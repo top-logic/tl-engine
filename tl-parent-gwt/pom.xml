@@ -54,10 +54,6 @@
 	</dependencyManagement>
 
 	<build>
-		<!-- Output classes directly into the webapp, so that IDEs and "mvn process-classes" 
-			update them in DevMode -->
-		<outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
-
 		<pluginManagement>
 			<plugins>
 				<!-- GWT Maven Plugin -->
@@ -98,7 +94,9 @@
 							<arg>-XcompilerMetrics</arg>
 						</compilerArgs>
 						<!-- DevMode configuration -->
-						<warDir>${project.build.directory}/${project.build.finalName}</warDir>
+						<warDir>${project.basedir}/src/main/webapp</warDir>
+						<!-- Build to webapp folder so IDE mode can pick up generated files. -->
+						<webappDirectory>${project.basedir}/src/main/webapp</webappDirectory>
 						<classpathScope>compile+runtime</classpathScope>
 					</configuration>
 				</plugin>

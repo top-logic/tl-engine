@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<script name="tl-react-flow-gwt"
+						resource="/TLReactFlowClient/TLReactFlowClient.nocache.js"
+					/>
+					<module-script name="tl-react-flow-controls"
+						resource="/script/tl-react-flow-controls.js"
+						requires="tl-react-bridge"
+					/>
+					<stylesheet name="tl-react-flow-css"
+						resource="/style/tl-react-flow.css"
+					/>
+				</resources>
+			</instance>
+		</config>
+	</services>
+</application>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<!-- Transient OtpEntry model bound to the form. -->
+		<channel name="model"/>
+		<!-- The account being authenticated (set by LoginAction). -->
+		<channel name="account"/>
+		<!-- The account's stored TOTP secret to verify against (set by LoginAction). -->
+		<channel name="secret"/>
+	</channels>
+	<window resizable="false"
+			width="380px">
+		<title>
+			<en>Two-factor authentication</en>
+			<de>Zwei-Faktor-Authentifizierung</de>
+		</title>
+		<form input="model"
+			initial-edit-mode="true"
+			mode-switch="false"
+		>
+			<text>
+				<label>
+					<en>Enter the current code from your authenticator app.</en>
+					<de>Geben Sie den aktuellen Code aus Ihrer Authenticator-App ein.</de>
+				</label>
+			</text>
+			<field attribute="code"/>
+			<commands>
+				<generic-command placement="BUTTON_BAR" image="css:bi bi-check-lg">
+					<label>
+						<en>Verify</en>
+						<de>Best&#228;tigen</de>
+					</label>
+					<store-form-state/>
+					<verify-otp/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand" image="css:bi bi-x-lg">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

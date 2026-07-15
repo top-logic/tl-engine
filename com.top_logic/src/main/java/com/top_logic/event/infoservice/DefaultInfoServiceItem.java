@@ -61,6 +61,28 @@ public class DefaultInfoServiceItem extends WithPropertiesBase implements HTMLFr
 		_kindOfClass = cssClass;
 	}
 
+	/**
+	 * The CSS class identifying the message kind ({@link InfoService#ERROR_CSS},
+	 * {@link InfoService#WARNING_CSS}, or {@link InfoService#INFO_CSS}).
+	 */
+	public String getKindOfClass() {
+		return _kindOfClass;
+	}
+
+	/**
+	 * The header text key for this info service item.
+	 */
+	public ResKey getHeaderText() {
+		return _headerText;
+	}
+
+	/**
+	 * The message fragment of this info service item.
+	 */
+	public HTMLFragment getMessage() {
+		return _message;
+	}
+
 	@Override
 	public void write(DisplayContext context, TagWriter out) throws IOException {
 		createItemId(context);

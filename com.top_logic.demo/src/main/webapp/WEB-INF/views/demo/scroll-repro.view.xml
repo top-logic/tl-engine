@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<!--
+	Reproduction view for the tab-content scroll issue (Ticket #29108):
+	a tab bar whose first tab contains a tall dashboard. Before the fix, the
+	tall content scrolled the whole tab bar (tab strip included) away; after
+	the fix only the tab content scrolls and the tab strip stays pinned.
+-->
+<view>
+	<tab-bar active-tab="charts">
+		<tabs>
+			<tab id="charts">
+				<label>
+					<en>Charts</en>
+					<de>Diagramme</de>
+				</label>
+				<dashboard id="scroll-repro-dashboard" min-col-width="16rem">
+					<tile id="r1" width="full" row-span="3">
+						<card variant="elevated">
+							<title>
+								<en>Chart 1</en>
+								<de>Diagramm 1</de>
+							</title>
+							<demo-counter>
+								<label>
+									<en>Series</en>
+									<de>Reihe</de>
+								</label>
+							</demo-counter>
+						</card>
+					</tile>
+					<tile id="r2" width="full" row-span="3">
+						<card variant="elevated">
+							<title>
+								<en>Chart 2</en>
+								<de>Diagramm 2</de>
+							</title>
+							<demo-counter>
+								<label>
+									<en>Series</en>
+									<de>Reihe</de>
+								</label>
+							</demo-counter>
+						</card>
+					</tile>
+					<tile id="r3" width="full" row-span="3">
+						<card variant="elevated">
+							<title>
+								<en>Chart 3</en>
+								<de>Diagramm 3</de>
+							</title>
+							<demo-counter>
+								<label>
+									<en>Series</en>
+									<de>Reihe</de>
+								</label>
+							</demo-counter>
+						</card>
+					</tile>
+					<tile id="r4" width="full" row-span="3">
+						<card variant="elevated">
+							<title>
+								<en>Chart 4</en>
+								<de>Diagramm 4</de>
+							</title>
+							<demo-counter>
+								<label>
+									<en>Series</en>
+									<de>Reihe</de>
+								</label>
+							</demo-counter>
+						</card>
+					</tile>
+				</dashboard>
+			</tab>
+			<tab id="details">
+				<label>
+					<en>Details</en>
+					<de>Details</de>
+				</label>
+				<inset>
+					<card>
+						<title>
+							<en>Detail Content</en>
+							<de>Detailinhalt</de>
+						</title>
+					</card>
+				</inset>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

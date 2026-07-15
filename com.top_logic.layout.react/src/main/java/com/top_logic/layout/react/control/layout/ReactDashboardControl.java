@@ -1,0 +1,222 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.control.layout;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
+
+import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.ReactControl;
+
+/**
+ * A {@link ReactControl} that renders a responsive dashboard grid of
+ * {@link Tile tiles} with drag-to-reorder support.
+ *
+ * <p>
+ * The client-side layout engine packs tiles left-to-right, stretches the last
+ * tile in each row to remove horizontal gaps and extends neighbors vertically
+ * to fill gaps left by row-spanning tiles.
+ * </p>
+ */
+public class ReactDashboardControl extends ReactControl {
+
+	private static final String REACT_MODULE = "TLDashboard";
+
+	private static final String MIN_COL_WIDTH = "minColWidth";
+
+	private static final String CHILDREN = "children";
+
+	private static final String EDIT_MODE = "editMode";
+
+	/** The {@link ReactCommandHandler} that applies a drag-and-drop tile reordering. */
+	public static final String REORDER_COMMAND = "reorder";
+
+	private static final String ORDER_ARG = "order";
+
+	/**
+	 * A single tile of the dashboard.
+	 */
+	public static final class Tile {
+
+		private final String _id;
+
+		private final TileWidth _width;
+
+		private final int _rowSpan;
+
+		private final ReactControl _control;
+
+		/**
+		 * Creates a new {@link Tile}.
+		 *
+		 * @param id
+		 *        Stable tile id, used as persistence key for reordering.
+		 * @param width
+		 *        The tile's relative width.
+		 * @param rowSpan
+		 *        Number of rows the tile occupies (>= 1).
+		 * @param control
+		 *        The control rendered inside the tile.
+		 */
+		public Tile(String id, TileWidth width, int rowSpan, ReactControl control) {
+			_id = id;
+			_width = width;
+			_rowSpan = Math.max(1, rowSpan);
+			_control = control;
+		}
+
+		/** The stable id of this tile. */
+		public String getId() {
+			return _id;
+		}
+
+		/** The inner control. */
+		public ReactControl getControl() {
+			return _control;
+		}
+	}
+
+	private final List<Tile> _tiles;
+
+	private final Consumer<List<String>> _onReorder;
+
+	private boolean _editMode;
+
+	private final List<Runnable> _editModeListeners = new CopyOnWriteArrayList<>();
+
+	/**
+	 * Creates a new {@link ReactDashboardControl}.
+	 *
+	 * @param minColWidth
+	 *        CSS length used to decide column count (e.g. {@code "16rem"}).
+	 * @param tiles
+	 *        Tiles in the order they should appear initially.
+	 * @param onReorder
+	 *        Callback invoked with the new tile-id order after the user
+	 *        reordered tiles. May be {@code null}.
+	 */
+	public ReactDashboardControl(ReactContext context, String minColWidth, List<Tile> tiles,
+			Consumer<List<String>> onReorder) {
+		super(context, null, REACT_MODULE);
+		_tiles = new ArrayList<>(tiles);
+		_onReorder = onReorder;
+		putState(MIN_COL_WIDTH, minColWidth);
+		putState(CHILDREN, buildDescriptors());
+		putState(EDIT_MODE, Boolean.FALSE);
+	}
+
+	private List<Map<String, Object>> buildDescriptors() {
+		List<Map<String, Object>> list = new ArrayList<>(_tiles.size());
+		for (Tile t : _tiles) {
+			Map<String, Object> d = new LinkedHashMap<>();
+			d.put("id", t._id);
+			d.put("width", t._width.getExternalName());
+			d.put("rowSpan", Integer.valueOf(t._rowSpan));
+			d.put("control", t._control);
+			list.add(d);
+		}
+		return list;
+	}
+
+	/**
+	 * Whether the dashboard is currently in edit mode (drag-to-reorder active).
+	 */
+	public boolean isEditMode() {
+		return _editMode;
+	}
+
+	/**
+	 * Switches edit mode on. Notifies listeners registered via
+	 * {@link #addEditModeListener(Runnable)}.
+	 */
+	public void enterEditMode() {
+		setEditMode(true);
+	}
+
+	/**
+	 * Switches edit mode off. Notifies listeners.
+	 */
+	public void exitEditMode() {
+		setEditMode(false);
+	}
+
+	private void setEditMode(boolean value) {
+		if (_editMode == value) {
+			return;
+		}
+		_editMode = value;
+		putState(EDIT_MODE, Boolean.valueOf(value));
+		for (Runnable l : _editModeListeners) {
+			l.run();
+		}
+	}
+
+	/**
+	 * Registers a listener that fires when {@link #isEditMode()} changes.
+	 */
+	public void addEditModeListener(Runnable listener) {
+		_editModeListeners.add(listener);
+	}
+
+	/**
+	 * Unregisters a previously added edit-mode listener.
+	 */
+	public void removeEditModeListener(Runnable listener) {
+		_editModeListeners.remove(listener);
+	}
+
+	@Override
+	protected void cleanupChildren() {
+		for (Tile t : _tiles) {
+			t._control.cleanupTree();
+		}
+	}
+
+	/**
+	 * Handles the {@code reorder} command sent by the React client after a
+	 * drag-and-drop reorder.
+	 */
+	// Argument is a string array (ordered tile ids). The config-JSON binding does not support a List
+	// of primitives, so this command keeps a raw Map with a lightweight @ReactParam schema.
+	@ReactCommandHandler(value = REORDER_COMMAND, params = @ReactParam(name = ORDER_ARG, type = "string[]",
+		required = true, description = "The tile ids in their new order."))
+	@FrameworkInternal
+	void handleReorder(Map<String, Object> arguments) {
+		@SuppressWarnings("unchecked")
+		List<String> newOrder = (List<String>) arguments.get(ORDER_ARG);
+		reorderTiles(newOrder);
+		putState(CHILDREN, buildDescriptors());
+		if (_onReorder != null) {
+			_onReorder.accept(Collections.unmodifiableList(new ArrayList<>(newOrder)));
+		}
+	}
+
+	private void reorderTiles(List<String> newOrder) {
+		Map<String, Tile> byId = new LinkedHashMap<>();
+		for (Tile t : _tiles) {
+			byId.put(t._id, t);
+		}
+		List<Tile> reordered = new ArrayList<>(_tiles.size());
+		for (String id : newOrder) {
+			Tile t = byId.remove(id);
+			if (t != null) {
+				reordered.add(t);
+			}
+		}
+		// Append any tiles that weren't mentioned in the new order.
+		reordered.addAll(byId.values());
+		_tiles.clear();
+		_tiles.addAll(reordered);
+	}
+}

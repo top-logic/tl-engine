@@ -3,6 +3,8 @@
 /target
 /tmp
 /war
+/node
+/node_modules
 /src/main/webapp/script/top-logic.js
 /src/main/webapp/style/_*.css
 /.settings/com.gwtplugins.gwt.eclipse.core.prefs

@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>8.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-layout-react</artifactId>
+	<name>${project.artifactId}</name>
+	<description>React integration for TopLogic UI controls via SSE.</description>
+	<url>https://github.com/top-logic/tl-engine/</url>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+    </dependency>
+    <dependency>
+      <!-- Provides html/pdfjs/web/viewer.html used by the TLPdfViewer control. -->
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-org-mozilla-pdfjs</artifactId>
+    </dependency>
+    <!-- Icon and font stylesheets served via ClientResources (see tl-layout-react.conf.config.xml). -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-inter-fonts</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-fontawesome</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-bootstrap-icons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-icons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.webjars.npm</groupId>
+      <artifactId>remixicon</artifactId>
+      <version>4.7.0</version>
+    </dependency>
+    <dependency>
+      <groupId>de.haumacher.msgbuf</groupId>
+      <artifactId>msgbuf-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <version>1.15.4</version>
+
+        <executions>
+          <execution>
+            <id>install-node</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+            <configuration>
+              <nodeVersion>v20.10.0</nodeVersion>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>npm-install</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>install</arguments>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>npm-build</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>de.haumacher.msgbuf</groupId>
+        <artifactId>msgbuf-generator-maven-plugin</artifactId>
+        <version>${msgbuf.version}</version>
+
+        <executions>
+          <execution>
+            <id>generate-protocols</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

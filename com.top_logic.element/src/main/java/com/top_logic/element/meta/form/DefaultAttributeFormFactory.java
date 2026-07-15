@@ -337,7 +337,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 					if (otherMember instanceof FormField && otherMember != field) {
 						dependencies.add((FormField) otherMember);
 					}
-				}, formContext);
+				}, updateContainer);
 				return dependencies;
 			}
 		};

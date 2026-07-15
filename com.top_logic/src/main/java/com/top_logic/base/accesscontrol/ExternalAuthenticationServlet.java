@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpSession;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.LoginFailedException;
+import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SessionContext;
@@ -25,6 +26,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.DeferredBootUtil;
 import com.top_logic.util.NoContextServlet;
 import com.top_logic.util.Resources;
@@ -172,19 +174,34 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 		checkLoginCredentials(credentials, request, response);
 		if (reuseSession) {
 			HttpSession existingSession = SessionService.getInstance().getSession(request);
-			if (existingSession != null) {
+			if (existingSession != null && isAuthenticatedSession(existingSession)) {
 				String message = "Reusing an existing session for user '" + credentials.getUsername() + "'.";
 				Logger.debug(message, ExternalAuthenticationServlet.class);
 				redirectToStartPage(request, response);
 				return;
 			} else {
-				String message = "No existing session found for user '" + credentials.getUsername()
-						+ "', creating a new one.";
+				// Either no session at all, or only an anonymous one (e.g. the session the React view
+				// layer boots for every browser). An anonymous session is not a real login, so it must
+				// not suppress the external login - otherwise the user would stay anonymous.
+				String message = "No authenticated session to reuse for user '" + credentials.getUsername()
+						+ "', logging in.";
 				Logger.debug(message, ExternalAuthenticationServlet.class);
 			}
 		}
 		loginUser(credentials.getPerson(), request, response);
 		redirectToStartPage(request, response);
+	}
+
+	/**
+	 * Whether the given session belongs to an authenticated (non-anonymous) user.
+	 */
+	private static boolean isAuthenticatedSession(HttpSession session) {
+		TLSessionContext context = SessionService.getInstance().getSession(session);
+		if (context == null) {
+			return false;
+		}
+		Person user = context.getOriginalUser();
+		return user != null && !user.equals(PersonManager.getManager().getAnonymous());
 	}
 
 	protected boolean isExtAuthEnabled() {

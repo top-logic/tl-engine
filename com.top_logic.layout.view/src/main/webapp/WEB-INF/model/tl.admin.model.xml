@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.admin">
+		<!--
+			Transient-only type holding the input of the "new account" form. Instances are created
+			with new(`tl.admin:NewAccount`, transient: true) and never persisted (the actual account
+			is created by the create-account action), so no table is declared.
+		-->
+		<class name="NewAccount">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="login"
+					type="tl.core:String"
+				/>
+				<property name="password"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-control>
+							<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+						</input-control>
+					</annotations>
+				</property>
+				<property name="language"
+					type="tl.util:Language"
+				/>
+				<property name="restrictedUser"
+					type="tl.core:Boolean"
+				/>
+				<property name="admin"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type holding the input of the "reset password" form. Instances are created
+			with new(`tl.admin:PasswordReset`, transient: true), carry a reference to the account whose
+			password is reset, and are never persisted (the set-password action applies the password
+			directly to the referenced account), so no table is declared.
+		-->
+		<class name="PasswordReset">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="account"
+					type="tl.accounts:Person"
+				/>
+				<property name="password"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-control>
+							<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+						</input-control>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type holding the input of the "enter maintenance mode" dialog: the delay (in
+			minutes; empty or zero enters immediately) before the system switches to maintenance mode, and
+			an optional message shown to logged-in users. Instances are created with
+			new(`tl.admin:MaintenanceMode`, transient: true) and are never persisted (the action drives the
+			MaintenanceWindowManager directly), so no table is declared.
+		-->
+		<class name="MaintenanceMode">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="delayMinutes"
+					type="tl.core:Integer"
+				/>
+				<property name="message"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type holding the input of the "add logger" dialog: the name of the logger to
+			configure. Instances are created with new(`tl.admin:NewLogger`, transient: true) and are never
+			persisted (the action configures the logger level directly), so no table is declared.
+		-->
+		<class name="NewLogger">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

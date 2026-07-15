@@ -412,6 +412,60 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react-chartjs</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-client</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-client</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-common</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-common</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-react-flow-server</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-dev-tools</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react-wysiwyg</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react-codeedit</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-common-remote</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -503,6 +557,13 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graph-layouter</artifactId>
+				<version>${tl.version}</version>
+				<classifier>sources</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-graph-server</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -565,6 +626,21 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-view</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-view-selfservice</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-configedit</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-layout-scripting-template</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -601,6 +677,11 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-model-search</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-model-search-react</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>

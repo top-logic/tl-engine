@@ -43,6 +43,7 @@ public class UIService {
 	 * @param factory
 	 *        A {@link JSControlFactory} creating {@link JSControl}s for the given control type.
 	 */
+	@SuppressWarnings("unusable-by-js")
 	public static void registerFactory(String type, JSControlFactory factory) {
 		_factories.put(type, factory);
 

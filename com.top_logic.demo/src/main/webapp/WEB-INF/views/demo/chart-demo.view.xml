@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<view>
+	<inset>
+	<stack direction="column" gap="default">
+		<grid gap="default" min-column-width="24rem">
+			<card>
+				<title>
+					<en>Bar Chart Demo</en>
+					<de>Balkendiagramm-Demo</de>
+				</title>
+				<chart data="{
+					'type': 'bar',
+					'data': {
+						'labels': list('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'),
+						'datasets': [
+							{
+								'label': 'Verkauf',
+								'data': list(
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 0).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 1).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 2).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 3).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 4).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 5).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum()
+								),
+								'metadata': list(
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 0),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 1),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 2),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 3),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 4),
+									all(`demo.charts:Verkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 5)
+								),
+								'onClick': 'showDetails'
+							},
+							{
+								'label': 'Einkauf',
+								'data': list(
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 0).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 1).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 2).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 3).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 4).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum(),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 5).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum()
+								),
+								'metadata': list(
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 0),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 1),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 2),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 3),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 4),
+									all(`demo.charts:Einkauf`).filter(v -> month(toSystemCalendar($v.get(`demo.charts:Transaktion#datum`))) == 5)
+								),
+								'onClick': 'showDetails'
+							}
+						]
+					},
+					'options': {
+						'maintainAspectRatio': false,
+						'scales': {
+							'y': { 'beginAtZero': true }
+						}
+					}
+				}">
+					<inputs/>
+					<handlers>
+						<handler name="showDetails">
+							<action class="com.top_logic.layout.view.command.OpenDialogCommand"
+								dialog-view="demo/chart-detail-dialog.view.xml"
+								bind-input-to="transactions"
+								close-on-backdrop="true"
+							/>
+						</handler>
+					</handlers>
+				</chart>
+			</card>
+
+			<card>
+				<title>
+					<en>Doughnut Chart Demo</en>
+					<de>Ringdiagramm-Demo</de>
+				</title>
+				<chart data="{
+					'type': 'doughnut',
+					'data': {
+						'labels': all(`demo.charts:Kategorie`).map(k -> $k.get(`demo.charts:Kategorie#name`)),
+						'datasets': [{
+							'data': all(`demo.charts:Kategorie`).map(k -> all(`demo.charts:Verkauf`).filter(v -> $v.get(`demo.charts:Transaktion#kategorie`) == $k).map(v -> $v.get(`demo.charts:Transaktion#wert`)).sum()),
+							'metadata': all(`demo.charts:Kategorie`).map(k -> all(`demo.charts:Verkauf`).filter(v -> $v.get(`demo.charts:Transaktion#kategorie`) == $k)),
+							'tooltip': 'valueTable',
+							'onClick': 'showDetails'
+						}]
+					},
+					'options': {
+						'maintainAspectRatio': false
+					}
+				}">
+					<inputs/>
+					<handlers>
+						<handler name="showDetails">
+							<action class="com.top_logic.layout.view.command.OpenDialogCommand"
+								dialog-view="demo/chart-detail-dialog.view.xml"
+								bind-input-to="transactions"
+								close-on-backdrop="true"
+							/>
+						</handler>
+					</handlers>
+					<tooltips>
+						<tooltip name="valueTable" expr="txs -> toString($txs.size()) + ' Transaktionen, Gesamt: ' + toString($txs.map(t -> $t.get(`demo.charts:Transaktion#wert`)).sum()) + ' EUR'"/>
+					</tooltips>
+				</chart>
+			</card>
+		</grid>
+
+		<card>
+			<title>
+				<en>Line Chart with Zoom</en>
+				<de>Liniendiagramm mit Zoom</de>
+			</title>
+			<chart zoomEnabled="true" data="{
+				'type': 'line',
+				'data': {
+					'labels': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+					'datasets': [
+						{
+							'label': '2025',
+							'data': [12, 19, 15, 25, 22, 30, 28, 35, 32, 40, 38, 45],
+												'tension': 0.3
+						},
+						{
+							'label': '2024',
+							'data': [10, 14, 12, 18, 16, 22, 20, 26, 24, 30, 28, 35],
+												'tension': 0.3,
+							'borderDash': [5, 5]
+						}
+					]
+				},
+				'options': {
+					'maintainAspectRatio': false,
+					'interaction': { 'intersect': false, 'mode': 'index' }
+				}
+			}">
+				<inputs/>
+			</chart>
+		</card>
+
+		<card>
+			<title>
+				<en>Combined Bar + Line</en>
+				<de>Kombiniert Balken + Linie</de>
+			</title>
+			<chart data="{
+				'type': 'bar',
+				'data': {
+					'labels': ['Q1', 'Q2', 'Q3', 'Q4'],
+					'datasets': [
+						{
+							'type': 'bar',
+							'label': 'Revenue',
+							'data': [30, 50, 40, 60],
+							'order': 2
+						},
+						{
+							'type': 'line',
+							'label': 'Margin %',
+							'data': [15, 22, 18, 28],
+							'fill': false,
+							'tension': 0.3,
+							'yAxisID': 'y1',
+							'order': 1
+						}
+					]
+				},
+				'options': {
+					'maintainAspectRatio': false,
+					'scales': {
+						'y': { 'beginAtZero': true, 'title': { 'display': true, 'text': 'Revenue' } },
+						'y1': { 'beginAtZero': true, 'position': 'right', 'grid': { 'drawOnChartArea': false }, 'title': { 'display': true, 'text': 'Margin %' } }
+					}
+				}
+			}">
+				<inputs/>
+			</chart>
+		</card>
+	</stack>
+	</inset>
+</view>

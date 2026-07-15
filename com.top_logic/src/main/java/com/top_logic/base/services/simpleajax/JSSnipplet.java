@@ -29,7 +29,23 @@ public class JSSnipplet extends ClientAction {
 
 	private DynamicText fragment;
 	private String code;
-	
+
+	/**
+	 * The static JavaScript code, or <code>null</code> if this snipplet uses a dynamic
+	 * {@link #getCodeFragment() fragment}.
+	 */
+	public String getCode() {
+		return code;
+	}
+
+	/**
+	 * The dynamic code fragment, or <code>null</code> if this snipplet uses static
+	 * {@link #getCode() code}.
+	 */
+	public DynamicText getCodeFragment() {
+		return fragment;
+	}
+
 	/**
 	 * Evaluate the given code in the context of the client's page. 
 	 */

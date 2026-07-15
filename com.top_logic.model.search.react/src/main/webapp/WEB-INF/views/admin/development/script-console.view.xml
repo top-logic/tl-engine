@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Script console: enter a TL-Script expression in the editor and run it. The tlscript-editor
+	publishes its text to the script channel; both toolbar commands run the EvaluateScriptAction on
+	that text and write the result to the result channel, which the ScriptResultTable renders as a
+	table (one row per result element, a single row for a scalar). Evaluate runs read-only (no
+	transaction, modifications are discarded); Apply runs in a committed transaction, so a script that
+	creates, modifies or deletes persistent objects takes effect. A vertical split-panel stacks the
+	editor above the result table; a titled <panel> carries the toolbar commands.
+-->
+<view>
+	<channels>
+		<channel name="script"/>
+		<channel name="result"/>
+	</channels>
+	<panel fill="true">
+		<title>
+			<en>Script console</en>
+			<de>Skript-Konsole</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-play-fill"
+				input="script"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Evaluate</en>
+					<de>Auswerten</de>
+				</label>
+				<action class="com.top_logic.model.search.react.EvaluateScriptAction"
+					transaction="false"
+				/>
+				<write-channel name="result"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-database-fill-check"
+				input="script"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Apply</en>
+					<de>Anwenden</de>
+				</label>
+				<action class="com.top_logic.model.search.react.EvaluateScriptAction"
+					transaction="true"
+				/>
+				<write-channel name="result"/>
+			</generic-command>
+		</commands>
+		<split-panel
+			orientation="vertical"
+			resizable="true"
+		>
+			<panes>
+				<pane
+					min-size="120"
+					size="35"
+					unit="%"
+				>
+					<full-page>
+						<tlscript-editor value-channel="script"/>
+					</full-page>
+				</pane>
+				<pane
+					min-size="120"
+					size="65"
+					unit="%"
+				>
+					<child class="com.top_logic.model.search.react.ScriptResultTable"
+						input="result"
+					/>
+				</pane>
+			</panes>
+		</split-panel>
+	</panel>
+</view>

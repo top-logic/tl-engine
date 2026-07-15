@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<view>
+	<channels>
+		<channel name="selectedCompany"/>
+		<derived-channel name="companyId"
+			inputs="selectedCompany"
+			expr="c -> if($c != null, $c.get(`Contacts:Contact.all#name`), null)"
+			reverse="id -> if($id != null, singleElement(filter(all(`Contacts:CompanyContact`), c -> $c.get(`Contacts:Contact.all#name`) == $id)), null)"
+		/>
+	</channels>
+	<param-bindings>
+		<bind channel="companyId" route-param="companyId"/>
+	</param-bindings>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="40"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Companies</en>
+						<de>Unternehmen</de>
+					</title>
+					<table
+						selection="selectedCompany"
+						types="Contacts:CompanyContact"
+					>
+						<rows>all(`Contacts:CompanyContact`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="60"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Staff</en>
+						<de>Mitarbeiter</de>
+					</title>
+					<table types="Contacts:PersonContact">
+						<inputs>
+							<input channel="selectedCompany"/>
+						</inputs>
+						<rows>company -&gt; if($company == null, list(), $company.get(`Contacts:Contact.Company#staff`))</rows>
+					</table>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

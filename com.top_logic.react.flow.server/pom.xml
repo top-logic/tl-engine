@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.top-logic</groupId>
+        <artifactId>tl-parent-core-internal</artifactId>
+        <version>8.0.0-SNAPSHOT</version>
+        <relativePath>../tl-parent-core/internal</relativePath>
+    </parent>
+
+    <artifactId>tl-react-flow-server</artifactId>
+    <description>Server-side ReactControl for React flow diagrams.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-react-flow-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-layout-view</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-model-search</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-layout-react</artifactId>
+        </dependency>
+
+        <!-- The GWT client-code: WAR overlay for Maven packaging. -->
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-react-flow-client</artifactId>
+            <version>${project.version}</version>
+            <type>war</type>
+            <classifier>web-fragment</classifier>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+
+                <executions>
+                    <execution>
+                        <id>war-fragment</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>war</goal>
+                        </goals>
+                        <configuration>
+                            <overlays>
+                                <overlay>
+                                    <groupId>com.top-logic</groupId>
+                                    <artifactId>tl-react-flow-client</artifactId>
+                                    <type>war</type>
+                                    <classifier>web-fragment</classifier>
+                                </overlay>
+                            </overlays>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Djava.awt.headless=true</argLine>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.15.4</version>
+
+                <executions>
+                    <execution>
+                        <id>install-node</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>v20.10.0</nodeVersion>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>npm-install</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>npm-build</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run build</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

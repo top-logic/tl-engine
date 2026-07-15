@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view>
+	<panel>
+		<title>
+			<en>Gantt Demo</en>
+			<de>Gantt-Demo</de>
+		</title>
+		<flow-diagram>
+			<inputs/>
+			<createChart><![CDATA[{
+/* === Axis range expressed as Calendar values; converted to days-since-epoch
+   (the chart's axis unit in this demo). The +12h offset before integer division
+   absorbs the timezone-shift between system-calendar midnight and UTC, so the
+   result matches LocalDate.toEpochDay() regardless of the JVM timezone. === */
+
+dayNum = c -> ($c.toMillis() + 43200000) / 86400000;
+
+startCal  = date(2025, 11, 28).toSystemCalendar();  /* 2025-12-28 -> day 20450 */
+endCal    = date(2026,  4, 27).toSystemCalendar();  /* 2026-05-27 -> day 20600 */
+rangeMin  = $dayNum($startCal);
+rangeMax  = $dayNum($endCal);
+
+/* === Two axis rows demonstrating level-of-detail.
+   Each row contains spans at BOTH granularities; a synchronized zoom breakpoint
+   selects which set is visible. Below the breakpoint axis 1 shows year cells and
+   axis 2 shows month-name cells; at/above it axis 1 shows month-year cells and
+   axis 2 shows day-number cells. The same breakpoint drives both rows so the
+   month name is never duplicated. === */
+
+lodBreakpoint = 4.0;
+
+r_axis1   = reactFlowGanttRow(model: "axis:1",       label: reactFlowEmpty(), acceptsDrop: false, backgroundColor: "#f0f0f0", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 20);
+r_axis2   = reactFlowGanttRow(model: "axis:2",       label: reactFlowEmpty(), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 18);
+r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowAlign(reactFlowPadding(reactFlowText("Markers"), all: 4), vAlign: "middle"), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 32);
+
+/* === Axis cell builder ===
+   Each cell is a non-interactive GanttSpan whose box is an outer LOD that
+   toggles the cell on/off via a minZoom gate. The fill is INSIDE the LOD so
+   the zebra stripe disappears together with the label -- otherwise empty
+   cells of the inactive granularity would still paint a background and
+   compete visually with the active granularity.
+
+   The inner LOD then drops the label when the cell becomes too narrow for
+   the text (e.g. early day cells just after the breakpoint), keeping the
+   stripes visible without overflowing text. */
+
+axisFills = list("rgba(0,0,0,0.03)", "rgba(0,0,0,0.08)");
+
+axisCell = modelId -> rowModel -> start -> end -> label -> index -> showWhenZoomedIn -> {
+	cellBox = reactFlowFill(
+		reactFlowLod(variants: list(
+			reactFlowAlign(reactFlowText($label), hAlign: "middle", vAlign: "middle"),
+			reactFlowEmpty()
+		)),
+		fill: $axisFills[$index % 2]
+	);
+	/* For "zoomed in" cells the visible variant comes first with a minZoom gate;
+	   the fallback empty wins below the breakpoint.
+	   For "zoomed out" cells the hidden variant comes first with the same
+	   minZoom gate so the cell vanishes at/above the breakpoint; the fallback
+	   visible cell wins below it. */
+	variants = $showWhenZoomedIn
+		? list(
+			reactFlowLodVariant(content: $cellBox,         minZoom: $lodBreakpoint),
+			reactFlowLodVariant(content: reactFlowEmpty()))
+		: list(
+			reactFlowLodVariant(content: reactFlowEmpty(), minZoom: $lodBreakpoint),
+			reactFlowLodVariant(content: $cellBox));
+	reactFlowGanttSpan(
+		model: $modelId,
+		rowModel: $rowModel,
+		box: reactFlowLod(variants: $variants),
+		start: $start, end: $end,
+		canMove: false, canResize: false, canBeEdge: false)
+};
+
+yearFmt      = dateFormat("yyyy");
+monthYearFmt = dateFormat("MMM yyyy");
+monthFmt     = dateFormat("MMM");
+monthIdFmt   = dateFormat("yyyy-MM");
+dayFmt       = dateFormat("dd");
+
+clip = v -> lo -> hi -> $v < $lo ? $lo : ($v > $hi ? $hi : $v);
+
+/* The system calendar stores instants at midnight in the configured system
+   timezone, but dateFormat formats java.util.Date values in the JVM default
+   timezone. When those timezones differ, formatting a midnight-in-system-TZ
+   instant can roll the displayed day back into the previous day — and at
+   month boundaries into the previous month, mislabelling every axis cell.
+   Shifting the calendar to noon before .toDate() keeps the displayed day
+   stable for any TZ delta below 12h, mirroring the +12h offset used by
+   $dayNum above. */
+midDay = c -> $c.withHour(12);
+
+/* === Axis 1 zoomed-out: one cell per calendar year overlapping the range. === */
+firstOfStartYear = $startCal.withDay(1).withMonth(0);
+yearSpans = count(2).foreach(i -> {
+	yStart = $firstOfStartYear.withYearAdded($i);
+	yEnd   = $firstOfStartYear.withYearAdded($i + 1);
+	label  = $yearFmt.format($midDay($yStart).toDate());
+	$axisCell("axis:year:" + $label, "axis:1",
+		$clip($dayNum($yStart), $rangeMin, $rangeMax),
+		$clip($dayNum($yEnd),   $rangeMin, $rangeMax),
+		$label, $i, false)
+});
+
+/* === Axis 1 zoomed-in: month cell labelled "MMM yyyy" === */
+firstOfStartMonth = $startCal.withDay(1);
+monthYearSpans = count(6).foreach(i -> {
+	mStart = $firstOfStartMonth.withMonthAdded($i);
+	mEnd   = $firstOfStartMonth.withMonthAdded($i + 1);
+	mDate  = $midDay($mStart).toDate();
+	$axisCell("axis:monthyear:" + $monthIdFmt.format($mDate), "axis:1",
+		$clip($dayNum($mStart), $rangeMin, $rangeMax),
+		$clip($dayNum($mEnd),   $rangeMin, $rangeMax),
+		$monthYearFmt.format($mDate), $i, true)
+});
+
+/* === Axis 2 zoomed-out: month cell labelled "MMM" === */
+monthSpans = count(6).foreach(i -> {
+	mStart = $firstOfStartMonth.withMonthAdded($i);
+	mEnd   = $firstOfStartMonth.withMonthAdded($i + 1);
+	mDate  = $midDay($mStart).toDate();
+	$axisCell("axis:month:" + $monthIdFmt.format($mDate), "axis:2",
+		$clip($dayNum($mStart), $rangeMin, $rangeMax),
+		$clip($dayNum($mEnd),   $rangeMin, $rangeMax),
+		$monthFmt.format($mDate), $i, false)
+});
+
+/* === Axis 2 zoomed-in: one cell per day in the range. "dd" pads to 2 digits so
+   the inner label-fit LOD behaves consistently from day 1 to day 31. === */
+daySpans = count($rangeMax - $rangeMin).foreach(i -> {
+	dn = $rangeMin + $i;
+	$axisCell("axis:day:" + $dn, "axis:2", $dn, $dn + 1,
+		$dayFmt.format($midDay($startCal.withDayAdded($i)).toDate()), $i, true)
+});
+
+/* Freeze label in Markers row */
+freezeLabel = reactFlowGanttSpan(model: "marker:freeze", rowModel: "axis:markers",
+	box: reactFlowFill(reactFlowAlign(reactFlowPadding(reactFlowText("Freeze"), all: 2), vAlign: "middle"), fill: "rgba(255,100,100,0.3)"),
+	start: 20513, end: 20520, canMove: false, canResize: false, canBeEdge: false);
+
+/* === Data rows (default rowPadding: 4) === */
+
+r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4), borderColor: "#e0e0e0");
+r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
+r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reactFlowText("Testing"),        all: 4), borderColor: "#e0e0e0");
+r_deploy = reactFlowGanttRow(model: "phase:deploy", label: reactFlowPadding(reactFlowText("Deployment"),   all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
+r_docs   = reactFlowGanttRow(model: "phase:docs",   label: reactFlowPadding(reactFlowText("Documentation"), all: 4), borderColor: "#e0e0e0");
+r_review = reactFlowGanttRow(model: "phase:review", label: reactFlowPadding(reactFlowText("Review"),        all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
+r_launch = reactFlowGanttRow(model: "phase:launch", label: reactFlowPadding(reactFlowText("Launch"),        all: 4), borderColor: "#e0e0e0");
+r_maint  = reactFlowGanttRow(model: "phase:maint",  label: reactFlowPadding(reactFlowText("Maintenance"),   all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
+
+/* === Items === */
+
+spec  = reactFlowGanttSpan(model: "task:spec",  rowModel: "phase:design",
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), fill: "#d4e6f9"), start: 20454, end: 20485);
+build = reactFlowGanttSpan(model: "task:build", rowModel: "phase:impl",
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), fill: "#c8e6c9"), start: 20485, end: 20544,
+	validDropTargets: list("phase:impl", "phase:test"));
+beta  = reactFlowGanttPoint(model: "milestone:beta", rowModel: "phase:test",
+	box: reactFlowStack(
+		reactFlowPolygon(points: list(reactFlowPoint(10, 0), reactFlowPoint(20, 10), reactFlowPoint(10, 20), reactFlowPoint(0, 10)), fillStyle: "#ff9800", stroke: "#e65100", thickness: 1.5),
+		reactFlowPadding(reactFlowText("Beta"), left: 24)
+	), at: 20544);
+qa    = reactFlowGanttSpan(model: "task:qa",   rowModel: "phase:test",
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), fill: "#f8d7da"), start: 20544, end: 20574);
+
+fixed_row = reactFlowGanttSpan(model: "task:fixed-row", rowModel: "phase:design",
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Fixed Row"), all: 3)), fill: "#e0d4f9"),
+	start: 20470, end: 20478, canMoveRow: false);
+no_resize = reactFlowGanttSpan(model: "task:no-resize", rowModel: "phase:impl",
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("No Resize"), all: 3)), fill: "#fce4b8"),
+	start: 20490, end: 20500, canResize: false);
+
+deploy_item = reactFlowGanttSpan(model: "task:deploy", rowModel: "phase:deploy",
+    box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Deploy"), all: 3)), fill: "#d1c4e9"), start: 20574, end: 20590);
+docs_item = reactFlowGanttSpan(model: "task:docs", rowModel: "phase:docs",
+    box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Write Docs"), all: 3)), fill: "#b3e5fc"), start: 20544, end: 20580);
+review_item = reactFlowGanttSpan(model: "task:review", rowModel: "phase:review",
+    box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Code Review"), all: 3)), fill: "#c8e6c9"), start: 20560, end: 20574);
+launch_item = reactFlowGanttSpan(model: "task:launch", rowModel: "phase:launch",
+    box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Go Live"), all: 3)), fill: "#ffccbc"), start: 20590, end: 20600);
+maint_item = reactFlowGanttSpan(model: "task:maint", rowModel: "phase:maint",
+    box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Support"), all: 3)), fill: "#f0f4c3"), start: 20590, end: 20620);
+
+/* === Edges === */
+
+e1 = reactFlowGanttEdge(model: "dep:spec->build", sourceModel: "task:spec",  sourceEndpoint: "END", targetModel: "task:build",     targetEndpoint: "START", enforce: "STRICT",
+	strokeColor: "#808080", dashes: list(4, 3));
+e2 = reactFlowGanttEdge(model: "dep:build->beta", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "milestone:beta", targetEndpoint: "START",
+	strokeColor: "#808080",
+	violatedStrokeColor: "#d01030", violatedStrokeWidth: 2.0);
+
+/* === Decorations === */
+
+/* Grid lines at month boundaries */
+gl_feb = reactFlowGanttLineDeco(model: "grid:feb", at: 20485, color: "#888888", strokeWidth: 0.5);
+gl_mar = reactFlowGanttLineDeco(model: "grid:mar", at: 20513, color: "#888888", strokeWidth: 0.5);
+gl_apr = reactFlowGanttLineDeco(model: "grid:apr", at: 20544, color: "#888888", strokeWidth: 0.5);
+gl_may = reactFlowGanttLineDeco(model: "grid:may", at: 20574, color: "#888888", strokeWidth: 0.5);
+
+/* Freeze range (colored strip - no label here, label is in Markers row) */
+freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, color: "rgba(255,100,100,0.3)");
+
+reactFlowGantt(
+	rootRows:    list($r_axis1, $r_axis2, $r_markers, $r_design, $r_impl, $r_test, $r_deploy, $r_docs, $r_review, $r_launch, $r_maint),
+	items:       concat($yearSpans, $monthYearSpans, $monthSpans, $daySpans, list($freezeLabel, $spec, $build, $beta, $qa, $fixed_row, $no_resize, $deploy_item, $docs_item, $review_item, $launch_item, $maint_item)),
+	edges:       list($e1, $e2),
+	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze),
+	rangeMin:    $rangeMin,
+	rangeMax:    $rangeMax,
+	initialZoom: 8,
+	frozenRows:  3
+)
+}]]></createChart>
+		</flow-diagram>
+	</panel>
+</view>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.layout.react.theme.UIThemeService$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.react.theme.UIThemeService">
+			<instance class="com.top_logic.layout.react.theme.UIThemeService"
+				default-theme="default"
+			>
+				<themes>
+					<theme name="default" label="Default">
+					<color name="background" value="#FFFFFF"/>
+					<color name="background-inverse" value="#393C40"/>
+					<color name="background-selected" value="#F0F1F2"/>
+					<length name="body-02-font-size" value=".875rem"/>
+					<length name="body-02-line-height" value="1.125rem"/>
+					<length name="body-compact-01-font-size" value=".875rem"/>
+					<length name="body-compact-01-line-height" value="1.125rem"/>
+					<ref name="border-color" ref="border-subtle"/>
+					<color name="border-interactive" value="#2968C8"/>
+					<length name="border-radius-02" value=".5rem"/>
+					<color name="border-strong" value="#878D96"/>
+					<color name="border-subtle" value="#C4C7CC"/>
+					<ref name="border-subtle-01" ref="border-subtle"/>
+					<color name="button-danger" value="#D3181B"/>
+					<color name="button-danger-hover" value="#BC1518"/>
+					<color name="button-disabled" value="#E1E2E5"/>
+					<color name="button-primary" value="#2968C8"/>
+					<color name="button-primary-active" value="#09387E"/>
+					<color name="button-primary-hover" value="#245DB2"/>
+					<color name="button-secondary" value="#2968C8"/>
+					<color name="button-secondary-active" value="#09387E"/>
+					<color name="button-secondary-hover" value="#245DB2"/>
+					<ref name="color-border" ref="border-subtle"/>
+					<text name="color-drop-zone" value="rgba(41,104,200,0.08)"/>
+					<color name="color-surface" value="#FFFFFF"/>
+					<length name="corner-radius" value="0.25rem"/>
+					<color name="field" value="#F0F1F2"/>
+					<color name="field-disabled" value="#F0F1F2"/>
+					<color name="focus" value="#2968C8"/>
+					<color name="focus-inset" value="#FFFFFF"/>
+					<text name="font-family" value="'Inter'"/>
+					<length name="heading-compact-02-font-size" value=".875rem"/>
+					<length name="heading-compact-02-letter-spacing" value=".15px"/>
+					<length name="heading-compact-02-line-height" value="1.125rem"/>
+					<length name="heading-compact-03-font-size" value="1rem"/>
+					<color name="icon-disabled" value="#878D96"/>
+					<color name="icon-on-color" value="#FFFFFF"/>
+					<color name="icon-primary" value="#101113"/>
+					<color name="interactive" value="#2968C8"/>
+					<length name="label-01-font-size" value=".75rem"/>
+					<color name="layer" value="#F0F1F2"/>
+					<color name="layer-01" value="#FFFFFF"/>
+					<color name="layer-02" value="#FFFFFF"/>
+					<color name="layer-accent" value="#6A6A6A"/>
+					<color name="layer-accent-active" value="#3B3B3B"/>
+					<color name="layer-accent-hover" value="#525252"/>
+					<color name="layer-accent-icon" value="#FFFFFF"/>
+					<color name="layer-accent-text" value="#FFFFFF"/>
+					<color name="layer-active" value="#C4C7CC"/>
+					<color name="layer-hover" value="#E5E5E6"/>
+					<color name="layer-selected" value="#E1E2E5"/>
+					<color name="layer-selected-hover" value="#D3D5D9"/>
+					<ref name="link-color" ref="link-primary"/>
+					<color name="link-primary" value="#2968C8"/>
+					<color name="link-primary-hover" value="#245DB2"/>
+					<color name="script-editor-text-highlight" value="#D6E3F7"/>
+					<text name="shadow-menu" value="0 2px 6px 0 rgba(0,0,0,0.32)"/>
+					<length name="spacing-01" value=".25rem"/>
+					<length name="spacing-02" value=".5rem"/>
+					<length name="spacing-03" value="1rem"/>
+					<length name="spacing-04" value="1.5rem"/>
+					<length name="spacing-05" value="2rem"/>
+					<length name="spacing-06" value="3rem"/>
+					<color name="support-error" value="#D3181B"/>
+					<color name="support-success" value="#04A38D"/>
+					<color name="support-warning" value="#D3A118"/>
+					<color name="text-disabled" value="#C4C7CC"/>
+					<color name="text-error" value="#D3181B"/>
+					<color name="text-helper" value="#676B72"/>
+					<color name="text-inverse" value="#FFFFFF"/>
+					<ref name="text-muted" ref="text-secondary"/>
+					<color name="text-on-color" value="#FFFFFF"/>
+					<color name="text-on-color-disabled" value="#878D96"/>
+					<color name="text-placeholder" value="#A7ABB2"/>
+					<color name="text-primary" value="#101113"/>
+					<color name="text-secondary" value="#676B72"/>
+					</theme>
+					<theme name="dark"
+						extends="default"
+						label="Dark"
+					>
+					<color name="background" value="#1A1C1E"/>
+					<color name="background-inverse" value="#F0F1F2"/>
+					<color name="background-selected" value="#2A2D30"/>
+					<color name="border-interactive" value="#5B9BF0"/>
+					<color name="border-strong" value="#6F7378"/>
+					<color name="border-subtle" value="#3A4045"/>
+					<color name="button-disabled" value="#3A4045"/>
+					<color name="button-primary" value="#5B9BF0"/>
+					<color name="button-primary-active" value="#3F86E6"/>
+					<color name="button-primary-hover" value="#7AAEF3"/>
+					<color name="button-secondary" value="#5B9BF0"/>
+					<color name="button-secondary-active" value="#3F86E6"/>
+					<color name="button-secondary-hover" value="#7AAEF3"/>
+					<color name="color-surface" value="#1A1C1E"/>
+					<color name="field" value="#262A2E"/>
+					<color name="field-disabled" value="#2A2D30"/>
+					<color name="focus" value="#5B9BF0"/>
+					<color name="focus-inset" value="#1A1C1E"/>
+					<color name="icon-disabled" value="#6F7378"/>
+					<color name="icon-primary" value="#F2F4F8"/>
+					<color name="interactive" value="#5B9BF0"/>
+					<color name="layer" value="#262A2E"/>
+					<color name="layer-01" value="#1F2327"/>
+					<color name="layer-02" value="#262A2E"/>
+					<color name="layer-active" value="#3A4045"/>
+					<color name="layer-hover" value="#2F3438"/>
+					<color name="layer-selected" value="#343A3F"/>
+					<color name="layer-selected-hover" value="#3D444A"/>
+					<color name="link-primary" value="#7AAEF3"/>
+					<color name="link-primary-hover" value="#97C0F6"/>
+					<color name="script-editor-text-highlight" value="#2A3A55"/>
+					<color name="text-disabled" value="#6F7378"/>
+					<color name="text-helper" value="#A7ABB2"/>
+					<color name="text-placeholder" value="#6F7378"/>
+					<color name="text-primary" value="#F2F4F8"/>
+					<color name="text-secondary" value="#A7ABB2"/>
+					</theme>
+				</themes>
+			</instance>
+		</config>
+	</services>
+</application>

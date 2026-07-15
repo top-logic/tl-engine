@@ -37,6 +37,7 @@
 		<module>../com.top_logic.client.diagramjs</module>
 		<module>../com.top_logic.graph.diagramjs.client</module>
 		<module>../com.top_logic.graphic.blocks.client</module>
+		<module>../com.top_logic.react.flow.client</module>
 
 		<!-- TopLogic -->
 		<module>../com.top_logic</module>
@@ -74,14 +75,24 @@
 		<module>../com.top_logic.graph.server</module>
 		<module>../com.top_logic.graphic.blocks</module>
 		<module>../com.top_logic.graphic.blocks.server</module>
+		<module>../com.top_logic.react.flow.common</module>
+		<module>../com.top_logic.react.flow.server</module>
+		<module>../com.top_logic.dev.tools</module>
 		<module>../com.top_logic.ide.jetty</module>
 		<module>../com.top_logic.importer</module>
 		<module>../com.top_logic.kafka</module>
 		<module>../com.top_logic.kafka.server</module>
 		<module>../com.top_logic.kafka.sync</module>
 		<module>../com.top_logic.layout.codeedit</module>
+		<module>../com.top_logic.layout.configedit</module>
 		<module>../com.top_logic.layout.formeditor</module>
 		<module>../com.top_logic.layout.icons</module>
+		<module>../com.top_logic.layout.react</module>
+		<module>../com.top_logic.layout.view</module>
+		<module>../com.top_logic.layout.view.selfservice</module>
+		<module>../com.top_logic.layout.react.chartjs</module>
+		<module>../com.top_logic.layout.react.codeedit</module>
+		<module>../com.top_logic.layout.react.wysiwyg</module>
 		<module>../com.top_logic.layout.scripting.template</module>
 		<module>../com.top_logic.layout.themeedit</module>
 		<module>../com.top_logic.layout.wysiwyg</module>
@@ -90,6 +101,7 @@
 		<module>../com.top_logic.mail</module>
 		<module>../tl-mail-smtp</module>
 		<module>../com.top_logic.model.search</module>
+		<module>../com.top_logic.model.search.react</module>
 		<module>../com.top_logic.model.wysiwyg</module>
 		<module>../com.top_logic.monitoring</module>
 		<module>../com.top_logic.office</module>
@@ -144,6 +156,7 @@
 
 		<!-- Demos -->
 		<module>../com.top_logic.demo</module>
+		<module>../com.top_logic.demo.react</module>
 		<module>../com.top_logic.kafka.demo</module>
 		<module>../test.com.top_logic.kafka.demo</module>
 	</modules>

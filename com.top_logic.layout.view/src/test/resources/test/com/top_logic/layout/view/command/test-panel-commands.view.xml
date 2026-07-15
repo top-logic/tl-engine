@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<panel title="Commands Test">
+		<commands>
+			<command class="test.com.top_logic.layout.view.command.TestPanelCommands$TestCommand"
+					 name="testCmd" label="Test"/>
+		</commands>
+	</panel>
+</view>

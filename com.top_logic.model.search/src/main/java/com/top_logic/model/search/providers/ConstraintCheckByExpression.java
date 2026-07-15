@@ -13,9 +13,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.meta.form.AttributeFormContext;
-import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.ConstraintCheck;
@@ -103,10 +102,8 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 
 	@Override
 	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
-			FormContext formContext) {
-		AttributeFormContext attributeFormContext = (AttributeFormContext) formContext;
-		_checkAnalyzer.execute(trace, attributeFormContext.getAttributeUpdateContainer(), object.tValue(attribute),
-			object);
+			OverlayLookup overlays) {
+		_checkAnalyzer.execute(trace, overlays, object.tValue(attribute), object);
 	}
 
 	private static ResKey toResKey(Object result) {

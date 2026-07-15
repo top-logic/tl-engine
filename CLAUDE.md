@@ -34,7 +34,9 @@ Switching branches can leave stale jars in the local Maven repo (installed artif
 .claude/scripts/rebuild-stale.sh --dry-run  # only list them
 ```
 
-The script enumerates all reactor modules via one `mvn exec:exec` run, compares the newest mtime under each module's `pom.xml` + `src/` against the installed jar in the local Maven repo, and rebuilds only the stale ones in the correct order (`mvn -B install -pl <list>`).
+The script enumerates all reactor modules via one `mvn exec:exec` run, then flags a module as stale when **either** (a) its own `pom.xml` + `src/` mtime is newer than its installed jar (or the jar is missing) — *source-stale*; **or** (b) any reactor module it depends on is stale or has a newer jar — *dependency-stale*. Case (b) is propagated transitively over the reactor dependency graph (parsed from each module's `pom.xml`), so it catches **cross-module API drift**: e.g. `model.search`'s sources change and it is rebuilt, leaving `service.openapi.server` — whose own sources are untouched — compiled against the old `SearchExpression` API. A purely local mtime check would call that module fresh; the transitive check rebuilds it. It then rebuilds the whole stale set in the correct order (`mvn -B install -pl <list>`; Maven re-sorts `-pl` into reactor order). The dependency-stale rule is deliberately conservative (rebuilds rather than risk a binary-incompatible jar); after a full `mvn install` jars are written in topological order, so only genuine source-stale roots propagate.
+
+**Run this after every pull or branch switch — not just when something looks broken.** It is the cheap reconciliation step that keeps the local repo consistent with the working tree. In particular it covers **newly added modules**: a module that was registered in an aggregator's `<modules>` but never built has no installed jar, so it is flagged `[no jar]` and rebuilt (along with its dependents). The only thing it cannot see is a module added to the source tree but **not yet registered** in any aggregator `<modules>` list — such a module is not part of the reactor, produces no `@@MOD` enumeration line, and is invisible to both Maven and this script. Registration is the precondition; once a module is in the reactor, the `[no jar]` path covers it.
 
 ### Running Tests
 
@@ -60,7 +62,7 @@ The `-Dtest` value **must be the fully qualified class name** — a simple class
 - **Piping Maven output**: Always use `mvn -B` (batch mode) when piping output to `grep`, `tail`, etc. Without `-B`, Maven emits ANSI color codes that prevent text matching (e.g. `grep 'BUILD'` fails because the actual string is `[1;32mBUILD SUCCESS[m`).
 - **Always preserve full build output**: Use `tee` to save output to a log file while still seeing it live: `mvn -B install -pl com.top_logic.basic 2>&1 | tee com.top_logic.basic/target/mvn-build.log`. This way you can search the full output afterwards without having to re-run the build.
 - **GWT client → server WAR dependency**: `tl-react-flow-server` packages the GWT JavaScript from `tl-react-flow-client` as a WAR overlay. The Jetty server serves GWT files from the server's web-fragment.war, NOT from the client's. **Always rebuild `com.top_logic.react.flow.server` after changing `com.top_logic.react.flow.client`**, otherwise the app serves stale JavaScript. Full rebuild command: `mvn install -pl com.top_logic.react.flow.common,com.top_logic.react.flow.client,com.top_logic.react.flow.server,com.top_logic.demo`.
-- **Never call `javac` directly** — always build through Maven (`mvn compile` / `mvn install`), which handles the classpath, dependency resolution, and ISO-8859-1 source encoding.
+- **Never call `javac` directly** — always build through Maven (`mvn compile` / `mvn install`), which handles the classpath, dependency resolution, and source encoding.
 - **Do not use the `-am` (also-make) flag** when verifying your own changes. List every module you modified explicitly on `-pl` (comma-separated, in dependency order). `-am` drags in the whole upstream dependency closure, hides which modules you actually touched, and slows every iteration down.
 
 ### Other Useful Commands
@@ -358,12 +360,36 @@ throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(
 - Use `ResKey` (no params), `ResKey1` (1 param), `ResKey2` (2 params), etc.
 - JavaDoc comment must start with `@en` for English default text
 
+### JavaDoc Conventions
+
+**Reference members, methods, and types with `{@link}`, not `{@code}`.** A `{@link #getScrollX()}`
+is checked by the compiler/doclet, so a later rename breaks the build instead of silently leaving
+stale documentation (`{@code scrollX}` would rot unnoticed). Reserve `{@code ...}` for things that
+are not resolvable symbols: literals (`{@code null}`, `{@code true}`), expressions
+(`{@code end >= start}`), method parameter names (JavaDoc has no link syntax for parameters), and
+external/JS identifiers.
+
+- In `*.proto` files, reference a field by its **proto field name**, not the generated getter:
+  `{@link #strokeColor}` (same message) or `{@link OtherMessage#fieldName}` (another message). The
+  msgbuf generator rewrites field links to the correct getter — do NOT guess `getStrokeColor()`.
+- The `TLDoclet` "Invalid camel case word" warning flags bare `camelCase` words in JavaDoc — wrap
+  them in a `{@link}` (preferred) or, only for non-symbols, `{@code}`.
+
 ## Testing Conventions
 
 - Test classes use the `test.` package prefix (e.g., `test.com.top_logic.basic.GenericTest`)
 - Many base test classes exist for common scenarios (see `Abstract*Test.java` patterns)
 - Tests requiring a knowledge base extend `AbstractDBKnowledgeBaseTest`
 - Tests are JUnit 4 based
+
+### Manual Verification with Playwright
+
+After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done. This means:
+
+1. **Ensure the feature is accessible in `com.top_logic.demo`** — if the feature is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
+2. **Start the demo app** using the `tl-app` skill.
+3. **Use Playwright** to navigate to the feature, interact with it, and verify that it works as expected.
+4. **Only then report the work as complete.**
 
 ### Manual Verification with Playwright
 
@@ -412,6 +438,7 @@ mvn -N tl:normalize-resource-file -Dresource=<path>
 
 The `-N` flag is essential — without it Maven resolves the full reactor (including GWT modules) and the command fails.
 
+
 ### Theme / CSS Reloading
 
 To reload CSS changes at runtime: Use sidebar menu "Entwickleroptionen" (Developer Options) "Theme neu laden" (Reload Theme), then **reload the page** in the browser. The theme reload alone doesn't update the browser.
@@ -419,6 +446,7 @@ To reload CSS changes at runtime: Use sidebar menu "Entwickleroptionen" (Develop
 ### View Configuration Reloading
 
 Changes to `.view.xml` files take effect after a logout/login — no application restart is needed. Views are loaded per session, not cached globally at startup.
+
 
 ### Layout Normalization
 
@@ -446,7 +474,19 @@ mvn exec:java@migrate-ticket28336
 - **com.top_logic/** - Core engine (tl-core artifact)
 - **com.top_logic.basic/** - Foundation utilities
 - **com.top_logic.element/** - Element management
-- **com.top_logic.demo/** - Demo application
+- **com.top_logic.demo/** - Legacy demo application (`tl-demo`). The classic
+  layout UI plus a React view layer mounted at `/view/`. Depends directly on the
+  legacy `graphic.blocks.*` diagram stack, so it also serves those modules'
+  webapp resources (e.g. `/style/tl-flow-core.css`).
+- **com.top_logic.demo.react/** - React-only demo application (`tl-demo-react`),
+  built purely on the `com.top_logic.layout.view` `.view.xml` layer and served at
+  `/view/`. This is the successor test bed for React UI features (see its
+  `TRIAGE.md`). It does **not** depend on the legacy `graphic.blocks.*` modules;
+  the React flow diagram is provided by the copied, self-contained
+  `com.top_logic.react.flow.*` modules. When verifying a React UI feature, run
+  this app, not `tl-demo` — a feature that works under `tl-demo` may still be
+  broken here if it relies on a legacy webapp resource that only `tl-demo`
+  happens to serve.
 - **test-migrate-apps/** - Test applications for migration scenarios
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output
@@ -490,6 +530,8 @@ Commit messages in this project must follow a specific format:
 - **Important**: Do NOT include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-generation attribution lines
 - **Never amend commits** unless explicitly asked to do so. Always create new commits.
 - Keep the message plain and focused on describing the change.
+- **Commit completed work at the end of each turn** without waiting to be asked, so every step of
+  work lands as its own commit. Group unrelated changes into separate commits.
 
 ### Git PR Conventions
 
@@ -544,6 +586,7 @@ mvn msgbuf-generator:generate -pl com.top_logic.basic
 ```
 
 The prefix is `msgbuf-generator` (not `msgbuf`); no version is needed — Maven resolves it from the target module's POM (`${msgbuf.version}`).
+
 
 ## Additional Resources
 

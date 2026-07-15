@@ -6,6 +6,10 @@
 			<instance>
 				<clients>
 					<keycloak name="pac4j-keycloak">
+						<label>
+							<en>Login with Keycloak</en>
+							<de>Mit Keycloak anmelden</de>
+						</label>
 						<client-id>%PAC_CLIENT_ID%</client-id>
 						<scope>%PAC_SCOPE%</scope>
 						<secret>%PAC_SECRET%</secret>

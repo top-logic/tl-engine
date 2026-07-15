@@ -1,0 +1,76 @@
+.tlCodeEditor {
+	min-height: 160px;
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius, 2px);
+	background: var(--field, #fff);
+}
+
+.tlCodeEditor .cm-editor {
+	flex: 1;
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+}
+
+.tlCodeEditor:focus-within {
+	border-color: var(--focus, #0f62fe);
+	box-shadow: 0 0 0 1px var(--focus, #0f62fe);
+}
+
+.tlCodeEditor--error {
+	border-color: var(--support-error, #da1e28);
+}
+
+.tlCodeEditor .cm-editor.cm-focused {
+	outline: none;
+}
+
+.tlCodeEditor .cm-scroller {
+	overflow: auto;
+}
+
+.tlCodeEditor .cm-content {
+	font-family: var(--font-family-mono, monospace);
+}
+
+/*
+ * Structural rules shared by every editor built on the CodeEditor base: the editor root carries the
+ * tlCodeEditorSurface class (added by CodeEditor) in addition to the consumer's cosmetic class, so
+ * these apply to the generic code editor and the TL-Script editor alike.
+ *
+ * CodeMirror sizes the scroller to its content (flex: 0 1 auto) and lays it out with
+ * align-items: flex-start, leaving the area below a short document as a dead zone that does not
+ * focus on click. Growing the scroller to fill the editor and stretching the content over it makes
+ * a click anywhere in the box focus the editor, not only on existing lines.
+ */
+.tlCodeEditorSurface .cm-scroller {
+	flex-grow: 1;
+}
+
+.tlCodeEditorSurface .cm-content {
+	align-self: stretch;
+}
+
+.tlCodeEditor .cm-gutters {
+	background: var(--layer, #f4f4f4);
+	border-right: 1px solid var(--border-subtle);
+	color: var(--text-secondary);
+}
+
+.tlCodeEditor .cm-activeLineGutter {
+	background: var(--layer-accent, #e0e0e0);
+	color: var(--layer-accent-text);
+}
+
+.tlCodeEditor .cm-activeLine {
+	background: var(--background-selected, rgba(0, 0, 0, 0.04));
+}
+
+.tlCodeEditor .cm-diagnostic-error {
+	border-left-color: var(--support-error, #da1e28);
+}
+
+.tlCodeEditor .cm-diagnostic-warning {
+	border-left-color: var(--support-warning, #f1c21b);
+}

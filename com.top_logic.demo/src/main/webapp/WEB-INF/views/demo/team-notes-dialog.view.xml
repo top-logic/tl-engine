@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<view>
+	<window
+		width="500px"
+	>
+		<title>
+			<en>Team Notes</en>
+			<de>Teamnotizen</de>
+		</title>
+		<commands>
+			<generic-command placement="TOOLBAR"
+				image="css:fas fa-bookmark"
+			>
+				<label>
+					<en>Bookmark</en>
+					<de>Lesezeichen</de>
+				</label>
+				<close-dialog/>
+			</generic-command>
+			<generic-command placement="TOOLBAR"
+				image="css:fas fa-share-alt"
+			>
+				<label>
+					<en>Share</en>
+					<de>Teilen</de>
+				</label>
+				<close-dialog/>
+			</generic-command>
+		</commands>
+		<stack direction="column" gap="default">
+		</stack>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schlie&#xDF;en</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

@@ -1,0 +1,4544 @@
+/*
+ * Styles for React-based controls provided by the tl-layout-react module.
+ *
+ * Uses the same design tokens as coreButtons.css so that React controls
+ * integrate visually with the rest of the TL UI.
+ */
+
+/* --- Viewport-filling layout ------------------------------------------- */
+
+html, body {
+	height: 100%;
+	margin: 0;
+}
+
+.is-control {
+	height: 100%;
+}
+
+.is-control > .tlStack {
+	height: 100%;
+}
+
+/* --- React mount point ------------------------------------------------- */
+
+[data-react-module] {
+	width: 100%;
+	height: 100%;
+}
+
+/* --- TLButton ----------------------------------------------------------- */
+
+.tlReactButton {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--spacing-02);
+	height: 2rem;
+	padding: 0 var(--spacing-03);
+	border: none;
+	border-radius: var(--corner-radius);
+	font-family: var(--font-family);
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	color: var(--button-secondary);
+	white-space: nowrap;
+}
+
+button.tlReactButton:not(:disabled):hover {
+	background: var(--layer-hover);
+}
+
+button.tlReactButton:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+button.tlReactButton:not(:disabled):active {
+	background: var(--button-secondary-active);
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	color: var(--text-on-color);
+}
+
+button.tlReactButton:disabled {
+	cursor: default;
+	background: none;
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+	color: var(--text-disabled);
+}
+
+/* --- TLButton link variant: render the button as an inline text link ---- */
+
+.tlReactButton--link,
+button.tlReactButton--link {
+	height: auto;
+	padding: 0;
+	border: none;
+	box-shadow: none;
+	background: transparent;
+	font-weight: normal;
+	color: var(--link-primary, #0f62fe);
+	text-decoration: underline;
+}
+
+button.tlReactButton--link:not(:disabled):hover,
+button.tlReactButton--link:not(:disabled):active {
+	background: transparent;
+	box-shadow: none;
+	color: var(--link-primary-hover, #0043ce);
+}
+
+/* --- TLButton primary variant: emphasized (filled) dialog action -------- */
+
+.tlReactButton--primary,
+button.tlReactButton--primary {
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+	color: var(--text-on-color);
+}
+
+button.tlReactButton--primary:not(:disabled):hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlReactButton--primary:focus-visible {
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary), 0 0 0 2px var(--focus-inset);
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+button.tlReactButton--primary:not(:disabled):active {
+	background: var(--button-primary-active);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-active);
+	color: var(--text-on-color);
+}
+
+/* --- TLButton small size (independent of appearance) -------------------- */
+
+.tlReactButton--small,
+button.tlReactButton--small {
+	height: 1.5rem;
+	padding: 0 var(--spacing-02);
+	font-size: var(--label-01-font-size, 0.75rem);
+}
+
+.tlReactButton--large,
+button.tlReactButton--large {
+	height: 2.5rem;
+	padding: 0 var(--spacing-05);
+	font-size: var(--heading-compact-03-font-size, 1rem);
+}
+
+/* A link keeps its inline layout regardless of size; only the font size differs. */
+button.tlReactButton--small.tlReactButton--link,
+button.tlReactButton--large.tlReactButton--link {
+	height: auto;
+	padding: 0;
+}
+
+/* --- TLButton icon-only variant ----------------------------------------- */
+
+.tlReactButton--icon {
+	box-shadow: none;
+	background: none;
+	padding: var(--spacing-01);
+	min-height: 0;
+	line-height: 1;
+	color: var(--icon-primary);
+}
+
+button.tlReactButton--icon:not(:disabled):hover {
+	background: var(--layer-hover);
+	color: var(--icon-primary);
+}
+
+button.tlReactButton--icon:disabled {
+	box-shadow: none;
+	color: var(--icon-disabled, var(--text-disabled));
+}
+
+/* The panel-toolbar buttons inherit the default (secondary) button styling:
+   the panel header is now a light surface, so no on-accent inversion is needed. */
+
+/* --- TLToggleButton (active state) -------------------------------------- */
+
+.tlReactButton.tlReactButtonActive {
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+	color: var(--text-on-color);
+}
+
+button.tlReactButton.tlReactButtonActive:hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlReactButton.tlReactButtonActive:focus {
+	color: var(--text-on-color);
+}
+
+button.tlReactButton.tlReactButtonActive:focus-visible {
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary), 0 0 0 2px var(--focus-inset);
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+button.tlReactButton.tlReactButtonActive:active {
+	background: var(--button-primary-active);
+	color: var(--text-on-color);
+}
+
+button.tlReactButton.tlReactButtonActive:disabled {
+	background: var(--button-disabled);
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+	color: var(--text-on-color-disabled);
+}
+
+/* --- TLCounter ---------------------------------------------------------- */
+
+.tlCounter {
+	padding: var(--spacing-04);
+	font-family: var(--font-family);
+}
+
+.tlCounter__title {
+	margin: 0 0 var(--spacing-03) 0;
+}
+
+.tlCounter__controls {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.tlCounter__button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	font-size: 1.25rem;
+	cursor: pointer;
+	border-radius: var(--corner-radius);
+	border: none;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	color: var(--button-secondary);
+}
+
+button.tlCounter__button:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlCounter__button:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+.tlCounter__value {
+	font-size: 2rem;
+	min-width: 3.75rem;
+	text-align: center;
+	color: var(--text-primary);
+}
+
+.tlCounter__description {
+	margin-top: var(--spacing-03);
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+}
+
+/* --- TLTabBar ---------------------------------------------------------- */
+
+.tlReactTabBar {
+	display: flex;
+	flex-direction: column;
+	font-family: var(--font-family);
+	/* Fill the available slot instead of growing with the content, so the tab
+	   strip stays pinned and only the tab content scrolls (min-height: 0 lets
+	   this shrink below its content height inside a flex parent). */
+	flex: 1;
+	min-height: 0;
+}
+
+.tlReactTabBar__tabs {
+	display: flex;
+	gap: var(--spacing-02);
+	border-bottom: 1px solid var(--border-subtle-01);
+	padding: 0 var(--spacing-03);
+	/* Keep the tab strip pinned while the content scrolls. */
+	flex-shrink: 0;
+}
+
+.tlReactTabBar__tab {
+	padding: var(--spacing-03) var(--spacing-04);
+	border: none;
+	border-bottom: 2px solid transparent;
+	background: transparent;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-secondary);
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.tlReactTabBar__tabIcon {
+	margin-right: var(--spacing-03);
+}
+
+.tlReactTabBar__tab:hover {
+	color: var(--text-primary);
+	border-bottom-color: var(--border-subtle-01);
+}
+
+.tlReactTabBar__tab:focus {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlReactTabBar__tab--active {
+	color: var(--text-primary);
+	border-bottom-color: var(--button-primary);
+	font-weight: bold;
+}
+
+/* ===========================================================================
+   Spacing model.
+
+   Containers never introduce padding - everything flushes to the container
+   border by default. Breathing room is owned by the *content*:
+
+     - Forms pad themselves (.tlFormLayout), so a form renders nicely in any
+       container, pane, tab or dialog.
+     - The dashboard layout pads itself (its outer inset == its tile gap).
+     - The explicit <inset> element (.tlInset) is dropped into a view
+       wherever content would otherwise glue to the border (e.g. a stack/grid
+       of cards, or explanatory text in a dialog).
+
+   Simple layouts (<stack>, <grid>) and chrome containers (sidebar content, tab
+   content, split panes, panel body, dialog body) do NOT pad. A <panel> (dark
+   toolbar) flushes; a <card> (rounded border) must live inside a dashboard or a
+   <padding> so its border has room. No enforcement - build views per the
+   documented convention.
+   =========================================================================== */
+:root {
+	--page-inset: var(--spacing-04);
+}
+
+.tlInset {
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+	padding: var(--page-inset);
+}
+
+.tlReactTabBar__content {
+	/* Flush: content owns its inset (see spacing model above). */
+	/* Own scroll region: fill the space left by the tab strip and scroll the
+	   tab content here, rather than letting it push the whole tab bar (and an
+	   ancestor scroller, e.g. the sidebar) past the viewport. */
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	/* Lay the active content out as a bounded flex column. Children that opt to
+	   fill (a nested tab-bar, a fill panel) then resolve their height against this
+	   box; content-sized children keep their natural height and overflow-scroll
+	   here exactly as before. Without this, block flow lets a fill-ready child
+	   grow to its content height and a virtualized table never bounds its
+	   viewport (see TableViewControl). */
+	display: flex;
+	flex-direction: column;
+}
+
+/* --- TLAudioRecorder --------------------------------------------------- */
+
+.tlAudioRecorder {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	font-family: var(--font-family);
+}
+
+.tlAudioRecorder__button {
+	position: relative;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+}
+
+button.tlAudioRecorder__button:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+}
+
+button.tlAudioRecorder__button:hover .tlAudioRecorder__icon {
+	background: var(--text-on-color);
+}
+
+button.tlAudioRecorder__button:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlAudioRecorder__button:disabled {
+	cursor: default;
+	background: none;
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+}
+
+button.tlAudioRecorder__button:disabled .tlAudioRecorder__icon {
+	background: var(--text-disabled);
+}
+
+/* Icon: filled red circle (record) */
+.tlAudioRecorder__icon {
+	display: block;
+	width: 0.75rem;
+	height: 0.75rem;
+	border-radius: 50%;
+	background: var(--button-danger);
+}
+
+/* Icon: white square (stop) */
+.tlAudioRecorder__icon--stop {
+	border-radius: 2px;
+	background: var(--text-on-color);
+}
+
+/* Recording state */
+.tlAudioRecorder__button--recording {
+	background: var(--button-danger);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger);
+}
+
+button.tlAudioRecorder__button--recording:hover {
+	background: var(--button-danger-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger-hover);
+}
+
+/* Ripple rings animation during recording */
+.tlAudioRecorder__button--recording::before,
+.tlAudioRecorder__button--recording::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	border: 2px solid var(--button-danger);
+	animation: tlAudioRecorderRipple 2s ease-out infinite;
+	pointer-events: none;
+}
+
+.tlAudioRecorder__button--recording::after {
+	animation-delay: 1s;
+}
+
+@keyframes tlAudioRecorderRipple {
+	0%   { transform: scale(1); opacity: 0.6; }
+	100% { transform: scale(2); opacity: 0; }
+}
+
+/* Uploading state: wobble animation */
+.tlAudioRecorder__button--uploading {
+	animation: tlAudioRecorderWobble 0.5s ease-in-out infinite;
+}
+
+@keyframes tlAudioRecorderWobble {
+	0%, 100% { transform: rotate(0deg); }
+	25%      { transform: rotate(-10deg); }
+	75%      { transform: rotate(10deg); }
+}
+
+.tlAudioRecorder__status {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-secondary);
+}
+
+.tlAudioRecorder__status--error {
+	color: var(--text-error);
+}
+
+/* --- TLAudioPlayer ----------------------------------------------------- */
+
+.tlAudioPlayer {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	font-family: var(--font-family);
+}
+
+.tlAudioPlayer__button {
+	position: relative;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+}
+
+button.tlAudioPlayer__button:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+}
+
+button.tlAudioPlayer__button:hover .tlAudioPlayer__icon {
+	border-left-color: #42be65;
+}
+
+button.tlAudioPlayer__button:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlAudioPlayer__button:disabled {
+	cursor: default;
+	background: none;
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+}
+
+button.tlAudioPlayer__button:disabled .tlAudioPlayer__icon {
+	border-left-color: var(--text-disabled);
+}
+
+/* Icon: play triangle (right-pointing) */
+.tlAudioPlayer__icon {
+	display: block;
+	width: 0;
+	height: 0;
+	border-top: 0.4rem solid transparent;
+	border-bottom: 0.4rem solid transparent;
+	border-left: 0.65rem solid #198038;
+	margin-left: 0.1rem;
+}
+
+/* Icon: pause (two vertical bars) */
+.tlAudioPlayer__icon--pause {
+	width: 0.35rem;
+	height: 0.7rem;
+	margin-left: 0;
+	border-top: none;
+	border-bottom: none;
+	border-left: 0.15rem solid var(--text-on-color);
+	border-right: 0.15rem solid var(--text-on-color);
+	background: transparent;
+}
+
+/* Playing state */
+.tlAudioPlayer__button--playing {
+	background: #198038;
+	box-shadow: inset 0px 0px 0px 2px #198038;
+}
+
+button.tlAudioPlayer__button--playing:hover {
+	background: #24a148;
+	box-shadow: inset 0px 0px 0px 2px #24a148;
+}
+
+button.tlAudioPlayer__button--playing:hover .tlAudioPlayer__icon--pause {
+	border-left-color: var(--text-on-color);
+	border-right-color: var(--text-on-color);
+}
+
+/* Loading state: spinning border */
+.tlAudioPlayer__button--loading {
+	box-shadow: none;
+	border: 2px solid var(--button-disabled);
+	border-top-color: #198038;
+	animation: tlAudioPlayerSpin 0.8s linear infinite;
+}
+
+@keyframes tlAudioPlayerSpin {
+	to { transform: rotate(360deg); }
+}
+
+/* --- TLDownload -------------------------------------------------------- */
+
+.tlDownload {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	font-family: var(--font-family);
+	height: 2rem;
+}
+
+.tlDownload--empty {
+	color: var(--text-disabled);
+}
+
+/* File name label */
+.tlDownload__fileName {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-primary);
+	max-width: 20rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlDownload__fileName--empty {
+	color: var(--text-disabled);
+	font-style: italic;
+}
+
+/* Download button */
+.tlDownload__downloadBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	background: transparent;
+	color: var(--button-secondary);
+	padding: 0;
+}
+
+button.tlDownload__downloadBtn:hover {
+	background: var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlDownload__downloadBtn:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlDownload__downloadBtn:disabled {
+	cursor: default;
+	color: var(--text-disabled);
+}
+
+/* Downloading state: spinning icon */
+.tlDownload__downloadBtn--downloading .tlDownload__downloadIcon {
+	animation: tlDownloadSpin 0.8s linear infinite;
+}
+
+@keyframes tlDownloadSpin {
+	to { transform: rotate(360deg); }
+}
+
+/* Clear button */
+.tlDownload__clearBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	background: transparent;
+	color: var(--text-secondary);
+	padding: 0;
+}
+
+button.tlDownload__clearBtn:hover {
+	background: var(--button-danger-hover);
+	color: var(--text-on-color);
+}
+
+button.tlDownload__clearBtn:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+/* --- TLFileUpload ------------------------------------------------------ */
+
+.tlFileUpload {
+	display: inline-flex;
+	align-items: center;
+	height: 2rem;
+}
+
+.tlFileUpload__button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	background: transparent;
+	color: var(--button-secondary);
+	padding: 0;
+}
+
+button.tlFileUpload__button:hover {
+	background: var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlFileUpload__button:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlFileUpload__button:disabled {
+	cursor: default;
+	color: var(--text-disabled);
+}
+
+.tlFileUpload__button--uploading .tlFileUpload__icon {
+	animation: tlUploadSpin 0.8s linear infinite;
+}
+
+@keyframes tlUploadSpin {
+	to { transform: rotate(360deg); }
+}
+
+.tlFileUpload__status--error {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-error, #da1e28);
+	margin-left: var(--spacing-02);
+}
+
+.tlFileUpload--dragover {
+	outline: 2px dashed var(--focus);
+	outline-offset: 2px;
+	border-radius: var(--corner-radius);
+}
+
+/* --- TLPhotoCapture ---------------------------------------------------- */
+
+.tlPhotoCapture {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-03);
+	font-family: var(--font-family);
+}
+
+.tlPhotoCapture__controls {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.tlPhotoCapture__cameraBtn {
+	position: relative;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+}
+
+button.tlPhotoCapture__cameraBtn:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+}
+
+button.tlPhotoCapture__cameraBtn:hover .tlPhotoCapture__cameraIcon {
+	border-color: var(--text-on-color);
+}
+
+button.tlPhotoCapture__cameraBtn:hover .tlPhotoCapture__cameraIcon::before {
+	background: var(--text-on-color);
+}
+
+button.tlPhotoCapture__cameraBtn:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlPhotoCapture__cameraBtn:disabled {
+	cursor: default;
+	background: none;
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+}
+
+button.tlPhotoCapture__cameraBtn:disabled .tlPhotoCapture__cameraIcon {
+	border-color: var(--text-disabled);
+}
+
+button.tlPhotoCapture__cameraBtn:disabled .tlPhotoCapture__cameraIcon::before {
+	background: var(--text-disabled);
+}
+
+/* Camera icon: rectangle with circle lens */
+.tlPhotoCapture__cameraIcon {
+	display: block;
+	width: 0.9rem;
+	height: 0.65rem;
+	border: 1.5px solid var(--button-secondary);
+	border-radius: 2px;
+	position: relative;
+}
+
+.tlPhotoCapture__cameraIcon::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 0.3rem;
+	height: 0.3rem;
+	border-radius: 50%;
+	background: var(--button-secondary);
+	transform: translate(-50%, -50%);
+}
+
+/* Active camera state */
+.tlPhotoCapture__cameraBtn--active {
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+}
+
+.tlPhotoCapture__cameraBtn--active .tlPhotoCapture__cameraIcon {
+	border-color: var(--text-on-color);
+}
+
+.tlPhotoCapture__cameraBtn--active .tlPhotoCapture__cameraIcon::before {
+	background: var(--text-on-color);
+}
+
+button.tlPhotoCapture__cameraBtn--active:hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
+}
+
+/* Uploading state: wobble animation on camera button */
+.tlPhotoCapture__cameraBtn--uploading {
+	animation: tlPhotoCaptureWobble 0.5s ease-in-out infinite;
+}
+
+@keyframes tlPhotoCaptureWobble {
+	0%, 100% { transform: rotate(0deg); }
+	25%      { transform: rotate(-10deg); }
+	75%      { transform: rotate(10deg); }
+}
+
+/* Fullscreen overlay */
+.tlPhotoCapture__overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	outline: none;
+}
+
+.tlPhotoCapture__overlayBackdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.85);
+}
+
+.tlPhotoCapture__overlayContent {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+}
+
+.tlPhotoCapture__overlayVideo {
+	flex: 1 1 0;
+	min-height: 0;
+	width: 100%;
+	object-fit: contain;
+	background: #000;
+}
+
+.tlPhotoCapture__overlayVideo--mirrored {
+	transform: scaleX(-1);
+}
+
+/* Toolbar: three buttons centered at bottom */
+.tlPhotoCapture__overlayToolbar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1.5rem;
+	padding: 1.5rem 1rem;
+	background: rgba(0, 0, 0, 0.6);
+	flex-shrink: 0;
+}
+
+/* Mirror & close buttons: 3rem circles */
+.tlPhotoCapture__mirrorBtn,
+.tlPhotoCapture__overlayCloseBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 3rem;
+	height: 3rem;
+	border: 2px solid rgba(255, 255, 255, 0.5);
+	border-radius: 50%;
+	background: transparent;
+	color: rgba(255, 255, 255, 0.8);
+	cursor: pointer;
+	padding: 0;
+}
+
+button.tlPhotoCapture__mirrorBtn:hover,
+button.tlPhotoCapture__overlayCloseBtn:hover {
+	background: rgba(255, 255, 255, 0.15);
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.8);
+}
+
+button.tlPhotoCapture__mirrorBtn:focus-visible,
+button.tlPhotoCapture__overlayCloseBtn:focus-visible {
+	box-shadow: 0 0 0 2px var(--focus, #0f62fe);
+	outline: none;
+}
+
+.tlPhotoCapture__mirrorBtn--active {
+	background: rgba(255, 255, 255, 0.2);
+	border-color: #fff;
+	color: #fff;
+}
+
+/* Capture button: large 4.5rem circle with red inner disc */
+.tlPhotoCapture__overlayCaptureBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 4.5rem;
+	height: 4.5rem;
+	border: 4px solid #fff;
+	border-radius: 50%;
+	background: transparent;
+	cursor: pointer;
+	padding: 0;
+}
+
+button.tlPhotoCapture__overlayCaptureBtn:hover {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+button.tlPhotoCapture__overlayCaptureBtn:focus-visible {
+	box-shadow: 0 0 0 2px var(--focus, #0f62fe);
+	outline: none;
+}
+
+.tlPhotoCapture__overlayCaptureIcon {
+	display: block;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 50%;
+	background: var(--button-danger, #da1e28);
+}
+
+button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureIcon {
+	transform: scale(0.9);
+}
+
+.tlPhotoCapture__status {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-secondary);
+}
+
+.tlPhotoCapture__status--error {
+	color: var(--text-error);
+}
+
+/* --- TLPhotoViewer ----------------------------------------------------- */
+
+.tlPhotoViewer {
+	display: inline-flex;
+	align-items: center;
+	font-family: var(--font-family);
+}
+
+.tlPhotoViewer__image {
+	max-width: 320px;
+	border-radius: var(--corner-radius);
+	object-fit: cover;
+}
+
+.tlPhotoViewer__placeholder {
+	width: 320px;
+	height: 0;
+}
+
+/* --- TLPdfViewer ------------------------------------------------------- */
+
+.tlPdfViewer {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	font-family: var(--font-family);
+}
+
+.tlPdfViewer__frame {
+	flex: 1 1 auto;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	border: none;
+}
+
+.tlPdfViewer__placeholder {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-secondary);
+}
+
+/* --- TLFieldList ------------------------------------------------------- */
+
+.tlFieldList {
+	font-family: var(--font-family);
+}
+
+.tlFieldList__title {
+	margin: 0 0 var(--spacing-04) 0;
+	color: var(--text-primary);
+}
+
+.tlFieldList__fields {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-04);
+}
+
+.tlFieldList__item {
+	padding-bottom: var(--spacing-03);
+	border-bottom: 1px solid var(--border-subtle-01);
+}
+
+/* --- TLPanel ----------------------------------------------------------- */
+
+.tlPanel {
+	font-family: var(--font-family);
+}
+
+.tlPanel__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	/* A panel header is local chrome, not global chrome: it uses a light surface
+	   so it reads as content and does not visually merge with the dark app bar
+	   (which is the single accent-colored bar). A faint tint against the white
+	   content makes it read clearly as a header bar; it is applied uniformly to
+	   every panel header (standalone or split) so identical tables/panels look
+	   the same regardless of the surrounding layout. Delineated by a bottom border. */
+	background-color: var(--layer-02, #f4f4f4);
+	color: var(--text-primary);
+	border-bottom: 1px solid var(--border-subtle);
+	gap: var(--spacing-02);
+	padding: var(--spacing-02) var(--spacing-03);
+	box-sizing: border-box;
+	flex-shrink: 0;
+}
+
+.tlPanel__title {
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlPanel__toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+.tlPanel__actionButton {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--icon-primary, var(--text-primary));
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+button.tlPanel__actionButton:hover {
+	background: var(--layer-hover);
+}
+
+button.tlPanel__actionButton:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlPanel__actionButton svg {
+	width: 1rem;
+	height: 1rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.tlPanel__content {
+	flex: 1;
+	overflow: auto;
+	position: relative;
+}
+
+.tlPanel--fullLine {
+	grid-column: 1 / -1;
+}
+
+/* A fill panel fills the bounded height of its container instead of growing with
+   its content, so a virtualized child (e.g. a TableViewControl) bounds its
+   viewport and scrolls internally rather than overflowing an outer scroller.
+   This is the opt-in counterpart to the flex-column tab content above: the panel
+   already lays itself out at height:100%, and the :has() rule lets the wrapping
+   view-content stack fill too, so the chain down to the table is height-bounded. */
+.tlPanel--fill {
+	flex: 1;
+	min-height: 0;
+}
+
+/* The view-content stack fills its container when it hosts a fill panel or a split
+   panel, so the panel/split-panel height:100% resolves against a definite height.
+   A split panel always fills (its panes are sized proportionally and its divider
+   must span the available height); a plain panel only fills when it opts in. */
+.tlStack:has(> .tlPanel--fill),
+.tlStack:has(> .tlSplitPanel) {
+	flex: 1;
+	min-height: 0;
+}
+
+.tlPanel--maximized {
+	background: var(--background);
+}
+
+/* --- TLSplitPanel ------------------------------------------------------ */
+
+.tlSplitPanel__splitter {
+	flex-shrink: 0;
+	background: var(--border-subtle);
+}
+
+.tlSplitPanel__splitter--horizontal {
+	width: 4px;
+	cursor: col-resize;
+}
+
+.tlSplitPanel__splitter--vertical {
+	height: 4px;
+	cursor: row-resize;
+}
+
+.tlSplitPanel__splitter:hover {
+	background: var(--border-interactive);
+}
+
+.tlSplitPanel--allCollapsed > .tlSplitPanel__child {
+	overflow: hidden;
+}
+
+/* --- Collapsed panel in horizontal split ------------------------------- */
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__header {
+	flex-direction: column-reverse;
+	justify-content: start;
+	align-items: center;
+	height: 100%;
+	padding: var(--spacing-02);
+}
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__title {
+	display: block;
+	width: 0;
+	overflow: visible;
+	white-space: nowrap;
+	transform: rotate(90deg);
+}
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__toolbar {
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__actionButton {
+	margin-left: 0;
+}
+
+/* --- TLSidebar --------------------------------------------------------- */
+
+.tlSidebar {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+	height: 100%;
+	font-family: var(--font-family);
+}
+
+.tlSidebar__nav {
+	display: flex;
+	flex-direction: column;
+	width: 16rem;
+	flex-shrink: 0;
+	border-right: 1px solid var(--border-subtle);
+	background: var(--layer-01, #fff);
+	overflow-y: auto;
+	overflow-x: hidden;
+	transition: width 0.2s ease;
+}
+
+.tlSidebar--collapsed .tlSidebar__nav {
+	width: 2.5rem;
+}
+
+.tlSidebar__content {
+	flex: 1;
+	overflow: auto;
+	position: relative;
+	/* Flush: the active view's content owns its inset (see spacing model). */
+	display: flex;
+	flex-direction: column;
+}
+
+.tlSidebar__content > * {
+	flex: 1 1 0%;
+	min-height: 0;
+}
+
+.tlSidebar__headerSlot,
+.tlSidebar__footerSlot {
+	flex-shrink: 0;
+	border-bottom: 1px solid var(--border-subtle);
+	overflow: hidden;
+}
+
+.tlSidebar__footerSlot {
+	border-bottom: none;
+	border-top: 1px solid var(--border-subtle);
+}
+
+.tlSidebar__headerSlot--collapsed,
+.tlSidebar__footerSlot--collapsed {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: var(--spacing-02);
+	overflow: hidden;
+}
+
+.tlSidebar__items {
+	flex: 1;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: var(--spacing-02) 0;
+}
+
+/* Shared base for interactive sidebar items */
+.tlSidebar__item {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	width: 100%;
+	padding: var(--spacing-03) var(--spacing-04);
+	border: none;
+	border-left: 3px solid transparent;
+	background: transparent;
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	font-family: var(--font-family);
+	cursor: pointer;
+	text-align: left;
+}
+
+button.tlSidebar__item:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlSidebar__item:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* Navigation item */
+.tlSidebar__navItem--active {
+	background: var(--layer-selected);
+	border-left-color: var(--button-primary);
+	color: var(--text-primary);
+	font-weight: 600;
+}
+
+button.tlSidebar__navItem--active:hover {
+	background: var(--layer-selected-hover, var(--layer-selected));
+}
+
+/* Header item */
+.tlSidebar__headerItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-left: 3px solid transparent;
+	color: var(--text-primary);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+/* Separator */
+.tlSidebar__separator {
+	border: none;
+	border-top: 1px solid var(--border-subtle);
+	margin: var(--spacing-02) var(--spacing-04);
+}
+
+.tlSidebar__chevron {
+	margin-left: auto;
+	flex-shrink: 0;
+	transition: transform 0.2s ease;
+}
+
+.tlSidebar__chevron--open {
+	transform: rotate(180deg);
+}
+
+.tlSidebar__groupChildren {
+	padding-left: var(--spacing-04);
+}
+
+/* Icon */
+.tlSidebar__icon {
+	flex-shrink: 0;
+	width: 1rem;
+	text-align: center;
+	font-size: 1rem;
+}
+
+/* Label */
+.tlSidebar__label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Badge */
+.tlSidebar__badge {
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.25rem;
+	height: 1.25rem;
+	padding: 0 var(--spacing-02);
+	border-radius: 0.625rem;
+	background: var(--button-primary);
+	color: var(--text-on-color);
+	font-size: 0.6875rem;
+	font-weight: 600;
+	line-height: 1;
+	flex-shrink: 0;
+}
+
+.tlSidebar__iconWrap {
+	position: relative;
+	display: inline-flex;
+}
+
+.tlSidebar__badge--collapsed {
+	position: absolute;
+	top: -0.375rem;
+	right: -0.5rem;
+	margin-left: 0;
+	min-width: 0.875rem;
+	height: 0.875rem;
+	padding: 0 0.1875rem;
+	font-size: 0.5625rem;
+}
+
+/* --- Collapsed mode: center icon-only items --- */
+
+.tlSidebar--collapsed .tlSidebar__item,
+.tlSidebar--collapsed .tlSidebar__headerItem {
+	justify-content: center;
+	padding: var(--spacing-03) 0;
+	border-left: 3px solid transparent;
+	gap: 0;
+}
+
+.tlSidebar--collapsed .tlSidebar__navItem--active {
+	background: var(--layer-selected);
+	border-left-color: var(--button-primary);
+}
+
+.tlSidebar--collapsed .tlSidebar__separator {
+	margin: var(--spacing-02) var(--spacing-02);
+}
+
+/* Collapse toggle button */
+.tlSidebar__collapseBtn {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 2.5rem;
+	border: none;
+	border-top: 1px solid var(--border-subtle);
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+button.tlSidebar__collapseBtn:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlSidebar__collapseBtn:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* Group flyout (collapsed-mode popover) */
+.tlSidebar__group {
+	position: relative;
+}
+
+.tlSidebar__flyout {
+	position: fixed;
+	z-index: 1000;
+	min-width: 12rem;
+	background: var(--layer-01, #fff);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02, 4px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	padding: var(--spacing-02) 0;
+	overflow-y: auto;
+	max-height: 20rem;
+}
+
+.tlSidebar__flyoutHeader {
+	padding: var(--spacing-03) var(--spacing-04);
+	color: var(--text-primary);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	border-bottom: 1px solid var(--border-subtle);
+	margin-bottom: var(--spacing-02);
+}
+
+.tlSidebar__flyoutItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	width: 100%;
+	padding: var(--spacing-03) var(--spacing-04);
+	border: none;
+	background: transparent;
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	font-family: var(--font-family);
+	cursor: pointer;
+	text-align: left;
+}
+
+button.tlSidebar__flyoutItem:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlSidebar__flyoutItem:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlSidebar__flyoutItem--active {
+	color: var(--text-primary);
+	font-weight: 600;
+}
+
+.tlSidebar__flyoutSectionHeader {
+	padding: var(--spacing-02) var(--spacing-04);
+	color: var(--text-primary);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+/* --- Drawer backdrop (only used in mobile drawer mode; hidden on desktop). ---------- */
+
+.tlSidebar__backdrop {
+	display: none;
+}
+
+/* --- Drawer toggle (mobile hamburger contributed via the sidebar's drawer-open-slot-name) -- */
+
+.tlDrawerToggle {
+	display: none; /* desktop: hidden; mobile @media rules below override */
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+	border-radius: var(--corner-radius, 4px);
+}
+
+button.tlDrawerToggle:hover {
+	background: rgba(255, 255, 255, 0.12);
+}
+
+button.tlDrawerToggle:focus-visible {
+	outline: 2px solid var(--focus, currentColor);
+	outline-offset: -2px;
+}
+
+/* --- Responsive: sidebar becomes an off-canvas drawer on small viewports ---- */
+
+@media (max-width: 768px) {
+	.tlDrawerToggle {
+		display: inline-flex;
+	}
+
+	/* Turn the nav rail into a fixed off-canvas panel that slides in from the left.
+	 * Width is intentionally NOT set here: it inherits from the desktop base rules
+	 * (.tlSidebar--collapsed gives 2.5rem, default gives 16rem). That way crossing the
+	 * @media boundary from a collapsed desktop rail does NOT change the width — the
+	 * rail just slides off-canvas at its current 2.5rem width, instead of first
+	 * expanding to 16rem and then animating. Width is overridden to 16rem only when
+	 * the drawer is explicitly open (below). Both width and transform are in the
+	 * transition list so opening from a collapsed-preference state grows + slides
+	 * smoothly, and closing shrinks + slides back.
+	 */
+	.tlSidebar__nav {
+		position: fixed;
+		top: 3.5rem; /* below the app bar */
+		left: 0;
+		bottom: 0;
+		transform: translateX(-100%);
+		transition: transform 0.2s ease, width 0.2s ease;
+		z-index: 50;
+		box-shadow: none;
+	}
+
+	.tlSidebar.tlSidebar--drawerOpen .tlSidebar__nav {
+		transform: translateX(0);
+		width: 16rem; /* full drawer regardless of desktop collapsed preference */
+		box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+	}
+
+	/* Backdrop only when drawer is open. Clicking closes the drawer (handled in TLSidebar.tsx). */
+	.tlSidebar--drawerOpen .tlSidebar__backdrop {
+		display: block;
+		position: fixed;
+		top: 3.5rem;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.4);
+		z-index: 49;
+		cursor: pointer;
+	}
+
+	/* In-rail collapse arrow is meaningless on mobile; the AppBar hamburger replaces it. */
+	.tlSidebar__collapseBtn {
+		display: none;
+	}
+
+	/* Content takes full width regardless of nav state. */
+	.tlSidebar__content {
+		width: 100%;
+	}
+}
+
+/* --- TLStack --------------------------------------------------------------- */
+
+.tlStack {
+	display: flex;
+	font-family: var(--font-family);
+}
+
+.tlStack--column { flex-direction: column; }
+.tlStack--row    { flex-direction: row; }
+
+.tlStack--gap-compact { gap: var(--spacing-02); }
+.tlStack--gap-default { gap: var(--spacing-04); }
+.tlStack--gap-loose   { gap: var(--spacing-06); }
+
+.tlStack--align-start   { align-items: flex-start; }
+.tlStack--align-center  { align-items: center; }
+.tlStack--align-end     { align-items: flex-end; }
+.tlStack--align-stretch { align-items: stretch; }
+
+.tlStack--wrap { flex-wrap: wrap; }
+
+/* First child fills the remaining main-axis space (input-with-adornment row). */
+.tlStack--grow-first.tlStack--row > *:first-child { flex: 1 1 auto; min-width: 0; }
+.tlStack--grow-first.tlStack--column > *:first-child { flex: 1 1 auto; min-height: 0; }
+
+/* --- TLGrid ---------------------------------------------------------------- */
+
+.tlGrid {
+	display: grid;
+	font-family: var(--font-family);
+}
+
+.tlGrid--gap-compact { gap: var(--spacing-02); }
+.tlGrid--gap-default { gap: var(--spacing-04); }
+.tlGrid--gap-loose   { gap: var(--spacing-06); }
+
+/* --- TLCard ---------------------------------------------------------------- */
+
+.tlCard {
+	border-radius: var(--border-radius-02, 4px);
+	font-family: var(--font-family);
+	background: var(--layer-01, #fff);
+	overflow: hidden;
+}
+
+.tlCard--outlined {
+	border: 1px solid var(--border-subtle);
+}
+
+.tlCard--elevated {
+	box-shadow: 0 0 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.tlCard__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-03) var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle);
+}
+
+.tlCard__title {
+	font-weight: 600;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlCard__headerActions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	flex-shrink: 0;
+}
+
+.tlCard__body--pad-none    { padding: 0; }
+.tlCard__body--pad-compact { padding: var(--spacing-03); }
+.tlCard__body--pad-default { padding: var(--spacing-04); }
+
+/* --- TLAppBar -------------------------------------------------------------- */
+
+.tlAppBar {
+	display: flex;
+	align-items: center;
+	height: 3.5rem;
+	padding: 0 var(--spacing-03);
+	gap: var(--spacing-02);
+	font-family: var(--font-family);
+	flex-shrink: 0;
+	box-sizing: border-box;
+}
+
+.tlAppBar--primary {
+	background: var(--layer-accent);
+	color: var(--layer-accent-text);
+}
+
+.tlAppBar--surface {
+	background: var(--layer-01, #fff);
+	color: var(--text-primary);
+	border-bottom: 1px solid var(--border-subtle);
+}
+
+.tlAppBar--elevated {
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.tlAppBar__leading {
+	flex-shrink: 0;
+}
+
+.tlAppBar__title {
+	flex: 0 1 auto;
+	margin: 0;
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlAppBar__children {
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
+	gap: var(--spacing-02);
+	overflow: hidden;
+}
+
+.tlAppBar__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+/* --- Controls placed on the primary (accent) app bar -------------------- */
+/* The primary app bar has a dark accent background; its title and slot text
+   inherit the on-accent (white) color. Buttons and the user-name text bring
+   their own foreground (accent-blue / primary-text), which is nearly
+   unreadable on the accent background. Re-map them to on-accent colors. */
+
+.tlAppBar--primary .tlAppBarUser {
+	color: var(--layer-accent-text);
+}
+
+.tlAppBar--primary .tlReactButton {
+	color: var(--layer-accent-text);
+	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-text);
+}
+
+.tlAppBar--primary button.tlReactButton:not(:disabled):hover {
+	background: rgba(255, 255, 255, 0.16);
+}
+
+.tlAppBar--primary button.tlReactButton:not(:disabled):active {
+	background: rgba(255, 255, 255, 0.24);
+	color: var(--layer-accent-text);
+	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-text);
+}
+
+.tlAppBar--primary button.tlReactButton:disabled {
+	background: none;
+	color: rgba(255, 255, 255, 0.5);
+	box-shadow: inset 0px 0px 0px 2px rgba(255, 255, 255, 0.4);
+}
+
+.tlAppBar--primary .tlReactButton--icon {
+	box-shadow: none;
+	color: var(--icon-on-color, var(--layer-accent-text));
+}
+
+.tlAppBar--primary .tlReactButton--link {
+	color: var(--layer-accent-text);
+}
+
+/* --- TLBreadcrumb ---------------------------------------------------------- */
+
+.tlBreadcrumb {
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+}
+
+.tlBreadcrumb__list {
+	display: flex;
+	align-items: center;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	gap: var(--spacing-01);
+}
+
+.tlBreadcrumb__entry {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+}
+
+.tlBreadcrumb__separator {
+	color: var(--text-secondary);
+	flex-shrink: 0;
+}
+
+.tlBreadcrumb__item {
+	border: none;
+	background: transparent;
+	padding: 0;
+	color: var(--link-primary, var(--button-primary));
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	cursor: pointer;
+}
+
+.tlBreadcrumb__item:hover {
+	text-decoration: underline;
+}
+
+.tlBreadcrumb__item:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+.tlBreadcrumb__current {
+	color: var(--text-primary);
+}
+
+/* --- TLBottomBar ----------------------------------------------------------- */
+
+.tlBottomBar {
+	display: flex;
+	align-items: stretch;
+	height: 3.5rem;
+	border-top: 1px solid var(--border-subtle);
+	background: var(--layer-01, #fff);
+	font-family: var(--font-family);
+	flex-shrink: 0;
+}
+
+.tlBottomBar__item {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.125rem;
+	border: none;
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: var(--spacing-02) 0;
+	font-family: var(--font-family);
+	min-width: 0;
+}
+
+.tlBottomBar__item:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+button.tlBottomBar__item:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+.tlBottomBar__item--active {
+	color: var(--button-primary);
+}
+
+.tlBottomBar__iconWrap {
+	position: relative;
+	display: inline-flex;
+}
+
+.tlBottomBar__icon {
+	font-size: 1.25rem;
+}
+
+.tlBottomBar__badge {
+	position: absolute;
+	top: -0.375rem;
+	right: -0.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0.875rem;
+	height: 0.875rem;
+	padding: 0 0.1875rem;
+	border-radius: 0.4375rem;
+	background: var(--button-primary);
+	color: var(--text-on-color);
+	font-size: 0.5625rem;
+	font-weight: 600;
+	line-height: 1;
+}
+
+.tlBottomBar__label {
+	font-size: 0.6875rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+}
+
+/* --- TLDialog (overlay-only) ----------------------------------------------- */
+
+.tlDialog__backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.5);
+	outline: none;
+}
+
+/* --- TLDialogManager ------------------------------------------------------- */
+
+.tlDialogManager {
+	/* Container for stacked dialogs; no visual styles. */
+}
+
+/* --- TLWindow -------------------------------------------------------------- */
+
+.tlWindow {
+	position: relative;
+	background: var(--layer-01, #fff);
+	border-radius: var(--border-radius-02, 4px);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+	display: flex;
+	flex-direction: column;
+	max-height: 80vh;
+	font-family: var(--font-family);
+	outline: none;
+	overflow: hidden;
+}
+
+.tlWindow__header {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+	cursor: grab;
+	user-select: none;
+}
+
+.tlWindow__header:active {
+	cursor: grabbing;
+}
+
+.tlWindow__title {
+	flex: 1;
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlWindow__toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
+.tlWindow__toolbar .tlReactButton {
+	box-shadow: none;
+	background: none;
+	color: var(--text-secondary);
+	font-weight: normal;
+}
+
+.tlWindow__toolbar button.tlReactButton:not(:disabled):hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+.tlWindow__toolbar button.tlReactButton:not(:disabled):active {
+	background: var(--layer-active, var(--layer-hover));
+	box-shadow: none;
+	color: var(--text-primary);
+}
+
+.tlWindow__closeBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+button.tlWindow__closeBtn:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlWindow__closeBtn:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlWindow__maximizeBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+button.tlWindow__maximizeBtn:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlWindow__maximizeBtn:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlWindow__header--maximized {
+	cursor: default;
+}
+
+.tlWindow__body {
+	flex: 1;
+	overflow-y: auto;
+	/* Flush: a dialog is a container too - its content owns its inset (a self-padding
+	   form, or a <padding> around explanatory text). */
+}
+
+.tlWindow__footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-top: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+}
+
+/* Resize handles */
+.tlWindow__resizeHandle {
+	position: absolute;
+}
+
+.tlWindow__resizeHandle--n {
+	top: -3px; left: 8px; right: 8px; height: 6px;
+	cursor: ns-resize;
+}
+
+.tlWindow__resizeHandle--s {
+	bottom: -3px; left: 8px; right: 8px; height: 6px;
+	cursor: ns-resize;
+}
+
+.tlWindow__resizeHandle--e {
+	top: 8px; bottom: 8px; right: -3px; width: 6px;
+	cursor: ew-resize;
+}
+
+.tlWindow__resizeHandle--w {
+	top: 8px; bottom: 8px; left: -3px; width: 6px;
+	cursor: ew-resize;
+}
+
+.tlWindow__resizeHandle--ne {
+	top: -3px; right: -3px; width: 12px; height: 12px;
+	cursor: nesw-resize;
+}
+
+.tlWindow__resizeHandle--nw {
+	top: -3px; left: -3px; width: 12px; height: 12px;
+	cursor: nwse-resize;
+}
+
+.tlWindow__resizeHandle--se {
+	bottom: -3px; right: -3px; width: 12px; height: 12px;
+	cursor: nwse-resize;
+}
+
+.tlWindow__resizeHandle--sw {
+	bottom: -3px; left: -3px; width: 12px; height: 12px;
+	cursor: nesw-resize;
+}
+
+/* --- TLDrawer -------------------------------------------------------------- */
+
+.tlDrawer {
+	position: fixed;
+	z-index: 9000;
+	background: var(--layer-01, #fff);
+	box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+	display: flex;
+	flex-direction: column;
+	transition: transform 0.25s ease;
+	font-family: var(--font-family);
+}
+
+.tlDrawer--left, .tlDrawer--right { top: 0; bottom: 0; }
+.tlDrawer--left   { left: 0;  transform: translateX(-100%); }
+.tlDrawer--right  { right: 0; transform: translateX(100%); }
+.tlDrawer--bottom { left: 0; right: 0; bottom: 0; transform: translateY(100%); }
+
+.tlDrawer--left.tlDrawer--open   { transform: translateX(0); }
+.tlDrawer--right.tlDrawer--open  { transform: translateX(0); }
+.tlDrawer--bottom.tlDrawer--open { transform: translateY(0); }
+
+.tlDrawer--narrow { width: 16rem; }
+.tlDrawer--medium { width: 24rem; }
+.tlDrawer--wide   { width: 36rem; }
+.tlDrawer--bottom.tlDrawer--narrow { width: auto; height: 16rem; }
+.tlDrawer--bottom.tlDrawer--medium { width: auto; height: 24rem; }
+.tlDrawer--bottom.tlDrawer--wide   { width: auto; height: 36rem; }
+
+.tlDrawer__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-03) var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+}
+
+.tlDrawer__title {
+	font-weight: 600;
+	font-size: var(--heading-compact-02-font-size);
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlDrawer__closeBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 0;
+}
+
+button.tlDrawer__closeBtn:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlDrawer__closeBtn:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlDrawer__body {
+	flex: 1;
+	overflow-y: auto;
+	padding: var(--spacing-04);
+}
+
+/* --- TLSnackbar ------------------------------------------------------------ */
+
+.tlSnackbar {
+	position: fixed;
+	bottom: var(--spacing-04);
+	left: 50%;
+	transform: translateX(-50%) translateY(0);
+	z-index: 11000;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-radius: var(--border-radius-02, 4px);
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	animation: tlSnackbarSlideUp 0.2s ease;
+	max-width: 40rem;
+}
+
+.tlSnackbar--exiting {
+	animation: tlSnackbarFadeOut 0.2s ease forwards;
+}
+
+.tlSnackbar--info    { background: var(--background-inverse, #393939); color: var(--text-inverse, #fff); }
+.tlSnackbar--success { background: var(--support-success, #198038); color: #fff; }
+.tlSnackbar--warning { background: var(--support-warning, #f1c21b); color: #000; }
+.tlSnackbar--error   { background: var(--support-error, #da1e28); color: #fff; }
+
+.tlSnackbar__message {
+	flex: 1;
+}
+
+.tlSnackbar__action {
+	border: none;
+	background: transparent;
+	color: inherit;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: underline;
+	white-space: nowrap;
+}
+
+.tlSnackbar__action:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+@keyframes tlSnackbarSlideUp {
+	from { transform: translateX(-50%) translateY(1rem); opacity: 0; }
+	to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+}
+
+@keyframes tlSnackbarFadeOut {
+	from { opacity: 1; }
+	to   { opacity: 0; }
+}
+
+/* --- TLAppShell ------------------------------------------------------------ */
+
+.tlAppShell {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+/* The view-content stack hosting the app shell fills its container, so the shell's
+   height:100% resolves against the viewport-high mount chain: the app bar stays put
+   and overflowing content scrolls inside the shell's content region, not the page. */
+.tlStack:has(> .tlAppShell) {
+	flex: 1;
+	min-height: 0;
+}
+
+.tlAppShell__content {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.tlAppShell .tlBreadcrumb {
+	padding: var(--spacing-02) var(--spacing-05);
+}
+
+/* --- TLAdaptiveDetail (responsive master-detail) --------------------------- */
+
+.tlAdaptiveDetail {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+}
+
+.tlAdaptiveDetail__content {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.tlAdaptiveDetail__breadcrumb {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-02);
+	padding: var(--spacing-02) var(--spacing-04);
+	border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
+	flex: 0 0 auto;
+}
+
+.tlAdaptiveDetail__crumb {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	padding: 0;
+	font: inherit;
+	color: var(--link-color, #0d6efd);
+}
+
+.tlAdaptiveDetail__crumb--current {
+	cursor: default;
+	color: inherit;
+	font-weight: 600;
+}
+
+.tlAdaptiveDetail__sep {
+	color: var(--text-muted, rgba(0, 0, 0, 0.45));
+}
+
+/* --- TLMenu ---------------------------------------------------------------- */
+
+.tlMenu {
+	z-index: 10000;
+	min-width: 10rem;
+	background: var(--layer-01, #fff);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02, 4px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	padding: var(--spacing-02) 0;
+	font-family: var(--font-family);
+	outline: none;
+}
+
+.tlMenu__item {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	width: 100%;
+	padding: var(--spacing-03) var(--spacing-04);
+	border: none;
+	background: transparent;
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	font-family: var(--font-family);
+	cursor: pointer;
+	text-align: left;
+}
+
+button.tlMenu__item:hover,
+.tlMenu__item--focused {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlMenu__item:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlMenu__item--disabled {
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+button.tlMenu__item--disabled:hover {
+	background: transparent;
+	color: var(--text-disabled);
+}
+
+.tlMenu__separator {
+	border: none;
+	border-top: 1px solid var(--border-subtle);
+	margin: var(--spacing-02) var(--spacing-04);
+}
+
+.tlMenu__icon {
+	flex-shrink: 0;
+	width: 1rem;
+	text-align: center;
+	font-size: 1rem;
+}
+
+.tlMenu__label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* --- TLTableView ----------------------------------------------------------- */
+
+.tlTableView {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	font-family: var(--font-family);
+	overflow: hidden;
+}
+
+.tlTableView__header {
+	flex-shrink: 0;
+	overflow: hidden;
+	border-bottom: 2px solid var(--border-subtle, #e0e0e0);
+}
+
+.tlTableView__headerRow {
+	display: flex;
+}
+
+.tlTableView__headerCell {
+	display: flex;
+	align-items: center;
+	padding: 0 var(--spacing-03, 0.5rem);
+	height: 2.5rem;
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	font-weight: 600;
+	color: var(--text-primary, #161616);
+	user-select: none;
+	overflow: hidden;
+	min-width: 0;
+	box-sizing: border-box;
+	border-right: 1px solid var(--border-subtle, #e0e0e0);
+}
+
+.tlTableView__headerCell:last-child {
+	border-right: none;
+}
+
+.tlTableView__headerCell--sortable {
+	cursor: pointer;
+}
+
+.tlTableView__headerCell--sortable:hover {
+	background: var(--layer-hover, #e8e8e8);
+}
+
+.tlTableView__headerLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlTableView__sortIndicator {
+	margin-left: var(--spacing-02, 0.25rem);
+	font-size: 0.625rem;
+	color: var(--text-secondary, #525252);
+	flex-shrink: 0;
+}
+
+.tlTableView__sortPriority {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0.875rem;
+	height: 0.875rem;
+	margin-left: 2px;
+	padding: 0 2px;
+	border-radius: 0.4375rem;
+	background: var(--text-secondary, #525252);
+	color: var(--text-on-color, #fff);
+	font-size: 0.5625rem;
+	font-weight: 600;
+	line-height: 1;
+	vertical-align: middle;
+}
+
+.tlTableView__body {
+	flex: 1;
+	overflow-y: auto;
+	overflow-x: auto;
+}
+
+.tlTableView__row {
+	display: flex;
+	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
+	box-sizing: border-box;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.tlTableView__row:hover {
+	background: var(--layer-hover, #e8e8e8);
+}
+
+.tlTableView__row--selected {
+	background: var(--layer-selected);
+}
+
+.tlTableView__row--selected:hover {
+	background: var(--layer-selected-hover);
+}
+
+.tlTableView__cell {
+	display: flex;
+	align-items: center;
+	padding: 0 var(--spacing-03, 0.5rem);
+	overflow: hidden;
+	min-width: 0;
+	box-sizing: border-box;
+	border-right: 1px solid var(--border-subtle, #e0e0e0);
+}
+
+/* Ensure control wrapper spans (generated by React bridge) fill the cell */
+.tlTableView__cell > span {
+	display: block;
+	width: 100%;
+	min-width: 0;
+}
+
+/* Remove cell padding when it contains an editable input — the input provides its own.
+   Element-qualified so the rules match only real form controls, not the read-only
+   display spans that carry the same base class. */
+.tlTableView__cell:has(input.tlReactTextInput, textarea.tlReactTextInput, input.tlReactNumberInput, input.tlReactDatePicker, select.tlReactSelect) {
+	padding: 0;
+}
+
+/* Inline-edit inputs inside table cells: Excel-style, cell = input */
+.tlTableView__cell input.tlReactTextInput,
+.tlTableView__cell textarea.tlReactTextInput,
+.tlTableView__cell input.tlReactNumberInput,
+.tlTableView__cell input.tlReactDatePicker,
+.tlTableView__cell select.tlReactSelect,
+.tlTableView__cell input.tlReactTextInput:focus,
+.tlTableView__cell textarea.tlReactTextInput:focus,
+.tlTableView__cell input.tlReactNumberInput:focus,
+.tlTableView__cell input.tlReactDatePicker:focus,
+.tlTableView__cell select.tlReactSelect:focus {
+	border: none;
+	border-radius: 0;
+	background: transparent;
+	padding: 0 var(--spacing-03, 0.5rem);
+	min-height: 0;
+	height: 100%;
+	outline: none;
+}
+
+/* Excel-style focus: highlight the entire cell only when an input is focused */
+.tlTableView__cell:has(.tlReactTextInput:focus, .tlReactNumberInput:focus, .tlReactDatePicker:focus, .tlReactSelect:focus) {
+	outline: 2px solid var(--focus);
+	outline-offset: -1px;
+	z-index: 1;
+}
+
+/* Error state: red cell border */
+.tlTableView__cell:has(.tlReactTextInput--error, .tlReactNumberInput--error, .tlReactDatePicker--error, .tlReactSelect--error) {
+	outline: 2px solid var(--support-error, #da1e28);
+	outline-offset: -1px;
+	z-index: 1;
+}
+
+/* Warning state: yellow cell border (only when no error) */
+.tlTableView__cell:has(.tlReactTextInput--warning, .tlReactNumberInput--warning, .tlReactDatePicker--warning, .tlReactSelect--warning) {
+	outline: 2px solid var(--support-warning, #f1c21b);
+	outline-offset: -1px;
+	z-index: 1;
+}
+
+.tlTableView__cell:last-child {
+	border-right: none;
+}
+
+.tlText {
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	color: var(--text-primary, #161616);
+}
+
+.tlText--placeholder {
+	font-style: italic;
+	color: var(--text-helper, #6f6f6f);
+}
+
+/* Single-line truncation with an ellipsis (opt-in via the text element's overflow="ellipsis"). */
+.tlText--ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlTableView__checkboxCell {
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.tlTableView__checkbox {
+	cursor: pointer;
+	width: 1rem;
+	height: 1rem;
+	accent-color: var(--interactive, #0f62fe);
+}
+
+.tlTableView__resizeHandle {
+	position: absolute;
+	top: 0;
+	right: -2px;
+	width: 5px;
+	height: 100%;
+	cursor: col-resize;
+	z-index: 1;
+}
+
+.tlTableView__resizeHandle:hover,
+.tlTableView__resizeHandle:active {
+	background: var(--interactive, #0f62fe);
+	opacity: 0.3;
+}
+
+.tlTableView__headerCell[draggable] {
+	cursor: grab;
+}
+
+.tlTableView__headerCell[draggable]:active {
+	cursor: grabbing;
+}
+
+.tlTableView__headerCell--dragOver-left {
+	border-left: 2px solid var(--interactive, #0f62fe);
+}
+
+.tlTableView__headerCell--dragOver-right {
+	border-right: 2px solid var(--interactive, #0f62fe);
+}
+
+/* -- Frozen columns -- */
+
+.tlTableView__headerCell--frozen,
+.tlTableView__cell--frozen {
+	background: var(--layer-01, #fff);
+}
+
+.tlTableView__row:hover .tlTableView__cell--frozen {
+	background: var(--layer-hover, #e8e8e8);
+}
+
+.tlTableView__row--selected .tlTableView__cell--frozen {
+	background: var(--layer-selected);
+}
+
+.tlTableView__row--selected:hover .tlTableView__cell--frozen {
+	background: var(--layer-selected-hover);
+}
+
+.tlTableView__headerCell--frozenLast,
+.tlTableView__cell--frozenLast {
+	box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+	clip-path: inset(0 -4px 0 0);
+}
+
+/* -- Tree table -- */
+
+.tlTableView__treeCell {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	height: 100%;
+}
+
+.tlTableView__treeToggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	border: none;
+	background: none;
+	padding: 0;
+	cursor: pointer;
+	color: var(--text-secondary, #525252);
+	font-size: 12px;
+	border-radius: 3px;
+}
+
+.tlTableView__treeToggle:hover {
+	background-color: var(--layer-hover, rgba(0, 0, 0, 0.08));
+}
+
+.tlTableView__treeToggleSpacer {
+	display: inline-block;
+	width: 20px;
+	flex-shrink: 0;
+}
+
+/* --- TLFormLayout ------------------------------------------------------ */
+
+.tlFormLayout {
+	display: grid;
+	gap: var(--spacing-03, 0.5rem);
+	font-family: var(--font-family);
+	width: 100%;
+	box-sizing: border-box;
+	/* A form owns its breathing room, so it renders nicely in any flush container. */
+	padding: var(--page-inset);
+}
+
+.tlFormLayout--empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 4rem;
+}
+
+.tlFormLayout__noModel {
+	color: var(--text-secondary, #666);
+	font-style: italic;
+	margin: 0;
+}
+
+/* --- TLFormGroup ------------------------------------------------------- */
+
+.tlFormGroup {
+	display: grid;
+	grid-template-columns: subgrid;
+	grid-template-rows: auto 1fr;
+}
+
+.tlFormGroup--fullLine {
+	grid-column: 1 / -1;
+}
+
+.tlFormGroup--collapsed > .tlFormGroup__body {
+	display: none;
+}
+
+.tlFormGroup--border-subtle {
+	border: 1px solid var(--border-subtle, #e0e0e0);
+	border-radius: var(--border-radius-02, 4px);
+	padding: var(--spacing-03, 0.5rem);
+}
+
+.tlFormGroup--border-outlined {
+	border: 1px solid var(--border-strong, #8d8d8d);
+	border-radius: var(--border-radius-02, 4px);
+	padding: var(--spacing-03, 0.5rem);
+}
+
+.tlFormGroup--border-none {
+	border: none;
+	padding: 0;
+}
+
+.tlFormGroup__header {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02, 0.25rem);
+	padding-bottom: var(--spacing-03, 0.5rem);
+	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
+	margin-bottom: var(--spacing-03, 0.5rem);
+}
+
+.tlFormGroup--border-none > .tlFormGroup__header {
+	border-bottom: none;
+}
+
+.tlFormGroup--collapsed > .tlFormGroup__header {
+	padding-bottom: 0;
+	border-bottom: none;
+	margin-bottom: 0;
+}
+
+.tlFormGroup__title {
+	font-weight: 600;
+	font-size: var(--heading-compact-02-font-size, 0.875rem);
+	line-height: var(--heading-compact-02-line-height, 1.125rem);
+	color: var(--text-primary, #161616);
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlFormGroup__collapseToggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	color: var(--text-secondary, #525252);
+	border-radius: var(--border-radius-02, 4px);
+	flex-shrink: 0;
+}
+
+.tlFormGroup__collapseToggle:hover {
+	background: var(--layer-hover, rgba(0, 0, 0, 0.06));
+}
+
+.tlFormGroup__chevron {
+	transition: transform 0.15s ease;
+}
+
+.tlFormGroup__chevron--collapsed {
+	transform: rotate(-90deg);
+	transition: transform 0.15s ease;
+}
+
+.tlFormGroup__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01, 0.125rem);
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+.tlFormGroup__body {
+	grid-column: 1 / -1;
+	display: grid;
+	grid-template-columns: subgrid;
+	gap: var(--spacing-03, 0.5rem);
+}
+
+/* When fullLine, body defines its own responsive grid instead of subgrid */
+.tlFormGroup--fullLine > .tlFormGroup__body {
+	grid-template-columns: inherit;
+}
+
+/* --- TLFormField ------------------------------------------------------- */
+
+.tlFormField {
+	display: grid;
+	gap: var(--spacing-02, 0.25rem);
+	align-self: start;
+	position: relative;
+	font-family: var(--font-family);
+}
+
+.tlFormField--fullLine {
+	grid-column: 1 / -1;
+}
+
+/* Side-by-side label layout */
+.tlFormField--side {
+	grid-template-columns: minmax(6rem, 10rem) 1fr;
+	grid-template-rows: auto auto auto;
+	align-items: start;
+}
+
+.tlFormField--side > .tlFormField__label {
+	grid-column: 1;
+	grid-row: 1;
+	padding-top: 0.375rem;
+}
+
+.tlFormField--side > .tlFormField__input {
+	grid-column: 2;
+	grid-row: 1;
+}
+
+.tlFormField--side > .tlFormField__error {
+	grid-column: 2;
+	grid-row: 2;
+}
+
+.tlFormField--side > .tlFormField__helpText {
+	grid-column: 2;
+	grid-row: 3;
+}
+
+/* Stacked label layout */
+.tlFormField--top {
+	grid-template-columns: 1fr;
+}
+
+/* Read-only: compact, no extra chrome */
+.tlFormField--readonly {
+	gap: 0;
+}
+
+.tlFormField--readonly > .tlFormField__error,
+.tlFormField--readonly > .tlFormField__helpText {
+	display: none;
+}
+
+/* Dirty indicator dot next to label */
+.tlFormField__dirtyDot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--layer-accent, #0f62fe);
+	margin-left: 2px;
+	vertical-align: middle;
+}
+
+/* Label area */
+.tlFormField__label {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01, 0.125rem);
+	color: var(--text-secondary, #525252);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	line-height: var(--body-compact-01-line-height, 1.125rem);
+}
+
+.tlFormField__labelText {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlFormField__required {
+	color: var(--text-error, #da1e28);
+	font-weight: 600;
+	flex-shrink: 0;
+}
+
+.tlFormField__helpIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	color: var(--text-helper, #6f6f6f);
+	flex-shrink: 0;
+}
+
+.tlFormField__helpIcon:hover {
+	color: var(--text-primary, #161616);
+}
+
+/* Input wrapper */
+.tlFormField__input {
+	min-width: 0;
+}
+
+/* Error area */
+.tlFormField__error {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-01, 0.125rem);
+	color: var(--text-error, #da1e28);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	line-height: var(--body-compact-01-line-height, 1.125rem);
+}
+
+.tlFormField__errorIcon {
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+/* Warning area */
+.tlFormField__warnings {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-01, 0.125rem);
+}
+
+.tlFormField__warning {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-01, 0.125rem);
+	color: var(--support-warning, #f1c21b);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	line-height: var(--body-compact-01-line-height, 1.125rem);
+}
+
+.tlFormField__warningIcon {
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+.tlFormField--side .tlFormField__warnings {
+	grid-column: 2;
+}
+
+/* Help text */
+.tlFormField__helpText {
+	color: var(--text-helper, #6f6f6f);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	line-height: var(--body-compact-01-line-height, 1.125rem);
+}
+
+/* -- TLTreeView ----------------------------------------------------------- */
+
+.tlTreeView {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.tlTreeView__node {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding-right: var(--spacing-03);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+
+.tlTreeView__node:hover {
+  background: var(--layer-hover);
+}
+
+.tlTreeView__node--selected {
+  background: var(--layer-selected);
+  border-left-color: var(--interactive);
+}
+
+.tlTreeView__node--selected:hover {
+  background: var(--layer-selected-hover);
+}
+
+.tlTreeView__node--focused {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.tlTreeView__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-radius: var(--corner-radius);
+}
+
+.tlTreeView__toggle:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.tlTreeView__toggleSpacer {
+  display: inline-block;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.tlTreeView__chevron--right::before,
+.tlTreeView__chevron--down::before {
+  display: inline-block;
+  font-size: 12px;
+}
+
+.tlTreeView__chevron--right::before {
+  content: '\25B6';
+}
+
+.tlTreeView__chevron--down::before {
+  content: '\25BC';
+}
+
+.tlTreeView__spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-subtle);
+  border-top-color: var(--interactive);
+  border-radius: 50%;
+  animation: tlTreeSpin 0.6s linear infinite;
+}
+
+@keyframes tlTreeSpin {
+  to { transform: rotate(360deg); }
+}
+
+.tlTreeView__content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tlTreeView__node--drop-above {
+  box-shadow: inset 0 2px 0 0 var(--interactive);
+}
+
+.tlTreeView__node--drop-within {
+  outline: 2px solid var(--interactive);
+  outline-offset: -2px;
+  background: var(--layer-hover);
+}
+
+.tlTreeView__node--drop-below {
+  box-shadow: inset 0 -2px 0 0 var(--interactive);
+}
+
+.tlTreeView__node--no-drop {
+  cursor: not-allowed;
+}
+
+/* --- Simple input controls --------------------------------------------- */
+
+/* Shared base for text, number, date inputs and native select */
+.tlReactTextInput,
+.tlReactNumberInput,
+.tlReactDatePicker,
+.tlReactSelect {
+	display: block;
+	width: 100%;
+	border: 1px solid var(--border-subtle, #e0e0e0);
+	border-radius: var(--border-radius-02, 4px);
+	background-color: var(--field, #fff);
+	padding: var(--spacing-02) var(--spacing-03);
+	min-height: 2rem;
+	box-sizing: border-box;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-primary);
+	line-height: 1.4;
+}
+
+.tlReactTextInput:focus,
+.tlReactNumberInput:focus,
+.tlReactDatePicker:focus,
+.tlReactSelect:focus {
+	outline: 2px solid var(--focus);
+	outline-offset: -1px;
+	border-color: var(--focus);
+}
+
+.tlReactTextInput:disabled,
+.tlReactNumberInput:disabled,
+.tlReactDatePicker:disabled,
+.tlReactSelect:disabled {
+	opacity: 0.6;
+	cursor: default;
+	background-color: var(--field-disabled, #f0f0f0);
+}
+
+.tlReactTextInput::placeholder,
+.tlReactNumberInput::placeholder,
+.tlReactDatePicker::placeholder {
+	color: var(--text-secondary);
+	font-style: italic;
+}
+
+/* Immutable (read-only) state for text-like inputs */
+.tlReactTextInput--immutable,
+.tlReactNumberInput--immutable,
+.tlReactDatePicker--immutable,
+.tlReactSelect--immutable {
+	display: inline;
+	border: none;
+	background: none;
+	padding: 0;
+	min-height: auto;
+	color: var(--text-primary);
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+}
+
+/* Native select arrow spacing */
+.tlReactSelect {
+	appearance: auto;
+	cursor: pointer;
+}
+
+/* --- Checkbox --------------------------------------------------------- */
+
+.tlReactCheckbox {
+	width: 1rem;
+	height: 1rem;
+	accent-color: var(--interactive, #0f62fe);
+	cursor: pointer;
+	margin: 0;
+	vertical-align: middle;
+}
+
+.tlReactCheckbox:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+/* --- TLToolbar ------------------------------------------------------------- */
+
+.tlToolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex-shrink: 0;
+}
+
+.tlToolbar__separator {
+	display: block;
+	width: 1px;
+	height: 1rem;
+	background: var(--border-subtle);
+	flex-shrink: 0;
+}
+
+.tlToolbar__group--inline {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
+.tlToolbar__group--menu {
+	position: relative;
+}
+
+.tlToolbar__menuTrigger {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	height: 2rem;
+	padding: 0 var(--spacing-03);
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	color: var(--button-secondary);
+	font-family: var(--font-family);
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+button.tlToolbar__menuTrigger:hover {
+	background: var(--layer-hover);
+}
+
+button.tlToolbar__menuTrigger:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+/* Compact, square icon-only trigger (e.g. the burger overflow menu). */
+.tlToolbar__menuTrigger--icon {
+	gap: 0;
+	width: 2rem;
+	padding: 0;
+	justify-content: center;
+}
+
+.tlToolbar__menuIcon {
+	display: inline-flex;
+	align-items: center;
+	font-size: var(--heading-compact-03-font-size, 1rem);
+	line-height: 1;
+}
+
+/* The menu trigger visually mirrors a secondary button, so on the accent-colored
+   primary app bar it needs the same on-accent foreground the sibling buttons get -
+   otherwise its accent-blue text/outline is unreadable on the accent background.
+   (Panel toolbars are now light surfaces and use the default secondary styling.) */
+.tlAppBar--primary .tlToolbar__menuTrigger {
+	color: var(--layer-accent-icon, var(--text-inverse));
+	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-icon, var(--text-inverse));
+}
+
+.tlAppBar--primary button.tlToolbar__menuTrigger:not(:disabled):hover {
+	background: var(--layer-accent-hover);
+}
+
+.tlAppBar--primary button.tlToolbar__menuTrigger[aria-expanded="true"] {
+	background: var(--layer-accent-active, var(--layer-accent-hover));
+}
+
+/* The icon-only burger is a plain icon button: no outline box, on any surface. */
+.tlToolbar__menuTrigger--icon,
+.tlAppBar--primary .tlToolbar__menuTrigger--icon {
+	box-shadow: none;
+}
+
+.tlReactCheckbox:disabled,
+.tlReactCheckbox--immutable {
+	opacity: 0.6;
+	cursor: default;
+}
+
+/* --- Error / Warning states for simple inputs ----------------------------- */
+
+/* Error — red border, persists through focus */
+.tlReactTextInput--error,
+.tlReactNumberInput--error,
+.tlReactDatePicker--error,
+.tlReactSelect--error {
+	border-color: var(--support-error, #da1e28);
+}
+
+.tlReactTextInput--error:focus,
+.tlReactNumberInput--error:focus,
+.tlReactDatePicker--error:focus,
+.tlReactSelect--error:focus {
+	outline-color: var(--support-error, #da1e28);
+	border-color: var(--support-error, #da1e28);
+}
+
+/* Warning — yellow border, only when no error */
+.tlReactTextInput--warning,
+.tlReactNumberInput--warning,
+.tlReactDatePicker--warning,
+.tlReactSelect--warning {
+	border-color: var(--support-warning, #f1c21b);
+}
+
+.tlReactTextInput--warning:focus,
+.tlReactNumberInput--warning:focus,
+.tlReactDatePicker--warning:focus,
+.tlReactSelect--warning:focus {
+	outline-color: var(--support-warning, #f1c21b);
+	border-color: var(--support-warning, #f1c21b);
+}
+
+/* Checkbox error/warning — best-effort via accent-color */
+.tlReactCheckbox--error {
+	accent-color: var(--support-error, #da1e28);
+}
+
+.tlReactCheckbox--warning {
+	accent-color: var(--support-warning, #f1c21b);
+}
+
+/* --- TLDropdownSelect -------------------------------------------------- */
+
+.tlDropdownSelect {
+	display: flex;
+	align-items: flex-start;
+	border: 1px solid var(--border-subtle, #e0e0e0);
+	border-radius: var(--border-radius-02, 4px);
+	background-color: var(--field, #fff);
+	padding: var(--spacing-02) var(--spacing-03);
+	min-height: 2rem;
+	cursor: pointer;
+	box-sizing: border-box;
+	/* Same field typography as the text-like inputs, instead of the inherited body size. */
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+}
+
+.tlDropdownSelect:focus {
+	outline: 2px solid var(--focus);
+	outline-offset: -1px;
+}
+
+.tlDropdownSelect--open {
+	border-color: var(--focus);
+}
+
+.tlDropdownSelect--disabled {
+	opacity: 0.6;
+	cursor: default;
+	background-color: var(--field-disabled, #f0f0f0);
+}
+
+.tlDropdownSelect--immutable {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex-wrap: wrap;
+	border: none;
+	background: none;
+	padding: 0;
+	min-height: auto;
+	cursor: default;
+}
+
+/* Chip area */
+.tlDropdownSelect__chips {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-02);
+	flex: 1;
+	min-width: 0;
+}
+
+.tlDropdownSelect__placeholder {
+	color: var(--text-secondary);
+	font-style: italic;
+}
+
+.tlDropdownSelect__empty {
+	color: var(--text-secondary);
+}
+
+/* Individual chip */
+.tlDropdownSelect__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	background-color: var(--layer-hover);
+	border-radius: 12px;
+	padding: 2px var(--spacing-03) 2px var(--spacing-02);
+	max-width: 100%;
+}
+
+.tlDropdownSelect__chipLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tlDropdownSelect__chipRemove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--text-secondary);
+	font-size: 14px;
+	padding: 0 2px;
+	line-height: 1;
+}
+
+.tlDropdownSelect__chipRemove:hover {
+	color: var(--text-primary);
+}
+
+/* Controls area (clear, arrow) */
+.tlDropdownSelect__controls {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex-shrink: 0;
+	margin-left: var(--spacing-02);
+}
+
+.tlDropdownSelect__clearAll {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--text-secondary);
+	font-size: 16px;
+	padding: 0 2px;
+	line-height: 1;
+}
+
+.tlDropdownSelect__clearAll:hover {
+	color: var(--text-primary);
+}
+
+.tlDropdownSelect__arrow {
+	color: var(--text-secondary);
+	font-size: 10px;
+}
+
+/* Read-only value */
+.tlDropdownSelect__readonlyValue {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
+/* Dropdown (fixed position to escape overflow:hidden) */
+.tlDropdownSelect__dropdown {
+	position: fixed;
+	background-color: var(--field, #fff);
+	border: 1px solid var(--border-subtle, #e0e0e0);
+	border-radius: var(--border-radius-02, 4px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	z-index: 10000;
+}
+
+/* Search wrapper */
+.tlDropdownSelect__searchWrapper {
+	display: flex;
+	align-items: center;
+	padding: var(--spacing-02) var(--spacing-03);
+	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
+}
+
+.tlDropdownSelect__searchIcon {
+	margin-right: var(--spacing-02);
+	font-size: 14px;
+	color: var(--text-secondary);
+}
+
+.tlDropdownSelect__search {
+	flex: 1;
+	border: none;
+	outline: none;
+	background: transparent;
+	font-size: inherit;
+	font-family: var(--font-family);
+	color: var(--text-primary);
+}
+
+/* Option list */
+.tlDropdownSelect__list {
+	overflow-y: auto;
+	max-height: 250px;
+}
+
+/* Single option */
+.tlDropdownSelect__option {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-02) var(--spacing-03);
+	cursor: pointer;
+	color: var(--text-secondary);
+	line-height: 2rem;
+	white-space: nowrap;
+}
+
+.tlDropdownSelect__option:hover,
+.tlDropdownSelect__option--highlighted {
+	background-color: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+.tlDropdownSelect__optionLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Option image / icon */
+.tlDropdownSelect__optionImage {
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	object-fit: contain;
+}
+
+.tlDropdownSelect__optionIcon {
+	font-size: 20px;
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Loading / Error / No results */
+.tlDropdownSelect__loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-05);
+}
+
+.tlDropdownSelect__spinner {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--border-subtle, #e0e0e0);
+	border-top-color: var(--focus);
+	border-radius: 50%;
+	animation: tlDropdownSelectSpin 0.8s linear infinite;
+}
+
+@keyframes tlDropdownSelectSpin {
+	to { transform: rotate(360deg); }
+}
+
+.tlDropdownSelect__error {
+	padding: var(--spacing-04);
+	text-align: center;
+	color: var(--text-secondary);
+}
+
+.tlDropdownSelect__error a {
+	color: var(--link-primary, var(--focus));
+}
+
+.tlDropdownSelect__noResults {
+	padding: var(--spacing-04) var(--spacing-03);
+	text-align: center;
+	color: var(--text-secondary);
+	font-style: italic;
+}
+
+/* Drag handle for reorderable chips */
+.tlDropdownSelect__dragHandle {
+	cursor: grab;
+	color: var(--text-secondary);
+	font-size: 10px;
+	line-height: 1;
+	letter-spacing: -3px;
+	user-select: none;
+	flex-shrink: 0;
+	padding-right: 2px;
+}
+
+.tlDropdownSelect__dragHandle:active {
+	cursor: grabbing;
+}
+
+/* Chip being dragged */
+.tlDropdownSelect__chip--dragging {
+	opacity: 0.4;
+}
+
+/* Drop indicator: left border highlight */
+.tlDropdownSelect__chip--dropBefore {
+	box-shadow: -2px 0 0 0 var(--interactive, #0f62fe);
+}
+
+/* Drop indicator: right border highlight */
+.tlDropdownSelect__chip--dropAfter {
+	box-shadow: 2px 0 0 0 var(--interactive, #0f62fe);
+}
+
+/* --- TLColorInput ------------------------------------------------------ */
+
+.tlColorInput {
+  display: inline-block;
+  position: relative;
+}
+
+.tlColorInput--immutable {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+  cursor: default;
+}
+
+.tlColorInput--noColor {
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+}
+
+.tlColorInput__swatch {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 2px solid var(--border-strong);
+  border-radius: var(--corner-radius);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+
+.tlColorInput__swatch:hover {
+  box-shadow: 0 0 0 2px var(--focus);
+}
+
+.tlColorInput__swatch:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tlColorInput__swatch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  border-color: var(--border-subtle);
+}
+
+.tlColorInput__swatch:disabled:hover {
+  box-shadow: none;
+}
+
+.tlColorInput__swatch--noColor {}
+
+.tlColorInput__swatch--noColor::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  width: 2px;
+  height: calc(100% + 4px);
+  background: var(--support-error, #da1e28);
+  transform: rotate(45deg);
+  transform-origin: center;
+}
+
+/* Popup */
+
+.tlColorInput__popup {
+  position: fixed;
+  z-index: 9000;
+  background: var(--layer-02, #fff);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 480px;
+  overflow: hidden;
+}
+
+.tlColorInput__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--layer-01, #f4f4f4);
+}
+
+.tlColorInput__tab {
+  flex: 1;
+  padding: var(--spacing-03) var(--spacing-04);
+  border: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: var(--body-compact-01-font-size);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tlColorInput__tab:hover {
+  color: var(--text-primary);
+  background: var(--layer-hover);
+}
+
+.tlColorInput__tab--active {
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom-color: var(--focus);
+}
+
+.tlColorInput__body {
+  display: flex;
+  padding: var(--spacing-04);
+  gap: var(--spacing-04);
+}
+
+/* Palette */
+
+.tlColorInput__palette {
+  display: grid;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.tlColorInput__paletteCell {
+  width: 33px;
+  height: 33px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.tlColorInput__paletteCell:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  position: relative;
+}
+
+.tlColorInput__paletteCell--empty {
+  background-image:
+    linear-gradient(45deg, #eee 25%, transparent 25%),
+    linear-gradient(-45deg, #eee 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #eee 75%),
+    linear-gradient(-45deg, transparent 75%, #eee 75%);
+  background-size: 6px 6px;
+  background-position: 0 0, 0 3px, 3px -3px, -3px 0;
+  border: 1px dashed var(--border-subtle);
+  cursor: default;
+}
+
+.tlColorInput__paletteCell--empty:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Mixer */
+
+.tlColorInput__mixer {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.tlColorInput__svField {
+  width: 192px;
+  height: 192px;
+  position: relative;
+  border-radius: 4px;
+  cursor: crosshair;
+  overflow: hidden;
+}
+
+.tlColorInput__svField::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, #fff, transparent);
+}
+
+.tlColorInput__svField::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent, #000);
+}
+
+.tlColorInput__svHandle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.tlColorInput__hueSlider {
+  width: 24px;
+  height: 192px;
+  position: relative;
+  border-radius: 4px;
+  cursor: pointer;
+  background: linear-gradient(to bottom,
+    #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+}
+
+.tlColorInput__hueHandle {
+  position: absolute;
+  left: -3px;
+  width: 30px;
+  height: 8px;
+  border: 2px solid #fff;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+  transform: translateY(-50%);
+  pointer-events: none;
+  background: transparent;
+}
+
+/* Control panel */
+
+.tlColorInput__controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-03);
+  flex: 1;
+  min-width: 170px;
+}
+
+.tlColorInput__previewRow {
+  display: flex;
+  gap: var(--spacing-03);
+  align-items: center;
+}
+
+.tlColorInput__previewLabel {
+  font-size: var(--label-01-font-size);
+  color: var(--text-secondary);
+  width: 3.5rem;
+  flex-shrink: 0;
+}
+
+.tlColorInput__previewSwatch {
+  width: 100%;
+  height: 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+}
+
+.tlColorInput__paletteArea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-03);
+  flex-shrink: 0;
+}
+
+.tlColorInput__paletteReset {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: var(--label-01-font-size);
+  color: var(--link-primary, #0f62fe);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.tlColorInput__paletteReset:hover {
+  text-decoration: underline;
+}
+
+.tlColorInput__divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: var(--spacing-02) 0;
+}
+
+.tlColorInput__inputRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-03);
+}
+
+.tlColorInput__inputLabel {
+  font-size: var(--label-01-font-size);
+  color: var(--text-secondary);
+  width: 3.5rem;
+  flex-shrink: 0;
+}
+
+.tlColorInput__input {
+  flex: 1;
+  min-width: 0;
+  height: 2rem;
+  padding: 0 var(--spacing-03, 0.5rem);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+  font-family: var(--font-family);
+  font-size: var(--body-compact-01-font-size);
+  color: var(--text-primary);
+  background: var(--layer-02, #fff);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.tlColorInput__input:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+}
+
+.tlColorInput__input--error {
+  border-color: var(--support-error, #da1e28);
+}
+
+.tlColorInput__actions {
+  display: flex;
+  gap: var(--spacing-03);
+  justify-content: flex-end;
+  padding: var(--spacing-03) var(--spacing-04) var(--spacing-04);
+}
+
+.tlColorInput__btn {
+  flex: 1;
+  height: 2rem;
+  border: none;
+  border-radius: var(--corner-radius);
+  font-family: var(--font-family);
+  font-size: var(--body-compact-01-font-size);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tlColorInput__btn--ok {
+  background: var(--button-primary, #0f62fe);
+  color: var(--text-on-color, #fff);
+}
+
+.tlColorInput__btn--ok:hover {
+  background: var(--button-primary-hover, #0353e9);
+}
+
+.tlColorInput__btn--cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.tlColorInput__btn--cancel:hover {
+  background: var(--layer-hover);
+}
+
+.tlColorInput__btn--reset {
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--label-01-font-size);
+  font-weight: normal;
+  border: 1px solid var(--border-subtle);
+  flex: none;
+  padding: 0 var(--spacing-03);
+}
+
+.tlColorInput__btn--reset:hover {
+  background: var(--layer-hover);
+}
+
+/* --- TLIconSelect ------------------------------------------------------ */
+
+.tlIconSelect {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tlIconSelect__swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+  background: var(--layer-02, #fff);
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-primary);
+  transition: box-shadow 0.15s, border-color 0.15s;
+  padding: 0;
+}
+
+.tlIconSelect__swatch:hover {
+  box-shadow: 0 0 0 2px var(--focus);
+  border-color: var(--focus);
+}
+
+.tlIconSelect__swatch:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tlIconSelect__swatch--empty {
+  color: var(--text-placeholder, #a8a8a8);
+  font-size: 14px;
+}
+
+.tlIconSelect__swatch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tlIconSelect__swatch:disabled:hover {
+  box-shadow: none;
+  border-color: var(--border-subtle);
+}
+
+.tlIconSelect--immutable .tlIconSelect__swatch {
+  cursor: default;
+  border-color: transparent;
+  background: transparent;
+}
+
+.tlIconSelect--immutable .tlIconSelect__swatch:hover {
+  box-shadow: none;
+}
+
+/* Popup */
+
+.tlIconSelect__popup {
+  position: fixed;
+  z-index: 9000;
+  background: var(--layer-02, #fff);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  width: 420px;
+  height: 400px;
+  min-width: 280px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  resize: both;
+}
+
+.tlIconSelect__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--layer-01, #f4f4f4);
+}
+
+.tlIconSelect__tab {
+  flex: 1;
+  padding: var(--spacing-03) var(--spacing-04);
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tlIconSelect__tab:hover {
+  color: var(--text-primary);
+  background: var(--layer-hover);
+}
+
+.tlIconSelect__tab--active {
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom-color: var(--focus);
+}
+
+/* Search */
+
+.tlIconSelect__searchWrapper {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-03);
+  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--spacing-03);
+}
+
+.tlIconSelect__searchIcon {
+  color: var(--text-placeholder, #a8a8a8);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.tlIconSelect__search {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.tlIconSelect__search::placeholder {
+  color: var(--text-placeholder, #a8a8a8);
+}
+
+.tlIconSelect__resetBtn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 16px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  line-height: 1;
+}
+
+.tlIconSelect__resetBtn:hover {
+  color: var(--support-error, #da1e28);
+  background: var(--layer-hover);
+}
+
+/* Icon grid */
+
+.tlIconSelect__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 2px;
+  padding: var(--spacing-03);
+  flex: 1;
+  min-height: 80px;
+  overflow-y: scroll;
+  align-content: start;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong, #8d8d8d) transparent;
+}
+
+.tlIconSelect__grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tlIconSelect__grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tlIconSelect__grid::-webkit-scrollbar-thumb {
+  background: var(--border-strong, #8d8d8d);
+  border-radius: 4px;
+}
+
+.tlIconSelect__grid::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary, #525252);
+}
+
+.tlIconSelect__iconCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--corner-radius);
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-primary);
+  transition: background 0.1s;
+}
+
+.tlIconSelect__iconCell:hover {
+  background: var(--layer-hover);
+}
+
+.tlIconSelect__iconCell--selected {
+  background: #d0e2ff;
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.tlIconSelect__noResults {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  grid-column: 1 / -1;
+}
+
+.tlIconSelect__loading {
+  padding: 32px;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+.tlIconSelect__spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--focus);
+  border-radius: 50%;
+  animation: tlIconSelectSpin 0.8s linear infinite;
+}
+
+@keyframes tlIconSelectSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Advanced tab: edit area */
+
+.tlIconSelect__advancedArea {
+  padding: var(--spacing-03);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-03);
+}
+
+.tlIconSelect__editRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-03);
+}
+
+.tlIconSelect__editLabel {
+  font-size: var(--label-01-font-size, 12px);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  min-width: 50px;
+}
+
+.tlIconSelect__editInput {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--spacing-03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+  font-size: 13px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  color: var(--text-primary);
+  background: var(--layer-02, #fff);
+  transition: border-color 0.15s;
+}
+
+.tlIconSelect__editInput:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+  outline: none;
+}
+
+.tlIconSelect__previewArea {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-04, 12px);
+}
+
+.tlIconSelect__previewIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+  font-size: 24px;
+  background: var(--layer-01, #f4f4f4);
+}
+
+.tlIconSelect__previewLabel {
+  font-size: var(--label-01-font-size, 12px);
+  color: var(--text-secondary);
+}
+
+/* Actions */
+
+.tlIconSelect__actions {
+  display: flex;
+  gap: var(--spacing-03);
+  justify-content: flex-end;
+  padding: var(--spacing-03) var(--spacing-04, 12px) var(--spacing-04, 12px);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.tlIconSelect__btn {
+  height: 28px;
+  padding: 0 var(--spacing-04, 12px);
+  border: none;
+  border-radius: var(--corner-radius);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tlIconSelect__btn--ok {
+  background: var(--button-primary, #0f62fe);
+  color: var(--text-on-color, #fff);
+}
+
+.tlIconSelect__btn--ok:hover {
+  background: var(--button-primary-hover, #0353e9);
+}
+
+.tlIconSelect__btn--cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.tlIconSelect__btn--cancel:hover {
+  background: var(--layer-hover);
+}
+
+.tlIconSelect__btn--clear {
+  background: transparent;
+  color: var(--support-error, #da1e28);
+  border: 1px solid var(--support-error, #da1e28);
+  margin-right: auto;
+}
+
+.tlIconSelect__btn--clear:hover {
+  background: var(--support-error, #da1e28);
+  color: var(--text-on-color, #fff);
+}
+
+/*
+ * Rich tooltip popover (see tooltip-host.ts / TooltipPopover.tsx).
+ * Visually aligned with the legacy .tooltip styles in themes.core/core.css.
+ */
+@keyframes tl-tooltip-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.tl-tooltip-popover {
+  --tl-tt-padding: var(--spacing-02);
+  background-color: var(--background-inverse);
+  color: var(--text-inverse);
+  border-radius: 6px;
+  filter: drop-shadow(var(--shadow-menu));
+  max-width: 500px;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.5;
+  z-index: 9999999999999999;
+  cursor: text;
+  user-select: text;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  animation: tl-tooltip-in 140ms ease-out;
+}
+.tl-tooltip-caption {
+  padding: calc(var(--tl-tt-padding) / 2) 12px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.tl-tooltip-body {
+  overflow-y: auto;
+  white-space: normal;
+  overflow-wrap: break-word;
+  padding: var(--tl-tt-padding) 0.75rem;
+  line-height: 1.5;
+  text-align: left;
+  color: inherit;
+}
+.tl-tooltip-body * {
+  color: inherit;
+  line-height: 1.5;
+}
+.tl-tooltip-body p:first-child { margin-top: 0; }
+.tl-tooltip-body p:last-child  { margin-bottom: 0; }
+.tl-tooltip-body :is(ol, ul) {
+  padding-left: 0.75rem;
+}
+.tl-tooltip-arrow {
+  fill: var(--background-inverse);
+}
+/* --- Dashboard --- */
+.tlDashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+  /* The dashboard layout pads itself - the outer inset matches the tile gap. */
+  padding: var(--page-inset);
+}
+.tlDashboard__grid {
+  width: 100%;
+}
+.tlDashboard__tile {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border, #dde1e7);
+  border-radius: 6px;
+  background: var(--color-surface, #fff);
+}
+.tlDashboard__tile > *:not(.tlDashboard__overlay) {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+.tlDashboard--edit .tlDashboard__tile { cursor: move; }
+.tlDashboard__tile--dragging { opacity: 0.4; }
+.tlDashboard__overlay {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  cursor: move;
+  z-index: 5;
+}
+.tlDashboard__tile--dropBefore::before,
+.tlDashboard__tile--dropAfter::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 8px;
+  background: var(--color-drop-zone, #3380ff);
+  border-radius: 4px;
+  box-shadow: 0 0 12px 2px var(--color-drop-zone, #3380ff),
+              0 0 24px 4px var(--color-drop-zone, #3380ff);
+  pointer-events: none;
+  z-index: 10;
+}
+.tlDashboard__tile--dropBefore::before { left: -10px; }
+.tlDashboard__tile--dropAfter::after { right: -10px; }
+
+button.tlToolbar__menuTrigger[aria-expanded="true"] {
+	background: var(--layer-active, var(--layer-hover));
+}
+
+.tlToolbar__chevron {
+	width: 0.75rem;
+	height: 0.75rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	flex-shrink: 0;
+}
+
+.tlToolbar__dropdown[hidden] {
+	display: none;
+}
+
+.tlToolbar__dropdown {
+	position: absolute;
+	top: calc(100% + var(--spacing-02));
+	right: 0;
+	z-index: 10000;
+	min-width: 10rem;
+	background: var(--layer-01, #fff);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02, 4px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	padding: var(--spacing-02) 0;
+}
+
+.tlToolbar__dropdownItem {
+	display: flex;
+}
+
+/* Dropdown opens over a light surface — reset the inverse colors that
+   buttons inherit when the toolbar lives inside a dark panel header,
+   and let buttons fill the row so the dropdown reads as a clean list. */
+.tlToolbar__dropdown .tlReactButton {
+	box-shadow: none;
+	border-radius: 0;
+	background: transparent;
+	color: var(--text-primary);
+	width: 100%;
+	justify-content: flex-start;
+	font-weight: normal;
+	padding: var(--spacing-02) var(--spacing-04);
+}
+
+.tlToolbar__dropdown button.tlReactButton:not(:disabled):hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+/* A disabled menu entry is plain greyed text, never an outlined box. The base
+   button:disabled rule re-adds an inset 2px outline (higher specificity than the
+   dropdown reset above), so stacked disabled items otherwise look like a series of
+   framed rows ("horizontal lines"). Override it here. */
+.tlToolbar__dropdown button.tlReactButton:disabled {
+	box-shadow: none;
+	background: transparent;
+	color: var(--text-disabled);
+}
+
+.tlToolbar__dropdown .tlReactButton--icon {
+	color: var(--icon-primary);
+}
+
+.tlToolbar__dropdownSeparator {
+	border: none;
+	border-top: 1px solid var(--border-subtle);
+	margin: var(--spacing-02) var(--spacing-04);
+}
+
+/* --- TLButton enhancements ------------------------------------------------- */
+
+.tlReactButton--iconOnly {
+	width: 2rem;
+	padding: 0;
+}
+
+.tlReactButton__image {
+	font-size: 1rem;
+	line-height: 1;
+	flex-shrink: 0;
+}
+
+.tlReactButton__label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Icon + label gap */
+.tlReactButton__image + .tlReactButton__label {
+	margin-left: var(--spacing-02);
+}
+
+/* --- TLPanel button bar ---------------------------------------------------- */
+
+.tlPanel__buttonBar {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-top: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+}

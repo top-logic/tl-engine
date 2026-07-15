@@ -1,0 +1,208 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.control.layout;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.AgentControl;
+import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.ReactControl;
+
+
+/**
+ * A {@link ReactControl} that shows one child at a time from a list, driven by a server-side
+ * active index.
+ *
+ * <p>
+ * Previously visited children are cached so that re-selecting them preserves their state. This
+ * follows the same lazy-creation pattern as {@code ReactTabBarControl}.
+ * </p>
+ *
+ * <p>
+ * The React component {@code TLDeckPane} receives the following state:
+ * </p>
+ * <ul>
+ * <li>{@code activeIndex} - the index of the currently active child</li>
+ * <li>{@code activeChild} - the active child's control descriptor (or {@code null})</li>
+ * <li>{@code childCount} - total number of children</li>
+ * </ul>
+ */
+public class ReactDeckPaneControl extends ReactControl {
+
+	private static final String REACT_MODULE = "TLDeckPane";
+
+	private static final String ACTIVE_INDEX = "activeIndex";
+
+	private static final String ACTIVE_CHILD = "activeChild";
+
+	private static final String CHILD_COUNT = "childCount";
+
+	/** The {@link ReactCommandHandler} that activates a child pane. */
+	public static final String SELECT_CHILD_COMMAND = "selectChild";
+
+	/**
+	 * The child definitions. Each entry provides a factory for lazy creation.
+	 */
+	public interface ChildFactory {
+
+		/**
+		 * Creates the child control.
+		 */
+		ReactControl create();
+	}
+
+	private final List<ChildFactory> _childFactories = new ArrayList<>();
+
+	private final LinkedHashMap<Integer, ReactControl> _childCache = new LinkedHashMap<>();
+
+	private int _activeIndex;
+
+	/**
+	 * Creates a new {@link ReactDeckPaneControl}.
+	 *
+	 * @param childFactories
+	 *        The factories for lazily creating child controls. Must not be empty.
+	 * @param initialActiveIndex
+	 *        The initially active child index.
+	 */
+	public ReactDeckPaneControl(ReactContext context, List<ChildFactory> childFactories, int initialActiveIndex) {
+		super(context, null, REACT_MODULE);
+		_childFactories.addAll(childFactories);
+		_activeIndex = initialActiveIndex;
+
+		putState(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
+		putState(CHILD_COUNT, Integer.valueOf(_childFactories.size()));
+		// activeChild is null until the first render creates it.
+	}
+
+	/**
+	 * Creates a new {@link ReactDeckPaneControl} with the first child active.
+	 */
+	public ReactDeckPaneControl(ReactContext context, List<ChildFactory> childFactories) {
+		this(context, childFactories, 0);
+	}
+
+	/**
+	 * Selects the child at the given index.
+	 *
+	 * @param index
+	 *        The index of the child to select.
+	 */
+	public void selectChild(int index) {
+		if (index == _activeIndex) {
+			return;
+		}
+		if (index < 0 || index >= _childFactories.size()) {
+			throw new IllegalArgumentException("Index out of bounds: " + index);
+		}
+		ReactControl previousContent = _childCache.get(Integer.valueOf(_activeIndex));
+		_activeIndex = index;
+
+		if (!isSSEAttached()) {
+			putState(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
+			return;
+		}
+
+		ReactControl content = getOrCreateChild(index);
+
+		Object tx = beginUpdate();
+		putState(ACTIVE_INDEX, Integer.valueOf(index));
+		putState(ACTIVE_CHILD, content);
+		commitUpdate(tx);
+
+		if (previousContent != null) {
+			previousContent.detach();
+		}
+		if (isAttached()) {
+			content.attach();
+		}
+	}
+
+	/**
+	 * The currently active child index.
+	 */
+	public int getActiveIndex() {
+		return _activeIndex;
+	}
+
+	@Override
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
+		if (getState(ACTIVE_CHILD) == null) {
+			ReactControl activeChild = getOrCreateChild(_activeIndex);
+			putState(ACTIVE_CHILD, activeChild);
+			if (isAttached()) {
+				activeChild.attach();
+			}
+		}
+	}
+
+	@Override
+	protected void propagateAttach() {
+		super.propagateAttach();
+		ReactControl content = _childCache.get(Integer.valueOf(_activeIndex));
+		if (content != null) {
+			content.attach();
+		}
+	}
+
+	@Override
+	protected void propagateDetach() {
+		super.propagateDetach();
+		ReactControl content = _childCache.get(Integer.valueOf(_activeIndex));
+		if (content != null) {
+			content.detach();
+		}
+	}
+
+	@Override
+	protected void cleanupChildren() {
+		ReactControl active = _childCache.get(Integer.valueOf(_activeIndex));
+		if (active != null) {
+			active.detach();
+		}
+		for (ReactControl cached : _childCache.values()) {
+			cached.cleanupTree();
+		}
+		_childCache.clear();
+	}
+
+	private ReactControl getOrCreateChild(int index) {
+		ReactControl cached = _childCache.get(Integer.valueOf(index));
+		if (cached != null) {
+			return cached;
+		}
+
+		ReactControl child = _childFactories.get(index).create();
+		_childCache.put(Integer.valueOf(index), child);
+		return child;
+	}
+
+	// -- Commands --
+
+	/**
+	 * Handles child selection from the client.
+	 */
+	@ReactCommandHandler(SELECT_CHILD_COMMAND)
+	void handleSelectChild(SelectChildArguments args) {
+		selectChild(args.getIndex());
+	}
+
+	/**
+	 * Addresses the active card's content by its stable index (e.g. {@code pane[0]}), so content
+	 * addresses encode which card they belong to.
+	 */
+	@Override
+	public String agentChildSlot(ReactControl child) {
+		if (child == getState(ACTIVE_CHILD)) {
+			return AgentControl.slotSegment("pane", Integer.toString(_activeIndex));
+		}
+		return null;
+	}
+}

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog to configure a new logger. The form edits a transient NewLogger model (bound to the model
+	channel by the opening command): the name of the logger to configure. The primary command stores the
+	form state, runs the LoggerLevelAction in ADD mode (which configures the logger at the default level),
+	writes the refreshed logger list back to the loggers channel bound to the parent view, and closes the
+	dialog. The level is then adjusted inline in the table.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="loggers"/>
+	</channels>
+	<window
+		resizable="false"
+		width="420px"
+	>
+		<title>
+			<en>Add logger</en>
+			<de>Logger hinzufügen</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<text>
+				<label>
+					<en>Enter the name of a logger to configure. It starts at level INFO; adjust the level in the table afterwards.</en>
+					<de>Geben Sie den Namen eines zu konfigurierenden Loggers ein. Er beginnt mit der Ebene INFO; passen Sie die Ebene anschließend in der Tabelle an.</de>
+				</label>
+			</text>
+			<field attribute="name"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-plus-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Add</en>
+						<de>Hinzufügen</de>
+					</label>
+					<store-form-state/>
+					<action class="com.top_logic.layout.view.admin.system.LoggerLevelAction"
+						mode="ADD"
+						model="model"
+					/>
+					<write-channel name="loggers"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

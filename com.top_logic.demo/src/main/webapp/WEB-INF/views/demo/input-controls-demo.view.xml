@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<view>
+	<channels>
+		<channel name="selectedObject"/>
+		<derived-channel name="objectName"
+			inputs="selectedObject"
+			expr="obj -> if($obj != null, $obj.get(`DemoTypes:DemoTypes.A#name`), null)"
+			reverse="name -> if($name != null, singleElement(filter(all(`DemoTypes:A`), o -> $o.get(`DemoTypes:DemoTypes.A#name`) == $name)), null)"
+		/>
+	</channels>
+	<param-bindings>
+		<bind channel="objectName" route-param="objectName"/>
+	</param-bindings>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="30"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Demo Types</en>
+						<de>Demo-Typen</de>
+					</title>
+					<commands>
+						<generic-command label="New" placement="TOOLBAR">
+							<execute-script function="x -> { obj = new(`DemoTypes:A`, transient: true); $obj.set(`DemoTypes:DemoTypes.A#booleanMandatory`, true); $obj.set(`DemoTypes:DemoTypes.A#booleanRadioMandatory`, true); $obj.set(`DemoTypes:DemoTypes.A#booleanSelectMandatory`, true); $obj; }"/>
+							<open-dialog
+								dialog-view="demo/create-demo-type-a.view.xml"
+								bind-input-to="model"
+							>
+								<bind channel="selection" to="selectedObject"/>
+							</open-dialog>
+						</generic-command>
+						<command class="com.top_logic.layout.view.command.OpenDialogCommand"
+							placement="TOOLBAR"
+							dialog-view="demo/object-details-dialog.view.xml"
+							close-on-backdrop="true"
+						>
+							<label>
+								<en>Show in Dialog</en>
+								<de>Im Dialog anzeigen</de>
+							</label>
+							<bind channel="model" to="selectedObject"/>
+						</command>
+					</commands>
+					<table
+						selection="selectedObject"
+						types="DemoTypes:DemoTypes.A"
+						observed-types="DemoTypes:A"
+					>
+						<rows>all(`DemoTypes:A`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="70"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Object Details</en>
+						<de>Objektdetails</de>
+					</title>
+					<form input="selectedObject">
+						<field attribute="name"/>
+						<field attribute="color"/>
+						<field attribute="string"/>
+						<field attribute="boolean"/>
+						<field attribute="date"/>
+						<field attribute="float"/>
+						<field attribute="icon"/>
+						<field attribute="htmlDescription"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

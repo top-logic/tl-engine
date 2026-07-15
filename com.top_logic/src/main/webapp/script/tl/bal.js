@@ -1987,6 +1987,11 @@ BAL = {
                     return true;
                 }
             }
+            // Elements with an explicit tabindex >= 0 are developer-intended focus targets
+            // (e.g. React combobox widgets rendered as <div role="combobox" tabindex="0">).
+            if (element.hasAttribute("tabindex") && element.tabIndex >= 0) {
+                return true;
+            }
             return false;
         },
         

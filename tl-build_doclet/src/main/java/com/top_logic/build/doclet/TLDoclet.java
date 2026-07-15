@@ -136,6 +136,13 @@ public class TLDoclet implements Doclet {
 	 */
 	private static final String TL_DOCLET = "TLDoclet: ";
 
+	/**
+	 * Resource key suffix under which a type's {@code @Label#option()} label is stored (mirrors
+	 * {@code com.top_logic.basic.config.annotation.Label#OPTION_SUFFIX}, which the doclet cannot
+	 * reference at compile time).
+	 */
+	private static final String OPTION_LABEL_SUFFIX = "@option";
+
 	private String _destDir = ".";
 
 	private boolean _showSrcLink = false;
@@ -1158,6 +1165,9 @@ public class TLDoclet implements Doclet {
 			String key = signature(type.asType());
 			_configDoc.setProperty(key, label(type, true));
 
+			_wellKnown.getAnnotatedOptionLabel(type)
+				.ifPresent(optionLabel -> _configDoc.setProperty(key + OPTION_LABEL_SUFFIX, optionLabel));
+
 			String doc = extractDoc(configurationType, type);
 			if (!doc.isEmpty()) {
 				_configDoc.setProperty(tooltipKey(key), doc);
@@ -1272,7 +1282,7 @@ public class TLDoclet implements Doclet {
 					boolean found = false;
 					Element referencedElement = docTrees().getElement(getCurrentPath());
 					if (referencedElement != null) {
-						String labelValue = getAnnotatedLabel(referencedElement);
+						String labelValue = linkLabel(referencedElement);
 						if (labelValue != null) {
 							buffer.append("<i>");
 							buffer.append(adjustCase(labelValue, _startOfSentence));
@@ -1831,6 +1841,39 @@ public class TLDoclet implements Doclet {
 
 		private String getAnnotatedLabel(Element element) {
 			return _wellKnown.getAnnotatedLabel(element).orElse(null);
+		}
+
+		/**
+		 * The annotated label to render a reference to the given element with: its option label if
+		 * given, or its main label unless that is a rendering template; {@code null} if the
+		 * reference must be rendered from the element's name instead.
+		 *
+		 * @see #isLabelTemplate(String)
+		 */
+		private String linkLabel(Element element) {
+			String optionLabel = _wellKnown.getAnnotatedOptionLabel(element).orElse(null);
+			if (optionLabel != null) {
+				return optionLabel;
+			}
+			String label = getAnnotatedLabel(element);
+			if (label != null && !isLabelTemplate(label)) {
+				return label;
+			}
+			return null;
+		}
+
+		/**
+		 * Whether the given label is a rendering template with embedded property references (e.g.
+		 * {@code Select tile '{tile-label}' in '{group}'}), as used by actions and naming schemes.
+		 *
+		 * <p>
+		 * Such a label describes an <em>instance</em> and only makes sense expanded against one; as
+		 * the link text for the annotated element itself it would show the raw placeholders, so the
+		 * reference falls back to the element's option label or name-derived label.
+		 * </p>
+		 */
+		private boolean isLabelTemplate(String label) {
+			return label.indexOf('{') >= 0;
 		}
 
 		private ExecutableElement originalDefinition(ExecutableElement method) {

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Script recorder side-window: start / stop capturing the interactions performed in the main
+	(opener) window, and step through the captured script. The RecorderAction (referenced by class=,
+	app-specific) starts and stops the opener window's recorder; RecordedStepsTable listens to that
+	recorder directly and shows the captured steps live over this window's SSE connection (no manual
+	refresh). The boolean recording channel tracks whether capturing is running so the reusable
+	<visible-if> rule shows Start while stopped and Stop while running (they are mutually exclusive).
+	The selection channel holds the selected step's row key: StepReplayAction replays that step on the
+	opener window and writes the next key back, advancing the selection.
+-->
+<view>
+	<channels>
+		<channel name="recording"/>
+		<channel name="selection"/>
+	</channels>
+	<panel fill="true">
+		<title>
+			<en>Script recorder</en>
+			<de>Skript-Rekorder</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-record-circle"
+				input="recording"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Start</en>
+					<de>Starten</de>
+				</label>
+				<executability>
+					<visible-if expr="running -> $running != true"/>
+				</executability>
+				<action class="com.top_logic.layout.view.recorder.RecorderAction"
+					mode="START"
+				/>
+				<execute-script function="true"/>
+				<write-channel name="recording"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-stop-circle"
+				input="recording"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Stop</en>
+					<de>Stoppen</de>
+				</label>
+				<executability>
+					<visible-if expr="running -> $running == true"/>
+				</executability>
+				<action class="com.top_logic.layout.view.recorder.RecorderAction"
+					mode="STOP"
+				/>
+				<execute-script function="false"/>
+				<write-channel name="recording"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-play-fill"
+				input="selection"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Step</en>
+					<de>Schritt</de>
+				</label>
+				<action class="com.top_logic.layout.view.recorder.StepReplayAction"/>
+				<write-channel name="selection"/>
+			</generic-command>
+		</commands>
+		<child class="com.top_logic.layout.view.recorder.RecordedStepsTable"
+			selection="selection"
+		/>
+	</panel>
+</view>

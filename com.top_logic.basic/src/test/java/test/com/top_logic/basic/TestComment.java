@@ -162,7 +162,7 @@ public class TestComment extends TestCase {
     /** Check to find the beginning of a class */
 	static final Pattern classPattern =
             Pattern.compile(
-                "^([^\\*]* )?(class|interface|enum|@interface)+");
+                "^([^\\*]* )?(class|interface|enum|record|@interface)+");
 
 	static final Pattern javaStartPattern = Pattern.compile("\\s*(?=package )");
 

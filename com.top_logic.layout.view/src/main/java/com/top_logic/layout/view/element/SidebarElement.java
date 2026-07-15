@@ -1,0 +1,455 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view.element;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.util.Resources;
+import com.top_logic.layout.react.control.sidebar.DrawerToggleControl;
+import com.top_logic.layout.react.control.sidebar.NavigationItem;
+import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
+import com.top_logic.layout.react.control.sidebar.SeparatorItem;
+import com.top_logic.layout.react.control.sidebar.SidebarItem;
+import com.top_logic.layout.structure.PersonalizingExpandable;
+import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.security.AccessChecks;
+import com.top_logic.layout.view.security.AccessControl;
+import com.top_logic.layout.view.security.SecurityScope;
+import com.top_logic.layout.view.security.WithAccessControl;
+import com.top_logic.layout.view.channel.DirtyChannel;
+import com.top_logic.layout.view.slot.control.SlotContentControl;
+
+/**
+ * UIElement that wraps {@link ReactSidebarControl}.
+ *
+ * <p>
+ * Renders a sidebar with navigation items. Each {@code <nav-item>} has inline content elements that
+ * are lazily created when the item is selected. Separators can be added between items.
+ * </p>
+ */
+public class SidebarElement implements UIElement {
+
+	/**
+	 * Configuration for {@link SidebarElement}.
+	 */
+	@TagName("sidebar")
+	public interface Config extends UIElement.Config {
+
+		@Override
+		@ClassDefault(SidebarElement.class)
+		Class<? extends UIElement> getImplementationClass();
+
+		/** Configuration name for {@link #getItems()}. */
+		String ITEMS = "items";
+
+		/** Configuration name for {@link #getActiveItem()}. */
+		String ACTIVE_ITEM = "active-item";
+
+		/** Configuration name for {@link #getCollapsed()}. */
+		String COLLAPSED = "collapsed";
+
+		/** Configuration name for {@link #getDrawerOpenSlotName()}. */
+		String DRAWER_OPEN_SLOT_NAME = "drawer-open-slot-name";
+
+		/**
+		 * The sidebar navigation items.
+		 *
+		 * @implNote Written directly as {@code <nav-item>} / {@code <separator>} children of the
+		 *           {@code <sidebar>} (the {@code <items>} wrapper is optional). Keyed by
+		 *           {@link SidebarItemConfig#getId()} so that a configuration fragment in another
+		 *           module can add, reposition ({@code config:position}) or override individual items.
+		 */
+		@Name(ITEMS)
+		@Key(SidebarItemConfig.ID)
+		@DefaultContainer
+		@TreeProperty
+		List<SidebarItemConfig> getItems();
+
+		/**
+		 * The ID of the initially active item, or empty for the first navigation item.
+		 */
+		@Name(ACTIVE_ITEM)
+		String getActiveItem();
+
+		/**
+		 * Whether the sidebar starts collapsed.
+		 */
+		@Name(COLLAPSED)
+		@BooleanDefault(false)
+		boolean getCollapsed();
+
+		/**
+		 * Name of the slot into which the sidebar contributes a hamburger button that opens the
+		 * mobile drawer.
+		 *
+		 * <p>
+		 * If non-empty, the sidebar emits a {@code SlotContentControl} carrying a
+		 * {@code DrawerToggleControl} addressed to {@code <slot name="<this-value>"/>}. By
+		 * convention the placeholder is declared in the app bar's leading area (e.g.
+		 * {@code <leading><slot name="appbar-leading"/></leading>}), so the button surfaces in
+		 * the app bar at mobile breakpoints. Leave empty to suppress the contribution entirely
+		 * — useful when the sidebar is used in a layout without an app bar or with a different
+		 * mobile entry point.
+		 * </p>
+		 */
+		@Name(DRAWER_OPEN_SLOT_NAME)
+		String getDrawerOpenSlotName();
+	}
+
+	/**
+	 * Base interface for sidebar item elements.
+	 */
+	public interface SidebarItemElement {
+
+		/**
+		 * Creates a {@link SidebarItem} for use with {@link ReactSidebarControl}.
+		 *
+		 * @return The item, or {@code null} when the item must be omitted (e.g. because access is
+		 *         denied for the current user).
+		 */
+		SidebarItem createSidebarItem(ViewContext context);
+	}
+
+	/**
+	 * Common configuration base for the entries of a {@link SidebarElement}.
+	 *
+	 * @implNote {@link #getId()} is the merge key of the items list: a configuration fragment in
+	 *           another module positions ({@code config:position}) or overrides an item by
+	 *           referencing this id. A {@code <separator>} usually leaves it empty; at most one
+	 *           anonymous entry (empty id) may occur, so give separators an explicit id when more
+	 *           than one is needed.
+	 */
+	public interface SidebarItemConfig extends PolymorphicConfiguration<SidebarItemElement> {
+
+		/** Configuration name for {@link #getId()}. */
+		String ID = "id";
+
+		/**
+		 * The unique item identifier.
+		 */
+		@Name(ID)
+		String getId();
+	}
+
+	/**
+	 * A navigation item with content.
+	 */
+	@TagName("nav-item")
+	public interface NavItemConfig extends SidebarItemConfig, WithAccessControl {
+
+		@Override
+		@ClassDefault(NavItemElement.class)
+		Class<? extends SidebarItemElement> getImplementationClass();
+
+		/** Configuration name for {@link #getLabel()}. */
+		String LABEL = "label";
+
+		/** Configuration name for {@link #getIcon()}. */
+		String ICON = "icon";
+
+		/** Configuration name for {@link #getChildren()}. */
+		String CHILDREN = "children";
+
+		/** Configuration name for {@link #getRoute()}. */
+		String ROUTE = "route";
+
+		/**
+		 * The display label.
+		 */
+		@Name(LABEL)
+		ResKey getLabel();
+
+		/**
+		 * The CSS icon class (e.g. "bi bi-speedometer2").
+		 */
+		@Name(ICON)
+		String getIcon();
+
+		/**
+		 * The route segment for this item.
+		 *
+		 * <p>
+		 * By default (not set), the item's {@link #getId() ID} is used as the route
+		 * segment. Set to {@code "none"} to explicitly opt out of routing. Set to a
+		 * custom value to use a route segment different from the ID.
+		 * Routes are always relative (no leading slash).
+		 * </p>
+		 */
+		@Name(ROUTE)
+		String getRoute();
+
+		/**
+		 * The content elements shown when this item is selected.
+		 */
+		@Name(CHILDREN)
+		@DefaultContainer
+		@TreeProperty
+		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
+	}
+
+	/**
+	 * A separator line between sidebar items.
+	 */
+	@TagName("separator")
+	public interface SeparatorConfig extends SidebarItemConfig {
+
+		@Override
+		@ClassDefault(SeparatorElement.class)
+		Class<? extends SidebarItemElement> getImplementationClass();
+	}
+
+	/**
+	 * Implementation of a navigation sidebar item.
+	 */
+	public static class NavItemElement implements SidebarItemElement {
+
+		private final String _id;
+
+		private final ResKey _label;
+
+		private final String _icon;
+
+		private final String _route;
+
+		private final AccessControl _accessControl;
+
+		private final List<UIElement> _children;
+
+		/**
+		 * Creates a {@link NavItemElement}.
+		 */
+		@CalledByReflection
+		public NavItemElement(InstantiationContext context, NavItemConfig config) {
+			_id = config.getId();
+			_label = config.getLabel();
+			_icon = config.getIcon();
+			_route = config.getRoute();
+			_accessControl = config.getAccessControl();
+			_children = config.getChildren().stream()
+				.map(context::getInstance)
+				.collect(Collectors.toList());
+		}
+
+		@Override
+		public SidebarItem createSidebarItem(ViewContext context) {
+			if (!AccessChecks.isAccessible(_accessControl)) {
+				// Access denied for the current user: omit the navigation item entirely.
+				return null;
+			}
+			String label = Resources.getInstance().getString(_label);
+			DirtyChannel dirtyChannel = new DirtyChannel();
+			SecurityScope scope = AccessChecks.resolveScope(_accessControl);
+			NavigationItem item = new NavigationItem(_id, label, _icon,
+				() -> createContent(_children, context, dirtyChannel, scope), dirtyChannel);
+			String effectiveRoute = resolveRoute(_route, _id);
+			if (effectiveRoute != null) {
+				item.withRoute(effectiveRoute);
+			}
+			return item;
+		}
+	}
+
+	/**
+	 * Resolves the effective route segment for a navigation element.
+	 *
+	 * <p>
+	 * Convention: {@code null} (not set in XML) means use the element's ID as route.
+	 * Empty string ({@code route=""}) means explicitly not routed. Any other value is
+	 * used as-is (custom route different from ID). Leading slashes are stripped.
+	 * </p>
+	 *
+	 * @param configuredRoute
+	 *        The configured route value ({@code null} if not set).
+	 * @param id
+	 *        The element's ID (used as fallback).
+	 * @return The effective route segment, or {@code null} if not routed.
+	 */
+	/** Value for the {@code route} attribute that explicitly disables routing. */
+	public static final String NO_ROUTE = "none";
+
+	/**
+	 * Resolves the effective route segment for a navigation element.
+	 *
+	 * <p>
+	 * Convention: empty string (not set in XML) means use the element's ID as route.
+	 * {@code "none"} means explicitly not routed. Any other value is used as-is
+	 * (custom route different from ID). Leading slashes are stripped.
+	 * </p>
+	 *
+	 * @param configuredRoute
+	 *        The configured route value (empty string if not set).
+	 * @param id
+	 *        The element's ID (used as fallback).
+	 * @return The effective route segment, or {@code null} if not routed.
+	 */
+	public static String resolveRoute(String configuredRoute, String id) {
+		if (configuredRoute == null || configuredRoute.isEmpty()) {
+			// Not set -> use ID as route.
+			return id;
+		}
+		if (NO_ROUTE.equals(configuredRoute)) {
+			// Explicitly opted out of routing.
+			return null;
+		}
+		// Custom route, strip leading slash if present.
+		return configuredRoute.startsWith("/") ? configuredRoute.substring(1) : configuredRoute;
+	}
+
+	/**
+	 * Implementation of a separator sidebar item.
+	 */
+	public static class SeparatorElement implements SidebarItemElement {
+
+		private static int _counter;
+
+		/**
+		 * Creates a {@link SeparatorElement}.
+		 */
+		@CalledByReflection
+		public SeparatorElement(InstantiationContext context, SeparatorConfig config) {
+			// No configuration needed.
+		}
+
+		@Override
+		public SidebarItem createSidebarItem(ViewContext context) {
+			return new SeparatorItem("sep" + (_counter++));
+		}
+	}
+
+	private final List<SidebarItemElement> _items;
+
+	private final String _activeItem;
+
+	private final boolean _collapsed;
+
+	private final String _drawerOpenSlotName;
+
+	/**
+	 * Creates a new {@link SidebarElement} from configuration.
+	 */
+	@CalledByReflection
+	public SidebarElement(InstantiationContext context, Config config) {
+		_items = new ArrayList<>();
+		for (SidebarItemConfig itemConfig : config.getItems()) {
+			_items.add(context.getInstance(itemConfig));
+		}
+		_activeItem = config.getActiveItem();
+		_collapsed = config.getCollapsed();
+		_drawerOpenSlotName = config.getDrawerOpenSlotName();
+	}
+
+	@Override
+	public IReactControl createControl(ViewContext context) {
+		String key = resolveKey(context, "sidebar");
+
+		boolean collapsed = PersonalizingExpandable.loadCollapsed(key + ".collapsed", _collapsed);
+		Map<String, Boolean> groupStates = loadGroupStates(key);
+
+		List<SidebarItem> sidebarItems = new ArrayList<>();
+		for (SidebarItemElement itemElement : _items) {
+			SidebarItem item = itemElement.createSidebarItem(context);
+			if (item != null) {
+				sidebarItems.add(item);
+			}
+		}
+		String activeItem = _activeItem != null && !_activeItem.isEmpty() ? _activeItem : null;
+		ReactSidebarControl sidebar = new ReactSidebarControl(context,
+			sidebarItems, activeItem,
+			collapsed, groupStates,
+			c -> PersonalizingExpandable.saveCollapsed(key + ".collapsed", c, _collapsed),
+			(gid, exp) -> saveGroupState(key, gid, exp),
+			null, null, null, null);
+
+		// If a slot name is configured, contribute a hamburger button that toggles the mobile
+		// drawer. The placeholder must be declared elsewhere in the view tree (typically the app
+		// bar's leading area). Empty/missing -> no contribution, no drawer entry point on mobile.
+		if (_drawerOpenSlotName != null && !_drawerOpenSlotName.isEmpty()) {
+			DrawerToggleControl toggleButton = new DrawerToggleControl(context, sidebar);
+			SlotContentControl drawerToggleSlot = new SlotContentControl(context, _drawerOpenSlotName,
+				context.getSlotPath(), context.getSlotRegistry(), List.of(toggleButton));
+			sidebar.setDrawerToggleContribution(drawerToggleSlot);
+		}
+
+		return sidebar;
+	}
+
+	private static String resolveKey(ViewContext context, String defaultSegment) {
+		return context.getPersonalizationKey() + "." + defaultSegment;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Boolean> loadGroupStates(String key) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return null;
+		}
+		Object value = pc.getJSONValue(key + ".groups");
+		if (value instanceof Map) {
+			Map<String, Object> raw = (Map<String, Object>) value;
+			Map<String, Boolean> result = new HashMap<>();
+			for (Map.Entry<String, Object> entry : raw.entrySet()) {
+				if (entry.getValue() instanceof Boolean) {
+					result.put(entry.getKey(), (Boolean) entry.getValue());
+				}
+			}
+			return result;
+		}
+		return null;
+	}
+
+	private static void saveGroupState(String key, String groupId, boolean expanded) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return;
+		}
+		Map<String, Boolean> states = loadGroupStates(key);
+		if (states == null) {
+			states = new HashMap<>();
+		}
+		states.put(groupId, Boolean.valueOf(expanded));
+		if (states.isEmpty()) {
+			pc.setJSONValue(key + ".groups", null);
+		} else {
+			pc.setJSONValue(key + ".groups", states);
+		}
+	}
+
+	private static ReactControl createContent(List<UIElement> elements, ViewContext context,
+			DirtyChannel dirtyChannel, SecurityScope scope) {
+		ViewContext baseContext = context.childContext("sidebar-item");
+		// Establish the nav-item's security scope so command rules in its content default to it.
+		ViewContext itemContext = scope != null ? baseContext.withSecurityScope(scope) : baseContext;
+		itemContext.setDirtyChannel(dirtyChannel);
+
+		if (elements.size() == 1) {
+			return (ReactControl) elements.get(0).createControl(itemContext);
+		}
+		List<ReactControl> children = elements.stream()
+			.map(e -> (ReactControl) e.createControl(itemContext))
+			.collect(Collectors.toList());
+		return new ReactStackControl(itemContext, children);
+	}
+}

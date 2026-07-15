@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.devtools">
+		<!--
+			Kind of model type created through the model editor: a structured class or an enumeration.
+		-->
+		<enum name="TypeKind">
+			<classifier name="class"/>
+			<classifier name="enumeration"/>
+		</enum>
+
+		<!--
+			Transient-only type holding the input of the "new module" dialog: the name of the model
+			module to create. Instances are created with new(`tl.devtools:NewModule`, transient: true)
+			and are never persisted (the action creates the module directly), so no table is declared.
+		-->
+		<class name="NewModule">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type holding the input of the "new type" dialog: the name and kind (class or
+			enumeration) of the type to create in the selected module. Instances are created with
+			new(`tl.devtools:NewType`, transient: true) and are never persisted (the action creates the
+			type directly), so no table is declared.
+		-->
+		<class name="NewType">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="kind"
+					kind="forwards"
+					type="TypeKind"
+				>
+					<annotations>
+						<default-value>
+							<classifier value="class"/>
+						</default-value>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type holding the input of the "new classifier" dialog: the name of the
+			classifier to add to the selected enumeration. Instances are created with
+			new(`tl.devtools:NewClassifier`, transient: true) and are never persisted (the action adds the
+			classifier directly), so no table is declared.
+		-->
+		<class name="NewClassifier">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type holding the input of the "new attribute" dialog: the name, value type and
+			cardinality of the property to add to the selected type. Instances are created with
+			new(`tl.devtools:NewAttribute`, transient: true) and are never persisted (the action adds the
+			property directly), so no table is declared.
+		-->
+		<class name="NewAttribute">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="type"
+					kind="forwards"
+					type="tl.model:TLType"
+				/>
+				<property name="mandatory"
+					type="tl.core:Boolean"
+				/>
+				<property name="multiple"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

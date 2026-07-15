@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Layout Mockup</title>
+<style>
+  :root {
+    --gap: 1rem;
+    --row-height: 12rem;
+    --min-col-width: 16rem;
+    --color-bg: #f5f6fa;
+    --color-card: #fff;
+    --color-border: #e0e3eb;
+    --color-drag-handle: #aab;
+    --color-drop-zone: #4a90d9;
+    --color-accent: #4a90d9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--color-bg);
+    padding: 2rem;
+    color: #333;
+  }
+
+  h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #444; }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .edit-toggle {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--color-border); border-radius: 6px;
+    background: var(--color-card); cursor: pointer;
+    font-size: 0.85rem; color: #555; transition: all 0.15s;
+  }
+  .edit-toggle:hover { border-color: var(--color-accent); color: var(--color-accent); }
+  .edit-toggle.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+
+  /* Grid container -- columns set by JS */
+  .dashboard {
+    display: grid;
+    grid-auto-rows: var(--row-height);
+    gap: var(--gap);
+  }
+
+  /* Items -- grid-column and grid-row set by JS */
+  .dashboard-item {
+    border-radius: 10px;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s, opacity 0.2s;
+    min-width: 0;
+  }
+
+  .item-header {
+    display: flex; align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.85rem; font-weight: 600; color: #555;
+  }
+  .item-header .drag-handle {
+    display: none; cursor: grab; margin-right: 0.5rem;
+    color: var(--color-drag-handle); font-size: 1.1rem; user-select: none;
+  }
+  .item-header .drag-handle:active { cursor: grabbing; }
+
+  .item-content {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem; color: #888; font-size: 0.8rem;
+  }
+
+  .kpi-value { font-size: 2.5rem; font-weight: 700; color: #333; }
+  .kpi-label { font-size: 0.8rem; color: #999; margin-top: 0.25rem; }
+
+  .chart-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8edf5 100%);
+    border-radius: 6px; color: #aab; font-size: 0.85rem;
+  }
+
+  /* Edit mode */
+  .dashboard.edit-mode .drag-handle { display: inline-block; }
+  .dashboard.edit-mode .dashboard-item { cursor: default; }
+  .dashboard.edit-mode .dashboard-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+  .dashboard-item.dragging { opacity: 0.4; }
+  .dashboard-item.drop-before,
+  .dashboard-item.drop-after { position: relative; }
+  .dashboard-item.drop-before::before,
+  .dashboard-item.drop-after::after {
+    content: "";
+    position: absolute;
+    top: -6px; bottom: -6px;
+    width: 8px;
+    background: var(--color-drop-zone);
+    border-radius: 4px;
+    box-shadow: 0 0 12px 2px var(--color-drop-zone),
+                0 0 24px 4px var(--color-drop-zone);
+    pointer-events: none;
+    z-index: 10;
+  }
+  .dashboard-item.drop-before::before { left: -10px; }
+  .dashboard-item.drop-after::after { right: -10px; }
+
+  .size-spec {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #9aa;
+    margin-top: 0.35rem;
+  }
+
+  .info {
+    margin-top: 1.5rem; padding: 1rem;
+    background: var(--color-card); border: 1px solid var(--color-border);
+    border-radius: 8px; font-size: 0.8rem; color: #666;
+  }
+  .info .col-count { font-weight: 700; color: var(--color-accent); }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>Dashboard Layout Mockup</h1>
+  <button class="edit-toggle" onclick="toggleEdit()" id="editBtn">
+    <span>&#9998;</span> Edit Layout
+  </button>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="dashboard-item" data-id="sales" data-width="half" data-row-span="2">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Sales Overview
+    </div>
+    <div class="item-content">
+      <div class="chart-placeholder">Bar Chart<br><span class="size-spec">width="half" row-span="2"</span></div>
+    </div>
+  </div>
+
+  <div class="dashboard-item" data-id="tasks" data-width="quarter">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Active Tasks
+    </div>
+    <div class="item-content">
+      <div style="text-align:center">
+        <div class="kpi-value">42</div>
+        <div class="kpi-label">tasks in progress</div>
+        <div class="size-spec">width="quarter"</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-item" data-id="issues" data-width="quarter">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Open Issues
+    </div>
+    <div class="item-content">
+      <div style="text-align:center">
+        <div class="kpi-value">7</div>
+        <div class="kpi-label">critical issues</div>
+        <div class="size-spec">width="quarter"</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-item" data-id="reviews" data-width="half">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      In Review
+    </div>
+    <div class="item-content">
+      <div style="text-align:center">
+        <div class="kpi-value">12</div>
+        <div class="kpi-label">pending reviews</div>
+        <div class="size-spec">width="half"</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-item" data-id="timeline" data-width="two-thirds">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Timeline
+    </div>
+    <div class="item-content">
+      <div class="chart-placeholder">Line Chart<br><span class="size-spec">width="two-thirds"</span></div>
+    </div>
+  </div>
+
+  <div class="dashboard-item" data-id="distribution" data-width="third">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Distribution
+    </div>
+    <div class="item-content">
+      <div class="chart-placeholder">Doughnut Chart<br><span class="size-spec">width="third"</span></div>
+    </div>
+  </div>
+
+  <div class="dashboard-item" data-id="activity" data-width="full">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Recent Activity
+    </div>
+    <div class="item-content">
+      <div class="chart-placeholder">Activity Table<br><span class="size-spec">width="full"</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="info" id="info">
+  Resize the browser window to see responsive behavior.
+  Columns: <span class="col-count" id="colCount">?</span>
+  <br>Click <strong>Edit Layout</strong> to enable drag-and-drop reordering.
+</div>
+
+<script>
+const dashboard = document.getElementById('dashboard');
+const editBtn = document.getElementById('editBtn');
+const colCountEl = document.getElementById('colCount');
+
+// --- Width fractions ---
+const WIDTH_FRACTION = {
+  'full':       1.0,
+  'two-thirds': 2/3,
+  'half':       1/2,
+  'third':      1/3,
+  'quarter':    1/4,
+};
+
+// --- Responsive column count ---
+const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
+const minColWidthPx = 16 * remPx;
+const gapPx = remPx;
+
+function calcMaxColumns(containerWidth) {
+  return Math.max(1, Math.floor((containerWidth + gapPx) / (minColWidthPx + gapPx)));
+}
+
+// --- Layout engine ---
+// Items are packed into rows left-to-right. Each item's span is computed
+// from its width fraction against the actual column count. When a row
+// can't fit the next item, the last item in the row is stretched to fill
+// remaining columns. Row-spanning items reserve their columns in
+// subsequent rows. The stretching guarantees gap-free rows regardless
+// of which fraction combinations appear.
+
+function itemSpan(widthName, cols) {
+  const frac = WIDTH_FRACTION[widthName] || 1.0;
+  return Math.max(1, Math.round(frac * cols));
+}
+
+function computeLayout(items, maxVisualCols) {
+  const cols = Math.max(1, maxVisualCols);
+
+  // occupied[row][col] = true if cell is taken (by a row-spanning item)
+  const occupied = [];
+  function isOccupied(row, col) {
+    return occupied[row] && occupied[row][col];
+  }
+  function markOccupied(row, col) {
+    if (!occupied[row]) occupied[row] = {};
+    occupied[row][col] = true;
+  }
+
+  // Result: array of { element, colStart, colEnd, rowStart, rowEnd }
+  const placements = [];
+
+  let curRow = 0;
+  let curCol = 0;
+
+  for (const item of items) {
+    const widthName = item.dataset.width || 'full';
+    const rowSpan = (cols <= 1) ? 1 : (parseInt(item.dataset.rowSpan) || 1);
+    let span = Math.min(itemSpan(widthName, cols), cols);
+
+    // Find next free position
+    while (isOccupied(curRow, curCol)) {
+      curCol++;
+      if (curCol >= cols) { curCol = 0; curRow++; }
+    }
+
+    // Does this item fit in the current row?
+    // Count free columns from curCol to end of row
+    let freeInRow = 0;
+    for (let c = curCol; c < cols; c++) {
+      if (!isOccupied(curRow, c)) freeInRow++;
+      else break;
+    }
+
+    if (span > freeInRow) {
+      // Item doesn't fit. Stretch the previous item in this row to fill,
+      // then move to next row.
+      stretchLastInRow(placements, curRow, cols, occupied);
+      curCol = 0;
+      curRow++;
+      // Skip occupied cells (from row-spanning items)
+      while (isOccupied(curRow, curCol)) {
+        curCol++;
+        if (curCol >= cols) { curCol = 0; curRow++; }
+      }
+      // Recalculate free space
+      freeInRow = 0;
+      for (let c = curCol; c < cols; c++) {
+        if (!isOccupied(curRow, c)) freeInRow++;
+        else break;
+      }
+      span = Math.min(span, freeInRow);
+    }
+
+    const colStart = curCol;
+    const colEnd = curCol + span;
+    const rowStart = curRow;
+    const rowEnd = curRow + rowSpan;
+
+    placements.push({ element: item, colStart, colEnd, rowStart, rowEnd });
+
+    // Mark cells as occupied
+    for (let r = rowStart; r < rowEnd; r++) {
+      for (let c = colStart; c < colEnd; c++) {
+        markOccupied(r, c);
+      }
+    }
+
+    // Advance cursor
+    curCol = colEnd;
+    if (curCol >= cols) { curCol = 0; curRow++; }
+  }
+
+  // Stretch last item of the final row
+  stretchLastInRow(placements, curRow, cols, occupied);
+
+  // Fill gaps left by row-spanning items: extend neighbors downward.
+  fillRowSpanGaps(placements, occupied, cols);
+
+  return { placements, cols };
+}
+
+// Row-spanning items leave holes in subsequent rows that horizontal
+// stretching cannot fill (no item to stretch, or neighbors were already
+// placed in earlier rows). We close these holes by extending the items
+// directly above each hole vertically (increasing their row-span).
+function fillRowSpanGaps(placements, occupied, cols) {
+  let maxRow = 0;
+  for (const p of placements) {
+    if (p.rowEnd > maxRow) maxRow = p.rowEnd;
+  }
+
+  for (let r = 1; r < maxRow; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (occupied[r] && occupied[r][c]) continue;
+      // Find the placement that ends exactly at row r and covers column c.
+      const above = placements.find(p =>
+        p.rowEnd === r && p.colStart <= c && c < p.colEnd);
+      if (!above) continue;
+      // Extend it one row down.
+      above.rowEnd = r + 1;
+      if (!occupied[r]) occupied[r] = {};
+      for (let cc = above.colStart; cc < above.colEnd; cc++) {
+        occupied[r][cc] = true;
+      }
+    }
+  }
+}
+
+function stretchLastInRow(placements, row, totalCols, occupied) {
+  // Find the last placement that starts in this row
+  let lastInRow = null;
+  for (const p of placements) {
+    if (p.rowStart === row) lastInRow = p;
+  }
+  if (!lastInRow) return;
+
+  // Stretch it to fill remaining free columns in this row
+  let newEnd = lastInRow.colEnd;
+  while (newEnd < totalCols && !occupied[row][newEnd]) {
+    newEnd++;
+  }
+  if (newEnd !== lastInRow.colEnd) {
+    // Mark newly occupied cells
+    for (let r = lastInRow.rowStart; r < lastInRow.rowEnd; r++) {
+      for (let c = lastInRow.colEnd; c < newEnd; c++) {
+        if (!occupied[r]) occupied[r] = {};
+        occupied[r][c] = true;
+      }
+    }
+    lastInRow.colEnd = newEnd;
+  }
+}
+
+// --- Apply layout ---
+function updateLayout() {
+  const containerWidth = dashboard.clientWidth;
+  const maxCols = calcMaxColumns(containerWidth);
+  const items = [...dashboard.querySelectorAll('.dashboard-item')];
+  const { placements, cols } = computeLayout(items, maxCols);
+
+  colCountEl.textContent = cols;
+
+  dashboard.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+
+  for (const p of placements) {
+    // CSS Grid uses 1-based line numbers
+    p.element.style.gridColumn = (p.colStart + 1) + ' / ' + (p.colEnd + 1);
+    p.element.style.gridRow = (p.rowStart + 1) + ' / ' + (p.rowEnd + 1);
+  }
+}
+
+const ro = new ResizeObserver(() => updateLayout());
+ro.observe(dashboard);
+updateLayout();
+
+// --- Edit mode ---
+let editMode = false;
+let draggedItem = null;
+
+function toggleEdit() {
+  editMode = !editMode;
+  dashboard.classList.toggle('edit-mode', editMode);
+  editBtn.classList.toggle('active', editMode);
+  editBtn.innerHTML = editMode
+    ? '<span>&#10003;</span> Done'
+    : '<span>&#9998;</span> Edit Layout';
+  document.querySelectorAll('.dashboard-item').forEach(item => {
+    item.draggable = editMode;
+  });
+}
+
+// --- Drag and drop ---
+dashboard.addEventListener('dragstart', e => {
+  const item = e.target.closest('.dashboard-item');
+  if (!item || !editMode) return;
+  draggedItem = item;
+  item.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', item.dataset.id);
+});
+
+dashboard.addEventListener('dragover', e => {
+  e.preventDefault();
+  if (!editMode || !draggedItem) return;
+  e.dataTransfer.dropEffect = 'move';
+  const target = e.target.closest('.dashboard-item');
+  if (target && target !== draggedItem) {
+    document.querySelectorAll('.dashboard-item.drop-before, .dashboard-item.drop-after')
+      .forEach(el => el.classList.remove('drop-before', 'drop-after'));
+    const rect = target.getBoundingClientRect();
+    const before = e.clientX < rect.left + rect.width / 2;
+    target.classList.add(before ? 'drop-before' : 'drop-after');
+  }
+});
+
+dashboard.addEventListener('dragleave', e => {
+  const target = e.target.closest('.dashboard-item');
+  if (target) target.classList.remove('drop-before', 'drop-after');
+});
+
+dashboard.addEventListener('drop', e => {
+  e.preventDefault();
+  if (!editMode || !draggedItem) return;
+  const target = e.target.closest('.dashboard-item');
+  if (target && target !== draggedItem) {
+    const rect = target.getBoundingClientRect();
+    const before = e.clientX < rect.left + rect.width / 2;
+    if (before) {
+      target.before(draggedItem);
+    } else {
+      target.after(draggedItem);
+    }
+    updateLayout();
+    console.log('New order:', [...dashboard.querySelectorAll('.dashboard-item')]
+      .map(el => el.dataset.id));
+  }
+  document.querySelectorAll('.drop-before, .drop-after').forEach(el =>
+    el.classList.remove('drop-before', 'drop-after'));
+});
+
+dashboard.addEventListener('dragend', () => {
+  if (draggedItem) {
+    draggedItem.classList.remove('dragging');
+    draggedItem = null;
+  }
+  document.querySelectorAll('.drop-before, .drop-after').forEach(el =>
+    el.classList.remove('drop-before', 'drop-after'));
+});
+</script>
+</body>
+</html>

@@ -21,7 +21,10 @@
       "allowedHosts": [
         "registry.npmjs.org",
         "api-free.deepl.com",
-        "tl.bos.local"
+        "tl.bos.local",
+        "nodejs.org",
+        "dev.top-logic.com",
+        "repo.maven.apache.org"
       ]
     }
   }

@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.top_logic.basic.col.TupleFactory.Pair;
+import com.top_logic.graph.layouter.model.util.Pair;
 import com.top_logic.graph.layouter.Sugiyama;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;

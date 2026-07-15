@@ -1,0 +1,604 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.react.flow.client.control;
+
+import java.util.List;
+
+import org.vectomatic.dom.svg.OMSVGElement;
+import org.vectomatic.dom.svg.OMSVGGElement;
+import org.vectomatic.dom.svg.OMSVGMatrix;
+import org.vectomatic.dom.svg.OMSVGPoint;
+import org.vectomatic.dom.svg.OMSVGSVGElement;
+
+import com.google.gwt.dom.client.Element;
+
+import com.top_logic.react.flow.client.dom.DOMUtil;
+import com.top_logic.react.flow.data.Box;
+import com.top_logic.react.flow.data.DragEdge;
+import com.top_logic.react.flow.data.DropArea;
+import com.top_logic.react.flow.data.Widget;
+import com.top_logic.react.flow.operations.drag.DragController;
+
+import elemental2.dom.DomGlobal;
+
+/**
+ * Manages a single drag session on a flow diagram.
+ *
+ * <p>
+ * On pointer-down, detects whether the user wants to move or resize a box. Creates a clone for
+ * WYSIWYG feedback, dims the original, and updates the clone position/size on each pointer-move
+ * frame. On pointer-up, commits the drag; on ESC, cancels it.
+ * </p>
+ *
+ * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ */
+class DragHandler {
+
+	/** Distance in SVG units from a box edge to trigger resize instead of move. */
+	private static final double EDGE_THRESHOLD = 4.0;
+
+	/** CSS class applied to the original SVG element during drag. */
+	static final String DRAG_SOURCE_CLASS = "tl-drag-source";
+
+	/** ID of the SVG group that contains the drag clone. */
+	private static final String CLONE_GROUP_ID = "tl-drag-clone";
+
+	private final FlowDiagramClientControl _control;
+
+	private final OMSVGSVGElement _svg;
+
+	/** The controller that handles constraints and commit. */
+	private DragController _controller;
+
+	/** The original box being dragged (not the clone). */
+	private Box _target;
+
+	/** The direct child of the controller that contains or is the target. */
+	private Box _controllerChild;
+
+	/** Drag edge if resizing, {@code null} if moving. */
+	private DragEdge _edge;
+
+	/** Drop areas for this drag session. */
+	private List<DropArea> _dropAreas;
+
+	/** SVG coordinates at drag start. */
+	private double _startSvgX, _startSvgY;
+
+	/** Original box position at drag start. */
+	private double _origX, _origY, _origW, _origH;
+
+	/** Current clone position/size. */
+	private double _cloneX, _cloneY, _cloneW, _cloneH;
+
+	/** Whether a drag session is currently active. */
+	private boolean _active;
+
+	/** Whether a viewport pan session is active (mutually exclusive with item drag). */
+	private boolean _panning;
+
+	/** The SVG element of the original box (to dim/undim). */
+	private OMSVGElement _originalSvgElement;
+
+	/** The clone SVG group element. */
+	private OMSVGGElement _cloneGroup;
+
+	/**
+	 * Creates a {@link DragHandler}.
+	 */
+	DragHandler(FlowDiagramClientControl control, OMSVGSVGElement svg) {
+		_control = control;
+		_svg = svg;
+	}
+
+	/**
+	 * Whether a drag or pan session is active.
+	 */
+	boolean isActive() {
+		return _active || _panning;
+	}
+
+	/**
+	 * Whether the active drag is a resize (not a move).
+	 */
+	boolean isResizing() {
+		return _active && _edge != null;
+	}
+
+	/**
+	 * Attempts to start a drag session from a pointer-down event.
+	 *
+	 * @param clientX
+	 *        the pointer X in client (screen) coordinates.
+	 * @param clientY
+	 *        the pointer Y in client (screen) coordinates.
+	 * @param targetElement
+	 *        the DOM element that received the pointer-down event.
+	 * @return {@code true} if drag started, {@code false} if no draggable box was found.
+	 */
+	boolean tryStart(double clientX, double clientY, elemental2.dom.Element targetElement) {
+		if (_active) {
+			return false;
+		}
+
+		// Convert client coordinates to SVG coordinates.
+		double[] svgCoords = clientToSvg(clientX, clientY);
+		double svgX = svgCoords[0];
+		double svgY = svgCoords[1];
+
+		// Walk up the DOM from the event target to find a Box.
+		Box hitBox = findBoxFromElement(targetElement);
+		if (hitBox == null) {
+			return false;
+		}
+
+		// Walk up the Box parent tree to find a DragController.
+		DragController controller = null;
+		Box controllerChild = null;
+
+		Box current = hitBox;
+		while (current != null) {
+			Widget parent = current.getParent();
+			if (parent instanceof DragController) {
+				DragController candidate = (DragController) parent;
+				if (candidate.canMove(current) || candidate.canResize(current, DragEdge.E)
+					|| candidate.canResize(current, DragEdge.W)) {
+					controller = candidate;
+					controllerChild = current;
+					break;
+				}
+			}
+			if (parent instanceof Box) {
+				current = (Box) parent;
+			} else {
+				break;
+			}
+		}
+
+		if (controller == null) {
+			return tryStartPan(hitBox, svgX, svgY);
+		}
+
+		// Convert SVG root coordinates to layout coordinates (accounts for scroll offset).
+		double[] layoutCoords = controller.svgToLayout(svgX, svgY);
+		double layoutX = layoutCoords[0];
+		double layoutY = layoutCoords[1];
+
+		// Detect edge on the controllerChild (the outermost item box),
+		// NOT on the innermost hitBox (e.g. a Text inside Padding inside Border).
+		DragEdge edge = detectEdge(controllerChild, layoutX, layoutY);
+
+		// If edge detected but resize not allowed, fall back to move.
+		if (edge != null && !controller.canResize(controllerChild, edge)) {
+			edge = null;
+		}
+		// If no edge and move not allowed, try pan instead.
+		if (edge == null && !controller.canMove(controllerChild)) {
+			return tryStartPan(hitBox, svgX, svgY);
+		}
+
+		_controller = controller;
+		_target = hitBox;
+		_controllerChild = controllerChild;
+		_edge = edge;
+		_startSvgX = layoutX;
+		_startSvgY = layoutY;
+
+		// Use the controller child for position/size (it's the direct child of the controller).
+		_origX = _controllerChild.getX();
+		_origY = _controllerChild.getY();
+		_origW = _controllerChild.getWidth();
+		_origH = _controllerChild.getHeight();
+		_cloneX = _origX;
+		_cloneY = _origY;
+		_cloneW = _origW;
+		_cloneH = _origH;
+
+		_dropAreas = controller.getDropAreas(_controllerChild);
+
+		// Dim the original element.
+		String clientId = _controllerChild.getClientId();
+		if (clientId != null) {
+			_originalSvgElement = _control._svgDoc.getElementById(clientId);
+			if (_originalSvgElement != null) {
+				DOMUtil.addClassName(_originalSvgElement.getElement(), DRAG_SOURCE_CLASS);
+			}
+		}
+
+		// Create clone group overlay.
+		createCloneOverlay();
+
+		_active = true;
+
+		DomGlobal.console.info("Drag started on box: " + clientId
+			+ (edge != null ? " (resize " + edge.name() + ")" : " (move)"));
+		return true;
+	}
+
+	/**
+	 * Updates the drag based on a pointer-move event.
+	 */
+	void onMove(double clientX, double clientY) {
+		if (_panning) {
+			double[] svgCoords = clientToSvg(clientX, clientY);
+			_controller.panTo(svgCoords[0], svgCoords[1]);
+			_controller.renderPan(DragHandler.this::nativeSetTranslate);
+			return;
+		}
+		if (!_active) {
+			return;
+		}
+
+		double[] svgCoords = clientToSvg(clientX, clientY);
+		double[] layoutCoords = _controller.svgToLayout(svgCoords[0], svgCoords[1]);
+		double layoutX = layoutCoords[0];
+		double layoutY = layoutCoords[1];
+
+		double dx = layoutX - _startSvgX;
+		double dy = layoutY - _startSvgY;
+
+		if (_edge == null) {
+			// Move mode: apply delta to original position, then constrain.
+			double proposedX = _origX + dx;
+			double proposedY = _origY + dy;
+			double[] constrained = _controller.constrainMove(_controllerChild, proposedX, proposedY);
+			_cloneX = constrained[0];
+			_cloneY = constrained[1];
+			_cloneW = _origW;
+			_cloneH = _origH;
+		} else {
+			// Resize mode: move the dragged edge.
+			switch (_edge) {
+				case N: {
+					double proposedEdge = _origY + dy;
+					double constrained = _controller.constrainResize(_controllerChild, _edge, proposedEdge);
+					_cloneY = constrained;
+					_cloneH = (_origY + _origH) - constrained;
+					_cloneX = _origX;
+					_cloneW = _origW;
+					break;
+				}
+				case S: {
+					double proposedEdge = (_origY + _origH) + dy;
+					double constrained = _controller.constrainResize(_controllerChild, _edge, proposedEdge);
+					_cloneY = _origY;
+					_cloneH = constrained - _origY;
+					_cloneX = _origX;
+					_cloneW = _origW;
+					break;
+				}
+				case W: {
+					double proposedEdge = _origX + dx;
+					double constrained = _controller.constrainResize(_controllerChild, _edge, proposedEdge);
+					_cloneX = constrained;
+					_cloneW = (_origX + _origW) - constrained;
+					_cloneY = _origY;
+					_cloneH = _origH;
+					break;
+				}
+				case E: {
+					double proposedEdge = (_origX + _origW) + dx;
+					double constrained = _controller.constrainResize(_controllerChild, _edge, proposedEdge);
+					_cloneX = _origX;
+					_cloneW = constrained - _origX;
+					_cloneY = _origY;
+					_cloneH = _origH;
+					break;
+				}
+			}
+		}
+
+		updateCloneOverlay();
+	}
+
+	/**
+	 * Commits the drag on pointer-up.
+	 */
+	void commit() {
+		if (_panning) {
+			_controller.endPan();
+			_panning = false;
+			_controller = null;
+			return;
+		}
+		if (!_active) {
+			return;
+		}
+
+		DomGlobal.console.info("Drag committed: x=" + _cloneX + ", y=" + _cloneY
+			+ ", w=" + _cloneW + ", h=" + _cloneH);
+
+		_controller.commitDrag(_controllerChild, _cloneX, _cloneY, _cloneW, _cloneH);
+		cleanup();
+	}
+
+	/**
+	 * Cancels the drag (e.g., ESC key).
+	 */
+	void cancel() {
+		if (_panning) {
+			_panning = false;
+			_controller = null;
+			return;
+		}
+		if (!_active) {
+			return;
+		}
+
+		DomGlobal.console.info("Drag cancelled.");
+
+		_controller.cancelDrag(_controllerChild);
+		cleanup();
+	}
+
+	private void cleanup() {
+		// Un-dim the original.
+		if (_originalSvgElement != null) {
+			DOMUtil.removeClassName(_originalSvgElement.getElement(), DRAG_SOURCE_CLASS);
+			_originalSvgElement = null;
+		}
+
+		// Remove clone overlay.
+		removeCloneOverlay();
+
+		_active = false;
+		_controller = null;
+		_target = null;
+		_controllerChild = null;
+		_edge = null;
+		_dropAreas = null;
+	}
+
+	/**
+	 * Determines the appropriate CSS cursor for the current hover position.
+	 * Called on every pointermove when no drag is active.
+	 *
+	 * @return CSS cursor value: {@code "ew-resize"}, {@code "grab"}, or {@code "default"}.
+	 */
+	String detectCursor(double clientX, double clientY, elemental2.dom.Element targetElement) {
+		Box hitBox = findBoxFromElement(targetElement);
+		if (hitBox == null) {
+			return "default";
+		}
+
+		double[] svgCoords = clientToSvg(clientX, clientY);
+		double svgX = svgCoords[0];
+		double svgY = svgCoords[1];
+
+		// Find DragController parent.
+		Box controllerChild = null;
+		DragController controller = null;
+
+		Box current = hitBox;
+		while (current != null) {
+			Widget parent = current.getParent();
+			if (parent instanceof DragController) {
+				DragController candidate = (DragController) parent;
+				if (candidate.canMove(current) || candidate.canResize(current, DragEdge.E)
+					|| candidate.canResize(current, DragEdge.W)) {
+					controller = candidate;
+					controllerChild = current;
+					break;
+				}
+			}
+			if (parent instanceof Box) {
+				current = (Box) parent;
+			} else {
+				break;
+			}
+		}
+
+		if (controller == null) {
+			return "default";
+		}
+
+		double[] layoutCoords = controller.svgToLayout(svgX, svgY);
+		DragEdge edge = detectEdge(controllerChild, layoutCoords[0], layoutCoords[1]);
+		if (edge == DragEdge.W && controller.canResize(controllerChild, DragEdge.W)) {
+			return "ew-resize";
+		}
+		if (edge == DragEdge.E && controller.canResize(controllerChild, DragEdge.E)) {
+			return "ew-resize";
+		}
+		if (controller.canMove(controllerChild)) {
+			return "grab";
+		}
+		return "default";
+	}
+
+	/**
+	 * Detects which edge of the box is near the pointer, or {@code null} if the pointer is in
+	 * the interior.
+	 */
+	private DragEdge detectEdge(Box box, double svgX, double svgY) {
+		// Compute the absolute position of the box by walking up the parent tree
+		// and accumulating translate offsets. This is needed because box.getX()/getY()
+		// are relative to the parent.
+		double absX = 0;
+		double absY = 0;
+		Box current = box;
+		while (current != null) {
+			absX += current.getX();
+			absY += current.getY();
+			Widget parent = current.getParent();
+			if (parent instanceof Box) {
+				current = (Box) parent;
+			} else {
+				break;
+			}
+		}
+
+		double w = box.getWidth();
+		double h = box.getHeight();
+
+		double relX = svgX - absX;
+		double relY = svgY - absY;
+
+		// Scale the threshold to SVG units so it's always EDGE_THRESHOLD screen pixels,
+		// regardless of the current diagram zoom level.
+		double threshold = screenPixelsToSvg(EDGE_THRESHOLD);
+
+		// Check proximity to each edge.
+		boolean nearLeft = relX < threshold;
+		boolean nearRight = (w - relX) < threshold;
+		boolean nearTop = relY < threshold;
+		boolean nearBottom = (h - relY) < threshold;
+
+		// Prefer horizontal edges (E/W) for Gantt charts since resize is typically left/right.
+		if (nearLeft) {
+			return DragEdge.W;
+		}
+		if (nearRight) {
+			return DragEdge.E;
+		}
+		if (nearTop) {
+			return DragEdge.N;
+		}
+		if (nearBottom) {
+			return DragEdge.S;
+		}
+		return null;
+	}
+
+	/**
+	 * Walks up the DOM from the given element to find a Box. Each SVG element
+	 * that represents a model Widget has the Widget attached directly as a JS
+	 * property ({@code __tlWidget}) — no external map needed.
+	 */
+	private Box findBoxFromElement(elemental2.dom.Element element) {
+		elemental2.dom.Element current = element;
+		int depth = 0;
+		while (current != null) {
+			Object widget = FlowDiagramClientControl.getAttachedWidget(current);
+			DomGlobal.console.log("[DragDebug] walk[" + depth + "]: <" + current.tagName
+				+ "> id=" + current.id + " widget=" + (widget != null ? widget.getClass().getName() : "null"));
+			if (widget instanceof Box) {
+				return (Box) widget;
+			}
+			current = current.parentElement;
+			depth++;
+			if (depth > 30) break; // safety
+		}
+		return null;
+	}
+
+	/**
+	 * Converts client (screen) coordinates to SVG diagram coordinates using the
+	 * SVG element's CTM (current transformation matrix).
+	 */
+	/**
+	 * Converts a distance in screen pixels to SVG coordinate units using the CTM scale factor.
+	 */
+	private double screenPixelsToSvg(double screenPixels) {
+		OMSVGMatrix ctm = _svg.getScreenCTM();
+		if (ctm != null) {
+			// getA() is the horizontal scale factor (screen pixels per SVG unit).
+			return screenPixels / ctm.getA();
+		}
+		return screenPixels;
+	}
+
+	/**
+	 * Tries to start a viewport pan session. Walks the box parent tree to find a
+	 * DragController that supports pan.
+	 */
+	private boolean tryStartPan(Box hitBox, double svgX, double svgY) {
+		// Check hitBox itself (e.g. GanttLayout IS the DragController).
+		if (hitBox instanceof DragController && ((DragController) hitBox).canPan()) {
+			return startPanSession((DragController) hitBox, svgX, svgY);
+		}
+		// Walk up the parent tree.
+		Box current = hitBox;
+		while (current != null) {
+			Widget parent = current.getParent();
+			if (parent instanceof DragController && ((DragController) parent).canPan()) {
+				return startPanSession((DragController) parent, svgX, svgY);
+			}
+			if (parent instanceof Box) {
+				current = (Box) parent;
+			} else {
+				break;
+			}
+		}
+		return false;
+	}
+
+	private boolean startPanSession(DragController controller, double svgX, double svgY) {
+		_controller = controller;
+		_panning = true;
+		_startSvgX = svgX;
+		_startSvgY = svgY;
+		controller.startPan(svgX, svgY);
+		return true;
+	}
+
+	private native void nativeSetTranslate(String id, double tx, double ty) /*-{
+		var el = $doc.getElementById(id);
+		if (el) el.setAttribute('transform', 'translate(' + tx + ',' + ty + ')');
+	}-*/;
+
+	private double[] clientToSvg(double clientX, double clientY) {
+		OMSVGPoint point = _svg.createSVGPoint();
+		point.setX((float) clientX);
+		point.setY((float) clientY);
+
+		OMSVGMatrix ctm = _svg.getScreenCTM();
+		if (ctm != null) {
+			OMSVGMatrix inverse = ctm.inverse();
+			OMSVGPoint svgPoint = point.matrixTransform(inverse);
+			return new double[] { svgPoint.getX(), svgPoint.getY() };
+		}
+
+		// Fallback: use viewBox-based calculation.
+		return new double[] { clientX, clientY };
+	}
+
+	/**
+	 * Creates the clone overlay: a semi-transparent rectangle showing where the box would land.
+	 */
+	private void createCloneOverlay() {
+		_cloneGroup = _control._svgDoc.createSVGGElement();
+		_cloneGroup.setId(CLONE_GROUP_ID);
+		_cloneGroup.setAttribute("pointer-events", "none");
+		_svg.appendChild(_cloneGroup);
+
+		updateCloneOverlay();
+	}
+
+	/**
+	 * Updates the clone overlay rectangle to reflect the current clone position/size.
+	 */
+	private void updateCloneOverlay() {
+		if (_cloneGroup == null) {
+			return;
+		}
+
+		// Remove old children.
+		while (_cloneGroup.getFirstChild() != null) {
+			_cloneGroup.removeChild(_cloneGroup.getFirstChild());
+		}
+
+		// Convert layout coordinates to SVG visual coordinates for the overlay.
+		double[] visual = _controller.layoutToSvg(_cloneX, _cloneY);
+		org.vectomatic.dom.svg.OMSVGRectElement rect = _control._svgDoc.createSVGRectElement(
+			(float) visual[0], (float) visual[1], (float) _cloneW, (float) _cloneH, 2f, 2f);
+		rect.setAttribute("fill", "rgba(66,133,244,0.2)");
+		rect.setAttribute("stroke", "#4285F4");
+		rect.setAttribute("stroke-width", "1.5");
+		rect.setAttribute("stroke-dasharray", "4,3");
+		_cloneGroup.appendChild(rect);
+	}
+
+	/**
+	 * Removes the clone overlay from the SVG.
+	 */
+	private void removeCloneOverlay() {
+		if (_cloneGroup != null) {
+			_cloneGroup.getElement().removeFromParent();
+			_cloneGroup = null;
+		}
+	}
+}

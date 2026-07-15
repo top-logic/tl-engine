@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.basic.col.TupleFactory.Pair;
+import com.top_logic.graph.layouter.model.util.Pair;
 import com.top_logic.graph.layouter.LayoutDirection;
 import com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAligner;
 import com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAlignment;

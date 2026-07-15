@@ -16,6 +16,22 @@
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view-selfservice</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-configedit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-themes-core</artifactId>
     </dependency>
     <dependency>
@@ -64,6 +80,14 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-react-flow-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-dev-tools</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-monitoring</artifactId>
     </dependency>
     <dependency>
@@ -85,6 +109,15 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-chart-chartjs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react-chartjs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react-wysiwyg</artifactId>
+      <version>${tl.version}</version>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -132,6 +165,10 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-model-search-react</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-security-selfservice</artifactId>
     </dependency>
   </dependencies>
@@ -155,6 +192,45 @@
 					</execution>
 				</executions>
 			</plugin>
+
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <version>1.15.4</version>
+
+        <executions>
+          <execution>
+            <id>install-node</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+            <configuration>
+              <nodeVersion>v20.10.0</nodeVersion>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>npm-install</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>install</arguments>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>npm-build</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+	<window width="640px">
+		<title>
+			<en>New demo object</en>
+			<de>Neues Demo-Objekt</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<field attribute="name"/>
+			<field attribute="string"/>
+			<field attribute="multiLine"/>
+			<field attribute="html"/>
+			<field attribute="i18n"/>
+			<field attribute="i18nMultiline"/>
+			<field attribute="password"/>
+			<field attribute="count"/>
+			<field attribute="size"/>
+			<field attribute="amount"/>
+			<field attribute="price"/>
+			<field attribute="ratio"/>
+			<field attribute="active"/>
+			<field attribute="tri"/>
+			<field attribute="activeRadio"/>
+			<field attribute="activeSelect"/>
+			<field attribute="date"/>
+			<field attribute="dateTime"/>
+			<field attribute="time"/>
+			<field attribute="duration"/>
+			<field attribute="icon"/>
+			<field attribute="color"/>
+			<field attribute="country"/>
+			<field attribute="language"/>
+			<field attribute="timeZone"/>
+			<field attribute="url"/>
+			<field attribute="json"/>
+			<field attribute="image"/>
+			<field attribute="priority"/>
+			<field attribute="tags"/>
+			<field attribute="owner"/>
+			<field attribute="watchers"/>
+			<field attribute="related"/>
+			<commands>
+				<generic-command placement="BUTTON_BAR">
+					<label>
+						<en>Create</en>
+						<de>Anlegen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<execute-script function="obj -> $obj.copy(transient: false)"/>
+					</with-transaction>
+					<write-channel name="selection"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

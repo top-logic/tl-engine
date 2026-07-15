@@ -11,14 +11,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.top_logic.basic.col.Filter;
-import com.top_logic.basic.col.filter.FilterFactory;
+import java.util.function.Predicate;
 import com.top_logic.graph.layouter.model.LayoutGraph;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 import com.top_logic.graph.layouter.model.filter.FilterMarkedEdge;
 import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * A Finder to get the maximal acyclic subgraph for a given graph which uses the Strategy from
@@ -44,7 +42,7 @@ public class EadesLinSmythAcycleFinder extends AcycleFinder {
 
 	private Set<LayoutEdge> calculateConflictingEdges(Set<LayoutNode> toVisitedNodes, Set<LayoutEdge> markedEdges) {
 		if (!toVisitedNodes.isEmpty()) {
-			Filter<? super LayoutEdge> filterNotMarkedEdge = FilterFactory.not(new FilterMarkedEdge(markedEdges));
+			Predicate<LayoutEdge> filterNotMarkedEdge = new FilterMarkedEdge(markedEdges).negate();
 
 			LayoutNode maxUnbalancedNode = getMaximalUnbalancedNode(toVisitedNodes, filterNotMarkedEdge);
 
@@ -97,7 +95,7 @@ public class EadesLinSmythAcycleFinder extends AcycleFinder {
 		return 0;
 	}
 
-	private LayoutNode getMaximalUnbalancedNode(Set<LayoutNode> toVisitedNodes, Filter<? super LayoutEdge> filter) {
+	private LayoutNode getMaximalUnbalancedNode(Set<LayoutNode> toVisitedNodes, Predicate<LayoutEdge> filter) {
 		Iterator<LayoutNode> toVisitedNodesIterator = toVisitedNodes.iterator();
 		LayoutNode maxUnbalancedNode = toVisitedNodesIterator.next();
 
@@ -118,7 +116,7 @@ public class EadesLinSmythAcycleFinder extends AcycleFinder {
 		return maxUnbalancedNode;
 	}
 
-	private int getDifferenceOutgoingIncomingEdges(LayoutNode node, Filter<? super LayoutEdge> filter) {
+	private int getDifferenceOutgoingIncomingEdges(LayoutNode node, Predicate<LayoutEdge> filter) {
 		Set<LayoutEdge> outgoingEdges = new LinkedHashSet<>(node.outgoingEdges());
 		Set<LayoutEdge> incomingEdges = new LinkedHashSet<>(node.incomingEdges());
 
@@ -177,7 +175,7 @@ public class EadesLinSmythAcycleFinder extends AcycleFinder {
 		boolean isRemoved = edge.remove();
 
 		if (!isRemoved) {
-			throw new TopLogicException(I18NConstants.EDGE_COULD_NOT_BE_REMOVED);
+			throw new IllegalStateException("Edge could not be removed.");
 		}
 
 	}
@@ -188,7 +186,7 @@ public class EadesLinSmythAcycleFinder extends AcycleFinder {
 		if (reversedEdge != null) {
 			return reversedEdge;
 		} else {
-			throw new TopLogicException(I18NConstants.EDGE_COULD_NOT_BE_REVERSED);
+			throw new IllegalStateException("Edge could not be reversed.");
 		}
 	}
 

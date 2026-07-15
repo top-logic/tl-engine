@@ -1,0 +1,479 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view;
+
+import java.io.IOException;
+import java.util.List;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
+import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.react.resource.ClientResources;
+import com.top_logic.layout.react.theme.UIThemeService;
+import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.db2.UpdateChainLink;
+import com.top_logic.knowledge.service.db2.UpdateChainView;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.ForwardingReactContext;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ErrorSink;
+import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.react.protocol.RouteChangeEvent;
+import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.react.window.WindowEntry;
+import com.top_logic.layout.view.login.PendingSessionAction;
+import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.util.TLContextManager;
+import com.top_logic.util.TopLogicServlet;
+
+/**
+ * Servlet that bootstraps the view-based UI.
+ *
+ * <p>
+ * Loads a {@code .view.xml} file via {@link ViewLoader}, creates per-session control trees via
+ * {@link UIElement#createControl(ViewContext)}, and renders the initial HTML page using
+ * {@link TagWriter} and {@link IReactControl#write(TagWriter)}.
+ * </p>
+ *
+ * <p>
+ * The servlet is mapped to {@code /view/*}. The URL structure is:
+ * </p>
+ * <ul>
+ * <li>{@code /view/} - Serves the window-name bootstrap page</li>
+ * <li>{@code /view/<windowName>/} - Renders the default view for the given tab</li>
+ * <li>{@code /view/<windowName>/some.view.xml} - Renders a specific view for the given tab</li>
+ * </ul>
+ *
+ * <p>
+ * <b>Tab identity:</b> Each browser tab is identified by a unique window name. The browser's
+ * {@code window.name} property persists across page reloads (F5) but is empty in new or duplicated
+ * tabs. On the first request without a window name, the servlet serves a small JavaScript bootstrap
+ * page that checks or creates {@code window.name} and redirects to a URL that includes the window
+ * name as the first path segment. This ensures that each tab gets its own independent subsession.
+ * </p>
+ */
+public class ViewServlet extends TopLogicServlet {
+
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		HttpSession session = request.getSession(false);
+		if (session == null) {
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			return;
+		}
+
+		String pathInfo = request.getPathInfo();
+		String windowName = extractWindowName(pathInfo);
+
+		if (windowName == null) {
+			writeBootstrapPage(request, response);
+			return;
+		}
+
+		// Create or reuse the SubSession for this browser tab. On F5 (page reload) the
+		// window name is the same, so the existing SubSession is reused. In a new tab, a
+		// fresh SubSession is created. This mirrors the traditional layout system's
+		// ContentHandlersRegistry.startLogin() but without the SubsessionHandler /
+		// MainLayout setup that is specific to the traditional layout engine.
+		ensureSubSession(request, windowName);
+
+		// A login/logout initiated from the React UI swaps the underlying session here, on the
+		// reload request, rather than inside the command pipeline (see PendingSessionAction). This
+		// runs after the subsession context is installed, because the logout event fired by
+		// invalidateSession opens a knowledge-base transaction that requires a valid session
+		// context.
+		if (PendingSessionAction.apply(request, response)) {
+			return;
+		}
+
+		String routePath = extractRoutePath(pathInfo, windowName);
+
+		// Check if this is a programmatically opened window with a control provider.
+		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
+		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
+		WindowEntry windowEntry = windowRegistry.getWindow(windowName);
+		if (windowEntry != null) {
+			windowEntry.markConnected();
+			ReactControlProvider controlProvider = windowEntry.getControlProvider();
+			if (controlProvider != null) {
+				ReactContext baseContext = new DefaultReactContext(
+					request.getContextPath(), windowName, sseQueue, windowRegistry);
+				wireRouteManager(baseContext, sseQueue, routePath);
+				ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
+				ReactContext displayContext = withWindowErrorSink(baseContext, snackbar);
+				ReactControl content = controlProvider.createControl(
+					displayContext, windowEntry.getModel());
+				ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar));
+				windowEntry.setRootControl(rootControl);
+				sseQueue.setRootControl(rootControl);
+				renderPage(request, response, rootControl, displayContext);
+				return;
+			}
+		}
+
+		String viewPath = resolveViewPath(pathInfo);
+
+		ViewElement view;
+		try {
+			view = ViewLoader.getOrLoadView(viewPath);
+		} catch (ConfigurationException ex) {
+			Logger.error("Failed to load view: " + viewPath, ex, ViewServlet.class);
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+				"Failed to load view: " + ex.getMessage());
+			return;
+		}
+
+		ReactContext baseContext = new DefaultReactContext(
+			request.getContextPath(), windowName, sseQueue, windowRegistry);
+		wireRouteManager(baseContext, sseQueue, routePath);
+		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
+		ReactContext displayContext = withWindowErrorSink(baseContext, snackbar);
+		ViewContext viewContext = new DefaultViewContext(displayContext);
+
+		ReactControl content = new ReloadableControl(viewPath, viewContext,
+			(ReactControl) view.createControl(viewContext));
+		ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar));
+		sseQueue.setRootControl(rootControl);
+
+		renderPage(request, response, rootControl, displayContext);
+	}
+
+	/**
+	 * Creates the window-level snackbar that renders error and info notifications in windows whose
+	 * view does not embed an app shell (which carries its own snackbar), e.g. tool side-windows.
+	 */
+	private static ReactSnackbarControl createWindowSnackbar(ReactContext context) {
+		return new ReactSnackbarControl(context, "", ReactSnackbarControl.Variant.SUCCESS, () -> {
+			// No dismiss handling needed.
+		});
+	}
+
+	/**
+	 * Derives a context whose {@link ReactContext#getErrorSink()} routes to the window snackbar, so
+	 * command errors and action feedback are user-visible in every view window.
+	 */
+	private static ReactContext withWindowErrorSink(ReactContext context, ReactSnackbarControl snackbar) {
+		ErrorSink errorSink = snackbar.asErrorSink();
+		return new ForwardingReactContext(context) {
+			@Override
+			public ErrorSink getErrorSink() {
+				return errorSink;
+			}
+		};
+	}
+
+	/**
+	 * Creates a new {@link TLSubSessionContext} for the given window name, or reuses the existing
+	 * one (e.g. on page reload).
+	 *
+	 * <p>
+	 * The SubSession is stored in the {@link TLSessionContext} under the window name so that
+	 * {@link com.top_logic.layout.react.servlet.ReactServlet} can look it up when handling
+	 * subsequent commands and uploads.
+	 * </p>
+	 */
+	private void ensureSubSession(HttpServletRequest request, String windowName) {
+		TLSessionContext sessionContext = TLContextManager.getSession();
+		if (sessionContext == null) {
+			return;
+		}
+
+		TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
+		if (subSession == null) {
+			subSession = (TLSubSessionContext) ThreadContextManager.getManager().newSubSessionContext();
+			subSession.setSessionContext(sessionContext);
+			subSession = sessionContext.setIfAbsent(windowName, subSession);
+			subSession.setPerson(sessionContext.getOriginalUser());
+
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			HistoryManager hm = kb.getHistoryManager();
+			UpdateChainLink lastKBRevision = ((UpdateChainView) kb.getUpdateChain()).current();
+			subSession.updateSessionRevision(hm, lastKBRevision);
+		}
+
+		// Install on the current thread so that TLContext.getContext() is available during
+		// view rendering (e.g. for locale resolution).
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		displayContext.installSubSessionContext(subSession);
+	}
+
+	/**
+	 * Extracts the window name from the first path segment.
+	 *
+	 * <p>
+	 * Window names start with {@code v} followed by alphanumeric characters (generated client-side).
+	 * If the first path segment contains a dot, it is interpreted as a view file name rather than a
+	 * window name.
+	 * </p>
+	 *
+	 * @return the window name, or {@code null} if no valid window name is present.
+	 */
+	private String extractWindowName(String pathInfo) {
+		if (pathInfo == null || pathInfo.length() <= 1) {
+			return null;
+		}
+		// Remove leading slash.
+		String path = pathInfo.substring(1);
+		int slashIdx = path.indexOf('/');
+		String firstSegment = slashIdx >= 0 ? path.substring(0, slashIdx) : path;
+
+		if (firstSegment.isEmpty() || firstSegment.indexOf('.') >= 0) {
+			// Contains a dot -> view file name, not a window name.
+			return null;
+		}
+		if (firstSegment.charAt(0) != 'v') {
+			// Window names start with 'v'.
+			return null;
+		}
+
+		return firstSegment;
+	}
+
+	/**
+	 * Extracts the route path from the URL (everything after the window name segment, excluding the
+	 * view file name).
+	 *
+	 * <p>
+	 * For URL {@code /v1a2b3c/property/42}, returns {@code "property/42"}. The window name is
+	 * always the first segment, and the route is everything after it that is not a view file name
+	 * (i.e. does not end with {@code .view.xml}).
+	 * </p>
+	 *
+	 * @return The route path without leading slash, or {@code null} if no route is present.
+	 */
+	private String extractRoutePath(String pathInfo, String windowName) {
+		if (pathInfo == null || windowName == null) {
+			return null;
+		}
+		String normalized = pathInfo.startsWith("/") ? pathInfo.substring(1) : pathInfo;
+		if (!normalized.startsWith(windowName)) {
+			return null;
+		}
+		String afterWindow = normalized.substring(windowName.length());
+		if (afterWindow.startsWith("/")) {
+			afterWindow = afterWindow.substring(1);
+		}
+		if (afterWindow.isEmpty()) {
+			return null;
+		}
+		// If the remainder is a view file name, it is not a route.
+		if (afterWindow.endsWith(".view.xml")) {
+			return null;
+		}
+		return afterWindow;
+	}
+
+	/**
+	 * Wires the {@link RouteManager} from the given context to the SSE queue.
+	 *
+	 * <p>
+	 * Sets the pending URL on the route manager (for deep-link resolution) and installs a URL
+	 * change handler that pushes {@link RouteChangeEvent}s via SSE. Also stores the route manager
+	 * on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet} can look it
+	 * up for handling {@code navigateToRoute} commands.
+	 * </p>
+	 */
+	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String routePath) {
+		RouteManager routeManager = context.getRouteManager();
+		if (routeManager == null) {
+			return;
+		}
+
+		if (routePath != null && !routePath.isEmpty()) {
+			routeManager.setPendingUrl(routePath);
+		}
+
+		routeManager.setUrlChangeHandler((url, replace) -> {
+			RouteChangeEvent event = RouteChangeEvent.create()
+				.setUrl(url)
+				.setReplace(replace);
+			sseQueue.enqueue(event);
+		});
+
+		sseQueue.setRouteManager(routeManager);
+	}
+
+	/**
+	 * Resolves the view file path from the request's path info.
+	 *
+	 * <p>
+	 * Skips the first path segment (window name) and uses the rest as the view file name. When no
+	 * view file is specified, falls back to the default view configured in
+	 * {@link ViewConfig#getDefaultView()}.
+	 * </p>
+	 */
+	private String resolveViewPath(String pathInfo) {
+		// pathInfo is like /v1a2b3c/ or /v1a2b3c/app.view.xml or /v1a2b3c/config-editor
+		String path = pathInfo.substring(1);
+		int slashIdx = path.indexOf('/');
+		if (slashIdx >= 0 && slashIdx < path.length() - 1) {
+			String remainder = path.substring(slashIdx + 1);
+			// Only treat the remainder as a view file name if it ends with .view.xml.
+			// Everything else is a route path handled by the RouteManager.
+			if (!remainder.isEmpty() && remainder.endsWith(".view.xml")) {
+				return ViewLoader.VIEW_BASE_PATH + remainder;
+			}
+		}
+		String defaultView = ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView();
+		return ViewLoader.VIEW_BASE_PATH + defaultView;
+	}
+
+	/**
+	 * Serves a small HTML page that checks or creates the browser's {@code window.name} and
+	 * redirects to a URL containing the window name.
+	 *
+	 * <p>
+	 * {@code window.name} persists across page reloads (F5) within the same tab, but is empty in
+	 * newly opened or duplicated tabs. This ensures that each tab gets a unique window name, while
+	 * reloads reuse the existing one.
+	 * </p>
+	 */
+	private void writeBootstrapPage(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
+		response.setContentType("text/html");
+		response.setCharacterEncoding("UTF-8");
+
+		String basePath = request.getContextPath() + request.getServletPath();
+
+		TagWriter out = new TagWriter(response.getWriter());
+		out.writeContent(HTMLConstants.DOCTYPE_HTML);
+		out.beginBeginTag(HTMLConstants.HTML);
+		out.endBeginTag();
+
+		out.beginBeginTag(HTMLConstants.HEAD);
+		out.endBeginTag();
+		out.beginBeginTag(HTMLConstants.META);
+		out.writeAttribute("charset", "UTF-8");
+		out.endEmptyTag();
+		out.endTag(HTMLConstants.HEAD);
+
+		out.beginBeginTag(HTMLConstants.BODY);
+		out.endBeginTag();
+
+		out.beginScript();
+		out.writeScript("(function() {");
+		out.writeScript("var wn = window.name;");
+		out.writeScript("if (!wn || wn.charAt(0) !== 'v') {");
+		out.writeScript("var arr = new Uint8Array(8);");
+		out.writeScript("crypto.getRandomValues(arr);");
+		out.writeScript("wn = 'v';");
+		out.writeScript("for (var i = 0; i < arr.length; i++) {");
+		out.writeScript("wn += arr[i].toString(16).padStart(2, '0');");
+		out.writeScript("}");
+		out.writeScript("window.name = wn;");
+		out.writeScript("}");
+		out.writeScript("var base = ");
+		out.writeJsString(basePath);
+		out.writeScript(";");
+		out.writeScript("var routePath = location.pathname.substring(base.length);");
+		out.writeScript("if (routePath.charAt(0) !== '/') routePath = '/' + routePath;");
+		out.writeScript("var suffix = location.search + location.hash;");
+		out.writeScript("window.location.replace(base + '/' + encodeURIComponent(wn) + routePath + suffix);");
+		out.writeScript("})();");
+		out.endScript();
+
+		out.endTag(HTMLConstants.BODY);
+		out.endTag(HTMLConstants.HTML);
+
+		out.flushBuffer();
+	}
+
+	/**
+	 * Renders the HTML page with the root control using the {@link IReactControl#write} path.
+	 */
+	private void renderPage(HttpServletRequest request, HttpServletResponse response,
+			IReactControl rootControl, ReactContext context) throws IOException {
+		response.setContentType("text/html");
+		response.setCharacterEncoding("UTF-8");
+
+		String contextPath = context.getContextPath();
+
+		TagWriter out = new TagWriter(response.getWriter());
+
+		UIThemeService themes = UIThemeService.getInstance();
+
+		out.writeContent(HTMLConstants.DOCTYPE_HTML);
+		out.beginBeginTag(HTMLConstants.HTML);
+		out.writeAttribute("lang", "en");
+		out.writeAttribute("data-theme", themes.getActiveThemeId());
+		out.endBeginTag();
+
+		out.beginBeginTag(HTMLConstants.HEAD);
+		out.endBeginTag();
+		out.beginBeginTag(HTMLConstants.META);
+		out.writeAttribute("charset", "UTF-8");
+		out.endEmptyTag();
+		out.beginBeginTag(HTMLConstants.META);
+		out.writeAttribute("name", "viewport");
+		out.writeAttribute("content", "width=device-width, initial-scale=1.0");
+		out.endEmptyTag();
+		out.beginBeginTag(HTMLConstants.TITLE);
+		out.endBeginTag();
+		out.writeText("TopLogic View");
+		out.endTag(HTMLConstants.TITLE);
+		ClientResources clientResources = ClientResources.getInstance();
+		// Emit the registered client scripts: classic scripts, the import map, then ES module scripts.
+		clientResources.writeScriptRefs(out, contextPath);
+		// Emit the design tokens of every registered theme as data-theme scoped CSS custom
+		// properties. The active theme is selected via the data-theme attribute on <html>.
+		themes.writeThemeStyles(out);
+		// Append the React stylesheets (fonts, icons, component CSS).
+		clientResources.writeStyleRefs(out, contextPath);
+		out.endTag(HTMLConstants.HEAD);
+
+		out.beginBeginTag(HTMLConstants.BODY);
+		out.writeAttribute("data-window-name", context.getWindowName());
+		out.writeAttribute("data-context-path", context.getContextPath());
+		out.endBeginTag();
+
+		// Delegate rendering to the control itself. ReactControl.write() outputs a
+		// declarative div with data-react-module/data-react-state attributes.
+		// The static tl-react-bridge script discovers and mounts these elements.
+		rootControl.write(out);
+
+		out.endTag(HTMLConstants.BODY);
+		out.endTag(HTMLConstants.HTML);
+
+		out.flushBuffer();
+	}
+
+	@Override
+	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		super.handleNoSession(request, response);
+
+		ThreadContextManager.inSystemInteraction(TopLogicServlet.class, () -> {
+			Person anonymous = PersonManager.getManager().getAnonymous();
+			SessionService.getInstance().loginUser(request, response, anonymous);
+		});
+
+		redirectToStartPage(request, response);
+	}
+
+}

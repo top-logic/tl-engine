@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Maintenance mode: show whether the system runs normally, is about to enter maintenance mode, or is in
+	maintenance mode, and switch between those states. Entering maintenance mode logs out all users that
+	are not in an allowed group; a delay schedules the switch and informs logged-in users first. The
+	MaintenanceStatusView renders the live status and seeds the state channel with a NORMAL / PENDING /
+	ACTIVE token; the commands gate on that token via the reusable <visible-if> rule so Enter (while
+	normal), Abort (while scheduled) and Leave (while active) are mutually exclusive. Enter collects the
+	delay and message in a dialog bound to a transient MaintenanceMode model; the other commands run the
+	MaintenanceModeAction directly. Each command rewrites the state channel, which re-renders the status.
+	A titled <panel> is used (not the chrome-less <full-page>) because the view carries toolbar commands.
+-->
+<view>
+	<channels>
+		<channel name="state"/>
+	</channels>
+	<panel fill="true">
+		<title>
+			<en>Maintenance mode</en>
+			<de>Wartungsmodus</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-cone-striped"
+				input="state"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Enter maintenance mode</en>
+					<de>Wartungsmodus aktivieren</de>
+				</label>
+				<executability>
+					<visible-if expr="state -> $state == 'NORMAL'"/>
+				</executability>
+				<execute-script function="x -> new(`tl.admin:MaintenanceMode`, transient: true)"/>
+				<open-dialog
+					bind-input-to="model"
+					dialog-view="admin/system/enter-maintenance.view.xml"
+				>
+					<bind
+						channel="state"
+						to="state"
+					/>
+				</open-dialog>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-x-circle"
+				input="state"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Abort</en>
+					<de>Abbrechen</de>
+				</label>
+				<executability>
+					<visible-if expr="state -> $state == 'PENDING'"/>
+				</executability>
+				<confirm expr="x -> #('Abort entering maintenance mode?'@en, 'Aktivierung des Wartungsmodus abbrechen?'@de)"/>
+				<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
+					mode="ABORT"
+				/>
+				<write-channel name="state"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-play-circle"
+				input="state"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Leave maintenance mode</en>
+					<de>Wartungsmodus beenden</de>
+				</label>
+				<executability>
+					<visible-if expr="state -> $state == 'ACTIVE'"/>
+				</executability>
+				<confirm expr="x -> #('Leave maintenance mode and return to normal operation?'@en, 'Wartungsmodus beenden und zum Normalbetrieb zurückkehren?'@de)"/>
+				<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
+					mode="LEAVE"
+				/>
+				<write-channel name="state"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
+					mode="REFRESH"
+				/>
+				<write-channel name="state"/>
+			</generic-command>
+		</commands>
+		<child class="com.top_logic.layout.view.admin.system.MaintenanceStatusView"
+			state="state"
+		/>
+	</panel>
+</view>

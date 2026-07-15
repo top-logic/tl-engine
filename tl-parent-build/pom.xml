@@ -160,6 +160,38 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<executions>
+					<!--
+						The TLDoclet (above) regenerates src/main/java/META-INF/messages_*.properties
+						during prepare-package - AFTER maven-resources-plugin already copied them to
+						target/classes during process-resources. Re-copy the freshly generated files so
+						the jar (packaged from target/classes) contains the up-to-date messages on a
+						single build. Declared after the doclet and translate plugins so it runs last
+						in prepare-package.
+					-->
+					<execution>
+						<id>copy-regenerated-messages</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.outputDirectory}/META-INF</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/src/main/java/META-INF</directory>
+									<includes>
+										<include>messages*.properties</include>
+									</includes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 </project>

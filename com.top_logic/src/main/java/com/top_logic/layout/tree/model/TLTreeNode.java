@@ -65,8 +65,13 @@ public interface TLTreeNode<N extends TLTreeNode<N>> extends TypedAnnotatable {
 	
 	/**
 	 * This node's business object.
-	 * 
+	 *
 	 * @see #get(Property) for type-safe and more general annotations.
 	 */
 	public Object getBusinessObject();
+
+	/**
+	 * The depth of this node in the tree (0 for root).
+	 */
+	public int getDepth();
 }

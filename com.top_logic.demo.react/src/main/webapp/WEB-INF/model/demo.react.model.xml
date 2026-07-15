@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="demo.react">
+			<enum name="Priority">
+				<classifier name="low"/>
+				<classifier name="medium"/>
+				<classifier name="high"/>
+			</enum>
+			<class name="Demo">
+				<annotations>
+					<main-properties properties="name, string, priority, active, date, owner"/>
+				</annotations>
+				<attributes>
+					<!-- Text -->
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="string"
+						type="tl.core:String"
+					/>
+					<property name="multiLine"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<multi-line rows="4"/>
+						</annotations>
+					</property>
+					<property name="html"
+						type="tl.model.wysiwyg:Html"
+					/>
+					<property name="i18n"
+						type="tl.model.i18n:I18NString"
+					/>
+					<property name="i18nMultiline"
+						type="tl.model.i18n:I18NString"
+					>
+						<annotations>
+							<multi-line rows="4"/>
+						</annotations>
+					</property>
+					<property name="password"
+						type="tl.core:String"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+							</input-control>
+						</annotations>
+					</property>
+
+					<!-- Source code -->
+					<property name="xmlSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="XML"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<property name="jsonSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="JSON"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<property name="cssSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="CSS"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<property name="javascriptSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="JAVASCRIPT"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<property name="htmlSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="HTML"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<property name="markdownSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="MARKDOWN"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<property name="plainSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="PLAIN"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+
+					<!-- Numbers -->
+					<property name="count"
+						type="tl.core:Integer"
+					/>
+					<property name="size"
+						type="tl.core:Long"
+					/>
+					<property name="amount"
+						type="tl.core:Double"
+					/>
+					<property name="price"
+						type="tl.core:Double"
+					>
+						<annotations>
+							<format>
+								<decimal pattern="#,##0.00"/>
+							</format>
+						</annotations>
+					</property>
+					<property name="ratio"
+						type="tl.core:Double"
+					>
+						<annotations>
+							<value-range
+								max="100.0"
+								min="0.0"
+							/>
+						</annotations>
+					</property>
+
+					<!-- Boolean / Tristate -->
+					<property name="active"
+						type="tl.core:Boolean"
+					/>
+					<property name="tri"
+						type="tl.core:Tristate"
+					/>
+					<property name="activeRadio"
+						type="tl.core:Boolean"
+					>
+						<annotations>
+							<boolean-display presentation="radio"/>
+						</annotations>
+					</property>
+					<property name="activeSelect"
+						type="tl.core:Boolean"
+					>
+						<annotations>
+							<boolean-display presentation="select"/>
+						</annotations>
+					</property>
+
+					<!-- Date / Time -->
+					<property name="date"
+						type="tl.core:Date"
+					/>
+					<property name="dateTime"
+						type="tl.core:DateTime"
+					/>
+					<property name="time"
+						type="tl.core:Time"
+					/>
+					<property name="duration"
+						type="tl.core:Duration"
+					/>
+
+					<!-- Visual / complex value types -->
+					<property name="icon"
+						type="tl.core:Icon"
+					/>
+					<property name="color"
+						type="tl.util:Color"
+					/>
+					<property name="country"
+						type="tl.util:Country"
+					/>
+					<property name="language"
+						type="tl.util:Language"
+					/>
+					<property name="timeZone"
+						type="tl.util:TimeZone"
+					/>
+					<property name="url"
+						type="tl.util:URL"
+					/>
+					<property name="json"
+						type="tl.util:JSON"
+					/>
+					<property name="image"
+						type="tl.core:Binary"
+					/>
+
+					<!-- Enumeration / classification -->
+					<reference name="priority"
+						kind="forwards"
+						type="Priority"
+					>
+						<annotations>
+							<default-value>
+								<classifier value="medium"/>
+							</default-value>
+						</annotations>
+					</reference>
+					<reference name="tags"
+						kind="forwards"
+						multiple="true"
+						type="Priority"
+					>
+						<annotations>
+							<classification-display value="checklist"/>
+						</annotations>
+					</reference>
+
+					<!-- References -->
+					<reference name="owner"
+						kind="forwards"
+						type="tl.accounts:Person"
+					/>
+					<reference name="watchers"
+						kind="forwards"
+						multiple="true"
+						type="tl.accounts:Person"
+					/>
+					<reference name="related"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="tl.accounts:Person"
+					/>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>

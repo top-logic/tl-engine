@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.layout.view.form.FieldControlService$Module"
+						value="true"
+					/>
+					<module key="com.top_logic.layout.view.table.ColumnProviderService$Module"
+						value="true"
+					/>
+					<module key="com.top_logic.layout.view.security.SecurityScopeService$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.view.table.ColumnProviderService">
+			<instance class="com.top_logic.layout.view.table.ColumnProviderService">
+				<providers>
+					<!--
+						Built-in defaults (enumeration / number / date / boolean / string / label)
+						are derived from the attribute type; register app-specific type providers here.
+					-->
+				</providers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.view.form.FieldControlService">
+			<instance class="com.top_logic.layout.view.form.FieldControlService">
+				<providers>
+					<provider type="tl.core:Icon">
+						<impl class="com.top_logic.layout.view.form.IconSelectControlProvider"/>
+					</provider>
+					<provider type="tl.model.i18n:I18NString">
+						<impl class="com.top_logic.layout.view.form.I18NStringControlProvider"/>
+					</provider>
+					<provider type="tl.util:Color">
+						<impl class="com.top_logic.layout.view.form.ColorInputControlProvider"/>
+					</provider>
+					<provider type="tl.util:Country">
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider">
+							<option-provider class="com.top_logic.element.meta.complex.CountryOptionProvider"/>
+						</impl>
+					</provider>
+					<provider type="tl.util:Language">
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider">
+							<option-provider class="com.top_logic.element.meta.complex.LanguageOptionProvider"/>
+						</impl>
+					</provider>
+					<provider type="tl.util:TimeZone">
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider">
+							<option-provider class="com.top_logic.element.meta.complex.TimeZoneOptionProvider"/>
+						</impl>
+					</provider>
+				</providers>
+			</instance>
+		</config>
+
+		<!--
+			Security scope for the reusable account / group / role administration views
+			(WEB-INF/views/admin/admin.view.xml). Defined here in the framework so any app
+			that includes this module inherits it and can gate an Administration entry with
+			<access-control scope="administration"/> out of the box. With no roles assigned,
+			the scope is visible only to the technical super user (root); other users are
+			granted via the security administration UI. Apps may add further scopes by
+			extending this service's <scopes> list.
+		-->
+		<config service-class="com.top_logic.layout.view.security.SecurityScopeService">
+			<instance class="com.top_logic.layout.view.security.SecurityScopeService">
+				<scopes>
+					<scope id="administration">
+						<label>
+							<en>Administration</en>
+							<de>Administration</de>
+						</label>
+					</scope>
+				</scopes>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
+			<startPage>/view/</startPage>
+			<loginPage>/view/</loginPage>
+			<loginRetrySSO>/view/</loginRetrySSO>
+			<logoutPage>/view/</logoutPage>
+		</config>
+	</configs>
+</application>

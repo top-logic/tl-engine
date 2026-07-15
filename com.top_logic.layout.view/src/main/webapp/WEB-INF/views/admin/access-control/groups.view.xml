@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selectedGroup"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="40"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Groups</en>
+						<de>Gruppen</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`tl.accounts:Group`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="admin/access-control/create-group.view.xml"
+							>
+								<bind
+									channel="selection"
+									to="selectedGroup"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-trash"
+							input="selectedGroup"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="obj -> $obj.delete()"/>
+							</with-transaction>
+							<write-channel name="selectedGroup"/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="tl.accounts:Group"
+						selection="selectedGroup"
+						types="tl.accounts:Group"
+					>
+						<columns>
+							<column attribute="name"/>
+						</columns>
+						<rows>all(`tl.accounts:Group`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="60"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Group</en>
+						<de>Gruppe</de>
+					</title>
+					<form input="selectedGroup">
+						<field attribute="name"/>
+						<field attribute="isSystem"/>
+						<field attribute="defaultGroup"/>
+						<field attribute="members"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

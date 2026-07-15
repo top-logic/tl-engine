@@ -1,0 +1,328 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.control.form;
+
+import java.util.Map;
+import java.util.Objects;
+
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.form.model.FormFieldAdapter;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.util.Resources;
+
+/**
+ * A form field control that renders via a React component.
+ *
+ * <p>
+ * Extends {@link ReactControl} so it can be composed with other React controls (e.g. as a child of
+ * {@link com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl}). Listens to
+ * {@link FieldModel} property changes and delivers incremental patches via SSE.
+ * </p>
+ *
+ * <p>
+ * On initial render, the full field state (value, editable, mandatory, errors, label, tooltip) is
+ * sent as JSON. Subsequent field changes are delivered as incremental patches via SSE.
+ * </p>
+ */
+public class ReactFormFieldControl extends ReactControl {
+
+	/** Command sent by the client when the field value changes. */
+	public static final String CMD_VALUE_CHANGED = "valueChanged";
+
+	/** State key for the field value. */
+	protected static final String VALUE = "value";
+
+	/** State key for the placeholder shown while the field is empty (edit mode). */
+	protected static final String PLACEHOLDER = "placeholder";
+
+	/** State key for whether the text field renders as a multi-line text area. */
+	protected static final String MULTILINE = "multiline";
+
+	/** State key for the number of visible rows of a multi-line text area. */
+	protected static final String ROWS = "rows";
+
+	/** State key for whether the field is editable. */
+	protected static final String EDITABLE = "editable";
+
+	/** State key for whether the field is mandatory. */
+	protected static final String MANDATORY = "mandatory";
+
+	/** State key for whether {@code null} is a legal value for the field. */
+	protected static final String NULLABLE = "nullable";
+
+	/** State key for whether the field has a validation error. */
+	protected static final String HAS_ERROR = "hasError";
+
+	/** State key for the error message text. */
+	protected static final String ERROR_MESSAGE = "errorMessage";
+
+	/** State key for whether the field has validation warnings. */
+	protected static final String HAS_WARNINGS = "hasWarnings";
+
+	/** State key for the field label. */
+	protected static final String LABEL = "label";
+
+	/** State key for the tooltip text. */
+	protected static final String TOOLTIP = "tooltip";
+
+	/** State key for whether the control is hidden on the client. */
+	protected static final String HIDDEN = "hidden";
+
+	private final FieldModel _fieldModel;
+
+	private FieldModelListener _modelListener;
+
+	/**
+	 * While handling a client {@code valueChanged}, the value the client sent — so the model
+	 * listener can recognize (and skip) the redundant echo of exactly that value back to the client
+	 * that already holds it optimistically. {@code null} when not applying a client value.
+	 */
+	private Object _clientValue;
+
+	private boolean _applyingClientValue;
+
+	/**
+	 * Creates a new {@link ReactFormFieldControl}.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param model
+	 *        The field model.
+	 * @param reactModule
+	 *        The React module identifier (e.g. "TLTextInput").
+	 */
+	protected ReactFormFieldControl(ReactContext context, FieldModel model, String reactModule) {
+		super(context, model, reactModule);
+		_fieldModel = model;
+		initFieldState();
+		registerModelListeners();
+	}
+
+	@Override
+	protected void onCleanup() {
+		if (_modelListener != null) {
+			_fieldModel.removeListener(_modelListener);
+			_modelListener = null;
+		}
+	}
+
+	/**
+	 * Populates the initial React state from the {@link FieldModel}.
+	 *
+	 * <p>
+	 * Called from the constructor before the control is attached to any SSE queue, so all
+	 * {@link #putState} calls simply store values in the pre-render state map.
+	 * </p>
+	 */
+	private void initFieldState() {
+		putState(VALUE, _fieldModel.getValue());
+		setEditable(_fieldModel.isEditable());
+		setMandatory(_fieldModel.isMandatory());
+		putState(NULLABLE, _fieldModel.isNullable());
+		setHasError(_fieldModel.hasError());
+		setHasWarnings(_fieldModel.hasWarnings());
+		if (_fieldModel.hasError()) {
+			setErrorMessage(Resources.getInstance().getString(_fieldModel.getError()));
+		}
+		// Display properties from FormFieldAdapter.
+		if (_fieldModel instanceof FormFieldAdapter) {
+			FormFieldAdapter adapter = (FormFieldAdapter) _fieldModel;
+			putState(LABEL, adapter.getLabel());
+			putState(TOOLTIP, adapter.getTooltip());
+			putState(HIDDEN, Boolean.valueOf(!adapter.isVisible()));
+		}
+	}
+
+	/**
+	 * Registers a {@link FieldModelListener} that pushes incremental state patches to the React
+	 * client whenever the model changes.
+	 */
+	private void registerModelListeners() {
+		_modelListener = new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				if (_applyingClientValue && Objects.equals(newValue, _clientValue)) {
+					// The client already holds exactly this value (it updated optimistically before
+					// sending). Echoing it back races with continued typing and corrupts the input
+					// (a late echo of an earlier keystroke overwrites newer characters). A server
+					// coercion or a dependent change (newValue != the sent value) is still echoed.
+					// The server-side state is still updated so later renders and agent
+					// observations see the current value — only the patch event is skipped.
+					updateStateSilently(() -> handleModelValueChanged(source, oldValue, newValue));
+					return;
+				}
+				handleModelValueChanged(source, oldValue, newValue);
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel source, boolean editable) {
+				setEditable(editable);
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel source) {
+				setHasError(source.hasError());
+				setHasWarnings(source.hasWarnings());
+				if (source.hasError()) {
+					setErrorMessage(Resources.getInstance().getString(source.getError()));
+				} else {
+					setErrorMessage(null);
+				}
+				setMandatory(source.isMandatory());
+			}
+		};
+		_fieldModel.addListener(_modelListener);
+	}
+
+	/**
+	 * Called when the model value changes. Subclasses can override to customize value change
+	 * handling (e.g., to send option descriptors instead of raw values).
+	 *
+	 * @param source
+	 *        The field model whose value changed.
+	 * @param oldValue
+	 *        The previous value.
+	 * @param newValue
+	 *        The new value.
+	 */
+	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
+		putState(VALUE, newValue);
+	}
+
+	/**
+	 * Returns the field model.
+	 */
+	public FieldModel getFieldModel() {
+		return _fieldModel;
+	}
+
+	/**
+	 * Updates the editable state.
+	 */
+	protected void setEditable(boolean editable) {
+		putState(EDITABLE, editable);
+	}
+
+	/**
+	 * Updates the placeholder shown while the field is empty (edit mode).
+	 */
+	protected void setPlaceholder(String placeholder) {
+		putState(PLACEHOLDER, placeholder);
+	}
+
+	/**
+	 * Renders the field as a multi-line text area with the given number of visible rows.
+	 *
+	 * @param rows
+	 *        The number of visible text rows.
+	 */
+	public void setMultiline(int rows) {
+		putState(MULTILINE, Boolean.TRUE);
+		putState(ROWS, Integer.valueOf(rows));
+	}
+
+	/**
+	 * Updates the mandatory state.
+	 */
+	protected void setMandatory(boolean mandatory) {
+		putState(MANDATORY, mandatory);
+	}
+
+	/**
+	 * Updates the error flag.
+	 */
+	protected void setHasError(boolean hasError) {
+		putState(HAS_ERROR, hasError);
+	}
+
+	/**
+	 * Updates the warnings flag.
+	 */
+	protected void setHasWarnings(boolean hasWarnings) {
+		putState(HAS_WARNINGS, hasWarnings);
+	}
+
+	/**
+	 * Updates the error message.
+	 */
+	protected void setErrorMessage(String message) {
+		putState(ERROR_MESSAGE, message);
+	}
+
+	/**
+	 * Handles value changes from the React client.
+	 *
+	 * <p>
+	 * The value is typed as {@link String} here, which fits text-like fields. A field whose value is
+	 * a different JSON type (e.g. a checkbox's {@code boolean}) overrides this with its own typed
+	 * arguments, since the field value is polymorphic and cannot be one shared type.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_VALUE_CHANGED)
+	void handleValueChanged(FieldValueArguments args) {
+		applyClientValue(parseClientValue(args.getValue()));
+	}
+
+	/**
+	 * Applies a {@code valueChanged} value to the field model, suppressing the redundant echo of
+	 * exactly this value back to the client that already holds it (see the model listener in
+	 * {@link #registerModelListeners()}). Subclasses that handle {@code valueChanged} with their own
+	 * typed arguments call this so they share the same anti-echo behavior.
+	 *
+	 * <p>
+	 * The suppressed echo is recorded as a silent state change; when the command was dispatched
+	 * programmatically (script replay, headless agent) rather than by the browser, the framework
+	 * resends the control state after the command, so the value still reaches the client — see
+	 * {@link #executeCommand(String, java.util.Map)}.
+	 * </p>
+	 *
+	 * @param value
+	 *        The parsed value to set.
+	 */
+	protected void applyClientValue(Object value) {
+		_clientValue = value;
+		_applyingClientValue = true;
+		try {
+			_fieldModel.setValue(value);
+		} finally {
+			_applyingClientValue = false;
+			_clientValue = null;
+		}
+	}
+
+	/**
+	 * Records consecutive {@link #CMD_VALUE_CHANGED} edits of this field as a single coalescing step
+	 * (the latest value supersedes the prior ones), so an uninterrupted edit is one recorded value —
+	 * the successor to the legacy {@code FormInput} — rather than one step per keystroke.
+	 */
+	@Override
+	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
+		if (CMD_VALUE_CHANGED.equals(command)) {
+			return new RecordedCommand(commandItem(command, arguments), true);
+		}
+		return super.recordCommand(command, arguments);
+	}
+
+	/**
+	 * Parses the raw client value into the appropriate typed value.
+	 *
+	 * <p>
+	 * Subclasses override for type-specific parsing. Default returns raw value.
+	 * </p>
+	 *
+	 * @param rawValue
+	 *        The value sent by the React client (typically a JSON-typed value).
+	 * @return The parsed value suitable for the field model.
+	 */
+	protected Object parseClientValue(Object rawValue) {
+		return rawValue;
+	}
+
+}

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<view>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="30"
+				unit="%"
+			>
+				<inset>
+				<card
+					variant="elevated"
+				>
+					<title>
+						<en>Navigation</en>
+						<de>Navigation</de>
+					</title>
+					<button>
+						<action class="com.top_logic.demo.view.command.DemoCommand">
+							<label>
+								<en>Item 1</en>
+								<de>Element 1</de>
+							</label>
+						</action>
+					</button>
+				</card>
+				</inset>
+			</pane>
+			<pane
+				size="70"
+				unit="%"
+			>
+				<inset>
+				<card>
+					<title>
+						<en>Content Area</en>
+						<de>Inhaltsbereich</de>
+					</title>
+					<demo-counter>
+						<label>
+							<en>Content</en>
+							<de>Inhalt</de>
+						</label>
+					</demo-counter>
+				</card>
+				</inset>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

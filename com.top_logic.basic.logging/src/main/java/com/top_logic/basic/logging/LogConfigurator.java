@@ -6,7 +6,10 @@
 package com.top_logic.basic.logging;
 
 import java.net.URL;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
 
@@ -125,6 +128,56 @@ public abstract class LogConfigurator {
 
 	public void setExceptionLevel(String level) {
 		exceptionLevel = Level.valueOf(level);
+	}
+
+	/**
+	 * The configured loggers mapped to their level name (the root logger under the empty name).
+	 *
+	 * <p>
+	 * Returns an empty map when the logging subsystem does not support inspecting logger levels.
+	 * </p>
+	 */
+	public Map<String, String> getLoggerLevels() {
+		return Collections.emptyMap();
+	}
+
+	/**
+	 * Sets the level of the given logger at runtime.
+	 *
+	 * <p>
+	 * Does nothing when the logging subsystem does not support changing logger levels.
+	 * </p>
+	 *
+	 * @param loggerName
+	 *        The name of the logger to change; the empty {@link String} addresses the root logger.
+	 * @param level
+	 *        The new level name, one of {@link #getLevelNames()}.
+	 */
+	public void setLoggerLevel(String loggerName, String level) {
+		// Not supported by the default logging subsystem.
+	}
+
+	/**
+	 * Removes the explicit level configuration of the given logger, so that it inherits its level from
+	 * its parent again.
+	 *
+	 * <p>
+	 * Does nothing for the root logger or when the logging subsystem does not support changing logger
+	 * levels.
+	 * </p>
+	 *
+	 * @param loggerName
+	 *        The name of the logger whose explicit level is removed.
+	 */
+	public void removeLoggerLevel(String loggerName) {
+		// Not supported by the default logging subsystem.
+	}
+
+	/**
+	 * The selectable level names, strongest first.
+	 */
+	public List<String> getLevelNames() {
+		return List.of("OFF", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL");
 	}
 
 	public final boolean isTraceMessages() {

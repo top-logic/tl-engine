@@ -31,7 +31,7 @@ public class TestCssClassUpdate extends ActionTestcase {
 	public void testSeparatedClassUpdate() throws Exception {
 		AbstractCssClassUpdate update = new AbstractCssClassUpdate(ID) {
 			@Override
-			protected void writeCssClassContent(DisplayContext context, Appendable out) throws IOException {
+			public void writeCssClassContent(DisplayContext context, Appendable out) throws IOException {
 				out.append("foo");
 				out.append("bar");
 			}

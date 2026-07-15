@@ -5,6 +5,8 @@
  */
 package com.top_logic.basic.graph;
 
+import com.top_logic.basic.shared.graph.ExplicitGraph;
+
 /**
  * Graph structure that can associate an user object to each node and edge.
  *

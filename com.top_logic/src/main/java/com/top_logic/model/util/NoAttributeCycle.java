@@ -26,8 +26,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
@@ -170,7 +170,7 @@ public class NoAttributeCycle<C extends NoAttributeCycle.Config<?>> extends Abst
 	 * @param initial
 	 *        Whether it is the first step in the attribute chain, i.e. the given item is the item
 	 *        given in {@link #check(TLObject, TLStructuredTypePart)} or
-	 *        {@link #traceDependencies(TLObject, TLStructuredTypePart, Sink, FormContext)}. In this
+	 *        {@link #traceDependencies(TLObject, TLStructuredTypePart, Sink, OverlayLookup)}. In this
 	 *        case only the given attribute is used, additional references are <b>not</b> navigated.
 	 */
 	private Set<AttributeValue> determineValues(TLObject item, TLStructuredTypePart attribute, boolean initial) {
@@ -227,7 +227,7 @@ public class NoAttributeCycle<C extends NoAttributeCycle.Config<?>> extends Abst
 
 	@Override
 	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
-			FormContext formContext) {
+			OverlayLookup overlays) {
 		Set<TLObject> seen = new HashSet<>();
 		List<TLObject> remaining = new ArrayList<>();
 		remaining.add(object);

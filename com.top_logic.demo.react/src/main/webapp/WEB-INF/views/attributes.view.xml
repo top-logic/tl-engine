@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selected"/>
+	</channels>
+	<tab-bar active-tab="table">
+		<tabs>
+			<tab id="table"
+				icon="css:bi bi-table"
+			>
+				<label>
+					<en>Table</en>
+					<de>Tabelle</de>
+				</label>
+				<panel>
+					<title>
+						<en>Demo objects</en>
+						<de>Demo-Objekte</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-magic"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Generate samples</en>
+								<de>Beispiele erzeugen</de>
+							</label>
+							<with-transaction>
+								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, 'Sample ' + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o; })"/>
+							</with-transaction>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`demo.react:Demo`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="attributes-create.view.xml"
+							>
+								<bind
+									channel="selection"
+									to="selected"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-pencil"
+							input="selected"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Edit</en>
+								<de>Bearbeiten</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<open-dialog
+								bind-input-to="model"
+								close-on-backdrop="true"
+								dialog-view="attributes-detail.view.xml"
+							/>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-trash"
+							input="selected"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+							</with-transaction>
+							<write-channel name="selected"/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="demo.react:Demo"
+						selection="selected"
+						types="demo.react:Demo"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="string"/>
+							<column attribute="priority"/>
+							<column attribute="active"/>
+							<column attribute="amount"/>
+							<column attribute="date"/>
+							<column attribute="owner"/>
+						</columns>
+						<rows>all(`demo.react:Demo`)</rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="master-detail"
+				icon="css:bi bi-layout-sidebar"
+			>
+				<label>
+					<en>Selector + Form</en>
+					<de>Auswahl + Formular</de>
+				</label>
+				<split-panel
+					orientation="horizontal"
+					resizable="true"
+				>
+					<panes>
+						<pane
+							min-size="220"
+							size="30"
+							unit="%"
+						>
+							<panel>
+								<title>
+									<en>Demo objects</en>
+									<de>Demo-Objekte</de>
+								</title>
+								<commands>
+									<generic-command
+										image="css:bi bi-plus-lg"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>New</en>
+											<de>Neu</de>
+										</label>
+										<execute-script function="x -> new(`demo.react:Demo`, transient: true)"/>
+										<open-dialog
+											bind-input-to="model"
+											dialog-view="attributes-create.view.xml"
+										>
+											<bind
+												channel="selection"
+												to="selected"
+											/>
+										</open-dialog>
+									</generic-command>
+									<generic-command
+										image="css:bi bi-trash"
+										input="selected"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Delete</en>
+											<de>Löschen</de>
+										</label>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<with-transaction>
+											<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+										</with-transaction>
+										<write-channel name="selected"/>
+									</generic-command>
+								</commands>
+								<table
+									observed-types="demo.react:Demo"
+									selection="selected"
+									types="demo.react:Demo"
+								>
+									<columns>
+										<column attribute="name"/>
+									</columns>
+									<rows>all(`demo.react:Demo`)</rows>
+								</table>
+							</panel>
+						</pane>
+						<pane
+							size="70"
+							unit="%"
+						>
+							<panel>
+								<title>
+									<en>Details</en>
+									<de>Details</de>
+								</title>
+								<form input="selected">
+									<field attribute="name"/>
+									<field attribute="string"/>
+									<field attribute="multiLine"/>
+									<field attribute="html"/>
+									<field attribute="xmlSource"/>
+									<field attribute="jsonSource"/>
+									<field attribute="cssSource"/>
+									<field attribute="javascriptSource"/>
+									<field attribute="htmlSource"/>
+									<field attribute="markdownSource"/>
+									<field attribute="plainSource"/>
+									<field attribute="i18n"/>
+									<field attribute="i18nMultiline"/>
+									<field attribute="password"/>
+									<field attribute="count"/>
+									<field attribute="size"/>
+									<field attribute="amount"/>
+									<field attribute="price"/>
+									<field attribute="ratio"/>
+									<field attribute="active"/>
+									<field attribute="tri"/>
+									<field attribute="activeRadio"/>
+									<field attribute="activeSelect"/>
+									<field attribute="date"/>
+									<field attribute="dateTime"/>
+									<field attribute="time"/>
+									<field attribute="duration"/>
+									<field attribute="icon"/>
+									<field attribute="color"/>
+									<field attribute="country"/>
+									<field attribute="language"/>
+									<field attribute="timeZone"/>
+									<field attribute="url"/>
+									<field attribute="json"/>
+									<field attribute="image"/>
+									<field attribute="priority"/>
+									<field attribute="tags"/>
+									<field attribute="owner"/>
+									<field attribute="watchers"/>
+									<field attribute="related"/>
+								</form>
+							</panel>
+						</pane>
+					</panes>
+				</split-panel>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

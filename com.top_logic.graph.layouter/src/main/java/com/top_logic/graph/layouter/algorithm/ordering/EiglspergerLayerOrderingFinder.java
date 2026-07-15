@@ -18,8 +18,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.top_logic.basic.col.MapBuilder;
-import com.top_logic.basic.col.TupleFactory.Pair;
+import com.top_logic.graph.layouter.model.util.Pair;
 import com.top_logic.graph.layouter.LayoutDirection;
 import com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer;
 import com.top_logic.graph.layouter.algorithm.crossing.LayerDownCrossingMinimizer;
@@ -92,8 +91,7 @@ public class EiglspergerLayerOrderingFinder extends LayerOrderingFinder {
 		} else if (layering.size() == 1) {
 			DefaultAlternatingLayer layer = getFirstAlternatingLayer(layering);
 
-			return new MapBuilder<Integer, DefaultAlternatingLayer>(true).put(LayerConstants.FIRST_LAYER, layer)
-				.toMap();
+			return Collections.singletonMap(LayerConstants.FIRST_LAYER, layer);
 		} else {
 			return Collections.emptyMap();
 		}

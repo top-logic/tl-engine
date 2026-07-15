@@ -51,6 +51,9 @@
 
 	<fileSets>
 		<fileSet filtered="true">
+			<directory>.mvn</directory>
+		</fileSet>
+		<fileSet filtered="true">
 			<directory>.settings</directory>
 		</fileSet>
 		<fileSet filtered="true">
@@ -58,6 +61,9 @@
 		</fileSet>
 		<fileSet filtered="true">
 			<directory>deploy</directory>
+		</fileSet>
+		<fileSet filtered="true">
+			<directory>local-config.template</directory>
 		</fileSet>
 		<fileSet filtered="true">
 			<directory>src</directory>

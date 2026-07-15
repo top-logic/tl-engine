@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Developer-local configuration overlay, see README.md in this folder. -->
+<root>
+	<alias>
+		<!-- Add developer-local secrets here, e.g.
+		<entry name="%MY_SERVICE_USER%" value="alice"/>
+		<entry name="%MY_SERVICE_PASSWORD%" value="secret"/>
+		-->
+	</alias>
+</root>

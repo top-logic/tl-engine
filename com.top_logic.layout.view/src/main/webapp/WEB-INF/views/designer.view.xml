@@ -23,6 +23,16 @@
 					<de>Verwerfen</de>
 				</label>
 			</revert-design>
+			<select-view design-tree="designTree" selection="selectedNode" placement="TOOLBAR">
+				<label>
+					<en>Select view</en>
+					<de>Sicht auswählen</de>
+				</label>
+				<tooltip>
+					<en>Pick a view in the main window to select it here.</en>
+					<de>Eine Sicht im Hauptfenster anklicken, um sie hier auszuwählen.</de>
+				</tooltip>
+			</select-view>
 		</commands>
 
 		<split-panel orientation="horizontal" resizable="true">

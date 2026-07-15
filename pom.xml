@@ -52,6 +52,7 @@
 		<skipNormalizeLayouts>true</skipNormalizeLayouts>
 		
 		<tl.layoutDir>${basedir}/src/main/webapp/WEB-INF/layouts</tl.layoutDir>
+		<tl.confDir>${basedir}/src/main/webapp/WEB-INF</tl.confDir>
 	</properties>
 
 	<developers>
@@ -1692,11 +1693,12 @@
 						<configuration>
 							<skip>${skipNormalizeLayouts}</skip>
 
-							<mainClass>com.top_logic.layout.tools.ticket29221.RemoveSecurityDomain</mainClass>
+							<mainClass>com.top_logic.layout.tools.ticket29221.MigrateTicket29221</mainClass>
 							<arguments>
 								<argument>${tl.layoutDir}</argument>
+								<argument>${tl.confDir}</argument>
 							</arguments>
-						    	
+
 							<includePluginDependencies>false</includePluginDependencies>
 							<includeProjectDependencies>true</includeProjectDependencies>
 							<addOutputToClasspath>true</addOutputToClasspath>

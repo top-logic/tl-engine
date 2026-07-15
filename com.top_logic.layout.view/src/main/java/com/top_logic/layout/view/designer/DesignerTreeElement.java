@@ -133,6 +133,16 @@ public class DesignerTreeElement implements UIElement {
 					}
 				}
 			});
+
+			// Reflect an externally set selection (e.g. from the "select view" picker) in the tree.
+			selectionChannel.addListener((sender, oldValue, newValue) -> {
+				if (newValue instanceof DesignTreeNode target) {
+					DefaultTreeUINode uiNode = findUINode(treeModel.getRoot(), target);
+					if (uiNode != null) {
+						selectionModel.setSelected(uiNode, true);
+					}
+				}
+			});
 		}
 
 		// 6. Wire context menu for structural editing commands.
@@ -247,6 +257,24 @@ public class DesignerTreeElement implements UIElement {
 		DesignTreeNode root = (DesignTreeNode) inputChannel.get();
 		DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, root);
 		tree.setTreeModel(newTreeModel);
+	}
+
+	/**
+	 * Finds the {@link DefaultTreeUINode} whose business object is {@code target}, expanding nodes
+	 * along the way so lazily-built children are materialized. Returns {@code null} if not found.
+	 */
+	private static DefaultTreeUINode findUINode(DefaultTreeUINode node, DesignTreeNode target) {
+		if (node.getBusinessObject() == target) {
+			return node;
+		}
+		node.setExpanded(true);
+		for (DefaultTreeUINode child : node.getChildren()) {
+			DefaultTreeUINode found = findUINode(child, target);
+			if (found != null) {
+				return found;
+			}
+		}
+		return null;
 	}
 
 	private static Map<String, Object> menuItem(String id, String label) {

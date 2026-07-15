@@ -23,7 +23,7 @@
 						>
 							<label>
 								<en>Goodbye from sub-window</en>
-								<de>Tschuess aus Unterfenster</de>
+								<de>Tschüss aus Unterfenster</de>
 							</label>
 							<action class="com.top_logic.demo.view.command.SayGoodbyeAction"/>
 						</generic-command>
@@ -32,7 +32,7 @@
 					<card variant="elevated">
 						<title>
 							<en>Right-click in this sub-window to open the context menu.</en>
-							<de>Rechtsklicken Sie in diesem Unterfenster, um das Kontextmenue zu oeffnen.</de>
+							<de>Rechtsklicken Sie in diesem Unterfenster, um das Kontextmenü zu öffnen.</de>
 						</title>
 						<demo-counter/>
 					</card>

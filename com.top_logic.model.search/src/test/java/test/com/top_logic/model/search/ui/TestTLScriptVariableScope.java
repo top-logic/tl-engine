@@ -108,6 +108,12 @@ public class TestTLScriptVariableScope extends BasicTestCase {
 		assertEquals(set(), scope("{x -> $x+1}; $"));
 	}
 
+	public void testComparisonIsNotAnAssignment() {
+		// The '==' comparison operator must not be mistaken for a 'name =' assignment,
+		// even when a NAME precedes it and the statement is terminated by ';'.
+		assertEquals(set(), scope("size == 5; $"));
+	}
+
 	private static Set<String> set(String... names) {
 		return new HashSet<>(List.of(names));
 	}

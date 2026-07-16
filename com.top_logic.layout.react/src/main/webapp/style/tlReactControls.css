@@ -7,9 +7,15 @@
 
 /* --- Viewport-filling layout ------------------------------------------- */
 
+/* The view page is a full-viewport application: every scrollable region lives inside
+   the control tree (content areas, drawers, dialogs). The page itself never scrolls.
+   Clipping overflow here keeps a component that momentarily exceeds the viewport from
+   widening the mobile layout viewport, which would make the whole page pannable and
+   shift position:fixed overlays (app bar, drawer) partly off-screen. */
 html, body {
 	height: 100%;
 	margin: 0;
+	overflow: hidden;
 }
 
 .is-control {
@@ -1262,6 +1268,9 @@ button.tlPanel__actionButton:focus-visible {
 	flex: 1;
 	overflow-y: auto;
 	overflow-x: hidden;
+	/* Keep a swipe that reaches the end of the item list from chaining into an outer
+	   scroll region (page panning in mobile drawer mode). */
+	overscroll-behavior: contain;
 	padding: var(--spacing-02) 0;
 }
 
@@ -1555,6 +1564,9 @@ button.tlDrawerToggle:focus-visible {
 		transition: transform 0.2s ease, width 0.2s ease;
 		z-index: 50;
 		box-shadow: none;
+		/* Touch scrolling inside the drawer must not chain into page panning. */
+		overscroll-behavior: contain;
+		touch-action: pan-y;
 	}
 
 	.tlSidebar.tlSidebar--drawerOpen .tlSidebar__nav {
@@ -1768,6 +1780,31 @@ button.tlDrawerToggle:focus-visible {
 
 .tlAppBar--primary .tlReactButton--link {
 	color: var(--layer-accent-text);
+}
+
+/* --- Responsive: compact app bar at small viewports ------------------------- */
+
+@media (max-width: 768px) {
+	/* Labeled command buttons collapse to their icon so the bar never grows wider
+	   than the device. Buttons without an icon keep their label. */
+	.tlAppBar .tlReactButton:has(> .tlReactButton__image) {
+		width: 2rem;
+		flex-shrink: 0;
+		padding: 0;
+		box-shadow: none;
+	}
+
+	.tlAppBar .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__image {
+		display: inline-block;
+	}
+
+	.tlAppBar .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__label {
+		display: none;
+	}
+
+	.tlAppBar__actions {
+		min-width: 0;
+	}
 }
 
 /* --- TLBreadcrumb ---------------------------------------------------------- */
@@ -2170,6 +2207,8 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlDrawer__body {
 	flex: 1;
 	overflow-y: auto;
+	/* Touch scrolling inside the drawer must not chain into page panning. */
+	overscroll-behavior: contain;
 	padding: var(--spacing-04);
 }
 
@@ -4512,6 +4551,13 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 .tlReactButton--iconOnly {
 	width: 2rem;
 	padding: 0;
+}
+
+/* A label-only button still carries its icon element in the DOM when an image is set,
+   so responsive containers can swap it to the icon presentation with a media query
+   (see the compact app bar rules). By default only the label is visible. */
+.tlReactButton--labelOnly > .tlReactButton__image {
+	display: none;
 }
 
 .tlReactButton__image {

@@ -32,7 +32,12 @@ export interface TLButtonProps {
  * </ul>
  *
  * <p>The icon is supplied as a {@code ThemeImage} encoded form via {@code state.image} and
- * rendered through {@link ThemeIcon}.</p>
+ * rendered through {@link ThemeIcon}. The icon element is present in the DOM whenever an image
+ * is set, independent of the display mode; in {@code label-only} mode CSS hides it. This lets
+ * responsive containers (e.g. the app bar at compact viewport widths) swap a labeled button to
+ * its icon presentation with a pure CSS media query. The label always provides the accessible
+ * name via {@code aria-label} when the icon is present, so hiding the label text keeps the
+ * button named for assistive technology.</p>
  */
 const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, image, disabled, displayMode }) => {
   const state = useTLState();
@@ -74,7 +79,6 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   });
 
   const iconOnly = resolvedMode === 'icon-only';
-  const showIcon = resolvedMode === 'icon-only' || resolvedMode === 'icon-label';
   // In icon-only mode without an image, the label glyph is the visible content.
   const showLabel = resolvedMode === 'label-only' || resolvedMode === 'icon-label'
     || (iconOnly && !resolvedImage);
@@ -92,14 +96,15 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       disabled={resolvedDisabled}
       style={hiddenStyle}
       className={'tlReactButton' + (iconOnly ? ' tlReactButton--iconOnly' : '')
+        + (resolvedMode === 'label-only' ? ' tlReactButton--labelOnly' : '')
         + (appearance === 'link' ? ' tlReactButton--link' : '')
         + (appearance === 'primary' ? ' tlReactButton--primary' : '')
         + (size === 'small' ? ' tlReactButton--small' : '')
         + (size === 'large' ? ' tlReactButton--large' : '')}
       data-tooltip={tooltipAttr}
-      aria-label={iconOnly ? resolvedLabel : undefined}
+      aria-label={resolvedImage || iconOnly ? resolvedLabel : undefined}
     >
-      {showIcon && resolvedImage && (
+      {resolvedImage && (
         <ThemeIcon encoded={resolvedImage} className="tlReactButton__image" />
       )}
       {showLabel && <span className="tlReactButton__label">{resolvedLabel}</span>}

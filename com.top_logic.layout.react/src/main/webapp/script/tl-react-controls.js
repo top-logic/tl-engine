@@ -1521,7 +1521,7 @@ const Me = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(Ee, { encoded: l
         h: k ?? null
       }, _(!0), E({ x: 0, y: 0 }), h(null), w(null);
     }
-  }, [D, v, k]), Q = D ? { position: "absolute", top: 0, left: 0, width: "100vw", height: "100vh", maxHeight: "100vh", borderRadius: 0 } : {
+  }, [D, v, k]), Q = D ? { position: "absolute", top: 0, left: 0, width: "100vw", maxWidth: "100vw", height: "100vh", maxHeight: "100vh", borderRadius: 0 } : {
     width: v != null ? v + "px" : s,
     ...k != null ? { height: k + "px" } : i != null ? { height: i } : {},
     ...u != null && k == null ? { minHeight: u } : {},

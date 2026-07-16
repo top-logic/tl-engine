@@ -253,7 +253,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   }, [maximized, localWidth, localHeight]);
 
   const style: React.CSSProperties = maximized
-    ? { position: 'absolute' as const, top: 0, left: 0, width: '100vw', height: '100vh', maxHeight: '100vh', borderRadius: 0 }
+    ? { position: 'absolute' as const, top: 0, left: 0, width: '100vw', maxWidth: '100vw', height: '100vh', maxHeight: '100vh', borderRadius: 0 }
     : {
         width: localWidth != null ? localWidth + 'px' : serverWidth,
         ...(localHeight != null

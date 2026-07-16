@@ -1962,6 +1962,10 @@ button.tlBottomBar__item:hover {
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 	display: flex;
 	flex-direction: column;
+	/* The configured width is a preference: the window never grows beyond the viewport
+	   (minus a small margin), so wide dialogs stay fully visible on narrow screens.
+	   The maximized state overrides this inline with the full viewport width. */
+	max-width: calc(100vw - 2 * var(--spacing-04));
 	max-height: 80vh;
 	font-family: var(--font-family);
 	outline: none;
@@ -2075,6 +2079,9 @@ button.tlWindow__maximizeBtn:focus-visible {
 .tlWindow__body {
 	flex: 1;
 	overflow-y: auto;
+	/* Content wider than the (viewport-clamped) window scrolls inside the body instead
+	   of being clipped by the window's rounded-corner overflow. */
+	overflow-x: auto;
 	/* Flush: a dialog is a container too - its content owns its inset (a self-padding
 	   form, or a <padding> around explanatory text). */
 }
@@ -2155,12 +2162,14 @@ button.tlWindow__maximizeBtn:focus-visible {
 .tlDrawer--right.tlDrawer--open  { transform: translateX(0); }
 .tlDrawer--bottom.tlDrawer--open { transform: translateY(0); }
 
-.tlDrawer--narrow { width: 16rem; }
-.tlDrawer--medium { width: 24rem; }
-.tlDrawer--wide   { width: 36rem; }
-.tlDrawer--bottom.tlDrawer--narrow { width: auto; height: 16rem; }
-.tlDrawer--bottom.tlDrawer--medium { width: auto; height: 24rem; }
-.tlDrawer--bottom.tlDrawer--wide   { width: auto; height: 36rem; }
+/* The size is a preference: a side drawer never grows wider than the viewport, a
+   bottom drawer never taller. */
+.tlDrawer--narrow { width: 16rem; max-width: 100vw; }
+.tlDrawer--medium { width: 24rem; max-width: 100vw; }
+.tlDrawer--wide   { width: 36rem; max-width: 100vw; }
+.tlDrawer--bottom.tlDrawer--narrow { width: auto; height: 16rem; max-height: 100vh; }
+.tlDrawer--bottom.tlDrawer--medium { width: auto; height: 24rem; max-height: 100vh; }
+.tlDrawer--bottom.tlDrawer--wide   { width: auto; height: 36rem; max-height: 100vh; }
 
 .tlDrawer__header {
 	display: flex;
@@ -2229,7 +2238,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	font-size: var(--body-compact-01-font-size);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 	animation: tlSnackbarSlideUp 0.2s ease;
-	max-width: 40rem;
+	max-width: min(40rem, calc(100vw - 2 * var(--spacing-04)));
 }
 
 .tlSnackbar--exiting {

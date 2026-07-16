@@ -54,6 +54,17 @@ public class TestTLScriptAutoCompletionCommand extends BasicTestCase {
 		assertEquals(List.of(), result);
 	}
 
+	public void testInTextModeRecognizesDollarInString() {
+		// A '$' typed inside an open string literal must be recognized as text mode,
+		// so it does not trigger variable completion.
+		assertTrue(TLScriptCompletionService.inTextMode("\"$"));
+		assertTrue(TLScriptCompletionService.inTextMode("\"abc $"));
+		assertTrue(TLScriptCompletionService.inTextMode("'x $"));
+
+		// A '$' outside any string is NOT text mode.
+		assertFalse(TLScriptCompletionService.inTextMode("x -> $"));
+	}
+
 	public static Test suite() {
 		return BasicTestSetup.createBasicTestSetup(new TestSuite(TestTLScriptAutoCompletionCommand.class));
 	}

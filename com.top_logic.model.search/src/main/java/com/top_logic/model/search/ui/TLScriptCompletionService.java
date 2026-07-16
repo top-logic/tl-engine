@@ -174,8 +174,16 @@ public class TLScriptCompletionService implements TLScriptConstants {
 		return insideOf(line, "`", "[\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}:.# ]");
 	}
 
-	private static boolean inTextMode(String line) {
-		String allowedCharacters = "[a-zA-Z0-9.{} ]";
+	/**
+	 * Whether the cursor (end of the given line-prefix) is inside an open string literal.
+	 *
+	 * <p>
+	 * The allowed-character class includes <code>$</code> so that a <code>$</code> typed inside a
+	 * string is still recognized as being inside the string and does not trigger variable completion.
+	 * </p>
+	 */
+	public static boolean inTextMode(String line) {
+		String allowedCharacters = "[a-zA-Z0-9.{} $]";
 
 		return insideOf(line, "\"", allowedCharacters) || insideOf(line, "'", allowedCharacters);
 	}

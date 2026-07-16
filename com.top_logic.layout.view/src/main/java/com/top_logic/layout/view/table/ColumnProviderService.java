@@ -240,27 +240,45 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 				return optionsColumn(attribute, label, part, enumeration);
 			}
 			if (type instanceof TLPrimitive primitive) {
+				// The kind describes the storage format; the values seen here are application
+				// values, whose type is defined by the storage mapping. A datatype whose mapping
+				// translates to a different application type (e.g. I18NString: stored as string,
+				// application value ResKey) gets the label-based fallback column instead.
+				Class<?> applicationType = primitive.getStorageMapping().getApplicationType();
 				switch (primitive.getKind()) {
 					case BOOLEAN:
 					case TRISTATE:
-						// Label the filter's true/false options with the values' display labels.
-						return typedColumn(attribute, label, part, Boolean.class,
-							Comparator.<Boolean> naturalOrder(),
-							new BooleanColumnFilter(ResKey.text(label(Boolean.TRUE)), ResKey.text(label(Boolean.FALSE))));
+						if (Boolean.class.isAssignableFrom(applicationType)) {
+							// Label the filter's true/false options with the values' display labels.
+							return typedColumn(attribute, label, part, Boolean.class,
+								Comparator.<Boolean> naturalOrder(),
+								new BooleanColumnFilter(ResKey.text(label(Boolean.TRUE)),
+									ResKey.text(label(Boolean.FALSE))));
+						}
+						break;
 					case INT:
 					case FLOAT:
-						return typedColumn(attribute, label, part, Number.class,
-							Comparator.comparingDouble(Number::doubleValue),
-							new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
-								Double::valueOf));
+						if (Number.class.isAssignableFrom(applicationType)) {
+							return typedColumn(attribute, label, part, Number.class,
+								Comparator.comparingDouble(Number::doubleValue),
+								new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
+									Double::valueOf));
+						}
+						break;
 					case DATE:
-						return typedColumn(attribute, label, part, Date.class,
-							Comparator.<Date> naturalOrder(),
-							new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
-								ColumnProviderService::parseDate));
+						if (Date.class.isAssignableFrom(applicationType)) {
+							return typedColumn(attribute, label, part, Date.class,
+								Comparator.<Date> naturalOrder(),
+								new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
+									ColumnProviderService::parseDate));
+						}
+						break;
 					case STRING:
-						return typedColumn(attribute, label, part, String.class,
-							Comparator.<String> naturalOrder(), TextColumnFilter.forStrings());
+						if (String.class.isAssignableFrom(applicationType)) {
+							return typedColumn(attribute, label, part, String.class,
+								Comparator.<String> naturalOrder(), TextColumnFilter.forStrings());
+						}
+						break;
 					default:
 						break;
 				}

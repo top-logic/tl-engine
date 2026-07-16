@@ -93,8 +93,11 @@ public class DesignTreeBuilder {
 				ViewElement.Config refViewConfig = ViewLoader.getOrLoadConfig(refPath);
 				addChild(node, refViewConfig, refPath);
 			} catch (Exception ex) {
-				Logger.warn("Skipping invalid referenced view '" + refPath
+				Logger.warn("Adding error node for invalid referenced view '" + refPath
 					+ "' while building the design tree.", ex, DesignTreeBuilder.class);
+				DesignTreeNode errorNode = new ErrorDesignTreeNode(sourceFile, refConfig.getView(), ex.getMessage());
+				errorNode.setParent(node);
+				node.getChildren().add(errorNode);
 			}
 		}
 

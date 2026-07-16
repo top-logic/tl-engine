@@ -23,18 +23,21 @@ public class TestSearchToolsTool extends TestCase {
 
 	@Override
 	protected void setUp() {
+		// The registry keys tools in provider-safe notation ({factory}__{tool}), which is what
+		// AgentFactory.buildSearchTool passes here. Skills, however, reference their tools in
+		// config notation ({factory}.{tool}). SearchToolsTool must bridge the two.
 		Map<String, ToolSchema> allTools = new LinkedHashMap<>();
-		allTools.put("model-browser.listModules",
-			new ToolSchema("model-browser.listModules", "List all modules in the data model",
+		allTools.put("model-browser__listModules",
+			new ToolSchema("model-browser__listModules", "List all modules in the data model",
 				"{\"type\":\"object\",\"properties\":{}}"));
-		allTools.put("model-browser.getType",
-			new ToolSchema("model-browser.getType", "Get details of a specific type",
+		allTools.put("model-browser__getType",
+			new ToolSchema("model-browser__getType", "Get details of a specific type",
 				"{\"type\":\"object\",\"properties\":{}}"));
-		allTools.put("script-exec.executeTLScript",
-			new ToolSchema("script-exec.executeTLScript", "Execute a TL-Script expression",
+		allTools.put("script-exec__executeTLScript",
+			new ToolSchema("script-exec__executeTLScript", "Execute a TL-Script expression",
 				"{\"type\":\"object\",\"properties\":{}}"));
-		allTools.put("web-search.webSearch",
-			new ToolSchema("web-search.webSearch", "Search the web",
+		allTools.put("web-search__webSearch",
+			new ToolSchema("web-search__webSearch", "Search the web",
 				"{\"type\":\"object\",\"properties\":{}}"));
 
 		Map<String, Skill> skills = new LinkedHashMap<>();
@@ -75,7 +78,7 @@ public class TestSearchToolsTool extends TestCase {
 	 */
 	public void testUngroupedToolsHidden() {
 		String result = _tool.searchTools("web search");
-		assertFalse("Must not show tool assigned to no skill", result.contains("web-search.webSearch"));
+		assertFalse("Must not show tool assigned to no skill", result.contains("web-search__webSearch"));
 		assertTrue("Should indicate no matches", result.contains("No tools found"));
 	}
 
@@ -89,5 +92,16 @@ public class TestSearchToolsTool extends TestCase {
 	public void testCaseInsensitive() {
 		String result = _tool.searchTools("MODEL");
 		assertTrue("Case insensitive match", result.contains("TL_modelExploration"));
+	}
+
+	/**
+	 * Regression: skills reference tools in config notation ({factory}.{tool}) while the registry
+	 * keys them in provider notation ({factory}__{tool}). The search must bridge the two and list
+	 * the matched tool under its registry name.
+	 */
+	public void testBridgesConfigAndProviderNotation() {
+		String result = _tool.searchTools("modules");
+		assertTrue("Should surface the matched tool by its registry name: " + result,
+			result.contains("model-browser__listModules"));
 	}
 }

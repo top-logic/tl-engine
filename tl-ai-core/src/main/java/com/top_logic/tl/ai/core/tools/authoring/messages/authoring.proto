@@ -178,6 +178,14 @@ message ScriptToolListResult {
 }
 
 /**
+ * Result of listing the factories that hold registered TL-Script tools.
+ */
+message ScriptToolFactoryListResult {
+	/** Distinct factory names that contain at least one registered TL-Script tool. */
+	repeated string factoryNames;
+}
+
+/**
  * Full detail of a single TL-Script tool.
  */
 message ScriptToolDetail {

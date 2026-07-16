@@ -194,6 +194,10 @@ Activation:
 - Assign `{factory}.{name}` to an agent's or skill's tools list like any other tool.
 - Use `listScriptTools` / `getScriptTool` to see tools already authored (pass the factory name if not `custom`).
 
+Discovering factories:
+- At runtime a tool is named `{factory}__{name}` (double underscore). Derive the factory from what you already have: when a tool name contains `__`, everything before it is the factory — pass that to `listScriptTools` / `getScriptTool` instead of guessing or defaulting to `custom`. Example: `pizzashop__findOverBudgetProducts` → factory `pizzashop`.
+- When no factory name is known, call `listScriptToolFactories` first to discover the factories that hold TL-Script tools, then query the relevant one with `listScriptTools`.
+
 Editing an existing tool:
 - First call `listScriptTools` (with factory if needed) to get its exact name, then `getScriptTool` to retrieve its current body and parameters.
 - Then call `updateScriptTool` with that exact name (and factory) and your edits. Never create a second tool (or a renamed variant) to "replace" an existing one.
@@ -217,6 +221,7 @@ Editing an existing tool:
 						<tool name="script-tool-authoring.deleteScriptTool"/>
 						<tool name="script-tool-authoring.getScriptTool"/>
 						<tool name="script-tool-authoring.listScriptTools"/>
+						<tool name="script-tool-authoring.listScriptToolFactories"/>
 						<tool name="framework-wiring.listFrameworkAgents"/>
 						<tool name="framework-wiring.getFrameworkAgent"/>
 						<tool name="framework-wiring.listFrameworkSkills"/>
@@ -1304,7 +1309,7 @@ You start with minimal tools. Full capabilities live in skills — load them on 
 Before calling any tool, briefly tell the user what you're about to do. Never leave the user in silence.
 
 1. **Understand:** If clear enough, start working. If ambiguous, ask ONE question. Never ask for information you can look up yourself.
-2. **Discover:** For anything about model structure, call `model-browser.outlineModel` once for a compact overview of all modules and types. Load skills and call other tools only for information beyond structure (annotations, instances, usages, TLScript).
+2. **Discover:** Gather only the context the request actually needs. When answering genuinely requires the application's types, properties, or modules, call `model-browser.outlineModel` for a compact overview; load skills and other tools for anything beyond structure (annotations, instances, usages, TLScript).
 3. **Plan:** For model modifications, present a plan via askUser(type="choice", options=["Approve", "Revise"]) listing every element to create/modify. The plan is your checklist — nothing silently dropped.
 4. **Execute:** Follow creation order: Modules → Enumerations → Classes → Properties → Forward refs → Backward refs. Never create an element before its dependencies exist.
 5. **Verify:** Confirm results with tools. NEVER assume success. For TLScript: always validate AND execute before presenting.
@@ -1312,7 +1317,7 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 </workflow>
 
 <core_rules>
-- For model structure, call `model-browser.outlineModel` first for a compact overview; use other tools for annotations, instances, usages, and TLScript.
+- Call `model-browser.outlineModel` when — and only when — the answer genuinely requires knowing the application's types, properties, or modules. Do not call it by default or as orientation.
 - If a tool returns a result, USE it — never repeat the same call with identical arguments
 - Never ask the user for model information you can look up yourself
 - Never silently drop failed operations or planned elements

@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.tools.authoring;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -20,15 +21,18 @@ import com.top_logic.model.search.configured.ScriptParameter;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.tl.ai.core.tools.authoring.messages.OperationResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolDetail;
+import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolFactoryListResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolListResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolParamInfo;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolSummary;
+import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
 import com.top_logic.tl.ai.core.tools.registry.ToolDescriptions;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
@@ -218,7 +222,10 @@ public class ScriptToolAuthoringTool {
 	 *
 	 * @return JSON-serialized {@link ScriptToolListResult}.
 	 */
-	@ToolMethod(description = "List all TL-Script tools in a factory", mode = ToolMode.READ)
+	@ToolMethod(description = "List all TL-Script tools in a factory. Tools are referenced as "
+		+ "{factory}__{name} (double underscore); parse the factory prefix from any known tool name "
+		+ "to call this correctly. If the factory is unknown, call listScriptToolFactories first.",
+		mode = ToolMode.READ)
 	public String listScriptTools(
 			@P(value = "Factory name (default 'custom')", required = false) String factory) {
 		String factoryName = resolveFactory(factory);
@@ -235,6 +242,32 @@ public class ScriptToolAuthoringTool {
 			return DataClassSerializer.toJson(result, ScriptToolAuthoringTool.class, "listScriptTools()");
 		} catch (Exception ex) {
 			return error("Failed to list script tools: " + ex.getMessage(), "listScriptTools()", ex);
+		}
+	}
+
+	/**
+	 * Lists the factory names that hold at least one registered TL-Script tool.
+	 *
+	 * @return JSON-serialized {@link ScriptToolFactoryListResult}.
+	 */
+	@ToolMethod(
+		description = "Returns all distinct factory names that have registered TL-Script tools. "
+			+ "Call this before listScriptTools when the factory name is unknown.",
+		mode = ToolMode.READ)
+	public String listScriptToolFactories() {
+		try {
+			ScriptToolFactoryListResult result = ScriptToolFactoryListResult.create();
+			for (Map.Entry<String, ToolRegistryService.ToolFactoryConfig> entry : copyOfSource()
+				.getToolFactories().entrySet()) {
+				PolymorphicConfiguration<? extends ToolFactory> impl = entry.getValue().getImplementation();
+				if (impl instanceof ScriptToolFactory.Config scriptConfig && !scriptConfig.getTools().isEmpty()) {
+					result.addFactoryName(entry.getKey());
+				}
+			}
+			return DataClassSerializer.toJson(result, ScriptToolAuthoringTool.class, "listScriptToolFactories()");
+		} catch (Exception ex) {
+			return error("Failed to list script tool factories: " + ex.getMessage(),
+				"listScriptToolFactories()", ex);
 		}
 	}
 

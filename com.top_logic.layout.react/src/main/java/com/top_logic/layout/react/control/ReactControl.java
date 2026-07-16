@@ -1038,8 +1038,24 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	/**
-	 * Unregisters this control and all its children from SSE. Called during cleanup and when
-	 * dynamically removing a child.
+	 * Disposes this control and all its children: detaches the tree, runs cleanup actions, and
+	 * unregisters from SSE. Called during cleanup and when dynamically removing a child.
+	 *
+	 * <p>
+	 * A disposed control tolerates trailing state updates: {@link #putState(String, Object)} and
+	 * state resends become no-ops instead of failing. This is required because stale references can
+	 * legitimately reach the control within the running interaction — the very handler that
+	 * triggered the disposal may continue on its own control (e.g. a selection handler whose
+	 * channel write replaced the presentation containing it), and observer notifications iterating
+	 * a listener snapshot may still deliver one event after the disposal.
+	 * </p>
+	 *
+	 * <p>
+	 * Callers replacing a child subtree from <em>inside</em> an observer notification must not call
+	 * this method synchronously if the old subtree observes the same source; they defer the call
+	 * until the notification has unwound (view channels provide
+	 * {@code ChannelNotificationScope.current().afterNotification(old::cleanupTree)} for this).
+	 * </p>
 	 */
 	public final void cleanupTree() {
 		_disposed = true;

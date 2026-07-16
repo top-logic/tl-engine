@@ -29,6 +29,15 @@ public interface ViewChannel {
 	/**
 	 * Updates the value of this channel, notifying all listeners if the value changed.
 	 *
+	 * <p>
+	 * Listeners are notified synchronously on the writing thread, iterating a <em>snapshot</em> of
+	 * the listener list: adding or removing listeners during the notification does not affect which
+	 * listeners the running notification still calls. A listener that replaces and disposes a
+	 * control subtree in reaction to the change must therefore defer the disposal via
+	 * {@link ChannelNotificationScope#afterNotification(Runnable)} — controls of the old subtree
+	 * may still be pending in the snapshot.
+	 * </p>
+	 *
 	 * @param newValue
 	 *        The new value (may be {@code null}).
 	 * @return {@code true} if the value actually changed (was different from the previous value).
@@ -37,6 +46,25 @@ public interface ViewChannel {
 
 	/**
 	 * Adds a listener that is notified when this channel's value changes.
+	 *
+	 * <p>
+	 * A channel typically outlives the controls observing it (it belongs to the enclosing view,
+	 * while presentations are rebuilt e.g. on selection changes). A control registering a listener
+	 * must therefore {@link #removeListener(ChannelListener) remove} it again when the control is
+	 * disposed, typically via a cleanup action:
+	 * </p>
+	 *
+	 * <pre>
+	 * channel.addListener(listener);
+	 * control.addCleanupAction(() -&gt; channel.removeListener(listener));
+	 * </pre>
+	 *
+	 * <p>
+	 * Even with proper removal, the snapshot semantics of {@link #set(Object)} mean the listener
+	 * can fire once more within the very notification that disposed its control; listener
+	 * implementations touching more than the control's React state must guard against running on a
+	 * disposed control (state updates on a disposed control are dropped by the control itself).
+	 * </p>
 	 *
 	 * @param listener
 	 *        The listener to add.

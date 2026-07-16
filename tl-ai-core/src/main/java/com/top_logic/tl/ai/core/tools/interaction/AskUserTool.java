@@ -61,7 +61,8 @@ public class AskUserTool {
 			@P("Short label (e.g. 'Clarify', 'Choose')") String header,
 			@P("Type: 'text' for free text input, "
 				+ "'choice' for option selection") String type,
-			@P("For 'choice': JSON array of options (max 5), "
+			@P("For 'choice': JSON array of options (max 5), either bare strings "
+				+ "e.g. [\"Option A\", \"Option B\"] or objects "
 				+ "e.g. [{\"label\":\"Option A\",\"description\":\"...\"}]. "
 				+ "Ignored for other types.") String options,
 			@P("For 'choice': allow multiple selections. Defaults to false.") Boolean multiSelect,

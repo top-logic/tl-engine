@@ -173,11 +173,11 @@ public class SelectSubtree extends AbstractCommandHandler {
 			treeSelection.setSelected(directTarget, select());
 		}
 
-		if (levels > 0) {
-			int childLevels = (_levelFilter == null
-				|| _levelFilter.apply(((TLTreeNode<?>) directTarget).getBusinessObject(), component.getModel()))
-					? levels - 1
-					: levels;
+		boolean countLevel = _levelFilter == null
+			|| _levelFilter.apply(((TLTreeNode<?>) directTarget).getBusinessObject(), component.getModel());
+
+		if (levels > 0 || !countLevel) {
+			int childLevels = countLevel ? levels - 1 : levels;
 
 			for (Object child : treeSelection.getTreeModel().getChildren(directTarget)) {
 				selectLevel(component, treeSelection, child, childLevels);

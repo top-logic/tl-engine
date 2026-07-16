@@ -140,6 +140,15 @@ public class TLScriptVariableScope {
 	/**
 	 * Ends the current statement: commits a pending assignment to the block scope and drops the
 	 * lambda parameters that were only in scope within the just-finished statement.
+	 *
+	 * <p>
+	 * Called when a <code>;</code> is encountered. Committing the pending assignment only here (rather
+	 * than when the <code>name =</code> is seen) ensures the assigned variable becomes visible for the
+	 * following statements but not within its own right-hand side.
+	 * </p>
+	 *
+	 * @param frame
+	 *        The frame of the block in which the statement was terminated.
 	 */
 	private static void endStatement(Frame frame) {
 		if (frame._pendingAssign != null) {
@@ -149,6 +158,23 @@ public class TLScriptVariableScope {
 		frame._lambdaVars.clear();
 	}
 
+	/**
+	 * Determines the variable name bound by a lambda whose <code>-&gt;</code> token was just read.
+	 *
+	 * <p>
+	 * Handles both the plain form <code>name -&gt; body</code> and the optional-parameter form used in
+	 * tuple coordinates, <code>name? -&gt; body</code>.
+	 * </p>
+	 *
+	 * @param prev
+	 *        The token immediately preceding the <code>-&gt;</code>, or <code>null</code> if there is
+	 *        none.
+	 * @param prevPrev
+	 *        The token before {@code prev}, or <code>null</code>. Needed to look past a <code>?</code>
+	 *        in the optional-parameter form.
+	 * @return The bound parameter name, or <code>null</code> if the tokens before the
+	 *         <code>-&gt;</code> are not a valid lambda-parameter position.
+	 */
 	private static String lambdaParameter(Token prev, Token prevPrev) {
 		if (prev == null) {
 			return null;
@@ -164,6 +190,20 @@ public class TLScriptVariableScope {
 		return null;
 	}
 
+	/**
+	 * Removes the partially typed variable reference (<code>$</code> optionally followed by identifier
+	 * characters) at the very end of the given text.
+	 *
+	 * <p>
+	 * The text ends at the cursor, where the user is typing the <code>$name</code> to be completed.
+	 * That incomplete reference must be dropped before tokenizing: a bare <code>$</code> is not a
+	 * valid token and would otherwise cause a lexer error.
+	 * </p>
+	 *
+	 * @param text
+	 *        The script source up to the cursor.
+	 * @return The text without its trailing <code>$...</code> fragment.
+	 */
 	private static String stripTrailingVariable(String text) {
 		return text.replaceFirst("\\$\\w*\\z", "");
 	}

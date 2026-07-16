@@ -92,6 +92,19 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 */
 	private boolean _attached;
 
+	/**
+	 * Whether this control has been disposed via {@link #cleanupTree()}.
+	 *
+	 * <p>
+	 * A disposed control may still be reached within the running interaction: the very handler
+	 * that triggered the disposal can continue on a stale reference (e.g. a selection handler
+	 * whose channel write replaced the presentation containing its own control). The client has
+	 * already unmounted the control at that point, so trailing state updates are dropped instead
+	 * of failing.
+	 * </p>
+	 */
+	private boolean _disposed;
+
 	private final List<Runnable> _attachListeners = new CopyOnWriteArrayList<>();
 
 	private final List<Runnable> _detachListeners = new CopyOnWriteArrayList<>();
@@ -250,6 +263,10 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 */
 	private void sendCurrentState() {
 		_silentChanges = false;
+		if (_disposed) {
+			// The client has already unmounted this control; drop the trailing update.
+			return;
+		}
 		StateEvent event = StateEvent.create()
 			.setControlId(getID())
 			.setState(stateAsJSON());
@@ -795,6 +812,10 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	private void sendPatch(Map<String, Object> patch) {
+		if (_disposed) {
+			// The client has already unmounted this control; drop the trailing update.
+			return;
+		}
 		PatchEvent event = PatchEvent.create()
 			.setControlId(getID())
 			.setPatch(toJsonString(_reactContext, patch));
@@ -1021,6 +1042,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * dynamically removing a child.
 	 */
 	public final void cleanupTree() {
+		_disposed = true;
 		detach();
 		cleanupChildren();
 		onCleanup();

@@ -92,8 +92,14 @@ public class DefaultViewChannel implements ViewChannel {
 	}
 
 	private void notifyListeners(Object oldValue, Object newValue) {
-		for (ChannelListener listener : _listeners) {
-			listener.handleNewValue(this, oldValue, newValue);
+		ChannelNotificationScope scope = ChannelNotificationScope.current();
+		scope.enter();
+		try {
+			for (ChannelListener listener : _listeners) {
+				listener.handleNewValue(this, oldValue, newValue);
+			}
+		} finally {
+			scope.exit();
 		}
 	}
 

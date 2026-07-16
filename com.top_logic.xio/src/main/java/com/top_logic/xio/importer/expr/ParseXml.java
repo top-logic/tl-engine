@@ -70,6 +70,11 @@ public class ParseXml extends GenericMethod {
 	}
 
 	@Override
+	public Object getId() {
+		return getName();
+	}
+
+	@Override
 	public TLType getType(List<TLType> argumentTypes) {
 		return null;
 	}
@@ -166,6 +171,11 @@ public class ParseXml extends GenericMethod {
 		@Override
 		public ParseXml build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new ParseXml(getName(), args, _importDefinition);
+		}
+
+		@Override
+		public Object getId() {
+			return getName();
 		}
 
 		@Override

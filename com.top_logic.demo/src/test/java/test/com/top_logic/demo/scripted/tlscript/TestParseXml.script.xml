@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	comment="Import a library structure through the configured parseLibrary TL-Script function and check the imported objects."
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Administration"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Script Konsole"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  xml = "<items><factory name='Scripted factory'><floor name='Scripted floor'><location name='Scripted location'><entry name='Scripted entry'/></location></floor></factory></items>";
+  parseLibrary(binary("library.xml", $xml, contentType: "text/xml"), context: `test.dnd#LIBRARY`);
+  factory = `test.dnd#LIBRARY`.get(`test.dnd:Library#elements`)
+    .filter(e -> $e.get(`test.dnd:NamedPlanElement#name`) == "Scripted factory")
+    .singleElement();
+  floor = $factory.get(`test.dnd:Factory#floors`).singleElement();
+  location = $floor.get(`test.dnd:Floor#locations`).singleElement();
+  entry = $location.get(`test.dnd:Location#entry`);
+  toString(
+    $floor.get(`test.dnd:NamedPlanElement#name`), " / ",
+    $location.get(`test.dnd:NamedPlanElement#name`), " / ",
+    $entry.get(`test.dnd:NamedPlanElement#name`))
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen und Änderungen speichern"
+			command-name="updateSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comment="The imported factory contains the floor/location/entry structure and is linked into the library given as import context."
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Scripted floor / Scripted location / Scripted entry"
+			/>
+		</action>
+	</actions>
+</action>

@@ -26,6 +26,7 @@ import com.top_logic.layout.form.values.edit.editor.InternationalizationEditor.W
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.constraint.CheckExprWithAdditionalParams;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
  * Configuration of TL-Script that delegates to a configured {@link Expr}.
@@ -104,6 +105,7 @@ public interface ScriptConfiguration extends NamedConfigMandatory {
 	@Mandatory
 	@PropertyEditor(PlainEditor.class)
 	@Constraint(value = CheckExprWithAdditionalParams.class, args = { @Ref(PARAMETERS) })
+	@ScriptContextVariables(ScriptParameterVariables.class)
 	@Name(IMPLEMENTATION)
 	Expr getImplementation();
 

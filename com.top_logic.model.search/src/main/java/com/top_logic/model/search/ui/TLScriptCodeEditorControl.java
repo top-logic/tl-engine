@@ -164,7 +164,12 @@ public class TLScriptCodeEditorControl extends CodeEditorControl implements TLSc
 	private String createTLScriptAutoCompletionRegex() {
 		return new TLRegexBuilder().add(createTLModelConstantExpression())
 			.or().add(createTLScriptFunctionExpression())
+			.or().add(createVariableExpression())
 			.or().add(createDefaultExpression()).toJavascriptString();
+	}
+
+	private String createVariableExpression() {
+		return new TLRegexBuilder().then("$").emptyWord().endOfLine().toString();
 	}
 
 	private String createTLScriptFunctionExpression() {

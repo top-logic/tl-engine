@@ -71,6 +71,43 @@ public class TestTLScriptVariableScope extends BasicTestCase {
 		assertEquals(set("x"), scope("x -> foo(x -> $"));
 	}
 
+	public void testSemicolonEndsLambdaScope() {
+		// A lambda parameter is out of scope after the statement-terminating ';'.
+		assertEquals(set(), scope("x -> $x; $"));
+	}
+
+	public void testAssignmentDefinesVariable() {
+		assertEquals(set("fun"), scope("fun = 5; $"));
+	}
+
+	public void testAssignmentAcrossLambdaBody() {
+		// The reported case: after 'fun = x -> $x+1;', 'x' is gone but 'fun' is available.
+		assertEquals(set("fun"), scope("fun = x -> $x+1; $"));
+	}
+
+	public void testAssignmentNotVisibleInOwnRhs() {
+		assertEquals(set(), scope("fun = $"));
+	}
+
+	public void testMultipleAssignments() {
+		assertEquals(set("a", "fun"), scope("a = 5; fun = 3; $"));
+	}
+
+	public void testAssignmentVisibleInsideLaterLambda() {
+		assertEquals(set("a", "x"), scope("a = 5; x -> $"));
+	}
+
+	public void testAssignmentIsBlockLocal() {
+		// 'a' is defined inside the block; at the block-open position it is in scope,
+		// while the still-being-defined 'fun' (its own RHS) is not.
+		assertEquals(set("a"), scope("fun = {a = 1; $"));
+	}
+
+	public void testBracedLambdaStillCleared() {
+		// Regression: closing '}' ends the lambda scope (this already worked).
+		assertEquals(set(), scope("{x -> $x+1}; $"));
+	}
+
 	private static Set<String> set(String... names) {
 		return new HashSet<>(List.of(names));
 	}

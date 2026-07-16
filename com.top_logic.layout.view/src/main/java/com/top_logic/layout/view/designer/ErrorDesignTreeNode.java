@@ -17,6 +17,9 @@ package com.top_logic.layout.view.designer;
  */
 public class ErrorDesignTreeNode extends DesignTreeNode {
 
+	/** Warning sign (U+26A0) prefixed to the label to mark the node as an error. */
+	private static final String WARNING_SIGN = "\u26A0";
+
 	private final String _viewName;
 
 	private final String _message;
@@ -44,7 +47,7 @@ public class ErrorDesignTreeNode extends DesignTreeNode {
 
 	@Override
 	public String getDisplayLabel() {
-		return "⚠ Invalid view: " + _viewName;
+		return WARNING_SIGN + " Invalid view: " + _viewName;
 	}
 
 	@Override

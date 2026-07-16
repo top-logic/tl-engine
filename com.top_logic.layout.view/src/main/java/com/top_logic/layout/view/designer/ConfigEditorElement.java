@@ -121,14 +121,16 @@ public class ConfigEditorElement implements UIElement {
 		}
 
 		// Listen for selection changes and rebuild the editor.
-		inputChannel.addListener((sender, oldValue, newValue) -> {
+		ViewChannel.ChannelListener selectionListener = (sender, oldValue, newValue) -> {
 			if (newValue instanceof ConfigDesignTreeNode node) {
 				wrapper.setChild(new ConfigEditorControl(context, node.getConfig(),
 					Collections.emptySet(), true));
 			} else {
 				wrapper.setChild(null);
 			}
-		});
+		};
+		inputChannel.addListener(selectionListener);
+		wrapper.addCleanupAction(() -> inputChannel.removeListener(selectionListener));
 
 		return wrapper;
 	}

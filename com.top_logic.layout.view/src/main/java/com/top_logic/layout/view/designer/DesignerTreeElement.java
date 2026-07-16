@@ -143,13 +143,15 @@ public class DesignerTreeElement implements UIElement {
 				selChannelForMenu, inputChannel));
 
 		// 7. Listen on the input channel for root changes (e.g. after Revert) and rebuild tree.
-		inputChannel.addListener((sender, oldValue, newValue) -> {
+		ViewChannel.ChannelListener rootListener = (sender, oldValue, newValue) -> {
 			if (newValue instanceof DesignTreeNode newRoot) {
 				DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, newRoot);
 				newTreeModel.setRootVisible(true);
 				treeControl.setTreeModel(newTreeModel);
 			}
-		});
+		};
+		inputChannel.addListener(rootListener);
+		treeControl.addCleanupAction(() -> inputChannel.removeListener(rootListener));
 
 		return treeControl;
 	}

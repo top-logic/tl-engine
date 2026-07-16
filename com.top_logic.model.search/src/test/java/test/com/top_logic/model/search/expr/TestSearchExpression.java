@@ -9,6 +9,7 @@ import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -37,6 +38,7 @@ import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.mime.MimeTypesModule;
 import com.top_logic.basic.thread.ThreadContext;
@@ -2646,14 +2648,14 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		Object result = execute(search(
 			"binary(name: \"hello.txt\", data: \"Hello world!\", encoding: \"utf-8\").gzip().gunzip()"));
 
-		assertInstanceof(result, BinaryDataSource.class);
-		BinaryDataSource data = (BinaryDataSource) result;
+		assertInstanceof(result, BinaryData.class);
+		BinaryData data = (BinaryData) result;
 		assertEquals("hello.txt", data.getName());
 		assertEquals(MimeTypesModule.getInstance().getMimeType("hello.txt"), data.getContentType());
 
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		data.deliverTo(buffer);
-		assertEquals("Hello world!", new String(buffer.toByteArray(), StandardCharsets.UTF_8));
+		try (InputStream in = data.getStream()) {
+			assertEquals("Hello world!", StreamUtilities.readAllFromStream(in, StandardCharsets.UTF_8));
+		}
 
 		// Explicit result name and content type.
 		BinaryDataSource named = (BinaryDataSource) execute(search(

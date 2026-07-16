@@ -7,7 +7,6 @@ package com.top_logic.model.search.expr.config.operations.binary;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
@@ -15,7 +14,7 @@ import com.top_logic.basic.Named;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.BinaryContent;
-import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.AbstractBinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.mime.MimeTypesModule;
 import com.top_logic.element.meta.TypeSpec;
@@ -73,7 +72,7 @@ public class Gunzip extends GenericMethod {
 		String name = asString(arguments[1], defaultName(((Named) input).getName()));
 		String contentType = asString(arguments[2], MimeTypesModule.getInstance().getMimeType(name));
 
-		return new BinaryDataSource() {
+		return new AbstractBinaryData() {
 			@Override
 			public String getName() {
 				return name;
@@ -90,10 +89,8 @@ public class Gunzip extends GenericMethod {
 			}
 
 			@Override
-			public void deliverTo(OutputStream out) throws IOException {
-				try (InputStream in = new GZIPInputStream(content.getStream())) {
-					StreamUtilities.copyStreamContents(in, out);
-				}
+			public InputStream getStream() throws IOException {
+				return new GZIPInputStream(content.getStream());
 			}
 		};
 	}

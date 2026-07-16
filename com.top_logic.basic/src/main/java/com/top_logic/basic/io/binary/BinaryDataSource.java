@@ -6,6 +6,7 @@
 package com.top_logic.basic.io.binary;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.top_logic.basic.Named;
@@ -15,8 +16,18 @@ import com.top_logic.basic.config.json.JsonBinding;
 
 /**
  * Binary data that is actively produced to a given stream.
- * 
+ *
+ * <p>
+ * Implement this interface directly only, if the data is produced by an algorithm actively writing
+ * to an {@link OutputStream} and the content cannot be offered as an {@link InputStream}. Whenever
+ * the content is available as a stream, implement {@link BinaryData} instead, preferably by
+ * extending {@link AbstractBinaryData}. A plain {@link BinaryDataSource} forces every consumer that
+ * needs an {@link InputStream} through the expensive generic upgrade {@link #toData()}, while a
+ * {@link BinaryData} serves both access styles without conversion.
+ * </p>
+ *
  * @see #deliverTo(OutputStream)
+ * @see AbstractBinaryData
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -60,10 +71,13 @@ public interface BinaryDataSource extends Named {
 
 	/**
 	 * Upgrades this {@link BinaryDataSource} to a full {@link BinaryData}.
-	 * 
+	 *
 	 * <p>
-	 * Note: Using the resulting {@link BinaryData#getStream()} API might be much less efficient
-	 * than {@link #deliverTo(OutputStream)}.
+	 * Note: The generic upgrade pumps the data through a pipe that is filled by a separate thread,
+	 * see {@link StreamIOConverter#convert(BinaryDataSource)}. Therefore, reading the resulting
+	 * {@link BinaryData#getStream()} is much more expensive than consuming
+	 * {@link #deliverTo(OutputStream)} directly. Data that can offer its content as a stream
+	 * should implement {@link BinaryData} in the first place, making this upgrade a no-op.
 	 * </p>
 	 */
 	default BinaryData toData() {

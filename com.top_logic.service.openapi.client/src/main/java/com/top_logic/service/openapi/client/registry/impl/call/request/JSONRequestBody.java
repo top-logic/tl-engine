@@ -28,6 +28,7 @@ import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.service.openapi.client.registry.impl.call.Call;
 import com.top_logic.service.openapi.client.registry.impl.call.CallBuilder;
 import com.top_logic.service.openapi.client.registry.impl.call.CallBuilderFactory;
@@ -64,6 +65,7 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 		 * the TL-Script function for the corresponding parameter.
 		 * </p>
 		 */
+		@ScriptContextVariables(MethodParameterVariables.class)
 		@PropertyEditor(PlainEditor.class)
 		@Name(JSON)
 		Expr getJson();

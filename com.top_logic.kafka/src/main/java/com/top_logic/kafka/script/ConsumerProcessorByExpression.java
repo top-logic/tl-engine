@@ -38,6 +38,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ModelReferenceChecker;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.search.ui.TLScriptPropertyEditor;
 
 /**
@@ -94,6 +95,7 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 		@Mandatory
 		@PropertyEditor(PlainEditor.class)
 		@Constraint(value = SyntaxCheck.class)
+		@ScriptContextVariables(ConsumerProcessorVariables.class)
 		Expr getProcessor();
 
 		/**
@@ -138,6 +140,26 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 
 	}
 
+	/**
+	 * Name of the variable bound to the Kafka message value in {@link Config#getProcessor()}.
+	 */
+	public static final String MESSAGE = "message";
+
+	/**
+	 * Name of the variable bound to the Kafka message key in {@link Config#getProcessor()}.
+	 */
+	public static final String KEY = "key";
+
+	/**
+	 * Name of the variable bound to the Kafka message headers in {@link Config#getProcessor()}.
+	 */
+	public static final String HEADERS = "headers";
+
+	/**
+	 * Name of the variable bound to the Kafka topic in {@link Config#getProcessor()}.
+	 */
+	public static final String TOPIC = "topic";
+
 	private final QueryExecutor _processor;
 
 	private final boolean _transaction;
@@ -150,10 +172,10 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 	}
 
 	private static Define prefixWithParameters(Expr scriptBody) {
-		Define withTopic = Define.create("topic", scriptBody);
-		Define withHeaders = Define.create("headers", withTopic);
-		Define withKey = Define.create("key", withHeaders);
-		return Define.create("message", withKey);
+		Define withTopic = Define.create(TOPIC, scriptBody);
+		Define withHeaders = Define.create(HEADERS, withTopic);
+		Define withKey = Define.create(KEY, withHeaders);
+		return Define.create(MESSAGE, withKey);
 	}
 
 	@Override

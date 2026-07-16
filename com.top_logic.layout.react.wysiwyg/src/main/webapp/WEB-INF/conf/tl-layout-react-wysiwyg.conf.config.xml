@@ -8,6 +8,9 @@
           <provider type="tl.model.wysiwyg:Html">
             <impl class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider"/>
           </provider>
+          <provider type="tl.model.i18n:I18NHtml">
+            <impl class="com.top_logic.layout.react.wysiwyg.I18NHtmlControlProvider"/>
+          </provider>
         </providers>
       </instance>
     </config>

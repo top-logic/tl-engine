@@ -19,6 +19,7 @@ import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Tool that searches the full tool registry by keyword, grouping results by skill.
@@ -68,19 +69,23 @@ public class SearchToolsTool {
 			List<String> matched = new ArrayList<>();
 
 			for (String toolName : skill.tools()) {
-				ToolSchema schema = _allTools.get(toolName);
-				if (schema != null && matchesQuery(toolName, schema.description(), queryWords)) {
-					matched.add(toolName);
-					matchedToolNames.add(toolName);
+				// Skills reference tools in config notation ({factory}.{tool}), while the registry
+				// keys them in provider-safe notation ({factory}__{tool}). Normalize before lookup.
+				String registryName = ToolRegistryService.toProviderName(toolName);
+				ToolSchema schema = _allTools.get(registryName);
+				if (schema != null && matchesQuery(registryName, schema.description(), queryWords)) {
+					matched.add(registryName);
+					matchedToolNames.add(registryName);
 				}
 			}
 
 			// Also check if the skill name/description itself matches
 			if (matched.isEmpty() && matchesQuery(skillId, skill.description(), queryWords)) {
 				for (String toolName : skill.tools()) {
-					if (_allTools.containsKey(toolName)) {
-						matched.add(toolName);
-						matchedToolNames.add(toolName);
+					String registryName = ToolRegistryService.toProviderName(toolName);
+					if (_allTools.containsKey(registryName)) {
+						matched.add(registryName);
+						matchedToolNames.add(registryName);
 					}
 				}
 			}
@@ -93,7 +98,9 @@ public class SearchToolsTool {
 		// Find ungrouped matches (tools not assigned to any skill)
 		Set<String> allSkillTools = new LinkedHashSet<>();
 		for (Skill skill : _skills.values()) {
-			allSkillTools.addAll(skill.tools());
+			for (String toolName : skill.tools()) {
+				allSkillTools.add(ToolRegistryService.toProviderName(toolName));
+			}
 		}
 
 		List<String> ungroupedMatches = new ArrayList<>();

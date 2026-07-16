@@ -193,6 +193,38 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 		}
 	}
 
+	public void testListScriptToolFactories() {
+		ToolRegistryService.Config<?>[] holder = { newRegistryConfig() };
+		ScriptToolAuthoringTool tool = new ScriptToolAuthoringTool(
+			() -> holder[0],
+			cfg -> holder[0] = cfg);
+
+		assertFalse("no factories expected before any tool is created: " + tool.listScriptToolFactories(),
+			tool.listScriptToolFactories().contains("pizzashop"));
+
+		tool.createScriptTool("greet", "Greet", "Greets by name.",
+			List.of(), "\"hi\"", "READ", Boolean.TRUE, "custom");
+		tool.createScriptTool("findOverBudgetProducts", "Find", "Finds products over budget.",
+			List.of(), "1", "READ", Boolean.TRUE, "pizzashop");
+
+		String list = tool.listScriptToolFactories();
+		assertTrue("custom factory must be listed: " + list, list.contains("custom"));
+		assertTrue("pizzashop factory must be listed: " + list, list.contains("pizzashop"));
+	}
+
+	public void testListScriptToolFactoriesExcludesEmptyFactory() {
+		ToolRegistryService.Config<?>[] holder = { newRegistryConfig() };
+		ScriptToolAuthoringTool tool = new ScriptToolAuthoringTool(
+			() -> holder[0],
+			cfg -> holder[0] = cfg);
+
+		tool.createScriptTool("temp", "Temp", "d", List.of(), "1", "READ", Boolean.TRUE, "reporting");
+		tool.deleteScriptTool("temp", "reporting");
+
+		assertFalse("a factory with no remaining tools must not be listed: " + tool.listScriptToolFactories(),
+			tool.listScriptToolFactories().contains("reporting"));
+	}
+
 	public static Test suite() {
 		BasicRuntimeModule<?>[] modules = {
 			SearchBuilder.Module.INSTANCE,

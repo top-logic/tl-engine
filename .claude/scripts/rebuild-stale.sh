@@ -2,19 +2,36 @@
 #
 # Find all reactor modules whose installed artifact in the local Maven
 # repository is stale, then rebuild just those modules (and everything that
-# transitively depends on them) in the correct order via `mvn install -pl ...`.
+# transitively depends on them) in the correct order via
+# `mvn clean install -pl ...`.
 #
 # A module is considered stale when EITHER:
 #   (a) its own sources (src/ + pom.xml) are newer than its installed jar, or
 #       the jar is missing  -- "source-stale"; or
 #   (b) any reactor module it depends on is stale, or has a newer jar than
-#       this module's jar   -- "dependency-stale" (cross-module API drift).
+#       this module's jar   -- "dependency-stale" (cross-module API drift); or
+#   (c) its jar was built while HEAD was on a different commit AND the
+#       module's git tree differs between that commit and the current HEAD
+#       -- "branch-state-stale".
 #
 # (b) is what a naive per-module mtime check misses: e.g. model.search's
 # sources change and it gets rebuilt, but service.openapi.server -- whose own
 # sources are untouched -- is still compiled against the OLD SearchExpression
 # API. Its jar is newer than its own sources, so a local check calls it fresh,
 # yet it must be rebuilt against the new model.search jar.
+#
+# (c) closes the mtime rule's blind spot after a branch switch to an OLDER
+# state: a jar built from the previous branch is newer than the now-older
+# sources, so (a) calls it fresh, yet it contains the other branch's code.
+# The jar's provenance is reconstructed from the HEAD reflog: the entry
+# current at the jar's mtime is the commit the build saw; if the module's
+# tree hash changed between that commit and HEAD, the jar is stale. Jars
+# older than the oldest reflog entry (e.g. seeded from the shared read-only
+# tail repository) have unknown provenance and are left to rules (a)/(b).
+#
+# The rebuild uses `clean install` because a stale module may contain
+# orphaned class files in target/classes (sources removed by the branch
+# switch); a non-clean build would re-package them into the new jar.
 #
 # Pom-packaging modules (parents/aggregators) are tracked by their installed
 # POM: out-of-reactor builds (e.g. the nested builds of the tl-archetype-*
@@ -66,10 +83,18 @@ fi
 # stdout, and a human-readable summary to stderr. Any inconsistency (missing
 # or unparsable POM, unresolvable coordinates) is a loud, fatal error.
 ROOT="$ROOT" LOCAL_REPO="$LOCAL_REPO" python3 - > "$MAPFILE" <<'PY'
-import os, sys, re, xml.etree.ElementTree as ET
+import os, re, subprocess, sys, xml.etree.ElementTree as ET
 
 root = os.environ["ROOT"]
 repo = os.environ["LOCAL_REPO"]
+
+def rel(basedir):
+    if basedir == root:
+        return "."      # the root POM itself, as a -pl selector
+    return basedir[len(root) + 1:] if basedir.startswith(root + os.sep) else basedir
+
+def git(*args):
+    return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True)
 
 NS = re.compile(r"\{.*\}")          # strip XML namespace
 
@@ -241,6 +266,62 @@ for a in pom_only:
     elif m["src_mtime"] > m["jar_mtime"]:
         stale.add(a); reason[a] = "pom changed"
 
+# --- 3b. Seed branch-state-stale set (reflog provenance) ------------------
+# The HEAD reflog records every HEAD movement of this worktree (checkout,
+# pull, rebase, commit) with a timestamp. The entry current at the jar's
+# mtime is the commit the build saw, regardless of WHO built the jar (this
+# script, a plain `mvn install`, or the IDE). If the module's tree differs
+# between that commit and the current HEAD, the jar was built from different
+# module content -- stale in a way mtimes cannot express. Jars built from
+# uncommitted edits are attributed to the then-current commit; that
+# direction is covered by rule (a).
+reflog = []                          # (unix_time, commit), newest first
+r = git("log", "-g", "--date=unix", "--format=%H %gd", "HEAD")
+if r.returncode == 0:
+    for line in r.stdout.splitlines():
+        entry = re.match(r"([0-9a-f]{40}) HEAD@\{(\d+)\}", line)
+        if entry:
+            reflog.append((int(entry.group(2)), entry.group(1)))
+
+head = git("rev-parse", "HEAD").stdout.strip()
+
+def head_at(t):
+    for when, commit in reflog:      # newest first
+        if when <= t:
+            return commit
+    return None                      # jar predates the reflog: unknown
+
+changes_cache = {}                   # commit -> set of paths changed vs HEAD
+
+def changes_since(commit):
+    if commit not in changes_cache:
+        d = git("diff", "--name-only", commit, "HEAD")
+        changes_cache[commit] = set(d.stdout.splitlines()) if d.returncode == 0 else None
+    return changes_cache[commit]
+
+if reflog and head:
+    for a in jarred:
+        if a in stale:
+            continue
+        m = mods[a]
+        if m["jar_mtime"] is None:
+            continue
+        build_commit = head_at(m["jar_mtime"])
+        if build_commit is None or build_commit == head:
+            continue
+        relpath = rel(m["basedir"])
+        if os.path.isabs(relpath):   # module outside the repository
+            continue
+        changes = changes_since(build_commit)
+        if changes is None:          # commit unknown (e.g. pruned): be safe
+            stale.add(a)
+            reason[a] = f"built at unknown commit {build_commit[:10]}"
+            continue
+        prefix = relpath + os.sep
+        if any(f.startswith(prefix) for f in changes):
+            stale.add(a)
+            reason[a] = f"branch state changed since build at {build_commit[:10]}"
+
 # --- 4. Propagate to a fixpoint over the dependency graph ----------------
 # M is stale if a dependency D is stale, OR D's jar is newer than M's jar
 # (D was rebuilt after M -> M links against a stale D).
@@ -264,11 +345,6 @@ while changed:
                 break
 
 # --- 5. Emit --------------------------------------------------------------
-def rel(basedir):
-    if basedir == root:
-        return "."      # the root POM itself, as a -pl selector
-    return basedir[len(root) + 1:] if basedir.startswith(root + os.sep) else basedir
-
 if not stale:
     print(f">>> Checked {len(jarred)} jar-producing modules. All up to date.", file=sys.stderr)
     sys.exit(0)
@@ -296,5 +372,5 @@ fi
 
 IFS=','; list="${stale_paths[*]}"; unset IFS
 
-echo ">>> Running: mvn -B install -pl <stale>" >&2
-exec mvn -B install -pl "$list"
+echo ">>> Running: mvn -B clean install -pl <stale>" >&2
+exec mvn -B clean install -pl "$list"

@@ -129,6 +129,10 @@ public class SearchToolsTool {
 				+ "Note: searchTools searches tool names and descriptions, not domain-specific "
 				+ "functions or APIs. If you're looking for a specific function (e.g. a TLScript "
 				+ "function), load the relevant skill first and use its discovery tools instead. "
+				+ "This search also does NOT cover runtime-authored TL-Script tools: if the query "
+				+ "is a specific tool name (especially one shaped like {factory}__{name} or "
+				+ "{factory}.{name}), load TL_agenticAuthoring and check with listScriptToolFactories "
+				+ "/ listScriptTools / getScriptTool before concluding the tool does not exist. "
 				+ "Do NOT call searchTools again with the same or similar query.";
 		}
 

@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2019 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.model.search.ui;
@@ -49,9 +49,10 @@ public class TLScriptAutoCompletionCommand extends ControlCommand implements TLS
 
 		String prefix = (String) arguments.get("prefix");
 		String line = (String) arguments.get("line");
+		String textToCursor = (String) arguments.get("textToCursor");
 
 		List<CodeCompletion> completions =
-			TLScriptCompletionService.computeCompletions(commandContext, line, prefix, _completeCaseSensitive);
+			TLScriptCompletionService.computeCompletions(commandContext, line, prefix, textToCursor, _completeCaseSensitive);
 
 		if (!completions.isEmpty()) {
 			sendCompletions(scriptCodeControl, completions);

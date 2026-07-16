@@ -40,6 +40,8 @@ import com.top_logic.util.regex.TLRegexBuilder;
  */
 public class TLScriptCompletionService implements TLScriptConstants {
 
+	private static final Pattern VARIABLE_PREFIX_PATTERN = Pattern.compile("\\$\\w*$");
+
 	/**
 	 * Computes completions for the given line and prefix.
 	 *
@@ -55,7 +57,30 @@ public class TLScriptCompletionService implements TLScriptConstants {
 	 */
 	public static List<CodeCompletion> computeCompletions(DisplayContext context, String line,
 			String prefix, boolean caseSensitive) {
-		Optional<List<CodeCompletion>> completions = createCompletions(context, line, prefix, caseSensitive);
+		return computeCompletions(context, line, prefix, null, caseSensitive);
+	}
+
+	/**
+	 * Computes completions for the given line and prefix.
+	 *
+	 * @param context
+	 *        The display context (needed for locale-aware documentation).
+	 * @param line
+	 *        The full text of the current line.
+	 * @param prefix
+	 *        The prefix typed so far (may be empty).
+	 * @param textToCursor
+	 *        The whole script source up to the cursor, used to determine the variables in scope for
+	 *        <code>$</code>-completion, or <code>null</code> when variable completion is not
+	 *        supported by the caller.
+	 * @param caseSensitive
+	 *        Whether to match case-sensitively.
+	 * @return Sorted list of completions with scores assigned, possibly empty.
+	 */
+	public static List<CodeCompletion> computeCompletions(DisplayContext context, String line,
+			String prefix, String textToCursor, boolean caseSensitive) {
+		Optional<List<CodeCompletion>> completions =
+			createCompletions(context, line, prefix, textToCursor, caseSensitive);
 
 		completions.ifPresent(list -> orderCompletions(list));
 
@@ -63,11 +88,13 @@ public class TLScriptCompletionService implements TLScriptConstants {
 	}
 
 	private static Optional<List<CodeCompletion>> createCompletions(DisplayContext context, String line,
-			String prefix, boolean caseSensitive) {
+			String prefix, String textToCursor, boolean caseSensitive) {
 		if (inTLModelPartCompletionMode(line)) {
 			return createTLModelPartCompletions(line, caseSensitive);
 		} else if (inTextMode(line)) {
 			return Optional.empty();
+		} else if (inVariableCompletionMode(line)) {
+			return createVariableCompletions(textToCursor, prefix, caseSensitive);
 		} else {
 			return createDefaultCompletion(context, line, prefix, caseSensitive);
 		}
@@ -96,6 +123,51 @@ public class TLScriptCompletionService implements TLScriptConstants {
 		}
 
 		return Optional.empty();
+	}
+
+	/**
+	 * Whether the given line-prefix ends with a (possibly empty) variable reference, i.e. a
+	 * <code>$</code> optionally followed by identifier characters.
+	 */
+	public static boolean inVariableCompletionMode(String line) {
+		return VARIABLE_PREFIX_PATTERN.matcher(line).find();
+	}
+
+	/**
+	 * The in-scope variables (each with the leading <code>$</code>) matching the typed prefix.
+	 *
+	 * @param textToCursor
+	 *        The script source up to the cursor.
+	 * @param prefix
+	 *        The completion prefix as computed by the editor; includes the leading <code>$</code>.
+	 * @param caseSensitive
+	 *        Whether prefix matching is case sensitive.
+	 */
+	public static List<String> matchingVariables(String textToCursor, String prefix, boolean caseSensitive) {
+		String barePrefix = prefix.startsWith("$") ? prefix.substring(1) : prefix;
+
+		List<String> result = new ArrayList<>();
+		for (String variable : TLScriptVariableScope.inScopeVariables(textToCursor)) {
+			if (startsWith(variable, barePrefix, caseSensitive)) {
+				result.add("$" + variable);
+			}
+		}
+		return result;
+	}
+
+	private static Optional<List<CodeCompletion>> createVariableCompletions(String textToCursor, String prefix,
+			boolean caseSensitive) {
+		if (textToCursor == null) {
+			return Optional.empty();
+		}
+		List<CodeCompletion> completions = new ArrayList<>();
+		for (String variable : matchingVariables(textToCursor, prefix, caseSensitive)) {
+			CodeCompletion completion = new CodeCompletion();
+			completion.setName(variable);
+			completion.setValue(variable);
+			completions.add(completion);
+		}
+		return Optional.of(completions);
 	}
 
 	private static boolean inTLModelPartCompletionMode(String line) {

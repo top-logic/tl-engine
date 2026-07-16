@@ -9,7 +9,10 @@
 	</channels>
 	<app-shell>
 		<content>
-			<sidebar active-item="attributes">
+			<sidebar
+				active-item="attributes"
+				drawer-open-slot-name="appbar-leading"
+			>
 				<items>
 					<nav-item id="attributes"
 						icon="css:bi bi-card-list"
@@ -105,6 +108,15 @@
 					<en>TopLogic React Demo</en>
 					<de>TopLogic React Demo</de>
 				</title>
+				<leading>
+					<!--
+						Mobile drawer-toggle target. The sidebar above is configured with
+						drawer-open-slot-name="appbar-leading", which makes it contribute a
+						hamburger button into this slot via the slot-content registry; CSS makes
+						it visible only at small viewports. The two names must match.
+					-->
+					<slot name="appbar-leading"/>
+				</leading>
 				<children>
 					<text
 						css-class="tlAppBarUser"

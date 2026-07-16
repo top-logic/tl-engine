@@ -52,7 +52,8 @@ public class TLScriptAutoCompletionCommand extends ControlCommand implements TLS
 		String textToCursor = (String) arguments.get("textToCursor");
 
 		List<CodeCompletion> completions =
-			TLScriptCompletionService.computeCompletions(commandContext, line, prefix, textToCursor, _completeCaseSensitive);
+			TLScriptCompletionService.computeCompletions(commandContext, line, prefix, textToCursor,
+				scriptCodeControl.getContextVariableNames(), _completeCaseSensitive);
 
 		if (!completions.isEmpty()) {
 			sendCompletions(scriptCodeControl, completions);

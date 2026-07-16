@@ -226,7 +226,7 @@ public class ChangeAttributeTargetType extends TLModelBaseLineMigrationProcessor
 		}
 		
 		_util.updateTLStructuredTypePart(connection, sourcePart, targetType, null, null, null, null, null, null, null,
-			null, null, null, null, null, null);
+			null, null, null, null, null, null, null);
 
 		if (tlModel != null) {
 			QualifiedPartName src;

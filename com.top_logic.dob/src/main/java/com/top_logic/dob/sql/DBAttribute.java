@@ -7,6 +7,7 @@ package com.top_logic.dob.sql;
 
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.dob.MOAttribute;
+import com.top_logic.dob.meta.MOClass;
 
 /**
  * DBAttribute can be implemented by classes also implementing
@@ -79,9 +80,14 @@ public interface DBAttribute {
 	public void initDBColumnIndex(int index);
 	
 	/**
-	 * The zero-based column index in the defining table this {@link DBAttribute} stores to.
+	 * The zero-based column index in the defining {@link MOClass} this {@link DBAttribute} stores
+	 * to.
 	 * 
-	 * If there is no corresponding column it returns <code>-1</code>.
+	 * <p>
+	 * Note: This index is <b>not</b> related to the index of the corresponding physical column in
+	 * the database. It is the index this {@link DBAttribute} in the list of all {@link DBAttribute}
+	 * of a {@link MOClass}.
+	 * </p>
 	 */
 	public int getDBColumnIndex();
 	

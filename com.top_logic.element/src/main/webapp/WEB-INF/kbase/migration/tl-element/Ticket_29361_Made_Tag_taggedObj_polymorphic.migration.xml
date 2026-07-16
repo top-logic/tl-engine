@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29361_Made_Tag_taggedObj_polymorphic"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29236_Added_isRevert_isRedo"
+			module="tl-element"
+		/>
+	</dependencies>
+	<pre-processors>
+		<!--
+			Run as a preprocessor, because otherwise earlier migrations will not
+			be able to read the database baseline: the `taggedObj` reference is monomorphic
+			but has an abstract target type
+		-->
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_29361_Made_Tag_taggedObj_polymorphic.xslt"
+		/>
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddDatabaseColumnProcessor"
+			binary="true"
+			column="TAGGED_OBJ_TYPE"
+			db-type="string"
+			size="150"
+			table="TAG"
+		/>
+	</pre-processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

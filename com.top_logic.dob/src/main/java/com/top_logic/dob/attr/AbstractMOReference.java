@@ -12,9 +12,11 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.IdentifierTypes;
+import com.top_logic.dob.MOAlternative;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.DeferredMetaObject;
+import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOIndex;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.TypeContext;
@@ -460,6 +462,18 @@ public abstract class AbstractMOReference extends AbstractMOAttribute implements
 		if (_targetTypeHasBranchColumn != newTargetTypeHasBranchColumn) {
 			_targetTypeHasBranchColumn = newTargetTypeHasBranchColumn;
 			handleDBMappingChanged();
+		}
+		if (isMonomorphic()) {
+			MetaObject mo = getTargetType();
+			
+			if (mo instanceof MOClass targetType && targetType.isAbstract()) {
+				throw new DataObjectException("The target type of the monomorphic reference " + this + " (" + mo
+					+ ") cannot be an abstract class, since there is no column in which the concrete target type can be stored.");
+			}
+			if (mo instanceof MOAlternative) {
+				throw new DataObjectException("The target type of the monomorphic reference " + this + " (" + mo
+					+ ") cannot be an alternative type, since there is no column in which the concrete target type can be stored.");
+			}
 		}
 	}
 

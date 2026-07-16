@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.EndAspect;
 import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor.UpdateTypePartConfig;
@@ -80,6 +81,24 @@ public class UpdateTLAssociationEndProcessor
 		@Nullable
 		@Label("Historization")
 		HistoryType getHistoryType();
+
+		/**
+		 * Setter for {@link #getHistoryType()}.
+		 */
+		void setHistoryType(HistoryType value);
+
+		/**
+		 * See {@link EndAspect#getDeletionPolicy()}.
+		 */
+		@Name(EndAspect.DELETION_POLICY_PROPERTY)
+		@NullDefault
+		@Nullable
+		DeletionPolicy getDeletionPolicy();
+
+		/**
+		 * @see #getDeletionPolicy()
+		 */
+		void setDeletionPolicy(DeletionPolicy value);
 	}
 
 	private Util _util;
@@ -134,7 +153,7 @@ public class UpdateTLAssociationEndProcessor
 			getConfig().isMandatory(), getConfig().isAbstract(), getConfig().isComposite(), getConfig().isAggregate(),
 			getConfig().isMultiple(),
 			getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
-			null, null);
+			getConfig().getDeletionPolicy(), null, null);
 
 		boolean updateModelBaseline;
 		if (tlModel == null || TLStructuredTypeColumns.isSyntheticAssociationName(endName.getTypeName())) {
@@ -145,8 +164,7 @@ public class UpdateTLAssociationEndProcessor
 			MigrationUtils.updateAssociationEnd(log, tlModel, endName, newName, null,
 				getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
 				getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().isAbstract(),
-				getConfig().canNavigate(), getConfig().getHistoryType(),
-				getConfig());
+				getConfig().canNavigate(), getConfig().getHistoryType(), getConfig().getDeletionPolicy(), getConfig());
 			updateModelBaseline = true;
 		}
 		return updateModelBaseline;

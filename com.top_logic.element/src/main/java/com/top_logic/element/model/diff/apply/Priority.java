@@ -9,6 +9,7 @@ import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLModuleSingleton;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
@@ -170,6 +171,16 @@ enum Priority {
 	 * Change of {@link TLStructuredTypePart#isBag()}.
 	 */
 	CHANGE_TYPE_PART_BAG,
+
+	/**
+	 * Change of {@link TLReference#getHistoryType()}.
+	 */
+	CHANGE_REFERENCE_HISTORY_TYPE,
+
+	/**
+	 * Change of {@link TLReference#getDeletionPolicy()}.
+	 */
+	CHANGE_REFERENCE_DELETION_POLICY,
 
 	/**
 	 * Change of annotations. Either complete override or add of a new {@link TLAnnotation}.

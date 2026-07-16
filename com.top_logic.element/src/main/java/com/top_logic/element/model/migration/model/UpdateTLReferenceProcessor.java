@@ -154,7 +154,8 @@ public class UpdateTLReferenceProcessor extends TLModelBaseLineMigrationProcesso
 				newReferenceName, getConfig().isMandatory(), getConfig().isAbstract(),
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
-				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
+				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
+				getConfig().getDeletionPolicy(), getConfig(), newEnd);
 			if (tlModel == null) {
 				updateModelBaseline = false;
 			} else {
@@ -162,7 +163,8 @@ public class UpdateTLReferenceProcessor extends TLModelBaseLineMigrationProcesso
 					referenceName, getConfig().getNewName(), getConfig().getNewType(),
 					getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
 					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().isAbstract(),
-					getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
+					getConfig().canNavigate(), getConfig().getHistoryType(), getConfig().getDeletionPolicy(),
+					getConfig(), getConfig().getNewEnd());
 				updateModelBaseline = true;
 			}
 			log.info("Updated reference " + _util.qualifiedName(referenceName));
@@ -172,7 +174,8 @@ public class UpdateTLReferenceProcessor extends TLModelBaseLineMigrationProcesso
 				newReferenceName, getConfig().isMandatory(), getConfig().isAbstract(),
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
-				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
+				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
+				getConfig().getDeletionPolicy(), getConfig(), newEnd);
 			if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
 				updateModelBaseline = false;
 			} else {
@@ -180,7 +183,8 @@ public class UpdateTLReferenceProcessor extends TLModelBaseLineMigrationProcesso
 					referenceName, newReferenceName,
 					getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
 					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().isAbstract(),
-					getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
+					getConfig().canNavigate(), getConfig().getHistoryType(), getConfig().getDeletionPolicy(),
+					getConfig(), getConfig().getNewEnd());
 				updateModelBaseline = true;
 			}
 			log.info("Updated inverse reference " + _util.qualifiedName(referenceName));

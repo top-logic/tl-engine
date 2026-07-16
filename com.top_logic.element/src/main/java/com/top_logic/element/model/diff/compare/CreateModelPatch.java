@@ -46,9 +46,11 @@ import com.top_logic.element.model.diff.config.MoveGeneralization;
 import com.top_logic.element.model.diff.config.MoveStructuredTypePart;
 import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
-import com.top_logic.element.model.diff.config.UpdateAbstract;
 import com.top_logic.element.model.diff.config.RenamePart;
+import com.top_logic.element.model.diff.config.UpdateAbstract;
 import com.top_logic.element.model.diff.config.UpdateBag;
+import com.top_logic.element.model.diff.config.UpdateDeletionPolicy;
+import com.top_logic.element.model.diff.config.UpdateHistoryType;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
 import com.top_logic.element.model.diff.config.UpdateMultiplicity;
 import com.top_logic.element.model.diff.config.UpdateOrdered;
@@ -655,21 +657,33 @@ public class CreateModelPatch {
 			addDiff(update);
 		}
 
-		boolean oldMandatory = left.isMandatory();
-		boolean newMandatory = right.isMandatory();
-		if (oldMandatory != newMandatory) {
+		if (left.isMandatory() != right.isMandatory()) {
 			UpdateMandatory update = TypedConfiguration.newConfigItem(UpdateMandatory.class);
 			update.setPart(TLModelUtil.qualifiedName(left));
-			update.setMandatory(newMandatory);
+			update.setMandatory(right.isMandatory());
 			addDiff(update);
 		}
-		boolean oldAbstract = left.isAbstract();
-		boolean newAbstract = right.isAbstract();
-		if (oldAbstract != newAbstract) {
+
+		if (left.isAbstract() != right.isAbstract()) {
 			UpdateAbstract update = TypedConfiguration.newConfigItem(UpdateAbstract.class);
 			update.setPart(TLModelUtil.qualifiedName(left));
-			update.setAbstract(newAbstract);
+			update.setAbstract(right.isAbstract());
 			addDiff(update);
+		}
+
+		if (left instanceof TLReference leftRef && right instanceof TLReference rightRef) {
+			if (leftRef.getDeletionPolicy() != rightRef.getDeletionPolicy()) {
+				UpdateDeletionPolicy update = TypedConfiguration.newConfigItem(UpdateDeletionPolicy.class);
+				update.setPart(TLModelUtil.qualifiedName(leftRef));
+				update.setDeletionPolicy(rightRef.getDeletionPolicy());
+				addDiff(update);
+			}
+			if (leftRef.getHistoryType() != rightRef.getHistoryType()) {
+				UpdateHistoryType update = TypedConfiguration.newConfigItem(UpdateHistoryType.class);
+				update.setPart(TLModelUtil.qualifiedName(leftRef));
+				update.setHistoryType(rightRef.getHistoryType());
+				addDiff(update);
+			}
 		}
 	}
 

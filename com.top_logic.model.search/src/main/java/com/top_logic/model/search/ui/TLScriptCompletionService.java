@@ -8,6 +8,7 @@ package com.top_logic.model.search.ui;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -79,8 +80,18 @@ public class TLScriptCompletionService implements TLScriptConstants {
 	 */
 	public static List<CodeCompletion> computeCompletions(DisplayContext context, String line,
 			String prefix, String textToCursor, boolean caseSensitive) {
+		return computeCompletions(context, line, prefix, textToCursor, Collections.emptyList(), caseSensitive);
+	}
+
+	/**
+	 * Variant of
+	 * {@link #computeCompletions(DisplayContext, String, String, String, boolean)} that also offers
+	 * the given always-in-scope context variables for <code>$</code>-completion.
+	 */
+	public static List<CodeCompletion> computeCompletions(DisplayContext context, String line,
+			String prefix, String textToCursor, Collection<String> contextVariables, boolean caseSensitive) {
 		Optional<List<CodeCompletion>> completions =
-			createCompletions(context, line, prefix, textToCursor, caseSensitive);
+			createCompletions(context, line, prefix, textToCursor, contextVariables, caseSensitive);
 
 		completions.ifPresent(list -> orderCompletions(list));
 
@@ -88,13 +99,13 @@ public class TLScriptCompletionService implements TLScriptConstants {
 	}
 
 	private static Optional<List<CodeCompletion>> createCompletions(DisplayContext context, String line,
-			String prefix, String textToCursor, boolean caseSensitive) {
+			String prefix, String textToCursor, Collection<String> contextVariables, boolean caseSensitive) {
 		if (inTLModelPartCompletionMode(line)) {
 			return createTLModelPartCompletions(line, caseSensitive);
 		} else if (inTextMode(line)) {
 			return Optional.empty();
 		} else if (inVariableCompletionMode(line)) {
-			return createVariableCompletions(textToCursor, prefix, caseSensitive);
+			return createVariableCompletions(textToCursor, contextVariables, prefix, caseSensitive);
 		} else {
 			return createDefaultCompletion(context, line, prefix, caseSensitive);
 		}
@@ -144,10 +155,25 @@ public class TLScriptCompletionService implements TLScriptConstants {
 	 *        Whether prefix matching is case sensitive.
 	 */
 	public static List<String> matchingVariables(String textToCursor, String prefix, boolean caseSensitive) {
+		return matchingVariables(textToCursor, Collections.emptyList(), prefix, caseSensitive);
+	}
+
+	/**
+	 * Variant of {@link #matchingVariables(String, String, boolean)} that also offers the given
+	 * context variables, which are always in scope (they wrap the whole script).
+	 *
+	 * @param contextVariables
+	 *        Variable names (without <code>$</code>) provided by the surrounding context.
+	 */
+	public static List<String> matchingVariables(String textToCursor, Collection<String> contextVariables,
+			String prefix, boolean caseSensitive) {
 		String barePrefix = prefix.startsWith("$") ? prefix.substring(1) : prefix;
 
+		LinkedHashSet<String> variables = new LinkedHashSet<>(TLScriptVariableScope.inScopeVariables(textToCursor));
+		variables.addAll(contextVariables);
+
 		List<String> result = new ArrayList<>();
-		for (String variable : TLScriptVariableScope.inScopeVariables(textToCursor)) {
+		for (String variable : variables) {
 			if (startsWith(variable, barePrefix, caseSensitive)) {
 				result.add("$" + variable);
 			}
@@ -155,13 +181,14 @@ public class TLScriptCompletionService implements TLScriptConstants {
 		return result;
 	}
 
-	private static Optional<List<CodeCompletion>> createVariableCompletions(String textToCursor, String prefix,
-			boolean caseSensitive) {
-		if (textToCursor == null) {
+	private static Optional<List<CodeCompletion>> createVariableCompletions(String textToCursor,
+			Collection<String> contextVariables, String prefix, boolean caseSensitive) {
+		if (textToCursor == null && contextVariables.isEmpty()) {
 			return Optional.empty();
 		}
+		String safeText = textToCursor == null ? "" : textToCursor;
 		List<CodeCompletion> completions = new ArrayList<>();
-		for (String variable : matchingVariables(textToCursor, prefix, caseSensitive)) {
+		for (String variable : matchingVariables(safeText, contextVariables, prefix, caseSensitive)) {
 			CodeCompletion completion = new CodeCompletion();
 			completion.setName(variable);
 			completion.setValue(variable);

@@ -22,6 +22,10 @@ import com.top_logic.model.search.ui.TLScriptCompletionService;
  */
 public class TestTLScriptAutoCompletionCommand extends BasicTestCase {
 
+	/**
+	 * Variable-completion mode triggers on a trailing <code>$</code> (optionally followed by
+	 * identifier characters), but not after a completed reference or outside a variable position.
+	 */
 	public void testInVariableCompletionMode() {
 		assertTrue(TLScriptCompletionService.inVariableCompletionMode("x -> $"));
 		assertTrue(TLScriptCompletionService.inVariableCompletionMode("x -> $fo"));
@@ -30,41 +34,93 @@ public class TestTLScriptAutoCompletionCommand extends BasicTestCase {
 		assertFalse(TLScriptCompletionService.inVariableCompletionMode(""));
 	}
 
+	/**
+	 * Matched variables are returned with the leading <code>$</code> (all enclosing lambda parameters
+	 * offered).
+	 */
 	public void testMatchingVariablesReturnsDollarPrefixed() {
 		Set<String> result =
 			new HashSet<>(TLScriptCompletionService.matchingVariables("x -> foo(y -> $", "$", false));
 		assertEquals(new HashSet<>(List.of("$x", "$y")), result);
 	}
 
+	/**
+	 * The typed prefix narrows the offered variables.
+	 */
 	public void testMatchingVariablesFiltersByPrefix() {
 		List<String> result =
 			TLScriptCompletionService.matchingVariables("element -> foo(other -> $el", "$el", false);
 		assertEquals(List.of("$element"), result);
 	}
 
+	/**
+	 * Prefix matching is case insensitive when requested.
+	 */
 	public void testMatchingVariablesCaseInsensitive() {
 		List<String> result =
 			TLScriptCompletionService.matchingVariables("Element -> $e", "$e", false);
 		assertEquals(List.of("$Element"), result);
 	}
 
+	/**
+	 * Prefix matching respects case when case-sensitive matching is requested.
+	 */
 	public void testMatchingVariablesCaseSensitive() {
 		List<String> result =
 			TLScriptCompletionService.matchingVariables("Element -> $e", "$e", true);
 		assertEquals(List.of(), result);
 	}
 
+	/**
+	 * Context variables are offered at the top level, where no lambda parameter is in scope.
+	 */
+	public void testContextVariablesOfferedTopLevel() {
+		java.util.Set<String> result = new HashSet<>(
+			TLScriptCompletionService.matchingVariables("$", List.of("path", "id"), "$", false));
+		assertEquals(new HashSet<>(List.of("$path", "$id")), result);
+	}
+
+	/**
+	 * Context variables are offered alongside the in-scope lambda parameters.
+	 */
+	public void testContextVariablesUnionWithLambda() {
+		java.util.Set<String> result = new HashSet<>(
+			TLScriptCompletionService.matchingVariables("x -> $", List.of("path"), "$", false));
+		assertEquals(new HashSet<>(List.of("$x", "$path")), result);
+	}
+
+	/**
+	 * A context variable with the same name as an in-scope lambda parameter is offered only once.
+	 */
+	public void testContextVariablesDeduplicated() {
+		java.util.Set<String> result = new HashSet<>(
+			TLScriptCompletionService.matchingVariables("x -> $", List.of("x"), "$", false));
+		assertEquals(new HashSet<>(List.of("$x")), result);
+	}
+
+	/**
+	 * Context variables are subject to the same prefix filtering as text-derived variables.
+	 */
+	public void testContextVariablesFilteredByPrefix() {
+		assertEquals(List.of("$path"),
+			TLScriptCompletionService.matchingVariables("$pa", List.of("path", "id"), "$pa", false));
+	}
+
+	/**
+	 * A <code>$</code> typed inside an open string literal is recognized as text mode, so it does not
+	 * trigger variable completion; a <code>$</code> outside any string is not text mode.
+	 */
 	public void testInTextModeRecognizesDollarInString() {
-		// A '$' typed inside an open string literal must be recognized as text mode,
-		// so it does not trigger variable completion.
 		assertTrue(TLScriptCompletionService.inTextMode("\"$"));
 		assertTrue(TLScriptCompletionService.inTextMode("\"abc $"));
 		assertTrue(TLScriptCompletionService.inTextMode("'x $"));
 
-		// A '$' outside any string is NOT text mode.
 		assertFalse(TLScriptCompletionService.inTextMode("x -> $"));
 	}
 
+	/**
+	 * The {@link Test} suite of this test case.
+	 */
 	public static Test suite() {
 		return BasicTestSetup.createBasicTestSetup(new TestSuite(TestTLScriptAutoCompletionCommand.class));
 	}

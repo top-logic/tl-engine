@@ -30,6 +30,7 @@ import de.haumacher.msgbuf.data.DataObject;
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
+import de.haumacher.msgbuf.json.JsonToken;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
@@ -124,8 +125,14 @@ public final class DtoMapper {
 	}
 
 	/**
-	 * Parses a JSON array of options (e.g. {@code [{"label":"A","description":"B"}]}) and adds
-	 * them to the event.
+	 * Parses a JSON array of choice options and adds them to the event.
+	 *
+	 * <p>
+	 * Both element shapes the model may emit are accepted: bare strings
+	 * ({@code ["Approve", "Revise"]}, the form the agent prompts instruct) and objects
+	 * ({@code [{"label":"Approve","description":"..."}]}, the form documented on the tool). A bare
+	 * string becomes the option label. Mixing the two shapes in one array is tolerated.
+	 * </p>
 	 */
 	private static void parseInteractionOptions(String optionsJson, UserInteractionEvent event) {
 		try {
@@ -133,22 +140,26 @@ public final class DtoMapper {
 			reader.beginArray();
 			while (reader.hasNext()) {
 				InteractionOptionDto option = InteractionOptionDto.create();
-				reader.beginObject();
-				while (reader.hasNext()) {
-					String name = reader.nextName();
-					switch (name) {
-						case "label":
-							option.setLabel(reader.nextString());
-							break;
-						case "description":
-							option.setDescription(reader.nextString());
-							break;
-						default:
-							reader.skipValue();
-							break;
+				if (reader.peek() == JsonToken.STRING) {
+					option.setLabel(reader.nextString());
+				} else {
+					reader.beginObject();
+					while (reader.hasNext()) {
+						String name = reader.nextName();
+						switch (name) {
+							case "label":
+								option.setLabel(reader.nextString());
+								break;
+							case "description":
+								option.setDescription(reader.nextString());
+								break;
+							default:
+								reader.skipValue();
+								break;
+						}
 					}
+					reader.endObject();
 				}
-				reader.endObject();
 				event.addOption(option);
 			}
 			reader.endArray();

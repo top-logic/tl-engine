@@ -16,7 +16,14 @@ import com.top_logic.basic.io.StreamUtilities;
  * Base class for {@link BinaryData} implementations that provides generic
  * implementations for the general contract of {@link #hashCode()} and
  * {@link #equals(Object)} of {@link BinaryData}.
- * 
+ *
+ * <p>
+ * Extend this class whenever binary content can be offered as an {@link InputStream}. Hand-written
+ * or anonymous {@link BinaryData} implementations typically violate the content-based
+ * {@link BinaryData#equals(Object)} and {@link BinaryData#hashCode()} contract that this class
+ * guarantees.
+ * </p>
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public abstract class AbstractBinaryData implements BinaryData {

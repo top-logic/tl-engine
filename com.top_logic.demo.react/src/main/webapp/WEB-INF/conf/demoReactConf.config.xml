@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
@@ -14,6 +14,7 @@
 				</supported-locales>
 				<bundles>
 					<bundle name="model.demo.react.messages"/>
+					<bundle name="model.demo.tickets.messages"/>
 				</bundles>
 			</instance>
 		</config>
@@ -21,6 +22,7 @@
 			<instance>
 				<declarations>
 					<declaration file="/WEB-INF/model/demo.react.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.tickets.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

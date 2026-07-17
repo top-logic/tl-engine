@@ -23,6 +23,15 @@
 							<de>Attribute</de>
 						</label>
 					</nav-item>
+					<nav-item id="tickets"
+						icon="css:bi bi-chat-left-text"
+					>
+						<view-ref view="tickets.view.xml"/>
+						<label>
+							<en>Tickets</en>
+							<de>Tickets</de>
+						</label>
+					</nav-item>
 					<separator/>
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"

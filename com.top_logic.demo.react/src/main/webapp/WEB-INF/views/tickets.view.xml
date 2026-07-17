@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="ticket"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="220"
+				size="30"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Tickets</en>
+						<de>Tickets</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`demo.tickets:Ticket`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="tickets-create.view.xml"
+							>
+								<bind
+									channel="selection"
+									to="ticket"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-trash"
+							input="ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+							</with-transaction>
+							<write-channel name="ticket"/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="demo.tickets:Ticket"
+						selection="ticket"
+						types="demo.tickets:Ticket"
+					>
+						<columns>
+							<column attribute="name"/>
+						</columns>
+						<rows>all(`demo.tickets:Ticket`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="70"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Conversation</en>
+						<de>Verlauf</de>
+					</title>
+					<object-list
+						element-channel="comment"
+						element-type="demo.tickets:Comment"
+						input="ticket"
+						items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
+						link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
+						new-element-channel="newComment"
+						remove="ticket -> comment -> $comment.delete()"
+					>
+						<item-template>
+							<panel>
+								<title>
+									<en>Comment</en>
+									<de>Kommentar</de>
+								</title>
+								<commands>
+									<generic-command
+										image="css:bi bi-trash"
+										input="comment"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Delete</en>
+											<de>Löschen</de>
+										</label>
+										<remove-element/>
+									</generic-command>
+								</commands>
+								<form input="comment">
+									<field
+										attribute="author"
+										readonly="true"
+									/>
+									<field
+										attribute="date"
+										readonly="true"
+									/>
+									<field attribute="content"/>
+									<composition-table attribute="attachments">
+										<columns>
+											<column attribute="name"/>
+											<column attribute="data"/>
+										</columns>
+									</composition-table>
+								</form>
+							</panel>
+						</item-template>
+						<new-element-template>
+							<panel>
+								<title>
+									<en>New comment</en>
+									<de>Neuer Kommentar</de>
+								</title>
+								<form
+									initial-edit-mode="true"
+									input="newComment"
+									mode-switch="false"
+								>
+									<field attribute="content"/>
+									<commands>
+										<generic-command
+											image="css:bi bi-send"
+											placement="TOOLBAR"
+										>
+											<label>
+												<en>Add comment</en>
+												<de>Kommentar hinzufügen</de>
+											</label>
+											<store-form-state/>
+											<link-element/>
+										</generic-command>
+									</commands>
+								</form>
+							</panel>
+						</new-element-template>
+						<empty-text>
+							<en>No comments yet.</en>
+							<de>Noch keine Kommentare.</de>
+						</empty-text>
+					</object-list>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

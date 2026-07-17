@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="demo.tickets">
+			<class name="Ticket">
+				<annotations>
+					<main-properties properties="name"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<reference name="comments"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="Comment"
+					/>
+				</attributes>
+			</class>
+			<class name="Comment">
+				<attributes>
+					<property name="content"
+						type="tl.model.wysiwyg:Html"
+					/>
+					<reference name="author"
+						kind="forwards"
+						type="tl.accounts:Person"
+					/>
+					<property name="date"
+						type="tl.core:DateTime"
+					/>
+					<reference name="attachments"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="Attachment"
+					/>
+				</attributes>
+			</class>
+			<class name="Attachment">
+				<annotations>
+					<main-properties properties="name, data"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						type="tl.core:String"
+					/>
+					<property name="data"
+						type="tl.core:Binary"
+					/>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>

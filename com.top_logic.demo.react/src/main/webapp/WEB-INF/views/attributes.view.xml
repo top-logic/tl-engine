@@ -200,6 +200,7 @@
 									<field attribute="plainSource"/>
 									<field attribute="i18n"/>
 									<field attribute="i18nMultiline"/>
+									<field attribute="i18nHtml"/>
 									<field attribute="password"/>
 									<field attribute="count"/>
 									<field attribute="size"/>

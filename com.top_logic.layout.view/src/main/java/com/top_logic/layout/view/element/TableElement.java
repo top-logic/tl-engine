@@ -279,7 +279,9 @@ public class TableElement implements UIElement {
 					applyingFromChannel[0] = false;
 				}
 			};
-			selectionChannel.addListener((sender, oldValue, newValue) -> reapplySelection[0].run());
+			ViewChannel.ChannelListener channelListener = (sender, oldValue, newValue) -> reapplySelection[0].run();
+			selectionChannel.addListener(channelListener);
+			control.addCleanupAction(() -> selectionChannel.removeListener(channelListener));
 		}
 
 		// Refresh the rows when observed objects change or an input channel changes. After a refresh,

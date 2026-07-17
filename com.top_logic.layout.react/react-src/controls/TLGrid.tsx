@@ -20,7 +20,9 @@ const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
 
   const style: React.CSSProperties = {};
   if (minColumnWidth) {
-    style.gridTemplateColumns = `repeat(auto-fit, minmax(${minColumnWidth}, 1fr))`;
+    // Cap the column minimum at the container width so a minimum wider than a narrow
+    // (mobile) viewport collapses to full-width columns instead of overflowing.
+    style.gridTemplateColumns = `repeat(auto-fit, minmax(min(${minColumnWidth}, 100%), 1fr))`;
   } else if (columns) {
     style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
   }

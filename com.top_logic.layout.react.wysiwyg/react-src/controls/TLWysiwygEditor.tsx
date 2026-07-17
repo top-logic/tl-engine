@@ -24,8 +24,10 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const editable: boolean = state.editable !== false;
   const hasError: boolean = !!state.hasError;
   const imageUrl: string | null = (state.imageUrl as string) || null;
+  const commitOnBlur: boolean = state.commitOnBlur === true;
 
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dirtyRef = React.useRef(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
@@ -44,6 +46,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     content: value,
     editable,
     onUpdate: ({ editor: ed }) => {
+      dirtyRef.current = true;
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
@@ -59,6 +62,12 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
         debounceRef.current = null;
       }
       sendCommand('valueChanged', { value: ed.getHTML() });
+      // Commands are dispatched FIFO, so the commit runs after the value is applied
+      // server-side. Only an actual edit commits: focusing and leaving does nothing.
+      if (commitOnBlur && dirtyRef.current) {
+        dirtyRef.current = false;
+        sendCommand('commit');
+      }
     },
   }, [editable]);
 

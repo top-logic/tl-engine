@@ -4,6 +4,14 @@
 	<services>
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance>
+				<!--
+					A third data language (without own UI resources, falling back to English)
+					exercises multi-language features beyond the trivial two-locale case, e.g. the
+					language selector of the I18N editor dialog.
+				-->
+				<supported-locales>
+					<locale name="es"/>
+				</supported-locales>
 				<bundles>
 					<bundle name="model.demo.react.messages"/>
 				</bundles>

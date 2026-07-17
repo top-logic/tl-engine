@@ -25,6 +25,7 @@ import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 
@@ -87,12 +88,6 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	private boolean _disposed;
 
 	/**
-	 * Subsession-shared coordinator that defers disposal of replaced presentations until the
-	 * triggering channel notification has unwound (see {@link AdaptiveDetailDisposal}).
-	 */
-	private final AdaptiveDetailDisposal _disposal;
-
-	/**
 	 * Creates a new {@link ReactAdaptiveDetailControl}.
 	 *
 	 * @param context
@@ -126,7 +121,6 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 		_chain = chain;
 		_homeLabel = homeLabel;
 		_displayModel = DisplayClassModel.forCurrentSubSession();
-		_disposal = AdaptiveDetailDisposal.forCurrentSubSession();
 
 		_displayListener = (sender, oldValue, newValue) -> renderPresentation();
 		_displayModel.addListener(DisplayClassModel.DISPLAY_CLASS, _displayListener);
@@ -193,11 +187,12 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 		putState(BREADCRUMB, buildBreadcrumb());
 		commitUpdate(token);
 		if (old != null && old != built) {
-			if (_disposal.isDeferring()) {
-				_disposal.defer(old);
-			} else {
-				old.cleanupTree();
-			}
+			// A rebuild is typically triggered from inside the selection channel's listener
+			// notification, where the old presentation's controls (a selector table, a detail form)
+			// may still be pending in the channel's listener snapshot. Disposing them synchronously
+			// would let those listeners run on a torn-down control, so disposal is deferred until
+			// the notification has unwound.
+			ChannelNotificationScope.current().afterNotification(old::cleanupTree);
 		}
 	}
 
@@ -258,12 +253,6 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	 * Navigates to a breadcrumb crumb: clears the chain selections from the crumb's depth down,
 	 * returning the drill-in to that level.
 	 *
-	 * <p>
-	 * Clearing runs (re-entrantly) inside {@link ViewChannel#set} while channels notify their
-	 * listener snapshots, so disposal of the replaced presentation is deferred until the
-	 * notifications have unwound (see {@link #_disposal}).
-	 * </p>
-	 *
 	 * @param arguments
 	 *        Command arguments; {@code "depth"} is the target chain depth to clear from.
 	 */
@@ -280,11 +269,9 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 		if (depth < 0 || depth >= _chain.size()) {
 			return;
 		}
-		_disposal.run(() -> {
-			for (int j = depth; j < _chain.size(); j++) {
-				_chain.get(j).set(null);
-			}
-		});
+		for (int j = depth; j < _chain.size(); j++) {
+			_chain.get(j).set(null);
+		}
 	}
 
 	@Override

@@ -140,8 +140,14 @@ public class DerivedViewChannel implements ViewChannel {
 		Object oldValue = _value;
 		if (!Objects.equals(oldValue, newValue)) {
 			_value = newValue;
-			for (ChannelListener listener : _listeners) {
-				listener.handleNewValue(this, oldValue, newValue);
+			ChannelNotificationScope scope = ChannelNotificationScope.current();
+			scope.enter();
+			try {
+				for (ChannelListener listener : _listeners) {
+					listener.handleNewValue(this, oldValue, newValue);
+				}
+			} finally {
+				scope.exit();
 			}
 		}
 	}

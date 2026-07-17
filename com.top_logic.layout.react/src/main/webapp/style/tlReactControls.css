@@ -7,9 +7,15 @@
 
 /* --- Viewport-filling layout ------------------------------------------- */
 
+/* The view page is a full-viewport application: every scrollable region lives inside
+   the control tree (content areas, drawers, dialogs). The page itself never scrolls.
+   Clipping overflow here keeps a component that momentarily exceeds the viewport from
+   widening the mobile layout viewport, which would make the whole page pannable and
+   shift position:fixed overlays (app bar, drawer) partly off-screen. */
 html, body {
 	height: 100%;
 	margin: 0;
+	overflow: hidden;
 }
 
 .is-control {
@@ -1262,6 +1268,9 @@ button.tlPanel__actionButton:focus-visible {
 	flex: 1;
 	overflow-y: auto;
 	overflow-x: hidden;
+	/* Keep a swipe that reaches the end of the item list from chaining into an outer
+	   scroll region (page panning in mobile drawer mode). */
+	overscroll-behavior: contain;
 	padding: var(--spacing-02) 0;
 }
 
@@ -1555,6 +1564,9 @@ button.tlDrawerToggle:focus-visible {
 		transition: transform 0.2s ease, width 0.2s ease;
 		z-index: 50;
 		box-shadow: none;
+		/* Touch scrolling inside the drawer must not chain into page panning. */
+		overscroll-behavior: contain;
+		touch-action: pan-y;
 	}
 
 	.tlSidebar.tlSidebar--drawerOpen .tlSidebar__nav {
@@ -1770,6 +1782,31 @@ button.tlDrawerToggle:focus-visible {
 	color: var(--layer-accent-text);
 }
 
+/* --- Responsive: compact app bar at small viewports ------------------------- */
+
+@media (max-width: 768px) {
+	/* Labeled command buttons collapse to their icon so the bar never grows wider
+	   than the device. Buttons without an icon keep their label. */
+	.tlAppBar .tlReactButton:has(> .tlReactButton__image) {
+		width: 2rem;
+		flex-shrink: 0;
+		padding: 0;
+		box-shadow: none;
+	}
+
+	.tlAppBar .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__image {
+		display: inline-block;
+	}
+
+	.tlAppBar .tlReactButton:has(> .tlReactButton__image) > .tlReactButton__label {
+		display: none;
+	}
+
+	.tlAppBar__actions {
+		min-width: 0;
+	}
+}
+
 /* --- TLBreadcrumb ---------------------------------------------------------- */
 
 .tlBreadcrumb {
@@ -1925,6 +1962,10 @@ button.tlBottomBar__item:hover {
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 	display: flex;
 	flex-direction: column;
+	/* The configured width is a preference: the window never grows beyond the viewport
+	   (minus a small margin), so wide dialogs stay fully visible on narrow screens.
+	   The maximized state overrides this inline with the full viewport width. */
+	max-width: calc(100vw - 2 * var(--spacing-04));
 	max-height: 80vh;
 	font-family: var(--font-family);
 	outline: none;
@@ -2038,6 +2079,9 @@ button.tlWindow__maximizeBtn:focus-visible {
 .tlWindow__body {
 	flex: 1;
 	overflow-y: auto;
+	/* Content wider than the (viewport-clamped) window scrolls inside the body instead
+	   of being clipped by the window's rounded-corner overflow. */
+	overflow-x: auto;
 	/* Flush: a dialog is a container too - its content owns its inset (a self-padding
 	   form, or a <padding> around explanatory text). */
 }
@@ -2118,12 +2162,14 @@ button.tlWindow__maximizeBtn:focus-visible {
 .tlDrawer--right.tlDrawer--open  { transform: translateX(0); }
 .tlDrawer--bottom.tlDrawer--open { transform: translateY(0); }
 
-.tlDrawer--narrow { width: 16rem; }
-.tlDrawer--medium { width: 24rem; }
-.tlDrawer--wide   { width: 36rem; }
-.tlDrawer--bottom.tlDrawer--narrow { width: auto; height: 16rem; }
-.tlDrawer--bottom.tlDrawer--medium { width: auto; height: 24rem; }
-.tlDrawer--bottom.tlDrawer--wide   { width: auto; height: 36rem; }
+/* The size is a preference: a side drawer never grows wider than the viewport, a
+   bottom drawer never taller. */
+.tlDrawer--narrow { width: 16rem; max-width: 100vw; }
+.tlDrawer--medium { width: 24rem; max-width: 100vw; }
+.tlDrawer--wide   { width: 36rem; max-width: 100vw; }
+.tlDrawer--bottom.tlDrawer--narrow { width: auto; height: 16rem; max-height: 100vh; }
+.tlDrawer--bottom.tlDrawer--medium { width: auto; height: 24rem; max-height: 100vh; }
+.tlDrawer--bottom.tlDrawer--wide   { width: auto; height: 36rem; max-height: 100vh; }
 
 .tlDrawer__header {
 	display: flex;
@@ -2170,6 +2216,8 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlDrawer__body {
 	flex: 1;
 	overflow-y: auto;
+	/* Touch scrolling inside the drawer must not chain into page panning. */
+	overscroll-behavior: contain;
 	padding: var(--spacing-04);
 }
 
@@ -2190,7 +2238,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	font-size: var(--body-compact-01-font-size);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 	animation: tlSnackbarSlideUp 0.2s ease;
-	max-width: 40rem;
+	max-width: min(40rem, calc(100vw - 2 * var(--spacing-04)));
 }
 
 .tlSnackbar--exiting {
@@ -4512,6 +4560,13 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 .tlReactButton--iconOnly {
 	width: 2rem;
 	padding: 0;
+}
+
+/* A label-only button still carries its icon element in the DOM when an image is set,
+   so responsive containers can swap it to the icon presentation with a media query
+   (see the compact app bar rules). By default only the label is visible. */
+.tlReactButton--labelOnly > .tlReactButton__image {
+	display: none;
 }
 
 .tlReactButton__image {

@@ -376,17 +376,32 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Languages…
 	 */
-	public static ResKey I18N_STRING_ALL_LANGUAGES_BUTTON;
+	public static ResKey I18N_EDITOR_OPEN_BUTTON;
 
 	/**
-	 * @en Edit all languages
+	 * @en Edit languages
 	 */
-	public static ResKey I18N_STRING_ALL_LANGUAGES_TITLE;
+	public static ResKey I18N_EDITOR_TITLE;
 
 	/**
-	 * @en Translate
+	 * @en Edit translations of "{0}"
 	 */
-	public static ResKey I18N_STRING_TRANSLATE_BUTTON;
+	public static ResKey1 I18N_EDITOR_TITLE__FIELD;
+
+	/**
+	 * @en Other language
+	 */
+	public static ResKey I18N_EDITOR_OTHER_LANGUAGE;
+
+	/**
+	 * @en {0} (empty)
+	 */
+	public static ResKey1 I18N_EDITOR_EMPTY_LANGUAGE__LANG;
+
+	/**
+	 * @en Translate from {0}
+	 */
+	public static ResKey1 I18N_EDITOR_TRANSLATE_FROM__LANG;
 
 	/**
 	 * @en Form group collapse toggled.

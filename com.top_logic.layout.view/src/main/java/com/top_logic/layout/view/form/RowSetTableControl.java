@@ -6,8 +6,14 @@
 package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
@@ -18,10 +24,10 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.control.table.CellContentReactAdapter;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -30,13 +36,27 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
+import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.layout.view.table.ColumnBinding;
+import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
+import com.top_logic.table.CellExistence;
+import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.Group;
+import com.top_logic.table.GroupKey;
+import com.top_logic.table.Sort;
+import com.top_logic.table.TableId;
+import com.top_logic.table.ViewStateStore;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
@@ -54,10 +74,21 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * Renders as a {@code TLPanel} React component with the bound attribute's label as title, the
- * table as content, and an Add button in the toolbar (visible only in edit mode, when the binding
- * offers row creation). Action columns for detail-open (always visible) and row removal (edit mode
- * only, when the binding supports removal) are appended to the table columns.
+ * Data columns are derived from the model per attribute (sortable, filterable, cells displayed
+ * through the attribute's view-mode field display). While the form is in edit mode, the cells of
+ * rows covered by the {@link RowEditPolicy} render the attribute's editable field control instead.
+ * An action column for row removal is appended in edit mode when the binding supports removal; a
+ * detail-open column is prepended when a {@link #setDetailDialog detail dialog} is configured.
+ * </p>
+ *
+ * <p>
+ * Renders as a {@code TLPanel} React component. A {@link #setFramed framed} table shows the bound
+ * attribute's label as panel title and offers row creation as an Add button in its own toolbar; a
+ * frameless table shows neither, and its creator offers row creation through the enclosing command
+ * scope instead. Optional wiring — column personalization, a two-way selection channel, and
+ * automatic row refresh on model or input changes — is configured through setters before
+ * {@link #initTable()}. While an edit session is running, the row set is frozen (no automatic
+ * re-query), so edited rows stay in place; after save or cancel the rows are re-read.
  * </p>
  */
 public class RowSetTableControl extends ReactControl implements FormModelListener {
@@ -69,57 +100,62 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 	static final String COLUMN_DELETE = "_delete";
 
 	/**
-	 * Configuration for a single column in the table.
+	 * A data column of a row-set table.
+	 *
+	 * @param attribute
+	 *        The model attribute name.
+	 * @param readonly
+	 *        Whether the column stays read-only in edit mode.
+	 * @param binding
+	 *        The strategy turning the attribute into a runtime column (sort, filter, display).
 	 */
-	public static class ColumnConfig {
-
-		private final String _attributeName;
-
-		private final boolean _readonly;
-
-		/**
-		 * Creates a new column configuration.
-		 *
-		 * @param attributeName
-		 *        The model attribute name for this column.
-		 * @param readonly
-		 *        Whether the column is always read-only.
-		 */
-		public ColumnConfig(String attributeName, boolean readonly) {
-			_attributeName = attributeName;
-			_readonly = readonly;
-		}
-
-		/**
-		 * The model attribute name.
-		 */
-		public String getAttributeName() {
-			return _attributeName;
-		}
-
-		/**
-		 * Whether this column is forced read-only regardless of form edit mode.
-		 */
-		public boolean isReadonly() {
-			return _readonly;
-		}
+	public record TableColumn(String attribute, boolean readonly, ColumnBinding binding) {
+		// Pure data carrier.
 	}
 
-	private final ReactContext _context;
+	private final ViewContext _context;
 
 	private final FormControl _formControl;
 
 	private final RowSetEditor _editor;
 
-	private final String _fallbackTitle;
+	private final List<TableColumn> _columns;
 
-	private final List<ColumnConfig> _columnConfigs;
+	private final RowEditPolicy _policy;
 
-	private final CompositionTableElement.DetailDialogConfig _detailDialogConfig;
+	private String _fallbackTitle;
+
+	private boolean _framed = true;
+
+	private CompositionTableElement.DetailDialogConfig _detailDialogConfig;
+
+	private ViewStateStore _store;
+
+	private TableId _tableId;
+
+	private ViewChannel _selectionChannel;
+
+	private ViewChannel.ChannelListener _selectionChannelListener;
+
+	private Function<Object[], Collection<?>> _rowFunction;
+
+	private Set<TLStructuredType> _observedTypes = Set.of();
+
+	private List<ViewChannel> _inputChannels = List.of();
 
 	private TableViewControl<TLObject> _tableControl;
 
 	private ListRowSource<TLObject> _rowSource;
+
+	private RowSourceObserver<TLObject> _observer;
+
+	/** Whether the first client write happened (the point from which observers attach directly). */
+	private boolean _written;
+
+	/** Guard breaking the notification cycle between selection channel and table selection. */
+	private boolean _applyingFromChannel;
+
+	private final Set<Object> _selectedKeys = new LinkedHashSet<>();
 
 	/** The Add button in the toolbar, or {@code null} if not in edit mode. */
 	private ReactButtonControl _addButton;
@@ -131,49 +167,114 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 	 * Creates a new {@link RowSetTableControl}.
 	 *
 	 * @param context
-	 *        The React context for ID allocation and SSE registration.
+	 *        The view context (channels, model scope, React wiring).
 	 * @param formControl
 	 *        The parent form control managing the editing lifecycle.
 	 * @param binding
 	 *        The row-set semantics (row objects, add, remove, commit).
-	 * @param fallbackTitle
-	 *        The panel title used when the binding has no bound attribute to derive a label from.
-	 * @param columnConfigs
-	 *        The column configurations defining which attributes to display and edit.
-	 * @param detailDialogConfig
-	 *        Optional configuration for the detail dialog, or {@code null} if no detail dialog is
-	 *        configured.
+	 * @param columns
+	 *        The data columns to display and edit.
+	 * @param policy
+	 *        Which rows are editable while the form is in edit mode.
 	 */
-	public RowSetTableControl(ReactContext context, FormControl formControl, RowSetBinding binding,
-			String fallbackTitle, List<ColumnConfig> columnConfigs,
-			CompositionTableElement.DetailDialogConfig detailDialogConfig) {
+	public RowSetTableControl(ViewContext context, FormControl formControl, RowSetBinding binding,
+			List<TableColumn> columns, RowEditPolicy policy) {
 		super(context, null, "TLPanel");
 		_context = context;
 		_formControl = formControl;
 		_editor = new RowSetEditor(formControl, binding);
-		_fallbackTitle = fallbackTitle;
-		_columnConfigs = columnConfigs;
-		_detailDialogConfig = detailDialogConfig;
+		_columns = columns;
+		_policy = policy;
 
 		// Row-set tables should span the full form row.
 		putState("fullLine", Boolean.TRUE);
 
+		addBeforeWriteAction(() -> {
+			_written = true;
+			attachObserver();
+		});
+
 		formControl.addFormModelListener(this);
+	}
+
+	/**
+	 * Sets the panel title used when the binding has no bound attribute to derive a label from.
+	 */
+	public void setFallbackTitle(String fallbackTitle) {
+		_fallbackTitle = fallbackTitle;
+	}
+
+	/**
+	 * Sets whether the table renders framed: with the bound attribute's label as panel title and
+	 * row creation as an Add button in its own toolbar. A frameless table shows neither; its
+	 * creator offers row creation through the enclosing command scope.
+	 */
+	public void setFramed(boolean framed) {
+		_framed = framed;
+	}
+
+	/**
+	 * Configures the detail dialog opened from each row's detail button. Without it, no detail
+	 * column is shown.
+	 */
+	public void setDetailDialog(CompositionTableElement.DetailDialogConfig detailDialogConfig) {
+		_detailDialogConfig = detailDialogConfig;
+	}
+
+	/**
+	 * Enables column personalization (order, widths) under the given key.
+	 */
+	public void setPersonalization(ViewStateStore store, TableId tableId) {
+		_store = store;
+		_tableId = tableId;
+	}
+
+	/**
+	 * Binds the table's selection two-way to the given channel.
+	 */
+	public void setSelectionChannel(ViewChannel selectionChannel) {
+		if (_selectionChannel != null && _selectionChannelListener != null) {
+			_selectionChannel.removeListener(_selectionChannelListener);
+		}
+		_selectionChannel = selectionChannel;
+		if (_selectionChannel != null) {
+			_selectionChannelListener = (sender, oldValue, newValue) -> reapplySelectionFromChannel();
+			_selectionChannel.addListener(_selectionChannelListener);
+		}
+	}
+
+	/**
+	 * Enables automatic row refresh outside edit sessions: the row function is re-evaluated when
+	 * an observed object or input channel changes.
+	 *
+	 * @param rowFunction
+	 *        Computes the row objects from the input channel values.
+	 * @param observedTypes
+	 *        Types whose object changes trigger a refresh.
+	 * @param inputChannels
+	 *        Channels whose changes trigger a refresh.
+	 */
+	public void setRowRefresh(Function<Object[], Collection<?>> rowFunction,
+			Set<TLStructuredType> observedTypes, List<ViewChannel> inputChannels) {
+		_rowFunction = rowFunction;
+		_observedTypes = observedTypes;
+		_inputChannels = inputChannels;
 	}
 
 	/**
 	 * Initializes the table control and sets it as state.
 	 *
 	 * <p>
-	 * Must be called after construction, once column and row information is available from the
-	 * form's current object. Called by the element that creates this control.
+	 * Must be called after construction (and after all setters), once column and row information
+	 * is available from the form's current object. Called by the element that creates this
+	 * control.
 	 * </p>
 	 */
 	public void initTable() {
 		TLObject currentObject = _formControl.getCurrentObject();
 		boolean available = binding().resolve(currentObject);
 
-		putState("title", title());
+		updateTitle();
 
 		if (!available) {
 			// No rows can be computed yet — build an empty table so TLPanel always has a valid
@@ -205,17 +306,23 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 	}
 
 	/**
-	 * The panel title: the bound attribute's display label if available, else the fallback title.
+	 * Sets the panel title: the bound attribute's display label if available, else the fallback
+	 * title. A frameless table shows no title.
 	 */
-	private String title() {
+	private void updateTitle() {
+		if (!_framed) {
+			putState("title", null);
+			return;
+		}
+		String title = _fallbackTitle;
 		TLStructuredTypePart boundPart = binding().getBoundPart();
 		if (boundPart != null) {
 			String label = MetaLabelProvider.INSTANCE.getLabel(boundPart);
 			if (label != null) {
-				return label;
+				title = label;
 			}
 		}
-		return _fallbackTitle;
+		putState("title", title);
 	}
 
 	// -- FormModelListener --
@@ -230,7 +337,7 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 		}
 
 		// The bound attribute may resolve only now (the form had no object at construction time).
-		putState("title", title());
+		updateTitle();
 
 		if (source.isEditMode()) {
 			List<TLObject> rows = _editor.beginEditSession();
@@ -252,7 +359,8 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 	}
 
 	/**
-	 * Adds a new transient row of the binding's create type to the table.
+	 * Adds a new transient row of the binding's create type to the table and selects it, so it is
+	 * immediately editable under the {@link RowEditPolicy#SELECTED} policy.
 	 */
 	public void addRow() {
 		List<TLClass> createTypes = binding().getCreateTypes();
@@ -262,16 +370,10 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 		TLObject newRow = _editor.addRow(createTypes.get(0));
 		if (newRow != null) {
 			rebuildTableRows();
-			onRowAdded(newRow);
+			if (_tableControl != null) {
+				_tableControl.selectRow(newRow);
+			}
 		}
-	}
-
-	/**
-	 * Hook invoked after a new row has been added and the table refreshed. Subclasses e.g. select
-	 * the new row.
-	 */
-	protected void onRowAdded(TLObject newRow) {
-		// No follow-up by default.
 	}
 
 	/**
@@ -282,6 +384,18 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 		if (_editor.removeRow(rowObject)) {
 			rebuildTableRows();
 		}
+	}
+
+	/**
+	 * Whether the given row is currently editable: in edit mode, all rows under
+	 * {@link RowEditPolicy#ALL}, exactly the selected row under {@link RowEditPolicy#SELECTED}.
+	 */
+	private boolean isRowEditable(TLObject row) {
+		if (_policy == RowEditPolicy.SELECTED) {
+			// The row source keys rows by identity, so the selected keys are the row objects.
+			return _selectedKeys.contains(row);
+		}
+		return true;
 	}
 
 	// -- Table Building --
@@ -299,7 +413,8 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 				.build());
 		}
 
-		columns.addAll(createDataColumns(editMode));
+		List<ColumnSetup> setups = new ArrayList<>(_columns.size());
+		columns.addAll(createDataColumns(editMode, setups));
 
 		// Removal action column (edit mode only, when the binding supports removal, last).
 		if (editMode && binding().getRemoveMode() != RowSetBinding.RemoveMode.NONE) {
@@ -314,7 +429,9 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
 		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
-		DefaultTableView<TLObject> view = createTableView(columns, _rowSource);
+		DefaultTableView<TLObject> view = _store != null
+			? DefaultTableView.create(columns, _rowSource, _store, _tableId)
+			: DefaultTableView.create(columns, _rowSource);
 
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();
@@ -325,94 +442,111 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 		// Set panel child to the table.
 		putState("child", _tableControl);
 
-		afterTableBuilt(_tableControl, editMode);
+		_tableControl.setSelectionListener(this::handleSelectionChanged);
+		reapplySelectionFromChannel();
 
-		// Update toolbar: Add button only in edit mode, when the binding offers row creation.
-		updateToolbar(editMode && !binding().getCreateTypes().isEmpty());
+		// Let each column contribute any per-session UI (e.g. a custom filter dialog).
+		for (ColumnSetup setup : setups) {
+			setup.binding().installUI(setup, _tableControl);
+		}
+
+		// Refresh rows on model or input changes — but only outside edit sessions: while editing,
+		// the row set is frozen so edited rows (overlays) stay in place until save or cancel.
+		detachObserver();
+		if (_rowFunction != null && !editMode) {
+			TableViewControl<TLObject> table = _tableControl;
+			_observer = new RowSourceObserver<>(_rowSource, _rowFunction, _observedTypes, _inputChannels,
+				() -> {
+					table.refreshData();
+					reapplySelectionFromChannel();
+				});
+			if (_written) {
+				attachObserver();
+			}
+		}
+
+		// Update toolbar: a framed table offers an own Add button in edit mode, when the binding
+		// offers row creation.
+		updateToolbar(_framed && editMode && !binding().getCreateTypes().isEmpty());
 	}
 
 	/**
-	 * Builds the data columns for the current mode.
+	 * Builds the data columns for the current mode, resolving each attribute against the binding's
+	 * current row type (the bound attribute may resolve only once the form has an object).
 	 *
-	 * <p>
-	 * The default implementation creates one column per configured {@link ColumnConfig}, rendering
-	 * each cell through {@link #buildDataControl}. Subclasses override to derive columns
-	 * differently (e.g. with sort and filter capabilities).
-	 * </p>
+	 * @param setups
+	 *        Collects the resolved {@link ColumnSetup}s, for per-session UI installation.
 	 */
-	protected List<Column<TLObject, ?>> createDataColumns(boolean editMode) {
-		List<Column<TLObject, ?>> columns = new ArrayList<>();
+	private List<Column<TLObject, ?>> createDataColumns(boolean editMode, List<ColumnSetup> setups) {
+		List<Column<TLObject, ?>> columns = new ArrayList<>(_columns.size());
 		TLClass rowType = binding().getRowType();
-		for (ColumnConfig col : _columnConfigs) {
-			String attribute = col.getAttributeName();
-			boolean readonly = col.isReadonly();
-			columns.add(DefaultColumn.<TLObject, TLObject> builder(attribute, row -> row)
-				.label(columnLabel(rowType, attribute))
-				.renderer(row -> new CellContent.Raw(
-					(CellControlFactory) (ctx -> buildDataControl(ctx, row, attribute, editMode, readonly))))
-				.build());
+		for (TableColumn column : _columns) {
+			String attribute = column.attribute();
+			TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
+			ResKey label = part != null ? TLModelNamingConvention.resourceKey(part) : ResKey.text(attribute);
+			ColumnSetup setup = new ColumnSetup(attribute, label, part, _context, column.binding());
+			setups.add(setup);
+			Column<Object, ?> inner = column.binding().createColumn(setup);
+			columns.add(adapt(inner, editMode && !column.readonly()));
 		}
 		return columns;
 	}
 
-	/**
-	 * Creates the {@link DefaultTableView} composing columns and row source.
-	 *
-	 * <p>
-	 * The default creates a view without personalization; subclasses override to attach a
-	 * {@link com.top_logic.table.ViewStateStore}.
-	 * </p>
-	 */
-	protected DefaultTableView<TLObject> createTableView(List<Column<TLObject, ?>> columns,
-			ListRowSource<TLObject> source) {
-		return DefaultTableView.create(columns, source);
+	private <V> Column<TLObject, V> adapt(Column<Object, V> inner, boolean editable) {
+		return new EditAwareColumn<>(inner, editable);
 	}
 
-	/**
-	 * Hook invoked after the inner {@link TableViewControl} has been (re-)created, e.g. on an edit
-	 * mode transition. Subclasses attach per-table wiring (selection listeners, observers) here.
-	 *
-	 * @param table
-	 *        The freshly created table control.
-	 * @param editMode
-	 *        Whether the table was built for edit mode.
-	 */
-	protected void afterTableBuilt(TableViewControl<TLObject> table, boolean editMode) {
-		// No additional wiring by default.
+	private void handleSelectionChanged(Set<Object> selectedKeys) {
+		// Rows whose selection state flips change their editability under the SELECTED policy, so
+		// their cells must re-render.
+		Set<Object> flipped = new LinkedHashSet<>(_selectedKeys);
+		Set<Object> unchanged = new HashSet<>(flipped);
+		unchanged.retainAll(selectedKeys);
+		flipped.addAll(selectedKeys);
+		flipped.removeAll(unchanged);
+
+		_selectedKeys.clear();
+		_selectedKeys.addAll(selectedKeys);
+
+		if (_policy == RowEditPolicy.SELECTED && _editor.isEditing() && _tableControl != null
+			&& !flipped.isEmpty()) {
+			_tableControl.invalidateRowCells(flipped);
+		}
+
+		if (_selectionChannel != null && !_applyingFromChannel) {
+			if (selectedKeys.size() == 1) {
+				_selectionChannel.set(selectedKeys.iterator().next());
+			} else if (selectedKeys.isEmpty()) {
+				_selectionChannel.set(null);
+			} else {
+				_selectionChannel.set(selectedKeys);
+			}
+		}
 	}
 
-	/**
-	 * Whether the given row is currently editable. The default edits all rows; subclasses restrict
-	 * this (e.g. to the selected row).
-	 */
-	protected boolean isRowEditable(TLObject row) {
-		return true;
-	}
-
-	/**
-	 * The current row source, or {@code null} before the first {@link #initTable()}.
-	 */
-	protected ListRowSource<TLObject> getRowSource() {
-		return _rowSource;
-	}
-
-	/**
-	 * The form control this table participates in.
-	 */
-	protected FormControl getFormControl() {
-		return _formControl;
-	}
-
-	/**
-	 * Replaces the displayed rows and refreshes the table.
-	 */
-	protected void updateRows(List<? extends TLObject> rows) {
-		if (_rowSource == null) {
+	private void reapplySelectionFromChannel() {
+		if (_selectionChannel == null || _tableControl == null) {
 			return;
 		}
-		_rowSource.setElements(new ArrayList<>(rows));
-		if (_tableControl != null) {
-			_tableControl.refreshData();
+		Object value = _selectionChannel.get();
+		_applyingFromChannel = true;
+		try {
+			_tableControl.selectRow(value instanceof Collection ? null : value);
+		} finally {
+			_applyingFromChannel = false;
+		}
+	}
+
+	private void attachObserver() {
+		if (_observer != null) {
+			_observer.attach(_context.getModelScope());
+		}
+	}
+
+	private void detachObserver() {
+		if (_observer != null) {
+			_observer.detach();
+			_observer = null;
 		}
 	}
 
@@ -442,40 +576,13 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 	}
 
 	private void rebuildTableRows() {
-		if (!_editor.isEditing()) {
+		if (_rowSource == null || !_editor.isEditing()) {
 			return;
 		}
-		updateRows(_editor.getCurrentRows());
-	}
-
-	/**
-	 * The header label for a data column: the model attribute's label if the row type and part
-	 * resolve, else the attribute name.
-	 */
-	private static ResKey columnLabel(TLClass rowType, String attribute) {
-		if (rowType != null) {
-			TLStructuredTypePart part = rowType.getPart(attribute);
-			if (part != null) {
-				return TLModelNamingConvention.resourceKey(part);
-			}
+		_rowSource.setElements(new ArrayList<>(_editor.getCurrentRows()));
+		if (_tableControl != null) {
+			_tableControl.refreshData();
 		}
-		return ResKey.text(attribute);
-	}
-
-	/**
-	 * Builds the control for a data cell: a read-only label in view mode, for read-only columns
-	 * and rows that are not {@link #isRowEditable(TLObject) editable}, otherwise the attribute's
-	 * editable field control provided by the {@link RowSetEditor}.
-	 */
-	protected ReactControl buildDataControl(ReactContext ctx, TLObject row, String columnName, boolean editMode,
-			boolean readonly) {
-		if (editMode && !readonly && isRowEditable(row)) {
-			ReactControl editControl = _editor.createEditCellControl(ctx, row, columnName);
-			if (editControl != null) {
-				return editControl;
-			}
-		}
-		return new ReactTextControl(ctx, MetaLabelProvider.INSTANCE.getLabel(row.tValueByName(columnName)));
 	}
 
 	private ReactButtonControl createDetailButton(ReactContext ctx, Object rowObject) {
@@ -576,6 +683,11 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 	protected void cleanupChildren() {
 		_formControl.removeFormModelListener(this);
 		_editor.endEditSession();
+		detachObserver();
+		if (_selectionChannel != null && _selectionChannelListener != null) {
+			_selectionChannel.removeListener(_selectionChannelListener);
+			_selectionChannelListener = null;
+		}
 		if (_toolbar != null) {
 			_toolbar.cleanupTree();
 			_toolbar = null;
@@ -586,4 +698,111 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 			_tableControl = null;
 		}
 	}
+
+	/**
+	 * Adapts a type-derived {@link Column} (rows typed {@code Object}) to the {@link TLObject} row
+	 * type of this table, rendering cells editable when the enclosing form edits and the
+	 * {@link RowEditPolicy} covers the row.
+	 */
+	private final class EditAwareColumn<V> implements Column<TLObject, V> {
+
+		private final Column<Object, V> _inner;
+
+		private final boolean _editable;
+
+		EditAwareColumn(Column<Object, V> inner, boolean editable) {
+			_inner = inner;
+			_editable = editable;
+		}
+
+		@Override
+		public String name() {
+			return _inner.name();
+		}
+
+		@Override
+		public ResKey label() {
+			return _inner.label();
+		}
+
+		@Override
+		public V value(TLObject row) {
+			return _inner.value(row);
+		}
+
+		@Override
+		public CellRenderer<V> renderer() {
+			return _inner.renderer();
+		}
+
+		@Override
+		public CellContent renderCell(TLObject row) {
+			if (_editable && row != null && isRowEditable(row)) {
+				return new CellContent.Raw((CellControlFactory) context -> {
+					ReactControl editControl = _editor.createEditCellControl(context, row, name());
+					return editControl != null
+						? editControl
+						: CellContentReactAdapter.toControl(context, _inner.renderCell(row));
+				});
+			}
+			return _inner.renderCell(row);
+		}
+
+		@Override
+		public Optional<Sort<V>> sort() {
+			return _inner.sort();
+		}
+
+		@Override
+		public Optional<ColumnFilter<V>> filter() {
+			return _inner.filter();
+		}
+
+		@Override
+		public Optional<Aggregator<TLObject, V>> aggregate() {
+			return _inner.aggregate().map(aggregator -> group -> aggregator.over(asObjectGroup(group)));
+		}
+
+		@Override
+		public int defaultWidth() {
+			return _inner.defaultWidth();
+		}
+
+		@Override
+		public boolean frozenEligible() {
+			return _inner.frozenEligible();
+		}
+
+		@Override
+		public String cssClass(TLObject row) {
+			return _inner.cssClass(row);
+		}
+
+		@Override
+		public Optional<CellExistence<TLObject>> existence() {
+			return _inner.existence().map(existence -> existence::cellExists);
+		}
+
+	}
+
+	private static Group<Object> asObjectGroup(Group<TLObject> group) {
+		return new Group<>() {
+
+			@Override
+			public GroupKey key() {
+				return group.key();
+			}
+
+			@Override
+			public int size() {
+				return group.size();
+			}
+
+			@Override
+			public List<Object> members() {
+				return List.copyOf(group.members());
+			}
+		};
+	}
+
 }

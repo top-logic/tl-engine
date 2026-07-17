@@ -22,7 +22,9 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.form.AttributeRowSetBinding;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.RowEditPolicy;
 import com.top_logic.layout.view.form.RowSetTableControl;
+import com.top_logic.layout.view.table.ColumnBinding;
 
 /**
  * Declarative {@link UIElement} that creates a {@link RowSetTableControl} for an inline
@@ -196,19 +198,19 @@ public class CompositionTableElement implements UIElement {
 		// FormElement always sets a FormControl as the FormModel.
 		FormControl formControl = (FormControl) formModel;
 
-		// Convert config to RowSetTableControl.ColumnConfig list.
-		List<RowSetTableControl.ColumnConfig> columnConfigs = new ArrayList<>();
+		List<RowSetTableControl.TableColumn> columns = new ArrayList<>();
 		if (_config.getColumns() != null) {
 			for (ColumnConfig col : _config.getColumns().getColumns()) {
-				columnConfigs.add(new RowSetTableControl.ColumnConfig(
-					col.getAttribute(), col.getReadonly()));
+				columns.add(new RowSetTableControl.TableColumn(
+					col.getAttribute(), col.getReadonly(), ColumnBinding.TYPE_DERIVED));
 			}
 		}
 
 		String attribute = _config.getAttribute();
 		RowSetTableControl control = new RowSetTableControl(
-			context, formControl, new AttributeRowSetBinding(attribute), attribute, columnConfigs,
-			_config.getDetailDialog());
+			context, formControl, new AttributeRowSetBinding(attribute), columns, RowEditPolicy.ALL);
+		control.setFallbackTitle(attribute);
+		control.setDetailDialog(_config.getDetailDialog());
 		control.initTable();
 		return control;
 	}

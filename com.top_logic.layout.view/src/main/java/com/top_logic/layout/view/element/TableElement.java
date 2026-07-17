@@ -35,15 +35,18 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.Icons;
 import com.top_logic.layout.view.form.QueryRowSetBinding;
 import com.top_logic.layout.view.form.RowEditPolicy;
 import com.top_logic.layout.view.form.RowSetBinding;
+import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnSetup;
-import com.top_logic.layout.view.table.EditableTableControl;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -237,6 +240,9 @@ public class TableElement implements UIElement {
 		boolean getReadonly();
 	}
 
+	/** Command name of the contributed {@link #contributeAddRowCommand add-row command}. */
+	private static final String COMMAND_ADD_ROW = "tableAddRow";
+
 	private final Config _config;
 
 	private final QueryExecutor _rowsExecutor;
@@ -286,12 +292,11 @@ public class TableElement implements UIElement {
 		}
 		Collection<?> rows = executeRowsQuery(_rowsExecutor, readChannelValues(inputChannels));
 
-		List<ColumnSetup> setups = columnSetups(resolveRowType(rows), context);
-
 		if (_config.getRowEdit() != RowEditPolicy.NONE) {
-			return createEditableControl(context, inputChannels, rows, setups);
+			return createEditableControl(context, inputChannels, rows);
 		}
 
+		List<ColumnSetup> setups = columnSetups(resolveRowType(rows), context);
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
 			columns.add(setup.binding().createColumn(setup));
@@ -369,12 +374,12 @@ public class TableElement implements UIElement {
 	}
 
 	/**
-	 * Creates the {@link EditableTableControl} variant: rows come from the same query (frozen
-	 * while an edit session runs), cells become editable according to {@link Config#getRowEdit()},
-	 * and membership changes follow {@link Config#getCreateType()} / {@link Config#getOnRemove()}.
+	 * Creates the editable variant: rows come from the same query (frozen while an edit session
+	 * runs), cells become editable according to {@link Config#getRowEdit()}, and membership
+	 * changes follow {@link Config#getCreateType()} / {@link Config#getOnRemove()}.
 	 */
 	private IReactControl createEditableControl(ViewContext context, List<ViewChannel> inputChannels,
-			Collection<?> rows, List<ColumnSetup> setups) {
+			Collection<?> rows) {
 		FormModel formModel = context.getFormModel();
 		if (!(formModel instanceof FormControl formControl)) {
 			throw new IllegalStateException(
@@ -390,27 +395,76 @@ public class TableElement implements UIElement {
 			createType == null ? List.of() : List.of(createType),
 			_config.getOnRemove());
 
-		Map<String, Boolean> readonlyByAttribute = new HashMap<>();
-		ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig != null) {
-			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
-				readonlyByAttribute.put(columnConfig.getAttribute(), Boolean.valueOf(columnConfig.getReadonly()));
-			}
-		}
-		List<EditableTableControl.EditColumn> columns = new ArrayList<>(setups.size());
-		for (ColumnSetup setup : setups) {
-			boolean readonly = Boolean.TRUE.equals(readonlyByAttribute.get(setup.attribute()));
-			columns.add(new EditableTableControl.EditColumn(setup, readonly));
-		}
-
 		ChannelRef selectionRef = _config.getSelection();
 		ViewChannel selectionChannel = selectionRef != null ? context.resolveChannel(selectionRef) : null;
 
-		EditableTableControl control = new EditableTableControl(context, formControl, binding, columns,
-			_config.getRowEdit(), PersonalConfigViewStateStore.INSTANCE, tableId(), selectionChannel,
-			args -> executeRowsQuery(rowsExecutor, args), resolveObservedTypes(), inputChannels);
+		RowSetTableControl control =
+			new RowSetTableControl(context, formControl, binding, editColumns(rowType), _config.getRowEdit());
+		control.setFramed(false);
+		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
+		control.setSelectionChannel(selectionChannel);
+		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), resolveObservedTypes(), inputChannels);
 		control.initTable();
+
+		contributeAddRowCommand(context, formControl, binding, control);
+
 		return control;
+	}
+
+	/**
+	 * The data columns of the editable variant: one per configured {@code <column>} (with its
+	 * read-only flag and resolved filter binding), or - when no columns are configured - one per
+	 * non-hidden attribute of the row type.
+	 */
+	private List<RowSetTableControl.TableColumn> editColumns(TLStructuredType rowType) {
+		List<RowSetTableControl.TableColumn> columns = new ArrayList<>();
+		ColumnsConfig columnsConfig = _config.getColumns();
+		if (columnsConfig != null && !columnsConfig.getColumns().isEmpty()) {
+			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
+				String attribute = columnConfig.getAttribute();
+				columns.add(new RowSetTableControl.TableColumn(attribute, columnConfig.getReadonly(),
+					_bindings.get(attribute)));
+			}
+		} else if (rowType != null) {
+			for (TLStructuredTypePart part : rowType.getAllParts()) {
+				if (DisplayAnnotations.isHidden(part)) {
+					continue;
+				}
+				columns.add(
+					new RowSetTableControl.TableColumn(part.getName(), false, ColumnBinding.TYPE_DERIVED));
+			}
+		}
+		if (columns.isEmpty()) {
+			throw new IllegalStateException(
+				"A <table> requires either explicit <column>s or a resolvable row type to derive them from.");
+		}
+		return columns;
+	}
+
+	/**
+	 * Contributes the "add row" command to the enclosing command scope (next to the form's save
+	 * and cancel commands), visible only while the form is in edit mode. The table itself renders
+	 * frameless, so it has no own toolbar to host the command.
+	 */
+	private static void contributeAddRowCommand(ViewContext context, FormControl formControl,
+			RowSetBinding binding, RowSetTableControl control) {
+		if (binding.getCreateTypes().isEmpty()) {
+			return;
+		}
+		CommandScope scope = context.getCommandScope();
+		if (scope == null) {
+			return;
+		}
+
+		FormCommandModel addCommand = FormCommandModel.editModeCommand(COMMAND_ADD_ROW,
+			com.top_logic.layout.view.I18NConstants.COMPOSITION_TABLE_ADD, Icons.COMPOSITION_TABLE_ADD,
+			formControl, ctx -> control.addRow());
+		scope.addCommand(addCommand);
+		formControl.addBeforeWriteAction(addCommand::attach);
+		formControl.addCleanupAction(() -> {
+			scope.removeCommand(addCommand);
+			addCommand.detach();
+		});
 	}
 
 	/**

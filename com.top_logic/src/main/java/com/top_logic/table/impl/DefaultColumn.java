@@ -11,7 +11,6 @@ import java.util.function.Function;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
-import com.top_logic.table.CellEditor;
 import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
@@ -24,8 +23,8 @@ import com.top_logic.table.Sort;
  *
  * <p>
  * Required: a {@link #name()} and a value function. A text renderer and a label derived
- * from the name are used unless overridden. Capabilities (sort, filter, editor, aggregate)
- * are optional and absent unless set.
+ * from the name are used unless overridden. Capabilities (sort, filter, aggregate) are
+ * optional and absent unless set.
  * </p>
  *
  * @param <R>
@@ -47,8 +46,6 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final ColumnFilter<V> _filter;
 
-	private final CellEditor<R, V> _editor;
-
 	private final Aggregator<R, V> _aggregate;
 
 	private final int _width;
@@ -67,7 +64,6 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 			: value -> CellContent.text(String.valueOf(value));
 		_sort = builder._sort;
 		_filter = builder._filter;
-		_editor = builder._editor;
 		_aggregate = builder._aggregate;
 		_width = builder._width;
 		_frozenEligible = builder._frozenEligible;
@@ -103,11 +99,6 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	@Override
 	public Optional<ColumnFilter<V>> filter() {
 		return Optional.ofNullable(_filter);
-	}
-
-	@Override
-	public Optional<CellEditor<R, V>> editor() {
-		return Optional.ofNullable(_editor);
 	}
 
 	@Override
@@ -169,8 +160,6 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 		ColumnFilter<V> _filter;
 
-		CellEditor<R, V> _editor;
-
 		Aggregator<R, V> _aggregate;
 
 		int _width = 150;
@@ -215,14 +204,6 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 */
 		public Builder<R, V> filter(ColumnFilter<V> filter) {
 			_filter = filter;
-			return this;
-		}
-
-		/**
-		 * Makes the column inline-editable with the given editor.
-		 */
-		public Builder<R, V> editor(CellEditor<R, V> editor) {
-			_editor = editor;
 			return this;
 		}
 

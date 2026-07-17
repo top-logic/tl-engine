@@ -7,8 +7,6 @@ package com.top_logic.table;
 
 import java.util.List;
 
-import com.top_logic.layout.form.model.FieldModel;
-
 /**
  * The single binding object the UI tier talks to: composes a column model, a
  * {@link RowSource} and a {@link TableViewState} into a windowed, command-driven view.
@@ -67,12 +65,6 @@ public interface TableView<R> {
 	 */
 	MatchCounts columnMatchCounts(String column);
 
-	/**
-	 * The editable field model for the given cell, or {@code null} if the cell is not
-	 * editable.
-	 */
-	FieldModel editor(Object rowKey, String column);
-
 	// ---- commands (UI -> model) ----
 
 	/**
@@ -120,11 +112,6 @@ public interface TableView<R> {
 	 * Replaces the current selection.
 	 */
 	void select(Selection selection);
-
-	/**
-	 * Commits an inline edit of a cell. The implementation owns the transaction.
-	 */
-	void commitEdit(Object rowKey, String column, Object value);
 
 	/**
 	 * Sets the paging window ({@code pageSize == }{@link TableViewState#SHOW_ALL} disables

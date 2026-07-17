@@ -229,6 +229,9 @@ public class RowSetTableControl extends ReactControl implements FormModelListene
 			return;
 		}
 
+		// The bound attribute may resolve only now (the form had no object at construction time).
+		putState("title", title());
+
 		if (source.isEditMode()) {
 			List<TLObject> rows = _editor.beginEditSession();
 			buildTable(rows, true);

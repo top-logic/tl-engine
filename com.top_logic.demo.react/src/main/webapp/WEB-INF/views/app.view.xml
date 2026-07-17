@@ -28,8 +28,8 @@
 					>
 						<view-ref view="tickets.view.xml"/>
 						<label>
-							<en>Tickets</en>
-							<de>Tickets</de>
+							<en>Object list</en>
+							<de>Objektliste</de>
 						</label>
 					</nav-item>
 					<separator/>

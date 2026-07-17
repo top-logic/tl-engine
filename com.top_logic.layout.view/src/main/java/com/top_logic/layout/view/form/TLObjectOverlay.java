@@ -76,6 +76,9 @@ public class TLObjectOverlay extends TransientObject {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
 			_base.tUpdate(entry.getKey(), entry.getValue());
 		}
+		// The base now holds all values, so the overlay has no unsaved changes anymore. Reads
+		// delegate to the base, and dirty tracking reports a clean state.
+		_changes.clear();
 	}
 
 	/**

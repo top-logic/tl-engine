@@ -64,6 +64,9 @@ public class StoreFormStateAction implements ViewAction {
 
 		FormControl formControl = (FormControl) formModel;
 		Object result = formControl.executeStoreState();
+		// The stored values live in the base object now - continue with a clean edit session so
+		// the form no longer reports the already-stored values as unsaved changes.
+		formControl.refreshEditSession();
 		return result != null ? result : input;
 	}
 }

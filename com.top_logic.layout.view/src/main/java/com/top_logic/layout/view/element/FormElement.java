@@ -374,6 +374,11 @@ public class FormElement extends ContainerElement {
 		if (initialEditMode) {
 			formControl.enterEditMode();
 		}
+		if (editModeChannel == null && _config.getInitialEditMode()) {
+			// Without an edit-mode channel governing the mode, initial-edit-mode means "editable
+			// whenever an object is available" - including objects arriving via the input channel.
+			formControl.setAutoEditMode(true);
+		}
 
 		// 12. Model listener registration is tied to the control's attach/detach lifecycle.
 		formControl.setModelScope(context.getModelScope());

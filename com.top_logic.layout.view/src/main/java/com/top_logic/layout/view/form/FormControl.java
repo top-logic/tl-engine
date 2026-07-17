@@ -66,6 +66,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private boolean _editMode;
 
+	private boolean _autoEditMode;
+
 	private final LockHandler _lockHandler;
 
 	private ViewChannel _inputChannel;
@@ -383,6 +385,23 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
+	 * Makes the form enter edit mode whenever an object becomes available.
+	 *
+	 * <p>
+	 * Set for forms configured with {@code initial-edit-mode} (and no edit-mode channel): such a
+	 * form is editable not only for its first object, but also after its input channel switches to
+	 * another object (e.g. a new-entry form whose channel is re-filled with a fresh transient
+	 * object after each submit).
+	 * </p>
+	 *
+	 * @param autoEditMode
+	 *        Whether to re-enter edit mode on every object switch.
+	 */
+	public void setAutoEditMode(boolean autoEditMode) {
+		_autoEditMode = autoEditMode;
+	}
+
+	/**
 	 * Enters edit mode by acquiring a lock, creating an overlay, and notifying listeners.
 	 */
 	public void enterEditMode() {
@@ -512,6 +531,24 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			throw new TopLogicException(
 				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 		}
+	}
+
+	/**
+	 * Starts a fresh edit session after overlay edits have been applied to the base object, so the
+	 * form reports a clean state relative to the updated base.
+	 *
+	 * <p>
+	 * Called after {@link #executeStoreState()} when the form stays alive (e.g. a new-entry form
+	 * that is re-used for the next entry): without a fresh session, field models would still
+	 * compare against their original default values and report unsaved changes that are in fact
+	 * already stored.
+	 * </p>
+	 */
+	public void refreshEditSession() {
+		if (!_editMode) {
+			return;
+		}
+		setupEditSession();
 	}
 
 	/**
@@ -693,6 +730,12 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		updateNoModelMessage();
 
 		fireFormStateChanged();
+
+		if (_autoEditMode) {
+			// The form is configured to be editable whenever an object is available, so the
+			// object switch re-enters edit mode for the new object.
+			enterEditMode();
+		}
 	}
 
 	@Override

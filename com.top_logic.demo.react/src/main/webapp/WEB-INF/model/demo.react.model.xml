@@ -41,6 +41,9 @@
 							<multi-line rows="4"/>
 						</annotations>
 					</property>
+					<property name="i18nHtml"
+						type="tl.model.i18n:I18NHtml"
+					/>
 					<property name="password"
 						type="tl.core:String"
 					>

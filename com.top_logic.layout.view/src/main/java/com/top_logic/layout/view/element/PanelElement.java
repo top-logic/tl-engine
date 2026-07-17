@@ -58,6 +58,9 @@ public class PanelElement extends CommandScopeElement {
 		/** Configuration name for {@link #getFill()}. */
 		String FILL = "fill";
 
+		/** Configuration name for {@link #getHoverActions()}. */
+		String HOVER_ACTIONS = "hover-actions";
+
 		/**
 		 * The panel title displayed in the toolbar header.
 		 */
@@ -76,6 +79,19 @@ public class PanelElement extends CommandScopeElement {
 		 */
 		@Name(TITLE_CONTENT)
 		List<PolymorphicConfiguration<? extends UIElement>> getTitleContent();
+
+		/**
+		 * Whether the header's toolbar buttons stay hidden until the pointer hovers over the panel
+		 * or a button receives keyboard focus.
+		 *
+		 * <p>
+		 * Reduces visual noise in repeated panels such as comment lists. Note that on touch
+		 * devices there is no hover; the buttons appear there once a control inside the panel is
+		 * focused.
+		 * </p>
+		 */
+		@Name(HOVER_ACTIONS)
+		boolean getHoverActions();
 
 		/**
 		 * Whether the panel fills the bounded height of its container instead of growing with its
@@ -99,6 +115,8 @@ public class PanelElement extends CommandScopeElement {
 
 	private final boolean _fill;
 
+	private final boolean _hoverActions;
+
 	/**
 	 * Creates a new {@link PanelElement} from configuration.
 	 */
@@ -110,6 +128,7 @@ public class PanelElement extends CommandScopeElement {
 			.map(context::getInstance)
 			.collect(Collectors.toList());
 		_fill = config.getFill();
+		_hoverActions = config.getHoverActions();
 	}
 
 	@Override
@@ -118,6 +137,7 @@ public class PanelElement extends CommandScopeElement {
 		String title = _title != null ? Resources.getInstance().getString(_title) : "";
 		ReactPanelControl panel = new ReactPanelControl(context, title, content, toolbar, buttonBar, false, false, false);
 		panel.setFill(_fill);
+		panel.setHoverActions(_hoverActions);
 		panel.setTitleContent(createTitleContentControl(context));
 		return panel;
 	}

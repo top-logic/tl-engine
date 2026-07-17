@@ -1080,6 +1080,18 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	flex: 1;
 }
 
+/* Hover-revealed actions: the toolbar stays invisible (but keyboard-reachable) until the
+   pointer is over the panel or one of the buttons holds focus. */
+.tlPanel--hoverActions > .tlPanel__header > .tlPanel__toolbar {
+	opacity: 0;
+	transition: opacity 0.15s ease-in-out;
+}
+
+.tlPanel--hoverActions:hover > .tlPanel__header > .tlPanel__toolbar,
+.tlPanel--hoverActions > .tlPanel__header > .tlPanel__toolbar:focus-within {
+	opacity: 1;
+}
+
 .tlPanel__toolbar {
 	display: flex;
 	align-items: center;

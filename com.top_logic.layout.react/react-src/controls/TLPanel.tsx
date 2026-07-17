@@ -58,6 +58,7 @@ const IconPopOut = () => (
  * - showMaximize: boolean
  * - showPopOut: boolean
  * - fill: boolean (fill the container's bounded height instead of growing with content)
+ * - hoverActions: boolean (hide toolbar buttons until the panel is hovered or a button is focused)
  * - toolbar: ChildDescriptor (a TLToolbar control, may be absent)
  * - buttonBar: ChildDescriptor (a TLToolbar control, may be absent)
  * - child: ChildDescriptor
@@ -74,6 +75,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const showPopOut = state.showPopOut === true;
   const fullLine = state.fullLine === true;
   const fill = state.fill === true;
+  const hoverActions = state.hoverActions === true;
 
   const isMinimized = expansionState === 'MINIMIZED';
   const isMaximized = expansionState === 'MAXIMIZED';
@@ -110,7 +112,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fill ? ' tlPanel--fill' : ''}`}
+      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fill ? ' tlPanel--fill' : ''}${hoverActions ? ' tlPanel--hoverActions' : ''}`}
       style={panelStyle}
     >
       {hasHeader && (

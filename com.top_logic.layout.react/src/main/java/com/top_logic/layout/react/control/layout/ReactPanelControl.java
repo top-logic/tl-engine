@@ -68,6 +68,9 @@ public class ReactPanelControl extends ToolbarControl {
 	/** @see #setTitleContent(ReactControl) */
 	private static final String TITLE_CONTENT = "titleContent";
 
+	/** @see #setHoverActions(boolean) */
+	private static final String HOVER_ACTIONS = "hoverActions";
+
 	/** Default collapsed size in pixels (toolbar header height). */
 	private static final float COLLAPSED_SIZE = 36f;
 
@@ -140,6 +143,14 @@ public class ReactPanelControl extends ToolbarControl {
 	 */
 	public void setTitle(String title) {
 		putState(TITLE, title);
+	}
+
+	/**
+	 * When enabled, the header's toolbar buttons stay hidden until the pointer hovers over the
+	 * panel or a button receives keyboard focus.
+	 */
+	public void setHoverActions(boolean hoverActions) {
+		putState(HOVER_ACTIONS, Boolean.valueOf(hoverActions));
 	}
 
 	/**

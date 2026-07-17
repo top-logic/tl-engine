@@ -99,7 +99,10 @@
 									inputs="comment"
 								/>
 							</channels>
-							<panel command-display="icon-only">
+							<panel
+								command-display="icon-only"
+								hover-actions="true"
+							>
 								<title-content>
 									<avatar input="author"/>
 									<text

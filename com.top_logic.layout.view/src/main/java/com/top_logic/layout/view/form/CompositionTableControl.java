@@ -578,9 +578,11 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 		List<Column<TLObject, ?>> columns = new ArrayList<>();
 
 		// Detail action column (first), only when a detail dialog is configured to open.
+		// Action columns carry no header label - it would not fit their narrow width; the
+		// buttons in the cells label the action themselves.
 		if (_detailDialogConfig != null) {
 			columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DETAIL, row -> row)
-				.label(I18NConstants.COMPOSITION_TABLE_DETAIL)
+				.label(ResKey.text(""))
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDetailButton(ctx, row))))
 				.width(48)
 				.frozenEligible(false)
@@ -599,10 +601,10 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 				.build());
 		}
 
-		// Delete action column (edit mode only, last).
+		// Delete action column (edit mode only, last, no header label - see detail column).
 		if (editMode) {
 			columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DELETE, row -> row)
-				.label(I18NConstants.COMPOSITION_TABLE_DELETE)
+				.label(ResKey.text(""))
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row))))
 				.width(48)
 				.frozenEligible(false)

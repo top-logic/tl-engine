@@ -11,6 +11,11 @@ package com.top_logic.layout.view.form;
 public enum RowEditPolicy {
 
 	/**
+	 * The table is read-only (the default).
+	 */
+	NONE,
+
+	/**
 	 * All rows are editable.
 	 */
 	ALL,

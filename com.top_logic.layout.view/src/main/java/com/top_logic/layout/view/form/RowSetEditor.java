@@ -287,7 +287,7 @@ public class RowSetEditor implements FormParticipant {
 		}
 		AttributeFieldModel cellFieldModel = rowModel.getColumnModel(columnName);
 		if (cellFieldModel == null) {
-			cellFieldModel = new AttributeFieldModel(row, part);
+			cellFieldModel = FieldControlService.getInstance().createModel(row, part, _form);
 			cellFieldModel.setEditable(true);
 			rowModel.putColumnModel(columnName, cellFieldModel);
 

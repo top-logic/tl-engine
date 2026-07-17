@@ -161,7 +161,7 @@ public class TableElement implements UIElement {
 		 *
 		 * <p>
 		 * When set, the table must be nested inside a form; cell edits buffer on row overlays and
-		 * are committed together with the form's save. When unset, the table is read-only.
+		 * are committed together with the form's save. By default the table is read-only.
 		 * </p>
 		 */
 		@Name(ROW_EDIT)
@@ -288,7 +288,7 @@ public class TableElement implements UIElement {
 
 		List<ColumnSetup> setups = columnSetups(resolveRowType(rows), context);
 
-		if (_config.getRowEdit() != null) {
+		if (_config.getRowEdit() != RowEditPolicy.NONE) {
 			return createEditableControl(context, inputChannels, rows, setups);
 		}
 
@@ -388,7 +388,7 @@ public class TableElement implements UIElement {
 			() -> tlObjectRows(executeRowsQuery(rowsExecutor, readChannelValues(inputChannels))),
 			createType != null ? createType : (rowType instanceof TLClass rowClass ? rowClass : null),
 			createType == null ? List.of() : List.of(createType),
-			_config.getOnRemove() == null ? RowSetBinding.RemoveMode.NONE : _config.getOnRemove());
+			_config.getOnRemove());
 
 		Map<String, Boolean> readonlyByAttribute = new HashMap<>();
 		ColumnsConfig columnsConfig = _config.getColumns();

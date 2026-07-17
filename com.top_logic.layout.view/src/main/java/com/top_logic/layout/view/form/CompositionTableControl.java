@@ -686,12 +686,19 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	 */
 	private ReactControl buildDataControl(ReactContext ctx, TLObject row, String columnName, boolean editMode,
 			boolean readonly) {
+		TLStructuredType type = row.tType();
+		TLStructuredTypePart part = type.getPart(columnName);
+
 		if (!editMode || readonly) {
+			if (part != null) {
+				// Same read-only representation as a view-mode form field, so value types keep
+				// their interactive display (e.g. a download link for a binary value).
+				return FieldControlService.getInstance()
+					.createDisplayControl(ctx, part, row.tValueByName(columnName));
+			}
 			return new ReactTextControl(ctx, MetaLabelProvider.INSTANCE.getLabel(row.tValueByName(columnName)));
 		}
 
-		TLStructuredType type = row.tType();
-		TLStructuredTypePart part = type.getPart(columnName);
 		if (part != null) {
 			CompositionRowModel rowModel = findRowModel(row);
 			if (rowModel != null) {

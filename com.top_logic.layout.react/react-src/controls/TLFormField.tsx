@@ -41,8 +41,6 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const [helpVisible, setHelpVisible] = useState(false);
   const toggleHelp = useCallback(() => setHelpVisible(v => !v), []);
 
-  if (!visible) return null;
-
   const labelHidden = labelPos === 'hidden';
   const hasError = error != null;
   const hasWarnings = warnings != null && warnings.length > 0;
@@ -57,8 +55,11 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
     dirty ? 'tlFormField--dirty' : '',
   ].filter(Boolean).join(' ');
 
+  // An invisible field is hidden via CSS instead of not being rendered: unmounting the child
+  // control would drop its SSE subscription, so state patches arriving while hidden (e.g.
+  // editable toggling with the form mode) would be lost until a full re-serialization.
   return (
-    <div id={controlId} className={className}>
+    <div id={controlId} className={className} style={visible ? undefined : { display: 'none' }}>
       {!labelHidden && (
         <div className="tlFormField__label">
           <span

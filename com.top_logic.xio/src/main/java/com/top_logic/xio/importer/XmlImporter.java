@@ -168,17 +168,40 @@ public final class XmlImporter {
 	 * @return The (top-level) model element that was built by the import.
 	 */
 	public Object importModel(ModelBinding binding, Source source) throws XMLStreamException {
+		return importModel(binding, source, null);
+	}
+
+	/**
+	 * Processes the given input source and builds the model through the given {@link ModelBinding}.
+	 *
+	 * @param binding
+	 *        Algorithm to build model elements from the given input source.
+	 * @param source
+	 *        The XML input to interpret.
+	 * @param context
+	 *        An optional context object that is assigned to the top-level
+	 *        {@link ImportContext#THIS_VAR this} variable of the import. Top-level object imports
+	 *        use this value as their {@link ImportContext#SCOPE_VAR scope} (just like the inner
+	 *        handlers of an {@code in-scope} declaration). May be <code>null</code> to start the
+	 *        import without an outer context.
+	 * @return The (top-level) model element that was built by the import.
+	 */
+	public Object importModel(ModelBinding binding, Source source, Object context) throws XMLStreamException {
 		try (DefaultImportContext importContext = new DefaultImportContext(_log, binding)) {
 			importContext.setLogCreations(_logCreations);
 
-			return readModel(source, importContext);
+			return readModel(source, importContext, context);
 		}
 	}
 
-	private Object readModel(Source source, ImportContext context) throws XMLStreamException {
+	private Object readModel(Source source, ImportContext context, Object outerContext) throws XMLStreamException {
 		XMLStreamReader in = XMLStreamUtil.getDefaultInputFactory().createXMLStreamReader(source);
 		try {
-			return context.importXml(_handler, in);
+			if (outerContext == null) {
+				return context.importXml(_handler, in);
+			}
+			return context.withVar(ImportContext.THIS_VAR, outerContext, in,
+				(ctx, reader) -> ctx.importXml(_handler, reader));
 		} finally {
 			in.close();
 		}

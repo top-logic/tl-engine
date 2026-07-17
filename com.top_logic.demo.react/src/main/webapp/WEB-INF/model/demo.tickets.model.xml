@@ -50,8 +50,37 @@
 				<attributes>
 					<property name="name"
 						type="tl.core:String"
-					/>
+					>
+						<annotations>
+							<storage-algorithm>
+								<fallback-storage
+									fallback-attribute="fileName"
+									storage-attribute="customName"
+								/>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="customName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<property name="fileName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr>x -&gt; label($x.get(`demo.tickets:Attachment#data`))</expr>
+								</query>
+							</storage-algorithm>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
 					<property name="data"
+						mandatory="true"
 						type="tl.core:Binary"
 					/>
 				</attributes>

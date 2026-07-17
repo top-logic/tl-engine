@@ -24,6 +24,7 @@
 			<class name="Comment">
 				<attributes>
 					<property name="content"
+						mandatory="true"
 						type="tl.model.wysiwyg:Html"
 					/>
 					<reference name="author"

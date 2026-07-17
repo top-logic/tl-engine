@@ -17,6 +17,7 @@ import jakarta.activation.MimeTypeParseException;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.io.BinaryContent;
@@ -28,6 +29,7 @@ import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.search.expr.ScriptAbort;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.service.openapi.server.script.Response;
 import com.top_logic.util.TLContextManager;
@@ -91,25 +93,14 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	 * </p>
 	 */
 	@FrameworkInternal
-	public final void writeResponse(Object result, HttpServletResponse resp) throws IOException {
-		Object body;
-		int status;
-		String contentType;
-
-		if (result instanceof Response) {
-			Response response = ((Response) result);
-			status = response.getStatus();
-			body = response.getResult();
-			if (body == null) {
-				resp.sendError(status);
-				return;
-			}
-			contentType = response.getContentType();
-		} else {
-			status = HttpServletResponse.SC_OK;
-			body = result;
-			contentType = null;
+	public final void writeResponse(Response result, HttpServletResponse resp) throws IOException {
+		int status = result.getStatus();
+		Object body = result.getResult();
+		if (body == null) {
+			resp.sendError(status);
+			return;
 		}
+		String contentType = result.getContentType();
 
 		if (contentType == null || contentType.isEmpty()) {
 			contentType = defaultContentType(body);
@@ -194,7 +185,7 @@ public class ServiceMethodByExpression implements ServiceMethod {
 		return "text/plain";
 	}
 
-	private Object inInteraction(Map<String, Object> arguments) throws ComputationFailure {
+	private Response inInteraction(Map<String, Object> arguments) throws ComputationFailure {
 		if (Logger.isDebugEnabled(ServiceMethodByExpression.class)) {
 			Logger.debug("Processing request for '" + _path + "', arguments=" + arguments,
 				ServiceMethodByExpression.class);
@@ -202,18 +193,40 @@ public class ServiceMethodByExpression implements ServiceMethod {
 		if (_transaction) {
 			try (Transaction tx =
 				PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.REST_CALL__NAME.fill(_path))) {
-				Object result = execute(arguments);
-				tx.commit();
+				Response result = createResponse(arguments);
+				if (result.isSuccess()) {
+					tx.commit();
+				} else {
+					tx.rollback(I18NConstants.REST_ERROR_RESPONSE__CODE.fill(result.getStatus()));
+				}
 				return result;
 			}
 		} else {
-			return execute(arguments);
+			return createResponse(arguments);
 		}
+	}
+
+	private Response createResponse(Map<String, Object> arguments) throws ComputationFailure {
+		Object result = execute(arguments);
+		if (result instanceof Response response) {
+			return response;
+		}
+		if (result == null) {
+			result = StringServices.EMPTY_STRING;
+		}
+		return new Response(HttpServletResponse.SC_OK, result, null);
 	}
 
 	private Object execute(Map<String, Object> arguments) throws ComputationFailure {
 		try {
 			return _operation.execute(arguments(arguments));
+		} catch (ScriptAbort ex) {
+			Object value = ex.getValue();
+			if (value instanceof Response resp) {
+				// Allow throwing a response to abort a script without failure.
+				return resp;
+			}
+			throw new ComputationFailure(ex.getMessage(), ex);
 		} catch (RuntimeException ex) {
 			throw new ComputationFailure(ex.getMessage(), ex);
 		}

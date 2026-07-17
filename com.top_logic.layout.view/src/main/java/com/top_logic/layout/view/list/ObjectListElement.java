@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelConfig;
+import com.top_logic.layout.view.channel.ChannelFactory;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -214,8 +217,22 @@ public class ObjectListElement implements UIElement {
 	 */
 	public interface TemplateConfig extends ConfigurationItem {
 
+		/** Configuration name for {@link #getChannels()}. */
+		String CHANNELS = "channels";
+
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
+
+		/**
+		 * Local channel declarations, instantiated once per template instance.
+		 *
+		 * <p>
+		 * A derived channel here typically computes a display value from the template's element
+		 * channel, e.g. the element's author or creation date.
+		 * </p>
+		 */
+		@Name(CHANNELS)
+		List<ChannelConfig> getChannels();
 
 		/**
 		 * The template's elements.
@@ -239,6 +256,10 @@ public class ObjectListElement implements UIElement {
 
 	private final List<UIElement> _newElementTemplate;
 
+	private final List<Map.Entry<String, ChannelFactory>> _itemChannels;
+
+	private final List<Map.Entry<String, ChannelFactory>> _newElementChannels;
+
 	/**
 	 * Creates an {@link ObjectListElement} from configuration.
 	 */
@@ -250,6 +271,8 @@ public class ObjectListElement implements UIElement {
 		_removeExecutor = config.getRemove() == null ? null : QueryExecutor.compile(config.getRemove());
 		_itemTemplate = instantiate(context, config.getItemTemplate());
 		_newElementTemplate = instantiate(context, config.getNewElementTemplate());
+		_itemChannels = channelFactories(context, config.getItemTemplate());
+		_newElementChannels = channelFactories(context, config.getNewElementTemplate());
 	}
 
 	private static List<UIElement> instantiate(InstantiationContext context, TemplateConfig template) {
@@ -261,6 +284,16 @@ public class ObjectListElement implements UIElement {
 			.collect(Collectors.toList());
 	}
 
+	private static List<Map.Entry<String, ChannelFactory>> channelFactories(InstantiationContext context,
+			TemplateConfig template) {
+		if (template == null) {
+			return Collections.emptyList();
+		}
+		return template.getChannels().stream()
+			.map(cc -> Map.<String, ChannelFactory> entry(cc.getName(), context.getInstance(cc)))
+			.collect(Collectors.toList());
+	}
+
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel container = context.resolveChannel(_config.getInput());
@@ -269,7 +302,7 @@ public class ObjectListElement implements UIElement {
 		ViewContext templateContext = context.withObjectListScope(scope);
 
 		ObjectListControl control = new ObjectListControl(templateContext, scope, container,
-			_itemTemplate, _newElementTemplate,
+			_itemTemplate, _newElementTemplate, _itemChannels, _newElementChannels,
 			_config.getElementChannel(), _config.getNewElementChannel(),
 			resolveElementType(), _config.getEmptyText());
 

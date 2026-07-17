@@ -1085,9 +1085,10 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
    insets keep the entry tight - forms inside pick up the reduced inset via --page-inset. */
 .tlPanel--card {
 	border: 1px solid var(--border-subtle, #d1d5db);
-	border-radius: 8px;
+	border-radius: var(--border-radius-02, 0.5rem);
 	overflow: hidden;
-	--page-inset: 0.75rem 1rem;
+	/* Same insets as the panel header, so header and content align on the token grid. */
+	--page-inset: var(--spacing-02) var(--spacing-03);
 }
 
 /* Hover-revealed actions: the toolbar stays invisible (but keyboard-reachable) until the

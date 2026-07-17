@@ -95,6 +95,21 @@ import com.top_logic.util.TopLogicServlet;
 @MultipartConfig
 public class ReactServlet extends TopLogicServlet {
 
+	/**
+	 * Machine-readable error code signaling that the server-side UI state for the requesting page
+	 * no longer exists: the request has no session, or the session does not know the page's
+	 * window (e.g. the session was replaced underneath the open page by a login or logout, or the
+	 * server was restarted).
+	 *
+	 * <p>
+	 * The command channel of the React client reacts to a rejection carrying this code by
+	 * re-bootstrapping the page, instead of leaving a page whose interactions are all rejected
+	 * appearing frozen. The client-side counterpart of this constant is
+	 * {@code ERROR_CODE_STALE_UI} in {@code command-channel.ts}.
+	 * </p>
+	 */
+	public static final String ERROR_CODE_STALE_UI = "stale-ui";
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -280,7 +295,7 @@ public class ReactServlet extends TopLogicServlet {
 			throws ServletException, IOException {
 		HttpSession session = request.getSession(false);
 		if (session == null) {
-			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_CODE_STALE_UI, "No session.");
 			return;
 		}
 
@@ -393,7 +408,8 @@ public class ReactServlet extends TopLogicServlet {
 			Logger.warn("Command '" + commandName + "' for control '" + controlId
 				+ "' targets unknown window '" + windowName + "'. Known windows: "
 				+ ReactWindowRegistry.forSession(session).windowNames(), ReactServlet.class);
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, ERROR_CODE_STALE_UI,
+				"Unknown window: " + windowName);
 			return;
 		}
 		ReactCommandTarget control = queue.getControl(controlId);
@@ -405,6 +421,16 @@ public class ReactServlet extends TopLogicServlet {
 				Logger.debug("Dropped '" + commandName + "' for disposed control '" + controlId + "'.",
 					ReactServlet.class);
 				sendSuccess(response);
+				return;
+			}
+			if (!queue.hasControls()) {
+				// The window's queue holds no controls at all: it was created empty by an SSE
+				// reconnect after the session was replaced underneath the open page. The page's
+				// control tree lives in the discarded session - let the client re-bootstrap.
+				Logger.warn("Command '" + commandName + "' for control '" + controlId + "' targets window '"
+					+ windowName + "' without any registered controls (session replaced).", ReactServlet.class);
+				sendError(response, HttpServletResponse.SC_NOT_FOUND, ERROR_CODE_STALE_UI,
+					"Control not found: " + controlId);
 				return;
 			}
 			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
@@ -802,11 +828,29 @@ public class ReactServlet extends TopLogicServlet {
 	}
 
 	private void sendError(HttpServletResponse response, int status, String message) throws IOException {
+		sendError(response, status, null, message);
+	}
+
+	/**
+	 * Writes a JSON error response, optionally carrying a machine-readable error code the client
+	 * dispatches on (e.g. {@link #ERROR_CODE_STALE_UI}).
+	 *
+	 * @param errorCode
+	 *        The machine-readable code identifying the error condition, or {@code null} for errors
+	 *        the client only logs.
+	 */
+	private void sendError(HttpServletResponse response, int status, String errorCode, String message)
+			throws IOException {
 		response.setStatus(status);
 		response.setContentType("application/json");
 		response.setCharacterEncoding("UTF-8");
 		PrintWriter writer = response.getWriter();
-		writer.write("{\"success\":false,\"error\":\"" + message.replace("\"", "\\\"") + "\"}");
+		StringBuilder json = new StringBuilder("{\"success\":false,");
+		if (errorCode != null) {
+			json.append("\"errorCode\":\"").append(errorCode).append("\",");
+		}
+		json.append("\"error\":\"").append(message.replace("\"", "\\\"")).append("\"}");
+		writer.write(json.toString());
 		writer.flush();
 	}
 

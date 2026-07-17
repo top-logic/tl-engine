@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29384_unify_sequence_names"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29236_Added_isRevert_isRedo"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.element.structured.util.SequenceNameMigrationProcessor"/>
+	</processors>
+	<post-processors/>
+</migration>

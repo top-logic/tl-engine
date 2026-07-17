@@ -1073,6 +1073,13 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	white-space: nowrap;
 }
 
+.tlPanel__titleContent {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	flex: 1;
+}
+
 .tlPanel__toolbar {
 	display: flex;
 	align-items: center;

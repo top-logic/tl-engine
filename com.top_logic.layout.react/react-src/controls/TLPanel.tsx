@@ -52,6 +52,7 @@ const IconPopOut = () => (
  *
  * State:
  * - title: string
+ * - titleContent: ChildDescriptor (rendered in the title area, may be absent)
  * - expansionState: "NORMALIZED" | "MINIMIZED" | "MAXIMIZED" | "HIDDEN"
  * - showMinimize: boolean
  * - showMaximize: boolean
@@ -103,7 +104,8 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   // content, without an empty header bar wasting space.
   const hasActionButtons =
     (showMinimize && !isMaximized) || (showMaximize && !isMinimized) || showPopOut;
-  const hasHeader = (!!title && title.trim() !== '') || !!state.toolbar || hasActionButtons;
+  const hasHeader =
+    (!!title && title.trim() !== '') || !!state.titleContent || !!state.toolbar || hasActionButtons;
 
   return (
     <div
@@ -113,7 +115,12 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
     >
       {hasHeader && (
       <div className="tlPanel__header">
-        <span className="tlPanel__title">{title}</span>
+        {!!title && title.trim() !== '' && <span className="tlPanel__title">{title}</span>}
+        {state.titleContent && (
+          <div className="tlPanel__titleContent">
+            <TLChild control={state.titleContent} />
+          </div>
+        )}
         <div className="tlPanel__toolbar">
           {state.toolbar && <TLChild control={state.toolbar} />}
           {showMinimize && !isMaximized && (

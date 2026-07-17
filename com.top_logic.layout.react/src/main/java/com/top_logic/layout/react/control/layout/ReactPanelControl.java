@@ -22,6 +22,7 @@ import com.top_logic.layout.react.control.ToolbarControl;
  * </p>
  * <ul>
  * <li>{@code title} - the panel title</li>
+ * <li>{@code titleContent} - child control descriptor rendered in the title area (optional)</li>
  * <li>{@code expansionState} - one of "NORMALIZED", "MINIMIZED", "MAXIMIZED", "HIDDEN"</li>
  * <li>{@code showMinimize} - whether the minimize button is shown</li>
  * <li>{@code showMaximize} - whether the maximize button is shown</li>
@@ -64,10 +65,15 @@ public class ReactPanelControl extends ToolbarControl {
 	/** @see #setFill(boolean) */
 	private static final String FILL = "fill";
 
+	/** @see #setTitleContent(ReactControl) */
+	private static final String TITLE_CONTENT = "titleContent";
+
 	/** Default collapsed size in pixels (toolbar header height). */
 	private static final float COLLAPSED_SIZE = 36f;
 
 	private final ReactControl _child;
+
+	private ReactControl _titleContent;
 
 	private final ReactToolbarControl _toolbar;
 
@@ -137,6 +143,21 @@ public class ReactPanelControl extends ToolbarControl {
 	}
 
 	/**
+	 * Sets a control rendered in the header's title area (after an optional {@link #setTitle(String)
+	 * title text}), e.g. an avatar byline.
+	 *
+	 * @param titleContent
+	 *        The title content control, or {@code null} for none.
+	 */
+	public void setTitleContent(ReactControl titleContent) {
+		if (_titleContent != null) {
+			_titleContent.cleanupTree();
+		}
+		_titleContent = titleContent;
+		putState(TITLE_CONTENT, titleContent);
+	}
+
+	/**
 	 * Whether the panel fills the bounded height of its container instead of growing with its
 	 * content.
 	 *
@@ -182,6 +203,9 @@ public class ReactPanelControl extends ToolbarControl {
 	@Override
 	protected void cleanupChildren() {
 		_child.cleanupTree();
+		if (_titleContent != null) {
+			_titleContent.cleanupTree();
+		}
 		cleanupToolbarButtons();
 		if (_toolbar != null) {
 			_toolbar.cleanupTree();

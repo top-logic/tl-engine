@@ -120,12 +120,7 @@
 										attribute="content"
 										label-position="hide-label"
 									/>
-									<composition-table attribute="attachments">
-										<columns>
-											<column attribute="name"/>
-											<column attribute="data"/>
-										</columns>
-									</composition-table>
+									<file-list attribute="attachments"/>
 								</form>
 							</panel>
 						</item-template>
@@ -144,12 +139,7 @@
 										attribute="content"
 										label-position="hide-label"
 									/>
-									<composition-table attribute="attachments">
-										<columns>
-											<column attribute="name"/>
-											<column attribute="data"/>
-										</columns>
-									</composition-table>
+									<file-list attribute="attachments"/>
 									<commands>
 										<generic-command
 											image="css:bi bi-send"

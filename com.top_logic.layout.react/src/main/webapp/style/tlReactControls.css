@@ -2852,6 +2852,110 @@ button.tlMenu__item--disabled:hover {
 	grid-template-columns: inherit;
 }
 
+/* --- TLFileChips ------------------------------------------------------- */
+
+.tlFileChips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-03, 0.5rem);
+	align-items: center;
+	min-height: 1.75rem;
+	border-radius: 6px;
+	font-family: var(--font-family);
+}
+
+.tlFileChips--dragover {
+	outline: 2px dashed var(--interactive, #2563eb);
+	outline-offset: 2px;
+}
+
+.tlFileChip {
+	display: inline-flex;
+	align-items: center;
+	border: 1px solid var(--border-subtle, #d1d5db);
+	border-radius: 999px;
+	background: var(--layer-01, #fff);
+	overflow: hidden;
+}
+
+.tlFileChip__main {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.25rem 0.625rem;
+	border: none;
+	background: none;
+	font: inherit;
+	font-size: 0.8125rem;
+	color: inherit;
+	cursor: pointer;
+}
+
+.tlFileChip__main:disabled {
+	cursor: default;
+}
+
+.tlFileChip__main:not(:disabled):hover {
+	background: var(--layer-hover, rgba(0, 0, 0, 0.05));
+}
+
+.tlFileChip__icon {
+	flex: none;
+	color: var(--text-secondary, #6b7280);
+}
+
+.tlFileChip__name {
+	max-width: 16rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlFileChip__size {
+	color: var(--text-secondary, #6b7280);
+	font-size: 0.75rem;
+}
+
+.tlFileChip__remove {
+	display: inline-flex;
+	align-items: center;
+	align-self: stretch;
+	padding: 0 0.5rem;
+	border: none;
+	border-left: 1px solid var(--border-subtle, #d1d5db);
+	background: none;
+	color: var(--text-secondary, #6b7280);
+	cursor: pointer;
+}
+
+.tlFileChip__remove:hover {
+	background: var(--layer-hover, rgba(0, 0, 0, 0.05));
+	color: var(--support-error, #dc2626);
+}
+
+.tlFileChips__add {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.25rem 0.625rem;
+	border: 1px dashed var(--border-subtle, #d1d5db);
+	border-radius: 999px;
+	background: none;
+	font: inherit;
+	font-size: 0.8125rem;
+	color: var(--text-secondary, #6b7280);
+	cursor: pointer;
+}
+
+.tlFileChips__add:not(:disabled):hover {
+	border-color: var(--interactive, #2563eb);
+	color: var(--interactive, #2563eb);
+}
+
+.tlFileChips__add--uploading {
+	cursor: progress;
+}
+
 /* --- TLFormField ------------------------------------------------------- */
 
 .tlFormField {

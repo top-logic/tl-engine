@@ -396,7 +396,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	 * chrome, resolving the edit-mode-dependent {@link LabelPosition#ABOVE_INPUT} against the
 	 * field's current editability.
 	 */
-	private static com.top_logic.layout.react.control.layout.LabelPosition wirePosition(
+	public static com.top_logic.layout.react.control.layout.LabelPosition wirePosition(
 			LabelPosition position, boolean editable) {
 		if (position == null) {
 			return null;

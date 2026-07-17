@@ -338,7 +338,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			Set<TLStructuredTypePart> dependencies = new HashSet<>();
 			Sink<Pointer> sink = pointer -> dependencies.add(pointer.attribute());
 			OverlayLookup overlays = _formControl.getValidationModel();
-			mode = _modeSelector.getMode(self, part);
+			mode = _modeSelector.getMode(self, part, editMode);
 			_modeSelector.traceDependencies(self, part, sink,
 				overlays != null ? overlays : AttributeOptions.NO_OVERLAYS);
 			_modeDependencies = dependencies;

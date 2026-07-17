@@ -40,7 +40,15 @@
 						multiple="true"
 						ordered="true"
 						type="Attachment"
-					/>
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="comment -&gt; editMode -&gt; if ($editMode || $comment.get(`demo.tickets:Comment#attachments`).size() &gt; 0, &quot;default&quot;, &quot;hidden&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</reference>
 				</attributes>
 			</class>
 			<class name="Attachment">

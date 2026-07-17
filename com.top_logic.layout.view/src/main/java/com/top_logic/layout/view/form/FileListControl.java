@@ -29,6 +29,9 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.ModeSelector;
+import com.top_logic.model.annotate.TLDynamicVisibility;
+import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -125,7 +128,29 @@ public class FileListControl extends AbstractCompositionControl implements Uploa
 		_currentRows = new ArrayList<>(rows);
 		putState(EDITABLE, editMode);
 		updateChromeLabel();
+		updateVisibility(editMode);
 		updateChips();
+	}
+
+	/**
+	 * Applies the composition attribute's {@link TLDynamicVisibility} to the chrome: the file list
+	 * (including its label) is hidden when the annotated {@link ModeSelector} computes
+	 * {@link FormVisibility#HIDDEN}, e.g. for an empty list in view mode.
+	 */
+	private void updateVisibility(boolean editMode) {
+		if (_chrome == null) {
+			return;
+		}
+		boolean visible = true;
+		TLStructuredTypePart part = compositionPart();
+		if (part != null) {
+			ModeSelector selector = DynamicVisibility.modeSelector(part);
+			if (selector != null) {
+				TLObject self = formControl().getCurrentObject();
+				visible = selector.getMode(self, part, editMode) != FormVisibility.HIDDEN;
+			}
+		}
+		_chrome.setVisible(visible);
 	}
 
 	private void updateChromeLabel() {
@@ -140,6 +165,7 @@ public class FileListControl extends AbstractCompositionControl implements Uploa
 	@Override
 	protected void refreshRows() {
 		_currentRows = new ArrayList<>(fieldModel().getCurrentList());
+		updateVisibility(true);
 		updateChips();
 	}
 

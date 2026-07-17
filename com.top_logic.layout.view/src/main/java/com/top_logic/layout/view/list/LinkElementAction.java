@@ -13,6 +13,8 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -56,7 +58,19 @@ public class LinkElementAction implements ViewAction {
 
 	@Override
 	public Object execute(ReactContext context, Object input) {
-		return listScope(context).linkElement(input);
+		ObjectListScope scope = listScope(context);
+		Object result = scope.linkElement(input);
+
+		// The entered values are stored in the linked element now: drop the enclosing form's edit
+		// session before switching the new-element channel, so the reset is not vetoed as
+		// discarding unsaved changes.
+		FormModel formModel = ((ViewContext) context).getFormModel();
+		if (formModel instanceof FormControl formControl) {
+			formControl.executeCancel();
+		}
+
+		scope.resetNewElement();
+		return result;
 	}
 
 	/**

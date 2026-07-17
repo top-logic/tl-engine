@@ -69,11 +69,13 @@ public class ObjectListScope {
 
 	/**
 	 * Links the given element to the current container by running the configured link function in
-	 * a transaction, then resets the new-element channel.
+	 * a transaction.
 	 *
 	 * @param element
 	 *        The element to link, typically the new-element template's transient object.
 	 * @return The result of the link function.
+	 *
+	 * @see #resetNewElement()
 	 */
 	public Object linkElement(Object element) {
 		if (_link == null) {
@@ -83,11 +85,17 @@ public class ObjectListScope {
 		if (container == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_CONTAINER);
 		}
-		Object result = inTransaction(() -> _link.execute(container, element));
+		return inTransaction(() -> _link.execute(container, element));
+	}
+
+	/**
+	 * Re-initializes the new-element channel with a fresh transient element, so the new-element
+	 * template is ready for the next entry.
+	 */
+	public void resetNewElement() {
 		if (_newElementReset != null) {
 			_newElementReset.run();
 		}
-		return result;
 	}
 
 	/**

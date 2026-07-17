@@ -375,11 +375,37 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 				overlay.apply();
 			}
 		}
+
+		if (isTransientOwner()) {
+			// A transient owner keeps transient composition rows: write the current row list into
+			// the main overlay so applying it transfers the rows to the owner. The whole transient
+			// tree becomes persistent in one piece when the owner is copied persistent (e.g. by a
+			// create dialog's or a new-entry form's submit chain).
+			List<TLObject> bases = new ArrayList<>();
+			for (TLObject obj : _fieldModel.getCurrentList()) {
+				bases.add(obj instanceof TLObjectOverlay overlay ? overlay.getBase() : obj);
+			}
+			_formControl.getOverlay().tUpdate(_compositionPart, bases);
+		}
+	}
+
+	/**
+	 * Whether the form's base object is transient, so composition rows stay transient as well and
+	 * are persisted together with the owner.
+	 */
+	private boolean isTransientOwner() {
+		TLObjectOverlay overlay = _formControl.getOverlay();
+		return overlay != null && overlay.getBase() != null && overlay.getBase().tTransient();
 	}
 
 	@Override
 	public void persist(Transaction tx) {
 		if (_fieldModel == null) {
+			return;
+		}
+		if (isTransientOwner()) {
+			// Rows of a transient owner are not persisted individually - they are transferred to
+			// the owner by applyState() and become persistent together with it.
 			return;
 		}
 		List<TLObject> currentList = _fieldModel.getCurrentList();

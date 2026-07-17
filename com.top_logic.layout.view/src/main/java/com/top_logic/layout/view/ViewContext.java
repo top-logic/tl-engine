@@ -15,6 +15,7 @@ import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.list.ObjectListScope;
 import com.top_logic.layout.view.security.SecurityScope;
 import com.top_logic.layout.view.slot.SlotPath;
 import com.top_logic.layout.view.slot.SlotRegistry;
@@ -281,6 +282,53 @@ public interface ViewContext extends ReactContext {
 	 * @return {@code true} if a channel with this name exists.
 	 */
 	boolean hasChannel(String name);
+
+	/**
+	 * Creates a derived context whose channel namespace is a copy of this context's namespace with
+	 * the given channel added (replacing a same-named channel from the enclosing scope).
+	 *
+	 * <p>
+	 * Called by elements that instantiate a content template once per model object (e.g.
+	 * {@link com.top_logic.layout.view.list.ObjectListElement &lt;object-list&gt;}): each instance
+	 * gets its own context where the item channel resolves to that instance's object, while all
+	 * channels of the enclosing scope stay visible. The local channel does not leak into the
+	 * enclosing scope.
+	 * </p>
+	 *
+	 * @param name
+	 *        The local channel name.
+	 * @param channel
+	 *        The channel instance visible only in the derived context (and its children).
+	 * @return A new context with the extended channel namespace.
+	 */
+	ViewContext withLocalChannel(String name, ViewChannel channel);
+
+	/**
+	 * The {@link ObjectListScope} of the nearest enclosing
+	 * {@link com.top_logic.layout.view.list.ObjectListElement &lt;object-list&gt;} template, or
+	 * {@code null} if no object list is in scope.
+	 *
+	 * <p>
+	 * Used by {@link com.top_logic.layout.view.list.LinkElementAction &lt;link-element&gt;} and
+	 * {@link com.top_logic.layout.view.list.RemoveElementAction &lt;remove-element&gt;} to reach
+	 * the list's container and configured link / remove functions.
+	 * </p>
+	 */
+	ObjectListScope getObjectListScope();
+
+	/**
+	 * Creates a derived context with the given {@link ObjectListScope}.
+	 *
+	 * <p>
+	 * Called by {@link com.top_logic.layout.view.list.ObjectListElement} when instantiating its
+	 * item and new-element templates. Nested object lists override (not stack) the scope.
+	 * </p>
+	 *
+	 * @param scope
+	 *        The object list scope to establish for descendants.
+	 * @return A new context with the given scope.
+	 */
+	ViewContext withObjectListScope(ObjectListScope scope);
 
 	/**
 	 * Resolves a {@link ChannelRef} to its runtime {@link ViewChannel}.

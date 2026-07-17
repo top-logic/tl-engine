@@ -147,6 +147,24 @@ public class ReactStackControl extends ReactControl {
 	}
 
 	/**
+	 * Replaces the displayed children.
+	 *
+	 * <p>
+	 * A dropped child is not cleaned up automatically, since callers may re-add it later (e.g. an
+	 * unchanged item in a refreshed list). Callers that remove a child for good must call
+	 * {@link #cleanupTree()} on it themselves.
+	 * </p>
+	 *
+	 * @param children
+	 *        The new child controls, replacing the current ones.
+	 */
+	public void setChildren(List<? extends ReactControl> children) {
+		_children.clear();
+		_children.addAll(children);
+		putState(CHILDREN, new ArrayList<>(_children));
+	}
+
+	/**
 	 * Lets the first child grow to fill the main axis while trailing children keep their natural
 	 * size.
 	 *

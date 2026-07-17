@@ -35,9 +35,16 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.QueryRowSetBinding;
+import com.top_logic.layout.view.form.RowEditPolicy;
+import com.top_logic.layout.view.form.RowSetBinding;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.layout.view.table.EditableTableControl;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -93,6 +100,15 @@ public class TableElement implements UIElement {
 		/** Configuration name for {@link #getObservedTypes()}. */
 		String OBSERVED_TYPES = "observed-types";
 
+		/** Configuration name for {@link #getRowEdit()}. */
+		String ROW_EDIT = "row-edit";
+
+		/** Configuration name for {@link #getCreateType()}. */
+		String CREATE_TYPE = "create-type";
+
+		/** Configuration name for {@link #getOnRemove()}. */
+		String ON_REMOVE = "on-remove";
+
 		/**
 		 * Optional qualified TL type name(s) of the row objects, used to resolve column
 		 * labels from the model attributes. When unset, the type is derived from the first
@@ -139,6 +155,37 @@ public class TableElement implements UIElement {
 		@Name(OBSERVED_TYPES)
 		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 		List<TLModelPartRef> getObservedTypes();
+
+		/**
+		 * Which rows are editable while the enclosing form is in edit mode.
+		 *
+		 * <p>
+		 * When set, the table must be nested inside a form; cell edits buffer on row overlays and
+		 * are committed together with the form's save. When unset, the table is read-only.
+		 * </p>
+		 */
+		@Name(ROW_EDIT)
+		RowEditPolicy getRowEdit();
+
+		/**
+		 * The concrete type instantiated when a new row is created in edit mode.
+		 *
+		 * <p>
+		 * When unset, the table offers no row creation.
+		 * </p>
+		 */
+		@Name(CREATE_TYPE)
+		TLModelPartRef getCreateType();
+
+		/**
+		 * What removing a row means when the form is saved.
+		 *
+		 * <p>
+		 * When unset, the table offers no row removal.
+		 * </p>
+		 */
+		@Name(ON_REMOVE)
+		RowSetBinding.RemoveMode getOnRemove();
 	}
 
 	/**
@@ -165,6 +212,9 @@ public class TableElement implements UIElement {
 		/** Configuration name for {@link #getFilter()}. */
 		String FILTER = "filter";
 
+		/** Configuration name for {@link #getReadonly()}. */
+		String READONLY = "readonly";
+
 		/**
 		 * The name of the attribute (column) to display.
 		 */
@@ -178,6 +228,13 @@ public class TableElement implements UIElement {
 		 */
 		@Name(FILTER)
 		PolymorphicConfiguration<? extends ColumnFilter<?>> getFilter();
+
+		/**
+		 * Whether this column stays read-only while the table is {@link Config#getRowEdit()
+		 * edited}.
+		 */
+		@Name(READONLY)
+		boolean getReadonly();
 	}
 
 	private final Config _config;
@@ -230,6 +287,11 @@ public class TableElement implements UIElement {
 		Collection<?> rows = executeRowsQuery(_rowsExecutor, readChannelValues(inputChannels));
 
 		List<ColumnSetup> setups = columnSetups(resolveRowType(rows), context);
+
+		if (_config.getRowEdit() != null) {
+			return createEditableControl(context, inputChannels, rows, setups);
+		}
+
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
 			columns.add(setup.binding().createColumn(setup));
@@ -304,6 +366,80 @@ public class TableElement implements UIElement {
 		control.addCleanupAction(observer::detach);
 
 		return control;
+	}
+
+	/**
+	 * Creates the {@link EditableTableControl} variant: rows come from the same query (frozen
+	 * while an edit session runs), cells become editable according to {@link Config#getRowEdit()},
+	 * and membership changes follow {@link Config#getCreateType()} / {@link Config#getOnRemove()}.
+	 */
+	private IReactControl createEditableControl(ViewContext context, List<ViewChannel> inputChannels,
+			Collection<?> rows, List<ColumnSetup> setups) {
+		FormModel formModel = context.getFormModel();
+		if (!(formModel instanceof FormControl formControl)) {
+			throw new IllegalStateException(
+				"A <table> with '" + Config.ROW_EDIT + "' requires an enclosing <form>.");
+		}
+
+		TLClass createType = resolveCreateType();
+		TLStructuredType rowType = resolveRowType(rows);
+		QueryExecutor rowsExecutor = _rowsExecutor;
+		QueryRowSetBinding binding = new QueryRowSetBinding(
+			() -> tlObjectRows(executeRowsQuery(rowsExecutor, readChannelValues(inputChannels))),
+			createType != null ? createType : (rowType instanceof TLClass rowClass ? rowClass : null),
+			createType == null ? List.of() : List.of(createType),
+			_config.getOnRemove() == null ? RowSetBinding.RemoveMode.NONE : _config.getOnRemove());
+
+		Map<String, Boolean> readonlyByAttribute = new HashMap<>();
+		ColumnsConfig columnsConfig = _config.getColumns();
+		if (columnsConfig != null) {
+			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
+				readonlyByAttribute.put(columnConfig.getAttribute(), Boolean.valueOf(columnConfig.getReadonly()));
+			}
+		}
+		List<EditableTableControl.EditColumn> columns = new ArrayList<>(setups.size());
+		for (ColumnSetup setup : setups) {
+			boolean readonly = Boolean.TRUE.equals(readonlyByAttribute.get(setup.attribute()));
+			columns.add(new EditableTableControl.EditColumn(setup, readonly));
+		}
+
+		ChannelRef selectionRef = _config.getSelection();
+		ViewChannel selectionChannel = selectionRef != null ? context.resolveChannel(selectionRef) : null;
+
+		EditableTableControl control = new EditableTableControl(context, formControl, binding, columns,
+			_config.getRowEdit(), PersonalConfigViewStateStore.INSTANCE, tableId(), selectionChannel,
+			args -> executeRowsQuery(rowsExecutor, args), resolveObservedTypes(), inputChannels);
+		control.initTable();
+		return control;
+	}
+
+	/**
+	 * The resolved {@link Config#getCreateType() create type}, or {@code null} if none is
+	 * configured.
+	 */
+	private TLClass resolveCreateType() {
+		TLModelPartRef ref = _config.getCreateType();
+		if (ref == null) {
+			return null;
+		}
+		try {
+			return ref.resolveClass();
+		} catch (ConfigurationException ex) {
+			throw new RuntimeException("Failed to resolve create type: " + ref.qualifiedName(), ex);
+		}
+	}
+
+	/**
+	 * The {@link TLObject} rows of a query result; non-model entries are skipped.
+	 */
+	private static List<TLObject> tlObjectRows(Collection<?> rows) {
+		List<TLObject> result = new ArrayList<>(rows.size());
+		for (Object row : rows) {
+			if (row instanceof TLObject object) {
+				result.add(object);
+			}
+		}
+		return result;
 	}
 
 	private Set<TLStructuredType> resolveObservedTypes() {

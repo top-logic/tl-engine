@@ -89,11 +89,17 @@
 						remove="ticket -> comment -> $comment.delete()"
 					>
 						<item-template>
+							<channels>
+								<derived-channel name="author"
+									expr="c -> $c.get(`demo.tickets:Comment#author`)"
+									inputs="comment"
+								/>
+								<derived-channel name="date"
+									expr="c -> $c.get(`demo.tickets:Comment#date`)"
+									inputs="comment"
+								/>
+							</channels>
 							<panel>
-								<title>
-									<en>Comment</en>
-									<de>Kommentar</de>
-								</title>
 								<commands>
 									<generic-command
 										image="css:bi bi-trash"
@@ -107,15 +113,19 @@
 										<remove-element/>
 									</generic-command>
 								</commands>
+								<stack
+									align="center"
+									direction="row"
+									gap="compact"
+								>
+									<avatar input="author"/>
+									<text
+										css-class="tlText--strong"
+										input="author"
+									/>
+									<relative-time input="date"/>
+								</stack>
 								<form input="comment">
-									<field
-										attribute="author"
-										readonly="true"
-									/>
-									<field
-										attribute="date"
-										readonly="true"
-									/>
 									<field
 										attribute="content"
 										label-position="hide-label"

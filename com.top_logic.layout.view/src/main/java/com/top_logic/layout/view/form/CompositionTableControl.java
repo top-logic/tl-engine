@@ -67,7 +67,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * Renders as a {@code TLPanel} React component with the composition attribute's label as title, the
  * table as content, and an Add button in the toolbar (visible only in edit mode). Action columns for
- * detail-open (always visible) and delete (edit mode only) are appended to the table columns.
+ * detail-open (only when a detail dialog is configured) and delete (edit mode only) are appended to
+ * the table columns.
  * </p>
  *
  * <p>
@@ -576,13 +577,15 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	private void buildTable(List<? extends TLObject> rowObjects, boolean editMode) {
 		List<Column<TLObject, ?>> columns = new ArrayList<>();
 
-		// Detail action column (always first).
-		columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DETAIL, row -> row)
-			.label(I18NConstants.COMPOSITION_TABLE_DETAIL)
-			.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDetailButton(ctx, row))))
-			.width(48)
-			.frozenEligible(false)
-			.build());
+		// Detail action column (first), only when a detail dialog is configured to open.
+		if (_detailDialogConfig != null) {
+			columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DETAIL, row -> row)
+				.label(I18NConstants.COMPOSITION_TABLE_DETAIL)
+				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDetailButton(ctx, row))))
+				.width(48)
+				.frozenEligible(false)
+				.build());
+		}
 
 		// Data columns from configuration.
 		TLClass targetType = resolveTargetType();

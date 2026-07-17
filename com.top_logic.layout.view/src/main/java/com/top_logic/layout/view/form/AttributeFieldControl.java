@@ -28,6 +28,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.RenderWholeLineAnnotation;
 import com.top_logic.model.form.ConstraintValidationListener;
@@ -59,6 +61,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private final ResKey _labelOverride;
 
 	private final boolean _forceReadonly;
+
+	private final LabelPosition _labelPositionOverride;
 
 	private AttributeFieldModel _model;
 
@@ -93,15 +97,20 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	 *        Optional label override, or {@code null} to derive the label from the model.
 	 * @param forceReadonly
 	 *        Whether the field should always be read-only regardless of form edit mode.
+	 * @param labelPositionOverride
+	 *        The {@link LabelPosition} configured in the view, or {@code null} to fall back to a
+	 *        {@link LabelPositionAnnotation} on the model attribute.
 	 */
 	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
-			String attributeName, ResKey labelOverride, boolean forceReadonly) {
+			String attributeName, ResKey labelOverride, boolean forceReadonly,
+			LabelPosition labelPositionOverride) {
 		_context = context;
 		_formModel = formModel;
 		_formControl = formControl;
 		_attributeName = attributeName;
 		_labelOverride = labelOverride;
 		_forceReadonly = forceReadonly;
+		_labelPositionOverride = labelPositionOverride;
 		formModel.addFormModelListener(this);
 	}
 
@@ -118,7 +127,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 					// Placeholder model with default state.
 				});
 			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
-				false, false, null, null, null, false, true, _innerControl);
+				false, false, null, null, wirePosition(_labelPositionOverride, false), false, true,
+				_innerControl);
 			_chrome.setAgentName(_attributeName);
 			return _chrome;
 		}
@@ -131,7 +141,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 					// Placeholder model with default state.
 				});
 			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
-				false, false, null, null, null, false, false, _innerControl);
+				false, false, null, null, wirePosition(_labelPositionOverride, false), false, false,
+				_innerControl);
 			_chrome.setAgentName(_attributeName);
 			return _chrome;
 		}
@@ -360,7 +371,51 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		}
 		_chrome.setVisible(visible);
 		_chrome.setRequired(mandatory);
+		_chrome.setLabelPosition(wirePosition(legacyLabelPosition(part), editMode && !_forceReadonly && editable));
 		_model.setEditable(editMode && !_forceReadonly && editable);
+	}
+
+	/**
+	 * The effective model-level {@link LabelPosition}: the view configuration wins, then an
+	 * explicit {@link LabelPositionAnnotation} on the attribute. {@code null} means "not
+	 * specified" and lets the field inherit the responsive default of the enclosing form layout.
+	 */
+	private LabelPosition legacyLabelPosition(TLStructuredTypePart part) {
+		if (_labelPositionOverride != null) {
+			return _labelPositionOverride;
+		}
+		LabelPositionAnnotation annotation = part.getAnnotation(LabelPositionAnnotation.class);
+		if (annotation != null) {
+			return annotation.getValue();
+		}
+		return null;
+	}
+
+	/**
+	 * Maps a model-level {@link LabelPosition} to the wire-level position understood by the field
+	 * chrome, resolving the edit-mode-dependent {@link LabelPosition#ABOVE_INPUT} against the
+	 * field's current editability.
+	 */
+	private static com.top_logic.layout.react.control.layout.LabelPosition wirePosition(
+			LabelPosition position, boolean editable) {
+		if (position == null) {
+			return null;
+		}
+		switch (position) {
+			case ABOVE:
+				return com.top_logic.layout.react.control.layout.LabelPosition.TOP;
+			case ABOVE_INPUT:
+				return editable ? com.top_logic.layout.react.control.layout.LabelPosition.TOP : null;
+			case INLINE:
+				return com.top_logic.layout.react.control.layout.LabelPosition.SIDE;
+			case AFTER_VALUE:
+				return com.top_logic.layout.react.control.layout.LabelPosition.AFTER;
+			case HIDE_LABEL:
+				return com.top_logic.layout.react.control.layout.LabelPosition.HIDDEN;
+			case DEFAULT:
+			default:
+				return null;
+		}
 	}
 
 	private void onModeDependencyChanged(TLStructuredTypePart changedPart) {

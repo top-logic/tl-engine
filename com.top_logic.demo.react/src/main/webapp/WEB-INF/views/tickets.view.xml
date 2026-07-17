@@ -116,7 +116,10 @@
 										attribute="date"
 										readonly="true"
 									/>
-									<field attribute="content"/>
+									<field
+										attribute="content"
+										label-position="hide-label"
+									/>
 									<composition-table attribute="attachments">
 										<columns>
 											<column attribute="name"/>
@@ -137,7 +140,10 @@
 									input="newComment"
 									mode-switch="false"
 								>
-									<field attribute="content"/>
+									<field
+										attribute="content"
+										label-position="hide-label"
+									/>
 									<composition-table attribute="attachments">
 										<columns>
 											<column attribute="name"/>

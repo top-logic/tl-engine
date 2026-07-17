@@ -9,6 +9,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
@@ -19,6 +20,8 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.annotate.LabelPositionAnnotation;
 
 /**
  * Declarative {@link UIElement} that creates an {@link AttributeFieldControl} for a single model
@@ -50,6 +53,9 @@ public class FieldElement implements UIElement {
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
 
+		/** Configuration name for {@link #getLabelPosition()}. */
+		String LABEL_POSITION = "label-position";
+
 		/**
 		 * The name of the model attribute to display.
 		 */
@@ -72,6 +78,19 @@ public class FieldElement implements UIElement {
 		 */
 		@Name(READONLY)
 		boolean getReadonly();
+
+		/**
+		 * Where the field renders its label relative to the input, e.g. {@code hide-label} for a
+		 * label-less field.
+		 *
+		 * <p>
+		 * If not set, the position falls back to a {@link LabelPositionAnnotation} on the model
+		 * attribute, and without one to the responsive default of the enclosing form layout.
+		 * </p>
+		 */
+		@Name(LABEL_POSITION)
+		@Nullable
+		LabelPosition getLabelPosition();
 	}
 
 	private final Config _config;
@@ -99,7 +118,7 @@ public class FieldElement implements UIElement {
 		// 2. Create AttributeFieldControl (self-registers as FormModelListener).
 		AttributeFieldControl fieldControl =
 			new AttributeFieldControl(context, formModel, formControl, _config.getAttribute(),
-				_config.getLabel(), _config.getReadonly());
+				_config.getLabel(), _config.getReadonly(), _config.getLabelPosition());
 
 		// 3. Create the chrome-wrapped control.
 		ReactFormFieldChromeControl chrome = fieldControl.createChromeControl();

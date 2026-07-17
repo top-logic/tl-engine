@@ -2899,6 +2899,11 @@ button.tlMenu__item--disabled:hover {
 	grid-template-columns: 1fr;
 }
 
+/* Label-less layout: the input spans the full field width */
+.tlFormField--hidden {
+	grid-template-columns: 1fr;
+}
+
 /* Read-only: compact, no extra chrome */
 .tlFormField--readonly {
 	gap: 0;

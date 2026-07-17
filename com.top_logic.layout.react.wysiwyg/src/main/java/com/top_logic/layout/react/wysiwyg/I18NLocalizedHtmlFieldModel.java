@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.basic.util.ResKey;
@@ -26,11 +27,16 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * The adapter translates in both directions: {@link #getValue()} extracts the current locale's
- * {@link StructuredText} (without falling back to other languages, so editing never silently
- * copies another language's content), and {@link #setValue(Object)} merges the edited
- * {@link StructuredText} back into the underlying attribute value, preserving the entries of all
- * other languages. This lets a control operating on {@link StructuredText} values (e.g.
- * {@link ReactWysiwygControl}) edit an {@code I18NHtml} attribute.
+ * {@link StructuredText}, and {@link #setValue(Object)} merges the edited {@link StructuredText}
+ * back into the underlying attribute value, preserving the entries of all other languages. This
+ * lets a control operating on {@link StructuredText} values (e.g. {@link ReactWysiwygControl})
+ * edit an {@code I18NHtml} attribute.
+ * </p>
+ *
+ * <p>
+ * While the underlying model is editable, extraction is strict (no fallback to other languages),
+ * so editing never silently copies another language's content. In view mode the best available
+ * translation is shown instead, so a value maintained only in another language is never hidden.
  * </p>
  *
  * <p>
@@ -63,8 +69,12 @@ public class I18NLocalizedHtmlFieldModel implements FieldModel, FieldModelListen
 	}
 
 	private StructuredText localize(Object i18nValue) {
+		return localize(i18nValue, _delegate.isEditable());
+	}
+
+	private StructuredText localize(Object i18nValue, boolean editable) {
 		if (i18nValue instanceof I18NStructuredText i18n) {
-			return i18n.localizeStrict(editLocale());
+			return editable ? i18n.localizeStrict(editLocale()) : i18n.localize(editLocale());
 		}
 		return null;
 	}
@@ -167,6 +177,16 @@ public class I18NLocalizedHtmlFieldModel implements FieldModel, FieldModelListen
 	public void onEditabilityChanged(FieldModel source, boolean editable) {
 		for (FieldModelListener listener : _listeners) {
 			listener.onEditabilityChanged(this, editable);
+		}
+		// The exposed value depends on the mode (strict extraction while editable, best-available
+		// fallback in view mode), so a mode switch may change it.
+		Object i18nValue = _delegate.getValue();
+		StructuredText oldText = localize(i18nValue, !editable);
+		StructuredText newText = localize(i18nValue, editable);
+		if (!Objects.equals(oldText, newText)) {
+			for (FieldModelListener listener : _listeners) {
+				listener.onValueChanged(this, oldText, newText);
+			}
 		}
 	}
 

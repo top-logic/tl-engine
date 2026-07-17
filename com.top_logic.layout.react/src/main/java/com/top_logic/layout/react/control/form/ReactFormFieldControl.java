@@ -79,6 +79,8 @@ public class ReactFormFieldControl extends ReactControl {
 
 	private FieldModelListener _modelListener;
 
+	private ReactControl _editModeAdornment;
+
 	/**
 	 * While handling a client {@code valueChanged}, the value the client sent — so the model
 	 * listener can recognize (and skip) the redundant echo of exactly that value back to the client
@@ -208,6 +210,18 @@ public class ReactFormFieldControl extends ReactControl {
 	 */
 	protected void setEditable(boolean editable) {
 		putState(EDITABLE, editable);
+		if (_editModeAdornment != null) {
+			_editModeAdornment.setHidden(!editable);
+		}
+	}
+
+	/**
+	 * Registers an adornment control (e.g. the languages button of an internationalized field)
+	 * that is shown only while the field is {@link FieldModel#isEditable() editable}.
+	 */
+	public void setEditModeAdornment(ReactControl adornment) {
+		_editModeAdornment = adornment;
+		adornment.setHidden(!_fieldModel.isEditable());
 	}
 
 	/**

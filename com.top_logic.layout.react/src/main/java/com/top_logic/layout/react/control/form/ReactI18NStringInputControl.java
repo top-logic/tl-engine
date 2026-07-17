@@ -11,16 +11,10 @@ import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
-import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.button.ButtonDisplayMode;
-import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -42,11 +36,11 @@ import com.top_logic.util.TLContext;
  * <p>
  * If the current locale has no value but another locale does, that best-available translation is
  * shown as the displayed value in view mode and as a placeholder in edit mode, so an existing value
- * is never hidden. An optional adornment (e.g. the all-languages button) is shown only in edit mode.
+ * is never hidden.
  * </p>
  *
- * @implNote An editor for all languages is a separate concern and should be composed from existing
- *           controls (dialog / form / fields / buttons), not built into this control.
+ * @implNote An editor for other languages is a separate concern and is composed from existing
+ *           controls by the {@link I18NEditorDialog}, not built into this control.
  */
 public class ReactI18NStringInputControl extends ReactFormFieldControl {
 
@@ -57,8 +51,6 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	private static final String COMMIT_ON_BLUR = "commitOnBlur";
 
 	private boolean _editable;
-
-	private ReactControl _adornment;
 
 	/**
 	 * Creates a new {@link ReactI18NStringInputControl}.
@@ -79,14 +71,7 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 
 	/**
 	 * Creates a ready-to-use editor for an {@code I18NString} field: the inline current-locale input
-	 * together with the all-languages button that opens the {@link I18NStringDialog}.
-	 *
-	 * <p>
-	 * Editing all languages is an intrinsic part of a multi-locale value, so the dialog wiring (and
-	 * hiding the button outside edit mode) is encapsulated here - callers need no further assembly.
-	 * The all-languages button is laid out as an inline adornment so the input keeps the full field
-	 * width.
-	 * </p>
+	 * together with the languages button that opens the {@link I18NEditorDialog}.
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
@@ -98,34 +83,11 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	 * @return The composed editor control.
 	 */
 	public static ReactControl createEditor(ReactContext context, FieldModel model, int rows) {
-		boolean multiline = rows > 0;
 		ReactI18NStringInputControl inline = new ReactI18NStringInputControl(context, model);
-		if (multiline) {
+		if (rows > 0) {
 			inline.setMultiline(rows);
 		}
-
-		ReactButtonControl editAll = new ReactButtonControl(context,
-			Resources.getInstance().getString(I18NConstants.I18N_STRING_ALL_LANGUAGES_BUTTON),
-			ctx -> {
-				I18NStringDialog.openEditor(ctx, model, rows);
-				return HandlerResult.DEFAULT_RESULT;
-			});
-		editAll.setImage(ThemeImage.icon("css:fa-solid fa-globe"));
-		editAll.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-		inline.setAdornment(editAll);
-
-		// Top-align the all-languages button next to a tall multi-line field rather than centering it.
-		return ReactFormBuilder.inputWithAdornment(context, inline, editAll,
-			multiline ? StackAlign.START : StackAlign.CENTER);
-	}
-
-	/**
-	 * Registers an adornment control (the all-languages button) that is only shown while the field
-	 * is editable.
-	 */
-	private void setAdornment(ReactControl adornment) {
-		_adornment = adornment;
-		adornment.setHidden(!_editable);
+		return I18NEditorDialog.createEditor(context, model, inline, new I18NStringValueEditor(rows));
 	}
 
 	@Override
@@ -133,9 +95,6 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 		super.setEditable(editable);
 		_editable = editable;
 		refresh();
-		if (_adornment != null) {
-			_adornment.setHidden(!editable);
-		}
 	}
 
 	@Override

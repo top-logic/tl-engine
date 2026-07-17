@@ -31,8 +31,8 @@ import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
  * </p>
  *
  * <p>
- * Use for programmatic forms that are not bound to a model object (e.g. the all-languages
- * {@link I18NStringDialog}). Attribute forms keep their attribute-aware field controls, but both
+ * Use for programmatic forms that are not bound to a model object (e.g. the
+ * {@link I18NEditorDialog}). Attribute forms keep their attribute-aware field controls, but both
  * render through the same {@code TLFormLayout}/{@code TLFormField} pipeline.
  * </p>
  */
@@ -81,10 +81,14 @@ public final class ReactFormBuilder {
 
 	/**
 	 * Adds a labelled field wrapping the given input control in field chrome.
+	 *
+	 * @return The created field chrome, for later updates (e.g.
+	 *         {@link ReactFormFieldChromeControl#setLabel(String) relabeling}).
 	 */
-	public ReactFormBuilder addField(String label, ReactControl input) {
-		_fields.add(new ReactFormFieldChromeControl(_context, label, input));
-		return this;
+	public ReactFormFieldChromeControl addField(String label, ReactControl input) {
+		ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(_context, label, input);
+		_fields.add(chrome);
+		return chrome;
 	}
 
 	/**

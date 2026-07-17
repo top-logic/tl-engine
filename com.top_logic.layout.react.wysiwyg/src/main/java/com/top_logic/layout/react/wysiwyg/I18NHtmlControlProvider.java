@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.wysiwyg;
 
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.I18NEditorDialog;
@@ -28,7 +29,8 @@ public class I18NHtmlControlProvider implements ReactFieldControlProvider {
 	@Override
 	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
 		ReactWysiwygControl inline = new ReactWysiwygControl(context, new I18NLocalizedHtmlFieldModel(model));
-		return I18NEditorDialog.createEditor(context, model, inline, new I18NHtmlValueEditor());
+		return I18NEditorDialog.createEditor(context, model, inline, new I18NHtmlValueEditor(),
+			MetaLabelProvider.INSTANCE.getLabel(part));
 	}
 
 }

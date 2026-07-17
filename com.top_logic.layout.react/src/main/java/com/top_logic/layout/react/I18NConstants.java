@@ -384,6 +384,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey I18N_EDITOR_TITLE;
 
 	/**
+	 * @en Edit translations of "{0}"
+	 */
+	public static ResKey1 I18N_EDITOR_TITLE__FIELD;
+
+	/**
 	 * @en Other language
 	 */
 	public static ResKey I18N_EDITOR_OTHER_LANGUAGE;
@@ -394,9 +399,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 I18N_EDITOR_EMPTY_LANGUAGE__LANG;
 
 	/**
-	 * @en Translate to {0}
+	 * @en Translate from {0}
 	 */
-	public static ResKey1 I18N_EDITOR_TRANSLATE__LANG;
+	public static ResKey1 I18N_EDITOR_TRANSLATE_FROM__LANG;
 
 	/**
 	 * @en Form group collapse toggled.

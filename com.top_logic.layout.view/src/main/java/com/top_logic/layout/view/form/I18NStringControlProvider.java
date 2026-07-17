@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.form;
 
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
@@ -24,7 +25,7 @@ public class I18NStringControlProvider implements ReactFieldControlProvider {
 	@Override
 	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
 		return ReactI18NStringInputControl.createEditor(context, model,
-			ReactFieldControlProvider.multilineRows(part));
+			ReactFieldControlProvider.multilineRows(part), MetaLabelProvider.INSTANCE.getLabel(part));
 	}
 
 }

@@ -80,14 +80,17 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	 * @param rows
 	 *        The number of visible rows for a multi-line text area, or {@code 0} to render the
 	 *        current-locale input as a single line.
+	 * @param fieldLabel
+	 *        The label of the edited field, shown in the dialog title, or {@code null} for a
+	 *        generic title.
 	 * @return The composed editor control.
 	 */
-	public static ReactControl createEditor(ReactContext context, FieldModel model, int rows) {
+	public static ReactControl createEditor(ReactContext context, FieldModel model, int rows, String fieldLabel) {
 		ReactI18NStringInputControl inline = new ReactI18NStringInputControl(context, model);
 		if (rows > 0) {
 			inline.setMultiline(rows);
 		}
-		return I18NEditorDialog.createEditor(context, model, inline, new I18NStringValueEditor(rows));
+		return I18NEditorDialog.createEditor(context, model, inline, new I18NStringValueEditor(rows), fieldLabel);
 	}
 
 	@Override

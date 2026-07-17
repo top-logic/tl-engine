@@ -50,9 +50,10 @@ import com.top_logic.util.TLContext;
  * </p>
  *
  * <p>
- * When a {@link TranslationService} is active, each pane has a button translating its text into
- * the other pane, overwriting it. Translation only ever targets the visible other pane, so no
- * language is overwritten sight unseen.
+ * When a {@link TranslationService} is active, each pane has a button filling it with a
+ * translation of the other pane, overwriting the pane's own text. The button sits at the pane it
+ * modifies — with exactly two panes, the translation source is always the other one. Translation
+ * only ever targets a visible pane, so no language is overwritten sight unseen.
  * </p>
  *
  * <p>
@@ -73,6 +74,9 @@ public class I18NEditorDialog {
 	private final I18NValueEditor _valueEditor;
 
 	private final Resources _resources;
+
+	/** The label of the edited field, or {@code null} for a generic dialog title. */
+	private final String _fieldLabel;
 
 	/** The locale used to render language names. */
 	private final Locale _displayLocale;
@@ -103,9 +107,11 @@ public class I18NEditorDialog {
 
 	private ReactFormFieldChromeControl _bottomChrome;
 
-	private ReactButtonControl _translateToBottom;
+	/** The top pane's translate button: fills the top pane from the bottom pane. */
+	private ReactButtonControl _translateTop;
 
-	private ReactButtonControl _translateToTop;
+	/** The bottom pane's translate button: fills the bottom pane from the top pane. */
+	private ReactButtonControl _translateBottom;
 
 	/** Whether the bottom pane's entry was empty when the selector options were last built. */
 	private boolean _bottomShownEmpty;
@@ -130,17 +136,20 @@ public class I18NEditorDialog {
 	 *        The control editing the current locale's entry inline.
 	 * @param valueEditor
 	 *        The strategy for the edited value kind.
+	 * @param fieldLabel
+	 *        The label of the edited field, shown in the dialog title, or {@code null} for a
+	 *        generic title.
 	 * @return The composed editor control.
 	 */
 	public static ReactControl createEditor(ReactContext context, FieldModel mainModel, ReactFormFieldControl inline,
-			I18NValueEditor valueEditor) {
+			I18NValueEditor valueEditor, String fieldLabel) {
 		if (Resources.getInstance().getSupportedLocalesInDisplayOrder().size() < 2) {
 			return inline;
 		}
 		ReactButtonControl editLanguages = new ReactButtonControl(context,
 			Resources.getInstance().getString(I18NConstants.I18N_EDITOR_OPEN_BUTTON),
 			ctx -> {
-				openEditor(ctx, mainModel, valueEditor);
+				openEditor(ctx, mainModel, valueEditor, fieldLabel);
 				return HandlerResult.DEFAULT_RESULT;
 			});
 		editLanguages.setImage(ThemeImage.icon("css:fa-solid fa-globe"));
@@ -161,8 +170,12 @@ public class I18NEditorDialog {
 	 *        The field model whose value is the edited internationalized value.
 	 * @param valueEditor
 	 *        The strategy for the edited value kind.
+	 * @param fieldLabel
+	 *        The label of the edited field, shown in the dialog title, or {@code null} for a
+	 *        generic title.
 	 */
-	public static void openEditor(ReactContext context, FieldModel mainModel, I18NValueEditor valueEditor) {
+	public static void openEditor(ReactContext context, FieldModel mainModel, I18NValueEditor valueEditor,
+			String fieldLabel) {
 		DialogManager dialogManager = context.getDialogManager();
 		if (dialogManager == null) {
 			return;
@@ -172,15 +185,16 @@ public class I18NEditorDialog {
 			// Nothing to translate to.
 			return;
 		}
-		new I18NEditorDialog(context, dialogManager, mainModel, valueEditor, supportedLocales).open();
+		new I18NEditorDialog(context, dialogManager, mainModel, valueEditor, supportedLocales, fieldLabel).open();
 	}
 
 	private I18NEditorDialog(ReactContext context, DialogManager dialogManager, FieldModel mainModel,
-			I18NValueEditor valueEditor, List<Locale> supportedLocales) {
+			I18NValueEditor valueEditor, List<Locale> supportedLocales, String fieldLabel) {
 		_context = context;
 		_dialogManager = dialogManager;
 		_mainModel = mainModel;
 		_valueEditor = valueEditor;
+		_fieldLabel = fieldLabel;
 		_resources = Resources.getInstance();
 		_displayLocale = TLContext.getLocale();
 		_translator = TranslationService.isActive() ? TranslationService.getInstance() : null;
@@ -218,9 +232,9 @@ public class I18NEditorDialog {
 
 		ReactControl topEditor = _valueEditor.createEntryEditor(_context, _topModel);
 		if (_translator != null) {
-			_translateToBottom = createTranslateButton(
-				ctx -> translateEntry(_topModel, _topLocale, _bottomModel, _bottomLocale));
-			topEditor = withTranslateButton(topEditor, _translateToBottom);
+			_translateTop = createTranslateButton(
+				ctx -> translateEntry(_bottomModel, _bottomLocale, _topModel, _topLocale));
+			topEditor = withTranslateButton(topEditor, _translateTop);
 		}
 		form.addField(languageName(_topLocale), topEditor);
 
@@ -248,9 +262,9 @@ public class I18NEditorDialog {
 
 		ReactControl bottomEditor = _valueEditor.createEntryEditor(_context, _bottomModel);
 		if (_translator != null) {
-			_translateToTop = createTranslateButton(
-				ctx -> translateEntry(_bottomModel, _bottomLocale, _topModel, _topLocale));
-			bottomEditor = withTranslateButton(bottomEditor, _translateToTop);
+			_translateBottom = createTranslateButton(
+				ctx -> translateEntry(_topModel, _topLocale, _bottomModel, _bottomLocale));
+			bottomEditor = withTranslateButton(bottomEditor, _translateBottom);
 		}
 		_bottomChrome = form.addField(languageName(_bottomLocale), bottomEditor);
 
@@ -279,7 +293,7 @@ public class I18NEditorDialog {
 		updateTranslateButtons();
 
 		ReactWindowControl window = new ReactWindowControl(_context,
-			_resources.getString(I18NConstants.I18N_EDITOR_TITLE),
+			dialogTitle(),
 			_valueEditor.dialogWidth(),
 			() -> _dialogManager.closeTopDialog(DialogResult.cancelled()));
 		window.setChild(form.build());
@@ -305,6 +319,14 @@ public class I18NEditorDialog {
 		_dialogManager.openDialog(false, window, result -> {
 			// Nothing to do on close: OK already applied the value, Cancel discards.
 		});
+	}
+
+	/** The dialog title, naming the edited field when its label is known. */
+	private String dialogTitle() {
+		if (_fieldLabel == null || _fieldLabel.isEmpty()) {
+			return _resources.getString(I18NConstants.I18N_EDITOR_TITLE);
+		}
+		return _resources.getString(I18NConstants.I18N_EDITOR_TITLE__FIELD.fill(_fieldLabel));
 	}
 
 	private ReactButtonControl createTranslateButton(ButtonAction action) {
@@ -359,14 +381,14 @@ public class I18NEditorDialog {
 			return;
 		}
 		boolean pairSupported = _translator.isSupported(_topLocale) && _translator.isSupported(_bottomLocale);
-		_translateToBottom.setLabel(translateLabel(_bottomLocale));
-		_translateToBottom.setDisabled(!pairSupported);
-		_translateToTop.setLabel(translateLabel(_topLocale));
-		_translateToTop.setDisabled(!pairSupported);
+		_translateTop.setLabel(translateLabel(_bottomLocale));
+		_translateTop.setDisabled(!pairSupported);
+		_translateBottom.setLabel(translateLabel(_topLocale));
+		_translateBottom.setDisabled(!pairSupported);
 	}
 
-	private String translateLabel(Locale target) {
-		return _resources.getString(I18NConstants.I18N_EDITOR_TRANSLATE__LANG.fill(languageName(target)));
+	private String translateLabel(Locale source) {
+		return _resources.getString(I18NConstants.I18N_EDITOR_TRANSLATE_FROM__LANG.fill(languageName(source)));
 	}
 
 	/** Rebuilds the language selector options so the emptiness markers reflect the current state. */

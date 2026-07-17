@@ -100,6 +100,14 @@
 								/>
 							</channels>
 							<panel>
+								<title-content>
+									<avatar input="author"/>
+									<text
+										css-class="tlText--strong"
+										input="author"
+									/>
+									<relative-time input="date"/>
+								</title-content>
 								<commands>
 									<generic-command
 										image="css:bi bi-trash"
@@ -113,18 +121,6 @@
 										<remove-element/>
 									</generic-command>
 								</commands>
-								<stack
-									align="center"
-									direction="row"
-									gap="compact"
-								>
-									<avatar input="author"/>
-									<text
-										css-class="tlText--strong"
-										input="author"
-									/>
-									<relative-time input="date"/>
-								</stack>
 								<form input="comment">
 									<field
 										attribute="content"

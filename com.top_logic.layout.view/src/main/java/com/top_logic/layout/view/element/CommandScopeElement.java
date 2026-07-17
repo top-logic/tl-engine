@@ -8,9 +8,13 @@ package com.top_logic.layout.view.element;
 import java.util.List;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.UIElement;
@@ -50,14 +54,35 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 	 * </p>
 	 */
 	public interface Config extends CommandCarrierElement.Config {
-		// Inherits getCommands() from CommandCarrierElement.Config.
+
+		/** Configuration name for {@link #getCommandDisplay()}. */
+		String COMMAND_DISPLAY = "command-display";
+
+		/**
+		 * How this scope's buttons display icon and label, e.g. {@code icon-only} for compact icon
+		 * buttons whose labels become tooltips.
+		 *
+		 * <p>
+		 * Applies to every button rendered from this scope - explicitly configured commands as
+		 * well as commands contributed by child elements (e.g. a form's edit and save buttons). A
+		 * command's own display setting takes precedence. If not set, buttons show the icon (when
+		 * configured) together with the label.
+		 * </p>
+		 */
+		@Name(COMMAND_DISPLAY)
+		@Nullable
+		@NullDefault
+		ButtonDisplayMode getCommandDisplay();
 	}
+
+	private final ButtonDisplayMode _commandDisplay;
 
 	/**
 	 * Creates a new {@link CommandScopeElement}.
 	 */
 	protected CommandScopeElement(InstantiationContext context, Config config) {
 		super(context, config);
+		_commandDisplay = config.getCommandDisplay();
 	}
 
 	@Override
@@ -77,9 +102,9 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		// reactive rebuild.
 		CliqueRegistry registry = new CliqueRegistry();
 		ReactToolbarControl toolbar =
-			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry);
+			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry, _commandDisplay);
 		ReactToolbarControl buttonBar =
-			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, registry);
+			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, registry, _commandDisplay);
 
 		// Phase 5: Let subclass create the chrome control.
 		ToolbarControl chrome = createChromeControl(derivedContext, content, toolbar, buttonBar);
@@ -88,9 +113,10 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		// the existing toolbar controls keep their SSE registration.
 		scope.addListener(() -> {
 			toolbar.replaceGroups(
-				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry));
+				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry, _commandDisplay));
 			buttonBar.replaceGroups(
-				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, registry));
+				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, registry,
+					_commandDisplay));
 		});
 
 		// Phase 7: Lazy attach on render, cleanup on dispose.

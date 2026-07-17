@@ -18,11 +18,11 @@
 </ol>
 
 <div>
-<div>Wird der <code>eval</code>-Block erfolgreich ausgeführt, wird dessen Ergebnis zurückgegeben. Tritt ein Fehler auf, wird der <code>catch</code>-Block ausgeführt. Dieser erhält Informationen zur aufgetretenen Ausnahme abhängig vom Fehlertyp:</div>
+<div>Wird der <code>eval</code>-Block erfolgreich ausgeführt, wird dessen Ergebnis zurückgegeben. Tritt ein Fehler auf, wird der <code>catch</code>-Block ausgeführt. Dieser erhält immer zwei Argumente: die Fehlermeldung <code>message</code> und den Wert <code>value</code>.</div>
 
 <ul>
-	<li><strong>I18NException</strong>: <code>catch</code>-Block erhält (<code>ResKey</code>, ursprüngliches Argument)</li>
-	<li><strong>Reguläre Exception</strong>: <code>catch</code>-Block erhält (<code>Fehlermeldung</code>, ursprüngliches Argument)</li>
+	<li><strong>message</strong>: Bei einer <code>I18NException</code> der <code>ResKey</code>, sonst die Fehlermeldung als Text.</li>
+	<li><strong>value</strong>: Der über das dritte Argument von <code>throw()</code> übergebene Wert. <code>null</code>, wenn der Fehler nicht aus einem <code>throw()</code> stammt oder <code>throw()</code> ohne Wert aufgerufen wurde.</li>
 </ul>
 </div>
 
@@ -49,7 +49,7 @@
 		<tr>
 			<td>catch</td>
 			<td>Code-Block oder Ausdruck</td>
-			<td>Der Code-Block oder Ausdruck, der bei einem Fehler ausgeführt wird. Erhält das Exception-Objekt als Parameter</td>
+			<td>Der Code-Block oder Ausdruck, der bei einem Fehler ausgeführt wird. Erhält zwei Argumente: die Fehlermeldung und den über <code>throw()</code> übergebenen Wert (<code>value</code>).</td>
 			<td>nein</td>
 			<td>null</td>
 		</tr>

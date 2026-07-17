@@ -40,7 +40,11 @@ public class RowSetFieldModel extends AbstractFieldModel {
 	 *        The initial list of row objects; used as default value for dirty tracking.
 	 */
 	public RowSetFieldModel(List<TLObject> initialList) {
-		super(new ArrayList<>(initialList)); // defaultValue = initial snapshot
+		super(new ArrayList<>(initialList));
+		// Decouple the dirty-tracking snapshot from the current list: the inherited constructor
+		// stores one and the same instance for both, which would make membership changes
+		// undetectable if the current list ever got mutated in place.
+		setDefaultValue(new ArrayList<>(initialList));
 	}
 
 	@Override

@@ -196,7 +196,9 @@ public class RowSetEditor implements FormParticipant {
 
 		_rowModels.add(RowEditModel.forNew(transientObject));
 
-		List<TLObject> currentList = _fieldModel.getCurrentList();
+		// Replace the list instead of mutating it in place, so dirty tracking (comparison against
+		// the initial snapshot) and value-change events observe the membership change.
+		List<TLObject> currentList = new ArrayList<>(_fieldModel.getCurrentList());
 		currentList.add(transientObject);
 		_fieldModel.setValue(currentList);
 
@@ -220,7 +222,9 @@ public class RowSetEditor implements FormParticipant {
 			return false;
 		}
 
-		List<TLObject> currentList = _fieldModel.getCurrentList();
+		// Replace the list instead of mutating it in place, so dirty tracking (comparison against
+		// the initial snapshot) and value-change events observe the membership change.
+		List<TLObject> currentList = new ArrayList<>(_fieldModel.getCurrentList());
 		if (!currentList.remove(rowObject)) {
 			return false;
 		}

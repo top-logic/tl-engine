@@ -12,19 +12,19 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.model.TLObject;
 
 /**
- * {@link com.top_logic.layout.form.model.FieldModel} for a composition reference as a whole.
+ * {@link com.top_logic.layout.form.model.FieldModel} for an edited row set as a whole.
  *
  * <p>
- * Value is the current list of composed objects (row overlays + transient new objects) stored in
- * the main overlay. Reference-level constraints (min/max count) apply here.
+ * Value is the current list of row objects (row overlays + transient new objects) of the edit
+ * session. For attribute-bound row sets, reference-level constraints (min/max count) apply here.
  * </p>
  *
  * <p>
  * Dirty tracking checks both the list membership (added/removed objects) and whether any row
- * overlay is dirty (attribute changes within composed objects).
+ * overlay is dirty (attribute changes within row objects).
  * </p>
  */
-public class CompositionFieldModel extends AbstractFieldModel {
+public class RowSetFieldModel extends AbstractFieldModel {
 
 	// Note: AbstractFieldModel tracks _defaultValue and _value internally.
 	// We use _value (via getValue/setValue) as the current list and _defaultValue as the
@@ -34,12 +34,12 @@ public class CompositionFieldModel extends AbstractFieldModel {
 	private final List<TLObjectOverlay> _rowOverlays = new ArrayList<>();
 
 	/**
-	 * Creates a new {@link CompositionFieldModel} with the given initial list.
+	 * Creates a new {@link RowSetFieldModel} with the given initial list.
 	 *
 	 * @param initialList
-	 *        The initial list of composed objects; used as default value for dirty tracking.
+	 *        The initial list of row objects; used as default value for dirty tracking.
 	 */
-	public CompositionFieldModel(List<TLObject> initialList) {
+	public RowSetFieldModel(List<TLObject> initialList) {
 		super(new ArrayList<>(initialList)); // defaultValue = initial snapshot
 	}
 

@@ -19,12 +19,13 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.form.CompositionTableControl;
+import com.top_logic.layout.view.form.AttributeRowSetBinding;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.RowSetTableControl;
 
 /**
- * Declarative {@link UIElement} that creates a {@link CompositionTableControl} for an inline
+ * Declarative {@link UIElement} that creates a {@link RowSetTableControl} for an inline
  * composition table within a form.
  *
  * <p>
@@ -195,17 +196,19 @@ public class CompositionTableElement implements UIElement {
 		// FormElement always sets a FormControl as the FormModel.
 		FormControl formControl = (FormControl) formModel;
 
-		// Convert config to CompositionTableControl.ColumnConfig list.
-		List<CompositionTableControl.ColumnConfig> columnConfigs = new ArrayList<>();
+		// Convert config to RowSetTableControl.ColumnConfig list.
+		List<RowSetTableControl.ColumnConfig> columnConfigs = new ArrayList<>();
 		if (_config.getColumns() != null) {
 			for (ColumnConfig col : _config.getColumns().getColumns()) {
-				columnConfigs.add(new CompositionTableControl.ColumnConfig(
+				columnConfigs.add(new RowSetTableControl.ColumnConfig(
 					col.getAttribute(), col.getReadonly()));
 			}
 		}
 
-		CompositionTableControl control = new CompositionTableControl(
-			context, formControl, _config.getAttribute(), columnConfigs, _config.getDetailDialog());
+		String attribute = _config.getAttribute();
+		RowSetTableControl control = new RowSetTableControl(
+			context, formControl, new AttributeRowSetBinding(attribute), attribute, columnConfigs,
+			_config.getDetailDialog());
 		control.initTable();
 		return control;
 	}

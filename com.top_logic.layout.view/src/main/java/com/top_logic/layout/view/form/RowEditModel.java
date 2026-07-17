@@ -11,14 +11,14 @@ import java.util.Map;
 import com.top_logic.model.TLObject;
 
 /**
- * Per-row model for a composition table.
+ * Per-row editing state of a table edited within a form.
  *
  * <p>
  * Holds a reference to the row's overlay (for existing persistent objects) or transient object
  * (for new entries), plus the {@link AttributeFieldModel} instances for each editable column.
  * </p>
  */
-public class CompositionRowModel {
+public class RowEditModel {
 
 	private final TLObjectOverlay _rowOverlay;
 
@@ -28,7 +28,7 @@ public class CompositionRowModel {
 
 	private final Map<String, AttributeFieldModel> _columnModels = new LinkedHashMap<>();
 
-	private CompositionRowModel(TLObjectOverlay rowOverlay, TLObject rowObject, boolean isNew) {
+	private RowEditModel(TLObjectOverlay rowOverlay, TLObject rowObject, boolean isNew) {
 		_rowOverlay = rowOverlay;
 		_rowObject = rowObject;
 		_isNew = isNew;
@@ -37,15 +37,15 @@ public class CompositionRowModel {
 	/**
 	 * Factory for existing persistent objects (wrapped in overlay).
 	 */
-	public static CompositionRowModel forExisting(TLObjectOverlay rowOverlay) {
-		return new CompositionRowModel(rowOverlay, rowOverlay, false);
+	public static RowEditModel forExisting(TLObjectOverlay rowOverlay) {
+		return new RowEditModel(rowOverlay, rowOverlay, false);
 	}
 
 	/**
 	 * Factory for new transient objects.
 	 */
-	public static CompositionRowModel forNew(TLObject transientObject) {
-		return new CompositionRowModel(null, transientObject, true);
+	public static RowEditModel forNew(TLObject transientObject) {
+		return new RowEditModel(null, transientObject, true);
 	}
 
 	/**

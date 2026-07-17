@@ -10,7 +10,7 @@
 		<dependency name="Ticket_29019_Removed_log_entries"
 			module="tl"
 		/>
-		<dependency name="Ticket_29236_Added_isRevert_isRedo"
+		<dependency name="Ticket_29361_Move_taggedObj_to_Tag_table"
 			module="tl-element"
 		/>
 	</dependencies>

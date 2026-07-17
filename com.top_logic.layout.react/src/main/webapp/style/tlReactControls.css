@@ -2611,6 +2611,11 @@ button.tlMenu__item--disabled:hover {
 	white-space: nowrap;
 }
 
+/* Emphasized text, e.g. the author name in a byline (opt-in via css-class="tlText--strong"). */
+.tlText--strong {
+	font-weight: 600;
+}
+
 .tlTableView__checkboxCell {
 	justify-content: center;
 	flex-shrink: 0;
@@ -2850,6 +2855,34 @@ button.tlMenu__item--disabled:hover {
 /* When fullLine, body defines its own responsive grid instead of subgrid */
 .tlFormGroup--fullLine > .tlFormGroup__body {
 	grid-template-columns: inherit;
+}
+
+/* --- TLAvatar ---------------------------------------------------------- */
+
+.tlAvatar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	color: #fff;
+	font-family: var(--font-family);
+	font-size: 0.75rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	user-select: none;
+}
+
+/* --- TLRelativeTime ---------------------------------------------------- */
+
+.tlRelativeTime {
+	color: var(--text-secondary, #6b7280);
+	font-family: var(--font-family);
+	font-size: 0.8125rem;
+	white-space: nowrap;
+	cursor: default;
 }
 
 /* --- TLFileChips ------------------------------------------------------- */

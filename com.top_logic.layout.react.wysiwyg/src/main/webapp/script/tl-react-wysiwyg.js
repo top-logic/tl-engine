@@ -21489,7 +21489,7 @@ const rt = ({ icon: n, tooltip: e, active: t, disabled: r, onClick: o }) => /* @
     }
   ))) : null;
 }, UM = ({ controlId: n }) => {
-  const e = Nm(), t = Rm(), r = Pm(), o = Dm(), i = e.value || "", s = e.editable !== !1, l = !!e.hasError, a = e.imageUrl || null, c = x.useRef(null), u = x.useRef(null), d = iv({
+  const e = Nm(), t = Rm(), r = Pm(), o = Dm(), i = e.value || "", s = e.editable !== !1, l = !!e.hasError, a = e.imageUrl || null, c = e.commitOnBlur === !0, u = x.useRef(null), d = x.useRef(!1), f = x.useRef(null), h = iv({
     extensions: [
       aC,
       cC,
@@ -21504,37 +21504,37 @@ const rt = ({ icon: n, tooltip: e, active: t, disabled: r, onClick: o }) => /* @
     ],
     content: i,
     editable: s,
-    onUpdate: ({ editor: m }) => {
-      c.current && clearTimeout(c.current), c.current = setTimeout(() => {
-        t("valueChanged", { value: m.getHTML() });
+    onUpdate: ({ editor: y }) => {
+      d.current = !0, u.current && clearTimeout(u.current), u.current = setTimeout(() => {
+        t("valueChanged", { value: y.getHTML() });
       }, 300);
     },
-    onBlur: ({ editor: m }) => {
-      c.current && (clearTimeout(c.current), c.current = null), t("valueChanged", { value: m.getHTML() });
+    onBlur: ({ editor: y }) => {
+      u.current && (clearTimeout(u.current), u.current = null), t("valueChanged", { value: y.getHTML() }), c && d.current && (d.current = !1, t("commit"));
     }
   }, [s]);
   x.useEffect(() => {
-    d && !d.isFocused && d.getHTML() !== i && d.commands.setContent(i, !1);
-  }, [i, d]), x.useEffect(() => {
-    if (d && a) {
-      const m = o + "&key=" + encodeURIComponent(a);
-      d.chain().focus().setImage({ src: m }).run();
+    h && !h.isFocused && h.getHTML() !== i && h.commands.setContent(i, !1);
+  }, [i, h]), x.useEffect(() => {
+    if (h && a) {
+      const y = o + "&key=" + encodeURIComponent(a);
+      h.chain().focus().setImage({ src: y }).run();
     }
-  }, [a, d, o]);
-  const f = x.useCallback(() => {
-    var m;
-    (m = u.current) == null || m.click();
-  }, []), h = x.useCallback((m) => {
+  }, [a, h, o]);
+  const p = x.useCallback(() => {
     var y;
-    const g = (y = m.target.files) == null ? void 0 : y[0];
-    if (g) {
-      const b = new FormData();
-      b.append("file", g), r(b);
+    (y = f.current) == null || y.click();
+  }, []), m = x.useCallback((y) => {
+    var w;
+    const b = (w = y.target.files) == null ? void 0 : w[0];
+    if (b) {
+      const v = new FormData();
+      v.append("file", b), r(v);
     }
-    m.target.value = "";
+    y.target.value = "";
   }, [r]);
   if (x.useEffect(() => () => {
-    c.current && clearTimeout(c.current);
+    u.current && clearTimeout(u.current);
   }, []), !s)
     return /* @__PURE__ */ x.createElement("div", { className: "tlWysiwygEditor tlWysiwygEditor--immutable" }, /* @__PURE__ */ x.createElement(
       "div",
@@ -21543,15 +21543,15 @@ const rt = ({ icon: n, tooltip: e, active: t, disabled: r, onClick: o }) => /* @
         dangerouslySetInnerHTML: { __html: i }
       }
     ));
-  const p = "tlWysiwygEditor" + (l ? " tlWysiwygEditor--error" : "");
-  return /* @__PURE__ */ x.createElement("div", { className: p }, /* @__PURE__ */ x.createElement(jM, { editor: d, onImageUpload: f }), /* @__PURE__ */ x.createElement("div", { className: "tlWysiwygEditor__content" }, /* @__PURE__ */ x.createElement(Jw, { editor: d })), /* @__PURE__ */ x.createElement(
+  const g = "tlWysiwygEditor" + (l ? " tlWysiwygEditor--error" : "");
+  return /* @__PURE__ */ x.createElement("div", { className: g }, /* @__PURE__ */ x.createElement(jM, { editor: h, onImageUpload: p }), /* @__PURE__ */ x.createElement("div", { className: "tlWysiwygEditor__content" }, /* @__PURE__ */ x.createElement(Jw, { editor: h })), /* @__PURE__ */ x.createElement(
     "input",
     {
-      ref: u,
+      ref: f,
       type: "file",
       accept: "image/*",
       style: { display: "none" },
-      onChange: h
+      onChange: m
     }
   ));
 };

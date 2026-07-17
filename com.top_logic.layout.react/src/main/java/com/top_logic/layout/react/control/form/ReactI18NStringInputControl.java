@@ -44,12 +44,6 @@ import com.top_logic.util.TLContext;
  */
 public class ReactI18NStringInputControl extends ReactFormFieldControl {
 
-	/** Command sent by the client when an edited field is committed (loses focus). */
-	private static final String COMMIT_COMMAND = "commit";
-
-	/** State key telling the client to send {@link #COMMIT_COMMAND} when the field loses focus. */
-	private static final String COMMIT_ON_BLUR = "commitOnBlur";
-
 	private boolean _editable;
 
 	/**

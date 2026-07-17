@@ -36,6 +36,12 @@ public class ReactFormFieldControl extends ReactControl {
 	/** Command sent by the client when the field value changes. */
 	public static final String CMD_VALUE_CHANGED = "valueChanged";
 
+	/** Command sent by the client when an edited field is committed (loses focus). */
+	protected static final String COMMIT_COMMAND = "commit";
+
+	/** State key telling the client to send {@link #COMMIT_COMMAND} when the field loses focus. */
+	protected static final String COMMIT_ON_BLUR = "commitOnBlur";
+
 	/** State key for the field value. */
 	protected static final String VALUE = "value";
 
@@ -166,6 +172,14 @@ public class ReactFormFieldControl extends ReactControl {
 			@Override
 			public void onEditabilityChanged(FieldModel source, boolean editable) {
 				setEditable(editable);
+				// While the user edits, value patches are suppressed as redundant echoes (see
+				// applyClientValue), so the client's state may lag behind the model. That is
+				// harmless as long as the input keeps its own editing surface, but on the mode
+				// switch the client re-renders the field from its state. Re-send the value
+				// (through the subclass's transformation) so the re-render shows the model's
+				// current value.
+				Object value = source.getValue();
+				handleModelValueChanged(source, value, value);
 			}
 
 			@Override
@@ -301,6 +315,12 @@ public class ReactFormFieldControl extends ReactControl {
 	 *        The parsed value to set.
 	 */
 	protected void applyClientValue(Object value) {
+		if (!_fieldModel.isEditable()) {
+			// A trailing edit from a client whose display lags behind the server (e.g. an editor
+			// flushing its content on blur while the same interaction already left edit mode).
+			// The model must not be modified outside an edit session; drop the stale value.
+			return;
+		}
 		_clientValue = value;
 		_applyingClientValue = true;
 		try {

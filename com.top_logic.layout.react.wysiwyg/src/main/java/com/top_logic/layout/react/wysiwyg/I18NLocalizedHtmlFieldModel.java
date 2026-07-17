@@ -61,10 +61,10 @@ public class I18NLocalizedHtmlFieldModel implements FieldModel, FieldModelListen
 	}
 
 	/**
-	 * The locale whose entry is edited: the resource-bundle locale for the current session's
-	 * locale, so reading and writing use the same normalized key.
+	 * The locale whose entry is edited inline: the resource-bundle locale for the current
+	 * session's locale, so reading and writing use the same normalized key.
 	 */
-	private Locale editLocale() {
+	public static Locale editLocale() {
 		return Resources.getInstance(TLContext.getLocale()).getLocale();
 	}
 

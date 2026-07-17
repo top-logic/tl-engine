@@ -28,7 +28,7 @@ public class I18NHtmlControlProvider implements ReactFieldControlProvider {
 
 	@Override
 	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
-		ReactWysiwygControl inline = new ReactWysiwygControl(context, new I18NLocalizedHtmlFieldModel(model));
+		I18NWysiwygControl inline = new I18NWysiwygControl(context, model);
 		return I18NEditorDialog.createEditor(context, model, inline, new I18NHtmlValueEditor(),
 			MetaLabelProvider.INSTANCE.getLabel(part));
 	}

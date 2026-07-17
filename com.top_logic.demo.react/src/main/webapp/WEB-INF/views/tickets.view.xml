@@ -138,6 +138,12 @@
 									mode-switch="false"
 								>
 									<field attribute="content"/>
+									<composition-table attribute="attachments">
+										<columns>
+											<column attribute="name"/>
+											<column attribute="data"/>
+										</columns>
+									</composition-table>
 									<commands>
 										<generic-command
 											image="css:bi bi-send"

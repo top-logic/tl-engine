@@ -19,6 +19,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
 import com.top_logic.layout.react.control.layout.ReactPanelControl;
+import com.top_logic.layout.react.control.layout.ReactPanelControl.PanelAppearance;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
@@ -61,6 +62,9 @@ public class PanelElement extends CommandScopeElement {
 		/** Configuration name for {@link #getHoverActions()}. */
 		String HOVER_ACTIONS = "hover-actions";
 
+		/** Configuration name for {@link #getAppearance()}. */
+		String APPEARANCE = "appearance";
+
 		/**
 		 * The panel title displayed in the toolbar header.
 		 */
@@ -94,6 +98,13 @@ public class PanelElement extends CommandScopeElement {
 		boolean getHoverActions();
 
 		/**
+		 * The panel's visual variant: {@code card} renders a bordered, rounded panel with compact
+		 * content insets, e.g. for one entry of an item list.
+		 */
+		@Name(APPEARANCE)
+		PanelAppearance getAppearance();
+
+		/**
 		 * Whether the panel fills the bounded height of its container instead of growing with its
 		 * content.
 		 *
@@ -117,6 +128,8 @@ public class PanelElement extends CommandScopeElement {
 
 	private final boolean _hoverActions;
 
+	private final PanelAppearance _appearance;
+
 	/**
 	 * Creates a new {@link PanelElement} from configuration.
 	 */
@@ -129,6 +142,7 @@ public class PanelElement extends CommandScopeElement {
 			.collect(Collectors.toList());
 		_fill = config.getFill();
 		_hoverActions = config.getHoverActions();
+		_appearance = config.getAppearance();
 	}
 
 	@Override
@@ -138,6 +152,7 @@ public class PanelElement extends CommandScopeElement {
 		ReactPanelControl panel = new ReactPanelControl(context, title, content, toolbar, buttonBar, false, false, false);
 		panel.setFill(_fill);
 		panel.setHoverActions(_hoverActions);
+		panel.setAppearance(_appearance);
 		panel.setTitleContent(createTitleContentControl(context));
 		return panel;
 	}

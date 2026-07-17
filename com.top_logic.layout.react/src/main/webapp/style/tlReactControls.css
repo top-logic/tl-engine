@@ -1080,6 +1080,16 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	flex: 1;
 }
 
+/* Card appearance: a bordered, rounded panel reading as one self-contained entry of a list
+   (e.g. a comment). The tinted header visually binds byline and content together; compact
+   insets keep the entry tight - forms inside pick up the reduced inset via --page-inset. */
+.tlPanel--card {
+	border: 1px solid var(--border-subtle, #d1d5db);
+	border-radius: 8px;
+	overflow: hidden;
+	--page-inset: 0.75rem 1rem;
+}
+
 /* Hover-revealed actions: the toolbar stays invisible (but keyboard-reachable) until the
    pointer is over the panel or one of the buttons holds focus. */
 .tlPanel--hoverActions > .tlPanel__header > .tlPanel__toolbar {
@@ -2947,6 +2957,15 @@ button.tlMenu__item--disabled:hover {
 	cursor: default;
 }
 
+/* Keyboard focus: the chip buttons sit inside a clipping pill (overflow: hidden), so the
+   focus ring is drawn inset to stay visible. */
+.tlFileChip__main:focus-visible,
+.tlFileChip__remove:focus-visible,
+.tlFileChips__add:focus-visible {
+	outline: 2px solid var(--focus, #0f62fe);
+	outline-offset: -2px;
+}
+
 .tlFileChip__main:not(:disabled):hover {
 	background: var(--layer-hover, rgba(0, 0, 0, 0.05));
 }
@@ -3398,6 +3417,12 @@ button.tlMenu__item--disabled:hover {
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-02);
+}
+
+/* An item whose button is currently hidden renders empty - drop it from the flex layout so
+   it does not contribute gap and the visible buttons stay flush with the toolbar edge. */
+.tlToolbar__item:empty {
+	display: none;
 }
 
 .tlToolbar__group--menu {
@@ -4773,4 +4798,10 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	border: 2px solid var(--border-interactive, #2680eb);
 	background: rgba(38, 128, 235, 0.12);
 	box-sizing: border-box;
+}
+
+/* The button bar control always exists (as the target for reactive command rebuilds), but
+   while it holds no visible button it must not take up space or draw its separator. */
+.tlPanel__buttonBar:not(:has(button)) {
+	display: none;
 }

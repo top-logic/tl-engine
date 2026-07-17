@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.layout;
 
+import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -70,6 +71,32 @@ public class ReactPanelControl extends ToolbarControl {
 
 	/** @see #setHoverActions(boolean) */
 	private static final String HOVER_ACTIONS = "hoverActions";
+
+	/** @see #setAppearance(PanelAppearance) */
+	private static final String APPEARANCE = "appearance";
+
+	/**
+	 * Visual variants of a panel.
+	 */
+	public enum PanelAppearance implements ExternallyNamed {
+
+		/** Flush panel filling its container. */
+		DEFAULT("default"),
+
+		/** Bordered, rounded card with compact content insets, e.g. one entry of an item list. */
+		CARD("card");
+
+		private final String _externalName;
+
+		PanelAppearance(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
 
 	/** Default collapsed size in pixels (toolbar header height). */
 	private static final float COLLAPSED_SIZE = 36f;
@@ -151,6 +178,13 @@ public class ReactPanelControl extends ToolbarControl {
 	 */
 	public void setHoverActions(boolean hoverActions) {
 		putState(HOVER_ACTIONS, Boolean.valueOf(hoverActions));
+	}
+
+	/**
+	 * Sets the panel's visual variant.
+	 */
+	public void setAppearance(PanelAppearance appearance) {
+		putState(APPEARANCE, appearance.getExternalName());
 	}
 
 	/**

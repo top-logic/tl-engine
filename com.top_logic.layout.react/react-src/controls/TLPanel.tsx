@@ -59,6 +59,7 @@ const IconPopOut = () => (
  * - showPopOut: boolean
  * - fill: boolean (fill the container's bounded height instead of growing with content)
  * - hoverActions: boolean (hide toolbar buttons until the panel is hovered or a button is focused)
+ * - appearance: "default" | "card" (card renders a bordered, rounded panel with compact insets)
  * - toolbar: ChildDescriptor (a TLToolbar control, may be absent)
  * - buttonBar: ChildDescriptor (a TLToolbar control, may be absent)
  * - child: ChildDescriptor
@@ -76,6 +77,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const fullLine = state.fullLine === true;
   const fill = state.fill === true;
   const hoverActions = state.hoverActions === true;
+  const card = state.appearance === 'card';
 
   const isMinimized = expansionState === 'MINIMIZED';
   const isMaximized = expansionState === 'MAXIMIZED';
@@ -112,7 +114,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fill ? ' tlPanel--fill' : ''}${hoverActions ? ' tlPanel--hoverActions' : ''}`}
+      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fill ? ' tlPanel--fill' : ''}${hoverActions ? ' tlPanel--hoverActions' : ''}${card ? ' tlPanel--card' : ''}`}
       style={panelStyle}
     >
       {hasHeader && (

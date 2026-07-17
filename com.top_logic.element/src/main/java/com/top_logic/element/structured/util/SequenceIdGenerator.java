@@ -17,6 +17,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.time.CalendarUtil;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -173,8 +174,13 @@ public class SequenceIdGenerator implements NumberHandler {
 				addNames(sequenceNameBuilder, element);
 			}
 		} else if (id instanceof TLObject) {
+			ObjectKey key = ((TLObject) id).tId();
+			if (key == null) {
+				throw new IllegalArgumentException("Cannot derive a sequence identifier from the transient object '"
+					+ id + "': An object discriminating a number sequence must be persistent.");
+			}
 			addNameSeparator(sequenceNameBuilder);
-			sequenceNameBuilder.append(((TLObject) id).tId().asString());
+			sequenceNameBuilder.append(key.asString());
 		} else if (id == null) {
 			return;
 		} else {

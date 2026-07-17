@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.OptionProvider;
@@ -36,6 +37,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Service that resolves the appropriate {@link ReactFieldControlProvider} for a model attribute.
@@ -50,6 +52,9 @@ import com.top_logic.model.util.TLModelUtil;
  * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}.</li>
  * </ol>
  */
+@ServiceDependencies({
+	ModelService.Module.class,
+})
 public class FieldControlService extends ConfiguredManagedClass<FieldControlService.Config> {
 
 	/**

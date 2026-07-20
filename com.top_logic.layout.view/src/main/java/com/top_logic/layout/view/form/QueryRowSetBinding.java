@@ -26,9 +26,9 @@ import com.top_logic.model.TLStructuredTypePart;
  * </p>
  *
  * <p>
- * Nothing is written back to the form object on commit; created rows are persisted and removed
- * rows deleted (with {@link RemoveMode#DELETE}) by the {@link RowSetEditor}'s commit, after which
- * a re-evaluation of the query observes the new state.
+ * Nothing is written back to the form object on commit; created rows are persisted and removed rows
+ * deleted (with {@link com.top_logic.layout.view.form.RowSetBinding.RemoveMode#DELETE}) by the
+ * {@link RowSetEditor}'s commit, after which a re-evaluation of the query observes the new state.
  * </p>
  */
 public class QueryRowSetBinding implements RowSetBinding {
@@ -51,8 +51,10 @@ public class QueryRowSetBinding implements RowSetBinding {
 	 * @param createTypes
 	 *        The concrete types offered for row creation; empty disables row creation.
 	 * @param removeMode
-	 *        The remove semantics; {@link RemoveMode#UNLINK} is not meaningful for a query (there
-	 *        is no membership to unlink from) and is treated like {@link RemoveMode#NONE}.
+	 *        The remove semantics;
+	 *        {@link com.top_logic.layout.view.form.RowSetBinding.RemoveMode#UNLINK} is not
+	 *        meaningful for a query (there is no membership to unlink from) and is treated like
+	 *        {@link com.top_logic.layout.view.form.RowSetBinding.RemoveMode#NONE}.
 	 */
 	public QueryRowSetBinding(Supplier<List<TLObject>> rows, TLClass rowType, List<TLClass> createTypes,
 			RemoveMode removeMode) {

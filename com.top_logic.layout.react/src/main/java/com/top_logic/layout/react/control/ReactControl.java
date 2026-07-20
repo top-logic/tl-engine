@@ -81,6 +81,13 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	private SSEUpdateQueue _sseQueue;
 
 	/**
+	 * The source {@code .view.xml} path of the view whose root this control is, or {@code null}.
+	 *
+	 * @see #setViewSource(String)
+	 */
+	private String _viewSource;
+
+	/**
 	 * Whether this control has been rendered (written to HTML or serialized as a child). Before
 	 * rendering, {@link #putState} writes directly to the pre-render state map. After rendering,
 	 * it sends SSE patch events to the client.
@@ -168,6 +175,18 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 */
 	public ReactContext getReactContext() {
 		return _reactContext;
+	}
+
+	/**
+	 * Marks this control as the root of a view loaded from the given source file. The path is
+	 * emitted as a {@code data-view-source} DOM attribute so the client "select view" picker can map
+	 * a clicked area to its source {@code .view.xml}.
+	 *
+	 * @param viewSource
+	 *        The full view path (e.g. {@code /WEB-INF/views/app.view.xml}), or {@code null}.
+	 */
+	public void setViewSource(String viewSource) {
+		_viewSource = viewSource;
 	}
 
 	@Override
@@ -576,6 +595,9 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			out.writeAttribute("data-react-state", stateJson);
 			out.writeAttribute("data-window-name", _reactContext.getWindowName());
 			out.writeAttribute("data-context-path", _reactContext.getContextPath());
+			if (_viewSource != null) {
+				out.writeAttribute("data-view-source", _viewSource);
+			}
 			out.endBeginTag();
 			out.endTag(HTMLConstants.DIV);
 		} finally {
@@ -873,6 +895,14 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			writer.value(_reactModule);
 			writer.name("state");
 			writeState(writer);
+			if (_viewSource != null) {
+				// Carried in the child descriptor so the client (TLChild) can stamp
+				// data-view-source onto this control's root element; the top-level write() path
+				// emits the same attribute directly, but view-boundary controls are always
+				// serialized here as nested children.
+				writer.name("viewSource");
+				writer.value(_viewSource);
+			}
 			writer.endObject();
 		} finally {
 			_silentUpdates = silentBefore;

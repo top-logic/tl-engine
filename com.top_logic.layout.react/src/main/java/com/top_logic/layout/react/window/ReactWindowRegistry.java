@@ -47,6 +47,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	/** Maps singleton keys to window IDs for singleton window reuse. */
 	private final ConcurrentHashMap<String, String> _singletonKeys = new ConcurrentHashMap<>();
 
+	private final java.util.Map<String, PendingViewPick> _pendingPicks = new java.util.concurrent.ConcurrentHashMap<>();
+
 	private final ReentrantLock _requestLock = new ReentrantLock();
 
 	/**
@@ -135,6 +137,22 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	public ReentrantLock getRequestLock() {
 		return _requestLock;
+	}
+
+	/**
+	 * Registers a pending "select view" pick under the given token.
+	 */
+	public void registerPick(String token, PendingViewPick pending) {
+		_pendingPicks.put(token, pending);
+	}
+
+	/**
+	 * Looks up and removes the pending pick for the given token.
+	 *
+	 * @return The pending pick, or {@code null} if the token is unknown or already consumed.
+	 */
+	public PendingViewPick consumePick(String token) {
+		return _pendingPicks.remove(token);
 	}
 
 	/**

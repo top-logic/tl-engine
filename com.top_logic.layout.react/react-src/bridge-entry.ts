@@ -66,6 +66,10 @@ if (document.readyState === 'loading') {
 import { initKeyboardDispatcher } from './bridge/keyboard-dispatcher';
 initKeyboardDispatcher();
 
+// Initialize the "select view" picker (cross-window pick mode for the View Designer).
+import { initViewPicker } from './bridge/view-picker';
+initViewPicker();
+
 // Install the single document-level focus-trap listener (confines focus to modal surfaces).
 import { initFocusTrap } from './bridge/focus-trap';
 initFocusTrap();

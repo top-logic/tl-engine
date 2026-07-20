@@ -113,6 +113,13 @@ public class DesignerTreeElement implements UIElement {
 		ReactTreeControl treeControl =
 			new ReactTreeControl(context, treeModel, selectionModel, DESIGN_NODE_CONTROL_PROVIDER);
 
+		// Holder for the tree model currently displayed by treeControl. The control itself does not
+		// expose a getter for its current model, and the model is replaced (not mutated) whenever the
+		// tree is rebuilt (e.g. after Revert, see the input-channel listener below, or after a
+		// context-menu structural edit). Listeners that need to search the *currently displayed* tree
+		// must consult this holder instead of a captured local, which would go stale after a rebuild.
+		DefaultTreeUINodeModel[] currentModel = { treeModel };
+
 		// 5. Wire selection: push selected DesignTreeNode to the selection channel.
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
@@ -133,6 +140,22 @@ public class DesignerTreeElement implements UIElement {
 					}
 				}
 			});
+
+			// Reflect an externally set selection (e.g. from the "select view" picker) in the tree.
+			selectionChannel.addListener((sender, oldValue, newValue) -> {
+				if (newValue instanceof DesignTreeNode target) {
+					DefaultTreeUINode uiNode = findUINode(currentModel[0].getRoot(), target);
+					if (uiNode != null) {
+						revealNode(uiNode);
+						selectionModel.setSelected(uiNode, true);
+						// Push the server-side expansion+selection change to the client. Unlike a
+						// client-initiated select/expand (which flows through the control's own
+						// command handlers that rebuild this state), this change is made directly on
+						// the models, so the control's visible node state must be rebuilt explicitly.
+						treeControl.updateVisibleState();
+					}
+				}
+			});
 		}
 
 		// 6. Wire context menu for structural editing commands.
@@ -140,7 +163,7 @@ public class DesignerTreeElement implements UIElement {
 		ViewChannel selChannelForMenu = selRefForMenu != null ? context.resolveChannel(selRefForMenu) : null;
 		treeControl.setContextMenuProvider(
 			(tree, node, x, y) -> openDesignContextMenu(tree, node, x, y, builder, selectionModel,
-				selChannelForMenu, inputChannel));
+				selChannelForMenu, inputChannel, currentModel));
 
 		// 7. Listen on the input channel for root changes (e.g. after Revert) and rebuild tree.
 		ViewChannel.ChannelListener rootListener = (sender, oldValue, newValue) -> {
@@ -148,6 +171,7 @@ public class DesignerTreeElement implements UIElement {
 				DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, newRoot);
 				newTreeModel.setRootVisible(true);
 				treeControl.setTreeModel(newTreeModel);
+				currentModel[0] = newTreeModel;
 			}
 		};
 		inputChannel.addListener(rootListener);
@@ -170,7 +194,7 @@ public class DesignerTreeElement implements UIElement {
 	private void openDesignContextMenu(ReactTreeControl tree, Object node, int x, int y,
 			TreeBuilder<DefaultTreeUINode> builder,
 			DefaultSingleSelectionModel<Object> selectionModel,
-			ViewChannel selectionChannel, ViewChannel inputChannel) {
+			ViewChannel selectionChannel, ViewChannel inputChannel, DefaultTreeUINodeModel[] currentModel) {
 
 		DesignTreeNode designNode;
 		if (node instanceof DefaultTreeUINode treeNode) {
@@ -209,7 +233,7 @@ public class DesignerTreeElement implements UIElement {
 
 		tree.openContextMenu(items, itemId -> {
 			handleContextMenuAction(itemId, designNode, tree, builder, selectionModel, selectionChannel,
-				inputChannel);
+				inputChannel, currentModel);
 		}, x, y);
 	}
 
@@ -219,7 +243,7 @@ public class DesignerTreeElement implements UIElement {
 	private void handleContextMenuAction(String itemId, DesignTreeNode designNode, ReactTreeControl tree,
 			TreeBuilder<DefaultTreeUINode> builder,
 			DefaultSingleSelectionModel<Object> selectionModel,
-			ViewChannel selectionChannel, ViewChannel inputChannel) {
+			ViewChannel selectionChannel, ViewChannel inputChannel, DefaultTreeUINodeModel[] currentModel) {
 
 		switch (itemId) {
 			case CMD_ADD_CHILD:
@@ -247,6 +271,40 @@ public class DesignerTreeElement implements UIElement {
 		DesignTreeNode root = (DesignTreeNode) inputChannel.get();
 		DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, root);
 		tree.setTreeModel(newTreeModel);
+		currentModel[0] = newTreeModel;
+	}
+
+	/**
+	 * Finds the {@link DefaultTreeUINode} whose business object is {@code target}. Returns
+	 * {@code null} if not found.
+	 *
+	 * <p>
+	 * Does not expand any node: {@link DefaultTreeUINode#getChildren()} materializes children
+	 * lazily regardless of expansion state, so the search does not need to expand anything. Use
+	 * {@link #revealNode(DefaultTreeUINode)} to expand the ancestors of a found node.
+	 * </p>
+	 */
+	private static DefaultTreeUINode findUINode(DefaultTreeUINode node, DesignTreeNode target) {
+		if (node.getBusinessObject() == target) {
+			return node;
+		}
+		for (DefaultTreeUINode child : node.getChildren()) {
+			DefaultTreeUINode found = findUINode(child, target);
+			if (found != null) {
+				return found;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Expands all ancestors of the given node so it becomes visible in the tree, without expanding
+	 * the node itself.
+	 */
+	private static void revealNode(DefaultTreeUINode node) {
+		for (DefaultTreeUINode parent = node.getParent(); parent != null; parent = parent.getParent()) {
+			parent.setExpanded(true);
+		}
 	}
 
 	private static Map<String, Object> menuItem(String id, String label) {

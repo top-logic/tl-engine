@@ -157,12 +157,19 @@ public class SplitPanelElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		String key = resolveKey(context, "split-panel");
+		String configSignature = configSignature(_panes);
 
 		Map<Integer, Float> persistedSizes = loadPaneSizes(key);
+		if (!configSignature.equals(loadConfigSignature(key))) {
+			// The configured pane sizes have changed (or predate size persistence) since the sizes
+			// were last persisted: the personalized sizes are stale, so fall back to the configured
+			// sizes instead of masking the (new) configuration.
+			persistedSizes = Map.of();
+		}
 		Map<Integer, Boolean> persistedCollapse = loadCollapseStates(key);
 
 		ReactSplitPanelControl splitPanel = new ReactSplitPanelControl(context, _orientation, _resizable,
-			sizes -> savePaneSizes(key, sizes),
+			sizes -> savePaneSizes(key, sizes, configSignature),
 			(idx, collapsed) -> saveCollapseState(key, idx, collapsed));
 
 		for (int i = 0; i < _panes.size(); i++) {
@@ -175,7 +182,10 @@ public class SplitPanelElement implements UIElement {
 			DisplayUnit unit = persistedSizes.containsKey(idx)
 				? DisplayUnit.PIXEL : pane._unit;
 			ChildConstraint constraint = new ChildConstraint(size, unit, pane._minSize, Scrolling.AUTO);
-			ReactControl content = createContent(pane._children, context);
+			// Descend the personalization path per pane so that nested split panels get distinct
+			// personalization keys instead of all sharing the parent's key.
+			ViewContext paneContext = context.childContext(String.valueOf(i));
+			ReactControl content = createContent(pane._children, paneContext);
 
 			if (collapsed) {
 				// Restore collapsed state. The constraint holds the current (collapsed) size.
@@ -219,7 +229,7 @@ public class SplitPanelElement implements UIElement {
 		return Map.of();
 	}
 
-	private static void savePaneSizes(String key, Map<String, Float> controlIdToSize) {
+	private static void savePaneSizes(String key, Map<String, Float> controlIdToSize, String configSignature) {
 		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
 		if (pc == null) {
 			return;
@@ -231,6 +241,38 @@ public class SplitPanelElement implements UIElement {
 			i++;
 		}
 		pc.setJSONValue(key + ".sizes", indexed);
+		// Remember the configuration the persisted sizes were derived from, so a later change to the
+		// configured sizes invalidates them (see loadConfigSignature usage in createControl).
+		pc.setJSONValue(key + ".configSignature", configSignature);
+	}
+
+	/**
+	 * The configuration signature previously persisted alongside the pane sizes, or {@code null} if
+	 * none was stored.
+	 */
+	private static String loadConfigSignature(String key) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return null;
+		}
+		Object value = pc.getJSONValue(key + ".configSignature");
+		return value instanceof String ? (String) value : null;
+	}
+
+	/**
+	 * A signature of the configured pane sizes, used to detect configuration changes that must
+	 * invalidate persisted (personalized) sizes.
+	 */
+	private static String configSignature(List<PaneEntry> panes) {
+		StringBuilder result = new StringBuilder();
+		for (PaneEntry pane : panes) {
+			result.append(pane._size);
+			result.append(pane._unit == null ? "" : pane._unit.getExternalName());
+			result.append(':');
+			result.append(pane._minSize);
+			result.append(';');
+		}
+		return result.toString();
 	}
 
 	@SuppressWarnings("unchecked")

@@ -4597,3 +4597,19 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	border-top: 1px solid var(--border-subtle);
 	flex-shrink: 0;
 }
+
+/* --- View Designer "select view" picker ------------------------------- */
+
+.tlViewPick--active,
+.tlViewPick--active * {
+	cursor: crosshair !important;
+}
+
+#tl-view-pick-highlight {
+	position: fixed;
+	pointer-events: none;
+	z-index: 10000;
+	border: 2px solid var(--border-interactive, #2680eb);
+	background: rgba(38, 128, 235, 0.12);
+	box-sizing: border-box;
+}

@@ -140,7 +140,9 @@ public class ReferenceElement implements UIElement {
 			childContext.registerChannel(binding.getChannel(), parentChannel);
 		}
 
-		return new ReloadableControl(fullPath, childContext,
+		ReloadableControl viewControl = new ReloadableControl(fullPath, childContext,
 			(ReactControl) referencedView.createControl(childContext));
+		viewControl.setViewSource(fullPath);
+		return viewControl;
 	}
 }

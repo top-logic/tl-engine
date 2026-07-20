@@ -81,7 +81,7 @@ public class Try extends SearchExpression {
 	protected Object internalEval(EvalContext definitions, Args args) {
 		try {
 			// Execute the try block
-			return _tryBlock.evalWith(definitions, Args.none());
+			return _tryBlock.eval(definitions);
 		} catch (Exception e) {
 			// If no catch function provided, return null
 			if (_catchBlock == null) {
@@ -90,14 +90,22 @@ public class Try extends SearchExpression {
 			
 			// Determine the error message to pass to the catch block
 			Object errorMessage;
-			if (e instanceof I18NException) {
-				errorMessage = ((I18NException) e).getErrorKey();
+			if (e instanceof I18NException i18nEx) {
+				errorMessage = i18nEx.getErrorKey();
 			} else {
 				errorMessage = e.getMessage();
 			}
-			
-			// Execute the catch block with the error message as argument
-			return _catchBlock.evalWith(definitions, Args.some(errorMessage));
+
+			// The value passed to throw(), or null if the error did not originate from throw().
+			Object value;
+			if (e instanceof ScriptAbort abort) {
+				value = abort.getValue();
+			} else {
+				value = null;
+			}
+
+			// Execute the catch block with the error message and the thrown value as arguments.
+			return _catchBlock.eval(definitions, errorMessage, value);
 		}
 	}
 

@@ -29,6 +29,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 REST_CALL__NAME;
 
+	/**
+	 * @en Error response. Status: {0}
+	 */
+	public static ResKey1 REST_ERROR_RESPONSE__CODE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

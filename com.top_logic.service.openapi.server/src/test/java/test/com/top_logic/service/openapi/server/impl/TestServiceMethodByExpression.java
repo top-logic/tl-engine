@@ -11,11 +11,14 @@ import java.util.Collections;
 
 import junit.framework.TestCase;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import com.top_logic.service.openapi.server.impl.ServiceMethodByExpression;
 import com.top_logic.service.openapi.server.script.Response;
 
 /**
- * Tests for {@link ServiceMethodByExpression#writeResponse(Object, jakarta.servlet.http.HttpServletResponse)}.
+ * Tests for
+ * {@link ServiceMethodByExpression#writeResponse(Response, jakarta.servlet.http.HttpServletResponse)}.
  */
 @SuppressWarnings("javadoc")
 public class TestServiceMethodByExpression extends TestCase {
@@ -26,7 +29,7 @@ public class TestServiceMethodByExpression extends TestCase {
 	public void testRawStringIsTextPlain() throws Exception {
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
 
-		_method.writeResponse("hello", resp);
+		_method.writeResponse(success("hello"), resp);
 
 		assertEquals(200, resp.getStatus());
 		assertEquals("text/plain", resp.getContentType());
@@ -36,7 +39,7 @@ public class TestServiceMethodByExpression extends TestCase {
 	public void testRawMapIsJsonSerialized() throws Exception {
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
 
-		_method.writeResponse(java.util.Map.of("greeting", "hello"), resp);
+		_method.writeResponse(success(java.util.Map.of("greeting", "hello")), resp);
 
 		assertEquals(200, resp.getStatus());
 		assertEquals("application/json", resp.getContentType());
@@ -81,7 +84,7 @@ public class TestServiceMethodByExpression extends TestCase {
 			com.top_logic.basic.io.binary.BinaryDataFactory.createBinaryData(payload, "image/png");
 
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
-		_method.writeResponse(data, resp);
+		_method.writeResponse(success(data), resp);
 
 		assertEquals(200, resp.getStatus());
 		assertEquals("image/png", resp.getContentType());
@@ -126,7 +129,7 @@ public class TestServiceMethodByExpression extends TestCase {
 		byte[] payload = new byte[] { 1, 2, 3, 4, 5 };
 
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
-		_method.writeResponse(payload, resp);
+		_method.writeResponse(success(payload), resp);
 
 		assertEquals(200, resp.getStatus());
 		assertEquals("application/octet-stream", resp.getContentType());
@@ -141,5 +144,9 @@ public class TestServiceMethodByExpression extends TestCase {
 
 		assertEquals("text/csv; charset=utf-8", resp.getContentType());
 		assertArrayEquals(payload, resp.bodyBytes());
+	}
+
+	private static Response success(Object content) {
+		return new Response(HttpServletResponse.SC_OK, content, null);
 	}
 }

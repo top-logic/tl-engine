@@ -15,6 +15,8 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.BasicTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.model.search.ui.CodeCompletion;
 import com.top_logic.model.search.ui.TLScriptCompletionService;
 
 /**
@@ -116,6 +118,22 @@ public class TestTLScriptAutoCompletionCommand extends BasicTestCase {
 		assertTrue(TLScriptCompletionService.inTextMode("'x $"));
 
 		assertFalse(TLScriptCompletionService.inTextMode("x -> $"));
+	}
+
+	/**
+	 * The overload the React editor's completion handler uses: a null {@link DisplayContext} is
+	 * acceptable in variable mode, the text up to the cursor drives the in-scope variables, and the
+	 * declared context variables are included — all returned with a leading <code>$</code>.
+	 */
+	public void testComputeCompletionsVariableModeNullContext() {
+		List<CodeCompletion> completions = TLScriptCompletionService.computeCompletions(
+			null, "x -> $", "$", "x -> $", List.of("ctx"), false);
+
+		java.util.Set<String> names = new HashSet<>();
+		for (CodeCompletion completion : completions) {
+			names.add(completion.getName());
+		}
+		assertEquals(new HashSet<>(List.of("$x", "$ctx")), names);
 	}
 
 	/**

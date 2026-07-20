@@ -5,7 +5,10 @@
  */
 package com.top_logic.model.search.react;
 
+import java.util.List;
+
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
@@ -59,6 +62,9 @@ public class TLScriptEditorElement implements UIElement {
 		/** Configuration name for {@link #getReadOnly()}. */
 		String READ_ONLY = "readOnly";
 
+		/** Configuration name for {@link #getContextVariables()}. */
+		String CONTEXT_VARIABLES = "context-variables";
+
 		/**
 		 * The initial TL-Script expression text.
 		 *
@@ -84,6 +90,14 @@ public class TLScriptEditorElement implements UIElement {
 		@Name(READ_ONLY)
 		@BooleanDefault(false)
 		boolean getReadOnly();
+
+		/**
+		 * Names of variables that the surrounding infrastructure binds around the edited script and
+		 * that are therefore offered at the top level of <code>$</code>-completion.
+		 */
+		@Name(CONTEXT_VARIABLES)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getContextVariables();
 	}
 
 	private final String _value;
@@ -91,6 +105,8 @@ public class TLScriptEditorElement implements UIElement {
 	private final ChannelRef _valueChannelRef;
 
 	private final boolean _readOnly;
+
+	private final List<String> _contextVariables;
 
 	/**
 	 * Creates a new {@link TLScriptEditorElement} from configuration.
@@ -100,6 +116,7 @@ public class TLScriptEditorElement implements UIElement {
 		_value = config.getValue();
 		_valueChannelRef = config.getValueChannel();
 		_readOnly = config.getReadOnly();
+		_contextVariables = config.getContextVariables();
 	}
 
 	@Override
@@ -111,7 +128,8 @@ public class TLScriptEditorElement implements UIElement {
 			initial = channel.get().toString();
 		}
 
-		TLScriptEditorReactControl control = new TLScriptEditorReactControl(context, initial, _readOnly);
+		TLScriptEditorReactControl control =
+			new TLScriptEditorReactControl(context, initial, _readOnly, _contextVariables);
 
 		if (channel != null) {
 			control.setValueCallback(channel::set);

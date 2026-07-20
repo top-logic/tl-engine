@@ -66,6 +66,14 @@ public class ComponentCommandModel extends DynamicDelegatingCommandModel {
 			return tooltipOverride;
 		}
 
+		return defaultTooltip();
+	}
+
+	/**
+	 * The tooltip used when no tooltip was {@link #setTooltip(String) set} explicitly: the tooltip
+	 * of the underlying {@link CommandHandler}.
+	 */
+	protected String defaultTooltip() {
 		Resources resources = Resources.getInstance();
 		return resources.getString(getCommandHandler().getResourceKey(getComponent()).tooltipOptional());
 	}

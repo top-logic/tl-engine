@@ -87,6 +87,14 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 			}
 
 			BinaryData data = UploadSupport.toBinaryData(filePart);
+
+			String scanError = UploadSupport.checkContent(data);
+			if (scanError != null) {
+				putState(ERROR, scanError);
+				putState(STATUS, "idle");
+				return HandlerResult.DEFAULT_RESULT;
+			}
+
 			getFieldModel().setValue(data);
 
 			putState(ERROR, null);

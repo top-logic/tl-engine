@@ -31,6 +31,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.io.binary.scan.UploadSecurityService;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
@@ -463,6 +464,13 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 		}
 
 		BinaryData data = BinaryDataFactory.createUploadData(file);
+
+		ResKey scanError = UploadSecurityService.checkUpload(data);
+		if (scanError != null) {
+			_uploadErrors.add(scanError);
+			return;
+		}
+
 		String contentType = file.getContentType();
 
 		if (BinaryDataSource.CONTENT_TYPE_OCTET_STREAM.equals(contentType)) {

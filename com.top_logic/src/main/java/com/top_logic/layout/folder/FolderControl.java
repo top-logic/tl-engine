@@ -19,6 +19,7 @@ import jakarta.servlet.http.Part;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.scan.UploadSecurityService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.common.folder.FolderDefinition;
@@ -41,6 +42,7 @@ import com.top_logic.layout.tree.breadcrumb.BreadcrumbControl;
 import com.top_logic.layout.tree.breadcrumb.BreadcrumbData;
 import com.top_logic.layout.tree.breadcrumb.BreadcrumbRenderer;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
@@ -249,6 +251,12 @@ public class FolderControl extends TableControl implements FolderListener, Conte
 					}
 
 					BinaryData data = BinaryDataFactory.createUploadData(fileItem);
+
+					ResKey scanError = UploadSecurityService.checkUpload(data);
+					if (scanError != null) {
+						throw new TopLogicException(scanError);
+					}
+
 					String contentType = DnDFileUtilities.getContentType(fileItem, fileName);
 					addUploadedItem(new DefaultDataItem(filePath + fileName, data, contentType));
 				}

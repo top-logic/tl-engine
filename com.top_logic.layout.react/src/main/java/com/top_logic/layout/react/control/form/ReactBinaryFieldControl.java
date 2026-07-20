@@ -19,6 +19,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -144,6 +145,14 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 			}
 
 			BinaryData data = BinaryDataFactory.createBinaryData(fileData, contentType, fileName);
+
+			String scanError = UploadSupport.checkContent(data);
+			if (scanError != null) {
+				putState(ERROR, scanError);
+				putState(STATUS, "idle");
+				return HandlerResult.DEFAULT_RESULT;
+			}
+
 			getFieldModel().setValue(data);
 
 			putState(ERROR, null);

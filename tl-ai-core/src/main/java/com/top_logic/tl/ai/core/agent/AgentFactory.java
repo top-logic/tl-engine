@@ -33,13 +33,11 @@ import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
-import com.top_logic.tl.ai.core.tools.interaction.SearchToolsTool;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
@@ -687,16 +685,6 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			dynamicCatalog.addOverlay(skillToolOverlay.freeze());
 		}
 
-		// Build SearchToolsTool
-		SearchToolsTool searchTool = buildSearchTool(agent);
-		if (searchTool != null) {
-			ToolCatalog searchOverlay = new ToolCatalog();
-			for (Tool tool : AnnotatedTools.from(searchTool)) {
-				searchOverlay.register(tool);
-			}
-			dynamicCatalog.addOverlay(searchOverlay.freeze());
-		}
-
 		return dynamicCatalog;
 	}
 
@@ -724,35 +712,6 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		Function<String, Tool> resolver = name -> ToolRegistryService.getInstance().getTool(name);
 		return new SkillTool(skillMap, dynamicCatalog, resolver, preloadedSkillIds);
-	}
-
-	private SearchToolsTool buildSearchTool(AgentDefinition agent) {
-		if (agent.skills().isEmpty()) {
-			return null;
-		}
-
-		// Collect all tool schemas from the global registry
-		ToolRegistryService registry = ToolRegistryService.getInstance();
-		Map<String, ToolSchema> allTools = new LinkedHashMap<>();
-		for (String toolName : registry.getToolNames()) {
-			Tool tool = registry.getTool(toolName);
-			if (tool != null) {
-				allTools.put(toolName, tool.schema());
-			}
-		}
-
-		// Collect skill definitions with their tools
-		Map<String, Skill> skills = new LinkedHashMap<>();
-		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-		for (String skillName : agent.skills()) {
-			SkillDefinition sd = query.findSkillByName(skillName);
-			if (sd != null) {
-				skills.put(sd.name(), new Skill(sd.name(), sd.description(),
-					sd.content(), sd.tools()));
-			}
-		}
-
-		return new SearchToolsTool(allTools, skills);
 	}
 
 	/**

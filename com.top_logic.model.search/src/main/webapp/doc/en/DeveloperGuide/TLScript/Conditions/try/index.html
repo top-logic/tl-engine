@@ -18,11 +18,11 @@
 </ol>
 
 <div>
-<div>If the try block is executed successfully, its result is returned. If an error occurs, the catch function is executed with specific parameters:</div>
+<div>If the try block is executed successfully, its result is returned. If an error occurs, the catch function is executed. It always receives two arguments: the error <code>message</code> and the <code>value</code>.</div>
 
 <ul>
-	<li><strong>I18NException</strong>: catch function receives (ResKey, original argument)</li>
-	<li><strong>Regular exception</strong>: catch function receives (error message, original argument)</li>
+	<li><strong>message</strong>: For an <code>I18NException</code> the <code>ResKey</code>, otherwise the error message as text.</li>
+	<li><strong>value</strong>: The value passed as the third argument of <code>throw()</code>. <code>null</code> if the error did not originate from a <code>throw()</code> or <code>throw()</code> was called without a value.</li>
 </ul>
 </div>
 
@@ -49,7 +49,7 @@
 		<tr>
 			<td>catch</td>
 			<td>Function</td>
-			<td>The fallback function that is executed when an error occurs. Receives the exception object as a parameter</td>
+			<td>The fallback function that is executed when an error occurs. Receives two arguments: the error message and the value passed via <code>throw()</code> (<code>value</code>).</td>
 			<td>no</td>
 			<td>null</td>
 		</tr>

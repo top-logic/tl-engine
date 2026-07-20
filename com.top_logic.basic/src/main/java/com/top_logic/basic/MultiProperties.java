@@ -106,15 +106,19 @@ public class MultiProperties extends XMLProperties {
                 System.out.println("*******************************************************************************************");
 				System.out.println();
 				if (configFile.isFile()) {
-					BinaryData config1 = BinaryDataFactory.createBinaryData(configFile);
-					FileManager resolver = FileManager.getInstance();
-					config.addConfiguration(resolver, config1.getName(), config1);
+					addAdditionalContentFile(config, configFile);
 				} else {
 					addAdditionalContentFolder(config, configFile);
 				}
             }
         }
     }
+
+	private static void addAdditionalContentFile(XMLPropertiesConfig config, File configFile) {
+		FileManager resolver = createConfigResolver(configFile.getAbsoluteFile().getParentFile());
+		String resourceName = ModuleLayoutConstants.CONF_RESOURCE_PREFIX + '/' + configFile.getName();
+		config.addConfiguration(resolver, resourceName, BinaryDataFactory.createBinaryData(configFile));
+	}
 
 	private static void addAdditionalContentFolder(XMLPropertiesConfig config, File configDir) throws IOException {
 		File metaConf = new File(configDir, ModuleLayoutConstants.META_CONF_NAME);
@@ -123,7 +127,16 @@ public class MultiProperties extends XMLProperties {
 				+ configDir.getAbsolutePath() + "', will be ignored!");
 			return;
 		}
-		FileManager resolver = new FileManagerOverlay(new DefaultFileManager(configDir) {
+		config.loadMetaConf(createConfigResolver(configDir), BinaryDataFactory.createBinaryData(metaConf));
+	}
+
+	/**
+	 * A {@link FileManager} resolving configuration resources (names with prefix
+	 * {@link ModuleLayoutConstants#CONF_RESOURCE_PREFIX}) in the given directory, falling back to
+	 * the web application resources.
+	 */
+	private static FileManager createConfigResolver(File configDir) {
+		return new FileManagerOverlay(new DefaultFileManager(configDir) {
 			@Override
 			protected String toPath(String resourceName) {
 				String prefix = ModuleLayoutConstants.CONF_RESOURCE_PREFIX;
@@ -135,8 +148,6 @@ public class MultiProperties extends XMLProperties {
 				return super.toPath(suffix);
 			}
 		}, FileManager.getInstance());
-
-		config.loadMetaConf(resolver, BinaryDataFactory.createBinaryData(metaConf));
 	}
 
 	static XMLProperties createNewXMLProperties(XMLProperties previous, BinaryContent config) throws IOException {

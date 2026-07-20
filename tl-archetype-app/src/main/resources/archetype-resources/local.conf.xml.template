@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+	Template for the developer-local configuration overlay 'local.conf.xml'.
+
+	Copy this file to 'local.conf.xml' (git-ignored) and enter secrets (database
+	passwords, API tokens, service credentials, ...) as alias entries. The overlay
+	is loaded last (overriding the application configuration) when the application
+	is started via Maven ('.mvn/jvm.config' points 'tl_config' at it) or via the
+	Eclipse start launch. A missing 'local.conf.xml' is silently ignored, so a
+	fresh checkout starts with the base configuration.
+-->
+<root>
+	<alias>
+		<!--
+		<entry name="%MY_SERVICE_USER%" value="alice"/>
+		<entry name="%MY_SERVICE_PASSWORD%" value="secret"/>
+		-->
+	</alias>
+</root>

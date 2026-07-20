@@ -10,16 +10,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.DefaultContainer;
-import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -31,8 +27,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelConfig;
-import com.top_logic.layout.view.channel.ChannelFactory;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -58,14 +52,21 @@ import com.top_logic.model.util.TLModelPartRef;
  * </p>
  *
  * <p>
- * For each element, the {@link Config#getItemTemplate() item template} is instantiated with the
- * element published on a local channel ({@link Config#getElementChannel()}), so the template
- * typically contains a {@code <form input="...">} over the element. Below the items, the
- * {@link Config#getNewElementTemplate() new-element template} is instantiated once, bound to a
- * channel ({@link Config#getNewElementChannel()}) holding a fresh transient element of
+ * For each element, the {@link Config#getItem() item content} is instantiated with the element
+ * published on a local channel ({@link Config#getElementChannel()}), so the content typically binds
+ * a {@code <form input="...">} over the element. Below the items, the
+ * {@link Config#getNewElement() new-element content} is instantiated once, bound to a channel
+ * ({@link Config#getNewElementChannel()}) holding a fresh transient element of
  * {@link Config#getElementType()}; a command chain with {@code <store-form-state/>} and
- * {@link LinkElementAction &lt;link-element&gt;} persists it. Inside an item template,
+ * {@link LinkElementAction &lt;link-element&gt;} persists it. Inside the item content,
  * {@link RemoveElementAction &lt;remove-element&gt;} detaches the item.
+ * </p>
+ *
+ * <p>
+ * Both slots hold ordinary view content, so the per-element layout is not a bespoke template but a
+ * regular {@link UIElement}: typically a {@link com.top_logic.layout.view.ReferenceElement
+ * &lt;view-ref&gt;} to an external {@code .view.xml} that binds the element channel and declares its
+ * own display channels (e.g. author, date), or any element inline.
  * </p>
  *
  * <p>
@@ -106,11 +107,11 @@ public class ObjectListElement implements UIElement {
 		/** Configuration name for {@link #getNewElementChannel()}. */
 		String NEW_ELEMENT_CHANNEL = "new-element-channel";
 
-		/** Configuration name for {@link #getItemTemplate()}. */
-		String ITEM_TEMPLATE = "item-template";
+		/** Configuration name for {@link #getItem()}. */
+		String ITEM = "item";
 
-		/** Configuration name for {@link #getNewElementTemplate()}. */
-		String NEW_ELEMENT_TEMPLATE = "new-element-template";
+		/** Configuration name for {@link #getNewElement()}. */
+		String NEW_ELEMENT = "new-element";
 
 		/** Configuration name for {@link #getEmptyText()}. */
 		String EMPTY_TEXT = "empty-text";
@@ -192,56 +193,38 @@ public class ObjectListElement implements UIElement {
 		String getNewElementChannel();
 
 		/**
-		 * The content instantiated once per list element.
+		 * The content instantiated once per list element, with the element published on the
+		 * {@link #getElementChannel() element channel}.
+		 *
+		 * <p>
+		 * Ordinary view content: typically a single {@link com.top_logic.layout.view.ReferenceElement
+		 * &lt;view-ref&gt;} binding the element channel, or elements written inline. Multiple entries
+		 * are stacked vertically.
+		 * </p>
 		 */
-		@Name(ITEM_TEMPLATE)
+		@Name(ITEM)
 		@Mandatory
-		TemplateConfig getItemTemplate();
+		@TreeProperty
+		List<PolymorphicConfiguration<? extends UIElement>> getItem();
 
 		/**
-		 * The content instantiated once below the items for entering a new element; omitted for a
-		 * read-only list.
+		 * The content instantiated once below the items for entering a new element, with the fresh
+		 * transient element published on the {@link #getNewElementChannel() new-element channel};
+		 * omitted for a read-only list.
+		 *
+		 * <p>
+		 * Ordinary view content, like {@link #getItem()}.
+		 * </p>
 		 */
-		@Name(NEW_ELEMENT_TEMPLATE)
-		TemplateConfig getNewElementTemplate();
+		@Name(NEW_ELEMENT)
+		@TreeProperty
+		List<PolymorphicConfiguration<? extends UIElement>> getNewElement();
 
 		/**
 		 * Text displayed instead of items when the list is empty.
 		 */
 		@Name(EMPTY_TEXT)
 		ResKey getEmptyText();
-	}
-
-	/**
-	 * Content template of an {@link ObjectListElement}: a list of {@link UIElement}s.
-	 */
-	public interface TemplateConfig extends ConfigurationItem {
-
-		/** Configuration name for {@link #getChannels()}. */
-		String CHANNELS = "channels";
-
-		/** Configuration name for {@link #getChildren()}. */
-		String CHILDREN = "children";
-
-		/**
-		 * Local channel declarations, instantiated once per template instance.
-		 *
-		 * <p>
-		 * A derived channel here typically computes a display value from the template's element
-		 * channel, e.g. the element's author or creation date.
-		 * </p>
-		 */
-		@Name(CHANNELS)
-		List<ChannelConfig> getChannels();
-
-		/**
-		 * The template's elements.
-		 */
-		@Name(CHILDREN)
-		@DefaultContainer
-		@EntryTag("child")
-		@TreeProperty
-		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 
 	private final Config _config;
@@ -252,13 +235,9 @@ public class ObjectListElement implements UIElement {
 
 	private final QueryExecutor _removeExecutor;
 
-	private final List<UIElement> _itemTemplate;
+	private final List<UIElement> _itemContent;
 
-	private final List<UIElement> _newElementTemplate;
-
-	private final List<Map.Entry<String, ChannelFactory>> _itemChannels;
-
-	private final List<Map.Entry<String, ChannelFactory>> _newElementChannels;
+	private final List<UIElement> _newElementContent;
 
 	/**
 	 * Creates an {@link ObjectListElement} from configuration.
@@ -269,28 +248,17 @@ public class ObjectListElement implements UIElement {
 		_itemsExecutor = QueryExecutor.compile(config.getItems());
 		_linkExecutor = config.getLink() == null ? null : QueryExecutor.compile(config.getLink());
 		_removeExecutor = config.getRemove() == null ? null : QueryExecutor.compile(config.getRemove());
-		_itemTemplate = instantiate(context, config.getItemTemplate());
-		_newElementTemplate = instantiate(context, config.getNewElementTemplate());
-		_itemChannels = channelFactories(context, config.getItemTemplate());
-		_newElementChannels = channelFactories(context, config.getNewElementTemplate());
+		_itemContent = instantiate(context, config.getItem());
+		_newElementContent = instantiate(context, config.getNewElement());
 	}
 
-	private static List<UIElement> instantiate(InstantiationContext context, TemplateConfig template) {
-		if (template == null) {
+	private static List<UIElement> instantiate(InstantiationContext context,
+			List<PolymorphicConfiguration<? extends UIElement>> content) {
+		if (content == null) {
 			return Collections.emptyList();
 		}
-		return template.getChildren().stream()
+		return content.stream()
 			.map(context::getInstance)
-			.collect(Collectors.toList());
-	}
-
-	private static List<Map.Entry<String, ChannelFactory>> channelFactories(InstantiationContext context,
-			TemplateConfig template) {
-		if (template == null) {
-			return Collections.emptyList();
-		}
-		return template.getChannels().stream()
-			.map(cc -> Map.<String, ChannelFactory> entry(cc.getName(), context.getInstance(cc)))
 			.collect(Collectors.toList());
 	}
 
@@ -302,7 +270,7 @@ public class ObjectListElement implements UIElement {
 		ViewContext templateContext = context.withObjectListScope(scope);
 
 		ObjectListControl control = new ObjectListControl(templateContext, scope, container,
-			_itemTemplate, _newElementTemplate, _itemChannels, _newElementChannels,
+			_itemContent, _newElementContent,
 			_config.getElementChannel(), _config.getNewElementChannel(),
 			resolveElementType(), _config.getEmptyText());
 

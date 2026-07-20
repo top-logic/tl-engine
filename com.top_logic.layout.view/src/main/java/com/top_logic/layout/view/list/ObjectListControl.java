@@ -18,7 +18,6 @@ import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelFactory;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLClass;
@@ -42,13 +41,9 @@ public class ObjectListControl extends ReactStackControl {
 
 	private final ViewChannel _container;
 
-	private final List<UIElement> _itemTemplate;
+	private final List<UIElement> _itemContent;
 
-	private final List<UIElement> _newElementTemplate;
-
-	private final List<Map.Entry<String, ChannelFactory>> _itemChannels;
-
-	private final List<Map.Entry<String, ChannelFactory>> _newElementChannels;
+	private final List<UIElement> _newElementContent;
 
 	private final String _elementChannelName;
 
@@ -85,16 +80,10 @@ public class ObjectListControl extends ReactStackControl {
 	 *        The list's runtime scope.
 	 * @param container
 	 *        The channel providing the container object.
-	 * @param itemTemplate
-	 *        The elements instantiated once per list element.
-	 * @param newElementTemplate
-	 *        The elements instantiated once for entering a new element; empty for a read-only
-	 *        list.
-	 * @param itemChannels
-	 *        Local channels registered in each item's context, keyed by channel name.
-	 * @param newElementChannels
-	 *        Local channels registered in the new-element template's context, keyed by channel
-	 *        name.
+	 * @param itemContent
+	 *        The content instantiated once per list element.
+	 * @param newElementContent
+	 *        The content instantiated once for entering a new element; empty for a read-only list.
 	 * @param elementChannelName
 	 *        Name of the per-item channel holding the item template's element.
 	 * @param newElementChannelName
@@ -106,17 +95,13 @@ public class ObjectListControl extends ReactStackControl {
 	 *        Text displayed instead of items when the list is empty, or {@code null} for none.
 	 */
 	public ObjectListControl(ViewContext templateContext, ObjectListScope scope, ViewChannel container,
-			List<UIElement> itemTemplate, List<UIElement> newElementTemplate,
-			List<Map.Entry<String, ChannelFactory>> itemChannels,
-			List<Map.Entry<String, ChannelFactory>> newElementChannels,
+			List<UIElement> itemContent, List<UIElement> newElementContent,
 			String elementChannelName, String newElementChannelName, TLClass elementType, ResKey emptyText) {
 		super(templateContext, List.of());
 		_templateContext = templateContext;
 		_container = container;
-		_itemTemplate = itemTemplate;
-		_newElementTemplate = newElementTemplate;
-		_itemChannels = itemChannels;
-		_newElementChannels = newElementChannels;
+		_itemContent = itemContent;
+		_newElementContent = newElementContent;
 		_elementChannelName = elementChannelName;
 		_newElementChannelName = newElementChannelName;
 		_elementType = elementType;
@@ -131,7 +116,7 @@ public class ObjectListControl extends ReactStackControl {
 	 * element.
 	 */
 	private void createNewElementControls(ObjectListScope scope) {
-		if (_newElementTemplate.isEmpty() || _elementType == null) {
+		if (_newElementContent.isEmpty() || _elementType == null) {
 			return;
 		}
 		_newElementChannel = new DefaultViewChannel(_newElementChannelName);
@@ -140,10 +125,9 @@ public class ObjectListControl extends ReactStackControl {
 
 		ViewContext newElementContext =
 			_templateContext.withLocalChannel(_newElementChannelName, _newElementChannel);
-		registerLocalChannels(newElementContext, _newElementChannels);
-		for (int i = 0; i < _newElementTemplate.size(); i++) {
+		for (int i = 0; i < _newElementContent.size(); i++) {
 			ViewContext childContext = newElementContext.withChildSlotPath("new-element-" + i);
-			ReactControl control = (ReactControl) _newElementTemplate.get(i).createControl(childContext);
+			ReactControl control = (ReactControl) _newElementContent.get(i).createControl(childContext);
 			registerChildControl(control);
 			_newElementControls.add(control);
 		}
@@ -210,31 +194,18 @@ public class ObjectListControl extends ReactStackControl {
 	}
 
 	/**
-	 * Instantiates the given template-local channels in a per-instance context. The context's
-	 * channel map is instance-local, so the channels shadow neither the surrounding view's channels
-	 * nor those of sibling instances.
-	 */
-	private static void registerLocalChannels(ViewContext context,
-			List<Map.Entry<String, ChannelFactory>> channels) {
-		for (Map.Entry<String, ChannelFactory> entry : channels) {
-			context.registerChannel(entry.getKey(), entry.getValue().createChannel(context));
-		}
-	}
-
-	/**
-	 * Instantiates the item template for one list element.
+	 * Instantiates the item content for one list element.
 	 */
 	private ReactControl createItemControl(Object element) {
 		DefaultViewChannel elementChannel = new DefaultViewChannel(_elementChannelName);
 		elementChannel.set(element);
 		ViewContext itemContext = _templateContext.withLocalChannel(_elementChannelName, elementChannel);
-		registerLocalChannels(itemContext, _itemChannels);
 
 		String itemSegment = "item-" + (_itemCounter++);
-		List<ReactControl> controls = new ArrayList<>(_itemTemplate.size());
-		for (int i = 0; i < _itemTemplate.size(); i++) {
+		List<ReactControl> controls = new ArrayList<>(_itemContent.size());
+		for (int i = 0; i < _itemContent.size(); i++) {
 			ViewContext childContext = itemContext.withChildSlotPath(itemSegment + "." + i);
-			IReactControl control = _itemTemplate.get(i).createControl(childContext);
+			IReactControl control = _itemContent.get(i).createControl(childContext);
 			controls.add((ReactControl) control);
 		}
 

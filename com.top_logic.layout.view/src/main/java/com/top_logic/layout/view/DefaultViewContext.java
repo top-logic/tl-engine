@@ -254,6 +254,13 @@ public class DefaultViewContext implements ViewContext {
 	}
 
 	@Override
+	public ViewContext withIsolatedChannels() {
+		return new DefaultViewContext(_reactContext, _personalizationPath, new HashMap<>(), _commandScope,
+			_tileStackScope, null, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
+			_slotPath, _slotRegistry, _securityScope, _objectListScope);
+	}
+
+	@Override
 	public ObjectListScope getObjectListScope() {
 		return _objectListScope;
 	}

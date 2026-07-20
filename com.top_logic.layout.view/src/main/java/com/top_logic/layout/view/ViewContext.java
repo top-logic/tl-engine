@@ -304,6 +304,28 @@ public interface ViewContext extends ReactContext {
 	ViewContext withLocalChannel(String name, ViewChannel channel);
 
 	/**
+	 * Creates a derived context for an embedded view: a fresh, empty channel namespace and a fresh
+	 * form model, while all other ambient scopes (command scope, security scope, error sink, dirty
+	 * channel, {@link #getObjectListScope() object list scope}, {@link #getSlotPath() slot path} and
+	 * personalization key) are inherited.
+	 *
+	 * <p>
+	 * This is the shared seam for instantiating a self-contained view with its own channel scope:
+	 * used by {@link ReferenceElement &lt;view-ref&gt;} for each embedded view, and reached by an
+	 * {@link com.top_logic.layout.view.list.ObjectListElement &lt;object-list&gt;} row whose content
+	 * is a {@code <view-ref>}. Inheriting the slot path keeps distinct positions (hence distinct
+	 * personalization) for multiple instances; inheriting the object list scope keeps
+	 * {@link com.top_logic.layout.view.list.RemoveElementAction &lt;remove-element&gt;} and
+	 * {@link com.top_logic.layout.view.list.LinkElementAction &lt;link-element&gt;} working inside a
+	 * referenced row view. Channels shared with the embedded view are established afterwards via
+	 * {@link #registerChannel(String, ViewChannel)}.
+	 * </p>
+	 *
+	 * @return A new context with an isolated channel namespace.
+	 */
+	ViewContext withIsolatedChannels();
+
+	/**
 	 * The {@link ObjectListScope} of the nearest enclosing
 	 * {@link com.top_logic.layout.view.list.ObjectListElement &lt;object-list&gt;} template, or
 	 * {@code null} if no object list is in scope.

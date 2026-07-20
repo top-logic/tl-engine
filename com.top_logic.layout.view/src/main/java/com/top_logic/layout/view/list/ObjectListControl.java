@@ -37,7 +37,7 @@ import com.top_logic.util.Resources;
  */
 public class ObjectListControl extends ReactStackControl {
 
-	private final ViewContext _templateContext;
+	private ViewContext _templateContext;
 
 	private final ViewChannel _container;
 
@@ -123,10 +123,12 @@ public class ObjectListControl extends ReactStackControl {
 		resetNewElement();
 		scope.initNewElementReset(this::resetNewElement);
 
-		ViewContext newElementContext =
-			_templateContext.withLocalChannel(_newElementChannelName, _newElementChannel);
+		// Publish the pending new element on the shared template context, so that item content (e.g.
+		// a reply button) can reference the draft being composed via the new-element channel - not
+		// only the new-element content itself.
+		_templateContext = _templateContext.withLocalChannel(_newElementChannelName, _newElementChannel);
 		for (int i = 0; i < _newElementContent.size(); i++) {
-			ViewContext childContext = newElementContext.withChildSlotPath("new-element-" + i);
+			ViewContext childContext = _templateContext.withChildSlotPath("new-element-" + i);
 			ReactControl control = (ReactControl) _newElementContent.get(i).createControl(childContext);
 			registerChildControl(control);
 			_newElementControls.add(control);

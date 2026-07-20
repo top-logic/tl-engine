@@ -3,6 +3,7 @@
 <view>
 	<channels>
 		<channel name="comment"/>
+		<channel name="draft"/>
 		<derived-channel name="author"
 			expr="c -> $c.get(`demo.tickets:Comment#author`)"
 			inputs="comment"
@@ -11,39 +12,61 @@
 			expr="c -> $c.get(`demo.tickets:Comment#date`)"
 			inputs="comment"
 		/>
+		<derived-channel name="cited"
+			expr="c -> $c.get(`demo.tickets:Comment#cited`)"
+			inputs="comment"
+		/>
 	</channels>
-	<panel
-		appearance="card"
-		command-display="icon-only"
-		hover-actions="true"
-	>
-		<title-content>
-			<avatar input="author"/>
-			<text
-				css-class="tlText--strong"
-				input="author"
-			/>
-			<relative-time input="date"/>
-		</title-content>
-		<commands>
-			<generic-command
-				image="css:bi bi-trash"
-				input="comment"
-				placement="TOOLBAR"
-			>
-				<label>
-					<en>Delete</en>
-					<de>Löschen</de>
-				</label>
-				<remove-element/>
-			</generic-command>
-		</commands>
-		<form input="comment">
-			<field
-				attribute="content"
-				label-position="hide-label"
-			/>
-			<file-list attribute="attachments"/>
-		</form>
-	</panel>
+	<anchor input="comment">
+		<panel
+			appearance="card"
+			command-display="icon-only"
+			hover-actions="true"
+		>
+			<title-content>
+				<avatar input="author"/>
+				<text
+					css-class="tlText--strong"
+					input="author"
+				/>
+				<relative-time input="date"/>
+				<scroll-link
+					input="cited"
+					label="c -> &quot;↩ &quot; + label($c.get(`demo.tickets:Comment#author`))"
+				/>
+			</title-content>
+			<commands>
+				<generic-command
+					image="css:bi bi-reply"
+					input="comment"
+					placement="TOOLBAR"
+				>
+					<label>
+						<en>Reply</en>
+						<de>Antworten</de>
+					</label>
+					<execute-script function="comment -> { reply = new(`demo.tickets:Comment`, transient: true); $reply.set(`demo.tickets:Comment#cited`, $comment); $reply; }"/>
+					<write-channel name="draft"/>
+				</generic-command>
+				<generic-command
+					image="css:bi bi-trash"
+					input="comment"
+					placement="TOOLBAR"
+				>
+					<label>
+						<en>Delete</en>
+						<de>Löschen</de>
+					</label>
+					<remove-element/>
+				</generic-command>
+			</commands>
+			<form input="comment">
+				<field
+					attribute="content"
+					label-position="hide-label"
+				/>
+				<file-list attribute="attachments"/>
+			</form>
+		</panel>
+	</anchor>
 </view>

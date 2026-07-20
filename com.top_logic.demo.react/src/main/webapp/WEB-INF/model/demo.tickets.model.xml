@@ -34,6 +34,10 @@
 					<property name="date"
 						type="tl.core:DateTime"
 					/>
+					<reference name="cited"
+						kind="forwards"
+						type="Comment"
+					/>
 					<reference name="attachments"
 						composite="true"
 						kind="forwards"

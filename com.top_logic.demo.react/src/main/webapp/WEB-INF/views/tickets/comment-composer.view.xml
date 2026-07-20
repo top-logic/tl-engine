@@ -3,12 +3,20 @@
 <view>
 	<channels>
 		<channel name="comment"/>
+		<derived-channel name="cited"
+			expr="c -> $c.get(`demo.tickets:Comment#cited`)"
+			inputs="comment"
+		/>
 	</channels>
 	<panel appearance="card">
 		<title>
 			<en>New comment</en>
 			<de>Neuer Kommentar</de>
 		</title>
+		<scroll-link
+			input="cited"
+			label="c -> &quot;↩ &quot; + label($c.get(`demo.tickets:Comment#author`))"
+		/>
 		<form
 			initial-edit-mode="true"
 			input="comment"

@@ -95,6 +95,10 @@
 										channel="comment"
 										to="comment"
 									/>
+									<bind
+										channel="draft"
+										to="newComment"
+									/>
 								</view-ref>
 							</item>
 							<new-element>

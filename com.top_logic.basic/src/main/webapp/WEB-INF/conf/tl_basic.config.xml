@@ -19,7 +19,7 @@
 					<module key="com.top_logic.basic.time.TimeZones$Module" value="true" />
 					<module key="com.top_logic.basic.html.SafeHTML$Module" value="true" />
 					<module key="com.top_logic.basic.translation.TranslationService$Module" value="%TRANSLATION_ENABLED%" />
-					<module key="com.top_logic.basic.io.binary.scan.UploadSecurityService$Module" value="false" />
+					<module key="com.top_logic.basic.io.binary.scan.UploadSecurityService$Module" value="%UPLOAD_VIRUS_SCAN_ENABLED%" />
 				</modules>
 			</instance>
 		</config>
@@ -461,13 +461,16 @@
 			<instance class="com.top_logic.basic.io.binary.scan.UploadSecurityService">
 				<checkers>
 					<!--
-						Upload virus scanning is off by default. To enable it, set the
-						UploadSecurityService$Module to "true" and configure one or more checkers, e.g.
-						a ClamAV daemon:
-
-						<checker class="com.top_logic.basic.io.binary.scan.ClamAvScanner"
-							host="localhost" port="3310" unavailable-policy="REJECT" />
+						Upload virus scanning is disabled by default. It is enabled and configured per
+						deployment through environment variables / system properties (see the
+						%UPLOAD_VIRUS_SCAN_*% aliases): set upload_virus_scan_enabled=true to activate
+						the ClamAV daemon configured below.
 					-->
+					<checker class="com.top_logic.basic.io.binary.scan.ClamAvScanner"
+						host="%UPLOAD_VIRUS_SCAN_HOST%"
+						port="%UPLOAD_VIRUS_SCAN_PORT%"
+						unavailable-policy="%UPLOAD_VIRUS_SCAN_UNAVAILABLE_POLICY%"
+					/>
 				</checkers>
 			</instance>
 		</config>

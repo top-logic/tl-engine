@@ -22,6 +22,13 @@
 				</attributes>
 			</class>
 			<class name="Comment">
+				<annotations>
+					<label>
+						<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression"
+							label="comment -> { a = $comment.get(`demo.tickets:Comment#author`); d = $comment.get(`demo.tickets:Comment#date`); if($a == null, #(&quot;Kommentar&quot;@de, &quot;Comment&quot;@en), label($a) + if($d != null, &quot; · &quot; + dateFormat(&quot;dd.MM.yyyy HH:mm&quot;).format($d), &quot;&quot;)); }"
+						/>
+					</label>
+				</annotations>
 				<attributes>
 					<property name="content"
 						mandatory="true"
@@ -37,7 +44,15 @@
 					<reference name="cited"
 						kind="forwards"
 						type="Comment"
-					/>
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="comment -> editMode -> if ($comment.get(`demo.tickets:Comment#cited`) != null, if($editMode, &quot;editable&quot;, &quot;read-only&quot;), &quot;hidden&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</reference>
 					<reference name="attachments"
 						composite="true"
 						kind="forwards"
@@ -48,7 +63,7 @@
 						<annotations>
 							<dynamic-visibility>
 								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
-									function="comment -&gt; editMode -&gt; if ($editMode || $comment.get(`demo.tickets:Comment#attachments`).size() &gt; 0, &quot;default&quot;, &quot;hidden&quot;)"
+									function="comment -> editMode -> if ($editMode || $comment.get(`demo.tickets:Comment#attachments`).size() > 0, &quot;default&quot;, &quot;hidden&quot;)"
 								/>
 							</dynamic-visibility>
 						</annotations>

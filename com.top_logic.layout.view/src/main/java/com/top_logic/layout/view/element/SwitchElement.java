@@ -25,7 +25,6 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactDeckPaneControl;
 import com.top_logic.layout.react.control.layout.ReactDeckPaneControl.ChildFactory;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -196,13 +195,7 @@ public class SwitchElement implements UIElement {
 
 	private static ReactControl buildContent(List<UIElement> elements, ViewContext context, int index) {
 		ViewContext childContext = context.childContext("switch").withChildSlotPath(String.valueOf(index));
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(childContext);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(childContext))
-			.collect(Collectors.toList());
-		return new ReactStackControl(childContext, children);
+		return ContentControls.toControl(elements, childContext);
 	}
 
 	private record CaseEntry(QueryExecutor _test, List<UIElement> _content) {

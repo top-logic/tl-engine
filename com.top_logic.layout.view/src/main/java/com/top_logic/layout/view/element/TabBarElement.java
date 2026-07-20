@@ -21,7 +21,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.view.UIElement;
@@ -204,13 +203,7 @@ public class TabBarElement implements UIElement {
 		tabContext.setDirtyChannel(dirtyChannel);
 
 		List<UIElement> elements = entry._children;
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(tabContext);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(tabContext))
-			.collect(Collectors.toList());
-		return new ReactStackControl(tabContext, children);
+		return ContentControls.toControl(elements, tabContext);
 	}
 
 	private record TabEntry(String _id, String _label, String _route, String _icon,

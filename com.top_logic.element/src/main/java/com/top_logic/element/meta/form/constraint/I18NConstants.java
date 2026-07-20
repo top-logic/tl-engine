@@ -6,6 +6,7 @@
 package com.top_logic.element.meta.form.constraint;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -38,6 +39,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The value exceeds the maximum. Maximum: {0}, actual: {1}.
 	 */
 	public static ResKey2 ERROR_VALUE_ABOVE_MAXIMUM__MAX_ACTUAL;
+
+	/**
+	 * @en The value is already used by "{0}".
+	 */
+	public static ResKey1 ERROR_VALUE_NOT_UNIQUE__CONFLICT;
 
 	static {
 		initConstants(I18NConstants.class);

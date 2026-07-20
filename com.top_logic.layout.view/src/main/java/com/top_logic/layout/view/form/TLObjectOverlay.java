@@ -9,6 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import com.top_logic.layout.form.FormMember;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
@@ -23,7 +25,7 @@ import com.top_logic.model.TransientObject;
  * This serves as the transient editing buffer for the form system.
  * </p>
  */
-public class TLObjectOverlay extends TransientObject {
+public class TLObjectOverlay extends TransientObject implements TLFormObjectBase {
 
 	private final TLObject _base;
 
@@ -116,5 +118,40 @@ public class TLObjectOverlay extends TransientObject {
 	 */
 	public TLObject getBase() {
 		return _base;
+	}
+
+	@Override
+	public boolean isCreate() {
+		return _base.tTransient();
+	}
+
+	@Override
+	public TLObject getEditedObject() {
+		return _base.tTransient() ? null : _base;
+	}
+
+	@Override
+	public String getDomain() {
+		return null;
+	}
+
+	@Override
+	public Object getFieldValue(TLStructuredTypePart attribute) {
+		return tValue(attribute);
+	}
+
+	@Override
+	public FormMember getField(TLStructuredTypePart attribute) {
+		return null;
+	}
+
+	@Override
+	public Object getBaseValue(TLStructuredTypePart attribute) {
+		return _base.tValue(attribute);
+	}
+
+	@Override
+	public Object defaultValue(TLStructuredTypePart part) {
+		return _base.tValue(part);
 	}
 }

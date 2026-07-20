@@ -1,18 +1,20 @@
-<?xml version="1.0" encoding="iso-8859-1" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <view>
 	<channels>
 		<channel name="model"/>
 		<channel name="selection"/>
 	</channels>
-	<window
-		width="600px"
-	>
+	<window width="600px">
 		<title>
 			<en>New Constraint Test Object</en>
 			<de>Neues Constraint-Test-Objekt</de>
 		</title>
-		<form input="model" initial-edit-mode="true" mode-switch="false">
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
 			<field attribute="mandatoryString"/>
 			<field attribute="sizedString"/>
 			<field attribute="mandatorySizedString"/>
@@ -21,6 +23,9 @@
 			<field attribute="uppercaseStart"/>
 			<field attribute="warningField"/>
 			<field attribute="freeText"/>
+			<field attribute="uniqueName"/>
+			<field attribute="category"/>
+			<field attribute="codeInCategory"/>
 			<composition-table attribute="items">
 				<columns>
 					<column attribute="name"/>

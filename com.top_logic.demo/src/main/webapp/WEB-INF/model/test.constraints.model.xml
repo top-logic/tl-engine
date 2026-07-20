@@ -52,8 +52,8 @@
 				>
 					<annotations>
 						<value-range
-							min="0.0"
 							max="10000.0"
+							min="0.0"
 						/>
 						<constraints>
 							<constraint-by-expression>
@@ -80,8 +80,8 @@
 				>
 					<annotations>
 						<value-range
-							min="-10.0"
 							max="10.0"
+							min="-10.0"
 						/>
 					</annotations>
 				</property>
@@ -127,6 +127,33 @@
 					type="tl.core:String"
 				/>
 
+				<!-- Globally unique value -->
+				<property name="uniqueName"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<unique/>
+						</constraints>
+					</annotations>
+				</property>
+
+				<!-- Scope for the unique code below -->
+				<property name="category"
+					type="tl.core:String"
+				/>
+
+				<!-- Unique among all objects with the same category -->
+				<property name="codeInCategory"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<unique additional-attributes="category"/>
+						</constraints>
+					</annotations>
+				</property>
+
 				<!-- Composition reference: items owned by this object -->
 				<reference name="items"
 					composite="true"
@@ -156,15 +183,28 @@
 				<table name="GenericObject"/>
 			</annotations>
 			<attributes>
-				<property name="name" mandatory="true" type="tl.core:String"/>
-				<property name="quantity" type="tl.core:Integer">
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="quantity"
+					type="tl.core:Integer"
+				>
 					<annotations>
-						<value-range min="1.0" max="1000.0"/>
+						<value-range
+							max="1000.0"
+							min="1.0"
+						/>
 					</annotations>
 				</property>
-				<property name="unitPrice" type="tl.core:Double">
+				<property name="unitPrice"
+					type="tl.core:Double"
+				>
 					<annotations>
-						<value-range min="0.01" max="99999.0"/>
+						<value-range
+							max="99999.0"
+							min="0.01"
+						/>
 					</annotations>
 				</property>
 			</attributes>

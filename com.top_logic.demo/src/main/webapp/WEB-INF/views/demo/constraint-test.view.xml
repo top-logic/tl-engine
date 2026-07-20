@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="iso-8859-1" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <view>
 	<channels>
@@ -27,17 +27,20 @@
 							</label>
 							<execute-script function="x -> new(`test.constraints:ConstraintTestType`, transient: true)"/>
 							<open-dialog
-								dialog-view="demo/create-constraint-test.view.xml"
 								bind-input-to="model"
+								dialog-view="demo/create-constraint-test.view.xml"
 							>
-								<bind channel="selection" to="selectedObject"/>
+								<bind
+									channel="selection"
+									to="selectedObject"
+								/>
 							</open-dialog>
 						</generic-command>
 					</commands>
 					<table
+						observed-types="test.constraints:ConstraintTestType"
 						selection="selectedObject"
 						types="test.constraints:ConstraintTestType"
-						observed-types="test.constraints:ConstraintTestType"
 					>
 						<rows>all(`test.constraints:ConstraintTestType`)</rows>
 					</table>
@@ -61,6 +64,9 @@
 						<field attribute="uppercaseStart"/>
 						<field attribute="warningField"/>
 						<field attribute="freeText"/>
+						<field attribute="uniqueName"/>
+						<field attribute="category"/>
+						<field attribute="codeInCategory"/>
 						<composition-table attribute="items">
 							<columns>
 								<column attribute="name"/>
@@ -68,11 +74,11 @@
 								<column attribute="unitPrice"/>
 							</columns>
 							<detail-dialog
-								layout="demo/edit-constraint-test-item.view.xml"
-								input-channel="editedItem"
 								edit-mode-channel="editMode"
-								width="500"
 								height="300"
+								input-channel="editedItem"
+								layout="demo/edit-constraint-test-item.view.xml"
+								width="500"
 							/>
 						</composition-table>
 					</form>

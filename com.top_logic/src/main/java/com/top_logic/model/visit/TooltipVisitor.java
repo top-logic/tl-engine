@@ -9,6 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.knowledge.gui.layout.list.FastListElementLabelProvider;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.format.CommonMark;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLModelPart;
@@ -61,17 +62,18 @@ public class TooltipVisitor extends DefaultTLModelVisitor<ResKey, Void> {
 	}
 
 	/**
-	 * Resolves the description (tool-tip resource) of the given resource key and encodes it for
+	 * Resolves the description (tool-tip resource) of the given resource key and renders it for
 	 * insertion into the HTML tool-tip.
 	 *
 	 * <p>
-	 * The description is plain text entered by the user. Since the tool-tip is interpreted as HTML,
-	 * the description must be XML-encoded, just like the other dynamic values inserted into the
-	 * tool-tip.
+	 * The description is authored as <i>CommonMark</i> text in the model editor. It is rendered to
+	 * HTML for insertion into the tool-tip: This escapes contained special characters (so that a
+	 * description containing e.g. {@code <} or {@code >} does not break the tool-tip) and turns
+	 * blank-line-separated text into paragraphs.
 	 * </p>
 	 */
 	private static String description(ResKey resourceKey) {
-		return TagUtil.encodeXML(
+		return CommonMark.toHTML(
 			Resources.getInstance().getString(resourceKey.tooltip().fallback(ResKey.text(""))));
 	}
 

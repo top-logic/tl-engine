@@ -9,7 +9,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.values.MultiLineText;
+import com.top_logic.layout.form.values.CommonMarkText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
@@ -27,12 +27,16 @@ public interface InternationalizedDescription extends ConfigurationItem {
 
 	/**
 	 * The internationalized description.
+	 *
+	 * <p>
+	 * <i>CommonMark</i> syntax may be used for rich text representation.
+	 * </p>
 	 */
 	@Name(DESCRIPTION)
 	@Nullable
 	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
 	@WithTooltipConfiguration(false)
-	@ControlProvider(MultiLineText.class)
+	@ControlProvider(CommonMarkText.class)
 	ResKey getDescription();
 
 	/**

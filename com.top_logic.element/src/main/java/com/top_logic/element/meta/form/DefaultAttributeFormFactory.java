@@ -53,6 +53,7 @@ import com.top_logic.layout.form.FormContextProxy;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ValueListener;
+import com.top_logic.layout.form.format.CommonMark;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
@@ -439,7 +440,9 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 	public static void initLabel(FormMember result, EditContext editContext) {
 		ResKey resKey = editContext.getLabelKey();
 		result.setLabel(resKey);
-		result.setTooltip(resKey.tooltipOptional());
+		// The description is authored as CommonMark text; render it to HTML so that special
+		// characters do not break the tool-tip and paragraphs are displayed as such.
+		result.setTooltip(CommonMark.toHTML(Resources.getInstance().getString(resKey.tooltipOptional())));
 		result.setTooltipCaption(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX).optional());
 	}
 

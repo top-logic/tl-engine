@@ -20,6 +20,7 @@ import com.top_logic.model.resources.TLPartResourceProvider;
 import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.Resources;
 
 /**
  * {@link TLModelVisitor} resolving the {@link ResourceProvider#getTooltip(Object) tooltip} of a
@@ -51,12 +52,27 @@ public class TooltipVisitor extends DefaultTLModelVisitor<ResKey, Void> {
 
 			TagUtil.encodeXML(TLModelUtil.qualifiedName(type)),
 
-			TLModelNamingConvention.getTypeLabelKey(type).tooltip().fallback(ResKey.text(""))
+			description(TLModelNamingConvention.getTypeLabelKey(type))
 		);
 	}
 
 	private String label(TLModelPart part) {
 		return _labelProvider.getLabel(part);
+	}
+
+	/**
+	 * Resolves the description (tool-tip resource) of the given resource key and encodes it for
+	 * insertion into the HTML tool-tip.
+	 *
+	 * <p>
+	 * The description is plain text entered by the user. Since the tool-tip is interpreted as HTML,
+	 * the description must be XML-encoded, just like the other dynamic values inserted into the
+	 * tool-tip.
+	 * </p>
+	 */
+	private static String description(ResKey resourceKey) {
+		return TagUtil.encodeXML(
+			Resources.getInstance().getString(resourceKey.tooltip().fallback(ResKey.text(""))));
 	}
 
 	@Override
@@ -71,7 +87,7 @@ public class TooltipVisitor extends DefaultTLModelVisitor<ResKey, Void> {
 			TagUtil.encodeXML(label(part)),
 			TagUtil.encodeXML(label(part.getType())),
 			TagUtil.encodeXML(TLModelUtil.qualifiedName(part)),
-			TLModelI18N.getI18NKey(part).tooltip().fallback(ResKey.text("")));
+			description(TLModelI18N.getI18NKey(part)));
 	}
 
 	@Override
@@ -80,6 +96,6 @@ public class TooltipVisitor extends DefaultTLModelVisitor<ResKey, Void> {
 			TagUtil.encodeXML(label(module.tType())),
 			TagUtil.encodeXML(label(module)),
 			TagUtil.encodeXML(module.getName()),
-			LabelVisitor.getModuleResourceKey(module).tooltip().fallback(ResKey.text("")));
+			description(LabelVisitor.getModuleResourceKey(module)));
 	}
 }

@@ -254,7 +254,12 @@ public class Environment {
 
 	/**
 	 * Whether this files runs within a jar file.
+	 *
+	 * @deprecated This method no longer participates in deployment detection. The prod/dev
+	 *             distinction is now driven solely by the {@link #OPERATION_MODE} variable via
+	 *             {@link #isDeployed()}.
 	 */
+	@Deprecated
 	public static boolean isJarFile() {
 		URL location = Environment.class.getProtectionDomain().getCodeSource().getLocation();
 		if (location == null) {

@@ -73,24 +73,21 @@ public class TLMetaModelUtil {
 
 	private static void storeInternationalized(Internationalized i18n, ResKey key, String technicalName,
 			ResourceTransaction tx, Function<String, String> labelHeuristic, boolean autoTranslate) {
+		ResKey labelKey = i18n.getLabel();
+		HtmlResKey descriptionHtml = i18n.getDescription();
+		ResKey descriptionKey = descriptionHtml == null ? null : ((DefaultHtmlResKey) descriptionHtml).content();
+
 		for (Locale locale : ResourcesModule.getInstance().getSupportedLocales()) {
-			ResKey labelKey = i18n.getLabel();
-			String label = labelKey == null ? null
-				: labelKey.isLiteral() ? ((LiteralKey) labelKey).getTranslationWithoutFallbacks(locale)
-					: StringServices.nonEmpty(ResKeyUtil.translateWithoutFallback(locale, labelKey));
-
-			HtmlResKey descriptionHtml = i18n.getDescription();
-			ResKey descriptionKey = descriptionHtml == null ? null : ((DefaultHtmlResKey) descriptionHtml).content();
-			String description = descriptionKey == null ? null
-				: descriptionKey.isLiteral() ? ((LiteralKey) descriptionKey).getTranslationWithoutFallbacks(locale)
-					: StringServices.nonEmpty(ResKeyUtil.translateWithoutFallback(locale, descriptionKey));
-
 			// Both label and description are stored per language exactly as entered. A language left empty
-			// stays empty and is resolved through the resource fall-back only when displayed - so a value
-			// entered in a single language is shown in every language without being copied verbatim into
-			// the others (which could not be told apart from an explicit translation). Only when
-			// auto-translation is enabled are empty languages filled, by actually translating an entered
-			// value rather than copying it.
+			// is stored as null, which deletes its resource entry - so an all-empty key is cleared as if
+			// it was never set, and a value entered in a single language is resolved through the resource
+			// fall-back when displayed rather than being copied verbatim into the other languages (which
+			// could not be told apart from an explicit translation).
+			String label = StringServices.nonEmpty(translationWithoutFallback(labelKey, locale));
+			String description = StringServices.nonEmpty(translationWithoutFallback(descriptionKey, locale));
+
+			// Only when auto-translation is enabled are empty languages filled, by actually translating an
+			// entered value rather than copying it.
 			if (autoTranslate) {
 				if (label == null) {
 					label = autoTranslation(locale, labelKey, technicalName, labelHeuristic);
@@ -103,6 +100,18 @@ public class TLMetaModelUtil {
 			tx.saveI18N(locale, key, label);
 			tx.saveI18N(locale, key.tooltip(), description);
 		}
+	}
+
+	/**
+	 * The translation of the given {@link ResKey} in the given {@link Locale} without any language
+	 * fall-back, or <code>null</code> if none is defined for that language.
+	 */
+	private static String translationWithoutFallback(ResKey key, Locale locale) {
+		if (key == null) {
+			return null;
+		}
+		return key.isLiteral() ? ((LiteralKey) key).getTranslationWithoutFallbacks(locale)
+			: ResKeyUtil.translateWithoutFallback(locale, key);
 	}
 
 	private static String autoTranslation(Locale locale, ResKey labelKey, String technicalName,

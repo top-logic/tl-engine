@@ -27,7 +27,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 
 /**
- * {@link UploadContentChecker} scanning uploaded content with a ClamAV daemon (<code>clamd</code>).
+ * {@link UploadContentChecker} scanning uploaded content with a {@code ClamAV} daemon (<code>clamd</code>).
  *
  * <p>
  * The content is streamed to <code>clamd</code> over a socket using its <code>INSTREAM</code>
@@ -56,7 +56,7 @@ public class ClamAvScanner implements UploadContentChecker, ConfiguredInstance<C
 	private static final String REPLY_FOUND = "FOUND";
 
 	/**
-	 * Behavior when the ClamAV daemon cannot be reached (connection refused, timeout, protocol
+	 * Behavior when the {@code ClamAV} daemon cannot be reached (connection refused, timeout, protocol
 	 * error, or content exceeding the scan size limit).
 	 */
 	public enum UnavailablePolicy {
@@ -75,14 +75,14 @@ public class ClamAvScanner implements UploadContentChecker, ConfiguredInstance<C
 	public interface Config extends PolymorphicConfiguration<ClamAvScanner> {
 
 		/**
-		 * The host name of the ClamAV daemon.
+		 * The host name of the {@code ClamAV} daemon.
 		 */
 		@Name("host")
 		@StringDefault("localhost")
 		String getHost();
 
 		/**
-		 * The TCP port the ClamAV daemon listens on.
+		 * The TCP port the {@code ClamAV} daemon listens on.
 		 */
 		@Name("port")
 		@IntDefault(3310)

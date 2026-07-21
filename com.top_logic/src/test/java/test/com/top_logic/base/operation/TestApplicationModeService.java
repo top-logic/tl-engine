@@ -16,6 +16,7 @@ import com.top_logic.base.operation.ApplicationModeService.Config;
 import com.top_logic.base.operation.OperationMode;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.core.workspace.Environment;
 
 /**
  * Test for {@link ApplicationModeService}.
@@ -32,17 +33,25 @@ public class TestApplicationModeService extends BasicTestCase {
 	}
 
 	public void testDerivationUnderTest() {
-		// The test signal wins over the deployment state.
-		assertSame(OperationMode.TEST, ApplicationModeService.deriveMode(true, false));
-		assertSame(OperationMode.TEST, ApplicationModeService.deriveMode(true, true));
+		// An automated test install is detected via the test container.
+		assertSame(OperationMode.TEST, ApplicationModeService.deriveMode(true));
 	}
 
-	public void testDerivationDevelopment() {
-		assertSame(OperationMode.DEVELOPMENT, ApplicationModeService.deriveMode(false, false));
+	public void testDerivationDefaultsToProduction() {
+		// Production is the zero-configuration default. DEVELOPMENT is never derived; it is only
+		// reached via an explicit configured mode (see testExplicitConfigWins).
+		assertSame(OperationMode.PRODUCTION, ApplicationModeService.deriveMode(false));
 	}
 
-	public void testDerivationProduction() {
-		assertSame(OperationMode.PRODUCTION, ApplicationModeService.deriveMode(false, true));
+	/**
+	 * {@link Environment#isDeployed()} and {@link ApplicationModeService} must key off the same
+	 * variable value. {@link Environment} lives below the core module and cannot reference
+	 * {@link OperationMode}, so it duplicates the development marker as a string constant; this test
+	 * guards the two against drifting apart.
+	 */
+	public void testDevelopmentMarkerAgreesWithEnvironment() {
+		assertEquals(OperationMode.DEVELOPMENT.getExternalName(), Environment.OPERATION_MODE_DEVELOPMENT);
+		assertEquals("tl_operation_mode", Environment.OPERATION_MODE);
 	}
 
 	public void testMaintenanceInactiveWhenManagerAbsent() {

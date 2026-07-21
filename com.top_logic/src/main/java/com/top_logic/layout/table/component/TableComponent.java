@@ -64,6 +64,7 @@ import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.InAppSelectable;
+import com.top_logic.layout.component.ListSelectionProvider;
 import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -457,6 +458,8 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private CommandHandler _onSelectionChange;
 
+	private final ListSelectionProvider _defaultSelectionProvider;
+
 	private IFunction2<String, Object, String> _configKeyBuilder;
 
 	/**
@@ -490,6 +493,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		}
 		_selectionModel = createSelectionModel(config);
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_defaultSelectionProvider = context.getInstance(config.getDefaultSelectionProvider());
 		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
 	}
 
@@ -951,12 +955,27 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 				List<?> displayedRows = getTableModel().getDisplayedRows();
 
 				if (!CollectionUtil.isEmpty(displayedRows) && getTableControl().isSelectable()) {
+					if (_defaultSelectionProvider != null) {
+						return computeDefaultSelection(_defaultSelectionProvider, selectableRows(displayedRows),
+							getSelected());
+					}
 					return getDefaultSelection(displayedRows);
 				}
 			}
 		}
 
 		return null;
+	}
+
+	private List<?> selectableRows(List<?> displayedRows) {
+		TableModel tableModel = getTableModel();
+		List<Object> result = new ArrayList<>();
+		for (Object rowObject : displayedRows) {
+			if (isObjectSelectable(tableModel, rowObject)) {
+				result.add(rowObject);
+			}
+		}
+		return result;
 	}
 
 	/**

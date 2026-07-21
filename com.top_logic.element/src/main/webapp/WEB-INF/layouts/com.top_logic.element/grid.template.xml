@@ -21,6 +21,7 @@
 
 					<property name="multiSelection"/>
 					<property name="defaultSelection"/>
+					<property name="defaultSelectionProvider"/>
 					<property name="showDetailOpener"/>
 					<property name="isSecurityMaster"/>
 
@@ -143,6 +144,7 @@
 	<grid name="Grid"
 		custom-config-key="${custom-config-key}"
 		defaultSelection="${defaultSelection}"
+		defaultSelectionProvider="${defaultSelectionProvider}"
 		deleteCommand=""
 		dialogs="${dialogs}"
 		editCommand="customEdit"

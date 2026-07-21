@@ -115,6 +115,7 @@ import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.InAppSelectable;
+import com.top_logic.layout.component.ListSelectionProvider;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.NoSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -531,6 +532,8 @@ public class GridComponent extends EditComponent implements
 
 	private CommandHandler _onSelectionChange;
 
+	private final ListSelectionProvider _defaultSelectionProvider;
+
 	private IFunction2<String, Object, String> _configKeyBuilder;
 
 	/**
@@ -561,6 +564,7 @@ public class GridComponent extends EditComponent implements
 		_componentTableConfigProvider = config.getComponentTableConfigProvider();
 		_addTechnicalColumn = config.getAddTechnicalColumn();
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_defaultSelectionProvider = context.getInstance(config.getDefaultSelectionProvider());
 		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
 		_rowTypeFilter = CorrectTypeFilter.newTypeFilter(getConfiguredTypes());
 
@@ -772,6 +776,7 @@ public class GridComponent extends EditComponent implements
 			TableViewModel tableViewModel = getViewModel();
 			TableModel tableModel = getTableField(getFormContext()).getTableModel();
 
+			List<Object> selectableRows = new ArrayList<>();
 			for (int rowIndex = 0; rowIndex < tableViewModel.getRowCount(); rowIndex++) {
 				FormGroup group = getFormGroup(tableViewModel, rowIndex);
 
@@ -779,11 +784,18 @@ public class GridComponent extends EditComponent implements
 				Object internalRow = _handler.getFirstTableRow(group);
 
 				if (_selectionModel.isSelectable(internalRow) && tableModel.containsRowObject(internalRow)) {
-					return rowObject;
+					if (_defaultSelectionProvider == null) {
+						return rowObject;
+					}
+					selectableRows.add(rowObject);
 				}
 			}
+
+			if (_defaultSelectionProvider != null) {
+				return computeDefaultSelection(_defaultSelectionProvider, selectableRows, getSelected());
+			}
 		}
-		
+
 		return null;
 	}
 

@@ -65,6 +65,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.InAppSelectable;
+import com.top_logic.layout.component.ListSelectionProvider;
 import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -357,6 +358,8 @@ public class TreeTableComponent extends BoundComponent
 
 	private CommandHandler _onSelectionChange;
 
+	private final ListSelectionProvider _defaultSelectionProvider;
+
 	private IFunction2<String, Object, String> _configKeyBuilder;
 
 	/**
@@ -386,6 +389,7 @@ public class TreeTableComponent extends BoundComponent
 			_tableConfigProvider = TableConfigurationFactory.toProvider(context, table);
 		}
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_defaultSelectionProvider = context.getInstance(config.getDefaultSelectionProvider());
 		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
 	}
 
@@ -1347,6 +1351,9 @@ public class TreeTableComponent extends BoundComponent
 			List<AbstractTreeTableNode<?>> displayedRows = treeModel.getTable().getDisplayedRows();
 
 			if (!displayedRows.isEmpty()) {
+				if (_defaultSelectionProvider != null) {
+					return providedDefaultSelection(displayedRows);
+				}
 				for (AbstractTreeTableNode<?> displayedRow : displayedRows) {
 					if (isSelectable(displayedRow)) {
 						return displayedRow;
@@ -1356,6 +1363,21 @@ public class TreeTableComponent extends BoundComponent
 		}
 
 		return null;
+	}
+
+	private AbstractTreeTableNode<?> providedDefaultSelection(List<AbstractTreeTableNode<?>> displayedRows) {
+		List<Object> candidates = new ArrayList<>();
+		Map<Object, AbstractTreeTableNode<?>> nodeByObject = new HashMap<>();
+		for (AbstractTreeTableNode<?> displayedRow : displayedRows) {
+			if (isSelectable(displayedRow)) {
+				Object businessObject = displayedRow.getBusinessObject();
+				candidates.add(businessObject);
+				nodeByObject.putIfAbsent(businessObject, displayedRow);
+			}
+		}
+
+		Object selected = computeDefaultSelection(_defaultSelectionProvider, candidates, getSelected());
+		return selected == null ? null : nodeByObject.get(selected);
 	}
 
 	/* The cast is safe, as the tree model has this type parameter. The TableField just "forgets"

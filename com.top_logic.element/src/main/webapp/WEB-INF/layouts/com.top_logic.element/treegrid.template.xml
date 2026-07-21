@@ -24,6 +24,7 @@
 					<property name="rootVisible"/>
 					<property name="expandRoot"/>
 					<property name="defaultSelection"/>
+					<property name="defaultSelectionProvider"/>
 					<property name="expandSelected"/>
 					<property name="revealSelection"/>
 					<property name="multiSelection"/>
@@ -148,6 +149,7 @@
 		adjustSelectionWhenCollapsing="${adjustSelectionWhenCollapsing}"
 		custom-config-key="${custom-config-key}"
 		defaultSelection="${defaultSelection}"
+		defaultSelectionProvider="${defaultSelectionProvider}"
 		deleteCommand=""
 		dialogs="${dialogs}"
 		editCommand="customEdit"

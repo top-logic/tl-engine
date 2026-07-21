@@ -18,7 +18,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -28,14 +27,12 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.component.ListSelectionProvider;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
-import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * {@link LayoutComponent} displaying a single select field showing options produced by a
@@ -64,11 +61,6 @@ public class SelectorComponent extends AbstractSelectorComponent {
 		 * @see #getAlphabeticalOrder()
 		 */
 		String ALPHABETICAL_ORDER = "alphabeticalOrder";
-
-		/**
-		 * @see #getDefaultSelectionProvider()
-		 */
-		String DEFAULT_SELECTION_PROVIDER = "defaultSelectionProvider";
 
 		/**
 		 * {@link ListModelBuilder} creating the options to select from.
@@ -105,20 +97,6 @@ public class SelectorComponent extends AbstractSelectorComponent {
 		@Name(ALPHABETICAL_ORDER)
 		@BooleanDefault(true)
 		boolean getAlphabeticalOrder();
-
-		/**
-		 * Algorithm selecting some option, if {@link #getDefaultSelection()} is enabled and the
-		 * user has not yet chosen an option.
-		 * 
-		 * <p>
-		 * If {@link #getDefaultSelection()} is enabled but no value is given here, the first option
-		 * from the list is chosen by default.
-		 * </p>
-		 */
-		@Name(DEFAULT_SELECTION_PROVIDER)
-		@Options(fun = AllInAppImplementations.class)
-		@DynamicMode(fun = CommandHandler.ConfirmConfig.VisibleIf.class, args = @Ref(DEFAULT_SELECTION))
-		PolymorphicConfiguration<? extends ListSelectionProvider> getDefaultSelectionProvider();
 
 		/**
 		 * All {@link InApp} {@link LabelProvider}s that are not also {@link ResourceProvider}s.

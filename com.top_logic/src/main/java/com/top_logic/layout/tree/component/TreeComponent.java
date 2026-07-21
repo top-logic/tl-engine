@@ -13,6 +13,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -70,6 +71,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.channel.ComponentChannel.ChannelValueFilter;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.ListSelectionProvider;
 import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
@@ -448,6 +450,8 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 
 	private ContextMenuFactory _contextMenuFactory;
 
+	private final ListSelectionProvider _defaultSelectionProvider;
+
 	/**
 	 * Creates a new {@link TreeComponent} from the given configuration.
 	 */
@@ -467,6 +471,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		_dragSource = context.getInstance(config.getDragSource());
 		_dropTargets = TypedConfiguration.getInstanceList(context, config.getDropTargets());
 		_contextMenuFactory = context.getInstance(config.getContextMenuFactory());
+		_defaultSelectionProvider = context.getInstance(config.getDefaultSelectionProvider());
 	}
 
 	private static TreeRenderer buildRenderer(InstantiationContext context, Config config) {
@@ -1117,6 +1122,9 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 			return null;
 		}
 		DefaultTreeUINode root = treeModel.getRoot();
+		if (_defaultSelectionProvider != null) {
+			return providedDefaultSelection(treeModel, root);
+		}
 		if (treeModel.isRootVisible()) {
 			return firstSelectableNode(root);
 		} else {
@@ -1127,6 +1135,37 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 				// Just root but root not visible.
 				return null;
 			}
+		}
+	}
+
+	private DefaultTreeUINode providedDefaultSelection(DefaultTreeUINodeModel treeModel, DefaultTreeUINode root) {
+		List<DefaultTreeUINode> selectableNodes = new ArrayList<>();
+		if (treeModel.isRootVisible()) {
+			collectSelectableNodes(root, selectableNodes);
+		} else {
+			for (DefaultTreeUINode child : root.getChildren()) {
+				collectSelectableNodes(child, selectableNodes);
+			}
+		}
+
+		List<Object> candidates = new ArrayList<>();
+		Map<Object, DefaultTreeUINode> nodeByObject = new HashMap<>();
+		for (DefaultTreeUINode node : selectableNodes) {
+			Object businessObject = node.getBusinessObject();
+			candidates.add(businessObject);
+			nodeByObject.putIfAbsent(businessObject, node);
+		}
+
+		Object selected = computeDefaultSelection(_defaultSelectionProvider, candidates, getSelected());
+		return selected == null ? null : nodeByObject.get(selected);
+	}
+
+	private void collectSelectableNodes(DefaultTreeUINode node, List<DefaultTreeUINode> result) {
+		if (isSelectableNode(node)) {
+			result.add(node);
+		}
+		for (DefaultTreeUINode child : node.getChildren()) {
+			collectSelectableNodes(child, result);
 		}
 	}
 

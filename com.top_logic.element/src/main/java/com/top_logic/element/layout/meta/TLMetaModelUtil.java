@@ -17,6 +17,7 @@ import com.top_logic.basic.generate.CodeUtil;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey.LiteralKey;
+import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.basic.util.ResourceTransaction;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.config.ReferenceConfig.ReferenceKind;
@@ -83,16 +84,16 @@ public class TLMetaModelUtil {
 
 			HtmlResKey descriptionHtml = i18n.getDescription();
 			ResKey descriptionKey = descriptionHtml == null ? null : ((DefaultHtmlResKey) descriptionHtml).content();
+			// The description is stored per language exactly as entered, without a fall-back to another
+			// language: A language left empty stays empty and is resolved through the resource fall-back
+			// only when displayed. Filling it here (unlike for the mandatory label) would persist e.g.
+			// the German text as the English description, indistinguishable from an explicit translation.
 			String description = descriptionKey == null ? null
 				: descriptionKey.isLiteral() ? ((LiteralKey) descriptionKey).getTranslationWithoutFallbacks(locale)
-					: StringServices.nonEmpty(bundle.getString(descriptionKey, null));
+					: StringServices.nonEmpty(ResKeyUtil.translateWithoutFallback(locale, descriptionKey));
 
 			if (label == null) {
 				label = defaultTranslation(locale, labelKey, technicalName, labelHeuristic, autoTranslate);
-			}
-
-			if (description == null) {
-				description = defaultTranslation(locale, descriptionKey, null, labelHeuristic, autoTranslate);
 			}
 
 			tx.saveI18N(locale, key, label);

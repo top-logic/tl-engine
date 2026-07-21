@@ -17,6 +17,7 @@ import com.top_logic.base.operation.OperationMode;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.core.workspace.Environment;
+import com.top_logic.tool.execution.IDEOnly;
 
 /**
  * Test for {@link ApplicationModeService}.
@@ -64,6 +65,21 @@ public class TestApplicationModeService extends BasicTestCase {
 		assertEquals("development", OperationMode.DEVELOPMENT.getExternalName());
 		assertEquals("test", OperationMode.TEST.getExternalName());
 		assertEquals("production", OperationMode.PRODUCTION.getExternalName());
+	}
+
+	/**
+	 * IDE-only commands (layout export, model extraction) must be reachable on a developer
+	 * workstation <em>and</em> under an automated test container, and hidden only in a real
+	 * production install. Guards the regression where these commands became hidden during scripted
+	 * tests because the run was classified as deployed.
+	 */
+	public void testIDEOnlyVisibleOutsideProduction() {
+		assertTrue("IDE tooling must be available on a developer workstation.",
+			IDEOnly.isVisibleIn(OperationMode.DEVELOPMENT));
+		assertTrue("IDE tooling must remain available under an automated test container "
+			+ "so scripted tests can exercise it.", IDEOnly.isVisibleIn(OperationMode.TEST));
+		assertFalse("IDE tooling must be hidden in a real production install.",
+			IDEOnly.isVisibleIn(OperationMode.PRODUCTION));
 	}
 
 	/**

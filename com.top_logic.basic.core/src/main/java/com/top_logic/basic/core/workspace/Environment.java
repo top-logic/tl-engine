@@ -50,7 +50,20 @@ public class Environment {
 	 * <p>
 	 * This is the single low-level driver of the prod/dev distinction. It is shared with the
 	 * high-level {@code ApplicationModeService}, which resolves the same variable through the
-	 * <code>%OPERATION_MODE%</code> configuration alias, so the two can never disagree.
+	 * <code>%OPERATION_MODE%</code> configuration alias.
+	 * </p>
+	 *
+	 * <p>
+	 * The two answer <em>different</em> questions and therefore need not always coincide.
+	 * {@link #isDeployed()} is a two-way flag ("developer workspace" vs. "everything else"): it is
+	 * only ever {@code false} when this variable is explicitly set to
+	 * {@value #OPERATION_MODE_DEVELOPMENT}. The {@code ApplicationModeService}, by contrast,
+	 * resolves the full three-way environment axis (development / test / production) and can derive
+	 * {@code TEST} from the surrounding test container even when this variable is unset. So in an
+	 * automated test install {@link #isDeployed()} reports {@code true} (not a developer workspace)
+	 * while the service reports {@code TEST}: consistent, because they classify along different
+	 * axes. Code that must distinguish test from production has to consult the service, not this
+	 * flag.
 	 * </p>
 	 *
 	 * <p>

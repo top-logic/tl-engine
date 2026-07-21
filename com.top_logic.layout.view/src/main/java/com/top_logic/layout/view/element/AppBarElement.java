@@ -180,7 +180,7 @@ public class AppBarElement implements UIElement {
 		// Use parent scope when available so that commands contributed by descendants
 		// (e.g. form edit commands, dashboard layout edit) surface in the app bar.
 		// Fall back to a private scope if the app bar is used standalone.
-		CommandScope parentScope = context.getCommandScope();
+		CommandScope parentScope = context.getScope(CommandScope.class);
 		CommandScope scope;
 		ViewContext derivedContext;
 		if (parentScope != null) {
@@ -191,7 +191,7 @@ public class AppBarElement implements UIElement {
 			derivedContext = context;
 		} else {
 			scope = new CommandScope(commandModels);
-			derivedContext = context.withCommandScope(scope);
+			derivedContext = context.withScope(CommandScope.class, scope);
 		}
 
 		// Build inline children (e.g. a <slot> for content projected by descendant views).

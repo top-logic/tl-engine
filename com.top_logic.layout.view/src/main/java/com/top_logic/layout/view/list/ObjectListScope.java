@@ -14,7 +14,7 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * Runtime scope of an {@link ObjectListElement}, reachable from within its templates via
- * {@link com.top_logic.layout.view.ViewContext#getObjectListScope()}.
+ * {@link com.top_logic.layout.view.ViewContext#getScope(Class)}.
  *
  * <p>
  * Bundles the list's container channel with the configured link / remove functions, so that

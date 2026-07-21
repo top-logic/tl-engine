@@ -267,7 +267,7 @@ public class ObjectListElement implements UIElement {
 		ViewChannel container = context.resolveChannel(_config.getInput());
 
 		ObjectListScope scope = new ObjectListScope(container, _linkExecutor, _removeExecutor);
-		ViewContext templateContext = context.withObjectListScope(scope);
+		ViewContext templateContext = context.withScope(ObjectListScope.class, scope);
 
 		ObjectListControl control = new ObjectListControl(templateContext, scope, container,
 			_itemContent, _newElementContent,

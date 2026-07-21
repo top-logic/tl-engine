@@ -113,7 +113,7 @@ public class AppShellElement implements UIElement {
 		// Establish a shared command scope so that commands contributed by descendant
 		// elements (forms, dashboards, ...) can bubble up to the app bar in the header.
 		// If a parent already provides a scope, reuse it.
-		CommandScope sharedScope = context.getCommandScope();
+		CommandScope sharedScope = context.getScope(CommandScope.class);
 		if (sharedScope == null) {
 			sharedScope = new CommandScope(List.of());
 		}
@@ -144,7 +144,7 @@ public class AppShellElement implements UIElement {
 		// Derive context with error sink, shared command scope, and context-menu opener.
 		ViewContext scopedContext = context
 			.withErrorSink(errorSink)
-			.withCommandScope(sharedScope)
+			.withScope(CommandScope.class, sharedScope)
 			.withContextMenuOpener(opener);
 
 		// Expose the opener on the underlying ReactContext too (fallback for nested DefaultViewContext

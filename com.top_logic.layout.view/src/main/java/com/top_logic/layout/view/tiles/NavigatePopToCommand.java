@@ -64,7 +64,7 @@ public class NavigatePopToCommand implements ViewCommand {
 			throw new IllegalStateException(
 				"<navigate-pop-to> requires a ViewContext, got " + context.getClass().getName());
 		}
-		TileStackScope scope = viewContext.getTileStackScope();
+		TileStackScope scope = viewContext.getScope(TileStackScope.class);
 		if (scope == null) {
 			throw new IllegalStateException(
 				"<navigate-pop-to> executed outside of any enclosing <tile-stack>.");

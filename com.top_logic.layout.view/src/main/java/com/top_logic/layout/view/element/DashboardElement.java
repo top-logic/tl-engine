@@ -127,7 +127,7 @@ public class DashboardElement implements UIElement {
 	}
 
 	private void contributeEditCommands(ViewContext context, ReactDashboardControl control) {
-		CommandScope scope = context.getCommandScope();
+		CommandScope scope = context.getScope(CommandScope.class);
 		if (scope == null) {
 			return;
 		}

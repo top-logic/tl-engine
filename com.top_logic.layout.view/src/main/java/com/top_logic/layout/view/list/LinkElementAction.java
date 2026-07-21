@@ -80,7 +80,7 @@ public class LinkElementAction implements ViewAction {
 	 *         if the action executes outside an {@link ObjectListElement} template.
 	 */
 	static ObjectListScope listScope(ReactContext context) {
-		ObjectListScope scope = ((ViewContext) context).getObjectListScope();
+		ObjectListScope scope = ((ViewContext) context).getScope(ObjectListScope.class);
 		if (scope == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_OBJECT_LIST_SCOPE);
 		}

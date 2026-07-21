@@ -92,7 +92,7 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 
 		// Phase 2: Create command scope and derived context.
 		CommandScope scope = new CommandScope(commandModels);
-		ViewContext derivedContext = context.withCommandScope(scope);
+		ViewContext derivedContext = context.withScope(CommandScope.class, scope);
 
 		// Phase 3: Create child content controls.
 		ReactControl content = createContent(derivedContext);

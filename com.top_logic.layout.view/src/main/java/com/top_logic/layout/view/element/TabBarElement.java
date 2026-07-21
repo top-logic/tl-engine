@@ -200,7 +200,7 @@ public class TabBarElement implements UIElement {
 			.withChildSlotPath(entry._id);
 		// Establish the tab's security scope so command rules in its content default to it.
 		SecurityScope scope = AccessChecks.resolveScope(entry._accessControl());
-		ViewContext tabContext = scope != null ? baseContext.withSecurityScope(scope) : baseContext;
+		ViewContext tabContext = scope != null ? baseContext.withScope(SecurityScope.class, scope) : baseContext;
 		tabContext.setDirtyChannel(dirtyChannel);
 
 		List<UIElement> elements = entry._children;

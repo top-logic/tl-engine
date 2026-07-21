@@ -141,7 +141,7 @@ public class TileElement implements UIElement {
 	 */
 	public ReactControl createContentControl(ViewContext context) {
 		SecurityScope scope = AccessChecks.resolveScope(_accessControl);
-		ViewContext contentContext = scope != null ? context.withSecurityScope(scope) : context;
+		ViewContext contentContext = scope != null ? context.withScope(SecurityScope.class, scope) : context;
 		IReactControl inner = _content.createControl(contentContext);
 		return (ReactControl) inner;
 	}

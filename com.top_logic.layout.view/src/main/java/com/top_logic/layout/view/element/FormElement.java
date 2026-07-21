@@ -408,7 +408,7 @@ public class FormElement extends ContainerElement {
 	 */
 	private void contributeFormCommands(ViewContext parentContext, ViewContext formContext,
 			FormControl formControl) {
-		CommandScope scope = parentContext.getCommandScope();
+		CommandScope scope = parentContext.getScope(CommandScope.class);
 		if (scope == null) {
 			return;
 		}
@@ -526,7 +526,7 @@ public class FormElement extends ContainerElement {
 
 	private void contributeEditCommands(ViewContext parentContext, ViewContext formContext,
 			FormControl formControl) {
-		CommandScope scope = parentContext.getCommandScope();
+		CommandScope scope = parentContext.getScope(CommandScope.class);
 		if (scope == null) {
 			return;
 		}

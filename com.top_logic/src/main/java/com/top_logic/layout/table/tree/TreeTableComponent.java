@@ -1031,7 +1031,17 @@ public class TreeTableComponent extends BoundComponent
 		if (hasTreeTableData()) {
 			_expansionUserModel = TreeUIModelUtil.getExpansionUserModel(_treeTableData.getTree());
 			_expansionRootObject = _treeTableData.getTree().getRoot().getBusinessObject();
+
+			/* Drop the selection model that references the nodes of the discarded tree, but keep
+			 * the selection channel so that the selection can be restored when the tree is rebuilt
+			 * for the same model (invalidate). Removing the listener during the clear prevents the
+			 * (temporary) empty selection from being propagated to the selection channel. When the
+			 * displayed model actually changes, the retained selection paths do not resolve in the
+			 * new tree and the default selection is installed as before. */
+			unregisterSelectionListener();
 			_selectionModel.clear();
+			registerSelectionListener();
+
 			removeToolbarButtons(_treeTableData);
 			_treeTableData = null;
 

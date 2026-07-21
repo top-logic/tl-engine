@@ -7,170 +7,187 @@
 				<role-rules>
 					<rules>
 						<rule
+							id="WithOwner_OwnerRole"
 							inherit="true"
 							meta-element="tl.accounts:WithOwner"
 							role="SecurityStructure.OwnerRole"
 						>
 							<path>
-								<step
-									attribute="owner"
-									inverse="false"
-								/>
+								<step attribute="tl.accounts:WithOwner#owner"/>
 							</path>
 						</rule>
 
 						<rule
+							id="DemoSecurity.A_Role1"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.A"
 							role="DemoSecurity.Role1"
 						>
 							<path>
-								<step
-									attribute="singlePersonContact"
-									inverse="false"
-								/>
+								<step attribute="DemoSecurity:DemoSecurity.A#singlePersonContact"/>
 							</path>
 						</rule>
 
 						<rule
+							id="DemoSecurity.A_Role2"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.A"
 							role="DemoSecurity.Role2"
 						>
 							<path>
-								<step
-									attribute="personContactList"
-									inverse="false"
-								/>
+								<step attribute="DemoSecurity:DemoSecurity.A#personContactList"/>
 							</path>
 						</rule>
 
 						<inheritance-rule
+							id="DemoSecurity.A_SecurityAdministrator"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.A"
 							role="DemoSecurity.SecurityAdministrator"
 						>
 							<path>
 								<step
-									attribute="children"
+									attribute="DemoSecurity:DemoSecurityElementContainer#children"
 									inverse="true"
-									meta-element="DemoSecurity:DemoSecurityElementContainer"
 								/>
 							</path>
 						</inheritance-rule>
 
 						<inheritance-rule
-							base="structureRoot@DemoSecurity"
+							id="DemoSecurity.B_SecurityAdministratorB"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.B"
 							role="DemoSecurity.SecurityAdministratorB"
 							source-role="DemoSecurity.SecurityAdministrator"
-						/>
+						>
+							<script-step expr="`DemoSecurity#ROOT`"/>
+						</inheritance-rule>
 
 						<inheritance-rule
+							id="DemoSecurity.All_selection"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.All"
-							role="DemoSecurity.selection"
-							source-role="DemoSecurity.Role1,DemoSecurity.Role2,DemoSecurity.Role3,DemoSecurity.SecurityAdministrator,DemoSecurity.SecurityAdministratorB,DemoSecurity.User"
+							role="selection"
+							source-role="DemoSecurity.Role1,DemoSecurity.Role2,DemoSecurity.SecurityAdministrator,DemoSecurity.SecurityAdministratorB,DemoSecurity.User"
 						/>
 
 						<inheritance-rule
+							id="DemoSecurity.All_navigation"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.All"
-							role="DemoSecurity.navigation"
-							source-role="DemoSecurity.selection"
+							role="navigation"
+							source-role="selection"
 						/>
 
 						<inheritance-rule
+							id="DemoSecurityElementContainer_navigation"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurityElementContainer"
-							role="DemoSecurity.navigation"
+							role="navigation"
 						>
 							<path>
-								<step
-									attribute="children"
-									inverse="false"
-								/>
+								<step attribute="DemoSecurity:DemoSecurityElementContainer#children"/>
 							</path>
 						</inheritance-rule>
 
 						<inheritance-rule
+							id="DemoTypes.All_navigation"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.Navigation"
-							source-role="DemoTypes.Selection"
+							role="navigation"
+							source-role="selection"
 						/>
 
 						<inheritance-rule
+							id="DemoTypesContainer_navigation"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypesContainer"
-							role="DemoTypes.Navigation"
+							role="navigation"
 						>
 							<path>
-								<step
-									attribute="children"
-									inverse="false"
-								/>
+								<step attribute="DemoTypes:DemoTypesContainer#children"/>
 							</path>
 						</inheritance-rule>
 
 						<inheritance-rule
+							id="DemoTypes.All_Administrator"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
 							role="DemoTypes.Administrator,DemoTypes.StringAdministrator,DemoTypes.BooleanAdministrator,DemoTypes.DateAdministrator,DemoTypes.Responsible"
 						>
 							<path>
 								<step
-									attribute="children"
+									attribute="DemoTypes:DemoTypesContainer#children"
 									inverse="true"
-									meta-element="DemoTypes:DemoTypesContainer"
 								/>
 							</path>
 						</inheritance-rule>
 
 						<inheritance-rule
+							id="DemoTypes.All_selection"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.Selection"
+							role="selection"
 							source-role="DemoTypes.Administrator,DemoTypes.Responsible,DemoTypes.BAdministrator,DemoTypes.BooleanAdministrator,DemoTypes.DateAdministrator,DemoTypes.StringAdministrator"
 						/>
 
 						<rule
+							id="DemoTypes.A_Responsible"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.A"
 							role="DemoTypes.Responsible"
 						>
 							<path>
-								<step
-									attribute="responsible"
-									meta-element="DemoTypes:DemoTypes.A"
-								/>
+								<step attribute="DemoTypes:DemoTypes.A#responsible"/>
 							</path>
 						</rule>
 						<rule
+							id="DemoTypes.A_Responsible_2"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.A"
 							role="DemoTypes.Responsible"
 						>
 							<path>
+								<step attribute="DemoTypes:DemoTypes.A#responsibleContact"/>
 								<step
-									attribute="responsibleContact"
-									meta-element="DemoTypes:DemoTypes.A"
-								/>
-								<step
-									attribute="contact"
+									attribute="tl.accounts:Person#contact"
 									inverse="true"
-									meta-element="tl.accounts:Person"
 								/>
 							</path>
 						</rule>
 
 						<inheritance-rule
-							base="structureRoot@DemoTypes"
+							id="DemoTypes.B_BAdministrator"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.B"
 							role="DemoTypes.BAdministrator"
-						/>
+						>
+							<script-step expr="`DemoTypes#ROOT`"/>
+						</inheritance-rule>
+
+						<rule
+							id="DemoPlain.All_Administrator"
+							inherit="true"
+							meta-element="DemoPlain:DemoPlain.All"
+							role="DemoTypes.Administrator"
+						>
+							<group-with-name name="demoTypeAdministrators"/>
+						</rule>
+						<singleton-rule
+							id="Administrator"
+							role="DemoTypes.Administrator"
+							target="DemoTypes#ROOT"
+						>
+							<group-with-name name="demoTypeAdministrators"/>
+						</singleton-rule>
+
+						<singleton-rule
+							id="BAdministrator"
+							role="DemoTypes.BAdministrator"
+							target="DemoTypes#ROOT"
+						>
+							<group-with-name name="demoTypeBAdministrators"/>
+						</singleton-rule>
 					</rules>
 				</role-rules>
 			</instance>

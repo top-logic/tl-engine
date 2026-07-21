@@ -5,12 +5,13 @@
 >
 	<rules>
 		<rule
+			id="invalidMetaElement"
 			meta-element="unknown"
 			resource-key="roleRule.invalidMetaElement"
 			role="testRole"
 		>
 			<path>
-				<step attribute="Verantwortlicher"/>
+				<step attribute="projElement:projElement.All#Verantwortlicher"/>
 			</path>
 		</rule>
 	</rules>

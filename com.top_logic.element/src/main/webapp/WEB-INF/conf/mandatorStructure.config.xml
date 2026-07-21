@@ -11,9 +11,6 @@
 				<settings>
 					<module name="mandatorStructure">
 						<factory value="com.top_logic.element.structured.wrap.MandatorFactory"/>
-						<roles>
-							<role name="mandatorStructure.navigation" />
-						</roles>
 					</module>
 				</settings>
 			</instance>
@@ -23,16 +20,17 @@
 			<instance>
 				<role-rules>
 					<rules>
-				        <rule
-							inherit="true" 
-							meta-element="mandatorStructure:Mandator.all" 
-							role="mandatorStructure.navigation" 
+						<rule
+							id="Mandator.all_navigation"
+							inherit="true"
+							meta-element="mandatorStructure:Mandator.all"
+							role="navigation"
 							type="inheritance"
 						>
 							<path>
-					            <step attribute="children" inverse="false" />
+								<step attribute="mandatorStructure:Mandator.all#children"/>
 							</path>
-				        </rule>
+						</rule>
 					</rules>
 				</role-rules>
 			</instance>

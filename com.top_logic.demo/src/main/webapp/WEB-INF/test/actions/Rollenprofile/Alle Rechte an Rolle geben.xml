@@ -10,9 +10,6 @@
 			output-xml-header="false"
 		/>
 		<t:parameters>
-			<t:parameter name="Berechtigungsstruktur"
-				type="string"
-			/>
 			<t:parameter name="Rolle"
 				type="string"
 			/>
@@ -33,26 +30,6 @@
 					/>
 				</action>
 
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Berechtigungsstruktur"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-							tab-path="Administration > Berechtigungen"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="${$Berechtigungsstruktur}"
-							/>
-						</values>
-					</value>
-				</action>
-
 				<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
 					columns="Rechte,${$Rolle}"
 					label="true"
@@ -68,7 +45,7 @@
 					</model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ExpandAllCommandHandler"
+					command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.ExpandAllCommandHandler"
 					command-label="Rollenprofile aufklappen"
 					command-name="expandRoleProfileTree"
 					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"

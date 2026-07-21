@@ -16,7 +16,6 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.instance.exporter.XMLInstanceExporter;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.model.util.TLModelPartRefsFormat;
 
 /**
  * {@link ExportCustomization} that excludes types from export.
@@ -31,7 +30,7 @@ public class ExcludeTypes extends AbstractConfiguredInstance<ExcludeTypes.Config
 		/**
 		 * The types to exclude from export.
 		 */
-		@Format(TLModelPartRefsFormat.class)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 		@Mandatory
 		List<TLModelPartRef> getTypes();
 	}

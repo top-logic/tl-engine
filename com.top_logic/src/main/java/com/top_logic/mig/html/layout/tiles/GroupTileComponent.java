@@ -81,7 +81,7 @@ public class GroupTileComponent extends LayoutList implements Selectable, Layout
 	 */
 	public GroupTileComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
-		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
+		_securityObjectProvider = config.resolveSecurityObject(context);
 	}
 
 	@Override

@@ -32,12 +32,10 @@ import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.AddGeneralization;
 import com.top_logic.element.model.diff.config.CreateClassifier;
 import com.top_logic.element.model.diff.config.CreateModule;
-import com.top_logic.element.model.diff.config.CreateRole;
 import com.top_logic.element.model.diff.config.CreateSingleton;
 import com.top_logic.element.model.diff.config.CreateStructuredTypePart;
 import com.top_logic.element.model.diff.config.CreateType;
 import com.top_logic.element.model.diff.config.Delete;
-import com.top_logic.element.model.diff.config.DeleteRole;
 import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.element.model.diff.config.MakeAbstract;
 import com.top_logic.element.model.diff.config.MakeConcrete;
@@ -78,8 +76,6 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypeVisitor;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.annotate.security.RoleConfig;
-import com.top_logic.model.annotate.security.TLRoleDefinitions;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -361,7 +357,6 @@ public class CreateModelPatch {
 		processTypeDiff(noAssociations(left.getTypes()), noAssociations(right.getTypes()));
 
 		addSingletonsPatch(right, left.getAnnotation(TLSingletons.class), right.getAnnotation(TLSingletons.class));
-		addRolesPatch(right, left.getAnnotation(TLRoleDefinitions.class), right.getAnnotation(TLRoleDefinitions.class));
 	}
 
 	private Collection<? extends TLType> noAssociations(Collection<TLType> types) {
@@ -418,41 +413,6 @@ public class CreateModelPatch {
 
 	private Collection<SingletonConfig> getSingletons(TLSingletons annotation) {
 		return annotation == null ? Collections.emptyList() : annotation.getSingletons();
-	}
-
-	/**
-	 * Creates a patch for a singleton change in a {@link TLModule}.
-	 */
-	public void addRolesPatch(TLModule module, TLRoleDefinitions left, TLRoleDefinitions right) {
-		Collection<RoleConfig> leftValues = getRoles(left);
-		Collection<RoleConfig> rightValues = getRoles(right);
-
-		SetDiff<RoleConfig> diff =
-			CollectionDiff.diffSet(RoleConfig::getName, leftValues, rightValues);
-		for (RoleConfig config : diff.getDeleted()) {
-			addDelete(module, config);
-		}
-		for (RoleConfig config : diff.getCreated()) {
-			addCreate(module, config);
-		}
-	}
-
-	private void addCreate(TLModule module, RoleConfig config) {
-		CreateRole create = TypedConfiguration.newConfigItem(CreateRole.class);
-		create.setModule(module.getName());
-		create.setRole(TypedConfiguration.copy(config));
-		addDiff(create);
-	}
-
-	private void addDelete(TLModule module, RoleConfig config) {
-		DeleteRole delete = TypedConfiguration.newConfigItem(DeleteRole.class);
-		delete.setModule(module.getName());
-		delete.setRole(config.getName());
-		addDiff(delete);
-	}
-
-	private Collection<RoleConfig> getRoles(TLRoleDefinitions annotation) {
-		return annotation == null ? Collections.emptyList() : annotation.getRoles();
 	}
 
 	/**

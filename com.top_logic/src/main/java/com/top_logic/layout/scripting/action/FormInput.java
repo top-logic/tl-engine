@@ -101,6 +101,9 @@ public interface FormInput extends AbstractFormInput {
 		@Override
 		protected Object processInternal(ActionContext context, Object argument) throws Throwable {
 			FormField field = (FormField) ModelResolver.locateModel(context, getConfig().getField());
+			if (!field.isActive()) {
+				ApplicationAssertions.fail(getConfig(), "Try to update an inactive field.");
+			}
 			Object value = ModelResolver.locateModel(context, field, getConfig().getValue());
 
 			Object adaptedValue = checkAndAdaptValue(field, value);

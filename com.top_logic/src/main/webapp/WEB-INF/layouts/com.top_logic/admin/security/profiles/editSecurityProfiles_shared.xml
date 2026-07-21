@@ -8,7 +8,7 @@
 <template>
 	<params>
 		<param name="model"
-			value="selection(com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree)"
+			value="provider(com.top_logic.layout.component.model.SecurityRootModelProvider)"
 		/>
 		<param name="namePrefix"
 			value=""
@@ -60,8 +60,20 @@
 		</tables>
 		<buttons>
 			${exportButtons}
-			<reference command-id="expandRoleProfileTree"/>
-			<reference command-id="collapseRoleProfileTree"/>
+			<button id="expandRoleProfileTree"
+				class="com.top_logic.tool.boundsec.gui.profile.ExpandAllCommandHandler"
+				clique="expand"
+				disabledImage="theme:ICONS_EXPAND_ALL_DISABLED"
+				image="theme:ICONS_EXPAND_ALL"
+				tree-name="tree"
+			/>
+			<button id="collapseRoleProfileTree"
+				class="com.top_logic.tool.boundsec.gui.profile.CollapseAllCommandHandler"
+				clique="collapse"
+				disabledImage="theme:ICONS_COLLAPSE_ALL_DISABLED"
+				image="theme:ICONS_COLLAPSE_ALL"
+				tree-name="tree"
+			/>
 			<button id="setAllAccess"
 				access="true"
 				class="com.top_logic.tool.boundsec.gui.profile.SetAccessCommandHandler"

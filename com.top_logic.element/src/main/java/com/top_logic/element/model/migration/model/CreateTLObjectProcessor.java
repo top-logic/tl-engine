@@ -35,6 +35,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.PersistentObject;
@@ -124,6 +125,8 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		 * Note: This is the real name of the column in the database, usually in capital letters and
 		 * separated by underscore.
 		 * </p>
+		 * 
+		 * @see DBAttribute#getDBName()
 		 */
 		@Name(COLUMN)
 		@Mandatory

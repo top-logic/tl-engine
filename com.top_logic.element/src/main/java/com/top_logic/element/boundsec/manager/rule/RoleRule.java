@@ -10,23 +10,19 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.ElementAccessHelper;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
-import com.top_logic.element.meta.AttributeOperations;
-import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.element.singleton.ElementSingletonManager;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -40,31 +36,15 @@ import com.top_logic.util.Utils;
  *
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
-public class RoleRule implements RoleProvider {
+public abstract class RoleRule implements RoleProvider {
 
-    /** The meta element type of objects the role applies to */
-    private TLClass metaElement;
-
-    /** The meta element type of objects an inheritance rule may inherit from */
-    private TLClass sourceMetaElement;
-
-    /** Indicates that the role is to be applied to sub types too */
-    private boolean     inherit;
     /** the role to apply by this rule */
     private BoundRole   role;
-    /** the role to request in case of an inheritance rule that maps one role to another one */
-    private BoundRole   sourceRole;
     /**
      * a list {@link com.top_logic.element.boundsec.manager.rule.PathElement}s
      * determining the groups the role is given to
      */
     private List<PathElement>        path;
-
-    /** the type of the rule */
-    private Type        type;
-
-    /** the base the rule is evaluated on. Must be a singleton reference */
-    private String      base;
 
     /**
      * The resource key (prefix) used to get a name and a description for the role
@@ -76,134 +56,41 @@ public class RoleRule implements RoleProvider {
     /**
      * Constructor with all attributes
      */
-    private RoleRule(TLClass aME, TLClass aSourceME, boolean isInterit, BoundRole aRole, BoundRole aSourceRole, List<PathElement> aPath, Type aType, String aBase, ResKey aResourceKey) {
-        super();
-		this.metaElement = Objects.requireNonNull(aME);
-        this.sourceMetaElement = aSourceME;
-        this.inherit           = isInterit;
-        this.role              = aRole;
-        this.sourceRole        = aSourceRole;
-        this.path              = aPath;
-        this.type              = aType;
-        this.base              = aBase;
-        this.resourceKey       = aResourceKey;
-        this.id                = this.computeId(aME, aSourceME, isInterit, aRole, aSourceRole, aPath, aType, aBase);
-    }
+	protected RoleRule(BoundRole aRole, List<PathElement> aPath, ResKey aResourceKey, String id) {
+		super();
+		this.role = aRole;
+		this.path = aPath;
+		this.resourceKey = aResourceKey;
+		this.id = id;
+	}
 
-    /**
-     * Constructor for reference rules on meta elements
-     */
-    public RoleRule(TLClass aME, boolean isInterit, BoundRole aRole, List<PathElement> aPath, String aBase, ResKey aResourceKey) {
-        this(aME, null, isInterit, aRole, null, aPath, Type.reference, aBase, aResourceKey);
-    }
-
-    /**
-     * Constructor for inheritance rules on meta elements
-     */
-    public RoleRule(TLClass aME, TLClass aSourceME, boolean isInterit, BoundRole aRole, BoundRole aSourceRole, List<PathElement> aPath, String aBase, ResKey aResourceKey) {
-        this(aME, aSourceME, isInterit, aRole, aSourceRole, aPath, Type.inheritance, aBase, aResourceKey);
-    }
-
-    public String computeId(TLClass aME, TLClass aSourceME, boolean isInherit, BoundRole aRole, BoundRole aSourceRole, List<PathElement> aPath, Type aType, String aBase) {
-        StringBuffer theSB = new StringBuffer();
-		theSB.append("me:");
-		theSB.append(aME.getName());
-        if (aSourceME != null) {
-            theSB.append("sme:");
-            theSB.append(aSourceME.getName());
-        }
-        theSB.append('_');
-        theSB.append(isInherit);
-        theSB.append('_');
-        theSB.append(aRole.getName());
-        if (aSourceRole != null) {
-            theSB.append('=');
-            theSB.append(aSourceRole.getName());
-        }
-        theSB.append('_');
-        for (Iterator<PathElement> theIt = aPath.iterator(); theIt.hasNext();) {
-            PathElement   thePE  = theIt.next();
-            if (thePE instanceof IdentityPathElement) continue;
-            TLStructuredTypePart theMA  = thePE.getMetaAttribute();
-			TLClass theME = AttributeOperations.getMetaElement(theMA);
-			if (theME != null) {
-				theSB.append("pme:");
-				theSB.append(theME.getName());
-            }
-			theSB.append("ma:");
-			theSB.append(theMA.getName());
-            theSB.append('_');
-            theSB.append(thePE.isInverse() ? "back" : "succ");
-        }
-        theSB.append("_base:");
-        if (aBase != null) {
-            theSB.append(aBase);
-        }
-        theSB.append('_');
-        theSB.append(aType.ordinal());
-        return theSB.toString();
-    }
-
-    /**
-	 * @see com.top_logic.element.boundsec.manager.rule.RoleProvider#getId()
-	 */
     @Override
 	public String getId() {
         return this.id;
     }
 
     /**
-     * <code>true</code> if the rule applies to the given meta element
-     */
-    public boolean matches(TLClass aME) {
-        if (aME == null) {
-            return false;
-        }
-        if (this.inherit) {
-			return MetaElementUtil.hasGeneralization(aME, metaElement);
-		} else {
-			return this.metaElement.equals(aME);
-        }
-    }
-
-    /**
-     * true if the rule is applicable to the given wrapper
-     */
-    public boolean matches(Wrapper aWrapper) {
-    	if (aWrapper == null || !aWrapper.tValid()) return false;
-
-		if (!(aWrapper instanceof Wrapper)) {
-			return false;
-		}
-		return this.matches((TLClass) ((Wrapper) aWrapper).tType());
-    }
+	 * <code>true</code> if the rule is applicable to the given item
+	 */
+	public abstract boolean matches(TLObject itemWrapper);
     
     @Override
 	public boolean matches(BoundObject anObject) {
-    	return (anObject instanceof Wrapper)
-    		? this.matches((Wrapper) anObject)
-    	    : false;
-    }
-
-
-
-    /**
-     * Getter
-     */
-    public TLClass getMetaElement() {
-        return (metaElement);
+		return matches((TLObject) anObject);
     }
 
     /**
      * Getter
      */
-    public TLClass getSourceMetaElement() {
-        return (sourceMetaElement);
-    }
+	public abstract TLClass getMetaElement();
 
     /**
-	 * @see com.top_logic.element.boundsec.manager.rule.RoleProvider#getRole()
+	 * Getter
+	 * 
+	 * @return May be <code>null</code>.
 	 */
+	public abstract TLClass getSourceMetaElement();
+
     @Override
 	public BoundRole getRole() {
         return (role);
@@ -212,9 +99,7 @@ public class RoleRule implements RoleProvider {
     /**
 	 * Indicates, that the rule also applies to the sub types (in case of a set {@link TLClass}) 
 	 */
-    public boolean isInherit() {
-        return (inherit);
-    }
+	public abstract boolean isInherit();
 
     /**
      * This method returns the resourceKey.
@@ -247,24 +132,19 @@ public class RoleRule implements RoleProvider {
 	 * 
 	 * @since 5.7.4
 	 */
-	public Collection<Group> getGroupsFor(Wrapper aBase) {
-		if (aBase == null || !aBase.tValid()) {
+	public Collection<Group> getGroupsFor(Wrapper base) {
+		if (base == null) {
     		return Collections.emptySet();
     	}
-    	if (!matches(aBase)) {
+		if (!matches(base)) {
     	    return Collections.emptySet();
     	}
-
-        Wrapper theBase = this.getBase();
-        if (theBase == null) {
-            theBase = aBase;
-        }
 
 		Collection<Group> theResult;
         ElementAccessManager theAM = (ElementAccessManager)AccessManager.getInstance();
 		Tuple resultCacheKey;
         if (theAM.isInCacheMode()) {
-			resultCacheKey = new TupleFactory.Pair<>(getId(), KBUtils.getWrappedObjectName(theBase));
+			resultCacheKey = new TupleFactory.Pair<>(getId(), KBUtils.getWrappedObjectName(base));
 			theResult = (Collection<Group>) theAM.getResult(resultCacheKey);
 
 			if (theResult != null) {
@@ -274,20 +154,17 @@ public class RoleRule implements RoleProvider {
 			resultCacheKey = null;
         }
 
+		Set theCollector = getContents(base);
+		theResult = new HashSet<>();
         if (this.getType().equals(Type.reference)) {
-            Set theCollector = new HashSet();
-            this.getContent(theBase, this.path, 0, theCollector);
-            theResult = new HashSet<>();
             CollectionUtil.mapIgnoreNull(theCollector.iterator(), theResult, theAM.getGroupMapper());
         } else {
-            Set theCollector = new HashSet();
-            this.getContent(theBase, this.path, 0, theCollector);
-            theResult = new HashSet<>();
             BoundRole theRole = this.getSourceRole();
             if (theRole == null) {
                 theRole = this.getRole();
             }
-            CollectionUtil.mapIgnoreNull(theCollector.iterator(), theResult, new HasRoleGroupMapper(theRole, this.sourceMetaElement));
+			CollectionUtil.mapIgnoreNull(theCollector.iterator(), theResult,
+				new HasRoleGroupMapper(theRole, getSourceMetaElement()));
             Set<Group> theFinalResult = new HashSet<>();
             Utils.fold(theFinalResult, theResult.iterator(), new Utils.FolderFunction() {
                 @Override
@@ -306,87 +183,63 @@ public class RoleRule implements RoleProvider {
     }
 
     @Override
-	public Set<BoundObject> getBaseObjects(Object aDestination) {
-    	if ( ! (aDestination instanceof Wrapper)) {
-    		return Collections.emptySet();
+	public BaseObjects<Set<BoundObject>> getBaseObjects(Object aDestination) {
+		if (!(aDestination instanceof TLObject)) {
+			return BaseObjects.of(Collections.emptySet());
     	}
-    	Wrapper theDestination = (Wrapper) aDestination;
-        Set<BoundObject> theCollector = new HashSet<>();
-        this.getContentBackwards(theDestination, this.path, this.path.size() - 1, theCollector);
+		TLObject theDestination = (TLObject) aDestination;
+		Set<TLObject> theCollector = new HashSet<>();
+        boolean couldBeComputed = this.getContentBackwards(theDestination, this.path, this.path.size() - 1, theCollector);
+		if (!couldBeComputed) {
+			return BaseObjects.all();
+		}
 
-        Wrapper theBase = this.getBase();
-        if (theBase != null) {
-            if (theCollector.contains(theBase)) {
-                return ElementAccessHelper.getTargetObjects(this);
-            } else {
-                return Collections.emptySet();
-            }
-        } else {
-            for (Iterator it = theCollector.iterator(); it.hasNext(); ) {
-                if (!matches((Wrapper)it.next())) {
-                    it.remove();
-                }
-            }
-            return theCollector;
-        }
+		theCollector.removeIf(Predicate.not(this::matches));
+		return BaseObjects.of((Set) theCollector);
     }
 
-	private void getContent(Wrapper aNode, List aPath, int aPosition, Set aResult) {
+	private Set<TLObject> getContents(TLObject aNode) {
+		Set<TLObject> result = new HashSet<>();
+		getContent(aNode, getPath(), 0, result);
+		return result;
+	}
+
+	private void getContent(TLObject aNode, List<PathElement> aPath, int aPosition, Set<TLObject> aResult) {
     	if (aNode == null || !aNode.tValid()) return;
 
-        PathElement thePE = (PathElement) aPath.get(aPosition);
-        Collection theNodeElements = thePE.getValues(aNode);
+		PathElement thePE = aPath.get(aPosition);
+		Collection<? extends TLObject> theNodeElements = thePE.getValues(aNode);
         if (aPath.size() == aPosition + 1) {
         	aResult.addAll(theNodeElements);
         } else {
             int theChildPosition = aPosition + 1;
-            for (Iterator theIt = theNodeElements.iterator(); theIt.hasNext();) {
-                Wrapper theElement = (Wrapper) theIt.next();
+            for (Iterator<? extends TLObject> theIt = theNodeElements.iterator(); theIt.hasNext();) {
+				TLObject theElement = theIt.next();
                 this.getContent(theElement, aPath, theChildPosition, aResult);
             }
         }
     }
 
-    private void getContentBackwards(Wrapper aNode, List aPath, int aPosition, Set aResult) {
-        PathElement thePE = (PathElement) aPath.get(aPosition);
-        Collection theNodeElements = thePE.getSources(aNode);
+	private boolean getContentBackwards(TLObject aNode, List<PathElement> aPath, int aPosition, Set<TLObject> aResult) {
+		PathElement thePE = aPath.get(aPosition);
+		BaseObjects<? extends Collection<? extends TLObject>> nodeElements = thePE.getSources(aNode);
+		if (nodeElements.isAll()) {
+			return false;
+		}
+		Collection<? extends TLObject> theNodeElements = nodeElements.get();
         if (aPosition == 0) {
             aResult.addAll(theNodeElements);
         } else {
             int theChildPosition = aPosition - 1;
-            for (Iterator theIt = theNodeElements.iterator(); theIt.hasNext();) {
-                Wrapper theElement = (Wrapper) theIt.next();
-                this.getContentBackwards(theElement, aPath, theChildPosition, aResult);
+			for (Iterator<? extends TLObject> theIt = theNodeElements.iterator(); theIt.hasNext();) {
+				TLObject theElement = theIt.next();
+				boolean couldBeComputed = this.getContentBackwards(theElement, aPath, theChildPosition, aResult);
+				if (!couldBeComputed) {
+					return false;
+				}
             }
         }
-    }
-
-    /**
-	 * @see com.top_logic.element.boundsec.manager.rule.RoleProvider#getSourceRole()
-	 */
-    @Override
-	public BoundRole getSourceRole() {
-        return this.sourceRole == null ? this.role : this.sourceRole;
-    }
-
-    /**
-	 * @see com.top_logic.element.boundsec.manager.rule.RoleProvider#getType()
-	 */
-    @Override
-	public Type getType() {
-        return (this.type);
-    }
-
-    public Wrapper getBase() {
-        if (StringServices.isEmpty(this.base)) {
-            return null;
-        } else {
-			return (Wrapper) ElementSingletonManager.getSingleton(this.base);
-        }
-    }
-
-    public String getBaseString() {
-        return this.base;
+		return true;
     }
 
 	@Override

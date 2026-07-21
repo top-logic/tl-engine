@@ -11,7 +11,7 @@
 		</include>
 		<layout>
 			<components>
-				<component class="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+				<component class="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 					defaultFor="tl.accounts:Role"
 					model="selection(editRolesTable)"
 					name="EditRole"

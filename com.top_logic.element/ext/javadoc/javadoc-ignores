@@ -28,26 +28,6 @@ com.top_logic.element.boundsec.attribute.MetaAttributeBasedSecurityProvider.java
 com.top_logic.element.boundsec.manager.AllowAccessVisitor.java: Invalid camel case word 'AllowAccessVisitor', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.boundsec.manager.AllowAccessVisitor.java: Invalid camel case word 'BoundObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.boundsec.manager.AllowAccessVisitor.java: Missing documentation: com.top_logic.element.boundsec.manager.AllowAccessVisitor.createVisitor
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_ATTRIBUTE_DESCRIPTION
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_ATTRIBUTE_IS_GROUP
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_ATTRIBUTE_KEY
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_ATTRIBUTE_NAME
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_ATTRIBUTE_VALUE
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_ACCESS
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_AUTHORIZATION
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_CLASSIFICATION
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_CLASSIFICATIONS
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_CLASSIFIER
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_ENTRY
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_GROUP
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_GROUPS
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_LANGUAGE
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_MEMBER
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_META_ATTRIBUTE
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_META_ELEMENT
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_PATH
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_ROLE
-com.top_logic.element.boundsec.manager.ElementAccessExportHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessExportHelper.XML_TAG_SECURITY
 com.top_logic.element.boundsec.manager.ElementAccessHelper.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.boundsec.manager.ElementAccessHelper
 com.top_logic.element.boundsec.manager.ElementAccessHelper.java: Invalid camel case word 'BoundCommandGroup', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.boundsec.manager.ElementAccessHelper.java: Invalid camel case word 'BoundRole', this may only be used within JavaDoc links or HTML code tags.
@@ -62,17 +42,6 @@ com.top_logic.element.boundsec.manager.ElementAccessHelper.java: Missing documen
 com.top_logic.element.boundsec.manager.ElementAccessHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessHelper.getClassifier
 com.top_logic.element.boundsec.manager.ElementAccessHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessHelper.getUniqueMetaElements
 com.top_logic.element.boundsec.manager.ElementAccessHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessHelper.setClassifierRoles
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.ApplicationRoleHolder
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.ApplicationRoleHolder.getRole
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.ApplicationRoleHolder.isUniqueRoleRole
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.addProblem
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.getAttributeClassifications
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.getClassifierRoles
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.getGroups
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.getProblems
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.getProfileCount
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.parse
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Invalid camel case word 'ElementAccessManager', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Invalid camel case word 'RoleRules', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Invalid camel case word 'beginCacheMode', this may only be used within JavaDoc links or HTML code tags.
@@ -94,17 +63,6 @@ com.top_logic.element.boundsec.manager.ElementAccessManager.java: Missing docume
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessManager.getRules
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessManager.getRulesWithSourceRole
 com.top_logic.element.boundsec.manager.ElementSecurityUpdateManager.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementSecurityUpdateManager.handleSecurityUpdate
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.EntryHandler
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.GroupHandler
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.GroupHandler.addGroup
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.GroupHandler.addLanguage
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.GroupHandler.addPerson
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.GroupInfo
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.LanguageHandler
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.LanguageHandler.addEntry
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.MemberHandler
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.addProblem
 com.top_logic.element.boundsec.manager.LogHandler.java: Missing documentation: com.top_logic.element.boundsec.manager.LogHandler.logSecurityUpdate
 com.top_logic.element.boundsec.manager.PartialImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.PartialImporter
 com.top_logic.element.boundsec.manager.RebuildStorageAfterStartupThread.java: Missing documentation: com.top_logic.element.boundsec.manager.RebuildStorageAfterStartupThread.CM_PROPERTY_REBUILD_AFTER_STARTUP
@@ -401,8 +359,6 @@ com.top_logic.element.knowledge.search.ElementExpressionFactory.java: Missing do
 com.top_logic.element.knowledge.search.ElementExpressionFactory.java: Missing documentation: com.top_logic.element.knowledge.search.ElementExpressionFactory.metaAttribute
 com.top_logic.element.knowledge.search.ElementExpressionFactory.java: Missing documentation: com.top_logic.element.knowledge.search.ElementExpressionFactory.metaElement
 com.top_logic.element.layout.TypeInstanceListModelBuilder.java: Documentation starts with an uppercase letter: com.top_logic.element.layout.TypeInstanceListModelBuilder
-com.top_logic.element.layout.admin.StructureDomainMapper.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.admin.StructureDomainMapper
-com.top_logic.element.layout.admin.StructureDomainMapper.java: Invalid camel case word 'StructureDomainMapper', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.admin.component.SecurityRowAccessor.java: Missing documentation: com.top_logic.element.layout.admin.component.SecurityRowAccessor
 com.top_logic.element.layout.formeditor.ContentDefinitionUtil.java: Invalid camel case word 'propertyTest', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.formeditor.FormEditorUtil.java: Invalid camel case word 'FormConstraints', this may only be used within JavaDoc links or HTML code tags.
@@ -671,26 +627,9 @@ com.top_logic.element.layout.meta.search.SearchFilterSupport.java: Invalid camel
 com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler.java: Missing documentation: com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler
 com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler.java: Missing documentation: com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler.COMMAND_ID
 com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler.java: Missing documentation: com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler.switchSearchScope
-com.top_logic.element.layout.person.ApplyRolesHandler.java: Invalid camel case word 'BoundObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.person.ApplyRolesHandler.java: Missing documentation: com.top_logic.element.layout.person.ApplyRolesHandler.COMMAND_ID
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Invalid camel case word 'BoundObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Missing documentation: com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.COL_CHECKBOX
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Missing documentation: com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.COL_SELECTION
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Missing documentation: com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.RolesNodeGroupInitializer
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Missing documentation: com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.TREE_FIELD
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Missing documentation: com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.getTreeModel
-com.top_logic.element.layout.person.SaveRolesHandler.java: Missing documentation: com.top_logic.element.layout.person.SaveRolesHandler.COMMAND_ID
 com.top_logic.element.layout.provider.MetaElementLabelProvider.java: Invalid camel case word 'MetaAttributeName', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.provider.MetaElementLabelProvider.java: Missing documentation: com.top_logic.element.layout.provider.MetaElementLabelProvider
 com.top_logic.element.layout.provider.ZipFolderNameProvider.java: Missing documentation: com.top_logic.element.layout.provider.ZipFolderNameProvider.INSTANCE
-com.top_logic.element.layout.role.GlobalEditRoleComponent.java: Invalid camel case word 'BoundedRoles', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.GlobalEditRoleComponent.java: Invalid camel case word 'GlobalEditRoleComponent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.GlobalRolesTableModelBuilder.java: Invalid camel case word 'ModelBuilder', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.ScopedEditRoleComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.role.ScopedEditRoleComponent
-com.top_logic.element.layout.role.ScopedEditRoleComponent.java: Invalid camel case word 'BoundedRoles', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.ScopedEditRoleComponent.java: Invalid camel case word 'ScopedEditRoleComponent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.ScopedEditRoleComponent.java: Invalid camel case word 'StructuredElement', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.ScopedRolesTableModelBuilder.java: Invalid camel case word 'ModelBuilder', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.scripting.ChildNamingScheme.java: Missing documentation: com.top_logic.element.layout.scripting.ChildNamingScheme.ChildName
 com.top_logic.element.layout.scripting.CommentNamingScheme.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.scripting.CommentNamingScheme
 com.top_logic.element.layout.scripting.ScriptingElementUtil.java: Invalid camel case word 'ScriptingFramework', this may only be used within JavaDoc links or HTML code tags.
@@ -713,9 +652,7 @@ com.top_logic.element.layout.security.AttributeSecurityEditComponent.java: Missi
 com.top_logic.element.layout.security.AttributeSecurityEditComponent.java: Missing documentation: com.top_logic.element.layout.security.AttributeSecurityEditComponent.SelectFieldFastListComparator
 com.top_logic.element.layout.security.AttributeSecurityEditComponent.java: Missing documentation: com.top_logic.element.layout.security.AttributeSecurityEditComponent.getColumnDeclaration
 com.top_logic.element.layout.security.AttributeSecurityEditComponent.java: Missing documentation: com.top_logic.element.layout.security.AttributeSecurityEditComponent.getRowFormGroupGenerator
-com.top_logic.element.layout.security.ExportingEditRolesProfileComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.security.ExportingEditRolesProfileComponent
 com.top_logic.element.layout.security.RoleRulesComponent.java: Missing documentation: com.top_logic.element.layout.security.RoleRulesComponent
-com.top_logic.element.layout.security.handler.SecurityExportHandler.java: Missing documentation: com.top_logic.element.layout.security.handler.SecurityExportHandler.COMMAND_ID
 com.top_logic.element.layout.structured.AdminElementComponent.java: Invalid camel case word 'FormConstraint', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.structured.AdminElementComponent.java: Invalid camel case word 'FormContext', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.structured.AdminElementComponent.java: Invalid camel case word 'SelectField', this may only be used within JavaDoc links or HTML code tags.
@@ -790,10 +727,6 @@ com.top_logic.element.layout.table.renderer.I18NMetaAttributeCellRenderer.java: 
 com.top_logic.element.layout.tree.FilterModelBuilder.java: Missing documentation: com.top_logic.element.layout.tree.FilterModelBuilder
 com.top_logic.element.layout.tree.SelectablesProvider.java: Missing documentation: com.top_logic.element.layout.tree.SelectablesProvider
 com.top_logic.element.layout.tree.SelectablesProvider.java: Missing documentation: com.top_logic.element.layout.tree.SelectablesProvider.getSelectableObjects
-com.top_logic.element.layout.tree.StructureSelectorComponent.java: Missing documentation: com.top_logic.element.layout.tree.StructureSelectorComponent.Config
-com.top_logic.element.layout.tree.StructureSelectorComponent.java: Missing documentation: com.top_logic.element.layout.tree.StructureSelectorComponent.Config.getStructures
-com.top_logic.element.layout.tree.StructureSelectorComponent.java: Missing documentation: com.top_logic.element.layout.tree.StructureSelectorComponent.FORM_FIELD_STRUCTURE
-com.top_logic.element.layout.tree.StructureSelectorComponent.java: Missing documentation: com.top_logic.element.layout.tree.StructureSelectorComponent.XML_ATTRIBUTE_STRUCTURES
 com.top_logic.element.layout.tree.StructuredElementTreeDropTarget.java: Invalid camel case word 'StructuredElement', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.tree.StructuredElementTreeDropTarget.java: Invalid camel case word 'getIndex', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.tree.StructuredElementTreeDropTarget.java: Invalid camel case word 'getParent', this may only be used within JavaDoc links or HTML code tags.

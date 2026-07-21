@@ -48,7 +48,7 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 	 * Configuration for {@link BoundComponent}.
 	 */
 	public interface Config
-			extends AJAXComponent.Config, BoundCheckerLayoutConfig, SecurityObjectProviderConfig, WithSecurityMaster {
+			extends AJAXComponent.Config, BoundCheckerLayoutConfig, WithSecurityMaster {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -94,7 +94,7 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 		super(context, config);
 
 		isSecurityMaster = config.getIsSecurityMaster();
-		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
+		_securityObjectProvider = config.resolveSecurityObject(context);
     }
     
 	@Override

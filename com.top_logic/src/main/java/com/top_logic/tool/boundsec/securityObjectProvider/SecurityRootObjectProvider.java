@@ -5,8 +5,12 @@
  */
 package com.top_logic.tool.boundsec.securityObjectProvider;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.model.TLClass;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -17,16 +21,17 @@ import com.top_logic.tool.boundsec.SecurityObjectProvider;
  * The {@link SecurityRootObjectProvider} uses the root of the security structure as security
  * object.
  * 
- * @see BoundHelper#getDefaultObject()
- *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
+ *
+ * @see ModuleSingletonSecurityProvider
+ * @see BoundHelper#getDefaultObject()
  */
 @InApp
 @Label("Security root object")
 public class SecurityRootObjectProvider implements SecurityObjectProvider {
 
 	/** Alias for {@link SecurityRootObjectProvider}. */
-    public static String ALIAS_NAME = "securityRoot";
+	public static final String ALIAS_NAME = "securityRoot";
 
     /** Saves an instance of this class. */
     public static final SecurityRootObjectProvider INSTANCE = new SecurityRootObjectProvider();
@@ -34,6 +39,11 @@ public class SecurityRootObjectProvider implements SecurityObjectProvider {
     @Override
 	public BoundObject getSecurityObject(BoundChecker checker, Object model, BoundCommandGroup commandGroup) {
 		return getSecurityRoot();
+	}
+
+	@Override
+	public Set<TLClass> getPossibleSecurityObjectTypes() {
+		return Collections.singleton((TLClass) getSecurityRoot().tType());
 	}
 
 	/**

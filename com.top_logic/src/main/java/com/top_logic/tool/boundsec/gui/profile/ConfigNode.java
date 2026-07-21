@@ -10,17 +10,23 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.mig.html.layout.LayoutConfigTreeNode;
-import com.top_logic.model.TLModule;
+import com.top_logic.model.TLClass;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.BoundLayout;
+import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
+import com.top_logic.tool.boundsec.WithSecurityMaster;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
@@ -36,6 +42,8 @@ public class ConfigNode extends SecurityNode {
 	static final String GLOBAL_DOMAIN = "SecurityStructure";
 
 	private List<BoundCommandGroup> _commandGroups;
+
+	private Set<TLClass> _securityObjectTypes;
 
 	/**
 	 * Creates a new {@link ConfigNode}.
@@ -74,38 +82,29 @@ public class ConfigNode extends SecurityNode {
 		return (LayoutConfigTreeNode) getBusinessObject();
 	}
 
-	boolean hasRight(Set<BoundedRole> set, BoundCommandGroup group) {
+	boolean hasRight(BoundedRole role, BoundCommandGroup group) {
 		PersBoundComp secComp = layoutNode().getSecurityComponent();
 		if (secComp == null) {
 			return false;
 		}
-		Collection<?> roles = secComp.rolesForCommandGroup(group);
-		return CollectionUtil.containsAny(set, roles);
+		return secComp.rolesForCommandGroup(group).contains(role);
 	}
 
-	void storeRight(Set<BoundedRole> roles, BoundCommandGroup group, boolean hasRight) {
+	void storeRight(BoundedRole role, BoundCommandGroup group, boolean hasRight) {
 		PersBoundComp secComp = layoutNode().getSecurityComponent();
 		if (secComp == null) {
 			return;
 		}
-		storeLocalRights(secComp, roles, group, hasRight);
+		storeLocalRights(secComp, role, group, hasRight);
 	}
 
-	private boolean storeLocalRights(PersBoundComp persBoundComp, Set<BoundedRole> roles, BoundCommandGroup group,
+	private void storeLocalRights(PersBoundComp persBoundComp, BoundedRole role, BoundCommandGroup group,
 			boolean hasRight) {
-		boolean changes = false;
-		for (BoundedRole role : roles) {
-			if (!isRoleRelevantForDomain(role)) {
-				continue;
-			}
-			if (hasRight) {
-				persBoundComp.addAccess(group, role);
-			} else {
-				persBoundComp.removeAccess(group, role);
-			}
-			changes = true;
+		if (hasRight) {
+			persBoundComp.addAccess(group, role);
+		} else {
+			persBoundComp.removeAccess(group, role);
 		}
-		return changes;
 	}
 
 	List<BoundCommandGroup> getCommandGroups() {
@@ -115,34 +114,81 @@ public class ConfigNode extends SecurityNode {
 		return _commandGroups;
 	}
 
-	boolean isRoleRelevantForDomain(BoundedRole role) {
-		return isRoleForDomain(role, domain());
-	}
-
-	private String domain() {
-		return findDomain(layoutNode());
-	}
-
-	private boolean isRoleForDomain(BoundedRole role, String domain) {
-		TLModule scope = role.getScope();
-		if (scope == null) {
-			return false;
+	Set<TLClass> getSecurityObjectTypes() {
+		if (_securityObjectTypes == null) {
+			_securityObjectTypes =
+				findSecurityObjectTypes(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config());
 		}
-		return scope.getName().equals(domain);
+		return _securityObjectTypes;
 	}
 
-	boolean needsCheckBox(Set<BoundedRole> set) {
-		String domain = domain();
-		return set.stream()
-			.filter(role -> isRoleForDomain(role, domain))
-			.findFirst()
-			.isPresent();
+	private Set<TLClass> findSecurityObjectTypes(InstantiationContext context, LayoutComponent.Config config) {
+		if (config instanceof BoundLayout.Config boundLayoutConfig) {
+			Set<Config> stopConfigs = getChildren().stream()
+				.filter(ConfigNode.class::isInstance)
+				.map(ConfigNode.class::cast)
+				.map(ConfigNode::config)
+				.collect(Collectors.toSet());
+			WithSecurityMaster securityMaster = findSecurityMaster(boundLayoutConfig, stopConfigs);
+			if (securityMaster != null) {
+				return securityMaster.resolveSecurityObject(context).getPossibleSecurityObjectTypes();
+			}
+			List<? extends Config> childConfigurations = boundLayoutConfig.getChildConfigurations();
+			if (childConfigurations.size() == 1) {
+				Config child = childConfigurations.get(0);
+				if (child instanceof SecurityObjectProviderConfig) {
+					// See logic in BoundLayout#hideReason.
+					return findSecurityObjectTypes(context, child);
+				}
+			}
+		}
+		if (config instanceof SecurityObjectProviderConfig withSecurityObjectProvider) {
+			return withSecurityObjectProvider.resolveSecurityObject(context).getPossibleSecurityObjectTypes();
+		}
+		return Collections.emptySet();
+	}
+
+	private WithSecurityMaster findSecurityMaster(BoundLayout.Config boundLayoutConfig,
+			Set<Config> stopConfigs) {
+		List<? extends Config> children = boundLayoutConfig.getChildConfigurations();
+		List<BoundLayout.Config> childBoundLayouts = new ArrayList<>();
+		for (Config child : children) {
+			if (stopConfigs.contains(child)) {
+				continue;
+			}
+			if (child instanceof WithSecurityMaster securityMaster) {
+				if (securityMaster.getIsSecurityMaster()) {
+					return securityMaster;
+				}
+			}
+			if (child instanceof BoundLayout.Config childBoundLayout) {
+				childBoundLayouts.add(childBoundLayout);
+			}
+		}
+		for (BoundLayout.Config childBoundLayout : childBoundLayouts) {
+			WithSecurityMaster securityMaster = findSecurityMaster(childBoundLayout, stopConfigs);
+			if (securityMaster != null) {
+				return securityMaster;
+			}
+		}
+		return null;
+	}
+
+	boolean needsCheckBox(BoundedRole role) {
+		Set<TLClass> securityObjectTypes = getSecurityObjectTypes();
+		AccessManager accessManager = AccessManager.getInstance();
+		for (TLClass type : securityObjectTypes) {
+			if (accessManager.canHaveRole(type, role)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
 	List<SecurityNode> createChildList(SecurityTreeTableBuilder builder) {
 		LayoutConfigTreeNode bo = layoutNode();
-		List<LayoutConfigTreeNode> children = filterChildren(bo, builder.securityDomain());
+		List<LayoutConfigTreeNode> children = filterChildren(bo);
 		List<SecurityNode> result = new ArrayList<>();
 		if (children.isEmpty()) {
 			addChildren(builder, result, getCommandGroups());
@@ -193,42 +239,26 @@ public class ConfigNode extends SecurityNode {
 			.forEach(newNode -> newChildren.add(newNode));
 	}
 
-	private List<LayoutConfigTreeNode> filterChildren(LayoutConfigTreeNode bo, String securityDomain) {
+	private List<LayoutConfigTreeNode> filterChildren(LayoutConfigTreeNode bo) {
 		List<LayoutConfigTreeNode> children = new ArrayList<>();
-		fillChildren(bo, securityDomain, children);
+		fillChildren(bo, children);
 		return children;
 	}
 
-	private void fillChildren(LayoutConfigTreeNode configNode, String domain,
-			List<LayoutConfigTreeNode> children) {
+	private void fillChildren(LayoutConfigTreeNode configNode, List<LayoutConfigTreeNode> children) {
 		for (LayoutConfigTreeNode child : configNode.getChildren()) {
-			if (accept(child, domain)) {
+			if (accept(child)) {
 				children.add(child);
 			} else {
-				fillChildren(child, domain, children);
+				fillChildren(child, children);
 			}
 		}
 	}
 
-	private boolean accept(LayoutConfigTreeNode child, String domain) {
+	private boolean accept(LayoutConfigTreeNode child) {
 		LayoutComponent.Config bo = child.getConfig();
-		if (!(bo instanceof CompoundSecurityLayout.Config)) {
-			return false;
-		}
-		return domain.equals(findDomain(child));
+		return bo instanceof CompoundSecurityLayout.Config;
 	}
 
-	String findDomain(LayoutConfigTreeNode child) {
-		child = CompoundSecurityLayoutConfigDescender.findCompoundSecurityNode(child);
-		if (child == null) {
-			return ConfigNode.GLOBAL_DOMAIN;
-		}
-		CompoundSecurityLayout.Config conf = (CompoundSecurityLayout.Config) child.getConfig();
-		String securityDomain = conf.getSecurityDomain();
-		if (securityDomain != null) {
-			return securityDomain;
-		}
-		return findDomain(child.getParent());
-	}
 
 }

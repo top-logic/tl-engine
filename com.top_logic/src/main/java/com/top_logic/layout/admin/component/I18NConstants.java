@@ -118,6 +118,14 @@ public class I18NConstants extends I18NConstantsBase {
 	/** Message that fetching configuration for a service was not possible. */
 	public static ResKey1 ERROR_GETTING_SERVICE_CONFIGURATION__SERVICE;
 
+	/** @en Reloading service {0} was not successful. */
+	public static ResKey1 ERROR_RELOADING_SERVICE__NAME;
+
+	/**
+	 * @en Service {0} was reloaded sucessfully.
+	 */
+	public static ResKey1 SERVICE_RELOAD_MESSAGE__SERVICE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

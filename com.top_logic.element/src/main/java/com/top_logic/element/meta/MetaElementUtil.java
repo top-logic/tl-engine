@@ -163,6 +163,8 @@ public class MetaElementUtil {
 	 * @param type
 	 *        The type to find direct instances of.
 	 * @return {@link CloseableIterator} of instances.
+	 * 
+	 * @see AttributeOperations#allDirectInstances(TLClass, Class)
 	 */
 	public static <T extends TLObject> CloseableIterator<T> iterateDirectInstances(TLClass type, Class<T> expectedType) {
 		return AttributeOperations.allDirectInstances(type, expectedType);

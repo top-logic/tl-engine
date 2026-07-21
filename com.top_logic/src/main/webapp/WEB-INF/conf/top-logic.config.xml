@@ -42,6 +42,7 @@
 			       <module key="com.top_logic.tool.export.ExportQueueManager$Module" value="true"/>
 			       <module key="com.top_logic.tool.export.ExportRegistryFactory$Module" value="true"/>
 			       <module key="com.top_logic.base.services.InitialGroupManager$Module" value="true" />
+			       <module key="com.top_logic.base.services.InitialRolesManager$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService$Module" value="true" />
 			       <module key="com.top_logic.base.administration.MaintenanceWindowManager$Module" value="true"/>
 			       <module key="com.top_logic.base.accesscontrol.SessionService$Module" value="true"/>
@@ -562,7 +563,6 @@
 					<provider name="null" impl="com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProvider" />
 					<provider name="securityRoot" impl="com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider" />
 					<provider name="selection" impl="path:selection" />
-					<provider name="slave" impl="com.top_logic.tool.boundsec.securityObjectProvider.FirstSlaveSecurityObjectProvider" />
 					<provider name="windowParent" impl="path:window.opener.currentobject" />
 					<provider name="windowParentModel" impl="path:window.opener.model" />
 					<provider name="windowParentSelection" impl="path:window.opener.selection" />
@@ -779,6 +779,15 @@
 		
 		<config service-class="com.top_logic.base.services.InitialGroupManager">
 			<instance class="com.top_logic.base.services.InitialGroupManager">
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance class="com.top_logic.base.services.InitialRolesManager">
+				<roles>
+					<role name="navigation"/>
+					<role name="selection"/>
+				</roles>
 			</instance>
 		</config>
 
@@ -1320,15 +1329,6 @@
 						image="theme:ICONS_BUTTON_CLEAR"
 						target="selection(self())"
 					/>
-					
-					<handler id="applyCheckerRoles" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ApplyRolesProfile"
-						clique="apply" group="System"/>
-					<handler id="expandRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ExpandAllCommandHandler"
-						clique="expand" image="theme:ICONS_EXPAND_ALL" disabledImage="theme:ICONS_EXPAND_ALL_DISABLED" />
-					<handler id="collapseRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$CollapseAllCommandHandler"
-						clique="collapse" image="theme:ICONS_COLLAPSE_ALL" disabledImage="theme:ICONS_COLLAPSE_ALL_DISABLED" />
-					<handler id="setAllRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$SetAllCommandHandler"/>
-					<handler id="unSetAllRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$UnSetAllCommandHandler"/>
 					
 					<handler id="newUnit" class="com.top_logic.layout.unit.NewUnitCommandHandler"
 						clique="create"/>
@@ -2254,17 +2254,26 @@
 			</customizations>
 		</config>
 		
-		<config config:interface="com.top_logic.layout.editor.config.LayoutEditorConfig">
-			<excluded-layouts>
-				<layout path="com.top_logic.element/admin/security/indexLegacy.layout.xml" />
-			</excluded-layouts>
-		</config>
-		
 		<config config:interface="com.top_logic.util.monitor.SystemEnvironmentBuilder$GlobalConfig">
 			<protected-alias pattern="(?i)(_PASS|_CRED|_PWD|_API_KEY|_SECRET)[^_]*$" />
 			<!-- Attention: Do not use %TRANSLATION_API_KEY%, because this will be replaced by the value! -->
 			<protected-alias pattern="TRANSLATION_API_KEY" />
 		</config>
+
+		<config config:interface="com.top_logic.layout.admin.component.TLServicesCommandProvider$Config">
+			<commands-by-service-class service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+				<command id="restartAndReload"
+					class="com.top_logic.layout.admin.component.RestartAndReload"
+					image="theme:ICON_RELOAD_ACCESSMANAGER"
+					resourceKey="class.com.top_logic.tool.boundsec.manager.I18NConstants.RESTART_AND_RELOAD_ACCESS_MANAGER"
+				>
+					<executability>
+						<reference rule-id="InViewMode"/>
+					</executability>
+				</command>
+			</commands-by-service-class>
+		</config>
+
 	</configs>
 	
 	<defaults>

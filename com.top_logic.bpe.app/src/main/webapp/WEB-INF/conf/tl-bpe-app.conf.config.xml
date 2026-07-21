@@ -17,17 +17,8 @@
 				</declarations>
 				<settings>
 					<module name="SecurityStructure">
-						<roles>
-							<role name="SecurityStructure.user"/>
-							<role name="SecurityStructure.superuser"/>
-						</roles>
 						<singletons>
-							<singleton type="Root">
-								<role-assignments>
-									<role-assignment role="SecurityStructure.user" group="user"/>
-									<role-assignment role="SecurityStructure.superuser" group="superuser"/>
-								</role-assignments>
-							</singleton>
+							<singleton type="Root"/>
 						</singletons>
 					</module>
 				</settings>
@@ -40,7 +31,38 @@
 				</model-filter>
 			</instance>
 		</config>
+
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="SecurityStructure.user"/>
+					<role name="SecurityStructure.superuser"/>
+				</roles>
+			</instance>
+		</config>
 		
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<singleton-rule
+						id="user"
+						target="SecurityStructure#ROOT"
+						role="SecurityStructure.user"
+					>
+						<group-with-name name="user"/>
+					</singleton-rule>
+
+					<singleton-rule
+						id="superuser"
+						target="SecurityStructure#ROOT"
+						role="SecurityStructure.superuser"
+					>
+						<group-with-name name="superuser"/>
+					</singleton-rule>
+				</role-rules>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.base.services.InitialGroupManager">
 			<instance default-group="user">
 				<groups>
@@ -62,11 +84,6 @@
 			</type-systems>
 		</config>
 
-		<config config:interface="com.top_logic.base.security.SecurityConfiguration">
-			<layout>
-				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper" />
-			</layout>
-		</config>
 		<config config:interface="com.top_logic.layout.form.control.IconInputControl$Config" width="500" height="500">
 		</config>	
 	</configs>

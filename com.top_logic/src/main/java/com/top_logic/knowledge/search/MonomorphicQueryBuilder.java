@@ -33,10 +33,10 @@ public class MonomorphicQueryBuilder implements InstancesQueryBuilder {
 	}
 
 	@Override
-	public SetExpression createInstancesQuery(MOClass table, Set<TLClass> types) {
+	public Expression createInstancesFilter(MOClass table, Set<TLClass> types) {
 		assert types.size() == 1 : "Multiple types storing in monomorphic table '" + table.getName() + "': " + types;
 
-		return allOf(table);
+		return literal(Boolean.TRUE);
 	}
 
 }

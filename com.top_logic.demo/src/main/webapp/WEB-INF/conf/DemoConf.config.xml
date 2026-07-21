@@ -149,22 +149,22 @@
 			</instance>
 		</config>
 
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="SecurityStructure.OwnerRole"/>
+					<role name="DemoTypes.Administrator"/>
+					<role name="DemoTypes.BAdministrator"/>
+					<role name="DemoTypes.BooleanAdministrator"/>
+					<role name="DemoTypes.StringAdministrator"/>
+					<role name="DemoTypes.DateAdministrator"/>
+					<role name="DemoTypes.Responsible"/>
+				</roles>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance>
-				<settings>
-					<module name="SecurityStructure">
-						<roles>
-							<role name="SecurityStructure.OwnerRole"/>
-						</roles>
-						<singletons>
-							<singleton type="Root">
-								<role-assignments>
-									<role-assignment role="SecurityStructure.OwnerRole" group="securityOwner"/>
-								</role-assignments>
-							</singleton>
-						</singletons>
-					</module>
-				</settings>
 				<model-filter>
 					<blacklist>
 						<!-- These types are inherited from "com.top_logic.remote".
@@ -175,6 +175,20 @@
 						<name-filter name="Ticket:Feedback" />
 					</blacklist>
 				</model-filter>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<singleton-rule
+						id="OwnerRole"
+						target="SecurityStructure#ROOT"
+						role="SecurityStructure.OwnerRole"
+					>
+						<group-with-name name="securityOwner"/>
+					</singleton-rule>
+				</role-rules>
 			</instance>
 		</config>
 
@@ -251,12 +265,6 @@
 			</registrations>
 		</config>
 
-		<config config:interface="com.top_logic.base.security.SecurityConfiguration">
-			<layout>
-				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper" />
-			</layout>
-		</config>
-		
 		<config config:interface="com.top_logic.layout.tree.renderer.LogoutTimerControl$Config"
 			counting-seconds="-10"
 		>

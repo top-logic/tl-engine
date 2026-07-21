@@ -30,9 +30,11 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.TLContext;
 
 /**
@@ -60,8 +62,6 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 
 	}
 
-	private final Collection<String> _structureNames;
-
 	/**
 	 * Called by the {@link TypedConfiguration} for creating a {@link AccessManager}.
 	 * <p>
@@ -77,7 +77,6 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 	@CalledByReflection
 	public AccessManager(InstantiationContext context, Config config) {
 		super(context, config);
-		_structureNames = config.getStructures();
         ReloadableManager.getInstance().addReloadable(this);
     }
 
@@ -154,7 +153,7 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 
     /**
 	 * Checks the given collection of BoundObjects and returns only these objects, on which the
-	 * given person has on of the given roles.
+	 * given person has one of the given roles.
 	 *
 	 * @param user
 	 *        the person to check
@@ -194,8 +193,8 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 		return result;
 	}
 
-	public Collection<String> getStructureNames() {
-		return _structureNames;
+	public final Collection<String> getStructureNames() {
+		return getConfig().getStructures();
 	}
 
 	/**
@@ -232,6 +231,21 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 
 
     // Subclass hooks
+
+	/**
+	 * Checks whether a user can have the role on an object of the specified type.
+	 * 
+	 * @param type
+	 *        The type to check.
+	 * @param role
+	 *        The role to check.
+	 * 
+	 * @return <code>true</code> if it is possible that a user has the given role on an object of
+	 *         the given type.
+	 */
+	public boolean canHaveRole(TLClass type, BoundedRole role) {
+		return true;
+	}
 
     /**
 	 * Hook for subclasses to update the access manager in case of a security change.

@@ -16,11 +16,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.ex.UnknownTypeException;
+import com.top_logic.element.boundsec.manager.rule.BaseObjects;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.meta.AttributeOperations;
@@ -194,25 +193,6 @@ public class ElementAccessHelper {
 		}
 	}
 
-	public static List<? extends BoundRole> getAvailableRoles(TLClass aME, ElementAccessManager accessManager) {
-        List<BoundRole> theList = new ArrayList<>();
-        if (aME != null) {
-            theList.addAll(accessManager.getRolesForMetaElement(aME));
-        } else {
-            HashSet<BoundRole> theRoles = new HashSet<>();
-            for (Iterator<TLClass> theIt = accessManager.getSupportedMetaElements().iterator(); theIt.hasNext(); ) {
-                TLClass theME = theIt.next();
-                theRoles.addAll(getAvailableRoles(theME, accessManager));
-            }
-			Collection<? extends BoundRole> theElementRoles = accessManager.getSecurityRoot().getRoles();
-            if (theElementRoles != null) {
-            	theRoles.addAll(theElementRoles);
-            }
-            theList.addAll(theRoles);
-        }
-        return theList;
-    }
-
 	public static TLClassifier getClassifier(String aClassifierName) {
         return FastListElement.getElementByName(aClassifierName);
     }
@@ -318,14 +298,14 @@ public class ElementAccessHelper {
 	 * 
 	 * @param obj
 	 *        The object which has changed values.
-	 * @param reference
-	 *        The reference whose value has changed.
-	 * @param referenceValue
-	 *        Supplier delivering values for the reference. When the reference is multiple, then the
-	 *        reference value may not deliver all values.
+	 * @param part
+	 *        The part whose value has changed.
+	 * @param partValue
+	 *        Supplier delivering values for the part. When the part is a multiple reference, then
+	 *        the part value may not deliver all values.
 	 */
-	public static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject obj, TLReference reference,
-			Supplier<?> referenceValue) {
+	public static BaseObjects<Set<BoundObject>> navigateRoleRuleBackwards(RoleRule rule, TLObject obj,
+			TLStructuredTypePart part, Supplier<?> partValue) {
 
 		List<PathElement> path = rule.getPath();
 
@@ -333,109 +313,54 @@ public class ElementAccessHelper {
 		// locate the meta attribute, may appear more than once
 		for (int i = 0, thePathLength = path.size(); i < thePathLength; i++) {
 			PathElement elt = path.get(i);
-			if (reference.equals(elt.getMetaAttribute())) {
+			if (elt.getRelevantParts().contains(part)) {
 				partIndexes.add(Integer.valueOf(i));
 			}
 		}
 
-		return navigateRoleRuleBackwards(rule, obj, referenceValue, partIndexes);
+		return navigateRoleRuleBackwards(rule, obj, part, partValue, partIndexes);
 	}
 
-	private static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject base, Supplier<?> referenceValue,
-			List<Integer> referenceIndexes) {
+	private static BaseObjects<Set<BoundObject>> navigateRoleRuleBackwards(RoleRule rule, TLObject base,
+			TLStructuredTypePart part,
+			Supplier<?> partValue, List<Integer> indexes) {
 		List<PathElement> path = rule.getPath();
 		Set<BoundObject> theResult = new HashSet<>();
-		for (Integer index : referenceIndexes) {
-			PathElement thePE = path.get(index.intValue());
-			Collection<? extends TLObject> theWrapper;
-			if (thePE.isInverse()) {
-				@SuppressWarnings("unchecked")
-				Collection<? extends TLObject> refValue =
-					(Collection<? extends TLObject>) CollectionUtil.asCollection(referenceValue.get());
-				theWrapper = refValue;
-			} else {
-				theWrapper = Collections.singleton(base);
+		for (Integer index : indexes) {
+			int idx = index.intValue();
+			PathElement thePE = path.get(idx);
+			BaseObjects<? extends Collection<? extends TLObject>> theWrapper = thePE.getPathBase(base, part, partValue);
+			if (theWrapper.isAll()) {
+				return BaseObjects.all();
 			}
-
-			addBaseObjects(path, index.intValue(), theWrapper, theResult);
-		}
-
-		// handle base object
-		TLObject theBaseObject = rule.getBase();
-		if (theBaseObject == null) {
-			// no base object, therefore the calculated objects are already the result
-			// Filter the objects that do not fit the meta object / meta element of the rule
-			for (Iterator<BoundObject> theIt = theResult.iterator(); theIt.hasNext();) {
-				BoundObject theObject = theIt.next();
-				if (!(rule.matches(theObject))) {
-					theIt.remove();
+			Collection<? extends TLObject> sources = theWrapper.get();
+			for (int pos = idx - 1; pos >= 0; pos--) {
+				Set<TLObject> newSources = new HashSet<>();
+				PathElement newPE = path.get(pos);
+				for (TLObject source : sources) {
+					BaseObjects<? extends Collection<? extends TLObject>> baseObjects = newPE.getSources(source);
+					if (baseObjects.isAll()) {
+						return BaseObjects.all();
+					}
+					newSources.addAll(baseObjects.get());
 				}
+				sources = newSources;
 			}
+			uncheckedAddAll(sources, theResult);
+		}
 
-			return theResult;
-		} else {
-			if (theResult.contains(theBaseObject)) {
-				return getTargetObjects(rule);
-			} else {
-				return Collections.emptySet();
+		// Filter the objects that do not fit the meta object / meta element of the rule
+		for (Iterator<BoundObject> theIt = theResult.iterator(); theIt.hasNext();) {
+			BoundObject theObject = theIt.next();
+			if (!(rule.matches(theObject))) {
+				theIt.remove();
 			}
 		}
+
+		return BaseObjects.of(theResult);
 	}
 
-    /**
-     * Get all objects potentially affected by this rule
-     *
-     * @return never NULL
-     */
-    public static Set<BoundObject> getTargetObjects(RoleRule aRule) {
-		Set<BoundObject> theResult = new HashSet<>();
-		TLClass theME = aRule.getMetaElement();
-		Iterable<TLClass> theMEs =
-			aRule.isInherit() ? TLModelUtil.getConcreteSpecializations(theME) : Collections.singleton(theME);
-		for (TLClass theFoundME : theMEs) {
-			try (CloseableIterator<BoundObject> theObjectIterator =
-				MetaElementUtil.iterateDirectInstances(theFoundME, BoundObject.class)) {
-				while (theObjectIterator.hasNext()) {
-					theResult.add(theObjectIterator.next());
-				}
-			}
-
-		}
-		return theResult;
-    }
-
-	private static void addBaseObjects(List<PathElement> aPath, int aPos, Collection<? extends TLObject> someSources,
-			Set<BoundObject> someResult) {
-        if (aPos == 0) {
-            uncheckedAddAll(someSources, someResult);
-        } else {
-			Set<TLObject> theNewSources = new HashSet<>();
-            int           theNewPos     = aPos - 1;
-            PathElement   thePE         = aPath.get(theNewPos);
-            TLStructuredTypePart theMA         = thePE.getMetaAttribute();
-			if (thePE.isInverse()) {
-				for (Iterator<? extends TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
-					TLObject theSource = theIt.next();
-					Object theDestination = theSource.tValue(theMA);
-					if (theDestination != null) {
-						theNewSources.addAll((theDestination instanceof Collection)
-							? (Collection<TLObject>) theDestination
-							: Collections.singleton((TLObject) theDestination));
-					}
-				}
-            } else {
-				for (Iterator<? extends TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
-					TLObject theSource = theIt.next();
-					theNewSources.addAll(theSource.tReferers((TLReference) theMA));
-				}
-            }
-            addBaseObjects(aPath, theNewPos, theNewSources, someResult);
-        }
-    }
-
-
-
-    /**
+	/**
 	 * Gets a set with the given type and all specializations.
 	 *
 	 * @param aMetaElement

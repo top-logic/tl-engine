@@ -33,6 +33,7 @@ import java.text.Format;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Iterator;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.IdentifierUtil;
@@ -2949,19 +2950,31 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * @param values
 	 *        The literal values.
 	 */
-	public void literalSet(Appendable sql, DBType dbType, Iterable<?> values) {
+	public final void literalSet(Appendable sql, DBType dbType, Iterable<?> values) {
+		literalSet(sql, dbType, values.iterator());
+	}
+
+	/**
+	 * Appends a SQL set literal to the given buffer.
+	 * 
+	 * @param sql
+	 *        The buffer to append.
+	 * @param dbType
+	 *        The {@link Types} type of the contents.
+	 * @param values
+	 *        The literal values.
+	 */
+	public void literalSet(Appendable sql, DBType dbType, Iterator<?> values) {
 		Format format = getLiteralFormat(dbType);
 
 		try {
 			sql.append('(');
-			boolean first = true;
-			for (Object value : values) {
-				if (first) {
-					first = false;
-				} else {
+			if (values.hasNext()) {
+				sql.append(format.format(values.next()));
+				while (values.hasNext()) {
 					sql.append(',');
+					sql.append(format.format(values.next()));
 				}
-				sql.append(format.format(value));
 			}
 			sql.append(')');
 		} catch (IOException ex) {

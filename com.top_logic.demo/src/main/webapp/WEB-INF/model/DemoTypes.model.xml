@@ -11,29 +11,8 @@
 				implementation-package="com.top_logic.demo.model.types.wrap"
 				interface-package="com.top_logic.demo.model.types"
 			/>
-			<roles>
-				<role name="DemoTypes.Navigation"/>
-				<role name="DemoTypes.Selection"/>
-				<role name="DemoTypes.Administrator"/>
-				<role name="DemoTypes.BAdministrator"/>
-				<role name="DemoTypes.BooleanAdministrator"/>
-				<role name="DemoTypes.StringAdministrator"/>
-				<role name="DemoTypes.DateAdministrator"/>
-				<role name="DemoTypes.Responsible"/>
-			</roles>
 			<singletons>
-				<singleton type="Root">
-					<role-assignments>
-						<role-assignment
-							group="demoTypeAdministrators"
-							role="DemoTypes.Administrator"
-						/>
-						<role-assignment
-							group="demoTypeBAdministrators"
-							role="DemoTypes.BAdministrator"
-						/>
-					</role-assignments>
-				</singleton>
+				<singleton type="Root"/>
 			</singletons>
 		</annotations>
 		<datatype name="DemoTime"

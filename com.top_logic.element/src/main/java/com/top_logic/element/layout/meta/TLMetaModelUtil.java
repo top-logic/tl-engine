@@ -20,6 +20,8 @@ import com.top_logic.basic.util.ResKey.LiteralKey;
 import com.top_logic.basic.util.ResourceTransaction;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.config.ReferenceConfig.ReferenceKind;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
+import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
@@ -79,7 +81,8 @@ public class TLMetaModelUtil {
 				: labelKey.isLiteral() ? ((LiteralKey) labelKey).getTranslationWithoutFallbacks(locale)
 					: StringServices.nonEmpty(bundle.getString(labelKey, null));
 
-			ResKey descriptionKey = i18n.getDescription();
+			HtmlResKey descriptionHtml = i18n.getDescription();
+			ResKey descriptionKey = descriptionHtml == null ? null : ((DefaultHtmlResKey) descriptionHtml).content();
 			String description = descriptionKey == null ? null
 				: descriptionKey.isLiteral() ? ((LiteralKey) descriptionKey).getTranslationWithoutFallbacks(locale)
 					: StringServices.nonEmpty(bundle.getString(descriptionKey, null));

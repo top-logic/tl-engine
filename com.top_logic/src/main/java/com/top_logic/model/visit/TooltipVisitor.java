@@ -9,7 +9,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.knowledge.gui.layout.list.FastListElementLabelProvider;
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.form.format.CommonMark;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLModelPart;
@@ -21,7 +20,6 @@ import com.top_logic.model.resources.TLPartResourceProvider;
 import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.Resources;
 
 /**
  * {@link TLModelVisitor} resolving the {@link ResourceProvider#getTooltip(Object) tooltip} of a
@@ -53,28 +51,12 @@ public class TooltipVisitor extends DefaultTLModelVisitor<ResKey, Void> {
 
 			TagUtil.encodeXML(TLModelUtil.qualifiedName(type)),
 
-			description(TLModelNamingConvention.getTypeLabelKey(type))
+			TLModelNamingConvention.getTypeLabelKey(type).tooltip().fallback(ResKey.text(""))
 		);
 	}
 
 	private String label(TLModelPart part) {
 		return _labelProvider.getLabel(part);
-	}
-
-	/**
-	 * Resolves the description (tool-tip resource) of the given resource key and renders it for
-	 * insertion into the HTML tool-tip.
-	 *
-	 * <p>
-	 * The description is authored as <i>CommonMark</i> text in the model editor. It is rendered to
-	 * HTML for insertion into the tool-tip: This escapes contained special characters (so that a
-	 * description containing e.g. {@code <} or {@code >} does not break the tool-tip) and turns
-	 * blank-line-separated text into paragraphs.
-	 * </p>
-	 */
-	private static String description(ResKey resourceKey) {
-		return CommonMark.toHTML(
-			Resources.getInstance().getString(resourceKey.tooltip().fallback(ResKey.text(""))));
 	}
 
 	@Override
@@ -89,7 +71,7 @@ public class TooltipVisitor extends DefaultTLModelVisitor<ResKey, Void> {
 			TagUtil.encodeXML(label(part)),
 			TagUtil.encodeXML(label(part.getType())),
 			TagUtil.encodeXML(TLModelUtil.qualifiedName(part)),
-			description(TLModelI18N.getI18NKey(part)));
+			TLModelI18N.getI18NKey(part).tooltip().fallback(ResKey.text("")));
 	}
 
 	@Override
@@ -98,6 +80,6 @@ public class TooltipVisitor extends DefaultTLModelVisitor<ResKey, Void> {
 			TagUtil.encodeXML(label(module.tType())),
 			TagUtil.encodeXML(label(module)),
 			TagUtil.encodeXML(module.getName()),
-			description(LabelVisitor.getModuleResourceKey(module)));
+			LabelVisitor.getModuleResourceKey(module).tooltip().fallback(ResKey.text("")));
 	}
 }

@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.form.format;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Objects;
@@ -70,30 +69,6 @@ public class CommonMark {
 		Writer internalWriter = out.internalTargetWriter();
 		// Render to the internal Writer to avoid quoting of HTML structure.
 		renderer.render(node, internalWriter);
-	}
-
-	/**
-	 * Renders a {@link String} in <i>CommonMark</i> syntax to an HTML fragment.
-	 *
-	 * <p>
-	 * Contained HTML is escaped, see {@link #writeCommonMark(TagWriter, String)}.
-	 * </p>
-	 *
-	 * @param value
-	 *        The value in <i>CommonMark</i> syntax, or <code>null</code>.
-	 * @return The rendered HTML fragment, or <code>null</code> if the given value was
-	 *         <code>null</code>.
-	 */
-	public static String toHTML(String value) {
-		if (value == null) {
-			return null;
-		}
-		try (TagWriter out = new TagWriter()) {
-			writeCommonMark(out, value);
-			return out.toString();
-		} catch (IOException ex) {
-			throw new IOError(ex);
-		}
 	}
 
 }

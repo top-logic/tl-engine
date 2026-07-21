@@ -31,15 +31,18 @@ import com.top_logic.layout.tools.XMLRewriter;
  *
  * <p>
  * A role-rule element is a {@code <rule>}, {@code <inheritance-rule>} or {@code <singleton-rule>}
- * whose parent element is a {@code <rules>} or {@code <role-rules>} container. Elements that
- * already have an {@code id} are left untouched, and files without any change are not rewritten.
+ * whose parent element is a {@code <rules>}, {@code <role-rules>} or {@code <security-parents>}
+ * container. The {@code <security-parents>} container holds the same role-rule configurations (see
+ * {@code com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig}, ticket #29088)
+ * and therefore needs the same {@code id}. Elements that already have an {@code id} are left
+ * untouched, and files without any change are not rewritten.
  * </p>
  */
 public class AddRoleRuleId extends XMLRewriter {
 
 	private static final Set<String> RULE_TAGS = Set.of("rule", "inheritance-rule", "singleton-rule");
 
-	private static final Set<String> CONTAINER_TAGS = Set.of("rules", "role-rules");
+	private static final Set<String> CONTAINER_TAGS = Set.of("rules", "role-rules", "security-parents");
 
 	private static final String ID_ATTRIBUTE = "id";
 

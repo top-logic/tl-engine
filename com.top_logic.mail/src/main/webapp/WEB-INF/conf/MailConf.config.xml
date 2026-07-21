@@ -126,6 +126,7 @@
 			<instance>
 				<security-parents>
 					<rule
+						id="MailForMailContent"
 						inherit="true"
 						meta-element="tl.mail:Mail"
 					>

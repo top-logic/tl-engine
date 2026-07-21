@@ -49,7 +49,7 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 		extends CommonStructuredTextAttributeStorage<C> implements ColumnStorage {
 
 	private static final Collection<? extends Class<?>> COMPATIBLE_TYPES =
-		Arrays.asList(StructuredText.class, HTMLFragment.class);
+		Arrays.asList(StructuredText.class, HTMLFragment.class, CharSequence.class);
 
 	/**
 	 * Configuration options for {@link StructuredTextAttributeStorage}.
@@ -128,6 +128,8 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 			structuredText = (StructuredText) value;
 		} else if (value instanceof HTMLFragment fragment) {
 			structuredText = toStructuredText(fragment);
+		} else if (value instanceof CharSequence text) {
+			structuredText = StructuredTextUtil.fromCommonMark(text);
 		} else {
 			throw new IllegalArgumentException(
 				"Unsupported application type " + value.getClass().getName() + ". Allowed: " + COMPATIBLE_TYPES);

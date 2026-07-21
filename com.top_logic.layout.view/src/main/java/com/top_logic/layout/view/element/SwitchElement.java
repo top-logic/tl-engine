@@ -22,15 +22,11 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.layout.ReactDeckPaneControl;
-import com.top_logic.layout.react.control.layout.ReactDeckPaneControl.ChildFactory;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -47,9 +43,12 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * </p>
  *
  * <p>
- * Backed by {@link ReactDeckPaneControl}, so each case's content is created lazily on first
- * activation and cached afterwards (e.g. a form's edit mode survives switching away and back).
+ * When the matching case changes, the previously shown content is disposed rather than cached, so a
+ * hidden case leaves no contributions (e.g. a form's edit/save/cancel commands) behind in the
+ * enclosing scope.
  * </p>
+ *
+ * @see ReactSwitchControl
  */
 public class SwitchElement implements UIElement {
 
@@ -131,7 +130,7 @@ public class SwitchElement implements UIElement {
 
 	private final ChannelRef _inputRef;
 
-	private final List<CaseEntry> _cases;
+	private final List<SwitchCase> _cases;
 
 	private final List<UIElement> _default;
 
@@ -147,7 +146,7 @@ public class SwitchElement implements UIElement {
 			List<UIElement> content = caseConfig.getContent().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
-			_cases.add(new CaseEntry(test, content));
+			_cases.add(new SwitchCase(test, content));
 		}
 		_default = config.getDefault().stream()
 			.map(context::getInstance)
@@ -157,47 +156,12 @@ public class SwitchElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel input = context.resolveChannel(_inputRef);
-
-		List<ChildFactory> factories = new ArrayList<>();
-		for (int i = 0; i < _cases.size(); i++) {
-			CaseEntry entry = _cases.get(i);
-			int index = i;
-			factories.add(() -> buildContent(entry._content, context, index));
-		}
-		// Trailing fallback pane: the <default> content, or an empty pane when no default is
-		// configured. Chosen whenever no case matches.
-		int fallbackIndex = factories.size();
-		factories.add(() -> buildContent(_default, context, fallbackIndex));
-
-		ReactDeckPaneControl deck =
-			new ReactDeckPaneControl(context, factories, selectIndex(input.get(), fallbackIndex));
-
-		// Re-choose the visible case on input change. selectChild() is a no-op when the index is
-		// unchanged, so selecting a different object of the same case does not rebuild; and it
-		// detaches (does not dispose) the previous pane, so cached case content keeps its state -
-		// no ChannelNotificationScope deferral needed here.
-		ChannelListener listener =
-			(sender, oldValue, newValue) -> deck.selectChild(selectIndex(newValue, fallbackIndex));
-		input.addListener(listener);
-		deck.addCleanupAction(() -> input.removeListener(listener));
-
-		return deck;
+		return new ReactSwitchControl(context, input, _cases, _default);
 	}
 
-	private int selectIndex(Object value, int fallbackIndex) {
-		for (int i = 0; i < _cases.size(); i++) {
-			if (Boolean.TRUE.equals(_cases.get(i)._test.execute(value))) {
-				return i;
-			}
-		}
-		return fallbackIndex;
-	}
-
-	private static ReactControl buildContent(List<UIElement> elements, ViewContext context, int index) {
-		ViewContext childContext = context.childContext("switch").withChildSlotPath(String.valueOf(index));
-		return ContentControls.toControl(elements, childContext);
-	}
-
-	private record CaseEntry(QueryExecutor _test, List<UIElement> _content) {
+	/**
+	 * A compiled case: its predicate and the content shown when it matches.
+	 */
+	record SwitchCase(QueryExecutor _test, List<UIElement> _content) {
 	}
 }

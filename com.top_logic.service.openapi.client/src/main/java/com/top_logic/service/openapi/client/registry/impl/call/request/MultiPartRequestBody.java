@@ -30,6 +30,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -39,6 +40,7 @@ import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.service.openapi.client.registry.impl.call.Call;
 import com.top_logic.service.openapi.client.registry.impl.call.CallBuilder;
 import com.top_logic.service.openapi.client.registry.impl.call.CallBuilderFactory;
@@ -91,7 +93,7 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 		MultiPartContent.CONTENT,
 		MultiPartContent.CONTENT_TYPE,
 	})
-	public interface MultiPartContent extends NamedConfigMandatory {
+	public interface MultiPartContent extends NamedConfigMandatory, ConfigPart {
 
 		/** Name of the configuration option {@link #getContent()}. */
 		String CONTENT = "content";
@@ -113,6 +115,7 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 		 * TL-Script variables.
 		 * </p>
 		 */
+		@ScriptContextVariables(MethodParameterVariables.class)
 		@PropertyEditor(PlainEditor.class)
 		@Mandatory
 		@Name(CONTENT)

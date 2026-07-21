@@ -8,6 +8,7 @@ package com.top_logic.model.search.ui;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -40,6 +41,8 @@ import com.top_logic.util.regex.TLRegexBuilder;
  */
 public class TLScriptCompletionService implements TLScriptConstants {
 
+	private static final Pattern VARIABLE_PREFIX_PATTERN = Pattern.compile("\\$\\w*$");
+
 	/**
 	 * Computes completions for the given line and prefix.
 	 *
@@ -55,7 +58,40 @@ public class TLScriptCompletionService implements TLScriptConstants {
 	 */
 	public static List<CodeCompletion> computeCompletions(DisplayContext context, String line,
 			String prefix, boolean caseSensitive) {
-		Optional<List<CodeCompletion>> completions = createCompletions(context, line, prefix, caseSensitive);
+		return computeCompletions(context, line, prefix, null, caseSensitive);
+	}
+
+	/**
+	 * Computes completions for the given line and prefix.
+	 *
+	 * @param context
+	 *        The display context (needed for locale-aware documentation).
+	 * @param line
+	 *        The full text of the current line.
+	 * @param prefix
+	 *        The prefix typed so far (may be empty).
+	 * @param textToCursor
+	 *        The whole script source up to the cursor, used to determine the variables in scope for
+	 *        <code>$</code>-completion, or <code>null</code> when variable completion is not
+	 *        supported by the caller.
+	 * @param caseSensitive
+	 *        Whether to match case-sensitively.
+	 * @return Sorted list of completions with scores assigned, possibly empty.
+	 */
+	public static List<CodeCompletion> computeCompletions(DisplayContext context, String line,
+			String prefix, String textToCursor, boolean caseSensitive) {
+		return computeCompletions(context, line, prefix, textToCursor, Collections.emptyList(), caseSensitive);
+	}
+
+	/**
+	 * Variant of
+	 * {@link #computeCompletions(DisplayContext, String, String, String, boolean)} that also offers
+	 * the given always-in-scope context variables for <code>$</code>-completion.
+	 */
+	public static List<CodeCompletion> computeCompletions(DisplayContext context, String line,
+			String prefix, String textToCursor, Collection<String> contextVariables, boolean caseSensitive) {
+		Optional<List<CodeCompletion>> completions =
+			createCompletions(context, line, prefix, textToCursor, contextVariables, caseSensitive);
 
 		completions.ifPresent(list -> orderCompletions(list));
 
@@ -63,11 +99,13 @@ public class TLScriptCompletionService implements TLScriptConstants {
 	}
 
 	private static Optional<List<CodeCompletion>> createCompletions(DisplayContext context, String line,
-			String prefix, boolean caseSensitive) {
+			String prefix, String textToCursor, Collection<String> contextVariables, boolean caseSensitive) {
 		if (inTLModelPartCompletionMode(line)) {
 			return createTLModelPartCompletions(line, caseSensitive);
 		} else if (inTextMode(line)) {
 			return Optional.empty();
+		} else if (inVariableCompletionMode(line)) {
+			return createVariableCompletions(textToCursor, contextVariables, prefix, caseSensitive);
 		} else {
 			return createDefaultCompletion(context, line, prefix, caseSensitive);
 		}
@@ -98,12 +136,81 @@ public class TLScriptCompletionService implements TLScriptConstants {
 		return Optional.empty();
 	}
 
+	/**
+	 * Whether the given line-prefix ends with a (possibly empty) variable reference, i.e. a
+	 * <code>$</code> optionally followed by identifier characters.
+	 */
+	public static boolean inVariableCompletionMode(String line) {
+		return VARIABLE_PREFIX_PATTERN.matcher(line).find();
+	}
+
+	/**
+	 * The in-scope variables (each with the leading <code>$</code>) matching the typed prefix.
+	 *
+	 * @param textToCursor
+	 *        The script source up to the cursor.
+	 * @param prefix
+	 *        The completion prefix as computed by the editor; includes the leading <code>$</code>.
+	 * @param caseSensitive
+	 *        Whether prefix matching is case sensitive.
+	 */
+	public static List<String> matchingVariables(String textToCursor, String prefix, boolean caseSensitive) {
+		return matchingVariables(textToCursor, Collections.emptyList(), prefix, caseSensitive);
+	}
+
+	/**
+	 * Variant of {@link #matchingVariables(String, String, boolean)} that also offers the given
+	 * context variables, which are always in scope (they wrap the whole script).
+	 *
+	 * @param contextVariables
+	 *        Variable names (without <code>$</code>) provided by the surrounding context.
+	 */
+	public static List<String> matchingVariables(String textToCursor, Collection<String> contextVariables,
+			String prefix, boolean caseSensitive) {
+		String barePrefix = prefix.startsWith("$") ? prefix.substring(1) : prefix;
+
+		LinkedHashSet<String> variables = new LinkedHashSet<>(TLScriptVariableScope.inScopeVariables(textToCursor));
+		variables.addAll(contextVariables);
+
+		List<String> result = new ArrayList<>();
+		for (String variable : variables) {
+			if (startsWith(variable, barePrefix, caseSensitive)) {
+				result.add("$" + variable);
+			}
+		}
+		return result;
+	}
+
+	private static Optional<List<CodeCompletion>> createVariableCompletions(String textToCursor,
+			Collection<String> contextVariables, String prefix, boolean caseSensitive) {
+		if (textToCursor == null && contextVariables.isEmpty()) {
+			return Optional.empty();
+		}
+		String safeText = textToCursor == null ? "" : textToCursor;
+		List<CodeCompletion> completions = new ArrayList<>();
+		for (String variable : matchingVariables(safeText, contextVariables, prefix, caseSensitive)) {
+			CodeCompletion completion = new CodeCompletion();
+			completion.setName(variable);
+			completion.setValue(variable);
+			completions.add(completion);
+		}
+		return Optional.of(completions);
+	}
+
 	private static boolean inTLModelPartCompletionMode(String line) {
 		return insideOf(line, "`", "[\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}:.# ]");
 	}
 
-	private static boolean inTextMode(String line) {
-		String allowedCharacters = "[a-zA-Z0-9.{} ]";
+	/**
+	 * Whether the cursor (end of the given line-prefix) is inside an open string literal.
+	 *
+	 * <p>
+	 * The allowed-character class includes <code>$</code> so that a <code>$</code> typed inside a
+	 * string is still recognized as being inside the string and does not trigger variable completion.
+	 * </p>
+	 */
+	public static boolean inTextMode(String line) {
+		String allowedCharacters = "[a-zA-Z0-9.{} $]";
 
 		return insideOf(line, "\"", allowedCharacters) || insideOf(line, "'", allowedCharacters);
 	}

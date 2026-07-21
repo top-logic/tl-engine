@@ -66,7 +66,9 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       if (!triggerMatch && !context.explicit) return Promise.resolve(null);
 
       // Narrow match for the word being typed — determines replacement range.
-      const wordMatch = context.matchBefore(/[\w]+/);
+      // Include an optional leading '$' so a variable completion value ("$name")
+      // returned by the server replaces the typed "$fo" cleanly (no doubled '$').
+      const wordMatch = context.matchBefore(/\$?[\w]*/);
       const prefix = wordMatch?.text ?? '';
       const from = wordMatch?.from ?? pos;
 
@@ -74,8 +76,12 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       // the server uses backtick parity to detect model-part mode.
       const lineUpToCursor = line.text.substring(0, pos - line.from);
 
+      // Full text up to the cursor — the server determines the in-scope
+      // variables (which may span earlier lines) for '$'-completion.
+      const textToCursor = context.state.sliceDoc(0, pos);
+
       const requestId = String(Date.now()) + Math.random();
-      sendCommand('complete', { line: lineUpToCursor, prefix, requestId });
+      sendCommand('complete', { line: lineUpToCursor, prefix, textToCursor, requestId });
 
       return new Promise((resolve) => {
         pendingCompletion.current = { requestId, resolve, from };

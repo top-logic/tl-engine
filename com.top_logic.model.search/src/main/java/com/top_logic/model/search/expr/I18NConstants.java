@@ -88,6 +88,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 PERMISSION_DENIED__NAME;
 
+	/**
+	 * @en Invalid log level ''{0}'', expected one of: {1}
+	 */
+	public static ResKey2 ERROR_INVALID_LOG_LEVEL__VALUE_OPTIONS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

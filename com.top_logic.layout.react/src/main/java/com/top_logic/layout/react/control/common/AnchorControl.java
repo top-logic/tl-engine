@@ -16,10 +16,11 @@ import com.top_logic.model.TLObject;
  * object, via the {@code TLAnchor} React component.
  *
  * <p>
- * The anchor renders a wrapper carrying the object's {@link #anchorId(Object) anchor id} as a
- * {@code data-tl-anchor} attribute. A {@link ScrollLinkControl} pointing at the same object scrolls
- * the browser to this anchor. Anchor and link derive the key from the same {@link #anchorId(Object)}
- * helper, so they cannot drift.
+ * The anchor renders a wrapper carrying its key as a {@code data-tl-anchor} attribute. The key is
+ * either an object's {@link #anchorId(Object) anchor id} (for object-keyed anchors) or a literal
+ * name (for fixed regions). A {@link ScrollLinkControl} or a {@code <scroll-to-anchor>} action
+ * targeting the same key scrolls the browser here; object-keyed anchors and links derive the key
+ * from the same {@link #anchorId(Object)} helper, so they cannot drift.
  * </p>
  */
 public class AnchorControl extends ReactControl {
@@ -29,7 +30,7 @@ public class AnchorControl extends ReactControl {
 	/** State key for the wrapped child control. */
 	private static final String CHILD = "child";
 
-	/** State key for the anchor id ({@code data-tl-anchor} value), or {@code null} for no anchor. */
+	/** State key for the anchor key ({@code data-tl-anchor} value), or {@code null} for no anchor. */
 	private static final String ANCHOR = "anchor";
 
 	private final ReactControl _child;
@@ -41,24 +42,25 @@ public class AnchorControl extends ReactControl {
 	 *        The {@link ReactContext} for ID allocation and SSE registration.
 	 * @param child
 	 *        The wrapped content control.
-	 * @param target
-	 *        The model object this anchor marks, or {@code null} for no anchor.
+	 * @param key
+	 *        The anchor key ({@code data-tl-anchor} value), or {@code null} for no anchor. Use
+	 *        {@link #anchorId(Object)} for an object-keyed anchor.
 	 */
-	public AnchorControl(ReactContext context, ReactControl child, Object target) {
+	public AnchorControl(ReactContext context, ReactControl child, String key) {
 		super(context, null, REACT_MODULE);
 		_child = child;
 		putState(CHILD, child);
-		setTarget(target);
+		setKey(key);
 	}
 
 	/**
-	 * Updates the model object this anchor marks.
+	 * Updates the anchor key ({@code data-tl-anchor} value).
 	 *
-	 * @param target
-	 *        The marked object, or {@code null} for no anchor.
+	 * @param key
+	 *        The new key, or {@code null} for no anchor.
 	 */
-	public void setTarget(Object target) {
-		putState(ANCHOR, anchorId(target));
+	public void setKey(String key) {
+		putState(ANCHOR, key);
 	}
 
 	@Override

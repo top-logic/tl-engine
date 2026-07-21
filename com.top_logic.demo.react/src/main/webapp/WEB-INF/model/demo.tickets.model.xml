@@ -51,6 +51,9 @@
 									function="comment -> editMode -> if ($comment.get(`demo.tickets:Comment#cited`) != null, if($editMode, &quot;editable&quot;, &quot;read-only&quot;), &quot;hidden&quot;)"
 								/>
 							</dynamic-visibility>
+							<options>
+								<options-by-expression function="comment -> $comment.container().get(`demo.tickets:Ticket#comments`)"/>
+							</options>
 						</annotations>
 					</reference>
 					<reference name="attachments"

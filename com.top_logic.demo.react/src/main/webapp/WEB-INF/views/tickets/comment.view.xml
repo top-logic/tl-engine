@@ -45,8 +45,9 @@
 						<en>Reply</en>
 						<de>Antworten</de>
 					</label>
-					<execute-script function="comment -> { reply = new(`demo.tickets:Comment`, transient: true); $reply.set(`demo.tickets:Comment#cited`, $comment); $reply; }"/>
+					<execute-script function="comment -> { reply = new(`demo.tickets:Comment`, transient: true, context: $comment.container()); $reply.set(`demo.tickets:Comment#cited`, $comment); $reply; }"/>
 					<write-channel name="draft"/>
+					<scroll-to-anchor target="'composer'"/>
 				</generic-command>
 				<generic-command
 					image="css:bi bi-trash"

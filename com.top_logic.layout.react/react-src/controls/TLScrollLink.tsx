@@ -1,4 +1,4 @@
-import { React, useTLState } from 'tl-react-bridge';
+import { React, useTLState, scrollToAnchor } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -22,17 +22,7 @@ const TLScrollLink: React.FC<TLCellProps> = ({ controlId }) => {
 
   const onClick = (event: React.MouseEvent) => {
     event.preventDefault();
-    const node = document.querySelector('[data-tl-anchor="' + CSS.escape(target) + '"]');
-    if (!node) {
-      return;
-    }
-    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // Briefly highlight the target. Restarting the animation (remove -> reflow -> add)
-    // gives feedback on repeated clicks and when the target is already in view, so that
-    // a click without scrolling is still perceptible.
-    node.classList.remove('tlAnchor--flash');
-    void (node as HTMLElement).offsetWidth;
-    node.classList.add('tlAnchor--flash');
+    scrollToAnchor(target);
   };
 
   return (

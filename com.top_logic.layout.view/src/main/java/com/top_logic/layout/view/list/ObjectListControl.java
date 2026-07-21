@@ -21,6 +21,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.util.Resources;
 
@@ -137,9 +138,17 @@ public class ObjectListControl extends ReactStackControl {
 
 	/**
 	 * Fills the new-element channel with a fresh transient element.
+	 *
+	 * <p>
+	 * The element is created with the list's container as its {@link TLObject#tContainer() container},
+	 * so that option providers or default-value expressions of the new element can navigate to the
+	 * container (e.g. restrict a reference to siblings within the same container).
+	 * </p>
 	 */
 	private void resetNewElement() {
-		_newElementChannel.set(TransientObjectFactory.INSTANCE.createObject(_elementType));
+		Object container = _container.get();
+		TLObject containerObject = container instanceof TLObject ? (TLObject) container : null;
+		_newElementChannel.set(TransientObjectFactory.INSTANCE.createObject(_elementType, containerObject));
 	}
 
 	/**

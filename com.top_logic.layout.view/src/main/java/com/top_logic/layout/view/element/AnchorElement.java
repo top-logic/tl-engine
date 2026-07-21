@@ -26,13 +26,15 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 
 /**
- * Declarative {@link UIElement} that wraps its content in a scroll anchor identified by an object
- * from the {@link Config#getInput() input} channel.
+ * Declarative {@link UIElement} that wraps its content in a scroll anchor.
  *
  * <p>
- * A {@link ScrollLinkElement &lt;scroll-link&gt;} pointing at the same object scrolls the browser to
- * this anchor - e.g. wrap each comment card of a conversation in {@code <anchor input="comment">} to
- * make replies jump to the cited comment.
+ * The anchor is keyed either by an object from the {@link Config#getInput() input} channel (its
+ * {@link AnchorControl#anchorId(Object) anchor id}) or by a literal {@link Config#getName() name}
+ * for a fixed region without a model object. A {@link ScrollLinkElement &lt;scroll-link&gt;} or a
+ * {@code <scroll-to-anchor>} action targeting the same key scrolls the browser here - e.g. wrap
+ * each comment card in {@code <anchor input="comment">} to jump to a cited comment, or the new
+ * comment editor in {@code <anchor name="composer">} to bring it into view on reply.
  * </p>
  */
 public class AnchorElement implements UIElement {
@@ -46,6 +48,9 @@ public class AnchorElement implements UIElement {
 		/** Configuration name for {@link #getInput()}. */
 		String INPUT = "input";
 
+		/** Configuration name for {@link #getName()}. */
+		String NAME = "name";
+
 		/** Configuration name for {@link #getContent()}. */
 		String CONTENT = "content";
 
@@ -54,12 +59,20 @@ public class AnchorElement implements UIElement {
 		Class<? extends UIElement> getImplementationClass();
 
 		/**
-		 * Channel providing the object this anchor marks.
+		 * Channel providing the object this anchor marks; the anchor key is the object's
+		 * {@link AnchorControl#anchorId(Object) anchor id}. Mutually exclusive with
+		 * {@link #getName()}.
 		 */
 		@Name(INPUT)
-		@Mandatory
 		@Format(ChannelRefFormat.class)
 		ChannelRef getInput();
+
+		/**
+		 * Literal anchor key for a fixed region without a model object. Mutually exclusive with
+		 * {@link #getInput()}.
+		 */
+		@Name(NAME)
+		String getName();
 
 		/**
 		 * The wrapped content.
@@ -86,14 +99,18 @@ public class AnchorElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		ViewChannel channel = context.resolveChannel(_config.getInput());
 		ReactControl child = (ReactControl) _content.createControl(context.withChildSlotPath("content"));
 
-		AnchorControl control = new AnchorControl(context, child, channel.get());
-		ChannelListener listener = (sender, oldValue, newValue) -> control.setTarget(newValue);
-		channel.addListener(listener);
-		control.addCleanupAction(() -> channel.removeListener(listener));
-		return control;
+		if (_config.getInput() != null) {
+			ViewChannel channel = context.resolveChannel(_config.getInput());
+			AnchorControl control = new AnchorControl(context, child, AnchorControl.anchorId(channel.get()));
+			ChannelListener listener =
+				(sender, oldValue, newValue) -> control.setKey(AnchorControl.anchorId(newValue));
+			channel.addListener(listener);
+			control.addCleanupAction(() -> channel.removeListener(listener));
+			return control;
+		}
+		return new AnchorControl(context, child, _config.getName());
 	}
 
 }

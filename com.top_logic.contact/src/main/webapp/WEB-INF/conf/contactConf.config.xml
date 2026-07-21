@@ -66,18 +66,21 @@
 				<group-mapper class="com.top_logic.contact.boundsec.manager.rule.ContactGroupMapper"/>
 				<security-parents>
 					<rule
+						id="SecRootForCompanyContact"
 						inherit="true"
 						meta-element="Contacts:CompanyContact"
 					>
 						<singleton module="SecurityStructure"/>
 					</rule>
 					<rule
+						id="SecRootForPersonContact"
 						inherit="true"
 						meta-element="Contacts:PersonContact"
 					>
 						<singleton module="SecurityStructure"/>
 					</rule>
 					<rule
+						id="ContactForPerson"
 						inherit="true"
 						meta-element="tl.accounts:Person"
 					>

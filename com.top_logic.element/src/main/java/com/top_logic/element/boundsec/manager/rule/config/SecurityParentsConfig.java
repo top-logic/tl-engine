@@ -10,6 +10,7 @@ import java.util.List;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
@@ -34,6 +35,7 @@ public interface SecurityParentsConfig extends ConfigurationItem {
 	 */
 	@Name(RULES)
 	@EntryTag(RULE)
+	@Key(RoleRuleConfig.ID)
 	@DefaultContainer
 	List<RoleRuleConfig> getRules();
 

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
@@ -41,6 +42,16 @@ public class TLObjectOverlay extends TransientObject {
 	@Override
 	public TLStructuredType tType() {
 		return _base.tType();
+	}
+
+	@Override
+	public TLObject tContainer() {
+		return _base.tContainer();
+	}
+
+	@Override
+	public TLReference tContainerReference() {
+		return _base.tContainerReference();
 	}
 
 	@Override

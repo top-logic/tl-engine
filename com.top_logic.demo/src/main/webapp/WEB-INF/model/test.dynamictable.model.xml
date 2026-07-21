@@ -55,6 +55,22 @@
 					navigate="true"
 					type="Development"
 				/>
+				<reference name="metrics"
+					composite="true"
+					kind="forwards"
+					navigate="true"
+					type="Metrics"
+				/>
+			</attributes>
+		</class>
+		<class name="Metrics">
+			<attributes>
+				<property name="budget"
+					type="tl.core:Integer"
+				/>
+				<property name="comment"
+					type="tl.core:String"
+				/>
 			</attributes>
 		</class>
 		<class name="Objective">

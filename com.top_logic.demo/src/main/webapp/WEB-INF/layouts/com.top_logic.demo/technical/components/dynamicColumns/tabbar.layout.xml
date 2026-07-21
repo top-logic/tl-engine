@@ -10,6 +10,7 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/developmentTable/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/developmentTreeTable/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/developmentTreeGrid/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/dynamicColumns/embeddedColumns/tabLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

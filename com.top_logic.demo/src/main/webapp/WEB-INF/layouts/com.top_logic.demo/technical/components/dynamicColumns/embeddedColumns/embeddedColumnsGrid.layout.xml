@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		showMaximize="true"
+		type="test.dynamictable:Development"
+	>
+		<name key="dynamic.6f0a1d20-3b8e-4f2a-9c11-1e0b7a2c4d01">
+			<en>Development projects</en>
+			<de>Entwicklungsprojekte</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model -> all(`test.dynamictable:Development`)"
+			modelForElement="element -> model -> $model"
+			supportsElement="true"
+			supportsModel="true"
+		/>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.EmbeddedObjectColumnProvider"
+				attributes="test.dynamictable:Metrics#budget, test.dynamictable:Metrics#comment"
+				idPrefix="e3d1c7a4-9b52-4f80-8a6e-7c5d2f1b0e34"
+				type="test.dynamictable:Metrics"
+			>
+				<object><![CDATA[dev -> model -> {
+  m = $dev.get(`test.dynamictable:Development#metrics`);
+  if ($m == null, new(`test.dynamictable:Metrics`, transient: true), $m)
+}]]></object>
+				<anchor><![CDATA[dev -> metrics -> model ->
+  $dev.set(`test.dynamictable:Development#metrics`,
+    $metrics.copy(transient: false))]]></anchor>
+				<group-label key="dynamic.1a7f9c30-2d4b-4e61-9f83-5b6a8c7d0e12">
+					<en>Metrics</en>
+					<de>Metriken</de>
+				</group-label>
+			</configurationProvider>
+		</configurationProviders>
+		<buttons>
+			<button id="ID_e0a1b2c3_d4e5_4f60_8a7b_9c0d1e2f3a40"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			>
+				<resourceKey key="dynamic.9b8c7d60-1e2f-4a30-8b41-5c6d7e8f9a01">
+					<en>Update</en>
+					<de>Aktualisieren</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

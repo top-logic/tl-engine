@@ -102,20 +102,6 @@
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.layout.react.resource.ClientResources">
-			<instance class="com.top_logic.layout.react.resource.ClientResources">
-				<resources>
-					<module-script name="tl-demo-controls"
-						resource="/script/tl-demo-controls.js"
-						requires="tl-react-bridge"
-					/>
-					<stylesheet name="demo-styles-css"
-						resource="/style/demoStylesCoreTheme.css"
-					/>
-				</resources>
-			</instance>
-		</config>
-
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance
 				error-on-missing-key="true"

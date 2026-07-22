@@ -17,7 +17,6 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -88,7 +87,7 @@ public class AskUserTool {
 		Logger.info("User interaction requested (id: " + request.getId() + ", type: " + type
 			+ ", header: " + header + ")", AskUserTool.class);
 
-		InteractionRequest interactionRow = InteractionRecorder.begin(
+		String interactionId = InteractionRecorder.begin(
 			currentExecution(context),
 			"choice".equals(type) ? AgentExecutionStore.InteractionType.CHOICE
 				: AgentExecutionStore.InteractionType.QUESTION,
@@ -108,19 +107,19 @@ public class AskUserTool {
 			Logger.info("User responded to interaction " + request.getId() + ": " + response,
 				AskUserTool.class);
 			if ("cancelled".equals(response)) {
-				InteractionRecorder.resolve(interactionRow,
+				InteractionRecorder.resolve(interactionId,
 					AgentExecutionStore.InteractionState.CANCELLED, null);
 				return "The user cancelled this request. Do not retry the same question. "
 					+ "Instead, write your final answer acknowledging the cancellation and ask "
 					+ "the user how they would like to proceed (without using the askUser tool).";
 			}
-			InteractionRecorder.resolve(interactionRow,
+			InteractionRecorder.resolve(interactionId,
 				AgentExecutionStore.InteractionState.RESOLVED, response);
 			return response;
 		} catch (TimeoutException e) {
 			Logger.warn("User interaction timed out (id: " + request.getId() + ")", AskUserTool.class);
 			store.resolve(request.getId(), "timeout");
-			InteractionRecorder.resolve(interactionRow,
+			InteractionRecorder.resolve(interactionId,
 				AgentExecutionStore.InteractionState.TIMED_OUT, null);
 			return "The user interaction timed out. Write your final answer and ask how they would "
 				+ "like to proceed (without using the askUser tool).";
@@ -128,7 +127,7 @@ public class AskUserTool {
 			Thread.currentThread().interrupt();
 			Logger.info("User interaction interrupted/cancelled (id: " + request.getId() + ")",
 				AskUserTool.class);
-			InteractionRecorder.resolve(interactionRow,
+			InteractionRecorder.resolve(interactionId,
 				AgentExecutionStore.InteractionState.CANCELLED, null);
 			return "The user cancelled this request. Do not retry the same question. "
 				+ "Instead, write your final answer acknowledging the cancellation and ask "
@@ -136,7 +135,7 @@ public class AskUserTool {
 		} catch (Exception e) {
 			Logger.error("User interaction failed (id: " + request.getId() + "): " + e.getMessage(),
 				e, AskUserTool.class);
-			InteractionRecorder.resolve(interactionRow,
+			InteractionRecorder.resolve(interactionId,
 				AgentExecutionStore.InteractionState.CANCELLED, "error: " + e.getMessage());
 			return "error: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
 		} finally {

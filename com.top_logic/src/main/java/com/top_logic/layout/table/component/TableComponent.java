@@ -63,8 +63,9 @@ import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.DefaultSelectionProvider;
+import com.top_logic.layout.component.DefaultSelectionProviderConfig;
 import com.top_logic.layout.component.InAppSelectable;
-import com.top_logic.layout.component.ListSelectionProvider;
 import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -133,7 +134,8 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	 */
 	@TagName(Config.TAG_NAME)
 	public interface Config extends BuilderComponent.Config, ColumnsChannel.Config,
-			InAppSelectable.InAppSelectableConfig, SelectionModelConfig, WithCustomConfigKey {
+			InAppSelectable.InAppSelectableConfig, DefaultSelectionProviderConfig, SelectionModelConfig,
+			WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -458,7 +460,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private CommandHandler _onSelectionChange;
 
-	private final ListSelectionProvider _defaultSelectionProvider;
+	private final DefaultSelectionProvider _defaultSelectionProvider;
 
 	private IFunction2<String, Object, String> _configKeyBuilder;
 
@@ -593,6 +595,14 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
 	private void setDefaultSelection() {
+		if (_defaultSelectionProvider != null && getConfig().getDefaultSelection() && this.listValid
+				&& getTableControl().isSelectable()) {
+			Set<Object> selection =
+				getSelectableObjects(_defaultSelectionProvider.computeDefaultSelection(getModel(), getSelected()));
+			SelectionUtil.setSelection(_selectionModel, selection);
+			return;
+		}
+
 		Object defaultSelection = getDefaultSelection();
 
 		if (defaultSelection != null) {
@@ -955,27 +965,12 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 				List<?> displayedRows = getTableModel().getDisplayedRows();
 
 				if (!CollectionUtil.isEmpty(displayedRows) && getTableControl().isSelectable()) {
-					if (_defaultSelectionProvider != null) {
-						return computeDefaultSelection(_defaultSelectionProvider, selectableRows(displayedRows),
-							getSelected());
-					}
 					return getDefaultSelection(displayedRows);
 				}
 			}
 		}
 
 		return null;
-	}
-
-	private List<?> selectableRows(List<?> displayedRows) {
-		TableModel tableModel = getTableModel();
-		List<Object> result = new ArrayList<>();
-		for (Object rowObject : displayedRows) {
-			if (isObjectSelectable(tableModel, rowObject)) {
-				result.add(rowObject);
-			}
-		}
-		return result;
 	}
 
 	/**

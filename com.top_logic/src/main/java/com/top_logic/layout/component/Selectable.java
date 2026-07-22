@@ -6,28 +6,20 @@
 package com.top_logic.layout.component;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.SelectionChannel;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
-import com.top_logic.layout.form.values.edit.AllInAppImplementations;
-import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
-import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
-import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * A {@link LayoutComponent} that offers a single selection channel.
@@ -64,31 +56,14 @@ public interface Selectable extends IComponent {
 		/** @see #getDefaultSelection() */
 		String DEFAULT_SELECTION = "defaultSelection";
 
-		/** @see #getDefaultSelectionProvider() */
-		String DEFAULT_SELECTION_PROVIDER = "defaultSelectionProvider";
-
 		/**
 		 * Whether the component always tries to select some object.
 		 *
-		 * @see ListSelectionProvider
+		 * @see DefaultSelectionProvider
 		 */
 		@Name(DEFAULT_SELECTION)
 		@BooleanDefault(true)
 		boolean getDefaultSelection();
-
-		/**
-		 * Algorithm selecting some object, if {@link #getDefaultSelection()} is enabled and the
-		 * user has not yet chosen an object.
-		 *
-		 * <p>
-		 * If {@link #getDefaultSelection()} is enabled but no value is given here, the first
-		 * selectable object is chosen by default.
-		 * </p>
-		 */
-		@Name(DEFAULT_SELECTION_PROVIDER)
-		@Options(fun = AllInAppImplementations.class)
-		@DynamicMode(fun = CommandHandler.ConfirmConfig.VisibleIf.class, args = @Ref(DEFAULT_SELECTION))
-		PolymorphicConfiguration<? extends ListSelectionProvider> getDefaultSelectionProvider();
 
 		/**
 		 * The source of the component's selection.
@@ -166,26 +141,6 @@ public interface Selectable extends IComponent {
 	 */
 	default void clearSelection() {
 		setSelected(null);
-	}
-
-	/**
-	 * Computes the object to select by default from the given selectable candidates using the
-	 * configured {@link SelectableConfig#getDefaultSelectionProvider()}.
-	 *
-	 * @param provider
-	 *        The {@link ListSelectionProvider} instantiated from
-	 *        {@link SelectableConfig#getDefaultSelectionProvider()}.
-	 * @param candidates
-	 *        The currently selectable objects to choose from, in display order.
-	 * @param lastSelection
-	 *        The current (or previous) selection that is passed through to the provider. May be
-	 *        <code>null</code>.
-	 * @return The single object to select by default, or <code>null</code> if none should be
-	 *         selected.
-	 */
-	default Object computeDefaultSelection(ListSelectionProvider provider, List<?> candidates,
-			Object lastSelection) {
-		return CollectionUtil.getFirst(provider.computeDefaultSelection(getModel(), candidates, lastSelection));
 	}
 
 	/**

@@ -115,7 +115,7 @@ import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.InAppSelectable;
-import com.top_logic.layout.component.ListSelectionProvider;
+import com.top_logic.layout.component.DefaultSelectionProvider;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.NoSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -532,7 +532,7 @@ public class GridComponent extends EditComponent implements
 
 	private CommandHandler _onSelectionChange;
 
-	private final ListSelectionProvider _defaultSelectionProvider;
+	private final DefaultSelectionProvider _defaultSelectionProvider;
 
 	private IFunction2<String, Object, String> _configKeyBuilder;
 
@@ -773,10 +773,13 @@ public class GridComponent extends EditComponent implements
 	 */
 	public Object getDefaultSelection() {
 		if (getConfig().getDefaultSelection()) {
+			if (_defaultSelectionProvider != null) {
+				return CollectionUtil.getFirst(_defaultSelectionProvider.computeDefaultSelection(getModel(), getSelected()));
+			}
+
 			TableViewModel tableViewModel = getViewModel();
 			TableModel tableModel = getTableField(getFormContext()).getTableModel();
 
-			List<Object> selectableRows = new ArrayList<>();
 			for (int rowIndex = 0; rowIndex < tableViewModel.getRowCount(); rowIndex++) {
 				FormGroup group = getFormGroup(tableViewModel, rowIndex);
 
@@ -784,15 +787,8 @@ public class GridComponent extends EditComponent implements
 				Object internalRow = _handler.getFirstTableRow(group);
 
 				if (_selectionModel.isSelectable(internalRow) && tableModel.containsRowObject(internalRow)) {
-					if (_defaultSelectionProvider == null) {
-						return rowObject;
-					}
-					selectableRows.add(rowObject);
+					return rowObject;
 				}
-			}
-
-			if (_defaultSelectionProvider != null) {
-				return computeDefaultSelection(_defaultSelectionProvider, selectableRows, getSelected());
 			}
 		}
 

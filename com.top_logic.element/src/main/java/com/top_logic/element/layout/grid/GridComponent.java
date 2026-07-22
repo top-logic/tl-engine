@@ -2370,11 +2370,14 @@ public class GridComponent extends EditComponent implements
                             }
                         }
 					} else {
-						// Custom columns can handle field creation through field providers.
+						// Custom columns can handle field creation through field providers. The row's
+						// form overlay (not the raw business object) is passed, so that a provider
+						// sees and operates on the form state - including, for a newly created row,
+						// the still-transient object that becomes persistent only on store.
 						FieldProvider fieldProvider = column.getFieldProvider();
 						if (fieldProvider != null) {
 							FormMember field =
-								fieldProvider.createField(rowObject, column.getAccessor(), columnName);
+								fieldProvider.createField(overlay, column.getAccessor(), columnName);
 							if (field != null) {
 								row.addMember(field);
 							}

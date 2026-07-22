@@ -7,9 +7,10 @@ package com.top_logic.model.search.providers;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
@@ -30,11 +31,11 @@ import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
-import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
+import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.layout.Accessor;
-import com.top_logic.layout.form.FormHandler;
+import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -263,15 +264,22 @@ public class EmbeddedObjectColumnProvider
 	private final List<TLStructuredTypePart> _attributes;
 
 	/**
-	 * The companion object of a row while it is being edited.
+	 * The companion object of a row while its embedded columns are being edited.
 	 *
 	 * <p>
-	 * A transient companion created on demand must stay the same instance from field creation until
-	 * it is persisted on save, so that edits accumulate on it. The entry is dropped once the
-	 * companion has been anchored.
+	 * A transient companion created on demand must stay the same instance across all embedded
+	 * columns of a row, so that edits accumulate on a single object. Keyed by the row's form
+	 * overlay, which is stable while the row is edited and is discarded (and garbage collected)
+	 * afterwards.
 	 * </p>
 	 */
-	private final Map<Object, TLObject> _companionByRow = new HashMap<>();
+	private final Map<TLObject, TLObject> _companionByRow = new WeakHashMap<>();
+
+	/**
+	 * Row overlays for which the companion anchor operation is already installed, ensuring it runs
+	 * at most once per row regardless of the number of embedded columns.
+	 */
+	private final Set<TLObject> _anchorInstalled = Collections.newSetFromMap(new WeakHashMap<TLObject, Boolean>());
 
 	/**
 	 * Creates a {@link EmbeddedObjectColumnProvider} from configuration.
@@ -358,64 +366,74 @@ public class EmbeddedObjectColumnProvider
 	}
 
 	/**
-	 * Looks up the companion object for the given row without remembering a freshly created one.
+	 * Looks up the companion object for the given row by evaluating the configured
+	 * {@link Config#getObject() object function}.
 	 *
-	 * <p>
-	 * Used for read-only display. An object being edited is served from {@link #_companionByRow} so
-	 * that it stays stable across the edit; all other rows resolve their companion afresh.
-	 * </p>
+	 * @return The companion object, or <code>null</code> if the function yields no object.
 	 */
-	TLObject displayCompanion(Object row) {
-		TLObject editedCompanion = _companionByRow.get(row);
-		if (editedCompanion != null) {
-			return editedCompanion;
-		}
-		return lookupCompanion(row);
+	TLObject lookupCompanion(TLObject row) {
+		Object result = _object.execute(row, _component.getModel());
+		return result instanceof TLObject ? (TLObject) result : null;
 	}
 
 	/**
-	 * Looks up the companion object for the given row and remembers it for the duration of the edit.
+	 * Looks up the companion for a row that is being edited, keeping the same instance for all
+	 * embedded columns of that row.
+	 *
+	 * <p>
+	 * The row's {@link TLFormObject form overlay} is used both as the stable cache key and as the
+	 * input to the {@link Config#getObject() object function}, so that the lookup sees the current
+	 * form state (e.g. a reference just set in the form) instead of only the persisted value.
+	 * </p>
 	 */
-	TLObject editCompanion(Object row) {
-		TLObject companion = _companionByRow.get(row);
+	private TLObject editCompanion(TLFormObject rowOverlay) {
+		TLObject companion = _companionByRow.get(rowOverlay);
 		if (companion == null) {
-			companion = lookupCompanion(row);
+			companion = lookupCompanion(rowOverlay);
 			if (companion != null) {
-				_companionByRow.put(row, companion);
+				_companionByRow.put(rowOverlay, companion);
 			}
 		}
 		return companion;
 	}
 
-	private TLObject lookupCompanion(Object row) {
-		Object result = _object.execute(row, _component.getModel());
-		return result instanceof TLObject ? (TLObject) result : null;
-	}
-
-	private AttributeUpdateContainer updateContainer() {
-		return ((AttributeFormContext) ((FormHandler) _component).getFormContext()).getAttributeUpdateContainer();
-	}
-
 	/**
-	 * Persists the companion of the given row if it is transient and the row was edited.
+	 * Persists a transient companion and links it to its row when the row's form is stored.
 	 *
 	 * <p>
-	 * Runs on save, after the companion's edited values have been written back (in memory for a
-	 * transient companion). The anchor operation is expected to create a persistent copy and link it
-	 * to the row. The remembered companion is dropped so that a possible second call for another
-	 * edited column of the same row does nothing and a subsequent lookup resolves the now-linked
-	 * persistent object.
+	 * Runs as a deferred {@link Modification} at the end of the form store, i.e. after the row has
+	 * been created (for a new row) and after the companion's edited values have been written to it.
+	 * The configured {@link Config#getAnchor() anchor operation} creates a persistent representation
+	 * of the companion and links it to the (now persistent) row. Nothing is done when the companion
+	 * was not actually edited, so that leaving the embedded columns untouched does not create an
+	 * empty companion.
 	 * </p>
 	 */
-	void anchor(Object row) {
-		TLObject companion = _companionByRow.get(row);
-		if (companion == null) {
+	private void anchorCompanion(TLFormObject rowOverlay, TLFormObject companionOverlay, TLObject companion) {
+		_companionByRow.remove(rowOverlay);
+		_anchorInstalled.remove(rowOverlay);
+
+		if (!companion.tTransient()) {
 			return;
 		}
-		if (companion.tTransient() && _anchor != null) {
-			_anchor.execute(row, companion, _component.getModel());
+		if (!isEdited(companionOverlay)) {
+			return;
 		}
-		_companionByRow.remove(row);
+		TLObject row = rowOverlay.getEditedObject();
+		if (row == null) {
+			return;
+		}
+		_anchor.execute(row, companion, _component.getModel());
+	}
+
+	private static boolean isEdited(TLFormObject companionOverlay) {
+		for (AttributeUpdate update : companionOverlay.getUpdates()) {
+			FormMember field = update.getField();
+			if (field instanceof FormField input && input.isChanged()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private final class CompanionAccessor implements Accessor<Object> {
@@ -428,16 +446,15 @@ public class EmbeddedObjectColumnProvider
 
 		@Override
 		public Object getValue(Object row, String property) {
-			TLObject companion = displayCompanion(row);
+			TLObject companion = row instanceof TLObject ? lookupCompanion((TLObject) row) : null;
 			return companion == null ? null : companion.tValue(_attribute);
 		}
 
 		@Override
 		public void setValue(Object row, String property, Object value) {
-			/* The value has already been stored on the companion through its AttributeUpdate when the
-			 * form context was stored. A transient companion additionally needs to be persisted and
-			 * linked to its row. */
-			anchor(row);
+			/* The embedded columns are edited through the companion's own AttributeUpdate and
+			 * persisted when the row's form is stored (see CompanionFieldProvider). Storing the cell
+			 * value through the row accessor is neither possible nor necessary. */
 		}
 	}
 
@@ -454,19 +471,52 @@ public class EmbeddedObjectColumnProvider
 			if (_attribute.isDerived()) {
 				return null;
 			}
+			if (!(row instanceof TLFormObject)) {
+				/* Fields are only created in an editable form context, where the grid passes the
+				 * row's form overlay. */
+				return null;
+			}
+			TLFormObject rowOverlay = (TLFormObject) row;
 
-			TLObject companion = editCompanion(row);
+			TLObject companion = editCompanion(rowOverlay);
 			if (companion == null) {
 				return null;
 			}
 
 			boolean disabled = companion.tTransient() && _anchor == null;
 
-			AttributeUpdateContainer container = updateContainer();
-			TLFormObject overlay = container.editObject(companion);
-			AttributeUpdate update = overlay.newEditUpdateDefault(_attribute, disabled);
+			AttributeUpdateContainer container = rowOverlay.getScope();
+			TLFormObject companionOverlay = container.editObject(companion);
+			AttributeUpdate update = companionOverlay.newEditUpdateDefault(_attribute, disabled);
+
+			if (companion.tTransient() && _anchor != null && _anchorInstalled.add(rowOverlay)) {
+				installAnchor(update, rowOverlay, companionOverlay, companion);
+			}
+
 			return AttributeFormFactory.getInstance().toFormMember(update, container, columnName);
 		}
+	}
+
+	/**
+	 * Installs a {@link AttributeUpdate.StoreAlgorithm} that, once the given update has been stored,
+	 * persists and links the transient companion through {@link #anchorCompanion}.
+	 *
+	 * <p>
+	 * Tying the companion persistence to the form store makes it run exactly once per row for both
+	 * edited and newly created rows (both go through
+	 * {@link com.top_logic.element.meta.form.AttributeFormContext#store()}), inside the store
+	 * transaction, and after the row and the companion values have been written.
+	 * </p>
+	 */
+	private void installAnchor(AttributeUpdate update, TLFormObject rowOverlay, TLFormObject companionOverlay,
+			TLObject companion) {
+		update.setStoreAlgorithm(new AttributeUpdate.DefaultStorageAlgorithm() {
+			@Override
+			public Modification store(AttributeUpdate storedUpdate) {
+				Modification result = super.store(storedUpdate);
+				return result.andThen(() -> anchorCompanion(rowOverlay, companionOverlay, companion));
+			}
+		});
 	}
 
 }

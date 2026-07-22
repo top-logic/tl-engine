@@ -338,6 +338,11 @@ public class ChatProcessor {
 			persistMessages(tracker, tracker.getActiveSessionId());
 		}
 
+		// Evict any dead state left over from a prior run of this session so it cannot shadow the
+		// new run in getProcessingStateForSession (which would swallow the new run's ask-user
+		// questions). Prior runs' final events have already been flushed by this point.
+		tracker.evictCompletedStatesForSession(tracker.getActiveSessionId());
+
 		AIProcessingState state = new AIProcessingState();
 		state.startProcessing();
 		String taskId = tracker.generateTaskId();

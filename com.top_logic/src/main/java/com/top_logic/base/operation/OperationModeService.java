@@ -20,30 +20,35 @@ import com.top_logic.mig.html.ContainerDetector;
  * <p>
  * The {@link #getMode() environment axis} ({@link OperationMode#DEVELOPMENT development} /
  * {@link OperationMode#TEST test} / {@link OperationMode#PRODUCTION production}) is boot-time
- * configuration and does not change while the application is running.
+ * configuration and does not change while the application is running. It is therefore resolved once
+ * at service {@link #startUp() startup} and cached.
  * </p>
  *
  * <p>
- * Runtime maintenance is a separate, orthogonal axis exposed via
- * {@link #isMaintenanceActive() a maintenance flag}. A consumer folds the two axes as follows: if
- * maintenance is active, treat the application as being in maintenance regardless of the
- * environment; otherwise behaviour keys off {@link #getMode() the environment mode}.
+ * Runtime maintenance is a <em>separate</em>, orthogonal axis: a production install can be in a
+ * maintenance window without changing its environment. That axis is served by the
+ * {@link MaintenanceWindowManager} (see {@link MaintenanceWindowManager#isMaintenanceActive()}), not
+ * by this service. A consumer that needs both folds them as follows: if maintenance is active, treat
+ * the application as being in maintenance regardless of the environment; otherwise behaviour keys
+ * off {@link #getMode() the environment mode}.
  * </p>
+ *
+ * @see MaintenanceWindowManager The orthogonal runtime-maintenance axis.
  *
  * @author <a href="mailto:jonathan.huesing@top-logic.com">Jonathan Hüsing</a>
  */
-public class ApplicationModeService extends ConfiguredManagedClass<ApplicationModeService.Config> {
+public class OperationModeService extends ConfiguredManagedClass<OperationModeService.Config> {
 
 	/**
-	 * Configuration of the {@link ApplicationModeService}.
+	 * Configuration of the {@link OperationModeService}.
 	 */
-	public interface Config extends ConfiguredManagedClass.Config<ApplicationModeService> {
+	public interface Config extends ConfiguredManagedClass.Config<OperationModeService> {
 
 		/**
 		 * The configured operational environment.
 		 *
 		 * <p>
-		 * If left unset, the service {@link ApplicationModeService#getMode() derives} the mode: an
+		 * If left unset, the service {@link OperationModeService#getMode() derives} the mode: an
 		 * automated test install becomes {@link OperationMode#TEST test}, everything else defaults
 		 * to {@link OperationMode#PRODUCTION production}. A developer workspace is selected by setting
 		 * this property (typically through the {@code %OPERATION_MODE%} alias backed by the
@@ -59,16 +64,22 @@ public class ApplicationModeService extends ConfiguredManagedClass<ApplicationMo
 	}
 
 	/**
-	 * The effective environment, computed lazily on first access and then cached (the environment
-	 * axis is static for the lifetime of the application).
+	 * The effective environment, resolved once at {@link #startUp()} (the environment axis is static
+	 * for the lifetime of the application).
 	 */
-	private volatile OperationMode _effectiveMode;
+	private OperationMode _mode;
 
 	/**
-	 * Creates a new {@link ApplicationModeService}.
+	 * Creates a new {@link OperationModeService}.
 	 */
-	public ApplicationModeService(InstantiationContext context, Config config) {
+	public OperationModeService(InstantiationContext context, Config config) {
 		super(context, config);
+	}
+
+	@Override
+	protected void startUp() {
+		super.startUp();
+		_mode = computeMode();
 	}
 
 	/**
@@ -88,16 +99,11 @@ public class ApplicationModeService extends ConfiguredManagedClass<ApplicationMo
 	 * <p>
 	 * Production is therefore the zero-configuration default: an installation with neither a
 	 * configured mode nor the {@link Environment#OPERATION_MODE} variable set is treated as
-	 * production.
+	 * production. The value is computed at {@link #startUp()} and returned unchanged afterwards.
 	 * </p>
 	 */
 	public OperationMode getMode() {
-		OperationMode result = _effectiveMode;
-		if (result == null) {
-			result = computeMode();
-			_effectiveMode = result;
-		}
-		return result;
+		return _mode;
 	}
 
 	private OperationMode computeMode() {
@@ -119,14 +125,10 @@ public class ApplicationModeService extends ConfiguredManagedClass<ApplicationMo
 	 * variable.
 	 * </p>
 	 *
-	 * <p>
-	 * Pure function so that each derivation branch can be tested in isolation.
-	 * </p>
-	 *
 	 * @param underTest
 	 *        Whether the application runs inside an automated test container.
 	 */
-	public static OperationMode deriveMode(boolean underTest) {
+	private static OperationMode deriveMode(boolean underTest) {
 		if (underTest) {
 			return OperationMode.TEST;
 		}
@@ -143,35 +145,16 @@ public class ApplicationModeService extends ConfiguredManagedClass<ApplicationMo
 	}
 
 	/**
-	 * Whether the application currently is in a maintenance window.
-	 *
-	 * <p>
-	 * This is the orthogonal maintenance axis, delegating to the {@link MaintenanceWindowManager}.
-	 * It is null-safe: if the manager is absent (minimal setups), maintenance is reported inactive.
-	 * </p>
+	 * The currently active {@link OperationModeService}.
 	 */
-	public boolean isMaintenanceActive() {
-		if (!MaintenanceWindowManager.Module.INSTANCE.isActive()) {
-			return false;
-		}
-		MaintenanceWindowManager manager = MaintenanceWindowManager.getInstance();
-		if (manager == null) {
-			return false;
-		}
-		return manager.getMaintenanceModeState() == MaintenanceWindowManager.IN_MAINTENANCE_MODE;
-	}
-
-	/**
-	 * The currently active {@link ApplicationModeService}.
-	 */
-	public static ApplicationModeService getInstance() {
+	public static OperationModeService getInstance() {
 		return Module.INSTANCE.getImplementationInstance();
 	}
 
 	/**
-	 * Module for instantiation of the {@link ApplicationModeService}.
+	 * Module for instantiation of the {@link OperationModeService}.
 	 */
-	public static class Module extends TypedRuntimeModule<ApplicationModeService> {
+	public static class Module extends TypedRuntimeModule<OperationModeService> {
 
 		/** Singleton for this module. */
 		public static final Module INSTANCE = new Module();
@@ -181,8 +164,8 @@ public class ApplicationModeService extends ConfiguredManagedClass<ApplicationMo
 		}
 
 		@Override
-		public Class<ApplicationModeService> getImplementation() {
-			return ApplicationModeService.class;
+		public Class<OperationModeService> getImplementation() {
+			return OperationModeService.class;
 		}
 	}
 }

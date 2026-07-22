@@ -7,7 +7,7 @@ package com.top_logic.tool.execution;
 
 import java.util.Map;
 
-import com.top_logic.base.operation.ApplicationModeService;
+import com.top_logic.base.operation.OperationModeService;
 import com.top_logic.base.operation.OperationMode;
 import com.top_logic.basic.core.workspace.Environment;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -23,7 +23,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * live {@link OperationMode#PRODUCTION production} install.
  * </p>
  *
- * @see ApplicationModeService#getMode()
+ * @see OperationModeService#getMode()
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -51,15 +51,15 @@ public class IDEOnly implements ExecutabilityRule {
 	 * The effective {@link OperationMode} to gate on.
 	 *
 	 * <p>
-	 * Consults the {@link ApplicationModeService single source of truth} for the operation mode. In
+	 * Consults the {@link OperationModeService single source of truth} for the operation mode. In
 	 * a minimal setup where that service is not started, the low-level {@link Environment} marker is
 	 * the only available signal and is used as a fallback (it answers the narrower question
 	 * "packaged / non-development", which for a bare setup maps to production vs. development).
 	 * </p>
 	 */
 	private static OperationMode effectiveMode() {
-		if (ApplicationModeService.Module.INSTANCE.isActive()) {
-			return ApplicationModeService.getInstance().getMode();
+		if (OperationModeService.Module.INSTANCE.isActive()) {
+			return OperationModeService.getInstance().getMode();
 		}
 		return Environment.isDeployed() ? OperationMode.PRODUCTION : OperationMode.DEVELOPMENT;
 	}

@@ -19,10 +19,12 @@ import com.top_logic.basic.config.ExternallyNamed;
  * <p>
  * Runtime maintenance is a <em>separate</em>, orthogonal axis (a production install can be in a
  * maintenance window) and is therefore not modelled as a member here. Consumers fold the two axes
- * together via {@link ApplicationModeService#isMaintenanceActive() a separate maintenance flag}.
+ * together via
+ * {@link com.top_logic.base.administration.MaintenanceWindowManager#isMaintenanceActive() a separate
+ * maintenance flag}.
  * </p>
  *
- * @see ApplicationModeService
+ * @see OperationModeService
  *
  * @author <a href="mailto:jonathan.huesing@top-logic.com">Jonathan Hüsing</a>
  */

@@ -15,7 +15,7 @@
 		<entry name="%ENVIRONMENT%" value="${env:tl_environment:}"/>
 
 		<!-- Operational environment (development/test/production) of this install. Empty falls
-			back to the automatic derivation in ApplicationModeService. -->
+			back to the automatic derivation in OperationModeService. -->
 		<entry name="%OPERATION_MODE%" value="${env:tl_operation_mode:}"/>
 		
 		<!-- Name of the host where the application can be reached. -->

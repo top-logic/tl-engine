@@ -961,7 +961,12 @@ public class GridComponent extends EditComponent implements
 			// No adaption of list, because it still has to be created.
 			return;
 		}
-		boolean changes = gridBuilder().handleTLObjectCreations(this, created);
+		/* Only objects of a configured row type can become rows. Objects of other types created as a
+		 * side effect of storing a row (e.g. a related object that a column provider persists on save)
+		 * must not be turned into spurious rows. This mirrors the row-type check applied to updates in
+		 * receiveModelChangedEvent. */
+		Stream<? extends TLObject> rowCreations = created.filter(_rowTypeFilter::accept);
+		boolean changes = gridBuilder().handleTLObjectCreations(this, rowCreations);
 		if (changes) {
 			invalidateSelection();
 		}

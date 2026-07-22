@@ -39,6 +39,18 @@
 			</configurationProvider>
 		</configurationProviders>
 		<buttons>
+			<button id="createRow"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+			>
+				<type-options
+					include-subtypes="false"
+					type="test.dynamictable:Development"
+				/>
+			</button>
+			<button id="deleteRow"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
 			<button id="ID_e0a1b2c3_d4e5_4f60_8a7b_9c0d1e2f3a40"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 			>

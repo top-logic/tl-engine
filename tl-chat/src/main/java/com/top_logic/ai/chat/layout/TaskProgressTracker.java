@@ -107,6 +107,30 @@ public class TaskProgressTracker {
 	}
 
 	/**
+	 * Evicts completed (non-{@link AIProcessingState#isProcessing() processing}) states for the
+	 * given chat session.
+	 *
+	 * <p>
+	 * Called when a new run starts for a session so a prior run's dead state cannot linger and
+	 * shadow the new run in {@link #getProcessingStateForSession(String)}. Only non-processing
+	 * states are removed, so an in-flight run of the same session is never touched. Evicting at run
+	 * start (rather than at run end) is safe: the completed run's final events have already been
+	 * flushed to the client - the user only sends a follow-up message after seeing the previous run
+	 * finish.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The chat session id; {@code null} is a no-op.
+	 */
+	public void evictCompletedStatesForSession(String sessionId) {
+		if (sessionId == null) {
+			return;
+		}
+		_processingStates.values()
+			.removeIf(state -> sessionId.equals(state.getSessionId()) && !state.isProcessing());
+	}
+
+	/**
 	 * Returns the processing state for the given task ID, or null if not found.
 	 *
 	 * @param taskId
@@ -144,6 +168,14 @@ public class TaskProgressTracker {
 	 * a background run's interactions are not surfaced into the foreground chat.
 	 * </p>
 	 *
+	 * <p>
+	 * When several states share the session id (e.g. a completed run whose state has not been
+	 * evicted yet plus the live run of a follow-up message), the {@link AIProcessingState#isProcessing()
+	 * processing} one is preferred. This mirrors {@link #getAnyActiveProcessingState()} and prevents a
+	 * dead state (with a {@code null} {@code UserInteractionStore}) from shadowing the live run and
+	 * swallowing its pending questions.
+	 * </p>
+	 *
 	 * @param sessionId
 	 *        The chat session id; null returns any active state (single-session fallback).
 	 */
@@ -151,12 +183,18 @@ public class TaskProgressTracker {
 		if (sessionId == null) {
 			return getAnyActiveProcessingState();
 		}
+		AIProcessingState anyMatch = null;
 		for (AIProcessingState state : _processingStates.values()) {
 			if (sessionId.equals(state.getSessionId())) {
-				return state;
+				if (state.isProcessing()) {
+					return state;
+				}
+				if (anyMatch == null) {
+					anyMatch = state;
+				}
 			}
 		}
-		return null;
+		return anyMatch;
 	}
 
 	/**

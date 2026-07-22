@@ -18,6 +18,7 @@ import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -259,7 +260,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		Person formerPerson = context.getCurrentPersonWrapper();
 		// An explicit context id can only be set without a current person.
 		context.setCurrentPerson(null);
-		context.setContextId(SessionContext.SYSTEM_ID_PREFIX + TestTLScriptSecurity.class.getName());
+		context.setContextId(ThreadContextManager.systemContextId(TestTLScriptSecurity.class));
 		try {
 			assertTrue(ThreadContext.isSystemContext());
 			assertEquals(set(_p1), asSet(eval(PROJECTS_WITH_WELL_PAID_RESPONSIBLE)));
@@ -793,7 +794,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		TLContext context = TLContext.getContext();
 		Person formerPerson = context.getCurrentPersonWrapper();
 		context.setCurrentPerson(null);
-		context.setContextId(SessionContext.SYSTEM_ID_PREFIX + TestTLScriptSecurity.class.getName());
+		context.setContextId(ThreadContextManager.systemContextId(TestTLScriptSecurity.class));
 		try {
 			assertTrue(ThreadContext.isSystemContext());
 			assertTrue(accessRights.isAllowed(null, _p1, secret, SimpleBoundCommandGroup.WRITE));

@@ -547,7 +547,15 @@ public abstract class ThreadContextManager extends ManagedClass {
 		return newInteraction(servletContext, request, response);
 	}
 
-	private String systemContextId(Class<?> caller) {
+	/**
+	 * Creates the context id for a {@link SubSessionContext} when the system executes some
+	 * operations.
+	 * 
+	 * @param caller
+	 *        Class that sets the context id.
+	 */
+	@FrameworkInternal
+	public static String systemContextId(Class<?> caller) {
 		return SessionContext.SYSTEM_ID_PREFIX + caller.getName();
 	}
 

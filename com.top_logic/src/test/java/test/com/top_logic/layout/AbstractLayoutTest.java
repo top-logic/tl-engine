@@ -23,6 +23,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.html.SafeHTML;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.layout.ContentHandlersRegistry;
@@ -78,6 +79,7 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		ml.addComponent(component);
 		
 		TLSubSessionContext subSession = ComponentTestUtils.newSubSession();
+		subSession.setContextId(ThreadContextManager.systemContextId(getClass()));
 		
 		ContentHandlersRegistry urlContext = new ContentHandlersRegistry();
 		WindowId windowId = new WindowId("test");

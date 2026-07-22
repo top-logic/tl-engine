@@ -5,7 +5,7 @@
 	
 	Two tabs, each hosting its own independent tile-stack with its own navPath channel and its
 	own breadcrumb. Only one tab's content is mounted at a time, so only one breadcrumb is in
-	the slot registry at a time; the app bar's <slot name="secondary"/> shows the active tab's
+	the slot registry at a time; the app bar's <slot name="appbar-content"/> shows the active tab's
 	breadcrumb. Switching tabs implicitly switches the visible breadcrumb - no app-level
 	multiplexer needed.
 	
@@ -26,7 +26,7 @@
 					</channels>
 
 					<stack>
-						<slot-content to="secondary">
+						<slot-content to="appbar-content">
 							<tile-breadcrumb path="navPath">
 								<home-label>
 									<en>Workspace A – Accounts</en>
@@ -53,7 +53,7 @@
 					</channels>
 
 					<stack>
-						<slot-content to="secondary">
+						<slot-content to="appbar-content">
 							<tile-breadcrumb path="navPath">
 								<home-label>
 									<en>Workspace B – Accounts</en>

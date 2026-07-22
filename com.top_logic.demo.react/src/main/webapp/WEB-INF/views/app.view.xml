@@ -240,6 +240,14 @@
 					<slot name="appbar-leading"/>
 				</leading>
 				<children>
+					<!--
+						Inline projection slot. Any descendant view in the shell may push content
+						here by declaring <slot-content to="appbar-content">...</slot-content>; the
+						slot routes contributions to the nearest matching <slot> by tree distance.
+						The tiles demos use it to raise their drill-down breadcrumb to the app bar.
+					-->
+					<slot name="appbar-content"/>
+
 					<text
 						css-class="tlAppBarUser"
 						input="currentPerson"

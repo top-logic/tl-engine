@@ -32,6 +32,105 @@
 							<de>Objektliste</de>
 						</label>
 					</nav-item>
+					<nav-item id="charts"
+						icon="css:bi bi-bar-chart-line"
+					>
+						<view-ref view="demo/chart-demo.view.xml"/>
+						<label>
+							<en>Chart Demo</en>
+							<de>Diagramm-Demo</de>
+						</label>
+					</nav-item>
+					<nav-item id="flow-diagram"
+						icon="css:bi bi-diagram-3"
+					>
+						<view-ref view="demo/flow-diagram-demo.view.xml"/>
+						<label>
+							<en>Flow Diagram</en>
+							<de>Flow-Diagramm</de>
+						</label>
+					</nav-item>
+					<nav-item id="gantt-demo"
+						icon="css:bi bi-bar-chart-steps"
+					>
+						<view-ref view="demo/gantt-demo.view.xml"/>
+						<label>
+							<en>Gantt Demo</en>
+							<de>Gantt-Demo</de>
+						</label>
+					</nav-item>
+					<nav-item id="pdf"
+						icon="css:bi bi-file-earmark-pdf"
+					>
+						<view-ref view="demo/pdf-demo.view.xml"/>
+						<label>
+							<en>PDF Viewer</en>
+							<de>PDF-Viewer</de>
+						</label>
+					</nav-item>
+					<nav-item id="config-editor"
+						icon="css:bi bi-sliders"
+					>
+						<view-ref view="demo/config-editor-demo.view.xml"/>
+						<label>
+							<en>Config Editor</en>
+							<de>Konfigurationseditor</de>
+						</label>
+					</nav-item>
+					<nav-item id="tlscript"
+						icon="css:bi bi-code-square"
+					>
+						<view-ref view="demo/tlscript-editor-demo.view.xml"/>
+						<label>
+							<en>TL-Script Editor</en>
+							<de>TL-Script-Editor</de>
+						</label>
+					</nav-item>
+					<nav-item id="constraints"
+						icon="css:bi bi-check-circle"
+					>
+						<view-ref view="demo/constraint-test.view.xml"/>
+						<label>
+							<en>Constraint Test</en>
+							<de>Constraint-Test</de>
+						</label>
+					</nav-item>
+					<nav-item id="tiles-demo"
+						icon="css:bi bi-layers"
+					>
+						<view-ref view="demo/tiles-demo.view.xml"/>
+						<label>
+							<en>Tiles Demo</en>
+							<de>Tiles-Demo</de>
+						</label>
+					</nav-item>
+					<nav-item id="tiles-multi-demo"
+						icon="css:bi bi-columns-gap"
+					>
+						<view-ref view="demo/tiles-multi-demo.view.xml"/>
+						<label>
+							<en>Tiles Multi-Tab Demo</en>
+							<de>Tiles Mehr-Tab-Demo</de>
+						</label>
+					</nav-item>
+					<nav-item id="responsive-md-demo"
+						icon="css:bi bi-layout-sidebar-inset"
+					>
+						<view-ref view="demo/responsive-md-demo.view.xml"/>
+						<label>
+							<en>Responsive Master-Detail Demo</en>
+							<de>Responsive Master-Detail-Demo</de>
+						</label>
+					</nav-item>
+					<nav-item id="errors"
+						icon="css:bi bi-exclamation-triangle"
+					>
+						<view-ref view="demo/error-handling-demo.view.xml"/>
+						<label>
+							<en>Error Handling</en>
+							<de>Fehlerbehandlung</de>
+						</label>
+					</nav-item>
 					<separator/>
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"
@@ -50,7 +149,10 @@
 		<header>
 			<app-bar variant="flat">
 				<commands>
-					<open-designer placement="TOOLBAR" image="css:bi bi-easel">
+					<open-designer
+						image="css:bi bi-easel"
+						placement="TOOLBAR"
+					>
 						<label>
 							<en>Designer</en>
 							<de>Designer</de>

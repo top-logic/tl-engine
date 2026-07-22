@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<panel>
+		<title>
+			<en>Error Handling Demo</en>
+			<de>Fehlerbehandlungs-Demo</de>
+		</title>
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand">
+				<label>
+					<en>Throw TopLogicException</en>
+					<de>TopLogicException auslösen</de>
+				</label>
+				<throw-error message="This is a test error from a TopLogicException."/>
+			</action>
+		</button>
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand">
+				<label>
+					<en>Throw KB error (wrapped)</en>
+					<de>KB-Fehler auslösen (gewrapped)</de>
+				</label>
+				<with-transaction>
+					<execute-script function="x -> new(`test.constraints:ConstraintTestType`)"/>
+				</with-transaction>
+			</action>
+		</button>
+	</panel>
+</view>

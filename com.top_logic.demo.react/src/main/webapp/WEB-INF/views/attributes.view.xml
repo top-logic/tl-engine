@@ -29,7 +29,7 @@
 								<de>Beispiele erzeugen</de>
 							</label>
 							<with-transaction>
-								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, 'Sample ' + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o; })"/>
+								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#count`, ($i + 1) * 100); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o; })"/>
 							</with-transaction>
 						</generic-command>
 						<generic-command
@@ -93,10 +93,54 @@
 						types="demo.react:Demo"
 					>
 						<columns>
-							<column attribute="name"/>
+							<column attribute="name">
+								<!-- Application-defined filter: predefined regexp facets as checkboxes. -->
+								<filter class="com.top_logic.table.filter.RegexpOptionsFilter">
+									<pattern regexp="^Part">
+										<label>
+											<en>Parts</en>
+											<de>Teile</de>
+										</label>
+									</pattern>
+									<pattern regexp="^Tool">
+										<label>
+											<en>Tools</en>
+											<de>Werkzeuge</de>
+										</label>
+									</pattern>
+									<pattern regexp="^Usage">
+										<label>
+											<en>Usage entries</en>
+											<de>Verwendungen</de>
+										</label>
+									</pattern>
+								</filter>
+							</column>
 							<column attribute="string"/>
 							<column attribute="priority"/>
 							<column attribute="active"/>
+							<column attribute="count">
+								<!--
+									Model- and script-defined filter: the form is a transient
+									demo.filter:LongRange instance; the match function builds a
+									per-row predicate closure from it.
+								-->
+								<filter class="com.top_logic.layout.view.table.ScriptedFilter"
+									model="demo.filter:LongRange"
+								>
+									<label>
+										<en>Count range (scripted)</en>
+										<de>Anzahl-Bereich (per Skript)</de>
+									</label>
+									<match><![CDATA[
+										params -> value -> row -> {
+											min = $params.get(`demo.filter:LongRange#min`);
+											max = $params.get(`demo.filter:LongRange#max`);
+											($min == null || $value >= $min) && ($max == null || $value <= $max)
+										}
+									]]></match>
+								</filter>
+							</column>
 							<column attribute="amount"/>
 							<column attribute="date"/>
 							<column attribute="owner"/>

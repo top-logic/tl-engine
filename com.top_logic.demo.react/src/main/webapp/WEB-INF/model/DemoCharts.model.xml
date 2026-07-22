@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="demo.charts">
+		<annotations>
+			<display-group value="demo"/>
+		</annotations>
+
+		<class name="Kategorie">
+			<annotations>
+				<main-properties properties="name"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+
+		<class name="Transaktion"
+			abstract="true"
+		>
+			<annotations>
+				<main-properties properties="datum, wert, kategorie"/>
+			</annotations>
+			<attributes>
+				<property name="datum"
+					mandatory="true"
+					type="tl.core:Date"
+				/>
+				<property name="wert"
+					mandatory="true"
+					type="tl.core:Double"
+				/>
+				<reference name="kategorie"
+					kind="forwards"
+					mandatory="true"
+					type="Kategorie"
+				/>
+				<property name="beschreibung"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+
+		<class name="Verkauf">
+			<generalizations>
+				<generalization type="Transaktion"/>
+			</generalizations>
+		</class>
+
+		<class name="Einkauf">
+			<generalizations>
+				<generalization type="Transaktion"/>
+			</generalizations>
+		</class>
+	</module>
+</model>

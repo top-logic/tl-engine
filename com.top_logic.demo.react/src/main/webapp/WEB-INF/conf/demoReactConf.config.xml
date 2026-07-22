@@ -15,6 +15,11 @@
 				<bundles>
 					<bundle name="model.demo.react.messages"/>
 					<bundle name="model.demo.tickets.messages"/>
+					<bundle name="model.demo.charts.messages"/>
+					<bundle name="model.test.constraints.messages"/>
+					<bundle name="model.test.flowchart.messages"/>
+					<bundle name="model.tl.demo.projectManagement.messages"/>
+					<bundle name="model.demo.filter.messages"/>
 				</bundles>
 			</instance>
 		</config>
@@ -23,6 +28,11 @@
 				<declarations>
 					<declaration file="/WEB-INF/model/demo.react.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.tickets.model.xml"/>
+					<declaration file="/WEB-INF/model/DemoCharts.model.xml"/>
+					<declaration file="/WEB-INF/model/test.constraints.model.xml"/>
+					<declaration file="/WEB-INF/model/test.flowchart.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.demo.projectManagement.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.filter.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

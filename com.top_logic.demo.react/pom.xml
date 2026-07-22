@@ -45,6 +45,21 @@
 
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react-chartjs</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-react-flow-server</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-configedit</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-dev-tools</artifactId>
     </dependency>
   </dependencies>

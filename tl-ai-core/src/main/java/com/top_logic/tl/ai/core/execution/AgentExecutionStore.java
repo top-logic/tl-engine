@@ -717,20 +717,37 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
-	 * Records the outcome of a human-in-the-loop request.
+	 * Records the outcome of a human-in-the-loop request, located by its {@code requestId}.
 	 *
+	 * <p>
+	 * The row is looked up and updated entirely on the writer thread, whose fresh system
+	 * interaction sees KB HEAD. Callers therefore pass the stable {@code requestId} string
+	 * (captured when the request was created) rather than a persistent {@link InteractionRequest}
+	 * wrapper: the calling agent/tool thread's KB view is pinned to a revision that predates the
+	 * row's creation, so dereferencing such a wrapper on that thread throws "created after access
+	 * revision N". A request id that matches no persisted row (best-effort recording never
+	 * committed it, or it was already removed) is a silent no-op.
+	 * </p>
+	 *
+	 * @param requestId
+	 *        Correlation id of the request to resolve; must not be <code>null</code>.
 	 * @param state
 	 *        Terminal state; must not be {@link InteractionState#PENDING}.
 	 * @param resolution
 	 *        The response data (decision, answer text, selected options); may be
 	 *        <code>null</code>.
 	 */
-	public void resolveInteraction(InteractionRequest request, InteractionState state, String resolution) {
+	public void resolveInteraction(String requestId, InteractionState state, String resolution) {
 		if (state == InteractionState.PENDING) {
 			throw new IllegalArgumentException("Resolution state must be terminal, not PENDING.");
 		}
 		write(() -> {
-			try (Transaction tx = beginTx("Resolve interaction request " + request.getRequestId())) {
+			InteractionRequest request = findInteractionByRequestId(requestId);
+			if (request == null) {
+				// Row was never persisted (best-effort) or is already gone: nothing to resolve.
+				return null;
+			}
+			try (Transaction tx = beginTx("Resolve interaction request " + requestId)) {
 				request.setState(interactionStateClassifier(state));
 				request.setResolution(resolution);
 				request.setResolvedAt(new Date());
@@ -738,6 +755,24 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			}
 			return null;
 		});
+	}
+
+	/**
+	 * Finds the pending/resolved interaction row with the given correlation id, or
+	 * <code>null</code> if none exists. Must run on the writer thread (KB HEAD) so a row committed
+	 * after the caller's pinned revision is still found.
+	 */
+	private InteractionRequest findInteractionByRequestId(String requestId) {
+		if (requestId == null) {
+			return null;
+		}
+		for (TLObject obj : allInstances(TlAiAgentFactory.getInteractionRequestType())) {
+			InteractionRequest request = (InteractionRequest) obj;
+			if (requestId.equals(request.getRequestId())) {
+				return request;
+			}
+		}
+		return null;
 	}
 
 	/**

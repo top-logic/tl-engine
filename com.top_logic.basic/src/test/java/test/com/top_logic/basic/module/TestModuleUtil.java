@@ -25,7 +25,6 @@ import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.ModuleUtil.ModuleContext;
 import com.top_logic.basic.module.RestartException;
-import com.top_logic.basic.module.RuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
@@ -120,7 +119,7 @@ public class TestModuleUtil extends AbstractModuleTest {
 		protected A() {
 		}
 
-		/** {@link RuntimeModule} for {@link TestModuleUtil.A}. */
+		/** {@link BasicRuntimeModule} for {@link TestModuleUtil.A}. */
 		public static class Module extends TestingRuntimeModule<A> {
 			/** Singleton instance of {@link TestModuleUtil.A.Module}. */
 			public static final A.Module INSTANCE = new Module();
@@ -154,7 +153,7 @@ public class TestModuleUtil extends AbstractModuleTest {
 		protected B() {
 		}
 
-		/** {@link RuntimeModule} for {@link TestModuleUtil.B}. */
+		/** {@link BasicRuntimeModule} for {@link TestModuleUtil.B}. */
 		public static class Module extends TestingRuntimeModule<B> {
 			/** Singleton instance of {@link TestModuleUtil.B.Module}. */
 			public static final B.Module INSTANCE = new Module();
@@ -188,7 +187,7 @@ public class TestModuleUtil extends AbstractModuleTest {
 		protected C() {
 		}
 
-		/** {@link RuntimeModule} for {@link TestModuleUtil.C}. */
+		/** {@link BasicRuntimeModule} for {@link TestModuleUtil.C}. */
 		public static class Module extends TestingRuntimeModule<C> {
 			/** Singleton instance of {@link TestModuleUtil.C.Module}. */
 			public static final C.Module INSTANCE = new Module();
@@ -222,7 +221,7 @@ public class TestModuleUtil extends AbstractModuleTest {
 		protected D() {
 		}
 
-		/** {@link RuntimeModule} for {@link TestModuleUtil.D}. */
+		/** {@link BasicRuntimeModule} for {@link TestModuleUtil.D}. */
 		public static class Module extends TestingRuntimeModule<D> {
 			/** Singleton instance of {@link TestModuleUtil.D.Module}. */
 			public static final D.Module INSTANCE = new Module();
@@ -256,7 +255,7 @@ public class TestModuleUtil extends AbstractModuleTest {
 		protected E() {
 		}
 
-		/** {@link RuntimeModule} for {@link TestModuleUtil.E}. */
+		/** {@link BasicRuntimeModule} for {@link TestModuleUtil.E}. */
 		public static class Module extends TestingRuntimeModule<E> {
 			/** Singleton instance of {@link TestModuleUtil.E.Module}. */
 			public static final E.Module INSTANCE = new Module();
@@ -311,7 +310,7 @@ public class TestModuleUtil extends AbstractModuleTest {
 			super.shutDown();
 		}
 
-		/** {@link RuntimeModule} for {@link TestModuleUtil.K}. */
+		/** {@link BasicRuntimeModule} for {@link TestModuleUtil.K}. */
 		public static class Module extends TestingRuntimeModule<K> {
 			/** Singleton instance of {@link TestModuleUtil.K.Module}. */
 			public static final K.Module INSTANCE = new Module();
@@ -564,7 +563,7 @@ public class TestModuleUtil extends AbstractModuleTest {
 
 			@Override
 			public Collection<? extends Class<? extends BasicRuntimeModule<?>>> getDependencies() {
-				return RuntimeModule.NO_DEPENDENCIES;
+				return BasicRuntimeModule.NO_DEPENDENCIES;
 			}
 			
 			@Override

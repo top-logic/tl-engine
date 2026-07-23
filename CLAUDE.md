@@ -391,14 +391,12 @@ After implementing a UI feature or fix, always verify it manually in a running a
 3. **Use Playwright** to navigate to the feature, interact with it, and verify that it works as expected.
 4. **Only then report the work as complete.**
 
-### Manual Verification with Playwright
+**Prefer `browser_snapshot` over `browser_take_screenshot`.** Screenshots are images and are by far the most token-expensive input available — a handful can dwarf all the build and log output combined.
 
-After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done. This means:
-
-1. **Ensure the feature is accessible in `com.top_logic.demo`** — if the feature is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
-2. **Start the demo app** using the `tl-app` skill.
-3. **Use Playwright** to navigate to the feature, interact with it, and verify that it works as expected.
-4. **Only then report the work as complete.**
+- **Default to `browser_snapshot`** (accessibility tree + text) for anything checkable from structure or content: element presence, labels, values, enabled/disabled state, list contents, whether a dialog opened, whether navigation landed on the right page. It is also easier to assert against than an image.
+- **Use `browser_take_screenshot` only for genuinely visual checks** the snapshot cannot answer: layout/alignment, spacing, colors, theming, icon rendering, overflow/clipping, chart or diagram appearance. When you do, take **one targeted shot** of the relevant element/region rather than repeated full-page captures.
+- **Don't screenshot to confirm a click worked** — take a `browser_snapshot` after the interaction and read the resulting state.
+- **One confirming shot at the end** of a visual feature is fine; a screenshot after every step is the pattern to avoid.
 
 ## Important Notes
 

@@ -13,6 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.annotation.Subtypes.Subtype;
 import com.top_logic.basic.module.ManagedClass;
@@ -22,14 +23,13 @@ import com.top_logic.element.structured.util.NumberHandler.NumberHandlerConfig;
 import com.top_logic.layout.provider.LabelProviderService;
 
 /**
- * This class handles the {@link com.top_logic.element.structured.util.NumberHandler}s. This
- * class gets information from the xml config file and creates a map with all
- * known {@link com.top_logic.element.structured.util.NumberHandler}.
- * 
+ * Provides the configured number handlers that generate unique identification numbers.
+ *
  * @author    <a href=mailto:tdi@top-logic.com>tdi</a>
  */
 // Note: A configured number handler uses the meta label provider to add a dynamic context to the generated ID.
 @ServiceDependencies(LabelProviderService.Module.class)
+@Label("Number generators")
 public class NumberHandlerFactory extends ManagedClass {
     
 	/**

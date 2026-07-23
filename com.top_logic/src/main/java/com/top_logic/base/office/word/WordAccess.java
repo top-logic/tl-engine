@@ -14,15 +14,15 @@ import com.top_logic.base.office.OfficeException;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 
 /**
- * {@link ManagedClass} for access to MS-Word documents.
- * 
- * This class provides high level methods for reading and writing 
+ * Provides high-level read and write access to MS-Word documents.
+ *
+ * This class provides high level methods for reading and writing
  * Word files. High level means that values from Word can be read 
  * and written by passing  {@link java.util.Map maps}.
  * 
@@ -37,6 +37,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@Label("MS-Word access")
 public abstract class WordAccess extends AbstractOffice {
 
     /** File extension for MS-Word documents. */

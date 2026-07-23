@@ -7,6 +7,7 @@ package com.top_logic.element.meta;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -24,8 +25,8 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Create/remove MetaAttributes in/from MetaElements.
- * 
+ * Creates and removes attributes of model types.
+ *
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
 @ServiceDependencies({
@@ -34,6 +35,7 @@ import com.top_logic.model.TLStructuredTypePart;
 	FilterFactory.Module.class,
 	GeneratorFactory.Module.class,
 	AttributeValueLocatorFactory.Module.class})
+@Label("Model attribute factory")
 public abstract class MetaAttributeFactory extends ManagedClass {
 
 	private final Config _config;

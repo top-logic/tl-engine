@@ -16,6 +16,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -52,6 +53,7 @@ import com.top_logic.util.model.ModelService;
  * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}.</li>
  * </ol>
  */
+@Label("Form field controls")
 @ServiceDependencies({
 	ModelService.Module.class,
 })

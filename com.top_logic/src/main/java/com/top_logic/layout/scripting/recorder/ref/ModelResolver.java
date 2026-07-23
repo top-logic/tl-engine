@@ -28,6 +28,7 @@ import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
@@ -45,6 +46,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
 @ServiceDependencies({
 	TypeIndex.Module.class,
 })
+@Label("Model name resolver")
 public class ModelResolver extends ManagedClass {
 
 	/**

@@ -23,6 +23,7 @@ import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.ObjectFlag;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.db.schema.properties.DBPropertiesSchema;
 import com.top_logic.basic.io.FileUtilities;
@@ -41,8 +42,8 @@ import com.top_logic.tool.boundsec.commandhandlers.BookmarkService;
 import com.top_logic.util.model.ModelService;
 
 /**
- * {@link KBBasedManagedClass} importing the documentation of the application during the start up.
- * 
+ * Imports the application's documentation during startup.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceDependencies({
@@ -50,6 +51,7 @@ import com.top_logic.util.model.ModelService;
 	BookmarkService.Module.class,
 	CommandHandlerFactory.Module.class,
 })
+@Label("Documentation import")
 public class ImportDocumentationModule extends KBBasedManagedClass<ImportDocumentationModule.Config> {
 
 	/**

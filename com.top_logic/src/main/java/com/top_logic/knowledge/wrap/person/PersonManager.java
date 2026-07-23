@@ -18,6 +18,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -46,6 +47,7 @@ import com.top_logic.util.license.LicenseTool;
 	InitialGroupManager.Module.class,
 	ResourcesModule.Module.class,
 })
+@Label("Account management")
 public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 
 	/**

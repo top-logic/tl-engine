@@ -38,6 +38,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.misc.NamedRegexp;
 import com.top_logic.basic.io.FileSystemCache;
@@ -89,6 +90,7 @@ import com.top_logic.util.error.TopLogicException;
 	DynamicComponentService.Module.class,
 	FileSystemCache.Module.class,
 })
+@Label("Layout storage")
 public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 
 	/**

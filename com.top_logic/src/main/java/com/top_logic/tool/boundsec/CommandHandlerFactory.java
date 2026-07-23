@@ -27,6 +27,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
@@ -54,6 +55,7 @@ import com.top_logic.tool.execution.ExecutabilityRuleManager;
 @ServiceDependencies({
 	ExecutabilityRuleManager.Module.class,
 	CommandGroupRegistry.Module.class })
+@Label("Command handlers")
 public final class CommandHandlerFactory extends ManagedClass {
 
 	/**

@@ -13,14 +13,16 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
- * Registry for {@link KeyStorageChecker}.
- * 
+ * Registry of the {@link KeyStorageChecker}s validating the application's key storages.
+ *
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
+@Label("Key storage checkers")
 public class KeyStorageCheckerRegistry extends ConfiguredManagedClass<KeyStorageCheckerRegistry.Config> {
 
 	/**

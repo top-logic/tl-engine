@@ -26,6 +26,7 @@ import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.Location;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -53,13 +54,14 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.TLContext;
 
 /**
- * Common, configurable functions used by the Bound hierarchy.
+ * Common, configurable helper functions for the security framework.
  * <p>
  * This class can easily be overridden to modify aspects of the BoundSecurity
  * as needed by applications.
  * </p>
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
+@Label("Security helper functions")
 public class BoundHelper extends ManagedClass {
 
     /** When asking for groups this will merge in the groups of the SuperObject */

@@ -9,6 +9,7 @@ import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -28,11 +29,12 @@ import com.top_logic.util.model.ModelService;
 import com.top_logic.util.model.TL5Types;
 
 /**
- * Create {@link TLClass}s in their {@link MetaElementHolder defining scopes}. 
+ * Creates model classes in their defining scopes.
  *
  * @author    <a href="mailto:kbu@top-logic.com></a>
  */
 @ServiceDependencies(PersistencyLayer.Module.class)
+@Label("Model class factory")
 public abstract class MetaElementFactory extends ManagedClass {
 
 	/**

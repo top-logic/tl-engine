@@ -18,6 +18,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
@@ -48,11 +49,12 @@ import com.top_logic.util.Resources;
 
 
 /**
- * Central point of login for all top-logic activities..
+ * Central service that authenticates users and grants access to the application.
  *
  * @author    <a href="mailto:mer@top-logic.com">Michael Eriksson</a>
  */
 @ServiceDependencies(CommandGroupRegistry.Module.class)
+@Label("Login")
 public class Login extends ConfiguredManagedClass<Login.Config> {
 
 	/**

@@ -12,14 +12,16 @@ import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
- * Providing access to sensor instances.
- * 
+ * Provides access to the configured sensor instances.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
+@Label("Sensors")
 public class SensorService extends ConfiguredManagedClass<SensorService.Config>
 {
 

@@ -29,6 +29,7 @@ import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.map.MultiMaps;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.i18n.log.BufferingI18NLog;
@@ -60,8 +61,7 @@ import com.top_logic.xio.importer.binding.ApplicationModelBinding;
 import com.top_logic.xio.importer.binding.ModelBinding;
 
 /**
- * {@link ManagedClass} that imports BPML and BPMN workflow definition files from
- * {@value #DATA_PATH} during application startup.
+ * Imports BPML and BPMN workflow definition files during application startup.
  *
  * <p>
  * Each file is imported when it is encountered for the first time or when its content has changed
@@ -75,6 +75,7 @@ import com.top_logic.xio.importer.binding.ModelBinding;
 	// Workflows may refer to groups, therefore, those must be created first.
 	InitialGroupManager.Module.class,
 })
+@Label("Initial workflow import")
 public class InitialProcessSetupService extends ManagedClass {
 
 	/**

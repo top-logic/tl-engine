@@ -16,6 +16,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -29,6 +30,7 @@ import com.top_logic.basic.util.ResourcesModule;
 @ServiceDependencies({
 	ResourcesModule.Module.class,
 })
+@Label("Resource key check")
 public class I18NCheck extends ConfiguredManagedClass<I18NCheck.Config> {
 
 	/**

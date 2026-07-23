@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
@@ -19,11 +20,12 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ComputationEx2;
 
 /**
- * Service that is started from the {@link AbstractStartStopListener}, if deferred boot is enabled
- * (instead of starting all configured services).
- * 
+ * Delays the full application boot until it is explicitly triggered, redirecting incoming requests
+ * to a waiting location while startup is still pending.
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Deferred boot")
 public class DeferredBootService extends ManagedClass {
 
 	/**

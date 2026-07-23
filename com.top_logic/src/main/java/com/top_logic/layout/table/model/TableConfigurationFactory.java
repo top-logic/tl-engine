@@ -15,6 +15,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -40,6 +41,7 @@ import com.top_logic.model.TLObject;
 	ThemeFactory.Module.class,
 	LabelProviderService.Module.class,
 })
+@Label("Table configurations")
 public class TableConfigurationFactory extends ManagedClass {
 
 	/**

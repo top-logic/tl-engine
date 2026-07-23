@@ -11,21 +11,23 @@ import java.util.Map.Entry;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
- * This class allows a Reloadable Configuration of the default CachePolicy used by most JSP Pages and Servlets.
- * 
- * Th Cacheploicy tells the UserAgent (vugo Browser) whwn to relaod/cache pages.
- * 
- * Use the top-logix.xml to configure this class, It can be reloaded
- * an this way cchange in a running system.
- * 
+ * Configures the HTTP cache-control headers sent for most JSP pages and servlets.
+ *
+ * <p>
+ * These headers tell the browser when to reload or cache pages. The configuration can be reloaded
+ * and thereby changed in a running system.
+ * </p>
+ *
  * @author <a href="mailto:klaus.halfmann@top-logic.com">Klaus Halfmann</a>
  */
+@Label("HTTP cache policy")
 public class CachePolicy extends ConfiguredManagedClass<CachePolicy.Config> {
 
 	/**

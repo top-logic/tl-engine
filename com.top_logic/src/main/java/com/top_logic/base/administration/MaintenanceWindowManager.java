@@ -26,6 +26,7 @@ import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.CommaSeparatedStringSet;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -40,8 +41,7 @@ import com.top_logic.util.Utils;
 import com.top_logic.util.db.DBUtil;
 
 /**
- * The MaintenanceWindowManager manages the maintenance window mode of the system, including
- * entering and leaving of this mode.
+ * Manages the system's maintenance window mode, including entering and leaving it.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
@@ -53,6 +53,7 @@ import com.top_logic.util.db.DBUtil;
 	SessionService.Module.class,
 	Login.Module.class,
 })
+@Label("Maintenance window")
 public final class MaintenanceWindowManager extends ManagedClass implements ClusterManagerListener {
 
     /**

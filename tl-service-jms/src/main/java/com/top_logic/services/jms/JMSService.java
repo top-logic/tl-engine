@@ -19,6 +19,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
@@ -29,11 +30,11 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.event.infoservice.InfoService;
 
 /**
- * The TopLogic Service to set the config for a connection and establish this connection to a JMS
- * Message System.
- * 
+ * Establishes and manages connections to a JMS messaging system.
+ *
  * @author <a href="mailto:simon.haneke@top-logic.com">Simon Haneke</a>
  */
+@Label("JMS messaging")
 public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 
 	/**

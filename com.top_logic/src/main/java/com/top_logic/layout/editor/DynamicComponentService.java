@@ -21,6 +21,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.SetBuilder;
 import com.top_logic.basic.config.DeclarativeConfigDescriptor;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.FileSystemCache;
 import com.top_logic.basic.io.FileUtilities;
@@ -38,14 +39,15 @@ import com.top_logic.layout.editor.DynamicComponentDefinition.UnsupportedFormatE
 import com.top_logic.mig.html.layout.LayoutUtils;
 
 /**
- * Module that holds all {@link DynamicComponentDefinition}s in the system.
- * 
+ * Provides the component definitions available for building views in the layout editor.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceDependencies({
 	FileSystemCache.Module.class,
 	SafeHTML.Module.class,
 })
+@Label("Dynamic components")
 public class DynamicComponentService extends ConfiguredManagedClass<DynamicComponentService.Config> {
 
 	/**

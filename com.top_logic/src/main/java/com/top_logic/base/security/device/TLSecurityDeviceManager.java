@@ -21,6 +21,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.encryption.SecureRandomService;
@@ -43,6 +44,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 	SecureRandomService.Module.class,
 	Login.Module.class,
 })
+@Label("Security devices")
 public class TLSecurityDeviceManager extends ManagedClass {
 	
 	private static final String DB_SECURITY = "dbSecurity";

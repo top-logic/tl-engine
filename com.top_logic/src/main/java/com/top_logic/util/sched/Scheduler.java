@@ -40,6 +40,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -115,6 +116,7 @@ import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 	SchedulerService.Module.class,
 	ThreadContextManager.Module.class,
 })
+@Label("Task scheduler")
 public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implements Reloadable, Runnable, Suspendable {
 
 	/**

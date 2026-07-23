@@ -22,6 +22,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -40,7 +41,7 @@ import com.top_logic.model.search.ui.model.combinator.SearchExpressionCombinator
 import com.top_logic.util.model.ModelService;
 
 /**
- * The module of the model based search.
+ * Holds the configuration options for the model-based search.
  * <p>
  * Holds the config options for the search. This has two advantages. First, without this module,
  * they would be distributed all over the subpackages, hidden for example in option providers.
@@ -50,6 +51,7 @@ import com.top_logic.util.model.ModelService;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
+@Label("Model-based search")
 @ServiceDependencies({
 	SearchBuilder.Module.class
 })

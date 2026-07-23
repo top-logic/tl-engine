@@ -16,17 +16,19 @@ import com.top_logic.base.office.excel.Formula;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
- * Manage {@link PoiTypeHandler} for different kinds of objects.
- * 
+ * Manages the type handlers used to write values of different object types into Excel sheets.
+ *
  * <p>The {@link PoiTypeHandler} can be used to set values into an excel sheet.</p>
- * 
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
+@Label("Excel cell type handlers")
 public class POITypeProvider extends ManagedClass {
 
 	/**

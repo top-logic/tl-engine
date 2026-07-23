@@ -29,7 +29,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.dob.DataObjectException;
@@ -44,8 +43,8 @@ import com.top_logic.mail.proxy.MailReceiverService;
 import com.top_logic.mail.proxy.exchange.ExchangeMail;
 
 /**
- * {@link ManagedClass} for creating model instances for received mails.
- * 
+ * Turns mails received from the mail server into model instances.
+ *
  * <p>
  * All mail folders are located on the mail server in the {@link MailServer#getRootFolderName() root
  * folder}.

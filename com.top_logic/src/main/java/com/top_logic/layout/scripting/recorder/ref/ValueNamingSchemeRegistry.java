@@ -14,6 +14,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -24,6 +25,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Value naming schemes")
 public class ValueNamingSchemeRegistry extends ConfiguredManagedClass<ValueNamingSchemeRegistry.Config> {
 
 	/**

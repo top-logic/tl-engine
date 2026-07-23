@@ -20,17 +20,18 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider;
 import com.top_logic.tool.boundsec.securityObjectProvider.SecurityObjectProviderFormat;
 
 /**
- * The {@link SecurityObjectProviderManager} manages the {@link SecurityObjectProvider}s and their
- * aliases to comfort up layout configuration.
+ * Manages the available security object providers and their aliases for use in layout configuration.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
+@Label("Security object providers")
 public class SecurityObjectProviderManager extends ManagedClass {
 
 	/** Prefix to denote path in SecurityObjectProvider configuration. */

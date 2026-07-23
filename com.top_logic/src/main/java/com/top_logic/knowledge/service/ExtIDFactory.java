@@ -11,6 +11,7 @@ import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.ConstantMapping;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.module.ManagedClass;
@@ -36,6 +37,7 @@ import com.top_logic.model.util.TLModelUtil;
 	PersistencyLayer.Module.class,
 	SecureRandomService.Module.class
 })
+@Label("External ID factory")
 public class ExtIDFactory extends ManagedClass {
 
 	/** Default external id attribute when nothing is configured for the concrete type */

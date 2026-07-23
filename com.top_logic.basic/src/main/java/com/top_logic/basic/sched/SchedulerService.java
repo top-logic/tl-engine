@@ -21,15 +21,17 @@ import java.util.concurrent.TimeoutException;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.Suspendable;
 
 /**
- * Service providing a singleton {@link ScheduledExecutorService}.
- * 
+ * Service providing a shared scheduler for executing tasks in the background.
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Scheduler service")
 public class SchedulerService extends ConfiguredManagedClass<SchedulerService.Config>
 		implements ScheduledExecutorService, Suspendable {
 

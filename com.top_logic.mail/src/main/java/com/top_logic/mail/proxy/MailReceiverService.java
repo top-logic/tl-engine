@@ -6,15 +6,17 @@
 package com.top_logic.mail.proxy;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
- * Service managing a configured {@link MailReceiver}.
- * 
+ * Connects to a configured mail server to receive incoming mails.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Mail receiver")
 public class MailReceiverService extends ManagedClass {
 
 	/**

@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
@@ -17,6 +18,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
+@Label("File system cache")
 public abstract class FileSystemCache extends ManagedClass {
 
 	/**

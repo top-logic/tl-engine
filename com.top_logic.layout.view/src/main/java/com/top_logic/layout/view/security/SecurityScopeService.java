@@ -17,6 +17,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -52,6 +53,7 @@ import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
  * @see AccessControl
  * @see SecurityScope
  */
+@Label("Security scopes")
 @ServiceDependencies({
 	KnowledgeBaseFactory.Module.class,
 	PersistencyLayer.Module.class,

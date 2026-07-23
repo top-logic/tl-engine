@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ManagedClass;
@@ -22,7 +23,6 @@ import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseSetup;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModel;
@@ -33,8 +33,8 @@ import com.top_logic.model.instance.importer.schema.ObjectsConf;
 import com.top_logic.util.model.ModelService;
 
 /**
- * {@link KnowledgeBaseSetup} loading initial data from XML files in <code>WEB-INF/data</code>.
- * 
+ * Loads initial application data from XML files in <code>WEB-INF/data</code> on first startup.
+ *
  * <p>
  * Initial data files can be produced by {@link XMLInstanceExporter} or in the UI from the export
  * command in the instance editor.
@@ -43,6 +43,7 @@ import com.top_logic.util.model.ModelService;
 @ServiceDependencies({
 	ModelService.Module.class,
 })
+@Label("Initial data setup")
 public class InitialDataSetupService extends ManagedClass {
 
 	private static final String DATA_PATH = "/WEB-INF/data/";

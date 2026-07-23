@@ -6,6 +6,7 @@
 package com.top_logic.kafka.server.module;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -15,16 +16,17 @@ import kafka.Kafka;
 import kafka.server.KafkaConfig;
 
 /**
- * Module starting {@link Kafka}.
- * 
+ * Starts an embedded Kafka server.
+ *
  * <p>
  * Actually a wrapper for {@link KafkaStarter}.
  * </p>
- * 
+ *
  * @see KafkaStarter
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Kafka server")
 @ServiceDependencies(ZooKeeperModule.Module.class)
 public class KafkaModule extends ManagedClass {
 

@@ -23,6 +23,12 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 ERROR_NOT_A_CALENDAR__VAL_EXPR;
 
+	/**
+	 * @en The value "{0}" is not a time zone, use a time zone id string (e.g. "Asia/Tokyo") or the
+	 *     time zone of a calendar in expression: {1}
+	 */
+	public static ResKey2 ERROR_NOT_A_TIME_ZONE__VAL_EXPR;
+
 	public static ResKey2 ERROR_NOT_A_TL_OBJECT__VAL_EXPR;
 
 	/**

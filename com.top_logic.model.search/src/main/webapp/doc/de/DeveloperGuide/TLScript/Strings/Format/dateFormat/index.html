@@ -1,9 +1,10 @@
 <h2>Syntax</h2>
-<pre>	<code>dateFormat($pattern)</code>
+<pre>	<code>dateFormat($pattern, $timeZone)</code>
 </pre>
 <h2>Beschreibung</h2>
 <p>Konstruiert ein Datumsformat mit dem angegebenen Muster für entweder <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> oder <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> Aufrufe.</p>
 <p>Siehe <a href="https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html">SimpleDateFormat</a>.</p>
+<p>Standardmäßig wird der Wert in der Standard-Zeitzone der JVM dargestellt. Wird eine <code class="hljs inlineCode">timeZone</code> angegeben, wird der Wert stattdessen in dieser Zeitzone dargestellt. Das ist beim Formatieren eines <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">Kalender</a>-Wertes relevant: Übergibt man dessen <a class="tlObject" data-custom="true" href="?page=timeZone&amp;uuid=b9f2d1a4-1c53-4c9e-8f0a-6d3e2a4b7c10">Zeitzone</a>, wird der Zeitpunkt als der Tag dargestellt, den er in dieser Zeitzone repräsentiert. So wird eine Verschiebung um Tag/Monat/Jahr vermieden, wenn sich die System-Zeitzone von der Standard-Zeitzone der JVM unterscheidet.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>
@@ -30,6 +31,14 @@
    <td>ja</td>
    <td></td>
   </tr>
+  <tr>
+   <td>timeZone</td>
+   <td>Zeichenkette / Fachobjekt</td>
+   <td>
+    <p>Die Zeitzone, in der der Wert dargestellt werden soll. Zulässig sind eine Zeitzonen-ID als Zeichenkette (z. B. <code class="hljs inlineCode">"Asia/Tokyo"</code>), die Zeichenkette <code class="hljs inlineCode">"system"</code> für die konfigurierte System-Zeitzone der Anwendung, die Zeichenkette <code class="hljs inlineCode">"user"</code> für die Zeitzone des aktuellen Benutzers oder die <a class="tlObject" data-custom="true" href="?page=timeZone&amp;uuid=b9f2d1a4-1c53-4c9e-8f0a-6d3e2a4b7c10">Zeitzone</a> eines Kalenders.</p></td>
+   <td>nein</td>
+   <td>Standard-Zeitzone der JVM</td>
+  </tr>
  </tbody>
 </table>
 <p></p>
@@ -45,4 +54,9 @@
 <pre>	<code>dateFormat("dd-MM-yy").parse("04-12-12")</code>
 </pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 04.12.2012</p>
+<h3>Einen Kalender in seiner eigenen Zeitzone formatieren</h3>
+<pre>	<code>cal = date(2025, 11, 1).toSystemCalendar();
+dateFormat("yyyy-MM-dd", $cal.timeZone()).format($cal.toDate())</code>
+</pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> 2025-12-01</p>
 <p></p>

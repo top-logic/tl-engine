@@ -6,11 +6,7 @@
 package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import com.top_logic.element.meta.form.validation.FormValidationModel;
@@ -29,20 +25,28 @@ import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.impl.TransientObjectFactory;
 
 /**
- * Base class for form controls that display and edit the value of a composition reference inline.
+ * Base class for form controls that display and edit a set of row objects inline.
  *
  * <p>
  * Owns the complete editing lifecycle independent of the concrete presentation: implements
  * {@link FormModelListener} to react to form state changes (enter/exit edit mode, object switch)
  * and {@link FormParticipant} for validation, apply, cancel, and dirty tracking. On entering edit
- * mode, creates {@link TLObjectOverlay}s for existing composed objects and stores the overlay list
- * in the main form overlay. On save, persists new transient objects, applies overlay changes, and
- * removes orphaned objects.
+ * mode, creates {@link TLObjectOverlay}s for the existing row objects and buffers the overlay list;
+ * on save, persists new transient objects, applies overlay changes, and applies the binding's
+ * remove semantics to orphaned objects.
  * </p>
  *
  * <p>
- * Subclasses render the composed objects: {@link #buildContent(List, boolean)} builds the
- * presentation for a row list, {@link #refreshRows()} updates it after {@link #addRow()} or
+ * The membership semantics of the row set (which objects are the rows, what adding and removing
+ * means, what is written back on commit) are delegated to a {@link RowSetBinding}. An
+ * {@link AttributeRowSetBinding} derives them from a composition or plain reference of the form
+ * object; a {@link QueryRowSetBinding} computes the rows from a query and takes them from explicit
+ * configuration.
+ * </p>
+ *
+ * <p>
+ * Subclasses render the row objects: {@link #buildContent(List, boolean)} builds the presentation
+ * for a row list, {@link #refreshRows()} updates it after {@link #addRow()} or
  * {@link #deleteRow(TLObject, int)} changed the list.
  * </p>
  */
@@ -51,9 +55,7 @@ public abstract class AbstractCompositionControl extends ReactControl
 
 	private final FormControl _formControl;
 
-	private final String _compositionAttributeName;
-
-	private TLStructuredTypePart _compositionPart;
+	private final RowSetBinding _binding;
 
 	private CompositionFieldModel _fieldModel;
 
@@ -69,52 +71,68 @@ public abstract class AbstractCompositionControl extends ReactControl
 	private FormValidationModel _registeredValidationModel;
 
 	/**
-	 * Creates a new {@link AbstractCompositionControl}.
+	 * Creates a new {@link AbstractCompositionControl} over the given row-set binding.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param formControl
+	 *        The parent form control managing the editing lifecycle.
+	 * @param binding
+	 *        The row-set semantics (row objects, create types, remove mode, commit).
+	 * @param reactModule
+	 *        The React module rendering this control.
+	 */
+	public AbstractCompositionControl(ReactContext context, FormControl formControl,
+			RowSetBinding binding, String reactModule) {
+		super(context, null, reactModule);
+		_formControl = formControl;
+		_binding = binding;
+
+		formControl.addFormModelListener(this);
+	}
+
+	/**
+	 * Creates a new {@link AbstractCompositionControl} editing a composition or plain reference
+	 * attribute of the form object.
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
 	 * @param formControl
 	 *        The parent form control managing the editing lifecycle.
 	 * @param compositionAttributeName
-	 *        The name of the composition reference attribute on the parent object.
+	 *        The name of the reference attribute on the parent object holding the rows.
 	 * @param reactModule
 	 *        The React module rendering this control.
 	 */
 	public AbstractCompositionControl(ReactContext context, FormControl formControl,
 			String compositionAttributeName, String reactModule) {
-		super(context, null, reactModule);
-		_formControl = formControl;
-		_compositionAttributeName = compositionAttributeName;
-
-		formControl.addFormModelListener(this);
+		this(context, formControl, new AttributeRowSetBinding(compositionAttributeName), reactModule);
 	}
 
 	/**
 	 * Initializes the presentation from the form's current object.
 	 *
 	 * <p>
-	 * Must be called after construction. Resolves the composition reference and builds the initial
-	 * content; without a current object or resolvable reference, builds empty view-mode content.
+	 * Must be called after construction. Resolves the row-set binding and builds the initial
+	 * content; when the binding is not available (e.g. the current object's type does not declare
+	 * the bound attribute), builds empty view-mode content.
 	 * </p>
 	 */
 	public void init() {
 		TLObject currentObject = _formControl.getCurrentObject();
-		if (currentObject != null) {
-			_compositionPart = resolveCompositionPart(currentObject);
-		}
-		if (currentObject == null || _compositionPart == null) {
-			buildContent(Collections.emptyList(), false);
+		if (!_binding.resolve(currentObject)) {
+			buildContent(List.of(), false);
 			return;
 		}
-		buildContent(readCompositionValue(currentObject), _formControl.isEditMode());
+		buildContent(_binding.readRows(currentObject), _formControl.isEditMode());
 	}
 
 	/**
-	 * Builds the presentation for the given composed objects.
+	 * Builds the presentation for the given row objects.
 	 *
 	 * @param rows
-	 *        The composed objects to display: overlays and transient objects in edit mode,
-	 *        persistent objects in view mode.
+	 *        The row objects to display: overlays and transient objects in edit mode, persistent
+	 *        objects in view mode.
 	 * @param editMode
 	 *        Whether the form is in edit mode.
 	 */
@@ -135,18 +153,29 @@ public abstract class AbstractCompositionControl extends ReactControl
 	}
 
 	/**
-	 * The name of the composition reference attribute on the parent object.
+	 * The row-set semantics of this control.
 	 */
-	protected final String compositionAttributeName() {
-		return _compositionAttributeName;
+	protected final RowSetBinding binding() {
+		return _binding;
 	}
 
 	/**
-	 * The resolved composition reference, or {@code null} before {@link #init()} or when the
-	 * current object's type does not declare the attribute.
+	 * The name of the bound reference attribute, or {@code null} for bindings without a bound
+	 * attribute (e.g. a query binding).
+	 */
+	protected final String compositionAttributeName() {
+		return _binding instanceof AttributeRowSetBinding attributeBinding
+			? attributeBinding.getAttributeName()
+			: null;
+	}
+
+	/**
+	 * The bound reference of the row-set binding, or {@code null} before {@link #init()}, when the
+	 * current object's type does not declare the attribute, or for a binding without a bound
+	 * attribute.
 	 */
 	protected final TLStructuredTypePart compositionPart() {
-		return _compositionPart;
+		return _binding.getBoundPart();
 	}
 
 	/**
@@ -154,6 +183,13 @@ public abstract class AbstractCompositionControl extends ReactControl
 	 */
 	protected final CompositionFieldModel fieldModel() {
 		return _fieldModel;
+	}
+
+	/**
+	 * Whether an edit session is running.
+	 */
+	protected final boolean isEditing() {
+		return _fieldModel != null;
 	}
 
 	/**
@@ -176,13 +212,7 @@ public abstract class AbstractCompositionControl extends ReactControl
 	public void onFormStateChanged(FormModel source) {
 		TLObject currentObject = source.getCurrentObject();
 
-		if (currentObject == null) {
-			cleanupEditState();
-			return;
-		}
-
-		_compositionPart = resolveCompositionPart(currentObject);
-		if (_compositionPart == null) {
+		if (!_binding.resolve(currentObject)) {
 			cleanupEditState();
 			return;
 		}
@@ -204,25 +234,25 @@ public abstract class AbstractCompositionControl extends ReactControl
 			baseObject = ((TLObjectOverlay) currentObject).getBase();
 		}
 
-		// Read the persistent composition value.
-		List<TLObject> persistentObjects = readCompositionValue(baseObject);
+		// Read the persistent row objects.
+		List<TLObject> persistentObjects = _binding.readRows(baseObject);
 		_originalPersistentObjects = new ArrayList<>(persistentObjects);
 
-		// Create overlays for each existing composed object.
+		// Create overlays for each existing row object.
 		List<TLObject> overlayList = new ArrayList<>();
 		_rowModels.clear();
 
-		for (TLObject composed : persistentObjects) {
-			TLObjectOverlay rowOverlay = new TLObjectOverlay(composed);
+		for (TLObject row : persistentObjects) {
+			TLObjectOverlay rowOverlay = new TLObjectOverlay(row);
 			CompositionRowModel rowModel = CompositionRowModel.forExisting(rowOverlay);
 			_rowModels.add(rowModel);
 			overlayList.add(rowOverlay);
 		}
 
-		// Store the overlay list in the main overlay.
-		_formControl.getOverlay().tUpdate(_compositionPart, overlayList);
+		// Publish the overlay list to the form overlay through the binding.
+		_binding.updateMembership(_formControl, overlayList);
 
-		// Create composition field model.
+		// Create the row-list field model.
 		_fieldModel = new CompositionFieldModel(overlayList);
 		for (CompositionRowModel row : _rowModels) {
 			TLObjectOverlay rowOverlay = row.getRowOverlay();
@@ -232,7 +262,7 @@ public abstract class AbstractCompositionControl extends ReactControl
 		}
 
 		// Register row overlays with the validation model so field-level
-		// constraints (mandatory, range) are evaluated for composition items.
+		// constraints (mandatory, range) are evaluated for row objects.
 		_registeredValidationModel = _formControl.getValidationModel();
 		if (_registeredValidationModel != null) {
 			for (CompositionRowModel rowModel : _rowModels) {
@@ -254,8 +284,8 @@ public abstract class AbstractCompositionControl extends ReactControl
 		cleanupEditState();
 
 		// Rebuild the presentation in view mode.
-		List<TLObject> composedObjects = readCompositionValue(currentObject);
-		buildContent(composedObjects, false);
+		List<TLObject> rows = _binding.readRows(currentObject);
+		buildContent(rows, false);
 	}
 
 	/**
@@ -323,21 +353,21 @@ public abstract class AbstractCompositionControl extends ReactControl
 		}
 
 		if (isTransientOwner()) {
-			// A transient owner keeps transient composition rows: write the current row list into
-			// the main overlay so applying it transfers the rows to the owner. The whole transient
-			// tree becomes persistent in one piece when the owner is copied persistent (e.g. by a
-			// create dialog's or a new-entry form's submit chain).
+			// A transient owner keeps transient row objects: write the current row list into the
+			// main overlay so applying it transfers the rows to the owner. The whole transient tree
+			// becomes persistent in one piece when the owner is copied persistent (e.g. by a create
+			// dialog's or a new-entry form's submit chain).
 			List<TLObject> bases = new ArrayList<>();
 			for (TLObject obj : _fieldModel.getCurrentList()) {
 				bases.add(obj instanceof TLObjectOverlay overlay ? overlay.getBase() : obj);
 			}
-			_formControl.getOverlay().tUpdate(_compositionPart, bases);
+			_binding.updateMembership(_formControl, bases);
 		}
 	}
 
 	/**
-	 * Whether the form's base object is transient, so composition rows stay transient as well and
-	 * are persisted together with the owner.
+	 * Whether the form's base object is transient, so row objects stay transient as well and are
+	 * persisted together with the owner.
 	 */
 	private boolean isTransientOwner() {
 		TLObjectOverlay overlay = _formControl.getOverlay();
@@ -356,7 +386,7 @@ public abstract class AbstractCompositionControl extends ReactControl
 		}
 		List<TLObject> currentList = _fieldModel.getCurrentList();
 
-		// Persist new transient objects and build the persisted reference list.
+		// Persist new transient objects and build the persisted row list.
 		List<TLObject> persistedList = new ArrayList<>();
 		for (TLObject obj : currentList) {
 			if (obj instanceof TLObjectOverlay) {
@@ -369,17 +399,8 @@ public abstract class AbstractCompositionControl extends ReactControl
 			}
 		}
 
-		// Update composition reference in the main overlay so the main overlay.apply()
-		// writes the correct persisted list to the base object.
-		_formControl.getOverlay().tUpdate(_compositionPart, persistedList);
-
-		// Delete orphaned objects (present in original but absent from current).
-		Set<TLObject> currentBases = new HashSet<>(persistedList);
-		for (TLObject original : _originalPersistentObjects) {
-			if (!currentBases.contains(original)) {
-				original.tDelete();
-			}
-		}
+		// Write the row set back and apply the binding's remove semantics to orphaned objects.
+		_binding.commit(tx, _formControl, persistedList, _originalPersistentObjects);
 	}
 
 	@Override
@@ -408,34 +429,40 @@ public abstract class AbstractCompositionControl extends ReactControl
 	// -- Row Manipulation --
 
 	/**
-	 * Adds a new, empty row to the composition.
+	 * Adds a new, empty row to the row set.
 	 *
 	 * <p>
-	 * Creates a transient object of the composition reference's target type and appends it to the
-	 * current list. Updates the main overlay and refreshes the presentation.
+	 * Creates a transient object of the binding's create type and appends it to the current list.
+	 * Publishes the membership change and refreshes the presentation.
 	 * </p>
+	 *
+	 * @return The created transient row object, or {@code null} if no edit session is running or the
+	 *         binding offers no row creation.
 	 */
-	public void addRow() {
-		addRow(null);
+	public TLObject addRow() {
+		return addRow(null);
 	}
 
 	/**
-	 * Adds a new row to the composition, optionally initialized by the given function.
+	 * Adds a new row to the row set, optionally initialized by the given function.
 	 *
 	 * @param initializer
-	 *        Initializes attribute values of the created transient object before it is added to
-	 *        the list, or {@code null} for an empty row.
+	 *        Initializes attribute values of the created transient object before it is added to the
+	 *        list, or {@code null} for an empty row.
+	 * @return The created transient row object, or {@code null} if no edit session is running or the
+	 *         binding offers no row creation.
 	 */
-	public void addRow(Consumer<TLObject> initializer) {
-		if (_fieldModel == null || _compositionPart == null) {
-			return;
+	public TLObject addRow(Consumer<TLObject> initializer) {
+		if (_fieldModel == null) {
+			return null;
 		}
 
-		// Determine target type from composition reference.
-		TLClass targetType = resolveTargetType();
-		if (targetType == null) {
-			return;
+		// Determine the create type from the binding.
+		List<TLClass> createTypes = _binding.getCreateTypes();
+		if (createTypes.isEmpty()) {
+			return null;
 		}
+		TLClass targetType = createTypes.get(0);
 
 		// Create transient object.
 		TLObject transientObject = TransientObjectFactory.INSTANCE.createObject(targetType);
@@ -453,24 +480,44 @@ public abstract class AbstractCompositionControl extends ReactControl
 		CompositionRowModel rowModel = CompositionRowModel.forNew(transientObject);
 		_rowModels.add(rowModel);
 
-		// Add to current list.
-		List<TLObject> currentList = _fieldModel.getCurrentList();
+		// Replace the list instead of mutating it in place, so dirty tracking (comparison against
+		// the initial snapshot) and value-change events observe the membership change.
+		List<TLObject> currentList = new ArrayList<>(_fieldModel.getCurrentList());
 		currentList.add(transientObject);
 		_fieldModel.setValue(currentList);
 
-		// Update main overlay.
-		_formControl.getOverlay().tUpdate(_compositionPart, currentList);
+		// Publish the membership change.
+		_binding.updateMembership(_formControl, currentList);
 
-		// Notify validation model that the composition reference changed.
+		// Notify validation model that the bound attribute changed.
 		notifyValidationModelChanged();
 
 		_formControl.updateDirtyState();
 
 		refreshRows();
+
+		return transientObject;
 	}
 
 	/**
-	 * Deletes a row from the composition.
+	 * Removes the given row from the row set. The binding's remove semantics are applied on commit,
+	 * not here.
+	 *
+	 * @param rowObject
+	 *        The row object (overlay or transient) to remove.
+	 */
+	public void removeRow(TLObject rowObject) {
+		if (_fieldModel == null) {
+			return;
+		}
+		int index = _fieldModel.getCurrentList().indexOf(rowObject);
+		if (index >= 0) {
+			deleteRow(rowObject, index);
+		}
+	}
+
+	/**
+	 * Deletes a row from the row set.
 	 *
 	 * @param rowObject
 	 *        The row to remove from the current list.
@@ -482,7 +529,9 @@ public abstract class AbstractCompositionControl extends ReactControl
 			return;
 		}
 
-		List<TLObject> currentList = _fieldModel.getCurrentList();
+		// Replace the list instead of mutating it in place, so dirty tracking (comparison against
+		// the initial snapshot) and value-change events observe the membership change.
+		List<TLObject> currentList = new ArrayList<>(_fieldModel.getCurrentList());
 		currentList.remove(rowObject);
 		_fieldModel.setValue(currentList);
 
@@ -503,10 +552,10 @@ public abstract class AbstractCompositionControl extends ReactControl
 			}
 		}
 
-		// Update main overlay.
-		_formControl.getOverlay().tUpdate(_compositionPart, currentList);
+		// Publish the membership change.
+		_binding.updateMembership(_formControl, currentList);
 
-		// Notify validation model that the composition reference changed.
+		// Notify validation model that the bound attribute changed.
 		notifyValidationModelChanged();
 
 		_formControl.updateDirtyState();
@@ -515,18 +564,59 @@ public abstract class AbstractCompositionControl extends ReactControl
 	}
 
 	/**
-	 * Notifies the {@link FormValidationModel} that the composition reference value has changed,
-	 * so that constraints on the reference (e.g. min count) are re-evaluated.
+	 * Notifies the {@link FormValidationModel} that the bound attribute value has changed, so that
+	 * constraints on the attribute (e.g. min count) are re-evaluated.
 	 */
 	private void notifyValidationModelChanged() {
 		FormValidationModel validationModel = _registeredValidationModel;
 		TLObjectOverlay overlay = _formControl.getOverlay();
-		if (validationModel != null && overlay != null && _compositionPart != null) {
-			validationModel.onValueChanged(overlay, _compositionPart);
+		TLStructuredTypePart boundPart = _binding.getBoundPart();
+		if (validationModel != null && overlay != null && boundPart != null) {
+			validationModel.onValueChanged(overlay, boundPart);
 		}
 	}
 
 	// -- Cell Model Support --
+
+	/**
+	 * Builds the editable control for a cell: the attribute's field control bound to the cell's
+	 * {@link AttributeFieldModel}, which is created once per row and column (resolved through
+	 * {@link FieldControlService}, so enums and references edit as selects) and wired for validation
+	 * and dirty tracking.
+	 *
+	 * @param context
+	 *        The React context for control creation.
+	 * @param row
+	 *        The row object (overlay or transient).
+	 * @param columnName
+	 *        The model attribute name of the column.
+	 * @return The editable cell control, or {@code null} if the cell cannot be edited (the attribute
+	 *         does not resolve or the row is not part of the session).
+	 */
+	protected final ReactControl buildEditCellControl(ReactContext context, TLObject row, String columnName) {
+		TLStructuredType type = row.tType();
+		TLStructuredTypePart part = type.getPart(columnName);
+		if (part == null) {
+			return null;
+		}
+		CompositionRowModel rowModel = findRowModel(row);
+		if (rowModel == null) {
+			return null;
+		}
+		AttributeFieldModel cellFieldModel = rowModel.getColumnModel(columnName);
+		if (cellFieldModel == null) {
+			cellFieldModel = FieldControlService.getInstance().createModel(row, part, _formControl);
+			cellFieldModel.setEditable(true);
+			rowModel.putColumnModel(columnName, cellFieldModel);
+
+			// Wire validation from FormValidationModel to this cell.
+			wireCellValidation(cellFieldModel, row, part);
+
+			// Add dirty propagation and live validation trigger.
+			addCellListener(cellFieldModel, row);
+		}
+		return FieldControlService.getInstance().createFieldControl(context, part, cellFieldModel);
+	}
 
 	/**
 	 * Wires a {@link ConstraintValidationListener} that propagates validation results from the
@@ -598,44 +688,6 @@ public abstract class AbstractCompositionControl extends ReactControl
 	}
 
 	// -- Utility --
-
-	private TLStructuredTypePart resolveCompositionPart(TLObject object) {
-		TLObject base = object;
-		if (object instanceof TLObjectOverlay) {
-			base = ((TLObjectOverlay) object).getBase();
-		}
-		TLStructuredType type = base.tType();
-		return type.getPart(_compositionAttributeName);
-	}
-
-	/**
-	 * Reads the composition reference value of the given object as a list.
-	 */
-	@SuppressWarnings("unchecked")
-	protected final List<TLObject> readCompositionValue(TLObject object) {
-		Object value = object.tValue(_compositionPart);
-		if (value instanceof Collection<?>) {
-			return new ArrayList<>((Collection<TLObject>) value);
-		}
-		if (value instanceof TLObject) {
-			List<TLObject> result = new ArrayList<>();
-			result.add((TLObject) value);
-			return result;
-		}
-		return new ArrayList<>();
-	}
-
-	/**
-	 * The target type of the composition reference, or {@code null} if the reference is not
-	 * resolved.
-	 */
-	protected final TLClass resolveTargetType() {
-		if (_compositionPart instanceof TLReference) {
-			TLReference ref = (TLReference) _compositionPart;
-			return (TLClass) ref.getType();
-		}
-		return null;
-	}
 
 	/**
 	 * Persists a transient object by creating a new persistent KB object of the same type and

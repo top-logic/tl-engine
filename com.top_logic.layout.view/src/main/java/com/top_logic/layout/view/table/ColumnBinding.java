@@ -51,7 +51,7 @@ public interface ColumnBinding {
 	 * @param control
 	 *        The control rendering the table.
 	 */
-	default void installUI(ColumnSetup setup, TableViewControl<Object> control) {
+	default void installUI(ColumnSetup setup, TableViewControl<?> control) {
 		// No custom UI by default.
 	}
 

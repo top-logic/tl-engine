@@ -4,6 +4,11 @@
 	<channels>
 		<channel name="model"/>
 		<channel name="selected"/>
+		<channel name="gridSelected"/>
+		<!-- Anchor object for the editable-table form: the edit session locks on it. -->
+		<derived-channel name="gridAnchor"
+			expr="currentUser()"
+		/>
 	</channels>
 	<tab-bar active-tab="table">
 		<tabs>
@@ -233,6 +238,44 @@
 						</pane>
 					</panes>
 				</split-panel>
+			</tab>
+			<tab id="grid"
+				icon="css:bi bi-pencil-square"
+			>
+				<label>
+					<en>Editable table</en>
+					<de>Editierbare Tabelle</de>
+				</label>
+				<panel>
+					<title>
+						<en>Editable table</en>
+						<de>Editierbare Tabelle</de>
+					</title>
+					<form input="gridAnchor">
+						<table
+							create-type="demo.react:Demo"
+							observed-types="demo.react:Demo"
+							on-remove="DELETE"
+							row-edit="SELECTED"
+							selection="gridSelected"
+							types="demo.react:Demo"
+						>
+							<columns>
+								<column attribute="name"/>
+								<column attribute="string"/>
+								<column attribute="priority"/>
+								<column attribute="active"/>
+								<column attribute="amount"/>
+								<column attribute="date"/>
+								<column
+									attribute="owner"
+									readonly="true"
+								/>
+							</columns>
+							<rows>all(`demo.react:Demo`)</rows>
+						</table>
+					</form>
+				</panel>
 			</tab>
 		</tabs>
 	</tab-bar>

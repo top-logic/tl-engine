@@ -6,6 +6,8 @@
 package com.top_logic.layout.react.control.table;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.function.Supplier;
@@ -254,6 +256,34 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 */
 	public void setSelectionListener(SelectionListener listener) {
 		_selectionListener = listener;
+	}
+
+	/**
+	 * The currently selected {@link Row#key() row keys}, in selection order.
+	 */
+	public Set<Object> getSelectedKeys() {
+		return Collections.unmodifiableSet(_selectedKeys);
+	}
+
+	/**
+	 * Drops the cached cell controls of the given rows and re-renders the current viewport, so
+	 * those rows' cells are rebuilt on the next write (e.g. after a row's editability changed).
+	 *
+	 * @param rowKeys
+	 *        The {@link Row#key() keys} of the rows whose cells are stale.
+	 */
+	public void invalidateRowCells(Collection<Object> rowKeys) {
+		boolean changed = false;
+		for (Object key : rowKeys) {
+			Map<String, ReactControl> cells = _cellCache.remove(key);
+			if (cells != null) {
+				cells.values().forEach(ReactControl::cleanupTree);
+				changed = true;
+			}
+		}
+		if (changed) {
+			updateViewport(_viewportStart, _viewportCount);
+		}
 	}
 
 	/**

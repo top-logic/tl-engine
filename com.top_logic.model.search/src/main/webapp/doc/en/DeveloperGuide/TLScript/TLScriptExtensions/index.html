@@ -1,5 +1,29 @@
-<p>TL-Script can easily be extended with own functions via a plug-in mechanism. To do this, you need to create a Java implementation of the TL-Script function and register it in the application configuration.</p>
-<h2>Implementation</h2>
+<p>TL-Script can easily be extended with own functions. There are two mechanisms &ndash; pick the simplest one that fits the function:</p>
+<ul>
+	<li><strong>Simple functions</strong> that map directly to a Java static method: add a static method to a subclass of <code class="hljs inlineCode">com.top_logic.model.search.expr.config.operations.TLScriptFunctions</code>. No registration in the application configuration is required.</li>
+	<li><strong>Functions with full control</strong> over argument evaluation, the computed result type or lazy/context-dependent evaluation: implement a <code class="hljs inlineCode">GenericMethod</code> with a <code class="hljs inlineCode">MethodBuilder</code> and register it in the application configuration.</li>
+</ul>
+<h2>Simple functions via static methods</h2>
+<p>The simplest way to add functions is to create a subclass of <code class="hljs inlineCode">com.top_logic.model.search.expr.config.operations.TLScriptFunctions</code> and add <code class="hljs inlineCode">public static</code> methods. Every public static method automatically becomes a TL-Script function &ndash; there is no registration in the application configuration, because all subclasses are discovered automatically at start-up. A subclass may live in any module that depends on <code class="hljs inlineCode">com.top_logic.model.search</code>.</p>
+<pre><code class="language-java">@ScriptPrefix("math")
+public class MathFunctions extends TLScriptFunctions {
+   /**
+    * Returns the absolute value of a number.
+    *
+    * @param a
+    *        The value whose absolute value is to be determined.
+    * @return The absolute value of the argument.
+    */
+   @Label("Absolute value of a number")
+   @SideEffectFree
+   public static double abs(@Mandatory double a) {
+      return Math.abs(a);
+   }
+}
+</code></pre>
+<p>The function name is the prefix followed by the capitalized method name, joined with <em>no</em> separator (e.g. <code class="hljs inlineCode">math</code> + <code class="hljs inlineCode">abs</code> &rarr; <code class="hljs inlineCode">mathAbs()</code>). <strong>Always annotate the class with <code class="hljs inlineCode">@ScriptPrefix</code></strong> to define this prefix: it groups the functions under a common namespace, prevents name conflicts with built-in or future functions, and lets users find them by prefix in the editor's auto-completion. Without the annotation the prefix defaults to the class's simple name, which is discouraged. The suffix of an individual function can be overridden with <code class="hljs inlineCode">@Name</code> on the method.</p>
+<p>Each method parameter becomes a TL-Script parameter (positionally). Mark required parameters with <code class="hljs inlineCode">@Mandatory</code>; provide a default for a primitive parameter via the matching annotation (<code class="hljs inlineCode">@StringDefault</code>, <code class="hljs inlineCode">@LongDefault</code>, &hellip;); for a type that TL-Script cannot convert natively, annotate the parameter with <code class="hljs inlineCode">@ScriptConversion</code> naming a <code class="hljs inlineCode">ValueConverter</code>. The method's JavaDoc becomes the function description and each parameter is described by its <code class="hljs inlineCode">@param</code> tag; <code class="hljs inlineCode">@Label</code> overrides the generated UI label, and <code class="hljs inlineCode">@SideEffectFree</code> declares a side-effect-free function. Function names must be globally unique across all subclasses; a clash is reported as a configuration error at start-up. Functions defined this way need no separate documentation page &ndash; their description is generated from the JavaDoc.</p>
+<h2>Functions with full control</h2>
 <p>The TL-Script function is implemented in a derivative of <code class="hljs inlineCode">com.top_logic.model.search.expr.GenericMethod</code>. The actual function is implemented in the overridden method <code class="hljs inlineCode">com.top_logic.model.search.expr.Info.eval(Object, Object[], EvalContext)</code>. The method gets the self argument as first parameter and all other arguments in the arguments array. As a result, the method must return the function result of the TL-Script function.</p>
 <p>Additionally, a builder for the function class must be created. This is created as a derivative of <code class="hljs inlineCode">com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder&lt;I&gt;</code>. This builder creates an instance of the function implementation from above. The builder implementation is registered in the application configuration.</p>
 <p>A minimal implementation of a TL-Script function that rounds off a number might look like this:</p>
@@ -31,7 +55,6 @@
       @Override
       public Floor build(Expr expr, SearchExpression self, SearchExpression[] args)
             throws ConfigurationException {
-         checkNoArguments(expr, self, args);
          return new Floor(getConfig().getName(), self, args);
       }
    }
@@ -66,7 +89,8 @@ public ArgumentDescriptor descriptor() {
 <pre><code>my_floor(4.2)</code></pre>
 <p>The expected result would then be <code class="hljs inlineCode">4</code>.</p>
 <h2>Documentation</h2>
-<p>A TL-Script function is only complete once it is documented &ndash; otherwise users cannot discover or understand it. Provide a documentation page for every function. Built-in engine functions are documented under <code class="hljs inlineCode">src/main/webapp/doc/{en,de}/DeveloperGuide/TLScript/&lt;Section&gt;/&lt;functionName&gt;/</code>, with one directory per function (named exactly like the registered <code class="hljs inlineCode">&lt;method name&gt;</code>) containing:</p>
+<p>This applies to functions registered via a <code class="hljs inlineCode">MethodBuilder</code>; functions defined as static methods on a <code class="hljs inlineCode">TLScriptFunctions</code> subclass are documented through their JavaDoc, as described above.</p>
+<p>A <code class="hljs inlineCode">MethodBuilder</code>-based TL-Script function is only complete once it is documented &ndash; otherwise users cannot discover or understand it. Provide a documentation page for every such function. Built-in engine functions are documented under <code class="hljs inlineCode">src/main/webapp/doc/{en,de}/DeveloperGuide/TLScript/&lt;Section&gt;/&lt;functionName&gt;/</code>, with one directory per function (named exactly like the registered <code class="hljs inlineCode">&lt;method name&gt;</code>) containing:</p>
 <ul>
 	<li><code class="hljs inlineCode">index.html</code> &ndash; an HTML fragment with the sections <em>Syntax</em>, <em>Description</em>, <em>Parameters</em> (a <code class="hljs inlineCode">tlDocTable</code>), <em>Return value</em> and <em>Examples</em>.</li>
 	<li><code class="hljs inlineCode">page.properties</code> &ndash; with <code class="hljs inlineCode">position</code> (ordering within the section), <code class="hljs inlineCode">source</code>, <code class="hljs inlineCode">title</code> and a <code class="hljs inlineCode">uuid</code> (identical for the <code class="hljs inlineCode">en</code> and <code class="hljs inlineCode">de</code> variant).</li>

@@ -146,7 +146,7 @@ UI is assembled declaratively in `*.layout.xml` files under `WEB-INF/layouts/`. 
 
 ### React Controls (`com.top_logic.layout.react`)
 
-React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md).
+React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md).
 
 ### Model Definitions
 
@@ -181,6 +181,10 @@ external/JS identifiers.
   msgbuf generator rewrites field links to the correct getter — do NOT guess `getStrokeColor()`.
 - The `TLDoclet` "Invalid camel case word" warning flags bare `camelCase` words in JavaDoc — wrap
   them in a `{@link}` (preferred) or, only for non-symbols, `{@code}`.
+- **Never downgrade a `{@link}` to `{@code}` to silence a doclet warning** — relocate the link (e.g.
+  into `@implNote`, or link the class instead of the member) so it stays a checked reference. See
+  [docs/faq/javadoc-warnings.md](docs/faq/javadoc-warnings.md) for the full set of TLDoclet warnings
+  and their fixes.
 
 ## Testing Conventions
 
@@ -188,6 +192,8 @@ external/JS identifiers.
 - Many base test classes exist for common scenarios (see `Abstract*Test.java` patterns)
 - Tests requiring a knowledge base extend `AbstractDBKnowledgeBaseTest`
 - Tests are JUnit 4 based
+
+**A green local `mvn install` is not a green CI build** (tests are skipped locally). Before pushing a branch that adds or edits source or layouts: every new `.java` needs an SPDX header + class doc comment, every new/edited `*.xml` layout must be `XMLPrettyPrinter`-normalized, and `-DskipTests=true` even skips test *compilation* so broken test code can pass a local build. See [docs/faq/build-conformance.md](docs/faq/build-conformance.md).
 
 ### Manual Verification with Playwright
 
@@ -202,7 +208,7 @@ After implementing a UI feature or fix, always verify it manually in a running a
 
 ### Demo App Credentials
 
-The demo application's default developer login is `root` / `root1234`.
+The demo application's default developer login is `root` / `root1234`. For the demo app URLs (the classic `tl-demo` UI is at `/tl-demo/servlet/LayoutServlet`, the React demos at `/view/`) and scripted-test notes, see [docs/faq/demo-apps.md](docs/faq/demo-apps.md).
 
 ### Version Management
 
@@ -293,6 +299,10 @@ Available tools include:
 - `search_tickets` - Search for tickets using Trac query syntax
 - `get_ticket_changelog` - Get ticket change history
 - `create_ticket` / `update_ticket` - Create or update tickets
+
+**`update_ticket` silently ignores top-level status/owner fields — nest them under `attributes`.** `{"ticket_id": N, "status": "accepted"}` returns "Updated ticket #N" but changes nothing (the Modified timestamp stays untouched, and a later push is rejected by the ticket-status hook). Use `{"ticket_id": N, "attributes": {"status": "accepted", "owner": "…"}}` and verify with `get_ticket`.
+
+**Migration / upgrade instructions go into the ticket DESCRIPTION, not a comment.** The release changelog is generated from ticket descriptions only — comments, PR bodies, and commit messages do not reach it. Append a `== Migration ==` section to the existing description via `update_ticket` (with the full description text) and flag the ticket with the `CodeMigration` keyword.
 
 **Important**: Trac uses WikiFormatting syntax (not Markdown) for ticket descriptions and comments. Key syntax:
 - Headings: `= Title =`, `== Subtitle ==`

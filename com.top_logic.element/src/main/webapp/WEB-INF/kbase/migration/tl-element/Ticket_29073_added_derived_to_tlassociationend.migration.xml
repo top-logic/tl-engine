@@ -10,7 +10,7 @@
 		<dependency name="Ticket_29019_Removed_log_entries"
 			module="tl"
 		/>
-		<dependency name="Ticket_28710_RoleAssignment_TLSearch"
+		<dependency name="Ticket_29001_Added_revertedBy_attribute"
 			module="tl-element"
 		/>
 	</dependencies>

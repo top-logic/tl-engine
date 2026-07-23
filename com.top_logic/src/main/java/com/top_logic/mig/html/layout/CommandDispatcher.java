@@ -6,7 +6,6 @@
 package com.top_logic.mig.html.layout;
 
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -257,10 +256,10 @@ public class CommandDispatcher {
 		ResKey errorKey = getErrorKey(result);
 		if (errorKey != null) {
 			String failureMessage = context.getResources().getString(errorKey);
-			// The recorded message is the concrete failure text; ExpectedFailureAction interprets it
-			// as a regular expression, so quote it to match literally (real messages may contain
-			// regex metacharacters).
-			failureExpectation.setExpectedFailureMessage(Pattern.quote(failureMessage));
+			// Record the concrete failure text as a literal expected message. ExpectedFailureAction
+			// matches it as a literal substring by default (regexp mode is off), so no quoting is
+			// required.
+			failureExpectation.setExpectedFailureMessage(failureMessage);
 		}
 		return failureExpectation;
 	}

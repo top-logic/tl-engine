@@ -44,13 +44,15 @@ public class ExpectedFailureActionOp
 		void setFailureAction(ApplicationAction value);
 
 		/**
-		 * A regular expression that must be {@link java.util.regex.Matcher#find() found} somewhere in
-		 * the failure message when the {@link #getFailureAction()} fails.
+		 * The message that must occur in the failure message when the {@link #getFailureAction()}
+		 * fails.
 		 *
 		 * <p>
-		 * The value is interpreted as a regular expression (not a literal substring), so regex
-		 * metacharacters (e.g. <code>. ( ) [ ] { } * + ? \ ^ $ |</code>) must be escaped to match
-		 * literally. When empty, any failure is accepted.
+		 * By default, the value is matched as a literal substring of the failure message. If
+		 * {@link #isRegexpMode()} is set, the value is instead interpreted as a regular expression
+		 * that must be {@link java.util.regex.Matcher#find() found} somewhere in the failure message;
+		 * in that case regex metacharacters (e.g. <code>. ( ) [ ] { } * + ? \ ^ $ |</code>) must be
+		 * escaped to match literally. When empty, any failure is accepted.
 		 * </p>
 		 */
 		String getExpectedFailureMessage();
@@ -60,9 +62,26 @@ public class ExpectedFailureActionOp
 		 */
 		void setExpectedFailureMessage(String value);
 
+		/**
+		 * Whether {@link #getExpectedFailureMessage()} is interpreted as a regular expression.
+		 *
+		 * <p>
+		 * If not set (the default), {@link #getExpectedFailureMessage()} is matched as a literal
+		 * substring of the failure message. If set, it is interpreted as a regular expression.
+		 * </p>
+		 */
+		boolean isRegexpMode();
+
+		/**
+		 * @see #isRegexpMode()
+		 */
+		void setRegexpMode(boolean value);
+
 	}
 
 	private final ApplicationActionOp<?> _failureAction;
+
+	private final String _expectedFailureMessage;
 
 	private final Pattern _expectedFailurePattern;
 
@@ -72,11 +91,11 @@ public class ExpectedFailureActionOp
 	public ExpectedFailureActionOp(InstantiationContext context, ExpectedFailureAction config) {
 		super(context, config);
 		_failureAction = context.getInstance(config.getFailureAction());
-		_expectedFailurePattern = compilePattern(context, config.getExpectedFailureMessage());
+		_expectedFailureMessage = config.getExpectedFailureMessage() == null ? "" : config.getExpectedFailureMessage();
+		_expectedFailurePattern = config.isRegexpMode() ? compilePattern(context, _expectedFailureMessage) : null;
 	}
 
-	private static Pattern compilePattern(InstantiationContext context, String expectedFailureMessage) {
-		String regex = expectedFailureMessage == null ? "" : expectedFailureMessage;
+	private static Pattern compilePattern(InstantiationContext context, String regex) {
 		try {
 			return Pattern.compile(regex);
 		} catch (PatternSyntaxException ex) {
@@ -114,16 +133,22 @@ public class ExpectedFailureActionOp
 			}
 
 			ApplicationAssertions.fail(getConfig(),
-				"Expected failure matching '" + _expectedFailurePattern.pattern() + "', but was: "
+				"Expected failure matching '" + _expectedFailureMessage + "', but was: "
 					+ String.join(" ", allMessages));
 		}
 		ApplicationAssertions.fail(getConfig(),
-			"Expected failure matching '" + _expectedFailurePattern.pattern() + "', but action was successful.");
+			"Expected failure matching '" + _expectedFailureMessage + "', but action was successful.");
 		return argument;
 	}
 
 	private boolean matches(String message) {
-		return message != null && _expectedFailurePattern.matcher(message).find();
+		if (message == null) {
+			return false;
+		}
+		if (_expectedFailurePattern != null) {
+			return _expectedFailurePattern.matcher(message).find();
+		}
+		return message.contains(_expectedFailureMessage);
 	}
 
 }

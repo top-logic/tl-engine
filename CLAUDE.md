@@ -4,10 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TopLogic is an open-source, model-based, no-code web application development platform. It combines declarative configuration (UML/BPMN modeling, WYSIWYG UI configuration) with extensible Java components. The platform enables both no-code application development and traditional Java/Maven development workflows.
-
-**Build System**: Maven
-**License**: Dual-licensed (AGPL-3.0 / BOS-TopLogic-1.0)
+TopLogic is an open-source, model-based, no-code web application platform (declarative UML/BPMN modeling + WYSIWYG UI, extensible with Java components). Maven build; dual-licensed AGPL-3.0 / BOS-TopLogic-1.0.
 
 ## Build Commands
 
@@ -27,16 +24,14 @@ Tests are skipped by default (`skipTests=true` in tl-parent-all), so `-DskipTest
 
 ### Refreshing the Workspace After a Branch Switch
 
-Switching branches can leave stale jars in the local Maven repo (installed artifacts older than the current sources). A full rebuild is expensive. Use:
+Switching branches or pulling can leave stale jars in the local Maven repo (installed artifacts older than — or built from a different branch than — the current sources). A full rebuild is expensive; detect and rebuild only the stale modules:
 
 ```bash
 .claude/scripts/rebuild-stale.sh            # detect + rebuild stale modules
 .claude/scripts/rebuild-stale.sh --dry-run  # only list them
 ```
 
-The script enumerates all reactor modules by walking the aggregator `<modules>` lists in the POM tree (including active-by-default profiles; Maven itself is invoked only once, non-recursively, to resolve the local-repository path — so enumeration works even when reactor jars are missing), then flags a module as stale when **either** (a) its own `pom.xml` + `src/` mtime is newer than its installed jar (or the jar is missing) — *source-stale*; **or** (b) any reactor module it depends on is stale or has a newer jar — *dependency-stale*; **or** (c) its jar was built while HEAD was on a different commit and the module's git tree differs between that commit and the current HEAD — *branch-state-stale*. Staleness compares sources against the artifact's actual install time (the newer of the artifact file and `maven-metadata-local.xml` — the install plugin copies files preserving their source mtime, so the file timestamp alone would flag some modules forever). Pom-packaging modules (parents/aggregators) are tracked by their installed POM and reinstalled when outdated — out-of-reactor builds (e.g. the `tl-archetype-*` integration tests' nested builds) resolve parent chains from the repository — but they do not propagate staleness. Case (b) is propagated transitively over the reactor dependency graph (parsed from each module's `pom.xml`), so it catches **cross-module API drift**: e.g. `model.search`'s sources change and it is rebuilt, leaving `service.openapi.server` — whose own sources are untouched — compiled against the old `SearchExpression` API. A purely local mtime check would call that module fresh; the transitive check rebuilds it. Case (c) closes the mtime blind spot after switching to an **older** branch state: a jar built from the previous branch is newer than the now-older sources, so (a) calls it fresh, yet it contains the other branch's code. The jar's provenance is reconstructed from the HEAD reflog (the entry current at the jar's mtime is the commit the build saw — regardless of who built the jar); jars older than the oldest reflog entry (e.g. from the read-only tail repository) have unknown provenance and are left to (a)/(b). It then rebuilds the whole stale set in the correct order (`mvn -B clean install -pl <list>`; Maven re-sorts `-pl` into reactor order). The rebuild uses `clean` because a branch switch can leave orphaned class files of deleted sources in `target/classes`, which a non-clean build would re-package into the new jar. The dependency-stale rule is deliberately conservative (rebuilds rather than risk a binary-incompatible jar); after a full `mvn install` jars are written in topological order, so only genuine source-stale roots propagate.
-
-**Run this after every pull or branch switch — not just when something looks broken.** It is the cheap reconciliation step that keeps the local repo consistent with the working tree. In particular it covers **newly added modules**: a module that was registered in an aggregator's `<modules>` but never built has no installed jar, so it is flagged `[no jar]` and rebuilt (along with its dependents). The only thing it cannot see is a module added to the source tree but **not yet registered** in any aggregator `<modules>` list — such a module is not part of the reactor and is invisible to both Maven and this script. Registration is the precondition; once a module is in the reactor, the `[no jar]` path covers it.
+**Run it after every pull or branch switch, not just when something looks broken** — it is the cheap step that reconciles the local repo with the working tree, including newly registered modules (flagged `[no jar]`). The one case it cannot catch is a module present in the source tree but not yet registered in any aggregator's `<modules>` list. The script's header comment documents the staleness rules (source-, dependency-, and branch-state-stale) and why each is needed.
 
 ### Running Tests
 
@@ -84,103 +79,28 @@ mvn dependency-check:check
 mvn javadoc:javadoc
 ```
 
-## Architecture Overview
+## Architecture & Module Layout
 
-TopLogic uses a **layered, modular architecture** with approximately 110+ Maven modules organized into distinct layers:
+TopLogic is a layered Maven reactor of 110+ modules. Name prefixes:
 
-### Module Naming Conventions
+- **`com.top_logic.*`** — framework and feature modules
+- **`tl-*`** — build tooling, parent POMs, infrastructure
+- **`ext.*`** — repackaged external libraries (CKEditor, Font Awesome, BPMN.js, …)
+- **`test.*`** — test-only modules
 
-- **`com.top_logic.*`** - Core framework modules (reverse DNS)
-- **`tl-*`** - Build tooling and infrastructure
-- **`ext.*`** - Packaged external libraries (Bootstrap Icons, CKEditor, Font Awesome, BPMN.js, Ace Editor, etc.)
-- **`test.*`** - Test-only modules
+Most modules are library-JAR *fragments* composed into applications: fragments use parent `tl-parent-core`, runnable apps use `tl-parent-app`.
 
-### Core Layers
+**Dependency direction is strictly bottom-up and must stay acyclic:** `com.top_logic.basic` (utilities, no other TL deps) → `basic.db` → `dob` / `dsa` (data access) → `com.top_logic` (knowledge base, model, layout) → feature modules → application modules. In particular, `basic.*` must never depend on a higher layer.
 
-1. **Build Infrastructure** (`tl-parent-*`, `tl-build-*`, `tl-maven-plugin`)
-   - Parent POMs define versioning, dependencies, and plugin configuration
-   - Custom Maven plugins for TopLogic-specific build tasks
-   - Build processors for code generation
-
-2. **Foundation Layer** (`com.top_logic.basic*`)
-   - Low-level utilities with no UI dependencies
-   - Configuration framework (`basic.config`) - declarative typed configuration system
-   - Data structures, I18N, reflection, XML/JSON processing
-   - Database abstraction layer (`basic.db`, `basic.db.schema`)
-   - Logging facades (Log4j, Logback)
-
-3. **Core Engine** (`com.top_logic` / tl-core)
-   - **Knowledge Base** (`knowledge.*`) - Object persistence, versioning, event journal
-   - **Type System** (`model.*`) - Dynamic type definitions, forms, data binding
-   - **Layout System** (`layout.*`) - Component-based declarative UI framework
-   - **Security** - Authentication, authorization, access control
-
-4. **Feature Modules** (various `com.top_logic.*`)
-   - **BPE**: Business Process Engine (`bpe`, `bpe.modeler`, `bpe.app`)
-   - **Reporting**: Report generation (`reporting`, `reporting.office`, `reporting.flex`)
-   - **Search**: Full-text search (`search.base`, `search.lucene`)
-   - **Graph/Diagrams**: UML, BPMN support (`graph.*`, `umljs`, `graph.diagramjs.*`)
-   - **Office Integration**: Word/Excel/PowerPoint (`office`, `doc`, `template`)
-   - **Messaging**: Kafka, JMS integration (`kafka*`, `tl-service-jms*`)
-   - **OpenAPI**: REST API support (`service.openapi.*`)
-
-5. **Client Layer** (GWT-compiled JavaScript)
-   - `*.ajax.client`, `*.client.diagramjs`, `*.graphic.blocks.client`
-   - Compiled from Java to JavaScript for browser execution
-
-### Key Architectural Patterns
-
-- **Fragment Modules**: Most modules are library JARs that compose into applications
-- **Parent POMs**: `tl-parent-core` for fragment modules, `tl-parent-app` for runnable applications
-- **Configuration-Driven**: Heavy use of XML configuration files in `src/main/webapp/WEB-INF/`
-- **Declarative Layouts**: UI defined in `.layout.xml` files under `WEB-INF/layouts/`
-- **Type System**: Dynamic type definitions enable model-driven development
-- **Knowledge Base**: Custom ORM layer above SQL databases with versioning and auditing
-
-## Module Dependencies
-
-**Typical dependency flow** (bottom-up):
-
-```
-com.top_logic.basic (utilities, no dependencies on other TL modules)
-  ↓
-com.top_logic.basic.db (database layer)
-  ↓
-com.top_logic.dob, .dsa (data access layer)
-  ↓
-com.top_logic (core: knowledge base, model system, layout engine)
-  ↓
-Feature modules (bpe, reporting, search, etc.)
-  ↓
-Application modules (compose features)
-```
-
-**Important**: The `basic.*` layer must remain dependency-free from higher layers to prevent circular dependencies.
+To find the module that owns a class or feature, use the `tl-mcp` tools (`module_of`) or the "Repository Structure" section below.
 
 ## File Locations
 
-### Source Structure
+Standard Maven layout, plus these TopLogic conventions:
 
-- **Java source**: `src/main/java/com/top_logic/...`
-- **Resources**: `src/main/resources/`
-- **Webapp files**: `src/main/webapp/` (for web modules)
-  - Layouts: `WEB-INF/layouts/`
-  - Configuration: `WEB-INF/conf/`
-  - Kbase definitions: `WEB-INF/kbase/`
-  - Model definitions: `WEB-INF/model/`
-
-### Test Structure
-
-- **Test source**: `src/test/java/test/com/top_logic/...`
-  - Note the `test.` prefix in package names
-- **Test resources**: `src/test/resources/`
-
-### Configuration Files
-
-- **Module POM**: `pom.xml` (defines dependencies, build configuration)
-- **Parent POM reference**: Most modules extend `tl-parent-core-internal`
-- **Webapp descriptor**: `WEB-INF/web.xml` (for web modules)
-- **TypeDoc**: `*.type.xml` files define model types
+- **Tests** live under `src/test/java/test/com/top_logic/...` — note the extra `test.` package prefix.
+- **Webapp config** (web modules) under `src/main/webapp/WEB-INF/`: `layouts/` (layout XML), `model/` (model XML), `conf/` (app config), `kbase/` (kbase definitions).
+- Model types are also declared in `*.type.xml`.
 
 ## Development Patterns
 
@@ -208,17 +128,7 @@ public class MyClass {
 
 ### Configuration Framework
 
-TopLogic uses a sophisticated typed configuration system. Configuration classes use annotations:
-
-```java
-public interface MyConfig extends ConfigurationItem {
-    @Name("my-property")
-    @Mandatory
-    String getMyProperty();
-}
-```
-
-Configuration is typically loaded from XML files using `InstantiationContext`.
+TopLogic uses a typed configuration system: config classes are annotated `ConfigurationItem` / `PolymorphicConfiguration` interfaces (properties declared via `@Name`, `@Mandatory`, …), loaded from XML via `InstantiationContext`.
 
 **TypedConfiguration pitfalls:**
 - `@ClassDefault(MyClass.class)` is REQUIRED on Config interfaces extending `PolymorphicConfiguration<T>` — otherwise the framework tries to instantiate the base interface.
@@ -228,137 +138,34 @@ Configuration is typically loaded from XML files using `InstantiationContext`.
 
 ### Knowledge Base Access
 
-Objects are accessed through the Knowledge Base API:
-
-```java
-KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-Transaction tx = kb.beginTransaction();
-try {
-    // Perform operations
-    tx.commit();
-} finally {
-    tx.rollback();
-}
-```
+Objects are read/written through `PersistencyLayer.getKnowledgeBase()`. Wrap every mutation in a transaction: `kb.beginTransaction()`, perform the changes, `tx.commit()`, with `tx.rollback()` in a `finally` (a no-op after a successful commit).
 
 ### Layout Components
 
-UI components extend `LayoutComponent` and are configured declaratively:
-
-```xml
-<layout>
-    <component class="com.top_logic.layout.form.component.FormComponent">
-        <!-- Configuration -->
-    </component>
-</layout>
-```
+UI is assembled declaratively in `*.layout.xml` files under `WEB-INF/layouts/`. See the `tl-layout` skill for the template-call pattern, channel binding, and the component catalog.
 
 ### React Controls (`com.top_logic.layout.react`)
 
-React controls use a bridge library (`tl-react-bridge`) that provides a single shared React instance.
-
-**Critical**: Controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly. Importing from `'react'` bundles a duplicate React copy, causing "useState is null" errors at runtime.
-
-```typescript
-// Correct:
-import { React, useTLState } from 'tl-react-bridge';
-
-// Wrong — causes runtime errors:
-import React, { useState } from 'react';
-```
-
-The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`. Do NOT run `npx vite build` directly.
+React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md).
 
 ### Model Definitions
 
-Types are defined in XML files (`*.model.xml`):
-
-```xml
-<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
-    <module name="my.module">
-        <class name="MyType">
-            <attributes>
-                <property name="myAttribute" type="tl.core:String"/>
-            </attributes>
-        </class>
-    </module>
-</model>
-```
+Application data types are defined in `*.model.xml` files under `WEB-INF/model/`. See the `tl-model` skill for types, attributes, references, derived attributes, and wrapper generation.
 
 ### UI Labels and I18N
 
-TopLogic generates UI labels from configuration interface properties. The English `messages_en.properties` files in `src/main/java/META-INF/` are **generated during `mvn install`** from JavaDoc comments — **do NOT edit them directly**, changes are overwritten on the next build.
+- English `messages_en.properties` (in `src/main/java/META-INF/`) are **generated during `mvn install`** from config-property names and JavaDoc — **never edit them by hand**; the next build overwrites them.
+- German `messages_de.properties` are **hand-maintained**: the build seeds new keys via DeepL but never overwrites existing entries, so correcting a translation directly is the normal workflow.
+- **Never pass `-Dmaven.javadoc.skip=true` when adding or renaming `I18NConstants`** — the `TLDoclet` runs in the javadoc lifecycle, so skipping it leaves the `messages_*.properties` stale.
+- To change a label, add a `@Label` annotation (tooltip = getter JavaDoc), run `mvn install`, and commit both the Java change and the regenerated `messages_*.properties`.
 
-The German `messages_de.properties` files are **maintained by hand**. The build seeds new keys (via DeepL auto-translation) but never overwrites existing entries, so correcting an awkward or wrong German translation directly in `messages_de.properties` is the normal workflow.
-
-Message generation runs as part of the `maven-javadoc-plugin` lifecycle (the `TLDoclet`). **Never pass `-Dmaven.javadoc.skip=true` when adding or renaming `I18NConstants`** — the doclet is skipped along with Javadoc, leaving the `messages_*.properties` files outdated.
-
-**To change a UI label:**
-
-1. **Add a `@Label` annotation** to the configuration property:
-
-```java
-@Name("cssClassOverride")
-@Label("CSS class override")  // Overrides auto-generated label
-boolean getCssClassOverride();
-```
-
-2. **Run `mvn install`** on the module to regenerate the properties files
-
-3. **Commit both** the Java source change AND the regenerated `messages_*.properties` files
-
-**How labels are generated:**
-- Default label is derived from the property name (e.g., `cssClassOverride` → "Css class override")
-- `@Label` annotation overrides the auto-generated label
-- Tooltips are generated from JavaDoc comments on the getter method
-
-**Example regeneration workflow:**
-```bash
-cd com.top_logic
-mvn install
-git diff src/main/java/META-INF/messages_en.properties  # Verify changes
-git add src/main/java/META-INF/messages_*.properties
-git commit -m "Ticket #XXXXX: Regenerate messages with label fixes."
-```
+See [docs/faq/i18n.md](docs/faq/i18n.md) for the full workflow and examples.
 
 ### Exception Handling
 
-TopLogic uses **`TopLogicException`** for user-visible errors that should be displayed with internationalized messages:
+Throw `com.top_logic.util.error.TopLogicException` for user-visible errors that need an internationalized message; use a plain `RuntimeException` for internal programming errors users cannot act on. User-facing messages are `ResKey` constants declared in an `I18NConstants` class with an `@en` JavaDoc default, named `ERROR_<DESCRIPTION>__<PARAM1>_<PARAM2>` (`ResKey`, `ResKey1`, … chosen by parameter count).
 
-```java
-import com.top_logic.util.error.TopLogicException;
-
-// Define I18N constants in I18NConstants.java
-public class I18NConstants extends I18NConstantsBase {
-    /**
-     * @en Failed to generate PDF: {0}
-     */
-    public static ResKey1 ERROR_PDF_GENERATION_FAILED__MSG;
-
-    static {
-        initConstants(I18NConstants.class);
-    }
-}
-
-// Use TopLogicException with I18N constants
-throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(ex.getMessage()), ex);
-```
-
-**When to use TopLogicException:**
-- User-visible errors that should be displayed in the UI
-- Errors that need internationalization support
-- Validation failures that users need to understand
-
-**When to use RuntimeException:**
-- Internal programming errors that should not occur in production
-- Errors that indicate bugs rather than user mistakes
-- Low-level technical failures that users cannot act upon
-
-**I18N Constant Naming Convention:**
-- Format: `ERROR_<DESCRIPTION>__<PARAM1>_<PARAM2>`
-- Example: `ERROR_INVALID_PAGE_SIZE__VALUE_VALID` (takes value and valid options as parameters)
-- Use `ResKey` (no params), `ResKey1` (1 param), `ResKey2` (2 params), etc.
-- JavaDoc comment must start with `@en` for English default text
+See [docs/faq/i18n.md](docs/faq/i18n.md) for the `I18NConstants` pattern and a full example.
 
 ### JavaDoc Conventions
 
@@ -374,6 +181,10 @@ external/JS identifiers.
   msgbuf generator rewrites field links to the correct getter — do NOT guess `getStrokeColor()`.
 - The `TLDoclet` "Invalid camel case word" warning flags bare `camelCase` words in JavaDoc — wrap
   them in a `{@link}` (preferred) or, only for non-symbols, `{@code}`.
+- **Never downgrade a `{@link}` to `{@code}` to silence a doclet warning** — relocate the link (e.g.
+  into `@implNote`, or link the class instead of the member) so it stays a checked reference. See
+  [docs/faq/javadoc-warnings.md](docs/faq/javadoc-warnings.md) for the full set of TLDoclet warnings
+  and their fixes.
 
 ## Testing Conventions
 
@@ -382,37 +193,22 @@ external/JS identifiers.
 - Tests requiring a knowledge base extend `AbstractDBKnowledgeBaseTest`
 - Tests are JUnit 4 based
 
-### Manual Verification with Playwright
-
-After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done. This means:
-
-1. **Ensure the feature is accessible in `com.top_logic.demo`** — if the feature is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
-2. **Start the demo app** using the `tl-app` skill.
-3. **Use Playwright** to navigate to the feature, interact with it, and verify that it works as expected.
-4. **Only then report the work as complete.**
+**A green local `mvn install` is not a green CI build** (tests are skipped locally). Before pushing a branch that adds or edits source or layouts: every new `.java` needs an SPDX header + class doc comment, every new/edited `*.xml` layout must be `XMLPrettyPrinter`-normalized, and `-DskipTests=true` even skips test *compilation* so broken test code can pass a local build. See [docs/faq/build-conformance.md](docs/faq/build-conformance.md).
 
 ### Manual Verification with Playwright
 
-After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done. This means:
+After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done:
 
-1. **Ensure the feature is accessible in `com.top_logic.demo`** — if the feature is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
+1. **Ensure the feature is accessible in `com.top_logic.demo`** — if it is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
 2. **Start the demo app** using the `tl-app` skill.
-3. **Use Playwright** to navigate to the feature, interact with it, and verify that it works as expected.
+3. **Verify the feature** by navigating to it, interacting with it, and checking it behaves as expected. **Delegate the browser interaction loop to a sub-agent** so its hundreds of round-trips don't re-bill the main thread's context on every turn — see the `tl-app` skill's "Verifying in the browser" section for the sub-agent brief and the snapshot-vs-screenshot guidance.
 4. **Only then report the work as complete.**
 
 ## Important Notes
 
 ### Demo App Credentials
 
-The demo application's default developer login is `root` / `root1234`.
-
-### Database Support
-
-The platform supports multiple databases:
-- **H2** (default for development/testing)
-- **Oracle**, **PostgreSQL**, **MySQL**, **MS SQL Server**, **IBM DB2**
-
-Database-specific drivers are included in test scope for internal modules.
+The demo application's default developer login is `root` / `root1234`. For the demo app URLs (the classic `tl-demo` UI is at `/tl-demo/servlet/LayoutServlet`, the React demos at `/view/`) and scripted-test notes, see [docs/faq/demo-apps.md](docs/faq/demo-apps.md).
 
 ### Version Management
 
@@ -430,13 +226,7 @@ When creating a new TopLogic module:
 
 ### Resource File Normalization
 
-`.properties` files under `WEB-INF/conf/resources/` must be normalized:
-
-```bash
-mvn -N tl:normalize-resource-file -Dresource=<path>
-```
-
-The `-N` flag is essential — without it Maven resolves the full reactor (including GWT modules) and the command fails.
+`.properties` files under `WEB-INF/conf/resources/` must be normalized. See the `tl-model` skill ("Normalizing resource files") for the command and the mandatory `-N` flag.
 
 
 ### Theme / CSS Reloading
@@ -510,6 +300,10 @@ Available tools include:
 - `get_ticket_changelog` - Get ticket change history
 - `create_ticket` / `update_ticket` - Create or update tickets
 
+**`update_ticket` silently ignores top-level status/owner fields — nest them under `attributes`.** `{"ticket_id": N, "status": "accepted"}` returns "Updated ticket #N" but changes nothing (the Modified timestamp stays untouched, and a later push is rejected by the ticket-status hook). Use `{"ticket_id": N, "attributes": {"status": "accepted", "owner": "…"}}` and verify with `get_ticket`.
+
+**Migration / upgrade instructions go into the ticket DESCRIPTION, not a comment.** The release changelog is generated from ticket descriptions only — comments, PR bodies, and commit messages do not reach it. Append a `== Migration ==` section to the existing description via `update_ticket` (with the full description text) and flag the ticket with the `CodeMigration` keyword.
+
 **Important**: Trac uses WikiFormatting syntax (not Markdown) for ticket descriptions and comments. Key syntax:
 - Headings: `= Title =`, `== Subtitle ==`
 - Bold: `'''text'''`
@@ -550,42 +344,7 @@ Commit messages in this project must follow a specific format:
 
 ## msgbuf Library
 
-The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library for type-safe protocol message generation from `.proto` files.
-
-### Key Pitfall: Writer Types
-
-`de.haumacher.msgbuf.json.JsonWriter` takes `de.haumacher.msgbuf.io.Writer` — **not** `java.io.Writer`. The compiler error "StringWriter cannot be converted to Writer" is misleading because `StringWriter` IS a `java.io.Writer`, but the constructor expects the msgbuf `Writer` interface. The error omits the package, making it look like a standard Java type.
-
-**Correct usage:**
-
-```java
-// For in-memory string serialization:
-import de.haumacher.msgbuf.io.StringW;
-import de.haumacher.msgbuf.json.JsonWriter;
-
-StringW out = new StringW();
-try (JsonWriter writer = new JsonWriter(out)) {
-    myMessage.writeTo(writer);
-}
-String json = out.toString();
-
-// To wrap a java.io.Writer (server-side only):
-import de.haumacher.msgbuf.server.io.WriterAdapter;
-
-try (JsonWriter writer = new JsonWriter(new WriterAdapter(javaIoWriter))) {
-    myMessage.writeTo(writer);
-}
-```
-
-### Generator Plugin
-
-The msgbuf Maven plugin generates Java classes from `.proto` files. Note that its default lifecycle phase is **not** `generate-sources`, so `mvn generate-sources` alone won't trigger it. It runs during `mvn compile`. To run it in isolation, invoke its `generate` goal by plugin prefix, targeting a module that declares the plugin (`com.top_logic.basic`, `com.top_logic.graphic.blocks`, or `tl-tools-resources`):
-
-```bash
-mvn msgbuf-generator:generate -pl com.top_logic.basic
-```
-
-The prefix is `msgbuf-generator` (not `msgbuf`); no version is needed — Maven resolves it from the target module's POM (`${msgbuf.version}`).
+The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library for type-safe protocol message generation from `.proto` files. For the `JsonWriter` writer-type pitfall and the generator-plugin invocation, see [docs/faq/msgbuf.md](docs/faq/msgbuf.md).
 
 
 ## Additional Resources

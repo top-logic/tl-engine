@@ -251,6 +251,8 @@ mvn install -DskipTests=true -pl my.new.module
 
 Never `cd` into the module. Never run `npx vite build` directly.
 
+**After changing `react-src/*.ts(x)` in `com.top_logic.layout.react`, rebuild the *app* module too** (e.g. `mvn install -pl com.top_logic.demo.react`), not just `layout.react`. The running app serves `script/tl-react-bridge.js` from the app's exploded overlay (`target/<app>-app/script/`), which stays a stale copy until the app module is rebuilt — Java jars, by contrast, resolve fresh from the local m2 repo on restart. Symptom: server-side changes take effect but client-side changes silently don't. Verify with `grep -rl "<new string>" com.top_logic.demo.react/target`.
+
 ## Common errors
 
 | Error | Cause | Fix |

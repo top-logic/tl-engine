@@ -206,17 +206,7 @@ public class MyClass {
 
 ### Configuration Framework
 
-TopLogic uses a sophisticated typed configuration system. Configuration classes use annotations:
-
-```java
-public interface MyConfig extends ConfigurationItem {
-    @Name("my-property")
-    @Mandatory
-    String getMyProperty();
-}
-```
-
-Configuration is typically loaded from XML files using `InstantiationContext`.
+TopLogic uses a typed configuration system: config classes are annotated `ConfigurationItem` / `PolymorphicConfiguration` interfaces (properties declared via `@Name`, `@Mandatory`, …), loaded from XML via `InstantiationContext`.
 
 **TypedConfiguration pitfalls:**
 - `@ClassDefault(MyClass.class)` is REQUIRED on Config interfaces extending `PolymorphicConfiguration<T>` — otherwise the framework tries to instantiate the base interface.
@@ -226,18 +216,7 @@ Configuration is typically loaded from XML files using `InstantiationContext`.
 
 ### Knowledge Base Access
 
-Objects are accessed through the Knowledge Base API:
-
-```java
-KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-Transaction tx = kb.beginTransaction();
-try {
-    // Perform operations
-    tx.commit();
-} finally {
-    tx.rollback();
-}
-```
+Objects are read/written through `PersistencyLayer.getKnowledgeBase()`. Wrap every mutation in a transaction: `kb.beginTransaction()`, perform the changes, `tx.commit()`, with `tx.rollback()` in a `finally` (a no-op after a successful commit).
 
 ### Layout Components
 
@@ -253,78 +232,18 @@ Application data types are defined in `*.model.xml` files under `WEB-INF/model/`
 
 ### UI Labels and I18N
 
-TopLogic generates UI labels from configuration interface properties. The English `messages_en.properties` files in `src/main/java/META-INF/` are **generated during `mvn install`** from JavaDoc comments — **do NOT edit them directly**, changes are overwritten on the next build.
+- English `messages_en.properties` (in `src/main/java/META-INF/`) are **generated during `mvn install`** from config-property names and JavaDoc — **never edit them by hand**; the next build overwrites them.
+- German `messages_de.properties` are **hand-maintained**: the build seeds new keys via DeepL but never overwrites existing entries, so correcting a translation directly is the normal workflow.
+- **Never pass `-Dmaven.javadoc.skip=true` when adding or renaming `I18NConstants`** — the `TLDoclet` runs in the javadoc lifecycle, so skipping it leaves the `messages_*.properties` stale.
+- To change a label, add a `@Label` annotation (tooltip = getter JavaDoc), run `mvn install`, and commit both the Java change and the regenerated `messages_*.properties`.
 
-The German `messages_de.properties` files are **maintained by hand**. The build seeds new keys (via DeepL auto-translation) but never overwrites existing entries, so correcting an awkward or wrong German translation directly in `messages_de.properties` is the normal workflow.
-
-Message generation runs as part of the `maven-javadoc-plugin` lifecycle (the `TLDoclet`). **Never pass `-Dmaven.javadoc.skip=true` when adding or renaming `I18NConstants`** — the doclet is skipped along with Javadoc, leaving the `messages_*.properties` files outdated.
-
-**To change a UI label:**
-
-1. **Add a `@Label` annotation** to the configuration property:
-
-```java
-@Name("cssClassOverride")
-@Label("CSS class override")  // Overrides auto-generated label
-boolean getCssClassOverride();
-```
-
-2. **Run `mvn install`** on the module to regenerate the properties files
-
-3. **Commit both** the Java source change AND the regenerated `messages_*.properties` files
-
-**How labels are generated:**
-- Default label is derived from the property name (e.g., `cssClassOverride` → "Css class override")
-- `@Label` annotation overrides the auto-generated label
-- Tooltips are generated from JavaDoc comments on the getter method
-
-**Example regeneration workflow:**
-```bash
-cd com.top_logic
-mvn install
-git diff src/main/java/META-INF/messages_en.properties  # Verify changes
-git add src/main/java/META-INF/messages_*.properties
-git commit -m "Ticket #XXXXX: Regenerate messages with label fixes."
-```
+See [docs/faq/i18n.md](docs/faq/i18n.md) for the full workflow and examples.
 
 ### Exception Handling
 
-TopLogic uses **`TopLogicException`** for user-visible errors that should be displayed with internationalized messages:
+Throw `com.top_logic.util.error.TopLogicException` for user-visible errors that need an internationalized message; use a plain `RuntimeException` for internal programming errors users cannot act on. User-facing messages are `ResKey` constants declared in an `I18NConstants` class with an `@en` JavaDoc default, named `ERROR_<DESCRIPTION>__<PARAM1>_<PARAM2>` (`ResKey`, `ResKey1`, … chosen by parameter count).
 
-```java
-import com.top_logic.util.error.TopLogicException;
-
-// Define I18N constants in I18NConstants.java
-public class I18NConstants extends I18NConstantsBase {
-    /**
-     * @en Failed to generate PDF: {0}
-     */
-    public static ResKey1 ERROR_PDF_GENERATION_FAILED__MSG;
-
-    static {
-        initConstants(I18NConstants.class);
-    }
-}
-
-// Use TopLogicException with I18N constants
-throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(ex.getMessage()), ex);
-```
-
-**When to use TopLogicException:**
-- User-visible errors that should be displayed in the UI
-- Errors that need internationalization support
-- Validation failures that users need to understand
-
-**When to use RuntimeException:**
-- Internal programming errors that should not occur in production
-- Errors that indicate bugs rather than user mistakes
-- Low-level technical failures that users cannot act upon
-
-**I18N Constant Naming Convention:**
-- Format: `ERROR_<DESCRIPTION>__<PARAM1>_<PARAM2>`
-- Example: `ERROR_INVALID_PAGE_SIZE__VALUE_VALID` (takes value and valid options as parameters)
-- Use `ResKey` (no params), `ResKey1` (1 param), `ResKey2` (2 params), etc.
-- JavaDoc comment must start with `@en` for English default text
+See [docs/faq/i18n.md](docs/faq/i18n.md) for the `I18NConstants` pattern and a full example.
 
 ### JavaDoc Conventions
 

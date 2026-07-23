@@ -39,6 +39,7 @@ import com.top_logic.basic.func.misc.NonEmpty;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.ClassConfig;
 import com.top_logic.element.config.ExtendsConfig;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
@@ -478,7 +479,7 @@ public class TLStructuredTypeFormBuilder
 
 		ResKey key = TLModelNamingConvention.getTypeLabelKey(type);
 		formModel.setLabel(key);
-		formModel.setDescription(key.tooltip());
+		formModel.setDescription(new DefaultHtmlResKey(key.tooltip()));
 
 		for (TLAnnotation annotation : type.getAnnotations()) {
 			TLTypeAnnotation typeAnnotation = (TLTypeAnnotation) annotation;

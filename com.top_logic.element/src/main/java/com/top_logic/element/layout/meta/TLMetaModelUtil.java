@@ -17,9 +17,12 @@ import com.top_logic.basic.generate.CodeUtil;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey.LiteralKey;
+import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.basic.util.ResourceTransaction;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.config.ReferenceConfig.ReferenceKind;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
+import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
@@ -31,7 +34,6 @@ import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLResKeyUtil;
 
 /**
  * Utilities for the meta model.
@@ -71,25 +73,28 @@ public class TLMetaModelUtil {
 
 	private static void storeInternationalized(Internationalized i18n, ResKey key, String technicalName,
 			ResourceTransaction tx, Function<String, String> labelHeuristic, boolean autoTranslate) {
+		ResKey labelKey = i18n.getLabel();
+		HtmlResKey descriptionHtml = i18n.getDescription();
+		ResKey descriptionKey = descriptionHtml == null ? null : ((DefaultHtmlResKey) descriptionHtml).content();
+
 		for (Locale locale : ResourcesModule.getInstance().getSupportedLocales()) {
-			Resources bundle = Resources.getInstance(locale);
+			// Both label and description are stored per language exactly as entered. A language left empty
+			// is stored as null, which deletes its resource entry - so an all-empty key is cleared as if
+			// it was never set, and a value entered in a single language is resolved through the resource
+			// fall-back when displayed rather than being copied verbatim into the other languages (which
+			// could not be told apart from an explicit translation).
+			String label = StringServices.nonEmpty(translationWithoutFallback(labelKey, locale));
+			String description = StringServices.nonEmpty(translationWithoutFallback(descriptionKey, locale));
 
-			ResKey labelKey = i18n.getLabel();
-			String label = labelKey == null ? null
-				: labelKey.isLiteral() ? ((LiteralKey) labelKey).getTranslationWithoutFallbacks(locale)
-					: StringServices.nonEmpty(bundle.getString(labelKey, null));
-
-			ResKey descriptionKey = i18n.getDescription();
-			String description = descriptionKey == null ? null
-				: descriptionKey.isLiteral() ? ((LiteralKey) descriptionKey).getTranslationWithoutFallbacks(locale)
-					: StringServices.nonEmpty(bundle.getString(descriptionKey, null));
-
-			if (label == null) {
-				label = defaultTranslation(locale, labelKey, technicalName, labelHeuristic, autoTranslate);
-			}
-
-			if (description == null) {
-				description = defaultTranslation(locale, descriptionKey, null, labelHeuristic, autoTranslate);
+			// Only when auto-translation is enabled are empty languages filled, by actually translating an
+			// entered value rather than copying it.
+			if (autoTranslate) {
+				if (label == null) {
+					label = autoTranslation(locale, labelKey, technicalName, labelHeuristic);
+				}
+				if (description == null) {
+					description = autoTranslation(locale, descriptionKey, null, labelHeuristic);
+				}
 			}
 
 			tx.saveI18N(locale, key, label);
@@ -97,34 +102,36 @@ public class TLMetaModelUtil {
 		}
 	}
 
-	private static String defaultTranslation(Locale locale, ResKey labelKey, String technicalName,
-			Function<String, String> labelHeuristic, boolean autoTranslate) {
-		if (autoTranslate) {
-			Translator service = TranslationService.getInstance();
-			if (service.isSupported(locale)) {
-				if (labelKey != null && labelKey instanceof LiteralKey) {
-					for (Locale other : ResourcesModule.getInstance().getSupportedLocales()) {
-						if (service.isSupported(other)) {
-							if (((LiteralKey) labelKey).getTranslations().containsKey(other)) {
-								String originLabel = Resources.getInstance(other).getString(labelKey);
+	/**
+	 * The translation of the given {@link ResKey} in the given {@link Locale} without any language
+	 * fall-back, or <code>null</code> if none is defined for that language.
+	 */
+	private static String translationWithoutFallback(ResKey key, Locale locale) {
+		if (key == null) {
+			return null;
+		}
+		return key.isLiteral() ? ((LiteralKey) key).getTranslationWithoutFallbacks(locale)
+			: ResKeyUtil.translateWithoutFallback(locale, key);
+	}
 
-								return service.translate(originLabel, other, locale);
-							}
+	private static String autoTranslation(Locale locale, ResKey labelKey, String technicalName,
+			Function<String, String> labelHeuristic) {
+		Translator service = TranslationService.getInstance();
+		if (service.isSupported(locale)) {
+			if (labelKey instanceof LiteralKey) {
+				for (Locale other : ResourcesModule.getInstance().getSupportedLocales()) {
+					if (service.isSupported(other)) {
+						if (((LiteralKey) labelKey).getTranslations().containsKey(other)) {
+							String originLabel = Resources.getInstance(other).getString(labelKey);
+
+							return service.translate(originLabel, other, locale);
 						}
 					}
 				}
-
-				if (technicalName != null) {
-					return service.translate(labelHeuristic.apply(technicalName), Locale.ENGLISH, locale);
-				}
-			}
-		} else {
-			if (labelKey != null && TLResKeyUtil.existsResource(labelKey)) {
-				return Resources.getInstance().getString(labelKey);
 			}
 
 			if (technicalName != null) {
-				return labelHeuristic.apply(technicalName);
+				return service.translate(labelHeuristic.apply(technicalName), Locale.ENGLISH, locale);
 			}
 		}
 

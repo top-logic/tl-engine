@@ -23,6 +23,7 @@ import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder.EditModel.AllModules;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
@@ -237,7 +238,7 @@ public class TLEnumerationFormBuilder
 		ResKey key = TLModelNamingConvention.enumKey(enumeration);
 
 		formModel.setLabel(key);
-		formModel.setDescription(key.tooltip());
+		formModel.setDescription(new DefaultHtmlResKey(key.tooltip()));
 	}
 
 	private void fillClassifiers(EditModel formModel, TLEnumeration enumeration) {
@@ -253,7 +254,7 @@ public class TLEnumerationFormBuilder
 
 			ResKey key = TLModelNamingConvention.classifierKey(classifier);
 			classifierModel.setLabel(key);
-			classifierModel.setDescription(key.tooltip());
+			classifierModel.setDescription(new DefaultHtmlResKey(key.tooltip()));
 
 			for (TLAnnotation annotation : classifier.getAnnotations()) {
 				TLClassifierAnnotation classifierAnnotation = (TLClassifierAnnotation) annotation;

@@ -29,14 +29,14 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 	private List<ServiceDependency<M>> _dynamicDependencies = new CopyOnWriteArrayList<>();
 
 	/**
-	 * Convenience constant for the implementation of {@link #getDependencies()}
-	 * in {@link RuntimeModule}s without dependencies.
+	 * Convenience constant for the implementation of {@link #getDependencies()} in
+	 * {@link BasicRuntimeModule}s without dependencies.
 	 */
 	public static final Collection<Class<? extends BasicRuntimeModule<?>>> NO_DEPENDENCIES = Collections.emptyList();
 
 	/**
-	 * All {@link RuntimeModule}s that must be {@link #startUp() started} before this
-	 * {@link RuntimeModule} can be started.
+	 * All {@link BasicRuntimeModule}s that must be {@link #startUp() started} before this
+	 * {@link BasicRuntimeModule} can be started.
 	 * 
 	 * @see #getExtendedService()
 	 */
@@ -60,8 +60,7 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 	}
 
 	/**
-	 * The implementation class that is represented by this
-	 * {@link RuntimeModule} instance.
+	 * The implementation class that is represented by this {@link BasicRuntimeModule} instance.
 	 */
 	public abstract Class<M> getImplementation();
 
@@ -77,8 +76,7 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 	protected abstract M newImplementationInstance() throws ModuleException;
 
 	/**
-	 * Whether this {@link RuntimeModule} has been successfully
-	 * {@link #startUp() started}.
+	 * Whether this {@link BasicRuntimeModule} has been successfully {@link #startUp() started}.
 	 */
 	public boolean isActive() {
 		return impl != null;

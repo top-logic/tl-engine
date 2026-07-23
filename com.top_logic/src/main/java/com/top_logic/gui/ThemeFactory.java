@@ -31,7 +31,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.format.BuiltInFormats;
 import com.top_logic.basic.module.ConfiguredManagedClass;
-import com.top_logic.basic.module.RuntimeModule;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.Computation;
@@ -136,7 +135,7 @@ public abstract class ThemeFactory extends ConfiguredManagedClass<ThemeFactory.C
 	}
 
 	/**
-	 * {@link RuntimeModule} managing the {@link ThemeFactory} service.
+	 * {@link TypedRuntimeModule} managing the {@link ThemeFactory} service.
 	 * 
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */

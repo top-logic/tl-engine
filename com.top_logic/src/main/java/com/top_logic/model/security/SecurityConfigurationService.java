@@ -20,6 +20,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -59,8 +60,8 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Service class implementation of {@link ModelAccessRights}.
- * 
+ * Provides the configured access rights for model elements.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceDependencies({
@@ -69,6 +70,7 @@ import com.top_logic.util.model.ModelService;
 	InitialRolesManager.Module.class
 })
 @ServiceExtensionPoint(ModelService.Module.class)
+@Label("Model access rights")
 public class SecurityConfigurationService extends ConfiguredManagedClass<SecurityConfigurationService.Config>
 		implements ModelAccessRights {
 

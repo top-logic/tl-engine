@@ -14,6 +14,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.searching.Filter;
@@ -28,10 +29,11 @@ import com.top_logic.knowledge.searching.SearchResultSetSPI;
 import com.top_logic.knowledge.searching.SearchService;
 
 /**
- * The class {@link SearchFactory} provides the {@link SearchService}.
- * 
+ * Provides the configured full-text search service.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Search service")
 public class SearchFactory extends ManagedClass implements SearchService {
 
 	/**

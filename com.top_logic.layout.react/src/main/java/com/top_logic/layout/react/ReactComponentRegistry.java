@@ -11,6 +11,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -25,6 +26,7 @@ import com.top_logic.model.TLStructuredTypePart;
  * used for a given type part.
  * </p>
  */
+@Label("React component registry")
 public class ReactComponentRegistry extends ConfiguredManagedClass<ReactComponentRegistry.Config> {
 
 	/**

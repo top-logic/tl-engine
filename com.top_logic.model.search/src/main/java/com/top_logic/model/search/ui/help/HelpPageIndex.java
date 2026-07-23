@@ -19,6 +19,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -30,6 +31,7 @@ import com.top_logic.basic.util.ResourcesModule;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("TL-Script editor help index")
 @ServiceDependencies(SchedulerService.Module.class)
 public class HelpPageIndex extends ConfiguredManagedClass<ConfiguredManagedClass.Config<HelpPageIndex>> {
 

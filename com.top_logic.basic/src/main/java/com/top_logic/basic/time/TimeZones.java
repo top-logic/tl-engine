@@ -23,6 +23,7 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.TimeZoneValueProvider;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
@@ -30,10 +31,11 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 
 /**
- * Module handling time zones in <i>TopLogic</i>
- * 
+ * Service managing the time zones available in the application.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Time zones")
 public class TimeZones extends ManagedClass {
 
 	/**

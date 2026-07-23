@@ -31,10 +31,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -44,7 +44,7 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
- * {@link ManagedClass} holding active user sessions.
+ * Holds and manages the currently active user sessions.
  */
 @ServiceDependencies({
 	ThreadContextManager.Module.class,
@@ -52,6 +52,7 @@ import com.top_logic.util.TLContext;
 	 * depend on the KB. Therefore it must be restarted, when the KB is restarted. */
 	PersistencyLayer.Module.class
 })
+@Label("User sessions")
 public final class SessionService extends ConfiguredManagedClass<SessionService.Config>
 		implements HttpSessionBindingListener {
 	

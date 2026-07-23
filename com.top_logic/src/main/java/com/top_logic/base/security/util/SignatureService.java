@@ -16,6 +16,7 @@ import java.util.Arrays;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -25,6 +26,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@Label("Signature service")
 public abstract class SignatureService extends ManagedClass {
 
     private static final byte[] NO_SIGNATURE = new byte[0];

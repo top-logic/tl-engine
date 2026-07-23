@@ -20,6 +20,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.BasicRuntimeModule;
@@ -29,10 +30,11 @@ import com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory.Config.Gene
 import com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory.Config.GeneratorSpiConfig;
 
 /**
- * Get the Generator for a config entry
- * 
+ * Provides the configured option generators for model attributes.
+ *
  * @author <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
+@Label("Option generators")
 public class GeneratorFactory extends ConfiguredManagedClass<GeneratorFactory.Config> {
 
 	/**

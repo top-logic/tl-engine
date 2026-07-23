@@ -10,6 +10,7 @@ import java.sql.SQLException;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sql.CommitContext;
@@ -17,13 +18,11 @@ import com.top_logic.dob.DataObject;
 import com.top_logic.dob.NamedValues;
 
 /**
- * A Generic interface to store and load DataObjects into some storage.
- * 
- * Usually this is a database but the time coming will show how this
- * can be used otherwise ;-).
- * 
+ * Stores and loads data objects in a persistent storage such as a database.
+ *
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
+@Label("Data object storage")
 public abstract class DataManager extends ManagedClass {
 
     /** The default number of Attributes assumed */

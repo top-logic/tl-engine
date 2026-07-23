@@ -26,6 +26,7 @@ import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.format.BuiltInFormats;
@@ -50,10 +51,11 @@ import com.top_logic.layout.template.WithProperties;
 import com.top_logic.util.TLContext;
 
 /**
- * Registry of {@link Theme}s.
- * 
+ * Manages the {@link Theme}s that control the look and feel of the user interface.
+ *
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@Label("Theme management")
 public abstract class ThemeFactory extends ConfiguredManagedClass<ThemeFactory.Config> implements Reloadable {
 
 	/**

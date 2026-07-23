@@ -9,21 +9,23 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ServerConfig;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.kafka.server.starter.ZooKeeperStarter;
 
 /**
- * Module starting the {@link ZooKeeper}.
- * 
+ * Starts an embedded {@link ZooKeeper} server.
+ *
  * <p>
  * Actually a wrapper for {@link ZooKeeperStarter}.
  * </p>
- * 
+ *
  * @see ZooKeeperStarter
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("ZooKeeper server")
 public class ZooKeeperModule extends ManagedClass {
 
 	/**

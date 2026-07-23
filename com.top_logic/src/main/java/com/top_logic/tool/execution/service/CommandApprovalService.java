@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -41,6 +42,7 @@ import com.top_logic.tool.execution.ExecutableState;
 @ServiceDependencies({
 	CommandGroupRegistry.Module.class
 })
+@Label("Command approval")
 public abstract class CommandApprovalService extends ManagedClass {
 
 	private static final CommandApprovalService INACTIVE = new CommandApprovalService() {

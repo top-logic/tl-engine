@@ -33,6 +33,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -100,6 +101,7 @@ import com.top_logic.basic.xml.XMLStreamUtil;
  * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
+@Label("XML properties")
 public class XMLProperties extends ManagedClass {
 
 	/**

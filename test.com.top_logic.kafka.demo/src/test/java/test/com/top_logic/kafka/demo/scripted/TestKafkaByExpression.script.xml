@@ -33,7 +33,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Kafka Produzenten-Service"
+									name="Kafka-Produzenten"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -182,7 +182,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Kafka Empfänger Service"
+									name="Kafka-Konsumenten"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -590,7 +590,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Kafka Empfänger Service"
+									name="Kafka-Konsumenten"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -666,7 +666,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Kafka Produzenten-Service"
+									name="Kafka-Produzenten"
 								/>
 								<selection-state boolean="true"/>
 							</selection>

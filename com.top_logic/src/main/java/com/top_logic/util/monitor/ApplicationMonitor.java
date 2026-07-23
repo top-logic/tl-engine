@@ -15,22 +15,24 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedPolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
- * {@link ManagedClass} providing {@link MonitorComponent}s.
- * 
+ * Collects the health-check results of all registered {@link MonitorComponent}s.
+ *
  * <p>
  * A {@link MonitorComponent} checks a certain function of the application. This
  * {@link ManagedClass} collects the results from all {@link MonitorComponent}s.
  * </p>
- * 
+ *
  * @see MonitorComponent#checkState(MonitorResult)
  * @see #checkApplication()
- * 
+ *
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@Label("Application monitor")
 public class ApplicationMonitor extends ManagedClass {
 
 	/**

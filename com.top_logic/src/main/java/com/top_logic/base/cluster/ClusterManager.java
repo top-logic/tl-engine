@@ -36,6 +36,7 @@ import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
@@ -68,6 +69,7 @@ import com.top_logic.util.db.DBUtil.ResultAsLongList;
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
 @ServiceDependencies({ ConnectionPoolRegistry.Module.class, SchedulerService.Module.class })
+@Label("Cluster management")
 public class ClusterManager extends ManagedClass {
 
     /** Mapping that maps everything to <code>null</code>. */

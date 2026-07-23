@@ -10,6 +10,7 @@ import java.util.Collections;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -19,8 +20,7 @@ import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 
 /**
- * Abstract analyze service that defines the base functionality and abstract 
- * methods common to all analyze services.
+ * Analyzes stored documents to find related or similar content.
  *
  * @author    <a href="mailto:dro@top-logic.com">Dieter Rothb&auml;cher</a>
  */
@@ -28,6 +28,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 	KnowledgeBaseFactory.Module.class,
 	PersistencyLayer.Module.class
 })
+@Label("Document analysis")
 public class DefaultAnalyzeService<C extends DefaultAnalyzeService.Config<?>> extends ConfiguredManagedClass<C>
 		implements AnalyzeService {
     

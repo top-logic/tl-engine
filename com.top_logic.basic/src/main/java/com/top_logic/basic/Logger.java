@@ -381,13 +381,13 @@ public class Logger {
     }
 
     /**
-     * Log the specified information.
+     * Log the specified information at the given {@link Level}.
      *
      * @param aMessage       the message to log
      * @param aCaller        the caller
      * @param aPriority      the priority to log with
      */
-    private static void log(String aMessage, Object aCaller, Level aPriority) {
+    public static void log(String aMessage, Object aCaller, Level aPriority) {
 		log(aMessage, null, aCaller, aPriority);
     }
 

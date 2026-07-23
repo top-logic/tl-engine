@@ -20,7 +20,6 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @see com.top_logic.model.search.expr.Log
  * @see com.top_logic.model.search.expr.Info
- * @see com.top_logic.model.search.expr.LogLevel
  */
 @SuppressWarnings("javadoc")
 public class TestLog extends AbstractSearchExpressionTest {

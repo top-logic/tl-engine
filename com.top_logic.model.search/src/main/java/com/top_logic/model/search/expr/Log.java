@@ -11,8 +11,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.Argument;
@@ -24,7 +26,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.util.TLContext;
 
 /**
- * Reports a message to the application log at a selectable {@link LogLevel}.
+ * Reports a message to the application log at a selectable {@link Level}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -34,7 +36,7 @@ public class Log extends GenericMethod {
 	 * Creates a {@link Log}.
 	 *
 	 * <p>
-	 * The first argument selects the {@link LogLevel}, the second is the message and any further
+	 * The first argument selects the {@link Level}, the second is the message and any further
 	 * arguments are the {@link MessageFormat} arguments filled into the message.
 	 * </p>
 	 */
@@ -54,12 +56,12 @@ public class Log extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		LogLevel level = LogLevel.parse(arguments[0]);
+		Level level = ScriptLog.parse(arguments[0]);
 		String message = asString(arguments[1]);
 		if (arguments.length > 2) {
 			message = MessageFormat.format(message, Arrays.copyOfRange(arguments, 2, arguments.length));
 		}
-		level.log("Script (" + whoAmI() + ") reported: " + message, Log.class);
+		Logger.log("Script (" + whoAmI() + ") reported: " + message, Log.class, level);
 		return null;
 	}
 
@@ -99,21 +101,21 @@ public class Log extends GenericMethod {
 				String name = arg.getName();
 				if (name == null) {
 					positional.add(arg.getValue());
-				} else if (LogLevel.ARGUMENT.equals(name)) {
+				} else if (ScriptLog.ARGUMENT.equals(name)) {
 					if (level != null) {
 						throw error(I18NConstants.ERROR_AMBIGUOUS_ARGUMENT__FUN_NAME.fill(expr.getName(), name));
 					}
 					level = arg.getValue();
 				} else {
 					throw error(I18NConstants.ERROR_NO_SUCH_NAMED_ARGUMENT__FUN_NAME_AVAIL.fill(expr.getName(), name,
-						Collections.singletonList(LogLevel.ARGUMENT)));
+						Collections.singletonList(ScriptLog.ARGUMENT)));
 				}
 			}
 			if (positional.isEmpty()) {
 				throw error(I18NConstants.ERROR_AT_LEAST_ARGUMENTS_EXPECTED__CNT_EXPR.fill(1, toString(expr)));
 			}
 			if (level == null) {
-				level = SearchExpressionFactory.literal(LogLevel.defaultName());
+				level = SearchExpressionFactory.literal(ScriptLog.defaultName());
 			}
 
 			SearchExpression[] result = new SearchExpression[positional.size() + 1];

@@ -10,6 +10,7 @@ import java.util.List;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.event.infoservice.InfoServiceItemMessageFragment;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.model.TLType;
@@ -19,7 +20,7 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
 /**
- * Reports a message bubble to the UI at a selectable {@link LogLevel}.
+ * Reports a message bubble to the UI at a selectable {@link Level}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -51,12 +52,12 @@ public class Info extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		HTMLFragment message = toFragment(arguments[0]);
 		if (message != null) {
-			LogLevel level = LogLevel.parse(arguments[2]);
+			Level level = ScriptLog.parse(arguments[2]);
 			Object detail = arguments[1];
 			if (detail != null) {
-				level.showInUI(new InfoServiceItemMessageFragment(message, toFragment(detail)));
+				ScriptLog.showInUI(level, new InfoServiceItemMessageFragment(message, toFragment(detail)));
 			} else {
-				level.showInUI(message);
+				ScriptLog.showInUI(level, message);
 			}
 		}
 		return null;
@@ -80,7 +81,7 @@ public class Info extends GenericMethod {
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("message")
 			.optional("detail")
-			.optional(LogLevel.ARGUMENT, LogLevel.defaultName())
+			.optional(ScriptLog.ARGUMENT, ScriptLog.defaultName())
 			.build();
 
 		/**

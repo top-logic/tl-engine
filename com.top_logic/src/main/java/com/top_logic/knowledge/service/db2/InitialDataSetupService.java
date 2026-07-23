@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -51,6 +52,25 @@ public class InitialDataSetupService extends ManagedClass {
 	 * File name suffix required for initial data files to be automatically picked up.
 	 */
 	public static final String FILE_SUFFIX = ".objects.xml";
+
+	/**
+	 * Typed configuration interface definition for {@link InitialDataSetupService}.
+	 */
+	public interface Config extends ServiceConfiguration<InitialDataSetupService> {
+		// configuration interface definition
+	}
+
+	/**
+	 * Create a {@link InitialDataSetupService}.
+	 * 
+	 * @param context
+	 *        the {@link InstantiationContext} to create the new object in
+	 * @param config
+	 *        the configuration object to be used for instantiation
+	 */
+	public InitialDataSetupService(InstantiationContext context, Config config) {
+		super(context, config);
+	}
 
 	@Override
 	protected void startUp() {

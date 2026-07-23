@@ -51,6 +51,7 @@ public class KafkaModule extends ManagedClass {
 	 *        Configuration for this {@link KafkaModule}.
 	 */
 	public KafkaModule(InstantiationContext context, Config config) {
+		super(context, config);
 		_kafkaStarter = new KafkaStarter(context, config);
 	}
 

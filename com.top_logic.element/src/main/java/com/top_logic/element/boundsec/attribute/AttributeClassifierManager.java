@@ -135,6 +135,7 @@ public class AttributeClassifierManager extends ManagedClass {
 	 *        Configuration for this {@link AttributeClassifierManager}.
 	 */
 	public AttributeClassifierManager(InstantiationContext context, Config config) {
+		super(context, config);
 		Map<String, TLClass> uniqueMetaElements = ElementAccessHelper.getUniqueMetaElements();
 		addClassifications(context, _globalClassifiers, config.getGlobalClassifications());
 		for (TypeClassifications typeConfiguration : config.getTypeClassifications().values()) {

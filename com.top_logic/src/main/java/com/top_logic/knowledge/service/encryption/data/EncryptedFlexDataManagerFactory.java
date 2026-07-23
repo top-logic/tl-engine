@@ -5,8 +5,6 @@
  */
 package com.top_logic.knowledge.service.encryption.data;
 
-import java.util.Properties;
-
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.knowledge.service.FlexDataManager;
@@ -21,23 +19,8 @@ import com.top_logic.knowledge.service.db2.SerializingTransformer;
  */
 public class EncryptedFlexDataManagerFactory extends FlexDataManagerFactory {
 
-	private static final String SERIALIZER_PREFIX = "dataManager.";
-	private Properties _subConfig;
-
 	private Config _config;
 
-	/**
-	 * Creates a {@link EncryptedFlexDataManagerFactory} from configuration.
-	 */
-	public EncryptedFlexDataManagerFactory(Properties config) {
-		_subConfig = new Properties();
-		for (Object key : config.keySet()) {
-			String property = (String) key;
-			if (property.startsWith(SERIALIZER_PREFIX)) {
-				_subConfig.setProperty(property.substring(SERIALIZER_PREFIX.length()), config.getProperty(property));
-			}
-		}
-	}
 
 	/**
 	 * Configuration of a {@link FlexDataManagerFactory}

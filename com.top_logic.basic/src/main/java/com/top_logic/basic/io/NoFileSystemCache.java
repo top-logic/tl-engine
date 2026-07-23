@@ -10,6 +10,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
+
 /**
  * {@link FileSystemCache} that does no caching at all.
  */
@@ -21,7 +24,8 @@ public final class NoFileSystemCache extends FileSystemCache {
 	public static final NoFileSystemCache INSTANCE = new NoFileSystemCache();
 
 	private NoFileSystemCache() {
-		// Singleton constructor.
+		super(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			TypedConfiguration.newConfigItem(FileSystemCache.Config.class));
 	}
 
 	@Override

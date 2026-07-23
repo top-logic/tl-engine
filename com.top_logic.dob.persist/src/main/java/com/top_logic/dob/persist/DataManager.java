@@ -38,14 +38,6 @@ public abstract class DataManager extends ManagedClass {
 		super(context, config);
 	}
 
-	/**
-	 * Implicit super constructor for subclasses for non-configuration
-	 * constructors.
-	 */
-    protected DataManager() {
-    	// Default constructor.
-    }
-
     /**
 	 * Create an empty DataObject that an be used optimally by this DataManager.
 	 * <p>

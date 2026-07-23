@@ -36,6 +36,7 @@ import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.MultiFileManager;
 import com.top_logic.basic.col.GCQueue;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.core.workspace.ModuleLayoutConstants;
 import com.top_logic.basic.util.StopWatch;
 
@@ -59,8 +60,8 @@ public class IDEFileSystemCache extends FileSystemCache {
 	/**
 	 * Creates a {@link IDEFileSystemCache}.
 	 */
-	public IDEFileSystemCache() {
-		super();
+	public IDEFileSystemCache(InstantiationContext context, Config config) {
+		super(context, config);
 	}
 
 	@Override

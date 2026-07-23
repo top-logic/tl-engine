@@ -40,13 +40,6 @@ public class FlexDataManagerFactory extends ManagedClass {
 	}
 
 	/**
-	 * Creates a {@link FlexDataManagerFactory}.
-	 */
-	public FlexDataManagerFactory() {
-		super();
-	}
-
-	/**
 	 * The {@link FlexDataManagerFactory}.
 	 */
 	public static FlexDataManagerFactory getInstance() {

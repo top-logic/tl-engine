@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.RandomAccess;
 import java.util.Set;
+import java.util.TimeZone;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
@@ -28,6 +29,8 @@ import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.thread.StackTrace;
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.time.TimeZones;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -895,6 +898,51 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 
 		throw new TopLogicException(I18NConstants.ERROR_NOT_A_CALENDAR__VAL_EXPR.fill(self, this));
 	}
+
+	/**
+	 * Converts the given value to a {@link TimeZone} or reports an error, if this is not possible.
+	 *
+	 * <p>
+	 * The value may be a {@link TimeZone} instance, a {@link Calendar} (whose
+	 * {@link Calendar#getTimeZone()} is used), or a zone-id {@link String}. Two zone-ids are treated
+	 * specially: {@value #SYSTEM_TIME_ZONE} resolves to the application's
+	 * {@link TimeZones#systemTimeZone()}, and {@value #USER_TIME_ZONE} resolves to the current user's
+	 * {@link ThreadContext#getTimeZone()}.
+	 * </p>
+	 */
+	public final TimeZone asTimeZone(Object self) {
+		if (self instanceof TimeZone) {
+			return (TimeZone) self;
+		}
+		if (self instanceof Calendar) {
+			return ((Calendar) self).getTimeZone();
+		}
+		if (self instanceof String) {
+			String id = (String) self;
+			switch (id) {
+				case SYSTEM_TIME_ZONE:
+					return TimeZones.systemTimeZone();
+				case USER_TIME_ZONE:
+					return ThreadContext.getTimeZone();
+				default:
+					return TimeZone.getTimeZone(id);
+			}
+		}
+
+		throw new TopLogicException(I18NConstants.ERROR_NOT_A_TIME_ZONE__VAL_EXPR.fill(self, this));
+	}
+
+	/**
+	 * Zone-id accepted by {@link #asTimeZone(Object)} that resolves to the application's
+	 * {@link TimeZones#systemTimeZone()}.
+	 */
+	public static final String SYSTEM_TIME_ZONE = "system";
+
+	/**
+	 * Zone-id accepted by {@link #asTimeZone(Object)} that resolves to the current user's
+	 * {@link ThreadContext#getTimeZone()}.
+	 */
+	public static final String USER_TIME_ZONE = "user";
 
 	/**
 	 * Converts the given value to a {@link ResKey}.

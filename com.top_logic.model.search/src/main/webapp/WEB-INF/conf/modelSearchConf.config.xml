@@ -541,7 +541,8 @@
 					<method name="dstOffset" class="com.top_logic.model.search.expr.CalendarField$Builder"
 						field="DST_OFFSET"
 					/>
-					
+					<method name="timeZone" class="com.top_logic.model.search.expr.CalendarTimeZone$Builder"/>
+
 					<method name="withEra" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
 						op="SET" field="ERA"
 					/>

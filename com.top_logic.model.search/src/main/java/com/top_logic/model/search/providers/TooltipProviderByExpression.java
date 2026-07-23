@@ -21,7 +21,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.util.Resources;
@@ -94,7 +94,7 @@ public class TooltipProviderByExpression<C extends TooltipProviderByExpression.C
 		if (rawResult instanceof ResKey key) {
 			return TagUtil.encodeXML(Resources.getInstance().getString(key));
 		}
-		return ToString.toString(rawResult);
+		return SearchExpression.asString(rawResult);
 	}
 
 }

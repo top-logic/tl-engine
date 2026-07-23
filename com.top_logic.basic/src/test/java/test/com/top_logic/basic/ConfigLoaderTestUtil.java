@@ -5,14 +5,7 @@
  */
 package test.com.top_logic.basic;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +23,7 @@ import com.top_logic.basic.XMLProperties.XMLPropertiesConfig;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.core.workspace.Workspace;
 import com.top_logic.basic.io.RegExpFilenameFilter;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -70,22 +64,6 @@ public class ConfigLoaderTestUtil {
 	private boolean _active = false;
 	
 	private boolean failed = false;
-
-	private File _metaConfFile;
-
-	private File _metaConfCopy;
-
-	/**
-	 * Whether {@link #addToMetaConf(List)} created {@link #_metaConfCopy} as an empty placeholder
-	 * (because no original {@link ModuleLayoutConstants#META_CONF_NAME} existed), as opposed to
-	 * backing up an existing original by renaming it into {@link #_metaConfCopy}.
-	 *
-	 * <p>
-	 * Recorded explicitly at setup so that {@link #restoreMetaConf(boolean)} does not have to infer
-	 * it from {@link File#length()}, which cannot tell an empty file from an absent one.
-	 * </p>
-	 */
-	private boolean _createdMetaConfPlaceholder;
 
 	private ConfigLoaderTestUtil() {
 		/* Private singleton constructor */
@@ -227,12 +205,14 @@ public class ConfigLoaderTestUtil {
 	
 	private void setupConfiguration() {
 		try {
-			setupConnectionPoolRegistry();
 			if (XMLProperties.exists()) {
 				previousConfig = XMLProperties.Module.INSTANCE.config();
 			}
 
-			MultiProperties.restartWithConfig(null);
+			List<BinaryData> additionalConfigs = additionalTestConfigs();
+			XMLPropertiesConfig baseConfig = previousConfig != null ? previousConfig : new XMLPropertiesConfig();
+			XMLProperties.restartXMLProperties(
+				MultiProperties.pushConfig(baseConfig, additionalConfigs.toArray(new BinaryData[0])));
 
 			_threadContextStarter.startService();
 		}
@@ -241,28 +221,46 @@ public class ConfigLoaderTestUtil {
 		}
 	}
 
-	private void setupConnectionPoolRegistry() throws IOException {
-		// Update the metaConf.txt to be able to survive a restart of the configuration.
-		List<String> additionalFiles = new ArrayList<>();
-		addConfigFile(additionalFiles, "testingConnectionPool.xml");
+	/**
+	 * The test-only configuration fragments to overlay onto the application configuration: the
+	 * testing connection pool, the database-specific settings for the drivers on the class path,
+	 * and the application's test configuration.
+	 *
+	 * <p>
+	 * These are overlaid as in-memory {@link XMLPropertiesConfig} additional content (via
+	 * {@link MultiProperties#pushConfig}) rather than by rewriting
+	 * {@link ModuleLayoutConstants#META_CONF_NAME} on disk. Rewriting it there is
+	 * racy on a workspace shared between concurrent CI runs, and the overlay survives configuration
+	 * restarts regardless: it is carried in the {@link XMLPropertiesConfig} and re-applied on every
+	 * reload, and is preserved when the configuration is cloned.
+	 * </p>
+	 */
+	private List<BinaryData> additionalTestConfigs() {
+		List<String> names = new ArrayList<>();
+		addConfigFile(names, "testingConnectionPool.xml");
 
-		addDBConfigFile(additionalFiles, "com.mysql.cj.jdbc.MysqlConnectionPoolDataSource", "test-with-mysql.xml");
-		addDBConfigFile(additionalFiles, "org.h2.jdbcx.JdbcDataSource", "test-with-h2.xml");
-		addDBConfigFile(additionalFiles, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle.xml");
-		addDBConfigFile(additionalFiles, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle12.xml");
-		addDBConfigFile(additionalFiles, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle19.xml");
-		addDBConfigFile(additionalFiles, "com.ibm.db2.jcc.DB2SimpleDataSource", "test-with-db2.xml");
-		addDBConfigFile(additionalFiles, "com.microsoft.sqlserver.jdbc.SQLServerDataSource", "test-with-mssql.xml");
-		addDBConfigFile(additionalFiles, "org.postgresql.ds.PGSimpleDataSource", "test-with-postgresql.xml");
+		addDBConfigFile(names, "com.mysql.cj.jdbc.MysqlConnectionPoolDataSource", "test-with-mysql.xml");
+		addDBConfigFile(names, "org.h2.jdbcx.JdbcDataSource", "test-with-h2.xml");
+		addDBConfigFile(names, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle.xml");
+		addDBConfigFile(names, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle12.xml");
+		addDBConfigFile(names, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle19.xml");
+		addDBConfigFile(names, "com.ibm.db2.jcc.DB2SimpleDataSource", "test-with-db2.xml");
+		addDBConfigFile(names, "com.microsoft.sqlserver.jdbc.SQLServerDataSource", "test-with-mssql.xml");
+		addDBConfigFile(names, "org.postgresql.ds.PGSimpleDataSource", "test-with-postgresql.xml");
 
 		if (withTestConfig) {
 			Maybe<String> testConfig = getTestConfiguration();
 			if (testConfig.hasValue()) {
-				additionalFiles.add(testConfig.get());
+				names.add(testConfig.get());
 			}
 		}
 
-		addToMetaConf(additionalFiles);
+		FileManager fileManager = FileManager.getInstance();
+		List<BinaryData> configs = new ArrayList<>(names.size());
+		for (String name : names) {
+			configs.add(fileManager.getData(ModuleLayoutConstants.CONF_RESOURCE_PREFIX + '/' + name));
+		}
+		return configs;
 	}
 
 	private void addDBConfigFile(List<String> additionalFiles, String dataSourceClassName, String filename) {
@@ -277,56 +275,6 @@ public class ConfigLoaderTestUtil {
 
 	private void addConfigFile(List<String> additionalFiles, String name) {
 		additionalFiles.add(name);
-	}
-
-	private void addToMetaConf(List<String> additionalFiles) throws IOException {
-		File topMetaConf = FileManager.getInstance().getIDEFile(ModuleLayoutConstants.META_CONF_RESOURCE);
-		File metaConfDir = topMetaConf.getParentFile();
-		if (!metaConfDir.exists()) {
-			// Ensure that storing metaConf.txt does not fail because of missing parent directory.
-			metaConfDir.mkdirs();
-		}
-		_metaConfFile = new File(metaConfDir, ModuleLayoutConstants.META_CONF_NAME);
-		_metaConfCopy = new File(metaConfDir, ModuleLayoutConstants.META_CONF_NAME + ".orig");
-		if (_metaConfCopy.exists()) {
-			// A backup left over from a prior run whose teardown did not complete (e.g. a JVM
-			// crash, or a race on a shared/parallel workspace). The backup holds the real original
-			// state, so restore from it and continue rather than aborting the whole run.
-			Logger.warn("Found a left-over meta conf backup '" + _metaConfCopy.getAbsolutePath()
-				+ "' from an incompletely torn-down prior run; restoring it before setup.",
-				ConfigLoaderTestUtil.class);
-			restoreMetaConf(_metaConfCopy.length() == 0);
-		}
-		String charsetName = "ascii";
-		if (_metaConfFile.exists()) {
-			_createdMetaConfPlaceholder = false;
-			if (!_metaConfFile.renameTo(_metaConfCopy)) {
-				// A failure to back up the original at setup time is fatal: proceeding would
-				// overwrite the original with the augmented variant and lose it.
-				throw new IOException("Unable to back up '" + _metaConfFile.getAbsolutePath()
-					+ "' to '" + _metaConfCopy.getAbsolutePath() + "'.");
-			}
-		} else {
-			// No original exists; remember an empty placeholder so teardown removes it again.
-			_createdMetaConfPlaceholder = true;
-			_metaConfCopy.createNewFile();
-		}
-		try (PrintWriter out =
-			new PrintWriter(new OutputStreamWriter(new FileOutputStream(_metaConfFile), charsetName))) {
-			try (BufferedReader in =
-				new BufferedReader(new InputStreamReader(new FileInputStream(_metaConfCopy), charsetName))) {
-				String line;
-				while ((line = in.readLine()) != null) {
-					if (!line.isEmpty()) {
-						out.println(line);
-					}
-				}
-			}
-			for (String additionalFile : additionalFiles) {
-				out.print(additionalFile);
-				out.println();
-			}
-		}
 	}
 
 	private void setupFileManager() {
@@ -379,58 +327,12 @@ public class ConfigLoaderTestUtil {
 			} else {
 				ModuleUtil.INSTANCE.shutDown(XMLProperties.Module.INSTANCE);
 			}
-			teardownConnectionPoolRegistry();
 		}
 		catch (IllegalStateException exception) {
 			throw new RuntimeException(exception);
 		}
 		catch (ModuleException exception) {
 			throw new RuntimeException(exception);
-		}
-	}
-
-	private void teardownConnectionPoolRegistry() {
-		restoreMetaConf(_createdMetaConfPlaceholder);
-	}
-
-	/**
-	 * Restores the original {@link ModuleLayoutConstants#META_CONF_NAME} by discarding the
-	 * swapped-in variant ({@link #_metaConfFile}) and putting {@link #_metaConfCopy} back.
-	 *
-	 * <p>
-	 * This is pure filesystem clean-up that runs <em>after</em> the in-memory configuration has
-	 * already been restored (see {@link #teardownXMLProps()}), so any anomaly is harmless: on a
-	 * shared or parallel workspace a concurrent run's teardown (or an NFS unlink race) may have
-	 * removed a file first. Such anomalies are therefore logged and swallowed, never thrown:
-	 * turning them into an exception would poison the JVM-wide {@link #failed} flag and fail every
-	 * subsequent test in the same JVM.
-	 * </p>
-	 *
-	 * @param placeholder
-	 *        Whether {@link #_metaConfCopy} is an empty placeholder to be removed, as opposed to a
-	 *        backup of a real original to be renamed back into place.
-	 */
-	private void restoreMetaConf(boolean placeholder) {
-		if (_metaConfFile != null && _metaConfFile.exists() && !_metaConfFile.delete()) {
-			Logger.warn("Unable to delete swapped-in meta conf '" + _metaConfFile.getAbsolutePath()
-				+ "'; leaving it in place.", ConfigLoaderTestUtil.class);
-		}
-
-		if (_metaConfCopy == null || !_metaConfCopy.exists()) {
-			// Already gone, e.g. removed by a concurrent run on a shared workspace. The in-memory
-			// configuration is already restored, so there is nothing left to do.
-			return;
-		}
-		if (placeholder) {
-			if (!_metaConfCopy.delete()) {
-				Logger.warn("Unable to remove meta conf placeholder '" + _metaConfCopy.getAbsolutePath() + "'.",
-					ConfigLoaderTestUtil.class);
-			}
-		} else {
-			if (!_metaConfCopy.renameTo(_metaConfFile)) {
-				Logger.warn("Unable to restore original meta conf from backup '" + _metaConfCopy.getAbsolutePath()
-					+ "'.", ConfigLoaderTestUtil.class);
-			}
 		}
 	}
 

@@ -82,6 +82,15 @@
 			<version>1.1.3</version>
 		</dependency>
 
+		<!-- Headless-browser web tool: drives a real Chromium so the agent can read
+		     JavaScript-rendered pages that the static webFetch cannot. Pinned version;
+		     the Chromium binary is installed separately (see module README / spike report). -->
+		<dependency>
+			<groupId>com.microsoft.playwright</groupId>
+			<artifactId>playwright</artifactId>
+			<version>1.49.0</version>
+		</dependency>
+
 		<!-- Tests -->
 		<dependency>
 			<groupId>com.top-logic</groupId>

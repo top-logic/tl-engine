@@ -56,6 +56,19 @@ public class TestExecutionRecorder extends TestCase {
 		recorder.complete("{}", null);
 	}
 
+	public void testNoConversationIdWithoutSession() {
+		// A recorder constructed without a session (the unrecorded path) publishes no conversation id;
+		// the browser tool then keys per run, as before. Deriving it must not throw for a null session.
+		assertNull("no conversation id derivable from a null session",
+			ExecutionRecorder.conversationIdOf(null));
+
+		ExecutionHandle handle = new ExecutionHandle();
+		new ExecutionRecorder(null, "test-agent", null, handle, e -> {
+			// ignore
+		});
+		assertNull("handle carries no conversation id when no session is given", handle.conversationId());
+	}
+
 	public void testCapturesProviderErrorAsFailureDetail() {
 		ExecutionRecorder recorder = new ExecutionRecorder(null, "test-agent", null,
 			new ExecutionHandle(), e -> {

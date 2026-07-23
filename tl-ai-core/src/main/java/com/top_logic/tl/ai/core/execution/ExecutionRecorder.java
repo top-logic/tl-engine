@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.execution;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
@@ -75,12 +76,47 @@ public final class ExecutionRecorder implements AgentEventListener {
 		_parent = parent;
 		_handle = handle;
 		_delegate = delegate;
+
+		// Publish a stable conversation id on the handle at run setup, so per-conversation resources
+		// (the interactive browser session) are reused across all runs/messages of one conversation.
+		// Derived here - on the setup thread, before the loop starts and before beginExecution creates
+		// the revision-sensitive AgentExecution row - as a plain String, so no tool ever dereferences
+		// the persistent wrapper on an execution thread reading at an older revision.
+		if (handle != null) {
+			handle.setConversationId(conversationIdOf(session));
+		}
+	}
+
+	/**
+	 * The stable conversation id of {@code session} as a plain String (its persistent object id, as
+	 * used to look the session back up), or <code>null</code> when no session is given or its id
+	 * cannot be read. Best-effort: any failure degrades to <code>null</code> (the browser tool then
+	 * falls back to per-run keying) rather than disturbing the run. Package-visible for testing.
+	 */
+	static String conversationIdOf(AgentSession session) {
+		if (session == null) {
+			return null;
+		}
+		try {
+			return KBUtils.getWrappedObjectName(session).toString();
+		} catch (RuntimeException ex) {
+			Logger.info("Could not derive a conversation id for the browser session key: " + ex.getMessage(),
+				ExecutionRecorder.class);
+			return null;
+		}
 	}
 
 	@Override
 	public void onEvent(AgentEvent event) {
 		if (event instanceof AgentEvent.RunStarted e) {
 			_runId = e.runId();
+			// Publish the run id on the shared handle before any tool runs, so tools can derive a
+			// stable per-run key without a revision-sensitive read of the persistent execution
+			// wrapper. Done unconditionally (even when execution recording is inactive) so the key
+			// is available whether or not the run is persisted.
+			if (_handle != null) {
+				_handle.setRunId(_runId);
+			}
 			beginRecording(e);
 		} else if (event instanceof AgentEvent.ProviderError e) {
 			_lastErrorMessage = e.message();

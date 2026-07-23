@@ -8,9 +8,7 @@ package com.top_logic.tl.ai.core.tools.web;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -168,36 +166,11 @@ public class WebFetchTool {
 	/**
 	 * Validates a URL for fetching. Returns {@code null} if acceptable, otherwise a human-readable
 	 * reason for rejection. Package-visible for testing.
+	 *
+	 * @see UrlSafety#validateUrl(URI)
 	 */
 	static String validateUrl(URI uri) {
-		String scheme = uri.getScheme();
-		if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
-			return "only http and https URLs are supported.";
-		}
-		if (uri.getUserInfo() != null) {
-			return "URLs containing credentials are not allowed.";
-		}
-		String host = uri.getHost();
-		if (host == null || host.isEmpty()) {
-			return "the URL has no host.";
-		}
-		try {
-			for (InetAddress address : InetAddress.getAllByName(host)) {
-				if (address.isLoopbackAddress() || address.isAnyLocalAddress() || address.isLinkLocalAddress()
-						|| address.isSiteLocalAddress() || address.isMulticastAddress()
-						|| isUniqueLocalIpv6(address)) {
-					return "access to internal or private addresses is blocked (" + host + ").";
-				}
-			}
-		} catch (UnknownHostException ex) {
-			return "could not resolve host: " + host;
-		}
-		return null;
-	}
-
-	private static boolean isUniqueLocalIpv6(InetAddress address) {
-		byte[] bytes = address.getAddress();
-		return bytes.length == 16 && (bytes[0] & 0xFE) == 0xFC; // fc00::/7
+		return UrlSafety.validateUrl(uri);
 	}
 
 	private static boolean looksLikeHtml(String body) {

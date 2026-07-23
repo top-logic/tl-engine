@@ -1,0 +1,815 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.tools.web;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.BlockSignal;
+import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.CaptchaSignal;
+import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
+import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
+
+import junit.framework.TestCase;
+
+/**
+ * Tests for the interactive headless-browser web tool.
+ *
+ * <p>
+ * The security-relevant behaviour (SSRF rejection, layered domain policy, untrusted-data framing,
+ * truncation) and the concurrency policy of {@link BrowserSessionPool} (reuse, fail-fast, LRU and
+ * idle eviction) are verified without launching a browser. The end-to-end tests that prove the
+ * tool reads and drives a real JavaScript-rendered page are gated behind the system property
+ * {@code tl.ai.browser.e2e=true}, because they download/launch Chromium and need network access -
+ * infeasible in a plain unit-test CI run.
+ * </p>
+ */
+public class TestBrowserTool extends TestCase {
+
+	/** JavaScript-rendered page: the quotes are injected client-side, absent from the raw HTML. */
+	private static final String JS_PAGE = "https://quotes.toscrape.com/js/";
+
+	/** Login form (accepts any credentials) used to prove interaction and cookie isolation. */
+	private static final String LOGIN_PAGE = "https://quotes.toscrape.com/login";
+
+	private static final String HOME_PAGE = "https://quotes.toscrape.com/";
+
+	// --- SSRF: the browser tool shares WebFetchTool's exact policy via UrlSafety. ---
+
+	public void testSsrfRejectsNonHttpScheme() {
+		assertNotNull(UrlSafety.validateUrl(URI.create("ftp://example.com/x")));
+		assertNotNull(UrlSafety.validateUrl(URI.create("file:///etc/passwd")));
+	}
+
+	public void testSsrfRejectsCredentialsInUrl() {
+		assertNotNull(UrlSafety.validateUrl(URI.create("https://user:pass@example.com/")));
+	}
+
+	public void testSsrfRejectsLoopbackAndPrivate() {
+		assertNotNull(UrlSafety.validateUrl(URI.create("http://127.0.0.1/")));
+		assertNotNull(UrlSafety.validateUrl(URI.create("http://localhost/")));
+		assertNotNull(UrlSafety.validateUrl(URI.create("http://10.0.0.1/")));
+		assertNotNull(UrlSafety.validateUrl(URI.create("http://192.168.1.1/")));
+		assertNotNull(UrlSafety.validateUrl(URI.create("http://169.254.169.254/")));
+	}
+
+	// --- Domain list matching (shared by allowlist and blocklist). ---
+
+	public void testDomainListMatchesHostAndSubdomains() {
+		List<String> list = List.of("quotes.toscrape.com", "example.org");
+		assertTrue(BrowserToolsService.matchesDomainList("quotes.toscrape.com", list));
+		assertTrue("sub-domains matched", BrowserToolsService.matchesDomainList("api.example.org", list));
+		assertTrue("case-insensitive", BrowserToolsService.matchesDomainList("Example.ORG", list));
+	}
+
+	public void testDomainListRejectsOffListAndEmpty() {
+		List<String> list = List.of("example.org");
+		assertFalse("off-list domain rejected", BrowserToolsService.matchesDomainList("evil.com", list));
+		assertFalse("suffix trick rejected",
+			BrowserToolsService.matchesDomainList("example.org.evil.com", list));
+		assertFalse("empty list matches nothing", BrowserToolsService.matchesDomainList("example.org", List.of()));
+		assertFalse(BrowserToolsService.matchesDomainList(null, list));
+	}
+
+	// --- Layered domain policy: SSRF (separate) > blocklist > allowlist / allow-any. ---
+
+	public void testPolicyAllowlistEnforcedByDefault() {
+		BrowserToolsService service = newService(List.of("example.org"), List.of(), false);
+		assertTrue("allowlisted host permitted", service.isNavigationPermitted("example.org"));
+		assertTrue("sub-domain of allowlist permitted", service.isNavigationPermitted("docs.example.org"));
+		assertFalse("off-allowlist host refused", service.isNavigationPermitted("evil.com"));
+		assertFalse("allow-any is off by default", service.isAllowAnyDomain());
+	}
+
+	public void testPolicyBlocklistAlwaysWinsOverAllowlist() {
+		// A blocklist entry carves an exception out of a broader allowlist.
+		BrowserToolsService service = newService(List.of("example.org"), List.of("ads.example.org"), false);
+		assertTrue("allowlisted parent still permitted", service.isNavigationPermitted("example.org"));
+		assertFalse("blocklisted sub-domain refused", service.isNavigationPermitted("ads.example.org"));
+		assertFalse("sub-domain of a blocklist entry refused",
+			service.isNavigationPermitted("eu.ads.example.org"));
+		assertTrue("blocklist detected", service.isBlockedDomain("ads.example.org"));
+	}
+
+	public void testPolicyAllowAnyRelaxesAllowlistOnly() {
+		// Allow-any with an empty allowlist: any public domain is permitted...
+		BrowserToolsService service = newService(List.of(), List.of("evil.com"), true);
+		assertTrue("allow-any lets an off-allowlist public host through",
+			service.isNavigationPermitted("random-public-site.com"));
+		// ...but the blocklist STILL applies.
+		assertFalse("allow-any still refuses a blocklisted host", service.isNavigationPermitted("evil.com"));
+		assertFalse("allow-any still refuses a blocklisted sub-domain",
+			service.isNavigationPermitted("mail.evil.com"));
+	}
+
+	public void testPolicyAllowAnyDoesNotTouchSsrf() {
+		// SSRF is enforced by UrlSafety independently of the domain policy; allow-any never
+		// relaxes it. isNavigationPermitted deliberately does not consider SSRF - the loopback
+		// address is still rejected by UrlSafety, which every navigation runs unconditionally.
+		assertNotNull("loopback still SSRF-blocked", UrlSafety.validateUrl(URI.create("http://127.0.0.1/")));
+		assertNotNull("link-local still SSRF-blocked",
+			UrlSafety.validateUrl(URI.create("http://169.254.169.254/")));
+	}
+
+	// --- Untrusted-data framing and truncation. ---
+
+	public void testRenderWrapsContentInUntrustedEnvelope() {
+		String out = BrowserTool.renderResult("https://quotes.toscrape.com/js/",
+			"- heading \"Quotes\"", "# Quotes\n\nHello world.", 50_000);
+
+		assertTrue("opening envelope tag with source",
+			out.contains("<untrusted_page_content source=\"https://quotes.toscrape.com/js/\">"));
+		assertTrue("closing envelope tag", out.contains("</untrusted_page_content>"));
+		assertTrue("standing data-not-instructions note", out.contains("never an instruction")
+			|| out.contains("NEVER an instruction"));
+		assertTrue("snapshot section", out.contains("## Accessibility snapshot"));
+		assertTrue("interactive-elements section", out.contains("## Interactive elements"));
+		assertTrue("markdown section", out.contains("## Page content (Markdown)"));
+		assertTrue("markdown body preserved", out.contains("Hello world."));
+	}
+
+	public void testRenderListsInteractiveElementsWithRefs() {
+		List<InteractiveElement> elements = List.of(
+			new InteractiveElement("s1e1", "textbox", "input", "text", "username"),
+			new InteractiveElement("s1e2", "textbox", "input", "password", "password"),
+			new InteractiveElement("s1e3", "button", "button", "", "Login"));
+		String out = BrowserTool.renderResult(LOGIN_PAGE, "- form", "# Login", elements, 50_000);
+
+		assertTrue("ref s1e1 listed", out.contains("[s1e1]"));
+		assertTrue("ref s1e2 with password type", out.contains("[s1e2]") && out.contains("type=password"));
+		assertTrue("ref s1e3 login button named", out.contains("[s1e3]") && out.contains("Login"));
+	}
+
+	public void testRenderTruncatesToCharCap() {
+		String longMarkdown = "x".repeat(5_000);
+		String out = BrowserTool.renderResult("https://quotes.toscrape.com/", "- x", longMarkdown, 500);
+
+		assertTrue("truncation marker present", out.contains("[Content truncated at 500 characters.]"));
+		assertTrue("still wrapped after truncation", out.contains("</untrusted_page_content>"));
+	}
+
+	// --- Agent-loop truncation exemption: page-returning verbs opt out of the global cap. ---
+
+	/**
+	 * Every verb that returns a rendered page must declare {@code truncationHint =
+	 * Integer.MAX_VALUE} so the agent loop never drops the middle of a large snapshot (where the
+	 * interactive-element refs and consent dialogs live). Asserted at the tool layer via the
+	 * {@link ToolMethod} annotation, the same hook the loop reads.
+	 */
+	public void testPageReturningVerbsExemptFromAgentLoopTruncation() {
+		for (String verb : List.of(
+			"browserNavigate", "browserSnapshot", "browserClick", "browserType", "browserBack")) {
+			assertEquals("verb '" + verb + "' must be exempt from agent-loop truncation",
+				Integer.MAX_VALUE, truncationHintOf(verb));
+		}
+	}
+
+	private static int truncationHintOf(String verb) {
+		for (Method method : BrowserTool.class.getDeclaredMethods()) {
+			if (method.getName().equals(verb)) {
+				ToolMethod annotation = method.getAnnotation(ToolMethod.class);
+				assertNotNull("verb '" + verb + "' is not a @ToolMethod", annotation);
+				return annotation.truncationHint();
+			}
+		}
+		fail("no method named '" + verb + "' on BrowserTool");
+		throw new AssertionError("unreachable");
+	}
+
+	// --- Bot-wall block-page detection (always on, non-evasive, browser-free). ---
+
+	/** An Akamai-style access-denied body, the shape the motivating Siemens block served. */
+	private static final String AKAMAI_ACCESS_DENIED_BODY =
+		"<html><head><title>Access Denied</title></head><body>"
+			+ "<h1>Access Denied</h1>"
+			+ "<p>You don't have permission to access \"http://sieportal.siemens.com/\" on this server.</p>"
+			+ "<p>Reference #18.abcd1234.1700000000.deadbeef</p>"
+			+ "</body></html>";
+
+	public void testBlockDetectedOnHttp403() {
+		BlockSignal signal = BotWallDetector.detect(403, Map.of(), "<html><body>Forbidden</body></html>");
+		assertTrue("HTTP 403 is treated as a bot-protection block", signal.detected());
+		assertEquals("status carried through for the banner", 403, signal.status());
+	}
+
+	public void testBlockDetectedOnAkamaiAccessDeniedBody() {
+		// The distinctive body is recognised even without a 403 (status unknown, as on a re-snapshot).
+		BlockSignal viaBody = BotWallDetector.detect(BotWallDetector.NO_STATUS, null, AKAMAI_ACCESS_DENIED_BODY);
+		assertTrue("Akamai access-denied body recognised", viaBody.detected());
+
+		// And with the real 403 status the same page is still flagged (both signals agree).
+		BlockSignal viaStatusAndBody = BotWallDetector.detect(403, Map.of(), AKAMAI_ACCESS_DENIED_BODY);
+		assertTrue(viaStatusAndBody.detected());
+		assertEquals(403, viaStatusAndBody.status());
+	}
+
+	public void testBlockDetectedOnCommonBotWallSignatures() {
+		assertTrue("Cloudflare 'Attention Required' block",
+			BotWallDetector.detect(403, null,
+				"<title>Attention Required! | Cloudflare</title>").detected());
+		assertTrue("Cloudflare 'checking your browser' interstitial",
+			BotWallDetector.detect(BotWallDetector.NO_STATUS, null,
+				"<body>Checking your browser before accessing example.com</body>").detected());
+		assertTrue("Google 'unusual traffic' page",
+			BotWallDetector.detect(BotWallDetector.NO_STATUS, null,
+				"<body>Our systems have detected unusual traffic from your network.</body>").detected());
+		assertTrue("Cloudflare cf-mitigated response header",
+			BotWallDetector.detect(200, Map.of("cf-mitigated", "challenge"),
+				"<body>ordinary looking body</body>").detected());
+	}
+
+	public void testNormalPageNotMisclassifiedAsBlocked() {
+		// A plain 200 page whose text merely contains the word "denied" must NOT be flagged - the
+		// matcher keys on distinctive multi-word phrases, never a bare word.
+		BlockSignal signal = BotWallDetector.detect(200, Map.of(),
+			"<html><body><h1>Loan report</h1><p>Your application was denied by the reviewer.</p></body></html>");
+		assertFalse("a normal page that merely says 'denied' is not a block page", signal.detected());
+		assertNull("no reason when nothing matched", signal.reason());
+	}
+
+	public void testEmptyOrUnknownPageNotBlocked() {
+		assertFalse(BotWallDetector.detect(BotWallDetector.NO_STATUS, null, "").detected());
+		assertFalse(BotWallDetector.detect(200, Map.of(), "<html><body>Welcome home</body></html>").detected());
+	}
+
+	public void testRenderPrependsDistinctBlockBanner() {
+		PageView blocked = new PageView("https://sieportal.siemens.com/", 403,
+			AKAMAI_ACCESS_DENIED_BODY, "- heading \"Access Denied\"", List.of(),
+			new CaptchaSignal(false, null),
+			new BlockSignal(true, 403, "Akamai/Apache access-denied page (\"You don't have permission to access\")"));
+
+		String out = BrowserTool.render(blocked, 5_000_000, 50_000);
+
+		assertTrue("distinct, clearly-worded block headline with the HTTP status",
+			out.contains("PAGE BLOCKED BY BOT PROTECTION (HTTP 403)"));
+		assertTrue("names the detected reason", out.contains("You don't have permission to access"));
+		assertTrue("banner precedes the untrusted envelope (it is the tool's own trusted text)",
+			out.indexOf("PAGE BLOCKED BY BOT PROTECTION") < out.indexOf("<untrusted_page_content"));
+		assertTrue("block page content is still rendered for context", out.contains("<untrusted_page_content"));
+	}
+
+	public void testRenderHasNoBlockBannerForNormalPage() {
+		PageView normal = new PageView("https://quotes.toscrape.com/", 200,
+			"<html><body><h1>Quotes</h1></body></html>", "- heading \"Quotes\"", List.of(),
+			new CaptchaSignal(false, null), new BlockSignal(false, 200, null));
+
+		String out = BrowserTool.render(normal, 5_000_000, 50_000);
+
+		assertFalse("no block banner on an ordinary page", out.contains("PAGE BLOCKED"));
+		assertTrue("ordinary page is rendered normally", out.contains("<untrusted_page_content"));
+	}
+
+	// --- Ref generation tagging: parse the snapshot generation out of a ref. ---
+
+	/**
+	 * A generation-tagged ref {@code s<gen>e<index>} yields its snapshot generation; anything that is
+	 * not in that exact form (a bare pre-generation {@code eN} ref, junk, or {@code null}) yields
+	 * {@code -1}, which never equals a live generation and is therefore always rejected as stale.
+	 */
+	public void testRefGenerationParsing() {
+		assertEquals("snapshot 1, element 3", 1L, BrowserSession.refGeneration("s1e3"));
+		assertEquals("multi-digit generation and index", 42L, BrowserSession.refGeneration("s42e137"));
+		assertEquals("leading/trailing whitespace tolerated", 2L, BrowserSession.refGeneration("  s2e5 "));
+
+		assertEquals("bare pre-generation ref rejected", -1L, BrowserSession.refGeneration("e3"));
+		assertEquals("missing element part rejected", -1L, BrowserSession.refGeneration("s1e"));
+		assertEquals("missing generation part rejected", -1L, BrowserSession.refGeneration("se3"));
+		assertEquals("non-numeric generation rejected", -1L, BrowserSession.refGeneration("saeb"));
+		assertEquals("wrong prefix rejected", -1L, BrowserSession.refGeneration("x1e3"));
+		assertEquals("empty rejected", -1L, BrowserSession.refGeneration(""));
+		assertEquals("null rejected", -1L, BrowserSession.refGeneration(null));
+	}
+
+	// --- Session-key derivation: stable per run, isolated across runs, revision-safe. ---
+
+	/**
+	 * Reproduces the KnowledgeBase revision bug: on an execution thread reading at an older
+	 * revision than the one the {@link AgentExecution} was created in, any access to that persistent
+	 * wrapper throws "created after access revision N". Deriving the session key must therefore
+	 * never dereference the wrapper. Here no run id is recorded yet, so the key falls back to the
+	 * run's execution-handle instance - and the wrapper must stay untouched.
+	 */
+	public void testSessionKeyNeverDereferencesExecutionWrapper() {
+		ToolContext context = ToolContext.createUnrestricted();
+		context.executionHandle().set(revisionTrappedExecution());
+
+		Object key = BrowserTool.sessionKey(context);
+
+		assertNotNull("a stable key is derived without dereferencing the persistent wrapper", key);
+	}
+
+	/**
+	 * Proves the shipped fix on the live path: a recorded run carries both a plain run id and a
+	 * persistent {@link AgentExecution} wrapper. The key must come from the run id string (a plain
+	 * read, revision-safe) and never from the wrapper, which would throw on a stale-revision thread.
+	 */
+	public void testSessionKeyUsesRunIdWithoutTouchingWrapper() {
+		ToolContext context = ToolContext.createUnrestricted();
+		context.executionHandle().setRunId("run-77");
+		context.executionHandle().set(revisionTrappedExecution());
+
+		Object key = BrowserTool.sessionKey(context);
+
+		assertEquals("key derived from the plain run id, not the revision-sensitive wrapper",
+			"run:run-77", key);
+	}
+
+	/**
+	 * With a conversation id present, the key is derived from it (so one browser is reused across all
+	 * runs/messages of a conversation) and never from the revision-sensitive persistent wrapper.
+	 */
+	public void testSessionKeyPrefersConversationIdOverRunId() {
+		ToolContext context = ToolContext.createUnrestricted();
+		context.executionHandle().setConversationId("conv-9002");
+		context.executionHandle().setRunId("run-77");
+		context.executionHandle().set(revisionTrappedExecution());
+
+		Object key = BrowserTool.sessionKey(context);
+
+		assertEquals("key derived from the stable conversation id, not the per-run id or the wrapper",
+			"conversation:conv-9002", key);
+	}
+
+	/**
+	 * Two runs (distinct run ids - a new run per chat message) that share a conversation id resolve
+	 * to the <em>same</em> session key, so the browser (history, captured login) is reused across the
+	 * messages of the conversation.
+	 */
+	public void testSessionKeySharedAcrossRunsOfSameConversation() {
+		ToolContext messageOne = ToolContext.createUnrestricted();
+		messageOne.executionHandle().setConversationId("conv-1");
+		messageOne.executionHandle().setRunId("run-A");
+		ToolContext messageTwo = ToolContext.createUnrestricted();
+		messageTwo.executionHandle().setConversationId("conv-1");
+		messageTwo.executionHandle().setRunId("run-B");
+
+		assertEquals("same conversation reuses one browser session across its runs/messages",
+			BrowserTool.sessionKey(messageOne), BrowserTool.sessionKey(messageTwo));
+	}
+
+	/** Different conversations get different keys, so their browsers (and logins) stay isolated. */
+	public void testSessionKeyIsolatedAcrossConversations() {
+		ToolContext convA = ToolContext.createUnrestricted();
+		convA.executionHandle().setConversationId("conv-A");
+		ToolContext convB = ToolContext.createUnrestricted();
+		convB.executionHandle().setConversationId("conv-B");
+
+		assertFalse("distinct conversations get distinct session keys",
+			BrowserTool.sessionKey(convA).equals(BrowserTool.sessionKey(convB)));
+	}
+
+	/**
+	 * With no conversation id available, the key falls back to the loop-generated run id (the
+	 * previous per-run behaviour), still without touching the persistent wrapper.
+	 */
+	public void testSessionKeyFallsBackToRunIdWithoutConversationId() {
+		ToolContext context = ToolContext.createUnrestricted();
+		context.executionHandle().setRunId("run-77");
+		context.executionHandle().set(revisionTrappedExecution());
+
+		assertEquals("falls back to the run id when no conversation id is set",
+			"run:run-77", BrowserTool.sessionKey(context));
+	}
+
+	/** A blank conversation id is ignored (treated as absent), falling back to the run id. */
+	public void testSessionKeyIgnoresBlankConversationId() {
+		ToolContext context = ToolContext.createUnrestricted();
+		context.executionHandle().setConversationId("   ");
+		context.executionHandle().setRunId("run-77");
+
+		assertEquals("blank conversation id ignored, run id used", "run:run-77",
+			BrowserTool.sessionKey(context));
+	}
+
+	/**
+	 * The session key is sticky across all tool calls within one run (so the isolated browser
+	 * context and any login persist) yet distinct across concurrent runs (so per-session isolation
+	 * holds). {@code withToolCallId} models successive tool calls sharing the run's handle.
+	 */
+	public void testSessionKeyStickyWithinRunAndIsolatedAcrossRuns() {
+		ToolContext runA = ToolContext.createUnrestricted();
+		runA.executionHandle().setRunId("run-A");
+		ToolContext runB = ToolContext.createUnrestricted();
+		runB.executionHandle().setRunId("run-B");
+
+		Object a1 = BrowserTool.sessionKey(runA.withToolCallId("call-1"));
+		Object a2 = BrowserTool.sessionKey(runA.withToolCallId("call-2"));
+		assertEquals("sticky: same session key across calls within one run", a1, a2);
+
+		Object b1 = BrowserTool.sessionKey(runB.withToolCallId("call-1"));
+		assertFalse("isolated: concurrent runs get distinct session keys", a1.equals(b1));
+	}
+
+	/**
+	 * Two concurrent unrecorded runs (no run id set) must still be isolated: each falls back to its
+	 * own execution-handle instance, and the two handles are distinct.
+	 */
+	public void testSessionKeyIsolatesUnrecordedConcurrentRuns() {
+		ToolContext runA = ToolContext.createUnrestricted();
+		ToolContext runB = ToolContext.createUnrestricted();
+
+		Object a = BrowserTool.sessionKey(runA);
+		Object aAgain = BrowserTool.sessionKey(runA.withToolCallId("call-2"));
+		Object b = BrowserTool.sessionKey(runB);
+
+		assertSame("sticky: an unrecorded run reuses its own handle across calls", a, aAgain);
+		assertNotSame("isolated: distinct unrecorded runs get distinct handles", a, b);
+	}
+
+	/**
+	 * A stand-in for a persistent {@link AgentExecution} that can only be resolved at its creation
+	 * revision: every method throws, mimicking the "created after access revision N" failure seen on
+	 * an execution thread reading at an older revision.
+	 */
+	private static AgentExecution revisionTrappedExecution() {
+		return (AgentExecution) Proxy.newProxyInstance(
+			AgentExecution.class.getClassLoader(),
+			new Class<?>[] { AgentExecution.class },
+			(proxy, method, args) -> {
+				throw new IllegalStateException("Object (ID: AgentExecution:10013; "
+					+ "Wrapper class: ...AgentExecutionImpl) was deleted before or created after "
+					+ "access revision 76.");
+			});
+	}
+
+	// --- Concurrency policy: BrowserSessionPool (no browser launched). ---
+
+	public void testPoolReusesSessionForSameKey() {
+		AtomicInteger created = new AtomicInteger();
+		try (BrowserSessionPool<Object> pool = new BrowserSessionPool<>(2, 60_000, 1_000,
+				System::nanoTime, key -> {
+					created.incrementAndGet();
+					return new Object();
+				}, session -> {
+					// no-op destroyer
+				})) {
+			Object first = pool.run("A", session -> session);
+			Object second = pool.run("A", session -> session);
+			assertSame("same key reuses the same session", first, second);
+			assertEquals("created only once", 1, created.get());
+			assertEquals(1, pool.liveSessionCount());
+		}
+	}
+
+	public void testPoolFailsFastWhenAllSlotsInUse() throws Exception {
+		try (BrowserSessionPool<Object> pool = new BrowserSessionPool<>(1, 60_000, 150,
+				System::nanoTime, key -> new Object(), session -> {
+					// no-op destroyer
+				})) {
+			CountDownLatch inUse = new CountDownLatch(1);
+			CountDownLatch release = new CountDownLatch(1);
+			Thread holder = new Thread(() -> pool.run("A", session -> {
+				inUse.countDown();
+				await(release);
+				return null;
+			}));
+			holder.setDaemon(true);
+			holder.start();
+			assertTrue("holder acquired the only slot", inUse.await(5, TimeUnit.SECONDS));
+
+			try {
+				pool.run("B", session -> session);
+				fail("expected fail-fast while the only slot is in use");
+			} catch (BrowserBusyException expected) {
+				assertTrue("mentions the cap", expected.getMessage().contains("busy"));
+			}
+
+			release.countDown();
+			holder.join(5_000);
+		}
+	}
+
+	public void testPoolEvictsLruIdleWhenAtCap() {
+		List<Object> destroyed = new CopyOnWriteArrayList<>();
+		try (BrowserSessionPool<Object> pool = new BrowserSessionPool<>(1, 60_000, 1_000,
+				System::nanoTime, key -> new Object(), destroyed::add)) {
+			Object sessionA = pool.run("A", session -> session);
+			assertEquals(1, pool.liveSessionCount());
+
+			// At cap with A idle: creating B evicts A by LRU.
+			pool.run("B", session -> session);
+			assertEquals("cap of 1 is never exceeded", 1, pool.liveSessionCount());
+			assertTrue("idle A was evicted and destroyed", awaitContains(destroyed, sessionA));
+		}
+	}
+
+	public void testPoolIdleSweepClosesExpiredSessions() {
+		AtomicLong now = new AtomicLong(0);
+		List<Object> destroyed = new CopyOnWriteArrayList<>();
+		try (BrowserSessionPool<Object> pool = new BrowserSessionPool<>(2, 1_000, 1_000,
+				now::get, key -> new Object(), destroyed::add)) {
+			Object sessionA = pool.run("A", session -> session);
+			assertEquals(1, pool.liveSessionCount());
+
+			// Advance the clock past the idle timeout (1_000 ms = 1e9 ns) and sweep.
+			now.addAndGet(2_000_000_000L);
+			pool.sweepIdle();
+
+			assertEquals("idle session swept", 0, pool.liveSessionCount());
+			assertTrue("idle session destroyed", awaitContains(destroyed, sessionA));
+		}
+	}
+
+	/** Waits briefly for the (asynchronous) destroyer to record {@code item}. */
+	private static boolean awaitContains(List<Object> destroyed, Object item) {
+		for (int i = 0; i < 200; i++) {
+			if (destroyed.contains(item)) {
+				return true;
+			}
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException ex) {
+				Thread.currentThread().interrupt();
+				return destroyed.contains(item);
+			}
+		}
+		return destroyed.contains(item);
+	}
+
+	private static void await(CountDownLatch latch) {
+		try {
+			latch.await(5, TimeUnit.SECONDS);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+	}
+
+	// --- End-to-end interactive path (gated: launches Chromium, needs network). ---
+
+	/**
+	 * Exercises the full shipped read path against a real JavaScript-rendered page and proves the
+	 * domain policy is enforced. Gated behind {@code -Dtl.ai.browser.e2e=true}.
+	 */
+	public void testBrowserReadEndToEnd() throws Exception {
+		if (!e2eEnabled()) {
+			return;
+		}
+		BrowserToolsService service = newService("quotes.toscrape.com");
+		service.startUp();
+		try {
+			BrowserTool tool = new BrowserTool();
+			ToolContext context = ToolContext.createUnrestricted();
+
+			// 1) Renders a JS-heavy allowlisted page: envelope + JS-injected content present.
+			String result = tool.browserNavigate(JS_PAGE, context);
+			assertTrue("wrapped in untrusted envelope", result.contains("<untrusted_page_content"));
+			assertTrue("accessibility snapshot present", result.contains("## Accessibility snapshot"));
+			assertTrue("JS-injected quote rendered", result.contains("Albert Einstein"));
+
+			// 2) Sticky: a second call in the same session re-reads the same page (reuse, no re-nav).
+			String snapshot = tool.browserSnapshot(context);
+			assertTrue("snapshot re-reads the retained page", snapshot.contains("Albert Einstein"));
+			assertEquals("still a single live session", 1, service.liveSessionCountForTest());
+
+			// 3) Contrast: the static webFetch cannot render the JS content.
+			String staticFetch = new WebFetchTool().webFetch(JS_PAGE);
+			assertFalse("static webFetch does NOT see the JS-injected quote",
+				staticFetch.contains("Albert Einstein"));
+
+			// 4) Allowlist rejects an off-list origin (before any navigation happens).
+			String offList = tool.browserNavigate("https://example.com/", context);
+			assertTrue("off-allowlist domain refused",
+				offList.startsWith("Error:") && offList.contains("allowlist"));
+
+			// 5) SSRF guard rejects loopback.
+			String loopback = tool.browserNavigate("http://127.0.0.1/", context);
+			assertTrue("loopback refused", loopback.startsWith("Error:"));
+		} finally {
+			service.shutDown();
+		}
+	}
+
+	/**
+	 * Proves the interactive verbs (navigate -&gt; snapshot -&gt; type -&gt; click) let an agent log in
+	 * by typing credentials within one run, and that a second concurrent session is fully isolated
+	 * (does not see the first session's login cookie). Gated behind {@code -Dtl.ai.browser.e2e=true}.
+	 */
+	public void testInteractiveLoginAndSessionIsolationEndToEnd() throws Exception {
+		if (!e2eEnabled()) {
+			return;
+		}
+		BrowserToolsService service = newService("quotes.toscrape.com");
+		service.startUp();
+		try {
+			Object sessionA = new Object();
+			Object sessionB = new Object();
+
+			// Session A: navigate to the login form and read its interactive elements.
+			PageView loginForm = service.navigate(sessionA, LOGIN_PAGE);
+			String userRef = refWhere(loginForm.elements(), el -> "text".equals(el.type()));
+			String passwordRef = refWhere(loginForm.elements(), el -> "password".equals(el.type()));
+			String submitRef = refWhere(loginForm.elements(), el -> "submit".equals(el.type()));
+			assertNotNull("username field found", userRef);
+			assertNotNull("password field found", passwordRef);
+			assertNotNull("submit button found", submitRef);
+
+			// Type credentials (any are accepted by this sandbox) and submit - all in one session.
+			service.type(sessionA, userRef, "agent");
+			service.type(sessionA, passwordRef, "secret");
+			PageView afterLogin = service.click(sessionA, submitRef);
+			assertTrue("session A is logged in (Logout link present)",
+				afterLogin.html().contains("Logout"));
+
+			// Session A stays logged in across a further call (sticky context).
+			PageView reread = service.snapshot(sessionA);
+			assertTrue("login persists across calls in the same session", reread.html().contains("Logout"));
+
+			// Session B is a separate context: it must NOT see session A's login.
+			PageView homeB = service.navigate(sessionB, HOME_PAGE);
+			assertFalse("session B does not inherit session A's login", homeB.html().contains("Logout"));
+			assertTrue("session B sees the logged-out Login link", homeB.html().contains("Login"));
+
+			assertEquals("two isolated live sessions", 2, service.liveSessionCountForTest());
+		} finally {
+			service.shutDown();
+		}
+	}
+
+	/**
+	 * Proves the concurrency cap is never exceeded: with a cap of 1, a second session key reclaims
+	 * the first (LRU) so only one live browser exists at a time. (Fail-fast under active contention
+	 * is covered deterministically by {@link #testPoolFailsFastWhenAllSlotsInUse()}.) Gated behind
+	 * {@code -Dtl.ai.browser.e2e=true}.
+	 */
+	public void testConcurrencyCapBoundsLiveSessionsEndToEnd() throws Exception {
+		if (!e2eEnabled()) {
+			return;
+		}
+		BrowserToolsService service = newService(List.of("quotes.toscrape.com"), List.of(), false, 1);
+		service.startUp();
+		try {
+			service.navigate(new Object(), HOME_PAGE);
+			service.navigate(new Object(), JS_PAGE);
+			assertEquals("cap of 1 is never exceeded (LRU reclaim)", 1, service.liveSessionCountForTest());
+		} finally {
+			service.shutDown();
+		}
+	}
+
+	/**
+	 * Gated E2E for the blocklist and allow-any-domains mode: allow-any lets an off-allowlist
+	 * public URL through, yet SSRF and the blocklist stay enforced. Gated behind
+	 * {@code -Dtl.ai.browser.e2e=true}.
+	 */
+	public void testBlocklistAndAllowAnyEndToEnd() throws Exception {
+		if (!e2eEnabled()) {
+			return;
+		}
+		// Blocklist rejection under the default allowlist-enforced mode.
+		BrowserToolsService blocking = newService(List.of("quotes.toscrape.com"),
+			List.of("quotes.toscrape.com"), false);
+		blocking.startUp();
+		try {
+			BrowserTool tool = new BrowserTool();
+			String blocked = tool.browserNavigate(JS_PAGE, ToolContext.createUnrestricted());
+			assertTrue("blocklisted domain refused even when allowlisted",
+				blocked.startsWith("Error:") && blocked.contains("blocklist"));
+		} finally {
+			blocking.shutDown();
+		}
+
+		// Allow-any: empty allowlist, but example.com is a blocklisted domain and loopback is SSRF.
+		BrowserToolsService allowAny = newService(List.of(), List.of("example.com"), true);
+		allowAny.startUp();
+		try {
+			BrowserTool tool = new BrowserTool();
+			ToolContext context = ToolContext.createUnrestricted();
+
+			// 1) Allow-any lets an OFF-allowlist public URL through (nothing is on the allowlist).
+			String offAllowlist = tool.browserNavigate(JS_PAGE, context);
+			assertTrue("allow-any renders an off-allowlist public page",
+				offAllowlist.contains("<untrusted_page_content"));
+			assertTrue("allow-any page content rendered", offAllowlist.contains("Albert Einstein"));
+
+			// 2) Allow-any STILL blocks a blocklisted domain.
+			String stillBlocked = tool.browserNavigate("https://example.com/", context);
+			assertTrue("allow-any still refuses a blocklisted domain",
+				stillBlocked.startsWith("Error:") && stillBlocked.contains("blocklist"));
+
+			// 3) Allow-any STILL blocks SSRF/loopback.
+			String stillSsrf = tool.browserNavigate("http://127.0.0.1/", context);
+			assertTrue("allow-any still refuses loopback", stillSsrf.startsWith("Error:"));
+		} finally {
+			allowAny.shutDown();
+		}
+	}
+
+	/**
+	 * Regression for the stale-ref silent-wrong-click defect: a ref carried over from an earlier
+	 * snapshot must be rejected with an explicit "call browserSnapshot" error, not silently act on
+	 * whatever element now occupies that index (the old bug) nor dead-end in a ~30s locator timeout.
+	 * A current-generation ref must still work. Gated behind {@code -Dtl.ai.browser.e2e=true}.
+	 */
+	public void testStaleRefIsRejectedEndToEnd() throws Exception {
+		if (!e2eEnabled()) {
+			return;
+		}
+		BrowserToolsService service = newService("quotes.toscrape.com");
+		service.startUp();
+		try {
+			BrowserTool tool = new BrowserTool();
+			ToolContext context = ToolContext.createUnrestricted();
+
+			// Snapshot generation N: navigate the home page and grab one of its refs (form s1e...).
+			String home = tool.browserNavigate(HOME_PAGE, context);
+			String oldRef = firstRef(home);
+			assertNotNull("home page exposes interactive refs", oldRef);
+			assertTrue("first snapshot's refs are generation-tagged (s1e...)", oldRef.startsWith("s1e"));
+
+			// Generation N+1: navigate elsewhere WITHOUT re-snapshotting. The old ref is now stale.
+			String humor = tool.browserNavigate("https://quotes.toscrape.com/tag/humor/", context);
+			String newRef = firstRef(humor);
+			assertNotNull("second page exposes fresh refs", newRef);
+			assertTrue("second snapshot bumps the generation (s2e...)", newRef.startsWith("s2e"));
+
+			// The carried-over ref is rejected explicitly - and fast (no ~30s locator timeout).
+			long startNanos = System.nanoTime();
+			String clicked = tool.browserClick(oldRef, context);
+			long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
+			assertTrue("stale click is an explicit error, not a silent wrong action: " + clicked,
+				clicked.startsWith("Error:"));
+			assertTrue("error tells the model to re-snapshot: " + clicked, clicked.contains("browserSnapshot"));
+			assertTrue("stale ref fails fast, no ~30s locator timeout (was " + elapsedMillis + " ms)",
+				elapsedMillis < 5_000L);
+
+			// Typing with the same stale ref is rejected identically.
+			String typed = tool.browserType(oldRef, "hello", context);
+			assertTrue("stale type is an explicit error: " + typed,
+				typed.startsWith("Error:") && typed.contains("browserSnapshot"));
+
+			// A current-generation ref still works: re-snapshot, then act on a fresh ref.
+			String reSnapshot = tool.browserSnapshot(context);
+			String freshRef = firstRef(reSnapshot);
+			assertNotNull("re-snapshot exposes fresh refs", freshRef);
+			String afterFreshClick = tool.browserClick(freshRef, context);
+			assertFalse("a current-generation ref is NOT rejected: " + afterFreshClick,
+				afterFreshClick.startsWith("Error:"));
+			assertTrue("acting on a fresh ref returns a rendered page",
+				afterFreshClick.contains("<untrusted_page_content"));
+		} finally {
+			service.shutDown();
+		}
+	}
+
+	/** The first generation-tagged ref ({@code s<gen>e<index>}) listed in a rendered tool result. */
+	private static String firstRef(String rendered) {
+		Matcher matcher = Pattern.compile("\\[(s\\d+e\\d+)\\]").matcher(rendered);
+		return matcher.find() ? matcher.group(1) : null;
+	}
+
+	private static boolean e2eEnabled() {
+		return Boolean.getBoolean("tl.ai.browser.e2e");
+	}
+
+	private static String refWhere(List<InteractiveElement> elements, Predicate<InteractiveElement> match) {
+		for (InteractiveElement element : elements) {
+			if (match.test(element)) {
+				return element.ref();
+			}
+		}
+		return null;
+	}
+
+	private static BrowserToolsService newService(String allowedDomains) {
+		return newService(List.of(allowedDomains), List.of(), false);
+	}
+
+	private static BrowserToolsService newService(List<String> allowedDomains, List<String> blockedDomains,
+			boolean allowAny) {
+		return newService(allowedDomains, blockedDomains, allowAny, 4);
+	}
+
+	private static BrowserToolsService newService(List<String> allowedDomains, List<String> blockedDomains,
+			boolean allowAny, int maxConcurrentSessions) {
+		BrowserToolsService.Config<?> config =
+			TypedConfiguration.newConfigItem(BrowserToolsService.Config.class);
+		config.update(config.descriptor().getProperty(BrowserToolsService.Config.ALLOWED_DOMAINS),
+			allowedDomains);
+		config.update(config.descriptor().getProperty(BrowserToolsService.Config.BLOCKED_DOMAINS),
+			blockedDomains);
+		config.update(config.descriptor().getProperty(BrowserToolsService.Config.ALLOW_ANY_DOMAINS),
+			Boolean.valueOf(allowAny));
+		config.update(config.descriptor().getProperty(BrowserToolsService.Config.MAX_CONCURRENT_SESSIONS),
+			Integer.valueOf(maxConcurrentSessions));
+		return new BrowserToolsService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+	}
+}

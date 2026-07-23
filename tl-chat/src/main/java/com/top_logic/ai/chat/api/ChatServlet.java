@@ -418,6 +418,13 @@ public class ChatServlet extends TopLogicServlet {
 			}
 		}
 
+		// Fire cooperative cancellation before interrupting: this notifies onCancel listeners so
+		// teardown happens deterministically on abort, not only via the thread interrupt below.
+		com.top_logic.tl.ai.tool.api.CancellationToken cancellationToken = state.getCancellationToken();
+		if (cancellationToken != null) {
+			cancellationToken.cancel();
+		}
+
 		Thread agentThread = state.getAgentThread();
 		if (agentThread != null) {
 			agentThread.interrupt();

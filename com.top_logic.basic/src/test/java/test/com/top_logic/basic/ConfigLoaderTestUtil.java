@@ -74,7 +74,19 @@ public class ConfigLoaderTestUtil {
 	private File _metaConfFile;
 
 	private File _metaConfCopy;
-	
+
+	/**
+	 * Whether {@link #addToMetaConf(List)} created {@link #_metaConfCopy} as an empty placeholder
+	 * (because no original {@link ModuleLayoutConstants#META_CONF_NAME} existed), as opposed to
+	 * backing up an existing original by renaming it into {@link #_metaConfCopy}.
+	 *
+	 * <p>
+	 * Recorded explicitly at setup so that {@link #restoreMetaConf(boolean)} does not have to infer
+	 * it from {@link File#length()}, which cannot tell an empty file from an absent one.
+	 * </p>
+	 */
+	private boolean _createdMetaConfPlaceholder;
+
 	private ConfigLoaderTestUtil() {
 		/* Private singleton constructor */
 	}
@@ -277,13 +289,26 @@ public class ConfigLoaderTestUtil {
 		_metaConfFile = new File(metaConfDir, ModuleLayoutConstants.META_CONF_NAME);
 		_metaConfCopy = new File(metaConfDir, ModuleLayoutConstants.META_CONF_NAME + ".orig");
 		if (_metaConfCopy.exists()) {
-			throw handleExistingMetaConfCopy();
+			// A backup left over from a prior run whose teardown did not complete (e.g. a JVM
+			// crash, or a race on a shared/parallel workspace). The backup holds the real original
+			// state, so restore from it and continue rather than aborting the whole run.
+			Logger.warn("Found a left-over meta conf backup '" + _metaConfCopy.getAbsolutePath()
+				+ "' from an incompletely torn-down prior run; restoring it before setup.",
+				ConfigLoaderTestUtil.class);
+			restoreMetaConf(_metaConfCopy.length() == 0);
 		}
 		String charsetName = "ascii";
 		if (_metaConfFile.exists()) {
-			_metaConfFile.renameTo(_metaConfCopy);
+			_createdMetaConfPlaceholder = false;
+			if (!_metaConfFile.renameTo(_metaConfCopy)) {
+				// A failure to back up the original at setup time is fatal: proceeding would
+				// overwrite the original with the augmented variant and lose it.
+				throw new IOException("Unable to back up '" + _metaConfFile.getAbsolutePath()
+					+ "' to '" + _metaConfCopy.getAbsolutePath() + "'.");
+			}
 		} else {
-			// Only touch file.
+			// No original exists; remember an empty placeholder so teardown removes it again.
+			_createdMetaConfPlaceholder = true;
 			_metaConfCopy.createNewFile();
 		}
 		try (PrintWriter out =
@@ -302,16 +327,6 @@ public class ConfigLoaderTestUtil {
 				out.println();
 			}
 		}
-	}
-
-	private RuntimeException handleExistingMetaConfCopy() {
-		StringBuilder msg = new StringBuilder();
-		msg.append("There is a copy of the meta conf file: ");
-		msg.append(_metaConfCopy.getAbsolutePath());
-		msg.append(". Last setup may not did complete nornally. Current " + ModuleLayoutConstants.META_CONF_NAME + " (");
-		msg.append(_metaConfFile.getAbsolutePath());
-		msg.append(") may be corrupted.");
-		throw new RuntimeException(msg.toString());
 	}
 
 	private void setupFileManager() {
@@ -375,28 +390,46 @@ public class ConfigLoaderTestUtil {
 	}
 
 	private void teardownConnectionPoolRegistry() {
-		if (_metaConfFile != null) {
-			boolean delete = _metaConfFile.delete();
-			if (!delete) {
-				throw new RuntimeException("Unable to delete " + _metaConfFile.getAbsolutePath() + " to reinstall copy "
-					+ _metaConfCopy.getAbsolutePath());
-			}
+		restoreMetaConf(_createdMetaConfPlaceholder);
+	}
+
+	/**
+	 * Restores the original {@link ModuleLayoutConstants#META_CONF_NAME} by discarding the
+	 * swapped-in variant ({@link #_metaConfFile}) and putting {@link #_metaConfCopy} back.
+	 *
+	 * <p>
+	 * This is pure filesystem clean-up that runs <em>after</em> the in-memory configuration has
+	 * already been restored (see {@link #teardownXMLProps()}), so any anomaly is harmless: on a
+	 * shared or parallel workspace a concurrent run's teardown (or an NFS unlink race) may have
+	 * removed a file first. Such anomalies are therefore logged and swallowed, never thrown:
+	 * turning them into an exception would poison the JVM-wide {@link #failed} flag and fail every
+	 * subsequent test in the same JVM.
+	 * </p>
+	 *
+	 * @param placeholder
+	 *        Whether {@link #_metaConfCopy} is an empty placeholder to be removed, as opposed to a
+	 *        backup of a real original to be renamed back into place.
+	 */
+	private void restoreMetaConf(boolean placeholder) {
+		if (_metaConfFile != null && _metaConfFile.exists() && !_metaConfFile.delete()) {
+			Logger.warn("Unable to delete swapped-in meta conf '" + _metaConfFile.getAbsolutePath()
+				+ "'; leaving it in place.", ConfigLoaderTestUtil.class);
 		}
 
-		if (_metaConfCopy != null) {
-			if (_metaConfCopy.length() == 0) {
-				// Clean-up placeholder file.
-				boolean ok = _metaConfCopy.delete();
-				if (!ok) {
-					throw new RuntimeException(
-						"Unable to remove placeholder file " + _metaConfCopy.getAbsolutePath() + ".");
-				}
-			} else {
-				boolean renameTo = _metaConfCopy.renameTo(_metaConfFile);
-				if (!renameTo) {
-					throw new RuntimeException("Unable to rename " + _metaConfCopy.getAbsolutePath() + " to "
-						+ _metaConfFile.getAbsolutePath());
-				}
+		if (_metaConfCopy == null || !_metaConfCopy.exists()) {
+			// Already gone, e.g. removed by a concurrent run on a shared workspace. The in-memory
+			// configuration is already restored, so there is nothing left to do.
+			return;
+		}
+		if (placeholder) {
+			if (!_metaConfCopy.delete()) {
+				Logger.warn("Unable to remove meta conf placeholder '" + _metaConfCopy.getAbsolutePath() + "'.",
+					ConfigLoaderTestUtil.class);
+			}
+		} else {
+			if (!_metaConfCopy.renameTo(_metaConfFile)) {
+				Logger.warn("Unable to restore original meta conf from backup '" + _metaConfCopy.getAbsolutePath()
+					+ "'.", ConfigLoaderTestUtil.class);
 			}
 		}
 	}

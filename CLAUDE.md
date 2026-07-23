@@ -4,10 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TopLogic is an open-source, model-based, no-code web application development platform. It combines declarative configuration (UML/BPMN modeling, WYSIWYG UI configuration) with extensible Java components. The platform enables both no-code application development and traditional Java/Maven development workflows.
-
-**Build System**: Maven
-**License**: Dual-licensed (AGPL-3.0 / BOS-TopLogic-1.0)
+TopLogic is an open-source, model-based, no-code web application platform (declarative UML/BPMN modeling + WYSIWYG UI, extensible with Java components). Maven build; dual-licensed AGPL-3.0 / BOS-TopLogic-1.0.
 
 ## Build Commands
 
@@ -99,28 +96,11 @@ To find the module that owns a class or feature, use the `tl-mcp` tools (`module
 
 ## File Locations
 
-### Source Structure
+Standard Maven layout, plus these TopLogic conventions:
 
-- **Java source**: `src/main/java/com/top_logic/...`
-- **Resources**: `src/main/resources/`
-- **Webapp files**: `src/main/webapp/` (for web modules)
-  - Layouts: `WEB-INF/layouts/`
-  - Configuration: `WEB-INF/conf/`
-  - Kbase definitions: `WEB-INF/kbase/`
-  - Model definitions: `WEB-INF/model/`
-
-### Test Structure
-
-- **Test source**: `src/test/java/test/com/top_logic/...`
-  - Note the `test.` prefix in package names
-- **Test resources**: `src/test/resources/`
-
-### Configuration Files
-
-- **Module POM**: `pom.xml` (defines dependencies, build configuration)
-- **Parent POM reference**: Most modules extend `tl-parent-core-internal`
-- **Webapp descriptor**: `WEB-INF/web.xml` (for web modules)
-- **TypeDoc**: `*.type.xml` files define model types
+- **Tests** live under `src/test/java/test/com/top_logic/...` — note the extra `test.` package prefix.
+- **Webapp config** (web modules) under `src/main/webapp/WEB-INF/`: `layouts/` (layout XML), `model/` (model XML), `conf/` (app config), `kbase/` (kbase definitions).
+- Model types are also declared in `*.type.xml`.
 
 ## Development Patterns
 
@@ -223,14 +203,6 @@ After implementing a UI feature or fix, always verify it manually in a running a
 ### Demo App Credentials
 
 The demo application's default developer login is `root` / `root1234`.
-
-### Database Support
-
-The platform supports multiple databases:
-- **H2** (default for development/testing)
-- **Oracle**, **PostgreSQL**, **MySQL**, **MS SQL Server**, **IBM DB2**
-
-Database-specific drivers are included in test scope for internal modules.
 
 ### Version Management
 

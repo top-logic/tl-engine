@@ -13,7 +13,7 @@
 		<dependency name="Ticket_29073_added_derived_to_tlassociationend"
 			module="tl-element"
 		/>
-		<dependency name="Ticket_28710_Added_TLSearch"
+		<dependency name="Ticket_28298_add_group_member_options"
 			module="tl-model-search"
 		/>
 		<dependency name="Ticket_28557_enlarge_contact_attributes"
@@ -28,7 +28,7 @@
 		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
 			module="tl-search-lucene"
 		/>
-		<dependency name="Ticket_28710_Missing_migrations"
+		<dependency name="Ticket_28984_Remove_task_label"
 			module="tl-bpe"
 		/>
 	</dependencies>

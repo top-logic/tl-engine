@@ -50,7 +50,6 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const resolvedMode = displayMode ?? (state.displayMode as string | undefined) ?? 'label-only';
   const resolvedHidden = state.hidden === true;
   const tooltip = state.tooltip as string | undefined;
-  const hiddenStyle = resolvedHidden ? { display: 'none' as const } : undefined;
   // Optional appearance modifier (e.g. "link" renders the button as an inline text link).
   const appearance = state.appearance as string | undefined;
   // Optional size modifier ("small" / "large"); absent means the default size.
@@ -88,13 +87,19 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const tooltipText = tooltip ?? (iconOnly ? resolvedLabel : undefined);
   const tooltipAttr = tooltipText ? `text:${tooltipText}` : undefined;
 
+  // A hidden button renders nothing: its empty wrapper (e.g. a toolbar item) can then collapse,
+  // so the visible buttons stay flush with the toolbar edge. The keyboard binding above stays
+  // registered and declines while hidden.
+  if (resolvedHidden) {
+    return null;
+  }
+
   return (
     <button
       type="button"
       id={controlId}
       onClick={handleClick}
       disabled={resolvedDisabled}
-      style={hiddenStyle}
       className={'tlReactButton' + (iconOnly ? ' tlReactButton--iconOnly' : '')
         + (resolvedMode === 'label-only' ? ' tlReactButton--labelOnly' : '')
         + (appearance === 'link' ? ' tlReactButton--link' : '')

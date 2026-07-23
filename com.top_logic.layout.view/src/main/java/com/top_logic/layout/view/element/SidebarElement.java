@@ -441,7 +441,7 @@ public class SidebarElement implements UIElement {
 			DirtyChannel dirtyChannel, SecurityScope scope) {
 		ViewContext baseContext = context.childContext("sidebar-item");
 		// Establish the nav-item's security scope so command rules in its content default to it.
-		ViewContext itemContext = scope != null ? baseContext.withSecurityScope(scope) : baseContext;
+		ViewContext itemContext = scope != null ? baseContext.withScope(SecurityScope.class, scope) : baseContext;
 		itemContext.setDirtyChannel(dirtyChannel);
 
 		if (elements.size() == 1) {

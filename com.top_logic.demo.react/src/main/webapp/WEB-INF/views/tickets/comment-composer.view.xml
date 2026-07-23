@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="comment"/>
+	</channels>
+	<anchor name="composer">
+		<panel appearance="card">
+			<title>
+				<en>New comment</en>
+				<de>Neuer Kommentar</de>
+			</title>
+			<form
+				initial-edit-mode="true"
+				input="comment"
+				mode-switch="false"
+			>
+				<field attribute="cited"/>
+				<field
+					attribute="content"
+					label-position="hide-label"
+				/>
+				<file-list attribute="attachments"/>
+				<commands>
+					<generic-command
+						image="css:bi bi-send"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Add comment</en>
+							<de>Kommentar hinzufügen</de>
+						</label>
+						<store-form-state/>
+						<link-element/>
+					</generic-command>
+				</commands>
+			</form>
+		</panel>
+	</anchor>
+</view>

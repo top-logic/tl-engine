@@ -56,8 +56,17 @@ const TLControlContext = createContext<TLControlContextValue | null>(null);
 
 type StateListener = (state: Record<string, unknown>) => void;
 
-/** Map of mounted control IDs to their React roots, state stores, and SSE listeners. */
-const _mounts = new Map<string, { root: Root | null; store: ControlStateStore; sseListener: StateListener }>();
+/**
+ * Map of mounted control IDs to their React roots, state stores, and SSE listeners.
+ *
+ * <p>{@code refs} counts the live holders of the entry (one top-level {@link mount} or one or more
+ * {@link createChildContext} callers). It exists because a React re-render can create the next
+ * holder — reusing this entry and its SSE subscription — before the previous holder's cleanup runs;
+ * tearing down on the first {@link unmount} would then orphan the still-mounted component from
+ * further SSE patches. The entry is torn down only when the last holder releases.</p>
+ */
+const _mounts =
+  new Map<string, { root: Root | null; store: ControlStateStore; sseListener: StateListener; refs: number }>();
 
 /** The application context path (e.g. "/demo"), set on first mount(). */
 let _contextPath = '';
@@ -136,7 +145,7 @@ export function mount(
   subscribe(controlId, sseListener);
 
   const root = createRoot(element);
-  _mounts.set(controlId, { root, store, sseListener });
+  _mounts.set(controlId, { root, store, sseListener, refs: 1 });
 
   _lastWindowName = resolvedWindowName;
 
@@ -177,13 +186,21 @@ export function mountField(
  */
 export function unmount(controlId: string): void {
   const entry = _mounts.get(controlId);
-  if (entry) {
-    unsubscribe(controlId, entry.sseListener);
-    if (entry.root) {
-      entry.root.unmount();
-    }
-    _mounts.delete(controlId);
+  if (!entry) {
+    return;
   }
+  // Reference-counted release: during a remount, the next holder can reuse this entry (see
+  // createChildContext) before this cleanup runs. Only the last holder tears down, so the live
+  // store keeps its SSE subscription across the remount instead of being orphaned.
+  if (entry.refs > 1) {
+    entry.refs--;
+    return;
+  }
+  unsubscribe(controlId, entry.sseListener);
+  if (entry.root) {
+    entry.root.unmount();
+  }
+  _mounts.delete(controlId);
 }
 
 /**
@@ -229,9 +246,12 @@ export function createChildContext(
     };
     subscribe(childControlId, sseListener);
     // Track it so we can clean up on unmount.
-    entry = { root: null, store, sseListener };
+    entry = { root: null, store, sseListener, refs: 0 };
     _mounts.set(childControlId, entry);
   }
+  // Register this holder. A matching unmount() releases it; the entry (and its SSE subscription)
+  // survives until the last holder is gone, which keeps patches flowing across a remount.
+  entry.refs++;
 
   // Inherit windowName from the parent context if available.
   const parentWindowName = _lastWindowName;

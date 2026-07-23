@@ -274,6 +274,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_FILE_UPLOAD_CHOOSE;
 
 	/**
+	 * @en Add file
+	 */
+	@CustomKey("js.fileChips.add")
+	public static ResKey JS_FILE_CHIPS_ADD;
+
+	/**
+	 * @en Remove {0}
+	 */
+	@CustomKey("js.fileChips.remove")
+	public static ResKey JS_FILE_CHIPS_REMOVE;
+
+	/**
 	 * @en Open camera
 	 */
 	@CustomKey("js.photoCapture.open")

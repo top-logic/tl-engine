@@ -130,7 +130,7 @@ public class ReactTileStackControl extends ReactControl {
 		if (parentDirty != null) {
 			frameContext.setDirtyChannel(parentDirty);
 		}
-		frameContext = frameContext.withTileStackScope(_scope);
+		frameContext = frameContext.withScope(TileStackScope.class, _scope);
 
 		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			DefaultViewChannel paramChannel = new DefaultViewChannel(entry.getKey());

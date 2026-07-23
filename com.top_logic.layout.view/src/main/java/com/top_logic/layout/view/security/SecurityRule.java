@@ -45,7 +45,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * <ul>
  * <li>The {@link SecurityScope} providing the role mapping: the explicitly configured
  * {@link Config#getScope() scope} if set, otherwise the
- * {@link ViewContext#getSecurityScope() enclosing unit's scope}. A guarded command that resolves to
+ * {@link ViewContext#getScope(Class) enclosing unit's scope}. A guarded command that resolves to
  * no scope fails closed.</li>
  * <li>The {@link BoundObject security object} the roles are checked on: the value of the configured
  * {@link Config#getSecurityObject() security-object channel} if it is a {@link BoundObject},
@@ -147,7 +147,7 @@ public class SecurityRule implements ViewExecutabilityRule, ContextDependentRule
 				Logger.error("Reference to undefined security scope '" + _scopeId + "'.", SecurityRule.class);
 			}
 		} else {
-			_scope = context.getSecurityScope();
+			_scope = context.getScope(SecurityScope.class);
 		}
 		_group = _groupRef.resolve();
 		_securityObjectChannel = _securityObjectRef != null ? context.resolveChannel(_securityObjectRef) : null;

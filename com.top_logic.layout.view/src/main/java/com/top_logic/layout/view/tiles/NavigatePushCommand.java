@@ -55,7 +55,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * &lt;/button&gt;
  * </pre>
  *
- * @implNote Resolves the target stack via {@link ViewContext#getTileStackScope()}.
+ * @implNote Resolves the target stack via {@link ViewContext#getScope(Class)}.
  */
 public class NavigatePushCommand implements ViewCommand {
 
@@ -159,7 +159,7 @@ public class NavigatePushCommand implements ViewCommand {
 			throw new IllegalStateException(
 				"<navigate-push> requires a ViewContext, got " + context.getClass().getName());
 		}
-		TileStackScope scope = viewContext.getTileStackScope();
+		TileStackScope scope = viewContext.getScope(TileStackScope.class);
 		if (scope == null) {
 			throw new IllegalStateException(
 				"<navigate-push> executed outside of any enclosing <tile-stack>.");

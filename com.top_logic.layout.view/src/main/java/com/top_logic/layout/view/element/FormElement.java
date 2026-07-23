@@ -374,6 +374,11 @@ public class FormElement extends ContainerElement {
 		if (initialEditMode) {
 			formControl.enterEditMode();
 		}
+		if (editModeChannel == null && _config.getInitialEditMode()) {
+			// Without an edit-mode channel governing the mode, initial-edit-mode means "editable
+			// whenever an object is available" - including objects arriving via the input channel.
+			formControl.setAutoEditMode(true);
+		}
 
 		// 12. Model listener registration is tied to the control's attach/detach lifecycle.
 		formControl.setModelScope(context.getModelScope());
@@ -403,7 +408,7 @@ public class FormElement extends ContainerElement {
 	 */
 	private void contributeFormCommands(ViewContext parentContext, ViewContext formContext,
 			FormControl formControl) {
-		CommandScope scope = parentContext.getCommandScope();
+		CommandScope scope = parentContext.getScope(CommandScope.class);
 		if (scope == null) {
 			return;
 		}
@@ -521,7 +526,7 @@ public class FormElement extends ContainerElement {
 
 	private void contributeEditCommands(ViewContext parentContext, ViewContext formContext,
 			FormControl formControl) {
-		CommandScope scope = parentContext.getCommandScope();
+		CommandScope scope = parentContext.getScope(CommandScope.class);
 		if (scope == null) {
 			return;
 		}

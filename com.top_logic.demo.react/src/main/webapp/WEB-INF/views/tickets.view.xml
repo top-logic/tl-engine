@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="ticket"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="220"
+				size="30"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Tickets</en>
+						<de>Tickets</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`demo.tickets:Ticket`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="tickets-create.view.xml"
+							>
+								<bind
+									channel="selection"
+									to="ticket"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-trash"
+							input="ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+							</with-transaction>
+							<write-channel name="ticket"/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="demo.tickets:Ticket"
+						selection="ticket"
+						types="demo.tickets:Ticket"
+					>
+						<columns>
+							<column attribute="name"/>
+						</columns>
+						<rows>all(`demo.tickets:Ticket`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="70"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Conversation</en>
+						<de>Verlauf</de>
+					</title>
+					<inset>
+						<object-list
+							element-channel="comment"
+							element-type="demo.tickets:Comment"
+							input="ticket"
+							items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
+							link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
+							new-element-channel="newComment"
+							remove="ticket -> comment -> $comment.delete()"
+						>
+							<item>
+								<view-ref view="tickets/comment.view.xml">
+									<bind
+										channel="comment"
+										to="comment"
+									/>
+									<bind
+										channel="draft"
+										to="newComment"
+									/>
+								</view-ref>
+							</item>
+							<new-element>
+								<view-ref view="tickets/comment-composer.view.xml">
+									<bind
+										channel="comment"
+										to="newComment"
+									/>
+								</view-ref>
+							</new-element>
+							<empty-text>
+								<en>No comments yet.</en>
+								<de>Noch keine Kommentare.</de>
+							</empty-text>
+						</object-list>
+					</inset>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

@@ -118,8 +118,28 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	protected Object parseClientValue(Object rawValue) {
 		String html = rawValue != null ? rawValue.toString() : "";
 		String cleanHtml = stripImageUrls(html);
+		if (isVisuallyEmpty(cleanHtml)) {
+			// An emptied editor means "no value": normalize to null so emptiness checks (e.g. a
+			// mandatory constraint) treat the field like a cleared text input rather than
+			// accepting markup skeletons such as an empty paragraph.
+			_shadowCopy.setSourceCode("");
+			return null;
+		}
 		_shadowCopy.setSourceCode(cleanHtml);
 		return _shadowCopy.copy();
+	}
+
+	/**
+	 * Whether the given HTML renders without any visible content: no text and no embedded media
+	 * (the editor represents an empty document as markup skeletons like {@code <p></p>}).
+	 */
+	private static boolean isVisuallyEmpty(String html) {
+		if (html.isEmpty()) {
+			return true;
+		}
+		Document document = Jsoup.parseBodyFragment(html);
+		return document.text().trim().isEmpty()
+			&& document.select("img, table, iframe, video, audio, hr").isEmpty();
 	}
 
 	@Override

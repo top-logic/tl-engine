@@ -52,11 +52,14 @@ const IconPopOut = () => (
  *
  * State:
  * - title: string
+ * - titleContent: ChildDescriptor (rendered in the title area, may be absent)
  * - expansionState: "NORMALIZED" | "MINIMIZED" | "MAXIMIZED" | "HIDDEN"
  * - showMinimize: boolean
  * - showMaximize: boolean
  * - showPopOut: boolean
  * - fill: boolean (fill the container's bounded height instead of growing with content)
+ * - hoverActions: boolean (hide toolbar buttons until the panel is hovered or a button is focused)
+ * - appearance: "default" | "card" (card renders a bordered, rounded panel with compact insets)
  * - toolbar: ChildDescriptor (a TLToolbar control, may be absent)
  * - buttonBar: ChildDescriptor (a TLToolbar control, may be absent)
  * - child: ChildDescriptor
@@ -73,6 +76,8 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const showPopOut = state.showPopOut === true;
   const fullLine = state.fullLine === true;
   const fill = state.fill === true;
+  const hoverActions = state.hoverActions === true;
+  const card = state.appearance === 'card';
 
   const isMinimized = expansionState === 'MINIMIZED';
   const isMaximized = expansionState === 'MAXIMIZED';
@@ -103,17 +108,23 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   // content, without an empty header bar wasting space.
   const hasActionButtons =
     (showMinimize && !isMaximized) || (showMaximize && !isMinimized) || showPopOut;
-  const hasHeader = (!!title && title.trim() !== '') || !!state.toolbar || hasActionButtons;
+  const hasHeader =
+    (!!title && title.trim() !== '') || !!state.titleContent || !!state.toolbar || hasActionButtons;
 
   return (
     <div
       id={controlId}
-      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fill ? ' tlPanel--fill' : ''}`}
+      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fill ? ' tlPanel--fill' : ''}${hoverActions ? ' tlPanel--hoverActions' : ''}${card ? ' tlPanel--card' : ''}`}
       style={panelStyle}
     >
       {hasHeader && (
       <div className="tlPanel__header">
-        <span className="tlPanel__title">{title}</span>
+        {!!title && title.trim() !== '' && <span className="tlPanel__title">{title}</span>}
+        {state.titleContent && (
+          <div className="tlPanel__titleContent">
+            <TLChild control={state.titleContent} />
+          </div>
+        )}
         <div className="tlPanel__toolbar">
           {state.toolbar && <TLChild control={state.toolbar} />}
           {showMinimize && !isMaximized && (

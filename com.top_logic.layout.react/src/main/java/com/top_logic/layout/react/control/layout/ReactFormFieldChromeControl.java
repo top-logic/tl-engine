@@ -135,9 +135,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		setDirty(dirty);
 		setError(error);
 		setHelpText(helpText);
-		if (labelPosition != null) {
-			putState(LABEL_POSITION, labelPosition.protocolName());
-		}
+		setLabelPosition(labelPosition);
 		putState(FULL_LINE, fullLine);
 		setVisible(visible);
 		putState(FIELD, field);
@@ -151,6 +149,16 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 */
 	public void setLabel(String label) {
 		putState(LABEL, label);
+	}
+
+	/**
+	 * Updates the label position.
+	 *
+	 * @param labelPosition
+	 *        The new {@link LabelPosition}, or {@code null} to inherit from the enclosing layout.
+	 */
+	public void setLabelPosition(LabelPosition labelPosition) {
+		putState(LABEL_POSITION, labelPosition == null ? null : labelPosition.protocolName());
 	}
 
 	/**

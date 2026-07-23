@@ -7,8 +7,10 @@ package com.top_logic.layout.view.form;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
@@ -43,6 +45,16 @@ public class TLObjectOverlay extends TransientObject {
 	}
 
 	@Override
+	public TLObject tContainer() {
+		return _base.tContainer();
+	}
+
+	@Override
+	public TLReference tContainerReference() {
+		return _base.tContainerReference();
+	}
+
+	@Override
 	public Object tValue(TLStructuredTypePart part) {
 		if (_changes.containsKey(part)) {
 			return _changes.get(part);
@@ -56,10 +68,21 @@ public class TLObjectOverlay extends TransientObject {
 	}
 
 	/**
-	 * Whether any attribute has been changed.
+	 * Whether any attribute holds a value that differs from the base object's value.
+	 *
+	 * <p>
+	 * A stored value equal to the base value does not count as a change: writing back an unchanged
+	 * value (e.g. a composition table registering its unmodified row list on edit-mode entry, or an
+	 * edit that is typed and reverted) leaves the overlay clean.
+	 * </p>
 	 */
 	public boolean isDirty() {
-		return !_changes.isEmpty();
+		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
+			if (!Objects.equals(entry.getValue(), _base.tValue(entry.getKey()))) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -76,6 +99,9 @@ public class TLObjectOverlay extends TransientObject {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
 			_base.tUpdate(entry.getKey(), entry.getValue());
 		}
+		// The base now holds all values, so the overlay has no unsaved changes anymore. Reads
+		// delegate to the base, and dirty tracking reports a clean state.
+		_changes.clear();
 	}
 
 	/**

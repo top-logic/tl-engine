@@ -16,7 +16,7 @@ const { useContext, useState, useCallback } = React;
  * - warnings: string[] | null
  * - helpText: string | null
  * - dirty: boolean
- * - labelPosition: "side" | "top" | null  (null = inherit from context)
+ * - labelPosition: "side" | "top" | "after" | "hidden" | null  (null = inherit from context)
  * - fullLine: boolean
  * - visible: boolean
  * - field: ChildDescriptor
@@ -41,8 +41,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const [helpVisible, setHelpVisible] = useState(false);
   const toggleHelp = useCallback(() => setHelpVisible(v => !v), []);
 
-  if (!visible) return null;
-
+  const labelHidden = labelPos === 'hidden';
   const hasError = error != null;
   const hasWarnings = warnings != null && warnings.length > 0;
 
@@ -56,26 +55,31 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
     dirty ? 'tlFormField--dirty' : '',
   ].filter(Boolean).join(' ');
 
+  // An invisible field is hidden via CSS instead of not being rendered: unmounting the child
+  // control would drop its SSE subscription, so state patches arriving while hidden (e.g.
+  // editable toggling with the form mode) would be lost until a full re-serialization.
   return (
-    <div id={controlId} className={className}>
-      <div className="tlFormField__label">
-        <span
-          className="tlFormField__labelText"
-          data-tooltip={hasTooltip ? 'key:tooltip' : undefined}
-        >{label}</span>
-        {required && !readOnly && <span className="tlFormField__required">*</span>}
-        {dirty && <span className="tlFormField__dirtyDot" />}
-        {helpText && !readOnly && (
-          <button type="button" className="tlFormField__helpIcon" onClick={toggleHelp}
-            aria-label="Help">
-            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-              <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5" />
-              <text x="8" y="12" textAnchor="middle" fontSize="10"
-                fill="currentColor">?</text>
-            </svg>
-          </button>
-        )}
-      </div>
+    <div id={controlId} className={className} style={visible ? undefined : { display: 'none' }}>
+      {!labelHidden && (
+        <div className="tlFormField__label">
+          <span
+            className="tlFormField__labelText"
+            data-tooltip={hasTooltip ? 'key:tooltip' : undefined}
+          >{label}</span>
+          {required && !readOnly && <span className="tlFormField__required">*</span>}
+          {dirty && <span className="tlFormField__dirtyDot" />}
+          {helpText && !readOnly && (
+            <button type="button" className="tlFormField__helpIcon" onClick={toggleHelp}
+              aria-label="Help">
+              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+                <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                <text x="8" y="12" textAnchor="middle" fontSize="10"
+                  fill="currentColor">?</text>
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
       <div className="tlFormField__input">
         <TLChild control={field} />
       </div>

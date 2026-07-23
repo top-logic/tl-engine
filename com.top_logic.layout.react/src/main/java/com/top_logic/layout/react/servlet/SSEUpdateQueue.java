@@ -172,6 +172,19 @@ public class SSEUpdateQueue {
 	}
 
 	/**
+	 * Whether any control is registered with this queue.
+	 *
+	 * <p>
+	 * A queue without any controls did not render a page in this session - it was typically
+	 * created empty by an SSE reconnect after the session was replaced underneath an open page.
+	 * Commands arriving for such a window target the control tree of a discarded session.
+	 * </p>
+	 */
+	public boolean hasControls() {
+		return !_controls.isEmpty();
+	}
+
+	/**
 	 * Looks up a previously registered control by its ID.
 	 *
 	 * @return The control, or {@code null} if not found.

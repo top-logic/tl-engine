@@ -206,7 +206,7 @@ public class CompositionTableElement implements UIElement {
 
 		CompositionTableControl control = new CompositionTableControl(
 			context, formControl, _config.getAttribute(), columnConfigs, _config.getDetailDialog());
-		control.initTable();
+		control.init();
 		return control;
 	}
 }

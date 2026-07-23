@@ -69,6 +69,17 @@ const MIN_COL_WIDTH = 50;
  * React table component with virtual scrolling, server-driven cell controls,
  * multi-selection with checkbox column, and column resize.
  */
+/**
+ * Whether the event originates from an interactive element inside a cell (input, button, link,
+ * editor). Row-level gestures must leave such clicks alone: neither steal the element's focus for
+ * the table's keyboard scope nor suppress its default mouse handling (e.g. double-click word
+ * selection in a text input).
+ */
+function isInteractiveTarget(event: React.SyntheticEvent): boolean {
+  const target = event.target as Element | null;
+  return !!target?.closest?.('input, textarea, select, button, a, [contenteditable="true"]');
+}
+
 const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
@@ -327,8 +338,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (selection && !selection.isCollapsed && event.currentTarget.contains(selection.anchorNode)) {
       return;
     }
-    // Give the body keyboard focus so the table's keyboard scope becomes active.
-    scrollContainerRef.current?.focus({ preventScroll: true });
+    // Give the body keyboard focus so the table's keyboard scope becomes active - except when
+    // the click landed in an interactive cell element (e.g. a text input of an editable cell),
+    // which must keep the focus to stay editable.
+    if (!isInteractiveTarget(event)) {
+      scrollContainerRef.current?.focus({ preventScroll: true });
+    }
     sendCommand('select', {
       rowIndex,
       ctrlKey: event.ctrlKey || event.metaKey,
@@ -604,8 +619,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               onMouseDown={(e) => {
                 // Suppress the text selection the browser would start as a side
                 // effect of row-selection gestures (shift/ctrl range or toggle,
-                // double-click); plain click-and-drag still selects cell text.
-                if (e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) {
+                // double-click); plain click-and-drag still selects cell text, and
+                // interactive cell elements keep their own mouse handling (e.g.
+                // double-click word selection in a text input).
+                if ((e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) && !isInteractiveTarget(e)) {
                   e.preventDefault();
                 }
               }}

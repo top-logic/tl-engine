@@ -15,7 +15,6 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
@@ -110,29 +109,13 @@ public class ReferenceElement implements UIElement {
 			throw new RuntimeException("Failed to load referenced view: " + fullPath, ex);
 		}
 
-		// Create isolated child context (fresh channel namespace, but inherits error sink,
-		// dirty channel and command scope from parent). The command scope is shared so
-		// that commands contributed by the referenced view (e.g. a dashboard's edit
-		// command) bubble up to the enclosing app bar.
-		ViewContext childContext = new DefaultViewContext(parentContext);
-		ErrorSink parentErrorSink = parentContext.getErrorSink();
-		if (parentErrorSink != null) {
-			childContext = childContext.withErrorSink(parentErrorSink);
-		}
-		com.top_logic.layout.view.command.CommandScope parentScope = parentContext.getCommandScope();
-		if (parentScope != null) {
-			childContext = childContext.withCommandScope(parentScope);
-		}
-		// Inherit the enclosing security scope so that command security rules in the referenced view
-		// default to the scope of the removable unit that hosts the reference.
-		com.top_logic.layout.view.security.SecurityScope parentSecurityScope = parentContext.getSecurityScope();
-		if (parentSecurityScope != null) {
-			childContext = childContext.withSecurityScope(parentSecurityScope);
-		}
-		com.top_logic.layout.view.channel.DirtyChannel parentDirtyChannel = parentContext.getDirtyChannel();
-		if (parentDirtyChannel != null) {
-			childContext.setDirtyChannel(parentDirtyChannel);
-		}
+		// Isolated child context: a fresh channel namespace, all ambient scopes inherited. The
+		// command scope is shared so that commands contributed by the referenced view (e.g. a
+		// dashboard's edit command) bubble up to the enclosing app bar; the security scope so that
+		// command security rules in the referenced view default to the enclosing removable unit; the
+		// object list scope so that a <view-ref> used as an <object-list> row keeps <link-element> /
+		// <remove-element> working.
+		ViewContext childContext = parentContext.withIsolatedChannels();
 
 		// Pre-bind parent channels into the child context.
 		for (ChannelBindingConfig binding : _bindings) {

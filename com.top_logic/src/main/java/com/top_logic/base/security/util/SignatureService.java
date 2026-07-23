@@ -54,6 +54,7 @@ public abstract class SignatureService extends ManagedClass {
 	 *        Configuration for {@link SignatureService}.
 	 */
 	public SignatureService(InstantiationContext context, Config config) {
+		super(context, config);
 		String configuredEncoding = config.getEncoding();
 
 		Charset encoding;

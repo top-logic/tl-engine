@@ -70,6 +70,7 @@ public class ApplicationMonitor extends ManagedClass {
 	 *         iff configuration is invalid.
 	 */
 	public ApplicationMonitor(InstantiationContext context, Config config) throws ConfigurationException {
+		super(context, config);
 		monitors = TypedConfiguration.getInstanceMap(context, config.getComponents());
 	}
 

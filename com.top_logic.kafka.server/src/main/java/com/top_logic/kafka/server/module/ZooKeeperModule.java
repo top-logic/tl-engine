@@ -48,6 +48,7 @@ public class ZooKeeperModule extends ManagedClass {
 	 *        Configuration for this {@link ZooKeeperModule}.
 	 */
 	public ZooKeeperModule(InstantiationContext context, Config config) {
+		super(context, config);
 		_zooKeeperStarter = new ZooKeeperStarter(context, config);
 	}
 

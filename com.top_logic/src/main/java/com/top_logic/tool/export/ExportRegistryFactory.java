@@ -59,6 +59,7 @@ public final class ExportRegistryFactory extends ManagedClass {
 	 *         iff configuration is invalid.
 	 */
 	public ExportRegistryFactory(InstantiationContext context, Config config) throws ConfigurationException {
+		super(context, config);
 		_registry = context.getInstance(config.getExportRegistry());
 	}
 

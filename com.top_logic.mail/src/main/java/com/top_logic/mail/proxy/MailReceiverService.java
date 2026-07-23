@@ -39,6 +39,7 @@ public class MailReceiverService extends ManagedClass {
 	 *        Configuration for this {@link MailReceiverService}.
 	 */
 	public MailReceiverService(InstantiationContext context, Config config) {
+		super(context, config);
 		_activated = config.isActivated();
 		if (_activated) {
 			_server = new MailReceiver(config);

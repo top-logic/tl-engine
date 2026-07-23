@@ -120,6 +120,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	 *        Configuration for this {@link TLSecurityDeviceManager}.
 	 */
 	public TLSecurityDeviceManager(InstantiationContext context, Config config) {
+		super(context, config);
 		_configuredDevices =
 			TypedConfiguration.<String, SecurityDevice> getInstanceMap(context, config.getSecurityDevices());
 		_dataAccessDevices = getDataAccessDevices(_configuredDevices);

@@ -29,6 +29,7 @@ import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.map.MultiMaps;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.exception.ErrorSeverity;
@@ -101,6 +102,25 @@ public class InitialProcessSetupService extends ManagedClass {
 	public static final String[] FILE_SUFFIXES = { ".bpml", ".bpmn", ".bpml.xml", ".bpmn.xml" };
 
 	private static final Pattern NAME_HASH_PATTERN = Pattern.compile("^(?<name>.+):(?<hash>[A-Za-z0-9/+=]+)$");
+
+	/**
+	 * Typed configuration interface definition for {@link InitialProcessSetupService}.
+	 */
+	public interface Config extends ServiceConfiguration<InitialProcessSetupService> {
+		// configuration interface definition
+	}
+
+	/**
+	 * Create a {@link InitialProcessSetupService}.
+	 * 
+	 * @param context
+	 *        the {@link InstantiationContext} to create the new object in
+	 * @param config
+	 *        the configuration object to be used for instantiation
+	 */
+	public InitialProcessSetupService(InstantiationContext context, Config config) {
+		super(context, config);
+	}
 
 	@Override
 	protected void startUp() {

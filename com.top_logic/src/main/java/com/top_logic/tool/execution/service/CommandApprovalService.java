@@ -10,6 +10,8 @@ import java.util.Map;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -45,7 +47,9 @@ import com.top_logic.tool.execution.ExecutableState;
 @Label("Command approval")
 public abstract class CommandApprovalService extends ManagedClass {
 
-	private static final CommandApprovalService INACTIVE = new CommandApprovalService() {
+	private static final CommandApprovalService INACTIVE =
+		new CommandApprovalService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			TypedConfiguration.newConfigItem(ServiceConfiguration.class)) {
 		@Override
 		public ExecutableState isExecutable(LayoutComponent component, BoundCommandGroup commandGroup,
 				String commandId,
@@ -59,13 +63,6 @@ public abstract class CommandApprovalService extends ManagedClass {
 	 * {@link CommandApprovalService} configurations.
 	 */
 	public static final String APPROVAL_SERVICE_CLASSIFIER = "approval-service";
-
-	/**
-	 * Creates a {@link CommandApprovalService}.
-	 */
-	protected CommandApprovalService() {
-		super();
-	}
 
 	/**
 	 * Creates a {@link CommandApprovalService}.

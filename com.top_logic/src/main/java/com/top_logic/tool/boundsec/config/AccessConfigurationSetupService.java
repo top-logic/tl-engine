@@ -19,6 +19,7 @@ import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
@@ -59,6 +60,25 @@ public class AccessConfigurationSetupService extends ManagedClass {
 
 	private static final String DB_PROPERTY = "setup-access-configuration";
 	private static final String DATA_PATH = "/WEB-INF/conf/security.xml";
+
+	/**
+	 * Typed configuration interface definition for {@link AccessConfigurationSetupService}.
+	 */
+	public interface Config extends ServiceConfiguration<AccessConfigurationSetupService> {
+		// configuration interface definition
+	}
+
+	/**
+	 * Create a {@link AccessConfigurationSetupService}.
+	 * 
+	 * @param context
+	 *        the {@link InstantiationContext} to create the new object in
+	 * @param config
+	 *        the configuration object to be used for instantiation
+	 */
+	public AccessConfigurationSetupService(InstantiationContext context, Config config) {
+		super(context, config);
+	}
 
 	@Override
 	protected void startUp() {

@@ -562,6 +562,7 @@ demoNewA(name: "newChild", parent: $p);
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
 							expected-failure-message="Der Benutzer darf Objekt (?:.*) nicht löschen."
+							regexp-mode="true"
 						>
 							<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 								command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"

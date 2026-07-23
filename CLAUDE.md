@@ -243,47 +243,15 @@ try {
 
 ### Layout Components
 
-UI components extend `LayoutComponent` and are configured declaratively:
-
-```xml
-<layout>
-    <component class="com.top_logic.layout.form.component.FormComponent">
-        <!-- Configuration -->
-    </component>
-</layout>
-```
+UI is assembled declaratively in `*.layout.xml` files under `WEB-INF/layouts/`. See the `tl-layout` skill for the template-call pattern, channel binding, and the component catalog.
 
 ### React Controls (`com.top_logic.layout.react`)
 
-React controls use a bridge library (`tl-react-bridge`) that provides a single shared React instance.
-
-**Critical**: Controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly. Importing from `'react'` bundles a duplicate React copy, causing "useState is null" errors at runtime.
-
-```typescript
-// Correct:
-import { React, useTLState } from 'tl-react-bridge';
-
-// Wrong — causes runtime errors:
-import React, { useState } from 'react';
-```
-
-The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`. Do NOT run `npx vite build` directly.
+React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md).
 
 ### Model Definitions
 
-Types are defined in XML files (`*.model.xml`):
-
-```xml
-<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
-    <module name="my.module">
-        <class name="MyType">
-            <attributes>
-                <property name="myAttribute" type="tl.core:String"/>
-            </attributes>
-        </class>
-    </module>
-</model>
-```
+Application data types are defined in `*.model.xml` files under `WEB-INF/model/`. See the `tl-model` skill for types, attributes, references, derived attributes, and wrapper generation.
 
 ### UI Labels and I18N
 
@@ -421,13 +389,7 @@ When creating a new TopLogic module:
 
 ### Resource File Normalization
 
-`.properties` files under `WEB-INF/conf/resources/` must be normalized:
-
-```bash
-mvn -N tl:normalize-resource-file -Dresource=<path>
-```
-
-The `-N` flag is essential — without it Maven resolves the full reactor (including GWT modules) and the command fails.
+`.properties` files under `WEB-INF/conf/resources/` must be normalized. See the `tl-model` skill ("Normalizing resource files") for the command and the mandatory `-N` flag.
 
 
 ### Theme / CSS Reloading
@@ -541,42 +503,7 @@ Commit messages in this project must follow a specific format:
 
 ## msgbuf Library
 
-The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library for type-safe protocol message generation from `.proto` files.
-
-### Key Pitfall: Writer Types
-
-`de.haumacher.msgbuf.json.JsonWriter` takes `de.haumacher.msgbuf.io.Writer` — **not** `java.io.Writer`. The compiler error "StringWriter cannot be converted to Writer" is misleading because `StringWriter` IS a `java.io.Writer`, but the constructor expects the msgbuf `Writer` interface. The error omits the package, making it look like a standard Java type.
-
-**Correct usage:**
-
-```java
-// For in-memory string serialization:
-import de.haumacher.msgbuf.io.StringW;
-import de.haumacher.msgbuf.json.JsonWriter;
-
-StringW out = new StringW();
-try (JsonWriter writer = new JsonWriter(out)) {
-    myMessage.writeTo(writer);
-}
-String json = out.toString();
-
-// To wrap a java.io.Writer (server-side only):
-import de.haumacher.msgbuf.server.io.WriterAdapter;
-
-try (JsonWriter writer = new JsonWriter(new WriterAdapter(javaIoWriter))) {
-    myMessage.writeTo(writer);
-}
-```
-
-### Generator Plugin
-
-The msgbuf Maven plugin generates Java classes from `.proto` files. Note that its default lifecycle phase is **not** `generate-sources`, so `mvn generate-sources` alone won't trigger it. It runs during `mvn compile`. To run it in isolation, invoke its `generate` goal by plugin prefix, targeting a module that declares the plugin (`com.top_logic.basic`, `com.top_logic.graphic.blocks`, or `tl-tools-resources`):
-
-```bash
-mvn msgbuf-generator:generate -pl com.top_logic.basic
-```
-
-The prefix is `msgbuf-generator` (not `msgbuf`); no version is needed — Maven resolves it from the target module's POM (`${msgbuf.version}`).
+The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library for type-safe protocol message generation from `.proto` files. For the `JsonWriter` writer-type pitfall and the generator-plugin invocation, see [docs/faq/msgbuf.md](docs/faq/msgbuf.md).
 
 
 ## Additional Resources

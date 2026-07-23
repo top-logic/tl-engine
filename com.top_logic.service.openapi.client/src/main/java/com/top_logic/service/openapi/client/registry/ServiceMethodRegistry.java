@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
@@ -190,6 +191,17 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		return new BasicHttpContext();
 	}
 
+	/**
+	 * Creates the {@link HttpClientBuilder} for the client that executes the actual request.
+	 *
+	 * @implNote Extension point for tests to customize the underlying transport, e.g. to install a
+	 *           {@link org.apache.hc.client5.http.io.HttpClientConnectionManager} that routes
+	 *           requests to an in-process server.
+	 */
+	protected HttpClientBuilder createClientBuilder() {
+		return HttpClients.custom();
+	}
+
 	private ServiceMethodBuilder createBuilder(MethodDefinition method) {
 		String methodName = method.getName();
 		String baseUrl = method.getBaseUrl();
@@ -251,7 +263,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 					modifier.buildRequest(request, call);
 				}
 
-				try (final CloseableHttpClient httpclient = enhancer.enhanceClient(HttpClients.custom()).build()) {
+				try (final CloseableHttpClient httpclient = enhancer.enhanceClient(createClientBuilder()).build()) {
 					enhancer.enhanceRequest(httpclient, request);
 					return httpclient.execute(request, _requestContext, response -> {
 						try {

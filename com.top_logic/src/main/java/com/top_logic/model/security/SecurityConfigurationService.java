@@ -82,7 +82,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	public interface Config extends ConfiguredManagedClass.Config<SecurityConfigurationService> {
 
 		/**
-		 * The explicit access right rules, keyed by model element name (e.g.
+		 * The explicit access right rules, indexed by model element name (e.g.
 		 * {@code "my.module:MyClass"}).
 		 */
 		@Key(ModelAccessRights.NAME_ATTRIBUTE)
@@ -99,9 +99,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * Access rights configuration for a {@link TLClass}, identified by its qualified name.
+	 * Configuration of access rights on objects of a {@link TLClass}. The {@link TLClass} is
+	 * identified by its qualified name.
 	 */
 	@TagName("class")
+	@Label("Class based access rights")
 	public static interface TLClassAccessRights extends ModelAccessRights {
 
 		@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
@@ -112,25 +114,30 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * Access rights configuration for a module singleton, identified by its qualified name.
+	 * Configuration of access rights on a module singleton, identified by its qualified name.
 	 */
 	@TagName("singleton")
+	@Label("Singleton access rights")
 	public static interface TLSingletonAccessRights extends ModelAccessRights {
 		// marker interface
 	}
 
 	/**
-	 * Access rights configuration for a {@link TLStructuredTypePart}, identified by its qualified name.
+	 * Configuration of access rights to values for a {@link TLStructuredTypePart}. The part is
+	 * identified by its qualified name.
 	 */
 	@TagName("part")
+	@Label("Attribute value access rights")
 	public static interface TLPartAccessRights extends ModelAccessRights {
 		// marker interface
 	}
 
 	/**
-	 * Access rights configuration for all classes in a {@link TLModule}, identified by the module name.
+	 * Configuration of access rights that are applied to all classes in a {@link TLModule}. The
+	 * module is identified by the module name.
 	 */
 	@TagName("module")
+	@Label("Module based access rights")
 	public static interface TLModuleAccessRights extends ModelAccessRights {
 
 		@Options(fun = TLModelPartRef.AllModules.class, mapping = TLModelPartMapping.class)

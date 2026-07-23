@@ -82,78 +82,20 @@ mvn dependency-check:check
 mvn javadoc:javadoc
 ```
 
-## Architecture Overview
+## Architecture & Module Layout
 
-TopLogic uses a **layered, modular architecture** with approximately 110+ Maven modules organized into distinct layers:
+TopLogic is a layered Maven reactor of 110+ modules. Name prefixes:
 
-### Module Naming Conventions
+- **`com.top_logic.*`** — framework and feature modules
+- **`tl-*`** — build tooling, parent POMs, infrastructure
+- **`ext.*`** — repackaged external libraries (CKEditor, Font Awesome, BPMN.js, …)
+- **`test.*`** — test-only modules
 
-- **`com.top_logic.*`** - Core framework modules (reverse DNS)
-- **`tl-*`** - Build tooling and infrastructure
-- **`ext.*`** - Packaged external libraries (Bootstrap Icons, CKEditor, Font Awesome, BPMN.js, Ace Editor, etc.)
-- **`test.*`** - Test-only modules
+Most modules are library-JAR *fragments* composed into applications: fragments use parent `tl-parent-core`, runnable apps use `tl-parent-app`.
 
-### Core Layers
+**Dependency direction is strictly bottom-up and must stay acyclic:** `com.top_logic.basic` (utilities, no other TL deps) → `basic.db` → `dob` / `dsa` (data access) → `com.top_logic` (knowledge base, model, layout) → feature modules → application modules. In particular, `basic.*` must never depend on a higher layer.
 
-1. **Build Infrastructure** (`tl-parent-*`, `tl-build-*`, `tl-maven-plugin`)
-   - Parent POMs define versioning, dependencies, and plugin configuration
-   - Custom Maven plugins for TopLogic-specific build tasks
-   - Build processors for code generation
-
-2. **Foundation Layer** (`com.top_logic.basic*`)
-   - Low-level utilities with no UI dependencies
-   - Configuration framework (`basic.config`) - declarative typed configuration system
-   - Data structures, I18N, reflection, XML/JSON processing
-   - Database abstraction layer (`basic.db`, `basic.db.schema`)
-   - Logging facades (Log4j, Logback)
-
-3. **Core Engine** (`com.top_logic` / tl-core)
-   - **Knowledge Base** (`knowledge.*`) - Object persistence, versioning, event journal
-   - **Type System** (`model.*`) - Dynamic type definitions, forms, data binding
-   - **Layout System** (`layout.*`) - Component-based declarative UI framework
-   - **Security** - Authentication, authorization, access control
-
-4. **Feature Modules** (various `com.top_logic.*`)
-   - **BPE**: Business Process Engine (`bpe`, `bpe.modeler`, `bpe.app`)
-   - **Reporting**: Report generation (`reporting`, `reporting.office`, `reporting.flex`)
-   - **Search**: Full-text search (`search.base`, `search.lucene`)
-   - **Graph/Diagrams**: UML, BPMN support (`graph.*`, `umljs`, `graph.diagramjs.*`)
-   - **Office Integration**: Word/Excel/PowerPoint (`office`, `doc`, `template`)
-   - **Messaging**: Kafka, JMS integration (`kafka*`, `tl-service-jms*`)
-   - **OpenAPI**: REST API support (`service.openapi.*`)
-
-5. **Client Layer** (GWT-compiled JavaScript)
-   - `*.ajax.client`, `*.client.diagramjs`, `*.graphic.blocks.client`
-   - Compiled from Java to JavaScript for browser execution
-
-### Key Architectural Patterns
-
-- **Fragment Modules**: Most modules are library JARs that compose into applications
-- **Parent POMs**: `tl-parent-core` for fragment modules, `tl-parent-app` for runnable applications
-- **Configuration-Driven**: Heavy use of XML configuration files in `src/main/webapp/WEB-INF/`
-- **Declarative Layouts**: UI defined in `.layout.xml` files under `WEB-INF/layouts/`
-- **Type System**: Dynamic type definitions enable model-driven development
-- **Knowledge Base**: Custom ORM layer above SQL databases with versioning and auditing
-
-## Module Dependencies
-
-**Typical dependency flow** (bottom-up):
-
-```
-com.top_logic.basic (utilities, no dependencies on other TL modules)
-  ↓
-com.top_logic.basic.db (database layer)
-  ↓
-com.top_logic.dob, .dsa (data access layer)
-  ↓
-com.top_logic (core: knowledge base, model system, layout engine)
-  ↓
-Feature modules (bpe, reporting, search, etc.)
-  ↓
-Application modules (compose features)
-```
-
-**Important**: The `basic.*` layer must remain dependency-free from higher layers to prevent circular dependencies.
+To find the module that owns a class or feature, use the `tl-mcp` tools (`module_of`) or the "Repository Structure" section below.
 
 ## File Locations
 

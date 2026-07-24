@@ -1,10 +1,12 @@
 <h2>Syntax</h2>
 <pre>	<code>log($message)
 
-log($message, $arguments)</code>
+log($message, $arguments)
+
+log($message, $arguments, level: $level)</code>
 </pre>
 <h2>Description</h2>
-<p>Writes an entry to the application log.</p>
+<p>Writes an entry to the application log. The <code class="hljs inlineCode">level</code> determines the severity of the log entry.</p>
 <h2>Parameters</h2>
 <table class="tlDocTable">
  <thead>
@@ -31,6 +33,13 @@ log($message, $arguments)</code>
    <td>no</td>
    <td></td>
   </tr>
+  <tr>
+   <td>level</td>
+   <td>String</td>
+   <td>The severity of the log entry, one of <code class="hljs inlineCode">debug</code>, <code class="hljs inlineCode">info</code>, <code class="hljs inlineCode">warn</code>, <code class="hljs inlineCode">error</code> or <code class="hljs inlineCode">fatal</code> (case-insensitive). As the message may be followed by an arbitrary number of <code class="hljs inlineCode">arguments</code>, the level can only be passed as a named argument.</td>
+   <td>no</td>
+   <td><code class="hljs inlineCode">info</code></td>
+  </tr>
  </tbody>
 </table>
 <h2>Examples</h2>
@@ -50,3 +59,6 @@ log($message, $arguments)</code>
 <pre><code>log('Current date: {0}', today(), today().toUserCalendar().dayOfWeek())</code></pre>
 <p><span style="color:#3498db"><strong>Output</strong> </span> (in log): Current date: 14.02.22 16:00</p>
 <p>There are more arguments than placeholders, so the second argument is ignored.</p>
+<h3>Log message with a level</h3>
+<pre><code>log('Disk almost full: {0}%', $percentage, level: 'warn')</code></pre>
+<p><span style="color:#3498db"><strong>Output</strong></span> (in log, as a warning): Disk almost full: 95%</p>

@@ -65,6 +65,12 @@ public class CompositionTableControl extends AbstractCompositionControl {
 	/** Command name for {@link #handleAddRow()}. */
 	private static final String CMD_ADD_ROW = "addRow";
 
+	/** Panel state: the validation error of the composition attribute, or {@code null}. */
+	private static final String ERROR_MESSAGE = "errorMessage";
+
+	/** Panel state: encoded theme icon displayed in front of the error message. */
+	private static final String ERROR_ICON = "errorIcon";
+
 	/**
 	 * Configuration for a single column in the composition table.
 	 */
@@ -143,6 +149,27 @@ public class CompositionTableControl extends AbstractCompositionControl {
 
 		// Composition tables should span the full form row.
 		putState("fullLine", Boolean.TRUE);
+
+		putState(ERROR_ICON,
+			com.top_logic.layout.react.control.layout.Icons.VALIDATION_ERROR.resolve().toEncodedForm());
+	}
+
+	/**
+	 * Pushes the composition attribute's validation error to the panel display.
+	 *
+	 * <p>
+	 * Like regular fields, the error only becomes visible once the field model is revealed - on
+	 * user interaction or on a save attempt.
+	 * </p>
+	 */
+	@Override
+	protected void updateCompositionErrorDisplay() {
+		CompositionFieldModel fieldModel = fieldModel();
+		if (fieldModel != null && fieldModel.hasError()) {
+			putState(ERROR_MESSAGE, Resources.getInstance().getString(fieldModel.getError()));
+		} else {
+			putState(ERROR_MESSAGE, null);
+		}
 	}
 
 	/**

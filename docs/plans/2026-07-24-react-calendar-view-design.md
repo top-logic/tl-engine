@@ -1,11 +1,11 @@
-# React Calendar View — Design Note (#29421)
+# React Calendar View — Design (#29421)
 
 A green-field React **calendar view** control plus a declarative `<calendar>`
 element for the `com.top_logic.layout.view` `.view.xml` composition layer. Outlook
 is the rough guidance for the view catalog and interaction model.
 
-This note records the agreed scope and architecture. It is a design document, not
-a how-to; the how-to follows once the control exists.
+This is a newly designed component. Nothing is carried over from existing UI — the
+platform has no calendar view today.
 
 ## Scope (v1)
 
@@ -21,10 +21,9 @@ duration, drag-select an empty slot to create.
 
 **Non-event visuals** are config-driven: a working-hours band (start/end hour) and
 non-working-day shading with locale defaults, plus the current-time indicator. A
-pluggable per-day decorator seam (mirroring the legacy
-`com.top_logic.layout.form.control.CalendarMarker`) is the extension point for
-holidays and similar markings. There is no holiday backend — the platform has none
-today (`DateUtil.isWorkingDay` is weekend-only and explicitly ignores holidays).
+pluggable per-day decorator seam is the extension point for holidays and similar
+markings. There is no holiday backend — the platform has none today
+(`DateUtil.isWorkingDay` is weekend-only and explicitly ignores holidays).
 
 **Out of scope** (later tickets): recurrence (RRULE expansion / exception dates),
 per-event timezone conversion, cross-resource lanes / room-booking side-by-side,
@@ -83,11 +82,13 @@ around them (a value-listener has no ambient transaction).
 
 ## Reuse map
 
+The calendar's rendering and interaction are all new. Only date math and the
+established view-layer wiring are reused:
+
 | Need | Existing infrastructure |
 | --- | --- |
 | Grid geometry (which day/week/month cells a view holds) | `com.top_logic.base.time.{DayRange, WeekRange, MonthRange, YearRange, TimeRangeIterator}`, `TimeRangeService` |
 | Locale/TZ calendar, first-day-of-week, calendar-week, formatting | `com.top_logic.basic.time.CalendarUtil`; `TimeZones` / `UserTimeZoneDefault`; `com.top_logic.basic.Day` (all-day) |
-| Grid-layout algorithm to port to React (not reusable as-is) | Legacy `com.top_logic.layout.form.control.CalendarControl` (`MonthView` / `YearView`) |
 | React control base + reference pair | `com.top_logic.layout.react.control.ReactControl`; `TableViewControl` ↔ `TLTableView.tsx` |
 | UIElement + channel binding pattern | `com.top_logic.layout.view.element.TableElement` and its `Config` |
 

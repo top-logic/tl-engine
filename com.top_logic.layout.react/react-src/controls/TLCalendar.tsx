@@ -234,8 +234,8 @@ function layoutDay(events: Ev[]): Placed[] {
 }
 
 type TimeDrag =
-  | { mode: 'move'; id: string; grabMin: number; dur: number; dayStart: number; startMin: number }
-  | { mode: 'resize'; id: string; dayStart: number; startMin: number; endMin: number }
+  | { mode: 'move'; id: string; grabMin: number; dur: number; dayStart: number; startMin: number; origStartMs: number }
+  | { mode: 'resize'; id: string; dayStart: number; startMin: number; endMin: number; origEndMs: number }
   | { mode: 'create'; dayStart: number; fromMin: number; toMin: number };
 
 const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularity }> = ({
@@ -312,9 +312,16 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
       }
       if (d.mode === 'move') {
         const start = d.dayStart + d.startMin * MS_MIN;
-        send('moveEvent', { eventId: d.id, start, end: start + d.dur * MS_MIN });
+        // Only a real move (pointer actually shifted the event) writes back; a plain click falls
+        // through to selection without a no-op transaction.
+        if (start !== d.origStartMs) {
+          send('moveEvent', { eventId: d.id, start, end: start + d.dur * MS_MIN });
+        }
       } else if (d.mode === 'resize') {
-        send('resizeEvent', { eventId: d.id, end: d.dayStart + d.endMin * MS_MIN });
+        const end = d.dayStart + d.endMin * MS_MIN;
+        if (end !== d.origEndMs) {
+          send('resizeEvent', { eventId: d.id, end });
+        }
       } else {
         const from = Math.min(d.fromMin, d.toMin);
         const to = Math.max(d.fromMin, d.toMin);
@@ -338,7 +345,10 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
     e.stopPropagation();
     const { min } = pointerToDayMin(e.clientX, e.clientY);
     const dur = (ev.end - ev.start) / MS_MIN;
-    setDrag({ mode: 'move', id: ev.id, grabMin: min - minutesOfDay(ev.start), dur, dayStart, startMin: minutesOfDay(ev.start) });
+    setDrag({
+      mode: 'move', id: ev.id, grabMin: min - minutesOfDay(ev.start), dur, dayStart,
+      startMin: minutesOfDay(ev.start), origStartMs: ev.start,
+    });
   };
 
   const startResize = (e: React.PointerEvent, ev: Ev, dayStart: number) => {
@@ -346,7 +356,10 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
       return;
     }
     e.stopPropagation();
-    setDrag({ mode: 'resize', id: ev.id, dayStart, startMin: minutesOfDay(ev.start), endMin: minutesOfDay(ev.end) });
+    setDrag({
+      mode: 'resize', id: ev.id, dayStart, startMin: minutesOfDay(ev.start),
+      endMin: minutesOfDay(ev.end), origEndMs: ev.end,
+    });
   };
 
   const startCreate = (e: React.PointerEvent, dayStart: number) => {

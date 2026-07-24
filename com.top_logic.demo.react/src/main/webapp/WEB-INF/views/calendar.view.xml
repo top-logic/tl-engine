@@ -35,7 +35,7 @@
 						</event>
 						<on-move>obj -> start -> end -> { $obj.set(`demo.calendar:Appointment#start`, $start); $obj.set(`demo.calendar:Appointment#end`, $end); }</on-move>
 						<on-resize>obj -> end -> $obj.set(`demo.calendar:Appointment#end`, $end)</on-resize>
-						<on-create>start -> end -> allDay -> { appt = new(`demo.calendar:Appointment`); $appt.set(`demo.calendar:Appointment#name`, #("Neuer Termin"@de, "New appointment"@en)); $appt.set(`demo.calendar:Appointment#start`, $start); $appt.set(`demo.calendar:Appointment#end`, $end); $appt.set(`demo.calendar:Appointment#allDay`, $allDay); $appt; }</on-create>
+						<on-create>start -> end -> allDay -> { appt = new(`demo.calendar:Appointment`); $appt.set(`demo.calendar:Appointment#name`, "New appointment"); $appt.set(`demo.calendar:Appointment#start`, $start); $appt.set(`demo.calendar:Appointment#end`, $end); $appt.set(`demo.calendar:Appointment#allDay`, $allDay); $appt; }</on-create>
 					</calendar>
 				</panel>
 			</pane>

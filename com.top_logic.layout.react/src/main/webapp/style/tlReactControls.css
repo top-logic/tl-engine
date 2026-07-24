@@ -4949,7 +4949,7 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 .tlCalCol { position: relative; border-left: 1px solid var(--border-subtle-00, #f4f4f4); }
 .tlCalCol--nonworking { background: var(--layer-accent-01, #fafafa); }
 .tlCalHourLine { position: absolute; left: 0; right: 0; border-top: 1px solid var(--border-subtle-00, #f4f4f4); pointer-events: none; }
-.tlCalWorkBand { position: absolute; left: 0; right: 0; background: var(--layer-accent, rgba(15, 98, 254, 0.05)); pointer-events: none; }
+.tlCalWorkBand { position: absolute; left: 0; right: 0; background: rgba(127, 127, 127, 0.09); pointer-events: none; }
 .tlCalNowLine { position: absolute; left: 0; right: 0; height: 2px; background: #da1e28; z-index: 5; pointer-events: none; }
 .tlCalNowLine::before { content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #da1e28; }
 

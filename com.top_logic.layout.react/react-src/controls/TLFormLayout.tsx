@@ -78,8 +78,9 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
 
   // A form whose sole content is a full-bleed, chrome-less region renders flush: the form's own
   // page inset would otherwise frame a control that already manages its own layout. That region is
-  // a table rendered directly, or a bare panel (a frameless table wrapper marks itself `bare`). A
-  // panel with chrome (title, toolbar, card border) is not bare and keeps the surrounding inset.
+  // a table rendered directly, or a panel that declares itself `bare` (the TLPanel state flag - see
+  // its doc - set by a frameless table wrapper like RowSetTableControl). A panel with chrome
+  // (title, toolbar, card border) is not bare and keeps the surrounding inset.
   const soleChild = children.length === 1
     ? (children[0] as { module?: string; state?: { bare?: boolean } } | undefined)
     : undefined;

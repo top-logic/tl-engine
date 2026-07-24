@@ -498,14 +498,28 @@ public class CalendarViewControl extends ReactControl {
 	void handleSelectEvent(Map<String, Object> args) {
 		String eventId = (String) args.get(ARG_EVENT_ID);
 		CalendarEvent event = eventId != null ? _eventsById.get(eventId) : null;
-		Object key = event != null ? event.getBusinessObject() : null;
-		if (!equalKeys(_selectedKey, key)) {
-			_selectedKey = key;
-			if (_selectionListener != null) {
-				_selectionListener.selectionChanged(key);
-			}
+		if (applySelection(event != null ? event.getBusinessObject() : null)) {
 			rebuild();
 		}
+	}
+
+	/**
+	 * Updates the selected business object and notifies the {@link SelectionListener}, without
+	 * rebuilding the client state.
+	 *
+	 * @param key
+	 *        The newly selected business object, or <code>null</code> to clear.
+	 * @return Whether the selection actually changed.
+	 */
+	private boolean applySelection(Object key) {
+		if (equalKeys(_selectedKey, key)) {
+			return false;
+		}
+		_selectedKey = key;
+		if (_selectionListener != null) {
+			_selectionListener.selectionChanged(key);
+		}
+		return true;
 	}
 
 	@ReactCommandHandler(CMD_MOVE_EVENT)
@@ -544,7 +558,11 @@ public class CalendarViewControl extends ReactControl {
 		Long end = asLong(args.get(ARG_END));
 		boolean allDay = Boolean.TRUE.equals(args.get(ARG_ALL_DAY));
 		if (start != null && end != null) {
-			_model.createEvent(new Date(start.longValue()), new Date(end.longValue()), allDay);
+			CalendarEvent created = _model.createEvent(new Date(start.longValue()), new Date(end.longValue()), allDay);
+			if (created != null) {
+				// Select the freshly created event so its detail view opens immediately.
+				applySelection(created.getBusinessObject());
+			}
 			rebuild();
 		}
 	}

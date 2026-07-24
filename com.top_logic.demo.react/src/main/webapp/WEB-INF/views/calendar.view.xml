@@ -35,7 +35,7 @@
 							<input channel="from"/>
 							<input channel="to"/>
 						</inputs>
-						<objects>from -> to -> if($from == null || $to == null, list(), all(`demo.calendar:Appointment`).filter(a -> { s = $a.get(`demo.calendar:Appointment#start`); e = $a.get(`demo.calendar:Appointment#end`); $s != null && $s < $to && if($e == null, $s, $e) > $from; }))</objects>
+						<objects>from -> to -> if($from == null || $to == null, list(), all(`demo.calendar:Appointment`).filter(a -> { s = $a.get(`demo.calendar:Appointment#start`); e = $a.get(`demo.calendar:Appointment#end`); $s != null &amp;&amp; $s &lt; $to &amp;&amp; if($e == null, $s, $e) &gt; $from; }))</objects>
 						<event>
 							<start>x -> $x.get(`demo.calendar:Appointment#start`)</start>
 							<end>x -> $x.get(`demo.calendar:Appointment#end`)</end>

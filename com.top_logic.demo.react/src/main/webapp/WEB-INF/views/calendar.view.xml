@@ -4,6 +4,10 @@
 	<channels>
 		<channel name="model"/>
 		<channel name="appointment"/>
+		<!-- The calendar publishes its displayed interval here; the object query reads it back to load
+			only the visible window's appointments. -->
+		<channel name="from"/>
+		<channel name="to"/>
 	</channels>
 	<split-panel
 		orientation="horizontal"
@@ -23,9 +27,15 @@
 						day-start-hour="8"
 						granularity="WEEK"
 						observed-types="demo.calendar:Appointment"
+						range-end="to"
+						range-start="from"
 						selection="appointment"
 					>
-						<objects>all(`demo.calendar:Appointment`)</objects>
+						<inputs>
+							<input channel="from"/>
+							<input channel="to"/>
+						</inputs>
+						<objects>from -> to -> if($from == null || $to == null, list(), all(`demo.calendar:Appointment`).filter(a -> { s = $a.get(`demo.calendar:Appointment#start`); e = $a.get(`demo.calendar:Appointment#end`); $s != null && $s < $to && if($e == null, $s, $e) > $from; }))</objects>
 						<event>
 							<start>x -> $x.get(`demo.calendar:Appointment#start`)</start>
 							<end>x -> $x.get(`demo.calendar:Appointment#end`)</end>

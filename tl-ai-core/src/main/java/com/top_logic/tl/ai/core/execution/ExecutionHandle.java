@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.execution;
 
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 
 /**
@@ -41,7 +42,7 @@ public final class ExecutionHandle {
 	 * {@code RunStarted} event.
 	 *
 	 * <p>
-	 * Unlike {@link #get()}, reading the run id does not touch the KnowledgeBase: it is a
+	 * Unlike {@link #get()}, reading the run id does not touch the {@link KnowledgeBase}: it is a
 	 * plain string set from the {@code RunStarted} event, so it is safe to read from an execution
 	 * thread whose interaction revision may be older than the revision in which the persistent
 	 * {@link AgentExecution} wrapper was created. It is stable across all tool calls within a run
@@ -67,7 +68,7 @@ public final class ExecutionHandle {
 	 * the interactive browser session (see {@code BrowserTool}) - is reused across the messages of a
 	 * conversation instead of being recreated per message. It is a plain string captured at run
 	 * setup from the persistent {@code AgentSession}'s id; reading it here never touches the
-	 * KnowledgeBase, so it is safe to read from an execution thread whose interaction revision may be
+	 * {@link KnowledgeBase}, so it is safe to read from an execution thread whose interaction revision may be
 	 * older than the revision in which that wrapper was created (the same revision-safety guarantee
 	 * as {@link #runId()}).
 	 * </p>

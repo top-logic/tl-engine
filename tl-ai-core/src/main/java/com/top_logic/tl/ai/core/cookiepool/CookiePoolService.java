@@ -56,11 +56,13 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * Mirrors {@code ScreenshotService} in shape: it does <b>not</b> open its own {@code Transaction}.
- * {@link #upsertPool} is called from the {@code browserSaveCookies} verb, a
+ * The pool-upsert call happens from the {@code browserSaveCookies} verb, a
  * {@link com.top_logic.tl.ai.tool.api.ToolMode#DATA_WRITE DATA_WRITE} tool whose transaction is
  * opened and committed by the agent loop's {@code TransactionScope}, so the pool is committed with
  * the turn. Programmatic callers (and tests) supply their own transaction.
  * </p>
+ *
+ * @see #upsertPool(String, byte[], Person)
  */
 @ServiceDependencies({
 	ModelService.Module.class,
@@ -69,8 +71,8 @@ import com.top_logic.util.model.ModelService;
 public class CookiePoolService extends ConfiguredManagedClass<CookiePoolService.Config<?>> {
 
 	/**
-	 * Content type of the stored {@code state} blob. It holds ciphertext (encrypted storageState
-	 * JSON), so it is a generic binary stream, not {@code application/json}.
+	 * Content type of the stored {@code state} blob. It holds ciphertext (encrypted
+	 * <code>storageState</code> JSON), so it is a generic binary stream, not {@code application/json}.
 	 */
 	public static final String STATE_CONTENT_TYPE = "application/octet-stream";
 

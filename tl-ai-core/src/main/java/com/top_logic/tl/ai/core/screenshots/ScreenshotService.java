@@ -28,8 +28,10 @@ import com.top_logic.util.model.ModelService;
  * {@link com.top_logic.tl.ai.core.agent.TransactionScope} (the "tool transaction seam"). Creating the
  * object in that ambient transaction keeps the screenshot atomic with the rest of the turn - it is
  * committed when the turn commits and rolled back if the turn is rolled back. Programmatic callers
- * (and tests) therefore supply their own transaction around {@link #createScreenshot}.
+ * (and tests) therefore supply their own transaction around the screenshot-creating call.
  * </p>
+ *
+ * @see #createScreenshot(String, byte[], String, Person)
  */
 @ServiceDependencies({
 	ModelService.Module.class,

@@ -29,7 +29,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * It holds the configuration (per-navigation timeout, page byte/character caps, the
  * administrator-owned domain allowlist/blocklist/allow-any policy, and the concurrency bounds) and
  * owns the {@link BrowserSessionPool}. Each agent session gets its <b>own</b>
- * {@link BrowserSession} - a dedicated Playwright/Browser/BrowserContext with separate
+ * {@link BrowserSession} - a dedicated <code>Playwright/Browser/BrowserContext</code> with separate
  * cookies/storage - reused across the many tool calls of a run. Two concurrent sessions can never
  * see each other's cookies, pages or results.
  * </p>
@@ -363,11 +363,11 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		 * {@code false} to launch a <b>headed</b> (visible) Chromium window on the app host's desktop
 		 * - a dev/local convenience that requires a local display and must not be used in production
 		 * or on remote/headless hosts. When headed is requested on a host with no display, the
-		 * service fails fast at startup (see {@link #isLocalDisplayAvailable()}) rather than hanging
-		 * on a launch that can never succeed.
+		 * service fails fast at startup rather than hanging on a launch that can never succeed.
 		 * </p>
 		 *
 		 * @see #HEADLESS
+		 * @see #isLocalDisplayAvailable()
 		 */
 		@Name(HEADLESS)
 		@BooleanDefault(true)

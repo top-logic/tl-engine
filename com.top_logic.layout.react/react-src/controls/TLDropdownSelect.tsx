@@ -1,6 +1,7 @@
 import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, CMD_VALUE_CHANGED } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import type { TLCellProps } from 'tl-react-bridge';
+import FontIcon from './FontIcon';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
 
@@ -20,11 +21,7 @@ function OptionImage({ image }: { image?: string }) {
   if (image.startsWith('/')) {
     return <img src={image} alt="" className="tlDropdownSelect__optionImage" />;
   }
-  // Strip "css:" or "colored:" prefix from ThemeImage.toEncodedForm() output.
-  const cssClass = image.startsWith('css:') ? image.substring(4)
-    : image.startsWith('colored:') ? image.substring(8)
-    : image;
-  return <span className={`tlDropdownSelect__optionIcon ${cssClass}`} />;
+  return <FontIcon image={image} className="tlDropdownSelect__optionIcon" />;
 }
 
 /** Renders a selected value as a chip/tag */

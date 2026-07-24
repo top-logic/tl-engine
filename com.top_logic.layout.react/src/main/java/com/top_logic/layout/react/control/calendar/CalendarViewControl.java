@@ -169,6 +169,16 @@ public class CalendarViewControl extends ReactControl {
 
 	private SelectionListener _selectionListener;
 
+	private RangeListener _rangeListener;
+
+	private long _rangeFrom;
+
+	private long _rangeTo;
+
+	private long _publishedFrom = Long.MIN_VALUE;
+
+	private long _publishedTo = Long.MIN_VALUE;
+
 	/**
 	 * Notified when the selected event changes, e.g. to write the selection onto a channel.
 	 */
@@ -181,6 +191,22 @@ public class CalendarViewControl extends ReactControl {
 		 *        event, or <code>null</code> if the selection was cleared.
 		 */
 		void selectionChanged(Object businessObject);
+	}
+
+	/**
+	 * Notified when the displayed time interval changes, e.g. to publish it onto output channels so a
+	 * supplier can load only the events of the visible window.
+	 */
+	public interface RangeListener {
+		/**
+		 * Announces the currently displayed half-open interval <code>[from, to)</code>.
+		 *
+		 * @param from
+		 *        The inclusive start of the displayed interval.
+		 * @param to
+		 *        The exclusive end of the displayed interval.
+		 */
+		void rangeChanged(Date from, Date to);
 	}
 
 	/**
@@ -281,6 +307,30 @@ public class CalendarViewControl extends ReactControl {
 	}
 
 	/**
+	 * Registers the listener notified when the displayed interval changes, and immediately publishes
+	 * the current interval to it.
+	 *
+	 * @param listener
+	 *        The listener, or <code>null</code> to remove.
+	 */
+	public void setRangeListener(RangeListener listener) {
+		_rangeListener = listener;
+		publishRange(true);
+	}
+
+	private void publishRange(boolean force) {
+		if (_rangeListener == null) {
+			return;
+		}
+		if (!force && _publishedFrom == _rangeFrom && _publishedTo == _rangeTo) {
+			return;
+		}
+		_publishedFrom = _rangeFrom;
+		_publishedTo = _rangeTo;
+		_rangeListener.rangeChanged(new Date(_rangeFrom), new Date(_rangeTo));
+	}
+
+	/**
 	 * Selects the event backed by the given business object, e.g. in reaction to a selection channel
 	 * change.
 	 *
@@ -302,6 +352,9 @@ public class CalendarViewControl extends ReactControl {
 		Calendar cal = calendar(_anchor);
 		long rangeStart = displayStart(cal);
 		long rangeEnd = displayEnd(cal);
+		_rangeFrom = rangeStart;
+		_rangeTo = rangeEnd;
+		publishRange(false);
 
 		putState(GRANULARITY, _granularity.name());
 		putState(TITLE, title(rangeStart, rangeEnd));

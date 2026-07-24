@@ -75,6 +75,12 @@ public class CalendarElement implements UIElement {
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
 
+		/** Configuration name for {@link #getRangeStart()}. */
+		String RANGE_START = "range-start";
+
+		/** Configuration name for {@link #getRangeEnd()}. */
+		String RANGE_END = "range-end";
+
 		/** Configuration name for {@link #getObservedTypes()}. */
 		String OBSERVED_TYPES = "observed-types";
 
@@ -128,6 +134,23 @@ public class CalendarElement implements UIElement {
 		@Name(SELECTION)
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelection();
+
+		/**
+		 * Optional {@link ViewChannel} the control writes the displayed interval's inclusive start to,
+		 * so a supplier can load only the visible window's events. Effective only together with
+		 * {@link #getRangeEnd()}.
+		 */
+		@Name(RANGE_START)
+		@Format(ChannelRefFormat.class)
+		ChannelRef getRangeStart();
+
+		/**
+		 * Optional {@link ViewChannel} the control writes the displayed interval's exclusive end to.
+		 * Effective only together with {@link #getRangeStart()}.
+		 */
+		@Name(RANGE_END)
+		@Format(ChannelRefFormat.class)
+		ChannelRef getRangeEnd();
 
 		/**
 		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
@@ -364,6 +387,20 @@ public class CalendarElement implements UIElement {
 			});
 		control.addBeforeWriteAction(() -> observer.attach(context.getModelScope()));
 		control.addCleanupAction(observer::detach);
+
+		// Publish the displayed interval to the range channels. Registered after the observer's attach
+		// action (both run once, in order, on first render) so that seeding the channels triggers the
+		// already-attached observer to load the initial window's events.
+		ChannelRef rangeStartRef = _config.getRangeStart();
+		ChannelRef rangeEndRef = _config.getRangeEnd();
+		if (rangeStartRef != null && rangeEndRef != null) {
+			ViewChannel rangeStartChannel = context.resolveChannel(rangeStartRef);
+			ViewChannel rangeEndChannel = context.resolveChannel(rangeEndRef);
+			control.addBeforeWriteAction(() -> control.setRangeListener((from, to) -> {
+				rangeStartChannel.set(from);
+				rangeEndChannel.set(to);
+			}));
+		}
 
 		return control;
 	}

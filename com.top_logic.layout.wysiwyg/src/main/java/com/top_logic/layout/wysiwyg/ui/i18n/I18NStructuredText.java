@@ -23,6 +23,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.basic.util.I18NBundleSPI;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.basic.util.WithEmptiness;
 import com.top_logic.knowledge.searching.FullTextBuBuffer;
 import com.top_logic.knowledge.searching.FullTextSearchable;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
@@ -41,7 +42,7 @@ import com.top_logic.util.Resources;
  */
 @Binding(I18NStructuredTextValueBinding.class)
 @JsonBinding(I18NStructuredTextJsonBinding.class)
-public class I18NStructuredText implements FullTextSearchable {
+public class I18NStructuredText implements FullTextSearchable, WithEmptiness {
 
 	/**
 	 * {@link I18NStructuredText} without any content.
@@ -236,6 +237,25 @@ public class I18NStructuredText implements FullTextSearchable {
 	@FrameworkInternal
 	public Map<Locale, StructuredText> getEntries() {
 		return _content;
+	}
+
+	/**
+	 * Whether none of the localized {@link StructuredText}s has any
+	 * {@link StructuredText#getSourceCode() source code}.
+	 *
+	 * <p>
+	 * An empty {@link I18NStructuredText} is treated like <code>null</code> and the empty string in
+	 * TL-Script (see {@link WithEmptiness}).
+	 * </p>
+	 */
+	@Override
+	public boolean isEmpty() {
+		for (StructuredText content : _content.values()) {
+			if (!content.isEmpty()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override

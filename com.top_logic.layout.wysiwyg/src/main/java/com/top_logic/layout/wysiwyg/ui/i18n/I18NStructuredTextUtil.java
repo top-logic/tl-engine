@@ -20,8 +20,10 @@ import org.jsoup.select.Elements;
 
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextUtil;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.TLObject;
+import com.top_logic.util.Resources;
 
 /**
  * Utilities for working with {@link I18NStructuredText}.
@@ -32,6 +34,29 @@ public class I18NStructuredTextUtil {
 
 	/** Prefix identifying image references. */
 	public static final String REF_ID_PREFIX = "ref:";
+
+	/**
+	 * Creates an {@link I18NStructuredText} from a plain text or <i>CommonMark</i> source.
+	 *
+	 * <p>
+	 * The given source is interpreted as <i>CommonMark</i> markup (see
+	 * {@link StructuredTextUtil#fromCommonMark(CharSequence)}) and stored as the translation for the
+	 * current session's {@link Locale}. This allows safely assigning a plain {@link String} to an
+	 * internationalized HTML attribute (e.g. from TL-Script) without the risk of HTML injection.
+	 * </p>
+	 *
+	 * @param source
+	 *        The source to convert. May be <code>null</code>.
+	 * @return The resulting {@link I18NStructuredText}, or <code>null</code> if the source was
+	 *         <code>null</code>.
+	 */
+	public static I18NStructuredText fromCommonMark(CharSequence source) {
+		if (source == null) {
+			return null;
+		}
+		StructuredText text = StructuredTextUtil.fromCommonMark(source);
+		return new I18NStructuredText(java.util.Collections.singletonMap(Resources.getCurrentLocale(), text));
+	}
 
 	/**
 	 * Updates the translation of the attribute value.

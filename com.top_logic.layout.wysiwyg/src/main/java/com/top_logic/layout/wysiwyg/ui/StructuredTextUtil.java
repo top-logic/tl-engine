@@ -6,8 +6,10 @@
 package com.top_logic.layout.wysiwyg.ui;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Base64;
 import java.util.Collections;
@@ -23,8 +25,10 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.event.infoservice.InfoService;
+import com.top_logic.layout.form.format.CommonMark;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
 import com.top_logic.mig.html.HTMLConstants;
 
@@ -80,6 +84,36 @@ public class StructuredTextUtil {
 		}
 
 		return document.html();
+	}
+
+	/**
+	 * Creates a {@link StructuredText} from a plain text or <i>CommonMark</i> source.
+	 *
+	 * <p>
+	 * The given source is interpreted as <i>CommonMark</i> markup and rendered to HTML; any embedded
+	 * raw HTML is escaped. This allows safely assigning a plain {@link String} to an HTML attribute
+	 * (e.g. from TL-Script) without the risk of HTML injection.
+	 * </p>
+	 *
+	 * @param source
+	 *        The source to convert. May be <code>null</code>.
+	 * @return The resulting {@link StructuredText}, or <code>null</code> if the source was
+	 *         <code>null</code>.
+	 *
+	 * @see CommonMark#writeCommonMark(TagWriter, String)
+	 */
+	public static StructuredText fromCommonMark(CharSequence source) {
+		if (source == null) {
+			return null;
+		}
+		StringWriter buffer = new StringWriter();
+		try (TagWriter out = new TagWriter(buffer)) {
+			CommonMark.writeCommonMark(out, source.toString());
+		} catch (IOException ex) {
+			// Writing to an in-memory buffer cannot fail.
+			throw new IOError(ex);
+		}
+		return new StructuredText(buffer.toString());
 	}
 
 	/**

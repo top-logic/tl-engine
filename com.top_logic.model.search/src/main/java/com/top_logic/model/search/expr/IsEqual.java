@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.util.WithEmptiness;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.search.expr.query.Args;
@@ -67,6 +68,11 @@ public class IsEqual extends BinaryOperation implements BooleanExpression {
 	 *        Right element of the equality check. May be <code>null</code>.
 	 */
 	public static boolean equals(Object left, Object right) {
+		// An "empty" value (e.g. an empty HTML text) is indistinguishable from null and the empty
+		// string in TL-Script, keeping equality consistent with isEmpty().
+		left = normalizeEmpty(left);
+		right = normalizeEmpty(right);
+
 		if (isCollection(left) || isCollection(right)) {
 			int leftSize = size(left);
 			int rightSize = size(right);
@@ -142,6 +148,18 @@ public class IsEqual extends BinaryOperation implements BooleanExpression {
 		} else {
 			return 1;
 		}
+	}
+
+	/**
+	 * Maps a {@link WithEmptiness} value that {@link WithEmptiness#isEmpty() reports itself empty} to
+	 * <code>null</code>, so that it compares equal to <code>null</code> and the empty string. All
+	 * other values are returned unchanged.
+	 */
+	private static Object normalizeEmpty(Object value) {
+		if (value instanceof WithEmptiness emptiness && emptiness.isEmpty()) {
+			return null;
+		}
+		return value;
 	}
 
 	private static boolean isStringLike(Object value) {

@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,9 +19,11 @@ import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.AgentTuning;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.cookiepool.CookiePoolService;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
+import com.top_logic.tl.ai.cookiepool.CookiePool;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.BlockSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
@@ -366,6 +369,148 @@ public class BrowserTool {
 			screenshots.createScreenshot(fileName, capture.png(), capture.url(), currentPersonQuietly());
 		return "Saved screenshot \"" + fileName + "\" (" + capture.png().length + " bytes) from "
 			+ capture.url() + ". Screenshot object TID: " + saved.tId().asString();
+	}
+
+	/**
+	 * Saves this session's current login state into a named, persistent, encrypted cookie pool owned
+	 * by the current user.
+	 *
+	 * @param poolName
+	 *        The pool handle to save into (created if new, overwritten if the caller already owns it).
+	 * @param context
+	 *        Injected execution context; identifies the agent session and the current user.
+	 * @return A short confirmation naming the pool, or an error string.
+	 */
+	@ToolMethod(
+		description = "Save this browser session's current login state (cookies + storage) into a named, "
+			+ "persistent cookie pool so a LATER browser session can start already logged in. Call this AFTER "
+			+ "you have logged a site in (typed credentials and submitted) in this session. 'poolName' is a "
+			+ "handle you choose (e.g. 'acme-intranet'); saving again with the same name overwrites your pool. "
+			+ "The saved state is stored ENCRYPTED at rest and defaults to PRIVATE to you (the current user) - "
+			+ "only your own sessions can select it later, unless an administrator marks the pool shared. "
+			+ "Returns a confirmation with the pool name; it does not return the cookies themselves.",
+		mode = ToolMode.DATA_WRITE,
+		// One browser page per session; not safe to run in parallel with other calls in the run.
+		concurrencySafe = false)
+	public String browserSaveCookies(
+			@P("The name of the cookie pool to save this session's login into (your own, private by "
+				+ "default).") String poolName,
+			ToolExecutionContext context) {
+		if (poolName == null || poolName.isBlank()) {
+			return "Error: poolName is required.";
+		}
+		BrowserToolsService service = BrowserToolsService.getInstance();
+		if (service == null) {
+			return "Error: the browser tool service is not available.";
+		}
+		if (!service.isCookiePoolsEnabled()) {
+			return "Error: cookie pools are disabled for this installation, so login state cannot be saved.";
+		}
+		CookiePoolService pools = CookiePoolService.getInstance();
+		if (pools == null) {
+			return "Error: the cookie pool service is not available.";
+		}
+		Object sessionKey = sessionKey(context);
+		if (sessionKey == null) {
+			return "Error: no execution context is available for the browser session.";
+		}
+		String stateJson;
+		try {
+			stateJson = service.captureStorageState(sessionKey);
+		} catch (BrowserBusyException ex) {
+			return "Error: the browser is busy right now (" + ex.getMessage() + "). Please retry shortly.";
+		} catch (BrowserSessionBrokenException ex) {
+			return "Error: the page did not respond in time and the browser session was reset. "
+				+ "Navigate and log in again to retry.";
+		} catch (RuntimeException ex) {
+			Logger.error("Capturing browser login state failed: " + ex.getMessage(), ex, BrowserTool.class);
+			return "Error: capturing the browser login state failed: " + ex.getMessage();
+		}
+		if (stateJson == null || stateJson.isBlank()) {
+			return "Error: the browser returned no login state to save. Navigate to and log in a site first.";
+		}
+		String name = poolName.trim();
+		try {
+			pools.upsertPool(name, stateJson.getBytes(StandardCharsets.UTF_8), currentPersonQuietly());
+		} catch (RuntimeException ex) {
+			// Most likely: no encryption key installed (cookie state is never stored in plaintext).
+			Logger.error("Saving cookie pool '" + name + "' failed: " + ex.getMessage(), ex, BrowserTool.class);
+			return "Error: could not save the cookie pool: " + ex.getMessage();
+		}
+		return "Saved this session's login into cookie pool \"" + name + "\" (encrypted, private to you). "
+			+ "A later browser session can start logged in with browserUseCookies(\"" + name + "\").";
+	}
+
+	/**
+	 * Selects a cookie pool for this session: the session's browser context is (re)opened seeded with
+	 * that pool's saved login, so the next navigation is already authenticated.
+	 *
+	 * @param poolName
+	 *        The pool handle to select (one of the caller's own pools, or a shared pool).
+	 * @param context
+	 *        Injected execution context; identifies the agent session and the current user.
+	 * @return A short confirmation, or an error string.
+	 */
+	@ToolMethod(
+		description = "Start this browser session already logged in, using a previously saved cookie pool. "
+			+ "Call this BEFORE browserNavigate: it (re)opens this session's browser seeded with the pool's "
+			+ "saved login, so navigating to the site the pool was saved from is already authenticated - no "
+			+ "need to log in again. 'poolName' is a pool you saved earlier with browserSaveCookies, OR a "
+			+ "shared pool an administrator provided (a background/unattended agent uses a shared pool the same "
+			+ "way). You can only select your OWN pools plus shared ones; a private pool owned by someone else "
+			+ "is not visible. After this succeeds, call browserNavigate to open the target page.",
+		mode = ToolMode.READ,
+		// Rebinds the session's context; not safe to run in parallel with other calls in the run.
+		concurrencySafe = false)
+	public String browserUseCookies(
+			@P("The name of the cookie pool to start this session from (your own or a shared pool).")
+			String poolName,
+			ToolExecutionContext context) {
+		if (poolName == null || poolName.isBlank()) {
+			return "Error: poolName is required.";
+		}
+		BrowserToolsService service = BrowserToolsService.getInstance();
+		if (service == null) {
+			return "Error: the browser tool service is not available.";
+		}
+		if (!service.isCookiePoolsEnabled()) {
+			return "Error: cookie pools are disabled for this installation, so no saved login can be used.";
+		}
+		CookiePoolService pools = CookiePoolService.getInstance();
+		if (pools == null) {
+			return "Error: the cookie pool service is not available.";
+		}
+		Object sessionKey = sessionKey(context);
+		if (sessionKey == null) {
+			return "Error: no execution context is available for the browser session.";
+		}
+		String name = poolName.trim();
+		String stateJson;
+		try {
+			Optional<CookiePool> pool = pools.findSelectablePool(name, currentPersonQuietly());
+			if (pool.isEmpty()) {
+				return "Error: no cookie pool named \"" + name + "\" is available to you. It may not exist, "
+					+ "or it is a private pool owned by another user. Use a pool you saved yourself, or a "
+					+ "shared pool.";
+			}
+			stateJson = new String(pools.decryptState(pool.get()), StandardCharsets.UTF_8);
+		} catch (RuntimeException ex) {
+			// Most likely: no encryption key installed, so the stored state cannot be decrypted.
+			Logger.error("Loading cookie pool '" + name + "' failed: " + ex.getMessage(), ex, BrowserTool.class);
+			return "Error: could not load the cookie pool: " + ex.getMessage();
+		}
+		if (stateJson == null || stateJson.isBlank()) {
+			return "Error: cookie pool \"" + name + "\" has no stored login state.";
+		}
+		try {
+			service.seedSession(sessionKey, stateJson);
+		} catch (RuntimeException ex) {
+			Logger.error("Seeding session from cookie pool '" + name + "' failed: " + ex.getMessage(), ex,
+				BrowserTool.class);
+			return "Error: could not start the session from the cookie pool: " + ex.getMessage();
+		}
+		return "This browser session will start from cookie pool \"" + name + "\" (already logged in). "
+			+ "Now call browserNavigate to open the target page.";
 	}
 
 	/**

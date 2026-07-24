@@ -233,6 +233,9 @@ final class BrowserSession {
 
 	private final DomainPolicy _policy;
 
+	/** Non-null when the session's context is seeded with a previously captured authenticated state. */
+	private final String _initialStorageState;
+
 	/** When {@code true} the browser is launched headed (a real window on the app host's desktop). */
 	private final boolean _headed;
 
@@ -267,11 +270,12 @@ final class BrowserSession {
 	private long _pageGeneration;
 
 	private BrowserSession(Object key, int navigationTimeoutMillis, int navigationSettleMillis,
-			DomainPolicy policy, boolean headed, boolean evadeBotDetection) {
+			DomainPolicy policy, String initialStorageState, boolean headed, boolean evadeBotDetection) {
 		_key = key;
 		_navigationTimeoutMillis = navigationTimeoutMillis;
 		_navigationSettleMillis = navigationSettleMillis;
 		_policy = policy;
+		_initialStorageState = initialStorageState;
 		_headed = headed;
 		_evadeBotDetection = evadeBotDetection;
 		_executor = Executors.newSingleThreadExecutor(runnable -> {
@@ -294,11 +298,12 @@ final class BrowserSession {
 	 * @return A started session.
 	 */
 	static BrowserSession open(Object key, int navigationTimeoutMillis, DomainPolicy policy) {
-		return open(key, navigationTimeoutMillis, 1500, policy, false, false);
+		return open(key, navigationTimeoutMillis, 1500, policy, null, false, false);
 	}
 
 	/**
-	 * Opens a new isolated session.
+	 * Opens a new isolated session, optionally seeding its context with a previously captured
+	 * authenticated {@code storageState} so the session resumes logged in.
 	 *
 	 * @param key
 	 *        The session key (for diagnostics).
@@ -310,6 +315,11 @@ final class BrowserSession {
 	 *        bounded well inside {@link #navigationDeadlineMillis()}.
 	 * @param policy
 	 *        The top-level-origin domain policy.
+	 * @param initialStorageState
+	 *        A {@code storageState} JSON to seed cookies/tokens into the fresh context, or
+	 *        {@code null} for a clean anonymous context. This is how a chosen cookie pool starts a
+	 *        session already logged in, and how authenticated continuation survives an
+	 *        eviction-and-recreate of the session.
 	 * @param headed
 	 *        When {@code true}, launch Chromium headed (a visible window on the app host's desktop)
 	 *        instead of headless (see {@code BrowserToolsService.Config#getHeadless()}); it requires
@@ -325,9 +335,9 @@ final class BrowserSession {
 	 * @return A started session.
 	 */
 	static BrowserSession open(Object key, int navigationTimeoutMillis, int navigationSettleMillis,
-			DomainPolicy policy, boolean headed, boolean evadeBotDetection) {
+			DomainPolicy policy, String initialStorageState, boolean headed, boolean evadeBotDetection) {
 		BrowserSession session = new BrowserSession(key, navigationTimeoutMillis, navigationSettleMillis,
-			policy, headed, evadeBotDetection);
+			policy, initialStorageState, headed, evadeBotDetection);
 		try {
 			session.startOnThread();
 		} catch (RuntimeException ex) {
@@ -413,7 +423,8 @@ final class BrowserSession {
 			}
 			_page = _context.newPage();
 			Logger.info("Opened isolated " + (_headed ? "headed" : "headless") + " browser session " + _key
-				+ (_evadeBotDetection ? " (bot-detection evasion on)." : "."),
+				+ (_evadeBotDetection ? " (bot-detection evasion on)" : "")
+				+ (_initialStorageState == null ? "." : " (seeded with a saved cookie pool)."),
 				BrowserSession.class);
 			return null;
 		}, startupDeadlineMillis());
@@ -421,13 +432,18 @@ final class BrowserSession {
 
 	/**
 	 * The context options for this session, or {@code null} when none are needed so the launch stays
-	 * byte-for-byte the plain {@code newContext()} default. Evasion mode overrides the user-agent and
-	 * locale.
+	 * byte-for-byte the plain {@code newContext()} default. A chosen cookie pool seeds
+	 * {@code storageState}; evasion mode additionally overrides the user-agent and locale.
 	 */
 	private Browser.NewContextOptions newContextOptions() {
 		Browser.NewContextOptions options = null;
+		if (_initialStorageState != null) {
+			options = new Browser.NewContextOptions().setStorageState(_initialStorageState);
+		}
 		if (_evadeBotDetection) {
-			options = new Browser.NewContextOptions();
+			if (options == null) {
+				options = new Browser.NewContextOptions();
+			}
 			// Replace the default HeadlessChrome user-agent with a realistic desktop Chrome UA, and
 			// set a matching locale so Accept-Language / navigator.language look ordinary too.
 			options.setUserAgent(EVASION_USER_AGENT).setLocale(EVASION_LOCALE);
@@ -498,6 +514,15 @@ final class BrowserSession {
 			locator.fill(text == null ? "" : text, new Locator.FillOptions().setTimeout(_navigationTimeoutMillis));
 			return capture(_page.url(), -1, null, false);
 		}, navigationDeadlineMillis());
+	}
+
+	/**
+	 * Captures the context's {@code storageState} (cookies + origin local/session storage) as a JSON
+	 * string, on this session's confined thread. This is the authenticated login state a cookie pool
+	 * persists (encrypted) and later seeds into a fresh session.
+	 */
+	String captureStorageState() {
+		return callOnThread(() -> _context.storageState(), navigationDeadlineMillis());
 	}
 
 	/** Navigates back in this session's history, then captures. */

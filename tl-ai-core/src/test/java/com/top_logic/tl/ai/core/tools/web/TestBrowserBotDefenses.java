@@ -133,7 +133,7 @@ public class TestBrowserBotDefenses extends TestCase {
 			return;
 		}
 		BrowserSession session = BrowserSession.open("evasion-on", TIMEOUT_MILLIS, 0, ALLOW_ANY,
-			false, true);
+			null, false, true);
 		try {
 			PageView view = session.loadHtmlForTest(WEBDRIVER_PROBE);
 
@@ -199,7 +199,7 @@ public class TestBrowserBotDefenses extends TestCase {
 		}
 
 		BrowserSession fullSession = BrowserSession.open("build-full", TIMEOUT_MILLIS, 0, ALLOW_ANY,
-			false, true);
+			null, false, true);
 		String fullUa;
 		try {
 			// Launching with channel "chromium" itself succeeds (no error) and the session is usable.

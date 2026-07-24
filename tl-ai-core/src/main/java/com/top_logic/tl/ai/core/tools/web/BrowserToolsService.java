@@ -8,6 +8,8 @@ package com.top_logic.tl.ai.core.tools.web;
 import java.net.URI;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -158,6 +160,13 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		 * @see #getHeadless()
 		 */
 		String HEADLESS = "headless";
+
+		/**
+		 * Configuration property name for the cookie-pools master toggle.
+		 *
+		 * @see #isCookiePoolsEnabled()
+		 */
+		String COOKIE_POOLS_ENABLED = "cookie-pools-enabled";
 
 		/**
 		 * Per-operation timeout for browser actions (navigate, click, type, snapshot), in seconds.
@@ -363,11 +372,45 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		@Name(HEADLESS)
 		@BooleanDefault(true)
 		boolean getHeadless();
+
+		/**
+		 * Master switch for cookie pools: whether the {@code browserSaveCookies} /
+		 * {@code browserUseCookies} verbs are operative.
+		 *
+		 * <p>
+		 * {@code true} (the default) enables persistent, named, encrypted login pools: a session can
+		 * save its current login state into a named pool and a later session can start seeded from one
+		 * (see {@code CookiePoolService}). When {@code false}, both verbs refuse with a clear message
+		 * and no cookie state is captured or seeded - use this to switch the whole feature off for an
+		 * installation regardless of what the model tries. Turning it off does not affect ordinary
+		 * navigation or the per-session isolated context.
+		 * </p>
+		 *
+		 * @see #COOKIE_POOLS_ENABLED
+		 */
+		@Name(COOKIE_POOLS_ENABLED)
+		@BooleanDefault(true)
+		boolean isCookiePoolsEnabled();
 	}
 
 	private static volatile BrowserToolsService _instance;
 
 	private volatile BrowserSessionPool<BrowserSession> _pool;
+
+	/**
+	 * The {@code storageState} JSON to seed into the next (re)created session for a key, set by
+	 * {@link #seedSession(Object, String)} when a cookie pool is selected.
+	 *
+	 * <p>
+	 * This is transient plumbing, not the durable store: the persistent, encrypted truth lives in the
+	 * {@code CookiePool} entities managed by {@code CookiePoolService}. The decrypted JSON is held
+	 * here only to convey a chosen pool into the pool's lazily-created {@link BrowserSession} (whose
+	 * factory sees only the session key), and kept for the session key's lifetime so the seed
+	 * survives an idle/LRU eviction-and-recreate within the conversation. Cleared on shutdown; never
+	 * persisted.
+	 * </p>
+	 */
+	private final Map<Object, String> _seedByKey = new ConcurrentHashMap<>();
 
 	/**
 	 * Creates a {@link BrowserToolsService} from configuration.
@@ -404,7 +447,7 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 			getAcquireTimeoutSeconds() * 1000L,
 			System::nanoTime,
 			key -> BrowserSession.open(key, navigationTimeoutMillis, navigationSettleMillis, this,
-				headed, evadeBotDetection),
+				_seedByKey.get(key), headed, evadeBotDetection),
 			BrowserSession::close);
 		_instance = this;
 	}
@@ -412,6 +455,7 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	@Override
 	protected void shutDown() {
 		_instance = null;
+		_seedByKey.clear();
 		BrowserSessionPool<BrowserSession> pool = _pool;
 		_pool = null;
 		if (pool != null) {
@@ -427,6 +471,15 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	 */
 	public boolean getHeadless() {
 		return getConfig().getHeadless();
+	}
+
+	/**
+	 * Whether cookie pools are enabled for this installation; {@code true} by default.
+	 *
+	 * @see Config#isCookiePoolsEnabled()
+	 */
+	public boolean isCookiePoolsEnabled() {
+		return getConfig().isCookiePoolsEnabled();
 	}
 
 	/**
@@ -767,6 +820,52 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	 */
 	public PageView back(Object sessionKey) {
 		return run(sessionKey, BrowserSession::back);
+	}
+
+	/**
+	 * Captures the current login state ({@code storageState}: cookies + origin storage) of the
+	 * session for {@code sessionKey} as a JSON string, creating the session if needed.
+	 *
+	 * <p>
+	 * This is the raw, unencrypted capture; {@code CookiePoolService} encrypts it before it is
+	 * persisted into a named pool. Used by the {@code browserSaveCookies} verb.
+	 * </p>
+	 *
+	 * @param sessionKey
+	 *        The stable session key.
+	 * @return The {@code storageState} JSON of the session's context.
+	 */
+	public String captureStorageState(Object sessionKey) {
+		return runOnSession(sessionKey, BrowserSession::captureStorageState);
+	}
+
+	/**
+	 * Selects a cookie pool for a session: the (decrypted) {@code storageState} JSON is remembered as
+	 * the seed for the session key, and any live session for that key is discarded so it is recreated
+	 * with a fresh context carrying the pool's cookies/login.
+	 *
+	 * <p>
+	 * The seed is kept for the session key's lifetime (see {@link #_seedByKey}), so an idle/LRU
+	 * eviction-and-recreate within the conversation stays seeded. Used by the
+	 * {@code browserUseCookies} verb; the next {@code browserNavigate} opens the seeded context.
+	 * </p>
+	 *
+	 * @param sessionKey
+	 *        The stable session key to seed.
+	 * @param storageStateJson
+	 *        The decrypted {@code storageState} JSON to seed; must not be {@code null}/blank.
+	 */
+	public void seedSession(Object sessionKey, String storageStateJson) {
+		if (storageStateJson == null || storageStateJson.isBlank()) {
+			throw new IllegalArgumentException("storageStateJson must not be blank");
+		}
+		_seedByKey.put(sessionKey, storageStateJson);
+		BrowserSessionPool<BrowserSession> pool = _pool;
+		if (pool != null) {
+			// Discard any live (unseeded, or differently-seeded) session so the next call recreates
+			// the context from the just-installed seed.
+			pool.invalidate(sessionKey);
+		}
 	}
 
 	/**

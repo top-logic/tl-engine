@@ -137,7 +137,7 @@ public class TestBrowserSettle extends TestCase {
 	/** Opens a session with the given settle cap (ms); {@code 0} disables the settle. */
 	private static BrowserSession open(int settleMillis) {
 		return BrowserSession.open("settle-" + settleMillis, TIMEOUT_MILLIS, settleMillis, ALLOW_ANY,
-			false, false);
+			null, false, false);
 	}
 
 	private static String refWithName(List<InteractiveElement> elements, String name) {

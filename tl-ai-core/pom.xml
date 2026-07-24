@@ -149,7 +149,7 @@
 									<goal>generate-java</goal>
 								</goals>
 								<configuration>
-									<modules>tl.ai.core,tl.ai.htmlpages,tl.ai.agent,tl.ai.screenshots</modules>
+									<modules>tl.ai.core,tl.ai.htmlpages,tl.ai.agent,tl.ai.screenshots,tl.ai.cookiepool</modules>
 								</configuration>
 							</execution>
 						</executions>

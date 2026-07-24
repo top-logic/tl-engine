@@ -110,3 +110,34 @@ browser.
    write-back expressions.
 6. Working-hours / non-working-day shading config + decorator seam.
 7. Demo view in `com.top_logic.demo.react`; browser verification.
+
+## Status
+
+Implemented. Delivered classes:
+
+- `com.top_logic.layout.react.control.calendar` — `CalendarEvent`, `CalendarModel`,
+  `CalendarModelListener`, `DefaultCalendarEvent`, `DefaultCalendarModel`,
+  `CalendarViewControl` (JS component `TLCalendar`).
+- `react-src/controls/TLCalendar.tsx` — toolbar, time grid (day / work-week /
+  week), month grid, year grid; drag-move / resize / drag-to-create; working-hours
+  and non-working-day shading; current-time line. Client i18n keys `js.calendar.*`.
+- `com.top_logic.layout.view.element` — `CalendarElement` (`<calendar>` tag) and
+  `ExpressionCalendarModel` (the expression-derived event wrapper + transactional
+  `on-move` / `on-resize` / `on-create` write-back).
+
+Demo: `com.top_logic.demo.react` — `demo.calendar:Appointment` type,
+`views/calendar.view.xml` (calendar + selection-driven detail form), and a
+**Calendar** sidebar entry. Verified in the browser: all five granularities render
+and navigate; create (click + drag), select, drag-move, resize and delete all work
+end-to-end and persist; zero console errors.
+
+Not yet built:
+
+- **`visible-range` output channel** (agreed v1 scope) — the control computes and
+  displays `[from, to)` internally but does not yet publish it to an output channel
+  for lazy, range-scoped object loading; `CalendarElement` currently loads its
+  objects eagerly (`all(…)`). This is the one remaining agreed-scope item; its
+  consumer-facing value contract (what the channel carries and how an `<objects>`
+  expression reads it) is an open design point.
+- The pluggable per-day **decorator seam** (holiday marking etc.) — a later
+  extension point, not agreed v1 scope.

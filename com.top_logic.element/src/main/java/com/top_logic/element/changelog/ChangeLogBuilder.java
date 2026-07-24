@@ -93,12 +93,7 @@ public class ChangeLogBuilder {
 		_hm = kb.getHistoryManager();
 
 		_startRev = _hm.getRevision(1);
-
-		/* Stop at the session revision, not at the last committed revision: A concurrent commit can
-		 * advance the last revision beyond what the current session can resolve. Reading up to such a
-		 * future revision makes resolving objects committed there (e.g. the author of a change set)
-		 * fail with "Unable to resolve future object". */
-		_stopRev = toRevision(_hm.getSessionRevision());
+		_stopRev = toRevision(_hm.getLastRevision());
 	}
 
 	private Revision toRevision(long commitNumber) {
@@ -424,7 +419,12 @@ public class ChangeLogBuilder {
 
 	private List<LongRange> getRevisionRanges(Revision effectiveStartRev) {
 		long startRev = effectiveStartRev.getCommitNumber();
-		long stopRev = _stopRev.getCommitNumber();
+
+		/* Never analyze beyond the session revision, even if a later stop revision was requested: A
+		 * concurrent commit can advance the last revision beyond what the current session can
+		 * resolve. Reading up to such a future revision makes resolving objects committed there
+		 * (e.g. the author of a change set) fail with "Unable to resolve future object". */
+		long stopRev = Math.min(_stopRev.getCommitNumber(), _hm.getSessionRevision());
 		if (_author == null) {
 			return LongRangeSet.range(startRev, stopRev);
 		}

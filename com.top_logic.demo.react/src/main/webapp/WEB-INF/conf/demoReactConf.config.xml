@@ -33,6 +33,7 @@
 					<declaration file="/WEB-INF/model/test.flowchart.model.xml"/>
 					<declaration file="/WEB-INF/model/tl.demo.projectManagement.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.filter.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.calendar.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

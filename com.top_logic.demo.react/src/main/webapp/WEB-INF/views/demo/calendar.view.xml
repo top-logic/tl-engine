@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="appointment"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane size="72"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Calendar</en>
+						<de>Kalender</de>
+					</title>
+					<calendar
+						day-end-hour="18"
+						day-start-hour="8"
+						granularity="WEEK"
+						observed-types="demo.calendar:Appointment"
+						selection="appointment"
+					>
+						<objects>all(`demo.calendar:Appointment`)</objects>
+						<event>
+							<start>x -> $x.get(`demo.calendar:Appointment#start`)</start>
+							<end>x -> $x.get(`demo.calendar:Appointment#end`)</end>
+							<all-day>x -> $x.get(`demo.calendar:Appointment#allDay`)</all-day>
+							<title>x -> $x.get(`demo.calendar:Appointment#name`)</title>
+							<category>x -> $x.get(`demo.calendar:Appointment#category`)</category>
+						</event>
+						<on-move>obj -> start -> end -> { $obj.set(`demo.calendar:Appointment#start`, $start); $obj.set(`demo.calendar:Appointment#end`, $end); }</on-move>
+						<on-resize>obj -> end -> $obj.set(`demo.calendar:Appointment#end`, $end)</on-resize>
+						<on-create>start -> end -> allDay -> { appt = new(`demo.calendar:Appointment`); $appt.set(`demo.calendar:Appointment#name`, #("Neuer Termin"@de, "New appointment"@en)); $appt.set(`demo.calendar:Appointment#start`, $start); $appt.set(`demo.calendar:Appointment#end`, $end); $appt.set(`demo.calendar:Appointment#allDay`, $allDay); $appt; }</on-create>
+					</calendar>
+				</panel>
+			</pane>
+			<pane
+				min-size="260"
+				size="28"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Appointment</en>
+						<de>Termin</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-trash"
+							input="appointment"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+							</with-transaction>
+							<write-channel name="appointment"/>
+						</generic-command>
+					</commands>
+					<inset>
+						<form
+							initial-edit-mode="true"
+							input="appointment"
+							mode-switch="false"
+						>
+							<field attribute="name"/>
+							<field attribute="start"/>
+							<field attribute="end"/>
+							<field attribute="allDay"/>
+							<field attribute="category"/>
+						</form>
+					</inset>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

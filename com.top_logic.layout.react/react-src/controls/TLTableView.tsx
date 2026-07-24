@@ -80,6 +80,46 @@ function isInteractiveTarget(event: React.SyntheticEvent): boolean {
   return !!target?.closest?.('input, textarea, select, button, a, [contenteditable="true"]');
 }
 
+/**
+ * Elements that accept text/edit focus inside an editable cell. Disabled/read-only controls are
+ * excluded: a read-only row still renders its boolean columns as a disabled checkbox {@code
+ * <input>}, which must not count as "this row is editable".
+ */
+const EDITABLE_SELECTOR =
+  'input:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), '
+  + 'select:not([disabled]), [contenteditable="true"]';
+
+/** Every keyboard-focusable element inside a row cell, including enabled action buttons/links. */
+const FOCUSABLE_SELECTOR = EDITABLE_SELECTOR + ', button:not([disabled]), a[href]';
+
+/** The cell {@code <div>}s (carrying data-row/data-col) of the given row, in column order. */
+function rowCells(body: HTMLElement, rowId: string): HTMLElement[] {
+  return Array.from(body.querySelectorAll<HTMLElement>('[data-row][data-col]'))
+    .filter((c) => c.dataset.row === rowId);
+}
+
+/**
+ * The editable input to focus within a row: the given column's input when present, otherwise the
+ * first (or, with {@code last}, the last) editable cell in column order. Returns null when the row
+ * has no editable cell (e.g. a not-yet-selected row in a single-row-editing table).
+ */
+function editableInRow(
+  body: HTMLElement, rowId: string, opts: { col?: string; last?: boolean } = {}
+): HTMLElement | null {
+  const cells = rowCells(body, rowId);
+  if (opts.col) {
+    const target = cells.find((c) => c.dataset.col === opts.col);
+    const inCol = target?.querySelector<HTMLElement>(EDITABLE_SELECTOR);
+    if (inCol) return inCol;
+  }
+  const ordered = opts.last ? [...cells].reverse() : cells;
+  for (const c of ordered) {
+    const found = c.querySelector<HTMLElement>(EDITABLE_SELECTOR);
+    if (found) return found;
+  }
+  return null;
+}
+
 const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
@@ -133,6 +173,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const headerRef = React.useRef<HTMLDivElement>(null);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = React.useRef<number | null>(null);
+
+  // A cell whose editable input should receive the caret once the server has re-rendered its row
+  // as editable. Set on a selecting cell-click (edit the clicked cell) and on Tab-wrap to a
+  // neighbouring row; consumed by the focus effect below. Addressed by row index (stable across
+  // virtual scrolling) rather than the transient row id.
+  const pendingFocusRef = React.useRef<{ index: number; col?: string; last?: boolean } | null>(null);
 
   // -- Resize state --
   const [columnWidthOverrides, setColumnWidthOverrides] = React.useState<Record<string, number>>({});
@@ -343,6 +389,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     // which must keep the focus to stay editable.
     if (!isInteractiveTarget(event)) {
       scrollContainerRef.current?.focus({ preventScroll: true });
+      // A plain selecting click enters the clicked cell for editing: once the row re-renders
+      // editable, the focus effect moves the caret into that column's input.
+      if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
+        const col = (event.target as Element)?.closest?.('[data-col]')?.getAttribute('data-col');
+        pendingFocusRef.current = { index: rowIndex, col: col ?? undefined };
+      }
     }
     sendCommand('select', {
       rowIndex,
@@ -390,6 +442,78 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       el.scrollTop = rowBottom - el.clientHeight;
     }
   }, [cursorIndex, rowHeight]);
+
+  // Once a row has re-rendered as editable (selected via cell-click or reached via Tab-wrap), move
+  // the caret into the intended cell. Runs on every server state update; a no-op until the target
+  // row is both rendered and editable, so it naturally waits out the select round-trip.
+  React.useEffect(() => {
+    const pending = pendingFocusRef.current;
+    const body = scrollContainerRef.current;
+    if (!pending || !body) {
+      return;
+    }
+    const row = rows.find((r) => r.index === pending.index);
+    if (!row) {
+      return;
+    }
+    const input = editableInRow(body, row.id, { col: pending.col, last: pending.last });
+    if (!input) {
+      return;
+    }
+    pendingFocusRef.current = null;
+    input.focus({ preventScroll: false });
+    if (input instanceof HTMLInputElement) {
+      input.select();
+    }
+  }, [rows]);
+
+  // Tab at a row boundary wraps to the neighbouring row: forward from the last editable cell to the
+  // start of the next row, backward from the first to the end of the previous row. In a single-row-
+  // editing table the neighbour must first be selected to become editable; when it is already
+  // editable (all rows editable) native Tab handles the move and this steps aside.
+  const handleBodyKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') {
+      return;
+    }
+    const body = scrollContainerRef.current;
+    const active = document.activeElement as HTMLElement | null;
+    if (!body || !active || !body.contains(active)) {
+      return;
+    }
+    const cell = active.closest<HTMLElement>('[data-row][data-col]');
+    if (!cell) {
+      return;
+    }
+    const rowId = cell.dataset.row!;
+    const row = rows.find((r) => r.id === rowId);
+    if (!row) {
+      return;
+    }
+    const focusables = rowCells(body, rowId)
+      .flatMap((c) => Array.from(c.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)));
+    const pos = focusables.indexOf(active);
+    if (pos < 0) {
+      return;
+    }
+    const forward = !e.shiftKey;
+    const atRowEnd = forward ? pos === focusables.length - 1 : pos === 0;
+    if (!atRowEnd) {
+      // Still room to move within the row: let native Tab handle it.
+      return;
+    }
+    const targetIndex = forward ? row.index + 1 : row.index - 1;
+    if (targetIndex < 0 || targetIndex >= totalRowCount) {
+      return;
+    }
+    const neighbour = rows.find((r) => r.index === targetIndex);
+    if (neighbour && editableInRow(body, neighbour.id)) {
+      // Neighbour already editable (all-rows-editable table): native Tab flows into it.
+      return;
+    }
+    e.preventDefault();
+    pendingFocusRef.current = { index: targetIndex, last: !forward };
+    sendCommand('select', { rowIndex: targetIndex, ctrlKey: false, shiftKey: false });
+  }, [rows, totalRowCount, sendCommand]);
 
   const handleCheckboxClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -595,6 +719,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         ref={scrollContainerRef}
         className="tlTableView__body"
         onScroll={handleScroll}
+        onKeyDown={handleBodyKeyDown}
         tabIndex={0}
       >
         {/* Spacer for virtual scrolling */}

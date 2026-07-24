@@ -8,6 +8,13 @@ const { useMemo, useRef, useState, useEffect } = React;
 const LABEL_SIDE_MIN_WIDTH = 320;
 
 /**
+ * React modules of full-bleed container controls that manage their own layout and spacing. A form
+ * whose sole content is one of these renders flush (see below): an editable table, for instance,
+ * renders as a {@code TLPanel} wrapping a {@code TLTableView}.
+ */
+const FULL_BLEED_MODULES = ['TLPanel', 'TLTableView'];
+
+/**
  * Top-level responsive form grid.
  *
  * State:
@@ -70,9 +77,16 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
     gridTemplateColumns: `repeat(auto-fit, minmax(min(${minColWidth}, 100%), 1fr))`,
   };
 
+  // A form whose sole content is a full-bleed container (a "grid" form wrapping just a table/panel)
+  // renders flush: the form's own page inset would otherwise draw a frame of empty space around a
+  // control that already manages its own layout. Detected from the single child's React module.
+  const isFullBleedOnly = children.length === 1
+    && FULL_BLEED_MODULES.includes((children[0] as { module?: string } | undefined)?.module ?? '');
+
   const className = [
     'tlFormLayout',
     readOnly ? 'tlFormLayout--readonly' : '',
+    isFullBleedOnly ? 'tlFormLayout--flush' : '',
   ].filter(Boolean).join(' ');
 
   if (noModelMessage) {

@@ -11,9 +11,11 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.servlet.ServletException;
@@ -36,6 +38,7 @@ import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
@@ -745,7 +748,9 @@ public class ReactServlet extends TopLogicServlet {
 	 *
 	 * <p>
 	 * Instead of returning HTTP 500, the error message from the {@link HandlerResult} is forwarded
-	 * to the snackbar so the user sees what went wrong.
+	 * to the snackbar so the user sees what went wrong. Detail messages chained as exception causes
+	 * (e.g. the individual constraint violations behind a vetoed commit) are appended, so the user
+	 * learns which value on which object was rejected.
 	 * </p>
 	 */
 	private void showCommandError(HandlerResult result, SSEUpdateQueue queue, ReactCommandTarget control) {
@@ -759,13 +764,27 @@ public class ReactServlet extends TopLogicServlet {
 			ResKey messageKey = result.getErrorMessage();
 			String details = messageKey != null ? resources.getString(messageKey) : null;
 
-			String text;
-			if (details != null && !details.isEmpty() && !details.equals("null")) {
-				text = title + " " + details;
-			} else {
-				text = title;
+			// The same message can arrive through several routes at once: title and message both
+			// fall back to the exception's error key, and the original exception reappears as cause
+			// of the wrapper created by HandlerResult.error(ResKey, Throwable). Report each distinct
+			// message only once.
+			Set<String> seen = new HashSet<>();
+			StringBuilder text = new StringBuilder(title);
+			seen.add(title);
+			if (details != null && !details.isEmpty() && !details.equals("null") && seen.add(details)) {
+				text.append(' ').append(details);
 			}
-			errorSink.showError(com.top_logic.layout.basic.fragments.Fragments.text(text));
+			if (result.getException() != null) {
+				for (Throwable cause = result.getException().getCause(); cause != null; cause = cause.getCause()) {
+					if (cause instanceof I18NFailure failure) {
+						String message = resources.getString(failure.getErrorKey());
+						if (seen.add(message)) {
+							text.append(' ').append(message);
+						}
+					}
+				}
+			}
+			errorSink.showError(com.top_logic.layout.basic.fragments.Fragments.text(text.toString()));
 		} else {
 			Logger.warn("No ErrorSink available to show command error: " + result.getErrorTitle(),
 				ReactServlet.class);

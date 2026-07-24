@@ -27,13 +27,13 @@ import com.top_logic.mig.html.ContainerDetector;
  * <p>
  * Runtime maintenance is a <em>separate</em>, orthogonal axis: a production install can be in a
  * maintenance window without changing its environment. That axis is served by the
- * {@link MaintenanceWindowManager} (see {@link MaintenanceWindowManager#isMaintenanceActive()}), not
- * by this service. A consumer that needs both folds them as follows: if maintenance is active, treat
- * the application as being in maintenance regardless of the environment; otherwise behaviour keys
- * off {@link #getMode() the environment mode}.
+ * {@link MaintenanceWindowManager}, not by this service. A consumer that needs both folds them as
+ * follows: if maintenance is active, treat the application as being in maintenance regardless of the
+ * environment; otherwise behaviour keys off {@link #getMode() the environment mode}.
  * </p>
  *
  * @see MaintenanceWindowManager The orthogonal runtime-maintenance axis.
+ * @see MaintenanceWindowManager#isMaintenanceActive()
  *
  * @author <a href="mailto:jonathan.huesing@top-logic.com">Jonathan Hüsing</a>
  */

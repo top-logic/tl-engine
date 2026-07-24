@@ -773,12 +773,26 @@ public class GridComponent extends EditComponent implements
 	 */
 	public Object getDefaultSelection() {
 		if (getConfig().getDefaultSelection()) {
+			TableModel tableModel = getTableField(getFormContext()).getTableModel();
+
 			if (_defaultSelectionProvider != null) {
-				return CollectionUtil.getFirst(_defaultSelectionProvider.computeDefaultSelection(getModel(), getSelected()));
+				for (Object businessObject : _defaultSelectionProvider.computeDefaultSelection(getModel(),
+						getSelected())) {
+					FormGroup group = getRowGroup(businessObject);
+					if (group == null) {
+						continue;
+					}
+
+					Object internalRow = _handler.getFirstTableRow(group);
+					if (_selectionModel.isSelectable(internalRow) && tableModel.containsRowObject(internalRow)) {
+						return businessObject;
+					}
+				}
+
+				return null;
 			}
 
 			TableViewModel tableViewModel = getViewModel();
-			TableModel tableModel = getTableField(getFormContext()).getTableModel();
 
 			for (int rowIndex = 0; rowIndex < tableViewModel.getRowCount(); rowIndex++) {
 				FormGroup group = getFormGroup(tableViewModel, rowIndex);

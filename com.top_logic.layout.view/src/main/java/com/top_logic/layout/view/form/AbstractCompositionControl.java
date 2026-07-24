@@ -276,8 +276,73 @@ public abstract class AbstractCompositionControl extends ReactControl
 		// Register as participant.
 		_formControl.registerParticipant(this);
 
+		// Reflect constraints of the bound attribute itself in the field model and display.
+		wireCompositionValidation();
+
 		// Rebuild the presentation in edit mode.
 		buildContent(overlayList, true);
+	}
+
+	/**
+	 * Reflects constraints of the bound attribute itself (e.g. a required minimum number of
+	 * entries) in the row-set {@link #fieldModel()} and notifies the subclass to display them.
+	 *
+	 * <p>
+	 * Without this wiring, such a constraint would only block saving without any visible location
+	 * of the problem: the bound attribute is displayed as a table and has no regular field chrome
+	 * showing validation errors.
+	 * </p>
+	 */
+	private void wireCompositionValidation() {
+		FormValidationModel validationModel = _registeredValidationModel;
+		TLObjectOverlay overlay = _formControl.getOverlay();
+		TLStructuredTypePart boundPart = _binding.getBoundPart();
+		if (validationModel == null || overlay == null || _fieldModel == null || boundPart == null) {
+			return;
+		}
+
+		_fieldModel.applyValidationResult(validationModel.getValidation(overlay, boundPart));
+
+		ConstraintValidationListener listener = (changedOverlay, attr, result) -> {
+			if (changedOverlay == overlay && attr.equals(boundPart)) {
+				_fieldModel.applyValidationResult(result);
+			}
+		};
+		validationModel.addConstraintValidationListener(listener);
+		_cellValidationListeners.add(listener);
+
+		_fieldModel.addListener(new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				// Value changes are handled by the table update logic.
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel source, boolean editable) {
+				// Not displayed.
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel source) {
+				updateCompositionErrorDisplay();
+			}
+		});
+
+		updateCompositionErrorDisplay();
+	}
+
+	/**
+	 * Reflects the current validation error of the row-set {@link #fieldModel()} in the
+	 * presentation.
+	 *
+	 * <p>
+	 * Called whenever the bound attribute's validation state changes and when the edit session
+	 * ends (with a then-cleared field model). Subclasses that render an error location override
+	 * this.
+	 * </p>
+	 */
+	protected void updateCompositionErrorDisplay() {
+		// Hook for subclasses.
 	}
 
 	private void exitEditMode(TLObject currentObject) {
@@ -315,6 +380,9 @@ public abstract class AbstractCompositionControl extends ReactControl
 		}
 		_rowModels.clear();
 		_originalPersistentObjects = null;
+
+		// Clear any displayed composition error (the field model is now gone).
+		updateCompositionErrorDisplay();
 	}
 
 	// -- FormParticipant --

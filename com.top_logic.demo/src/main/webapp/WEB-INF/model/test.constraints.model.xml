@@ -13,6 +13,7 @@
 			<annotations>
 				<table name="GenericObject"/>
 				<instance-presentation icon="css:bi bi-check-circle"/>
+				<id-column value="mandatoryString"/>
 			</annotations>
 			<attributes>
 				<!-- Mandatory string: must not be empty -->

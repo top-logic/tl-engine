@@ -864,7 +864,48 @@ public class XMLProperties extends ManagedClass {
 			_additionalContent.add(content);
 			_additionalContent.add(typedContent);
 		}
-		
+
+		/**
+		 * Names of configuration fragments that are loaded into <em>every</em>
+		 * {@link XMLPropertiesConfig} at the end of the
+		 * {@link ModuleLayoutConstants#META_CONF_RESOURCE} phase (before the <code>autoconf</code>
+		 * folder) whenever {@link #resolve()} runs.
+		 *
+		 * @see #setGlobalOverlay(List)
+		 */
+		private static volatile List<String> _globalOverlay = null;
+
+		/**
+		 * Installs a process-global configuration overlay that is applied to every
+		 * {@link XMLPropertiesConfig} loaded afterwards.
+		 *
+		 * <p>
+		 * The overlay is the in-memory equivalent of appending fragment names to the on-disk
+		 * {@link ModuleLayoutConstants#META_CONF_NAME}: the names are resolved fresh against the
+		 * current {@link FileManager} on every {@link #resolve()}, so the overlay is picked up by
+		 * any configuration (re)load in the process. In particular a freshly constructed
+		 * {@link XMLPropertiesConfig} built during application start-up (which carries no
+		 * {@link #pushAdditionalContent(BinaryContent) additional content} of its own) still sees
+		 * it, so a test overlay survives an application-driven configuration restart without
+		 * mutating any shared file.
+		 * </p>
+		 *
+		 * <p>
+		 * Only test setups install an overlay; it is absent in production. The overlay is applied at
+		 * the end of the {@code metaConf} phase, before the <code>autoconf</code> folder, matching
+		 * the historical on-disk append position.
+		 * </p>
+		 *
+		 * @param configNames
+		 *        Configuration fragment names (relative to
+		 *        {@link ModuleLayoutConstants#CONF_RESOURCE_PREFIX}, as in
+		 *        {@link ModuleLayoutConstants#META_CONF_NAME}), or <code>null</code> to remove a
+		 *        previously installed overlay.
+		 */
+		public static void setGlobalOverlay(List<String> configNames) {
+			_globalOverlay = configNames;
+		}
+
 		@Override
 		public XMLPropertiesConfig clone() {
 			{
@@ -908,6 +949,14 @@ public class XMLProperties extends ManagedClass {
 					FileManager.getInstance().getData(ModuleLayoutConstants.META_CONF_RESOURCE));
 			} else {
 				loadMetaConf(ModuleLayoutConstants.META_CONF_RESOURCE);
+			}
+
+			List<String> globalOverlay = _globalOverlay;
+			if (globalOverlay != null) {
+				FileManager resolver = FileManager.getInstance();
+				for (String configName : globalOverlay) {
+					addConfiguration(resolver, configName);
+				}
 			}
 
 			_autoConfSetting = Setting.getSetting(this, Setting.AUTO_CONF);

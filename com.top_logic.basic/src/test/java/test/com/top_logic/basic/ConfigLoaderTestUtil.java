@@ -23,7 +23,6 @@ import com.top_logic.basic.XMLProperties.XMLPropertiesConfig;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.core.workspace.Workspace;
 import com.top_logic.basic.io.RegExpFilenameFilter;
-import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -209,10 +208,8 @@ public class ConfigLoaderTestUtil {
 				previousConfig = XMLProperties.Module.INSTANCE.config();
 			}
 
-			List<BinaryData> additionalConfigs = additionalTestConfigs();
-			XMLPropertiesConfig baseConfig = previousConfig != null ? previousConfig : new XMLPropertiesConfig();
-			XMLProperties.restartXMLProperties(
-				MultiProperties.pushConfig(baseConfig, additionalConfigs.toArray(new BinaryData[0])));
+			XMLPropertiesConfig.setGlobalOverlay(additionalTestConfigNames());
+			MultiProperties.restartWithConfig(null);
 
 			_threadContextStarter.startService();
 		}
@@ -222,20 +219,22 @@ public class ConfigLoaderTestUtil {
 	}
 
 	/**
-	 * The test-only configuration fragments to overlay onto the application configuration: the
-	 * testing connection pool, the database-specific settings for the drivers on the class path,
-	 * and the application's test configuration.
+	 * The names of the test-only configuration fragments to overlay onto the application
+	 * configuration: the testing connection pool, the database-specific settings for the drivers on
+	 * the class path, and the application's test configuration.
 	 *
 	 * <p>
-	 * These are overlaid as in-memory {@link XMLPropertiesConfig} additional content (via
-	 * {@link MultiProperties#pushConfig}) rather than by rewriting
-	 * {@link ModuleLayoutConstants#META_CONF_NAME} on disk. Rewriting it there is
-	 * racy on a workspace shared between concurrent CI runs, and the overlay survives configuration
-	 * restarts regardless: it is carried in the {@link XMLPropertiesConfig} and re-applied on every
-	 * reload, and is preserved when the configuration is cloned.
+	 * These are installed as a process-global overlay via
+	 * {@link XMLPropertiesConfig#setGlobalOverlay(List)} rather than by rewriting
+	 * {@link ModuleLayoutConstants#META_CONF_NAME} on disk. Rewriting the file is racy on a
+	 * workspace shared between concurrent CI runs; the overlay achieves the same effect in memory.
+	 * Unlike overlaying only the {@link XMLPropertiesConfig} produced here, the global overlay is
+	 * applied on every configuration reload in the process, so it survives a configuration restart
+	 * driven by the application start-up (which builds a fresh {@link XMLPropertiesConfig} without
+	 * additional content), just as the on-disk fragments did.
 	 * </p>
 	 */
-	private List<BinaryData> additionalTestConfigs() {
+	private List<String> additionalTestConfigNames() {
 		List<String> names = new ArrayList<>();
 		addConfigFile(names, "testingConnectionPool.xml");
 
@@ -255,12 +254,7 @@ public class ConfigLoaderTestUtil {
 			}
 		}
 
-		FileManager fileManager = FileManager.getInstance();
-		List<BinaryData> configs = new ArrayList<>(names.size());
-		for (String name : names) {
-			configs.add(fileManager.getData(ModuleLayoutConstants.CONF_RESOURCE_PREFIX + '/' + name));
-		}
-		return configs;
+		return names;
 	}
 
 	private void addDBConfigFile(List<String> additionalFiles, String dataSourceClassName, String filename) {
@@ -322,6 +316,9 @@ public class ConfigLoaderTestUtil {
 	private void teardownXMLProps() {
 		try {
 			_threadContextStarter.stopService();
+			// Remove the overlay before restoring the previous configuration, so the restored state
+			// no longer carries the test fragments.
+			XMLPropertiesConfig.setGlobalOverlay(null);
 			if (previousConfig != null) {
 				XMLProperties.restartXMLProperties(previousConfig);
 			} else {

@@ -29,6 +29,7 @@ import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.Scheduler.SchedulerConfig;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.impl.TaskImpl;
+import com.top_logic.util.sched.task.schedule.legacy.LegacyOnceSchedule;
 import com.top_logic.util.sched.task.schedule.legacy.LegacySchedulesCommon;
 
 /**
@@ -88,8 +89,8 @@ public class TestScheduler extends BasicTestCase {
      *  Test handling of Tasks.
      */
     public void testTasks() throws InterruptedException {
-        
-		Calendar now = CalendarUtil.createCalendar();
+
+		Calendar now = nowWithinStableMinute();
         
         int curHour   = now.get(Calendar.HOUR_OF_DAY);
         int curMinute = now.get(Calendar.MINUTE);
@@ -117,6 +118,7 @@ public class TestScheduler extends BasicTestCase {
         assertTrue("DeadTask Task was not signaled to stop", deadTask.getShouldStop());
        
         // add a Slow Batch
+		now = nowWithinStableMinute();
 		curHour = now.get(Calendar.HOUR_OF_DAY);
 		curMinute = now.get(Calendar.MINUTE);
         ExampleTask slowTask = new ExampleTask("SlowTask", LegacySchedulesCommon.ONCE, 0, curHour, curMinute, LONG_SLEEP);
@@ -126,6 +128,7 @@ public class TestScheduler extends BasicTestCase {
         Thread.sleep(LONG_SLEEP);
         
         // add a Fast Task  overlapping
+		now = nowWithinStableMinute();
 		curHour = now.get(Calendar.HOUR_OF_DAY);
 		curMinute = now.get(Calendar.MINUTE);
         ExampleTask fastTask = new ExampleTask("FastTask", LegacySchedulesCommon.ONCE, 0, curHour, curMinute, SHORT_SLEEP);
@@ -167,6 +170,7 @@ public class TestScheduler extends BasicTestCase {
 		createScheduler("testTasks", TASK_SLEEP, (long) TASK_TIMEOUT, 3);
         
         // add a infinitely runningTask
+		now = nowWithinStableMinute();
 		curHour = now.get(Calendar.HOUR_OF_DAY);
 		curMinute = now.get(Calendar.MINUTE);
 		deadTask = new ExampleTask("Dead", LegacySchedulesCommon.ONCE, 0, curHour, curMinute, INFINITLY);
@@ -745,6 +749,30 @@ public class TestScheduler extends BasicTestCase {
 	public void createScheduler(String name, long pollingInterval, long maxTasktime, int maxTask) {
 		scheduler = TestingScheduler.newStartedScheduler(name, pollingInterval, maxTasktime, 1000, maxTask);
     }
+
+	/**
+	 * The current time, guaranteed to leave enough headroom until the end of the minute for a
+	 * {@link LegacySchedulesCommon#ONCE ONCE} task scheduled for the returned
+	 * {@link Calendar#HOUR_OF_DAY} and {@link Calendar#MINUTE} to still be dispatched within that
+	 * same minute.
+	 * <p>
+	 * {@link LegacyOnceSchedule} schedules a task for a fixed hour and minute and runs it today only
+	 * if the scheduler's first dispatch falls in that exact minute; otherwise the task is postponed
+	 * to the next day (and thus never runs during the test). Re-reading the current time right
+	 * before scheduling each task -- and waiting out the tail of a minute when it is nearly over --
+	 * removes the wall-clock minute-boundary race that made {@link #testTasks()} flaky.
+	 * </p>
+	 */
+	private static Calendar nowWithinStableMinute() throws InterruptedException {
+		Calendar now = CalendarUtil.createCalendar();
+		int secondsIntoMinute = now.get(Calendar.SECOND);
+		int minHeadroomSeconds = 10;
+		if (secondsIntoMinute > 60 - minHeadroomSeconds) {
+			Thread.sleep((60 - secondsIntoMinute) * 1000L + 100);
+			now = CalendarUtil.createCalendar();
+		}
+		return now;
+	}
 
 	private void stopAndJoin() throws InterruptedException {
 		stopScheduler();

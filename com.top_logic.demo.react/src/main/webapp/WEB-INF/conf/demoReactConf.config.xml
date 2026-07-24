@@ -23,6 +23,7 @@
 				<declarations>
 					<declaration file="/WEB-INF/model/demo.react.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.tickets.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.calendar.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

@@ -28,13 +28,20 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.MOClass;
+import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
+import com.top_logic.element.meta.kbbased.storage.ForeignKeyStorage;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.SimpleQuery;
+import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.provider.PartNamesOptionProvider;
+import com.top_logic.layout.table.provider.ColumnOptionLabelProvider;
+import com.top_logic.layout.table.provider.ColumnOptionMapping;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLFormObjectBase;
@@ -94,6 +101,8 @@ public class UniqueConstraint extends AbstractConfiguredInstance<UniqueConstrain
 		 */
 		@Name(ADDITIONAL_ATTRIBUTES)
 		@Format(CommaSeparatedStrings.class)
+		@Options(fun = PartNamesOptionProvider.class, mapping = ColumnOptionMapping.class)
+		@OptionLabels(value = ColumnOptionLabelProvider.class)
 		List<String> getAdditionalAttributes();
 
 		/**
@@ -163,15 +172,17 @@ public class UniqueConstraint extends AbstractConfiguredInstance<UniqueConstrain
 	 */
 	public TLObject findConflict(TLObject object, TLStructuredTypePart attribute) {
 		TLClass scope = (TLClass) attribute.getOwner();
+		String attributeName = attribute.getName();
 		List<String> additionalNames = getConfig().getAdditionalAttributes();
 
-		Object anchorValue = object.tValue(attribute);
-
+		// Resolve all participating parts and read the anchor values against the concrete type of
+		// the checked object. This is robust against attribute overrides: The constraint may be
+		// declared (and therefore reached) through the base attribute, while the object is an
+		// instance of a subtype that specializes the attribute.
 		TLStructuredType objectType = object.tType();
-		List<TLStructuredTypePart> additionalParts = new ArrayList<>(additionalNames.size());
+		Object anchorValue = object.tValue(resolvePart(objectType, attributeName));
 		List<Object> additionalValues = new ArrayList<>(additionalNames.size());
 		for (String name : additionalNames) {
-			additionalParts.add(resolvePart(scope, name));
 			additionalValues.add(object.tValue(resolvePart(objectType, name)));
 		}
 
@@ -194,10 +205,12 @@ public class UniqueConstraint extends AbstractConfiguredInstance<UniqueConstrain
 				if (!tableEntry.getValue().contains(candidate.tType())) {
 					continue;
 				}
-				if (candidate.equals(self) || candidate.equals(object)) {
+				// The edited object must not be reported as conflict of itself. A transient overlay
+				// is never returned by the query, so excluding its edited base object is enough.
+				if (candidate.equals(self)) {
 					continue;
 				}
-				if (matches(candidate, attribute, anchorValue, additionalParts, additionalValues)) {
+				if (matches(candidate, attributeName, anchorValue, additionalNames, additionalValues)) {
 					return candidate;
 				}
 			}
@@ -210,34 +223,62 @@ public class UniqueConstraint extends AbstractConfiguredInstance<UniqueConstrain
 	 *
 	 * <p>
 	 * If the constrained attribute is stored in a column of the table, the equality test is
-	 * performed by the database. Otherwise, all rows are retrieved and compared in memory by
-	 * {@link #matches(TLObject, TLStructuredTypePart, Object, List, List)}.
+	 * performed by the database. This covers both a primitive column and a foreign-key column of a
+	 * to-one reference. Otherwise, all rows are retrieved and compared in memory by
+	 * {@link #matches(TLObject, String, Object, List, List)}.
 	 * </p>
 	 */
 	private Expression candidateFilter(MOClass table, TLStructuredTypePart attribute, Object anchorValue) {
-		if (anchorValue != null) {
-			StorageDetail storage = attribute.getStorageImplementation();
-			if (storage instanceof ColumnStorage) {
-				MOAttribute column = table.getAttributeOrNull(((ColumnStorage) storage).getStorageAttribute());
-				if (column != null && attribute.getType() instanceof TLPrimitive) {
-					Object storageValue =
-						((TLPrimitive) attribute.getType()).getStorageMapping().getStorageObject(anchorValue);
-					if (storageValue != null) {
-						return eqBinary(attribute(column), literal(storageValue));
-					}
-				}
+		if (anchorValue == null) {
+			return literal(Boolean.TRUE);
+		}
+		String storageAttribute = storageAttribute(attribute.getStorageImplementation());
+		if (storageAttribute == null) {
+			return literal(Boolean.TRUE);
+		}
+		MOAttribute column = table.getAttributeOrNull(storageAttribute);
+		if (column == null) {
+			return literal(Boolean.TRUE);
+		}
+		if (column instanceof MOReference) {
+			if (anchorValue instanceof TLObject) {
+				return eqBinary(reference((MOReference) column), literal(((TLObject) anchorValue).tHandle()));
+			}
+			return literal(Boolean.TRUE);
+		}
+		if (attribute.getType() instanceof TLPrimitive) {
+			Object storageValue =
+				((TLPrimitive) attribute.getType()).getStorageMapping().getStorageObject(anchorValue);
+			if (storageValue != null) {
+				return eqBinary(attribute(column), literal(storageValue));
 			}
 		}
 		return literal(Boolean.TRUE);
 	}
 
-	private boolean matches(TLObject candidate, TLStructuredTypePart attribute, Object anchorValue,
-			List<TLStructuredTypePart> additionalParts, List<Object> additionalValues) {
-		if (!Utils.equals(candidate.tValue(attribute), anchorValue)) {
+	/**
+	 * The name of the storage column of the given storage implementation, or <code>null</code> if
+	 * the value is not stored in a single column of its owner's table.
+	 */
+	private static String storageAttribute(StorageDetail storage) {
+		if (storage instanceof ColumnStorage) {
+			return ((ColumnStorage) storage).getStorageAttribute();
+		}
+		if (storage instanceof ForeignKeyStorage<?>) {
+			return ((ForeignKeyStorage<?>) storage).getStorageAttribute();
+		}
+		return null;
+	}
+
+	private boolean matches(TLObject candidate, String attributeName, Object anchorValue,
+			List<String> additionalNames, List<Object> additionalValues) {
+		TLStructuredType candidateType = candidate.tType();
+		if (!Utils.equals(candidate.tValue(resolvePart(candidateType, attributeName)), anchorValue)) {
 			return false;
 		}
-		for (int n = 0, cnt = additionalParts.size(); n < cnt; n++) {
-			if (!Utils.equals(candidate.tValue(additionalParts.get(n)), additionalValues.get(n))) {
+		for (int n = 0, cnt = additionalNames.size(); n < cnt; n++) {
+			if (!Utils.equals(candidate.tValue(resolvePart(candidateType, additionalNames.get(n))),
+					additionalValues.get(n))) {
 				return false;
 			}
 		}

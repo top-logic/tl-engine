@@ -210,6 +210,40 @@ public class TestUniqueConstraint extends TLModelTest {
 		}
 	}
 
+	/**
+	 * Tests uniqueness of a to-one reference attribute itself (a references-only constraint). This
+	 * exercises the database push-down for a foreign-key column.
+	 */
+	public void testReferencePrimary() throws Exception {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		UniqueConstraint check = newConstraint();
+
+		Transaction tx = kb.beginTransaction();
+		TLObject target1 = newA();
+		target1.tUpdate(_name, "TUC-ref-primary-target-1");
+		TLObject target2 = newA();
+		target2.tUpdate(_name, "TUC-ref-primary-target-2");
+		tx.commit();
+
+		Transaction tx2 = kb.beginTransaction();
+		try {
+			TLObject a = newA();
+			a.tUpdate(_other, target1);
+
+			TLObject b = newA();
+			b.tUpdate(_other, target2);
+			assertNull("Distinct reference values do not conflict.", check.check(a, _other));
+
+			b.tUpdate(_other, target1);
+			assertNotNull("Equal reference values conflict.", check.check(a, _other));
+
+			b.tUpdate(_other, null);
+			assertNull("A set reference value does not conflict with an unset one.", check.check(a, _other));
+		} finally {
+			tx2.rollback();
+		}
+	}
+
 	private TLObject newA() {
 		return getFactory().createObject(_typeA, null, null);
 	}

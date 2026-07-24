@@ -288,6 +288,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * title. A frameless table shows no title.
 	 */
 	private void updateTitle() {
+		// A frameless table draws no chrome (no title, no own toolbar). Mark the panel bare so an
+		// enclosing form renders flush around it instead of framing it with its page inset; a framed
+		// panel keeps its chrome and the surrounding inset.
+		putState("bare", Boolean.valueOf(!_framed));
 		if (!_framed) {
 			putState("title", null);
 			return;

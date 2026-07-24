@@ -7,12 +7,11 @@ const { useMemo, useRef, useState, useEffect } = React;
 /** Column width threshold (px) below which labels switch from side to top. */
 const LABEL_SIDE_MIN_WIDTH = 320;
 
-/**
- * React modules of full-bleed container controls that manage their own layout and spacing. A form
- * whose sole content is one of these renders flush (see below): an editable table, for instance,
- * renders as a {@code TLPanel} wrapping a {@code TLTableView}.
- */
-const FULL_BLEED_MODULES = ['TLPanel', 'TLTableView'];
+/** React module of the table control. */
+const TABLE_MODULE = 'TLTableView';
+
+/** React module of the panel control (an editable table renders as a bare panel wrapping a table). */
+const PANEL_MODULE = 'TLPanel';
 
 /**
  * Top-level responsive form grid.
@@ -77,11 +76,16 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
     gridTemplateColumns: `repeat(auto-fit, minmax(min(${minColWidth}, 100%), 1fr))`,
   };
 
-  // A form whose sole content is a full-bleed container (a "grid" form wrapping just a table/panel)
-  // renders flush: the form's own page inset would otherwise draw a frame of empty space around a
-  // control that already manages its own layout. Detected from the single child's React module.
-  const isFullBleedOnly = children.length === 1
-    && FULL_BLEED_MODULES.includes((children[0] as { module?: string } | undefined)?.module ?? '');
+  // A form whose sole content is a full-bleed, chrome-less region renders flush: the form's own
+  // page inset would otherwise frame a control that already manages its own layout. That region is
+  // a table rendered directly, or a bare panel (a frameless table wrapper marks itself `bare`). A
+  // panel with chrome (title, toolbar, card border) is not bare and keeps the surrounding inset.
+  const soleChild = children.length === 1
+    ? (children[0] as { module?: string; state?: { bare?: boolean } } | undefined)
+    : undefined;
+  const isFullBleedOnly = !!soleChild
+    && (soleChild.module === TABLE_MODULE
+      || (soleChild.module === PANEL_MODULE && soleChild.state?.bare === true));
 
   const className = [
     'tlFormLayout',

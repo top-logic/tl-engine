@@ -33,6 +33,7 @@ import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.BlockSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.CaptchaSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
+import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.ScreenshotCapture;
 
 /**
  * One isolated, interactive browser session: its own {@link Playwright} instance, {@link Browser},
@@ -450,13 +451,24 @@ final class BrowserSession {
 			// An explicit navigation always lands on a fresh document: start a new page generation so
 			// refs from the previous page are detected as stale.
 			_pageGeneration++;
-			return capture(finalUrl, status, headers);
+			return capture(finalUrl, status, headers, true);
 		}, navigationDeadlineMillis());
 	}
 
 	/** Captures the current page without navigating. */
 	PageView snapshot() {
-		return callOnThread(() -> capture(_page.url(), -1, null), navigationDeadlineMillis());
+		return callOnThread(() -> capture(_page.url(), -1, null, false), navigationDeadlineMillis());
+	}
+
+	/**
+	 * Captures a PNG screenshot of the current page (the viewport when {@code fullPage} is
+	 * {@code false}, the full scrolling page when {@code true}), on this session's confined thread.
+	 */
+	ScreenshotCapture screenshot(boolean fullPage) {
+		return callOnThread(() -> {
+			byte[] png = _page.screenshot(new Page.ScreenshotOptions().setFullPage(fullPage));
+			return new ScreenshotCapture(_page.url(), png);
+		}, navigationDeadlineMillis());
 	}
 
 	/** Clicks the element previously assigned {@code ref}, then captures the resulting page. */
@@ -469,11 +481,12 @@ final class BrowserSession {
 			settle();
 			String finalUrl = _page.url();
 			verifyFinalUrl(finalUrl);
-			if (!finalUrl.equals(urlBefore)) {
+			boolean navigated = !finalUrl.equals(urlBefore);
+			if (navigated) {
 				// The click navigated to a different page: refs from the old page are now stale.
 				_pageGeneration++;
 			}
-			return capture(finalUrl, -1, null);
+			return capture(finalUrl, -1, null, navigated);
 		}, navigationDeadlineMillis());
 	}
 
@@ -483,7 +496,7 @@ final class BrowserSession {
 			requireCurrentRef(ref);
 			Locator locator = _page.locator(refSelector(ref));
 			locator.fill(text == null ? "" : text, new Locator.FillOptions().setTimeout(_navigationTimeoutMillis));
-			return capture(_page.url(), -1, null);
+			return capture(_page.url(), -1, null, false);
 		}, navigationDeadlineMillis());
 	}
 
@@ -495,14 +508,14 @@ final class BrowserSession {
 				.setTimeout(_navigationTimeoutMillis));
 			if (response == null) {
 				// No history entry to go back to: the page is unchanged, so keep the generation.
-				return capture(_page.url(), -1, null);
+				return capture(_page.url(), -1, null, false);
 			}
 			settle();
 			String finalUrl = response.url();
 			verifyFinalUrl(finalUrl);
 			// Going back landed on a different page in history: start a new page generation.
 			_pageGeneration++;
-			return capture(finalUrl, response.status(), response.headers());
+			return capture(finalUrl, response.status(), response.headers(), true);
 		}, navigationDeadlineMillis());
 	}
 
@@ -562,7 +575,8 @@ final class BrowserSession {
 		}
 	}
 
-	private PageView capture(String finalUrl, int status, Map<String, String> responseHeaders) {
+	private PageView capture(String finalUrl, int status, Map<String, String> responseHeaders,
+			boolean navigated) {
 		// Tag every ref minted below with the current page generation (the caller advances it when a
 		// navigation moved to a new page); refs from any earlier generation are stale.
 		long generation = _pageGeneration;
@@ -598,7 +612,7 @@ final class BrowserSession {
 		// Always-on, non-evasive block-page detection: flag a bot-protection / access-denied page so
 		// the agent gets a distinct signal instead of an unexplained empty element list.
 		BlockSignal block = BotWallDetector.detect(status, responseHeaders, html);
-		return new PageView(finalUrl, status, html, ariaSnapshot, elements, captcha, block);
+		return new PageView(finalUrl, status, html, ariaSnapshot, elements, captcha, block, navigated);
 	}
 
 	private static String str(Object value) {
@@ -747,7 +761,7 @@ final class BrowserSession {
 		return callOnThread(() -> {
 			_page.setContent(html, new Page.SetContentOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 			_pageGeneration++;
-			return capture(_page.url(), -1, null);
+			return capture(_page.url(), -1, null, true);
 		}, navigationDeadlineMillis());
 	}
 
@@ -763,7 +777,7 @@ final class BrowserSession {
 			_page.setContent(html, new Page.SetContentOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 			settle();
 			_pageGeneration++;
-			return capture(_page.url(), -1, null);
+			return capture(_page.url(), -1, null, true);
 		}, navigationDeadlineMillis());
 	}
 
@@ -788,7 +802,7 @@ final class BrowserSession {
 		return callOnThread(() -> {
 			requireCurrentRef(ref);
 			_page.locator(refSelector(ref)).click(new Locator.ClickOptions().setTimeout(_navigationTimeoutMillis));
-			return capture(_page.url(), -1, null);
+			return capture(_page.url(), -1, null, false);
 		}, navigationDeadlineMillis());
 	}
 

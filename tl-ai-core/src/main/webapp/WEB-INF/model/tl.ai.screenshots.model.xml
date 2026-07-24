@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.screenshots">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.tl.ai.screenshots.impl"
+				interface-package="com.top_logic.tl.ai.screenshots"
+			/>
+		</annotations>
+		<types>
+			<class name="Screenshot">
+				<annotations>
+					<table name="Screenshot"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="image"
+						mandatory="true"
+						type="tl.core:Binary"
+					/>
+					<property name="sourceUrl"
+						type="tl.core:String"
+					/>
+					<property name="capturedAt"
+						type="tl.core:DateTime"
+					/>
+					<property name="contentType"
+						type="tl.core:String"
+					/>
+					<reference name="owner"
+						type="tl.accounts:Person"
+					/>
+				</attributes>
+			</class>
+		</types>
+	</module>
+</model>

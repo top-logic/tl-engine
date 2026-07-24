@@ -255,7 +255,8 @@ public class TestBrowserTool extends TestCase {
 		PageView blocked = new PageView("https://sieportal.siemens.com/", 403,
 			AKAMAI_ACCESS_DENIED_BODY, "- heading \"Access Denied\"", List.of(),
 			new CaptchaSignal(false, null),
-			new BlockSignal(true, 403, "Akamai/Apache access-denied page (\"You don't have permission to access\")"));
+			new BlockSignal(true, 403, "Akamai/Apache access-denied page (\"You don't have permission to access\")"),
+			true);
 
 		String out = BrowserTool.render(blocked, 5_000_000, 50_000);
 
@@ -270,12 +271,114 @@ public class TestBrowserTool extends TestCase {
 	public void testRenderHasNoBlockBannerForNormalPage() {
 		PageView normal = new PageView("https://quotes.toscrape.com/", 200,
 			"<html><body><h1>Quotes</h1></body></html>", "- heading \"Quotes\"", List.of(),
-			new CaptchaSignal(false, null), new BlockSignal(false, 200, null));
+			new CaptchaSignal(false, null), new BlockSignal(false, 200, null), true);
 
 		String out = BrowserTool.render(normal, 5_000_000, 50_000);
 
 		assertFalse("no block banner on an ordinary page", out.contains("PAGE BLOCKED"));
 		assertTrue("ordinary page is rendered normally", out.contains("<untrusted_page_content"));
+	}
+
+	// --- Terse vs full render contract (Part B). ---
+
+	/** A JS-login-style page view with a title and two interactive elements, marked as navigated. */
+	private static PageView terseFixture(boolean navigated, int status) {
+		return new PageView("https://quotes.toscrape.com/login", status,
+			"<html><head><title>Login - Quotes to Scrape</title></head><body>"
+				+ "<h1>Login</h1><p>Lots of body text that must NOT appear in a terse result.</p></body></html>",
+			"- heading \"Login\"\n- textbox\n- button \"Login\"",
+			List.of(
+				new InteractiveElement("s2e1", "textbox", "input", "text", "username"),
+				new InteractiveElement("s2e2", "button", "button", "", "Login")),
+			new CaptchaSignal(false, null), new BlockSignal(false, status, null), navigated);
+	}
+
+	/**
+	 * The terse render (click/type/back) carries the status head, the page title and the COMPACT refs
+	 * inside the untrusted envelope, plus the re-snapshot hint - but never the full ARIA YAML or the
+	 * Markdown page body.
+	 */
+	public void testTerseRenderIsCompactWithRefsButNoFullPage() {
+		String terse = BrowserTool.renderTerse(terseFixture(true, 200), 50_000);
+
+		assertTrue("re-snapshot hint", terse.contains("Call browserSnapshot to read the full page"));
+		assertTrue("final URL", terse.contains("URL: https://quotes.toscrape.com/login"));
+		assertTrue("HTTP status", terse.contains("HTTP status: 200"));
+		assertTrue("page title", terse.contains("Title: Login - Quotes to Scrape"));
+		assertTrue("compact ref s2e1", terse.contains("[s2e1] textbox \"username\""));
+		assertTrue("compact ref s2e2", terse.contains("[s2e2] button \"Login\""));
+		assertTrue("refs wrapped in untrusted envelope", terse.contains("<untrusted_page_content"));
+
+		assertFalse("no full ARIA snapshot section", terse.contains("## Accessibility snapshot"));
+		assertFalse("no Markdown page body section", terse.contains("## Page content (Markdown)"));
+		assertFalse("no page body text leaked", terse.contains("must NOT appear"));
+	}
+
+	/** The Navigation line reflects whether the operation moved to a different page. */
+	public void testTerseRenderReportsNavigationAndUnknownStatus() {
+		assertTrue("navigation occurred",
+			BrowserTool.renderTerse(terseFixture(true, 200), 50_000).contains("Navigation: occurred (new page)"));
+
+		String samePage = BrowserTool.renderTerse(terseFixture(false, -1), 50_000);
+		assertTrue("no navigation", samePage.contains("Navigation: none (same page)"));
+		assertTrue("unknown status when none captured", samePage.contains("HTTP status: unknown"));
+	}
+
+	/**
+	 * {@code render(..., terse=false)} still returns the FULL page (ARIA + Markdown), while
+	 * {@code render(..., terse=true)} returns the compact status - the navigate/snapshot vs
+	 * click/type/back split.
+	 */
+	public void testRenderFullVersusTerseSplit() {
+		PageView view = terseFixture(true, 200);
+
+		String full = BrowserTool.render(view, 5_000_000, 50_000, false);
+		assertTrue("full render keeps the ARIA snapshot", full.contains("## Accessibility snapshot"));
+		assertTrue("full render keeps the Markdown body", full.contains("## Page content (Markdown)"));
+
+		String terse = BrowserTool.render(view, 5_000_000, 50_000, true);
+		assertFalse("terse render drops the ARIA snapshot", terse.contains("## Accessibility snapshot"));
+		assertTrue("terse render keeps the refs", terse.contains("[s2e1]"));
+		assertTrue("terse render tells the model to re-snapshot",
+			terse.contains("Call browserSnapshot to read the full page"));
+	}
+
+	/** A terse result for a blocked page still prepends the trusted block banner. */
+	public void testTerseRenderStillPrependsBlockBanner() {
+		PageView blocked = new PageView("https://sieportal.siemens.com/", 403,
+			AKAMAI_ACCESS_DENIED_BODY, "- heading \"Access Denied\"", List.of(),
+			new CaptchaSignal(false, null),
+			new BlockSignal(true, 403, "Akamai/Apache access-denied page"), true);
+
+		String out = BrowserTool.render(blocked, 5_000_000, 50_000, true);
+
+		assertTrue("block banner present in terse mode too",
+			out.contains("PAGE BLOCKED BY BOT PROTECTION (HTTP 403)"));
+		assertTrue("banner precedes the terse status",
+			out.indexOf("PAGE BLOCKED") < out.indexOf("Call browserSnapshot"));
+	}
+
+	/** A CAPTCHA is a hard stop regardless of terse mode - the interaction verbs must bail too. */
+	public void testTerseRenderCaptchaStillHardStops() {
+		PageView captcha = new PageView("https://example.com/verify", 200,
+			"<html><body>please verify</body></html>", "- text", List.of(),
+			new CaptchaSignal(true, "text-challenge"), new BlockSignal(false, 200, null), true);
+
+		String out = BrowserTool.render(captcha, 5_000_000, 50_000, true);
+		assertTrue("captcha hard-stops in terse mode", out.startsWith("HUMAN_VERIFICATION_REQUIRED"));
+	}
+
+	/** The screenshot verb is a DATA_WRITE tool (opens a transaction and gates on approval). */
+	public void testScreenshotVerbIsDataWrite() {
+		ToolMethod annotation = null;
+		for (Method method : BrowserTool.class.getDeclaredMethods()) {
+			if (method.getName().equals("browserScreenshot")) {
+				annotation = method.getAnnotation(ToolMethod.class);
+			}
+		}
+		assertNotNull("browserScreenshot is a @ToolMethod", annotation);
+		assertEquals("browserScreenshot writes data", com.top_logic.tl.ai.tool.api.ToolMode.DATA_WRITE,
+			annotation.mode());
 	}
 
 	// --- Ref generation tagging: parse the snapshot generation out of a ref. ---
@@ -768,6 +871,51 @@ public class TestBrowserTool extends TestCase {
 		} finally {
 			service.shutDown();
 		}
+	}
+
+	/**
+	 * Captures a real PNG screenshot of a JavaScript-rendered page and proves the bytes are a valid
+	 * PNG, and that {@code fullPage} produces a distinct (at least as large) capture. This exercises
+	 * only the browser capture path (no KB); the persistence path is unit-tested in
+	 * {@code TestScreenshotService}. Gated behind {@code -Dtl.ai.browser.e2e=true}.
+	 */
+	public void testScreenshotCaptureEndToEnd() throws Exception {
+		if (!e2eEnabled()) {
+			return;
+		}
+		BrowserToolsService service = newService("quotes.toscrape.com");
+		service.startUp();
+		try {
+			Object session = new Object();
+			service.navigate(session, JS_PAGE);
+
+			BrowserToolsService.ScreenshotCapture viewport = service.screenshot(session, false);
+			assertNotNull("a viewport screenshot was captured", viewport.png());
+			assertTrue("viewport screenshot is non-empty", viewport.png().length > 0);
+			assertTrue("viewport screenshot is a PNG", isPng(viewport.png()));
+			assertEquals("source URL carried through", JS_PAGE, viewport.url());
+
+			BrowserToolsService.ScreenshotCapture fullPage = service.screenshot(session, true);
+			assertTrue("full-page screenshot is a PNG", isPng(fullPage.png()));
+			assertTrue("full-page capture is at least as large as the viewport",
+				fullPage.png().length >= viewport.png().length);
+		} finally {
+			service.shutDown();
+		}
+	}
+
+	/** Whether {@code bytes} start with the 8-byte PNG signature. */
+	private static boolean isPng(byte[] bytes) {
+		byte[] sig = { (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+		if (bytes == null || bytes.length < sig.length) {
+			return false;
+		}
+		for (int i = 0; i < sig.length; i++) {
+			if (bytes[i] != sig[i]) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/** The first generation-tagged ref ({@code s<gen>e<index>}) listed in a rendered tool result. */

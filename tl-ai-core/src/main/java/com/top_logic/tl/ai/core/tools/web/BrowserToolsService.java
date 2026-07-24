@@ -669,9 +669,26 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	 *        Whether a human-verification challenge is present.
 	 * @param block
 	 *        Whether the page is a bot-protection / access-denied block page.
+	 * @param navigated
+	 *        Whether this capture moved to a <em>different</em> page than the one the session was on
+	 *        before the operation (an explicit navigate/back, or a click that changed the URL). Drives
+	 *        the terse "Navigation: occurred / none" line; always {@code false} for a same-page
+	 *        re-capture (snapshot / type).
 	 */
 	public record PageView(String finalUrl, int status, String html, String ariaSnapshot,
-			List<InteractiveElement> elements, CaptchaSignal captcha, BlockSignal block) {
+			List<InteractiveElement> elements, CaptchaSignal captcha, BlockSignal block, boolean navigated) {
+		// Value type only.
+	}
+
+	/**
+	 * A captured screenshot: the URL it was taken from and the PNG bytes.
+	 *
+	 * @param url
+	 *        The URL of the page at capture time.
+	 * @param png
+	 *        The PNG image bytes.
+	 */
+	public record ScreenshotCapture(String url, byte[] png) {
 		// Value type only.
 	}
 
@@ -698,6 +715,19 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	 */
 	public PageView snapshot(Object sessionKey) {
 		return run(sessionKey, BrowserSession::snapshot);
+	}
+
+	/**
+	 * Captures a PNG screenshot of the session's current page.
+	 *
+	 * @param sessionKey
+	 *        The stable session key.
+	 * @param fullPage
+	 *        {@code false} for the viewport only, {@code true} for the full scrolling page.
+	 * @return The captured screenshot (source URL and PNG bytes).
+	 */
+	public ScreenshotCapture screenshot(Object sessionKey, boolean fullPage) {
+		return runOnSession(sessionKey, session -> session.screenshot(fullPage));
 	}
 
 	/**

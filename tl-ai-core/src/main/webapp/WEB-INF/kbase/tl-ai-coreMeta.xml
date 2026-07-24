@@ -64,6 +64,34 @@
 		/>
 	</metaobject>
 
+	<!-- Persisted browser screenshots (see browserScreenshot tool). The scalar string metadata
+	     get dedicated columns; the PNG payload (image, Binary), the capture timestamp (capturedAt,
+	     DateTime) and the owner reference use generic flex/association storage, mirroring how
+	     GeneratedHtmlPage stores its htmlContent/owner. -->
+	<metaobject
+		object_name="Screenshot"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="name"
+			att_type="String"
+			db_size="255"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="sourceUrl"
+			att_type="String"
+			db_size="2048"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="contentType"
+			att_type="String"
+			db_size="255"
+			mandatory="false"
+		/>
+	</metaobject>
+
 	<!-- tl.ai.agent execution model. References (kind, owner, session, parentExecution,
 	     status, ...) and date attributes use generic flex/association storage. -->
 

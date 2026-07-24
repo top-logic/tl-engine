@@ -17,6 +17,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.control.calendar.CalendarEvent;
 import com.top_logic.layout.react.control.calendar.CalendarModel;
 import com.top_logic.layout.react.control.calendar.CalendarModelListener;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -153,6 +154,11 @@ public class ExpressionCalendarModel implements CalendarModel {
 	public Collection<? extends CalendarEvent> getEvents(Date start, Date end) {
 		List<CalendarEvent> result = new ArrayList<>();
 		for (Object object : _objects) {
+			// Skip objects deleted concurrently (e.g. the just-deleted selected appointment before the
+			// object list is re-queried): evaluating the field expressions on a deleted object throws.
+			if (object instanceof TLObject persistent && !persistent.tValid()) {
+				continue;
+			}
 			WrappedEvent event = new WrappedEvent(object, _exprs);
 			if (event.getStart() != null && event.getStart().before(end) && event.getEnd().after(start)) {
 				result.add(event);

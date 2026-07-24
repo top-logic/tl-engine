@@ -37,6 +37,7 @@ import com.top_logic.knowledge.service.db2.StaticItem;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
+import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.export.PreloadBuilder;
@@ -53,7 +54,8 @@ import com.top_logic.util.TLContextManager;
 public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttributeStorage.Config<?>>
 		extends CommonStructuredTextAttributeStorage<C> {
 
-	private static final Collection<? extends Class<?>> COMPATIBLE_TYPES = Arrays.asList(I18NStructuredText.class);
+	private static final Collection<? extends Class<?>> COMPATIBLE_TYPES =
+		Arrays.asList(I18NStructuredText.class, CharSequence.class);
 
 	/** Name of the database table storing the sources codes. */
 	public static final String SOURCES_CODES_TABLE_NAME = I18NAttributeStorage.I18N_STORAGE_KO_TYPE;
@@ -152,7 +154,12 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 
 	@Override
 	protected void internalSetAttributeValue(TLObject owner, TLStructuredTypePart attribute, Object newValue) {
-		I18NStructuredText newI18nStructuredTexts = (I18NStructuredText) newValue;
+		I18NStructuredText newI18nStructuredTexts;
+		if (newValue instanceof CharSequence text) {
+			newI18nStructuredTexts = I18NStructuredTextUtil.fromCommonMark(text);
+		} else {
+			newI18nStructuredTexts = (I18NStructuredText) newValue;
+		}
 		boolean sourceCodeChanged = setSourceCodes(owner, attribute, newI18nStructuredTexts);
 		boolean imagesChanged = setImages(owner, attribute, newI18nStructuredTexts);
 		if (sourceCodeChanged || imagesChanged) {
@@ -331,7 +338,7 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 	@Override
 	public boolean isEmpty(Object value) {
 		if (value instanceof I18NStructuredText) {
-			return ((I18NStructuredText) value).getEntries().isEmpty();
+			return ((I18NStructuredText) value).isEmpty();
 		}
 		return super.isEmpty(value);
 	}

@@ -48,15 +48,13 @@ public class DateFormatExpr extends GenericMethod {
 			return null;
 		}
 		SimpleDateFormat format = new SimpleDateFormat(asString(arguments[0]), ThreadContext.getLocale());
-		if (arguments[1] != null) {
-			format.setTimeZone(asTimeZone(arguments[1]));
-		}
+		format.setTimeZone(arguments[1] != null ? asTimeZone(arguments[1]) : ThreadContext.getTimeZone());
 		return format;
 	}
 
 	/**
-	 * {@link DateFormatExpr} creates an {@link DateFormat} which depends on the locale of the user,
-	 * so it can not evaluated at compile time.
+	 * {@link DateFormatExpr} creates an {@link DateFormat} which depends on the locale and time zone
+	 * of the user, so it can not evaluated at compile time.
 	 */
 	@Override
 	public boolean canEvaluateAtCompileTime(Object[] arguments) {

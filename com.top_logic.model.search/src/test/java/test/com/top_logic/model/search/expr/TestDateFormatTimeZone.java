@@ -42,14 +42,13 @@ public class TestDateFormatTimeZone extends AbstractSearchExpressionTest {
 		assertEquals("2025-11-30", eval("d -> dateFormat('yyyy-MM-dd', 'UTC').format($d)", d));
 	}
 
-	public void testNoTimeZoneUsesJvmDefault() throws Exception {
+	public void testNoTimeZoneUsesUserZone() throws Exception {
 		Date d = utcInstant();
 
-		Object explicitDefault =
-			eval("d -> zone -> dateFormat('yyyy-MM-dd HH:mm', $zone).format($d)", d, TimeZone.getDefault().getID());
+		Object explicitUser = eval("d -> dateFormat('yyyy-MM-dd HH:mm', 'user').format($d)", d);
 		Object implicitDefault = eval("d -> dateFormat('yyyy-MM-dd HH:mm').format($d)", d);
 
-		assertEquals(implicitDefault, explicitDefault);
+		assertEquals(explicitUser, implicitDefault);
 	}
 
 	public void testCalendarTimeZoneAccessorFormatsCalendarDay() throws Exception {

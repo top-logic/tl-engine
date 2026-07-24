@@ -4,7 +4,7 @@
 <h2>Description</h2>
 <p>Constructs a date format with the given pattern for either <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> or <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> calls.</p>
 <p>See <a href="https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html">SimpleDateFormat</a>.</p>
-<p>By default, the format renders values in the JVM default time zone. When a <code class="hljs inlineCode">timeZone</code> is given, the value is rendered in that time zone instead. This matters when formatting a <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">calendar</a> value: passing its <a class="tlObject" data-custom="true" href="?page=timeZone&amp;uuid=b9f2d1a4-1c53-4c9e-8f0a-6d3e2a4b7c10">time zone</a> renders the instant as the day it represents in that zone, avoiding a day/month/year shift when the system time zone differs from the JVM default.</p>
+<p>By default, the format renders values in the current user's time zone. When a <code class="hljs inlineCode">timeZone</code> is given, the value is rendered in that time zone instead. This matters when formatting a <a class="tlObject" data-custom="true" href="?page=toSystemCalendar&amp;uuid=155f70e5-1a3a-4b63-b53b-30a6261e4113">calendar</a> value: passing its <a class="tlObject" data-custom="true" href="?page=timeZone&amp;uuid=b9f2d1a4-1c53-4c9e-8f0a-6d3e2a4b7c10">time zone</a> renders the instant as the day it represents in that zone, avoiding a day/month/year shift when the calendar's time zone differs from the user's time zone.</p>
 <h2>Parameters</h2>
 <table class="tlDocTable">
  <thead>
@@ -37,7 +37,7 @@
    <td>
     <p>The time zone in which to render the value. Accepts a time-zone id string (e.g. <code class="hljs inlineCode">"Asia/Tokyo"</code>), the string <code class="hljs inlineCode">"system"</code> for the application's configured system time zone, the string <code class="hljs inlineCode">"user"</code> for the current user's time zone, or the <a class="tlObject" data-custom="true" href="?page=timeZone&amp;uuid=b9f2d1a4-1c53-4c9e-8f0a-6d3e2a4b7c10">time zone</a> of a calendar.</p></td>
    <td>no</td>
-   <td>JVM default time zone</td>
+   <td>Current user's time zone</td>
   </tr>
  </tbody>
 </table>

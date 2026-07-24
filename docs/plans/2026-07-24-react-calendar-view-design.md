@@ -125,6 +125,12 @@ Implemented. Delivered classes:
   `ExpressionCalendarModel` (the expression-derived event wrapper + transactional
   `on-move` / `on-resize` / `on-create` write-back).
 
+The **visible-range output channels** are implemented: the control publishes its
+displayed `[from, to)` to the configured `range-start` / `range-end` channels
+(`CalendarViewControl.RangeListener`), and an `<objects>` supplier reads them back
+as two positional `<input>` arguments to load only the visible window's objects.
+The demo uses this for windowed loading.
+
 Demo: `com.top_logic.demo.react` — `demo.calendar:Appointment` type,
 `views/calendar.view.xml` (calendar + selection-driven detail form), and a
 **Calendar** sidebar entry. Verified in the browser: all five granularities render
@@ -133,11 +139,5 @@ end-to-end and persist; zero console errors.
 
 Not yet built:
 
-- **`visible-range` output channel** (agreed v1 scope) — the control computes and
-  displays `[from, to)` internally but does not yet publish it to an output channel
-  for lazy, range-scoped object loading; `CalendarElement` currently loads its
-  objects eagerly (`all(…)`). This is the one remaining agreed-scope item; its
-  consumer-facing value contract (what the channel carries and how an `<objects>`
-  expression reads it) is an open design point.
 - The pluggable per-day **decorator seam** (holiday marking etc.) — a later
   extension point, not agreed v1 scope.

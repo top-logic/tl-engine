@@ -709,6 +709,68 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_ASSERTION_FAILED__ADDRESS_KEYS;
 
+	// -- Calendar client-side i18n keys --
+
+	/**
+	 * @en Today
+	 */
+	@CustomKey("js.calendar.today")
+	public static ResKey JS_CALENDAR_TODAY;
+
+	/**
+	 * @en Previous
+	 */
+	@CustomKey("js.calendar.previous")
+	public static ResKey JS_CALENDAR_PREVIOUS;
+
+	/**
+	 * @en Next
+	 */
+	@CustomKey("js.calendar.next")
+	public static ResKey JS_CALENDAR_NEXT;
+
+	/**
+	 * @en Day
+	 */
+	@CustomKey("js.calendar.day")
+	public static ResKey JS_CALENDAR_DAY;
+
+	/**
+	 * @en Work week
+	 */
+	@CustomKey("js.calendar.workWeek")
+	public static ResKey JS_CALENDAR_WORK_WEEK;
+
+	/**
+	 * @en Week
+	 */
+	@CustomKey("js.calendar.week")
+	public static ResKey JS_CALENDAR_WEEK;
+
+	/**
+	 * @en Month
+	 */
+	@CustomKey("js.calendar.month")
+	public static ResKey JS_CALENDAR_MONTH;
+
+	/**
+	 * @en Year
+	 */
+	@CustomKey("js.calendar.year")
+	public static ResKey JS_CALENDAR_YEAR;
+
+	/**
+	 * @en All day
+	 */
+	@CustomKey("js.calendar.allDay")
+	public static ResKey JS_CALENDAR_ALL_DAY;
+
+	/**
+	 * @en more
+	 */
+	@CustomKey("js.calendar.more")
+	public static ResKey JS_CALENDAR_MORE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

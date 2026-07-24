@@ -241,6 +241,24 @@ public class FormValidationModel implements OverlayLookup {
 		}
 	}
 
+	/**
+	 * Re-runs all constraint checks of all overlays.
+	 *
+	 * <p>
+	 * Stored results can be outdated when persistent data has changed after the value was entered,
+	 * because checks are otherwise only re-run when a form value changes. Checks that consult
+	 * persistent data (e.g. uniqueness) must therefore be re-evaluated before the form state is
+	 * applied.
+	 * </p>
+	 */
+	public void revalidateAll() {
+		Set<ConstraintEntry> all = new HashSet<>();
+		for (List<ConstraintEntry> entries : _constraintsByOwner.values()) {
+			all.addAll(entries);
+		}
+		revalidate(all);
+	}
+
 	private void validateAllFor(TLObject overlay) {
 		TLStructuredType type = (TLStructuredType) overlay.tType();
 		if (type == null) return;

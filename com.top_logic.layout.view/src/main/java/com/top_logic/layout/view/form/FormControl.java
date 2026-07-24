@@ -511,14 +511,19 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Validates all participants and throws if any are invalid.
 	 *
 	 * <p>
-	 * Reveals all hidden validation errors first (so model-level errors become visible via
-	 * {@code hasError()}), then iterates all participants without short-circuiting.
+	 * Re-runs all constraint checks first, since stored results can be outdated when persistent
+	 * data has changed after the value was entered (e.g. a uniqueness conflict introduced by
+	 * another commit). Then reveals all hidden validation errors (so model-level errors become
+	 * visible via {@code hasError()}) and iterates all participants without short-circuiting.
 	 * </p>
 	 *
 	 * @throws TopLogicException
 	 *         If any participant reports a validation error.
 	 */
 	public void validateOrThrow() {
+		if (_validationModel != null) {
+			_validationModel.revalidateAll();
+		}
 		revealAllValidation();
 
 		boolean valid = true;

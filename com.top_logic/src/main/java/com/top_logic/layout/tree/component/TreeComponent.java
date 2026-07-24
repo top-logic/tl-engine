@@ -70,6 +70,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.channel.ComponentChannel.ChannelValueFilter;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.DefaultSelectionProvider;
 import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
@@ -448,6 +449,8 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 
 	private ContextMenuFactory _contextMenuFactory;
 
+	private final DefaultSelectionProvider _defaultSelectionProvider;
+
 	/**
 	 * Creates a new {@link TreeComponent} from the given configuration.
 	 */
@@ -467,6 +470,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		_dragSource = context.getInstance(config.getDragSource());
 		_dropTargets = TypedConfiguration.getInstanceList(context, config.getDropTargets());
 		_contextMenuFactory = context.getInstance(config.getContextMenuFactory());
+		_defaultSelectionProvider = context.getInstance(config.getDefaultSelectionProvider());
 	}
 
 	private static TreeRenderer buildRenderer(InstantiationContext context, Config config) {
@@ -1117,6 +1121,9 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 			return null;
 		}
 		DefaultTreeUINode root = treeModel.getRoot();
+		if (_defaultSelectionProvider != null) {
+			return providedDefaultSelection();
+		}
 		if (treeModel.isRootVisible()) {
 			return firstSelectableNode(root);
 		} else {
@@ -1128,6 +1135,18 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 				return null;
 			}
 		}
+	}
+
+	private DefaultTreeUINode providedDefaultSelection() {
+		for (Object businessObject : _defaultSelectionProvider.computeDefaultSelection(getModel(), getSelected())) {
+			DefaultTreeUINode node = createNodeForBusinessNode(businessObject);
+			if (node != null && isSelectableNode(node)) {
+				// Expand the ancestors so that the node is displayed.
+				TLTreeModelUtil.expandParents(node);
+				return node;
+			}
+		}
+		return null;
 	}
 
 	private DefaultTreeUINode firstSelectableNode(DefaultTreeUINode node) {

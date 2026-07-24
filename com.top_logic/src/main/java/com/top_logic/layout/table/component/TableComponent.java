@@ -63,6 +63,8 @@ import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.DefaultSelectionProvider;
+import com.top_logic.layout.component.DefaultSelectionProviderConfig;
 import com.top_logic.layout.component.InAppSelectable;
 import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
@@ -132,7 +134,8 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	 */
 	@TagName(Config.TAG_NAME)
 	public interface Config extends BuilderComponent.Config, ColumnsChannel.Config,
-			InAppSelectable.InAppSelectableConfig, SelectionModelConfig, WithCustomConfigKey {
+			InAppSelectable.InAppSelectableConfig, DefaultSelectionProviderConfig, SelectionModelConfig,
+			WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -457,6 +460,8 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private CommandHandler _onSelectionChange;
 
+	private final DefaultSelectionProvider _defaultSelectionProvider;
+
 	private IFunction2<String, Object, String> _configKeyBuilder;
 
 	/**
@@ -490,6 +495,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		}
 		_selectionModel = createSelectionModel(config);
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_defaultSelectionProvider = context.getInstance(config.getDefaultSelectionProvider());
 		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
 	}
 
@@ -589,6 +595,14 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
 	private void setDefaultSelection() {
+		if (_defaultSelectionProvider != null && getConfig().getDefaultSelection() && this.listValid
+				&& getTableControl().isSelectable()) {
+			Set<Object> selection =
+				getSelectableObjects(_defaultSelectionProvider.computeDefaultSelection(getModel(), getSelected()));
+			SelectionUtil.setSelection(_selectionModel, selection);
+			return;
+		}
+
 		Object defaultSelection = getDefaultSelection();
 
 		if (defaultSelection != null) {

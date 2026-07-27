@@ -16,7 +16,7 @@ import com.top_logic.basic.util.ResKey;
  * Replaces the legacy {@code ColumnConfiguration} + untyped {@code Accessor}. A column is
  * generic over the row business object type {@code R} and its own cell value type
  * {@code V}; a table holds {@code List<Column<R, ?>>}. Capabilities beyond display
- * (sorting, filtering, editing, aggregation) are optional and absent by default.
+ * (sorting, filtering, aggregation) are optional and absent by default.
  * </p>
  *
  * @param <R>
@@ -47,6 +47,20 @@ public interface Column<R, V> {
 	CellRenderer<V> renderer();
 
 	/**
+	 * Renders the cell content for the given row.
+	 *
+	 * <p>
+	 * The default implementation renders the {@link #value(Object) cell value} through the
+	 * {@link #renderer()}. Implementations that need the row object itself (e.g. to produce an
+	 * interactive cell control bound to the row) override this method while keeping the typed
+	 * {@link #value(Object)} accessor for sorting and filtering.
+	 * </p>
+	 */
+	default CellContent renderCell(R row) {
+		return renderer().render(value(row));
+	}
+
+	/**
 	 * The sort capability, or empty if the column is not sortable.
 	 */
 	default Optional<Sort<V>> sort() {
@@ -57,13 +71,6 @@ public interface Column<R, V> {
 	 * The filter capability, or empty if the column is not filterable.
 	 */
 	default Optional<ColumnFilter<V>> filter() {
-		return Optional.empty();
-	}
-
-	/**
-	 * The inline-editing capability, or empty if the column is read-only.
-	 */
-	default Optional<CellEditor<R, V>> editor() {
 		return Optional.empty();
 	}
 

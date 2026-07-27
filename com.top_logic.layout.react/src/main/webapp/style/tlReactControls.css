@@ -2769,6 +2769,14 @@ button.tlMenu__item--disabled:hover {
 	min-height: 4rem;
 }
 
+/* A form whose sole content is a table drops its page inset and lets the table fill the area, so
+   no empty frame is drawn around the self-scrolling, full-bleed table. */
+.tlFormLayout--flush {
+	display: block;
+	padding: 0;
+	height: 100%;
+}
+
 .tlFormLayout__noModel {
 	color: var(--text-secondary, #666);
 	font-style: italic;

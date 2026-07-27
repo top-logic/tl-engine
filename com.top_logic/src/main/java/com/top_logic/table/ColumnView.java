@@ -22,8 +22,6 @@ import com.top_logic.basic.util.ResKey;
  *        Whether the user can sort by this column.
  * @param filterable
  *        Whether the user can filter this column.
- * @param editable
- *        Whether cells in this column are inline-editable.
  * @param frozen
  *        Whether this column is currently frozen (fixed).
  * @param sortDirection
@@ -39,7 +37,6 @@ public record ColumnView(
 		int width,
 		boolean sortable,
 		boolean filterable,
-		boolean editable,
 		boolean frozen,
 		SortDirection sortDirection,
 		int sortPriority) {

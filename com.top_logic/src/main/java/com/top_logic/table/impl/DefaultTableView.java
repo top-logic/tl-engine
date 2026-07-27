@@ -10,20 +10,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterCodec;
-import com.top_logic.table.Group;
-import com.top_logic.table.MatchCounts;
 import com.top_logic.table.FilterSpec;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.Group;
 import com.top_logic.table.GroupSpec;
+import com.top_logic.table.MatchCounts;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
-import com.top_logic.table.RowKind;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
 import com.top_logic.table.Selection;
@@ -165,7 +163,6 @@ public class DefaultTableView<R> implements TableView<R> {
 				width != null ? width : column.defaultWidth(),
 				column.sort().isPresent(),
 				column.filter().isPresent(),
-				column.editor().isPresent(),
 				frozen,
 				sortDirection(name),
 				sortPriority(name)));
@@ -218,7 +215,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		}
 		switch (row.kind()) {
 			case DATA:
-				return renderData(definition, row.data());
+				return definition.renderCell(row.data());
 			case GROUP_HEADER:
 				// The header doubles as the subtotal row: label in the first column,
 				// per-column aggregates in the rest.
@@ -230,10 +227,6 @@ public class DefaultTableView<R> implements TableView<R> {
 			default:
 				return CellContent.empty();
 		}
-	}
-
-	private <V> CellContent renderData(Column<R, V> column, R data) {
-		return column.renderer().render(column.value(data));
 	}
 
 	private <V> CellContent aggregate(Column<R, V> column, Group<R> group) {
@@ -259,32 +252,6 @@ public class DefaultTableView<R> implements TableView<R> {
 	private boolean isFirstColumn(String column) {
 		List<String> order = _state.getColumnOrder();
 		return !order.isEmpty() && order.get(0).equals(column);
-	}
-
-	@Override
-	public FieldModel editor(Object rowKey, String column) {
-		Column<R, ?> definition = _columns.get(column);
-		if (definition == null || definition.editor().isEmpty()) {
-			return null;
-		}
-		R data = dataByKey(rowKey);
-		if (data == null) {
-			return null;
-		}
-		return newField(definition, data);
-	}
-
-	private <V> FieldModel newField(Column<R, V> column, R data) {
-		return column.editor().orElseThrow().newField(data, column.value(data));
-	}
-
-	private R dataByKey(Object rowKey) {
-		for (Row<R> row : _source.window(0, _source.size())) {
-			if (row.kind() == RowKind.DATA && row.key().equals(rowKey)) {
-				return row.data();
-			}
-		}
-		return null;
 	}
 
 	// ---- commands ----
@@ -373,25 +340,6 @@ public class DefaultTableView<R> implements TableView<R> {
 	public void select(Selection selection) {
 		_state.setSelection(selection);
 		fireSelectionChanged();
-	}
-
-	@Override
-	public void commitEdit(Object rowKey, String column, Object value) {
-		Column<R, ?> definition = _columns.get(column);
-		if (definition == null) {
-			return;
-		}
-		R data = dataByKey(rowKey);
-		if (data == null) {
-			return;
-		}
-		commit(definition, data, value);
-		fireRowsChanged(0, Integer.MAX_VALUE);
-	}
-
-	@SuppressWarnings("unchecked")
-	private <V> void commit(Column<R, V> column, R data, Object value) {
-		column.editor().orElseThrow().commit(data, (V) value);
 	}
 
 	@Override

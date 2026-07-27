@@ -173,6 +173,35 @@ public class FormCommandModel implements CommandModel {
 	}
 
 	/**
+	 * Creates a toolbar command that is visible and executable only while the form is in edit
+	 * mode.
+	 *
+	 * <p>
+	 * Used for commands operating on the form's edit session beyond the built-in lifecycle
+	 * commands, e.g. adding a row to a table edited within the form.
+	 * </p>
+	 *
+	 * @param name
+	 *        The command name.
+	 * @param label
+	 *        The button label.
+	 * @param image
+	 *        The button icon.
+	 * @param form
+	 *        The form control whose state gates the command.
+	 * @param action
+	 *        The action to execute.
+	 * @return The command model.
+	 */
+	public static FormCommandModel editModeCommand(String name, ResKey label, ThemeImage image, FormControl form,
+			Consumer<ReactContext> action) {
+		return new FormCommandModel(name, label, image, CommandPlacement.TOOLBAR, form,
+			action,
+			FormControl::isEditMode,
+			FormControl::isEditMode);
+	}
+
+	/**
 	 * Subscribes to form state changes to track executability.
 	 */
 	public void attach() {

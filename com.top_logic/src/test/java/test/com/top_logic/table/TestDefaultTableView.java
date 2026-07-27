@@ -123,7 +123,6 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals(200, name.width());
 		assertTrue(name.sortable());
 		assertTrue(name.filterable());
-		assertFalse(name.editable());
 		assertNull(name.sortDirection());
 		assertEquals(0, name.sortPriority());
 	}

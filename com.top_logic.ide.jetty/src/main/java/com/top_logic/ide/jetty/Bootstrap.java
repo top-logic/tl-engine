@@ -111,7 +111,9 @@ public class Bootstrap {
 		String stopUrl = externalIntf + ADMIN_WEBAPP + STOP_SERVLET;
 		stopPreviousApp(stopUrl);
 
-		System.setProperty(Environment.DEVELOPER_MODE, "true");
+		// This is an IDE run: mark the installation as a non-deployed developer workspace so that
+		// the modular resource path is used (see Environment.isDeployed()).
+		System.setProperty(Environment.OPERATION_MODE, Environment.OPERATION_MODE_DEVELOPMENT);
 
 		PathInfo paths = Workspace.getAppPaths();
 

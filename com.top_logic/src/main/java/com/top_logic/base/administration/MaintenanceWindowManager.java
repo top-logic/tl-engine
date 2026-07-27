@@ -226,6 +226,28 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
     }
 
     /**
+     * Whether the application currently is in a maintenance window.
+     *
+     * <p>
+     * This is the runtime-maintenance axis, orthogonal to the boot-time environment axis served by
+     * {@link com.top_logic.base.operation.OperationModeService}. It is null-safe: if this manager's
+     * module is not started (minimal setups), maintenance is reported inactive.
+     * </p>
+     *
+     * @see com.top_logic.base.operation.OperationModeService The orthogonal environment axis.
+     */
+    public static boolean isMaintenanceActive() {
+        if (!Module.INSTANCE.isActive()) {
+            return false;
+        }
+        MaintenanceWindowManager manager = getInstance();
+        if (manager == null) {
+            return false;
+        }
+        return manager.getMaintenanceModeState() == IN_MAINTENANCE_MODE;
+    }
+
+    /**
      * Configuration lookup.
      */
 	private static final Set<Group> configAllowedGroups(Log log, Config configuration) {

@@ -34,21 +34,73 @@ public class Environment {
 
 	/**
 	 * Marker property to enable startup in the IDE with a modular resource path.
+	 *
+	 * @deprecated This property no longer influences {@link #isDeployed()}. The prod/dev
+	 *             distinction is now driven solely by the {@link #OPERATION_MODE} variable. To run
+	 *             an installation as a non-deployed developer workspace, set
+	 *             <code>{@value #OPERATION_MODE}={@value #OPERATION_MODE_DEVELOPMENT}</code>.
 	 */
+	@Deprecated
 	public static final String DEVELOPER_MODE = "tl_developerMode";
 
 	/**
+	 * Name of the system property or environment variable selecting the operational environment
+	 * (see {@code com.top_logic.base.operation.OperationMode}).
+	 *
+	 * <p>
+	 * This is the single low-level driver of the prod/dev distinction. It is shared with the
+	 * high-level {@code OperationModeService}, which resolves the same variable through the
+	 * <code>%OPERATION_MODE%</code> configuration alias.
+	 * </p>
+	 *
+	 * <p>
+	 * The two answer <em>different</em> questions and therefore need not always coincide.
+	 * {@link #isDeployed()} is a two-way flag ("developer workspace" vs. "everything else"): it is
+	 * only ever {@code false} when this variable is explicitly set to
+	 * {@value #OPERATION_MODE_DEVELOPMENT}. The {@code OperationModeService}, by contrast,
+	 * resolves the full three-way environment axis (development / test / production) and can derive
+	 * {@code TEST} from the surrounding test container even when this variable is unset. So in an
+	 * automated test install {@link #isDeployed()} reports {@code true} (not a developer workspace)
+	 * while the service reports {@code TEST}: consistent, because they classify along different
+	 * axes. Code that must distinguish test from production has to consult the service, not this
+	 * flag.
+	 * </p>
+	 *
+	 * <p>
+	 * The variable name is defined here, at the {@code basic.core} layer, because {@link Environment}
+	 * lives below the core module and must not depend on the {@code OperationModeService}.
+	 * </p>
+	 */
+	public static final String OPERATION_MODE = "tl_operation_mode";
+
+	/**
+	 * Value of {@link #OPERATION_MODE} that marks a non-deployed developer workspace.
+	 *
+	 * <p>
+	 * Must equal the external name of {@code OperationMode.DEVELOPMENT}; a test in
+	 * {@code TestOperationModeService} guards this agreement.
+	 * </p>
+	 */
+	public static final String OPERATION_MODE_DEVELOPMENT = "development";
+
+	/**
 	 * Determines whether the application is deployed.
-	 * 
-	 * @return <code>true</code> iff this class is loaded from a jar file, and is not developer
-	 *         mode.
+	 *
+	 * <p>
+	 * An installation is considered deployed (a production install) by default. It is only treated
+	 * as not deployed when the {@link #OPERATION_MODE} variable is explicitly set to
+	 * {@value #OPERATION_MODE_DEVELOPMENT} (a developer workspace or IDE run).
+	 * </p>
+	 *
+	 * @return <code>true</code> unless {@link #OPERATION_MODE} is set to
+	 *         {@value #OPERATION_MODE_DEVELOPMENT}.
 	 */
 	public static boolean isDeployed() {
-		return isJarFile() && !isDeveloperMode();
+		return !isDevelopmentMode();
 	}
 
-	private static boolean isDeveloperMode() {
-		return getSystemPropertyOrEnvironmentVariable(DEVELOPER_MODE, false);
+	private static boolean isDevelopmentMode() {
+		return OPERATION_MODE_DEVELOPMENT.equals(getSystemPropertyOrEnvironmentVariable(OPERATION_MODE, null));
 	}
 
 	/**
@@ -215,7 +267,12 @@ public class Environment {
 
 	/**
 	 * Whether this files runs within a jar file.
+	 *
+	 * @deprecated This method no longer participates in deployment detection. The prod/dev
+	 *             distinction is now driven solely by the {@link #OPERATION_MODE} variable via
+	 *             {@link #isDeployed()}.
 	 */
+	@Deprecated
 	public static boolean isJarFile() {
 		URL location = Environment.class.getProtectionDomain().getCodeSource().getLocation();
 		if (location == null) {

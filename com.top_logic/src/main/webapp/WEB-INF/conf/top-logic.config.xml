@@ -8,6 +8,7 @@
 				<modules>
 				   <module key="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry$Module" value="true"/>
 				   <module key="com.top_logic.base.time.TimeRangeService$Module" value="true"/>
+				   <module key="com.top_logic.base.operation.OperationModeService$Module" value="true"/>
 				   <module key="com.top_logic.basic.io.BasicFileLog$Module" value="true"/>
 				   <module key="com.top_logic.util.CachePolicy$Module" value="true"/>
 				   <module key="com.top_logic.layout.scripting.recorder.ScriptingRecorder$Module" value="true"/>
@@ -114,6 +115,12 @@
 				basicPath="%LOG_PATH%"/>
 		</config>
 		
+		<config service-class="com.top_logic.base.operation.OperationModeService">
+			<instance class="com.top_logic.base.operation.OperationModeService"
+				mode="%OPERATION_MODE%"
+			/>
+		</config>
+
 		<config service-class="com.top_logic.base.time.TimeRangeService">
 			<instance class="com.top_logic.base.time.TimeRangeService">
 				<ranges>

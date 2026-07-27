@@ -85,6 +85,13 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		String NAVIGATION_TIMEOUT_SECONDS = "navigation-timeout-seconds";
 
 		/**
+		 * Configuration property name for the bounded element-action timeout (seconds).
+		 *
+		 * @see #getActionTimeoutSeconds()
+		 */
+		String ACTION_TIMEOUT_SECONDS = "action-timeout-seconds";
+
+		/**
 		 * Configuration property name for the post-navigation settle hard cap (milliseconds).
 		 *
 		 * @see #getNavigationSettleMillis()
@@ -169,13 +176,47 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		String COOKIE_POOLS_ENABLED = "cookie-pools-enabled";
 
 		/**
-		 * Per-operation timeout for browser actions (navigate, click, type, snapshot), in seconds.
+		 * Timeout for a <b>page load</b> (navigate, back), in seconds.
+		 *
+		 * <p>
+		 * This bounds waiting for the network: how long the browser may spend reaching
+		 * {@code domcontentloaded} on a slow site. Acting on an <em>element</em> is bounded separately
+		 * and much more tightly by {@link #getActionTimeoutSeconds()}.
+		 * </p>
 		 *
 		 * @see #NAVIGATION_TIMEOUT_SECONDS
 		 */
 		@Name(NAVIGATION_TIMEOUT_SECONDS)
 		@IntDefault(30)
 		int getNavigationTimeoutSeconds();
+
+		/**
+		 * Timeout for acting on a single <b>element</b> - {@code browserClick} / {@code browserType},
+		 * and reading the accessibility snapshot - in seconds.
+		 *
+		 * <p>
+		 * Deliberately much shorter than {@link #getNavigationTimeoutSeconds() the page-load timeout},
+		 * because the two wait for entirely different things. A click waits for the element to become
+		 * <em>actionable</em> (attached, visible, stable, unobstructed, enabled); if the page has
+		 * re-rendered that element away - the classic search box whose suggestion list replaces the
+		 * control after the query is typed - no amount of further waiting can make the wait succeed, and
+		 * a page-load-sized budget just turns a dead click into a half-minute stall followed by an
+		 * opaque timeout. Bounding it to a few seconds lets the tool answer promptly with an actionable
+		 * "re-snapshot and use a fresh ref" instruction (see {@link BrowserRefNotActionableException})
+		 * while still absorbing the ordinary case of an element that needs a moment to settle.
+		 * </p>
+		 *
+		 * <p>
+		 * Raise it for a deliberately slow or heavily animated application; it is clamped to at most the
+		 * page-load timeout, since waiting longer for one element than for a whole page load is never
+		 * useful.
+		 * </p>
+		 *
+		 * @see #ACTION_TIMEOUT_SECONDS
+		 */
+		@Name(ACTION_TIMEOUT_SECONDS)
+		@IntDefault(8)
+		int getActionTimeoutSeconds();
 
 		/**
 		 * Hard cap, in milliseconds, of the post-navigation <b>settle</b>: after a page-loading
@@ -430,6 +471,7 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	protected void startUp() {
 		super.startUp();
 		int navigationTimeoutMillis = getNavigationTimeoutSeconds() * 1000;
+		int actionTimeoutMillis = getActionTimeoutSeconds() * 1000;
 		int navigationSettleMillis = getNavigationSettleMillis();
 		// A plain launch toggle: headless (the default) is production-safe and windowless; headed
 		// launches a visible window and needs a local display. Production stays headless.
@@ -446,8 +488,8 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 			getSessionIdleTimeoutSeconds() * 1000L,
 			getAcquireTimeoutSeconds() * 1000L,
 			System::nanoTime,
-			key -> BrowserSession.open(key, navigationTimeoutMillis, navigationSettleMillis, this,
-				_seedByKey.get(key), headed, evadeBotDetection),
+			key -> BrowserSession.open(key, navigationTimeoutMillis, actionTimeoutMillis,
+				navigationSettleMillis, this, _seedByKey.get(key), headed, evadeBotDetection),
 			BrowserSession::close);
 		_instance = this;
 	}
@@ -496,10 +538,20 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	}
 
 	/**
-	 * Per-operation timeout in seconds (clamped to a safe minimum).
+	 * Page-load timeout in seconds (clamped to a safe minimum).
 	 */
 	public int getNavigationTimeoutSeconds() {
 		return Math.max(1, getConfig().getNavigationTimeoutSeconds());
+	}
+
+	/**
+	 * Bounded element-action timeout in seconds (clamped to a safe minimum, and to at most the
+	 * page-load timeout).
+	 *
+	 * @see Config#getActionTimeoutSeconds()
+	 */
+	public int getActionTimeoutSeconds() {
+		return Math.min(Math.max(1, getConfig().getActionTimeoutSeconds()), getNavigationTimeoutSeconds());
 	}
 
 	/**
@@ -877,6 +929,16 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		if (pool != null) {
 			pool.invalidate(sessionKey);
 		}
+	}
+
+	/**
+	 * Test-only: evaluates {@code js} on the current page of the session for {@code sessionKey} (on
+	 * that session's confined thread) and returns the result. Lets a gated E2E test manipulate or
+	 * probe a live page - covering an element, reading computed styles - through the same pooled
+	 * session the tool verbs use. Package-visible for testing.
+	 */
+	Object evaluateForTest(Object sessionKey, String js) {
+		return runOnSession(sessionKey, session -> session.evaluateForTest(js));
 	}
 
 	/**

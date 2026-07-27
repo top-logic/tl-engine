@@ -83,13 +83,25 @@
 			     sessions (each ~200-400 MB); beyond it, an idle session is reclaimed (LRU) or the
 			     call fails fast with a retryable "browser busy" error after waiting at most
 			     acquire-timeout-seconds. A session idle for session-idle-timeout-seconds is
-			     closed. navigation-timeout-seconds also bounds every extraction/interaction.
+			     closed.
+
+			     Timeouts: navigation-timeout-seconds bounds a PAGE LOAD (navigate/back) - i.e.
+			     waiting for the network. action-timeout-seconds bounds acting on a single ELEMENT
+			     (browserClick / browserType, and reading the accessibility snapshot) and is
+			     deliberately much shorter: a click waits for actionability, and once the page has
+			     re-rendered that element away no further waiting can succeed, so a page-load-sized
+			     budget would only turn a dead click into a half-minute stall. On expiry the tool
+			     answers with an actionable "call browserSnapshot and retry with a fresh ref"
+			     instead. It is clamped to at most navigation-timeout-seconds.
 
 			     navigation-settle-millis: after browserNavigate/browserBack finish their
 			     network/load wait and before the page is captured, wait until the DOM goes quiet
-			     (no mutation for a short internal ~500 ms debounce) or this hard cap elapses,
-			     whichever first, so content injected just after navigation (cookie-consent
-			     banners, lazy widgets) is captured without a manual re-snapshot. A still page is
+			     (no mutation for a short internal ~500 ms debounce) AND any in-flight, finite CSS
+			     animation has finished, or until this hard cap elapses, whichever first. That
+			     captures content injected just after navigation (cookie-consent banners, lazy
+			     widgets) without a manual re-snapshot, and keeps a banner that is animating AWAY
+			     from being reported as still-clickable. Endlessly repeating animations (spinners,
+			     carousels) are ignored, so they never push a load out to the cap. A still page is
 			     delayed by at most the debounce window; the cap is always applied inside
 			     navigation-timeout-seconds, so it can never hang. 0 disables it (immediate
 			     capture). Does not apply to browserSnapshot / browserType (they stay immediate).
@@ -110,6 +122,7 @@
 				headless="true"
 				cookie-pools-enabled="true"
 				navigation-timeout-seconds="30"
+				action-timeout-seconds="8"
 				navigation-settle-millis="1500"
 				max-page-bytes="5000000"
 				max-page-chars="50000"

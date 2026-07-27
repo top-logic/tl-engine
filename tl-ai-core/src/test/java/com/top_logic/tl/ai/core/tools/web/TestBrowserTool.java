@@ -53,6 +53,19 @@ public class TestBrowserTool extends TestCase {
 
 	private static final String HOME_PAGE = "https://quotes.toscrape.com/";
 
+	/**
+	 * Page whose quotes are injected by a <em>long</em> client-side delay - far beyond any settle - so
+	 * a re-snapshot is the only way to see them.
+	 */
+	private static final String JS_DELAYED_PAGE = "https://quotes.toscrape.com/js-delayed/";
+
+	/**
+	 * How long {@link #JS_DELAYED_PAGE} actually withholds its quotes, measured against the live site:
+	 * the first quote appeared between 8 s and 12 s after the load. The generous margin below is what
+	 * keeps the assertion about the tool rather than about the site's exact delay.
+	 */
+	private static final long JS_DELAYED_INJECTION_MILLIS = 14_000L;
+
 	// --- SSRF: the browser tool shares WebFetchTool's exact policy via UrlSafety. ---
 
 	public void testSsrfRejectsNonHttpScheme() {
@@ -696,6 +709,49 @@ public class TestBrowserTool extends TestCase {
 			// 5) SSRF guard rejects loopback.
 			String loopback = tool.browserNavigate("http://127.0.0.1/", context);
 			assertTrue("loopback refused", loopback.startsWith("Error:"));
+		} finally {
+			service.shutDown();
+		}
+	}
+
+	/**
+	 * Proves {@code browserSnapshot} re-reads the <b>live</b> DOM rather than replaying the capture the
+	 * navigation took: on a page that injects its content ~10 s after load, the navigation is
+	 * legitimately content-free (the settle is bounded at 1.5 s and must not wait that long), and a
+	 * later snapshot - with no re-navigation - shows the content.
+	 *
+	 * <p>
+	 * The waiting is the point, and it is also what makes this easy to mis-test by hand: a snapshot
+	 * taken a second or two after the navigation is still content-free, which looks exactly like the
+	 * tool failing to re-read the page. {@link #JS_DELAYED_INJECTION_MILLIS} pins the site's real delay
+	 * so the expectation is explicit.
+	 * </p>
+	 *
+	 * <p>
+	 * Gated behind {@code -Dtl.ai.browser.e2e=true}.
+	 * </p>
+	 */
+	public void testDelayedContentAppearsOnLaterSnapshotEndToEnd() throws Exception {
+		if (!e2eEnabled()) {
+			return;
+		}
+		BrowserToolsService service = newService("quotes.toscrape.com");
+		service.startUp();
+		try {
+			BrowserTool tool = new BrowserTool();
+			ToolContext context = ToolContext.createUnrestricted();
+
+			String navigated = tool.browserNavigate(JS_DELAYED_PAGE, context);
+			assertTrue("the page itself was rendered", navigated.contains("<untrusted_page_content"));
+			assertFalse("the navigation does not wait out a ~10 s injection (the settle is bounded): "
+				+ navigated, navigated.contains("Albert Einstein"));
+
+			// No re-navigation: the same page, re-read once its own script has run.
+			Thread.sleep(JS_DELAYED_INJECTION_MILLIS);
+			String reread = tool.browserSnapshot(context);
+			assertTrue("browserSnapshot re-reads the live DOM, so the late content is now there: "
+				+ reread, reread.contains("Albert Einstein"));
+			assertEquals("no new session was opened for the re-read", 1, service.liveSessionCountForTest());
 		} finally {
 			service.shutDown();
 		}

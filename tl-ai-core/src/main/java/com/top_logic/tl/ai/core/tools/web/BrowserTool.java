@@ -519,14 +519,38 @@ public class BrowserTool {
 	 * ({@code browserNavigate} / {@code browserSnapshot}) renders the FULL page; an interaction verb
 	 * ({@code browserClick} / {@code browserType} / {@code browserBack}) renders the TERSE status
 	 * (see {@link #renderTerse}) so it does not dump a whole page into context on every click.
+	 *
+	 * <p>
+	 * Every expected failure has its own type and its own short, actionable message - a stale ref, a
+	 * ref whose element went dead, a navigation the policy refused, a page that never loaded, a busy
+	 * pool, a broken session. That matters more here than for a typical tool: these results are exempt
+	 * from the agent loop's truncation ({@link #PAGE_SNAPSHOT_TRUNCATION_HINT}), so a raw Playwright
+	 * error - which is a multi-line dump of the driver's own JavaScript stack trace - would land in the
+	 * model's context in full, telling it nothing it can act on. Only a genuinely unexpected
+	 * {@link RuntimeException} falls through to the generic branch, and that one is logged.
+	 * </p>
+	 *
+	 * <p>
+	 * Package-visible so the failure-to-message mapping can be asserted without a browser.
+	 * </p>
 	 */
-	private static String execute(BrowserToolsService service, Supplier<PageView> op, boolean terse) {
+	static String execute(BrowserToolsService service, Supplier<PageView> op, boolean terse) {
 		PageView view;
 		try {
 			view = op.get();
 		} catch (StaleBrowserRefException ex) {
 			// A ref carried over from an earlier snapshot: report it as an actionable error rather
 			// than acting on the wrong element or dead-ending in a locator timeout.
+			return "Error: " + ex.getMessage();
+		} catch (BrowserRefNotActionableException ex) {
+			// A current-generation ref whose element went dead (detached / covered / re-rendered):
+			// the model can recover by re-snapshotting, so this is not worth a stack trace in the log.
+			return "Error: " + ex.getMessage();
+		} catch (BrowserPolicyException ex) {
+			// The security policy refused a navigation the page itself triggered (a redirect, or a
+			// link off the permitted origin). Not a defect - report the policy reason as-is.
+			return "Error: " + ex.getMessage();
+		} catch (BrowserNavigationTimeoutException ex) {
 			return "Error: " + ex.getMessage();
 		} catch (BrowserBusyException ex) {
 			return "Error: the browser is busy right now (" + ex.getMessage() + "). Please retry shortly.";

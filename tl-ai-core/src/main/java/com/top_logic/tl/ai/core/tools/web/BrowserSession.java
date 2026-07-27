@@ -23,8 +23,10 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.Request;
 import com.microsoft.playwright.Response;
+import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitUntilState;
 
@@ -57,7 +59,17 @@ import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.ScreenshotCapture;
  * Every call is submitted to the session thread with a hard outer deadline so a hung page can
  * never pin its slot indefinitely; on timeout the session is considered broken and torn down by
  * the pool. SSRF and the domain policy are enforced by a per-context request route, so every
- * request the context issues (main document, redirects, sub-resources) stays guarded.
+ * request the context issues - main document and sub-resources alike - is refused before it leaves
+ * the process; a top-level hop reached by a <em>server-side redirect</em> (which Playwright's routing
+ * cannot intercept) is caught immediately afterwards by {@link #installRedirectGuard} plus the
+ * final-URL re-validation, so no off-policy page is ever handed to the agent.
+ * </p>
+ *
+ * <p>
+ * Failures are reported in the tool's own vocabulary, never as raw Playwright text: a navigation the
+ * policy refused raises {@link BrowserPolicyException}, a page that never loaded raises
+ * {@link BrowserNavigationTimeoutException}, and an element that cannot be acted on within the
+ * bounded action timeout raises {@link BrowserRefNotActionableException}.
  * </p>
  */
 final class BrowserSession {
@@ -87,6 +99,31 @@ final class BrowserSession {
 	 * ({@code element.shadowRoot} is {@code null}) and canvas-rendered widgets expose no DOM to
 	 * traverse and remain unreachable by any DOM approach - a known limit, to be addressed by a
 	 * future vision-based fallback.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Element visibility.</b> Only <em>effectively visible</em> elements are reported, because
+	 * modern UI hides things without removing them from the DOM: a dismissed cookie banner is
+	 * typically left in place with the whole container switched to {@code display:none} (or faded to
+	 * {@code opacity:0}, or marked {@code aria-hidden="true"}) while its buttons keep their own
+	 * {@code display:inline-block}. Testing only the element's own computed style therefore kept
+	 * reporting a banner the user had already dismissed as clickable. The test is consequently
+	 * <em>ancestor-aware</em>: an element is dropped when the standard, ancestor-aware
+	 * {@code Element.checkVisibility()} rejects it (covers {@code display:none} /
+	 * {@code visibility:hidden} anywhere up the tree, plus {@code content-visibility} skipping), when
+	 * it has no client rects (zero-area, or laid out in a hidden subtree), or when any ancestor - and
+	 * for {@code aria-hidden} the element itself - is marked {@code aria-hidden="true"} or faded to
+	 * {@code opacity:0}. The ancestor walk crosses open shadow boundaries via the root's {@code host},
+	 * so a component's hidden inner content is judged by its real, composed visibility.
+	 * </p>
+	 *
+	 * <p>
+	 * {@code opacity:0} is deliberately disqualifying only on an <em>ancestor</em>, never on the
+	 * element itself: a fully transparent <em>container</em> is hidden, whereas a fully transparent
+	 * <em>control</em> is the ubiquitous "visually hidden but functional" idiom (a native checkbox or
+	 * file input behind a styled label) that must stay addressable. Elements are judged as rendered,
+	 * so a control that is genuinely visible - including one inside an open shadow root - is
+	 * unaffected.
 	 * </p>
 	 */
 	private static final String CAPTURE_SCRIPT =
@@ -119,13 +156,33 @@ final class BrowserSession {
 			+ "  };\n"
 			+ "  const els = [];\n"
 			+ "  collect(document, els);\n"
+			// Effectively-hidden test - see the ELEMENT VISIBILITY javadoc paragraph. Ancestor-aware,
+			// so an element left in the DOM inside a hidden container is dropped.
+			+ "  const hidden = (el) => {\n"
+			+ "    if (typeof el.checkVisibility === 'function'\n"
+			+ "        && !el.checkVisibility({visibilityProperty: true, contentVisibilityAuto: true})) {\n"
+			+ "      return true;\n"
+			+ "    }\n"
+			+ "    if (el.getClientRects().length === 0) return true;\n"
+			+ "    for (let p = el; p; p = p.parentElement || (p.parentNode && p.parentNode.host)) {\n"
+			+ "      if (p.nodeType !== 1) continue;\n"
+			+ "      if (p.getAttribute('aria-hidden') === 'true') return true;\n"
+			+ "      const cs = window.getComputedStyle(p);\n"
+			+ "      if (!cs) continue;\n"
+			+ "      if (cs.display === 'none' || cs.visibility === 'hidden' || cs.visibility === 'collapse') {\n"
+			+ "        return true;\n"
+			+ "      }\n"
+			// opacity:0 on an ANCESTOR means the whole block is hidden; opacity:0 on the element
+			// itself is the standard visually-hidden-but-functional idiom (a native checkbox behind a
+			// styled label), so it must stay addressable.
+			+ "      if (p !== el && parseFloat(cs.opacity) === 0) return true;\n"
+			+ "    }\n"
+			+ "    return false;\n"
+			+ "  };\n"
 			+ "  const out = [];\n"
 			+ "  let i = 0;\n"
 			+ "  for (const el of els) {\n"
-			+ "    const style = window.getComputedStyle(el);\n"
-			+ "    if (!style || style.display === 'none' || style.visibility === 'hidden') continue;\n"
-			+ "    const rect = el.getBoundingClientRect();\n"
-			+ "    if (rect.width === 0 && rect.height === 0) continue;\n"
+			+ "    if (hidden(el)) continue;\n"
 			+ "    if (++i > 400) break;\n"
 			+ "    const ref = 's' + gen + 'e' + i;\n"
 			+ "    el.setAttribute('data-tl-ref', ref);\n"
@@ -160,11 +217,22 @@ final class BrowserSession {
 	 * stops mutating (constant animation/polling) still resolves promptly. A still page resolves
 	 * after just the debounce window, so fast pages are barely slowed. The cap is passed as a string
 	 * because Playwright's Java argument serializer rejects {@code Long} (mirrors {@link #CAPTURE_SCRIPT}).
+	 *
+	 * <p>
+	 * Once the DOM is quiet it additionally waits out any <em>in-flight, finite</em> CSS
+	 * animation/transition, still inside the same cap. A dismissed consent banner is a typical case:
+	 * accepting it starts a fade/flip-out that mutates no DOM at all, so the quiet wait alone resolves
+	 * while the banner is still fully laid out at a fractional opacity - and it would then be captured
+	 * as visible content the user has already dismissed. Only animations whose iteration count is
+	 * finite are awaited, so an endlessly repeating spinner or carousel (which would never finish)
+	 * does not push every page load out to the cap.
+	 * </p>
 	 */
 	private static final String DOM_SETTLE_SCRIPT =
 		"(capStr) => new Promise(resolve => {\n"
 			+ "  const cap = parseInt(capStr, 10);\n"
 			+ "  const quiet = " + DOM_QUIET_DEBOUNCE_MILLIS + ";\n"
+			+ "  const deadline = Date.now() + cap;\n"
 			+ "  let quietTimer = null;\n"
 			+ "  const finish = () => {\n"
 			+ "    observer.disconnect();\n"
@@ -172,15 +240,34 @@ final class BrowserSession {
 			+ "    clearTimeout(capTimer);\n"
 			+ "    resolve();\n"
 			+ "  };\n"
+			// Promise for "no finite animation is still running", ignoring infinitely repeating ones.
+			+ "  const animationsSettled = () => {\n"
+			+ "    if (typeof document.getAnimations !== 'function') return Promise.resolve();\n"
+			+ "    const pending = document.getAnimations()\n"
+			+ "      .filter(a => a.playState === 'running')\n"
+			+ "      .filter(a => {\n"
+			+ "        const t = (a.effect && a.effect.getComputedTiming) ? a.effect.getComputedTiming() : null;\n"
+			+ "        return t != null && t.iterations !== Infinity;\n"
+			+ "      })\n"
+			// A cancelled animation rejects its finished promise; that is a settled animation too.
+			+ "      .map(a => a.finished.catch(() => {}));\n"
+			+ "    return pending.length === 0 ? Promise.resolve() : Promise.all(pending);\n"
+			+ "  };\n"
+			+ "  const onQuiet = () => {\n"
+			+ "    const remaining = deadline - Date.now();\n"
+			+ "    if (remaining <= 0) { finish(); return; }\n"
+			+ "    Promise.race([animationsSettled(), new Promise(r => setTimeout(r, remaining))])\n"
+			+ "      .then(finish);\n"
+			+ "  };\n"
 			+ "  const observer = new MutationObserver(() => {\n"
 			+ "    if (quietTimer) clearTimeout(quietTimer);\n"
-			+ "    quietTimer = setTimeout(finish, quiet);\n"
+			+ "    quietTimer = setTimeout(onQuiet, quiet);\n"
 			+ "  });\n"
 			+ "  const capTimer = setTimeout(finish, cap);\n"
 			+ "  observer.observe(document, {childList: true, subtree: true});\n"
 			// Start the debounce immediately: a page that never mutates resolves after one quiet
 			// window rather than waiting out the whole cap.
-			+ "  quietTimer = setTimeout(finish, quiet);\n"
+			+ "  quietTimer = setTimeout(onQuiet, quiet);\n"
 			+ "});";
 
 	/**
@@ -195,6 +282,13 @@ final class BrowserSession {
 
 	/** Locale applied with {@link #EVASION_USER_AGENT}; sets {@code Accept-Language}/navigator language. */
 	private static final String EVASION_LOCALE = "en-US";
+
+	/**
+	 * The bounded element-action timeout used by the test-facing {@code open} overloads that do not
+	 * name one; the service passes its configured value
+	 * ({@code BrowserToolsService.Config#getActionTimeoutSeconds()}) explicitly.
+	 */
+	static final int DEFAULT_ACTION_TIMEOUT_MILLIS = 8_000;
 
 	/**
 	 * Small, standard "stealth" shim applied (before any page script) only when bot-detection evasion
@@ -227,6 +321,21 @@ final class BrowserSession {
 	private final Object _key;
 
 	private final int _navigationTimeoutMillis;
+
+	/**
+	 * Bounded timeout (ms) for an <em>element</em> action - click, type, ARIA snapshot - as opposed to
+	 * a page load.
+	 *
+	 * <p>
+	 * Deliberately far shorter than {@link #_navigationTimeoutMillis}: waiting for actionability is
+	 * not waiting for the network. When the element a ref points at has been detached, covered or
+	 * re-rendered, Playwright keeps retrying actionability until the timeout expires and there is
+	 * nothing to gain from spending a full page-load budget on it - the wait can only succeed if the
+	 * page settles within a moment. Bounding it is what turns a dead click into a fast, recoverable
+	 * {@link BrowserRefNotActionableException} instead of a 30-second stall.
+	 * </p>
+	 */
+	private final int _actionTimeoutMillis;
 
 	/** Hard cap (ms) of the post-navigation DOM-quiet settle; {@code 0} disables the settle. */
 	private final int _navigationSettleMillis;
@@ -269,10 +378,33 @@ final class BrowserSession {
 	 */
 	private long _pageGeneration;
 
-	private BrowserSession(Object key, int navigationTimeoutMillis, int navigationSettleMillis,
-			DomainPolicy policy, String initialStorageState, boolean headed, boolean evadeBotDetection) {
+	/**
+	 * The off-policy top-level navigation seen during the operation currently running, or {@code null}
+	 * if there was none.
+	 *
+	 * <p>
+	 * Recorded by the security route when it aborts a main-frame navigation, and by the request
+	 * listener for a redirect hop the route never sees (see {@link #installSecurityRoute} and
+	 * {@link #installRedirectGuard}). Reset at the start of every operation by
+	 * {@link #beginNavigationAttempt()} and consulted by {@link #verifyNavigationPolicy} and
+	 * {@link #translateNavigationFailure}, so the tool can report the precise policy reason instead of
+	 * the raw {@code net::ERR_FAILED} / {@code TimeoutError} the aborted request produces.
+	 * </p>
+	 *
+	 * <p>
+	 * Playwright dispatches route and event callbacks on the thread waiting inside the Playwright
+	 * call - this session's confined thread - so this is single-threaded in practice; {@code volatile}
+	 * documents and guarantees the publication regardless.
+	 * </p>
+	 */
+	private volatile String _offPolicyNavigation;
+
+	private BrowserSession(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
+			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
+			boolean evadeBotDetection) {
 		_key = key;
 		_navigationTimeoutMillis = navigationTimeoutMillis;
+		_actionTimeoutMillis = actionTimeoutMillis;
 		_navigationSettleMillis = navigationSettleMillis;
 		_policy = policy;
 		_initialStorageState = initialStorageState;
@@ -298,7 +430,34 @@ final class BrowserSession {
 	 * @return A started session.
 	 */
 	static BrowserSession open(Object key, int navigationTimeoutMillis, DomainPolicy policy) {
-		return open(key, navigationTimeoutMillis, 1500, policy, null, false, false);
+		return open(key, navigationTimeoutMillis, DEFAULT_ACTION_TIMEOUT_MILLIS, 1500, policy, null, false,
+			false);
+	}
+
+	/**
+	 * Opens a new isolated session with the given post-navigation settle cap and the default bounded
+	 * action timeout.
+	 *
+	 * @param key
+	 *        The session key (for diagnostics).
+	 * @param navigationTimeoutMillis
+	 *        The per-page-load Playwright timeout.
+	 * @param navigationSettleMillis
+	 *        Hard cap (ms) of the post-navigation settle; {@code 0} disables it.
+	 * @param policy
+	 *        The top-level-origin domain policy.
+	 * @param initialStorageState
+	 *        A {@code storageState} JSON to seed into the fresh context, or {@code null}.
+	 * @param headed
+	 *        Whether to launch a visible window instead of headless.
+	 * @param evadeBotDetection
+	 *        Whether to disguise the context as ordinary desktop Chrome.
+	 * @return A started session.
+	 */
+	static BrowserSession open(Object key, int navigationTimeoutMillis, int navigationSettleMillis,
+			DomainPolicy policy, String initialStorageState, boolean headed, boolean evadeBotDetection) {
+		return open(key, navigationTimeoutMillis, DEFAULT_ACTION_TIMEOUT_MILLIS, navigationSettleMillis,
+			policy, initialStorageState, headed, evadeBotDetection);
 	}
 
 	/**
@@ -308,7 +467,10 @@ final class BrowserSession {
 	 * @param key
 	 *        The session key (for diagnostics).
 	 * @param navigationTimeoutMillis
-	 *        The per-operation Playwright timeout.
+	 *        The per-page-load Playwright timeout.
+	 * @param actionTimeoutMillis
+	 *        The bounded timeout for an element action (click/type/ARIA snapshot); see
+	 *        {@link #_actionTimeoutMillis}.
 	 * @param navigationSettleMillis
 	 *        Hard cap (ms) of the post-navigation DOM-quiet settle run before a page-load capture
 	 *        (see {@link #settle()}); {@code 0} disables the settle (immediate capture). Always
@@ -334,10 +496,11 @@ final class BrowserSession {
 	 *        {@code false} the behaviour is byte-for-byte the plain headless-shell default.
 	 * @return A started session.
 	 */
-	static BrowserSession open(Object key, int navigationTimeoutMillis, int navigationSettleMillis,
-			DomainPolicy policy, String initialStorageState, boolean headed, boolean evadeBotDetection) {
-		BrowserSession session = new BrowserSession(key, navigationTimeoutMillis, navigationSettleMillis,
-			policy, initialStorageState, headed, evadeBotDetection);
+	static BrowserSession open(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
+			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
+			boolean evadeBotDetection) {
+		BrowserSession session = new BrowserSession(key, navigationTimeoutMillis, actionTimeoutMillis,
+			navigationSettleMillis, policy, initialStorageState, headed, evadeBotDetection);
 		try {
 			session.startOnThread();
 		} catch (RuntimeException ex) {
@@ -416,6 +579,7 @@ final class BrowserSession {
 			_context.setDefaultTimeout(_navigationTimeoutMillis);
 			_context.setDefaultNavigationTimeout(_navigationTimeoutMillis);
 			installSecurityRoute(_context);
+			installRedirectGuard(_context);
 			if (_evadeBotDetection) {
 				// Mask the automation fingerprint before any page script runs (applies to every
 				// document in the context, including the initial about:blank page created below).
@@ -456,12 +620,18 @@ final class BrowserSession {
 	 */
 	PageView navigate(String url) {
 		return callOnThread(() -> {
-			Response response = _page.navigate(url, new Page.NavigateOptions()
-				.setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
-				.setTimeout(_navigationTimeoutMillis));
+			beginNavigationAttempt();
+			Response response;
+			try {
+				response = _page.navigate(url, new Page.NavigateOptions()
+					.setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+					.setTimeout(_navigationTimeoutMillis));
+			} catch (PlaywrightException ex) {
+				throw translateNavigationFailure(url, ex);
+			}
 			settle();
 			String finalUrl = response != null ? response.url() : _page.url();
-			verifyFinalUrl(finalUrl);
+			verifyNavigationPolicy(finalUrl);
 			int status = response != null ? response.status() : -1;
 			Map<String, String> headers = response != null ? response.headers() : null;
 			// An explicit navigation always lands on a fresh document: start a new page generation so
@@ -491,12 +661,17 @@ final class BrowserSession {
 	PageView click(String ref) {
 		return callOnThread(() -> {
 			requireCurrentRef(ref);
+			beginNavigationAttempt();
 			String urlBefore = _page.url();
 			Locator locator = _page.locator(refSelector(ref));
-			locator.click(new Locator.ClickOptions().setTimeout(_navigationTimeoutMillis));
+			try {
+				locator.click(new Locator.ClickOptions().setTimeout(_actionTimeoutMillis));
+			} catch (PlaywrightException ex) {
+				throw translateActionFailure(ref, "clicked", ex);
+			}
 			settle();
 			String finalUrl = _page.url();
-			verifyFinalUrl(finalUrl);
+			verifyNavigationPolicy(finalUrl);
 			boolean navigated = !finalUrl.equals(urlBefore);
 			if (navigated) {
 				// The click navigated to a different page: refs from the old page are now stale.
@@ -510,8 +685,17 @@ final class BrowserSession {
 	PageView type(String ref, String text) {
 		return callOnThread(() -> {
 			requireCurrentRef(ref);
+			// Typing does not navigate by itself, but filling a field can submit a form: start a fresh
+			// observation window so a leftover record from the previous operation cannot be
+			// mis-attributed to this one.
+			beginNavigationAttempt();
 			Locator locator = _page.locator(refSelector(ref));
-			locator.fill(text == null ? "" : text, new Locator.FillOptions().setTimeout(_navigationTimeoutMillis));
+			try {
+				locator.fill(text == null ? "" : text,
+					new Locator.FillOptions().setTimeout(_actionTimeoutMillis));
+			} catch (PlaywrightException ex) {
+				throw translateActionFailure(ref, "typed into", ex);
+			}
 			return capture(_page.url(), -1, null, false);
 		}, navigationDeadlineMillis());
 	}
@@ -528,16 +712,22 @@ final class BrowserSession {
 	/** Navigates back in this session's history, then captures. */
 	PageView back() {
 		return callOnThread(() -> {
-			Response response = _page.goBack(new Page.GoBackOptions()
-				.setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
-				.setTimeout(_navigationTimeoutMillis));
+			beginNavigationAttempt();
+			Response response;
+			try {
+				response = _page.goBack(new Page.GoBackOptions()
+					.setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+					.setTimeout(_navigationTimeoutMillis));
+			} catch (PlaywrightException ex) {
+				throw translateNavigationFailure(_page.url(), ex);
+			}
 			if (response == null) {
 				// No history entry to go back to: the page is unchanged, so keep the generation.
 				return capture(_page.url(), -1, null, false);
 			}
 			settle();
 			String finalUrl = response.url();
-			verifyFinalUrl(finalUrl);
+			verifyNavigationPolicy(finalUrl);
 			// Going back landed on a different page in history: start a new page generation.
 			_pageGeneration++;
 			return capture(finalUrl, response.status(), response.headers(), true);
@@ -589,15 +779,176 @@ final class BrowserSession {
 		}
 	}
 
-	private void verifyFinalUrl(String finalUrl) {
+	/**
+	 * Starts a fresh policy-observation window for one operation, discarding whatever the previous
+	 * one recorded. Must be called before the Playwright call that may navigate, so
+	 * {@link #_offPolicyNavigation} can only ever describe the navigation being attempted now.
+	 */
+	private void beginNavigationAttempt() {
+		_offPolicyNavigation = null;
+	}
+
+	/**
+	 * Fails the operation when the navigation it performed violated the security policy - either
+	 * because the document the browser ended up on is off-policy, or because some intermediate
+	 * top-level hop was.
+	 *
+	 * <p>
+	 * Checking the recorded hop as well as the final URL is what stops a redirect chain from
+	 * <em>laundering</em> an off-policy origin: {@code allowed.example} → an internal or blocklisted
+	 * host → back to {@code allowed.example} would leave a permitted final URL while the browser had
+	 * meanwhile been driven somewhere the policy forbids. Both are reported as a
+	 * {@link BrowserPolicyException} with the same wording, so the model sees one consistent,
+	 * actionable message however the off-policy origin was reached.
+	 * </p>
+	 *
+	 * <p>
+	 * This is deliberately stricter than checking the final URL alone: an allowlisted page that tries
+	 * to take the top-level frame somewhere the policy forbids now fails the operation, where it
+	 * previously returned the (still-permitted) page it was in the middle of leaving. Reporting that is
+	 * the honest answer - the site wants to be somewhere the operator has ruled out - and it is the
+	 * only way the laundering case above can be caught at all. It cannot misfire in
+	 * {@code allow-any-domains} mode, where every public origin is permitted and so nothing is ever
+	 * recorded.
+	 * </p>
+	 *
+	 * @param finalUrl
+	 *        The URL of the document the navigation ended on.
+	 */
+	private void verifyNavigationPolicy(String finalUrl) {
+		String offPolicyHop = _offPolicyNavigation;
+		if (offPolicyHop != null) {
+			throw new BrowserPolicyException(offPolicyHop);
+		}
 		// Belt-and-suspenders: re-validate the URL the browser actually landed on.
 		String ssrf = UrlSafety.validateUrl(URI.create(finalUrl));
 		if (ssrf != null) {
-			throw new IllegalStateException("Navigation ended at a blocked address: " + ssrf);
+			throw new BrowserPolicyException(blockedAddressMessage(ssrf));
 		}
 		if (!_policy.isNavigationPermitted(URI.create(finalUrl).getHost())) {
-			throw new IllegalStateException("Navigation ended at a blocked or off-allowlist origin: " + finalUrl);
+			throw new BrowserPolicyException(blockedOriginMessage(finalUrl));
 		}
+	}
+
+	/**
+	 * Translates a failed page load into the tool's own vocabulary, so no raw Playwright error text
+	 * (a {@code net::ERR_FAILED} / {@code TimeoutError} carrying a driver JavaScript stack trace) ever
+	 * reaches the model.
+	 *
+	 * <p>
+	 * A load that the security route aborted is reported as the policy block it actually was; that is
+	 * the whole point of recording {@link #_offPolicyNavigation}, because an aborted main-frame request
+	 * is indistinguishable from a network failure at the Playwright level - and, when the abort hits a
+	 * redirect hop, the load can even sit out the full navigation timeout waiting for a document that
+	 * will never commit. A genuine timeout becomes a
+	 * {@link BrowserNavigationTimeoutException}; anything else keeps its (first-line-only) Playwright
+	 * message.
+	 * </p>
+	 *
+	 * @param url
+	 *        The URL whose load failed.
+	 * @param failure
+	 *        The Playwright exception the load raised.
+	 * @return The exception to throw instead; never {@code null}.
+	 */
+	private RuntimeException translateNavigationFailure(String url, PlaywrightException failure) {
+		String offPolicyHop = _offPolicyNavigation;
+		if (offPolicyHop != null) {
+			return new BrowserPolicyException(offPolicyHop);
+		}
+		if (failure instanceof TimeoutError) {
+			return new BrowserNavigationTimeoutException(url, _navigationTimeoutMillis);
+		}
+		return new IllegalStateException("the page at " + url + " could not be loaded: " + terse(failure));
+	}
+
+	/**
+	 * Translates a failed element action (click/type) into the tool's own vocabulary: a bounded
+	 * actionability timeout becomes the recoverable {@link BrowserRefNotActionableException}, while
+	 * anything else keeps its (first-line-only) Playwright message.
+	 *
+	 * @param ref
+	 *        The ref that was acted on.
+	 * @param action
+	 *        The attempted action, phrased for the message (e.g. {@code "clicked"}).
+	 * @param failure
+	 *        The Playwright exception the action raised.
+	 * @return The exception to throw instead; never {@code null}.
+	 */
+	private RuntimeException translateActionFailure(String ref, String action, PlaywrightException failure) {
+		String offPolicyHop = _offPolicyNavigation;
+		if (offPolicyHop != null) {
+			// The action itself worked but triggered a navigation the policy refused.
+			return new BrowserPolicyException(offPolicyHop);
+		}
+		if (failure instanceof TimeoutError) {
+			return new BrowserRefNotActionableException(ref, action, _actionTimeoutMillis);
+		}
+		return new IllegalStateException(
+			"the element for ref \"" + ref + "\" could not be " + action + ": " + terse(failure));
+	}
+
+	/**
+	 * The first line of a Playwright exception's message. The full text is a multi-line dump of the
+	 * driver's own JavaScript stack trace, which is noise in a tool result (and, exempted from the
+	 * agent loop's truncation, noise that is not even trimmed); the first line carries the actual
+	 * cause.
+	 */
+	private static String terse(PlaywrightException failure) {
+		String message = failure.getMessage();
+		if (message == null || message.isBlank()) {
+			return failure.getClass().getSimpleName();
+		}
+		for (String line : message.split("\n")) {
+			String trimmed = line.strip();
+			// The Playwright Java client renders the driver error as "Error {\n message='...'\n ...".
+			if (trimmed.startsWith("message='")) {
+				return trimmed.substring("message='".length()).strip();
+			}
+		}
+		return message.split("\n")[0].strip();
+	}
+
+	/** The message reported when a navigation was refused because of SSRF protection. */
+	private static String blockedAddressMessage(String ssrfReason) {
+		return "Navigation ended at a blocked address: " + ssrfReason;
+	}
+
+	/**
+	 * The message reported when a navigation was refused by the domain policy. Deliberately names the
+	 * policy as a whole rather than one list: {@link DomainPolicy} answers only whether a host is
+	 * permitted, so which of the blocklist or the allowlist refused it is not knowable here (unlike in
+	 * {@code BrowserTool}'s pre-flight check, which consults both and can say).
+	 */
+	private static String blockedOriginMessage(String url) {
+		String host = null;
+		try {
+			host = URI.create(url).getHost();
+		} catch (RuntimeException ex) {
+			// Keep the URL-only wording below.
+		}
+		StringBuilder message = new StringBuilder();
+		message.append("Navigation ended at a blocked or off-allowlist origin: ").append(url);
+		if (host != null && !host.isBlank()) {
+			message.append(" - the domain '").append(host)
+				.append("' is not permitted by the browser domain policy (allowlist/blocklist) "
+					+ "configured by the administrator");
+		}
+		message.append(". The page was NOT loaded. Stay on a permitted origin, or report that this "
+			+ "source is not reachable.");
+		return message.toString();
+	}
+
+	/**
+	 * Records {@code url} as the off-policy top-level navigation of the operation currently running,
+	 * unless one is already recorded (the first one is the cause; later ones are consequences).
+	 */
+	private void recordOffPolicyNavigation(URI uri, String ssrfReason) {
+		if (_offPolicyNavigation != null) {
+			return;
+		}
+		_offPolicyNavigation =
+			ssrfReason != null ? blockedAddressMessage(ssrfReason) : blockedOriginMessage(uri.toString());
 	}
 
 	private PageView capture(String finalUrl, int status, Map<String, String> responseHeaders,
@@ -632,8 +983,10 @@ final class BrowserSession {
 			Logger.warn("Browser element extraction failed for " + finalUrl + ".", ex, BrowserSession.class);
 		}
 		String html = _page.content();
+		// Bounded by the action timeout, not the page-load timeout: this reads the already-loaded
+		// document, so a body that is not there now will not appear by waiting a page load for it.
 		String ariaSnapshot = _page.locator("body").ariaSnapshot(
-			new Locator.AriaSnapshotOptions().setTimeout(_navigationTimeoutMillis));
+			new Locator.AriaSnapshotOptions().setTimeout(_actionTimeoutMillis));
 		// Always-on, non-evasive block-page detection: flag a bot-protection / access-denied page so
 		// the agent gets a distinct signal instead of an unexplained empty element list.
 		BlockSignal block = BotWallDetector.detect(status, responseHeaders, html);
@@ -705,8 +1058,17 @@ final class BrowserSession {
 	}
 
 	/**
-	 * Installs a request route that enforces SSRF and the domain policy for every request the
-	 * context issues, including redirects and sub-resources.
+	 * Installs a request route that enforces SSRF and the domain policy for every request the context
+	 * issues (main document and sub-resources), and records the reason whenever it refuses a top-level
+	 * navigation.
+	 *
+	 * <p>
+	 * Recording matters because {@code route.abort()} is invisible at the Playwright API level: the
+	 * pending {@code goto}/{@code click} only learns that "the request failed", and reports it as a
+	 * {@code net::ERR_FAILED} or - when nothing else commits a document - by sitting out its whole
+	 * timeout. {@link #translateNavigationFailure} turns the recorded reason back into the policy
+	 * message the abort actually stood for.
+	 * </p>
 	 */
 	private void installSecurityRoute(BrowserContext context) {
 		context.route("**/*", route -> {
@@ -724,20 +1086,81 @@ final class BrowserSession {
 				route.resume();
 				return;
 			}
-			if (UrlSafety.validateUrl(uri) != null) {
+			boolean mainFrameNavigation =
+				request.isNavigationRequest() && request.frame().parentFrame() == null;
+			String ssrf = UrlSafety.validateUrl(uri);
+			if (ssrf != null) {
 				// SSRF: block private/loopback/etc. for ALL requests (main doc and sub-resources).
+				if (mainFrameNavigation) {
+					recordOffPolicyNavigation(uri, ssrf);
+				}
 				route.abort();
 				return;
 			}
-			boolean mainFrameNavigation =
-				request.isNavigationRequest() && request.frame().parentFrame() == null;
 			if (mainFrameNavigation && !_policy.isNavigationPermitted(uri.getHost())) {
 				// Blocklist/allowlist govern only the top-level document origin; SSRF (above)
 				// governs every request.
+				recordOffPolicyNavigation(uri, null);
 				route.abort();
 				return;
 			}
 			route.resume();
+		});
+	}
+
+	/**
+	 * Installs a request listener that records a top-level navigation to an off-policy origin reached
+	 * by a <b>server-side redirect</b>, which {@link #installSecurityRoute the security route} never
+	 * sees.
+	 *
+	 * <p>
+	 * <b>Why this is needed.</b> Playwright routes are matched once per request; when a handler calls
+	 * {@code route.resume()} and the server answers with a {@code 3xx}, Chromium follows the
+	 * {@code Location} itself and the handler is <em>not</em> invoked again for the redirected request
+	 * (verified against Playwright 1.49: the request <em>event</em> fires for the hop, with
+	 * {@code redirectedFrom} set, while the route does not). A redirect therefore cannot be aborted
+	 * from a route at all - the browser has already issued the request by the time it is observable.
+	 * This listener closes what <em>can</em> be closed: every off-policy top-level hop is recorded, so
+	 * {@link #verifyNavigationPolicy} fails the operation even when the chain ends back on a permitted
+	 * origin, and the model is told which origin was refused rather than being handed the page.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Residual limit.</b> The redirected request itself is still issued by the browser before
+	 * anything can observe it. Blocking a redirect hop before it leaves the process is not expressible
+	 * with Playwright's routing API; it needs the browser to be constrained from outside (a filtering
+	 * forward proxy, or Chromium host-resolver rules). Until then a server on a permitted origin can
+	 * still make the browser send one request to an origin the policy forbids - it just cannot hand the
+	 * resulting page to the agent.
+	 * </p>
+	 */
+	private void installRedirectGuard(BrowserContext context) {
+		context.onRequest(request -> {
+			if (request.redirectedFrom() == null) {
+				// Not a redirect hop: the route above already governed (and could abort) this one.
+				return;
+			}
+			if (!request.isNavigationRequest() || request.frame().parentFrame() != null) {
+				return;
+			}
+			URI uri;
+			try {
+				uri = URI.create(request.url());
+			} catch (IllegalArgumentException ex) {
+				return;
+			}
+			String scheme = uri.getScheme();
+			if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+				return;
+			}
+			String ssrf = UrlSafety.validateUrl(uri);
+			if (ssrf != null) {
+				recordOffPolicyNavigation(uri, ssrf);
+				return;
+			}
+			if (!_policy.isNavigationPermitted(uri.getHost())) {
+				recordOffPolicyNavigation(uri, null);
+			}
 		});
 	}
 
@@ -826,7 +1249,13 @@ final class BrowserSession {
 	PageView activateRefForTest(String ref) {
 		return callOnThread(() -> {
 			requireCurrentRef(ref);
-			_page.locator(refSelector(ref)).click(new Locator.ClickOptions().setTimeout(_navigationTimeoutMillis));
+			beginNavigationAttempt();
+			try {
+				_page.locator(refSelector(ref))
+					.click(new Locator.ClickOptions().setTimeout(_actionTimeoutMillis));
+			} catch (PlaywrightException ex) {
+				throw translateActionFailure(ref, "clicked", ex);
+			}
 			return capture(_page.url(), -1, null, false);
 		}, navigationDeadlineMillis());
 	}

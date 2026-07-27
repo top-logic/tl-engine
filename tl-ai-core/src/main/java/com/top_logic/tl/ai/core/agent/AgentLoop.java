@@ -36,6 +36,9 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.DiagnosticLoggingListener;
+import com.top_logic.tl.ai.core.agent.perception.PerceivedContent;
+import com.top_logic.tl.ai.core.agent.perception.PerceptionBinding;
+import com.top_logic.tl.ai.core.agent.perception.PerceptionContext;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
@@ -48,6 +51,8 @@ import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.ImageContent;
+import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -217,15 +222,35 @@ public class AgentLoop {
 	}
 
 	/**
+	 * Publishes a fresh {@link PerceptionContext} for this run on the loop thread.
+	 *
+	 * <p>Tools reach it through {@link PerceptionBinding}; parallel tool workers inherit it via
+	 * {@link BindingSnapshot}. A delegated sub-run binds its own context and restores the parent's
+	 * on close, so a sub-agent never leaks content into its parent's conversation.</p>
+	 */
+	private PerceptionBinding.Binding bindPerception() {
+		return PerceptionBinding.bind(PerceptionContext.forModel(_config.model()));
+	}
+
+	/**
+	 * Appends everything tools queued for the model to perceive since the last turn, plus any
+	 * completed-but-undelivered subagent results, to the conversation.
+	 *
+	 * <p>Called at the start of every turn, i.e. after the previous turn's tool results were
+	 * appended and before the next provider request is built.</p>
+	 */
+	private void injectBetweenTurns(Conversation conversation) {
+		injectSubagentResultsForTest(conversation);
+		injectPerceivedContentForTest(conversation);
+	}
+
+	/**
 	 * Injects results of any completed-but-undelivered subagents (from the thread-bound
 	 * registry) into the conversation as system messages, so the next provider call sees them.
 	 * Realizes the long-standing "memory/attachment injection between turns" intent.
+	 *
+	 * <p>Test-visible entry point for the subagent part of {@link #injectBetweenTurns}.</p>
 	 */
-	private void injectSubagentResults(Conversation conversation) {
-		injectSubagentResultsForTest(conversation);
-	}
-
-	/** Test-visible entry point for {@link #injectSubagentResults}. */
 	static void injectSubagentResultsForTest(Conversation conversation) {
 		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
 		if (registry == null) {
@@ -238,6 +263,34 @@ public class AgentLoop {
 			conversation.add(new SystemMessage(
 				UUID.randomUUID().toString(), Instant.now(), text));
 		}
+	}
+
+	/**
+	 * Appends content that tools queued via {@link PerceptionContext#offer} as a single user
+	 * message, so the model perceives it on the next provider call.
+	 *
+	 * <p>A user message is used deliberately: {@link ImageContent}/{@link PdfContent} are exactly
+	 * what a chat attachment produces, and every provider request builder already renders those
+	 * parts in a user turn. Tool <em>results</em>, by contrast, are text-only in every provider's
+	 * wire format, so a tool cannot hand the model an image through its own return value.</p>
+	 *
+	 * <p>Test-visible entry point for the perception part of {@link #injectBetweenTurns}.</p>
+	 */
+	static void injectPerceivedContentForTest(Conversation conversation) {
+		PerceptionContext perception = PerceptionBinding.getContext();
+		if (perception == null) {
+			return;
+		}
+		List<PerceivedContent> pending = perception.takePending();
+		if (pending.isEmpty()) {
+			return;
+		}
+		List<ContentPart> parts = new ArrayList<>(pending.size() * 2);
+		for (PerceivedContent content : pending) {
+			parts.add(new TextContent(content.description()));
+			parts.add(content.content());
+		}
+		conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(), parts));
 	}
 
 	/**
@@ -263,7 +316,7 @@ public class AgentLoop {
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
-		try {
+		try (PerceptionBinding.Binding perception = bindPerception()) {
 			return runLoop(conversation, context, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
@@ -288,7 +341,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectSubagentResults(conversation);
+			injectBetweenTurns(conversation);
 
 			AssistantMessage assistantMsg;
 			try {
@@ -376,7 +429,7 @@ public class AgentLoop {
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
-		try {
+		try (PerceptionBinding.Binding perception = bindPerception()) {
 			return runWithMemory(_memory, context, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
@@ -425,7 +478,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectSubagentResults(conversation);
+			injectBetweenTurns(conversation);
 
 			AssistantMessage assistantMsg;
 			try {

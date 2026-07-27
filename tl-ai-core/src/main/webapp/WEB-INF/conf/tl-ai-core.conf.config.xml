@@ -1320,7 +1320,8 @@ Read -> act -> re-read:
 
 To keep a login for later sessions: log in, then `browserSaveCookies(pool)`. To reuse one: call
 `browserUseCookies(pool)` BEFORE navigating - this is also how an unattended agent starts from an
-administrator's shared pool. Need a visual record of a page? `browserScreenshot`.
+administrator's shared pool. Need a visual record of a page? `browserScreenshot`. To actually SEE a
+saved image or PDF - a screenshot you just took, say - call `view-document.viewDocument` with its TID.
 
 ## Invariants
 
@@ -1341,6 +1342,7 @@ administrator's shared pool. Need a visual record of a page? `browserScreenshot`
 							<tool name="web-browser.browserScreenshot"/>
 							<tool name="web-browser.browserSaveCookies"/>
 							<tool name="web-browser.browserUseCookies"/>
+							<tool name="view-document.viewDocument"/>
 						</tools>
 					</skill>
 					<skill name="TL_spawnSubagents"
@@ -2101,6 +2103,11 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 					<factory name="model-instances">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool"
+						/>
+					</factory>
+					<factory name="view-document">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.ViewDocumentTool"
 						/>
 					</factory>
 					<factory name="model-annotation-browser">

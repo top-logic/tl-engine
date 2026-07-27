@@ -10,18 +10,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.basic.IdentifierUtil;
-import com.top_logic.basic.TLID;
-import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.configured.ScriptParameter;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tl.ai.core.tools.model.TidResolver;
 
 /**
  * Translates an incoming named-argument map into the positional {@link Object} array expected by
@@ -109,19 +104,7 @@ public final class ScriptParamCoercion {
 	 *        the lookup fails fast.
 	 */
 	private static TLObject resolveTid(Object raw) {
-		String tid = String.valueOf(raw);
-		String[] split = tid.split(":", 2);
-		if (split.length != 2) {
-			throw new IllegalArgumentException(
-				"Invalid TID format. Expected 'TypeName:id', got: " + tid);
-		}
-		TLID id = IdentifierUtil.fromExternalForm(split[1]);
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		KnowledgeObject ko = kb.getKnowledgeObject(split[0], id);
-		if (ko == null) {
-			throw new IllegalArgumentException("Object with TID '" + tid + "' not found");
-		}
-		return WrapperFactory.getWrapper(ko);
+		return TidResolver.resolve(String.valueOf(raw));
 	}
 
 }

@@ -1631,7 +1631,7 @@ div.lcHidden {
 
 .tl-info-service {
 	position: absolute;
-	top: var(--spacing-03);
+	bottom: var(--spacing-03);
 	right: var(--spacing-03);
 	width: 25rem;
 	max-height: 100%;

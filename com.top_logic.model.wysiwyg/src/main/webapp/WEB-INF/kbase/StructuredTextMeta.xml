@@ -30,7 +30,7 @@
 					deletion-policy="delete-referer"
 					target-type="MetaAttribute"
 				/>
-				<mo_attribute att_name="filename" att_type="String" mandatory="true" />
+				<mo_attribute att_name="filename" att_type="String" mandatory="true" binary="true" />
 				<mo_attribute att_name="content-type" att_type="String" mandatory="true" />
 				<mo_attribute att_name="data" att_type="java.sql.Blob" mandatory="true" />
 				<mo_attribute att_name="hash" att_type="String" mandatory="true" />

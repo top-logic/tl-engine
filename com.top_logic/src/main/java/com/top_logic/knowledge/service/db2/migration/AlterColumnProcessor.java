@@ -325,6 +325,24 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 						Log.WARN);
 				}
 			}
+			// Apply the column type aspects on top of a potential new value type, so that they take
+			// precedence (in the same order as in adjustTable(...)).
+			if (attrConfig instanceof DBColumnType) {
+				DBColumnType columnType = (DBColumnType) attrConfig;
+				Config<?> config = getConfig();
+				if (config.getDBType() != null) {
+					columnType.setDBType(config.getDBType());
+				}
+				if (config.getDBSize() != null) {
+					columnType.setDBSize(config.getDBSize());
+				}
+				if (config.getDBPrecision() != null) {
+					columnType.setDBPrecision(config.getDBPrecision());
+				}
+				if (config.isBinary() != null) {
+					columnType.setBinary(config.isBinary());
+				}
+			}
 		}
 
 		AddMOAttributeProcessor.updateStoredSchema(log, connection, currentSchema);

@@ -19,6 +19,16 @@ implemented in the current deliverable.
 | Account / group / role administration | **Migrate now** | Reuses the shipped `admin/admin.view.xml` from `com.top_logic.layout.view`, gated by the `administration` security scope. |
 | React login / logout | **Migrate now** | Reuses the shipped `login.view.xml` + `tl.login:Credentials`. |
 | WYSIWYG HTML attribute (`tl.model.wysiwyg:Html`) | **Migrate now** | `html` attribute on `Demo`, edited by the React WYSIWYG control. Depends on `tl-model-wysiwyg` (the type) + `tl-layout-react-wysiwyg` (the control, which registers a `FieldControlService` provider for the type). |
+| Charts | **Migrated** | `demo/chart-demo.view.xml` (bar/doughnut/line/combined, click-to-drill dialog). Depends on `tl-layout-react-chartjs`; `demo.charts` model + seed data. |
+| Flow diagram + Gantt | **Migrated** | `demo/flow-diagram-demo.view.xml` (build-plan tree) and `demo/gantt-demo.view.xml` (axis LOD, spans/edges/decorations). Depend on `tl-react-flow-server`; flow uses the `test.flowchart` model + seed data. |
+| PDF viewer | **Migrated** | `demo/pdf-demo.view.xml` — inline PDF of server-rendered `pdfFile()` HTML via the `<pdf>` element (`tl-layout-view`). |
+| Config editor | **Migrated** | `demo/config-editor-demo.view.xml` + `DemoConfigEditorElement`, over a self-contained `DemoEditorConfig` (not the legacy `TypeDemos`). Depends on `tl-layout-configedit`. |
+| TL-Script editor | **Migrated** | `demo/tlscript-editor-demo.view.xml` via the `<tlscript-editor>` element (`tl-model-search-react`). |
+| Constraint test + composition table | **Migrated** | `demo/constraint-test.view.xml` (+ create / edit-item dialogs) over the `test.constraints` model, exercising mandatory/size/range/warning/expression constraints and an in-form `<composition-table>`. |
+| Tiles + multi-tab tiles | **Migrated** | `demo/tiles-demo.view.xml` and `demo/tiles-multi-demo.view.xml` (drill-down tile stacks with app-bar breadcrumb). |
+| Responsive master-detail | **Migrated** | `demo/responsive-md-demo.view.xml` (`<adaptive-detail>`, cascading scopes → milestones) over the `tl.demo.projectManagement` model + seed data (+ create dialogs). |
+| Error handling | **Migrated** | `demo/error-handling-demo.view.xml` — `TopLogicException` and wrapped KB errors. |
+| Green-field table filtering | **Migrated** | Per-column `RegexpOptionsFilter` (facets) and model/script-defined `ScriptedFilter` (over `demo.filter:LongRange`) folded into the **Attributes** table. |
 
 ## Folded out (deliberately not reproduced as standalone demos)
 
@@ -26,21 +36,17 @@ implemented in the current deliverable.
 |------|---------|-------|
 | `DemoTypes` tree / structure (composite refs, `CyclicDemoTreeBuilder`) | **Drop here** | Structure is a separate concern from attribute kinds. A dedicated structure/tree demo belongs to a later phase, not on the attribute-kind type. |
 | `DemoTypes` polymorphism (A/B/C/L/X inheritance, security P/PP/PX) | **Drop here** | Inheritance is a separate concern; not mixed into the flat `Demo` type. |
-| Per-element micro-demos (split-panel, tabs, channels, dialog, context-menu as standalone pages) | **Drop** | These compositions appear naturally inside real feature views; standalone pages add no value. |
+| Isolated common-UI-element demos (split-panel, tabs, channels, dialog, context-menu, open-window, dashboard + layout, scroll repro, commands display, command-security/theme settings) | **Drop** | These compositions appear naturally inside the real feature views; standalone pages add no value. |
+| Standalone input-controls and green-field table demos | **Drop** | Redundant with the **Attributes** demo (field controls + green-field table); the table's distinct filtering capability was folded into Attributes instead. |
+| Static graph layout and live module graph diagrams | **Drop** | The module graph was only the model-editor seed; the static graph layout is a subset of it. Flow + Gantt already cover the `tl-react-flow` capability. |
 
 ## Deferred (later phases — value + the dependency they need)
 
 | Area | Verdict | Needs |
 |------|---------|-------|
-| Green-field `TableViewControl` filtering/scripted filters | **Defer** | Already partly exercised by the Attributes table; expand with per-column filters. |
-| `composition-table` (in-form child editing) | **Defer** | Needs a child type — reintroduce once a second type is justified. |
 | Security permission matrix (`SecurityMatrixElement`) | **Defer** | Reusable from `com.top_logic.layout.view/views/admin/permissions.view.xml`. |
-| Config editor | **Defer** | `tl-layout-configedit` (already transitive). |
-| Charts | **Defer** | `tl-layout-react-chartjs`. |
-| Flow / graph / module diagrams | **Defer** | `tl-react-flow-*`, graph modules. |
 | BPE (business process) | **Defer** | `tl-bpe-app`. |
 | Reporting / office (Word/Excel/PowerPoint export) | **Defer** | `tl-reporting`, `tl-reporting-office`. |
 | Search | **Defer** | `tl-search-*`. |
 | Mail folders | **Defer** | `tl-mail`. |
 | Import / export (CSV / Excel importers) | **Defer** | `tl-importer`. |
-| Gantt | **Defer** | reporting/gantt modules. |

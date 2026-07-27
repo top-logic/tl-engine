@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Create dialog for a free tl.demo.projectManagement:ProjectScope.
+	
+	The opening command creates a transient ProjectScope and binds it to "model"; the Create button
+	persists it via copy(transient: false) and writes it to "selection" (bound to the list's
+	selectedScope channel, so the new scope becomes selected).
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+	<window width="500px">
+		<title>
+			<en>New Project Scope</en>
+			<de>Neuer Projekt-Scope</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<field attribute="name"/>
+			<field attribute="description"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<execute-script function="obj -> $obj.copy(transient: false)"/>
+					</with-transaction>
+					<write-channel name="selection"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

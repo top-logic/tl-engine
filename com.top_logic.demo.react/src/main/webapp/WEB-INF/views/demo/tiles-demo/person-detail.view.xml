@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Detail frame pushed by the overview's "Open" command. Receives the selected
+	Person on the pre-registered "person" channel (no <bind> needed - the
+	tile-stack registers the captured param value before this view's controls
+	are created). Derives the Person's contact for the form below.
+-->
+<view>
+	<channels>
+		<channel name="person"/>
+		<derived-channel name="contact"
+			expr="p -> if($p != null, $p.get(`tl.accounts:Person#contact`), null)"
+			inputs="person"
+		/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Person Detail</en>
+			<de>Personendetails</de>
+		</title>
+		<form input="contact">
+			<field attribute="firstname"/>
+			<field attribute="name"/>
+			<field attribute="phone"/>
+			<field attribute="email"/>
+		</form>
+	</panel>
+</view>

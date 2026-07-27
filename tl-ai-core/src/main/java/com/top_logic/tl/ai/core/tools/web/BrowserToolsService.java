@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
@@ -491,6 +492,14 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 			key -> BrowserSession.open(key, navigationTimeoutMillis, actionTimeoutMillis,
 				navigationSettleMillis, this, _seedByKey.get(key), headed, evadeBotDetection),
 			BrowserSession::close);
+		// State the EFFECTIVE limits, not the configured ones: they are clamped, and an operator
+		// investigating "the cap is not being honoured" needs to be able to rule out a configuration
+		// or restart-propagation artifact from the log alone.
+		Logger.info("Browser tool started: at most " + getMaxConcurrentSessions()
+			+ " concurrent live browser session(s), page-load timeout " + getNavigationTimeoutSeconds()
+			+ " s, action timeout " + getActionTimeoutSeconds() + " s, settle cap "
+			+ getNavigationSettleMillis() + " ms, acquire timeout " + getAcquireTimeoutSeconds()
+			+ " s, idle timeout " + getSessionIdleTimeoutSeconds() + " s.", BrowserToolsService.class);
 		_instance = this;
 	}
 
@@ -942,11 +951,21 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	}
 
 	/**
-	 * The number of currently live browser sessions. Package-visible for testing.
+	 * The number of currently registered (reusable) browser sessions. Package-visible for testing.
 	 */
 	int liveSessionCountForTest() {
 		BrowserSessionPool<BrowserSession> pool = _pool;
 		return pool == null ? 0 : pool.liveSessionCount();
+	}
+
+	/**
+	 * The number of browser contexts that currently <em>exist</em> - what
+	 * {@link Config#getMaxConcurrentSessions()} bounds: registered sessions plus any still being torn
+	 * down. Package-visible for testing.
+	 */
+	int liveResourceCountForTest() {
+		BrowserSessionPool<BrowserSession> pool = _pool;
+		return pool == null ? 0 : pool.liveResourceCount();
 	}
 
 	private PageView run(Object sessionKey, Function<BrowserSession, PageView> op) {

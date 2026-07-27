@@ -628,6 +628,144 @@ public class TestBrowserTool extends TestCase {
 		}
 	}
 
+	/**
+	 * The cap bounds the browser contexts that actually EXIST, not merely the pool's bookkeeping.
+	 *
+	 * <p>
+	 * This is the regression multi-user testing found: with {@code max-concurrent-sessions="1"}, two
+	 * conversations ran two live browsers at once. The pool freed the slot the moment it unregistered
+	 * the evicted session and only then <em>queued</em> the teardown, so a new browser launched while
+	 * the old process was still running - defeating the very thing the cap documents itself as
+	 * protecting ("each live session is its own Chromium process"). It went unnoticed because the
+	 * existing tests assert {@link BrowserSessionPool#liveSessionCount()}, which counts that same
+	 * bookkeeping; the resource count is what matters, so this test tracks created-minus-destroyed
+	 * directly.
+	 * </p>
+	 */
+	public void testPoolCapCountsResourcesStillBeingDestroyed() {
+		// Teardown must take observable time - as closing a real browser process does - or the race
+		// this test is about closes on its own and the test proves nothing. It stays well inside the
+		// acquire timeout, so the correct behaviour is to WAIT for it, not to fail fast.
+		long teardownMillis = 400;
+		long acquireTimeoutMillis = 5_000;
+		AtomicInteger alive = new AtomicInteger();
+		AtomicInteger peakAlive = new AtomicInteger();
+		try (BrowserSessionPool<Object> pool = new BrowserSessionPool<>(1, 60_000, acquireTimeoutMillis,
+				System::nanoTime,
+				key -> {
+					peakAlive.accumulateAndGet(alive.incrementAndGet(), Math::max);
+					return new Object();
+				},
+				session -> {
+					try {
+						Thread.sleep(teardownMillis);
+					} catch (InterruptedException ex) {
+						Thread.currentThread().interrupt();
+					}
+					alive.decrementAndGet();
+				})) {
+			pool.run("A", session -> session);
+			assertEquals("A exists", 1, alive.get());
+
+			// A is live and IDLE. A different key must reclaim it - and must not exist alongside it.
+			long startNanos = System.nanoTime();
+			pool.run("B", session -> session);
+			long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
+
+			assertEquals("cap of 1 is never exceeded, teardown included", 1, peakAlive.get());
+			assertTrue("B waited for A's teardown instead of launching alongside it (was "
+				+ elapsedMillis + " ms, teardown " + teardownMillis + " ms)",
+				elapsedMillis >= teardownMillis * 3 / 4);
+			assertEquals("exactly one browser exists afterwards", 1, alive.get());
+			assertEquals("and the pool agrees", 1, pool.liveResourceCount());
+			assertEquals("only B is registered", 1, pool.liveSessionCount());
+		}
+	}
+
+	/**
+	 * When the only session's teardown takes longer than the acquire timeout, admission FAILS FAST
+	 * rather than launching a second browser: a context that is still closing still owns its memory.
+	 * Together with {@link #testPoolCapCountsResourcesStillBeingDestroyed()} this pins both permitted
+	 * outcomes of an over-cap admission - reclaim by LRU, or fail fast - and rules out the third.
+	 */
+	public void testPoolFailsFastRatherThanExceedCapDuringSlowTeardown() throws Exception {
+		AtomicInteger alive = new AtomicInteger();
+		CountDownLatch teardownStarted = new CountDownLatch(1);
+		CountDownLatch finishTeardown = new CountDownLatch(1);
+		try (BrowserSessionPool<Object> pool = new BrowserSessionPool<>(1, 60_000, 300,
+				System::nanoTime,
+				key -> {
+					alive.incrementAndGet();
+					return new Object();
+				},
+				session -> {
+					teardownStarted.countDown();
+					await(finishTeardown);
+					alive.decrementAndGet();
+				})) {
+			pool.run("A", session -> session);
+
+			try {
+				pool.run("B", session -> session);
+				fail("a second browser must not be launched while the first is still closing");
+			} catch (BrowserBusyException expected) {
+				assertTrue("mentions the cap", expected.getMessage().contains("busy"));
+			}
+			assertTrue("the eviction of idle A was started", teardownStarted.await(5, TimeUnit.SECONDS));
+			assertEquals("never more than the cap, even mid-teardown", 1, alive.get());
+
+			// Once the teardown completes the slot frees up and the next attempt succeeds.
+			finishTeardown.countDown();
+			pool.run("B", session -> session);
+			assertEquals("B replaced A rather than joining it", 1, alive.get());
+			assertEquals(1, pool.liveResourceCount());
+		}
+	}
+
+	/**
+	 * A session becoming idle wakes a thread waiting for a slot immediately. It used to sit out its
+	 * entire acquire timeout - and then fail with "browser busy" although a slot had been free almost
+	 * the whole time - because a plain release signalled nobody.
+	 */
+	public void testPoolReleaseWakesWaiterPromptly() throws Exception {
+		long acquireTimeoutMillis = 5_000;
+		try (BrowserSessionPool<Object> pool = new BrowserSessionPool<>(1, 60_000, acquireTimeoutMillis,
+				System::nanoTime, key -> new Object(), session -> {
+					// no-op destroyer
+				})) {
+			CountDownLatch inUse = new CountDownLatch(1);
+			CountDownLatch release = new CountDownLatch(1);
+			Thread holder = new Thread(() -> pool.run("A", session -> {
+				inUse.countDown();
+				await(release);
+				return null;
+			}));
+			holder.setDaemon(true);
+			holder.start();
+			assertTrue("holder acquired the only slot", inUse.await(5, TimeUnit.SECONDS));
+
+			// Free the slot shortly from now, then measure how long admission actually takes.
+			Thread freer = new Thread(() -> {
+				try {
+					Thread.sleep(200);
+				} catch (InterruptedException ex) {
+					Thread.currentThread().interrupt();
+				}
+				release.countDown();
+			});
+			freer.setDaemon(true);
+			freer.start();
+
+			long startNanos = System.nanoTime();
+			pool.run("B", session -> session);
+			long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
+			assertTrue("admitted as soon as the slot freed, not at the acquire timeout (was "
+				+ elapsedMillis + " ms, timeout " + acquireTimeoutMillis + " ms)",
+				elapsedMillis < acquireTimeoutMillis / 2);
+			holder.join(5_000);
+		}
+	}
+
 	public void testPoolIdleSweepClosesExpiredSessions() {
 		AtomicLong now = new AtomicLong(0);
 		List<Object> destroyed = new CopyOnWriteArrayList<>();
@@ -804,9 +942,13 @@ public class TestBrowserTool extends TestCase {
 	}
 
 	/**
-	 * Proves the concurrency cap is never exceeded: with a cap of 1, a second session key reclaims
-	 * the first (LRU) so only one live browser exists at a time. (Fail-fast under active contention
-	 * is covered deterministically by {@link #testPoolFailsFastWhenAllSlotsInUse()}.) Gated behind
+	 * Proves the concurrency cap is never exceeded with real browsers: with a cap of 1, a second
+	 * session key reclaims the first (LRU) so only one browser <em>context</em> exists at a time. It
+	 * asserts the resource count too, which counts a context that is still being closed - the
+	 * registered-session count alone looked correct throughout the multi-user cap regression.
+	 * (Fail-fast under active contention is covered deterministically by
+	 * {@link #testPoolFailsFastWhenAllSlotsInUse()}, and the teardown accounting by
+	 * {@link #testPoolCapCountsResourcesStillBeingDestroyed()}.) Gated behind
 	 * {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testConcurrencyCapBoundsLiveSessionsEndToEnd() throws Exception {
@@ -819,6 +961,8 @@ public class TestBrowserTool extends TestCase {
 			service.navigate(new Object(), HOME_PAGE);
 			service.navigate(new Object(), JS_PAGE);
 			assertEquals("cap of 1 is never exceeded (LRU reclaim)", 1, service.liveSessionCountForTest());
+			assertEquals("and no evicted browser is still alive alongside it", 1,
+				service.liveResourceCountForTest());
 		} finally {
 			service.shutDown();
 		}

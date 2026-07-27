@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -30,9 +32,10 @@ import com.top_logic.basic.Logger;
  * tool's former single global {@code ReentrantLock}. The guarantees are:
  * </p>
  * <ul>
- * <li><b>Bounded live sessions.</b> At most {@code maxSessions} resources exist at once. The
- * bound protects memory (each live browser context costs RAM); it is <em>not</em> a throughput
- * throttle - independent sessions run fully concurrently.</li>
+ * <li><b>Bounded live sessions.</b> At most {@code maxSessions} resources <em>exist</em> at once -
+ * counting one whose teardown has been started but not finished (see below). The bound protects
+ * memory (each live browser context costs RAM); it is <em>not</em> a throughput throttle -
+ * independent sessions run fully concurrently.</li>
  * <li><b>Reuse by key.</b> {@link #run(Object, Function)} returns the existing resource for a
  * key, so a session sticks across many tool calls.</li>
  * <li><b>Fail-fast admission.</b> Creating a new session waits at most {@code acquireTimeout} for
@@ -46,8 +49,21 @@ import com.top_logic.basic.Logger;
  * </ul>
  *
  * <p>
- * The pool is thread-safe. Resource creation and destruction happen outside the internal lock so
- * a slow browser launch never blocks unrelated sessions; destruction is asynchronous.
+ * <b>A slot is held until the resource is really gone.</b> Removing an entry from the key map is
+ * not the same as releasing the memory it stands for: closing a browser context means shutting down
+ * an OS process, which takes time and is done off the caller's thread. A slot therefore stays
+ * reserved from admission until the destroyer has <em>returned</em>, so an eviction-and-recreate can
+ * never leave two browser processes alive under a cap of one. Freeing the slot at removal time
+ * instead - which is what this pool used to do - made {@code max-concurrent-sessions} bound the
+ * bookkeeping rather than the memory it exists to bound: with a cap of 1, two conversations
+ * alternating tool calls each evicted the other and genuinely ran two Chromium processes at once.
+ * Teardown consequently runs on its own executor rather than the maintenance thread, so several
+ * slow closes proceed in parallel instead of queueing behind each other and behind the idle sweep.
+ * </p>
+ *
+ * <p>
+ * The pool is thread-safe. Resource creation and destruction happen outside the internal lock so a
+ * slow browser launch or close never blocks unrelated sessions.
  * </p>
  *
  * @param <S>
@@ -101,17 +117,53 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 
 	private final ReentrantLock _lock = new ReentrantLock();
 
-	/** Signalled whenever a slot frees up (session removed or reservation released). */
+	/**
+	 * Signalled whenever the capacity picture changes in a way a waiter could act on: a slot was
+	 * released (a resource finished being destroyed) or a session became idle and so evictable.
+	 */
 	private final Condition _slotFreed = _lock.newCondition();
 
 	private final Map<Object, Entry<S>> _entries = new HashMap<>();
 
-	/** Live sessions plus in-flight reservations; the quantity bounded by {@link #_maxSessions}. */
+	/**
+	 * The quantity bounded by {@link #_maxSessions}: every resource that exists or is about to.
+	 *
+	 * <p>
+	 * That is registered sessions, plus in-flight creation reservations, plus sessions already removed
+	 * from {@link #_entries} whose destroyer has not returned yet. The last group is the point: a
+	 * browser context that is being closed still owns its process and its memory, so its slot must not
+	 * be handed to a new session. Incremented by {@link #reserveSlot()} and released only by
+	 * {@link #releaseSlot()}, which runs after the destroyer completes.
+	 * </p>
+	 */
 	private int _activeCount;
+
+	/**
+	 * How many resources have been handed to the destroyer but have not come back yet.
+	 *
+	 * <p>
+	 * Part of {@link #_activeCount}. Read by {@link #reserveSlot()} to start at most one eviction at a
+	 * time: a teardown in flight will free a slot on its own, so evicting another session would just
+	 * destroy a usable browser.
+	 * </p>
+	 */
+	private int _pendingTeardownCount;
 
 	private boolean _closed;
 
+	/** Runs the periodic idle sweep only, so it cannot be delayed behind a slow teardown. */
 	private final ScheduledExecutorService _maintenance;
+
+	/**
+	 * Runs resource destruction, off both the caller's thread and the sweeper's.
+	 *
+	 * <p>
+	 * Its own executor because a teardown holds a slot until it returns: queueing several slow closes
+	 * onto one thread would serialise the very waits that admission depends on. Threads are created on
+	 * demand and reaped when idle, and their number is naturally bounded by the session cap.
+	 * </p>
+	 */
+	private final ExecutorService _teardown;
 
 	/**
 	 * Creates a pool.
@@ -142,6 +194,7 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 		_maintenance = Executors.newSingleThreadScheduledExecutor(daemon("browser-session-maintenance"));
 		_maintenance.scheduleWithFixedDelay(this::sweepIdleSafely, sweepPeriodMillis, sweepPeriodMillis,
 			TimeUnit.MILLISECONDS);
+		_teardown = Executors.newCachedThreadPool(daemon("browser-session-teardown"));
 	}
 
 	private static ThreadFactory daemon(String name) {
@@ -213,13 +266,8 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 		try {
 			session = _factory.create(key);
 		} catch (RuntimeException | Error ex) {
-			_lock.lock();
-			try {
-				_activeCount--;
-				_slotFreed.signalAll();
-			} finally {
-				_lock.unlock();
-			}
+			// Nothing was created, so the reservation is released immediately.
+			releaseSlot();
 			throw ex;
 		}
 
@@ -227,9 +275,8 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 		try {
 			Entry<S> race = _entries.get(key);
 			if (race != null && !race._removed) {
-				// A concurrent caller created the same key; keep theirs, drop ours.
-				_activeCount--;
-				_slotFreed.signalAll();
+				// A concurrent caller created the same key; keep theirs, drop ours. Our slot stays
+				// reserved until the surplus resource has actually been destroyed.
 				destroyAsync(session);
 				race._inUse++;
 				race._lastAccessNanos = _clock.getAsLong();
@@ -244,12 +291,22 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 		}
 	}
 
-	/** Reserves one of the {@link #_maxSessions} slots, waiting/evicting as needed. Caller holds the lock. */
+	/**
+	 * Reserves one of the {@link #_maxSessions} slots, evicting an idle session and/or waiting as
+	 * needed. Caller holds the lock.
+	 *
+	 * <p>
+	 * At most one eviction is started at a time. A teardown already in flight is going to free a slot
+	 * the moment its destroyer returns, so evicting a second session as well would destroy a perfectly
+	 * usable browser for nothing - and with a cap of one, would destroy the pool's only session on
+	 * every admission.
+	 * </p>
+	 */
 	private void reserveSlot() {
 		long deadline = _clock.getAsLong() + _acquireTimeoutNanos;
 		while (_activeCount >= _maxSessions) {
-			if (reclaimIdleLocked()) {
-				continue;
+			if (_pendingTeardownCount == 0) {
+				reclaimIdleLocked();
 			}
 			long remaining = deadline - _clock.getAsLong();
 			if (remaining <= 0) {
@@ -257,6 +314,8 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 					"The browser is busy: all " + _maxSessions + " concurrent sessions are in use. Retry shortly.");
 			}
 			try {
+				// Woken by releaseSlot() as soon as a resource is really gone, and by release() as
+				// soon as a session becomes idle and therefore evictable.
 				_slotFreed.awaitNanos(remaining);
 			} catch (InterruptedException ex) {
 				Thread.currentThread().interrupt();
@@ -270,8 +329,14 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 	}
 
 	/**
-	 * Evicts the least-recently-used idle (not in-use) session to free a slot. Caller holds the
-	 * lock. Destruction is scheduled asynchronously. Returns {@code true} if a slot was freed.
+	 * Starts evicting the least-recently-used idle (not in-use) session. Caller holds the lock.
+	 *
+	 * <p>
+	 * Returns {@code true} when an eviction was <em>started</em> - not when a slot became free. The
+	 * evicted resource still holds its slot while it is being destroyed, so the caller must go back to
+	 * waiting on {@link #_slotFreed}; this is exactly the wait that keeps a cap of one from ever
+	 * running two browsers at once.
+	 * </p>
 	 */
 	private boolean reclaimIdleLocked() {
 		Entry<S> lru = null;
@@ -289,11 +354,17 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 		return true;
 	}
 
+	/**
+	 * Unregisters {@code entry} and starts destroying its resource. Caller holds the lock.
+	 *
+	 * <p>
+	 * The slot is deliberately <em>not</em> released here: the resource still exists until its
+	 * destroyer returns. {@link #releaseSlot()} does that.
+	 * </p>
+	 */
 	private void removeLocked(Entry<S> entry) {
 		entry._removed = true;
 		_entries.remove(entry._key);
-		_activeCount--;
-		_slotFreed.signalAll();
 		destroyAsync(entry._session);
 	}
 
@@ -304,6 +375,10 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 			entry._lastAccessNanos = _clock.getAsLong();
 			if ((discard || entry._broken || _closed) && entry._inUse <= 0 && !entry._removed) {
 				removeLocked(entry);
+			} else if (entry._inUse <= 0) {
+				// The session just became idle, so it is now evictable: wake anyone waiting for a
+				// slot instead of letting them sit out their whole acquire timeout.
+				_slotFreed.signalAll();
 			}
 		} finally {
 			_lock.unlock();
@@ -338,7 +413,11 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 		}
 	}
 
-	/** The number of live sessions (excludes in-flight reservations). Package-visible for tests. */
+	/**
+	 * The number of registered (reusable) sessions. Excludes in-flight reservations and sessions whose
+	 * teardown has been started - use {@link #liveResourceCount()} for what the cap actually bounds.
+	 * Package-visible for tests.
+	 */
 	int liveSessionCount() {
 		_lock.lock();
 		try {
@@ -348,14 +427,65 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 		}
 	}
 
+	/**
+	 * The number of resources that <em>exist</em>, which is what {@code maxSessions} bounds: registered
+	 * sessions, plus in-flight creations, plus sessions still being destroyed. Never exceeds the cap.
+	 * Package-visible for tests.
+	 */
+	int liveResourceCount() {
+		_lock.lock();
+		try {
+			return _activeCount;
+		} finally {
+			_lock.unlock();
+		}
+	}
+
+	/**
+	 * Destroys {@code session} off the caller's thread, releasing its slot only once the destroyer has
+	 * returned. Caller holds the lock.
+	 */
 	private void destroyAsync(S session) {
-		_maintenance.execute(() -> {
-			try {
-				_destroyer.destroy(session);
-			} catch (RuntimeException ex) {
-				Logger.warn("Failed to destroy a browser session cleanly.", ex, BrowserSessionPool.class);
-			}
-		});
+		_pendingTeardownCount++;
+		try {
+			_teardown.execute(() -> {
+				try {
+					_destroyer.destroy(session);
+				} catch (RuntimeException ex) {
+					Logger.warn("Failed to destroy a browser session cleanly.", ex, BrowserSessionPool.class);
+				} finally {
+					finishTeardown();
+				}
+			});
+		} catch (RejectedExecutionException shuttingDown) {
+			// The pool is closing and will destroy what remains synchronously; do not leak the slot.
+			_pendingTeardownCount--;
+			_activeCount = Math.max(0, _activeCount - 1);
+			_slotFreed.signalAll();
+		}
+	}
+
+	/** Marks one teardown as complete and frees the slot its resource occupied. */
+	private void finishTeardown() {
+		_lock.lock();
+		try {
+			_pendingTeardownCount = Math.max(0, _pendingTeardownCount - 1);
+			_activeCount = Math.max(0, _activeCount - 1);
+			_slotFreed.signalAll();
+		} finally {
+			_lock.unlock();
+		}
+	}
+
+	/** Frees a slot that was reserved but never turned into a resource (a failed creation). */
+	private void releaseSlot() {
+		_lock.lock();
+		try {
+			_activeCount = Math.max(0, _activeCount - 1);
+			_slotFreed.signalAll();
+		} finally {
+			_lock.unlock();
+		}
 	}
 
 	@Override
@@ -370,11 +500,14 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 			remaining = new ArrayList<>(_entries.values());
 			_entries.clear();
 			_activeCount = 0;
+			_pendingTeardownCount = 0;
 			_slotFreed.signalAll();
 		} finally {
 			_lock.unlock();
 		}
-		// Destroy synchronously on shutdown so nothing leaks past service teardown.
+		// Destroy synchronously on shutdown so nothing leaks past service teardown. In-flight
+		// teardowns run to completion on their own threads; their slot accounting is moot now that
+		// the pool is closed and admits nothing.
 		for (Entry<S> entry : remaining) {
 			try {
 				_destroyer.destroy(entry._session);
@@ -383,5 +516,6 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 			}
 		}
 		_maintenance.shutdownNow();
+		_teardown.shutdown();
 	}
 }

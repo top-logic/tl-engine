@@ -194,4 +194,18 @@ public interface ViewCommand {
 	 * @return The result of the command execution.
 	 */
 	HandlerResult execute(ReactContext context, Object input);
+
+	/**
+	 * Whether executing this command applies the values entered into the enclosing form.
+	 *
+	 * <p>
+	 * Such a command is disabled while the form displays validation errors, since the form would
+	 * reject it.
+	 * </p>
+	 *
+	 * @see FormValid
+	 */
+	default boolean appliesFormState() {
+		return false;
+	}
 }

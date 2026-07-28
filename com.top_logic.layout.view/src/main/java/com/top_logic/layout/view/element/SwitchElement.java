@@ -6,7 +6,9 @@
 package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -27,8 +29,10 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * UIElement that shows exactly one of several configured content views, chosen by evaluating a
@@ -37,9 +41,12 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * <p>
  * The cases are tested in configuration order; the first whose {@link CaseConfig#getTest() test}
  * returns {@code true} is shown. If none matches, the {@code <default>} content is shown (or nothing
- * if no default is configured). The switch re-evaluates whenever the input channel changes and only
- * swaps the visible view when the matching case actually changes - within a single case the content
- * (bound to its own channels) updates itself.
+ * if no default is configured). The switch re-evaluates whenever the input channel changes, and also
+ * when the input object itself is changed (a test typically decides by an attribute of that object,
+ * which can be edited without the channel value changing) - see
+ * {@link Config#getObservedTypes()} for tests reaching beyond the input object. It only swaps the
+ * visible view when the matching case actually changes - within a single case the content (bound to
+ * its own channels) updates itself.
  * </p>
  *
  * <p>
@@ -66,6 +73,9 @@ public class SwitchElement implements UIElement {
 
 		/** Configuration name for {@link #getDefault()}. */
 		String DEFAULT = "default";
+
+		/** Configuration name for {@link #getObservedTypes()}. */
+		String OBSERVED_TYPES = "observed-types";
 
 		@Override
 		@ClassDefault(SwitchElement.class)
@@ -96,6 +106,21 @@ public class SwitchElement implements UIElement {
 		@Name(DEFAULT)
 		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getDefault();
+
+		/**
+		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
+		 * {@link #getCases() cases}, in addition to the {@link #getInput() input} object, which is
+		 * always observed.
+		 *
+		 * <p>
+		 * Configure this only for a test that navigates beyond the input object, e.g. one deciding by
+		 * an attribute of the input's container: a change of that other object is invisible to the
+		 * input's own observation. Empty (default) observes just the input object.
+		 * </p>
+		 */
+		@Name(OBSERVED_TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getObservedTypes();
 	}
 
 	/**
@@ -134,12 +159,15 @@ public class SwitchElement implements UIElement {
 
 	private final List<UIElement> _default;
 
+	private final List<TLModelPartRef> _observedTypeRefs;
+
 	/**
 	 * Creates a new {@link SwitchElement} from configuration.
 	 */
 	@CalledByReflection
 	public SwitchElement(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
+		_observedTypeRefs = config.getObservedTypes();
 		_cases = new ArrayList<>();
 		for (CaseConfig caseConfig : config.getCases()) {
 			QueryExecutor test = QueryExecutor.compile(caseConfig.getTest());
@@ -156,7 +184,22 @@ public class SwitchElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel input = context.resolveChannel(_inputRef);
-		return new ReactSwitchControl(context, input, _cases, _default);
+		return new ReactSwitchControl(context, input, _cases, _default, resolveObservedTypes());
+	}
+
+	private Set<TLStructuredType> resolveObservedTypes() {
+		if (_observedTypeRefs.isEmpty()) {
+			return Set.of();
+		}
+		Set<TLStructuredType> types = new HashSet<>();
+		for (TLModelPartRef ref : _observedTypeRefs) {
+			TLStructuredType type = (TLStructuredType) ref.resolveType();
+			if (type == null) {
+				throw new RuntimeException("Failed to resolve observed type: " + ref.qualifiedName());
+			}
+			types.add(type);
+		}
+		return types;
 	}
 
 	/**

@@ -2282,6 +2282,23 @@ button.tlDrawer__closeBtn:focus-visible {
 
 .tlSnackbar__message {
 	flex: 1;
+	/* Carries block content when the message consists of a summary and a list of details. */
+	display: block;
+}
+
+/* Summary line of a message that carries several detail messages. */
+.tlSnackbar__title {
+	font-weight: 600;
+}
+
+/* One detail message per line, so it is clear where one ends and the next begins. */
+.tlSnackbar__message ul {
+	margin: var(--spacing-02) 0 0;
+	padding-inline-start: var(--spacing-05);
+}
+
+.tlSnackbar__message li + li {
+	margin-top: var(--spacing-02);
 }
 
 .tlSnackbar__action {

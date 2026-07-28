@@ -15,8 +15,13 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.db2.expr.visit.PolymorphicTypeComputation;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.Access;
+import com.top_logic.model.search.expr.And;
+import com.top_logic.model.search.expr.CompareOp;
 import com.top_logic.model.search.expr.EvalContext;
-import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.IsEqual;
+import com.top_logic.model.search.expr.Not;
+import com.top_logic.model.search.expr.Or;
 
 /**
  * Value whose {@link #buildExpression(EvalContext) expression} is a literal with an argument from
@@ -42,7 +47,7 @@ public class Variable extends CompiledValue {
 	}
 
 	@Override
-	public Value processEquals(SearchExpression orig, Value other) {
+	public Value processEquals(IsEqual orig, Value other) {
 		if (!other.hasInterpretedPart()) {
 			CompiledValue otherCompiled = other.compiled();
 			if (!notifyExpectedCompiledType(otherCompiled.compiledType())) {
@@ -54,12 +59,29 @@ public class Variable extends CompiledValue {
 	}
 
 	@Override
-	public Value processAccess(SearchExpression orig, TLStructuredTypePart part) {
+	public Value processCompareOp(CompareOp orig, Value other) {
+		if (!other.hasInterpretedPart()) {
+			CompiledValue otherCompiled = other.compiled();
+			if (!notifyExpectedCompiledType(otherCompiled.compiledType())) {
+				return new InterpretedExpression(orig);
+			}
+			if (!CompiledCompareOp.supportsCompiledCompare(otherCompiled.compiledType())) {
+				// Ordering of non-numeric/temporal types (e.g. strings) would use the database
+				// collation, which may differ from the in-memory comparison. Keep it interpreted.
+				return new InterpretedExpression(orig);
+			}
+			return new CompiledCompareOp(this, otherCompiled, orig.getKind());
+		}
 		return new InterpretedExpression(orig);
 	}
 
 	@Override
-	public Value processNot(SearchExpression orig) {
+	public Value processAccess(Access orig, TLStructuredTypePart part) {
+		return new InterpretedExpression(orig);
+	}
+
+	@Override
+	public Value processNot(Not orig) {
 		if (!notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
 			return new InterpretedExpression(orig);
 		}
@@ -67,7 +89,7 @@ public class Variable extends CompiledValue {
 	}
 
 	@Override
-	public Value processOr(SearchExpression orig, Value other) {
+	public Value processOr(Or orig, Value other) {
 		if (!notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
 			return new InterpretedExpression(orig);
 		}
@@ -82,7 +104,7 @@ public class Variable extends CompiledValue {
 	}
 
 	@Override
-	public Value processAnd(SearchExpression orig, Value other) {
+	public Value processAnd(And orig, Value other) {
 		if (!notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
 			return new InterpretedExpression(orig);
 		}

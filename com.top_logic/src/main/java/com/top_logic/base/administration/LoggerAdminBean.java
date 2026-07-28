@@ -32,6 +32,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -45,13 +46,14 @@ import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
-/** 
- * Utility functions around the Logging framework.
- * 
- * TODO KHA This works only with Logger4, redesign for LoggerJ 
- * 
+/**
+ * Administration service for the application's logging framework configuration.
+ *
+ * TODO KHA This works only with Logger4, redesign for LoggerJ
+ *
  * @author  Frank Mausz
  */
+@Label("Logging administration")
 public final class LoggerAdminBean extends ConfiguredManagedClass<LoggerAdminBean.Config> {
 
 	/**

@@ -22,6 +22,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.module.ManagedClass;
@@ -31,13 +32,14 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.ProcessingKind;
 
 /**
- * Holds and aggregates information about the time consumed for executing commands
+ * Collects and aggregates information about the time consumed for executing commands
  * in this VM.
  * Might be extended to measure rendering time etc.
  * Extensions to measure time in a cluster would need a database synchronization mechanism.
- * 
+ *
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */
+@Label("Performance monitor")
 public class PerformanceMonitor extends ManagedClass implements Reloadable {
 
 	private Map<Long, Set<PerformanceDataEntryAggregated>> perfData;

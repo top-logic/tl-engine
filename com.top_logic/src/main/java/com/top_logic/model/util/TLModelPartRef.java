@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.util;
 
+import java.util.Collection;
 import java.util.regex.Pattern;
 
 import com.top_logic.basic.ConfigurationError;
@@ -15,7 +16,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
+import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.OptionMapping;
@@ -25,6 +28,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.config.AbstractModelPartMapping;
@@ -314,6 +318,16 @@ public class TLModelPartRef {
 				return null;
 			}
 			return arg.resolveType();
+		}
+	}
+
+	/**
+	 * {@link GenericFunction} retrieving all {@link TLModule}s.
+	 */
+	public static class AllModules extends Function0<Collection<TLModule>> {
+		@Override
+		public Collection<TLModule> apply() {
+			return ModelService.getApplicationModel().getModules();
 		}
 	}
 

@@ -23,18 +23,18 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DynamicGet extends GenericMethod implements AccessLike {
+public class DynamicGet extends GenericMethodWithSecurity implements AccessLike {
 
 	/**
 	 * Creates a new {@link DynamicGet}.
 	 */
-	public DynamicGet(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	public DynamicGet(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new DynamicGet(getName(), arguments);
+		return new DynamicGet(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -91,7 +91,7 @@ public class DynamicGet extends GenericMethod implements AccessLike {
 		public DynamicGet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
-			return new DynamicGet(getConfig().getName(), args);
+			return new DynamicGet(getConfig().getName(), args, true);
 		}
 
 	}

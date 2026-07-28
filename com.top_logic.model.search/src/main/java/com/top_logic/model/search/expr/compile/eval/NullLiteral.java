@@ -7,6 +7,12 @@
 package com.top_logic.model.search.expr.compile.eval;
 
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.Access;
+import com.top_logic.model.search.expr.And;
+import com.top_logic.model.search.expr.CompareOp;
+import com.top_logic.model.search.expr.IsEqual;
+import com.top_logic.model.search.expr.Not;
+import com.top_logic.model.search.expr.Or;
 import com.top_logic.model.search.expr.SearchExpression;
 
 /**
@@ -26,7 +32,7 @@ public class NullLiteral extends Value {
 	}
 
 	@Override
-	public Value processEquals(SearchExpression orig, Value other) {
+	public Value processEquals(IsEqual orig, Value other) {
 		if (!other.hasInterpretedPart()) {
 			return new CompiledIsNull(other.compiled());
 		}
@@ -34,25 +40,31 @@ public class NullLiteral extends Value {
 	}
 
 	@Override
-	public Value processAccess(SearchExpression orig, TLStructuredTypePart part) {
+	public Value processCompareOp(CompareOp orig, Value other) {
+		// Comparison with null always leads to null
+		return this;
+	}
+
+	@Override
+	public Value processAccess(Access orig, TLStructuredTypePart part) {
 		// Access on null always leads to null
 		return this;
 	}
 
 	@Override
-	public Value processNot(SearchExpression orig) {
+	public Value processNot(Not orig) {
 		// Strange situation: not(literal(null))
 		return new InterpretedExpression(orig);
 	}
 
 	@Override
-	public Value processOr(SearchExpression orig, Value other) {
+	public Value processOr(Or orig, Value other) {
 		// Strange situation: or(xxx, literal(null))
 		return new InterpretedExpression(orig);
 	}
 
 	@Override
-	public Value processAnd(SearchExpression orig, Value other) {
+	public Value processAnd(And orig, Value other) {
 		// Strange situation: and(xxx, literal(null))
 		return new InterpretedExpression(orig);
 	}

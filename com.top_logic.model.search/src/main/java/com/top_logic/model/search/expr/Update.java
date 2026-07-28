@@ -9,13 +9,17 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Updating the value of a model property as side-effect.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Update extends SearchExpression {
+public class Update extends SearchExpressionWithSecurity {
 
 	private SearchExpression _self;
 
@@ -23,7 +27,8 @@ public class Update extends SearchExpression {
 
 	private SearchExpression _value;
 
-	Update(SearchExpression self, TLStructuredTypePart part, SearchExpression value) {
+	Update(SearchExpression self, TLStructuredTypePart part, SearchExpression value, boolean usesSecurity) {
+		super(usesSecurity);
 		_self = self;
 		_part = part;
 		_value = value;
@@ -76,8 +81,21 @@ public class Update extends SearchExpression {
 	public Object internalEval(EvalContext definitions, Args args) {
 		TLObject self = asTLObjectNonNull(getSelf().evalWith(definitions, args));
 		Object value = getValue().evalWith(definitions, args);
-		self.tUpdate(getPart(), value);
+		TLStructuredTypePart part = getPart();
+
+		if (usesSecurity()) {
+			checkWritePermission(self, part);
+		}
+
+		self.tUpdate(part, value);
 		return null;
+	}
+
+	static void checkWritePermission(TLObject self, TLStructuredTypePart part) {
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		if (!accessRights.isAllowed(TLContext.currentUser(), self, part, SimpleBoundCommandGroup.WRITE)) {
+			throw new TopLogicException(I18NConstants.WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE.fill(self, part));
+		}
 	}
 
 	@Override

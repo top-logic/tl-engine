@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
@@ -17,6 +18,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 
 /**
  * Persistent {@link com.top_logic.tool.boundsec.BoundObject}.
@@ -75,7 +77,11 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
     }
 
     @Override
-	public BoundObject getSecurityParent() {
+	public final BoundObject getSecurityParent() {
+		throw new UnsupportedOperationException("Call getSecurityParents()");
+	}
+
+	private BoundObject securityRoot() {
 		BoundHelper boundHelper = BoundHelper.getInstance();
 		if (boundHelper.useDefaultObject()) {
 			BoundObject securityRoot = boundHelper.getDefaultObject();
@@ -86,5 +92,18 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
 
         return null;
     }
+
+	@Override
+	public Collection<? extends BoundObject> getSecurityParents() {
+		Collection<? extends BoundObject> securityParents = AccessManager.getInstance().getSecurityParents(this);
+		if (!securityParents.isEmpty()) {
+			// Explicitly configured security parents take precedence. The global security root is
+			// not added automatically; a type that also wants the root in its parent chain can
+			// configure it explicitly (see the "singleton" security-parent path element).
+			return securityParents;
+		}
+		// No security parents configured: fall back to the global security root, if enabled.
+		return CollectionUtil.singletonOrEmptyList(securityRoot());
+	}
 
 }

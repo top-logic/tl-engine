@@ -74,6 +74,12 @@ public abstract class AbstractExpressionAttribute<C extends AbstractExpressionAt
 			// Otherwise, access to model literals that is resolved by the compiler use the wrong
 			// versions (e.g. classifier instances).
 			_expr = compileExpr(attribute.getModel(), getConfig().getExpr());
+
+			// Note: Whether the computation applies the invoking user's model security is decided by
+			// the concrete subclass, NOT here in the shared base. A computed value has definer's-rights
+			// semantics and disables it (see AttributeByExpression#init); a macro renders navigable
+			// content that must honor the viewer's read rights and therefore keeps security enabled
+			// (see MacroAttribute).
 		} catch (Exception ex) {
 			throw new TopLogicException(
 				I18NConstants.ERROR_INITIALIZING_ATTR__ATTR_MSG.fill(TLModelUtil.qualifiedName(attribute),

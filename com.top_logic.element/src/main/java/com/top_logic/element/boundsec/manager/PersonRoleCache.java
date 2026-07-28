@@ -30,8 +30,6 @@ import com.top_logic.tool.boundsec.BoundRole;
  */
 public class PersonRoleCache extends RoleComputation {
 
-	private final Person _person;
-
 	private List<TLID> _groupIDs;
 
 	private final ConcurrentHashMap<TLID, Set<BoundRole>> cache = new ConcurrentHashMap<>();
@@ -43,9 +41,8 @@ public class PersonRoleCache extends RoleComputation {
 	 * Creates a new {@link PersonRoleCache}.
 	 */
 	public PersonRoleCache(Person person, StorageAccessManager accessManager) {
-		super(accessManager);
-		_person = person;
-		_groupIDs = getGroupIDs(_person);
+		super(person, accessManager);
+		_groupIDs = getGroupIDs(getPerson());
 	}
 
 	@Override
@@ -65,7 +62,7 @@ public class PersonRoleCache extends RoleComputation {
 			try {
 				roles = Collections.unmodifiableSet(new HashSet<>(findRolesInStorage(boundObject, _groupIDs)));
 			} catch (StorageException ex) {
-				Logger.error("Unable to determine roles for person '" + _person.getName()
+				Logger.error("Unable to determine roles for person '" + getPerson().getName()
 					+ "'. No roles will be given to the person.", ex, PersonRoleCache.class);
 				roles = Collections.emptySet();
 			}
@@ -85,7 +82,7 @@ public class PersonRoleCache extends RoleComputation {
 		try {
 			return findAllowedBusinessObjects(someRoles, _groupIDs, someObjects);
 		} catch (StorageException ex) {
-			Logger.error("Unable to determine allowed for person '" + _person.getName() + "'.", ex,
+			Logger.error("Unable to determine allowed for person '" + getPerson().getName() + "'.", ex,
 				PersonRoleCache.class);
 			return Collections.emptyList();
 		}

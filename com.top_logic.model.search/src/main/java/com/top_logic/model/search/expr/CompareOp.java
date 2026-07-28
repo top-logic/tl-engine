@@ -63,6 +63,13 @@ public class CompareOp extends BinaryOperation implements BooleanExpression {
 	 * Actually computes the comparison based on the given concrete values.
 	 */
 	public final Boolean compute(Object left, Object right) {
+		return compare(left, right, _kind);
+	}
+
+	/**
+	 * Actually computes the comparison based on the given concrete values and compare kind.
+	 */
+	public static Boolean compare(Object left, Object right, CompareKind kind) {
 		if ((left == null) || (right == null)) {
 			/* Null is not a valid value in comparisons: If one of the values is null, the result is
 			 * not result, but null itself. */
@@ -70,7 +77,7 @@ public class CompareOp extends BinaryOperation implements BooleanExpression {
 		}
 		int comparison = Compare.Cmp.NULL_SMALLEST.compare(left, right);
 
-		switch (_kind) {
+		switch (kind) {
 			case GE:
 				return comparison >= 0;
 			case GT:
@@ -81,7 +88,7 @@ public class CompareOp extends BinaryOperation implements BooleanExpression {
 				return comparison < 0;
 		}
 
-		throw new UnsupportedOperationException("No such comparison: " + _kind);
+		throw new UnsupportedOperationException("No such comparison: " + kind);
 	}
 
 	@Override

@@ -52,6 +52,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -61,7 +62,6 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.IfTrue;
 import com.top_logic.basic.module.ConfiguredManagedClass;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.version.Version;
@@ -71,13 +71,14 @@ import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ManagedClass} for sending e-mail via SMTP.
- * 
+ * Sends e-mails via an SMTP mail server.
+ *
  * @see #sendMail(Mail) To send mails, create a new mail via {@link Mail} and pass it to the
  *      {@link #sendMail(Mail)} method.
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
+@Label("Mail sender (SMTP)")
 public final class MailSenderService extends ConfiguredManagedClass<MailSenderService.Config> implements Reloadable {
 
 	private Config _config;

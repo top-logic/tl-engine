@@ -10,7 +10,9 @@ import com.top_logic.knowledge.service.db2.expr.visit.PolymorphicTypeComputation
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.And;
+import com.top_logic.model.search.expr.CompareOp;
 import com.top_logic.model.search.expr.IsEqual;
+import com.top_logic.model.search.expr.Literal;
 import com.top_logic.model.search.expr.Not;
 import com.top_logic.model.search.expr.Or;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -32,7 +34,7 @@ public abstract class Value {
 	 *        The other {@link Value}.
 	 * @return The resulting {@link Value}.
 	 */
-	public abstract Value processEquals(SearchExpression orig, Value other);
+	public abstract Value processEquals(IsEqual orig, Value other);
 
 	/**
 	 * Interprets an {@link Access} expression on this this {@link Value}.
@@ -41,7 +43,7 @@ public abstract class Value {
 	 *        The original {@link SearchExpression} representing the processed operation.
 	 * @return The resulting {@link Value}.
 	 */
-	public abstract Value processAccess(SearchExpression orig, TLStructuredTypePart part);
+	public abstract Value processAccess(Access orig, TLStructuredTypePart part);
 
 	/**
 	 * Interprets an {@link Not} expression on this this {@link Value}.
@@ -50,7 +52,7 @@ public abstract class Value {
 	 *        The original {@link SearchExpression} representing the processed operation.
 	 * @return The resulting {@link Value}.
 	 */
-	public abstract Value processNot(SearchExpression orig);
+	public abstract Value processNot(Not orig);
 
 	/**
 	 * Interprets an {@link Or} comparison of this and the other {@link Value}.
@@ -61,7 +63,7 @@ public abstract class Value {
 	 *        The other {@link Value}.
 	 * @return The resulting {@link Value}.
 	 */
-	public abstract Value processOr(SearchExpression orig, Value other);
+	public abstract Value processOr(Or orig, Value other);
 
 	/**
 	 * Interprets an {@link And} comparison of this and the other {@link Value}.
@@ -72,7 +74,19 @@ public abstract class Value {
 	 *        The other {@link Value}.
 	 * @return The resulting {@link Value}.
 	 */
-	public abstract Value processAnd(SearchExpression orig, Value other);
+	public abstract Value processAnd(And orig, Value other);
+
+	/**
+	 * Interprets a {@link CompareOp} order comparison ({@code <}, {@code <=}, {@code >}, {@code >=})
+	 * of this and the other {@link Value}.
+	 *
+	 * @param orig
+	 *        The original {@link SearchExpression} representing the processed operation.
+	 * @param other
+	 *        The other {@link Value}.
+	 * @return The resulting {@link Value}.
+	 */
+	public abstract Value processCompareOp(CompareOp orig, Value other);
 
 	/**
 	 * Whether this {@link Value} has a {@link #compiled() compilation result}.
@@ -103,20 +117,20 @@ public abstract class Value {
 	 * 
 	 * @param orig
 	 *        The original {@link SearchExpression} representing the given literal value.
-	 * @param literal
+	 * @param literalValue
 	 *        The literal value.
 	 * @return A {@link Value} representing the literal.
 	 */
-	public static Value literal(SearchExpression orig, Object literal) {
-		if (literal == null) {
+	public static Value literal(Literal orig, Object literalValue) {
+		if (literalValue == null) {
 			// Null literal is not allowed in the KB.
 			return new NullLiteral(orig);
 		}
-		MetaObject literalType = PolymorphicTypeComputation.getLiteralType(literal);
+		MetaObject literalType = PolymorphicTypeComputation.getLiteralType(literalValue);
 		if (literalType == MetaObject.INVALID_TYPE) {
 			return new InterpretedExpression(orig);
 		}
-		return new CompiledLiteral(literalType, literal);
+		return new CompiledLiteral(literalType, literalValue);
 	}
 
 }

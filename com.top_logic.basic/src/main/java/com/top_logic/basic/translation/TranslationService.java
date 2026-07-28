@@ -18,6 +18,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
@@ -28,8 +29,8 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.tools.resources.translate.Translator;
 
 /**
- * A service for translation.
- * 
+ * Service for translating texts between languages using an external translation API.
+ *
  * <p>
  * <b>Cautions:</b>
  * <ul>
@@ -61,6 +62,7 @@ import com.top_logic.tools.resources.translate.Translator;
  * 
  * @author <a href="mailto:Dmitry.Ivanizki@top-logic.com">Dmitry Ivanizki</a>
  */
+@Label("Translation service")
 public abstract class TranslationService<C extends TranslationService.Config> extends ConfiguredManagedClass<C>
 		implements Translator {
 

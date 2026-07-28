@@ -68,6 +68,12 @@ public class DeleteConstraintByExpression<C extends DeleteConstraintByExpression
 		QueryExecutor expr;
 		try {
 			expr = QueryExecutor.compile(config.getExpr());
+
+			// A delete constraint must consider all objects, not just those the current user is
+			// allowed to see. For example, an object may not be deletable because it is still
+			// referenced by an object that is invisible to the current user. Therefore the check is
+			// evaluated without security.
+			expr.disableSecurity();
 		} catch (Exception ex) {
 			Logger.error("Creating delete constraint failed.", ex, DeleteConstraintByExpression.class);
 			expr = null;

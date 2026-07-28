@@ -56,6 +56,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
@@ -89,6 +90,7 @@ import com.top_logic.model.search.expr.supplier.SearchExpressionNow;
 import com.top_logic.model.search.expr.supplier.SearchExpressionToday;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -99,6 +101,12 @@ import com.top_logic.util.model.ModelService;
  */
 @SuppressWarnings("javadoc")
 public class TestSearchExpression extends AbstractSearchExpressionTest {
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		TLContext.getContext().setCurrentPerson(PersonManager.getManager().getRoot());
+	}
 
 	public void testKBSearchWithTransientObjects() {
 		with("TestSearchExpression-testKBSearchTransient.scenario.xml",
@@ -236,6 +244,114 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 					"all -> intVal -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == $intVal)");
 				assertEquals(list(a4), execute(filterInMemoryWithParam, list(a4, a5), 16));
 			});
+	}
+
+	/**
+	 * Order comparisons ({@code <}, {@code <=}, {@code >}, {@code >=}) on database columns are
+	 * delegated to the database.
+	 *
+	 * <p>
+	 * TL-Script normalizes numeric literals to {@link Double}; the literal is adapted back to the
+	 * column type (see {@code CompiledLiteral}) so that the comparison can be pushed to SQL. This
+	 * test verifies that the database-delegated comparison yields the same result as the in-memory
+	 * evaluation, including the boundary case and a non-integral literal against an integer column
+	 * (which is not value-preserving and therefore stays interpreted but must still be correct).
+	 * </p>
+	 */
+	public void testKBCompareOp() {
+		with("TestSearchExpression-testFuzzyKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a4 = scenario.getObject("a4"); // int = 15, double = 16
+				TLObject a5 = scenario.getObject("a5"); // int = 16, double = 18
+				assertNotNull(a4);
+				assertNotNull(a5);
+
+				String intAttr = "`TestSearchExpression:WithDatabaseColumns#int`";
+				String longAttr = "`TestSearchExpression:WithDatabaseColumns#long`";
+				String doubleAttr = "`TestSearchExpression:WithDatabaseColumns#double`";
+
+				// Integer column, integral literal: the Double literal is adapted to Integer and the
+				// comparison is delegated to the database. a4.int = 15, a5.int = 16.
+				assertCompareConsistent(set(a5), a4, a5, intAttr, "> 15");
+				assertCompareConsistent(set(a4, a5), a4, a5, intAttr, ">= 15");
+				assertCompareConsistent(set(a4), a4, a5, intAttr, "< 16");
+				assertCompareConsistent(set(a4, a5), a4, a5, intAttr, "<= 16");
+
+				// Long column: the literal is adapted to Long. a4.long = 100, a5.long = 200.
+				assertCompareConsistent(set(a5), a4, a5, longAttr, "> 150");
+				assertCompareConsistent(set(a4, a5), a4, a5, longAttr, ">= 100");
+
+				// Double column (no conversion needed, TL-Script literals are already Double).
+				assertCompareConsistent(set(a5), a4, a5, doubleAttr, "> 16");
+				assertCompareConsistent(set(a4, a5), a4, a5, doubleAttr, ">= 16");
+				assertCompareConsistent(set(a4), a4, a5, doubleAttr, "< 18");
+
+				// Non-integral literal against an integer column: not value-preserving, so it stays
+				// interpreted, but the result must still be correct.
+				assertCompareConsistent(set(a5), a4, a5, intAttr, "> 15.5");
+			});
+	}
+
+	/**
+	 * Comparisons on a {@code long} column with literals around the boundary of what a
+	 * {@code double} can represent exactly ({@code 2^53}).
+	 *
+	 * <p>
+	 * TL-Script literals are {@link Double}s, so the interpreted comparison against a {@code long}
+	 * column happens in {@code double}. {@code CompiledLiteral} only adapts a literal to an exact
+	 * {@code long} (delegating to SQL) within the double-safe range ({@code |value| <= 2^53-1}); a
+	 * larger literal would otherwise produce an exact SQL comparison that diverges from the
+	 * interpreted (lossy) one. This test verifies compiled == interpreted at and beyond that
+	 * boundary; in particular {@code == 2^53+1} must match both the {@code 2^53} and the
+	 * {@code 2^53+1} row (both round to {@code 2^53} as {@code double}).
+	 * </p>
+	 */
+	public void testLargeLongKBCompare() {
+		with("TestSearchExpression-testLargeLongKBCompare.scenario.xml",
+			scenario -> {
+				TLObject b0 = scenario.getObject("b0"); // long = 2^53-1
+				TLObject b1 = scenario.getObject("b1"); // long = 2^53
+				TLObject b2 = scenario.getObject("b2"); // long = 2^53+1
+				assertNotNull(b0);
+				assertNotNull(b1);
+				assertNotNull(b2);
+
+				List<TLObject> all = list(b0, b1, b2);
+				String longAttr = "`TestSearchExpression:WithDatabaseColumns#long`";
+
+				// Literal within the double-safe range: adapted to Long and delegated to SQL.
+				assertCompareConsistent(set(b0), all, longAttr, "== 9007199254740991");
+				assertCompareConsistent(set(b1, b2), all, longAttr, "> 9007199254740991");
+
+				// Literal beyond 2^53: not adapted, falls back to interpreted (double) evaluation.
+				// 2^53+1 is not double-representable and rounds to 2^53, so it matches both 2^53 rows.
+				assertCompareConsistent(set(b1, b2), all, longAttr, "== 9007199254740993");
+				assertCompareConsistent(set(b0), all, longAttr, "< 9007199254740992");
+			});
+	}
+
+	/**
+	 * Asserts that a comparison predicate yields the given result both when delegated to the database
+	 * (rooted in {@code all(...)}) and when evaluated in memory (rooted in a passed-in list).
+	 */
+	private void assertCompareConsistent(Set<?> expected, TLObject a4, TLObject a5, String attr, String op)
+			throws ParseException {
+		assertCompareConsistent(expected, list(a4, a5), attr, op);
+	}
+
+	/**
+	 * Asserts that a comparison predicate yields the given result both when delegated to the database
+	 * (rooted in {@code all(...)}) and when evaluated in memory (rooted in the given list).
+	 */
+	private void assertCompareConsistent(Set<?> expected, List<TLObject> all, String attr, String op)
+			throws ParseException {
+		Object kbResult = executeAsSet(search(
+			"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(" + attr + ") " + op + ")"));
+		assertEquals("Database-delegated result for '" + attr + " " + op + "'.", expected, kbResult);
+
+		Object inMemoryResult = asSet(execute(search(
+			"all -> $all.filter(x -> $x.get(" + attr + ") " + op + ")"), all));
+		assertEquals("In-memory result for '" + attr + " " + op + "'.", expected, inMemoryResult);
 	}
 
 	public void testSimpleSearch() {
@@ -2856,7 +2972,9 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public static Test suite() {
-		return suite(TestSearchExpression.class, SafeHTML.Module.INSTANCE);
+		return suite(TestSearchExpression.class,
+			SafeHTML.Module.INSTANCE,
+			PersonManager.Module.INSTANCE);
 	}
 
 }

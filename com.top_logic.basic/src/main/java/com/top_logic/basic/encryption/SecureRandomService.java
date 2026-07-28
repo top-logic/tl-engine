@@ -10,6 +10,7 @@ import java.security.SecureRandom;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
@@ -20,6 +21,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Secure random numbers")
 public class SecureRandomService extends ConfiguredManagedClass<SecureRandomService.Config> {
 
 	/**

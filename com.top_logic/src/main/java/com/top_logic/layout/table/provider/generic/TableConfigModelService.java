@@ -9,12 +9,12 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.tools.NameBuilder;
@@ -25,9 +25,12 @@ import com.top_logic.util.model.CompatibilityService;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Cache {@link ManagedClass service} for {@link TLModel} related information for the
- * {@link GenericTableConfigurationProvider}.
- * 
+ * Cache for model information used to generate generic table configurations.
+ *
+ * <p>
+ * Caches {@link TLModel} related information for the {@link GenericTableConfigurationProvider}.
+ * </p>
+ *
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 @ServiceDependencies({
@@ -35,6 +38,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	PersistencyLayer.Module.class
 })
+@Label("Table model cache")
 public class TableConfigModelService extends ConfiguredManagedClass<TableConfigModelService.Config> {
 
 	/**

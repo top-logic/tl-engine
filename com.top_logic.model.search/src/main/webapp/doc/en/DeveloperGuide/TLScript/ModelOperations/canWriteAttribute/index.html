@@ -1,0 +1,40 @@
+<h2>Syntax</h2>
+
+<pre><code>$object.canWriteAttribute($attribute)
+
+canWriteAttribute($object, $attribute)
+</code></pre>
+
+<h2>Description</h2>
+
+<p>Checks whether the currently logged-in user is allowed to modify the given attribute of the given object and returns a boolean.</p>
+
+<p>This is the attribute-level counterpart of <code class="hljs inlineCode">canWrite</code> and the natural guard before a <code class="hljs inlineCode">set</code>: instead of running into the permission error that <code class="hljs inlineCode">set</code> raises for a non-writable attribute, a script can check first and branch. The function never fails and never filters.</p>
+
+<p>The check is evaluated for the currently logged-in user and follows the same rules as the implicit permission enforcement: deny-by-default, role inheritance along the security hierarchy, and full access for administrators or executions in a system context.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Type</th><th>Type Description</th><th>Mandatory</th><th>Default</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>object</td><td>Business object</td><td>The object to check.</td><td>yes</td><td> </td></tr>
+		<tr><td>attribute</td><td>Attribute</td><td>The attribute (<code class="hljs inlineCode">TLStructuredTypePart</code>) whose write access is checked.</td><td>yes</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p>
+
+<p><code class="hljs inlineCode">true</code> if the current user may modify the attribute on the object, <code class="hljs inlineCode">false</code> otherwise.</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1</h3>
+
+<pre><code>if($contract.canWriteAttribute(`my.module:Contract#status`), $contract.set(`my.module:Contract#status`, "done"), null)</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> Sets the status only if the logged-in user may write that attribute &ndash; otherwise nothing happens, without a permission error.</p>

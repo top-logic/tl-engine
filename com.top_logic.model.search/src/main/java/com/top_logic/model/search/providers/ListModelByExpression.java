@@ -237,7 +237,8 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 
 	@Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
-		return (Collection<?>) _elements.execute(businessModel);
+		// Secure the displayed list: only elements the current user is allowed to read.
+		return (Collection<?>) SearchExpression.filterSecurity(_elements.execute(businessModel));
 	}
 
 	@Override

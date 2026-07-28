@@ -1,0 +1,871 @@
+# Model-Based Access Rights for TopLogic
+
+## 1. Status Quo: The Current Access Rights System
+
+### 1.1 Overview
+
+TopLogic's current access rights system controls who can do what through a combination of two concerns:
+
+- **Role assignments on model instances**: Who has which role on which business object?
+- **View-based permission configuration**: Which roles can execute which command groups in which views?
+
+The first concern is already model-based. The second is not -- it is tied to the layout structure of the application's user interface.
+
+### 1.2 Core Concepts
+
+#### 1.2.1 Roles (`BoundedRole`)
+
+A role (e.g. "Manager", "Editor", "Viewer") is a named entity stored persistently in the knowledge base (`BoundedRole` / table `BoundedRole`). Roles can be:
+
+- **Global**: Not bound to any scope. Available everywhere.
+- **Scoped**: Bound to a `TLModule` via the `definesRole` association. Only available within that module's context.
+
+Roles are defined in the `tl.accounts` model module as the type `tl.accounts:Role`.
+
+#### 1.2.2 Users, Groups, and Role Assignments
+
+- A **Person** (`tl.accounts:Person`) is a user account.
+- A **Group** (`tl.accounts:Group`) is a named set of members (persons and other groups).
+- Each person has a **representative group** -- a 1:1 group that represents the person for role assignment purposes.
+- Persons can also be members of additional **named groups** (e.g. "Sales Team", "Management").
+
+Role assignments are stored as `hasRole` records (`tl.accounts:RoleAssignment`) with three references:
+
+| Attribute | Meaning |
+|-----------|---------|
+| `source` (object) | The context object (business object or security root) on which the role is granted |
+| `dest` (role) | The role being granted |
+| `owner` (group) | The group (or person's representative group) receiving the role |
+
+This means: "Group G has role R on object O."
+
+When checking whether a person has a role on an object:
+1. The person's representative group is checked.
+2. All groups the person belongs to are checked.
+3. The check walks up the **security parent hierarchy** (`BoundObject.getSecurityParent()`), inheriting roles from parent objects.
+
+#### 1.2.3 Role Rules (`ElementAccessManager`)
+
+Beyond direct role assignments, the `ElementAccessManager` supports **rule-based role derivation**. Role rules (`RoleRule`) define dynamic role grants based on attribute values and relationships of business objects:
+
+- **Reference rules**: Follow a path of attribute references from a business object to reach groups. Those groups receive a specified role on the object. Example: "The groups referenced by the `responsibleTeam` attribute of a `Project` instance receive the `Editor` role on that project."
+- **Inheritance rules**: Derive roles from roles on related objects. Example: "If a user has the `Manager` role on a `Department`, they also get the `Viewer` role on all `Project` instances belonging to that department."
+
+Role rules are configured per `TLClass` (type) and can be inherited to sub-types.
+
+#### 1.2.4 Command Groups (`BoundCommandGroup`)
+
+Commands in TopLogic are classified into **command groups**, each with a type:
+
+| Command Group | Type | Meaning |
+|---------------|------|---------|
+| `Read` | READ | View/display operations |
+| `Write` | WRITE | Modify operations |
+| `Create` | WRITE | Object creation |
+| `Delete` | DELETE | Object deletion |
+| `Export` | READ | Export operations |
+| `System` | READ | System commands (bypass security) |
+
+Applications can define additional custom command groups (e.g. `Finish`, `Approve`).
+
+#### 1.2.5 Views and Security (`CompoundSecurityLayout`)
+
+The application's UI is organized as a tree of layout components. Security boundaries are defined by `CompoundSecurityLayout` nodes, which group components into logical units as experienced by the user.
+
+Each `CompoundSecurityLayout` has a corresponding persistent security configuration (`PersBoundComp`) that stores:
+
+**For this view: which roles are allowed to execute which command groups.**
+
+This is a mapping:
+```
+(CompoundSecurityLayout, BoundCommandGroup) → Set<BoundedRole>
+```
+
+Stored via `needsRole` associations:
+```
+PersBoundComp --needsRole[cmdGrp=X]--> BoundedRole
+```
+
+Example configuration for a "Customer Details" view:
+- Read: allowed for roles `Viewer`, `Editor`, `Manager`
+- Write: allowed for roles `Editor`, `Manager`
+- Delete: allowed for role `Manager`
+
+#### 1.2.6 Security Object Provider
+
+Each view has a `SecurityObjectProvider` that maps the view's current model to the `BoundObject` on which role assignments are checked. Common strategies:
+
+- **Model**: Use the view's current model directly (e.g., the selected Customer instance).
+- **Master**: Use the master component's model.
+- **Security root**: Use the application's global security root (for views not tied to specific instances).
+- **Path-based**: Navigate from the model through a defined path to reach the security context.
+- **Null**: No security check (for system views).
+
+#### 1.2.7 The Complete Security Check
+
+When a user tries to access a view or execute a command, the check proceeds as follows:
+
+```
+1. BoundChecker.allow(person, securityObject, commandGroup)
+   │
+   ├─ System command group? → ALLOW
+   ├─ Admin user? → ALLOW
+   ├─ Restricted user + write/delete command? → DENY
+   │
+   ├─ 2. getRolesForCommandGroup(commandGroup)
+   │     → Looks up PersBoundComp (VIEW-BASED configuration)
+   │     → Returns the set of roles that may execute this command group
+   │     → If empty: DENY
+   │
+   └─ 3. AccessManager.hasRole(person, securityObject, accessRoles)
+         → Determines person's roles on the security object (MODEL-BASED)
+         → Checks direct role assignments (hasRole records)
+         → Checks group memberships
+         → Walks security parent hierarchy
+         → Evaluates role rules (ElementAccessManager)
+         → If person has any of the access roles: ALLOW
+         → Otherwise: DENY
+```
+
+### 1.3 What is Already Model-Based
+
+The following aspects are already model-based and independent of views:
+
+1. **Role assignments** on business objects (hasRole records).
+2. **Role rules** configured per TLClass that derive roles from object attributes and relationships.
+3. **Security parent hierarchy walk** that enables role inheritance along object structures. However, which object is the security parent of a given instance is currently defined in Java code (`BoundObject.getSecurityParent()`), not declaratively -- see section 1.4.
+4. **Role scoping** to TLModules.
+
+### 1.4 What is View-Based (The Gap)
+
+The critical missing link is **step 2** of the security check: the mapping from command groups to roles is configured **per view**, not per model type. This means:
+
+- To answer "Who can edit Customer instances?", one must:
+  1. Find all views that display Customer instances.
+  2. For each view, look up which roles can execute Write commands.
+  3. For each such role, determine which users have that role on which Customer instances.
+
+- Different views showing the same type can have different permission configurations. A Customer might be editable in the "CRM" view but read-only in the "Reporting" view, even though it's the same data.
+
+- There is no single place that says "Role X can read/write/create/delete instances of type T." This information is scattered across view configurations.
+
+- For non-UI access paths (AI assistants, REST APIs, batch jobs), there is no natural view context to evaluate.
+
+- The **security parent relationship** is hardcoded in Java (`BoundObject.getSecurityParent()`). Which object is the security parent of a given instance cannot be configured declaratively. Moreover, only a single security parent per object is supported, which is insufficient when an object participates in multiple overlapping contexts.
+
+### 1.5 Architectural Diagram of the Status Quo
+
+```
+                     ┌─────────────────────┐
+                     │   User (Person)      │
+                     │   + Representative   │
+                     │     Group            │
+                     │   + Group            │
+                     │     Memberships      │
+                     └─────────┬───────────┘
+                               │
+                    "User accesses a view"
+                               │
+                               ▼
+              ┌────────────────────────────────┐
+              │  CompoundSecurityLayout (View)  │
+              │                                │
+              │  PersBoundComp:                │
+              │    Read  → {Viewer, Editor}    │  ◄── VIEW-BASED
+              │    Write → {Editor}            │      (which roles for which
+              │    Delete → {Manager}          │       command groups)
+              └────────────────┬───────────────┘
+                               │
+                    "Which roles are needed?"
+                               │
+                               ▼
+              ┌────────────────────────────────┐
+              │  SecurityObjectProvider         │
+              │  Maps view model → BoundObject  │
+              └────────────────┬───────────────┘
+                               │
+                    "Does user have a needed role
+                     on the security object?"
+                               │
+                               ▼
+              ┌────────────────────────────────┐
+              │  AccessManager                  │
+              │                                │
+              │  ┌─ Direct role assignments ─┐ │
+              │  │  hasRole(obj, role, group) │ │
+              │  └──────────────────────────┘ │  ◄── MODEL-BASED
+              │  ┌─ Role rules ─────────────┐ │      (who has which role
+              │  │  Attribute-based          │ │       on which object)
+              │  │  derivation per TLClass   │ │
+              │  └──────────────────────────┘ │
+              │  ┌─ Security parent chain ──┐ │
+              │  │  Role inheritance         │ │
+              │  └──────────────────────────┘ │
+              └────────────────────────────────┘
+```
+
+## 2. Goal: Model-Based Access Rights Definition
+
+### 2.1 Objective
+
+Introduce a model-level access rights definition that answers these questions directly, without reference to views:
+
+1. **Which users can read instances of type T?**
+2. **Which users can update instances of type T?**
+3. **Which users can create instances of type T?**
+4. **Which users can delete instances of type T?**
+5. **Which attributes of type T can user U read/modify?**
+6. **Can user U access this specific instance of type T?**
+
+### 2.2 Design Principles
+
+1. **Model-first**: Access rights are defined on model elements (types, attributes, singletons), not on views. Views derive their permissions from the model-level definitions.
+
+2. **Single source of truth**: There is one place -- the `SecurityConfigurationService` -- that defines "Role X can perform operation O on type T (or singleton S)." All access paths (UI, AI assistant, REST API, batch jobs) consult the same definition.
+
+3. **Backward compatible**: The existing view-based `PersBoundComp` configuration continues to work during migration. The model-based definition coexists with it and replaces it incrementally (see section 2.8).
+
+4. **Type-level and instance-level**: Type-level definitions say what is generally possible ("Editors can modify Customers"). Instance-level checks determine whether a specific user actually has the required role on a specific instance. The existing role assignment and role rule mechanisms are fully preserved, providing fine-grained instance-level access control: user U may have role R on instance I1 of type T but not on instance I2 of the same type.
+
+5. **Granularity**: Permissions can be defined at the type level (all attributes) or at the attribute level (individual properties and references).
+
+### 2.3 Proposed Model
+
+#### 2.3.1 Operations
+
+Operations in the model-based access rights system are `BoundCommandGroup`s -- the same type already used in the existing system. The built-in command groups cover fundamental data access:
+
+| BoundCommandGroup | CommandGroupType | Meaning |
+|-------------------|------------------|---------|
+| `Read` | READ | View/query instances and their attribute values |
+| `Write` | WRITE | Modify attribute values of existing instances |
+| `Create` | WRITE | Create new instances (see section 2.3.6) |
+| `Delete` | DELETE | Delete instances |
+
+In addition, types can declare **custom business operations** (e.g. `Approve`, `Cancel`) using custom `BoundCommandGroup`s. See section 2.3.7.
+
+#### 2.3.2 Type-Level Access Rules
+
+A **type access rule** defines which roles are permitted to perform which operations on instances of a given type:
+
+```
+TypeAccessRule:
+  type:          TLClass            -- The model type this rule applies to
+  commandGroup:  BoundCommandGroup   -- Read, Write, Delete, or a custom command group
+  roles:         Set<BoundedRole>    -- Roles that are permitted
+  inherit:       boolean             -- Whether the rule applies to sub-types
+```
+
+Example:
+```
+type: myapp:Customer
+operation: READ
+roles: {Viewer, Editor, Manager}
+inherit: true
+
+type: myapp:Customer
+operation: WRITE
+roles: {Editor, Manager}
+inherit: true
+
+type: myapp:Customer
+operation: CREATE
+roles: {Editor, Manager}
+inherit: false
+
+type: myapp:Customer
+operation: DELETE
+roles: {Manager}
+inherit: false
+```
+
+#### 2.3.3 Attribute-Level Access Rules
+
+An **attribute access rule** refines permissions for individual attributes:
+
+```
+AttributeAccessRule:
+  attribute:     TLStructuredTypePart  -- The specific attribute
+  commandGroup:  BoundCommandGroup      -- Typically Read or Write
+  roles:         Set<BoundedRole>       -- Roles that are permitted
+```
+
+Attribute-level rules **restrict** the type-level permissions. If no attribute-level rule exists, the type-level rule applies. If an attribute-level rule exists, only the roles listed in the attribute-level rule have access, provided they also have the corresponding type-level access.
+
+**Denying an attribute for every role.** An attribute-level rule whose role set is **empty** (a grant that is present but lists no roles) denies the operation for *every* role, overriding the type-level grant. This is the closed-world reading of "grant this operation to [these roles]" -- the empty set grants it to nobody. It is distinct from having *no* attribute-level rule (which falls back to the type-level decision). Only a bypassing super-user (system context or administrator, see section 2.3.5) is unaffected. This is how an attribute is made effectively unreadable or unwritable regardless of the roles a user holds:
+
+```xml
+<part name="myapp:Contract#secret">
+    <grant operation="Read"/>    <!-- present, no roles: nobody may read -->
+    <grant operation="Write"/>   <!-- nobody may write -->
+</part>
+```
+
+Example:
+```
+attribute: myapp:Customer#salary
+operation: READ
+roles: {Manager}
+-- Only Managers can see the salary field, even though Editors can see other Customer fields
+
+attribute: myapp:Customer#status
+operation: WRITE
+roles: {Manager}
+-- Only Managers can change the status, even though Editors can modify other fields
+```
+
+**Derived (computed) attributes: definer's-rights semantics.** A derived attribute's value is produced by its storage algorithm (e.g. a TL-Script expression), not stored. Security is handled as follows:
+
+- The **read of the derived attribute itself** is access-controlled like any attribute: it is subject to the read check on the derived attribute (its own attribute-level rule, falling back to the type-level rule). If denied, the empty value is returned.
+- The **computation** of the derived value applies **no** model security ("definer's rights", analogous to a SQL `SECURITY DEFINER` view). It runs with full access and is therefore user-independent and deterministic &ndash; a per-user derived value would be incoherent (it would break caching, indexing, persistence of derived values and equality/search) and would contradict the rule that a computed attribute uses security either always or never. This also keeps the behaviour backward compatible with the pre-security model.
+
+Consequence for the modeller: because the computation may aggregate data the reader must not see directly, a derived attribute is a potential side channel. Its read grant must be set to match the **sensitivity of what it exposes**, not the sensitivity of the raw data it happens to read. For example, `Employee#salaryBand` derived from `salary` must itself be at least as read-restricted as `salary`.
+
+#### 2.3.4 Module-Level Defaults
+
+Access rules can be defined at the **module level** as defaults for all types within that module:
+
+```
+ModuleAccessDefault:
+  module:        TLModule            -- The model module
+  commandGroup:  BoundCommandGroup    -- The command group
+  roles:         Set<BoundedRole>
+```
+
+Module-level grants are **additive**: they apply on top of the type-level grants for every type in the module (see the combining rules in section 2.4.2), rather than being overridden by them.
+
+#### 2.3.5 Relationship to Existing Role Assignments
+
+The model-based access rules define **which roles are needed** for an operation on a type. The existing role assignment mechanism continues to determine **which users have which roles on which instances**.
+
+This separation is key: the new type-level `SecurityConfiguration` entries replace the view-based `PersBoundComp` configuration -- the part that was previously tied to the UI. The instance-level role assignments (direct `hasRole` records, rule-based role derivation via `RoleRule`, and security parent chain inheritance) remain unchanged. This means access control stays fine-grained at the instance level. For example, if user U has the `Editor` role on Customer instance C1 (via a direct assignment or a role rule) but not on Customer instance C2, then U can modify C1 but not C2 -- even though both are of type `Customer` and the type-level rule permits `Editor` to write `Customer` instances.
+
+```
+Access check for "Can user U perform command group G on instance I of type T?":
+
+1. Look up TypeAccessRule(T, G) → required roles R
+   (Falls back to module default if no type-level rule exists)
+
+2. AccessManager.hasRole(U, I, R) → true/false
+   (Uses existing role assignments, role rules, security parent chain)
+```
+
+For attribute-level checks:
+```
+Access check for "Can user U perform command group G on attribute A of instance I?":
+
+1. Look up AttributeAccessRule(A, G)
+   - If it exists, the user must pass TWO independent checks (this is NOT the intersection
+     of the two role sets): the type-level access AND one of the attribute-level roles.
+       AccessManager.hasRole(U, I, TypeAccessRule(A.owner, G).roles)   -- type-level access
+       AccessManager.hasRole(U, I, AttributeAccessRule(A, G).roles)    -- attribute-level restriction
+     Access is granted only if BOTH return true. The user may satisfy the two checks with
+     different roles; the roles need not be the same.
+   - If it does not exist: required roles R = TypeAccessRule(A.owner, G).roles,
+     granted iff AccessManager.hasRole(U, I, R).
+```
+
+#### 2.3.6 Object Creation
+
+Creating an object requires satisfying two conditions that are checked independently:
+
+**Condition 1 — CREATE right on the target type**: The user must hold a role that is granted the `Create` command group on the type being created. This is a standard type-level check (section 2.3.5), with the composition parent as the context object (or the global security root when no parent exists):
+
+```
+TypeAccessRule(myapp:Milestone, Create) → required roles R_create
+AccessManager.hasRole(U, contextObject, R_create)
+```
+
+**Condition 2 — WRITE right on the composition context** (only when a parent object exists): The user must additionally hold a write right on the parent that will contain the new object. This is the standard attribute-level check from section 2.3.5, with `A = Project#milestones` and `G = Write`:
+
+```
+AttributeAccessRule(Project#milestones, Write) defined?
+  → two independent checks (see section 2.3.5):
+      AccessManager.hasRole(U, P, TypeAccessRule(Project, Write).roles)  AND
+      AccessManager.hasRole(U, P, AttributeAccessRule(Project#milestones, Write).roles)
+else
+  → required roles R_write = TypeAccessRule(Project, Write).roles
+      AccessManager.hasRole(U, P, R_write)
+```
+
+Both conditions must be satisfied. Full example:
+
+```
+"Can user U create a Milestone in Project P (via Project#milestones)?"
+
+  Condition 1: TypeAccessRule(myapp:Milestone, Create) → R_create
+               AccessManager.hasRole(U, P, R_create)
+
+  Condition 2: attribute-level Write check on Project#milestones → R_write
+               AccessManager.hasRole(U, P, R_write)
+
+  → ALLOW only if both are true
+```
+
+**Top-level objects**: When no composition parent exists (e.g., creating a top-level Project), only condition 1 applies, using the global security root as the context object. Condition 2 is vacuously satisfied since there is no containing object. The model is consistent across both cases: condition 1 is always required; condition 2 adds the container check whenever a container is present.
+
+> **Note on the top-level context.** A single global security root is used for top-level creation (rather than a per-module root). A CREATE role held on the root therefore applies across modules. This is intentionally coarse: a top-level `new(type)` has no instance/parent context, so only the type-level grant plus a role on the global root can gate it. Finer, context-sensitive control is achieved by creating through a composition reference (condition 2). Note that the roles are still per type (`getAllowedRoles(type, Create)` differs per type), so a user is not able to create arbitrary types &ndash; only those whose CREATE grant lists a role the user holds on the root.
+
+> **Implementation status.** Implemented (Ticket #29088): `ModelAccessRights.isAllowedCreate(person, type, context)` checks condition 1, `isAllowedCreate(person, parent, compositionAttribute)` checks conditions 1 and 2, and `getAccessibleTypes(person, commandGroup)` enumerates the creatable types. The TL-Script functions `new(...)` / `canCreate(...)` and the BPE process instantiation enforce these checks.
+
+> **Objects that are not (yet) persistent are exempt from instance-level security.** Role assignments &ndash; in particular rule-derived roles &ndash; are only computed at commit time. Two consequences follow:
+> - **Not-yet-committed objects** (created in the current, uncommitted transaction): instance-level checks (read, write, delete) are skipped, i.e. they return "allowed". Their creation was already gated by the CREATE check against a committed context (the parent, or the global security root), and their roles do not exist until commit. This makes patterns like `new(T)..set(attr, v)` work within a single transaction.
+> - **Transient objects** (never persisted, e.g. working copies or form overlays) are outside model security entirely: they are exempt from the instance-level checks (as above), and creating them is not CREATE-checked either &ndash; a transient object is never added to the persistent model, so its creation is not a security-relevant action. Turning a transient object into a persistent one (e.g. a non-transient `copy()`) goes through the normal CREATE check.
+>
+> This is not a loophole: security on committed objects stays fully in force, and an object created in a transaction becomes subject to the regular checks in subsequent transactions once its roles are computed at commit.
+
+This design preserves context-sensitivity: user U may be permitted to create Milestones in general (condition 1) but only in projects where U holds a sufficient role (condition 2). Attribute-level granularity is also preserved: a user might be allowed to add milestones to a project (`Project#milestones`) but not sub-projects (`Project#subProjects`), controlled by separate attribute-level WRITE rules on the parent.
+
+The access rights for `Milestone`, `Project`, and the individual composition references (`Project#milestones`, `Project#subProjects`) are configured via `SecurityConfiguration` entries in the knowledge base (see section 2.4). No XML annotations are used in the model files for role configuration.
+
+#### 2.3.7 Custom Business Operations
+
+Real-world applications often have complex operations that go beyond simple data access. An "Approve Order" operation might change `order.status` to "approved", create a new `ApprovalRecord`, and update `project.approvedBudget`. Such operations cannot be meaningfully decomposed into atomic READ/WRITE/DELETE checks:
+
+- **The permission is semantically distinct from the data it touches.** A regular Editor might be allowed to modify `Order#status` in general (e.g., changing it to "in progress"), but "Approve" requires the `Approver` role -- not because of *which* data is modified, but because of the *business meaning* of the action.
+- **Deriving permissions from atomic operations is impractical.** It would require analyzing all data modifications the operation performs in advance, and the intersection of the role sets for each atomic operation might be too restrictive, too permissive, or simply not what the application intends.
+
+The solution is to allow **custom `BoundCommandGroup`s on types**. Since both built-in operations (Read, Write, Delete) and custom business operations (Approve, Cancel) are `BoundCommandGroup`s, they use the same `TypeAccessRule` structure (see section 2.3.2). Custom command groups simply appear as additional grants in the type's access rights configuration. The access check is a single check against the context instance -- the same mechanism as for Read/Write/Delete. No decomposition into atomic operations is needed.
+
+Example:
+```
+type: myapp:Order
+commandGroup: Approve
+roles: {Manager, Approver}
+inherit: false
+
+type: myapp:Order
+commandGroup: Cancel
+roles: {Manager}
+inherit: false
+```
+
+The access check:
+```
+"Can user U approve Order instance O?"
+
+  1. Look up TypeAccessRule(Order, Approve) → required roles R = {Manager, Approver}
+
+  2. AccessManager.hasRole(U, O, R) → true/false
+     (Same instance-level check as for data access operations)
+```
+
+The difference to the current system is that the `(BoundCommandGroup → roles)` mapping lives in the `SecurityConfiguration` ManagedClass, keyed by model type, not by view. A command group like `Approve` configured in a view's `PersBoundComp` today becomes a `SecurityConfiguration` entry on the `Order` type in the model-based system.
+
+**Three levels of access rights** emerge:
+
+1. **Data access operations** (READ, WRITE, DELETE): Defined on types and attributes, covering straightforward data access from any access path (UI, AI, REST, batch).
+2. **Custom business operations** (approve, cancel, finish, ...): Defined on types, covering complex domain-specific actions. Checked against the context instance. The implementation of what the operation actually does remains opaque to the access rights system.
+3. **Attribute-level restrictions**: Refine data access for individual properties and composition references.
+
+The roles for built-in and custom operations on `Order` are configured via `SecurityConfiguration` entries in the knowledge base (see section 2.4). No XML annotations are used in the model files for role configuration.
+
+The AI assistant or REST API uses the data access operations (READ, WRITE, DELETE) and attribute-level restrictions for general data access. When invoking a specific business operation (e.g., through a tool or endpoint that corresponds to "approve this order"), it checks the custom operation.
+
+#### 2.3.8 Configurable Security Parent Rules
+
+The security parent hierarchy determines how role assignments are inherited across object structures: if user U has a role on a parent object, U implicitly has that role on all descendants. Currently the parent relationship is a Java method (`BoundObject.getSecurityParent()`) that must be overridden per type, making the security hierarchy opaque and inflexible.
+
+Model-based access rights introduce **security parent rules** that define the parent relationship declaratively, using the same path navigation mechanism already used by role rules.
+
+A **security parent rule** specifies, for instances of a given type, which related objects act as security parents:
+
+```
+SecurityParentRule:
+  type:     TLClass            -- The model type this rule applies to
+  path:     List<PathElement>  -- Attribute path from the instance to its security parent(s)
+  inherit:  boolean            -- Whether the rule applies to sub-types
+```
+
+Multiple security parent rules for the same type yield multiple security parents per instance. This is essential when an object participates in multiple overlapping contexts. The rules are configured in a `<security-parents>` section on the `ElementAccessManager` (the `AccessManager` implementation); each rule is a `<rule>` element carrying `meta-element` and `inherit`, with a `<path>` of `<step>`s. Each `<step>` names the traversed attribute by its qualified name (`module:Type#attr`) and its direction via `inverse`:
+
+```xml
+<security-parents>
+    <!-- Milestone's security parent is its Project -->
+    <rule meta-element="myapp:Milestone" inherit="false">
+        <path>
+            <step attribute="myapp:Milestone#project" inverse="false"/>
+        </path>
+    </rule>
+
+    <!-- Task has two security parents: its Milestone AND its Sprint -->
+    <rule meta-element="myapp:Task" inherit="false">
+        <path>
+            <step attribute="myapp:Task#milestone" inverse="false"/>
+        </path>
+    </rule>
+    <rule meta-element="myapp:Task" inherit="false">
+        <path>
+            <step attribute="myapp:Task#sprint" inverse="false"/>
+        </path>
+    </rule>
+</security-parents>
+```
+
+Paths follow the same `PathElement` semantics as role rules: `inverse="false"` follows a forward reference (the attribute value), `inverse="true"` navigates backwards (objects referencing this instance via the named attribute). Multi-step paths are supported.
+
+**Multiple security parents and DAG traversal**
+
+With multiple security parents, the security context forms a directed acyclic graph (DAG) rather than a chain. All places that previously walked the parent chain linearly become a breadth-first traversal over this DAG, with a visited-set guard against cycles:
+
+```
+Role check for instance I:
+  1. Initialize queue = {I}, visited = {}
+  2. While queue is not empty:
+     a. Dequeue current object C
+     b. If C is already in visited: skip
+     c. Add C to visited
+     d. Accumulate role assignments on C
+     e. Enqueue all security parents of C
+  3. Result: union of roles found at any visited node
+```
+
+**Fallback to the global security root**
+
+If no security parent rule is configured for a type, the global **security root** is used as the sole security parent -- provided `use-default-security-parent` is enabled (the default). The security root is the application's default security object (`BoundHelper.getDefaultObject()`); in a running application (`ElementBoundHelper`) it is the `ROOT` singleton of the `SecurityStructure` module.
+
+`AbstractBoundWrapper.getSecurityParents()` implements this as follows:
+
+- If security parent rules are configured for the instance's type, their result is returned **as-is** -- the security root is **not** added automatically.
+- Otherwise, the instance falls back to the security root (or to no parent at all when `use-default-security-parent` is disabled).
+
+In other words, explicitly configured security parents take precedence and fully define the parent set; the root is a *fallback*, not an always-present additional parent. A type that configures its own parents but still wants the root (or any other fixed object) in its parent chain must add it **explicitly** -- see below.
+
+**Including the security root (or any singleton) explicitly**
+
+To reach a fixed, base-object-independent object -- typically the security root, or any other module singleton -- a path uses a `<singleton>` step instead of an attribute `<step>`:
+
+```xml
+<security-parents>
+    <!-- Task's security parent is its Milestone... -->
+    <rule meta-element="myapp:Task" inherit="false">
+        <path>
+            <step attribute="myapp:Task#milestone" inverse="false"/>
+        </path>
+    </rule>
+    <!-- ...and, additionally, the security root (opt-in, since it is no longer merged in automatically): -->
+    <rule meta-element="myapp:Task" inherit="false">
+        <path>
+            <singleton module="SecurityStructure"/>
+        </path>
+    </rule>
+</security-parents>
+```
+
+A `<singleton>` step resolves to the `getSingleton(name)` of the named module, independent of the base object. Its attributes are `module` (mandatory) and `name` (optional, defaults to the module's default singleton `ROOT`). `<singleton module="SecurityStructure"/>` therefore yields the security root. Because a singleton is constant, the step declares no relevant attributes, so it never triggers a role recomputation.
+
+**Integration with `ElementAccessManager`**
+
+The `ElementAccessManager` loads and manages security parent rules alongside role rules: it resolves the `inherit` flag, propagates rules to sub-types, and caches rules per `TLClass` for efficient lookup.
+
+> **Not yet implemented:** Unlike role rules, security parent paths are **not** yet tracked by their participating attributes. The `pathAttributes` map that drives cache invalidation is built only from role rules, so a change to an attribute that participates *only* in a security parent path does not currently invalidate cached role computations. Extending the attribute tracking to security parent paths is an open item.
+
+**Model annotation form (planned)**
+
+Following the model-first principle, security parent rules *could* also be expressed as annotations on `TLClass` definitions in `*.model.xml` files:
+
+```xml
+<class name="Task">
+    <annotations>
+        <security-parents>
+            <parent-path>
+                <step attribute="milestone"/>
+            </parent-path>
+            <parent-path>
+                <step attribute="sprint"/>
+            </parent-path>
+        </security-parents>
+    </annotations>
+</class>
+```
+
+> **Not yet implemented:** Only the config-file form (shown above, on the `ElementAccessManager`) is currently supported. The model-annotation form on `<class>` -- and the intended rule that annotation-based rules take precedence over config-file rules -- is a planned extension.
+
+#### 2.3.9 Singleton-Based Security for View-Specific Access Rights
+
+Some UI components have no typed domain model -- navigation menus, dashboards, administration panels, workflow overview screens. Because no `TLClass` is associated with these views, the type-level access rules from section 2.3.2 cannot be used directly.
+
+`PersBoundComp` is removed entirely. The view-based `(commandGroup → roles)` configuration it previously maintained is superseded by model-based access rules combined with **TL singletons** for view-specific cases.
+
+**Singletons as security objects**
+
+A singleton is a named instance of a `TLClass` defined directly in a model module. Singletons are identified by a qualified name (`module:SingletonName`) and persist in the knowledge base as regular `TLObject` instances.
+
+For each view that needs specialized security, the application developer defines a singleton in an appropriate module and registers it as the security context of that view via the `SecurityObjectProvider`. The singleton acts as the security object on which role assignments and access rules are evaluated.
+
+Access rights for a singleton are not derived from a `TypeAccessRule` on its class. Instead, they are configured as **singleton-level `SecurityConfiguration` entries** (see section 2.4) that target the singleton instance directly. This gives each singleton its own independent `(commandGroup → roles)` mapping, managed centrally in the `SecurityConfiguration` ManagedClass.
+
+**Security check for singleton-based views:**
+
+```
+1. SecurityObjectProvider returns singleton instance S
+
+2. SecurityConfiguration lookup: getAccessRights(S, commandGroup) → required roles R
+   (singleton-level lookup, not a TypeAccessRule)
+
+3. AccessManager.hasRole(user, S, R)
+   ├─ Checks direct hasRole records on S
+   ├─ Evaluates role rules on S
+   └─ Walks security parent chain (DAG traversal, section 2.3.8)
+```
+
+**Security parent chain for singletons**
+
+Singletons participate in the same security parent hierarchy as domain objects. The security parent of a singleton is configured via `SecurityParentRule` (section 2.3.8), enabling role inheritance: granting a user a role on a parent singleton automatically grants it on all child singletons.
+
+**Summary: security can be defined on**
+
+| Target | Mechanism |
+|--------|-----------|
+| `TLClass` | Type-level `SecurityConfiguration` entry (all instances) |
+| `TLStructuredTypePart` | Attribute-level `SecurityConfiguration` entry |
+| `TLModule` | Module-level `SecurityConfiguration` entry (default for all types in the module) |
+| Singleton (`TLObject`) | Singleton-level `SecurityConfiguration` entry (this instance only) |
+
+### 2.4 Configuration Model
+
+Access rights are **not** configured as annotations in `*.model.xml` files. Instead they are defined centrally by a dedicated configured service, the `SecurityConfigurationService` (a `ConfiguredManagedClass`). Its configuration is supplied as typed application configuration -- an XML `<security-config>` section -- that is read once at service startup and resolved into an in-memory lookup structure. This makes the configuration:
+
+- Kept out of the model files and out of the view/layout configuration -- a single place that defines "role X may perform operation O on target element E"
+- Applicable to all target kinds (types, attributes, modules, singletons) through a single uniform mechanism
+
+Note: The configuration is currently **static application configuration**; it is loaded at startup and a change requires editing the configuration (and restarting). Turning it into a runtime-editable form -- e.g. persistent, journal-versioned knowledge-base objects with an administration UI (see section 2.4.3) -- is a possible future extension that does not change the lookup semantics described here.
+
+#### 2.4.1 The `SecurityConfigurationService` configuration
+
+The `SecurityConfigurationService` is configured with a `<security-config>` section. It contains one element per target element -- `<class>`, `<part>`, `<module>`, or `<singleton>` -- identified by its qualified `name`. Each target element carries one `<grant>` per command group:
+
+| `<grant>` attribute | Meaning |
+|---------------------|---------|
+| `operation` | The command group (Read, Write, Delete, Create, or a custom command group) |
+| `roles` | Comma-separated list of roles permitted to perform this operation on the target element |
+| `inherit` | Whether the grant is propagated to sub-types (relevant for `<class>`/`<module>` targets; see the semantics note below) |
+
+The four target-element kinds map to the security targets as follows:
+
+| Element | Target |
+|---------|--------|
+| `<class name="module:Type">` | A `TLClass` (all instances) |
+| `<part name="module:Type#attr">` | A `TLStructuredTypePart` (attribute-level restriction) |
+| `<module name="module">` | A `TLModule` (default for all its types) |
+| `<singleton name="module:Singleton">` | A singleton `TLObject` (this instance only) |
+
+**Example for `myapp:Customer` (including an attribute-level restriction and a singleton view):**
+
+```xml
+<security-config>
+    <class name="myapp:Customer">
+        <grant operation="Read"   roles="Viewer, Editor, Manager" inherit="true"/>
+        <grant operation="Write"  roles="Editor, Manager"         inherit="true"/>
+        <grant operation="Delete" roles="Manager"                 inherit="false"/>
+    </class>
+    <part name="myapp:Customer#salary">
+        <grant operation="Read"  roles="Manager"/>
+        <grant operation="Write" roles="Manager"/>
+    </part>
+    <singleton name="tl.admin:AdminPanel">
+        <grant operation="Read"  roles="Admin"/>
+        <grant operation="Write" roles="Admin"/>
+    </singleton>
+</security-config>
+```
+
+**Semantics of `inherit`.** The flag controls only the *downward* propagation of a grant to sub-types; it is orthogonal to the additive combination described in section 2.4.2.
+
+- On a `<class>` grant, `inherit="true"` propagates the grant to all specializations of the type (across module boundaries); `inherit="false"` limits it to the exact type.
+- On a `<module>` grant, the grant always applies to every type **defined in the module** (including sub-types that are themselves defined in that module -- they are part of the module's type set regardless of the flag). `inherit="true"` additionally propagates the grant to sub-types of the module's types that are **defined in other modules**; `inherit="false"` does not reach those out-of-module sub-types.
+
+In other words, for a module grant `inherit` answers a single question: *does the module's grant also reach sub-types of its types that live outside the module?*
+
+#### 2.4.2 Combining rules
+
+Rules at different levels combine as follows:
+
+- **Type, module, and inherited grants are additive (union).** The roles permitted for a command group on a type are the *union* of: the type's own grants, its module's grants (a module grant applies to every type in the module), and the grants inherited from super-types (for entries with `inherit="true"`). A user is permitted if they hold *any* of these roles. There is no "most specific wins" override between these levels -- a module grant is an additive baseline that type-level grants extend, not replace.
+
+- **Attribute-level entries restrict.** An attribute-level grant does not add to the type-level permission; it narrows it: the user must have the type-level permission for the command group *and* hold one of the roles listed for the attribute (see section 2.3.3). If no attribute-level grant exists for an attribute, the type-level permission applies unchanged.
+
+- **Singleton-level entries are standalone.** A singleton's grants define its own `(command group → roles)` mapping and are used in place of any type-level rules for that instance (see section 2.3.9).
+
+#### 2.4.3 Administration UI (future extension)
+
+A runtime administration UI for managing the access-rights configuration is a planned extension and is **not** part of the current implementation. At present the configuration is static (see section 2.4.1): it is edited in the application configuration and applied at startup. A future runtime-editable form -- persistent, journal-versioned entries with a dedicated admin screen (create/modify/delete without restart) -- can be layered on top without changing the lookup semantics.
+
+#### 2.4.4 Configuration location
+
+The `<security-config>` section (section 2.4.1) is the body of the `SecurityConfigurationService` service configuration and is registered like any other service configuration (e.g. via the module's `metaConf.txt`):
+
+```xml
+<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+    <instance>
+        <security-config>
+            <class name="myapp:Customer">
+                <grant operation="Read"   roles="Viewer, Editor, Manager" inherit="true"/>
+                <grant operation="Write"  roles="Editor, Manager"         inherit="true"/>
+                <grant operation="Delete" roles="Manager"                 inherit="false"/>
+            </class>
+            <part name="myapp:Customer#salary">
+                <grant operation="Read"  roles="Manager"/>
+                <grant operation="Write" roles="Manager"/>
+            </part>
+        </security-config>
+    </instance>
+</config>
+```
+
+The roles referenced by `roles` must exist (e.g. defined via `InitialRolesManager`), and the instance-level role assignment (direct `hasRole` records or `RoleRule`s configured on the `AccessManager`) determines which users actually hold those roles on which instances.
+
+### 2.5 Deriving View Permissions from Model Permissions
+
+Once model-based access rules exist, view permissions can be **derived** rather than independently configured:
+
+1. A view's `SecurityObjectProvider` determines the type of objects being displayed.
+2. The type's access rules define the available operations.
+3. The view's command groups are mapped to operations.
+4. The roles for each command group are derived from the type's access rules.
+
+```
+View "Customer Details" displays type "myapp:Customer"
+  → Read commands require: TypeAccessRule(Customer, READ).roles = {Viewer, Editor, Manager}
+  → Write commands require: TypeAccessRule(Customer, WRITE).roles = {Editor, Manager}
+  → Delete commands require: TypeAccessRule(Customer, DELETE).roles = {Manager}
+
+View "Order Processing" displays type "myapp:Order"
+  → Read commands require: TypeAccessRule(Order, READ).roles = {Viewer, Editor, Manager, Approver}
+  → Write commands require: TypeAccessRule(Order, WRITE).roles = {Editor, Manager}
+  → "Approve" commands require: TypeAccessRule(Order, Approve).roles = {Manager, Approver}
+```
+
+Custom `BoundCommandGroup`s in views are mapped to custom operations on the displayed type. `PersBoundComp` is no longer used; access rights are read from `SecurityConfiguration` entries in the knowledge base. Views with no domain type (dashboards, navigation menus, etc.) use a singleton as the security object and configure its access rights via a singleton-level `SecurityConfiguration` entry (section 2.3.9).
+
+### 2.6 API for Programmatic Access
+
+A new service interface provides programmatic access to model-based permissions:
+
+Since built-in operations (Read, Write, Delete) and custom business operations (Approve, Cancel, ...) are both `BoundCommandGroup`s, the API uses `BoundCommandGroup` as the unified operation type. There is no need for a separate `Operation` enum.
+
+```java
+public interface ModelAccessRights {
+
+    /**
+     * Returns the roles that are permitted to perform the given command group
+     * on instances of the given type. Applies to both built-in command groups
+     * (Read, Write, Delete) and custom business operations (Approve, Cancel, etc.).
+     */
+    Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup);
+
+    /**
+     * Returns the roles that are permitted to perform the given command group
+     * on the given attribute. Relevant for READ and WRITE command groups to
+     * implement attribute-level access restrictions.
+     */
+    Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute,
+                                     BoundCommandGroup commandGroup);
+
+    /**
+     * Checks whether the given person can perform the given command group
+     * on the given instance. Works for both built-in and custom operations.
+     */
+    boolean isAllowed(Person person, TLObject instance,
+                      BoundCommandGroup commandGroup);
+
+    /**
+     * Checks whether the given person can perform the given command group
+     * on the given attribute of the given instance.
+     */
+    boolean isAllowed(Person person, TLObject instance,
+                      TLStructuredTypePart attribute,
+                      BoundCommandGroup commandGroup);
+
+    /**
+     * Checks whether the given person can create a new child object in
+     * the given composition attribute of the given parent instance.
+     *
+     * Both creation conditions must hold (see section 2.3.6): the CREATE right on
+     * the created type (the composition attribute's target type) in the parent
+     * context, and the WRITE right on the composition attribute of the parent.
+     */
+    boolean isAllowedCreate(Person person, TLObject parent,
+                            TLStructuredTypePart compositionAttribute);
+
+    /**
+     * Checks whether the given person can create an instance of the given type
+     * in the given context (condition 1 of section 2.3.6). When no context is
+     * given (null), the check uses the global security root; this is the check
+     * for a top-level creation without a composition parent.
+     */
+    boolean isAllowedCreate(Person person, TLClass type, TLObject context);
+
+    /**
+     * Returns all types that the given person can perform the given
+     * command group on (based on type-level rules; instance-level checks
+     * still required for specific objects).
+     */
+    Set<TLClass> getAccessibleTypes(Person person, BoundCommandGroup commandGroup);
+}
+```
+
+### 2.7 Integration Points
+
+#### 2.7.1 AI Assistant
+
+The AI assistant uses the `ModelAccessRights` API directly:
+- Before reading data: `isAllowed(currentUser, instance, Read)`
+- Before modifying data: `isAllowed(currentUser, instance, Write)`
+- Before creating objects: `isAllowedCreate(currentUser, parent, compositionAttr)`
+- Before business operations: `isAllowed(currentUser, instance, Approve)`
+- To explain permissions: `getAllowedRoles(type, commandGroup)` → map to users
+
+#### 2.7.2 REST API / OpenAPI
+
+REST endpoints check model-level permissions instead of simulating view access:
+- GET: `isAllowed(user, instance, Read)`
+- PUT/PATCH: `isAllowed(user, instance, attribute, Write)` for each modified attribute
+- POST: `isAllowedCreate(user, parent, compositionAttribute)`
+- DELETE: `isAllowed(user, instance, Delete)`
+
+#### 2.7.3 Existing UI
+
+During the migration period (phases 1--2), views that still have `PersBoundComp` configurations continue to use them unchanged. Once a view is migrated to `SecurityConfiguration`-based access rules (phase 3), its `PersBoundComp` entry is removed. See section 2.8 for the full migration path.
+
+#### 2.7.4 TL-Script
+
+New TL-Script functions expose model-based access checks:
+```
+canRead($instance)
+canWrite($instance)
+canCreate($parent, $compositionAttribute)
+canDelete($instance)
+canReadAttribute($instance, $attribute)
+canWriteAttribute($instance, $attribute)
+canExecute($instance, $customOperation)
+```
+
+### 2.8 Migration Path
+
+1. **Phase 1 -- Introduce `SecurityConfiguration` ManagedClass and `ModelAccessRights` API**: Introduce the `SecurityConfiguration` ManagedClass as the single store for access rights. Both the new ManagedClass and the existing `PersBoundComp` coexist; views continue to use `PersBoundComp` as before. Also introduce `SecurityParentRule` configuration and the `getSecurityParents()` API; existing Java overrides of `getSecurityParent()` continue to work as a fallback.
+
+2. **Phase 2 -- AI and API integration**: The AI assistant and REST APIs use `ModelAccessRights` for their access checks against `SecurityConfiguration` entries.
+
+3. **Phase 3 -- Views migrate to `SecurityConfiguration`**: Views are migrated from `PersBoundComp` to `SecurityConfiguration`-based access rules. Views that display a typed domain object use type-level or attribute-level entries. Views with no domain type have a singleton created in their module and registered as their security object; their `PersBoundComp` configuration is converted to singleton-level `SecurityConfiguration` entries.
+
+4. **Phase 4 -- Remove `PersBoundComp`**: Once all views are migrated, `PersBoundComp` and its `needsRole` association are removed from the system. All access rights live exclusively in the `SecurityConfiguration` ManagedClass.
+
+### 2.9 Answering the Key Questions
+
+With model-based access rights in place:
+
+**"Which users can read instances of type Customer?"**
+→ `getAllowedRoles(Customer, Read)` gives the roles. Cross-referencing with role assignments on specific instances gives the users.
+
+**"Why can't user Meier edit this order?"**
+→ `getAllowedRoles(Order, Write)` = {Editor, Manager}. `AccessManager.getRoles(Meier, thisOrder)` = {Viewer}. Meier lacks the Editor or Manager role on this order.
+
+**"Which data can the AI assistant access for the current user?"**
+→ `getAccessibleTypes(currentUser, Read)` gives all readable types. For each type, instance-level checks filter to the specific objects the user can see.
+
+**"Who can approve orders?"**
+→ `getAllowedRoles(Order, Approve)` = {Manager, Approver}. The permission for the complex "approve" operation is defined directly on the Order type, independent of which views offer an Approve button.
+
+**"What would change if we give role X write access to type T?"**
+→ The impact is immediately visible: all users with role X on any T instance would gain write access. No need to trace through view configurations.

@@ -8,29 +8,29 @@ package com.top_logic.model.search.ui;
 import java.util.function.BiFunction;
 
 import com.top_logic.basic.col.Provider;
-import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.persistency.expressions.SearchExpressionImpl;
 import com.top_logic.model.search.ui.selector.SearchAndReportConfig;
 import com.top_logic.model.search.ui.selector.SearchType;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Editor to create {@link SearchExpression}.
+ * Editor to create {@link QueryExecutor}.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public interface SearchExpressionEditor {
 
 	/**
-	 * Creates the {@link SearchExpression} and executes it using the given algorithm.
+	 * Creates the {@link QueryExecutor} and executes it using the given algorithm.
 	 * 
 	 * @param algorithm
-	 *        Function that executes the created {@link SearchExpression}. The
-	 *        {@link SearchExpression} may be <code>null</code>.
-	 * @return Result of the search: When creating {@link SearchExpression} failed, the
+	 *        Function that executes the created {@link QueryExecutor}. The {@link QueryExecutor}
+	 *        may be <code>null</code>.
+	 * @return Result of the search: When creating {@link QueryExecutor} failed, the
 	 *         {@link HandlerResult} holds the errors. Otherwise it is the result of the algorithm.
 	 */
-	HandlerResult search(BiFunction<SearchExpression, Provider<String>, HandlerResult> algorithm);
+	HandlerResult search(BiFunction<QueryExecutor, Provider<String>, HandlerResult> algorithm);
 
 	/**
 	 * Normal, if its a GUI Editor, otherwise expert.

@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Generate test user"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="TestTLSecurity"
+						/>
+						<parameter name="ergebnis"
+							value="TestTLSecurity"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+					template-name-comment="Gruppe Zuordnen"
+				>
+					<parameters>
+						<parameter name="Login"
+							value="TestTLSecurity"
+						/>
+						<parameter name="Gruppe1"
+							value="Benutzer"
+						/>
+						<parameter name="Gruppe2"
+							value="Superusers"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="TestTLSecurity"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test admin bypass"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Suchausdruck"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Script Konsole > Editor"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value><![CDATA[{
+ all(`tl.accounts:Person`).filter(p -> $p.get(`tl.accounts:Person#name`) == "TestTLSecurity").singleElement()
+}]]></value>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							command-label="Script ausführen"
+							command-name="executeSearchConsole"
+							component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+							component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Benutzername"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
+									/>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming$GlobalVariableName"
+									name="TestTLSecurity"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="TestTLSecurity"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Suchausdruck"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Script Konsole > Editor"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value><![CDATA[{
+ all(`tl.accounts:Person`).filter(p -> $p.get(`tl.accounts:Person#name`) == "TestTLSecurity")..set(`tl.accounts:Person#admin`, true).get(`tl.accounts:Person#admin`)
+}]]></value>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							command-label="Script ausführen und Änderungen speichern"
+							command-name="updateSearchConsole"
+							component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+							component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Result"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
+									/>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+									displayed-row-index="0"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Suchausdruck"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Script Konsole > Editor"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+								<value><![CDATA[{
+ all(`tl.accounts:Person`).filter(p -> $p.get(`tl.accounts:Person#name`) == "TestTLSecurity")..set(`tl.accounts:Person#admin`, false).get(`tl.accounts:Person#admin`)
+}]]></value>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+							command-label="Script ausführen und Änderungen speichern"
+							command-name="updateSearchConsole"
+							component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+							component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Result"
+							>
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
+									/>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+									displayed-row-index="0"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			user-id="TestTLSecurity"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Test make admin user not allowed."
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+							<actions>
+								<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+									user-id="TestTLSecurity"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Suchausdruck"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Administration > Development > Script Konsole > Editor"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+										<value><![CDATA[{
+ self = all(`tl.accounts:Person`).filter(p -> $p.get(`tl.accounts:Person#name`) == "TestTLSecurity")
+}]]></value>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+									command-label="Script ausführen"
+									command-name="executeSearchConsole"
+									component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+									component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+									user-id="TestTLSecurity"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+									user-id="TestTLSecurity"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+										column-label="Benutzername"
+									>
+										<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+											<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Administration > Development > Script Konsole > Ergebnis"
+											/>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+											name="TestTLSecurity"
+										/>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="TestTLSecurity"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+							<actions>
+								<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+									user-id="TestTLSecurity"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Suchausdruck"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Administration > Development > Script Konsole > Editor"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+										<value><![CDATA[{
+ self = all(`tl.accounts:Person`).filter(p -> $p.get(`tl.accounts:Person#name`) == "TestTLSecurity").get(`tl.accounts:Person#admin`)
+}]]></value>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+									command-label="Script ausführen"
+									command-name="executeSearchConsole"
+									component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+									component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+									user-id="TestTLSecurity"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+									user-id="TestTLSecurity"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+										column-label="Result"
+									>
+										<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+											<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Administration > Development > Script Konsole > Ergebnis"
+											/>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+											displayed-row-index="0"
+										/>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="false"
+									/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+							<actions>
+								<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+									user-id="TestTLSecurity"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Suchausdruck"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Administration > Development > Script Konsole > Editor"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+										<value><![CDATA[{
+ self = all(`tl.accounts:Person`).filter(p -> $p.get(`tl.accounts:Person#name`) == "TestTLSecurity")..set(`tl.accounts:Person#admin`, true)
+}]]></value>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
+									expected-failure-message="Der Benutzer darf das Attribut Administrator von Objekt TestTLSecurity, TestTLSecurity nicht ändern."
+								>
+									<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+										command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+										command-label="Script ausführen und Änderungen speichern"
+										command-name="updateSearchConsole"
+										component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+										component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+										user-id="TestTLSecurity"
+									>
+										<arguments/>
+									</failure-action>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+							<actions>
+								<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+									user-id="TestTLSecurity"
+								>
+									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+										label="Suchausdruck"
+									>
+										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											tab-path="Administration > Development > Script Konsole > Editor"
+										/>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+										<value><![CDATA[{
+ self = all(`tl.accounts:Person`).filter(p -> $p.get(`tl.accounts:Person#name`) == "TestTLSecurity").get(`tl.accounts:Person#admin`)
+}]]></value>
+									</value>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+									command-label="Script ausführen"
+									command-name="executeSearchConsole"
+									component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+									component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+									user-id="TestTLSecurity"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+									comparision="equals"
+									inverted="false"
+									user-id="TestTLSecurity"
+								>
+									<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+										column-label="Result"
+									>
+										<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+											<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Administration > Development > Script Konsole > Ergebnis"
+											/>
+										</table>
+										<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+											displayed-row-index="0"
+										/>
+									</actual-value>
+									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="false"
+									/>
+								</action>
+							</actions>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:Nutzer/Action-Nutzer-Loeschen.xml"
+			template-name-comment="Nutzer Loeschen"
+		>
+			<parameters>
+				<parameter name="kontext"
+					value="TestTLSecurity"
+				/>
+			</parameters>
+		</action>
+	</actions>
+</action>

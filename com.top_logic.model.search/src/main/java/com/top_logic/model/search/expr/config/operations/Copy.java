@@ -19,6 +19,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.WithFlatMapSemantics;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -41,20 +42,20 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Copy extends GenericMethod implements WithFlatMapSemantics<CopyOperation> {
+public class Copy extends GenericMethodWithSecurity implements WithFlatMapSemantics<CopyOperation> {
 
 	private static final NamedConstant COPY_OPERATION = new NamedConstant("copyOperation");
 
 	/**
 	 * Creates a {@link Copy} operation.
 	 */
-	protected Copy(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected Copy(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new Copy(getName(), arguments);
+		return new Copy(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -113,6 +114,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<CopyOper
 			}
 
 			operation.setTransient(transientCopy);
+			operation.withSecurity(usesSecurity());
 
 			Object result = evalPotentialFlatMap(definitions, arguments[0], operation);
 
@@ -163,7 +165,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<CopyOper
 
 		@Override
 		public Copy build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			return new Copy(getConfig().getName(), args);
+			return new Copy(getConfig().getName(), args, true);
 		}
 
 		@Override

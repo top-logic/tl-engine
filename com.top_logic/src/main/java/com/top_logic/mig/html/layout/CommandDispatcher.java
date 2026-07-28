@@ -256,6 +256,9 @@ public class CommandDispatcher {
 		ResKey errorKey = getErrorKey(result);
 		if (errorKey != null) {
 			String failureMessage = context.getResources().getString(errorKey);
+			// Record the concrete failure text as a literal expected message. ExpectedFailureAction
+			// matches it as a literal substring by default (regexp mode is off), so no quoting is
+			// required.
 			failureExpectation.setExpectedFailureMessage(failureMessage);
 		}
 		return failureExpectation;

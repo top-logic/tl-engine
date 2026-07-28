@@ -29,6 +29,8 @@ public final class DeferredQueryExecutor extends QueryExecutor {
 
 	private QueryExecutor _executor;
 
+	private boolean _disableSecurity;
+
 	/**
 	 * Creates a {@link DeferredQueryExecutor}.
 	 */
@@ -39,6 +41,9 @@ public final class DeferredQueryExecutor extends QueryExecutor {
 	QueryExecutor executor() {
 		if (_executor == null) {
 			_executor = QueryExecutor.compile(getKnowledgeBase(), getTLModel(), _expr);
+			if (_disableSecurity) {
+				_executor.disableSecurity();
+			}
 		}
 		return _executor;
 	}
@@ -51,6 +56,14 @@ public final class DeferredQueryExecutor extends QueryExecutor {
 	@Override
 	protected TLModel getTLModel() {
 		return ModelService.getApplicationModel();
+	}
+
+	@Override
+	public void disableSecurity() {
+		_disableSecurity = true;
+		if (_executor != null) {
+			_executor.disableSecurity();
+		}
 	}
 
 	@Override

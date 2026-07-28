@@ -13,14 +13,16 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
- * TODO FSC Please document your code.
- * 
+ * Registry of the {@link ExportHandler}s available for exporting data, keyed by name.
+ *
  * @author <a href=mailto:fsc@top-logic.com>FSC</a>
  */
+@Label("Export handlers")
 public final class ExportHandlerRegistry extends ManagedClass {
 
 	/** The map of known handlers. */

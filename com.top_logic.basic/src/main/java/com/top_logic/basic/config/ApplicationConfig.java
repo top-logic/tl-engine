@@ -26,6 +26,7 @@ import com.top_logic.basic.config.DefaultConfigConstructorScheme.Factory;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Subtypes;
@@ -45,6 +46,7 @@ import com.top_logic.basic.vars.VariableExpander;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Application configuration")
 public final class ApplicationConfig extends ManagedClass implements Reloadable {
 
 	/**

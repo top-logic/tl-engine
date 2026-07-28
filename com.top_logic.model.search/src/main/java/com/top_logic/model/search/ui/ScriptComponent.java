@@ -28,7 +28,6 @@ import com.top_logic.layout.channel.TypedChannelSPI;
 import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
-import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.impl.TransientModelFactory;
@@ -73,7 +72,7 @@ public class ScriptComponent extends BoundLayout {
 	}
 
 	/**
-	 * Executes the given {@link SearchExpression} and propagates the result on the
+	 * Executes the given {@link QueryExecutor} and propagates the result on the
 	 * {@link #getResultChannel() result} channel.
 	 * 
 	 * @param expression
@@ -84,7 +83,7 @@ public class ScriptComponent extends BoundLayout {
 	 * @param src
 	 *        The script source code.
 	 */
-	public HandlerResult execute(SearchExpression expression, boolean withCommit, Provider<String> src) {
+	public HandlerResult execute(QueryExecutor expression, boolean withCommit, Provider<String> src) {
 		Collection<?> results;
 		try {
 			if (withCommit) {
@@ -102,46 +101,78 @@ public class ScriptComponent extends BoundLayout {
 			return error;
 		}
 
-		Set<TLClass> searchedTypes = SearchUtil.getSearchedTypes(expression);
+		Set<TLClass> searchedTypes = SearchUtil.getSearchedTypes(expression.getSearch());
 		if (searchedTypes.isEmpty() && !results.isEmpty()) {
 			// Cannot determine static type of query, use typing by example.
 			searchedTypes = new HashSet<>();
 			TLClass resultType = null;
+			TLClass multiResultType = null;
 			TLClassProperty resultPart = null;
+			TLClassProperty resultsPart = null;
 			Collection<Object> resultObjects = new ArrayList<>(results.size());
 			for (Object result : results) {
-				if (result instanceof TLObject) {
-					TLStructuredType type = ((TLObject) result).tType();
+				if (result instanceof TLObject item) {
+					TLStructuredType type = item.tType();
 					if (type instanceof TLClass) {
 						searchedTypes.add((TLClass) type);
 					}
 					resultObjects.add(result);
 				} else {
-					if (resultType == null) {
-						resultType = TransientModelFactory.createTransientClass(ModelService.getApplicationModel(),
-							"SearchResult");
-						resultPart = TransientModelFactory.addClassProperty(resultType, "result",
-							TLModelUtil.findType(TypeSpec.OBJECT_TYPE));
-						searchedTypes.add(resultType);
+					boolean multipleResult = false;
+					if (result != null) {
+						if (result.getClass().isArray()) {
+							result = Arrays.asList((Object[]) result);
+						}
+						if (result instanceof Collection<?> colResult) {
+							result = new ArrayList<>(colResult);
+							multipleResult = true;
+						}
+					}
+					if (multipleResult) {
+						if (multiResultType == null) {
+							multiResultType =
+								TransientModelFactory.createTransientClass(ModelService.getApplicationModel(),
+									"MultiSearchResult");
+							resultsPart = TransientModelFactory.addClassProperty(multiResultType, "results",
+								TLModelUtil.findType(TypeSpec.OBJECT_TYPE));
+							resultsPart.setMultiple(true);
+							searchedTypes.add(multiResultType);
+						}
+						TLObject obj = TransientModelFactory.createTransientObject(multiResultType);
+						obj.tUpdate(resultsPart, result);
+						resultObjects.add(obj);
+					} else {
+						if (resultType == null) {
+							resultType = TransientModelFactory.createTransientClass(ModelService.getApplicationModel(),
+								"SearchResult");
+							resultPart = TransientModelFactory.addClassProperty(resultType, "result",
+								TLModelUtil.findType(TypeSpec.OBJECT_TYPE));
+							searchedTypes.add(resultType);
+						}
+						TLObject obj = TransientModelFactory.createTransientObject(resultType);
+						obj.tUpdate(resultPart, result);
+						resultObjects.add(obj);
 					}
 
-					TLObject obj = TransientModelFactory.createTransientObject(resultType);
-					obj.tUpdate(resultPart, result);
-					resultObjects.add(obj);
 				}
 			}
 			results = resultObjects;
+		} else {
+			results = results.stream()
+				.map(TLObject.class::cast)
+				.toList();
 		}
 		Object resultSet = new AttributedSearchResultSet((Collection<TLObject>) results, searchedTypes, null, null);
 		getResultChannel().set(resultSet);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private Collection<?> getResults(SearchExpression expression) {
-		KnowledgeBase defaultKnowledgeBase = kb();
-		TLModel defaultTLModel = ModelService.getApplicationModel();
-		QueryExecutor executor = QueryExecutor.compile(defaultKnowledgeBase, defaultTLModel, expression);
-		Object result = executor.executeWith(executor.context(true, null, null), Args.none());
+
+	private Collection<?> getResults(QueryExecutor executor) {
+		// Secure the final result: access operations return referenced objects unfiltered, so the
+		// top-level result of an interactively executed script must be filtered for read access.
+		Object result =
+			SearchExpression.filterSecurity(executor.executeWith(executor.context(true, null, null), Args.none()));
 
 		// Note: Do not use SearchExpression.asCollection(result), since this decomposes maps into
 		// entry sets, which makes results hard to interpret.

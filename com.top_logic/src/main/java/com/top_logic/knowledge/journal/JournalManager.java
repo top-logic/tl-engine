@@ -33,6 +33,7 @@ import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.db.sql.Batch;
@@ -89,6 +90,7 @@ import com.top_logic.util.TLContext;
 	ApplicationConfig.Module.class,
 	ConnectionPoolRegistry.Module.class
 })
+@Label("Change journal")
 public class JournalManager extends ManagedClass {
 
 	private static final String MESSAGE_COLUMN = "MESSAGE";

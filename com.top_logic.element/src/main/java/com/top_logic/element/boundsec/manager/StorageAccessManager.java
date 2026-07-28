@@ -37,6 +37,7 @@ import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.cs.TLObjectChangeSet;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -298,10 +299,8 @@ public class StorageAccessManager extends ElementAccessManager {
 	protected List<TLID> getSecurityParentIDs(Collection<? extends BoundObject> businessObjects) {
 		List<TLID> resultIdList = new ArrayList<>();
 		for (BoundObject bo : businessObjects) {
-			while (bo != null) {
-				resultIdList.add(bo.getID());
-				bo = bo.getSecurityParent();
-    		}
+			resultIdList.add(bo.getID());
+			BoundHelper.collectAllSecurityParents(bo, parent -> resultIdList.add(parent.getID()));
     	}
 		return resultIdList;
     }
@@ -536,7 +535,11 @@ public class StorageAccessManager extends ElementAccessManager {
 
 			if (Utils.equals(currentPerson, person)) {
 				RoleComputation roleComputation = tlContext.get(PERSON_ROLE_CACHE);
-				if (roleComputation == null) {
+				// The cache is stored per interaction under a person-independent property. If the
+				// current person of the interaction has changed (e.g. the person was switched on the
+				// same context), a cache built for the previous person must not be reused, otherwise
+				// it would report that person's roles.
+				if (roleComputation == null || !Utils.equals(roleComputation.getPerson(), currentPerson)) {
 					roleComputation = this.createRoleComputation(currentPerson, true);
 					tlContext.set(PERSON_ROLE_CACHE, roleComputation);
 				}

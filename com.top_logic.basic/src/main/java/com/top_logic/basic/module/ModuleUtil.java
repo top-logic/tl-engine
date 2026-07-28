@@ -37,7 +37,7 @@ import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.basic.util.ResourcesModule;
 
 /**
- * Utilities for managing the live-cycle of {@link RuntimeModule}s.
+ * Utilities for managing the live-cycle of {@link BasicRuntimeModule}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -212,7 +212,7 @@ public class ModuleUtil {
 	 * @throws IllegalArgumentException
 	 *         If there is a cyclic dependency.
 	 * @throws ModuleException
-	 *         if startup of some dependent of the given {@link RuntimeModule} failed
+	 *         if startup of some dependent of the given {@link BasicRuntimeModule} failed
 	 */
 	public void startConfiguredModules() throws IllegalArgumentException, ModuleException {
 		ModuleSystem moduleSystem = ModuleSystem.Module.INSTANCE.getImplementationInstance();
@@ -223,16 +223,15 @@ public class ModuleUtil {
 	}
 
 	/**
-	 * Start the given {@link RuntimeModule} with all its dependencies.
+	 * Start the given {@link BasicRuntimeModule} with all its dependencies.
 	 * 
 	 * @param module
-	 *        The {@link RuntimeModule} to start.
+	 *        The {@link BasicRuntimeModule} to start.
 	 * 
 	 * @throws IllegalArgumentException
 	 *         If there is a cyclic dependency.
 	 * @throws ModuleException
-	 *         if startup of some dependent of the given {@link RuntimeModule}
-	 *         failed
+	 *         if startup of some dependent of the given {@link BasicRuntimeModule} failed
 	 * 
 	 * @see #beginContext()
 	 */
@@ -480,11 +479,10 @@ public class ModuleUtil {
 	}
 
 	/**
-	 * Stop the given {@link RuntimeModule} with all modules that depend on the
-	 * given module.
+	 * Stop the given {@link BasicRuntimeModule} with all modules that depend on the given module.
 	 * 
 	 * @param module
-	 *        The {@link RuntimeModule} to stop.
+	 *        The {@link BasicRuntimeModule} to stop.
 	 */
 	public void shutDown(BasicRuntimeModule<?> module) {
 		if (!module.isActive()) {
@@ -772,12 +770,12 @@ public class ModuleUtil {
 	}
 
 	/**
-	 * Resolve all dependencies of a given {@link RuntimeModule}.
+	 * Resolve all dependencies of a given {@link BasicRuntimeModule}.
 	 * 
 	 * @param module
-	 *        The {@link RuntimeModule} to resolve dependencies for.
-	 * @return {@link Iterable} of all dependencies of the given module and the
-	 *         given module itself in topological order (dependencies first).
+	 *        The {@link BasicRuntimeModule} to resolve dependencies for.
+	 * @return {@link Iterable} of all dependencies of the given module and the given module itself
+	 *         in topological order (dependencies first).
 	 * 
 	 * @throws IllegalArgumentException
 	 *         If there is a cyclic dependency.

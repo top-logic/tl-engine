@@ -45,6 +45,12 @@ public class MigrationScript extends AbstractConfiguredInstance<MigrationScript.
 		super(context, config);
 
 		_script = QueryExecutor.compile(config.getScript());
+
+		// The script runs as a startup migration (see perform()) in a system context without a
+		// logged-in user. It is backend logic that must operate on all data and must not be subject
+		// to a user's access rights; with security enabled it would even be denied, as there is no
+		// current user.
+		_script.disableSecurity();
 	}
 
 	@Override

@@ -13,6 +13,7 @@ import com.top_logic.basic.Environment;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceExtensionPoint;
@@ -50,6 +51,7 @@ import com.top_logic.knowledge.service.migration.MigrationService;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceExtensionPoint(ConnectionPoolRegistry.Module.class)
+@Label("Database table setup")
 public class InitialTableSetup extends ManagedClass {
 
 	/**

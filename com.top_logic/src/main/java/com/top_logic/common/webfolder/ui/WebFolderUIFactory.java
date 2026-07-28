@@ -18,6 +18,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
@@ -70,11 +71,11 @@ import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * The WebFolderUIFactory provides methods to create stuff for displaying a WebFolder
- * {@link WebFolder}.
- * 
+ * Creates the controls and fields used to display a {@link WebFolder}.
+ *
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
+@Label("Web folder UI")
 public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactory.Config> {
 
 	/** {@link ConfigurationItem} for the {@link WebFolderUIFactory}. */

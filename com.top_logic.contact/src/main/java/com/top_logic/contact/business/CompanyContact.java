@@ -8,9 +8,7 @@ package com.top_logic.contact.business;
 import java.util.Collection;
 
 import com.top_logic.basic.StringServices;
-import com.top_logic.element.boundsec.ElementBoundHelper;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.util.Country;
 import com.top_logic.util.Utils;
 
@@ -109,16 +107,6 @@ public class CompanyContact extends AbstractContact {
 	public Collection<PersonContact> getStaff() {
 		return (Collection) this.getValue(ATTRIBUTE_STAFF);
 	}
-
-    /** 
-     * Use global security
-     * 
-     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParent()
-     */
-    @Override
-	public BoundObject getSecurityParent() {
-        return ElementBoundHelper.getSecurityRoot();
-    }
 
     /** 
      * Return the SAP number of the company contact.

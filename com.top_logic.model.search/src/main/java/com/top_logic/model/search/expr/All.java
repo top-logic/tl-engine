@@ -63,6 +63,11 @@ public class All extends SearchExpression {
 
 	/**
 	 * Retrieves all instances of the given type.
+	 *
+	 * <p>
+	 * The result is not filtered for security: access to the individual objects' data is secured
+	 * when their attributes are accessed, and the final result of a script is secured by the caller.
+	 * </p>
 	 */
 	public static List<? extends TLObject> all(SearchExpression self, TLStructuredType type) {
 		switch (type.getModelKind()) {

@@ -167,6 +167,20 @@ Throw `com.top_logic.util.error.TopLogicException` for user-visible errors that 
 
 See [docs/faq/i18n.md](docs/faq/i18n.md) for the `I18NConstants` pattern and a full example.
 
+### TL-Script Builtin Functions
+
+Adding a builtin function (expression) to TL-Script is described in the in-app Developer Guide page `com.top_logic.model.search/src/main/webapp/doc/{en,de}/DeveloperGuide/TLScript/TLScriptExtensions/`. There are **two** mechanisms — pick the simplest one that fits.
+
+**Mechanism 1 — `MethodBuilder` (full control).** Implement a `GenericMethod` plus a `MethodBuilder`, register it as `<method>` in `SearchBuilder` configuration, name the arguments with a constant `ArgumentDescriptor`, keep the expression factory `getId()` unique when one class serves several `<method>` registrations, and **always** ship a documentation page (`index.html` + `page.properties`) under `.../doc/{en,de}/DeveloperGuide/TLScript/...` — a `MethodBuilder`-style expression without a help page is incomplete. Use this when you need custom argument evaluation, a computed/derived result type, lazy or context-dependent evaluation, or anything a plain static method signature cannot express.
+
+**Mechanism 2 — subclass `TLScriptFunctions` (the easy path for plain functions).** Extend `com.top_logic.model.search.expr.config.operations.TLScriptFunctions` and add `public static` methods — **every** public static method automatically becomes a TL-Script function. No `MethodBuilder`, no `<method>` registration, no `ArgumentDescriptor`: the single `TLScriptMethodResolver` (already wired as a `<method-resolver>` in `modelSearchConf.config.xml`) discovers all subclasses at startup via the `TypeIndex` (`getSpecializations(TLScriptFunctions.class, …)`). A subclass placed in any module that depends on `com.top_logic.model.search` is picked up automatically. Rules:
+
+- **Function name** = prefix + capitalized method name, joined with **no separator**. The prefix defaults to the class's simple name; override it with `@ScriptPrefix("…")` on the class. Override the per-method suffix with `@Name(…)`. Example: `@ScriptPrefix("math")` + `random()` → `mathRandom()`. **Always give the class a `@ScriptPrefix`** — a prefix namespaces the functions (e.g. `math…`), keeps names globally unique, and makes them discoverable by prefix in the editor's autocompletion; relying on the raw class simple name as the implicit prefix is discouraged.
+- **Parameters** map to script parameters positionally. Mark required ones with `@Mandatory`; give a primitive default via the matching annotation (`@StringDefault`, `@LongDefault`, …); for a type TL-Script cannot convert natively, annotate the parameter with `@ScriptConversion(<ValueConverter>)`.
+- **Docs/UI**: the method JavaDoc becomes the description and `@Label` overrides the generated UI label (auto-generated like other config labels — no separate HTML help page is required). Add `@SideEffectFree` to declare a pure function.
+- Names must be globally unique across all subclasses; a clash is reported as a config error at startup.
+- Canonical example: `com.top_logic.model.search/.../operations/MathFunctions.java` (`@ScriptPrefix("math")`); further real examples in `com.top_logic.react.flow.server` / `com.top_logic.graphic.blocks.server` (`FlowFactory`).
+
 ### JavaDoc Conventions
 
 **Reference members, methods, and types with `{@link}`, not `{@code}`.** A `{@link #getScrollX()}`

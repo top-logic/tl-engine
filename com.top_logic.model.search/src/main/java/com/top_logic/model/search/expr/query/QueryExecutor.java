@@ -273,6 +273,19 @@ public abstract class QueryExecutor {
 	protected abstract TLModel getTLModel();
 
 	/**
+	 * Disables the security check for the {@link #getSearch() compiled expression}.
+	 *
+	 * <p>
+	 * By default, every executed expression applies security, i.e. elements that the current user
+	 * is not allowed to see are removed from the (intermediate) results and modifying operations
+	 * require the corresponding write permission. Calling this method permanently switches security
+	 * off for this {@link QueryExecutor}'s expression. It must therefore only be used for internal
+	 * queries that must not be subject to the user's access rights.
+	 * </p>
+	 */
+	public abstract void disableSecurity();
+
+	/**
 	 * The {@link SearchExpression} being executed.
 	 */
 	public abstract SearchExpression getSearch();

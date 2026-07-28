@@ -8,6 +8,7 @@ package com.top_logic.basic;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.keystorages.KeyStorageCheckerRegistry;
@@ -17,11 +18,12 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 
 
 /**
- * Configurable static facade for {@link TypeKeyProvider}. 
- * 
+ * Resolves type keys for objects using the configured {@link TypeKeyProvider}.
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @ServiceDependencies(KeyStorageCheckerRegistry.Module.class)
+@Label("Type key registry")
 public final class TypeKeyRegistry extends ManagedClass {
 
 	public static final String PROVIDER_CLASS_CONFIGNAME = "provider";

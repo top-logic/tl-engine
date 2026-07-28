@@ -372,7 +372,12 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 
 	@Override
 	public Iterator<? extends Object> getChildIterator(LayoutComponent contextComponent, Object node) {
-		return (SearchExpression.asCollection(_children.execute(node, contextComponent.getModel()))).iterator();
+		// Secure the displayed child nodes: only those the current user is allowed to read. A
+		// forbidden node thereby drops out of the tree together with its subtree. The tree root is
+		// the (separately access-controlled) component model and is not filtered here.
+		return (SearchExpression
+			.asCollection(SearchExpression.filterSecurity(_children.execute(node, contextComponent.getModel()))))
+				.iterator();
 	}
 
 	@Override

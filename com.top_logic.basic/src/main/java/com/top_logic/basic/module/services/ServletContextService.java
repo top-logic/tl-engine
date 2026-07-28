@@ -13,6 +13,7 @@ import jakarta.servlet.ServletContext;
 
 import com.top_logic.basic.Environment;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.core.workspace.Workspace;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
@@ -23,11 +24,11 @@ import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.version.Version;
 
 /**
- * The class {@link ServletContextService} is a service which provides
- * informations about the context in which the application runs.
- * 
+ * Provides information about the servlet context in which the application runs.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Servlet context")
 public final class ServletContextService extends ManagedClass {
 
 	private final ServletContext context;

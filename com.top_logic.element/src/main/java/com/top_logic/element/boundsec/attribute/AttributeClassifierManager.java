@@ -22,6 +22,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -41,11 +42,12 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Provides the available classifiers for meta attributes
- * 
+ * Provides the classifiers available for securing model attributes.
+ *
  * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 @ServiceDependencies(ModelService.Module.class)
+@Label("Attribute classifiers")
 public class AttributeClassifierManager extends ManagedClass {
     
 	public static final String KA_CLASSIFIED_BY = ApplicationObjectUtil.KA_CLASSIFIED_BY;
@@ -133,6 +135,7 @@ public class AttributeClassifierManager extends ManagedClass {
 	 *        Configuration for this {@link AttributeClassifierManager}.
 	 */
 	public AttributeClassifierManager(InstantiationContext context, Config config) {
+		super(context, config);
 		Map<String, TLClass> uniqueMetaElements = ElementAccessHelper.getUniqueMetaElements();
 		addClassifications(context, _globalClassifiers, config.getGlobalClassifications());
 		for (TypeClassifications typeConfiguration : config.getTypeClassifications().values()) {

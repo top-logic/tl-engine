@@ -19,6 +19,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -26,7 +27,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.time.CalendarUtil;
 
 /**
- * This class has the ability to log strings into files.
+ * Service for logging strings into files.
  * There are two mechanisms for logging:
  * <ul>
  * <li><code>
@@ -58,6 +59,7 @@ import com.top_logic.basic.time.CalendarUtil;
  * 
  * @author    <a href="mailto:fma@top-logic.com">Frank Mausz</a>
  */
+@Label("File logging")
 public class BasicFileLog extends ConfiguredManagedClass<BasicFileLog.Config> {
 
 	/**

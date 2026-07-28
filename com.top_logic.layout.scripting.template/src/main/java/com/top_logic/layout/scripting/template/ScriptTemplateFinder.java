@@ -11,6 +11,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.FileLocation;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -31,6 +32,7 @@ import com.top_logic.template.xml.source.TemplateSourceFactory;
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
+@Label("Script template lookup")
 @ServiceDependencies({
 	TemplateSourceFactory.Module.class,
 })

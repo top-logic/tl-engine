@@ -20,6 +20,10 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, CopyConstructor {
@@ -36,6 +40,8 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 
 	private Boolean _transientCopy;
 
+	private Boolean _useSecurity;
+
 	@Override
 	public CopyOperationImpl setFilter(CopyFilter filter) {
 		_filter = filter;
@@ -46,6 +52,37 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 	public CopyOperationImpl setTransient(Boolean transientCopy) {
 		_transientCopy = transientCopy;
 		return this;
+	}
+
+	@Override
+	public CopyOperation withSecurity(Boolean useSecurity) {
+		_useSecurity = useSecurity;
+		return this;
+	}
+
+	/**
+	 * Whether read access to copied attributes is checked (see {@link #withSecurity(Boolean)}).
+	 */
+	protected final boolean useSecurity() {
+		return Boolean.TRUE.equals(_useSecurity);
+	}
+
+	/**
+	 * Reads the value of the given part from the original, applying a read-access check when
+	 * {@link #useSecurity() security is enabled}.
+	 *
+	 * <p>
+	 * This mirrors a TL-Script attribute read ({@code $orig.get(part)}): if the current user must
+	 * not read the part on the original, the empty value (<code>null</code>, or an empty collection
+	 * for multiple parts) is returned, exactly as {@code get} would. This keeps {@code copy()} a pure
+	 * shortcut for {@code new(...).set(part, $orig.get(part))...}.
+	 * </p>
+	 */
+	protected final Object readValue(TLObject orig, TLStructuredTypePart part) {
+		if (useSecurity() && !ModelAccessRights.getInstance().isReadAllowed(orig, part)) {
+			return TLModelUtil.getEmptyValue(part);
+		}
+		return orig.tValue(part);
 	}
 
 	@Override
@@ -124,6 +161,12 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 		if (copyTransient) {
 			return TransientObjectFactory.INSTANCE.createObject(classType, context);
 		} else {
+			if (useSecurity()
+					&& !ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), classType, context)) {
+				// Mirror new(type): allocating a copy requires the CREATE permission on the copied
+				// type.
+				throw new TopLogicException(I18NConstants.ERROR_CREATE_PERMISSION_DENIED__TYPE.fill(classType));
+			}
 			return _factory.createObject(classType, context);
 		}
 	}
@@ -135,7 +178,7 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 			return;
 		}
 
-		Object value = orig.tValue(reference);
+		Object value = readValue(orig, reference);
 
 		if (!_filter.accept(reference, value, orig)) {
 			return;

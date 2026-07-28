@@ -15,6 +15,7 @@ import java.sql.Types;
 import java.text.Format;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 
 /** This class helps using DB2.
@@ -46,6 +47,33 @@ public class DB2Helper extends DBHelper
 	@CalledByReflection
 	public DB2Helper(InstantiationContext context, Config config) {
 		super(context, config);
+	}
+
+	/**
+	 * Verifies that the DB2 database uses a case-insensitive collating sequence, since DB2 cannot
+	 * apply a case-insensitive collation per column. Logs an error otherwise.
+	 */
+	@Override
+	protected void internalCheck(Statement statement) throws SQLException {
+		// DB2 has no per-column collation; the database itself must use a case-insensitive
+		// collating sequence, otherwise non-binary string columns are compared case-sensitively.
+		try (ResultSet result =
+			statement.executeQuery("SELECT VALUE FROM SYSIBMADM.DBCFG WHERE NAME = 'coll_seq'")) {
+			String collation = result.next() ? result.getString(1) : null;
+			if (collation == null || !isCaseInsensitiveCollation(collation)) {
+				Logger.error(
+					"DB2 database is not configured with a case-insensitive collating sequence (coll_seq='"
+						+ collation + "'). Non-binary string columns will be compared case-sensitively.",
+					DB2Helper.class);
+			}
+		}
+	}
+
+	private boolean isCaseInsensitiveCollation(String collSeq) {
+		// A CLDR/UCA locale-sensitive collating sequence provides case-insensitive comparison;
+		// IDENTITY/IDENTITY_16BIT/SYSTEM (byte order) do not.
+		String value = collSeq.toUpperCase();
+		return value.contains("CLDR") || value.contains("UCA") || value.contains("NX");
 	}
 
     /** We use a Sequence based on the table name.

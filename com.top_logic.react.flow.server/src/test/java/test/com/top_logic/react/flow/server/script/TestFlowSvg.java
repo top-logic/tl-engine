@@ -22,7 +22,8 @@ import com.top_logic.react.flow.server.script.FlowFactory;
 public class TestFlowSvg extends TestCase {
 
 	/**
-	 * The generated SVG must declare the font its layout was measured with.
+	 * The generated SVG must declare the font its layout was measured with, at the measurement
+	 * scale (the requested text size in points, converted to pixels).
 	 *
 	 * <p>
 	 * A {@code <text>} without an explicit font otherwise inherits the viewer's default (typically
@@ -31,15 +32,17 @@ public class TestFlowSvg extends TestCase {
 	 * </p>
 	 */
 	public void testDefaultFontCssInjected() throws IOException {
+		// 12pt * 96/72 = 16px
 		String svg12 = readSvg(toSvg(12.0));
 		assertTrue("Default font-family CSS missing: " + svg12,
 			svg12.contains("text:not([font-family]):not([class]){font-family:Arial;}"));
-		assertTrue("Default font-size CSS for text size 12 should be 12px: " + svg12,
-			svg12.contains("text:not([font-size]):not([class]){font-size:12px;}"));
+		assertTrue("Default font-size CSS for 12pt should be 16px: " + svg12,
+			svg12.contains("text:not([font-size]):not([class]){font-size:16px;}"));
 
+		// 24pt * 96/72 = 32px
 		String svg24 = readSvg(toSvg(24.0));
-		assertTrue("Default font-size CSS for text size 24 should be 24px: " + svg24,
-			svg24.contains("text:not([font-size]):not([class]){font-size:24px;}"));
+		assertTrue("Default font-size CSS for 24pt should be 32px: " + svg24,
+			svg24.contains("text:not([font-size]):not([class]){font-size:32px;}"));
 	}
 
 	private static BinaryData toSvg(double textSize) {

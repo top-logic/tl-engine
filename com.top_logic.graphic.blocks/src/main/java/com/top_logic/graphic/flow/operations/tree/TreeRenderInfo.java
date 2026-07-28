@@ -589,21 +589,27 @@ public class TreeRenderInfo {
 			// (root vs. other subtree's descendant, or descendant vs. descendant) and uses
 			// _subtreeGapY.
 			List<SubtreeBoxes> placed = new ArrayList<>();
-			boolean first = true;
+			double prevAnchorMid = Double.NEGATIVE_INFINITY;
 			for (TreeNode child : children) {
 				double dx = childOriginX - subtreeMinX(child);
 				shiftSubtree(child, dx, 0);
 				SubtreeBoxes candidate = collectSubtree(child);
 				double topDy = -subtreeMinY(child);
 				double dy;
-				if (first) {
+				if (prevAnchorMid == Double.NEGATIVE_INFINITY) {
 					dy = topDy;
-					first = false;
 				} else {
-					dy = topmostFitDy(placed, candidate, topDy);
+					// The connections leave the parent's bus in the order they are declared in, so
+					// a child must not be packed above the one before it. Free space beside an
+					// earlier sibling's subtree is only usable as far as that order allows.
+					// Constraining the search rather than its result keeps the position it finds
+					// free of conflicts.
+					dy = topmostFitDy(placed, candidate,
+						Math.max(topDy, prevAnchorMid - anchorMid(child)));
 				}
 				shiftSubtree(child, 0, dy);
 				placed.add(candidate.shifted(dy));
+				prevAnchorMid = anchorMid(child);
 			}
 		} else {
 			// Align every child's outgoing-bus column to a single X derived from the widest

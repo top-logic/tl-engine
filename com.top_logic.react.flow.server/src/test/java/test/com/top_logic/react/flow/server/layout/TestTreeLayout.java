@@ -24,6 +24,8 @@ import com.top_logic.react.flow.data.Align;
 import com.top_logic.react.flow.data.Alignment;
 import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
+import com.top_logic.react.flow.operations.tree.TreeNode;
+import com.top_logic.react.flow.operations.tree.TreeRenderInfo;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.EdgeDecoration;
 import com.top_logic.react.flow.data.Padding;
@@ -772,15 +774,15 @@ public class TestTreeLayout extends TestCase {
 	}
 
 	public void testRandomTree() throws IOException {
-		Diagram diagramCompfort =
-			Diagram.create().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(false)));
+		TreeLayout comfort = createRandomTree().setCompact(false);
+		Diagram diagramCompfort = Diagram.create().setRoot(Padding.create().setAll(20).setContent(comfort));
 		writeToFile(diagramCompfort, "./target/TestTreeLayout-random-compfort.svg");
+		assertConnectionOrder(comfort);
 
-		Diagram diagramCompact =
-			Diagram.create().setRoot(
-				Padding.create().setAll(20)
-					.setContent(createRandomTree().setCompact(true).setSibblingGapY(15).setSubtreeGapY(30)));
+		TreeLayout compact = createRandomTree().setCompact(true).setSibblingGapY(15).setSubtreeGapY(30);
+		Diagram diagramCompact = Diagram.create().setRoot(Padding.create().setAll(20).setContent(compact));
 		writeToFile(diagramCompact, "./target/TestTreeLayout-random-compact.svg");
+		assertConnectionOrder(compact);
 	}
 
 	private TreeLayout createRandomTree() {
@@ -1087,6 +1089,39 @@ public class TestTreeLayout extends TestCase {
 			.addContent(descriptionAligned)
 			.addContent(anchorAligned);
 		return new LabelAnchorNode(box, anchor);
+	}
+
+	/**
+	 * Asserts that no child of any node is placed above the child connected before it.
+	 *
+	 * <p>
+	 * #29424: the connections of a node form an ordered list and leave its bus in that order.
+	 * Compact packing slides a subtree into free space beside an earlier sibling, which must not
+	 * carry it above a sibling that is connected earlier.
+	 * </p>
+	 */
+	private void assertConnectionOrder(TreeLayout tree) {
+		TreeRenderInfo info = (TreeRenderInfo) tree.getRenderInfo();
+		for (TreeNode node : info.getNodes()) {
+			TreeNode previous = null;
+			for (TreeNode child : node.getChildren()) {
+				if (previous != null) {
+					assertTrue("Child connected at position " + node.getChildren().indexOf(child)
+						+ " sits above the one connected before it: " + anchorMidY(child)
+						+ " above " + anchorMidY(previous) + ".",
+						anchorMidY(child) >= anchorMidY(previous) - 0.5);
+				}
+				previous = child;
+			}
+		}
+	}
+
+	/**
+	 * Y coordinate of the point where the connection to the given node meets it.
+	 */
+	private static double anchorMidY(TreeNode node) {
+		Box anchor = node.getAnchor();
+		return node.getY() + anchor.getY() + 0.5 * anchor.getHeight();
 	}
 
 }

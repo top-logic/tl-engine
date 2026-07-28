@@ -207,7 +207,7 @@ public class PostgreSQLHelper extends DBHelper {
 				break;
 			case NATURAL:
 				super.internalAppendCollatedExpression(buffer, sqlExpression, collationHint);
-				buffer.append(" COLLATE \"default\" ");
+				buffer.append(" COLLATE \"" + CI_COLLATION + "\" ");
 				break;
 		}
 	}

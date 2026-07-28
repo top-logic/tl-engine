@@ -118,6 +118,9 @@ public class PostgreSQLHelper extends DBHelper {
 		// According to https://github.com/pgjdbc/pgjdbc/issues/458, PostgreSQL does not support
 		// CLOB types.
 		result.append("TEXT");
+		if (!castContext) {
+			appendCollationDefinition(result, binary);
+		}
 	}
 
 	@Override
@@ -219,9 +222,14 @@ public class PostgreSQLHelper extends DBHelper {
 		}
 	}
 
+	/** Name of the case-insensitive (nondeterministic ICU) collation created by this dialect. */
+	public static final String CI_COLLATION = "tl_ci";
+
 	private void appendCollationDefinition(Appendable result, boolean binary) throws IOException {
 		if (binary) {
 			result.append(" COLLATE \"C\"");
+		} else {
+			result.append(" COLLATE \"" + CI_COLLATION + "\"");
 		}
 	}
 

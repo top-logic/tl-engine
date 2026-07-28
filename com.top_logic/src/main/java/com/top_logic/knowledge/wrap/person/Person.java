@@ -687,7 +687,7 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 			return null;
 		}
 
-		KnowledgeItem cachedPerson = getOrInstallByNameCache(defaultKB).getValue().get(name);
+		KnowledgeItem cachedPerson = getOrInstallByNameCache(defaultKB).lookup(name);
 		if (cachedPerson == null) {
 			return null;
 		}
@@ -699,7 +699,10 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 		if (byNameCache == null || byNameCache.kb() != defaultKB) {
 			// First access to cache or default KB has changed (PersistencyLayer may have been
 			// restarted).
-			byNameCache = new ItemByNameCache<>((DBKnowledgeBase) defaultKB, OBJECT_NAME, NAME_ATTRIBUTE, String.class);
+			// Account names are matched case-insensitively (Ticket #29423): the cache is keyed by
+			// the lower-cased name, while the stored name keeps its original spelling.
+			byNameCache = new ItemByNameCache<>((DBKnowledgeBase) defaultKB, OBJECT_NAME, NAME_ATTRIBUTE,
+				String.class, name -> name.toLowerCase(Locale.ROOT));
 			BY_NAME_CACHE = byNameCache;
 		}
 		return byNameCache;

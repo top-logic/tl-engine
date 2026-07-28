@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.SQLModifyColumn;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
@@ -38,10 +39,11 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
  *
  * <p>
  * Non-binary string columns created before this change do not have the case-insensitive
- * collation (<code>tl_ci</code> on {@code PostgreSQL}, <code>BINARY_CI</code> on Oracle) that is now
- * applied to newly created columns. Re-emitting the column type (without changing type, size, or
- * binary-ness) makes the database re-create the column with the current, collation-aware
- * definition.
+ * collation (e.g. <code>tl_ci</code> on {@code PostgreSQL}) that is now applied to newly created
+ * columns. Re-emitting the column type (without changing type, size, or binary-ness) makes the
+ * database re-create the column with the current, collation-aware definition. Dialects that do not
+ * apply a case-insensitive collation per column (e.g. Oracle and DB2, where case-insensitivity
+ * depends on the database configuration) are skipped.
  * </p>
  *
  * <p>
@@ -107,7 +109,13 @@ public class RecollateStringColumnsProcessor
 		String columnName = config.getColumn();
 
 		try {
-			connection.getSQLDialect().prepareDatabase(connection);
+			DBHelper sqlDialect = connection.getSQLDialect();
+			if (!sqlDialect.supportsColumnCollation()) {
+				log.info("Dialect '" + sqlDialect.getClass().getSimpleName()
+					+ "' does not apply a case-insensitive collation per column; nothing to re-collate.");
+				return;
+			}
+			sqlDialect.prepareDatabase(connection);
 
 			MORepository repository = context.getPersistentRepository();
 
@@ -140,7 +148,9 @@ public class RecollateStringColumnsProcessor
 		int count = 0;
 		for (MOAttribute attr : selectAttributes(table, columnName)) {
 			for (DBAttribute col : attr.getDbMapping()) {
-				if (col.getSQLType() != DBType.STRING || col.isBinary()) {
+				DBType type = col.getSQLType();
+				boolean stringLike = type == DBType.STRING || type == DBType.CHAR || type == DBType.CLOB;
+				if (col.isBinary() || !stringLike) {
 					continue;
 				}
 

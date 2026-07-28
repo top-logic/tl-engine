@@ -83,10 +83,14 @@ public class DB2Helper extends DBHelper
 	}
 
 	private boolean isCaseInsensitiveCollation(String collSeq) {
-		// A CLDR/UCA locale-sensitive collating sequence provides case-insensitive comparison;
-		// IDENTITY/IDENTITY_16BIT/SYSTEM (byte order) do not.
+		// A locale-sensitive CLDR/UCA collating sequence is case-insensitive at primary or secondary
+		// strength (suffix _S1 / _S2); tertiary or higher (_S3 / _S4) is case-sensitive. Byte-order
+		// sequences (IDENTITY / IDENTITY_16BIT / SYSTEM) are always case-sensitive. This is a
+		// heuristic and must be verified against the actual DB2 catalog values in QA.
 		String value = collSeq.toUpperCase();
-		return value.contains("CLDR") || value.contains("UCA") || value.contains("NX");
+		boolean localeSensitive = value.contains("CLDR") || value.contains("UCA");
+		boolean caseSensitiveStrength = value.endsWith("_S3") || value.endsWith("_S4");
+		return localeSensitive && !caseSensitiveStrength;
 	}
 
     /** We use a Sequence based on the table name.

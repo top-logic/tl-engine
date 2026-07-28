@@ -148,7 +148,15 @@ public class PostgreSQLHelper extends DBHelper {
 	 */
 	private void checkCaseInsensitiveCollationSupport(Statement statement) throws SQLException {
 		try (ResultSet result = statement.executeQuery("SELECT current_setting('server_version_num')")) {
-			int versionNum = result.next() ? Integer.parseInt(result.getString(1)) : 0;
+			String versionValue = result.next() ? result.getString(1) : null;
+			int versionNum;
+			try {
+				versionNum = versionValue == null ? 0 : Integer.parseInt(versionValue.trim());
+			} catch (NumberFormatException ex) {
+				Logger.error("Cannot determine PostgreSQL version from server_version_num='" + versionValue
+					+ "'; skipping the case-insensitive collation support check.", ex, PostgreSQLHelper.class);
+				return;
+			}
 			if (versionNum < 120000) {
 				Logger.error("PostgreSQL " + versionNum
 					+ " does not support nondeterministic ICU collations (requires 12+); non-binary string columns"

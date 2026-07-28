@@ -185,6 +185,16 @@ public class PostgreSQLHelper extends DBHelper {
 	}
 
 	@Override
+	protected void appendCharType(Appendable result, boolean mandatory, boolean binary, boolean castContext)
+			throws IOException {
+		super.appendCharType(result, mandatory, binary, castContext);
+
+		if (!castContext) {
+			appendCollationDefinition(result, binary);
+		}
+	}
+
+	@Override
 	protected void appendStringType(Appendable result, String columnName, long size, boolean mandatory, boolean binary,
 			boolean castContext) throws IOException {
 		super.appendStringType(result, columnName, size, mandatory, binary, castContext);

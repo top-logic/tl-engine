@@ -45,4 +45,20 @@ public class TestPostgreSQLCollation extends TestCase {
 		assertTrue(columnDDL(DBType.CLOB, 0, false).contains("COLLATE \"tl_ci\""));
 	}
 
+	/**
+	 * A non-binary CHAR column is emitted with the case-insensitive collation.
+	 */
+	public void testNonBinaryCharIsCiCollated() {
+		assertTrue(columnDDL(DBType.CHAR, 1, false).contains("COLLATE \"tl_ci\""));
+	}
+
+	/**
+	 * A binary CHAR column keeps the case-sensitive {@code COLLATE "C"}.
+	 */
+	public void testBinaryCharIsCCollated() {
+		String ddl = columnDDL(DBType.CHAR, 1, true);
+		assertTrue(ddl, ddl.contains("COLLATE \"C\""));
+		assertFalse(ddl, ddl.contains("tl_ci"));
+	}
+
 }

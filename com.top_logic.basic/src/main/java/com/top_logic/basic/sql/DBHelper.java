@@ -2131,7 +2131,18 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	public void appendLikeCaseSensitive(Appendable sql) throws IOException {
 		sql.append("LIKE");
 	}
-    
+
+	/**
+	 * Appends a collation to a {@code LIKE} operand when the dialect needs a deterministic
+	 * collation for pattern matching. The default implementation appends nothing.
+	 *
+	 * @param buffer
+	 *        The buffer receiving the collation clause (appended directly after the operand).
+	 */
+	public void appendLikeCollation(Appendable buffer) throws IOException {
+		// Most dialects need no explicit collation for LIKE.
+	}
+
 	/** Dump a given table as INSERT suiteable for the Helpers Database.
 	 * 
 	 * @param out Output will be written here.

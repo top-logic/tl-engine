@@ -397,6 +397,13 @@ public class PostgreSQLHelper extends DBHelper {
 	}
 
 	@Override
+	public void appendLikeCollation(Appendable buffer) throws IOException {
+		// Non-binary columns use a nondeterministic collation, which PostgreSQL rejects for LIKE;
+		// force a deterministic collation for pattern matching.
+		buffer.append(" COLLATE \"C\"");
+	}
+
+	@Override
 	public void appendDropIndex(Appendable sql, String idxName, String tableName) throws IOException {
 		sql.append("DROP INDEX ");
 		sql.append(columnRef(idxName));

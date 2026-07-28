@@ -21,6 +21,7 @@ import test.com.top_logic.model.search.expr.AbstractSearchExpressionTest;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.text.PDFTextStripper;
 
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.layout.provider.LabelProviderService;
@@ -52,12 +53,7 @@ public class TestFlowPdf extends AbstractSearchExpressionTest {
 	private static final String OUT_DIR = "./target";
 
 	/**
-	 * A diagram embedded into a PDF is drawn.
-	 *
-	 * <p>
-	 * Its text is drawn as glyph outlines rather than as text, so it cannot be selected; ticket
-	 * #29426 tracks that. The assertion is prepared below.
-	 * </p>
+	 * A diagram embedded into a PDF is drawn, and its text is text.
 	 *
 	 * <p>
 	 * Do not assert through {@code pdf2txt}: it falls back to OCR, so it reports the text of a
@@ -78,10 +74,31 @@ public class TestFlowPdf extends AbstractSearchExpressionTest {
 		try (PDDocument document = Loader.loadPDF(file)) {
 			assertTrue("Nothing was drawn into the PDF.", drawn(document));
 
-			// Ticket #29426: enable once the diagram is drawn into the PDF directly rather than
-			// through Batik, which fills glyph outlines instead of drawing text.
-			// assertEquals("Diagram text is not text in the PDF, so it cannot be selected.",
-			// "Hello World", new PDFTextStripper().getText(document).trim());
+			assertEquals("Diagram text is not text in the PDF, so it cannot be selected.",
+				"Hello World", new PDFTextStripper().getText(document).trim());
+		}
+	}
+
+	/**
+	 * A diagram embedded without an explicit size takes the size of its {@code viewBox}.
+	 */
+	public void testDiagramWithoutExplicitSize() throws Exception {
+		Diagram diagram = Diagram.create()
+			.setRoot(Border.create().setContent(Text.create().setValue("Hello World")));
+
+		BinaryData svg = FlowFactory.toSvg(diagram, "TestFlowPdf-unsized.svg", 12.0, null, null);
+		String dataUri = "data:image/svg+xml;base64,"
+			+ Base64.getEncoder().encodeToString(StreamUtilities.readAllFromStream(svg)
+				.getBytes(StandardCharsets.UTF_8));
+		String html = "<html><head></head><body><img src=\"" + dataUri + "\"/></body></html>";
+
+		BinaryDataSource pdf = (BinaryDataSource) execute(search("html -> pdfFile($html)"), html);
+		File file = write(pdf, "TestFlowPdf-unsized");
+
+		try (PDDocument document = Loader.loadPDF(file)) {
+			assertTrue("Nothing was drawn into the PDF.", drawn(document));
+			assertEquals("Diagram text is not text in the PDF, so it cannot be selected.",
+				"Hello World", new PDFTextStripper().getText(document).trim());
 		}
 	}
 

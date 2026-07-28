@@ -383,6 +383,22 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
         Logger.info("No database check implemented for '" + this.getClass().getSimpleName() + "'.", this);
     }
 
+	/**
+	 * Prepares the database for the schema about to be created, e.g. by creating custom
+	 * collations.
+	 *
+	 * <p>
+	 * Invoked once before the tables of a schema are created. The default implementation does
+	 * nothing.
+	 * </p>
+	 *
+	 * @param connection
+	 *        The connection to the database to prepare.
+	 */
+	public void prepareDatabase(PooledConnection connection) throws SQLException {
+		// Hook for dialects that need one-time database preparation.
+	}
+
 	private final Config _config;
 
 	private final int _maxNumberBatchParameter;

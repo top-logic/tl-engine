@@ -234,6 +234,15 @@ public class PostgreSQLHelper extends DBHelper {
 	}
 
 	@Override
+	public void prepareDatabase(PooledConnection connection) throws SQLException {
+		try (Statement statement = connection.createStatement()) {
+			statement.execute(
+				"CREATE COLLATION IF NOT EXISTS \"" + CI_COLLATION
+					+ "\" (provider = icu, locale = 'und-u-ks-level2', deterministic = false)");
+		}
+	}
+
+	@Override
 	public String forUpdate2() {
 		return " FOR UPDATE";
 	}

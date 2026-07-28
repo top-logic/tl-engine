@@ -80,10 +80,22 @@ public interface SvgWriter extends AutoCloseable {
 	 * @see RenderContext#getDefaultFontSizePx()
 	 */
 	default void writeDefaultTextStyle(RenderContext context) {
+		style(defaultTextStyle(context));
+	}
+
+	/**
+	 * The CSS rules written by {@link #writeDefaultTextStyle(RenderContext)}.
+	 *
+	 * <p>
+	 * Exposed separately so that a caller embedding further rules can emit them together in a
+	 * single {@link #style(CharSequence) style element}.
+	 * </p>
+	 */
+	static String defaultTextStyle(RenderContext context) {
 		double sizePx = context.getDefaultFontSizePx();
 		String size = sizePx == (int) sizePx ? Integer.toString((int) sizePx) : Double.toString(sizePx);
-		style("text:not([font-family]):not([class]){font-family:" + context.getDefaultFontFamily() + ";}"
-			+ "text:not([font-size]):not([class]){font-size:" + size + "px;}");
+		return "text:not([font-family]):not([class]){font-family:" + context.getDefaultFontFamily() + ";}"
+			+ "text:not([font-size]):not([class]){font-size:" + size + "px;}";
 	}
 
 	/**

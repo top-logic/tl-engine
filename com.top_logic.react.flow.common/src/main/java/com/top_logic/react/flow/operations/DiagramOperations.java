@@ -80,15 +80,24 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 			self().getViewBoxY(),
 			self().getViewBoxWidth(),
 			self().getViewBoxHeight());
-		if (context != null) {
-			out.writeDefaultTextStyle(context);
-		}
-		if (extraStyles != null) {
-			out.style(extraStyles);
+		CharSequence styles = styles(context, extraStyles);
+		if (styles != null) {
+			out.style(styles);
 		}
 		self().setClickHandler(out.attachOnClick(this, self()));
 		out.write(root);
 		out.endSvg();
+	}
+
+	/**
+	 * The CSS rules to embed, or {@code null} if there are none.
+	 */
+	private static CharSequence styles(RenderContext context, CharSequence extraStyles) {
+		if (context == null) {
+			return extraStyles;
+		}
+		String defaults = SvgWriter.defaultTextStyle(context);
+		return extraStyles == null ? defaults : defaults + extraStyles;
 	}
 
 	@Override

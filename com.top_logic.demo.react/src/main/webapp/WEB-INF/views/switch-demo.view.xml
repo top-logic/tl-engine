@@ -5,6 +5,13 @@
 	input-dependent view of the selected Demo object. A high-priority object shows a <tab-bar>
 	(Details + More), everything else a single detail form. Selecting rows of different priority
 	re-evaluates the switch and swaps the view.
+	
+	The objects can be created (New), edited (the detail forms have an edit mode) and deleted, so the
+	showcase is not restricted to looking at generated data. Editing the priority of the selected
+	object swaps the view too, since the switch observes its input object - which also demonstrates
+	that the commands of a hidden case do not stay behind in the panel toolbar. The criterion the
+	switch tests is stated by the hint above the detail view and by the description of the priority
+	attribute.
 -->
 <view>
 	<channels>
@@ -28,6 +35,26 @@
 					</title>
 					<commands>
 						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`demo.react:Demo`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="switch-demo-create.view.xml"
+							>
+								<bind
+									channel="selection"
+									to="selectedDemo"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							clique="more"
 							image="css:bi bi-magic"
 							placement="TOOLBAR"
 						>
@@ -80,6 +107,14 @@
 						<en>Detail (input-dependent)</en>
 						<de>Detail (eingabeabhängig)</de>
 					</title>
+					<inset>
+						<text>
+							<label>
+								<en>Which view is shown depends on the priority of the selected object: "high" shows a tab view (Details + More), every other value a single form. Editing the priority swaps the view as well, without selecting another object.</en>
+								<de>Welche Ansicht erscheint, richtet sich nach der Priorität des ausgewählten Objekts: „high“ zeigt eine Tab-Ansicht (Details + Mehr), jeder andere Wert ein einfaches Formular. Auch das Bearbeiten der Priorität wechselt die Ansicht, ohne dass ein anderes Objekt selektiert werden muss.</de>
+							</label>
+						</text>
+					</inset>
 					<switch input="selectedDemo">
 						<case test="d -> $d != null &amp;&amp; $d.get(`demo.react:Demo#priority`) != null &amp;&amp; $d.get(`demo.react:Demo#priority`).get(`tl.model:TLNamedPart#name`) == 'high'">
 							<tab-bar active-tab="details">
@@ -93,7 +128,7 @@
 									<inset>
 										<form
 											input="selectedDemo"
-											withEditMode="false"
+											withEditMode="true"
 										>
 											<field attribute="name"/>
 											<field attribute="string"/>
@@ -112,7 +147,7 @@
 									<inset>
 										<form
 											input="selectedDemo"
-											withEditMode="false"
+											withEditMode="true"
 										>
 											<field attribute="count"/>
 											<field attribute="amount"/>
@@ -126,7 +161,7 @@
 						<default>
 							<form
 								input="selectedDemo"
-								withEditMode="false"
+								withEditMode="true"
 							>
 								<field attribute="name"/>
 								<field attribute="string"/>

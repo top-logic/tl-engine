@@ -44,6 +44,11 @@ final class TestingRenderContext implements RenderContext {
 	}
 
 	@Override
+	public String getDefaultFontDeclaration() {
+		return "monospace";
+	}
+
+	@Override
 	public double getDefaultFontSizePx() {
 		return CHAR_WIDTH_PX / MONOSPACE_ADVANCE_EM;
 	}

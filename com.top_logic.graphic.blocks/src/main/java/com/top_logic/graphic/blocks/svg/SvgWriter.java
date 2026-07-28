@@ -72,7 +72,7 @@ public interface SvgWriter extends AutoCloseable {
 	 * is determined by that attribute or by a stylesheet rule.
 	 * </p>
 	 *
-	 * @see RenderContext#getDefaultFontFamily()
+	 * @see RenderContext#getDefaultFontDeclaration()
 	 * @see RenderContext#getDefaultFontSizePx()
 	 */
 	default void writeDefaultTextStyle(RenderContext context) {
@@ -90,7 +90,7 @@ public interface SvgWriter extends AutoCloseable {
 	static String defaultTextStyle(RenderContext context) {
 		double sizePx = context.getDefaultFontSizePx();
 		String size = sizePx == (int) sizePx ? Integer.toString((int) sizePx) : Double.toString(sizePx);
-		return "text:not([font-family]):not([class]){font-family:" + context.getDefaultFontFamily() + ";}"
+		return "text:not([font-family]):not([class]){font-family:" + context.getDefaultFontDeclaration() + ";}"
 			+ "text:not([font-size]):not([class]){font-size:" + size + "px;}";
 	}
 

@@ -8,7 +8,7 @@
    the default setting must not apply also, since the selector is now more specific
    than that of the icon font.
 */
-text:not([font-family]):not([class]) {font-family: Arial }
+text:not([font-family]):not([class]) {font-family: Arial, 'Liberation Sans', Arimo, Helvetica, sans-serif }
 text:not([font-size]):not([class]) {font-size: 14px; }
 
 g.tlbA path.tlbShape {stroke: #265699; fill: #4C97FF; }

@@ -23,6 +23,21 @@ public interface RenderContext {
 	String DEFAULT_FONT_FAMILY = "Arial";
 
 	/**
+	 * Declaration of {@link #DEFAULT_FONT_FAMILY} for a stylesheet, naming metric-compatible
+	 * substitutes after it.
+	 *
+	 * <p>
+	 * Naming a single family in a standalone SVG only expresses a preference: a viewer that does
+	 * not have that family substitutes one of its own, and a substitute with different advance
+	 * widths no longer fits the boxes the layout measured. Listing families that share the metrics
+	 * of {@link #DEFAULT_FONT_FAMILY} keeps the geometry intact wherever the document is opened.
+	 * {@code Liberation Sans} and {@code Arimo} are metric-compatible with {@code Arial} by
+	 * design; the trailing generic family is a last resort only.
+	 * </p>
+	 */
+	String DEFAULT_FONT_DECLARATION = "Arial, 'Liberation Sans', Arimo, Helvetica, sans-serif";
+
+	/**
 	 * Default {@code font-size} (in CSS pixels) assumed when no per-text size is set.
 	 *
 	 * @see #DEFAULT_FONT_FAMILY
@@ -42,6 +57,21 @@ public interface RenderContext {
 	 */
 	default String getDefaultFontFamily() {
 		return DEFAULT_FONT_FAMILY;
+	}
+
+	/**
+	 * How {@link #getDefaultFontFamily()} is declared in a stylesheet.
+	 *
+	 * <p>
+	 * Measurement resolves a single family, while a viewer resolves whatever the document asks
+	 * for. Naming metric-compatible substitutes alongside the measured family keeps the two in
+	 * agreement on a machine that does not have it.
+	 * </p>
+	 *
+	 * @see #DEFAULT_FONT_DECLARATION
+	 */
+	default String getDefaultFontDeclaration() {
+		return DEFAULT_FONT_DECLARATION;
 	}
 
 	/**
@@ -122,6 +152,11 @@ public interface RenderContext {
 			@Override
 			public String getDefaultFontFamily() {
 				return self.getDefaultFontFamily();
+			}
+
+			@Override
+			public String getDefaultFontDeclaration() {
+				return self.getDefaultFontDeclaration();
 			}
 
 			@Override

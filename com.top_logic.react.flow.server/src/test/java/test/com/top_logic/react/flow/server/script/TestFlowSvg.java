@@ -162,6 +162,28 @@ public class TestFlowSvg extends TestCase {
 
 
 	/**
+	 * The auto-sized viewBox width must grow proportionally with the requested {@code textSize}.
+	 * If measurement is hard-coded to a fixed font size (independent of {@code textSize}), the
+	 * viewBox width would not change.
+	 */
+	public void testBoxScalesWithTextSize() throws IOException {
+		Diagram d12 = Diagram.create().setRoot(Border.create()
+			.setContent(Text.create().setValue("Hello World")));
+		Diagram d24 = Diagram.create().setRoot(Border.create()
+			.setContent(Text.create().setValue("Hello World")));
+
+		toSvg(d12, "TestFlowSvg-scale-12pt.svg", 12.0, null, null);
+		toSvg(d24, "TestFlowSvg-scale-24pt.svg", 24.0, null, null);
+
+		double w12 = d12.getViewBoxWidth();
+		double w24 = d24.getViewBoxWidth();
+
+		assertTrue("Expected viewBox width > 0 for 12pt, got " + w12, w12 > 0);
+		assertTrue("Doubling textSize must roughly double the measured width; got "
+			+ w12 + " vs " + w24, w24 > 1.8 * w12 && w24 < 2.2 * w12);
+	}
+
+	/**
 	 * A bold text must measure wider than the same text in the default weight; otherwise the
 	 * {@code fontWeight} from the {@link Text} is ignored during measurement.
 	 */

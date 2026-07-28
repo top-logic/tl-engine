@@ -4,6 +4,13 @@
  * Rules in this stylesheet must use CSS2 features only, since the the Apache Batik rendering engine
  * does only support CSS2.
  */
+/*
+ * Font a text is measured with when it carries no explicit font of its own. The layout reserves
+ * space for a text using these values, so they must stay in sync with RenderContext.
+ */
+text:not([font-family]):not([class]) { font-family: Arial; }
+text:not([font-size]):not([class]) { font-size: 14px; }
+
 .tlSelectionMarker {
 	display: none;
 }

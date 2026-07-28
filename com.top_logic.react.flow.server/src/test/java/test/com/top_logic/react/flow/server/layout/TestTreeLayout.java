@@ -92,7 +92,6 @@ public class TestTreeLayout extends TestCase {
 					<g transform="translate(0.0,0.0)">
 						<g>
 							<text
-								font-size="14.0"
 								x="6.0"
 								y="16.0"
 							>Root</text>
@@ -107,7 +106,6 @@ public class TestTreeLayout extends TestCase {
 					<g transform="translate(100.0,0.0)">
 						<g>
 							<text
-								font-size="14.0"
 								x="6.0"
 								y="16.0"
 							>N1</text>
@@ -122,7 +120,6 @@ public class TestTreeLayout extends TestCase {
 					<g transform="translate(100.0,44.0)">
 						<g>
 							<text
-								font-size="14.0"
 								x="6.0"
 								y="16.0"
 							>N2</text>
@@ -137,7 +134,6 @@ public class TestTreeLayout extends TestCase {
 					<g transform="translate(100.0,88.0)">
 						<g>
 							<text
-								font-size="14.0"
 								x="6.0"
 								y="16.0"
 							>N3</text>

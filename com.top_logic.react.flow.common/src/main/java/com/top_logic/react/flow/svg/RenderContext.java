@@ -13,6 +13,49 @@ package com.top_logic.react.flow.svg;
 public interface RenderContext {
 
 	/**
+	 * Default {@code font-family} assumed when no per-text family is set.
+	 *
+	 * <p>
+	 * Both the measurement and the SVG output must use this default consistently to ensure that
+	 * rendered text fits its measured box.
+	 * </p>
+	 */
+	String DEFAULT_FONT_FAMILY = "Arial";
+
+	/**
+	 * Default {@code font-size} (in CSS pixels) assumed when no per-text size is set.
+	 *
+	 * @see #DEFAULT_FONT_FAMILY
+	 */
+	double DEFAULT_FONT_SIZE_PX = 14.0;
+
+	/**
+	 * The {@code font-family} this context assumes for text that has no explicit family set.
+	 *
+	 * <p>
+	 * A standalone SVG document has no external stylesheet, so it must declare this family itself
+	 * to render text in the font it was measured with. {@link SvgWriter#writeDefaultTextStyle}
+	 * emits the matching rule.
+	 * </p>
+	 *
+	 * @see #DEFAULT_FONT_FAMILY
+	 */
+	default String getDefaultFontFamily() {
+		return DEFAULT_FONT_FAMILY;
+	}
+
+	/**
+	 * The {@code font-size} in CSS pixels this context assumes for text that has no explicit size
+	 * set.
+	 *
+	 * @see #getDefaultFontFamily()
+	 * @see #DEFAULT_FONT_SIZE_PX
+	 */
+	default double getDefaultFontSizePx() {
+		return DEFAULT_FONT_SIZE_PX;
+	}
+
+	/**
 	 * Measures the given text with the default font size.
 	 *
 	 * @see TextMetrics
@@ -76,6 +119,16 @@ public interface RenderContext {
 	default RenderContext withZoom(double zoom) {
 		RenderContext self = this;
 		return new RenderContext() {
+			@Override
+			public String getDefaultFontFamily() {
+				return self.getDefaultFontFamily();
+			}
+
+			@Override
+			public double getDefaultFontSizePx() {
+				return self.getDefaultFontSizePx();
+			}
+
 			@Override
 			public TextMetrics measure(String text) {
 				return self.measure(text);

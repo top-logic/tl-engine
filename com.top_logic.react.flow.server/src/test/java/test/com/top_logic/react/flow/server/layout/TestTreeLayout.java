@@ -18,6 +18,7 @@ import junit.framework.TestCase;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
+import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.data.Align;
 import com.top_logic.react.flow.data.Alignment;
@@ -86,6 +87,7 @@ public class TestTreeLayout extends TestCase {
 				viewBox="0.0 0.0 0.0 0.0"
 				width="100%"
 			>
+				<style>text:not([font-family]):not([class]){font-family:monospace;}text:not([font-size]):not([class]){font-size:20px;}</style>
 				<g transform="translate(20.0,20.0)">
 					<g transform="translate(0.0,0.0)">
 						<g>
@@ -819,11 +821,14 @@ public class TestTreeLayout extends TestCase {
 	}
 
 	private String writeToFile(Diagram diagram, String fileName) throws IOException {
-		diagram.layout(new TestingRenderContext());
+		RenderContext context = new TestingRenderContext();
+		diagram.layout(context);
 
 		TagWriter out = new TagWriter();
 		SvgWriter svgOut = new SvgTagWriter(out);
-		diagram.draw(svgOut);
+		// Pass the context so the written file declares the font it was measured with. Without it
+		// a viewer falls back to its own default font and the text no longer matches its box.
+		diagram.draw(svgOut, context, null);
 
 		String svg = XMLPrettyPrinter.prettyPrint(out.toString());
 		System.out.println(svg);

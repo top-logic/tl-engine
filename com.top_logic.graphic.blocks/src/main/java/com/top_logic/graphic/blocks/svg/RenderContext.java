@@ -36,6 +36,32 @@ public interface RenderContext {
 	double DEFAULT_FONT_SIZE_PX = 14.0;
 
 	/**
+	 * The {@code font-family} this context assumes for text that has no explicit family set.
+	 *
+	 * <p>
+	 * A standalone SVG document has no external stylesheet, so it must declare this family itself
+	 * to render text in the font it was measured with. {@link SvgWriter#writeDefaultTextStyle}
+	 * emits the matching rule.
+	 * </p>
+	 *
+	 * @see #DEFAULT_FONT_FAMILY
+	 */
+	default String getDefaultFontFamily() {
+		return DEFAULT_FONT_FAMILY;
+	}
+
+	/**
+	 * The {@code font-size} in CSS pixels this context assumes for text that has no explicit size
+	 * set.
+	 *
+	 * @see #getDefaultFontFamily()
+	 * @see #DEFAULT_FONT_SIZE_PX
+	 */
+	default double getDefaultFontSizePx() {
+		return DEFAULT_FONT_SIZE_PX;
+	}
+
+	/**
 	 * Measures the given text using the context's default font.
 	 *
 	 * @see TextMetrics

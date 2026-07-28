@@ -16,6 +16,13 @@ import com.top_logic.react.flow.svg.TextMetricsImpl;
 /**
  * {@link RenderContext} based on AWT {@link Font}s.
  *
+ * <p>
+ * Measurement happens in the same unit the SVG output uses, so the size passed to the constructor
+ * is reported unchanged by {@link #getDefaultFontSizePx()} and
+ * {@link com.top_logic.react.flow.svg.SvgWriter#writeDefaultTextStyle} turns it into a default CSS
+ * rule, keeping measurement and rendering in lock-step.
+ * </p>
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class AWTContext implements RenderContext {
@@ -28,12 +35,17 @@ public class AWTContext implements RenderContext {
 	 * Creates a {@link AWTContext}.
 	 */
 	public AWTContext(float textSize) {
-		_font = Font.decode("Arial").deriveFont(textSize);
+		_font = Font.decode(DEFAULT_FONT_FAMILY).deriveFont(textSize);
 		// Anti-aliased + fractional-metrics rendering matches how browsers actually paint SVG
 		// text. The default FontRenderContext (no anti-aliasing, no fractional metrics) produces
 		// noticeably shorter advance widths than the browser, especially for bold weights, which
 		// would let text overflow its measured box.
 		_fontRenderContext = new FontRenderContext(null, true, true);
+	}
+
+	@Override
+	public double getDefaultFontSizePx() {
+		return _font.getSize2D();
 	}
 
 	@Override
@@ -43,7 +55,7 @@ public class AWTContext implements RenderContext {
 
 	@Override
 	public TextMetricsImpl measure(String text, String fontFamily, double fontSize, String fontWeight) {
-		String family = (fontFamily != null && !fontFamily.isEmpty()) ? fontFamily : "Arial";
+		String family = (fontFamily != null && !fontFamily.isEmpty()) ? fontFamily : DEFAULT_FONT_FAMILY;
 		float size = fontSize > 0 ? (float) fontSize : _font.getSize2D();
 		int style = "bold".equalsIgnoreCase(fontWeight) ? Font.BOLD : Font.PLAIN;
 		Font font = new Font(family, style, 1).deriveFont(size);

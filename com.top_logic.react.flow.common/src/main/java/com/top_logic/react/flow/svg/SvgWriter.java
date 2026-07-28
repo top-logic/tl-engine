@@ -53,6 +53,40 @@ public interface SvgWriter extends AutoCloseable {
 	void endSvg();
 
 	/**
+	 * Writes a <code>style</code> element with the given CSS rules.
+	 *
+	 * <p>
+	 * Only meaningful for writers producing a standalone SVG document. Writers targeting the live
+	 * DOM discard the rules, because there the surrounding page stylesheet applies.
+	 * </p>
+	 */
+	default void style(CharSequence css) {
+		// Ignored: the surrounding document supplies the stylesheet.
+	}
+
+	/**
+	 * Writes the {@link #style(CharSequence) style rules} that pin the font defaults the given
+	 * {@link RenderContext} measured with.
+	 *
+	 * <p>
+	 * Text without an explicit font would otherwise be rendered in the viewer's default font
+	 * (typically 16px sans-serif) rather than the font the layout was computed for, and would not
+	 * match the box reserved for it. The rules deliberately exclude text carrying a
+	 * <code>font-family</code>/<code>font-size</code> attribute or a <code>class</code>, whose font
+	 * is determined by that attribute or by a stylesheet rule.
+	 * </p>
+	 *
+	 * @see RenderContext#getDefaultFontFamily()
+	 * @see RenderContext#getDefaultFontSizePx()
+	 */
+	default void writeDefaultTextStyle(RenderContext context) {
+		double sizePx = context.getDefaultFontSizePx();
+		String size = sizePx == (int) sizePx ? Integer.toString((int) sizePx) : Double.toString(sizePx);
+		style("text:not([font-family]):not([class]){font-family:" + context.getDefaultFontFamily() + ";}"
+			+ "text:not([font-size]):not([class]){font-size:" + size + "px;}");
+	}
+
+	/**
 	 * Starts a <code>g</code> tag.
 	 */
 	void beginGroup();

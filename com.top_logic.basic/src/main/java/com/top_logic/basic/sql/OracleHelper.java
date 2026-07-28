@@ -524,7 +524,7 @@ public abstract class OracleHelper extends DBHelper {
 		if (binary) {
 			result.append("CHAR(1)");
 		} else {
-			result.append("NCHAR(1)");
+			result.append("NCHAR(1) COLLATE BINARY_CI");
 		}
 	}
 
@@ -539,6 +539,7 @@ public abstract class OracleHelper extends DBHelper {
 		} else {
 			result.append("NVARCHAR2");
 			size(result, size);
+			result.append(" COLLATE BINARY_CI");
 		}
 	}
 

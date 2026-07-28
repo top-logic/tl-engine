@@ -87,7 +87,7 @@ public class TestTreeLayout extends TestCase {
 				viewBox="0.0 0.0 0.0 0.0"
 				width="100%"
 			>
-				<style>text:not([font-family]):not([class]){font-family:monospace;}text:not([font-size]):not([class]){font-size:20px;}</style>
+				<style>text:not([font-family]){font-family:monospace;}text:not([font-size]){font-size:20px;}</style>
 				<g transform="translate(20.0,20.0)">
 					<g transform="translate(0.0,0.0)">
 						<g>

@@ -67,9 +67,11 @@ public interface SvgWriter extends AutoCloseable {
 	 * <p>
 	 * Text without an explicit font would otherwise be rendered in the viewer's default font
 	 * (typically 16px sans-serif) rather than the font the layout was computed for, and would not
-	 * match the box reserved for it. The rules deliberately exclude text carrying a
-	 * <code>font-family</code>/<code>font-size</code> attribute or a <code>class</code>, whose font
-	 * is determined by that attribute or by a stylesheet rule.
+	 * match the box reserved for it. Text carrying a <code>font-family</code>/<code>font-size</code>
+	 * attribute is excluded, since that attribute states the font the text was measured with. A
+	 * <code>class</code> is not excluded: it says that some rule styles the element, not that the
+	 * element brings its own font. A stylesheet rule that does set one must be specific enough to
+	 * win over the rules written here.
 	 * </p>
 	 *
 	 * @see RenderContext#getDefaultFontDeclaration()
@@ -90,8 +92,8 @@ public interface SvgWriter extends AutoCloseable {
 	static String defaultTextStyle(RenderContext context) {
 		double sizePx = context.getDefaultFontSizePx();
 		String size = sizePx == (int) sizePx ? Integer.toString((int) sizePx) : Double.toString(sizePx);
-		return "text:not([font-family]):not([class]){font-family:" + context.getDefaultFontDeclaration() + ";}"
-			+ "text:not([font-size]):not([class]){font-size:" + size + "px;}";
+		return "text:not([font-family]){font-family:" + context.getDefaultFontDeclaration() + ";}"
+			+ "text:not([font-size]){font-size:" + size + "px;}";
 	}
 
 	/**

@@ -151,14 +151,14 @@ public class TestFlowSvg extends TestCase {
 		// 12pt * 96/72 = 16px
 		String svg12 = readSvg(toSvg(d12, "TestFlowSvg-default-font-12pt.svg", 12.0, null, null));
 		assertTrue("Default font-family CSS missing: " + svg12,
-			svg12.contains("text:not([font-family]):not([class]){font-family:" + RenderContext.DEFAULT_FONT_DECLARATION + ";}"));
+			svg12.contains("text:not([font-family]){font-family:" + RenderContext.DEFAULT_FONT_DECLARATION + ";}"));
 		assertTrue("Default font-size CSS for 12pt should be 16px: " + svg12,
-			svg12.contains("text:not([font-size]):not([class]){font-size:16px;}"));
+			svg12.contains("text:not([font-size]){font-size:16px;}"));
 
 		// 24pt * 96/72 = 32px
 		String svg24 = readSvg(toSvg(d24, "TestFlowSvg-default-font-24pt.svg", 24.0, null, null));
 		assertTrue("Default font-size CSS for 24pt should be 32px: " + svg24,
-			svg24.contains("text:not([font-size]):not([class]){font-size:32px;}"));
+			svg24.contains("text:not([font-size]){font-size:32px;}"));
 	}
 
 

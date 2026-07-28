@@ -25,13 +25,12 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.react.flow.data.Diagram;
-import com.top_logic.react.flow.server.svg.SvgTagWriter;
+import com.top_logic.react.flow.server.script.FlowFactory;
 import com.top_logic.react.flow.server.ui.AWTContext;
 import com.top_logic.react.flow.svg.RenderContext;
-import com.top_logic.react.flow.svg.SvgWriter;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
 import de.haumacher.msgbuf.json.JsonReader;
@@ -69,7 +68,7 @@ public class TestDiagramReplay extends TestCase {
 	private static final String OUT_DIR = "./target";
 
 	/**
-	 * Path commands of an SVG {@code d} attribute, as written by {@link SvgTagWriter}.
+	 * Path commands of an SVG {@code d} attribute.
 	 */
 	private static final Pattern PATH_COMMAND = Pattern.compile("([MLHV])\\s*([-\\d.eE]+),?([-\\d.eE]*)");
 
@@ -136,17 +135,14 @@ public class TestDiagramReplay extends TestCase {
 	private String replay(String resource) throws IOException {
 		Diagram diagram = read(resource);
 
-		// Mirror the client, which measures with the canvas default font: the AWT size is given in
-		// points, so the context reports (and the SVG declares) DEFAULT_FONT_SIZE_PX pixels.
-		RenderContext context = new AWTContext((float) (RenderContext.DEFAULT_FONT_SIZE_PX * AWTContext.PT_PER_PX));
-		diagram.layout(context);
-
-		TagWriter out = new TagWriter();
-		SvgWriter svgOut = new SvgTagWriter(out);
-		diagram.draw(svgOut, context, null);
-		String svg = XMLPrettyPrinter.prettyPrint(out.toString());
-
+		// Render through the application's export, so that what is asserted here is what the
+		// application produces. The size is given in points; mirror the client, which measures with
+		// the canvas default font of DEFAULT_FONT_SIZE_PX pixels.
 		String name = "TestDiagramReplay-" + resource.replaceAll("\\.json$", "") + ".svg";
+		double textSize = RenderContext.DEFAULT_FONT_SIZE_PX * AWTContext.PT_PER_PX;
+		String svg = XMLPrettyPrinter.prettyPrint(
+			StreamUtilities.readAllFromStream(FlowFactory.toSvg(diagram, name, textSize, null, null)));
+
 		try (FileWriter w = new FileWriter(new File(OUT_DIR, name), StandardCharsets.UTF_8)) {
 			w.write(svg);
 		}

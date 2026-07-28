@@ -91,9 +91,14 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 			self().getViewBoxY(),
 			self().getViewBoxWidth(),
 			self().getViewBoxHeight());
-		CharSequence styles = styles(context, extraStyles);
-		if (styles != null) {
-			out.style(styles);
+		if (context != null) {
+			// The font the layout measured with, as presentation attributes on the root: text
+			// inherits it, an explicit font on a text or from a stylesheet rule still overrides it,
+			// and no selector support is required of the renderer.
+			out.setTextStyle(context.getDefaultFontDeclaration(), formatPx(context.getDefaultFontSizePx()), null);
+		}
+		if (extraStyles != null) {
+			out.style(extraStyles);
 		}
 		self().setClickHandler(out.attachOnClick(this, self()));
 		out.write(root);
@@ -101,14 +106,10 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 	}
 
 	/**
-	 * The CSS rules to embed, or {@code null} if there are none.
+	 * The given size in CSS pixels as a CSS length.
 	 */
-	private static CharSequence styles(RenderContext context, CharSequence extraStyles) {
-		if (context == null) {
-			return extraStyles;
-		}
-		String defaults = SvgWriter.defaultTextStyle(context);
-		return extraStyles == null ? defaults : defaults + extraStyles;
+	private static String formatPx(double sizePx) {
+		return (sizePx == (int) sizePx ? Integer.toString((int) sizePx) : Double.toString(sizePx)) + "px";
 	}
 
 	@Override

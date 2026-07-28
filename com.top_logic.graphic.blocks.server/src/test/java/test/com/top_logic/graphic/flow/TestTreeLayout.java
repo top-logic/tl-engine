@@ -82,12 +82,13 @@ public class TestTreeLayout extends TestCase {
 			
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
+				font-family="monospace"
+				font-size="20px"
 				height="100%"
 				version="1.1"
 				viewBox="0.0 0.0 176.0 152.0"
 				width="100%"
 			>
-				<style>text:where(:not([font-family])){font-family:monospace;}text:where(:not([font-size])){font-size:20px;}</style>
 				<g transform="translate(20.0,20.0)">
 					<g transform="translate(0.0,0.0)">
 						<text

@@ -241,6 +241,26 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		for (FormParticipant participant : _participants) {
 			participant.revealAll();
 		}
+		fireValidityChanged();
+	}
+
+	/**
+	 * Whether any participant reports a validation error that is visible to the user.
+	 *
+	 * <p>
+	 * Unlike {@link #hasErrors()}, an error that is still hidden (not yet
+	 * {@link FormParticipant#revealAll() revealed}, because the user has neither touched the field
+	 * nor attempted to save) does not count: a command must stay available as long as the user
+	 * cannot see what is wrong.
+	 * </p>
+	 */
+	public boolean hasVisibleErrors() {
+		for (FormParticipant participant : _participants) {
+			if (!participant.validate()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -570,6 +590,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		_overlay = new TLObjectOverlay(_currentObject);
 
+		// Participants announce a changed validity themselves, once they have applied the new
+		// result to their field models - announcing it from here would report the state as seen
+		// before the participants updated.
 		_validityListener = (overlay, attribute, result) -> {
 			putState(VALID, Boolean.valueOf(_validationModel.isValid()));
 		};
@@ -690,6 +713,24 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	private void fireFormStateChanged() {
 		for (FormModelListener listener : _formModelListeners) {
 			listener.onFormStateChanged(this);
+		}
+		// The participants have rebuilt themselves, so what the user sees may differ from before.
+		// The second pass reaches every listener with the settled state, independent of the order
+		// in which the participants were notified above.
+		fireValidityChanged();
+	}
+
+	/**
+	 * Announces that the validation errors visible to the user may have changed.
+	 *
+	 * <p>
+	 * Called by participants whose displayed validation state changed, so that commands gated on
+	 * {@link #hasVisibleErrors()} re-evaluate their executability.
+	 * </p>
+	 */
+	public void fireValidityChanged() {
+		for (FormModelListener listener : new ArrayList<>(_formModelListeners)) {
+			listener.onValidityChanged(this);
 		}
 	}
 

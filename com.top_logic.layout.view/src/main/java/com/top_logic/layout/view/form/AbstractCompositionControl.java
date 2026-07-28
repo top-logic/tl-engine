@@ -325,6 +325,7 @@ public abstract class AbstractCompositionControl extends ReactControl
 			@Override
 			public void onValidationChanged(FieldModel source) {
 				updateCompositionErrorDisplay();
+				_formControl.fireValidityChanged();
 			}
 		});
 
@@ -392,10 +393,6 @@ public abstract class AbstractCompositionControl extends ReactControl
 		if (_fieldModel == null) {
 			return true;
 		}
-
-		// Reveal all fields so that model-level errors (mandatory, range constraints
-		// from FormValidationModel) become visible via hasError().
-		revealAll();
 
 		boolean valid = !_fieldModel.hasError();
 		for (CompositionRowModel row : _rowModels) {
@@ -738,7 +735,9 @@ public abstract class AbstractCompositionControl extends ReactControl
 
 			@Override
 			public void onValidationChanged(FieldModel source) {
-				// No-op.
+				// The cell's displayed validation changed, so commands gated on visible errors
+				// must re-evaluate - after the new result was applied, not while it is computed.
+				_formControl.fireValidityChanged();
 			}
 		});
 	}

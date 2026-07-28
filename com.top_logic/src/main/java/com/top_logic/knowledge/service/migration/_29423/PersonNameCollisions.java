@@ -30,92 +30,37 @@ public final class PersonNameCollisions {
 
 	/**
 	 * An account whose name participates in the collision analysis.
+	 *
+	 * @param id
+	 *        The account's technical identifier.
+	 * @param name
+	 *        The account's login name (constant over the account's lifetime).
+	 * @param ordering
+	 *        A stable tie-breaker; the smallest value wins when choosing the keeper.
+	 * @param externallyManaged
+	 *        Whether the account is managed by an external directory (e.g. LDAP); such an account is
+	 *        preferred as keeper so its name keeps matching the directory.
+	 * @param alive
+	 *        Whether the account currently exists (has a current revision). Living accounts are
+	 *        preferred as keeper, so a deleted (history-only) account never forces the rename of a
+	 *        living one.
 	 */
-	public static final class Account {
-
-		private final TLID _id;
-
-		private final String _name;
-
-		private final long _ordering;
-
-		private final boolean _externallyManaged;
-
-		/**
-		 * Creates an {@link Account}.
-		 *
-		 * @param id
-		 *        The account's technical identifier.
-		 * @param name
-		 *        The account's current login name.
-		 * @param ordering
-		 *        A stable tie-breaker; the smallest value wins when choosing the keeper.
-		 * @param externallyManaged
-		 *        Whether the account is managed by an external directory (e.g. LDAP); such an
-		 *        account is preferred as keeper so its name keeps matching the directory.
-		 */
-		public Account(TLID id, String name, long ordering, boolean externallyManaged) {
-			_id = id;
-			_name = name;
-			_ordering = ordering;
-			_externallyManaged = externallyManaged;
-		}
-
-		/** The account's technical identifier. */
-		public TLID getId() {
-			return _id;
-		}
-
-		/** The account's current login name. */
-		public String getName() {
-			return _name;
-		}
-
-		/** A stable tie-breaker; the smallest value wins when choosing the keeper. */
-		public long getOrdering() {
-			return _ordering;
-		}
-
-		/** Whether the account is managed by an external directory. */
-		public boolean isExternallyManaged() {
-			return _externallyManaged;
-		}
+	public record Account(TLID id, String name, long ordering, boolean externallyManaged, boolean alive) {
+		// Data record.
 	}
 
 	/**
 	 * A planned rename of one account.
+	 *
+	 * @param id
+	 *        The identifier of the account to rename.
+	 * @param oldName
+	 *        The account's current name.
+	 * @param newName
+	 *        The name the account is renamed to.
 	 */
-	public static final class Rename {
-
-		private final TLID _id;
-
-		private final String _oldName;
-
-		private final String _newName;
-
-		/**
-		 * Creates a {@link Rename}.
-		 */
-		public Rename(TLID id, String oldName, String newName) {
-			_id = id;
-			_oldName = oldName;
-			_newName = newName;
-		}
-
-		/** The identifier of the account to rename. */
-		public TLID getId() {
-			return _id;
-		}
-
-		/** The account's current name. */
-		public String getOldName() {
-			return _oldName;
-		}
-
-		/** The name the account is renamed to. */
-		public String getNewName() {
-			return _newName;
-		}
+	public record Rename(TLID id, String oldName, String newName) {
+		// Data record.
 	}
 
 	/**
@@ -123,11 +68,11 @@ public final class PersonNameCollisions {
 	 * their original spelling.
 	 *
 	 * <p>
-	 * Accounts are grouped by their lower-cased name. Within a group the keeper is the
-	 * {@link Account#isExternallyManaged() externally managed} account (else the one with the
-	 * smallest {@link Account#getOrdering() ordering}); the keeper is never renamed. Each other
-	 * member keeps its own spelling plus the smallest integer suffix that is free (compared
-	 * case-insensitively).
+	 * Accounts are grouped by their lower-cased name. Within a group the keeper is chosen preferring
+	 * a {@link Account#alive() living} account, then an {@link Account#externallyManaged() externally
+	 * managed} one, then the one with the smallest {@link Account#ordering() ordering}; the keeper is
+	 * never renamed. Each other member keeps its own spelling plus the smallest integer suffix that
+	 * is free (compared case-insensitively).
 	 * </p>
 	 *
 	 * @return One {@link Rename} per account that must be renamed; empty if there are no
@@ -136,7 +81,7 @@ public final class PersonNameCollisions {
 	public static List<Rename> computeRenames(List<Account> accounts) {
 		Map<String, List<Account>> groups = new LinkedHashMap<>();
 		for (Account account : accounts) {
-			groups.computeIfAbsent(lower(account.getName()), x -> new ArrayList<>()).add(account);
+			groups.computeIfAbsent(lower(account.name()), x -> new ArrayList<>()).add(account);
 		}
 
 		// All lower-cased names that are already claimed, to avoid secondary collisions.
@@ -152,23 +97,35 @@ public final class PersonNameCollisions {
 				if (account == keeper) {
 					continue;
 				}
-				String target = nextFreeName(account.getName(), used);
+				String target = nextFreeName(account.name(), used);
 				used.add(lower(target));
-				renames.add(new Rename(account.getId(), account.getName(), target));
+				renames.add(new Rename(account.id(), account.name(), target));
 			}
 		}
 		return renames;
 	}
 
 	private static Account chooseKeeper(List<Account> group) {
+		// Prefer a living account: a deleted (history-only) account must never force the rename of
+		// a living one.
+		boolean anyAlive = false;
+		for (Account account : group) {
+			if (account.alive()) {
+				anyAlive = true;
+				break;
+			}
+		}
+
 		Account managed = null;
 		Account oldest = null;
 		for (Account account : group) {
-			if (account.isExternallyManaged()
-				&& (managed == null || account.getOrdering() < managed.getOrdering())) {
+			if (anyAlive && !account.alive()) {
+				continue;
+			}
+			if (account.externallyManaged() && (managed == null || account.ordering() < managed.ordering())) {
 				managed = account;
 			}
-			if (oldest == null || account.getOrdering() < oldest.getOrdering()) {
+			if (oldest == null || account.ordering() < oldest.ordering()) {
 				oldest = account;
 			}
 		}

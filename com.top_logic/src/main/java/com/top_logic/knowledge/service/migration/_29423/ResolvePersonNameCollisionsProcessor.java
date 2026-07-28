@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LongID;
@@ -42,12 +43,14 @@ import com.top_logic.model.migration.Util;
  * at most one account per case-insensitive name remains (Ticket #29423).
  *
  * <p>
- * The spelling of the surviving names is preserved. Within a collision group the oldest account
- * (smallest identifier) keeps its name; the others are suffixed (see {@link PersonNameCollisions}).
- * On databases that compare names case-insensitively no such collisions can exist, so this
- * processor is a no-op there. Every rename is logged; renames of directory-managed accounts (with a
- * non-empty authentication device) are logged as a warning so the directory synchronization can be
- * verified.
+ * All accounts are considered across their whole history (including deleted, history-only
+ * accounts). Assuming an account's name never changes, a rename rewrites the name in every revision
+ * of the account, so that no two case-insensitively equal names ever co-exist at any point in time.
+ * The spelling of the surviving names is preserved. Within a collision group a living account is
+ * kept (see {@link PersonNameCollisions}); the others are suffixed. On databases that compare names
+ * case-insensitively no such collisions can exist, so this processor is a no-op there. Every rename
+ * is logged; renames of directory-managed accounts (with a non-empty authentication device) are
+ * logged as a warning so the directory synchronization can be verified.
  * </p>
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -87,10 +90,11 @@ public class ResolvePersonNameCollisionsProcessor
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		Util util = context.getSQLUtils();
 		try {
-			// Group the current accounts by branch; collisions are resolved per branch.
+			// Group all accounts (across their whole history) by branch; collisions are resolved
+			// per branch.
 			Map<Long, List<PersonRow>> rowsByBranch = new LinkedHashMap<>();
-			for (PersonRow row : readCurrentPersons(util, connection)) {
-				rowsByBranch.computeIfAbsent(row._branch, x -> new ArrayList<>()).add(row);
+			for (PersonRow row : readPersons(util, connection)) {
+				rowsByBranch.computeIfAbsent(row.branch(), x -> new ArrayList<>()).add(row);
 			}
 
 			int renamed = 0;
@@ -99,19 +103,20 @@ public class ResolvePersonNameCollisionsProcessor
 				Map<TLID, PersonRow> rowById = new HashMap<>();
 				List<Account> accounts = new ArrayList<>();
 				for (PersonRow row : entry.getValue()) {
-					TLID id = LongID.valueOf(row._identifier);
+					TLID id = LongID.valueOf(row.identifier());
 					rowById.put(id, row);
-					accounts.add(new Account(id, row._name, row._identifier, false));
+					boolean externallyManaged = !TLSecurityDeviceManager.DB_SECURITY.equals(row.authDeviceID());
+					accounts.add(new Account(id, row.name(), row.identifier(), externallyManaged, row.alive()));
 				}
 				for (Rename rename : PersonNameCollisions.computeRenames(accounts)) {
-					PersonRow row = rowById.get(rename.getId());
-					updateName(util, connection, branch, row._identifier, rename.getNewName());
+					PersonRow row = rowById.get(rename.id());
+					updateName(util, connection, branch, row.identifier(), rename.newName());
 					renamed++;
-					if (StringServices.isEmpty(row._authDeviceID)) {
-						log.info("Renamed account '" + rename.getOldName() + "' to '" + rename.getNewName() + "'.");
+					if (StringServices.isEmpty(row.authDeviceID())) {
+						log.info("Renamed account '" + rename.oldName() + "' to '" + rename.newName() + "'.");
 					} else {
-						log.info("Renamed account '" + rename.getOldName() + "' to '" + rename.getNewName()
-							+ "' (managed by device '" + row._authDeviceID
+						log.info("Renamed account '" + rename.oldName() + "' to '" + rename.newName()
+							+ "' (managed by device '" + row.authDeviceID()
 							+ "'); please verify the directory synchronization.", Log.WARN);
 					}
 				}
@@ -125,63 +130,74 @@ public class ResolvePersonNameCollisionsProcessor
 		}
 	}
 
-	private List<PersonRow> readCurrentPersons(Util util, PooledConnection connection) throws SQLException {
+	/**
+	 * Reads every account across all revisions (including deleted, history-only accounts),
+	 * deduplicated to one {@link PersonRow} per (branch, identifier). Since an account's name does
+	 * not change, any revision provides the name; the account is {@link PersonRow#alive() alive} if
+	 * any of its revisions is the current one.
+	 */
+	private List<PersonRow> readPersons(Util util, PooledConnection connection) throws SQLException {
 		List<SQLColumnDefinition> selectColumns = columns(
 			util.branchColumnDef(),
 			columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 			columnDef(PERSON_COL_NAME),
-			columnDef(PERSON_COL_AUTH_DEVICE_ID));
-		SQLSelect select = select(
-			selectColumns,
-			table(PERSON_DBNAME),
-			eqSQL(column(BasicTypes.REV_MAX_DB_NAME), literal(DBType.LONG, Revision.CURRENT_REV)),
-			orders(order(column(BasicTypes.IDENTIFIER_DB_NAME))));
+			columnDef(PERSON_COL_AUTH_DEVICE_ID),
+			columnDef(BasicTypes.REV_MAX_DB_NAME));
+		SQLSelect select = select(selectColumns, table(PERSON_DBNAME));
 
 		CompiledStatement statement = query(select).toSql(connection.getSQLDialect());
-		List<PersonRow> result = new ArrayList<>();
+		Map<String, PersonRow> byPerson = new LinkedHashMap<>();
 		try (ResultSet resultSet = statement.executeQuery(connection)) {
 			while (resultSet.next()) {
-				result.add(new PersonRow(
-					resultSet.getLong(1),
-					resultSet.getLong(2),
-					resultSet.getString(3),
-					resultSet.getString(4)));
+				long branch = resultSet.getLong(1);
+				long identifier = resultSet.getLong(2);
+				String name = resultSet.getString(3);
+				String authDeviceID = resultSet.getString(4);
+				boolean alive = resultSet.getLong(5) == Revision.CURRENT_REV;
+
+				String key = branch + ":" + identifier;
+				PersonRow existing = byPerson.get(key);
+				if (existing == null) {
+					byPerson.put(key, new PersonRow(branch, identifier, name, authDeviceID, alive));
+				} else if (alive && !existing.alive()) {
+					byPerson.put(key, new PersonRow(branch, identifier, name, authDeviceID, true));
+				}
 			}
 		}
-		return result;
+		return new ArrayList<>(byPerson.values());
 	}
 
+	/**
+	 * Renames an account in all its revisions (its name is constant over time), so that no two
+	 * case-insensitively equal names ever co-exist at any point in time.
+	 */
 	private void updateName(Util util, PooledConnection connection, long branch, long identifier, String newName)
 			throws SQLException {
 		CompiledStatement statement = query(update(
 			table(PERSON_DBNAME),
 			and(
 				eqSQL(util.branchColumnRef(), literal(DBType.LONG, branch)),
-				eqSQL(column(BasicTypes.IDENTIFIER_DB_NAME), literal(DBType.ID, LongID.valueOf(identifier))),
-				eqSQL(column(BasicTypes.REV_MAX_DB_NAME), literal(DBType.LONG, Revision.CURRENT_REV))),
+				eqSQL(column(BasicTypes.IDENTIFIER_DB_NAME), literal(DBType.ID, LongID.valueOf(identifier)))),
 			columnNames(PERSON_COL_NAME),
 			expressions(literal(DBType.STRING, newName)))).toSql(connection.getSQLDialect());
 		statement.executeUpdate(connection);
 	}
 
 	/**
-	 * A current row of the {@code PERSON} table relevant for the collision analysis.
+	 * One account of the {@code PERSON} table, deduplicated across its revisions.
+	 *
+	 * @param branch
+	 *        The branch the account lives on.
+	 * @param identifier
+	 *        The account's technical identifier.
+	 * @param name
+	 *        The account's login name.
+	 * @param authDeviceID
+	 *        The authentication device the account is managed by, or empty for a local account.
+	 * @param alive
+	 *        Whether any revision of the account is the current one.
 	 */
-	private static final class PersonRow {
-
-		final long _branch;
-
-		final long _identifier;
-
-		final String _name;
-
-		final String _authDeviceID;
-
-		PersonRow(long branch, long identifier, String name, String authDeviceID) {
-			_branch = branch;
-			_identifier = identifier;
-			_name = name;
-			_authDeviceID = authDeviceID;
-		}
+	private record PersonRow(long branch, long identifier, String name, String authDeviceID, boolean alive) {
+		// Data record.
 	}
 }

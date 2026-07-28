@@ -72,17 +72,35 @@ public class TestPersonNameCollisions extends TestCase {
 	}
 
 	/**
-	 * Creates a local (not externally managed) account whose id doubles as its ordering.
+	 * A living account keeps its name even against an older deleted (history-only) account, which is
+	 * renamed instead.
 	 */
-	private static Account account(long id, String name) {
-		return new Account(LongID.valueOf(id), name, id, false);
+	public void testLivingAccountIsKept() {
+		Map<String, String> byOldName = index(PersonNameCollisions.computeRenames(
+			list(deleted(1, "Admin"), account(2, "admin"))));
+		assertNull("Living keeper 'admin' (id 2) keeps its name.", byOldName.get("admin"));
+		assertEquals("Admin2", byOldName.get("Admin"));
 	}
 
 	/**
-	 * Creates an externally managed account whose id doubles as its ordering.
+	 * Creates a living local (not externally managed) account whose id doubles as its ordering.
+	 */
+	private static Account account(long id, String name) {
+		return new Account(LongID.valueOf(id), name, id, false, true);
+	}
+
+	/**
+	 * Creates a living externally managed account whose id doubles as its ordering.
 	 */
 	private static Account managed(long id, String name) {
-		return new Account(LongID.valueOf(id), name, id, true);
+		return new Account(LongID.valueOf(id), name, id, true, true);
+	}
+
+	/**
+	 * Creates a deleted (history-only) account whose id doubles as its ordering.
+	 */
+	private static Account deleted(long id, String name) {
+		return new Account(LongID.valueOf(id), name, id, false, false);
 	}
 
 	/**
@@ -98,7 +116,7 @@ public class TestPersonNameCollisions extends TestCase {
 	private static Map<String, String> index(List<Rename> renames) {
 		Map<String, String> result = new HashMap<>();
 		for (Rename rename : renames) {
-			result.put(rename.getOldName(), rename.getNewName());
+			result.put(rename.oldName(), rename.newName());
 		}
 		return result;
 	}

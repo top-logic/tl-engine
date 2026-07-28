@@ -68,10 +68,15 @@ public interface SvgWriter extends AutoCloseable {
 	 * Text without an explicit font would otherwise be rendered in the viewer's default font
 	 * (typically 16px sans-serif) rather than the font the layout was computed for, and would not
 	 * match the box reserved for it. Text carrying a <code>font-family</code>/<code>font-size</code>
-	 * attribute is excluded, since that attribute states the font the text was measured with. A
-	 * <code>class</code> is not excluded: it says that some rule styles the element, not that the
-	 * element brings its own font. A stylesheet rule that does set one must be specific enough to
-	 * win over the rules written here.
+	 * attribute is excluded, since that attribute states the font the text was measured with.
+	 *
+	 * <p>
+	 * The guard sits in <code>:where()</code> so that it adds no specificity: the rules must reach
+	 * text that only carries a <code>class</code>, and at the same time lose against a rule that
+	 * really does supply a font - an icon font bound to a class, for instance. Text styled that way
+	 * is not measured with the font it renders in; its font belongs on the text itself, so that
+	 * measurement sees it.
+	 * </p>
 	 * </p>
 	 *
 	 * @see RenderContext#getDefaultFontDeclaration()
@@ -92,8 +97,8 @@ public interface SvgWriter extends AutoCloseable {
 	static String defaultTextStyle(RenderContext context) {
 		double sizePx = context.getDefaultFontSizePx();
 		String size = sizePx == (int) sizePx ? Integer.toString((int) sizePx) : Double.toString(sizePx);
-		return "text:not([font-family]){font-family:" + context.getDefaultFontDeclaration() + ";}"
-			+ "text:not([font-size]){font-size:" + size + "px;}";
+		return "text:where(:not([font-family])){font-family:" + context.getDefaultFontDeclaration() + ";}"
+			+ "text:where(:not([font-size])){font-size:" + size + "px;}";
 	}
 
 	/**

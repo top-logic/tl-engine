@@ -37,6 +37,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.Country;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Test for {@link com.top_logic.knowledge.wrap.person.Person}.
@@ -77,7 +78,7 @@ public class TestPerson extends BasicTestCase {
 		try {
 			createPerson(root.getName());
 			fail("Creating a person with the name of a different person should not work.");
-		} catch (KnowledgeBaseException ex) {
+		} catch (TopLogicException ex) {
 			// expected
 		}
 	}

@@ -50,6 +50,7 @@ import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.tool.boundsec.wrap.GroupMember;
 import com.top_logic.util.Country;
 import com.top_logic.util.Utils;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Wrapper for {@link com.top_logic.knowledge.objects.KnowledgeObject KnowledgeObjects} of
@@ -608,6 +609,10 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	 * @return The created person.
 	 */
 	public static Person create(KnowledgeBase kb, String userName, AuthenticationDevice authenticationDevice) {
+		// Account names are unique case-insensitively (Ticket #29423).
+		if (byName(kb, userName) != null) {
+			throw new TopLogicException(I18NConstants.ERROR_DUPLICATE_ACCOUNT_NAME__NAME.fill(userName));
+		}
 		KnowledgeObject handle = kb.createKnowledgeObject(OBJECT_NAME);
 		handle.setAttributeValue(AbstractWrapper.NAME_ATTRIBUTE, userName);
 		Person result = handle.getWrapper();

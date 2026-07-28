@@ -12,7 +12,10 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.TestPersonSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Test that account names are resolved case-insensitively while their original spelling is
@@ -33,6 +36,27 @@ public class TestPersonNameCaseInsensitivity extends BasicTestCase {
 			assertSame("Lookup by upper case must find the account.", admin, Person.byName("ADMIN"));
 			assertSame("Lookup by mixed case must find the account.", admin, Person.byName("Admin"));
 			assertNull("A non-existing name must not resolve.", Person.byName("does-not-exist"));
+		} finally {
+			TestPerson.deletePersonAndUser(admin);
+		}
+	}
+
+	/**
+	 * Creating an account whose name equals an existing one case-insensitively is rejected.
+	 */
+	public void testCreateRejectsCaseInsensitiveDuplicate() {
+		Person admin = TestPerson.createPerson("Admin");
+		try {
+			KnowledgeBase kb = admin.getKnowledgeBase();
+			Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+			try {
+				Person.create(kb, "ADMIN", null);
+				fail("Creating a case-insensitive duplicate must be rejected.");
+			} catch (TopLogicException expected) {
+				// Expected.
+			} finally {
+				tx.rollback();
+			}
 		} finally {
 			TestPerson.deletePersonAndUser(admin);
 		}

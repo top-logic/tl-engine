@@ -55,8 +55,9 @@ public interface RenderContext {
 	 *
 	 * <p>
 	 * A standalone SVG document has no external stylesheet, so it must declare this family itself
-	 * to render text in the font it was measured with. {@link SvgWriter#writeDefaultTextStyle}
-	 * emits the matching rule.
+	 * to render text in the font it was measured with. The diagram states it on its root element
+	 * through {@link SvgWriter#setTextStyle(String, String, String)}, from where its text inherits
+	 * it.
 	 * </p>
 	 *
 	 * @see #DEFAULT_FONT_FAMILY

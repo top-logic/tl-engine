@@ -31,8 +31,9 @@ import com.top_logic.react.flow.svg.TextMetricsImpl;
  * <p>
  * Therefore, measurements are converted from pt to CSS px via {@link #PX_PER_PT} before being
  * returned. The size actually assumed is reported in CSS pixels by {@link #getDefaultFontSizePx()},
- * which {@link com.top_logic.react.flow.svg.SvgWriter#writeDefaultTextStyle} turns into a default
- * CSS rule so that measurement and rendering stay in lock-step.
+ * which the diagram states on its root element through
+ * {@link com.top_logic.react.flow.svg.SvgWriter#setTextStyle(String, double, String)}, so that
+ * measurement and rendering stay in lock-step.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>

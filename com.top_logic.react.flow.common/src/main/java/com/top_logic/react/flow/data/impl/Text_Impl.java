@@ -9,7 +9,7 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 
 	private String _fontWeight = null;
 
-	private double _fontSize = 14;
+	private double _fontSize = 0.0d;
 
 	private String _fontFamily = null;
 

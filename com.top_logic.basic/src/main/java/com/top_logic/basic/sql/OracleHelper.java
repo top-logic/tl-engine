@@ -130,7 +130,53 @@ public abstract class OracleHelper extends DBHelper {
 	protected void internalCheck(Statement aStm) throws SQLException {
         checkSysNLS(aStm, "NLS_CHARACTERSET");
         checkSysNLS(aStm, "NLS_NCHAR_CHARACTERSET");
+        checkCaseInsensitiveNls(aStm);
     }
+
+    /**
+     * Verifies that the database is configured for case-insensitive comparison, since Oracle cannot
+     * apply a case-insensitive collation per column (a per-column {@code COLLATE} requires Oracle
+     * 12.2+ with {@code MAX_STRING_SIZE=EXTENDED}). Case-insensitivity of non-binary string columns
+     * therefore relies on the database/session NLS configuration ({@code NLS_COMP=LINGUISTIC} and a
+     * {@code NLS_SORT} ending in {@code _CI} or {@code _AI}). Logs an error otherwise.
+     */
+    private void checkCaseInsensitiveNls(Statement aStm) throws SQLException {
+        String comp = null;
+        String sort = null;
+        try (ResultSet res = aStm.executeQuery(
+            "SELECT PARAMETER, VALUE FROM NLS_SESSION_PARAMETERS WHERE PARAMETER IN ('NLS_COMP', 'NLS_SORT')")) {
+            while (res.next()) {
+                if ("NLS_COMP".equals(res.getString(1))) {
+                    comp = res.getString(2);
+                } else {
+                    sort = res.getString(2);
+                }
+            }
+        }
+        String upperSort = sort == null ? "" : sort.toUpperCase();
+        boolean caseInsensitive =
+            "LINGUISTIC".equalsIgnoreCase(comp) && (upperSort.endsWith("_CI") || upperSort.endsWith("_AI"));
+        if (!caseInsensitive) {
+            Logger.error("Oracle is not configured for case-insensitive comparison (NLS_COMP='" + comp
+                + "', NLS_SORT='" + sort + "'). Non-binary string columns will be compared case-sensitively. "
+                + "Set NLS_COMP=LINGUISTIC and NLS_SORT=<locale>_CI (or _AI) for case-insensitive behavior.",
+                OracleHelper.class);
+        }
+    }
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Oracle does not apply a case-insensitive collation per column here (a per-column
+	 * {@code COLLATE} requires Oracle 12.2+ with {@code MAX_STRING_SIZE=EXTENDED}); case-insensitive
+	 * comparison relies on the NLS configuration instead (see {@link #internalCheck(Statement)}).
+	 * </p>
+	 */
+	@Override
+	public boolean supportsColumnCollation() {
+		return false;
+	}
 
 	@Override
 	public boolean supportsUnicodeSupplementaryCharacters() {
@@ -524,7 +570,7 @@ public abstract class OracleHelper extends DBHelper {
 		if (binary) {
 			result.append("CHAR(1)");
 		} else {
-			result.append("NCHAR(1) COLLATE BINARY_CI");
+			result.append("NCHAR(1)");
 		}
 	}
 
@@ -539,7 +585,6 @@ public abstract class OracleHelper extends DBHelper {
 		} else {
 			result.append("NVARCHAR2");
 			size(result, size);
-			result.append(" COLLATE BINARY_CI");
 		}
 	}
 

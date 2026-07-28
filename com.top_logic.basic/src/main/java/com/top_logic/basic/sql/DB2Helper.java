@@ -50,6 +50,19 @@ public class DB2Helper extends DBHelper
 	}
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * DB2 has no per-column collation; case-insensitivity depends on the database's collating
+	 * sequence (see {@link #internalCheck(Statement)}).
+	 * </p>
+	 */
+	@Override
+	public boolean supportsColumnCollation() {
+		return false;
+	}
+
+	/**
 	 * Verifies that the DB2 database uses a case-insensitive collating sequence, since DB2 cannot
 	 * apply a case-insensitive collation per column. Logs an error otherwise.
 	 */

@@ -399,6 +399,20 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		// Hook for dialects that need one-time database preparation.
 	}
 
+	/**
+	 * Whether this dialect makes a non-binary string column case-insensitive through the column's
+	 * own collation.
+	 *
+	 * <p>
+	 * Dialects that cannot apply a case-insensitive collation per column (e.g. Oracle and DB2,
+	 * where case-insensitivity depends on the database/session configuration) return
+	 * <code>false</code>.
+	 * </p>
+	 */
+	public boolean supportsColumnCollation() {
+		return true;
+	}
+
 	private final Config _config;
 
 	private final int _maxNumberBatchParameter;

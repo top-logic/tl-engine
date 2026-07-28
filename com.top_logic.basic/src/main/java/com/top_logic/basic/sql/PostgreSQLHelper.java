@@ -137,6 +137,31 @@ public class PostgreSQLHelper extends DBHelper {
 		if (autosave == AutoSave.NEVER) {
 			Logger.error("PostgreSQL connection does not use autosave mode.", PostgreSQLHelper.class);
 		}
+
+		checkCaseInsensitiveCollationSupport(statement);
+	}
+
+	/**
+	 * Verifies that the server can provide the case-insensitive collation used for non-binary string
+	 * columns: a nondeterministic ICU collation requires PostgreSQL 12+ built with ICU support. Logs
+	 * an error otherwise.
+	 */
+	private void checkCaseInsensitiveCollationSupport(Statement statement) throws SQLException {
+		try (ResultSet result = statement.executeQuery("SELECT current_setting('server_version_num')")) {
+			int versionNum = result.next() ? Integer.parseInt(result.getString(1)) : 0;
+			if (versionNum < 120000) {
+				Logger.error("PostgreSQL " + versionNum
+					+ " does not support nondeterministic ICU collations (requires 12+); non-binary string columns"
+					+ " cannot be made case-insensitive.", PostgreSQLHelper.class);
+				return;
+			}
+		}
+		try (ResultSet result = statement.executeQuery("SELECT 1 FROM pg_collation WHERE collprovider = 'i' LIMIT 1")) {
+			if (!result.next()) {
+				Logger.error("PostgreSQL has no ICU collations available; the case-insensitive collation \""
+					+ CI_COLLATION + "\" for non-binary string columns cannot be created.", PostgreSQLHelper.class);
+			}
+		}
 	}
 
 	private AutoSave getAutosaveMode(Connection connection) throws SQLException {

@@ -13,6 +13,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.dirty.StateHandler;
@@ -60,7 +61,8 @@ public class DirtyConfirmDialogControl {
 		for (StateHandler handler : dirtyHandlers) {
 			bodyChildren.add(new ReactTextControl(context, "\u2022 " + handler.getDescription()));
 		}
-		ReactStackControl body = new ReactStackControl(context, bodyChildren);
+		// The window body is flush, so the content brings its own inset.
+		ReactInsetControl body = new ReactInsetControl(context, new ReactStackControl(context, bodyChildren));
 
 		// Close handler for window X button — delegates to DialogManager (result handler does rollback).
 		Runnable closeHandler = () -> dialogManager.closeTopDialog(DialogResult.cancelled());

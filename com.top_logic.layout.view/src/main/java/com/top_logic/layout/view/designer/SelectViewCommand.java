@@ -115,6 +115,9 @@ public class SelectViewCommand implements ViewCommand {
 				DesignTreeNode node = findViewRoot(rootNode, path);
 				if (node != null) {
 					selectionChannel.set(node);
+					// The user picked the view in the application window, so the designer is now behind
+					// it. Bring it back to the front to show the view that was selected there.
+					registry.focusWindow(designerWindowId);
 				} else {
 					Logger.info("Select view: no design node for source '" + path + "'.",
 						SelectViewCommand.class);

@@ -339,19 +339,39 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		String singletonKey = options.getSingletonKey();
 		if (singletonKey != null) {
 			String existingWindowId = _singletonKeys.get(singletonKey);
-			if (existingWindowId != null && _windows.containsKey(existingWindowId)) {
-				WindowEntry existingEntry = _windows.get(existingWindowId);
-				WindowFocusEvent focusEvent = WindowFocusEvent.create()
-					.setTargetWindowId(existingEntry.getOpenerWindowId())
-					.setWindowId(existingWindowId);
-				SSEUpdateQueue openerQueue = getQueue(existingEntry.getOpenerWindowId());
-				if (openerQueue != null) {
-					openerQueue.enqueue(focusEvent);
-				}
+			if (existingWindowId != null && focusWindow(existingWindowId)) {
 				return existingWindowId;
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Brings the given window to the front of the user's desktop.
+	 *
+	 * <p>
+	 * A window is focused through its opener, which holds the handle to it, so the request is sent to
+	 * the opener's update queue.
+	 * </p>
+	 *
+	 * @param windowId
+	 *        The window to bring to the front.
+	 * @return Whether the request was sent. {@code false} if the window is unknown or its opener is
+	 *         gone, in which case there is nothing to focus.
+	 */
+	public boolean focusWindow(String windowId) {
+		WindowEntry entry = _windows.get(windowId);
+		if (entry == null) {
+			return false;
+		}
+		SSEUpdateQueue openerQueue = getQueue(entry.getOpenerWindowId());
+		if (openerQueue == null) {
+			return false;
+		}
+		openerQueue.enqueue(WindowFocusEvent.create()
+			.setTargetWindowId(entry.getOpenerWindowId())
+			.setWindowId(windowId));
+		return true;
 	}
 
 	private void registerSingletonKey(WindowOptions options, String windowId) {

@@ -1,14 +1,16 @@
 # Headless Agent / Script Interface for the React View Layer — Plan & Progress
 
-> **Status: PROTOTYPE.** A proof-of-concept exists, is unit-tested, and has been
-> exercised live against the demo. None of this is production-ready or merged.
-> This document tracks the design questions and the work to turn the prototype
-> into a real feature.
+> **Status: WORKING, NOT COMPLETE.** The interface is on `master` (built under
+> #29108): observe/act/record/replay run live, are unit-tested and exercised
+> against the demo. What is missing is the authorization and session model for
+> non-browser callers, the read-concurrency model, and productionization. This
+> document tracks the design questions and the remaining work.
 
-- **Branch:** `CWS/CWS_29108_headless_agent_interface` (off `CWS/CWS_29108_integration`)
-- **Code:** `com.top_logic.layout.react.headless` (package), `AgentServlet` (HTTP)
+- **Ticket:** #29430 (completion); the interface itself was built under #29108
+- **Code:** `com.top_logic.layout.react.headless` (package), `AgentServlet` (HTTP),
+  `com.top_logic.layout.view.recorder` (recorder side window)
 - **Owner:** bhu
-- **Last updated:** 2026-06-26
+- **Last updated:** 2026-07-29
 
 ## How to use this document
 
@@ -340,9 +342,14 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       mutates the control tree without the request lock.
 - [ ] Real quiescence signal beyond the synchronous case (await pending model
       events / async work before returning an observation).
-- [ ] Security: confirm the endpoint enforces the same permission checks as the
-      UI for every `act`; decide whether it is enabled per-environment (dev vs.
-      prod) and how it is authenticated for a non-browser client.
+- [ ] **Authorization / session model for non-browser callers — see D7.** Today the
+      endpoint is a `TopLogicServlet` and reads the caller's authenticated
+      `HttpSession`, so it acts as the logged-in user with exactly the UI's
+      permissions — but only for a caller that already holds that session cookie.
+      Two usage modes need a decided answer: an agent driving the **user's own
+      session**, and an agent running its **own session on behalf of the user**.
+- [ ] Confirm every `act` enforces the same permission checks as the UI; decide
+      per-environment enablement (dev vs. prod) and auditability of agent actions.
 - [ ] Decide raw-tree vs. curated projection and whether nodes carry semantic
       role metadata at the control level (see **D4**).
 - [ ] Bound the observation size for very large trees (paging / subtree
@@ -352,7 +359,7 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
 
 - [ ] Thin MCP server mapping `observe` / `list_actions` / `act` /
       `wait_for_settled` onto the HTTP endpoint.
-- [ ] Auth/session handling for the MCP client.
+- [ ] Auth/session handling for the MCP client (blocked on **D7**).
 - [ ] End-to-end: an external agent drives a live TL session through MCP.
 
 ### Phase 6 — Productionization ⬜
@@ -524,6 +531,29 @@ How is a consistent, non-disruptive observation produced? Options:
 - (c) Maintain the projection incrementally as part of the render pipeline.
 Also decide whether `observe` should ever block user commands at all.
 
+### D7 — Authorization & session model `OPEN` (gates Phase 5, tracked in #29430)
+
+How is a non-browser caller authorized, and whose session does it act in? The
+prototype answers this only implicitly: `AgentServlet` extends `TopLogicServlet`
+and picks up the caller's already-authenticated `HttpSession`, so the agent *is*
+the logged-in user — which works for a caller inside the browser session and not
+at all for one outside it. Two distinct modes:
+
+- **(A) Agent drives the user's own session** — assist the user with a task in
+  the session they are looking at. Open: how the external agent is authorized
+  against that running session, what the user sees while the agent acts, and how
+  the user keeps control (consent, visibility, interruption).
+- **(B) Agent runs its own session on behalf of the user** — independent work,
+  not tied to the interactive session, executing with the rights of that user's
+  account. Open: creating a session without an interactive login, the agent's
+  own identity/credential model, and whether it gets the user's full rights or a
+  restricted subset.
+
+Both modes must keep the invariant that makes this design safe: acting goes
+through the same `executeCommand` path as the UI, so no permission check can be
+bypassed. Auditability (an action was performed by an agent, on whose behalf) is
+part of the decision.
+
 ---
 
 ## Risks & caveats
@@ -531,7 +561,8 @@ Also decide whether `observe` should ever block user commands at all.
 - **Address drift** is the central risk; D1 must address it or recorded scripts
   rot (the exact problem the legacy recorder solved with `ModelName`).
 - **Security**: a headless `act` surface is powerful; it must not bypass any UI
-  permission check and should be gated per environment.
+  permission check and should be gated per environment. Who may call it, and in
+  whose session, is **D7**.
 - **No servlet integration test yet** — only unit tests + a manual live run.
 - The prototype validated the **happy path**; error/veto/dialog flows
   (e.g. `ChannelVetoException` dirty-check) are unexplored headlessly.

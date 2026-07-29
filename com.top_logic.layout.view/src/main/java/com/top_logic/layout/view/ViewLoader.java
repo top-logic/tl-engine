@@ -21,6 +21,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryData;
 
 /**
@@ -109,28 +110,49 @@ public class ViewLoader {
 	 *         if the file cannot be found or parsed.
 	 */
 	public static ViewElement.Config loadConfig(String viewPath) throws ConfigurationException {
-		List<BinaryData> overlays = resolveOverlays(viewPath);
-
-		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
-			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
-
-		DefaultInstantiationContext context = new DefaultInstantiationContext(ViewLoader.class);
-		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
 		// All same-path copies across modules, in dependency (build) order: the first is the base
 		// view, the rest are overlays that a depending module contributes (add/position/override
 		// tabs, items, ...). The typed-configuration merge folds them into one view configuration.
-		reader.setSources(overlays);
+		List<BinaryData> overlays = resolveOverlays(viewPath);
 
-		ViewElement.Config config;
 		try {
-			config = (ViewElement.Config) reader.read();
-			context.checkErrors();
+			return parseConfig(overlays);
 		} catch (ConfigurationException ex) {
 			// Name the view being merged, so a dangling config:reference (e.g. a base tab a
 			// contributor positions against was renamed or removed) is not a cryptic failure.
 			throw new ConfigurationException("Failed to merge overlays for view '" + viewPath + "'.", ex);
 		}
+	}
 
+	/**
+	 * Parses view sources into a {@link ViewElement.Config}, applying every constraint the view
+	 * system enforces when loading a view.
+	 *
+	 * <p>
+	 * Callers that produce view content use this to check that what they produced can be loaded,
+	 * rather than restating the individual constraints.
+	 * </p>
+	 *
+	 * @param sources
+	 *        The view content to read: a single source, or a base view followed by its overlays.
+	 * @return The parsed {@link ViewElement.Config}.
+	 * @throws ConfigurationException
+	 *         If the content cannot be parsed, e.g. because a mandatory property is unset or two
+	 *         entries of a keyed list share a key.
+	 */
+	public static ViewElement.Config parseConfig(List<? extends Content> sources)
+			throws ConfigurationException {
+		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
+			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
+
+		DefaultInstantiationContext context = new DefaultInstantiationContext(ViewLoader.class);
+		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
+		// A copy, because the reader probes the list for null entries, which an immutable list
+		// rejects with an exception instead of answering.
+		reader.setSources(new ArrayList<Content>(sources));
+
+		ViewElement.Config config = (ViewElement.Config) reader.read();
+		context.checkErrors();
 		return config;
 	}
 

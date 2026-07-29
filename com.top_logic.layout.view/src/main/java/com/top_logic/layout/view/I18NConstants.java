@@ -66,10 +66,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_SAVE_VIEW_FAILED__PATH;
 
 	/**
-	 * @en View "{0}" is incomplete and was not saved, because it could not be loaded again. Complete
-	 *     the reported settings and save again. {1}
+	 * @en View "{0}" was not saved, because it could not be loaded again afterwards. Correct the
+	 *     reported settings and save again. {1}
 	 */
-	public static ResKey2 ERROR_SAVE_VIEW_INCOMPLETE__PATH_DETAILS;
+	public static ResKey2 ERROR_SAVE_VIEW_NOT_LOADABLE__PATH_DETAILS;
 
 	/**
 	 * @en Add element...

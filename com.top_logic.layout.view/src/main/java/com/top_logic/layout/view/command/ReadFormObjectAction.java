@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -24,6 +25,7 @@ import com.top_logic.layout.view.form.FormModel;
  *
  * @implNote Returns {@link FormModel#getCurrentObject()}.
  */
+@InApp
 public class ReadFormObjectAction implements ViewAction {
 
 	/**

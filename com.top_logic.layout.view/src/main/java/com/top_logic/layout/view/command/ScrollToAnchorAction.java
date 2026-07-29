@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -40,6 +41,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *           client {@code TLReact.scrollToAnchor} helper - the same primitive a
  *           {@link com.top_logic.layout.view.element.ScrollLinkElement &lt;scroll-link&gt;} uses.
  */
+@InApp
 public class ScrollToAnchorAction implements ViewAction {
 
 	/** Client-side global holding the scroll helper. */

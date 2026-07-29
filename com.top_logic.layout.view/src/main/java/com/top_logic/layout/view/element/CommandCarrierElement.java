@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
@@ -60,6 +62,7 @@ public abstract class CommandCarrierElement extends ContainerElement {
 		@Name(COMMANDS)
 		@EntryTag("command")
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 	}
 

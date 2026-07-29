@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.EntryTag;
@@ -40,6 +41,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *
  * @see ReactChartJsControl
  */
+@InApp
 public class ChartElement implements UIElement {
 
 	/**

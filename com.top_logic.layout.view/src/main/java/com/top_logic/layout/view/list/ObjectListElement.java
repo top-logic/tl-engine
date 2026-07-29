@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -75,6 +78,7 @@ import com.top_logic.model.util.TLModelPartRef;
  * unchanged elements keep their controls (including edit state).
  * </p>
  */
+@InApp
 public class ObjectListElement implements UIElement {
 
 	/**
@@ -205,6 +209,7 @@ public class ObjectListElement implements UIElement {
 		@Name(ITEM)
 		@Mandatory
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getItem();
 
 		/**
@@ -218,6 +223,7 @@ public class ObjectListElement implements UIElement {
 		 */
 		@Name(NEW_ELEMENT)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getNewElement();
 
 		/**

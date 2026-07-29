@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -73,6 +74,7 @@ import com.top_logic.table.impl.PersonalConfigViewStateStore;
  * no dependency on the legacy {@code TableModel}.
  * </p>
  */
+@InApp
 public class TableElement implements UIElement {
 
 	/**

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
@@ -22,6 +23,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * no configuration beyond the standard {@link ViewCommand.Config} properties (label, image, etc.).
  * </p>
  */
+@InApp
 public class CancelDialogCommand implements ViewCommand {
 
 	/**

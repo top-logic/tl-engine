@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -78,6 +80,7 @@ public class ViewElement implements UIElement {
 		@Name(CONTENT)
 		@DefaultContainer
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends UIElement> getContent();
 
 		/** Configuration name for {@link #getParamBindings()}. */

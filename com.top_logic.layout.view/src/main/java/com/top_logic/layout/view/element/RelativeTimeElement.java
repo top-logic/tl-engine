@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import java.util.Date;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
@@ -27,6 +28,7 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * Declarative {@link UIElement} displaying a channel's date value as relative time ("5 minutes
  * ago"), with the exact timestamp as tooltip.
  */
+@InApp
 public class RelativeTimeElement implements UIElement {
 
 	/**

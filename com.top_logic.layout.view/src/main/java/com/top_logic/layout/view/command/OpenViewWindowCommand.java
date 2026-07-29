@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -38,6 +39,7 @@ import com.top_logic.util.Resources;
  * than open duplicates.
  * </p>
  */
+@InApp
 public class OpenViewWindowCommand implements ViewCommand {
 
 	/**

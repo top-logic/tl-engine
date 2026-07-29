@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.ListBinding;
@@ -55,6 +56,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * &lt;/execute-script&gt;
  * </pre>
  */
+@InApp
 public class ExecuteScriptAction implements ViewAction {
 
 	/**

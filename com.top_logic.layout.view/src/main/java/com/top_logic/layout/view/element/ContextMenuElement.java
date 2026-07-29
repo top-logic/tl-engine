@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
@@ -44,6 +45,7 @@ import com.top_logic.layout.view.command.ViewCommandModel;
  * enclosing frame's {@link ContextMenuOpener}.
  * </p>
  */
+@InApp
 public class ContextMenuElement extends CommandCarrierElement {
 
 	/**

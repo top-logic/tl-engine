@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -32,6 +33,7 @@ import com.top_logic.model.annotate.LabelPositionAnnotation;
  * {@link ViewContext} and creates a chrome-wrapped field control for the configured attribute.
  * </p>
  */
+@InApp
 public class FieldElement implements UIElement {
 
 	/**

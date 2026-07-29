@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -47,6 +48,7 @@ import com.top_logic.util.Resources;
  * already-executed actions.
  * </p>
  */
+@InApp
 public class ConfirmAction extends InterruptibleViewAction {
 
 	/**

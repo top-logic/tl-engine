@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
@@ -53,6 +54,7 @@ import com.top_logic.util.model.ModelService;
  * arguments. Diagram handlers are injected as implicit variables into the script.
  * </p>
  */
+@InApp
 public class FlowDiagramElement implements UIElement {
 
 	/**

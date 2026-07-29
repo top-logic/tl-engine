@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.admin;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import java.util.Arrays;
@@ -34,6 +35,7 @@ import com.top_logic.util.error.TopLogicException;
  * {@code <with-transaction>}); the created {@link Person} is returned as the action result.
  * </p>
  */
+@InApp
 public class CreateAccountAction implements ViewAction {
 
 	/**

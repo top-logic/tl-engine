@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
@@ -47,6 +48,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * command presentation options (label, image, executability).
  * </p>
  */
+@InApp
 public class OpenDialogAction implements ViewAction {
 
 	/**

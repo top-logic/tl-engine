@@ -9,6 +9,9 @@ import java.util.List;
 
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -37,6 +40,7 @@ import com.top_logic.layout.view.command.CommandScope;
  * {@link ReactStackControl}.
  * </p>
  */
+@InApp
 public class AppShellElement implements UIElement {
 
 	/**
@@ -63,6 +67,7 @@ public class AppShellElement implements UIElement {
 		 */
 		@Name(HEADER)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getHeader();
 
 		/**
@@ -70,6 +75,7 @@ public class AppShellElement implements UIElement {
 		 */
 		@Name(CONTENT)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getContent();
 
 		/**
@@ -77,6 +83,7 @@ public class AppShellElement implements UIElement {
 		 */
 		@Name(FOOTER)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getFooter();
 	}
 

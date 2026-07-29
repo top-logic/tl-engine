@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.slot;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -25,6 +26,7 @@ import com.top_logic.layout.view.slot.control.SlotPlaceholderControl;
  * {@link SlotRegistry}.
  * </p>
  */
+@InApp
 public class SlotElement implements UIElement {
 
 	/**

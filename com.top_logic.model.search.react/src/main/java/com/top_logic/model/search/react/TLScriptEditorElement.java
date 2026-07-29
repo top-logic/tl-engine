@@ -7,6 +7,7 @@ package com.top_logic.model.search.react;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
@@ -41,6 +42,7 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * — the basis of an interactive console.
  * </p>
  */
+@InApp
 public class TLScriptEditorElement implements UIElement {
 
 	/**

@@ -60,6 +60,18 @@
 						selection="selectedObject"
 						types="test.constraints:ConstraintTestType"
 					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<column attribute="sizedString"/>
+							<column attribute="mandatorySizedString"/>
+							<column attribute="rangedInt"/>
+							<column attribute="rangedDouble"/>
+							<column attribute="uppercaseStart"/>
+							<column attribute="freeText"/>
+						</columns>
 						<rows>all(`test.constraints:ConstraintTestType`)</rows>
 					</table>
 				</panel>

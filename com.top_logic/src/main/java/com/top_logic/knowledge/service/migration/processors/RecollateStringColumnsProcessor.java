@@ -115,7 +115,6 @@ public class RecollateStringColumnsProcessor
 					+ "' does not apply a case-insensitive collation per column; nothing to re-collate.");
 				return;
 			}
-			sqlDialect.prepareDatabase(connection);
 
 			MORepository repository = context.getPersistentRepository();
 

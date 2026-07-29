@@ -749,8 +749,6 @@ public class DBSchemaUtils {
 	 */
 	public static void createTables(PooledConnection connection, DBSchema schema, boolean checkExistence)
 			throws SQLException {
-		connection.getSQLDialect().prepareDatabase(connection);
-
 		for (DBTable table : schema.getTables()) {
 			if (checkExistence && exists(connection, table)) {
 				// table already exists

@@ -36,6 +36,24 @@
 								/>
 							</open-dialog>
 						</generic-command>
+						<generic-command
+							image="css:bi bi-trash"
+							input="selectedObject"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm expr="obj -> if($obj != null, #(&quot;Delete the selected object?&quot;@en, &quot;Das ausgewählte Objekt löschen?&quot;@de), null)"/>
+							<with-transaction>
+								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+							</with-transaction>
+							<write-channel name="selectedObject"/>
+						</generic-command>
 					</commands>
 					<table
 						observed-types="test.constraints:ConstraintTestType"
@@ -56,7 +74,7 @@
 						<de>Constraint-Test-Formular</de>
 					</title>
 					<form input="selectedObject">
-						<field attribute="mandatoryString"/>
+						<field attribute="name"/>
 						<field attribute="sizedString"/>
 						<field attribute="mandatorySizedString"/>
 						<field attribute="rangedInt"/>

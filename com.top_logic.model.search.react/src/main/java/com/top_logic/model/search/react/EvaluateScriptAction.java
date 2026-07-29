@@ -5,93 +5,86 @@
  */
 package com.top_logic.model.search.react;
 
-import java.io.StringReader;
-import java.util.Collections;
-
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.parser.ParseException;
-import com.top_logic.model.search.expr.parser.SearchExpressionParser;
-import com.top_logic.model.search.expr.parser.TokenMgrError;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.WithTransaction;
-import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ViewAction} that compiles and evaluates the TL-Script source passed as input and returns
- * the result.
+ * {@link ViewAction} evaluating the TL-Script given in its configuration.
  *
  * <p>
- * The script is parsed and executed without an argument (a global expression such as {@code 1 + 2}
- * or <code>all(`my.module:MyType`)</code>); the evaluation result becomes the action's output and
- * is typically written to a channel feeding a {@link ScriptResultTable}.
+ * The script is passed the command's input as its argument, so a function such as
+ * <code>x -&gt; $x.get(`my.module:MyType#name`)</code> works on the input, while a global expression
+ * such as <code>all(`my.module:MyType`)</code> ignores it. The evaluation result becomes the
+ * action's output and is written to the channel the command names.
  * </p>
  *
  * <p>
- * Whether modifications are committed is controlled by
- * {@link com.top_logic.model.search.providers.WithTransaction.Config#isInTransaction()}: when set,
- * the evaluation runs inside a committed transaction, so a script that creates, modifies or deletes
- * persistent objects has a lasting effect; otherwise it runs without an ambient transaction and any
- * modification is discarded.
+ * With the transaction option set, the evaluation runs inside a committed transaction, so a script
+ * creating, modifying or deleting persistent objects has a lasting effect; otherwise it runs without
+ * an ambient transaction and any modification is discarded.
  * </p>
  *
- * @implNote Compilation uses {@link SearchExpressionParser} and
- *           {@link QueryExecutor#compile(Expr)}; parse and evaluation failures are surfaced as a
- *           {@link TopLogicException}.
+ * @implNote The script is compiled on first use through {@link QueryExecutor#compile(Expr)} and kept
+ *           for further invocations.
  */
-public class EvaluateScriptAction implements ViewAction, WithTransaction {
+@InApp
+public class EvaluateScriptAction extends AbstractScriptAction {
 
 	/**
 	 * Configuration for {@link EvaluateScriptAction}.
-	 *
-	 * <p>
-	 * Referenced by {@code class=} in the console view rather than claiming a global
-	 * {@code @TagName}.
-	 * </p>
 	 */
+	@TagName("evaluate-script")
 	public interface Config extends PolymorphicConfiguration<EvaluateScriptAction>, WithTransaction.Config {
+
+		/** Configuration name for {@link #getScript()}. */
+		String SCRIPT = "script";
 
 		@Override
 		@ClassDefault(EvaluateScriptAction.class)
 		Class<? extends EvaluateScriptAction> getImplementationClass();
+
+		/**
+		 * The script to evaluate, receiving the command's input as its argument.
+		 */
+		@Name(SCRIPT)
+		@Mandatory
+		Expr getScript();
 	}
 
-	private final boolean _inTransaction;
+	private final Expr _script;
+
+	private QueryExecutor _compiled;
 
 	/**
 	 * Creates a new {@link EvaluateScriptAction} from configuration.
 	 */
 	@CalledByReflection
 	public EvaluateScriptAction(InstantiationContext context, Config config) {
-		_inTransaction = config.isInTransaction();
+		super(config);
+		_script = config.getScript();
 	}
 
 	@Override
 	public Object execute(ReactContext context, Object input) {
-		String source = input == null ? "" : input.toString();
-		if (source.isBlank()) {
-			return Collections.emptyList();
-		}
-
-		Expr expr;
-		try {
-			expr = new SearchExpressionParser(new StringReader(source)).expr();
-		} catch (ParseException | TokenMgrError ex) {
-			throw new TopLogicException(I18NConstants.ERROR_SCRIPT_PARSE__MSG.fill(ex.getMessage()), ex);
-		}
-
-		try (Transaction tx = beginTransaction(_inTransaction)) {
-			Object result = QueryExecutor.compile(expr).execute((Object) null);
-			tx.commit();
-			return result;
-		} catch (RuntimeException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_SCRIPT_EVALUATION__MSG.fill(ex.getMessage()), ex);
-		}
+		return evaluate(compiled(), input);
 	}
+
+	private QueryExecutor compiled() {
+		if (_compiled == null) {
+			_compiled = QueryExecutor.compile(_script);
+		}
+		return _compiled;
+	}
+
 }

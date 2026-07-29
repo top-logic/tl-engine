@@ -2,7 +2,7 @@
 
 <!--
 	Script console: enter a TL-Script expression in the editor and run it. The tlscript-editor
-	publishes its text to the script channel; both toolbar commands run the EvaluateScriptAction on
+	publishes its text to the script channel; both toolbar commands run the EvaluateDynamicScriptAction on
 	that text and write the result to the result channel, which the ScriptResultTable renders as a
 	table (one row per result element, a single row for a scalar). Evaluate runs read-only (no
 	transaction, modifications are discarded); Apply runs in a committed transaction, so a script that
@@ -29,7 +29,7 @@
 					<en>Evaluate</en>
 					<de>Auswerten</de>
 				</label>
-				<action class="com.top_logic.model.search.react.EvaluateScriptAction"
+				<action class="com.top_logic.model.search.react.EvaluateDynamicScriptAction"
 					transaction="false"
 				/>
 				<write-channel name="result"/>
@@ -43,7 +43,7 @@
 					<en>Apply</en>
 					<de>Anwenden</de>
 				</label>
-				<action class="com.top_logic.model.search.react.EvaluateScriptAction"
+				<action class="com.top_logic.model.search.react.EvaluateDynamicScriptAction"
 					transaction="true"
 				/>
 				<write-channel name="result"/>

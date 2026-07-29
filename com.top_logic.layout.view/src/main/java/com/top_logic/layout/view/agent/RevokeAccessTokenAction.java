@@ -20,8 +20,8 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ViewAction} withdrawing the {@link AccessTokens access token} passed as its input: an
- * agent presenting it is no longer admitted.
+ * {@link ViewAction} withdrawing the {@link AccessTokens access token} passed as its input: the
+ * token is deleted, and an agent presenting it is no longer admitted.
  *
  * <p>
  * An account revokes its own tokens; revoking another account's token is an administrative
@@ -55,20 +55,18 @@ public class RevokeAccessTokenAction implements ViewAction {
 			throw new TopLogicException(I18NConstants.ERROR_ACCESS_TOKEN_NO_TOKEN);
 		}
 
+		String sessionKey = (String) token.tValue(AccessTokens.part(AccessTokens.SESSION_KEY));
 		try (Transaction tx = token.tKnowledgeBase().beginTransaction()) {
-			AccessTokens.revoke(token);
+			AccessTokens.withdraw(token);
 			tx.commit();
 		}
 
-		String sessionKey = (String) token.tValue(AccessTokens.part(AccessTokens.SESSION_KEY));
-		if (sessionKey != null) {
-			// Any other token admitting an agent to the same session keeps its own registration;
-			// this one's is dropped only if no other token still refers to the session.
-			if (!stillAdmitted(sessionKey)) {
-				AgentAccess.getInstance().unbindSession(sessionKey);
-			}
+		if (sessionKey != null && !stillAdmitted(sessionKey)) {
+			// Another token admitting an agent to the same session keeps its own registration; this
+			// one's is dropped only when no token refers to the session any more.
+			AgentAccess.getInstance().unbindSession(sessionKey);
 		}
-		return input;
+		return null;
 	}
 
 	private static boolean stillAdmitted(String sessionKey) {

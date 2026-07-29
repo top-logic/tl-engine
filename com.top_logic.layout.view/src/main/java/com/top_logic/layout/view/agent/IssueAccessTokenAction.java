@@ -20,6 +20,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.headless.AgentAccess;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
@@ -29,8 +30,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * The input is a {@code tl.agent:NewAccessToken} carrying the token's label, its validity in hours
- * and whether the agent may act. The action returns the plain secret, which the surrounding action
- * chain writes to the channel the dialog displays it from — the one and only time it is readable.
+ * and whether the agent may act. The action returns a transient carrier of the plain secret, which
+ * the surrounding chain hands to the dialog displaying it — the one and only time it is readable.
  * The token admits the agent to the session it is issued from, which is registered with
  * {@link AgentAccess} here.
  * </p>
@@ -85,9 +86,11 @@ public class IssueAccessTokenAction implements ViewAction {
 		AgentAccess.getInstance()
 			.bindSession(sessionKey, DefaultDisplayContext.getDisplayContext().asRequest().getSession());
 
-		// The plain secret is the action's result, so that the surrounding chain publishes it to a
-		// channel the dialog displays. This is the one and only time it is readable.
-		return secret;
+		// The plain secret travels on as the action's result, so that the surrounding chain opens the
+		// dialog displaying it. This is the one and only time it is readable.
+		TLObject issued = TransientObjectFactory.INSTANCE.createObject(AccessTokens.issuedType());
+		issued.tUpdate(AccessTokens.issuedType().getPart(AccessTokens.SECRET), secret);
+		return issued;
 	}
 
 }

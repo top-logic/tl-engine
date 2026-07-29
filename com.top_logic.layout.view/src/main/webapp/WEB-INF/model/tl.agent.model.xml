@@ -6,6 +6,8 @@
 			An access token lets an agent outside the browser drive the session its owner issued it
 			from. Only the hash of the secret is stored, so the token cannot be recovered from the
 			database; the plain secret is shown to the owner exactly once, when the token is issued.
+			Withdrawing a token deletes it: a token that no longer admits anyone has no further use,
+			and its secret cannot be recovered to revive it.
 		-->
 		<class name="AccessToken">
 			<generalizations>
@@ -32,16 +34,40 @@
 				/>
 				<property name="issued"
 					type="tl.core:DateTime"
-				/>
+				>
+					<annotations>
+						<format>
+							<date-time
+								date-style="SHORT"
+								time-style="SHORT"
+							/>
+						</format>
+					</annotations>
+				</property>
 				<property name="expires"
 					type="tl.core:DateTime"
-				/>
+				>
+					<annotations>
+						<format>
+							<date-time
+								date-style="SHORT"
+								time-style="SHORT"
+							/>
+						</format>
+					</annotations>
+				</property>
 				<property name="lastUsed"
 					type="tl.core:DateTime"
-				/>
-				<property name="revoked"
-					type="tl.core:Boolean"
-				/>
+				>
+					<annotations>
+						<format>
+							<date-time
+								date-style="SHORT"
+								time-style="SHORT"
+							/>
+						</format>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 
@@ -64,6 +90,21 @@
 				/>
 				<property name="mayAct"
 					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+		<!--
+			Transient-only type carrying an issued token from the issue action to the dialog that
+			displays it. Never persisted: the token itself is stored as a hash, and this instance
+			holds the plain secret only for as long as it is shown.
+		-->
+		<class name="IssuedAccessToken">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="secret"
+					type="tl.core:String"
 				/>
 			</attributes>
 		</class>

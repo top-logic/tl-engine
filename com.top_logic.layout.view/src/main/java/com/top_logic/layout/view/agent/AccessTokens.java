@@ -74,14 +74,17 @@ public class AccessTokens {
 	/** Name of the attribute holding the time the token was last presented. */
 	public static final String LAST_USED = "lastUsed";
 
-	/** Name of the attribute telling whether the token was revoked. */
-	public static final String REVOKED = "revoked";
-
 	/** Name of the attribute holding the token's public identifier. */
 	public static final String TOKEN_ID = "tokenId";
 
 	/** Qualified name of the transient type carrying the input of the issue form. */
 	public static final String REQUEST_TYPE = "tl.agent:NewAccessToken";
+
+	/** Qualified name of the transient type carrying an issued token to the dialog showing it. */
+	public static final String ISSUED_TYPE = "tl.agent:IssuedAccessToken";
+
+	/** Name of the attribute holding the plain secret, on the issued-token carrier. */
+	public static final String SECRET = "secret";
 
 	/** Name of the requested validity in hours, on the issue form input. */
 	public static final String VALID_HOURS = "validHours";
@@ -127,7 +130,6 @@ public class AccessTokens {
 		Date now = new Date();
 		token.tUpdate(part(ISSUED), now);
 		token.tUpdate(part(EXPIRES), new Date(now.getTime() + validHours * 3600_000L));
-		token.tUpdate(part(REVOKED), Boolean.FALSE);
 
 		return SECRET_PREFIX + tokenId + SECRET_SEPARATOR + secret;
 	}
@@ -169,12 +171,13 @@ public class AccessTokens {
 	}
 
 	/**
-	 * Whether the given token still admits an agent: not revoked and not expired.
+	 * Whether the given token still admits an agent, i.e. has not expired.
+	 *
+	 * <p>
+	 * A withdrawn token is not checked here: withdrawing {@link #withdraw(TLObject) deletes} it.
+	 * </p>
 	 */
 	public static boolean isValid(TLObject token) {
-		if (Boolean.TRUE.equals(token.tValue(part(REVOKED)))) {
-			return false;
-		}
 		Date expires = (Date) token.tValue(part(EXPIRES));
 		return expires == null || expires.after(new Date());
 	}
@@ -187,10 +190,16 @@ public class AccessTokens {
 	}
 
 	/**
-	 * Withdraws the given token: an agent presenting it is no longer admitted.
+	 * Withdraws the given token by deleting it: an agent presenting it is no longer admitted.
+	 *
+	 * <p>
+	 * The token is deleted rather than marked, because a withdrawn one can never admit anyone
+	 * again — its secret exists nowhere but in the agent that holds it — so a kept row would only
+	 * grow the owner's list.
+	 * </p>
 	 */
-	public static void revoke(TLObject token) {
-		token.tUpdate(part(REVOKED), Boolean.TRUE);
+	public static void withdraw(TLObject token) {
+		token.tDelete();
 	}
 
 	/**
@@ -198,6 +207,13 @@ public class AccessTokens {
 	 */
 	public static TLClass type() {
 		return (TLClass) TLModelUtil.findType(ModelService.getApplicationModel(), TYPE);
+	}
+
+	/**
+	 * The transient type carrying an issued token to the dialog showing it.
+	 */
+	public static TLClass issuedType() {
+		return (TLClass) TLModelUtil.findType(ModelService.getApplicationModel(), ISSUED_TYPE);
 	}
 
 	/**

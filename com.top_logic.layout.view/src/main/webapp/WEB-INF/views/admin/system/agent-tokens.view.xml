@@ -44,9 +44,8 @@
 				<column attribute="issued"/>
 				<column attribute="expires"/>
 				<column attribute="lastUsed"/>
-				<column attribute="revoked"/>
 			</columns>
-			<rows>all(`tl.agent:AccessToken`)</rows>
+			<rows>all(`tl.agent:AccessToken`).sort(comparator(t -&gt; $t.get(`tl.agent:AccessToken#issued`)).desc())</rows>
 		</table>
 	</panel>
 </view>

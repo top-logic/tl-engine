@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!--
+	The account's own access tokens: issue one for an agent that should drive this session, and
+	withdraw the ones no longer needed. Withdrawing deletes the token, so the list stays the list of
+	tokens that are actually out there. The secret is readable exactly once, in the dialog that
+	appears when the token is issued.
+-->
 <view>
 	<channels>
 		<!-- The token selected in the list, input of the withdraw command. -->
@@ -11,12 +17,6 @@
 			<de>Agentenzugriff</de>
 		</title>
 		<panel>
-			<text>
-				<label>
-					<en>An access token lets an agent outside the browser drive this session with your permissions. The token is shown once, when it is issued; withdraw it when the agent no longer needs it.</en>
-					<de>Ein Zugriffstoken erlaubt einem Agenten außerhalb des Browsers, diese Sitzung mit Ihren Berechtigungen zu bedienen. Das Token wird einmalig bei der Ausstellung angezeigt; ziehen Sie es zurück, sobald der Agent es nicht mehr benötigt.</de>
-				</label>
-			</text>
 			<commands>
 				<generic-command
 					image="css:bi bi-plus-lg"
@@ -48,21 +48,28 @@
 					<write-channel name="selectedToken"/>
 				</generic-command>
 			</commands>
-			<table
-				observed-types="tl.agent:AccessToken"
-				selection="selectedToken"
-				types="tl.agent:AccessToken"
-			>
-				<columns>
-					<column attribute="label"/>
-					<column attribute="mayAct"/>
-					<column attribute="issued"/>
-					<column attribute="expires"/>
-					<column attribute="lastUsed"/>
-					<column attribute="revoked"/>
-				</columns>
-				<rows>all(`tl.agent:AccessToken`).filter(t -&gt; $t.get(`tl.agent:AccessToken#owner`) == currentUser())</rows>
-			</table>
+			<inset>
+				<text>
+					<label>
+						<en>An access token lets an agent outside the browser drive this session with your permissions. The token is shown once, when it is issued; withdraw it when the agent no longer needs it.</en>
+						<de>Ein Zugriffstoken erlaubt einem Agenten außerhalb des Browsers, diese Sitzung mit Ihren Berechtigungen zu bedienen. Das Token wird einmalig bei der Ausstellung angezeigt; ziehen Sie es zurück, sobald der Agent es nicht mehr benötigt.</de>
+					</label>
+				</text>
+				<table
+					observed-types="tl.agent:AccessToken"
+					selection="selectedToken"
+					types="tl.agent:AccessToken"
+				>
+					<columns>
+						<column attribute="label"/>
+						<column attribute="mayAct"/>
+						<column attribute="issued"/>
+						<column attribute="expires"/>
+						<column attribute="lastUsed"/>
+					</columns>
+					<rows>all(`tl.agent:AccessToken`).filter(t -&gt; $t.get(`tl.agent:AccessToken#owner`) == currentUser()).sort(comparator(t -&gt; $t.get(`tl.agent:AccessToken#issued`)).desc())</rows>
+				</table>
+			</inset>
 		</panel>
 		<actions>
 			<button>

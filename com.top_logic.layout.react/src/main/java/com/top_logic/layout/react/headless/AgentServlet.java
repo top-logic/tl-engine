@@ -18,6 +18,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.exception.I18NRuntimeException;
@@ -134,10 +136,51 @@ public class AgentServlet extends TopLogicServlet {
 
 	private static final String FIELD_DESCRIPTION = "description";
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * An agent has no session cookie; it presents a credential naming the session it was admitted
+	 * to. That session is the one the request runs in, so that the agent acts in the very session
+	 * the user issued the credential from.
+	 * </p>
+	 */
+	@Override
+	protected TLSessionContext getSession(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		HttpSession credentialSession = credentialSession(request);
+		if (credentialSession != null) {
+			return SessionService.getInstance().getSession(credentialSession);
+		}
+		return super.getSession(request, response);
+	}
+
+	/**
+	 * The session this request acts in: the browser's own session, or the session an agent's
+	 * credential admits it to.
+	 */
+	private HttpSession effectiveSession(HttpServletRequest request) {
+		HttpSession cookieSession = request.getSession(false);
+		return cookieSession != null ? cookieSession : credentialSession(request);
+	}
+
+	/**
+	 * The session an agent's credential admits this request to, or <code>null</code> if the request
+	 * presents no credential, an unrecognized one, or one whose session has ended.
+	 */
+	private HttpSession credentialSession(HttpServletRequest request) {
+		AgentCredential credential = credential(request);
+		return credential == null ? null : AgentAccess.getInstance().session(credential.sessionKey());
+	}
+
+	private static AgentCredential credential(HttpServletRequest request) {
+		return AgentAccess.Module.INSTANCE.isActive() ? AgentAccess.getInstance().authenticate(request) : null;
+	}
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		HttpSession session = request.getSession(false);
+		HttpSession session = effectiveSession(request);
 		if (session == null) {
 			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No session.");
 			return;
@@ -167,9 +210,15 @@ public class AgentServlet extends TopLogicServlet {
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		HttpSession session = request.getSession(false);
+		HttpSession session = effectiveSession(request);
 		if (session == null) {
 			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			return;
+		}
+		AgentCredential credential = credential(request);
+		if (credential != null && !credential.mayAct()) {
+			// An observing agent reads the application; changing it is a permission of its own.
+			sendError(response, HttpServletResponse.SC_FORBIDDEN, "Credential may observe only.");
 			return;
 		}
 		response.setContentType("application/json");

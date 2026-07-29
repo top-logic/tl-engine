@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<!-- The token selected in the list, input of the withdraw command. -->
+		<channel name="selectedToken"/>
+	</channels>
+	<window
+		height="520px"
+		width="720px"
+	>
+		<title>
+			<en>Agent access</en>
+			<de>Agentenzugriff</de>
+		</title>
+		<panel>
+			<text>
+				<label>
+					<en>An access token lets an agent outside the browser drive this session with your permissions. The token is shown once, when it is issued; withdraw it when the agent no longer needs it.</en>
+					<de>Ein Zugriffstoken erlaubt einem Agenten außerhalb des Browsers, diese Sitzung mit Ihren Berechtigungen zu bedienen. Das Token wird einmalig bei der Ausstellung angezeigt; ziehen Sie es zurück, sobald der Agent es nicht mehr benötigt.</de>
+				</label>
+			</text>
+			<commands>
+				<generic-command
+					image="css:bi bi-plus-lg"
+					placement="TOOLBAR"
+				>
+					<label>
+						<en>New token</en>
+						<de>Neues Token</de>
+					</label>
+					<execute-script function="x -> new(`tl.agent:NewAccessToken`, transient: true)..set(`tl.agent:NewAccessToken#validHours`, 8)..set(`tl.agent:NewAccessToken#mayAct`, true)"/>
+					<open-dialog
+						bind-input-to="model"
+						dialog-view="agent-access-create.view.xml"
+					/>
+				</generic-command>
+				<generic-command
+					image="css:bi bi-slash-circle"
+					input="selectedToken"
+					placement="TOOLBAR"
+				>
+					<label>
+						<en>Withdraw</en>
+						<de>Zurückziehen</de>
+					</label>
+					<executability>
+						<null-input-disabled/>
+					</executability>
+					<revoke-access-token/>
+					<write-channel name="selectedToken"/>
+				</generic-command>
+			</commands>
+			<table
+				observed-types="tl.agent:AccessToken"
+				selection="selectedToken"
+				types="tl.agent:AccessToken"
+			>
+				<columns>
+					<column attribute="label"/>
+					<column attribute="mayAct"/>
+					<column attribute="created"/>
+					<column attribute="expires"/>
+					<column attribute="lastUsed"/>
+					<column attribute="revoked"/>
+				</columns>
+				<rows>x -&gt; all(`tl.agent:AccessToken`).filter(t -&gt; $t.get(`tl.agent:AccessToken#owner`) == currentUser())</rows>
+			</table>
+		</panel>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Administration of the access tokens through which agents outside the browser reach a session:
+	every account's tokens, with the account that issued each one, and the same withdraw command the
+	owner has. The secret itself is not shown here — it is stored as a hash and readable nowhere,
+	including by an administrator; a token that is lost is withdrawn and re-issued.
+-->
+<view>
+	<channels>
+		<channel name="selectedToken"/>
+	</channels>
+	<panel fill="true">
+		<title>
+			<en>Agent access tokens</en>
+			<de>Agenten-Zugriffstokens</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-slash-circle"
+				input="selectedToken"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Withdraw</en>
+					<de>Zurückziehen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<revoke-access-token/>
+				<write-channel name="selectedToken"/>
+			</generic-command>
+		</commands>
+		<table
+			observed-types="tl.agent:AccessToken"
+			selection="selectedToken"
+			types="tl.agent:AccessToken"
+		>
+			<columns>
+				<column attribute="owner"/>
+				<column attribute="label"/>
+				<column attribute="mayAct"/>
+				<column attribute="created"/>
+				<column attribute="expires"/>
+				<column attribute="lastUsed"/>
+				<column attribute="revoked"/>
+			</columns>
+			<rows>all(`tl.agent:AccessToken`)</rows>
+		</table>
+	</panel>
+</view>

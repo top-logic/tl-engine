@@ -129,6 +129,13 @@
 							</label>
 							<view-ref view="admin/system/locks.view.xml"/>
 						</tab>
+						<tab id="agent-tokens">
+							<label>
+								<en>Agent access</en>
+								<de>Agentenzugriff</de>
+							</label>
+							<view-ref view="admin/system/agent-tokens.view.xml"/>
+						</tab>
 						<tab id="maintenance">
 							<label>
 								<en>Maintenance mode</en>

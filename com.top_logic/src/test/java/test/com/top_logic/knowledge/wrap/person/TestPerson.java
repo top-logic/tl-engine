@@ -83,6 +83,87 @@ public class TestPerson extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * {@link Person#normalizeName(String)} strips surrounding whitespace, preserves case, and passes
+	 * {@code null} through.
+	 */
+	public void testNormalizeName() {
+		assertEquals("Admin", Person.normalizeName("  Admin  "));
+		assertEquals("Admin", Person.normalizeName("Admin"));
+		assertNull(Person.normalizeName(null));
+		assertEquals("", Person.normalizeName("   "));
+	}
+
+	/**
+	 * A lookup with surrounding whitespace resolves the account: the name is trimmed before the
+	 * (case-insensitive) lookup.
+	 */
+	public void testByNameTrimsWhitespace() {
+		Person person = createPerson("trimUser");
+		try {
+			assertNotNull("Lookup must trim surrounding whitespace.", Person.byName("  trimUser  "));
+			assertNotNull("Lookup is also case-insensitive.", Person.byName("  TRIMUSER  "));
+		} finally {
+			deletePersonAndUser(person);
+		}
+	}
+
+	/**
+	 * Creating an account with surrounding whitespace stores the trimmed name.
+	 */
+	public void testCreateTrimsWhitespace() {
+		Person person = createPerson("  spacey  ");
+		try {
+			assertEquals("Stored name must be trimmed.", "spacey", person.getName());
+			assertNotNull(Person.byName("spacey"));
+		} finally {
+			deletePersonAndUser(person);
+		}
+	}
+
+	/**
+	 * Creating an account with a disallowed character (an internal space) is rejected.
+	 */
+	public void testCreateRejectsInvalidName() {
+		try {
+			createPerson("bad name");
+			fail("Expected rejection of an invalid account name.");
+		} catch (TopLogicException expected) {
+			// Expected.
+		}
+	}
+
+	/**
+	 * An e-mail address is a valid account name under the e-mail-friendly default pattern.
+	 */
+	public void testCreateAcceptsEmailName() {
+		Person person = createPerson("jane.doe@example.com");
+		try {
+			assertEquals("jane.doe@example.com", person.getName());
+		} finally {
+			deletePersonAndUser(person);
+		}
+	}
+
+	/**
+	 * Two self-provisioning attempts from e-mail addresses that differ only in case resolve to the
+	 * same account: the first creates it, the second is rejected as a case-insensitive duplicate.
+	 */
+	public void testCaseOnlyDifferentEmailIsDuplicate() {
+		Person person = createPerson("user@example.com");
+		try {
+			try {
+				createPerson("User@Example.com");
+				fail("Expected a case-insensitive duplicate rejection.");
+			} catch (TopLogicException expected) {
+				// Expected.
+			}
+			assertNotNull(Person.byName("USER@EXAMPLE.COM"));
+		} finally {
+			deletePersonAndUser(person);
+		}
+	}
+
 	public void testSetLocaleWithoutCountry() throws Throwable {
 		Person person = createPerson("person");
 		try {

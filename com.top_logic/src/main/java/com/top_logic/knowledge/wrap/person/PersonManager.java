@@ -59,9 +59,11 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 		String XML_KEY_PATTERN = "person-name-pattern";
 
 		/**
-		 * Default value for {@link #getUserNamePattern()}.
+		 * Default value for {@link #getUserNamePattern()}: letters, digits and {@code _}, plus
+		 * {@code . @ + ~ -}; no whitespace or control characters; non-empty. Admits e-mail addresses
+		 * as account names and the bootstrap names {@code root} / {@code anonymous} (Ticket #29423).
 		 */
-		String DEFAULT_PATTERN = "[a-zA-Z]\\w*";
+		String DEFAULT_PATTERN = "[\\w.@+~-]+";
 
 		/**
 		 * Configuration name for {@link #getPersonNameMaxLength()}.

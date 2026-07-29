@@ -75,7 +75,8 @@ public class FormCommandModel implements CommandModel {
 	 * Creates the "Edit" command model.
 	 *
 	 * <p>
-	 * Executable when a current object exists and the form is not in edit mode.
+	 * Executable when a current object exists, the form is not in edit mode, and the form's
+	 * {@link FormControl#editPermission() edit permission} grants editing it.
 	 * </p>
 	 *
 	 * @param form
@@ -86,8 +87,8 @@ public class FormCommandModel implements CommandModel {
 		return new FormCommandModel("formEdit", I18NConstants.FORM_EDIT, Icons.FORM_EDIT,
 			CommandPlacement.TOOLBAR, form,
 			ctx -> form.enterEditMode(),
-			f -> f.getCurrentObject() != null && !f.isEditMode(),
-			f -> f.getCurrentObject() != null && !f.isEditMode());
+			f -> f.getCurrentObject() != null && !f.isEditMode() && f.editPermission().isExecutable(),
+			f -> f.getCurrentObject() != null && !f.isEditMode() && f.editPermission().isVisible());
 	}
 
 	/**
@@ -245,9 +246,19 @@ public class FormCommandModel implements CommandModel {
 		return _placement;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The condition is re-evaluated here rather than read from the state last published to the
+	 * client: a guarding rule can turn against the command without a form state change to observe
+	 * (a security scope that resolves through a channel, say), and the client's button state may
+	 * lag behind it.
+	 * </p>
+	 */
 	@Override
 	public HandlerResult executeCommand(ReactContext context) {
-		if (!_executable) {
+		if (!_executableWhen.test(_form)) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 		_action.accept(context);

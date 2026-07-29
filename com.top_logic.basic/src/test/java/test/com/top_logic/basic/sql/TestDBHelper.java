@@ -49,7 +49,6 @@ import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.MSSQLHelper;
 import com.top_logic.basic.sql.MySQL55Helper;
 import com.top_logic.basic.sql.PooledConnection;
-import com.top_logic.basic.sql.SQLH;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ComputationEx2;
 
@@ -587,7 +586,7 @@ public class TestDBHelper extends AbstractConnectionTest {
     	}
 		getConnection().commit();
 
-		String insert = SQLH.createInsert(sqlDialect, tableName, 1);
+		String insert = TestDBHelper.createInsert(sqlDialect, tableName, 1);
 		PreparedStatement pstm = getConnection().prepareStatement(insert);
 		for (int n = 0; n < 100; n++) {
 			pstm.setInt(1, n);
@@ -790,7 +789,7 @@ public class TestDBHelper extends AbstractConnectionTest {
         DBHelper dbh = getSQLDialect();
         
         Connection        con    = getConnection();
-		String insert = SQLH.createInsert(dbh, TABLE_NAME, 13);
+		String insert = TestDBHelper.createInsert(dbh, TABLE_NAME, 13);
 		try (PreparedStatement pstm = con.prepareStatement(insert)) {
 			java.util.Date now = MON_MAR_20_14_05_40_CET_2006;
 			dbh.setFromJava(pstm, Integer.valueOf(22), 1, DBType.INT);
@@ -817,7 +816,7 @@ public class TestDBHelper extends AbstractConnectionTest {
         DBHelper dbh = getSQLDialect();
         
         Connection         con    = getConnection();
-		String insert = SQLH.createInsert(dbh, TABLE_NAME, 13);
+		String insert = TestDBHelper.createInsert(dbh, TABLE_NAME, 13);
 		try (PreparedStatement pstm = con.prepareStatement(insert)) {
 			java.sql.Date now1 = new java.sql.Date(MON_MAR_20_14_05_40_CET_2006.getTime());
 			java.sql.Time now2 = new java.sql.Time(MON_MAR_20_14_05_40_CET_2006.getTime());
@@ -848,7 +847,7 @@ public class TestDBHelper extends AbstractConnectionTest {
         DBHelper dbh = getSQLDialect();
         
         Connection         con    = getConnection();
-		String insert = SQLH.createInsert(dbh, TABLE_NAME, 13);
+		String insert = TestDBHelper.createInsert(dbh, TABLE_NAME, 13);
 		try (PreparedStatement pstm = con.prepareStatement(insert)) {
 			java.util.Date now = new java.util.Date();
 			Long now1 = now.getTime();
@@ -1392,7 +1391,24 @@ public class TestDBHelper extends AbstractConnectionTest {
     // public void testGetBLOBOutputStream() {}
     // public void testSupportNullInSetObject() {}
 
-    /** 
+    /** Create INSERT INTO &lt;name&gt; VALUES (?,...,?)
+	 *
+	 * @param count must be &gt; 0 othwise an invalid
+	 *              statement will be generated.
+	 */
+	public static String createInsert(com.top_logic.basic.sql.DBHelper sqlDialect, String tableName, int count) {
+	    StringBuilder buf = new StringBuilder(
+	        32 + tableName.length() + count << 1);
+	    buf.append("INSERT INTO ");
+		buf.append(sqlDialect.tableRef(tableName));
+	    buf.append(" VALUES (?");
+	    for (int i=1;i<count;i++)
+	        buf.append(",?");
+	    buf.append(')');
+	    return buf.toString();
+	}
+
+	/** 
      * Return the suite of tests to execute.
      */
 	@SuppressWarnings("unused")

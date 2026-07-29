@@ -30,7 +30,7 @@
 				<property name="sessionKey"
 					type="tl.core:String"
 				/>
-				<property name="created"
+				<property name="issued"
 					type="tl.core:DateTime"
 				/>
 				<property name="expires"
@@ -48,8 +48,8 @@
 		<!--
 			Transient-only type holding the input of the "new access token" form. Instances are
 			created with new(`tl.agent:NewAccessToken`, transient: true) and never persisted; the
-			issue action creates the token and writes the plain secret back into the instance, which
-			is where the owner reads it the one time it is shown.
+			issue action creates the token from these values and returns the plain secret, which the
+			dialog displays the one time it is readable.
 		-->
 		<class name="NewAccessToken">
 			<generalizations>
@@ -64,9 +64,6 @@
 				/>
 				<property name="mayAct"
 					type="tl.core:Boolean"
-				/>
-				<property name="secret"
-					type="tl.core:String"
 				/>
 			</attributes>
 		</class>

@@ -192,6 +192,28 @@
 						</executability>
 					</open-window>
 
+					<!--
+						Opens the agent access administration: issue an access token that lets an
+						agent outside the browser drive this session, and withdraw issued ones.
+					-->
+					<generic-command
+						image="css:bi bi-robot"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Agent access</en>
+							<de>Agentenzugriff</de>
+						</label>
+						<tooltip>
+							<en>Issue and withdraw the access tokens through which an agent drives this session.</en>
+							<de>Stellt Zugriffstokens aus, mit denen ein Agent diese Sitzung bedient, und zieht sie zurück.</de>
+						</tooltip>
+						<executability>
+							<authenticated-only/>
+						</executability>
+						<open-dialog dialog-view="agent-access.view.xml"/>
+					</generic-command>
+
 					<!-- Login: shown only for the anonymous user; opens the login dialog. -->
 					<generic-command
 						image="css:bi bi-box-arrow-in-right"

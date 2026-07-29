@@ -38,6 +38,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_ACCESS_TOKEN_NO_TOKEN;
 
+
 	static {
 		initConstants(I18NConstants.class);
 	}

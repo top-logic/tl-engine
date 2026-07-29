@@ -29,9 +29,10 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * The input is a {@code tl.agent:NewAccessToken} carrying the token's label, its validity in hours
- * and whether the agent may act. The action writes the plain secret back into that same object, so
- * the form displays it — the one and only time it is readable. The token admits the agent to the
- * session it is issued from, which is registered with {@link AgentAccess} here.
+ * and whether the agent may act. The action returns the plain secret, which the surrounding action
+ * chain writes to the channel the dialog displays it from — the one and only time it is readable.
+ * The token admits the agent to the session it is issued from, which is registered with
+ * {@link AgentAccess} here.
  * </p>
  */
 public class IssueAccessTokenAction implements ViewAction {
@@ -84,8 +85,9 @@ public class IssueAccessTokenAction implements ViewAction {
 		AgentAccess.getInstance()
 			.bindSession(sessionKey, DefaultDisplayContext.getDisplayContext().asRequest().getSession());
 
-		request.tUpdate(request.tType().getPart(AccessTokens.SECRET), secret);
-		return input;
+		// The plain secret is the action's result, so that the surrounding chain publishes it to a
+		// channel the dialog displays. This is the one and only time it is readable.
+		return secret;
 	}
 
 }

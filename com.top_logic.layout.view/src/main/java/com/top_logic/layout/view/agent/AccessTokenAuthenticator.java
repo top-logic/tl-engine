@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.agent;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -60,6 +61,10 @@ public class AccessTokenAuthenticator implements AgentAuthenticator {
 			try (Transaction tx = token.tKnowledgeBase().beginTransaction()) {
 				AccessTokens.markUsed(token);
 				tx.commit();
+			} catch (RuntimeException ex) {
+				// Recording the use is bookkeeping for the owner; a token that is valid stays valid
+				// even when the note cannot be written.
+				Logger.warn("Cannot record the use of an access token.", ex, AccessTokenAuthenticator.class);
 			}
 
 			boolean mayAct = Boolean.TRUE.equals(token.tValue(AccessTokens.part(AccessTokens.MAY_ACT)));

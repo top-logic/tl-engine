@@ -136,6 +136,12 @@ public class AgentServlet extends TopLogicServlet {
 
 	private static final String FIELD_DESCRIPTION = "description";
 
+	/** Request attribute remembering the resolved credential, see {@link #credential}. */
+	private static final String CREDENTIAL_ATTRIBUTE = AgentServlet.class.getName() + ".credential";
+
+	/** Marker remembering that the request presents no admitted credential. */
+	private static final Object NO_CREDENTIAL = new Object();
+
 	/**
 	 * {@inheritDoc}
 	 *
@@ -173,8 +179,25 @@ public class AgentServlet extends TopLogicServlet {
 		return credential == null ? null : AgentAccess.getInstance().session(credential.sessionKey());
 	}
 
+	/**
+	 * The caller admitted by the credential this request presents, resolved once.
+	 *
+	 * <p>
+	 * A request asks for its credential more than once — the session it runs in is resolved before
+	 * the interaction is entered, the permissions it carries while handling the request. Resolving
+	 * it means reading and stamping the credential in the persistency layer, which is neither free
+	 * nor possible in every phase of the request, so the outcome is remembered on the request.
+	 * </p>
+	 */
 	private static AgentCredential credential(HttpServletRequest request) {
-		return AgentAccess.Module.INSTANCE.isActive() ? AgentAccess.getInstance().authenticate(request) : null;
+		Object cached = request.getAttribute(CREDENTIAL_ATTRIBUTE);
+		if (cached != null) {
+			return cached == NO_CREDENTIAL ? null : (AgentCredential) cached;
+		}
+		AgentCredential result =
+			AgentAccess.Module.INSTANCE.isActive() ? AgentAccess.getInstance().authenticate(request) : null;
+		request.setAttribute(CREDENTIAL_ATTRIBUTE, result == null ? NO_CREDENTIAL : result);
+		return result;
 	}
 
 	@Override

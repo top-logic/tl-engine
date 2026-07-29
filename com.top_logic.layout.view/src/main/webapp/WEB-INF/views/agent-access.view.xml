@@ -5,10 +5,7 @@
 		<!-- The token selected in the list, input of the withdraw command. -->
 		<channel name="selectedToken"/>
 	</channels>
-	<window
-		height="520px"
-		width="720px"
-	>
+	<window width="720px">
 		<title>
 			<en>Agent access</en>
 			<de>Agentenzugriff</de>
@@ -59,12 +56,12 @@
 				<columns>
 					<column attribute="label"/>
 					<column attribute="mayAct"/>
-					<column attribute="created"/>
+					<column attribute="issued"/>
 					<column attribute="expires"/>
 					<column attribute="lastUsed"/>
 					<column attribute="revoked"/>
 				</columns>
-				<rows>x -&gt; all(`tl.agent:AccessToken`).filter(t -&gt; $t.get(`tl.agent:AccessToken#owner`) == currentUser())</rows>
+				<rows>all(`tl.agent:AccessToken`).filter(t -&gt; $t.get(`tl.agent:AccessToken#owner`) == currentUser())</rows>
 			</table>
 		</panel>
 		<actions>

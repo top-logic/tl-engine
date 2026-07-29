@@ -58,8 +58,15 @@ public class AccessTokens {
 	/** Name of the attribute holding the key of the session the token admits an agent to. */
 	public static final String SESSION_KEY = "sessionKey";
 
-	/** Name of the token's creation time attribute. */
-	public static final String CREATED = "created";
+	/**
+	 * Name of the token's issue time attribute.
+	 *
+	 * <p>
+	 * Not named {@code created}: that is a reserved system attribute of every persistent item,
+	 * holding the technical creation timestamp in another representation.
+	 * </p>
+	 */
+	public static final String ISSUED = "issued";
 
 	/** Name of the token's expiry time attribute. */
 	public static final String EXPIRES = "expires";
@@ -79,8 +86,6 @@ public class AccessTokens {
 	/** Name of the requested validity in hours, on the issue form input. */
 	public static final String VALID_HOURS = "validHours";
 
-	/** Name of the attribute the issued plain secret is written to, on the issue form input. */
-	public static final String SECRET = "secret";
 
 	/** Prefix identifying a plain secret as an access token of this application. */
 	private static final String SECRET_PREFIX = "tlagt_";
@@ -120,7 +125,7 @@ public class AccessTokens {
 		token.tUpdate(part(MAY_ACT), Boolean.valueOf(mayAct));
 		token.tUpdate(part(SESSION_KEY), sessionKey);
 		Date now = new Date();
-		token.tUpdate(part(CREATED), now);
+		token.tUpdate(part(ISSUED), now);
 		token.tUpdate(part(EXPIRES), new Date(now.getTime() + validHours * 3600_000L));
 		token.tUpdate(part(REVOKED), Boolean.FALSE);
 

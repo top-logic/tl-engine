@@ -37,7 +37,6 @@ import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
-import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.callback.ClickHandler;
 import com.top_logic.graphic.flow.callback.DiagramContextMenuProvider;
 import com.top_logic.graphic.flow.data.Align;

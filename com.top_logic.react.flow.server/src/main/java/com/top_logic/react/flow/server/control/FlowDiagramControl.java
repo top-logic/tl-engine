@@ -7,7 +7,6 @@ package com.top_logic.react.flow.server.control;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

@@ -7,9 +7,11 @@ package com.top_logic.layout.view.designer;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -226,25 +228,41 @@ public class DesignerTreeElement implements UIElement {
 		// The position of the last opened menu, reused for the element-type menu.
 		int[] menuPosition = new int[2];
 
-		Runnable rebuild = () -> {
+		// Rebuilds the tree after a structural edit and selects the given node, keeping the parts of
+		// the tree the user had opened expanded.
+		Consumer<DesignTreeNode> rebuild = toSelect -> {
+			Set<DesignTreeNode> expanded = collectExpanded(currentModel[0].getRoot());
+
 			DesignTreeNode root = (DesignTreeNode) inputChannel.get();
 			DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, root);
 			newTreeModel.setRootVisible(true);
 			treeControl.setTreeModel(newTreeModel);
 			currentModel[0] = newTreeModel;
+			restoreExpansion(newTreeModel.getRoot(), expanded);
+
+			DefaultTreeUINode uiNode = toSelect == null ? null : findUINode(newTreeModel.getRoot(), toSelect);
+			if (uiNode != null) {
+				revealNode(uiNode);
+				selectionModel.setSelected(uiNode, true);
+			} else {
+				selectionModel.clear();
+				if (selectionChannel != null) {
+					selectionChannel.set(null);
+				}
+			}
+			treeControl.updateVisibleState();
 		};
 
 		List<CommandModel> commands = List.of(
 			SimpleCommandModel.create("designerAddChild", Resources.getInstance().getString(
 				I18NConstants.DESIGNER_ADD_CHILD),
-				ctx -> addChild(target[0], opener, menuPosition, selectionModel, selectionChannel,
-					currentModel, rebuild))
+				ctx -> addChild(target[0], opener, menuPosition, rebuild))
 				.setClique(CLIQUE_ADD)
 				.setExecutable(() -> AddChildCommand.canExecute(target[0])),
 
 			SimpleCommandModel.create("designerRemove", Resources.getInstance().getString(
 				I18NConstants.DESIGNER_REMOVE),
-				ctx -> remove(target[0], selectionModel, selectionChannel, rebuild))
+				ctx -> remove(target[0], rebuild))
 				.setClique(CLIQUE_ORDER)
 				.setExecutable(() -> RemoveElementCommand.canExecute(target[0])),
 
@@ -288,12 +306,11 @@ public class DesignerTreeElement implements UIElement {
 	 * accepts more than one.
 	 */
 	private HandlerResult addChild(DesignTreeNode parent, ContextMenuOpener opener, int[] menuPosition,
-			DefaultSingleSelectionModel<Object> selectionModel, ViewChannel selectionChannel,
-			DefaultTreeUINodeModel[] currentModel, Runnable rebuild) {
+			Consumer<DesignTreeNode> rebuild) {
 
 		ConfigTypeChoice types = ConfigTypeChoice.of(parent.getChildContainer());
 		if (types.isUnique()) {
-			return createChild(parent, types.single(), selectionModel, selectionChannel, currentModel, rebuild);
+			return createChild(parent, types.single(), rebuild);
 		}
 
 		// Offer the element types as a second menu at the position of the first one.
@@ -301,8 +318,7 @@ public class DesignerTreeElement implements UIElement {
 		List<CommandModel> typeCommands = new ArrayList<>(choices.size());
 		for (ConfigTypeChoice.Choice choice : choices) {
 			typeCommands.add(SimpleCommandModel.create(null, choice.label(),
-				ctx -> createChild(parent, choice.option(), selectionModel, selectionChannel, currentModel,
-					rebuild)));
+				ctx -> createChild(parent, choice.option(), rebuild)));
 		}
 		opener.open(menuPosition[0], menuPosition[1],
 			List.of(new Targeted(new ContextMenuContribution(value -> {
@@ -312,44 +328,71 @@ public class DesignerTreeElement implements UIElement {
 	}
 
 	private HandlerResult createChild(DesignTreeNode parent, Object typeOption,
-			DefaultSingleSelectionModel<Object> selectionModel, ViewChannel selectionChannel,
-			DefaultTreeUINodeModel[] currentModel, Runnable rebuild) {
+			Consumer<DesignTreeNode> rebuild) {
 
 		DesignTreeNode child = AddChildCommand.execute(parent, typeOption);
 		if (child == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
-		rebuild.run();
-
 		// Select the new element, so its properties are ready to be edited.
-		DefaultTreeUINode uiNode = findUINode(currentModel[0].getRoot(), child);
-		if (uiNode != null) {
-			revealNode(uiNode);
-			selectionModel.setSelected(uiNode, true);
-		} else if (selectionChannel != null) {
-			selectionChannel.set(child);
-		}
+		rebuild.accept(child);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private HandlerResult remove(DesignTreeNode node, DefaultSingleSelectionModel<Object> selectionModel,
-			ViewChannel selectionChannel, Runnable rebuild) {
+	private HandlerResult remove(DesignTreeNode node, Consumer<DesignTreeNode> rebuild) {
+		// The removed node is gone, so its parent takes the selection: it is the element the removal
+		// was performed on, and keeping it selected leaves the tree where the user was working.
+		DesignTreeNode parent = node.getParent();
 		if (RemoveElementCommand.execute(node)) {
-			// Clear selection since the removed node is no longer valid.
-			selectionModel.clear();
-			if (selectionChannel != null) {
-				selectionChannel.set(null);
-			}
-			rebuild.run();
+			rebuild.accept(parent);
 		}
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private HandlerResult move(DesignTreeNode node, MoveElementCommand.Direction direction, Runnable rebuild) {
+	private HandlerResult move(DesignTreeNode node, MoveElementCommand.Direction direction,
+			Consumer<DesignTreeNode> rebuild) {
 		if (MoveElementCommand.execute(node, direction)) {
-			rebuild.run();
+			rebuild.accept(node);
 		}
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The design nodes whose subtree is currently open, so that a rebuilt tree can be opened the same
+	 * way.
+	 */
+	private static Set<DesignTreeNode> collectExpanded(DefaultTreeUINode node) {
+		Set<DesignTreeNode> expanded = new HashSet<>();
+		collectExpanded(node, expanded);
+		return expanded;
+	}
+
+	private static void collectExpanded(DefaultTreeUINode node, Set<DesignTreeNode> expanded) {
+		if (!node.isExpanded()) {
+			return;
+		}
+		if (node.getBusinessObject() instanceof DesignTreeNode designNode) {
+			expanded.add(designNode);
+		}
+		// Only an expanded node has its children created, so the recursion stops where the tree was
+		// closed anyway.
+		for (DefaultTreeUINode child : node.getChildren()) {
+			collectExpanded(child, expanded);
+		}
+	}
+
+	/**
+	 * Re-opens the subtrees that were open before the tree was rebuilt.
+	 */
+	private static void restoreExpansion(DefaultTreeUINode node, Set<DesignTreeNode> expanded) {
+		if (!(node.getBusinessObject() instanceof DesignTreeNode designNode) || !expanded.contains(designNode)) {
+			return;
+		}
+		node.setExpanded(true);
+		// Expanding creates the children, so they can be visited afterwards.
+		for (DefaultTreeUINode child : node.getChildren()) {
+			restoreExpansion(child, expanded);
+		}
 	}
 
 	/**

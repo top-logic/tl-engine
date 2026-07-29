@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.locking.handler.DefaultLockHandler;
 import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.base.locking.handler.NoTokenHandling;
@@ -63,6 +64,7 @@ import com.top_logic.util.Resources;
  * via the {@link ViewContext}.
  * </p>
  */
+@InApp
 public class FormElement extends ContainerElement {
 
 	/**
@@ -207,6 +209,7 @@ public class FormElement extends ContainerElement {
 		 */
 		@Name(COMMANDS)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 
 		/**
@@ -222,7 +225,8 @@ public class FormElement extends ContainerElement {
 		 */
 		@Name(SAVE_ACTIONS)
 		@TreeProperty
-		List<PolymorphicConfiguration<ViewAction>> getSaveActions();
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends ViewAction>> getSaveActions();
 
 		/**
 		 * Optional action chain to execute on cancel instead of the default behavior.
@@ -236,7 +240,8 @@ public class FormElement extends ContainerElement {
 		 */
 		@Name(CANCEL_ACTIONS)
 		@TreeProperty
-		List<PolymorphicConfiguration<ViewAction>> getCancelActions();
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends ViewAction>> getCancelActions();
 	}
 
 	private final Config _config;
@@ -277,9 +282,9 @@ public class FormElement extends ContainerElement {
 	}
 
 	private List<ViewAction> instantiateActions(InstantiationContext context,
-			List<PolymorphicConfiguration<ViewAction>> configs) {
+			List<PolymorphicConfiguration<? extends ViewAction>> configs) {
 		List<ViewAction> result = new ArrayList<>();
-		for (PolymorphicConfiguration<ViewAction> actionConfig : configs) {
+		for (PolymorphicConfiguration<? extends ViewAction> actionConfig : configs) {
 			ViewAction action = context.getInstance(actionConfig);
 			if (action != null) {
 				result.add(action);

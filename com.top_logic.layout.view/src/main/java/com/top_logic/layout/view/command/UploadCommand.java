@@ -8,6 +8,9 @@ package com.top_logic.layout.view.command;
 import java.util.List;
 import java.util.Objects;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -40,6 +43,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * @implNote {@link #execute(ReactContext, Object)} is a no-op, since the click does not dispatch a
  *           server command.
  */
+@InApp
 public class UploadCommand implements ViewCommand {
 
 	/**
@@ -56,7 +60,8 @@ public class UploadCommand implements ViewCommand {
 		 * The chain of actions to execute once per uploaded file (the file is the chain input).
 		 */
 		@DefaultContainer
-		List<PolymorphicConfiguration<ViewAction>> getActions();
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends ViewAction>> getActions();
 
 		/**
 		 * The {@code accept} filter for the native file input (e.g. {@code "image/*,.pdf"}).
@@ -89,7 +94,7 @@ public class UploadCommand implements ViewCommand {
 	@CalledByReflection
 	public UploadCommand(InstantiationContext context, Config config) {
 		_actions = config.getActions().stream()
-			.map(context::getInstance)
+			.<ViewAction> map(context::getInstance)
 			.filter(Objects::nonNull)
 			.toList();
 		_accept = config.getAccept();

@@ -7,6 +7,9 @@ package com.top_logic.layout.view.command;
 
 import java.util.List;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -44,6 +47,7 @@ import com.top_logic.util.error.TopLogicException;
  * &lt;/with-transaction&gt;
  * </pre>
  */
+@InApp
 public class WithTransactionAction implements ViewAction {
 
 	/**
@@ -60,7 +64,8 @@ public class WithTransactionAction implements ViewAction {
 		 * Inner actions to execute within the transaction.
 		 */
 		@DefaultContainer
-		List<PolymorphicConfiguration<ViewAction>> getActions();
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends ViewAction>> getActions();
 	}
 
 	private final List<ViewAction> _actions;
@@ -71,7 +76,7 @@ public class WithTransactionAction implements ViewAction {
 	@CalledByReflection
 	public WithTransactionAction(InstantiationContext context, Config config) {
 		_actions = config.getActions().stream()
-			.map(c -> context.getInstance(c))
+			.<ViewAction> map(c -> context.getInstance(c))
 			.toList();
 	}
 

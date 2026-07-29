@@ -82,6 +82,21 @@ public class DefaultViewChannel implements ViewChannel {
 	}
 
 	@Override
+	public List<StateHandler> dirtyHandlers() {
+		if (_vetoListeners.isEmpty()) {
+			return List.of();
+		}
+		List<StateHandler> dirtyHandlers = new ArrayList<>();
+		for (VetoListener vl : _vetoListeners) {
+			StateHandler handler = vl.checkDirty(this);
+			if (handler != null) {
+				dirtyHandlers.add(handler);
+			}
+		}
+		return dirtyHandlers;
+	}
+
+	@Override
 	public void addVetoListener(VetoListener listener) {
 		_vetoListeners.add(listener);
 	}

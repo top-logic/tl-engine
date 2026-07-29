@@ -46,7 +46,7 @@ public class DirtyConfirmDialogControl {
 	 *        rollback), or {@code null}.
 	 */
 	public static void openDialog(ReactContext context, DialogManager dialogManager,
-			List<StateHandler> dirtyHandlers, Runnable continuation, Runnable rollback) {
+			List<? extends StateHandler> dirtyHandlers, Runnable continuation, Runnable rollback) {
 		Resources resources = Resources.getInstance();
 
 		String title = resources.getString(I18NConstants.DIRTY_CONFIRM_TITLE);

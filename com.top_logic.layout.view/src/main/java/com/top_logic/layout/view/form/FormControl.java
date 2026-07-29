@@ -437,7 +437,19 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		updateEditModeChannel();
 
 		if (_inputChannel != null && _inputVeto == null) {
-			_inputVeto = (sender, oldVal, newVal) -> isDirty() ? this : null;
+			// The form blocks any object switch while it holds unsaved changes, independent of
+			// which object would come next.
+			_inputVeto = new VetoListener() {
+				@Override
+				public StateHandler checkVeto(ViewChannel sender, Object oldValue, Object newValue) {
+					return checkDirty(sender);
+				}
+
+				@Override
+				public StateHandler checkDirty(ViewChannel sender) {
+					return isDirty() ? FormControl.this : null;
+				}
+			};
 			_inputChannel.addVetoListener(_inputVeto);
 		}
 

@@ -2,7 +2,7 @@
 
 **Ticket:** #29429
 **Date:** 2026-07-29
-**Status:** Design (pending review)
+**Status:** Implemented (browser verification outstanding)
 **Related:** `2026-03-27-view-designer-design.md`, `2026-07-15-view-designer-select-view-design.md`
 
 ## Problem
@@ -29,6 +29,25 @@ Two further gaps:
   move-down against the config list inline (its own `addElement`, `removeElement`, `moveUp`,
   `moveDown`). The designer needs the same operations. Writing them a second time in the
   designer would be two implementations of one thing.
+
+## Two further blockers found while implementing
+
+The context menu did not merely act on the wrong model — it never appeared:
+
+- **Nothing renders the tree's menu.** `ReactTreeControl.openContextMenu(...)` pushed the items,
+  position and open flag as control state, but `TLTreeView` reads only `nodes`, `selectionMode`,
+  `dragEnabled`, `dropEnabled` and the drop indicators. The state was write-only.
+  The framework already has the right mechanism: `ReactMenuControl` / `TLMenu`, which positions
+  itself at viewport coordinates, plus `ContextMenuOpener` / `ContextMenuContribution` which compose
+  a menu from `CommandModel`s and honour visibility, executability and cliques. So the fix is to
+  *use* it and delete the dead tree-local machinery, not to teach `TLTreeView` to render menus.
+- **A view without an app shell has no menu overlay.** Only `AppShellElement` creates a
+  `ReactMenuControl` and publishes a `ContextMenuOpener` (via `ViewContext.withContextMenuOpener`).
+  `designer.view.xml` is rooted in a `<panel>`, so `getContextMenuOpener()` was `null` there and no
+  overlay existed to render into. `ViewServlet` already solves the same problem for notifications
+  with a *window-level* snackbar, for "windows whose view does not embed an app shell". A menu
+  overlay gets the same treatment: one per browser window, since `TLMenu` positions itself
+  viewport-fixed anyway.
 
 ## Root cause
 
@@ -99,11 +118,25 @@ operations that would silently do nothing.
 option list and `OptionMapping` the form's type selector already uses. No separate registry of
 element types, and `@Options`-annotated properties keep working.
 
-- Context menu: a submenu of the allowed types, replacing today's single "Add Child" entry.
-  With exactly one allowed type, the submenu collapses to a direct entry.
-- On a node that is itself an element (not a container), *Add* targets the node's own child
-  container when it has one; otherwise the entry is not offered.
-- The form's *Add* button uses the same choice instead of `options().get(0)`.
+A container property of UI elements accepts on the order of 59 element types (the configuration
+interfaces derived from `UIElement.Config`), so the types cannot be listed as sibling entries of the
+context menu — the original plan of "one *Add ‹type›* entry per type" would produce an unusable
+menu. Instead:
+
+- `ConfigTypeChoice.of(children)` yields the choices in label order, and reports
+  `isUnique()` when there is nothing to ask about (the common case for a property whose element type
+  has no subtypes, e.g. `SidebarElement.getItems()`).
+- Context menu: a single *Add element…* entry. When the target property accepts one type, it adds
+  directly; otherwise it opens a second menu of the types at the same position.
+- The form's *Add* button uses the same `ConfigTypeChoice` and opens a `ReactMenuControl` anchored to
+  the button, instead of taking `options().get(0)`.
+
+A filterable dialog would serve a long type list better than a menu. Both call sites go through
+`ConfigTypeChoice`, so that can replace the menu later without touching them.
+
+Resolving a property's options loads every candidate implementation class, so `ConfigChildren`
+resolves `allowedTypes()` lazily: building the design tree binds a container per node and must not
+pay for options that only the *Add* command needs.
 
 After a successful add the new node is selected, so the config editor immediately shows the
 new element's properties.

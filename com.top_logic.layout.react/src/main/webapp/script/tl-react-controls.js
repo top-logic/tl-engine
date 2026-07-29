@@ -1540,7 +1540,8 @@ const Be = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(we, { encoded: l
     `tlStack--gap-${r}`,
     `tlStack--align-${c}`,
     s ? "tlStack--wrap" : "",
-    i ? "tlStack--grow-first" : ""
+    i ? "tlStack--grow-first" : "",
+    t.cssClass ?? ""
   ].filter(Boolean).join(" ");
   return /* @__PURE__ */ e.createElement("div", { id: l, className: a }, u.map((o, m) => /* @__PURE__ */ e.createElement(K, { key: m, control: o })));
 }, il = ({ controlId: l }) => {

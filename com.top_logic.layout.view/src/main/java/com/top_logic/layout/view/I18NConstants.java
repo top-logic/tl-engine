@@ -72,6 +72,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_SAVE_VIEW_NOT_LOADABLE__PATH_DETAILS;
 
 	/**
+	 * @en This view could not be loaded.
+	 */
+	public static ResKey ERROR_VIEW_NOT_LOADED;
+
+	/**
 	 * @en Add element...
 	 */
 	public static ResKey DESIGNER_ADD_CHILD;

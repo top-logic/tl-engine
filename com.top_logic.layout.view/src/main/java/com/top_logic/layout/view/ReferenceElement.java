@@ -8,6 +8,7 @@ package com.top_logic.layout.view;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -106,7 +107,12 @@ public class ReferenceElement implements UIElement {
 		try {
 			referencedView = ViewLoader.getOrLoadView(fullPath);
 		} catch (ConfigurationException ex) {
-			throw new RuntimeException("Failed to load referenced view: " + fullPath, ex);
+			// A defective view replaces only itself: the enclosing application keeps rendering, so its
+			// navigation and app bar stay usable and the View Designer can still be opened to repair
+			// the view.
+			Logger.error("Rendering a placeholder for the view that could not be loaded: " + fullPath, ex,
+				ReferenceElement.class);
+			return ViewLoadError.createControl(parentContext, fullPath, ex);
 		}
 
 		// Isolated child context: a fresh channel namespace, all ambient scopes inherited. The

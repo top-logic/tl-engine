@@ -31,6 +31,9 @@ public class ReactStackControl extends ReactControl {
 
 	private static final String CHILDREN = "children";
 
+	/** @see #setCssClass(String) */
+	private static final String CSS_CLASS = "cssClass";
+
 	/**
 	 * Flex direction.
 	 */
@@ -144,6 +147,24 @@ public class ReactStackControl extends ReactControl {
 		putState(ALIGN, align.getExternalName());
 		putState(WRAP, Boolean.valueOf(wrap));
 		putState(CHILDREN, _children);
+	}
+
+	/**
+	 * Sets an additional CSS class, appended to the layout classes of the stack.
+	 *
+	 * @param cssClass
+	 *        The CSS class, or {@code null} for none.
+	 */
+	public void setCssClass(String cssClass) {
+		putState(CSS_CLASS, cssClass != null ? cssClass : "");
+	}
+
+	/**
+	 * Rendering-only state keys, omitted from the headless agent projection.
+	 */
+	@Override
+	protected java.util.Set<String> agentPresentationKeys() {
+		return java.util.Set.of(CSS_CLASS);
 	}
 
 	/**

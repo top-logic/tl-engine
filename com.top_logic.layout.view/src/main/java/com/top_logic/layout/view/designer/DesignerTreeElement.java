@@ -225,6 +225,7 @@ public class DesignerTreeElement implements UIElement {
 		Runnable rebuild = () -> {
 			DesignTreeNode root = (DesignTreeNode) inputChannel.get();
 			DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, root);
+			newTreeModel.setRootVisible(true);
 			treeControl.setTreeModel(newTreeModel);
 			currentModel[0] = newTreeModel;
 		};

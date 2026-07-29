@@ -165,12 +165,17 @@ public class ContextMenuOpener {
 		int commandIdx = Integer.parseInt(itemId.substring(colon + 1));
 		List<CommandModel> commands = _activeCommands.get(contributionIdx);
 		CommandModel cmd = commandIdx < commands.size() ? commands.get(commandIdx) : null;
-		if (cmd != null && cmd.isExecutable()) {
-			cmd.executeCommand(currentReactContext());
-		}
+
+		// Closing the menu is part of dispatching the selection, so it happens before the command
+		// runs. Otherwise a command that itself opens a menu (e.g. to choose among element types)
+		// would have that menu closed again right after opening it.
 		_renderer.hide();
 		_active = List.of();
 		_activeCommands = List.of();
+
+		if (cmd != null && cmd.isExecutable()) {
+			cmd.executeCommand(currentReactContext());
+		}
 	}
 
 	private void handleClose() {

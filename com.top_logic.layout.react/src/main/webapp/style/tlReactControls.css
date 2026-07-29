@@ -2387,6 +2387,10 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlMenu {
 	z-index: 10000;
 	min-width: 10rem;
+	/* A menu offering many entries (e.g. the element types of a container) stays within the
+	   viewport and scrolls instead of being cut off. */
+	max-height: 70vh;
+	overflow-y: auto;
 	background: var(--layer-01, #fff);
 	border: 1px solid var(--border-subtle);
 	border-radius: var(--border-radius-02, 4px);

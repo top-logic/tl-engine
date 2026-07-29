@@ -289,13 +289,76 @@ public class ReactFormFieldControl extends ReactControl {
 	 *
 	 * <p>
 	 * The value is typed as {@link String} here, which fits text-like fields. A field whose value is
-	 * a different JSON type (e.g. a checkbox's {@code boolean}) overrides this with its own typed
-	 * arguments, since the field value is polymorphic and cannot be one shared type.
+	 * a different JSON type (e.g. a checkbox's {@code boolean}) declares its own handler with its
+	 * own typed arguments — the field value is polymorphic and cannot be one shared type — and
+	 * passes the raw value to {@link #clientValueChanged(Object)}.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_VALUE_CHANGED)
-	void handleValueChanged(FieldValueArguments args) {
-		applyClientValue(parseClientValue(args.getValue()));
+	final void handleValueChanged(FieldValueArguments args) {
+		clientValueChanged(args.getValue());
+	}
+
+	/**
+	 * Handles the commit the client sends when an edited field loses focus.
+	 *
+	 * @see #onCommit()
+	 */
+	@ReactCommandHandler(COMMIT_COMMAND)
+	final void handleCommit() {
+		if (!acceptsClientValue()) {
+			return;
+		}
+		onCommit();
+	}
+
+	/**
+	 * The single entry for a value arriving from a client, applying it only if the field
+	 * {@link #acceptsClientValue() accepts client values}.
+	 *
+	 * <p>
+	 * A field whose value type needs its own command arguments funnels them through here rather
+	 * than writing the model itself, so that the acceptance check cannot be forgotten by a new
+	 * field variant. What happens with an accepted value is {@link #applyRawClientValue(Object)}.
+	 * </p>
+	 *
+	 * @param rawValue
+	 *        The unparsed value as sent by the client.
+	 */
+	protected final void clientValueChanged(Object rawValue) {
+		if (!acceptsClientValue()) {
+			return;
+		}
+		applyRawClientValue(rawValue);
+	}
+
+	/**
+	 * Applies a value the field {@link #acceptsClientValue() accepts}, parsing it through
+	 * {@link #parseClientValue(Object)}.
+	 *
+	 * <p>
+	 * The hook for a field that does more than parse and set — reporting a parse error on the
+	 * model, say. It runs below the acceptance check, so an override cannot write the model of a
+	 * field that takes no client input.
+	 * </p>
+	 *
+	 * @param rawValue
+	 *        The unparsed value as sent by the client.
+	 */
+	protected void applyRawClientValue(Object rawValue) {
+		applyClientValue(parseClientValue(rawValue));
+	}
+
+	/**
+	 * Reacts to the client committing the edited value, once per edit rather than per keystroke.
+	 *
+	 * <p>
+	 * Runs below the acceptance check, like {@link #applyRawClientValue(Object)}. Does nothing
+	 * unless a field overrides it.
+	 * </p>
+	 */
+	protected void onCommit() {
+		// Nothing to commit for a plain field.
 	}
 
 	/**
@@ -311,11 +374,10 @@ public class ReactFormFieldControl extends ReactControl {
 	 * </p>
 	 *
 	 * <p>
-	 * A control that writes the field model from a command handler without going through
-	 * {@link #applyClientValue(Object)} checks this first.
+	 * A field that edits a model of its own beyond {@link #getFieldModel()} narrows this.
 	 * </p>
 	 */
-	protected final boolean acceptsClientValue() {
+	protected boolean acceptsClientValue() {
 		return _fieldModel.isEditable();
 	}
 

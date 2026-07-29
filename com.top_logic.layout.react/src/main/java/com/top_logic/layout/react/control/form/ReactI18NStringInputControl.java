@@ -13,7 +13,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
@@ -58,7 +57,7 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 		super(context, model, "TLTextInput");
 		refresh();
 		if (TranslationService.isActive()) {
-			// Defer auto-translation to field commit (blur); see #handleCommit.
+			// Defer auto-translation to field commit (blur); see #onCommit.
 			putState(COMMIT_ON_BLUR, Boolean.TRUE);
 		}
 	}
@@ -121,7 +120,7 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	protected Object parseClientValue(Object rawValue) {
 		// Fold the typed current-locale text into the ResKey, preserving the other locales. This runs
 		// on every keystroke and must stay cheap; translation into the other locales is deferred to
-		// the field commit (see #handleCommit), since it is a blocking remote call.
+		// the field commit (see #onCommit), since it is a blocking remote call.
 		String text = rawValue == null ? null : rawValue.toString();
 		Locale userLocale = TLContext.getLocale();
 		ResKey current = asResKey(getFieldModel().getValue());
@@ -149,11 +148,8 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	 * after an actual edit, so merely focusing and leaving the field translates nothing.
 	 * </p>
 	 */
-	@ReactCommandHandler(COMMIT_COMMAND)
-	void handleCommit() {
-		if (!acceptsClientValue()) {
-			return;
-		}
+	@Override
+	protected void onCommit() {
 		if (!TranslationService.isActive()) {
 			return;
 		}

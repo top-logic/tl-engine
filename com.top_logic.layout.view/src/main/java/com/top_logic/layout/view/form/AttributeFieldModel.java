@@ -73,6 +73,7 @@ public class AttributeFieldModel extends AbstractFieldModel {
 	 */
 	public void setObject(TLObject newObject) {
 		Object oldValue = getCachedValue();
+		boolean hadInputError = getInputError() != null;
 		_object = newObject;
 		_part = resolvePart(newObject);
 		setMandatory(_part.isMandatory());
@@ -80,12 +81,16 @@ public class AttributeFieldModel extends AbstractFieldModel {
 		setDefaultValue(newValue);
 		setValueInternal(newValue);
 
-		// Reset validation state from previous object.
+		// Reset validation state from previous object. This includes an input error: the raw text
+		// it rejected belongs to an edit that is over (saved, cancelled, or on another object).
 		setRevealed(false);
+		setError(null);
 		setModelValidationError(null);
 		setModelValidationWarnings(java.util.Collections.emptyList());
 
-		if (!Objects.equals(oldValue, newValue)) {
+		// A rejected raw input left the value unchanged, so only the input control still shows it.
+		// Push the value even though it did not change, to replace that text.
+		if (hadInputError || !Objects.equals(oldValue, newValue)) {
 			fireValueChanged(oldValue, newValue);
 		}
 	}

@@ -80,7 +80,7 @@ public class TestConfigFieldDispatch extends TestCase {
 		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.TEXT);
 		ConfigFieldModel model = new ConfigFieldModel(config, property);
 
-		ReactControl control = ConfigFieldDispatch.createPlainControl(createTestContext(), model);
+		ReactControl control = ConfigFieldDispatch.createPlainControl(createTestContext(), model, "");
 		assertTrue("String property should create ReactTextInputControl",
 			control instanceof ReactTextInputControl);
 	}
@@ -93,7 +93,7 @@ public class TestConfigFieldDispatch extends TestCase {
 		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.FLAG);
 		ConfigFieldModel model = new ConfigFieldModel(config, property);
 
-		ReactControl control = ConfigFieldDispatch.createPlainControl(createTestContext(), model);
+		ReactControl control = ConfigFieldDispatch.createPlainControl(createTestContext(), model, "");
 		assertTrue("boolean property should create ReactCheckboxControl",
 			control instanceof ReactCheckboxControl);
 	}
@@ -106,7 +106,7 @@ public class TestConfigFieldDispatch extends TestCase {
 		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.COUNT);
 		ConfigFieldModel model = new ConfigFieldModel(config, property);
 
-		ReactControl control = ConfigFieldDispatch.createPlainControl(createTestContext(), model);
+		ReactControl control = ConfigFieldDispatch.createPlainControl(createTestContext(), model, "");
 		assertTrue("int property should create ReactNumberInputControl",
 			control instanceof ReactNumberInputControl);
 	}
@@ -119,7 +119,7 @@ public class TestConfigFieldDispatch extends TestCase {
 		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.RATIO);
 		ConfigFieldModel model = new ConfigFieldModel(config, property);
 
-		ReactControl control = ConfigFieldDispatch.createPlainControl(createTestContext(), model);
+		ReactControl control = ConfigFieldDispatch.createPlainControl(createTestContext(), model, "");
 		assertTrue("double property should create ReactNumberInputControl",
 			control instanceof ReactNumberInputControl);
 	}

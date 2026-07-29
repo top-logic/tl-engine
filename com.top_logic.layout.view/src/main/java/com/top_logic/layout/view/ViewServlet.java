@@ -41,6 +41,7 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
+import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
@@ -130,12 +131,13 @@ public class ViewServlet extends TopLogicServlet {
 				wireRouteManager(baseContext, sseQueue, routePath);
 				ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 				ReactMenuControl menu = createWindowMenu(baseContext);
+				ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
 				ReactContext displayContext = withWindowContextMenu(
 					withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
 				ReactControl content = controlProvider.createControl(
 					displayContext, windowEntry.getModel());
 				ReactControl rootControl =
-					new ReactStackControl(displayContext, List.of(content, snackbar, menu));
+					new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 				windowEntry.setRootControl(rootControl);
 				sseQueue.setRootControl(rootControl);
 				renderPage(request, response, rootControl, displayContext);
@@ -160,6 +162,7 @@ public class ViewServlet extends TopLogicServlet {
 		wireRouteManager(baseContext, sseQueue, routePath);
 		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 		ReactMenuControl menu = createWindowMenu(baseContext);
+		ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
 		ReactContext displayContext = withWindowContextMenu(
 			withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
 		ViewContext viewContext = new DefaultViewContext(displayContext);
@@ -167,7 +170,8 @@ public class ViewServlet extends TopLogicServlet {
 		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
 			(ReactControl) view.createControl(viewContext));
 		content.setViewSource(viewPath);
-		ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar, menu));
+		ReactControl rootControl =
+			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);
 
 		renderPage(request, response, rootControl, displayContext);

@@ -25,6 +25,7 @@ import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.layout.react.field.FieldControlRegistry;
 
 /**
  * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, and LIST properties of a
@@ -35,7 +36,8 @@ import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
  * indicator, and help text. ITEM properties are rendered as collapsible
  * {@link ReactFormGroupControl} sections containing a nested {@link ConfigEditorControl}. LIST
  * properties are rendered as collapsible sections containing nested editors for each list element.
- * MAP, ARRAY, DERIVED, and COMPLEX properties are skipped.
+ * A DERIVED property is displayed read-only, because its value is computed. MAP and ARRAY
+ * properties are skipped, as are properties whose values are only representable as nested XML.
  * </p>
  */
 public class ConfigEditorControl extends ReactFormLayoutControl {
@@ -90,7 +92,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			if (hiddenProperties.contains(property)) {
 				continue;
 			}
-			if (!isSupportedKind(property.kind())) {
+			if (!isEditable(property)) {
 				continue;
 			}
 			if (isHidden(property)) {
@@ -136,10 +138,15 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			ConfigFieldModel model = new ConfigFieldModel(config, property);
 			addCleanupAction(model::detach);
 
-			ReactControl input = ConfigFieldDispatch.createPlainControl(context, model);
+			// A computed value is displayed, but cannot be changed.
+			if (property.kind() == PropertyKind.DERIVED) {
+				model.setEditable(false);
+			}
 
 			String label = resolveLabel(property);
 			String tooltip = resolveTooltip(property);
+
+			ReactControl input = ConfigFieldDispatch.createPlainControl(context, model, label);
 			LabelPosition labelPosition = (property.getType() == boolean.class || property.getType() == Boolean.class)
 				? LabelPosition.AFTER : null;
 
@@ -228,9 +235,22 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor);
 	}
 
-	private static boolean isSupportedKind(PropertyKind kind) {
-		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
-			|| kind == PropertyKind.LIST;
+	/**
+	 * Whether the given property is displayed in the form.
+	 *
+	 * <p>
+	 * Besides the structural kinds the form renders itself, a property is displayed whenever a control
+	 * is registered for the type of its value - an internationalized text, for instance, is not
+	 * representable as a plain value but has an editor of its own.
+	 * </p>
+	 */
+	private static boolean isEditable(PropertyDescriptor property) {
+		PropertyKind kind = property.kind();
+		if (kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
+			|| kind == PropertyKind.LIST || kind == PropertyKind.DERIVED) {
+			return true;
+		}
+		return FieldControlRegistry.getInstance().lookup(property.getType()) != null;
 	}
 
 	private static boolean isHidden(PropertyDescriptor property) {

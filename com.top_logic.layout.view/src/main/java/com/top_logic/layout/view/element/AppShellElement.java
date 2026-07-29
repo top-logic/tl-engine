@@ -16,15 +16,12 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.react.ForwardingReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.nav.ReactAppShellControl;
-import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
-import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -118,44 +115,12 @@ public class AppShellElement implements UIElement {
 			sharedScope = new CommandScope(List.of());
 		}
 
-		// Build the shared menu overlay and its opener. The opener is published into the view
-		// context so that deeply nested ContextMenuElements can resolve it without attaching a
-		// per-frame menu control.
-		ReactMenuControl menuControl = new ReactMenuControl(context, null, List.of(),
-			itemId -> { /* wired per open() via setSelectHandler */ },
-			() -> { /* wired per open() via setCloseHandler */ });
-		ContextMenuOpener.MenuRenderer renderer = new ContextMenuOpener.MenuRenderer() {
-			@Override
-			public void show(int x, int y, List<ReactMenuControl.MenuEntry> items,
-					java.util.function.Consumer<String> selectHandler, Runnable closeHandler) {
-				menuControl.updateItems(items);
-				menuControl.setSelectHandler(selectHandler);
-				menuControl.setCloseHandler(closeHandler);
-				menuControl.open(x, y);
-			}
-
-			@Override
-			public void hide() {
-				menuControl.close();
-			}
-		};
-		ContextMenuOpener opener = new ContextMenuOpener(renderer);
-
-		// Derive context with error sink, shared command scope, and context-menu opener.
+		// Derive context with error sink and shared command scope. The context-menu overlay belongs
+		// to the browser window, so the opener is inherited from the enclosing context rather than
+		// established here.
 		ViewContext scopedContext = context
 			.withErrorSink(errorSink)
-			.withScope(CommandScope.class, sharedScope)
-			.withContextMenuOpener(opener);
-
-		// Expose the opener on the underlying ReactContext too (fallback for nested DefaultViewContext
-		// instances that are constructed without inheriting the opener).
-		ReactContext openerContext = new ForwardingReactContext(scopedContext) {
-			@Override
-			public ContextMenuOpener getContextMenuOpener() {
-				return opener;
-			}
-		};
-		opener.bindReactContext(() -> openerContext);
+			.withScope(CommandScope.class, sharedScope);
 
 		// Create slot controls. Each of the three structural slots (header, content, footer) gets
 		// its own slot-path segment so that <slot> placeholders and <slot-content> contributions
@@ -165,7 +130,7 @@ public class AppShellElement implements UIElement {
 		ReactControl footer = createSlotControl(scopedContext.withChildSlotPath("footer"), _footer);
 
 		ReactAppShellControl shellControl =
-			new ReactAppShellControl(context, header, content, footer, snackbar, errorSink, menuControl);
+			new ReactAppShellControl(context, header, content, footer, snackbar, errorSink);
 		shellControl.attach();
 		return shellControl;
 	}

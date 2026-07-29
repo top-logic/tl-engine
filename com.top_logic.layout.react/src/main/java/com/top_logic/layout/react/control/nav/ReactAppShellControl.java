@@ -10,8 +10,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
-import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
 import com.top_logic.layout.responsive.DisplayClass;
@@ -28,8 +26,9 @@ import com.top_logic.layout.responsive.DisplayClassModel;
  * </p>
  *
  * <p>
- * Dialogs, drawers, and menus are <b>not</b> part of the shell. They are managed by the content
- * components that need them and position themselves via CSS {@code position: fixed}.
+ * Dialogs, drawers, and menus are <b>not</b> part of the shell: they overlay the whole browser window
+ * and are therefore mounted by it, see {@code ViewServlet}. Any view reaches them through its
+ * context, whether or not it embeds a shell.
  * </p>
  *
  * <p>
@@ -55,9 +54,7 @@ public class ReactAppShellControl extends ReactControl {
 
 	private static final String SNACKBAR = "snackbar";
 
-	private static final String DIALOG_MANAGER = "dialogManager";
 
-	private static final String MENU_OVERLAY = "menuOverlay";
 
 	/** The {@link ReactCommandHandler} that records the client's responsive display class. */
 	public static final String REPORT_DISPLAY_CLASS_COMMAND = "reportDisplayClass";
@@ -69,10 +66,6 @@ public class ReactAppShellControl extends ReactControl {
 	private final ReactControl _footer;
 
 	private final ReactSnackbarControl _snackbar;
-
-	private final ReactDialogManagerControl _dialogManager;
-
-	private final ReactMenuControl _menuControl;
 
 	private final ErrorSink _errorSink;
 
@@ -91,19 +84,14 @@ public class ReactAppShellControl extends ReactControl {
 	 *        The snackbar control for notifications.
 	 * @param errorSink
 	 *        The error sink that routes messages to the snackbar.
-	 * @param menuControl
-	 *        The shared {@link ReactMenuControl} mounted as app-shell overlay, or {@code null} if no
-	 *        context-menu overlay is required.
 	 */
 	public ReactAppShellControl(ReactContext context, ReactControl header, ReactControl content, ReactControl footer,
-			ReactSnackbarControl snackbar, ErrorSink errorSink, ReactMenuControl menuControl) {
+			ReactSnackbarControl snackbar, ErrorSink errorSink) {
 		super(context, null, REACT_MODULE);
 		_header = header;
 		_content = content;
 		_footer = footer;
 		_snackbar = snackbar;
-		_dialogManager = new ReactDialogManagerControl(context);
-		_menuControl = menuControl;
 		_errorSink = errorSink;
 
 		if (header != null) {
@@ -114,10 +102,6 @@ public class ReactAppShellControl extends ReactControl {
 			putState(FOOTER, footer);
 		}
 		putState(SNACKBAR, _snackbar);
-		putState(DIALOG_MANAGER, _dialogManager);
-		if (_menuControl != null) {
-			putState(MENU_OVERLAY, _menuControl);
-		}
 	}
 
 	/**
@@ -186,7 +170,6 @@ public class ReactAppShellControl extends ReactControl {
 			_footer.attach();
 		}
 		_snackbar.attach();
-		_dialogManager.attach();
 	}
 
 	@Override
@@ -200,7 +183,6 @@ public class ReactAppShellControl extends ReactControl {
 			_footer.detach();
 		}
 		_snackbar.detach();
-		_dialogManager.detach();
 	}
 
 	@Override
@@ -213,10 +195,6 @@ public class ReactAppShellControl extends ReactControl {
 			_footer.cleanupTree();
 		}
 		_snackbar.cleanupTree();
-		_dialogManager.cleanupTree();
-		if (_menuControl != null) {
-			_menuControl.cleanupTree();
-		}
 	}
 
 }

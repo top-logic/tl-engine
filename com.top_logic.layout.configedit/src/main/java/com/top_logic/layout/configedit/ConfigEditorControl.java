@@ -16,6 +16,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.ReactContext;
@@ -138,8 +139,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			ConfigFieldModel model = new ConfigFieldModel(config, property);
 			addCleanupAction(model::detach);
 
-			// A computed value is displayed, but cannot be changed.
-			if (property.kind() == PropertyKind.DERIVED) {
+			// A computed or read-only value is displayed, but cannot be changed.
+			if (property.kind() == PropertyKind.DERIVED || isReadOnly(property)) {
 				model.setEditable(false);
 			}
 
@@ -254,8 +255,40 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	}
 
 	private static boolean isHidden(PropertyDescriptor property) {
-		Hidden annotation = property.getAnnotation(Hidden.class);
+		Hidden annotation = annotation(property, Hidden.class);
 		return annotation != null && annotation.value();
+	}
+
+	/**
+	 * Whether the given property's value cannot be changed.
+	 */
+	private static boolean isReadOnly(PropertyDescriptor property) {
+		return annotation(property, ReadOnly.class) != null;
+	}
+
+	/**
+	 * The given annotation of the property, or of the property it overrides.
+	 *
+	 * <p>
+	 * A configuration overriding a property of its base configuration - narrowing the implementation
+	 * class of a {@link com.top_logic.basic.config.PolymorphicConfiguration PolymorphicConfiguration},
+	 * for instance - repeats neither the documentation nor the annotations of the declaration it
+	 * overrides, so an annotation is looked up along that chain rather than on the override alone.
+	 * </p>
+	 */
+	private static <T extends java.lang.annotation.Annotation> T annotation(PropertyDescriptor property,
+			Class<T> annotationType) {
+		T found = property.getAnnotation(annotationType);
+		if (found != null) {
+			return found;
+		}
+		for (PropertyDescriptor superProperty : property.getSuperProperties()) {
+			T inherited = annotation(superProperty, annotationType);
+			if (inherited != null) {
+				return inherited;
+			}
+		}
+		return null;
 	}
 
 	private static boolean isTreeProperty(PropertyDescriptor property) {

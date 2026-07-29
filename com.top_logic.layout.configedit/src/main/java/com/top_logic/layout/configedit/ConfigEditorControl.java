@@ -35,8 +35,10 @@ import com.top_logic.layout.react.field.FieldControlRegistry;
  * <p>
  * Each PLAIN/REF property is wrapped in a {@link ReactFormFieldChromeControl} with label, mandatory
  * indicator, and help text. ITEM properties are rendered as collapsible
- * {@link ReactFormGroupControl} sections containing a nested {@link ConfigEditorControl}. LIST
- * properties are rendered as collapsible sections containing nested editors for each list element.
+ * {@link ReactFormGroupControl} sections containing a nested {@link ConfigEditorControl} — unless the
+ * configuration writes the item as text, in which case that text is edited as a field, see
+ * {@link ConfigTextFieldModel}. LIST properties are rendered as collapsible sections containing
+ * nested editors for each list element.
  * A DERIVED property is displayed read-only, because its value is computed. MAP and ARRAY
  * properties are skipped, as are properties whose values are only representable as nested XML.
  * </p>
@@ -103,7 +105,9 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				continue;
 			}
 
-			if (property.kind() == PropertyKind.ITEM) {
+			// An item the configuration writes as text - a TL-Script expression, for instance - is
+			// edited as that text below, instead of as a form over its syntax tree.
+			if (property.kind() == PropertyKind.ITEM && !ConfigTextFieldModel.isFormatted(property)) {
 				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
 					String label = resolveLabel(property);
 					PolymorphicItemControl polyGroup =

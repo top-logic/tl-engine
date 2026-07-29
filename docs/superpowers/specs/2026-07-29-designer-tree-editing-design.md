@@ -2,7 +2,7 @@
 
 **Ticket:** #29429
 **Date:** 2026-07-29
-**Status:** Implemented (browser verification outstanding)
+**Status:** Implemented and verified in `tl-demo-react`
 **Related:** `2026-03-27-view-designer-design.md`, `2026-07-15-view-designer-select-view-design.md`
 
 ## Problem
@@ -170,3 +170,22 @@ tree can edit it only moves the property out of the form and into a read-only tr
 - Manual (Playwright, `tl-demo-react`): add an element of a chosen type, remove one, reorder
   one, press *Apply*, and confirm the `.view.xml` on disk changed accordingly and the running
   app reflects it.
+
+### Result of the manual verification
+
+Right-clicking a design-tree node opens the menu with the expected entries enabled: on the
+`app-shell` node *Add element…* is disabled (it has three tree properties, so its group nodes are the
+containers) while *Remove* is enabled and both move entries are disabled (it is the element of the
+single-valued `content`); on a `[footer]` group node *Add element…* is enabled and *Remove* / move are
+disabled (a group is not itself an element). *Add element…* lists 63 element types in label order.
+Adding a `<text>` to `[footer]` selects the new node, shows its properties in the form, and *Apply*
+writes `<footer><text/></footer>`; removing it and applying again writes `<footer/>`.
+
+Two defects were found and fixed in the process: the type menu was closed immediately by
+`ContextMenuOpener` (which hid the menu *after* running the command), and the rebuilt tree model
+lost `setRootVisible(true)`, dropping the root node from the tree.
+
+**Observed, pre-existing:** *Apply* re-serializes the whole file, dropping XML comments and
+reformatting throughout (156 insertions / 178 deletions for a one-element change in
+`app.view.xml`). This is the known formatting issue listed as out of scope, but structural editing
+makes it far more likely to be hit, and losing comments is destructive rather than cosmetic.

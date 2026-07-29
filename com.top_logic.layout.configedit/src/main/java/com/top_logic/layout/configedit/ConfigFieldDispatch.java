@@ -48,7 +48,12 @@ public class ConfigFieldDispatch {
 		if (type.isEnum()) {
 			return createEnumControl(context, model, type);
 		}
-		// String and everything else: text input.
+		// String and everything else: text input. A property whose values are not strings but that
+		// declares a value format is edited as the specification the configuration file uses for it.
+		if (ConfigTextFieldModel.isFormatted(property)) {
+			return new ReactTextInputControl(context,
+				new ConfigTextFieldModel(model.getConfig(), property));
+		}
 		return new ReactTextInputControl(context, model);
 	}
 

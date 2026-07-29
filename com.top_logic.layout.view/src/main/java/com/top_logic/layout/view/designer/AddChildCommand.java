@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.designer;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.layout.configedit.ConfigChildren;
 
@@ -41,7 +43,17 @@ public class AddChildCommand {
 			return null;
 		}
 
-		DesignTreeNode child = new ConfigDesignTreeNode(childConfig, parent.getSourceFile());
+		// Build the node through the tree builder, so the new element is bound to its own container
+		// properties and can immediately receive children itself. Constructing the node directly
+		// would leave it unbound until the whole tree is rebuilt from disk.
+		DesignTreeNode child;
+		try {
+			child = new DesignTreeBuilder().build(childConfig, parent.getSourceFile());
+		} catch (ConfigurationException ex) {
+			Logger.warn("Adding an element whose own structure could not be built: " + childConfig, ex,
+				AddChildCommand.class);
+			child = new ConfigDesignTreeNode(childConfig, parent.getSourceFile());
+		}
 		child.setParent(parent);
 		parent.getChildren().add(child);
 		parent.markDirty();

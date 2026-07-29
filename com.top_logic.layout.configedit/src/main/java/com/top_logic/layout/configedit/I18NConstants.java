@@ -18,6 +18,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 LIST_ELEMENT_EMPTY_TITLE__TYPE;
 
+	/**
+	 * @en Not a valid value: {0}
+	 */
+	public static ResKey1 ERROR_INVALID_VALUE__DETAILS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

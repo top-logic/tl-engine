@@ -299,6 +299,27 @@ public class ReactFormFieldControl extends ReactControl {
 	}
 
 	/**
+	 * Whether a value arriving from a client may be written to the {@link #getFieldModel() field
+	 * model}.
+	 *
+	 * <p>
+	 * A non-{@link FieldModel#isEditable() editable} field is not written: the value either comes
+	 * from a client whose display lags behind the server (e.g. an editor flushing its content on
+	 * blur while the same interaction already left edit mode), or from a client that sends a value
+	 * the user interface does not offer at all. The model must not be modified outside an edit
+	 * session, so the value is dropped.
+	 * </p>
+	 *
+	 * <p>
+	 * A control that writes the field model from a command handler without going through
+	 * {@link #applyClientValue(Object)} checks this first.
+	 * </p>
+	 */
+	protected final boolean acceptsClientValue() {
+		return _fieldModel.isEditable();
+	}
+
+	/**
 	 * Applies a {@code valueChanged} value to the field model, suppressing the redundant echo of
 	 * exactly this value back to the client that already holds it (see the model listener in
 	 * {@link #registerModelListeners()}). Subclasses that handle {@code valueChanged} with their own
@@ -315,10 +336,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 *        The parsed value to set.
 	 */
 	protected void applyClientValue(Object value) {
-		if (!_fieldModel.isEditable()) {
-			// A trailing edit from a client whose display lags behind the server (e.g. an editor
-			// flushing its content on blur while the same interaction already left edit mode).
-			// The model must not be modified outside an edit session; drop the stale value.
+		if (!acceptsClientValue()) {
 			return;
 		}
 		_clientValue = value;

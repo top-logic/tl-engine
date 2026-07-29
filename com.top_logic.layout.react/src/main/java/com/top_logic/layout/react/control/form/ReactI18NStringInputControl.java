@@ -151,6 +151,9 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	 */
 	@ReactCommandHandler(COMMIT_COMMAND)
 	void handleCommit() {
+		if (!acceptsClientValue()) {
+			return;
+		}
 		if (!TranslationService.isActive()) {
 			return;
 		}

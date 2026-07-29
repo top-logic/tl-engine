@@ -65,6 +65,9 @@ public class I18NWysiwygControl extends ReactWysiwygControl {
 	 */
 	@ReactCommandHandler(COMMIT_COMMAND)
 	void handleCommit() {
+		if (!acceptsClientValue() || !_i18nModel.isEditable()) {
+			return;
+		}
 		if (!TranslationService.isActive()) {
 			return;
 		}

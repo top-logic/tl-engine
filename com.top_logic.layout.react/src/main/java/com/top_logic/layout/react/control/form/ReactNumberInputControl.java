@@ -47,6 +47,9 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	@Override
 	@ReactCommandHandler(CMD_VALUE_CHANGED)
 	void handleValueChanged(FieldValueArguments args) {
+		if (!acceptsClientValue()) {
+			return;
+		}
 		Object rawValue = args.getValue();
 		FieldModel model = getFieldModel();
 

@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.AgentControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -528,10 +529,21 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 
 	/**
 	 * Handles navigation item selection from the client.
+	 *
+	 * <p>
+	 * Only an item the sidebar actually offers can be navigated to: a {@link NavigationItem#isHidden()
+	 * hidden} item is not displayed, so selecting it is refused instead of switching to a view the
+	 * user interface does not present.
+	 * </p>
 	 */
 	@ReactCommandHandler(SELECT_ITEM_COMMAND)
-	void handleSelectItem(SelectItemArguments args) {
+	HandlerResult handleSelectItem(SelectItemArguments args) {
 		String itemId = args.getItemId();
+
+		NavigationItem targetItem = findNavItem(itemId, _items);
+		if (targetItem != null && targetItem.isHidden()) {
+			return HandlerResult.error(I18NConstants.ERROR_NAVIGATION_NOT_AVAILABLE);
+		}
 
 		// Check for dirty forms in the current sidebar item before switching.
 		NavigationItem currentItem = findNavItem(_activeItemId, _items);
@@ -543,6 +555,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		}
 
 		selectItem(itemId);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

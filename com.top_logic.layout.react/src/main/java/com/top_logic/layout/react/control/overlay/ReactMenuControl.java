@@ -11,9 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Popup menu triggered by an anchor element.
@@ -65,6 +67,8 @@ public class ReactMenuControl extends ReactControl {
 
 	private Runnable _closeHandler;
 
+	private List<MenuEntry> _entries = List.of();
+
 	/**
 	 * Creates a popup menu.
 	 *
@@ -91,6 +95,7 @@ public class ReactMenuControl extends ReactControl {
 	 * Updates the menu items.
 	 */
 	public void updateItems(List<MenuEntry> items) {
+		_entries = List.copyOf(items);
 		List<Map<String, Object>> itemList = new ArrayList<>();
 		for (MenuEntry entry : items) {
 			Map<String, Object> map = new HashMap<>();
@@ -208,9 +213,27 @@ public class ReactMenuControl extends ReactControl {
 	 * Handles the selectItem command sent when a menu item is selected.
 	 */
 	@ReactCommandHandler(SELECT_ITEM_COMMAND)
-	void handleSelectItem(MenuSelectItemArguments args) {
+	HandlerResult handleSelectItem(MenuSelectItemArguments args) {
+		String itemId = args.getItemId();
+		if (isDisabled(itemId)) {
+			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+		}
 		close();
-		_selectHandler.accept(args.getItemId());
+		_selectHandler.accept(itemId);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Whether the entry with the given id is displayed as disabled, so that selecting it is not
+	 * offered.
+	 */
+	private boolean isDisabled(String itemId) {
+		for (MenuEntry entry : _entries) {
+			if (entry.id() != null && entry.id().equals(itemId)) {
+				return entry.disabled();
+			}
+		}
+		return false;
 	}
 
 	/**

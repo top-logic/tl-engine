@@ -7,6 +7,7 @@ package com.top_logic.layout.view;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Consumer;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,6 +40,8 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
+import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.protocol.RouteChangeEvent;
@@ -126,10 +129,13 @@ public class ViewServlet extends TopLogicServlet {
 					request.getContextPath(), windowName, sseQueue, windowRegistry);
 				wireRouteManager(baseContext, sseQueue, routePath);
 				ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
-				ReactContext displayContext = withWindowErrorSink(baseContext, snackbar);
+				ReactMenuControl menu = createWindowMenu(baseContext);
+				ReactContext displayContext = withWindowContextMenu(
+					withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
 				ReactControl content = controlProvider.createControl(
 					displayContext, windowEntry.getModel());
-				ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar));
+				ReactControl rootControl =
+					new ReactStackControl(displayContext, List.of(content, snackbar, menu));
 				windowEntry.setRootControl(rootControl);
 				sseQueue.setRootControl(rootControl);
 				renderPage(request, response, rootControl, displayContext);
@@ -153,13 +159,15 @@ public class ViewServlet extends TopLogicServlet {
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
 		wireRouteManager(baseContext, sseQueue, routePath);
 		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
-		ReactContext displayContext = withWindowErrorSink(baseContext, snackbar);
+		ReactMenuControl menu = createWindowMenu(baseContext);
+		ReactContext displayContext = withWindowContextMenu(
+			withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
 		ViewContext viewContext = new DefaultViewContext(displayContext);
 
 		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
 			(ReactControl) view.createControl(viewContext));
 		content.setViewSource(viewPath);
-		ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar));
+		ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar, menu));
 		sseQueue.setRootControl(rootControl);
 
 		renderPage(request, response, rootControl, displayContext);
@@ -187,6 +195,63 @@ public class ViewServlet extends TopLogicServlet {
 				return errorSink;
 			}
 		};
+	}
+
+	/**
+	 * Creates the window-level context menu overlay that serves windows whose view does not embed an
+	 * app shell (which carries its own overlay), e.g. the View Designer window.
+	 *
+	 * <p>
+	 * A {@link ReactMenuControl} positions itself at viewport coordinates, so exactly one overlay per
+	 * browser window is required. The control must be part of the window's root control tree to be
+	 * rendered; see {@link #withWindowContextMenu(ReactContext, ContextMenuOpener)} for publishing the
+	 * matching {@link ContextMenuOpener} to the view.
+	 * </p>
+	 */
+	private static ReactMenuControl createWindowMenu(ReactContext context) {
+		return new ReactMenuControl(context, null, List.of(),
+			itemId -> {
+				// The select handler is installed per open() by the ContextMenuOpener.
+			},
+			() -> {
+				// The close handler is installed per open() by the ContextMenuOpener.
+			});
+	}
+
+	/**
+	 * Creates the {@link ContextMenuOpener} rendering into the given window menu overlay.
+	 */
+	private static ContextMenuOpener createWindowMenuOpener(ReactMenuControl menu) {
+		return new ContextMenuOpener(new ContextMenuOpener.MenuRenderer() {
+			@Override
+			public void show(int x, int y, List<ReactMenuControl.MenuEntry> items,
+					Consumer<String> selectHandler, Runnable closeHandler) {
+				menu.updateItems(items);
+				menu.setSelectHandler(selectHandler);
+				menu.setCloseHandler(closeHandler);
+				menu.open(x, y);
+			}
+
+			@Override
+			public void hide() {
+				menu.close();
+			}
+		});
+	}
+
+	/**
+	 * Derives a context whose {@link ReactContext#getContextMenuOpener()} is the window-level opener,
+	 * so a view that does not embed an app shell can still open context menus.
+	 */
+	private static ReactContext withWindowContextMenu(ReactContext context, ContextMenuOpener opener) {
+		ReactContext result = new ForwardingReactContext(context) {
+			@Override
+			public ContextMenuOpener getContextMenuOpener() {
+				return opener;
+			}
+		};
+		opener.bindReactContext(() -> result);
+		return result;
 	}
 
 	/**

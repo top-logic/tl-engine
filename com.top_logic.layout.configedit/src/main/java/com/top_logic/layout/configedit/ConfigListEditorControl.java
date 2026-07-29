@@ -13,7 +13,6 @@ import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
@@ -30,6 +29,7 @@ import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -62,9 +62,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 	private final PropertyDescriptor _property;
 
+	private final ConfigChildren _children;
+
 	private final PolymorphicOptions.Choices _choices;
 
 	private final List<ListenerRegistration> _listeners = new ArrayList<>();
+
+	/** Menu offering the element types, created on first use. */
+	private ReactMenuControl _typeMenu;
+
+	/** The anchor the {@link #_typeMenu} is positioned at. */
+	private String _addButtonId;
 
 	private record ListenerRegistration(ConfigurationItem item, PropertyDescriptor property,
 			ConfigurationListener listener) {
@@ -86,7 +94,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		_context = context;
 		_parentConfig = parentConfig;
 		_property = property;
-		_choices = PolymorphicOptions.compute(parentConfig, property);
+		_children = ConfigChildren.create(parentConfig, property);
+		_choices = _children.allowedTypes();
 
 		rebuild(null);
 	}
@@ -120,6 +129,9 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 		getChildren().clear();
 
+		// The type menu is one of the disposed children; a later choice creates a fresh one.
+		_typeMenu = null;
+
 		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
 		if (items != null) {
 			for (int i = 0; i < items.size(); i++) {
@@ -128,13 +140,20 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			}
 		}
 
-		// Add button at the bottom.
+		// Add button at the bottom. When the property accepts several element types, the button opens
+		// a menu to choose from instead of silently picking one.
 		ReactButtonControl addButton = new ReactButtonControl(_context, "+ " + Labels.propertyLabel(_property, false),
 			ctx -> {
-				addElement();
+				ConfigTypeChoice types = ConfigTypeChoice.of(_children);
+				if (types.isUnique()) {
+					addElement(types.single());
+				} else {
+					openTypeMenu(types);
+				}
 				return HandlerResult.DEFAULT_RESULT;
 			});
 		addChild(addButton);
+		_addButtonId = addButton.getID();
 
 		putState("children", getChildren());
 	}
@@ -144,24 +163,21 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		// Action buttons: Move Up, Move Down, Remove.
 		ReactButtonControl moveUpButton = new ReactButtonControl(_context, "\u25B2", ctx -> {
-			moveUp(indexOf(item));
+			move(item, -1);
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		moveUpButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		moveUpButton.setDisabled(index == 0);
 
 		ReactButtonControl moveDownButton = new ReactButtonControl(_context, "\u25BC", ctx -> {
-			moveDown(indexOf(item));
+			move(item, 1);
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		moveDownButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		moveDownButton.setDisabled(index == listSize - 1);
 
 		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
-			int currentIndex = indexOf(item);
-			if (currentIndex >= 0) {
-				removeElement(currentIndex);
-			}
+			removeElement(item);
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
@@ -233,21 +249,16 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		return new ReactFormFieldChromeControl(_context, "Type", typeSelect);
 	}
 
-	@SuppressWarnings("unchecked")
 	private void onTypeChanged(ConfigurationItem oldItem, Object selected) {
 		if (selected == null) {
 			return;
 		}
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
-		int index = items.indexOf(oldItem);
-		if (index < 0) {
-			return;
-		}
-		ConfigurationItem replacement = (ConfigurationItem) _choices.mapping().toSelection(selected);
+		ConfigurationItem replacement = _children.newElement(selected);
 		ConfigCopier.copyContent(new DefaultInstantiationContext(ConfigListEditorControl.class),
 			oldItem, replacement, true);
-		items.set(index, replacement);
-		rebuild(replacement);
+		if (_children.replace(oldItem, replacement)) {
+			rebuild(replacement);
+		}
 	}
 
 	private boolean isTypeSelected(ConfigurationItem item) {
@@ -255,64 +266,60 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			&& _choices.mapping().asOption(_choices.options(), item) != null;
 	}
 
-	@SuppressWarnings("unchecked")
 	private int indexOf(ConfigurationItem item) {
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
-		return items != null ? items.indexOf(item) : -1;
+		return _children.indexOf(item);
 	}
 
 	// --- Operations ---
 
 	/**
-	 * Adds a new element with default values to the end of the list.
+	 * Opens the menu offering the given element types below the Add button.
 	 */
-	@SuppressWarnings("unchecked")
-	private void addElement() {
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
-		ConfigurationItem newItem;
-		if (_choices.hasOptions()) {
-			newItem = (ConfigurationItem) _choices.mapping().toSelection(_choices.options().get(0));
-		} else {
-			newItem = TypedConfiguration.newConfigItem(resolveNewElementType());
+	private void openTypeMenu(ConfigTypeChoice types) {
+		List<ConfigTypeChoice.Choice> choices = types.choices();
+		List<ReactMenuControl.MenuEntry> entries = new ArrayList<>();
+		for (int i = 0; i < choices.size(); i++) {
+			entries.add(ReactMenuControl.MenuEntry.item(Integer.toString(i), choices.get(i).label()));
 		}
-		items.add(newItem);
-		rebuild(newItem);
+
+		_typeMenu = new ReactMenuControl(_context, _addButtonId, entries,
+			itemId -> addElement(choices.get(Integer.parseInt(itemId)).option()),
+			() -> {
+				// Nothing to do when dismissed without a choice.
+			});
+		addChild(_typeMenu);
+		putState("children", getChildren());
+		_typeMenu.open();
 	}
 
 	/**
-	 * Removes the element at the given index.
+	 * Adds a new element of the given type to the end of the list.
+	 *
+	 * @param typeOption
+	 *        The element type to create, one of {@link ConfigChildren#allowedTypes()}, or
+	 *        {@code null} for the property's default type.
 	 */
-	@SuppressWarnings("unchecked")
-	private void removeElement(int index) {
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
-		if (items != null && index >= 0 && index < items.size()) {
-			items.remove(index);
+	private void addElement(Object typeOption) {
+		ConfigurationItem newItem = _children.newElement(typeOption);
+		if (_children.add(newItem)) {
+			rebuild(newItem);
+		}
+	}
+
+	/**
+	 * Removes the given element.
+	 */
+	private void removeElement(ConfigurationItem item) {
+		if (_children.remove(item)) {
 			rebuild(null);
 		}
 	}
 
 	/**
-	 * Moves the element at the given index one position up.
+	 * Moves the given element by the given number of positions.
 	 */
-	@SuppressWarnings("unchecked")
-	private void moveUp(int index) {
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
-		if (items != null && index > 0 && index < items.size()) {
-			ConfigurationItem item = items.remove(index);
-			items.add(index - 1, item);
-			rebuild(null);
-		}
-	}
-
-	/**
-	 * Moves the element at the given index one position down.
-	 */
-	@SuppressWarnings("unchecked")
-	private void moveDown(int index) {
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
-		if (items != null && index >= 0 && index < items.size() - 1) {
-			ConfigurationItem item = items.remove(index);
-			items.add(index + 1, item);
+	private void move(ConfigurationItem item, int delta) {
+		if (_children.move(item, delta)) {
 			rebuild(null);
 		}
 	}
@@ -384,13 +391,5 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 
 		return null;
-	}
-
-	/**
-	 * Resolves the configuration interface to instantiate for new list elements.
-	 */
-	@SuppressWarnings("unchecked")
-	private Class<? extends ConfigurationItem> resolveNewElementType() {
-		return (Class<? extends ConfigurationItem>) _property.getDefaultDescriptor().getConfigurationInterface();
 	}
 }

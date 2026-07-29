@@ -65,6 +65,36 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_SAVE_VIEW_FAILED__PATH;
 
 	/**
+	 * @en Add element...
+	 */
+	public static ResKey DESIGNER_ADD_CHILD;
+
+	/**
+	 * @en Remove
+	 */
+	public static ResKey DESIGNER_REMOVE;
+
+	/**
+	 * @en Move up
+	 */
+	public static ResKey DESIGNER_MOVE_UP;
+
+	/**
+	 * @en Move down
+	 */
+	public static ResKey DESIGNER_MOVE_DOWN;
+
+	/**
+	 * @en Add element
+	 */
+	public static ResKey DESIGNER_ADD_DIALOG_TITLE;
+
+	/**
+	 * @en Element type
+	 */
+	public static ResKey DESIGNER_ADD_DIALOG_TYPE;
+
+	/**
 	 * @en Edit Layout
 	 */
 	public static ResKey DASHBOARD_EDIT;

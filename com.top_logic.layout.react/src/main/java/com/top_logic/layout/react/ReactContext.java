@@ -73,8 +73,13 @@ public interface ReactContext {
 	ModelScope getModelScope();
 
 	/**
-	 * The {@link com.top_logic.layout.react.control.overlay.ContextMenuOpener} mounted at the
-	 * app-shell level, or {@code null} if none.
+	 * The {@link com.top_logic.layout.react.control.overlay.ContextMenuOpener} rendering into the
+	 * enclosing context-menu overlay, or {@code null} if none.
+	 *
+	 * <p>
+	 * A view embedding an app shell is served by that shell's overlay; any other view is served by
+	 * the window-level overlay of the enclosing browser window.
+	 * </p>
 	 */
 	default com.top_logic.layout.react.control.overlay.ContextMenuOpener getContextMenuOpener() {
 		return null;

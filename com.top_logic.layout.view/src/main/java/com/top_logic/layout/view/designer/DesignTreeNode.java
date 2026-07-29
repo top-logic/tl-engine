@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.layout.configedit.ConfigChildren;
 
 /**
  * A node in the design tree.
@@ -26,6 +27,8 @@ public abstract class DesignTreeNode {
 	private final List<DesignTreeNode> _children = new ArrayList<>();
 
 	private DesignTreeNode _parent;
+
+	private ConfigChildren _childContainer;
 
 	private boolean _dirty;
 
@@ -67,6 +70,30 @@ public abstract class DesignTreeNode {
 	 */
 	void setParent(DesignTreeNode parent) {
 		_parent = parent;
+	}
+
+	/**
+	 * The configuration property this node's child element nodes are stored in, or {@code null} if
+	 * this node is not a container of elements.
+	 *
+	 * <p>
+	 * This is the seam through which the structural edit commands change the configuration rather
+	 * than only the tree. It is set by {@link DesignTreeBuilder}, which is the only place deciding
+	 * whether a container property gets its own {@link VirtualDesignTreeNode} or is inlined into the
+	 * node owning it.
+	 * </p>
+	 */
+	public ConfigChildren getChildContainer() {
+		return _childContainer;
+	}
+
+	/**
+	 * Sets the {@link #getChildContainer() child container}.
+	 *
+	 * @see DesignTreeBuilder
+	 */
+	void setChildContainer(ConfigChildren childContainer) {
+		_childContainer = childContainer;
 	}
 
 	/**

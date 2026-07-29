@@ -7,12 +7,16 @@ package com.top_logic.layout.view.designer;
 
 import java.util.List;
 
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.layout.configedit.ConfigChildren;
+
 /**
- * Moves a {@link DesignTreeNode} up or down within its parent's children list.
+ * Reorders the element a {@link DesignTreeNode} represents within the container property holding it.
  *
  * <p>
- * The root node cannot be moved. The caller is responsible for rebuilding the tree UI after this
- * operation.
+ * The element is moved within the parent's {@link DesignTreeNode#getChildContainer() child
+ * container}, so the change is part of the configuration and is written to the {@code .view.xml}
+ * file on save. The caller is responsible for rebuilding the tree UI afterwards.
  * </p>
  */
 public class MoveElementCommand {
@@ -21,15 +25,28 @@ public class MoveElementCommand {
 	 * Direction constants for moving a node.
 	 */
 	public enum Direction {
-		/** Move the node one position earlier in its parent's children list. */
-		UP,
+		/** Move the node one position earlier in its container. */
+		UP(-1),
 
-		/** Move the node one position later in its parent's children list. */
-		DOWN
+		/** Move the node one position later in its container. */
+		DOWN(1);
+
+		private final int _delta;
+
+		private Direction(int delta) {
+			_delta = delta;
+		}
+
+		/**
+		 * The offset to apply to the element's position.
+		 */
+		public int delta() {
+			return _delta;
+		}
 	}
 
 	/**
-	 * Moves the given node in the specified direction within its parent's children list.
+	 * Moves the given node in the specified direction within its container.
 	 *
 	 * @param node
 	 *        The node to move.
@@ -38,66 +55,60 @@ public class MoveElementCommand {
 	 * @return {@code true} if the node was successfully moved.
 	 */
 	public static boolean execute(DesignTreeNode node, Direction direction) {
+		if (!canExecute(node, direction)) {
+			return false;
+		}
+
 		DesignTreeNode parent = node.getParent();
-		if (parent == null) {
+		ConfigurationItem config = DesignTreeNodes.configOf(node);
+		if (!parent.getChildContainer().move(config, direction.delta())) {
 			return false;
 		}
 
+		// Mirror the new order in the tree. The mirror may hold nodes that are not elements of the
+		// container (a <view-ref> child), so the sibling order is taken from the container.
 		List<DesignTreeNode> siblings = parent.getChildren();
-		int index = siblings.indexOf(node);
-		if (index < 0) {
-			return false;
-		}
-
-		int targetIndex;
-		switch (direction) {
-			case UP:
-				targetIndex = index - 1;
-				break;
-			case DOWN:
-				targetIndex = index + 1;
-				break;
-			default:
-				return false;
-		}
-
-		if (targetIndex < 0 || targetIndex >= siblings.size()) {
-			return false;
-		}
-
-		siblings.remove(index);
-		siblings.add(targetIndex, node);
+		siblings.remove(node);
+		siblings.add(mirrorIndex(parent, config), node);
 		parent.markDirty();
 		return true;
 	}
 
 	/**
-	 * Whether the command can be executed for the given node and direction.
+	 * Whether the given node can be moved in the given direction.
 	 *
 	 * @param node
 	 *        The candidate node (may be {@code null}).
 	 * @param direction
 	 *        The intended move direction.
-	 * @return {@code true} if the node can be moved in the given direction.
+	 * @return {@code true} if the node is an element of an ordered container and the target position
+	 *         is within it.
 	 */
 	public static boolean canExecute(DesignTreeNode node, Direction direction) {
-		if (node == null || node.getParent() == null) {
+		ConfigChildren container = DesignTreeNodes.owningContainer(node);
+		if (container == null || !container.isList()) {
 			return false;
 		}
+		int target = container.indexOf(DesignTreeNodes.configOf(node)) + direction.delta();
+		return target >= 0 && target < container.elements().size();
+	}
 
-		List<DesignTreeNode> siblings = node.getParent().getChildren();
-		int index = siblings.indexOf(node);
-		if (index < 0) {
-			return false;
+	/**
+	 * The position in the parent's mirror children list corresponding to the config's position in
+	 * the container.
+	 */
+	private static int mirrorIndex(DesignTreeNode parent, ConfigurationItem config) {
+		int configIndex = parent.getChildContainer().indexOf(config);
+		int seen = 0;
+		List<DesignTreeNode> siblings = parent.getChildren();
+		for (int i = 0; i < siblings.size(); i++) {
+			if (parent.getChildContainer().indexOf(DesignTreeNodes.configOf(siblings.get(i))) >= 0) {
+				if (seen == configIndex) {
+					return i;
+				}
+				seen++;
+			}
 		}
-
-		switch (direction) {
-			case UP:
-				return index > 0;
-			case DOWN:
-				return index < siblings.size() - 1;
-			default:
-				return false;
-		}
+		return siblings.size();
 	}
 }

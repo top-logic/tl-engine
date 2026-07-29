@@ -14,6 +14,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.layout.configedit.ConfigChildren;
 import com.top_logic.layout.view.ReferenceElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
@@ -50,7 +51,20 @@ public class DesignTreeBuilder {
 	 */
 	public DesignTreeNode build(String rootViewPath) throws ConfigurationException {
 		ViewElement.Config rootConfig = ViewLoader.getOrLoadConfig(rootViewPath);
-		return buildNode(rootConfig, rootViewPath);
+		return build(rootConfig, rootViewPath);
+	}
+
+	/**
+	 * Builds the design tree for an already loaded configuration.
+	 *
+	 * @param rootConfig
+	 *        The configuration forming the root of the tree.
+	 * @param sourceFile
+	 *        The {@code .view.xml} file the configuration originates from.
+	 * @return The root {@link DesignTreeNode}.
+	 */
+	public DesignTreeNode build(ConfigurationItem rootConfig, String sourceFile) throws ConfigurationException {
+		return buildNode(rootConfig, sourceFile);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -69,6 +83,12 @@ public class DesignTreeBuilder {
 
 		for (PropertyDescriptor property : treeProperties) {
 			DesignTreeNode target = inline ? node : createGroupNode(node, property, sourceFile);
+
+			// Bind the target node to the property its children are stored in, so that the
+			// structural edit commands can write through to the configuration. For an inlined
+			// property this is the config node itself; otherwise it is the group node.
+			target.setChildContainer(ConfigChildren.create(config, property));
+
 			if (property.kind() == PropertyKind.LIST) {
 				List<?> children = (List<?>) config.value(property);
 				if (children != null) {

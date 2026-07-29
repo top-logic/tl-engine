@@ -24,8 +24,10 @@ import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
@@ -58,6 +60,9 @@ import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.SortColumn;
+import com.top_logic.table.SortDirection;
+import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
@@ -218,6 +223,9 @@ public class TableElement implements UIElement {
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
 
+		/** Configuration name for {@link #getSort()}. */
+		String SORT = "sort";
+
 		/**
 		 * The name of the attribute (column) to display.
 		 */
@@ -238,6 +246,40 @@ public class TableElement implements UIElement {
 		 */
 		@Name(READONLY)
 		boolean getReadonly();
+
+		/**
+		 * The direction this column is sorted in when the table is first shown, or unset to leave
+		 * it unsorted.
+		 *
+		 * <p>
+		 * Sorting by several columns is expressed by setting this on more than one column; the
+		 * declaration order decides which one sorts first. The default only applies until the user
+		 * sorts the table themselves, from then on their own order is remembered.
+		 * </p>
+		 */
+		@Name(SORT)
+		@Nullable
+		@NullDefault
+		SortDirection getSort();
+	}
+
+	/**
+	 * The order the table is displayed in before the user sorts it, taken from the
+	 * {@link ColumnConfig#getSort() sorted} columns in declaration order.
+	 */
+	private SortSpec defaultSort() {
+		ColumnsConfig columnsConfig = _config.getColumns();
+		if (columnsConfig == null) {
+			return SortSpec.NONE;
+		}
+		List<SortColumn> sortColumns = new ArrayList<>();
+		for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
+			SortDirection direction = columnConfig.getSort();
+			if (direction != null) {
+				sortColumns.add(new SortColumn(columnConfig.getAttribute(), direction == SortDirection.ASC));
+			}
+		}
+		return sortColumns.isEmpty() ? SortSpec.NONE : new SortSpec(sortColumns);
 	}
 
 	/** Command name of the contributed {@link #contributeAddRowCommand add-row command}. */
@@ -302,8 +344,8 @@ public class TableElement implements UIElement {
 			columns.add(setup.binding().createColumn(setup));
 		}
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
-		DefaultTableView<Object> view =
-			DefaultTableView.create(columns, source, PersonalConfigViewStateStore.INSTANCE, tableId());
+		DefaultTableView<Object> view = DefaultTableView.create(columns, source,
+			PersonalConfigViewStateStore.INSTANCE, tableId(), defaultSort());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 
@@ -402,6 +444,7 @@ public class TableElement implements UIElement {
 			new RowSetTableControl(context, formControl, binding, editColumns(rowType), _config.getRowEdit());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
+		control.setDefaultSort(defaultSort());
 		control.setSelectionChannel(selectionChannel);
 		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), resolveObservedTypes(), inputChannels);
 		control.init();

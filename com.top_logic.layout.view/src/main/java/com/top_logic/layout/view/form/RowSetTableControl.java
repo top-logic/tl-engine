@@ -54,6 +54,7 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.Sort;
+import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
 import com.top_logic.table.ViewStateStore;
 import com.top_logic.table.impl.DefaultColumn;
@@ -136,6 +137,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private ViewStateStore _store;
 
 	private TableId _tableId;
+
+	private SortSpec _defaultSort = SortSpec.NONE;
 
 	private ViewChannel _selectionChannel;
 
@@ -248,6 +251,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	public void setPersonalization(ViewStateStore store, TableId tableId) {
 		_store = store;
 		_tableId = tableId;
+	}
+
+	/**
+	 * The order the rows are displayed in until the user sorts the table themselves.
+	 */
+	public void setDefaultSort(SortSpec defaultSort) {
+		_defaultSort = defaultSort;
 	}
 
 	/**
@@ -371,9 +381,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
 		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
-		DefaultTableView<TLObject> view = _store != null
-			? DefaultTableView.create(columns, _rowSource, _store, _tableId)
-			: DefaultTableView.create(columns, _rowSource);
+		DefaultTableView<TLObject> view =
+			DefaultTableView.create(columns, _rowSource, _store, _store != null ? _tableId : null, _defaultSort);
 
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();

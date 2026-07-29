@@ -9,10 +9,12 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
@@ -64,6 +66,7 @@ public class FieldControlRegistry {
 		register(Number.class,
 			(context, field, model) -> new ReactNumberInputControl(context, model, decimals(field)));
 		register(Date.class, (context, field, model) -> new ReactDatePickerControl(context, model));
+		register(BinaryData.class, (context, field, model) -> new ReactBinaryFieldControl(context, model));
 		// An internationalized text is edited in the current language, with the other languages
 		// reachable through the editor's dialog.
 		register(ResKey.class, (context, field, model) -> ReactI18NStringInputControl.createEditor(context, model,

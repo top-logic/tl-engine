@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,12 +30,18 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.field.FieldControlRegistry;
+import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.form.AttributeSelectFieldModel.OptionSource;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.ui.MultiLine;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
@@ -131,8 +138,28 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 				if (type != null) {
 					ReactFieldControlProvider provider = _context.getInstance(mapping.getImpl());
 					_providerByQualifiedType.put(TLModelUtil.qualifiedName(type), provider);
+					publish(type, provider);
 				}
 			}
+		}
+	}
+
+	/**
+	 * Makes the control configured for a model type available for every value of that kind, so that a
+	 * configuration property holding e.g. a color or an icon is edited like the matching attribute.
+	 *
+	 * <p>
+	 * A control that edits a selection is not published: it requires the value to be held by a
+	 * {@link SelectFieldModel}, which only the model side builds.
+	 * </p>
+	 */
+	private void publish(TLType type, ReactFieldControlProvider provider) {
+		if (provider instanceof SelectControlProvider) {
+			return;
+		}
+		Class<?> valueType = valueType(type);
+		if (valueType != String.class) {
+			FieldControlRegistry.getInstance().register(valueType, provider);
 		}
 	}
 
@@ -155,26 +182,79 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * @return A React control for the field input widget.
 	 */
 	public ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
+		FieldSpec field = fieldSpec(part, model);
+
 		// 1. Annotation on attribute (includes type-level default via VALUE_TYPE strategy).
 		TLInputControl annotation = part.getAnnotation(TLInputControl.class);
 		if (annotation != null) {
 			ReactFieldControlProvider provider = _context.getInstance(annotation.getImpl());
-			return provider.createControl(context, part, model);
+			return provider.createControl(context, field, model);
 		}
 
 		// 2. Option-based attributes use a select control.
 		if (model instanceof SelectFieldModel) {
-			return _selectProvider.createControl(context, part, model);
+			return _selectProvider.createControl(context, field, model);
 		}
 
 		// 3. Configured control by type.
 		ReactFieldControlProvider mapped = byType(part.getType());
 		if (mapped != null) {
-			return mapped.createControl(context, part, model);
+			return mapped.createControl(context, field, model);
 		}
 
-		// 4. Built-in primitive-kind fallback.
-		return primitiveFallback(context, part, model);
+		// 4. The control registered for the kind of value the attribute holds. The same registry
+		// serves configuration properties, so both are edited alike.
+		return FieldControlRegistry.getInstance().createControl(context, field, model);
+	}
+
+	/**
+	 * Describes the given attribute for the control that edits it.
+	 */
+	private FieldSpec fieldSpec(TLStructuredTypePart part, FieldModel model) {
+		return FieldSpec.of(valueType(part), MetaLabelProvider.INSTANCE.getLabel(part))
+			.setMandatory(model.isMandatory())
+			.setEditable(model.isEditable())
+			.setMultilineRows(multilineRows(part));
+	}
+
+	/**
+	 * The Java type of the values the given attribute holds, which decides the control editing it.
+	 */
+	private static Class<?> valueType(TLStructuredTypePart part) {
+		return valueType(part.getType());
+	}
+
+	/**
+	 * The Java type of the values of the given model type.
+	 */
+	private static Class<?> valueType(TLType type) {
+		if (type instanceof TLPrimitive primitive) {
+			StorageMapping<?> storage = primitive.getStorageMapping();
+			if (storage != null) {
+				return storage.getApplicationType();
+			}
+			switch (primitive.getKind()) {
+				case BOOLEAN:
+					return Boolean.class;
+				case INT:
+					return Long.class;
+				case FLOAT:
+					return Double.class;
+				case DATE:
+					return Date.class;
+				default:
+					return String.class;
+			}
+		}
+		return String.class;
+	}
+
+	/**
+	 * The number of text rows the given attribute is displayed with, or {@code 0} for a single line.
+	 */
+	private static int multilineRows(TLStructuredTypePart part) {
+		MultiLine annotation = part.getAnnotation(MultiLine.class);
+		return annotation != null && annotation.getValue() ? annotation.getRows() : 0;
 	}
 
 	/**
@@ -280,6 +360,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		return null;
 	}
 
+
 	/**
 	 * The {@link OptionSource} for an attribute edited by the given {@link SelectControlProvider}.
 	 *
@@ -297,30 +378,6 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 				.toList(configured.getOptions(SimpleEditContext.createContext(self, part)));
 		}
 		return (self, overlays, dependencies) -> AttributeOptions.optionsFor(self, part, overlays, dependencies);
-	}
-
-	private ReactControl primitiveFallback(ReactContext context, TLStructuredTypePart part, FieldModel model) {
-		TLType type = part.getType();
-		if (type instanceof TLPrimitive) {
-			TLPrimitive primitive = (TLPrimitive) type;
-			switch (primitive.getKind()) {
-				case BOOLEAN:
-					return _checkboxProvider.createControl(context, part, model);
-				case INT:
-				case FLOAT:
-					return _numberProvider.createControl(context, part, model);
-				case DATE:
-					return _dateProvider.createControl(context, part, model);
-				case BINARY:
-					return _binaryProvider.createControl(context, part, model);
-				case STRING:
-				case TRISTATE:
-				case CUSTOM:
-				default:
-					return _textProvider.createControl(context, part, model);
-			}
-		}
-		return _textProvider.createControl(context, part, model);
 	}
 
 	/**

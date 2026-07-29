@@ -6,8 +6,10 @@
 package com.top_logic.layout.configedit;
 
 import java.util.Arrays;
+import java.util.List;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.react.ReactContext;
@@ -56,6 +58,13 @@ public class ConfigFieldDispatch {
 			return createEnumControl(context, model, type);
 		}
 
+		// A property offering a fixed set of values is chosen from, not typed. This covers a property
+		// annotated with Options as well as one whose value type declares its own option set.
+		PolymorphicOptions.Choices choices = PolymorphicOptions.compute(model.getConfig(), property);
+		if (choices.hasOptions() && !PolymorphicConfiguration.class.isAssignableFrom(type)) {
+			return createOptionControl(context, model, choices);
+		}
+
 		FieldSpec field = FieldSpec.of(type, label)
 			.setMandatory(model.isMandatory())
 			.setEditable(model.isEditable());
@@ -76,6 +85,17 @@ public class ConfigFieldDispatch {
 				new ConfigTextFieldModel(model.getConfig(), property));
 		}
 		return registry.createControl(context, field, model);
+	}
+
+	/**
+	 * Creates the control choosing among the values the property offers.
+	 */
+	private static ReactControl createOptionControl(ReactContext context, ConfigFieldModel model,
+			PolymorphicOptions.Choices choices) {
+		List<Object> options = choices.options();
+		ConfigSelectFieldModel selectModel =
+			new ConfigSelectFieldModel(model.getConfig(), model.getProperty(), options, false);
+		return new ReactSelectFormFieldControl(context, selectModel, PolymorphicOptions::labelFor);
 	}
 
 	/**

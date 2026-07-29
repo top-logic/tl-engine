@@ -15,7 +15,9 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.configedit.ConfigChildren;
 
@@ -38,8 +40,15 @@ public class TestConfigChildren extends TestCase {
 		/** Property name for {@link #getLabel()}. */
 		String LABEL = "label";
 
+		/** Property name for {@link #getKeyed()}. */
+		String KEYED = "keyed";
+
 		@Name(ITEMS)
 		List<Item> getItems();
+
+		@Name(KEYED)
+		@Key(Keyed.ID)
+		List<Keyed> getKeyed();
 
 		@Name(SINGLE)
 		Item getSingle();
@@ -64,6 +73,22 @@ public class TestConfigChildren extends TestCase {
 
 		/** @see #getName() */
 		void setName(String value);
+	}
+
+	/**
+	 * An element of the keyed list {@link Container#getKeyed()}.
+	 */
+	@TagName("keyed")
+	public interface Keyed extends ConfigurationItem {
+
+		/** Property name for {@link #getId()}. */
+		String ID = "id";
+
+		@Name(ID)
+		String getId();
+
+		/** @see #getId() */
+		void setId(String value);
 	}
 
 	private Container _container;
@@ -229,6 +254,49 @@ public class TestConfigChildren extends TestCase {
 			_list.newElement(null) instanceof Item);
 		assertTrue("The declared type is created for the explicit choice",
 			_list.newElement(options.get(0)) instanceof Item);
+	}
+
+	/**
+	 * An element added to a keyed list is given a unique key, so that elements do not collapse into
+	 * one when the configuration is read again.
+	 */
+	public void testKeyedListGetsUniqueKeys() {
+		Container container = TypedConfiguration.newConfigItem(Container.class);
+		ConfigChildren keyed = ConfigChildren.create(container, container.descriptor().getProperty(Container.KEYED));
+
+		Keyed first = TypedConfiguration.newConfigItem(Keyed.class);
+		Keyed second = TypedConfiguration.newConfigItem(Keyed.class);
+		Keyed third = TypedConfiguration.newConfigItem(Keyed.class);
+		assertTrue(keyed.add(first));
+		assertTrue(keyed.add(second));
+		assertTrue(keyed.add(third));
+
+		assertEquals("keyed", first.getId());
+		assertEquals("keyed2", second.getId());
+		assertEquals("keyed3", third.getId());
+	}
+
+	/**
+	 * An explicitly set key is kept.
+	 */
+	public void testKeyedListKeepsGivenKey() {
+		Container container = TypedConfiguration.newConfigItem(Container.class);
+		ConfigChildren keyed = ConfigChildren.create(container, container.descriptor().getProperty(Container.KEYED));
+
+		Keyed given = TypedConfiguration.newConfigItem(Keyed.class);
+		given.setId("chosen");
+		assertTrue(keyed.add(given));
+
+		assertEquals("chosen", given.getId());
+	}
+
+	/**
+	 * A list that is not keyed is left alone.
+	 */
+	public void testUnkeyedListKeepsEmptyValues() {
+		Item added = item("");
+		assertTrue(_list.add(added));
+		assertEquals("", added.getName());
 	}
 
 	/**

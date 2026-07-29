@@ -17,6 +17,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.view.designer.AddChildCommand;
+import com.top_logic.layout.view.designer.ConfigDesignTreeNode;
 import com.top_logic.layout.view.designer.DesignTreeBuilder;
 import com.top_logic.layout.view.designer.DesignTreeNode;
 import com.top_logic.layout.view.designer.ErrorDesignTreeNode;
@@ -24,6 +25,8 @@ import com.top_logic.layout.view.designer.MoveElementCommand;
 import com.top_logic.layout.view.designer.MoveElementCommand.Direction;
 import com.top_logic.layout.view.designer.RemoveElementCommand;
 import com.top_logic.layout.view.element.AppShellElement;
+import com.top_logic.layout.view.element.TabBarElement;
+import com.top_logic.layout.view.element.TabBarElement.TabConfig;
 import com.top_logic.layout.view.element.StackElement;
 
 /**
@@ -167,6 +170,46 @@ public class TestDesignTreeEditing extends TestCase {
 			MoveElementCommand.canExecute(errorNode, Direction.UP));
 		assertFalse("A node without configuration has nothing to add to",
 			AddChildCommand.canExecute(errorNode));
+	}
+
+	/**
+	 * An element whose identifying property is edited notifies the tree, so that the displayed label
+	 * can be refreshed.
+	 */
+	public void testLabelChangeIsReported() throws Exception {
+		TabBarElement.Config tabBar = TypedConfiguration.newConfigItem(TabBarElement.Config.class);
+		DesignTreeNode node = build(tabBar);
+
+		DesignTreeNode tab = AddChildCommand.execute(node, null);
+		assertNotNull("A tab is added", tab);
+
+		int[] notifications = { 0 };
+		tab.addLabelListener(() -> notifications[0]++);
+
+		TabConfig tabConfig = (TabConfig) ((ConfigDesignTreeNode) tab).getConfig();
+		tabConfig.update(tabConfig.descriptor().getProperty(TabConfig.ID), "overview");
+
+		assertEquals("Editing the identifying property is reported once", 1, notifications[0]);
+		assertEquals("The label follows the identifying property", "overview", tab.getLabel());
+	}
+
+	/**
+	 * An element added to a keyed list gets a unique identifier, because elements of a keyed list are
+	 * identified by it when the view is read again.
+	 */
+	public void testAddedTabsGetDistinctIds() throws Exception {
+		TabBarElement.Config tabBar = TypedConfiguration.newConfigItem(TabBarElement.Config.class);
+		DesignTreeNode node = build(tabBar);
+
+		AddChildCommand.execute(node, null);
+		AddChildCommand.execute(node, null);
+
+		assertEquals(2, tabBar.getTabs().size());
+		String firstId = tabBar.getTabs().get(0).getId();
+		String secondId = tabBar.getTabs().get(1).getId();
+		assertNotNull("The first tab has an id", firstId);
+		assertFalse("The first tab's id is not empty", firstId.isEmpty());
+		assertFalse("The two tabs have distinct ids", firstId.equals(secondId));
 	}
 
 	private static DesignTreeNode groupFor(DesignTreeNode node, String propertyName) {

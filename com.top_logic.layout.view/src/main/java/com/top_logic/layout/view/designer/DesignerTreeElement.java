@@ -118,9 +118,13 @@ public class DesignerTreeElement implements UIElement {
 			new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER);
 
 		// 4. Create the ReactTreeControl with a designer-specific label provider that renders each
-		//    DesignTreeNode's display label and JavaDoc tooltip.
+		//    DesignTreeNode's display label and JavaDoc tooltip. The provider needs the control it
+		//    renders into to refresh a node whose label changed, so it is handed a holder that is
+		//    filled in right after construction.
+		ReactTreeControl[] treeRef = new ReactTreeControl[1];
 		ReactTreeControl treeControl =
-			new ReactTreeControl(context, treeModel, selectionModel, DESIGN_NODE_CONTROL_PROVIDER);
+			new ReactTreeControl(context, treeModel, selectionModel, designNodeControlProvider(treeRef));
+		treeRef[0] = treeControl;
 
 		// Holder for the tree model currently displayed by treeControl. The control itself does not
 		// expose a getter for its current model, and the model is replaced (not mutated) whenever the
@@ -397,19 +401,34 @@ public class DesignerTreeElement implements UIElement {
 	 * node's {@link DesignTreeNode#getDisplayLabel() display label} and
 	 * {@link DesignTreeNode#getTooltipHtml() tooltip HTML}.
 	 */
-	private static final ReactControlProvider DESIGN_NODE_CONTROL_PROVIDER = (context, model) -> {
-		Object target = model instanceof DefaultTreeUINode node ? node.getBusinessObject() : model;
-		if (target instanceof DesignTreeNode designNode) {
-			String label = designNode.getDisplayLabel();
-			ReactTextControl control = new ReactTextControl(context, label);
-			String tooltip = designNode.getTooltipHtml();
-			if (tooltip != null && !tooltip.isEmpty()) {
-				control.setTooltip(tooltip, label, false);
+	private static ReactControlProvider designNodeControlProvider(ReactTreeControl[] treeRef) {
+		return (context, model) -> {
+			Object target = model instanceof DefaultTreeUINode node ? node.getBusinessObject() : model;
+			if (target instanceof DesignTreeNode designNode) {
+				String label = designNode.getDisplayLabel();
+				ReactTextControl control = new ReactTextControl(context, label);
+				String tooltip = designNode.getTooltipHtml();
+				if (tooltip != null && !tooltip.isEmpty()) {
+					control.setTooltip(tooltip, label, false);
+				}
+
+				// Re-render the node when an identifying property is edited in the configuration
+				// form, so that the tree does not keep showing the previous label.
+				Runnable labelListener = () -> {
+					ReactTreeControl tree = treeRef[0];
+					if (tree != null) {
+						tree.invalidateNodeControl(model);
+						tree.updateVisibleState();
+					}
+				};
+				designNode.addLabelListener(labelListener);
+				control.addCleanupAction(() -> designNode.removeLabelListener(labelListener));
+
+				return control;
 			}
-			return control;
-		}
-		return new ReactTextControl(context, String.valueOf(model));
-	};
+			return new ReactTextControl(context, String.valueOf(model));
+		};
+	}
 
 	private TreeBuilder<DefaultTreeUINode> createTreeBuilder() {
 		return new TreeBuilder<>() {

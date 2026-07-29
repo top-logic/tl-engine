@@ -26,6 +26,8 @@ public abstract class DesignTreeNode {
 
 	private final List<DesignTreeNode> _children = new ArrayList<>();
 
+	private final List<Runnable> _labelListeners = new ArrayList<>();
+
 	private DesignTreeNode _parent;
 
 	private ConfigChildren _childContainer;
@@ -139,6 +141,35 @@ public abstract class DesignTreeNode {
 	 */
 	protected void onCleanup() {
 		// Hook for subclasses.
+	}
+
+	/**
+	 * Registers a listener notified when {@link #getDisplayLabel()} may have changed, so that a
+	 * rendered tree can re-render this node.
+	 */
+	public void addLabelListener(Runnable listener) {
+		_labelListeners.add(listener);
+	}
+
+	/**
+	 * Removes a listener registered through {@link #addLabelListener(Runnable)}.
+	 */
+	public void removeLabelListener(Runnable listener) {
+		_labelListeners.remove(listener);
+	}
+
+	/**
+	 * Notifies the {@link #addLabelListener(Runnable) label listeners}.
+	 *
+	 * <p>
+	 * Iterates a copy, because a listener typically re-renders the node, which unregisters it and
+	 * registers the replacement control's listener.
+	 * </p>
+	 */
+	protected void fireLabelChanged() {
+		for (Runnable listener : new ArrayList<>(_labelListeners)) {
+			listener.run();
+		}
 	}
 
 	/**

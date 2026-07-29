@@ -140,6 +140,12 @@ public final class ConfigChildren {
 	/**
 	 * Appends the given child to the edited property.
 	 *
+	 * <p>
+	 * When the property is keyed, the child is given a unique key first: elements of a keyed list are
+	 * identified by that key when the configuration is read again, so two elements added without one
+	 * would collapse into a single element.
+	 * </p>
+	 *
 	 * @param child
 	 *        The child to add.
 	 * @return Whether the child was added.
@@ -148,12 +154,49 @@ public final class ConfigChildren {
 		if (child == null || !canAdd()) {
 			return false;
 		}
+		assignUniqueKey(child);
 		if (isList()) {
 			list().add(child);
 		} else {
 			_owner.update(_property, child);
 		}
 		return true;
+	}
+
+	/**
+	 * Gives the child a key that no current element uses, if the property is keyed by a string
+	 * property that the child has not set.
+	 */
+	private void assignUniqueKey(ConfigurationItem child) {
+		PropertyDescriptor keyProperty = _property.getKeyProperty();
+		if (keyProperty == null || keyProperty.getType() != String.class) {
+			return;
+		}
+		PropertyDescriptor childKey = child.descriptor().getProperty(keyProperty.getPropertyName());
+		if (childKey == null) {
+			return;
+		}
+		Object current = child.value(childKey);
+		if (current != null && !current.toString().isEmpty()) {
+			return;
+		}
+
+		String base = ConfigTagName.of(child).toLowerCase();
+		String candidate = base;
+		for (int i = 2; isKeyUsed(childKey, candidate); i++) {
+			candidate = base + i;
+		}
+		child.update(childKey, candidate);
+	}
+
+	private boolean isKeyUsed(PropertyDescriptor keyProperty, String key) {
+		for (ConfigurationItem element : elements()) {
+			PropertyDescriptor elementKey = element.descriptor().getProperty(keyProperty.getPropertyName());
+			if (elementKey != null && key.equals(element.value(elementKey))) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

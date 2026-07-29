@@ -44,7 +44,13 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 		_config = config;
 
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
-			ConfigurationListener listener = change -> markDirty();
+			boolean affectsLabel = isLabelProperty(property);
+			ConfigurationListener listener = change -> {
+				markDirty();
+				if (affectsLabel) {
+					fireLabelChanged();
+				}
+			};
 			config.addConfigurationListener(property, listener);
 			_listeners.add(new ListenerRegistration(property, listener));
 		}
@@ -77,12 +83,26 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 			PropertyDescriptor property = descriptor.getProperty(propName);
 			if (property != null) {
 				Object value = _config.value(property);
-				if (value != null) {
-					return String.valueOf(value);
+				// An unset identifying property is displayed as no label at all, rather than as an
+				// empty one.
+				if (value != null && !value.toString().isEmpty()) {
+					return value.toString();
 				}
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Whether a change of the given property can change {@link #getLabel()}.
+	 */
+	private static boolean isLabelProperty(PropertyDescriptor property) {
+		for (String propName : LABEL_PROPERTIES) {
+			if (propName.equals(property.getPropertyName())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

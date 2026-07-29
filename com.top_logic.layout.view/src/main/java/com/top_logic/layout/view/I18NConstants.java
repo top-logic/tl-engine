@@ -6,6 +6,7 @@
 package com.top_logic.layout.view;
 
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -63,6 +64,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Failed to save view "{0}".
 	 */
 	public static ResKey1 ERROR_SAVE_VIEW_FAILED__PATH;
+
+	/**
+	 * @en View "{0}" is incomplete and was not saved, because it could not be loaded again. Complete
+	 *     the reported settings and save again. {1}
+	 */
+	public static ResKey2 ERROR_SAVE_VIEW_INCOMPLETE__PATH_DETAILS;
 
 	/**
 	 * @en Add element...

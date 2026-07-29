@@ -15,6 +15,7 @@ import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
@@ -28,6 +29,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -100,6 +102,11 @@ public class SaveDesignCommand implements ViewCommand {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
+		// Validate everything before writing anything. An incomplete configuration (e.g. an element
+		// added but not filled in, whose mandatory properties are still unset) can be serialized but
+		// not read back, so writing it would leave the application unable to load the view.
+		checkComplete(fileConfigs);
+
 		// Write only dirty files back to disk.
 		for (Map.Entry<String, ViewElement.Config> entry : fileConfigs.entrySet()) {
 			String viewPath = entry.getKey();
@@ -127,6 +134,26 @@ public class SaveDesignCommand implements ViewCommand {
 		}
 
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Checks that every configuration about to be written can be read back again.
+	 *
+	 * @param fileConfigs
+	 *        The configurations to write, by view path.
+	 * @throws TopLogicException
+	 *         If any configuration is incomplete. Nothing is written in that case, so the files on
+	 *         disk stay loadable and the reported problem can be corrected in the designer.
+	 */
+	private void checkComplete(Map<String, ViewElement.Config> fileConfigs) {
+		for (Map.Entry<String, ViewElement.Config> entry : fileConfigs.entrySet()) {
+			BufferingProtocol log = new BufferingProtocol();
+			entry.getValue().check(log);
+			if (log.hasErrors()) {
+				throw new TopLogicException(I18NConstants.ERROR_SAVE_VIEW_INCOMPLETE__PATH_DETAILS
+					.fill(entry.getKey(), StringServices.join(log.getErrors(), "\n")));
+			}
+		}
 	}
 
 	/**

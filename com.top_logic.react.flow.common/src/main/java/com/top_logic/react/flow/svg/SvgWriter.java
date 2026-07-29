@@ -12,7 +12,6 @@ import com.top_logic.react.flow.svg.event.Registration;
 import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
 import com.top_logic.react.flow.svg.event.SVGDropHandler;
-import com.top_logic.react.flow.svg.event.SVGPanEvent;
 import com.top_logic.react.flow.svg.event.SVGPanHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;

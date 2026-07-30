@@ -179,6 +179,11 @@ public class ReactSplitPanelControl extends ReactControl {
 		if (child instanceof ReactSplitPanelControl) {
 			((ReactSplitPanelControl) child).setParentSplitPanel(this, _children.size() - 1);
 		}
+
+		if (isAttached()) {
+			// Added into an already displayed split panel.
+			child.attach();
+		}
 	}
 
 	/**
@@ -190,6 +195,9 @@ public class ReactSplitPanelControl extends ReactControl {
 	public void removeChild(int index) {
 		ChildEntry removed = _children.remove(index);
 		_childDescriptors.remove(index);
+
+		// No longer displayed, so its contributions to the surroundings are withdrawn before disposal.
+		removed._control.detach();
 
 		// Unregister removed child and its subtree from SSE.
 		removed._control.cleanupTree();
@@ -305,6 +313,24 @@ public class ReactSplitPanelControl extends ReactControl {
 	void setParentSplitPanel(ReactSplitPanelControl parent, int indexInParent) {
 		_parentSplitPanel = parent;
 		_indexInParent = indexInParent;
+	}
+
+	@Override
+	protected void propagateAttach() {
+		super.propagateAttach();
+		for (ChildEntry entry : _children) {
+			// Also a collapsed pane stays part of the displayed tree: its control is still rendered,
+			// only sized down, and expanding it must not depend on an attach that never happened.
+			entry._control.attach();
+		}
+	}
+
+	@Override
+	protected void propagateDetach() {
+		super.propagateDetach();
+		for (ChildEntry entry : _children) {
+			entry._control.detach();
+		}
 	}
 
 	@Override

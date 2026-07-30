@@ -89,16 +89,41 @@ public class ReactCompositeControl extends ReactControl {
 	 * Replaces all child controls with a new list.
 	 *
 	 * <p>
-	 * Callers are responsible for cleaning up old children before calling this method.
+	 * Children that are gone are {@link ReactControl#detach() detached}, the new ones are
+	 * {@link ReactControl#attach() attached} if this control is displayed. A child contained in both
+	 * lists keeps its display state.
+	 * </p>
+	 *
+	 * <p>
+	 * Disposing the replaced children stays the caller's responsibility (see
+	 * {@link ReactControl#cleanupTree()}): this method is also reachable from inside an observer
+	 * notification, where a synchronous disposal of the old subtree would tear down controls whose
+	 * listeners are still pending in the notifying source's listener snapshot.
 	 * </p>
 	 *
 	 * @param newChildren
 	 *        The new child controls.
 	 */
 	protected void replaceChildren(List<? extends ReactControl> newChildren) {
+		List<ReactControl> removed = new ArrayList<>(_children);
+		removed.removeAll(newChildren);
+
 		_children.clear();
 		_children.addAll(newChildren);
 		putState(CHILDREN, _children);
+
+		// Hand over the display: what is gone is no longer displayed, what took its place is. Both
+		// halves matter for everything keyed on the display state - e.g. a form contributes its
+		// commands to the enclosing toolbar only while displayed, so a replaced form would otherwise
+		// leave its buttons behind and the replacing one would never show its own.
+		for (ReactControl child : removed) {
+			child.detach();
+		}
+		if (isAttached()) {
+			for (ReactControl child : _children) {
+				child.attach();
+			}
+		}
 	}
 
 	@Override

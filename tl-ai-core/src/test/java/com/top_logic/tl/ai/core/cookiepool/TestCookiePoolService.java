@@ -25,7 +25,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.tl.ai.cookiepool.CookiePool;
+import com.top_logic.tl.ai.core.cookiepool.model.CookiePool;
 import com.top_logic.util.model.ModelService;
 
 /**

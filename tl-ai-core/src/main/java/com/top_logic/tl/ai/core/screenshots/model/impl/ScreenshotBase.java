@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.screenshots.impl;
+package com.top_logic.tl.ai.core.screenshots.model.impl;
 
 /**
  * Basic interface for {@link #SCREENSHOT_TYPE} business objects.

@@ -4,8 +4,8 @@
 	<module name="tl.ai.cookiepool">
 		<annotations>
 			<package-binding
-				implementation-package="com.top_logic.tl.ai.cookiepool.impl"
-				interface-package="com.top_logic.tl.ai.cookiepool"
+				implementation-package="com.top_logic.tl.ai.core.cookiepool.model.impl"
+				interface-package="com.top_logic.tl.ai.core.cookiepool.model"
 			/>
 		</annotations>
 		<types>

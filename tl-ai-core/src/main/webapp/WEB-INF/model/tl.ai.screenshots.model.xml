@@ -4,8 +4,8 @@
 	<module name="tl.ai.screenshots">
 		<annotations>
 			<package-binding
-				implementation-package="com.top_logic.tl.ai.screenshots.impl"
-				interface-package="com.top_logic.tl.ai.screenshots"
+				implementation-package="com.top_logic.tl.ai.core.screenshots.model.impl"
+				interface-package="com.top_logic.tl.ai.core.screenshots.model"
 			/>
 		</annotations>
 		<types>

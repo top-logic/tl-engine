@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.cookiepool;
+package com.top_logic.tl.ai.core.cookiepool.model;
 
 /**
  * Factory for <code>tl.ai.cookiepool</code> objects.

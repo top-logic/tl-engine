@@ -25,8 +25,8 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.cookiepool.CookiePool;
-import com.top_logic.tl.ai.cookiepool.TlAiCookiepoolFactory;
+import com.top_logic.tl.ai.core.cookiepool.model.CookiePool;
+import com.top_logic.tl.ai.core.cookiepool.model.TlAiCookiepoolFactory;
 import com.top_logic.util.model.ModelService;
 
 /**

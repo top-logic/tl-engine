@@ -18,7 +18,7 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.tl.ai.screenshots.Screenshot;
+import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
 import com.top_logic.util.model.ModelService;
 
 /**

@@ -13,8 +13,8 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.screenshots.Screenshot;
-import com.top_logic.tl.ai.screenshots.TlAiScreenshotsFactory;
+import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
+import com.top_logic.tl.ai.core.screenshots.model.TlAiScreenshotsFactory;
 import com.top_logic.util.model.ModelService;
 
 /**

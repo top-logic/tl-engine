@@ -5,9 +5,12 @@
  */
 package com.top_logic.layout.view.agent;
 
+import java.io.IOError;
+import java.io.IOException;
 import java.util.UUID;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -19,6 +22,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.headless.AgentAccess;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.util.TLContext;
@@ -30,13 +34,19 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * The input is a {@code tl.agent:NewAccessToken} carrying the token's label, its validity in hours
- * and whether the agent may act. The action returns a transient carrier of the plain secret, which
- * the surrounding chain hands to the dialog displaying it — the one and only time it is readable.
- * The token admits the agent to the session it is issued from, which is registered with
- * {@link AgentAccess} here.
+ * and whether the agent may act. The action returns a transient carrier of the invitation — the
+ * application's address together with the issued token — which the surrounding chain hands to the
+ * dialog displaying it, the one and only time the token is readable. The token admits the agent to
+ * the session it is issued from, which is registered with {@link AgentAccess} here.
  * </p>
  */
 public class IssueAccessTokenAction implements ViewAction {
+
+	/**
+	 * Path of the agent endpoint below the application, named in the invitation so that an agent
+	 * knows where to talk to rather than having to guess it.
+	 */
+	private static final String AGENT_API_PATH = "/agent-api";
 
 	/**
 	 * Configuration for {@link IssueAccessTokenAction}.
@@ -86,11 +96,36 @@ public class IssueAccessTokenAction implements ViewAction {
 		AgentAccess.getInstance()
 			.bindSession(sessionKey, DefaultDisplayContext.getDisplayContext().asRequest().getSession());
 
-		// The plain secret travels on as the action's result, so that the surrounding chain opens the
-		// dialog displaying it. This is the one and only time it is readable.
+		// The invitation travels on as the action's result, so that the surrounding chain opens the
+		// dialog displaying it. This is the one and only time the token in it is readable.
 		TLObject issued = TransientObjectFactory.INSTANCE.createObject(AccessTokens.issuedType());
-		issued.tUpdate(AccessTokens.issuedType().getPart(AccessTokens.SECRET), secret);
+		issued.tUpdate(AccessTokens.issuedType().getPart(AccessTokens.INVITATION), invitation(secret));
 		return issued;
+	}
+
+	/**
+	 * The invitation the owner hands to an agent: where the application is, and the token admitting
+	 * the agent to this session.
+	 *
+	 * <p>
+	 * An agent needs both, so both are copied in one go. The application's address is the publicly
+	 * reachable one — the {@link AliasManager#HOST} alias when the application configures it,
+	 * because the address seen from inside a request can be a load balancer's or a container's,
+	 * which no agent could reach.
+	 * </p>
+	 */
+	private static String invitation(String secret) {
+		StringBuilder invitation = new StringBuilder();
+		try {
+			LayoutUtils.appendHostURL(DefaultDisplayContext.getDisplayContext(), invitation);
+		} catch (IOException ex) {
+			throw new IOError(ex);
+		}
+		invitation.append(AliasManager.getInstance().getAlias(AliasManager.APP_CONTEXT));
+		invitation.append(AGENT_API_PATH);
+		invitation.append(' ');
+		invitation.append(secret);
+		return invitation.toString();
 	}
 
 }

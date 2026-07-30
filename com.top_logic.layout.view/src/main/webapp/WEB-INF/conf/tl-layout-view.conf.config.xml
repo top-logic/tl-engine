@@ -22,6 +22,25 @@
 		</config>
 
 		<!--
+			Deletes access tokens whose validity has run out: they admit nobody, their secret cannot
+			be recovered to revive them, and they would only grow the table their owner reads.
+		-->
+		<config service-class="com.top_logic.util.sched.Scheduler">
+			<instance>
+				<tasks>
+					<task class="com.top_logic.model.search.providers.ScriptTask"
+						name="AccessTokenCleanup"
+					>
+						<script>all(`tl.agent:AccessToken`).filter(token -&gt; $token.get(`tl.agent:AccessToken#expires`) &lt;= now()).delete()</script>
+						<schedules>
+							<daily time-of-day="03:17"/>
+						</schedules>
+					</task>
+				</tasks>
+			</instance>
+		</config>
+
+		<!--
 			Admits an agent that presents an access token its owner issued from a running session
 			(see WEB-INF/views/agent-access.view.xml). With no authenticator registered, only
 			browsers reach the agent endpoint.

@@ -83,8 +83,8 @@ public class AccessTokens {
 	/** Qualified name of the transient type carrying an issued token to the dialog showing it. */
 	public static final String ISSUED_TYPE = "tl.agent:IssuedAccessToken";
 
-	/** Name of the attribute holding the plain secret, on the issued-token carrier. */
-	public static final String SECRET = "secret";
+	/** Name of the attribute holding the invitation, on the issued-token carrier. */
+	public static final String INVITATION = "invitation";
 
 	/** Name of the requested validity in hours, on the issue form input. */
 	public static final String VALID_HOURS = "validHours";

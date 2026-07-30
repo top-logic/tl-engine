@@ -45,7 +45,7 @@
 				<column attribute="expires"/>
 				<column attribute="lastUsed"/>
 			</columns>
-			<rows>all(`tl.agent:AccessToken`).sort(comparator(t -&gt; $t.get(`tl.agent:AccessToken#issued`)).desc())</rows>
+			<rows>all(`tl.agent:AccessToken`).filter(t -&gt; $t.get(`tl.agent:AccessToken#expires`) &gt; now()).sort(comparator(t -&gt; $t.get(`tl.agent:AccessToken#issued`)).desc())</rows>
 		</table>
 	</panel>
 </view>

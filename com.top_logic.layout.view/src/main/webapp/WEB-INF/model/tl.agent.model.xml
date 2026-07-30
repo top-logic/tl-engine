@@ -94,16 +94,16 @@
 			</attributes>
 		</class>
 		<!--
-			Transient-only type carrying an issued token from the issue action to the dialog that
-			displays it. Never persisted: the token itself is stored as a hash, and this instance
-			holds the plain secret only for as long as it is shown.
+			Transient-only type carrying a freshly issued invitation from the issue action to the
+			dialog that displays it. Never persisted: the token itself is stored as a hash, and this
+			instance holds the plain invitation only for as long as it is shown.
 		-->
 		<class name="IssuedAccessToken">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<attributes>
-				<property name="secret"
+				<property name="invitation"
 					type="tl.core:String"
 				/>
 			</attributes>

@@ -67,7 +67,7 @@
 						<column attribute="expires"/>
 						<column attribute="lastUsed"/>
 					</columns>
-					<rows>all(`tl.agent:AccessToken`).filter(t -&gt; $t.get(`tl.agent:AccessToken#owner`) == currentUser()).sort(comparator(t -&gt; $t.get(`tl.agent:AccessToken#issued`)).desc())</rows>
+					<rows>all(`tl.agent:AccessToken`).filter(t -&gt; $t.get(`tl.agent:AccessToken#expires`) &gt; now()).filter(t -&gt; $t.get(`tl.agent:AccessToken#owner`) == currentUser()).sort(comparator(t -&gt; $t.get(`tl.agent:AccessToken#issued`)).desc())</rows>
 				</table>
 			</inset>
 		</panel>

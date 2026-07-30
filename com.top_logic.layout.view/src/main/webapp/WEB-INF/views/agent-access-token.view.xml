@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Displays a freshly issued access token. The token is held by a transient IssuedAccessToken that
-	the issue action hands over; it is shown in an editable field so that it can be selected and
-	copied, which a plain text rendering does not allow. This dialog is the one and only place the
-	token is readable - it is stored as a hash and cannot be recovered.
+	Displays a freshly issued invitation: where the application is, and the token admitting an agent
+	to this session. An agent needs both, so both are copied in one go. The invitation is held by a
+	transient IssuedAccessToken that the issue action hands over; it is shown in an editable field so
+	that it can be selected and copied, which a plain text rendering does not allow. This dialog is
+	the one and only place the token is readable - it is stored as a hash and cannot be recovered.
 -->
 <view>
 	<channels>
@@ -12,8 +13,8 @@
 	</channels>
 	<window width="560px">
 		<title>
-			<en>Access token issued</en>
-			<de>Zugriffstoken ausgestellt</de>
+			<en>Invitation for an agent</en>
+			<de>Einladung f&#252;r einen Agenten</de>
 		</title>
 		<inset>
 			<form
@@ -21,11 +22,11 @@
 				input="model"
 				mode-switch="false"
 			>
-				<field attribute="secret"/>
+				<field attribute="invitation"/>
 				<text>
 					<label>
-						<en>Copy the token now: it is shown this one time and cannot be read again.</en>
-						<de>Kopieren Sie das Token jetzt: Es wird nur dieses eine Mal angezeigt und ist danach nicht mehr lesbar.</de>
+						<en>Copy the invitation now and hand it to the agent: the token in it is shown this one time and cannot be read again.</en>
+						<de>Kopieren Sie die Einladung jetzt und geben Sie sie dem Agenten: Das darin enthaltene Token wird nur dieses eine Mal angezeigt und ist danach nicht mehr lesbar.</de>
 					</label>
 				</text>
 			</form>

@@ -52,11 +52,13 @@ credentials as the `trac` MCP server, resolved in the same order: the
 | `trac_client.py` | Shared Trac XML-RPC connection (env / credentials file / keyring auth). Not run directly. |
 | `trac-milestone.py {get\|create\|update} <name> ...` | Inspect/create/update a Trac milestone (the MCP server cannot create milestones). |
 | `mark-release-tickets.py <milestone> [--apply]` | Set the `relatedmilestones` field on release tickets. Reads ticket IDs from stdin/args. |
+| `check-migration-keywords.py [--all] [--apply]` | Repair the `RequiresMigration` keyword: on the release tickets piped in, and with `--all` project-wide for deprecated spellings. |
 
 ## Process
 
-Run the steps **in this order** — step 3 marks tickets with the milestone, so
-the milestone (step 2) must already exist.
+Run the steps **in this order**: the keyword repair (step 1b) decides which
+tickets the milestone's queries pick up, and step 3 marks tickets with the
+milestone, so the milestone (step 2) must already exist.
 
 ### Step 1 — Pre-release ticket check
 
@@ -111,12 +113,36 @@ Each step needs the ticket's current `_ts` (re-read it after every step, since e
 update bumps it). Put the explanatory comment on the first step only, so a
 multi-step walk does not post the same comment three times.
 
-#### Migration keywords
+### Step 1b — Repair the migration keywords
 
 A ticket whose description has a `== Migration ==` section must carry the
-`RequiresMigration` keyword, or the milestone's migration query (step 2) drops it
-from the release changelog. Cross-check the whole release set — description
-section against keyword — and add the keyword where it is missing.
+`RequiresMigration` keyword, or the milestone's migration query (step 2) drops its
+instructions from the release changelog — silently, since an empty chapter looks
+exactly like a release without migrations. Two ways a ticket falls out, both
+repaired by `check-migration-keywords.py`:
+
+```bash
+# (a) the release set: description section vs. keyword
+.claude/skills/tl-release/scripts/list-release-tickets.sh \
+  | ./.venv/bin/python .claude/skills/tl-release/scripts/check-migration-keywords.py --apply
+
+# (b) project-wide: deprecated spellings, whenever they were introduced
+./.venv/bin/python .claude/skills/tl-release/scripts/check-migration-keywords.py --all --apply
+```
+
+Run **both**. (a) covers this release's tickets; (b) catches a ticket flagged
+`CodeMigration` / `RequiresCodeMigration` / `RequiresDataMigration` in an earlier
+release, whose instructions have been missing from the changelog ever since —
+those tickets get re-flagged and reach the *current* release notes, which is
+better than staying invisible. Both are dry-run without `--apply`.
+
+`MigrationTool` is a different keyword — it marks tickets *about* the migration
+tooling and is left untouched.
+
+The script also warns about the reverse case: a ticket carrying the keyword with no
+`== Migration ==` section. That one it cannot fix — either the description is
+missing its instructions or the keyword does not belong on the ticket. Decide per
+ticket; it does not block the release.
 
 ### Step 2 — Create the release milestone
 

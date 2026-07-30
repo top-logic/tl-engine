@@ -104,6 +104,9 @@ public class ConversationLogReplay {
 		ToolState state;
 
 		if (tc.status() == Part.ToolCallStatus.COMPLETED) {
+			// The log persists a tool result as text, so a replayed result is text-only: an image a
+			// tool showed live is not resent on reload, its caption remains. Deliberate — the
+			// alternative is storing multi-megabyte payloads in every session log.
 			state = new ToolState.Completed(
 				tc.result() != null ? tc.result() : "", now, now, false);
 		} else if (tc.status() == Part.ToolCallStatus.FAILED) {

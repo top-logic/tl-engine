@@ -185,7 +185,8 @@ public class ToolCatalog implements ToolRegistry {
 				UUID.randomUUID().toString(), Instant.now(),
 				toolCall.id(), toolCall.name(),
 				new ToolState.Completed(toolResult.text(), start, end, false,
-					toolResult.summary(), toolResult.truncationHint()));
+					toolResult.summary(), toolResult.truncationHint(),
+					ToolContents.toContentParts(toolResult.content())));
 		} catch (ToolArgumentCoercionException e) {
 			// Thrown while coercing arguments, strictly before the tool method is invoked —
 			// synthetic, must not trigger a rollback.

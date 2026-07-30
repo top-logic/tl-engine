@@ -7,12 +7,15 @@ package com.top_logic.tl.ai.core.provider.chatcompletions;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
+import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ImageContent;
+import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
@@ -26,6 +29,7 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
+import de.haumacher.msgbuf.json.JsonUtil;
 
 /**
  * Tests for {@link ChatCompletionsRequestBuilder}.
@@ -645,5 +649,121 @@ public class TestChatCompletionsRequestBuilder extends TestCase {
 
 			assertEquals(errorMessage, toolResultContent);
 		}
+	}
+
+	/**
+	 * An image a tool returned travels in a follow-up user message.
+	 *
+	 * <p>The {@code tool} role is text-only in this API, and this builder is the only place that has
+	 * to know it — the fallback is local, not a cross-cutting mechanism.</p>
+	 */
+	public void testImageToolResultFallsBackToAUserMessage() throws Exception {
+		String imageUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==";
+
+		List<Object> messages = messages(buildJson(List.of(toolResult("viewDocument", "call_1",
+			"Image content of \"demo.png\" (image/png).",
+			List.of(new TextContent("Image content of \"demo.png\" (image/png)."),
+				new ImageContent(imageUrl, "image/png"))))));
+
+		// user, assistant, tool, user(fallback)
+		assertEquals(4, messages.size());
+
+		Map<String, Object> toolMsg = asMap(messages.get(2));
+		assertEquals("tool", toolMsg.get("role"));
+		assertTrue("The tool message must stay text-only.", toolMsg.get("content") instanceof String);
+		assertTrue(((String) toolMsg.get("content")).contains("demo.png"));
+
+		Map<String, Object> fallback = asMap(messages.get(3));
+		assertEquals("user", fallback.get("role"));
+		List<?> parts = (List<?>) fallback.get("content");
+		assertEquals(2, parts.size());
+		Map<String, Object> intro = asMap(parts.get(0));
+		assertEquals("text", intro.get("type"));
+		assertTrue("The follow-up must name the tool it belongs to.",
+			((String) intro.get("text")).contains("viewDocument"));
+		Map<String, Object> image = asMap(parts.get(1));
+		assertEquals("image_url", image.get("type"));
+		assertEquals(imageUrl, asMap(image.get("image_url")).get("url"));
+	}
+
+	/** The follow-up message comes after <em>all</em> tool messages, so each still answers the call. */
+	public void testFallbackFollowsTheWholeToolResultBatch() throws Exception {
+		String imageUrl = "data:image/png;base64,QQ==";
+
+		List<Object> messages = messages(buildJson(List.of(
+			toolResult("viewDocument", "call_1", "First image.",
+				List.of(new ImageContent(imageUrl, "image/png"))),
+			toolResult("viewDocument", "call_2", "Second image.",
+				List.of(new ImageContent(imageUrl, "image/png"))))));
+
+		// user, assistant, tool, tool, user(one fallback for both)
+		assertEquals(5, messages.size());
+		assertEquals("tool", asMap(messages.get(2)).get("role"));
+		assertEquals("tool", asMap(messages.get(3)).get("role"));
+		assertEquals("user", asMap(messages.get(4)).get("role"));
+		assertEquals("Both images share one follow-up message.",
+			4, ((List<?>) asMap(messages.get(4)).get("content")).size());
+	}
+
+	/** A PDF cannot be delivered by this API at all, so the model is told instead of losing it. */
+	public void testPdfToolResultIsAnnouncedInTheText() throws Exception {
+		List<Object> messages = messages(buildJson(List.of(toolResult("viewDocument", "call_1",
+			"PDF content of \"invoice.pdf\" (1024 bytes).",
+			List.of(new PdfContent("JVBERi0xLjcK", "application/pdf"))))));
+
+		// no follow-up user message: there is nothing this API could put in it
+		assertEquals(3, messages.size());
+		String content = (String) asMap(messages.get(2)).get("content");
+		assertTrue("Expected an explicit note, got: " + content,
+			content.contains("cannot be shown to this model"));
+	}
+
+	/** A text-only tool result is serialized exactly as before. */
+	public void testTextOnlyToolResultIsUnchanged() throws Exception {
+		List<Object> messages =
+			messages(buildJson(List.of(toolResult("get_weather", "call_1", "15 degrees", List.of()))));
+
+		assertEquals(3, messages.size());
+		assertEquals("15 degrees", asMap(messages.get(2)).get("content"));
+	}
+
+	private static ToolResultMessage toolResult(String toolName, String callId, String text,
+			List<ContentPart> content) {
+		return new ToolResultMessage(UUID.randomUUID().toString(), Instant.now(), callId, toolName,
+			new ToolState.Completed(text, Instant.now(), Instant.now(), false, null, -1, content));
+	}
+
+	/** user &#x2192; assistant(tool_calls) &#x2192; the given tool results. */
+	private static String buildJson(List<ToolResultMessage> results) {
+		UserMessage user = new UserMessage(UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("Show me the screenshot.")));
+
+		List<ContentPart> calls = new java.util.ArrayList<>();
+		for (ToolResultMessage result : results) {
+			calls.add(new ToolCall(result.toolCallId(), result.toolName(), "{}"));
+		}
+		AssistantMessage assistant = new AssistantMessage(UUID.randomUUID().toString(), Instant.now(),
+			calls, new TokenUsage(10, 20, 0, 0, 0), "tool_use");
+
+		List<com.top_logic.tl.ai.core.message.Message> history = new java.util.ArrayList<>();
+		history.add(user);
+		history.add(assistant);
+		history.addAll(results);
+
+		return ChatCompletionsRequestBuilder.buildRequestJson(
+			new ProviderRequest("gpt-4o-mini", null, history, List.of(), 256));
+	}
+
+	private static List<Object> messages(String json) throws Exception {
+		@SuppressWarnings("unchecked")
+		List<Object> messages = (List<Object>) asMap(JsonUtil.parseJsonValue(json)).get("messages");
+		assertNotNull(messages);
+		return messages;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Object> asMap(Object value) {
+		assertTrue("Expected a JSON object, got: " + value, value instanceof Map);
+		return (Map<String, Object>) value;
 	}
 }

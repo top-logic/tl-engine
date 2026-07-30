@@ -17,11 +17,15 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.message.ImageContent;
+import com.top_logic.tl.ai.core.message.PdfContent;
+import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolContent;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -347,6 +351,59 @@ public class TestToolCatalog extends TestCase {
 		assertEquals("short summary", completed.summary());
 	}
 
+	/** ToolResult with content parts -> ToolState.Completed carries them as ContentParts. */
+	public void testExecutePropagatesContentParts() {
+		ToolCatalog catalog = new ToolCatalog();
+		Tool multimodal = new Tool() {
+			@Override public String name() { return "viewer"; }
+			@Override public String description() { return "Returns an image"; }
+			@Override public ToolSchema schema() {
+				return new ToolSchema("viewer", "Returns an image", "{\"type\":\"object\",\"properties\":{}}");
+			}
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
+				return ToolResult.multimodal("A screenshot.", new ToolContent.Image("QQ==", "image/png"));
+			}
+			@Override public ToolMode mode() { return ToolMode.READ; }
+		};
+		catalog.register(multimodal);
+
+		ToolResultMessage result = catalog.execute(new ToolCall("call-1", "viewer", "{}"),
+			ToolContext.EMPTY);
+
+		ToolState.Completed completed = (ToolState.Completed) result.state();
+		assertEquals("The text projection stays authoritative.", "A screenshot.", completed.result());
+		assertEquals(2, completed.content().size());
+		assertEquals("A screenshot.", ((TextContent) completed.content().get(0)).text());
+		ImageContent image = (ImageContent) completed.content().get(1);
+		assertEquals("image/png", image.mediaType());
+		assertEquals("data:image/png;base64,QQ==", image.url());
+	}
+
+	/** A text-only tool result carries no content parts, exactly as before. */
+	public void testTextOnlyResultHasNoContentParts() {
+		ToolCatalog catalog = new ToolCatalog();
+		catalog.register(echoTool());
+
+		ToolResultMessage result = catalog.execute(new ToolCall("call-1", "echo", "{\"msg\":\"hi\"}"),
+			ToolContext.EMPTY);
+
+		assertTrue(((ToolState.Completed) result.state()).content().isEmpty());
+	}
+
+	/** An annotated method may return a {@link ToolResult} directly, content and all. */
+	public void testAnnotatedMethodReturningToolResult() {
+		ToolCatalog catalog = new ToolCatalog();
+		catalog.register(new SampleToolProvider());
+
+		ToolResultMessage result = catalog.execute(new ToolCall("call-1", "show", "{}"),
+			ToolContext.EMPTY);
+
+		ToolState.Completed completed = (ToolState.Completed) result.state();
+		assertEquals("A document.", completed.result());
+		assertEquals(2, completed.content().size());
+		assertTrue(completed.content().get(1) instanceof PdfContent);
+	}
+
 	/** ToolResult with truncationHint -> ToolState.Completed carries it. */
 	public void testExecutePropagatesTruncationHint() {
 		ToolCatalog catalog = new ToolCatalog();
@@ -492,6 +549,12 @@ public class TestToolCatalog extends TestCase {
 		@ToolMethod(name = "repeat", description = "Repeats a marker", mode = ToolMode.READ)
 		public String repeat(@P("Number of repetitions") int times) {
 			return "x".repeat(times);
+		}
+
+		@ToolMethod(name = "show", description = "Shows a document", mode = ToolMode.READ)
+		public ToolResult show() {
+			return ToolResult.multimodal("A document.",
+				new ToolContent.Document("JVBERi0=", "application/pdf"));
 		}
 	}
 }

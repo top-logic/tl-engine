@@ -146,16 +146,62 @@ public class ChatCompletionsRequestBuilder {
 			system.put("content", request.systemPrompt());
 			messages.add(system);
 		}
-		for (Message msg : request.messages()) {
+		List<Message> history = request.messages();
+		int i = 0;
+		while (i < history.size()) {
+			Message msg = history.get(i);
 			if (msg instanceof UserMessage user) {
 				messages.add(buildUserMessage(user));
+				i++;
 			} else if (msg instanceof AssistantMessage assistant) {
 				messages.add(buildAssistantMessage(assistant));
-			} else if (msg instanceof ToolResultMessage result) {
-				messages.add(buildToolResultMessage(result));
+				i++;
+			} else if (msg instanceof ToolResultMessage) {
+				// The tool role is text-only in this API (its content-part union has exactly one
+				// member, text), so images a tool returned travel in one follow-up user message.
+				// It is emitted after the whole batch of tool results, because a tool message must
+				// answer the immediately preceding assistant tool_calls. Unlike Bedrock Converse,
+				// Chat Completions has no role-alternation rule, so a trailing user message is fine.
+				List<Object> attachments = new ArrayList<>();
+				while (i < history.size() && history.get(i) instanceof ToolResultMessage result) {
+					messages.add(buildToolResultMessage(result));
+					collectImageParts(result, attachments);
+					i++;
+				}
+				if (!attachments.isEmpty()) {
+					Map<String, Object> fallback = new LinkedHashMap<>();
+					fallback.put("role", "user");
+					fallback.put("content", attachments);
+					messages.add(fallback);
+				}
+			} else {
+				i++;
 			}
 		}
 		return messages;
+	}
+
+	/**
+	 * Appends the images of a tool result to the content of the follow-up user message, introduced by
+	 * a line naming the tool they came from.
+	 */
+	private static void collectImageParts(ToolResultMessage result, List<Object> attachments) {
+		if (!(result.state() instanceof ToolState.Completed completed)) {
+			return;
+		}
+		boolean introduced = false;
+		for (ContentPart part : completed.content()) {
+			if (part instanceof ImageContent image) {
+				if (!introduced) {
+					attachments.add(Map.of("type", "text",
+						"text", "Image content returned by tool '" + result.toolName() + "':"));
+					introduced = true;
+				}
+				Map<String, Object> imageUrlObj = new LinkedHashMap<>();
+				imageUrlObj.put("url", image.url());
+				attachments.add(Map.of("type", "image_url", "image_url", imageUrlObj));
+			}
+		}
 	}
 
 	private static Map<String, Object> buildUserMessage(UserMessage user) {
@@ -174,8 +220,12 @@ public class ChatCompletionsRequestBuilder {
 					Map<String, Object> imageUrlObj = new LinkedHashMap<>();
 					imageUrlObj.put("url", image.url());
 					parts.add(Map.of("type", "image_url", "image_url", imageUrlObj));
+				} else if (part instanceof PdfContent) {
+					// This API has no document part: say so rather than dropping it without a trace.
+					parts.add(Map.of("type", "text", "text",
+						"[A PDF document was attached but cannot be shown to this model: "
+							+ "its API accepts no documents.]"));
 				}
-				// PdfContent triggers array mode but is not serialized itself.
 			}
 			msg.put("content", parts);
 		} else {
@@ -225,11 +275,18 @@ public class ChatCompletionsRequestBuilder {
 		return msg;
 	}
 
+	/**
+	 * Builds the {@code {"role": "tool"}} message, whose content is always plain text here.
+	 *
+	 * <p>A PDF a tool returned cannot be delivered by this API at all — neither in the tool message
+	 * (text-only) nor in a user message (which takes text, images and audio, not documents) — so the
+	 * model is told about it in the result text instead of losing it silently.</p>
+	 */
 	private static Map<String, Object> buildToolResultMessage(ToolResultMessage result) {
 		String content;
 		ToolState state = result.state();
 		if (state instanceof ToolState.Completed c) {
-			content = c.result();
+			content = c.result() + unsupportedDocumentNote(c.content());
 		} else if (state instanceof ToolState.Failed f) {
 			content = f.error();
 		} else {
@@ -242,6 +299,23 @@ public class ChatCompletionsRequestBuilder {
 		msg.put("name", result.toolName());
 		msg.put("content", content);
 		return msg;
+	}
+
+	/**
+	 * The note appended to a tool result whose documents this API cannot carry, or the empty string.
+	 */
+	private static String unsupportedDocumentNote(List<ContentPart> content) {
+		int documents = 0;
+		for (ContentPart part : content) {
+			if (part instanceof PdfContent) {
+				documents++;
+			}
+		}
+		if (documents == 0) {
+			return "";
+		}
+		return "\n\n[" + (documents == 1 ? "A PDF document was" : documents + " PDF documents were")
+			+ " produced but cannot be shown to this model: its API accepts no documents.]";
 	}
 
 	// --- Utilities ---

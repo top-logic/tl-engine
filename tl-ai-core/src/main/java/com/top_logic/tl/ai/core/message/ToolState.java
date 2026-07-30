@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.message;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -53,9 +54,14 @@ public sealed interface ToolState
 	 * @param compacted      true if the result was cleared during context compaction
 	 * @param summary        optional compact summary for compaction, or {@code null}
 	 * @param truncationHint per-tool max chars before truncation, or {@code -1} for global default
+	 * @param content        the parts the model perceives instead of {@code result}, or empty for a
+	 *                       text-only result. Providers that support non-text content inside a tool
+	 *                       result render these natively; {@code result} stays the text-only
+	 *                       projection used for logging, compaction and token accounting
 	 */
 	record Completed(String result, Instant startTime, Instant endTime,
-			boolean compacted, String summary, int truncationHint) implements ToolState {
+			boolean compacted, String summary, int truncationHint,
+			List<ContentPart> content) implements ToolState {
 
 		/**
 		 * Convenience constructor for call sites that do not supply summary or truncation hint.
@@ -64,11 +70,20 @@ public sealed interface ToolState
 			this(result, startTime, endTime, compacted, null, -1);
 		}
 
+		/**
+		 * Convenience constructor for a text-only result.
+		 */
+		public Completed(String result, Instant startTime, Instant endTime, boolean compacted,
+				String summary, int truncationHint) {
+			this(result, startTime, endTime, compacted, summary, truncationHint, List.of());
+		}
+
 		/** */
 		public Completed {
 			Objects.requireNonNull(result, "Result must not be null.");
 			Objects.requireNonNull(startTime, "Start time must not be null.");
 			Objects.requireNonNull(endTime, "End time must not be null.");
+			content = content == null ? List.of() : List.copyOf(content);
 		}
 	}
 

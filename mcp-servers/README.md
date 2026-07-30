@@ -43,6 +43,14 @@ uv tool upgrade tl-dev-mcp      # or: pipx upgrade tl-dev-mcp
 The servers are installed and registered once per machine, so an update applies
 to every checkout and worktree at once.
 
+## Release tooling
+
+The package also installs the `tl-release` command and the `tl-release` skill,
+which perform the Trac bookkeeping of a TopLogic release (closing the release
+tickets, the milestone and its changelog queries, the `relatedmilestones`
+marking, the migration keywords). Run them from the engine checkout that is
+being released; upgrade the package to pick them up.
+
 See the package repository's `README.md` for full documentation (credential
 resolution order, service URLs, project-scoped `.mcp.json` as an alternative to
 global registration, troubleshooting, and development setup).

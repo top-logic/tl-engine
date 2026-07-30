@@ -10,12 +10,14 @@ import java.util.Date;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -71,11 +73,50 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<FieldControlService> {
 
+		/** Property name of {@link #getValueTypeProviders()}. */
+		String VALUE_TYPE_PROVIDERS = "value-type-providers";
+
 		/**
 		 * Global type-to-provider mappings keyed by model type reference.
 		 */
 		@Key(ProviderMapping.TYPE)
 		Map<TLModelPartRef, ProviderMapping> getProviders();
+
+		/**
+		 * The controls editing values of a plain Java type.
+		 *
+		 * <p>
+		 * A configuration property may hold a kind of value that no model type describes, a TL-Script
+		 * expression for instance. Such a value is edited by the control named here, so declaring it
+		 * once covers every configuration property holding that kind of value.
+		 * </p>
+		 */
+		@Name(VALUE_TYPE_PROVIDERS)
+		@EntryTag("provider")
+		List<ValueTypeMapping> getValueTypeProviders();
+
+	}
+
+	/**
+	 * A control editing the values of one Java type.
+	 */
+	public interface ValueTypeMapping extends ConfigurationItem {
+
+		/** Property name of {@link #getValueType()}. */
+		String VALUE_TYPE = "value-type";
+
+		/**
+		 * The type of the edited value.
+		 */
+		@Name(VALUE_TYPE)
+		@Mandatory
+		Class<?> getValueType();
+
+		/**
+		 * The control editing values of the type.
+		 */
+		@Mandatory
+		PolymorphicConfiguration<? extends ReactFieldControlProvider> getImpl();
 
 	}
 
@@ -141,6 +182,11 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 					publish(type, provider);
 				}
 			}
+		}
+
+		for (ValueTypeMapping mapping : getConfig().getValueTypeProviders()) {
+			FieldControlRegistry.getInstance()
+				.register(mapping.getValueType(), _context.getInstance(mapping.getImpl()));
 		}
 	}
 

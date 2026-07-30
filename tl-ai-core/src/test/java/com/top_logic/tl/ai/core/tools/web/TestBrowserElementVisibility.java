@@ -293,7 +293,8 @@ public class TestBrowserElementVisibility extends TestCase {
 	/** Opens a fixture session with the given settle cap (ms); {@code 0} disables the settle. */
 	private static BrowserSession open(int settleMillis) {
 		return BrowserSession.open("visibility-" + settleMillis, TIMEOUT_MILLIS,
-			BrowserSession.DEFAULT_ACTION_TIMEOUT_MILLIS, settleMillis, ALLOW_ANY, null, false, false);
+			BrowserSession.DEFAULT_ACTION_TIMEOUT_MILLIS, settleMillis, ALLOW_ANY, null, false, false,
+			null);
 	}
 
 	private static String refWithName(List<InteractiveElement> elements, String name) {

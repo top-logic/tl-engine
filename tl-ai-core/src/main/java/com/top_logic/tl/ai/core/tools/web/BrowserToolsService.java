@@ -65,13 +65,23 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * <p>
  * The allowlist, blocklist and allow-any flag are policy configuration owned by the
  * administrator - not model-supplied arguments. The default (allowlist-enforced, allow-any off)
- * is safe-by-default: an empty allowlist with allow-any off refuses every navigation. The SSRF and
- * domain policy is enforced by a per-context request route, so it holds for every session
- * independently.
+ * is safe-by-default: an empty allowlist with allow-any off refuses every navigation.
+ * </p>
+ *
+ * <p>
+ * <b>Where the policy is enforced.</b> The authoritative layer is a single service-wide
+ * {@link FilteringProxy} on the loopback interface that <em>every</em> browser session is pinned to:
+ * every connection Chromium makes - top-level navigation, redirect hop, sub-resource, IP-literal
+ * target - is checked there before a packet leaves the machine, and the destination is DNS-pinned so a
+ * rebinding host cannot slip through. One proxy suffices because the allowlist, blocklist and
+ * allow-any flag are <em>service</em> configuration, identical for every session; nothing about the
+ * decision varies per session. Inside each browser the same policy is applied again by a per-context
+ * request route, plus a redirect guard and a final-URL re-validation, which is what turns a refusal
+ * into the tool's clean policy message.
  * </p>
  */
 public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsService.Config<?>>
-		implements BrowserSession.DomainPolicy {
+		implements BrowserSession.DomainPolicy, FilteringProxy.RequestPolicy {
 
 	/**
 	 * Configuration of {@link BrowserToolsService}.
@@ -133,6 +143,13 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		 * @see #isAllowAnyDomain()
 		 */
 		String ALLOW_ANY_DOMAINS = "allow-any-domains";
+
+		/**
+		 * Configuration property name for the allowlist-governs-every-request flag.
+		 *
+		 * @see #isApplyAllowlistToAllRequests()
+		 */
+		String APPLY_ALLOWLIST_TO_ALL_REQUESTS = "apply-allowlist-to-all-requests";
 
 		/**
 		 * Configuration property name for the bot-detection evasion flag.
@@ -316,6 +333,35 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		boolean isAllowAnyDomain();
 
 		/**
+		 * Whether the {@link #getAllowedDomains() allowlist} governs <b>every</b> connection the
+		 * browser makes, rather than only the top-level document origin.
+		 *
+		 * <p>
+		 * The allowlist has always been a <em>top-level-origin</em> control: an allowlisted page may
+		 * pull in sub-resources (fonts, scripts, images from a CDN) from anywhere that is neither
+		 * SSRF-blocked nor blocklisted, exactly as an ordinary browser would. {@code false} (the
+		 * default) preserves that: the filtering proxy enforces SSRF and the blocklist for every
+		 * connection, and the allowlist keeps being enforced for the top-level origin only.
+		 * </p>
+		 *
+		 * <p>
+		 * Set to {@code true} for a locked-down installation whose intent is "this browser may talk to
+		 * these domains and nothing else": the proxy then refuses <em>any</em> connection to a host
+		 * that is not on the allowlist, sub-resources included. That is strictly safer - it also stops
+		 * an allowlisted page from beaconing to a third party - but a page whose assets live on other
+		 * domains will render without them, so it is an explicit operator decision rather than the
+		 * default. It has no effect when {@link #isAllowAnyDomain() allow-any} is enabled (there is no
+		 * allowlist to apply), and it can never relax anything: SSRF and the blocklist apply to every
+		 * connection in both settings.
+		 * </p>
+		 *
+		 * @see #APPLY_ALLOWLIST_TO_ALL_REQUESTS
+		 */
+		@Name(APPLY_ALLOWLIST_TO_ALL_REQUESTS)
+		@BooleanDefault(false)
+		boolean isApplyAllowlistToAllRequests();
+
+		/**
 		 * Whether the browser should disguise its automation fingerprint so bot-protection walls are
 		 * less likely to serve it an access-denied / challenge page (off by default).
 		 *
@@ -440,6 +486,17 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	private volatile BrowserSessionPool<BrowserSession> _pool;
 
 	/**
+	 * The single service-wide filtering forward proxy every browser session is pinned to.
+	 *
+	 * <p>
+	 * Service-scoped rather than session-scoped because the policy it applies - SSRF plus the
+	 * administrator allowlist/blocklist/allow-any configuration - is service configuration that does
+	 * not vary per session. One listener, one thread pool, one place the policy lives.
+	 * </p>
+	 */
+	private volatile FilteringProxy _proxy;
+
+	/**
 	 * The {@code storageState} JSON to seed into the next (re)created session for a key, set by
 	 * {@link #seedSession(Object, String)} when a cookie pool is selected.
 	 *
@@ -484,13 +541,17 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 				+ "host has no local display for a browser window. Set headless=true for this environment.");
 		}
 		boolean evadeBotDetection = isEvadeBotDetection();
+		// Start the outbound filter BEFORE any session can exist: an unproxied browser would not be
+		// bound by the policy for redirects and IP-literal targets.
+		_proxy = FilteringProxy.start(this);
+		String proxyServer = _proxy.serverUrl();
 		_pool = new BrowserSessionPool<>(
 			getMaxConcurrentSessions(),
 			getSessionIdleTimeoutSeconds() * 1000L,
 			getAcquireTimeoutSeconds() * 1000L,
 			System::nanoTime,
 			key -> BrowserSession.open(key, navigationTimeoutMillis, actionTimeoutMillis,
-				navigationSettleMillis, this, _seedByKey.get(key), headed, evadeBotDetection),
+				navigationSettleMillis, this, _seedByKey.get(key), headed, evadeBotDetection, proxyServer),
 			BrowserSession::close);
 		// State the EFFECTIVE limits, not the configured ones: they are clamped, and an operator
 		// investigating "the cap is not being honoured" needs to be able to rule out a configuration
@@ -499,7 +560,10 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 			+ " concurrent live browser session(s), page-load timeout " + getNavigationTimeoutSeconds()
 			+ " s, action timeout " + getActionTimeoutSeconds() + " s, settle cap "
 			+ getNavigationSettleMillis() + " ms, acquire timeout " + getAcquireTimeoutSeconds()
-			+ " s, idle timeout " + getSessionIdleTimeoutSeconds() + " s.", BrowserToolsService.class);
+			+ " s, idle timeout " + getSessionIdleTimeoutSeconds() + " s. Every browser connection is "
+			+ "filtered through " + proxyServer
+			+ (isApplyAllowlistToAllRequests() ? " (allowlist governs every request)." : "."),
+			BrowserToolsService.class);
 		_instance = this;
 	}
 
@@ -511,6 +575,13 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		_pool = null;
 		if (pool != null) {
 			pool.close();
+		}
+		// Close the proxy only after every session is gone, so no live browser is left pointing at a
+		// listener that has stopped answering.
+		FilteringProxy proxy = _proxy;
+		_proxy = null;
+		if (proxy != null) {
+			proxy.close();
 		}
 		super.shutDown();
 	}
@@ -687,6 +758,46 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 			return true;
 		}
 		return isAllowedDomain(host);
+	}
+
+	/**
+	 * Whether the allowlist governs every connection rather than only the top-level origin.
+	 *
+	 * @see Config#isApplyAllowlistToAllRequests()
+	 */
+	public boolean isApplyAllowlistToAllRequests() {
+		return getConfig().isApplyAllowlistToAllRequests();
+	}
+
+	/**
+	 * The domain-policy verdict the {@link FilteringProxy} applies to <b>every</b> outbound connection
+	 * of every session.
+	 *
+	 * <p>
+	 * The blocklist applies unconditionally here - a host the administrator has ruled out must not be
+	 * contacted for a sub-resource either, and refusing more than the top-level check does can only
+	 * ever tighten the policy. The allowlist is consulted only when
+	 * {@link #isApplyAllowlistToAllRequests()} is set, because it is defined as a top-level-origin
+	 * control (see that flag) and the proxy cannot tell a main document from a sub-resource: applying
+	 * it to everything unasked would silently change the documented semantics. SSRF is not decided
+	 * here at all - the proxy enforces it unconditionally through {@link UrlSafety}, so no
+	 * configuration reachable from this method can relax it.
+	 * </p>
+	 *
+	 * @param host
+	 *        The destination host of the connection.
+	 * @return The refusal reason, or {@code null} when the domain policy permits the connection.
+	 */
+	@Override
+	public String refuseRequest(String host) {
+		if (isBlockedDomain(host)) {
+			return "the domain '" + host + "' is on the browser blocklist configured by the administrator.";
+		}
+		if (isApplyAllowlistToAllRequests() && !isAllowAnyDomain() && !isAllowedDomain(host)) {
+			return "the domain '" + host + "' is not on the browser allowlist configured by the "
+				+ "administrator.";
+		}
+		return null;
 	}
 
 	/**
@@ -948,6 +1059,14 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	 */
 	Object evaluateForTest(Object sessionKey, String js) {
 		return runOnSession(sessionKey, session -> session.evaluateForTest(js));
+	}
+
+	/**
+	 * The service-wide filtering forward proxy, or {@code null} when the service is not started.
+	 * Package-visible so a test can assert what the proxy refused.
+	 */
+	FilteringProxy proxyForTest() {
+		return _proxy;
 	}
 
 	/**

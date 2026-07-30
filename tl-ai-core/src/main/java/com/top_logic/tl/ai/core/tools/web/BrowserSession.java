@@ -28,6 +28,7 @@ import com.microsoft.playwright.Request;
 import com.microsoft.playwright.Response;
 import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.Proxy;
 import com.microsoft.playwright.options.WaitUntilState;
 
 import com.top_logic.basic.Logger;
@@ -58,11 +59,20 @@ import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.ScreenshotCapture;
  * <p>
  * Every call is submitted to the session thread with a hard outer deadline so a hung page can
  * never pin its slot indefinitely; on timeout the session is considered broken and torn down by
- * the pool. SSRF and the domain policy are enforced by a per-context request route, so every
- * request the context issues - main document and sub-resources alike - is refused before it leaves
- * the process; a top-level hop reached by a <em>server-side redirect</em> (which Playwright's routing
- * cannot intercept) is caught immediately afterwards by {@link #installRedirectGuard} plus the
- * final-URL re-validation, so no off-policy page is ever handed to the agent.
+ * the pool.
+ * </p>
+ *
+ * <p>
+ * <b>Security layering.</b> The outermost and authoritative layer is a filtering forward proxy
+ * ({@link FilteringProxy}) the browser is pinned to via {@code --proxy-server}: every connection
+ * Chromium makes - top-level navigation, redirect hop, sub-resource, IP-literal target - is
+ * SSRF-checked and policy-checked there <em>before a packet leaves the machine</em>. Inside the
+ * browser the same policy is applied again by a per-context request route, so an off-policy request
+ * is refused before it even leaves the process; and a top-level hop reached by a <em>server-side
+ * redirect</em> (which Playwright's routing cannot intercept) is recorded by
+ * {@link #installRedirectGuard} and, with the final-URL re-validation, fails the operation - which is
+ * what turns the proxy's refusal into the tool's own clean policy message. So no off-policy origin is
+ * ever contacted, and no off-policy page is ever handed to the agent.
  * </p>
  *
  * <p>
@@ -351,6 +361,18 @@ final class BrowserSession {
 	/** When {@code true} the context is disguised as ordinary desktop Chrome (operator opt-in). */
 	private final boolean _evadeBotDetection;
 
+	/**
+	 * The {@code --proxy-server} value of the filtering forward proxy every connection of this
+	 * session must traverse, or {@code null} for an unconstrained browser.
+	 *
+	 * <p>
+	 * {@code null} only occurs in tests that exercise a browser mechanism with no network at all (a
+	 * {@code setContent} fixture); {@code BrowserToolsService} always pins its sessions to the
+	 * service-wide {@link FilteringProxy}.
+	 * </p>
+	 */
+	private final String _proxyServer;
+
 	private final ExecutorService _executor;
 
 	private volatile Playwright _playwright;
@@ -401,7 +423,7 @@ final class BrowserSession {
 
 	private BrowserSession(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
 			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
-			boolean evadeBotDetection) {
+			boolean evadeBotDetection, String proxyServer) {
 		_key = key;
 		_navigationTimeoutMillis = navigationTimeoutMillis;
 		_actionTimeoutMillis = actionTimeoutMillis;
@@ -410,6 +432,7 @@ final class BrowserSession {
 		_initialStorageState = initialStorageState;
 		_headed = headed;
 		_evadeBotDetection = evadeBotDetection;
+		_proxyServer = proxyServer;
 		_executor = Executors.newSingleThreadExecutor(runnable -> {
 			Thread thread = new Thread(runnable, "browser-session");
 			thread.setDaemon(true);
@@ -431,7 +454,7 @@ final class BrowserSession {
 	 */
 	static BrowserSession open(Object key, int navigationTimeoutMillis, DomainPolicy policy) {
 		return open(key, navigationTimeoutMillis, DEFAULT_ACTION_TIMEOUT_MILLIS, 1500, policy, null, false,
-			false);
+			false, null);
 	}
 
 	/**
@@ -457,7 +480,7 @@ final class BrowserSession {
 	static BrowserSession open(Object key, int navigationTimeoutMillis, int navigationSettleMillis,
 			DomainPolicy policy, String initialStorageState, boolean headed, boolean evadeBotDetection) {
 		return open(key, navigationTimeoutMillis, DEFAULT_ACTION_TIMEOUT_MILLIS, navigationSettleMillis,
-			policy, initialStorageState, headed, evadeBotDetection);
+			policy, initialStorageState, headed, evadeBotDetection, null);
 	}
 
 	/**
@@ -494,13 +517,17 @@ final class BrowserSession {
 	 *        the {@code --disable-blink-features=AutomationControlled} launch switch, set a realistic
 	 *        Chrome user-agent/locale, and install a fingerprint-masking init script. When
 	 *        {@code false} the behaviour is byte-for-byte the plain headless-shell default.
+	 * @param proxyServer
+	 *        The {@code --proxy-server} value of the {@link FilteringProxy} every connection of this
+	 *        session must traverse, or {@code null} for an unconstrained browser. Production sessions
+	 *        are always pinned (see {@link #_proxyServer}).
 	 * @return A started session.
 	 */
 	static BrowserSession open(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
 			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
-			boolean evadeBotDetection) {
+			boolean evadeBotDetection, String proxyServer) {
 		BrowserSession session = new BrowserSession(key, navigationTimeoutMillis, actionTimeoutMillis,
-			navigationSettleMillis, policy, initialStorageState, headed, evadeBotDetection);
+			navigationSettleMillis, policy, initialStorageState, headed, evadeBotDetection, proxyServer);
 		try {
 			session.startOnThread();
 		} catch (RuntimeException ex) {
@@ -542,13 +569,31 @@ final class BrowserSession {
 	 * wherever {@code evade-bot-detection} may be turned on.
 	 * </p>
 	 *
+	 * <p>
+	 * <b>Proxy pinning.</b> When a {@code proxyServer} is given it is set as the launch-level
+	 * {@link BrowserType.LaunchOptions#setProxy(com.microsoft.playwright.options.Proxy) proxy}, which
+	 * Playwright turns into Chromium's {@code --proxy-server} switch, so <em>every</em> connection the
+	 * browser process makes goes through the {@link FilteringProxy}. Launch level rather than
+	 * per-context because the SSRF and domain policy is service-wide configuration, and because
+	 * Chromium's per-context proxy support requires the browser to be launched with a placeholder
+	 * proxy anyway - each session has its own browser process, so launch level is per-session in
+	 * practice. Playwright additionally passes {@code --proxy-bypass-list=<-loopback>}, which
+	 * <em>disables</em> Chromium's built-in "never proxy localhost" rule; without that a loopback
+	 * target would evade the proxy entirely, so it is load-bearing here rather than incidental. The
+	 * proxy setting is orthogonal to both the headless toggle and the channel/evasion selection.
+	 * </p>
+	 *
 	 * @param headed
 	 *        Whether to launch a visible window (headed launch toggle) instead of headless.
 	 * @param evadeBotDetection
 	 *        Whether bot-detection evasion is enabled (selects the full Chromium build).
+	 * @param proxyServer
+	 *        The filtering forward proxy to pin the browser to (e.g. {@code http://127.0.0.1:41234}),
+	 *        or {@code null} to leave the browser unproxied.
 	 * @return The launch options; never {@code null}.
 	 */
-	static BrowserType.LaunchOptions buildLaunchOptions(boolean headed, boolean evadeBotDetection) {
+	static BrowserType.LaunchOptions buildLaunchOptions(boolean headed, boolean evadeBotDetection,
+			String proxyServer) {
 		// /dev/shm is only 64 MB in the default Docker sandbox; without this Chromium crashes
 		// under memory pressure. Harmless on a normal host.
 		List<String> launchArgs = new ArrayList<>(List.of("--disable-dev-shm-usage", "--no-sandbox"));
@@ -560,6 +605,11 @@ final class BrowserSession {
 		BrowserType.LaunchOptions options = new BrowserType.LaunchOptions()
 			.setHeadless(!headed)
 			.setArgs(launchArgs);
+		if (proxyServer != null && !proxyServer.isBlank()) {
+			// Constrain the browser from OUTSIDE the routing API: every connection - including a
+			// redirect hop, which a route cannot cancel - has to pass the filtering proxy first.
+			options.setProxy(new Proxy(proxyServer));
+		}
 		if (evadeBotDetection) {
 			// Select the FULL Chromium build (new headless) instead of the detectable
 			// chrome-headless-shell. DEPLOYMENT PREREQUISITE: the full build must be installed
@@ -574,12 +624,13 @@ final class BrowserSession {
 		callOnThread(() -> {
 			_playwright = Playwright.create();
 			BrowserType chromium = _playwright.chromium();
-			_browser = chromium.launch(buildLaunchOptions(_headed, _evadeBotDetection));
+			_browser = chromium.launch(buildLaunchOptions(_headed, _evadeBotDetection, _proxyServer));
 			_context = _browser.newContext(newContextOptions());
 			_context.setDefaultTimeout(_navigationTimeoutMillis);
 			_context.setDefaultNavigationTimeout(_navigationTimeoutMillis);
 			installSecurityRoute(_context);
 			installRedirectGuard(_context);
+			installProxyRefusalGuard(_context);
 			if (_evadeBotDetection) {
 				// Mask the automation fingerprint before any page script runs (applies to every
 				// document in the context, including the initial about:blank page created below).
@@ -588,6 +639,8 @@ final class BrowserSession {
 			_page = _context.newPage();
 			Logger.info("Opened isolated " + (_headed ? "headed" : "headless") + " browser session " + _key
 				+ (_evadeBotDetection ? " (bot-detection evasion on)" : "")
+				+ (_proxyServer == null ? " (UNPROXIED - no outbound filtering)"
+					: " (filtered through " + _proxyServer + ")")
 				+ (_initialStorageState == null ? "." : " (seeded with a saved cookie pool)."),
 				BrowserSession.class);
 			return null;
@@ -915,6 +968,16 @@ final class BrowserSession {
 	}
 
 	/**
+	 * The message reported when the {@link FilteringProxy} refused the navigation outright, so the
+	 * request never left the machine.
+	 */
+	private static String refusedByPolicyMessage(String reason) {
+		return "Navigation was refused by the browser security policy before the request left the "
+			+ "machine: " + reason + " The page was NOT loaded. Stay on a permitted, public origin, or "
+			+ "report that this source is not reachable.";
+	}
+
+	/**
 	 * The message reported when a navigation was refused by the domain policy. Deliberately names the
 	 * policy as a whole rather than one list: {@link DomainPolicy} answers only whether a host is
 	 * permitted, so which of the blocklist or the allowlist refused it is not knowable here (unlike in
@@ -1126,12 +1189,14 @@ final class BrowserSession {
 	 * </p>
 	 *
 	 * <p>
-	 * <b>Residual limit.</b> The redirected request itself is still issued by the browser before
-	 * anything can observe it. Blocking a redirect hop before it leaves the process is not expressible
-	 * with Playwright's routing API; it needs the browser to be constrained from outside (a filtering
-	 * forward proxy, or Chromium host-resolver rules). Until then a server on a permitted origin can
-	 * still make the browser send one request to an origin the policy forbids - it just cannot hand the
-	 * resulting page to the agent.
+	 * <b>What this layer does and does not do.</b> The redirected request is still <em>issued</em> by
+	 * the browser before anything in-process can observe it - blocking it there is not expressible with
+	 * Playwright's routing API at all. That is why the browser is additionally constrained from
+	 * outside: the request goes to the {@link FilteringProxy}, which refuses a forbidden destination
+	 * before a packet leaves the machine. This listener is what translates that refusal into the tool's
+	 * vocabulary - it records the off-policy hop so {@link #verifyNavigationPolicy} names the origin
+	 * that was refused instead of surfacing the proxy's {@code 403} (or the tunnel failure) as a
+	 * network error - and it independently fails a chain that ends back on a permitted origin.
 	 * </p>
 	 */
 	private void installRedirectGuard(BrowserContext context) {
@@ -1160,6 +1225,44 @@ final class BrowserSession {
 			}
 			if (!_policy.isNavigationPermitted(uri.getHost())) {
 				recordOffPolicyNavigation(uri, null);
+			}
+		});
+	}
+
+	/**
+	 * Installs a response listener that turns a refusal by the {@link FilteringProxy} into the tool's
+	 * own policy message.
+	 *
+	 * <p>
+	 * The proxy answers a refused request with a {@code 403}, which is an entirely ordinary response as
+	 * far as the browser is concerned: for a <em>top-level</em> request it commits as the document, so
+	 * without this the agent would be handed the proxy's own refusal page as if it were the content of
+	 * the site it asked for. Recognising the {@link FilteringProxy#REFUSAL_HEADER} marker instead lets
+	 * {@link #verifyNavigationPolicy} fail the operation with the reason the proxy gave.
+	 * </p>
+	 *
+	 * <p>
+	 * Belt-and-braces rather than the primary path: the proxy only ever refuses a main-frame navigation
+	 * that {@link #installSecurityRoute the route} or {@link #installRedirectGuard the redirect guard}
+	 * also refuses, so in practice the reason is already recorded by the time this fires. It exists so
+	 * that a future divergence between the two layers surfaces as a clean policy error rather than as
+	 * proxy HTML masquerading as page content. Only main-frame responses are recorded: a refused
+	 * sub-resource is a missing asset, not a failed operation - exactly as an aborted sub-resource
+	 * request has always been.
+	 * </p>
+	 */
+	private void installProxyRefusalGuard(BrowserContext context) {
+		context.onResponse(response -> {
+			String reason = response.headers().get(FilteringProxy.REFUSAL_HEADER);
+			if (reason == null || reason.isBlank()) {
+				return;
+			}
+			Request request = response.request();
+			if (!request.isNavigationRequest() || request.frame().parentFrame() != null) {
+				return;
+			}
+			if (_offPolicyNavigation == null) {
+				_offPolicyNavigation = refusedByPolicyMessage(reason);
 			}
 		});
 	}

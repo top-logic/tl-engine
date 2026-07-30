@@ -74,9 +74,29 @@
 			     every navigation is refused. The spike default allowlists the JS-heavy
 			     validation target used by the tests.
 
+			     WHERE this is enforced: the service runs one filtering forward proxy on an
+			     ephemeral loopback port and pins every browser session to it (via Chromium's
+			     proxy-server switch). EVERY connection the browser makes - top-level navigation,
+			     redirect hop, sub-resource, and IP-literal target such as the cloud-metadata
+			     address - is checked before a packet leaves the machine, and the destination is
+			     DNS-pinned so a rebinding host cannot slip through. Nothing to configure; the
+			     proxy is not reachable from outside the host. The same policy is applied a second
+			     time inside the browser (request route, redirect guard, final-URL re-validation),
+			     which is what turns a refusal into a clean, actionable tool error.
+
 			     allowed-domains / blocked-domains: comma-separated; may be combined (the
 			     blocklist carves exceptions out of the allowlist). allow-any-domains="true"
 			     disables ONLY the allowlist; SSRF and the blocklist remain enforced.
+
+			     apply-allowlist-to-all-requests: whether the allowlist governs EVERY connection
+			     rather than only the top-level document origin. false (the default) keeps the
+			     documented behaviour - an allowlisted page may load sub-resources (CDN fonts,
+			     scripts, images) from elsewhere, as an ordinary browser would, while SSRF and the
+			     blocklist still apply to every connection. true is for a locked-down installation
+			     whose intent is "this browser talks to these domains and nothing else": it also
+			     stops an allowlisted page from beaconing to a third party, at the cost of pages
+			     rendering without off-allowlist assets. No effect when allow-any-domains is true;
+			     it can never relax anything.
 
 			     Concurrency: each agent session gets its own isolated browser context, reused
 			     across the tool calls of a run. max-concurrent-sessions caps the number of live
@@ -129,6 +149,7 @@
 				allowed-domains="quotes.toscrape.com"
 				blocked-domains=""
 				allow-any-domains="false"
+				apply-allowlist-to-all-requests="false"
 				max-concurrent-sessions="4"
 				session-idle-timeout-seconds="300"
 				acquire-timeout-seconds="10"

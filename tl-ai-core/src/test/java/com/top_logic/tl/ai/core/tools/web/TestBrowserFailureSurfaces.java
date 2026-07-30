@@ -227,7 +227,7 @@ public class TestBrowserFailureSurfaces extends TestCase {
 			return;
 		}
 		BrowserSession session = BrowserSession.open("dead-click", TIMEOUT_MILLIS, ACTION_TIMEOUT_MILLIS,
-			0, ALLOW_ANY, null, false, false);
+			0, ALLOW_ANY, null, false, false, null);
 		try {
 			PageView view = session.loadHtmlForTest(COVERED_BUTTON_FIXTURE);
 			String ref = refWithName(view, "Search");
@@ -262,7 +262,7 @@ public class TestBrowserFailureSurfaces extends TestCase {
 			return;
 		}
 		BrowserSession session = BrowserSession.open("dead-click-recovery", TIMEOUT_MILLIS,
-			ACTION_TIMEOUT_MILLIS, 0, ALLOW_ANY, null, false, false);
+			ACTION_TIMEOUT_MILLIS, 0, ALLOW_ANY, null, false, false, null);
 		try {
 			PageView view = session.loadHtmlForTest(COVERED_BUTTON_FIXTURE
 				.replace("<button id='target'", "<button id='target' onclick=\"document.title='clicked'\""));

@@ -1459,6 +1459,7 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 						<tools>
 							<tool name="user-interaction.askUser"/>
 							<tool name="model-browser.outlineModel"/>
+							<tool name="view-document.viewDocument"/>
 						</tools>
 						<skills>
 							<skill name="TL_annotationEditing"/>

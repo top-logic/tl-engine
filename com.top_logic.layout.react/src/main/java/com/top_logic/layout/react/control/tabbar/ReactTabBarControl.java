@@ -117,7 +117,6 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		if (getState(ACTIVE_CONTENT) == null) {
 			ReactControl activeContent = getOrCreateContent(_activeTabId);
 			putState(ACTIVE_CONTENT, activeContent);
-			findTab(_activeTabId).notifyActivation(true);
 			if (isAttached()) {
 				activeContent.attach();
 			}
@@ -175,14 +174,7 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 			return;
 		}
 		ReactControl previousContent = _contentCache.get(_activeTabId);
-		String previousTabId = _activeTabId;
 		_activeTabId = tabId;
-
-		// Hand over the display before the content changes: a tab losing the display must have
-		// withdrawn its contributions to shared surroundings (e.g. the enclosing toolbar) before the
-		// tab gaining it adds its own.
-		findTab(previousTabId).notifyActivation(false);
-		findTab(tabId).notifyActivation(true);
 
 		if (!isSSEAttached()) {
 			// Not yet rendered; just update state for deferred rendering.

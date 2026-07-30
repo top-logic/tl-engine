@@ -439,7 +439,6 @@ public class FormElement extends ContainerElement {
 			FormScopedCommandModel wrapped = new FormScopedCommandModel(inner, formContext);
 
 			models.add(wrapped);
-			scope.addCommand(wrapped);
 		}
 
 		FormModelListener validityListener = new FormModelListener() {
@@ -454,6 +453,8 @@ public class FormElement extends ContainerElement {
 			}
 		};
 
+		contributeWhileDisplayed(formControl, scope, models);
+
 		formControl.addBeforeWriteAction(() -> {
 			for (CommandModel model : models) {
 				if (model instanceof FormScopedCommandModel) {
@@ -465,7 +466,6 @@ public class FormElement extends ContainerElement {
 		formControl.addCleanupAction(() -> {
 			formControl.removeFormModelListener(validityListener);
 			for (CommandModel model : models) {
-				scope.removeCommand(model);
 				if (model instanceof FormScopedCommandModel) {
 					((FormScopedCommandModel) model).getInner().detach();
 				}
@@ -582,9 +582,7 @@ public class FormElement extends ContainerElement {
 			models.add(FormCommandModel.cancelCommand(formControl));
 		}
 
-		for (FormCommandModel model : models) {
-			scope.addCommand(model);
-		}
+		contributeWhileDisplayed(formControl, scope, models);
 
 		formControl.addBeforeWriteAction(() -> {
 			for (FormCommandModel model : models) {
@@ -593,8 +591,47 @@ public class FormElement extends ContainerElement {
 		});
 		formControl.addCleanupAction(() -> {
 			for (FormCommandModel model : models) {
-				scope.removeCommand(model);
 				model.detach();
+			}
+		});
+	}
+
+	/**
+	 * Puts the given commands into the scope while the form is displayed, and takes them out again
+	 * while it is not.
+	 *
+	 * <p>
+	 * Bound to the control's attach/detach rather than to its creation/disposal, because content that
+	 * exists but is not displayed - the inactive tab of a {@code <tab-bar>}, the hidden child of any
+	 * one-of-N container - keeps its state and thus its controls. Its commands must not stay in the
+	 * enclosing panel's toolbar meanwhile: the panel would show a second edit button, operating on a
+	 * form the user cannot see.
+	 * </p>
+	 *
+	 * @param formControl
+	 *        The control whose display state decides whether the commands are in the scope.
+	 * @param scope
+	 *        The enclosing scope rendering the commands.
+	 * @param models
+	 *        The commands to contribute.
+	 */
+	private static void contributeWhileDisplayed(FormControl formControl, CommandScope scope,
+			List<? extends CommandModel> models) {
+		formControl.addAttachListener(() -> {
+			for (CommandModel model : models) {
+				scope.addCommand(model);
+			}
+		});
+		formControl.addDetachListener(() -> {
+			for (CommandModel model : models) {
+				scope.removeCommand(model);
+			}
+		});
+		formControl.addCleanupAction(() -> {
+			// Disposal while not displayed: the detach listener did not run (or ran already), so make
+			// sure nothing is left behind.
+			for (CommandModel model : models) {
+				scope.removeCommand(model);
 			}
 		});
 	}

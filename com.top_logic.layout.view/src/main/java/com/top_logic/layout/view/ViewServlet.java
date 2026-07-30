@@ -116,6 +116,8 @@ public class ViewServlet extends TopLogicServlet {
 
 		// Check if this is a programmatically opened window with a control provider.
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
+		// Collect the windows whose page was unloaded and did not come back within the grace period.
+		windowRegistry.sweepUnloadedWindows();
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
 		WindowEntry windowEntry = windowRegistry.getWindow(windowName);
 		if (windowEntry != null) {

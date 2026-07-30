@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.window;
 
 import java.security.SecureRandom;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -47,6 +48,19 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	/** Maps singleton keys to window IDs for singleton window reuse. */
 	private final ConcurrentHashMap<String, String> _singletonKeys = new ConcurrentHashMap<>();
 
+	/**
+	 * How long a window whose page was unloaded is kept before it is torn down.
+	 *
+	 * <p>
+	 * A reload is back within a fraction of a second, so any value well above that separates a reload
+	 * from a window that really went away.
+	 * </p>
+	 */
+	private static final long UNLOAD_GRACE_MILLIS = 30_000;
+
+	/** Windows whose page was unloaded, by the time the unload was reported. */
+	private final ConcurrentHashMap<String, Long> _unloaded = new ConcurrentHashMap<>();
+
 	private final java.util.Map<String, PendingViewPick> _pendingPicks = new java.util.concurrent.ConcurrentHashMap<>();
 
 	private final ReentrantLock _requestLock = new ReentrantLock();
@@ -79,6 +93,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * Gets or creates the {@link SSEUpdateQueue} for the given window.
 	 */
 	public SSEUpdateQueue getOrCreateQueue(String windowId) {
+		// The window is being displayed again - a reload rather than a close.
+		_unloaded.remove(windowId);
 		return _windowQueues.computeIfAbsent(windowId, id -> {
 			SSEUpdateQueue queue = new SSEUpdateQueue();
 			queue.setWindowName(id);
@@ -272,6 +288,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		if (windowId == null) {
 			return;
 		}
+		_unloaded.remove(windowId);
 		Logger.info("windowClosed(" + windowId + "), known windows: " + _windows.keySet(),
 			ReactWindowRegistry.class);
 		WindowEntry entry = _windows.remove(windowId);
@@ -306,6 +323,54 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			queue.shutdown();
 		}
 		_windowModelScopes.remove(windowId);
+	}
+
+	/**
+	 * Reports that the page of the given window was unloaded, without saying whether it will come
+	 * back.
+	 *
+	 * <p>
+	 * Sent on {@code beforeunload}, which fires for a reload just as it does for a close. The window
+	 * therefore keeps its queue, its control tree and its model scope for
+	 * {@link #UNLOAD_GRACE_MILLIS}: a reload arriving within that period finds all of it and can
+	 * render the tree it already has, while a window that really went away is collected by
+	 * {@link #sweepUnloadedWindows()}.
+	 * </p>
+	 */
+	public void windowUnloaded(String windowId) {
+		if (windowId == null) {
+			return;
+		}
+		_unloaded.put(windowId, Long.valueOf(System.currentTimeMillis()));
+	}
+
+	/**
+	 * Tears down the windows whose page was unloaded and did not come back within
+	 * {@link #UNLOAD_GRACE_MILLIS}.
+	 *
+	 * <p>
+	 * Called from request handling rather than from a timer, so that the teardown runs in a thread
+	 * that has a session context - {@link #windowClosed(String)} runs close callbacks and disposes
+	 * control trees. A window whose grace period expires while its session makes no further requests
+	 * is released when the session ends ({@link #valueUnbound(HttpSessionBindingEvent)}).
+	 * </p>
+	 */
+	public void sweepUnloadedWindows() {
+		long now = System.currentTimeMillis();
+		for (Map.Entry<String, Long> entry : _unloaded.entrySet()) {
+			if (now - entry.getValue().longValue() < UNLOAD_GRACE_MILLIS) {
+				continue;
+			}
+			String windowId = entry.getKey();
+			// Mirrors ReactServlet's window-close handling: the callbacks run by windowClosed patch
+			// the opener's state and flush SSE events, and must not race with concurrent commands.
+			_requestLock.lock();
+			try {
+				windowClosed(windowId);
+			} finally {
+				_requestLock.unlock();
+			}
+		}
 	}
 
 	@Override

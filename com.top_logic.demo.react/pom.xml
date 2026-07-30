@@ -25,6 +25,11 @@
 
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view-agent</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-model-wysiwyg</artifactId>
     </dependency>
 

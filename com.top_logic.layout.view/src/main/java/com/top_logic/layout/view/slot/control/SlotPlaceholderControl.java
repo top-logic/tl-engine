@@ -111,7 +111,7 @@ public class SlotPlaceholderControl extends ReactControl implements SlotPlacehol
 	 * Structural: this control is a slot placeholder and is elided from the headless agent projection.
 	 */
 	@Override
-	public boolean agentTransparent() {
+	public boolean scriptingTransparent() {
 		return true;
 	}
 }

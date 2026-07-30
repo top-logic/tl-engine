@@ -7,7 +7,7 @@
 > document tracks the design questions and the remaining work.
 
 - **Ticket:** #29430 (completion); the interface itself was built under #29108
-- **Code:** `com.top_logic.layout.react.headless` (package), `AgentServlet` (HTTP),
+- **Code:** `com.top_logic.layout.react.scripting` (package), `AgentServlet` (HTTP),
   `com.top_logic.layout.view.recorder` (recorder side window)
 - **Owner:** bhu
 - **Last updated:** 2026-07-29
@@ -44,24 +44,24 @@ dispatch.
 
 ## Architecture at a glance
 
-Three primitives (`AgentSession`):
+Three primitives (`ScriptingSession`):
 
-- `observe()` → project the live control tree into an addressable `AgentNodeView`
+- `observe()` → project the live control tree into an addressable `ScriptingNodeView`
   (role, name, state, advertised actions, children).
 - `resolve(address)` → map a semantic address back to the live control.
 - `act(address, command, args)` → dispatch through the **same**
   `ReactControl.executeCommand` the browser uses (one source of truth for
   behavior).
 
-Addressing (`AgentTreeProjector`): a path of `role[name]` segments derived from
+Addressing (`ScriptingTreeProjector`): a path of `role[name]` segments derived from
 semantic properties + tree shape (e.g. `…/card[Aktive_Aufgaben]/counter[Aufgaben]`),
 **not** the opaque per-session control IDs (`v17`). The content of a
 selection-driven container (sidebar item, tab, deck card) is addressed by a
 **navigation slot** — the stable config ID of the selected entry
-(`AgentControl.agentChildSlot`), e.g.
+(`ScriptingControl.scriptingChildSlot`), e.g.
 `/appShell/sidebar/item[attributes]/tabBar/tab[overview]/…` — so an address
 encodes the navigation context it belongs to and fails loudly under any other
-selection. Controls may implement `AgentNode` to refine role/name/state and
+selection. Controls may implement `ScriptingNode` to refine role/name/state and
 advertise an action space with argument schemas.
 
 ---
@@ -71,11 +71,11 @@ advertise an action space with argument schemas.
 ### Phase 0 — Prototype ✅ (done, 2026-06-23/24)
 
 - [x] Generic tree introspection over the existing state tree
-      (`ReactControl.agentChildren/agentScalarState/commandNames`,
+      (`ReactControl.scriptingChildren/scriptingScalarState/commandNames`,
       `SSEUpdateQueue.getRootControls`, `ReactCommandMap.commandIds`).
-- [x] `AgentSession` facade (`observe`/`resolve`/`act`) reusing `executeCommand`.
-- [x] `AgentTreeProjector` semantic addressing with sibling disambiguation.
-- [x] `AgentNode` opt-in enrichment + `AgentAction`/`AgentParam` schemas.
+- [x] `ScriptingSession` facade (`observe`/`resolve`/`act`) reusing `executeCommand`.
+- [x] `ScriptingTreeProjector` semantic addressing with sibling disambiguation.
+- [x] `ScriptingNode` opt-in enrichment + `ScriptingAction`/`ScriptingParam` schemas.
 - [x] Model-derived naming via `MetaLabelProvider` (pluggable; table rows / list
       items get business-object labels).
 - [x] `AgentServlet` HTTP endpoint (`/agent-api/{windows,observe,act}`) +
@@ -95,13 +95,13 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       favour of the *by-label* default (the label typically **is** the business
       identifier; KB ids are worse — unstable across DB reset and broken in tests).
 - [x] Introduce a stable identity for **data** nodes (rows, list items) — a
-      model/business-key reference (`AgentModelKey` = JSON `ModelName`), not a
+      model/business-key reference (`ScriptingModelKey` = JSON `ModelName`), not a
       positional index. Keys on table rows and dropdown options; build **and**
       resolve (`selectByKey`) verified live.
 - [x] Keep structural paths for **chrome** (buttons, tabs, panels).
 - [x] Define behavior when an address no longer resolves (drift): **DECIDED + done**.
       A control that resolves recorded business keys never silently substitutes or
-      drops. Structural address drift already hard-fails (`AgentSession.resolve`
+      drops. Structural address drift already hard-fails (`ScriptingSession.resolve`
       throws → `act`/`replay` report `success:false`). Key-level drift now does too:
       `selectByKey` on the dropdown (any unresolved key) and the table (no matching
       row) returns `HandlerResult.error` instead of a silent partial/empty selection,
@@ -120,7 +120,7 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
 - [x] **Intercept the browser command stream and translate to `(address, command,
       arguments)`.** `ReactServlet.handleCommand` feeds each dispatched command into the
       window's `ScriptRecorder` while recording, turning the target control into its
-      stable semantic address via `AgentSession.addressOf` (the inverse of `resolve`,
+      stable semantic address via `ScriptingSession.addressOf` (the inverse of `resolve`,
       same segment algorithm → guaranteed to resolve back). Verified live: two browser
       clicks on the dashboard counter captured as
       `/appShell/sidebar/grid/card[Aktive_Aufgaben]/counter[Aufgaben] :: increment` —
@@ -131,7 +131,7 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       action log — still open; the format is deliberately the `act` triple so they can
       converge.)
 - [x] **Replay a recorded script headlessly.** `POST /agent-api/replay {steps}` runs
-      each step through `AgentSession.act`, settling derived state between steps, and
+      each step through `ScriptingSession.act`, settling derived state between steps, and
       returns per-step `results` + final `observation`. Verified live end-to-end: counter
       0 →(2 recorded clicks)→ 2 →(replay)→ 4.
 - [x] **Replay-stable arguments.** A control rewrites session-bound arguments at record
@@ -193,7 +193,7 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
         both servlets' duplicated `installSubSession` delegate to it). Selection is the reused
         `TableElement` pattern (table selection ↔ a `selection` channel, guarded against feedback)
         plus a new programmatic `TableViewControl.selectRow(key)`. Replay goes through
-        `AgentSession.act`, not `ReactServlet`, so a replayed step is **not** itself recorded.
+        `ScriptingSession.act`, not `ReactServlet`, so a replayed step is **not** itself recorded.
         Verified live: two recorded increments stepped one at a time drove the main-window counter
         2→3→4, selection advancing 1→2, effect shown in the main UI, zero console errors.
   - [ ] **Export / clear from the UI** — copy the step script out and a clear button (the
@@ -213,7 +213,7 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
 ### Phase 3 — Action space & affordances 🚧
 
 - [x] **Structural pruning (modular).** Layout-only wrappers elide themselves from
-      the projection via a single polymorphic `ReactControl.agentTransparent()`
+      the projection via a single polymorphic `ReactControl.scriptingTransparent()`
       override (ReactStackControl, ReactInsetControl, ReactSplitPanelControl,
       ReloadableControl, SlotPlaceholderControl) — the projector asks each control
       and never switches
@@ -222,10 +222,10 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       to `/appShell/sidebar/grid/card[Aktive_Aufgaben]/counter[Aufgaben]`; payload
       ~27 KB → ~20 KB. Shorter addresses are also more stable against layout
       refactors (advances **D1**).
-- [x] **Strip rendering-only state and chrome commands (modular).** `agentScalarState`
+- [x] **Strip rendering-only state and chrome commands (modular).** `scriptingScalarState`
       drops `null` values generically; each control declares its own presentation
-      state keys (`agentPresentationKeys()`) and chrome commands
-      (`agentHiddenCommands()`) — same polymorphic seam as `agentTransparent()`, no
+      state keys (`scriptingPresentationKeys()`) and chrome commands
+      (`scriptingHiddenCommands()`) — same polymorphic seam as `scriptingTransparent()`, no
       central list. Applied to button/card/grid/appBar/text/snackbar (padding,
       variant, css class, size, …) and sidebar/appShell (`toggleCollapse`,
       `toggleDrawer`, `toggleGroup`, `reportDisplayClass`). Live: payload
@@ -236,10 +236,10 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       no children). Live: 16 nodes, ~10.95 KB vs 17.7 KB tree (~60% off the original
       27 KB); the read→act→read loop works by the same addresses.
 - [ ] `executeCommand` on the sidebar is a remaining chrome-command candidate to
-      assess (one-line `agentHiddenCommands` entry if internal).
+      assess (one-line `scriptingHiddenCommands` entry if internal).
 - [x] **Argument schemas on `@ReactCommand` (D5 first step) — DONE, now superseded.** New
       `@ReactParam` (name/type/required/description) declared in `@ReactCommand.params()`,
-      captured by `ReactCommandMap`, exposed via `ReactControl.agentCommandParams`, and
+      captured by `ReactCommandMap`, exposed via `ReactControl.scriptingCommandParams`, and
       surfaced by the projector in each action's `params`. Annotated the commands I had
       to guess: `selectItem {itemId}`, `valueChanged {value:string[]}`,
       `select {rowIndex,ctrlKey,shiftKey}`, `selectTab {tabId}`. Verified live: the
@@ -318,7 +318,7 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
 > 2. **Flaky reads (only the root node).** The tree is read while it is being
 >    rebuilt: the SSE heartbeat runs `synthesizeModelEvents` **without** the
 >    request lock, and control register-then-embed has a race window, so
->    `getRootControls()`/`agentChildren()` can see a partial tree.
+>    `getRootControls()`/`scriptingChildren()` can see a partial tree.
 
 - [x] **Project from the window's authoritative root**, not the registration
       heuristic. `SSEUpdateQueue.setRootControl` is set by `ViewServlet`; the
@@ -382,8 +382,8 @@ building recorder-side parity.
 
 | # | Capability | Legacy (key class) | React headless | State |
 |---|------------|--------------------|----------------|-------|
-| 1 | **Object/model references** | `ModelName` + `ModelNamingScheme`/`ModelResolver` (150+ schemes) | **Same infra reused** — `AgentModelKey` = JSON `ModelName`; `ReactActionContext` drives `ModelResolver.locateModel`; React-context schemes (`ReactOptionByLabelNaming`) | ✅ |
-| 2 | **Component/field addressing** | Fuzzy label/name/path (`FuzzyComponentNaming`, `*FieldRef`) | Semantic `role[name]` path (`AgentTreeProjector`) — different mechanism, same intent | ⚪→✅ |
+| 1 | **Object/model references** | `ModelName` + `ModelNamingScheme`/`ModelResolver` (150+ schemes) | **Same infra reused** — `ScriptingModelKey` = JSON `ModelName`; `ReactActionContext` drives `ModelResolver.locateModel`; React-context schemes (`ReactOptionByLabelNaming`) | ✅ |
+| 2 | **Component/field addressing** | Fuzzy label/name/path (`FuzzyComponentNaming`, `*FieldRef`) | Semantic `role[name]` path (`ScriptingTreeProjector`) — different mechanism, same intent | ⚪→✅ |
 | 3 | **Command/button execution** | `CommandAction` (by id / fuzzy label) | Browser command captured at the control's semantic address | ✅ |
 | 4 | **Tab/route navigation** | `FuzzyGotoActionOp` (tab-path), `TabSwitch` | `selectTab` recorded; navigation-slot addressing (`item[id]`/`tab[id]`); `/navigate` route primitive | ✅ |
 | 5 | **Form field input** | `FormInput` (CANONICAL/INTERACTIVE/RAW modes), typed `*FieldRef` | Browser field command via `recordCommand`; dropdown→`selectByKey`. Generic typed inputs (text/number/date) recorded verbatim — replay-stability not yet proven per field type | 🟡 |
@@ -432,7 +432,7 @@ identity is a locator (semantic criteria + stable keys)**; data nodes carry a st
 **business key = a `ModelName` serialized as JSON** (reusing the script recorder's
 object naming + `ModelResolver`, via `JsonConfigurationWriter`).
 
-Done (`AgentModelKey`): table rows and dropdown options now carry a `key` — the
+Done (`ScriptingModelKey`): table rows and dropdown options now carry a `key` — the
 JSON `ModelName` of the row/option business object. Verified live on the green-field
 table: e.g. `{"model-name":["…TLObjectByLabelNaming…",{"class-name":"DemoTypes:A","object-label":"Part 1"}]}`
 — a real, KB-resolvable global name independent of index/sort/session.
@@ -483,7 +483,7 @@ layer?
 ### D4 — Raw tree vs. curated projection `OPEN`
 
 Does the agent see the raw control state tree (presentation-shaped) or a curated
-semantic projection? Prototype exposes the raw tree with opt-in `AgentNode`
+semantic projection? Prototype exposes the raw tree with opt-in `ScriptingNode`
 refinement. Decide whether controls should contribute semantic descriptors at
 source.
 
@@ -574,7 +574,7 @@ part of the decision.
 - [x] **Field-name instability across view/edit — FIXED.** Root cause: the chrome
       control was named from its display `label`, which is the technical attribute
       name in the placeholder form but the localized label once an object is loaded.
-      `ReactFormFieldChromeControl` now carries a stable `agentName` (the technical
+      `ReactFormFieldChromeControl` now carries a stable `scriptingName` (the technical
       attribute name, set by `AttributeFieldControl`), so the field address is the
       technical name in both states. Verified live: `formField[members]` in
       placeholder and loaded-edit; `…/formField[members]/dropdownSelect` resolves and
@@ -603,7 +603,7 @@ part of the decision.
   already shows them (optimistic input echo, window drag-resize) — reasoning that only holds when
   the browser itself sent the command. The correction is central, not per handler:
   `ReactServlet` dispatches via `executeClientCommand`; every programmatic path
-  (`AgentSession.act`, replay, server code) stays on `executeCommand`, which resends the control's
+  (`ScriptingSession.act`, replay, server code) stays on `executeCommand`, which resends the control's
   full state (`StateEvent`, the reconnect mechanism) after the command whenever the handler left
   silent changes behind — no control makes the decision, so no future handler can forget it.
   `putStateSilent` is gone entirely: `putState` is the one write primitive (a no-op event-wise
@@ -658,7 +658,7 @@ part of the decision.
   a `description` component, computed once at capture time by `ReactServlet.recordCommand` via the
   target control's `describeCommand` (the only moment the target is reliably at hand), and the table
   merely displays it. The `record/steps` endpoint now carries the description too, so an agent reading
-  a script sees the human-readable step labels. `AgentSession.targetName(address)` extracts the last
+  a script sees the human-readable step labels. `ScriptingSession.targetName(address)` extracts the last
   `[name]` segment (moved from the table, which no longer touches the opener tree at all).
 
 - **2026-07-09** — **Replay failures made loud** (drift behavior, completes the "never silently
@@ -691,20 +691,20 @@ part of the decision.
   - *Instability:* a tab bar named itself after its **active** tab (`tabBar[Tabelle]` →
     `tabBar[Auswahl_Formular]` after a switch), so a recorded script that switches tabs
     invalidated its own subsequent steps addressing the tab bar (recorded assertion failed with
-    *"segment 'tabBar[Tabelle]' not found"* after the script's own `selectTab`). The `agentName()`
+    *"segment 'tabBar[Tabelle]' not found"* after the script's own `selectTab`). The `scriptingName()`
     contract ("stable, semantic name") forbids naming a container after mutable state.
   - *Ambiguity:* dropping the name entirely (bare `tabBar`) hid **which navigation context** a
     subtree belongs to: `/appShell/sidebar/tabBar/…` resolves under *any* sidebar item, so a step
     recorded under one item could silently act on a look-alike control of another.
   - *Fix — navigation slots:* a selection-driven container addresses its content child by the
-    **stable config ID of the selected entry** via the new `AgentControl.agentChildSlot(child)`
+    **stable config ID of the selected entry** via the new `ScriptingControl.scriptingChildSlot(child)`
     seam: the sidebar yields `item[<navItemId>]`, the tab bar `tab[<tabId>]`, the deck pane
     `pane[<index>]`. Addresses read like routes
     (`/appShell/sidebar/item[attributes]/tabBar/tab[table]/…`): stable while their context is
     active (the container's own address never changes with its selection), loud-failing when
     resolved under a different selection. The slot replaces only the address segment — the node
     keeps its own role/name in the observation; a slotted child is never elided as transparent.
-    `AgentTreeProjector.segmentsFor`/`baseSegment` are parent-aware; projection, `resolve` and
+    `ScriptingTreeProjector.segmentsFor`/`baseSegment` are parent-aware; projection, `resolve` and
     `addressOf` share the algorithm as before. Regression:
     `testTabBarAddressStableAcrossTabSwitch`, `testTabBarContentAddressedByNavigationSlot`.
 
@@ -717,7 +717,7 @@ part of the decision.
     `applyClientValue` the subclass reuses. Verified: toggling records `{value:false}`, no error.
   - **Technical/chrome commands are no longer recorded.** New co-located `@ReactCommand(technical =
     true)` flag (captured by `ReactCommandMap`, unioned into `nonRecordableCommands()`/the agent
-    action space) replaces the drift-prone per-control `agentHiddenCommands()` sets (migrated
+    action space) replaces the drift-prone per-control `scriptingHiddenCommands()` sets (migrated
     sidebar/appShell; marked snackbar `dismiss`, panel toggle/popOut, drawer/menu `close`, form-group
     collapse). Verified: a snackbar dismiss no longer appears as a step.
   - **Button/field steps read for humans.** A button click and a field value need the *control's*
@@ -817,7 +817,7 @@ part of the decision.
 - **2026-06-25** — **Recorder step-debugger**, verified live. Selecting a captured step in the
   recorder side-window and pressing Step replays that one step on the recorded (opener) window —
   the effect appears in the main browser window — and advances the selection to the next step.
-  New reusable `ReactWindowReplay.act` runs a headless `AgentSession.act` against a sibling window
+  New reusable `ReactWindowReplay.act` runs a headless `ScriptingSession.act` against a sibling window
   (installs that window's subsession, runs under the session request lock, settles derived state,
   restores the caller's subsession); the duplicated `installSubSession` in `AgentServlet`/
   `ReactServlet` now delegates to it. Selection ↔ a `selection` channel reuses the `TableElement`
@@ -881,7 +881,7 @@ part of the decision.
   `ReactControl.recordCommand(command, args)` hook (default verbatim) lets a control emit
   a replay-stable form at record time; `ReactDropdownSelectControl` overrides it to turn
   `valueChanged {value:[session ids]}` into `selectByKey {keys:[business keys]}` via the
-  option scope + `AgentModelKey`. Proof: a real browser option click recorded as
+  option scope + `ScriptingModelKey`. Proof: a real browser option click recorded as
   `selectByKey {keys:[…{label:securityOwner}]}` (not an id), and replaying that script
   against a fresh empty form reproduced the `securityOwner` selection. This unifies the
   recorder with the business-key/`selectByKey` resolve path — recordings are now
@@ -889,7 +889,7 @@ part of the decision.
 - **2026-06-24** — **Phase 2 recorder/capture first slice** (capture + replay), verified
   live. `ScriptRecorder` (per window, on `SSEUpdateQueue`) captures each browser command
   as a `RecordedStep(address, command, arguments)`; the address is the control's stable
-  semantic path via the new `AgentSession.addressOf` (inverse of `resolve`,
+  semantic path via the new `ScriptingSession.addressOf` (inverse of `resolve`,
   unit-tested to round-trip). `/agent-api/record/{start,stop,steps}` drive it;
   `/agent-api/replay` runs a step list back through `act`. Live proof: 2 recorded counter
   clicks (`…/counter[Aufgaben] :: increment`) → replayed → counter 0→2→4. The agent `act`
@@ -920,7 +920,7 @@ part of the decision.
   group key `["…ReactOptionByLabelNaming$Name",{"label":"securityOwner"}]` (context-
   relative) **and** a person key (`IndexedObjectNaming`, global) in one call changed
   the value from `[anonymous,anonymous,root,root]` to exactly `[root,securityOwner]`.
-  Both resolution paths proven: `AgentModelKey.fromJson` → `ModelResolver.locateModel`,
+  Both resolution paths proven: `ScriptingModelKey.fromJson` → `ModelResolver.locateModel`,
   routed by the `ContextDependent` marker (scope for context-relative names, global
   otherwise) through a new `ReactActionContext` (`AbstractActionContext` carrying only
   the `DisplayContext` + `HttpSession`; `getMainLayout()` throws — the resolution-context
@@ -954,7 +954,7 @@ part of the decision.
   declines. Still open: round-trip resolve (`locateModel`) is unit-level only; it is not
   yet wired into a live act command (e.g. selecting an option by its `{"label":…}` key),
   which is the next slice.
-- **2026-06-24** — D1 business keys: `AgentModelKey` projects a stable `ModelName`
+- **2026-06-24** — D1 business keys: `ScriptingModelKey` projects a stable `ModelName`
   (JSON) key onto table rows and dropdown options. Verified live — real KB-resolvable
   global names. Hit two decision walls: how to provide an `ActionContext` for *replay*
   resolution in the React view layer (no `LayoutComponent`), and whether to prefer a
@@ -985,14 +985,14 @@ part of the decision.
   node falls back to a role-only address. (2) Tab bars name themselves by their
   active tab, so nested tab bars read `tabBar[Outer]/tabBar[Inner]` instead of
   `tabBar/tabBar` (the doubling was legitimate nested tabs, not a bug — a tab's
-  content is itself a tab bar). Also consolidated the naming seam: `agentName()` /
-  `agentRole()` moved from the headless `AgentNode` interface onto `ReactControl`
-  (alongside `agentTransparent()`), so controls name themselves without depending on
+  content is itself a tab bar). Also consolidated the naming seam: `scriptingName()` /
+  `scriptingRole()` moved from the headless `ScriptingNode` interface onto `ReactControl`
+  (alongside `scriptingTransparent()`), so controls name themselves without depending on
   the headless package. Verified live: `tabBar[Übersicht]`; a 958-node form view has
   no `Class@hash` names.
 
 - **2026-06-23** — Phase 0 core landed (commit `90400a4561`): addressing +
-  `AgentSession` + introspection hooks + demonstration test.
+  `ScriptingSession` + introspection hooks + demonstration test.
 - **2026-06-23** — Model-derived naming (commit `c94f211b86`).
 - **2026-06-24** — HTTP endpoint `AgentServlet` (commit `8a6b44f12c`);
   live-verified against the demo dashboard (observe real tree; act counter 0→2;
@@ -1007,12 +1007,12 @@ part of the decision.
   loop validated live. Next size lever is expressing the sidebar nav as a
   parameterized action (D5), since its `items` array now dominates the payload.
 - **2026-06-24** — Stripped rendering-only state (`null` generically;
-  per-control `agentPresentationKeys()`) and chrome commands
-  (`agentHiddenCommands()`), same modular seam. Live payload ~20 KB → ~17.7 KB;
+  per-control `scriptingPresentationKeys()`) and chrome commands
+  (`scriptingHiddenCommands()`), same modular seam. Live payload ~20 KB → ~17.7 KB;
   sidebar actions `[executeCommand, selectItem]`, button state
   `[disabled, hidden, label]`; act through addressing still drives the UI.
 - **2026-06-24** — Structural pruning landed, modularly (one polymorphic
-  `agentTransparent()` per control, no type cascade). Live: addresses lose the
+  `scriptingTransparent()` per control, no type cascade). Live: addresses lose the
   stack/inset/slot scaffolding, payload ~27 KB → ~20 KB; act through the pruned
   address drives the real UI (counter 0→1 via SSE in a clean tab). Next size lever
   is the affordance-first `mode=actions` view (payload still dominated by raw

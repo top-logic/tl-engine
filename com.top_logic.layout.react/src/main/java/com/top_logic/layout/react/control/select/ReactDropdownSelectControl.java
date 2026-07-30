@@ -27,7 +27,7 @@ import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.layout.react.control.AgentModelKey;
+import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -151,13 +151,13 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	/**
 	 * Augments the agent projection of the loaded options with a stable {@code key} (the option
-	 * object's {@link AgentModelKey ModelName}), so an agent can select a member by business object
+	 * object's {@link ScriptingModelKey ModelName}), so an agent can select a member by business object
 	 * rather than by the session-allocated option id.
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public Map<String, Object> agentScalarState() {
-		Map<String, Object> result = super.agentScalarState();
+	public Map<String, Object> scriptingScalarState() {
+		Map<String, Object> result = super.scriptingScalarState();
 		Object options = result.get(OPTIONS);
 		if (options instanceof List<?> list && !list.isEmpty()) {
 			ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_optionIndex.values()), _labelProvider);
@@ -165,7 +165,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			for (Object entry : list) {
 				if (entry instanceof Map<?, ?> descriptor) {
 					Map<String, Object> augmented = new LinkedHashMap<>((Map<String, Object>) descriptor);
-					Object key = AgentModelKey.toKey(scope, _optionIndex.get(descriptor.get(OPT_VALUE)));
+					Object key = ScriptingModelKey.toKey(scope, _optionIndex.get(descriptor.get(OPT_VALUE)));
 					if (key != null) {
 						augmented.put("key", key);
 					}
@@ -272,8 +272,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	/**
 	 * Handles the {@link #CMD_SELECT_BY_KEY} command: sets the selection to the options designated by
-	 * their stable business {@link AgentModelKey key}s — the round-trip inverse of the {@code key} that
-	 * {@link #agentScalarState()} projects onto each option.
+	 * their stable business {@link ScriptingModelKey key}s — the round-trip inverse of the {@code key} that
+	 * {@link #scriptingScalarState()} projects onto each option.
 	 *
 	 * <p>
 	 * This lets a headless agent select members by business object identity (e.g. the group labeled
@@ -321,7 +321,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 				recorded.setName(CMD_SELECT_BY_KEY);
 				for (String id : ids) {
 					Object option = _optionIndex.get(id);
-					ModelName key = option == null ? null : AgentModelKey.name(scope, option);
+					ModelName key = option == null ? null : ScriptingModelKey.name(scope, option);
 					if (key != null) {
 						recorded.getKeys().add(key);
 					}

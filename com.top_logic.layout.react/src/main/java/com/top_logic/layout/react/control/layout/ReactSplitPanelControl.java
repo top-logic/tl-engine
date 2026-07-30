@@ -460,7 +460,7 @@ public class ReactSplitPanelControl extends ReactControl {
 	 * remain as addressable nodes).
 	 */
 	@Override
-	public boolean agentTransparent() {
+	public boolean scriptingTransparent() {
 		return true;
 	}
 }

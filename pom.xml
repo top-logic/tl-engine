@@ -632,6 +632,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-view-agent</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-layout-view-selfservice</artifactId>
 				<version>${tl.version}</version>
 			</dependency>

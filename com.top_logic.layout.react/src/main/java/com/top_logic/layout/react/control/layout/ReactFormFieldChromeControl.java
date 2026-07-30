@@ -91,15 +91,15 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 * agent address unstable. The agent name pins the address to the technical field name regardless.
 	 * </p>
 	 *
-	 * @param agentName
+	 * @param scriptingName
 	 *        The technical field name, or {@code null} to fall back to label-based naming.
 	 */
-	public void setAgentName(String agentName) {
-		_agentName = agentName;
+	public void setAgentName(String scriptingName) {
+		_agentName = scriptingName;
 	}
 
 	@Override
-	public String agentName() {
+	public String scriptingName() {
 		return _agentName;
 	}
 

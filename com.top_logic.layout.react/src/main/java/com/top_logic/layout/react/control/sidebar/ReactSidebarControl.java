@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.AgentControl;
+import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
@@ -653,9 +653,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 * {@code item[administration]}), so content addresses encode which sidebar item they belong to.
 	 */
 	@Override
-	public String agentChildSlot(ReactControl child) {
+	public String scriptingChildSlot(ReactControl child) {
 		if (child == getState(ACTIVE_CONTENT)) {
-			return AgentControl.slotSegment("item", _activeItemId);
+			return ScriptingControl.slotSegment("item", _activeItemId);
 		}
 		return null;
 	}

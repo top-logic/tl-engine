@@ -16,9 +16,10 @@ RUN ln -s /usr/share/java/*.jar $CATALINA_HOME/lib/
 #
 # The browser is installed with the Playwright CLI taken out of the deployed WAR itself, so the
 # installed browser revision always matches the playwright-java version that is actually shipped -
-# there is no second place holding a version that could drift. "install chromium" provides both
-# builds the tool can launch: the full Chromium (channel "chromium", used when the agent has
-# evade-bot-detection enabled) and chrome-headless-shell (the plain headless default).
+# there is no second place holding a version that could drift. "install chromium" provides the full
+# Chromium build (Playwright channel "chromium"), which every session launches: the lighter
+# chrome-headless-shell is deliberately never used, because the switch that disables WebRTC's UDP
+# egress does not exist in it. Do not slim this step down to the shell - that reopens an SSRF hole.
 #
 # No --shm-size is needed when running the container: the tool launches Chromium with
 # --disable-dev-shm-usage, so the default 64 MB /dev/shm is not used.

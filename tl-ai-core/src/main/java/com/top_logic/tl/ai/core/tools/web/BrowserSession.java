@@ -294,6 +294,76 @@ final class BrowserSession {
 	private static final String EVASION_LOCALE = "en-US";
 
 	/**
+	 * The Chromium switch that takes WebRTC's UDP egress away, closing the last hole the
+	 * {@link FilteringProxy} cannot cover.
+	 *
+	 * <p>
+	 * <b>Why this is needed at all.</b> {@code --proxy-server} constrains HTTP and HTTPS, but
+	 * <em>WebRTC does not honour an HTTP proxy</em>. A page that constructs an
+	 * {@code RTCPeerConnection} makes Chromium emit STUN/UDP datagrams straight from the browser
+	 * process to whatever address the page names - past the proxy, so past the SSRF and domain policy
+	 * entirely. That is a UDP reach into private/internal address space plus a disclosure of the
+	 * host's local interface addresses. A browsing agent never needs WebRTC, so the safe setting is
+	 * simply off, unconditionally: there is no configuration toggle, because an option whose only
+	 * effect is to reopen an SSRF hole is not worth offering.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Why this exact switch.</b> It was chosen empirically against the pinned browser (Playwright
+	 * 1.49.0, revision 1148, Chromium 131.0.6778.33), by pointing a page's ICE gathering at a
+	 * loopback UDP listener and counting datagrams - the same measurement
+	 * {@code TestBrowserWebRtcEgress} performs. Without it the listener receives STUN traffic and the
+	 * page collects host candidates; with it ICE gathering completes with <em>no candidates at all</em>
+	 * and the listener receives nothing, while ordinary page loads are unaffected. Three plausible
+	 * alternatives were measured and all three left the UDP flowing, so none of them may be
+	 * substituted here on the strength of its name:
+	 * </p>
+	 * <ul>
+	 * <li>{@code --force-webrtc-ip-handling-policy=disable_non_proxied_udp} - the Chrome-branded
+	 * variant; present in the binary, but no effect on this build, with or without a proxy pinned.</li>
+	 * <li>{@code --disable-blink-features=RTCPeerConnection} - not a Blink runtime-feature name, so it
+	 * is silently ignored.</li>
+	 * <li>{@code --disable-blink-features=WebRTC} and {@code --disable-features=WebRTC} - neither
+	 * removes {@code RTCPeerConnection} nor stops the datagrams.</li>
+	 * </ul>
+	 *
+	 * @see #FULL_CHROMIUM_CHANNEL The switch only exists in the full Chromium build, which is why the
+	 *      channel is pinned.
+	 */
+	private static final String DISABLE_NON_PROXIED_UDP_SWITCH =
+		"--webrtc-ip-handling-policy=disable_non_proxied_udp";
+
+	/**
+	 * Playwright channel selecting the <b>full</b> Chromium distribution
+	 * ({@code chromium-<rev>/chrome-linux/chrome}) instead of the light, stripped
+	 * {@code chrome-headless-shell}.
+	 *
+	 * <p>
+	 * <b>Why it is pinned unconditionally.</b> {@link #DISABLE_NON_PROXIED_UDP_SWITCH} is
+	 * <em>compiled out of the headless shell</em>: the switch name does not occur in the
+	 * {@code headless_shell} binary at all, and passing it there measurably changes nothing - the
+	 * shell keeps emitting STUN/UDP. Since Playwright 1.49 a headless launch with no channel resolves
+	 * to exactly that shell, so leaving the channel unset would silently leave the WebRTC hole open on
+	 * the default path. Pinning the full build is therefore what makes the switch above load-bearing
+	 * rather than decorative.
+	 * </p>
+	 *
+	 * <p>
+	 * This subsumes the previous evasion-only use of the channel (the headless shell is itself a
+	 * detectable fingerprint), so bot-detection evasion no longer has to select the build for itself.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Deployment prerequisite.</b> The full build must be present in the Playwright browser cache.
+	 * Both builds are {@code installByDefault}, so any ordinary {@code playwright install chromium}
+	 * (and Playwright's own auto-provisioning) supplies it; only a hand-slimmed image that ships
+	 * <em>only</em> {@code chrome-headless-shell} would fail to launch, and such an image must now
+	 * install the full build.
+	 * </p>
+	 */
+	private static final String FULL_CHROMIUM_CHANNEL = "chromium";
+
+	/**
 	 * The bounded element-action timeout used by the test-facing {@code open} overloads that do not
 	 * name one; the service passes its configured value
 	 * ({@code BrowserToolsService.Config#getActionTimeoutSeconds()}) explicitly.
@@ -511,12 +581,12 @@ final class BrowserSession {
 	 *        a local display.
 	 * @param evadeBotDetection
 	 *        When {@code true}, disguise the context as ordinary desktop Chrome (see
-	 *        {@code BrowserToolsService.Config#isEvadeBotDetection()}): launch the <b>full</b>
-	 *        Chromium build (channel "chromium", new headless) instead of the detectable
-	 *        {@code chrome-headless-shell} (see {@link #buildLaunchOptions(boolean, boolean)}), add
-	 *        the {@code --disable-blink-features=AutomationControlled} launch switch, set a realistic
-	 *        Chrome user-agent/locale, and install a fingerprint-masking init script. When
-	 *        {@code false} the behaviour is byte-for-byte the plain headless-shell default.
+	 *        {@code BrowserToolsService.Config#isEvadeBotDetection()}): add the
+	 *        {@code --disable-blink-features=AutomationControlled} launch switch, set a realistic
+	 *        Chrome user-agent/locale, and install a fingerprint-masking init script (see
+	 *        {@link #buildLaunchOptions(boolean, boolean, String)}). The <b>full</b> Chromium build
+	 *        that evasion also relies on is selected for every launch now, evasion or not (see
+	 *        {@link #FULL_CHROMIUM_CHANNEL}).
 	 * @param proxyServer
 	 *        The {@code --proxy-server} value of the {@link FilteringProxy} every connection of this
 	 *        session must traverse, or {@code null} for an unconstrained browser. Production sessions
@@ -544,29 +614,26 @@ final class BrowserSession {
 	 * browser.
 	 *
 	 * <p>
-	 * <b>Build selection.</b> With bot-detection evasion <em>off</em> the options are byte-for-byte
-	 * the previous default: {@code --disable-dev-shm-usage --no-sandbox}, {@code headless} = not
-	 * headed, and <em>no channel</em>, so Playwright launches its light, stripped
-	 * {@code chrome-headless-shell} build. With evasion <em>on</em> the options additionally select
-	 * the <b>full</b> Chromium distribution via {@link BrowserType.LaunchOptions#setChannel(String)
-	 * channel "chromium"} - the {@code chromium-<rev>/chrome-linux/chrome} binary
-	 * {@code playwright install} places alongside the shell. The headless shell is itself a
-	 * detectable fingerprint that some bot walls / consent managers suppress content for even when
-	 * the user-agent and {@code navigator.webdriver} are already masked; the full build is not
-	 * detected the same way, so it is what makes the rest of the evasion (UA, locale, stealth
-	 * init-script, {@code --disable-blink-features=AutomationControlled}) actually effective. The
-	 * launch stays windowless: for the non-headed case {@code headless} remains {@code true}
-	 * (channel "chromium" + headless = new headless, no visible window); the channel setting is
-	 * orthogonal to {@code headless} and composes cleanly with the headed launch toggle
-	 * ({@code headed=true} launches the same full build with a visible window).
+	 * <b>Build selection.</b> Every launch selects the <b>full</b> Chromium distribution via
+	 * {@link BrowserType.LaunchOptions#setChannel(String) channel "chromium"} - see
+	 * {@link #FULL_CHROMIUM_CHANNEL} for why that is not optional (the WebRTC switch below does not
+	 * exist in {@code chrome-headless-shell}) and for the deployment prerequisite it carries. The
+	 * launch stays windowless: for the non-headed case {@code headless} remains {@code true} (channel
+	 * "chromium" + headless = new headless, no visible window); the channel setting is orthogonal to
+	 * {@code headless} and composes cleanly with the headed launch toggle ({@code headed=true}
+	 * launches the same full build with a visible window). Picking the full build also happens to be
+	 * what bot-detection evasion needs anyway, since the headless shell is itself a detectable
+	 * fingerprint that some bot walls / consent managers suppress content for even when the
+	 * user-agent and {@code navigator.webdriver} are already masked; evasion adds the UA, locale,
+	 * stealth init-script and {@code --disable-blink-features=AutomationControlled} on top.
 	 * </p>
 	 *
 	 * <p>
-	 * <b>Deployment prerequisite.</b> Channel "chromium" requires the full Chromium build to be
-	 * present in the Playwright browser cache. {@code playwright install chromium} installs it
-	 * (alongside the headless shell), but a slimmed deploy image that ships <em>only</em>
-	 * {@code chrome-headless-shell} will fail to launch when evasion is enabled. Ship the full build
-	 * wherever {@code evade-bot-detection} may be turned on.
+	 * <b>WebRTC egress.</b> Every launch also carries
+	 * {@link #DISABLE_NON_PROXIED_UDP_SWITCH}, which stops WebRTC from sending UDP. This is a
+	 * security control, not a tuning knob: WebRTC ignores {@code --proxy-server}, so it is the one
+	 * egress path the {@link FilteringProxy} below cannot see, and leaving it on would let a page
+	 * reach private addresses over UDP regardless of the SSRF policy.
 	 * </p>
 	 *
 	 * <p>
@@ -586,7 +653,8 @@ final class BrowserSession {
 	 * @param headed
 	 *        Whether to launch a visible window (headed launch toggle) instead of headless.
 	 * @param evadeBotDetection
-	 *        Whether bot-detection evasion is enabled (selects the full Chromium build).
+	 *        Whether bot-detection evasion is enabled (adds its blink-feature switch; the full
+	 *        Chromium build it also relies on is selected either way).
 	 * @param proxyServer
 	 *        The filtering forward proxy to pin the browser to (e.g. {@code http://127.0.0.1:41234}),
 	 *        or {@code null} to leave the browser unproxied.
@@ -596,26 +664,28 @@ final class BrowserSession {
 			String proxyServer) {
 		// /dev/shm is only 64 MB in the default Docker sandbox; without this Chromium crashes
 		// under memory pressure. Harmless on a normal host.
-		List<String> launchArgs = new ArrayList<>(List.of("--disable-dev-shm-usage", "--no-sandbox"));
+		List<String> launchArgs = new ArrayList<>(List.of("--disable-dev-shm-usage", "--no-sandbox",
+			// Take WebRTC's UDP egress away: it does NOT honour --proxy-server, so without this a
+			// page could reach any address over UDP straight past the FilteringProxy. See the
+			// constant's comment for the evidence and for why the channel below is load-bearing.
+			DISABLE_NON_PROXIED_UDP_SWITCH));
 		if (evadeBotDetection) {
 			// Drop the AutomationControlled blink feature (which sets navigator.webdriver and is a
-			// cheap bot tell). Added only in evasion mode so the default arg set is unchanged.
+			// cheap bot tell). Evasion-only: the default path stays an ordinary headless Chromium.
 			launchArgs.add("--disable-blink-features=AutomationControlled");
 		}
 		BrowserType.LaunchOptions options = new BrowserType.LaunchOptions()
 			.setHeadless(!headed)
-			.setArgs(launchArgs);
+			.setArgs(launchArgs)
+			// Select the FULL Chromium build rather than chrome-headless-shell. Required
+			// unconditionally, because the WebRTC switch above is COMPILED OUT of the shell - see
+			// DISABLE_NON_PROXIED_UDP_SWITCH. Orthogonal to `headless`: channel "chromium" +
+			// headless is new headless, still windowless.
+			.setChannel(FULL_CHROMIUM_CHANNEL);
 		if (proxyServer != null && !proxyServer.isBlank()) {
 			// Constrain the browser from OUTSIDE the routing API: every connection - including a
 			// redirect hop, which a route cannot cancel - has to pass the filtering proxy first.
 			options.setProxy(new Proxy(proxyServer));
-		}
-		if (evadeBotDetection) {
-			// Select the FULL Chromium build (new headless) instead of the detectable
-			// chrome-headless-shell. DEPLOYMENT PREREQUISITE: the full build must be installed
-			// (`playwright install chromium`); an image shipping only chrome-headless-shell will fail
-			// to launch here. Only set in evasion mode, so the default (off) path is unchanged.
-			options.setChannel("chromium");
 		}
 		return options;
 	}

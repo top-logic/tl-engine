@@ -366,24 +366,23 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		 * less likely to serve it an access-denied / challenge page (off by default).
 		 *
 		 * <p>
-		 * When {@code false} (the default) the browser behaves exactly as an out-of-the-box headless
-		 * Chromium: the light {@code chrome-headless-shell} build, no user-agent override, no extra
-		 * launch argument, no fingerprint init script. When {@code true}, each session's context is
-		 * made to look like an ordinary desktop Chrome: the <b>full</b> Chromium build (Playwright
-		 * channel "chromium", new headless - still windowless) is launched instead of the detectable
-		 * headless shell, the {@code --disable-blink-features=AutomationControlled} launch switch is
-		 * added, a realistic desktop Chrome user-agent (and matching {@code Accept-Language}) is set,
-		 * and a small init script masks the usual automation tells ({@code navigator.webdriver}, empty
-		 * {@code navigator.plugins}, {@code navigator.languages}, missing {@code window.chrome}). The
-		 * build swap matters: the headless shell is itself a fingerprint some bot walls suppress
-		 * content for even when the UA and {@code navigator.webdriver} are masked.
+		 * When {@code false} (the default) the browser behaves as an out-of-the-box headless Chromium:
+		 * no user-agent override, no extra launch argument, no fingerprint init script. When
+		 * {@code true}, each session's context is made to look like an ordinary desktop Chrome: the
+		 * {@code --disable-blink-features=AutomationControlled} launch switch is added, a realistic
+		 * desktop Chrome user-agent (and matching {@code Accept-Language}) is set, and a small init
+		 * script masks the usual automation tells ({@code navigator.webdriver}, empty
+		 * {@code navigator.plugins}, {@code navigator.languages}, missing {@code window.chrome}).
 		 * </p>
 		 *
 		 * <p>
-		 * <b>Deployment prerequisite.</b> With this enabled the full Chromium build must be installed
-		 * in the Playwright browser cache ({@code playwright install chromium} installs it alongside
-		 * the shell). A slimmed deploy image that ships <em>only</em> {@code chrome-headless-shell}
-		 * will fail to launch when this flag is on.
+		 * The <b>full</b> Chromium build (Playwright channel "chromium", new headless - still
+		 * windowless) that evasion also depends on - the light {@code chrome-headless-shell} is itself
+		 * a fingerprint some bot walls suppress content for, even when the UA and
+		 * {@code navigator.webdriver} are masked - is launched for every session regardless of this
+		 * setting, because it is what allows WebRTC's UDP egress to be turned off. See
+		 * {@code BrowserSession.buildLaunchOptions}, including the deployment prerequisite that
+		 * carries.
 		 * </p>
 		 *
 		 * <p>

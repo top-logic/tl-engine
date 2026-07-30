@@ -173,51 +173,57 @@ public class TestBrowserBotDefenses extends TestCase {
 	private static final Pattern REDUCED_UA_VERSION = Pattern.compile("Chrome/\\d+\\.0\\.0\\.0");
 
 	/**
-	 * With evasion on, launching succeeds and the session runs the <b>full</b> Chromium build
-	 * (channel "chromium", new headless) rather than the light {@code chrome-headless-shell}: the
-	 * full build's native user-agent is UA-Reduced ({@code .../<major>.0.0.0 ...}), whereas the shell
-	 * launched by the default (evasion-off) path reports its exact patch version. Comparing the two
-	 * raw build UAs proves a genuinely different binary is launched, deterministically and with no
-	 * network.
+	 * The <b>full</b> Chromium build (channel "chromium", new headless) is launched, whether evasion
+	 * is on or off - the light {@code chrome-headless-shell} is never used any more. Evasion needs the
+	 * full build because the shell is itself a detectable fingerprint, but the reason it is now
+	 * unconditional is security rather than evasion: the switch that disables WebRTC's UDP egress does
+	 * not exist in the shell (see {@code TestBrowserWebRtcEgress}), so a shell launch would silently
+	 * reopen the SSRF hole. This test is therefore also the evasion-side guard on that pin.
+	 *
+	 * <p>
+	 * The signal is UA Reduction: the full build's native user-agent freezes the version to
+	 * {@code .../<major>.0.0.0 ...}, whereas the shell reports its exact patch version. Deterministic
+	 * and network-free.
+	 * </p>
 	 *
 	 * <p>
 	 * Note: in this Playwright-Java 1.49 / Chromium 131 build the full new-headless build still emits
 	 * a {@code HeadlessChrome} token, so "UA lacks HeadlessChrome" is <em>not</em> a valid
-	 * discriminator here; UA Reduction is. Either way the point holds - the full build is launched.
+	 * discriminator here; UA Reduction is.
 	 * </p>
 	 */
-	public void testEvasionLaunchesFullChromiumBuild() {
+	public void testEveryLaunchUsesTheFullChromiumBuild() {
 		if (!e2eEnabled()) {
 			return;
 		}
-		BrowserSession shellSession = BrowserSession.open("build-shell", TIMEOUT_MILLIS, ALLOW_ANY);
-		String shellUa;
+		BrowserSession defaultSession = BrowserSession.open("build-default", TIMEOUT_MILLIS, ALLOW_ANY);
+		String defaultUa;
 		try {
-			shellUa = shellSession.rawBuildUserAgentForTest();
+			defaultUa = defaultSession.rawBuildUserAgentForTest();
 		} finally {
-			shellSession.close();
+			defaultSession.close();
 		}
 
-		BrowserSession fullSession = BrowserSession.open("build-full", TIMEOUT_MILLIS, 0, ALLOW_ANY,
+		BrowserSession evasionSession = BrowserSession.open("build-evasion", TIMEOUT_MILLIS, 0, ALLOW_ANY,
 			null, false, true);
-		String fullUa;
+		String evasionUa;
 		try {
 			// Launching with channel "chromium" itself succeeds (no error) and the session is usable.
-			PageView view = fullSession.loadHtmlForTest("<!doctype html><html><body>ok</body></html>");
+			PageView view = evasionSession.loadHtmlForTest("<!doctype html><html><body>ok</body></html>");
 			assertTrue("full-build session renders normally", view.html().contains("ok"));
-			fullUa = fullSession.rawBuildUserAgentForTest();
+			evasionUa = evasionSession.rawBuildUserAgentForTest();
 		} finally {
-			fullSession.close();
+			evasionSession.close();
 		}
 
-		assertNotNull(shellUa);
-		assertNotNull(fullUa);
-		assertFalse("evasion launches a different build than the default headless shell (shell=" + shellUa
-			+ ", full=" + fullUa + ")", shellUa.equals(fullUa));
-		assertTrue("the full Chromium build applies UA Reduction (frozen version): " + fullUa,
-			REDUCED_UA_VERSION.matcher(fullUa).find());
-		assertFalse("the light headless shell reports its exact patch version, not the reduced form: "
-			+ shellUa, REDUCED_UA_VERSION.matcher(shellUa).find());
+		assertNotNull(defaultUa);
+		assertNotNull(evasionUa);
+		assertTrue("the default (evasion-off) path runs the full Chromium build, which is what makes the "
+			+ "WebRTC switch effective: " + defaultUa, REDUCED_UA_VERSION.matcher(defaultUa).find());
+		assertTrue("the evasion path runs the full Chromium build too: " + evasionUa,
+			REDUCED_UA_VERSION.matcher(evasionUa).find());
+		assertEquals("both paths launch the very same binary now (raw build user-agent)", defaultUa,
+			evasionUa);
 	}
 
 	private static boolean e2eEnabled() {

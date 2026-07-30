@@ -21,12 +21,13 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DirtyChannel;
+import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ForwardingCommandScope;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
 import com.top_logic.layout.view.security.SecurityScope;
@@ -40,6 +41,13 @@ import com.top_logic.util.Resources;
  * Renders a tab bar with lazily created content for each tab. Each {@code <tab>} child in the
  * configuration defines a tab with an ID, label, and inline content elements. Selecting a tab
  * creates the content controls on demand and caches them.
+ * </p>
+ *
+ * <p>
+ * Since the content of a hidden tab stays alive (to preserve its state), each tab contributes its
+ * commands through a {@link ForwardingCommandScope}: they reach the enclosing panel's toolbar only
+ * while that tab is displayed. Two tabs holding an editable {@code <form>} therefore yield one edit
+ * button - the one of the visible form - instead of one per visited tab.
  * </p>
  */
 public class TabBarElement implements UIElement {
@@ -167,6 +175,7 @@ public class TabBarElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
+		CommandScope enclosingScope = context.getScope(CommandScope.class);
 		List<TabDefinition> tabDefs = new ArrayList<>();
 		for (TabEntry entry : _tabs) {
 			if (!AccessChecks.isAccessible(entry._accessControl)) {
@@ -174,8 +183,16 @@ public class TabBarElement implements UIElement {
 				continue;
 			}
 			DirtyChannel dirtyChannel = new DirtyChannel();
+			// A tab's content stays alive while another tab is displayed, so its commands must be
+			// withdrawn from the enclosing toolbar meanwhile - otherwise the panel shows e.g. a second
+			// edit button belonging to a form the user cannot see.
+			ForwardingCommandScope tabScope =
+				enclosingScope == null ? null : new ForwardingCommandScope(enclosingScope);
 			TabDefinition tabDef = new TabDefinition(entry._id, entry._label,
-				() -> createContent(entry, context, dirtyChannel), dirtyChannel);
+				() -> createContent(entry, context, dirtyChannel, tabScope), dirtyChannel);
+			if (tabScope != null) {
+				tabDef.withActivation(tabScope::setActive);
+			}
 			if (entry._icon != null && !entry._icon.isEmpty()) {
 				tabDef.withIcon(entry._icon);
 			}
@@ -190,7 +207,7 @@ public class TabBarElement implements UIElement {
 	}
 
 	private static ReactControl createContent(TabEntry entry, ViewContext context,
-			DirtyChannel dirtyChannel) {
+			DirtyChannel dirtyChannel, ForwardingCommandScope tabScope) {
 		// Per-tab context: extend the personalization key with "tab" (legacy) and extend the slot
 		// path with the tab id so same-named <slot-content> in two tabs route into independent
 		// positions. Channels are NOT forked: only a <view> declares channels, so tab content
@@ -201,16 +218,14 @@ public class TabBarElement implements UIElement {
 		// Establish the tab's security scope so command rules in its content default to it.
 		SecurityScope scope = AccessChecks.resolveScope(entry._accessControl());
 		ViewContext tabContext = scope != null ? baseContext.withScope(SecurityScope.class, scope) : baseContext;
+		if (tabScope != null) {
+			// Contributions of the tab's content reach the enclosing toolbar only while displayed.
+			tabContext = tabContext.withScope(CommandScope.class, tabScope);
+		}
 		tabContext.setDirtyChannel(dirtyChannel);
 
 		List<UIElement> elements = entry._children;
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(tabContext);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(tabContext))
-			.collect(Collectors.toList());
-		return new ReactStackControl(tabContext, children);
+		return ContentControls.toControl(elements, tabContext);
 	}
 
 	private record TabEntry(String _id, String _label, String _route, String _icon,

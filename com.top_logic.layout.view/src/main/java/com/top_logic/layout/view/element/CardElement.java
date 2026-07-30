@@ -6,7 +6,6 @@
 package com.top_logic.layout.view.element;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -20,7 +19,6 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactCardControl;
 import com.top_logic.layout.react.control.layout.ReactCardControl.CardPadding;
 import com.top_logic.layout.react.control.layout.ReactCardControl.CardVariant;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -95,15 +93,7 @@ public class CardElement extends ContainerElement {
 	public IReactControl createControl(ViewContext context) {
 		List<IReactControl> childControls = createChildControls(context);
 
-		ReactControl content;
-		if (childControls.size() == 1) {
-			content = (ReactControl) childControls.get(0);
-		} else {
-			List<ReactControl> reactChildren = childControls.stream()
-				.map(c -> (ReactControl) c)
-				.collect(Collectors.toList());
-			content = new ReactStackControl(context, reactChildren);
-		}
+		ReactControl content = ContentControls.combine(context, childControls);
 
 		String title = _title != null ? Resources.getInstance().getString(_title) : null;
 		return new ReactCardControl(context, title, _variant, _padding, List.of(), content);

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -17,7 +16,6 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl.ChildConstraint;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.responsive.DisplayClass;
 import com.top_logic.layout.responsive.DisplayClassModel;
 import com.top_logic.layout.responsive.DisplayClassModel.DisplayClassListener;
@@ -240,13 +238,7 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	}
 
 	private ReactControl buildContent(List<UIElement> elements) {
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(_context);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(_context))
-			.collect(Collectors.toList());
-		return new ReactStackControl(_context, children);
+		return ContentControls.toControl(elements, _context);
 	}
 
 	/**

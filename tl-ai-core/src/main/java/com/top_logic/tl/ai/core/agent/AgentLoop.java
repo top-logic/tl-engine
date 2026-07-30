@@ -36,9 +36,6 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.DiagnosticLoggingListener;
-import com.top_logic.tl.ai.core.agent.perception.PerceivedContent;
-import com.top_logic.tl.ai.core.agent.perception.PerceptionBinding;
-import com.top_logic.tl.ai.core.agent.perception.PerceptionContext;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
@@ -51,8 +48,6 @@ import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
-import com.top_logic.tl.ai.core.message.ImageContent;
-import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -222,26 +217,13 @@ public class AgentLoop {
 	}
 
 	/**
-	 * Publishes a fresh {@link PerceptionContext} for this run on the loop thread.
-	 *
-	 * <p>Tools reach it through {@link PerceptionBinding}; parallel tool workers inherit it via
-	 * {@link BindingSnapshot}. A delegated sub-run binds its own context and restores the parent's
-	 * on close, so a sub-agent never leaks content into its parent's conversation.</p>
-	 */
-	private PerceptionBinding.Binding bindPerception() {
-		return PerceptionBinding.bind(PerceptionContext.forModel(_config.model()));
-	}
-
-	/**
-	 * Appends everything tools queued for the model to perceive since the last turn, plus any
-	 * completed-but-undelivered subagent results, to the conversation.
+	 * Appends any completed-but-undelivered subagent results to the conversation.
 	 *
 	 * <p>Called at the start of every turn, i.e. after the previous turn's tool results were
 	 * appended and before the next provider request is built.</p>
 	 */
 	private void injectBetweenTurns(Conversation conversation) {
 		injectSubagentResultsForTest(conversation);
-		injectPerceivedContentForTest(conversation);
 	}
 
 	/**
@@ -263,34 +245,6 @@ public class AgentLoop {
 			conversation.add(new SystemMessage(
 				UUID.randomUUID().toString(), Instant.now(), text));
 		}
-	}
-
-	/**
-	 * Appends content that tools queued via {@link PerceptionContext#offer} as a single user
-	 * message, so the model perceives it on the next provider call.
-	 *
-	 * <p>A user message is used deliberately: {@link ImageContent}/{@link PdfContent} are exactly
-	 * what a chat attachment produces, and every provider request builder already renders those
-	 * parts in a user turn. Tool <em>results</em>, by contrast, are text-only in every provider's
-	 * wire format, so a tool cannot hand the model an image through its own return value.</p>
-	 *
-	 * <p>Test-visible entry point for the perception part of {@link #injectBetweenTurns}.</p>
-	 */
-	static void injectPerceivedContentForTest(Conversation conversation) {
-		PerceptionContext perception = PerceptionBinding.getContext();
-		if (perception == null) {
-			return;
-		}
-		List<PerceivedContent> pending = perception.takePending();
-		if (pending.isEmpty()) {
-			return;
-		}
-		List<ContentPart> parts = new ArrayList<>(pending.size() * 2);
-		for (PerceivedContent content : pending) {
-			parts.add(new TextContent(content.description()));
-			parts.add(content.content());
-		}
-		conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(), parts));
 	}
 
 	/**
@@ -316,8 +270,8 @@ public class AgentLoop {
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
-		try (PerceptionBinding.Binding perception = bindPerception()) {
-			return runLoop(conversation, context, serialized, runId);
+		try {
+			return runLoop(conversation, context.withModel(_config.model()), serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
 			// never left waiting for a run that already died.
@@ -429,8 +383,8 @@ public class AgentLoop {
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
-		try (PerceptionBinding.Binding perception = bindPerception()) {
-			return runWithMemory(_memory, context, serialized, runId);
+		try {
+			return runWithMemory(_memory, context.withModel(_config.model()), serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
 			// never left waiting for a run that already died.
@@ -1091,13 +1045,7 @@ public class AgentLoop {
 			return result;
 		}
 
-		int halfBudget = limit / 2;
-		String head = text.substring(0, halfBudget);
-		String tail = text.substring(text.length() - halfBudget);
-		int droppedChars = text.length() - head.length() - tail.length();
-		String truncated = head
-			+ "\n\n[... " + droppedChars + " chars truncated ...]\n\n"
-			+ tail;
+		String truncated = truncateToBudget(text, limit);
 
 		emit(listener, new AgentEvent.ToolCallResultTruncated(runId, turn, now(),
 			result.toolCallId(), result.toolName(), text.length(), truncated.length()));
@@ -1105,7 +1053,37 @@ public class AgentLoop {
 		return new ToolResultMessage(
 			result.id(), result.timestamp(), result.toolCallId(), result.toolName(),
 			new ToolState.Completed(truncated, completed.startTime(), completed.endTime(),
-				false, completed.summary(), -1));
+				false, completed.summary(), -1, truncateTextParts(completed.content(), limit)));
+	}
+
+	/**
+	 * Applies the same character budget to the text parts of a multimodal tool result.
+	 *
+	 * <p>Images and documents pass through untouched: a character budget does not describe them,
+	 * and dropping them would silently cost the model the very content the tool was called for.</p>
+	 */
+	private static List<ContentPart> truncateTextParts(List<ContentPart> content, int limit) {
+		if (content.isEmpty()) {
+			return content;
+		}
+		List<ContentPart> result = new ArrayList<>(content.size());
+		for (ContentPart part : content) {
+			if (part instanceof TextContent text && text.text().length() > limit) {
+				result.add(new TextContent(truncateToBudget(text.text(), limit)));
+			} else {
+				result.add(part);
+			}
+		}
+		return result;
+	}
+
+	/** Keeps the first and last half of the budget, reporting how much was dropped in between. */
+	private static String truncateToBudget(String text, int limit) {
+		int halfBudget = limit / 2;
+		String head = text.substring(0, halfBudget);
+		String tail = text.substring(text.length() - halfBudget);
+		int droppedChars = text.length() - head.length() - tail.length();
+		return head + "\n\n[... " + droppedChars + " chars truncated ...]\n\n" + tail;
 	}
 
 	private static ToolResultMessage errorResult(ToolCall toolCall, String error) {

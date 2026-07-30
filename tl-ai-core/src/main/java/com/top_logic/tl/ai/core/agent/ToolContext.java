@@ -64,6 +64,8 @@ public class ToolContext implements ToolExecutionContext {
 
 	private final ExecutionHandle _executionHandle;
 
+	private final String _model;
+
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
 	 *
@@ -148,13 +150,13 @@ public class ToolContext implements ToolExecutionContext {
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter) {
 		this(security, approval, transaction, sessionApprovedTools, delegationDepth, toolCallId,
-			cancellationToken, progressReporter, new ExecutionHandle());
+			cancellationToken, progressReporter, new ExecutionHandle(), null);
 	}
 
 	private ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools,
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
-			ProgressReporter progressReporter, ExecutionHandle executionHandle) {
+			ProgressReporter progressReporter, ExecutionHandle executionHandle, String model) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
 		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
@@ -164,6 +166,7 @@ public class ToolContext implements ToolExecutionContext {
 		_cancellationToken = Objects.requireNonNull(cancellationToken, "Cancellation token must not be null.");
 		_progressReporter = Objects.requireNonNull(progressReporter, "Progress reporter must not be null.");
 		_executionHandle = Objects.requireNonNull(executionHandle, "Execution handle must not be null.");
+		_model = model;
 	}
 
 	/**
@@ -262,11 +265,34 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
+	 * The model of the run this tool executes in, or {@code null} outside an agent loop.
+	 *
+	 * <p>
+	 * Set by the {@link AgentLoop} from its configuration. A tool that produces content the model
+	 * has to <em>perceive</em> - an image, a PDF - uses it to ask the model catalogue whether that
+	 * model can, and to name the model in its explanation when it cannot.
+	 * </p>
+	 */
+	public String model() {
+		return _model;
+	}
+
+	/**
+	 * Returns a copy of this context bound to the given model.
+	 */
+	public ToolContext withModel(String model) {
+		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
+			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
+			model);
+	}
+
+	/**
 	 * Returns a copy of this context with the given tool call ID.
 	 */
 	public ToolContext withToolCallId(String toolCallId) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
-			_delegationDepth, toolCallId, _cancellationToken, _progressReporter, _executionHandle);
+			_delegationDepth, toolCallId, _cancellationToken, _progressReporter, _executionHandle,
+			_model);
 	}
 
 	/**
@@ -274,7 +300,8 @@ public class ToolContext implements ToolExecutionContext {
 	 */
 	public ToolContext withProgressReporter(ProgressReporter progressReporter) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
-			_delegationDepth, _toolCallId, _cancellationToken, progressReporter, _executionHandle);
+			_delegationDepth, _toolCallId, _cancellationToken, progressReporter, _executionHandle,
+			_model);
 	}
 
 	/**
@@ -289,7 +316,8 @@ public class ToolContext implements ToolExecutionContext {
 	 */
 	public ToolContext forDelegation(TransactionScope childTransaction) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
-			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP);
+			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP,
+			new ExecutionHandle(), _model);
 	}
 
 	/**
@@ -305,6 +333,7 @@ public class ToolContext implements ToolExecutionContext {
 	 */
 	public ToolContext forSubagent(TransactionScope childTransaction, CancellationToken childToken) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
-			_delegationDepth + 1, null, childToken, ProgressReporter.NOOP);
+			_delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
+			new ExecutionHandle(), _model);
 	}
 }

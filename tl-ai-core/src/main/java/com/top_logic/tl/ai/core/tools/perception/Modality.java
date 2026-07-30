@@ -3,12 +3,12 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.agent.perception;
+package com.top_logic.tl.ai.core.tools.perception;
 
 /**
  * A non-text input modality that a model may or may not be able to perceive.
  *
- * @see PerceptionContext#support(Modality)
+ * @see ModelPerception#support(Modality)
  */
 public enum Modality {
 

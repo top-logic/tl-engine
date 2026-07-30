@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.agent.perception;
+package com.top_logic.tl.ai.core.tools.perception;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -12,11 +12,10 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.core.message.ImageContent;
-import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelCapabilities;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelModalities;
+import com.top_logic.tl.ai.tool.api.ToolContent;
 
 /**
  * Tests the content-type dispatch and capability gate of {@link BinaryPerception}.
@@ -25,28 +24,29 @@ public class TestBinaryPerception extends TestCase {
 
 	private static final byte[] PDF_BYTES = "%PDF-1.7\nfake pdf body".getBytes(StandardCharsets.UTF_8);
 
-	/** An image is downscaled and offered as a data-URI {@link ImageContent}. */
+	/** An image is downscaled and attached as base64 {@link ToolContent.Image}. */
 	public void testImageBecomesImageContent() throws IOException {
 		byte[] png = TestImageDownscaler.png(2000, 1000);
 
 		BinaryPerception.Plan plan = BinaryPerception.plan("shot.png", png, "image/png", vision());
 
-		assertTrue("An image must be injected for a vision model.", plan.injects());
-		ImageContent image = (ImageContent) plan.content();
+		assertTrue("An image must be attached for a vision model.", plan.attaches());
+		ToolContent.Image image = (ToolContent.Image) plan.attachment();
 		assertEquals("image/png", image.mediaType());
-		assertTrue("Expected a data URI.", image.url().startsWith("data:image/png;base64,"));
-		assertTrue("The caption must name the source.", plan.perceived().description().contains("shot.png"));
+		assertFalse("The attachment carries raw base64, not a data URI.",
+			image.data().startsWith("data:"));
+		assertTrue("The caption must name the source.", plan.message().contains("shot.png"));
 		assertTrue("The result must say the image was downscaled.", plan.message().contains("downscaled"));
 		assertTrue("The result must report the sent resolution.", plan.message().contains("1568x784"));
 	}
 
-	/** A PDF is offered as base64 {@link PdfContent}. */
+	/** A PDF is attached as base64 {@link ToolContent.Document}. */
 	public void testPdfBecomesPdfContent() {
 		BinaryPerception.Plan plan =
 			BinaryPerception.plan("invoice.pdf", PDF_BYTES, "application/pdf", vision());
 
-		assertTrue(plan.injects());
-		PdfContent pdf = (PdfContent) plan.content();
+		assertTrue(plan.attaches());
+		ToolContent.Document pdf = (ToolContent.Document) plan.attachment();
 		assertEquals("application/pdf", pdf.mediaType());
 		assertEquals(Base64.getEncoder().encodeToString(PDF_BYTES), pdf.data());
 	}
@@ -58,7 +58,7 @@ public class TestBinaryPerception extends TestCase {
 		BinaryPerception.Plan plan =
 			BinaryPerception.plan("notes.txt", data, "text/plain; charset=UTF-8", vision());
 
-		assertFalse("Text needs no multimodal injection.", plan.injects());
+		assertFalse("Text needs no attachment.", plan.attaches());
 		assertTrue(plan.message().contains("Hallo Wörld"));
 	}
 
@@ -69,7 +69,7 @@ public class TestBinaryPerception extends TestCase {
 		BinaryPerception.Plan plan =
 			BinaryPerception.plan("data.json", data, "application/json", vision());
 
-		assertFalse(plan.injects());
+		assertFalse(plan.attaches());
 		assertTrue(plan.message().contains("{\"a\":1}"));
 	}
 
@@ -79,7 +79,7 @@ public class TestBinaryPerception extends TestCase {
 
 		BinaryPerception.Plan plan = BinaryPerception.plan("big.txt", data, "text/plain", vision());
 
-		assertFalse(plan.injects());
+		assertFalse(plan.attaches());
 		assertTrue(plan.message().contains("truncated"));
 		assertTrue(plan.message().contains("500 more characters"));
 	}
@@ -89,7 +89,7 @@ public class TestBinaryPerception extends TestCase {
 		BinaryPerception.Plan plan = BinaryPerception.plan("archive.zip",
 			new byte[] { 'P', 'K', 3, 4 }, "application/zip", vision());
 
-		assertFalse(plan.injects());
+		assertFalse(plan.attaches());
 		assertTrue(plan.message().contains("application/zip"));
 		assertTrue(plan.message().contains("not something a model can perceive"));
 	}
@@ -98,7 +98,7 @@ public class TestBinaryPerception extends TestCase {
 	public void testEmptyContent() {
 		BinaryPerception.Plan plan = BinaryPerception.plan("empty.png", new byte[0], "image/png", vision());
 
-		assertFalse(plan.injects());
+		assertFalse(plan.attaches());
 		assertTrue(plan.message().contains("empty"));
 	}
 
@@ -107,7 +107,7 @@ public class TestBinaryPerception extends TestCase {
 		BinaryPerception.Plan plan = BinaryPerception.plan("shot.png",
 			TestImageDownscaler.png(100, 100), "image/png", textOnly());
 
-		assertFalse("A text-only model must not receive an image.", plan.injects());
+		assertFalse("A text-only model must not receive an image.", plan.attaches());
 		assertTrue(plan.message().contains("cannot view images"));
 		assertTrue("The model must still learn what the object is.", plan.message().contains("shot.png"));
 		assertTrue(plan.message().contains("image/png"));
@@ -115,50 +115,50 @@ public class TestBinaryPerception extends TestCase {
 
 	/** A model whose catalogue lists images but not PDFs is blocked for PDFs only. */
 	public void testPdfBlockedForImageOnlyModel() throws IOException {
-		PerceptionContext imageOnly = context(modalities(List.of("text", "image"), false));
+		ModelPerception imageOnly = context(modalities(List.of("text", "image"), false));
 
 		assertTrue(BinaryPerception.plan("shot.png", TestImageDownscaler.png(50, 50), "image/png",
-			imageOnly).injects());
+			imageOnly).attaches());
 
 		BinaryPerception.Plan pdfPlan =
 			BinaryPerception.plan("invoice.pdf", PDF_BYTES, "application/pdf", imageOnly);
-		assertFalse(pdfPlan.injects());
+		assertFalse(pdfPlan.attaches());
 		assertTrue(pdfPlan.message().contains("cannot view PDF documents"));
 	}
 
 	/** Without declared modalities the coarse attachment flag decides. */
 	public void testFallsBackToAttachmentFlag() throws IOException {
-		PerceptionContext attachments = context(capabilities(null, true));
-		PerceptionContext noAttachments = context(capabilities(null, false));
+		ModelPerception attachments = context(capabilities(null, true));
+		ModelPerception noAttachments = context(capabilities(null, false));
 
 		assertEquals(PerceptionSupport.SUPPORTED, attachments.support(Modality.IMAGE));
 		assertEquals(PerceptionSupport.UNSUPPORTED, noAttachments.support(Modality.IMAGE));
 		assertTrue(BinaryPerception.plan("shot.png", TestImageDownscaler.png(50, 50), "image/png",
-			attachments).injects());
+			attachments).attaches());
 		assertFalse(BinaryPerception.plan("shot.png", TestImageDownscaler.png(50, 50), "image/png",
-			noAttachments).injects());
+			noAttachments).attaches());
 	}
 
 	/** An unknown model is given the benefit of the doubt, with the uncertainty spelled out. */
 	public void testUnknownModelInjectsWithACaveat() throws IOException {
-		PerceptionContext unknown = new PerceptionContext("some-local-model", null);
+		ModelPerception unknown = new ModelPerception("some-local-model", null);
 
 		assertEquals(PerceptionSupport.UNKNOWN, unknown.support(Modality.IMAGE));
 
 		BinaryPerception.Plan plan = BinaryPerception.plan("shot.png",
 			TestImageDownscaler.png(50, 50), "image/png", unknown);
 
-		assertTrue(plan.injects());
+		assertTrue(plan.attaches());
 		assertTrue(plan.message().contains("unverified"));
 		assertTrue(plan.message().contains("some-local-model"));
 	}
 
-	/** Outside an agent loop there is no model to gate on and nothing to inject into. */
-	public void testWithoutContextTheImageIsStillPlanned() throws IOException {
+	/** Outside an agent loop there is no model to gate on, so the content is attached anyway. */
+	public void testWithoutModelTheImageIsStillAttached() throws IOException {
 		BinaryPerception.Plan plan =
 			BinaryPerception.plan("shot.png", TestImageDownscaler.png(50, 50), "image/png", null);
 
-		assertTrue(plan.injects());
+		assertTrue(plan.attaches());
 	}
 
 	/** A missing or generic content type is recovered from the payload's magic bytes. */
@@ -176,12 +176,12 @@ public class TestBinaryPerception extends TestCase {
 	}
 
 	/** A PNG stored without a content type still reaches the model as an image. */
-	public void testSniffedImageIsInjected() throws IOException {
+	public void testSniffedImageIsAttached() throws IOException {
 		BinaryPerception.Plan plan =
 			BinaryPerception.plan("unnamed", TestImageDownscaler.png(60, 60), null, vision());
 
-		assertTrue(plan.injects());
-		assertEquals("image/png", ((ImageContent) plan.content()).mediaType());
+		assertTrue(plan.attaches());
+		assertEquals("image/png", ((ToolContent.Image) plan.attachment()).mediaType());
 	}
 
 	/** An image too large even after downscaling is refused with a clear reason. */
@@ -192,7 +192,7 @@ public class TestBinaryPerception extends TestCase {
 
 		BinaryPerception.Plan plan = BinaryPerception.plan("huge.webp", huge, "image/webp", vision());
 
-		assertFalse(plan.injects());
+		assertFalse(plan.attaches());
 		assertTrue(plan.message().contains("above the"));
 	}
 
@@ -203,20 +203,20 @@ public class TestBinaryPerception extends TestCase {
 		BinaryPerception.Plan plan =
 			BinaryPerception.plan("huge.pdf", huge, "application/pdf", vision());
 
-		assertFalse(plan.injects());
+		assertFalse(plan.attaches());
 		assertTrue(plan.message().contains("above the"));
 	}
 
-	static PerceptionContext vision() {
+	static ModelPerception vision() {
 		return context(modalities(List.of("text", "image", "pdf"), true));
 	}
 
-	private static PerceptionContext textOnly() {
+	private static ModelPerception textOnly() {
 		return context(modalities(List.of("text"), false));
 	}
 
-	private static PerceptionContext context(ModelCapabilities capabilities) {
-		return new PerceptionContext("test-model",
+	private static ModelPerception context(ModelCapabilities capabilities) {
+		return new ModelPerception("test-model",
 			new ModelInfo("test-model", null, null, capabilities, null, null, false, null));
 	}
 

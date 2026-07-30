@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.agent.perception;
+package com.top_logic.tl.ai.core.tools.perception;
 
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
@@ -12,18 +12,16 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.Base64;
 import java.util.Locale;
 
-import com.top_logic.tl.ai.core.message.ContentPart;
-import com.top_logic.tl.ai.core.message.ImageContent;
-import com.top_logic.tl.ai.core.message.PdfContent;
+import com.top_logic.tl.ai.tool.api.ToolContent;
 
 /**
  * Turns stored bytes into something a model can actually perceive.
  *
  * <p>
- * Dispatches on content type: images and PDFs become multimodal {@link ContentPart}s that the agent
- * loop injects into the conversation, text is returned inline as the tool's own result, and
- * anything else produces a plain explanation. Nothing here touches the knowledge base or the agent
- * loop, which keeps the whole decision testable in isolation.
+ * Dispatches on content type: images and PDFs become {@link ToolContent} attachments the calling
+ * tool hands back inside its own result, text is returned inline as plain text, and anything else
+ * produces a plain explanation. Nothing here touches the knowledge base or the agent loop, which
+ * keeps the whole decision testable in isolation.
  * </p>
  *
  * @see com.top_logic.tl.ai.core.tools.model.ViewDocumentTool
@@ -31,12 +29,12 @@ import com.top_logic.tl.ai.core.message.PdfContent;
 public final class BinaryPerception {
 
 	/**
-	 * Maximum encoded image size accepted for injection. Providers reject larger base64 image
+	 * Maximum encoded image size accepted as an attachment. Providers reject larger base64 image
 	 * payloads outright; the {@link ImageDownscaler} normally keeps real screenshots far below it.
 	 */
 	public static final int MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-	/** Maximum PDF size accepted for injection. */
+	/** Maximum PDF size accepted as an attachment. */
 	public static final int MAX_PDF_BYTES = 20 * 1024 * 1024;
 
 	/** Maximum number of characters returned for a text document. */
@@ -52,20 +50,15 @@ public final class BinaryPerception {
 	 * @param message
 	 *        The text the calling tool returns to the model. Always present: even when nothing can
 	 *        be shown, the model learns what the object is.
-	 * @param perceived
-	 *        The captioned content to place into the model's context, or {@code null} when there
-	 *        is nothing to inject (text, unsupported type, model cannot see it).
+	 * @param attachment
+	 *        The content to attach to the tool result, or {@code null} when there is nothing to
+	 *        attach (text, unsupported type, model cannot see it).
 	 */
-	public record Plan(String message, PerceivedContent perceived) {
+	public record Plan(String message, ToolContent attachment) {
 
-		/** Whether this plan wants content placed into the model's context. */
-		public boolean injects() {
-			return perceived != null;
-		}
-
-		/** The content part to inject, or {@code null}. */
-		public ContentPart content() {
-			return perceived == null ? null : perceived.content();
+		/** Whether this plan carries content the model has to perceive. */
+		public boolean attaches() {
+			return attachment != null;
 		}
 	}
 
@@ -79,13 +72,13 @@ public final class BinaryPerception {
 	 * @param declaredContentType
 	 *        The content type recorded with the data. May be {@code null} or generic, in which
 	 *        case it is sniffed from the payload.
-	 * @param context
-	 *        The running model's perception context, or {@code null} when the caller is not inside
-	 *        an agent loop (then nothing can be injected).
+	 * @param model
+	 *        What the receiving model can perceive, or {@code null} when the model is unknown (then
+	 *        the content is attached and the provider decides).
 	 * @return The plan, never {@code null}.
 	 */
 	public static Plan plan(String label, byte[] data, String declaredContentType,
-			PerceptionContext context) {
+			ModelPerception model) {
 		if (data == null || data.length == 0) {
 			return new Plan("The content of " + label + " is empty.", null);
 		}
@@ -96,10 +89,10 @@ public final class BinaryPerception {
 			return planText(label, data, contentType);
 		}
 		if (normalized.startsWith("image/")) {
-			return planImage(label, data, contentType, context);
+			return planImage(label, data, contentType, model);
 		}
 		if (normalized.startsWith("application/pdf")) {
-			return planPdf(label, data, contentType, context);
+			return planPdf(label, data, model);
 		}
 		return new Plan("Cannot show " + label + ": content type " + contentType
 			+ " is not something a model can perceive. Only images, PDFs and text are supported.",
@@ -117,10 +110,10 @@ public final class BinaryPerception {
 	}
 
 	private static Plan planImage(String label, byte[] data, String contentType,
-			PerceptionContext context) {
-		PerceptionSupport support = support(context, Modality.IMAGE);
+			ModelPerception model) {
+		PerceptionSupport support = support(model, Modality.IMAGE);
 		if (!support.permitted()) {
-			return new Plan(cannotPerceive("images", context)
+			return new Plan(cannotPerceive("images", model)
 				+ " " + label + " is a " + contentType + " image of " + data.length + " bytes.", null);
 		}
 
@@ -131,24 +124,21 @@ public final class BinaryPerception {
 				+ " byte limit for images sent to a model.", null);
 		}
 
-		String base64 = Base64.getEncoder().encodeToString(scaled.data());
-		ImageContent image =
-			new ImageContent("data:" + scaled.contentType() + ";base64," + base64, scaled.contentType());
+		ToolContent.Image image = new ToolContent.Image(
+			Base64.getEncoder().encodeToString(scaled.data()), scaled.contentType());
 		String dimensions = scaled.hasDimensions()
 			? " " + scaled.width() + "x" + scaled.height() + " pixels"
 				+ (scaled.resized() ? " (downscaled)" : "")
 			: "";
 		String caption = "Image content of " + label + " (" + scaled.contentType() + dimensions + ")";
-		return new Plan(caption + " has been added to your context; it is shown in the next message."
-			+ unknownSupportHint(support, context, "images"),
-			new PerceivedContent(caption + ":", image));
+		return new Plan(caption + ", shown to you with this result."
+			+ unknownSupportHint(support, model, "images"), image);
 	}
 
-	private static Plan planPdf(String label, byte[] data, String contentType,
-			PerceptionContext context) {
-		PerceptionSupport support = support(context, Modality.PDF);
+	private static Plan planPdf(String label, byte[] data, ModelPerception model) {
+		PerceptionSupport support = support(model, Modality.PDF);
 		if (!support.permitted()) {
-			return new Plan(cannotPerceive("PDF documents", context)
+			return new Plan(cannotPerceive("PDF documents", model)
 				+ " " + label + " is a PDF of " + data.length + " bytes.", null);
 		}
 		if (data.length > MAX_PDF_BYTES) {
@@ -156,32 +146,32 @@ public final class BinaryPerception {
 				+ " bytes, above the " + MAX_PDF_BYTES + " byte limit for documents sent to a model.",
 				null);
 		}
-		PdfContent pdf = new PdfContent(Base64.getEncoder().encodeToString(data), "application/pdf");
+		ToolContent.Document pdf = new ToolContent.Document(
+			Base64.getEncoder().encodeToString(data), "application/pdf");
 		String caption = "PDF content of " + label + " (" + data.length + " bytes)";
-		return new Plan(caption + " has been added to your context; it is shown in the next message."
-			+ unknownSupportHint(support, context, "PDF documents"),
-			new PerceivedContent(caption + ":", pdf));
+		return new Plan(caption + ", shown to you with this result."
+			+ unknownSupportHint(support, model, "PDF documents"), pdf);
 	}
 
-	private static PerceptionSupport support(PerceptionContext context, Modality modality) {
-		return context == null ? PerceptionSupport.UNKNOWN : context.support(modality);
+	private static PerceptionSupport support(ModelPerception model, Modality modality) {
+		return model == null ? PerceptionSupport.UNKNOWN : model.support(modality);
 	}
 
 	/**
 	 * Only reachable for {@link PerceptionSupport#UNSUPPORTED}, which requires a catalogue entry
-	 * and therefore a non-{@code null} context.
+	 * and therefore a non-{@code null} model.
 	 */
-	private static String cannotPerceive(String what, PerceptionContext context) {
-		return "The '" + context.model() + "' model cannot view " + what
-			+ ", so it was not added to your context.";
+	private static String cannotPerceive(String what, ModelPerception model) {
+		return "The '" + model.model() + "' model cannot view " + what
+			+ ", so it is not shown to you.";
 	}
 
-	private static String unknownSupportHint(PerceptionSupport support, PerceptionContext context,
+	private static String unknownSupportHint(PerceptionSupport support, ModelPerception model,
 			String what) {
-		if (support != PerceptionSupport.UNKNOWN || context == null) {
+		if (support != PerceptionSupport.UNKNOWN || model == null) {
 			return "";
 		}
-		return " (The model catalogue has no entry for '" + context.model()
+		return " (The model catalogue has no entry for '" + model.model()
 			+ "', so whether it can read " + what + " is unverified.)";
 	}
 

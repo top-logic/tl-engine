@@ -21,33 +21,29 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.perception.BinaryPerception;
-import com.top_logic.tl.ai.core.agent.perception.PerceptionBinding;
-import com.top_logic.tl.ai.core.agent.perception.PerceptionContext;
+import com.top_logic.tl.ai.core.tools.perception.BinaryPerception;
+import com.top_logic.tl.ai.core.tools.perception.ModelPerception;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * Lets an agent perceive the content stored on a model object.
  *
  * <p>
  * Given the TID of any object that holds a {@code tl.core:Binary} attribute, the tool reads the
- * stored bytes and brings them to the model in the right modality: images and PDFs are placed into
- * the model's context as multimodal content (so a vision-capable model actually <em>sees</em>
- * them), text is returned inline, and anything else produces a plain explanation. It is not tied to
- * any particular type — a browser screenshot, an uploaded invoice PDF and an attached CSV all go
- * through the same path.
+ * stored bytes and brings them to the model in the right modality: images and PDFs ride along in the
+ * tool result as multimodal content (so a vision-capable model actually <em>sees</em> them), text is
+ * returned inline, and anything else produces a plain explanation. It is not tied to any particular
+ * type — a browser screenshot, an uploaded invoice PDF and an attached CSV all go through the same
+ * path.
  * </p>
  *
- * <h2>Proof of concept</h2>
  * <p>
- * Injection reuses the attachment plumbing: the content is queued on the run's
- * {@link PerceptionContext} and appended by the agent loop as a user message before the next
- * provider call, because tool results are text-only in every provider's wire format. Read access is
- * checked through the security context, whose read check is still a placeholder that returns
- * {@code true} for everyone.
+ * Read access is checked through the security context, whose read check is still a framework-wide
+ * placeholder that returns {@code true} for everyone.
  * </p>
  *
  * @see BinaryPerception
@@ -90,18 +86,18 @@ public class ViewDocumentTool {
 	 *        Name of the binary attribute to read. Only needed when the object has more than one;
 	 *        the tool then reports the available names.
 	 * @param context
-	 *        Injected execution context, supplying the read-access check.
-	 * @return A description of what was loaded, or an explanation why it could not be.
+	 *        Injected execution context, supplying the read-access check and the running model.
+	 * @return A description of what was loaded, carrying the content itself when the model can
+	 *         perceive it, or an explanation why it could not be shown.
 	 */
 	@ToolMethod(
 		description = "Load the content stored on a model object into your context so you can "
-			+ "actually perceive it. Images and PDFs are shown to you directly (they appear as a "
-			+ "message right after this result), text documents are returned inline. Use it to see "
-			+ "a saved screenshot, a stored image or an attached document. Pass the object's TID; "
-			+ "pass 'attribute' only when the object stores more than one binary and the tool asks "
-			+ "for it.",
+			+ "actually perceive it. Images and PDFs are shown to you directly as part of this "
+			+ "result, text documents are returned inline. Use it to see a saved screenshot, a "
+			+ "stored image or an attached document. Pass the object's TID; pass 'attribute' only "
+			+ "when the object stores more than one binary and the tool asks for it.",
 		mode = ToolMode.READ)
-	public String viewDocument(
+	public ToolResult viewDocument(
 			@P("The TopLogic identifier (TID) of the object holding the content, "
 				+ "format 'TypeName:id'.") String tid,
 			@P(value = "Name of the binary attribute to read; only needed when the object has "
@@ -111,36 +107,36 @@ public class ViewDocumentTool {
 		try {
 			object = TidResolver.resolve(tid);
 		} catch (IllegalArgumentException ex) {
-			return "Error: " + ex.getMessage() + ".";
+			return ToolResult.of("Error: " + ex.getMessage() + ".");
 		} catch (RuntimeException ex) {
 			Logger.error("viewDocument() could not resolve TID '" + tid + "': " + ex.getMessage(), ex,
 				ViewDocumentTool.class);
-			return "Error: cannot resolve TID '" + tid + "': " + ex.getMessage();
+			return ToolResult.of("Error: cannot resolve TID '" + tid + "': " + ex.getMessage());
 		}
 
 		// Single access-control seam for this tool. Today SecurityContext.hasReadAccess is a
 		// framework-wide placeholder returning true; when it becomes real, this call enforces it.
 		if (!readAccess(context).hasReadAccess(object)) {
-			return "Error: you do not have read access to " + tid + ".";
+			return ToolResult.of("Error: you do not have read access to " + tid + ".");
 		}
 
 		List<TLStructuredTypePart> binaries = binaryAttributes(object);
 		if (binaries.isEmpty()) {
-			return "Error: " + tid + " stores no binary content.";
+			return ToolResult.of("Error: " + tid + " stores no binary content.");
 		}
 
 		TLStructuredTypePart part = select(binaries, attribute);
 		if (part == null) {
-			return attribute == null || attribute.isBlank()
+			return ToolResult.of(attribute == null || attribute.isBlank()
 				? "Error: " + tid + " has several binary attributes (" + names(binaries)
 					+ "). Call viewDocument again with the 'attribute' parameter set to the one you want."
 				: "Error: " + tid + " has no binary attribute named '" + attribute + "'. Available: "
-					+ names(binaries) + ".";
+					+ names(binaries) + ".");
 		}
 
 		Object value = object.tValue(part);
 		if (!(value instanceof BinaryDataSource binary)) {
-			return "Error: attribute '" + part.getName() + "' of " + tid + " is empty.";
+			return ToolResult.of("Error: attribute '" + part.getName() + "' of " + tid + " is empty.");
 		}
 
 		byte[] data;
@@ -149,21 +145,25 @@ public class ViewDocumentTool {
 		} catch (IOException | RuntimeException ex) {
 			Logger.error("viewDocument() could not read '" + part.getName() + "' of " + tid + ": "
 				+ ex.getMessage(), ex, ViewDocumentTool.class);
-			return "Error: cannot read the content of " + tid + ": " + ex.getMessage();
+			return ToolResult.of("Error: cannot read the content of " + tid + ": " + ex.getMessage());
 		}
 
 		String label = describe(tid, part, binary);
-		PerceptionContext perception = PerceptionBinding.getContext();
 		BinaryPerception.Plan plan =
-			BinaryPerception.plan(label, data, binary.getContentType(), perception);
-		if (!plan.injects()) {
-			return plan.message();
-		}
-		if (perception == null) {
-			return "Cannot show " + label + ": this run has no agent loop to deliver content to.";
-		}
-		perception.offer(plan.perceived());
-		return plan.message();
+			BinaryPerception.plan(label, data, binary.getContentType(), perception(context));
+		return plan.attaches()
+			? ToolResult.multimodal(plan.message(), plan.attachment())
+			: ToolResult.of(plan.message());
+	}
+
+	/**
+	 * What the model of the running agent can perceive, or {@code null} when the tool runs outside
+	 * an agent loop (scripting, tests) and there is no model to gate on.
+	 */
+	private static ModelPerception perception(ToolExecutionContext context) {
+		return context instanceof ToolContext toolContext
+			? ModelPerception.forModel(toolContext.model())
+			: null;
 	}
 
 	/**

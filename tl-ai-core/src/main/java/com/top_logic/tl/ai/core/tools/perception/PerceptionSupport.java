@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.agent.perception;
+package com.top_logic.tl.ai.core.tools.perception;
 
 /**
  * Whether the active model can perceive a given {@link Modality}.

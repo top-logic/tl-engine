@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.graphic.flow.server.script;
+package test.com.top_logic.react.flow.server.script;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -14,15 +14,15 @@ import junit.framework.TestCase;
 
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.graphic.blocks.svg.RenderContext;
-import com.top_logic.graphic.flow.data.Border;
-import com.top_logic.graphic.flow.data.Box;
-import com.top_logic.graphic.flow.data.Diagram;
-import com.top_logic.graphic.flow.data.HorizontalLayout;
-import com.top_logic.graphic.flow.data.Padding;
-import com.top_logic.graphic.flow.data.Text;
-import com.top_logic.graphic.flow.data.VerticalLayout;
-import com.top_logic.graphic.flow.server.script.FlowFactory;
+import com.top_logic.react.flow.svg.RenderContext;
+import com.top_logic.react.flow.data.Border;
+import com.top_logic.react.flow.data.Box;
+import com.top_logic.react.flow.data.Diagram;
+import com.top_logic.react.flow.data.HorizontalLayout;
+import com.top_logic.react.flow.data.Padding;
+import com.top_logic.react.flow.data.Text;
+import com.top_logic.react.flow.data.VerticalLayout;
+import com.top_logic.react.flow.server.script.FlowFactory;
 
 /**
  * Test case for {@link FlowFactory#toSvg(Diagram, String, double, Double, Double)}.
@@ -153,13 +153,14 @@ public class TestFlowSvg extends TestCase {
 		assertTrue("Default font-family missing from the root element: " + svg12,
 			svg12.contains("font-family=\"" + RenderContext.DEFAULT_FONT_DECLARATION + "\""));
 		assertTrue("Default font size for 12pt should be 16px: " + svg12,
-			svg12.contains("font-size=\"16px\""));
+			svg12.contains("font-size=\"16.0\""));
 
 		// 24pt * 96/72 = 32px
 		String svg24 = readSvg(toSvg(d24, "TestFlowSvg-default-font-24pt.svg", 24.0, null, null));
 		assertTrue("Default font size for 24pt should be 32px: " + svg24,
-			svg24.contains("font-size=\"32px\""));
+			svg24.contains("font-size=\"32.0\""));
 	}
+
 
 	/**
 	 * The auto-sized viewBox width must grow proportionally with the requested {@code textSize}.
@@ -211,10 +212,10 @@ public class TestFlowSvg extends TestCase {
 	public void testPerTextFontSizeRespected() throws IOException {
 		Diagram small = Diagram.create()
 			.setRoot(Border.create()
-				.setContent(Text.create().setValue("Hello").setFontSize("16px")));
+				.setContent(Text.create().setValue("Hello").setFontSize(16)));
 		Diagram large = Diagram.create()
 			.setRoot(Border.create()
-				.setContent(Text.create().setValue("Hello").setFontSize("32px")));
+				.setContent(Text.create().setValue("Hello").setFontSize(32)));
 
 		toSvg(small, "TestFlowSvg-per-text-16px.svg", 12.0, null, null);
 		toSvg(large, "TestFlowSvg-per-text-32px.svg", 12.0, null, null);
@@ -237,14 +238,14 @@ public class TestFlowSvg extends TestCase {
 			labelled("Bold 12pt",
 				Text.create().setValue("The quick brown fox").setFontWeight("bold")),
 			labelled("Per-text 20px",
-				Text.create().setValue("The quick brown fox").setFontSize("20px")),
+				Text.create().setValue("The quick brown fox").setFontSize(20)),
 			labelled("Per-text 32px",
-				Text.create().setValue("The quick brown fox").setFontSize("32px")),
+				Text.create().setValue("The quick brown fox").setFontSize(32)),
 			labelled("Per-text 32px bold",
 				Text.create().setValue("The quick brown fox")
-					.setFontSize("32px").setFontWeight("bold")),
+					.setFontSize(32).setFontWeight("bold")),
 			labelled("Per-text 12pt",
-				Text.create().setValue("The quick brown fox").setFontSize("12pt")),
+				Text.create().setValue("The quick brown fox").setFontSize(16)),
 		}) {
 			root.addContent(row);
 		}

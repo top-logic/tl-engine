@@ -12,7 +12,6 @@ import com.top_logic.react.flow.svg.event.Registration;
 import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
 import com.top_logic.react.flow.svg.event.SVGDropHandler;
-import com.top_logic.react.flow.svg.event.SVGPanEvent;
 import com.top_logic.react.flow.svg.event.SVGPanHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
@@ -51,6 +50,18 @@ public interface SvgWriter extends AutoCloseable {
 	 * Closes a <code>svg</code> tag.
 	 */
 	void endSvg();
+
+	/**
+	 * Writes a <code>style</code> element with the given CSS rules.
+	 *
+	 * <p>
+	 * Only meaningful for writers producing a standalone SVG document. Writers targeting the live
+	 * DOM discard the rules, because there the surrounding page stylesheet applies.
+	 * </p>
+	 */
+	default void style(CharSequence css) {
+		// Ignored: the surrounding document supplies the stylesheet.
+	}
 
 	/**
 	 * Starts a <code>g</code> tag.

@@ -30,10 +30,10 @@ import com.top_logic.graphic.blocks.svg.TextMetricsImpl;
  *
  * <p>
  * Therefore, measurements are converted from pt to CSS px via {@link #PX_PER_PT} before being
- * returned. The caller (e.g.
- * {@code com.top_logic.graphic.flow.server.script.FlowFactory#toSvg}) is expected to write a
- * matching {@code font-size} (in px) on the rendered {@code <text>} element (or as a default CSS
- * rule) so that measurement and rendering stay in lock-step.
+ * returned. The size actually assumed is reported in CSS pixels by {@link #getDefaultFontSizePx()},
+ * which the diagram states on its root element through
+ * {@link com.top_logic.graphic.blocks.svg.SvgWriter#setTextStyle(String, String, String)}, so that
+ * measurement and rendering stay in lock-step.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -74,11 +74,8 @@ public class AWTContext implements RenderContext {
 		_fontRenderContext = new FontRenderContext(null, true, true);
 	}
 
-	/**
-	 * The default font size in CSS pixels used by this context when no per-text
-	 * {@code font-size} is set.
-	 */
-	public double getDefaultSizePx() {
+	@Override
+	public double getDefaultFontSizePx() {
 		return _defaultSizePt * PX_PER_PT;
 	}
 

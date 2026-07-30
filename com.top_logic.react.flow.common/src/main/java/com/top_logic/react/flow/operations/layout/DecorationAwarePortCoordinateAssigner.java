@@ -10,7 +10,6 @@ import java.util.List;
 import com.top_logic.graph.layouter.GraphConstants;
 import com.top_logic.graph.layouter.LayoutContext;
 import com.top_logic.graph.layouter.algorithm.node.port.assigner.NodePortAssignAlgorithm;
-import com.top_logic.graph.layouter.model.LayoutGraph;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 import com.top_logic.graph.layouter.model.NodePort;

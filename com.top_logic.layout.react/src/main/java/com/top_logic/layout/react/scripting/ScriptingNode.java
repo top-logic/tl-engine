@@ -11,7 +11,7 @@ import java.util.Map;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
- * Optional enrichment a {@link ReactControl} may implement to describe itself to the headless agent
+ * Optional enrichment a {@link ReactControl} may implement to describe itself to the headless interface
  * interface.
  *
  * <p>

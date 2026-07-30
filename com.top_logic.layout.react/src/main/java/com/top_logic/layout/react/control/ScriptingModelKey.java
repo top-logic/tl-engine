@@ -22,7 +22,7 @@ import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 
 /**
  * Builds a stable, locale- and session-independent identity for a business object, for use as a
- * headless agent address/argument key.
+ * headless interface address/argument key.
  *
  * <p>
  * The identity is a {@link ModelName} — the same object-naming the script recorder uses to refer to

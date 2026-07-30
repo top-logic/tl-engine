@@ -56,7 +56,7 @@ public class ReactInsetControl extends ReactControl {
 	}
 
 	/**
-	 * Structural: this control is a padding/inset wrapper and is elided from the headless agent projection.
+	 * Structural: this control is a padding/inset wrapper and is elided from the headless projection.
 	 */
 	@Override
 	public boolean scriptingTransparent() {

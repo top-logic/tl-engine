@@ -200,7 +200,7 @@ public class ReactStackControl extends ReactControl {
 
 
 	/**
-	 * Structural: this control is a flex layout container and is elided from the headless agent projection.
+	 * Structural: this control is a flex layout container and is elided from the headless projection.
 	 */
 	@Override
 	public boolean scriptingTransparent() {

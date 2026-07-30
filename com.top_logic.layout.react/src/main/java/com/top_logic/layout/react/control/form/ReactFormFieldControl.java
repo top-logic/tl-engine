@@ -389,7 +389,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 *
 	 * <p>
 	 * The suppressed echo is recorded as a silent state change; when the command was dispatched
-	 * programmatically (script replay, headless agent) rather than by the browser, the framework
+	 * programmatically (script replay, headless interface) rather than by the browser, the framework
 	 * resends the control state after the command, so the value still reaches the client — see
 	 * {@link #executeCommand(String, java.util.Map)}.
 	 * </p>

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 /**
- * Headless agent interface over the React view-system control tree.
+ * Headless interface over the React view-system control tree.
  *
  * <p>
  * The view system already exposes a server-side state tree to the browser and accepts commands back;
@@ -18,9 +18,9 @@
  * </p>
  *
  * <p>
- * The two intended consumers are the script recorder (which captures a user's actions as
- * address+command tuples for replay as tests or data-setup scripts) and an AI agent (which observes,
- * decides, and acts to drive a session autonomously). Both are clients of the same interface; the
+ * The two consumers are the script recorder (which captures a user's actions as address+command
+ * tuples for replay as tests or data-setup scripts) and an agent driving a session on a user's
+ * behalf. Both are clients of the same interface; the
  * load-bearing piece is the {@link com.top_logic.layout.react.scripting.ScriptingTreeProjector semantic
  * addressing} that gives controls stable, meaningful handles independent of their opaque per-session
  * IDs. A control may implement {@link com.top_logic.layout.react.scripting.ScriptingNode} to refine its
@@ -28,12 +28,9 @@
  * </p>
  *
  * <p>
- * {@link com.top_logic.layout.react.scripting.AgentServlet} exposes the interface over HTTP
- * ({@code /agent-api/windows}, {@code /agent-api/observe}, {@code /agent-api/act}) for an out-of-process
- * consumer. The three verbs map directly onto MCP tools — {@code observe} / {@code list_actions}
- * (read from the projected tree) and {@code act} — so a thin MCP wrapper can let an external agent
- * drive a live, authenticated application session. Each {@code act} returns a quiesced observation,
- * which doubles as the {@code wait_for_settled} signal.
+ * The interface is in-process. Reaching it from outside the server is a separate concern with its
+ * own admission rules and is therefore an application's choice: the optional module
+ * {@code tl-layout-view-agent} publishes it over HTTP for a consumer that is not a browser.
  * </p>
  */
 package com.top_logic.layout.react.scripting;

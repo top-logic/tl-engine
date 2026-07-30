@@ -15,7 +15,7 @@ import java.util.Map;
  * it.
  *
  * <p>
- * This is the unit of observation of the headless agent interface: a stable {@link #address()}, a
+ * This is the unit of observation of the headless interface: a stable {@link #address()}, a
  * semantic {@link #role()} and optional {@link #name()}, the node's data {@link #state()}, the
  * {@link #actions()} it offers, and its {@link #children()}. The address is the handle an agent
  * passes back to {@link ScriptingSession#act(String, String, Map)} to act on this node.

@@ -1,4 +1,4 @@
-# Headless Agent / Script Interface for the React View Layer — Plan & Progress
+# Headless Interface for the React View Layer — Plan & Progress
 
 > **Status: WORKING, NOT COMPLETE.** The interface is on `master` (built under
 > #29108): observe/act/record/replay run live, are unit-tested and exercised
@@ -7,10 +7,12 @@
 > document tracks the design questions and the remaining work.
 
 - **Ticket:** #29430 (completion); the interface itself was built under #29108
-- **Code:** `com.top_logic.layout.react.scripting` (package), `AgentServlet` (HTTP),
-  `com.top_logic.layout.view.recorder` (recorder side window)
+- **Code:** `com.top_logic.layout.react.scripting` (the interface, in the core React
+  module), `com.top_logic.layout.view.recorder` (recorder side window),
+  `com.top_logic.layout.view.agent` (the optional module publishing the interface
+  over HTTP and issuing the access tokens that admit an agent)
 - **Owner:** bhu
-- **Last updated:** 2026-07-29
+- **Last updated:** 2026-07-30
 
 ## How to use this document
 

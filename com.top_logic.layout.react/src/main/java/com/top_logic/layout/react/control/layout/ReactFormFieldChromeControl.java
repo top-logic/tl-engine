@@ -83,7 +83,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 
 	/**
 	 * Sets a stable, locale-independent name for this field (its technical attribute name) used as
-	 * the headless agent address discriminator.
+	 * the headless interface address discriminator.
 	 *
 	 * <p>
 	 * The display {@code label} varies by locale and by whether an object is loaded (the placeholder

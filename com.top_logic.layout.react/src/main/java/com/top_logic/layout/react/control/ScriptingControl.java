@@ -12,7 +12,7 @@ import java.util.Set;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 
 /**
- * Headless agent-interface of a {@link ReactControl}.
+ * Headless interface-interface of a {@link ReactControl}.
  *
  * <p>
  * These methods expose the control tree, its data state and its action space without rendering or
@@ -42,7 +42,7 @@ public interface ScriptingControl extends ReactCommandTarget {
 	Set<String> commandNames();
 
 	/**
-	 * Whether this control is a purely structural wrapper that the headless agent projection should
+	 * Whether this control is a purely structural wrapper that the headless projection should
 	 * elide, lifting its children into its parent.
 	 *
 	 * <p>
@@ -136,7 +136,7 @@ public interface ScriptingControl extends ReactCommandTarget {
 	Map<String, Object> scriptingScalarState();
 
 	/**
-	 * The commands this control advertises to a headless agent: its {@link #commandNames()} minus its
+	 * The commands this control advertises to a headless interface: its {@link #commandNames()} minus its
 	 * chrome commands.
 	 */
 	Set<String> scriptingCommands();

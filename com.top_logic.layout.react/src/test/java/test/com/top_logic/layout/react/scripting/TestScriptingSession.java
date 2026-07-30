@@ -32,7 +32,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.listen.ModelScope;
 
 /**
- * Demonstration of the headless agent interface: build a control tree, observe it as an addressable
+ * Demonstration of the headless interface: build a control tree, observe it as an addressable
  * state tree, act on it by semantic address, and observe the result.
  *
  * <p>

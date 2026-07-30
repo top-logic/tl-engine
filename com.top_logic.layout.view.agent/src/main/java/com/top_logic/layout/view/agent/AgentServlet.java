@@ -44,7 +44,7 @@ import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.scripting.AssertCommand;
 
 /**
- * HTTP endpoint exposing the {@link ScriptingSession headless agent interface} of a live application
+ * HTTP endpoint exposing the {@link ScriptingSession headless interface} of a live application
  * session.
  *
  * <p>

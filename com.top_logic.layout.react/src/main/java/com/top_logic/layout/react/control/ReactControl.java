@@ -125,7 +125,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 
 	/**
 	 * Whether the currently executing command was dispatched by the browser client (via
-	 * {@link #executeClientCommand(String, Map)}), as opposed to programmatically (headless agent,
+	 * {@link #executeClientCommand(String, Map)}), as opposed to programmatically (headless interface,
 	 * script replay, server-side code).
 	 */
 	private boolean _clientDispatch;
@@ -374,7 +374,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
-	 * The names of state keys this control sets for rendering only, which the headless agent
+	 * The names of state keys this control sets for rendering only, which the headless interface
 	 * projection omits from {@link #scriptingScalarState()}.
 	 *
 	 * <p>
@@ -761,7 +761,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 *
 	 * <p>
 	 * The client-already-holds assumption is only valid for commands the browser itself
-	 * dispatched. When the same handler runs programmatically (script replay, headless agent), the
+	 * dispatched. When the same handler runs programmatically (script replay, headless interface), the
 	 * framework corrects the omission by resending the control's state after the command — see
 	 * {@link #executeCommand(String, Map)}. Handlers need not distinguish the two cases.
 	 * </p>

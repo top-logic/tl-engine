@@ -456,7 +456,7 @@ public class ReactSplitPanelControl extends ReactControl {
 	}
 
 	/**
-	 * Structural: a split-pane layout container, elided from the headless agent projection (its panels
+	 * Structural: a split-pane layout container, elided from the headless projection (its panels
 	 * remain as addressable nodes).
 	 */
 	@Override

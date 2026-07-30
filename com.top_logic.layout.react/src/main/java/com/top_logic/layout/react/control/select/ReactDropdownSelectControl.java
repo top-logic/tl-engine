@@ -276,7 +276,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * {@link #scriptingScalarState()} projects onto each option.
 	 *
 	 * <p>
-	 * This lets a headless agent select members by business object identity (e.g. the group labeled
+	 * This lets a headless interface select members by business object identity (e.g. the group labeled
 	 * {@code securityOwner} within this control) instead of session-allocated option ids that do not
 	 * survive a reload or replay. Each {@link ModelName} is resolved against this control's
 	 * {@link ReactOptionScope option scope} (for context-relative names) or globally.

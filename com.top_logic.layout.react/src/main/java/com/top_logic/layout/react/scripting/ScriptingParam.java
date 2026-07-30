@@ -9,7 +9,7 @@ package com.top_logic.layout.react.scripting;
  * Schema description of a single argument of an {@link ScriptingAction}.
  *
  * <p>
- * The headless agent interface advertises the parameters an action accepts so that a consumer (the
+ * The headless interface advertises the parameters an action accepts so that a consumer (the
  * script recorder or an AI agent) can construct a valid argument map without guessing. The
  * {@link #type()} is an informal type hint (e.g. {@code "string"}, {@code "boolean"},
  * {@code "number"}, {@code "objectId"}), not a Java type.

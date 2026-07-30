@@ -15,7 +15,7 @@
 			input="model"
 			mode-switch="false"
 		>
-			<field attribute="mandatoryString"/>
+			<field attribute="name"/>
 			<field attribute="sizedString"/>
 			<field attribute="mandatorySizedString"/>
 			<field attribute="rangedInt"/>

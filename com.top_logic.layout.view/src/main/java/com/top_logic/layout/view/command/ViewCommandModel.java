@@ -195,6 +195,14 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	}
 
 	/**
+	 * Re-evaluates the executability, e.g. after state a rule inspects changed without the input
+	 * channel changing.
+	 */
+	public void revalidate() {
+		updateExecutableState();
+	}
+
+	/**
 	 * Unsubscribe from input channel changes.
 	 */
 	public void detach() {

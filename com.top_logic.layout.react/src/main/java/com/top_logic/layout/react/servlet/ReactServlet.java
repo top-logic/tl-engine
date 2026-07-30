@@ -9,11 +9,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.servlet.ServletException;
@@ -36,6 +39,7 @@ import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
@@ -48,8 +52,10 @@ import com.top_logic.layout.DynamicText;
 import com.top_logic.layout.UpdateWriter;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.component.ControlSupport;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.react.DataProvider;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.UploadHandler;
@@ -109,6 +115,12 @@ public class ReactServlet extends TopLogicServlet {
 	 * </p>
 	 */
 	public static final String ERROR_CODE_STALE_UI = "stale-ui";
+
+	/**
+	 * CSS class of the summary line of a command-error message, separating it from the detail
+	 * messages listed below it.
+	 */
+	private static final String CSS_SNACKBAR_TITLE = "tlSnackbar__title";
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -745,30 +757,70 @@ public class ReactServlet extends TopLogicServlet {
 	 *
 	 * <p>
 	 * Instead of returning HTTP 500, the error message from the {@link HandlerResult} is forwarded
-	 * to the snackbar so the user sees what went wrong.
+	 * to the snackbar so the user sees what went wrong. Detail messages chained as exception causes
+	 * (e.g. the individual constraint violations behind a vetoed commit) are listed below the
+	 * summary, so the user learns which value on which object was rejected and where one message
+	 * ends and the next begins.
 	 * </p>
 	 */
 	private void showCommandError(HandlerResult result, SSEUpdateQueue queue, ReactCommandTarget control) {
 		ErrorSink errorSink = control instanceof ReactControl rc ? rc.getReactContext().getErrorSink() : null;
 		if (errorSink != null) {
-			Resources resources = Resources.getInstance();
-
 			ResKey titleKey = result.getErrorTitle();
-			String title = titleKey != null ? resources.getString(titleKey) : "Command failed.";
+			HTMLFragment title = Fragments.div(CSS_SNACKBAR_TITLE,
+				titleKey != null ? Fragments.message(titleKey) : Fragments.message(I18NConstants.ERROR_COMMAND_FAILED));
 
-			ResKey messageKey = result.getErrorMessage();
-			String details = messageKey != null ? resources.getString(messageKey) : null;
-
-			String text;
-			if (details != null && !details.isEmpty() && !details.equals("null")) {
-				text = title + " " + details;
-			} else {
-				text = title;
-			}
-			errorSink.showError(com.top_logic.layout.basic.fragments.Fragments.text(text));
+			errorSink.showError(Fragments.concat(title, Fragments.messageList(errorDetails(result))));
 		} else {
 			Logger.warn("No ErrorSink available to show command error: " + result.getErrorTitle(),
 				ReactServlet.class);
+		}
+	}
+
+	/**
+	 * The detail messages of a failed command, each describing one aspect of the failure.
+	 *
+	 * <p>
+	 * The same message can arrive through several routes at once: title and message both fall back
+	 * to the exception's error key, and the original exception reappears as cause of the wrapper
+	 * created by {@link HandlerResult#error(ResKey, Throwable)}. Each distinct message is therefore
+	 * reported only once, and a message already shown as the summary is dropped.
+	 * </p>
+	 */
+	private static List<ResKey> errorDetails(HandlerResult result) {
+		Resources resources = Resources.getInstance();
+
+		Set<String> seen = new HashSet<>();
+		ResKey titleKey = result.getErrorTitle();
+		if (titleKey != null) {
+			seen.add(resources.getString(titleKey));
+		}
+
+		List<ResKey> details = new ArrayList<>();
+		addDetail(details, seen, resources, result.getErrorMessage());
+		if (result.getException() != null) {
+			for (Throwable cause = result.getException().getCause(); cause != null; cause = cause.getCause()) {
+				if (cause instanceof I18NFailure failure) {
+					addDetail(details, seen, resources, failure.getErrorKey());
+				}
+			}
+		}
+		return details;
+	}
+
+	/**
+	 * Appends the given message unless it is empty or was already reported.
+	 */
+	private static void addDetail(List<ResKey> details, Set<String> seen, Resources resources, ResKey messageKey) {
+		if (messageKey == null) {
+			return;
+		}
+		String message = resources.getString(messageKey);
+		if (message == null || message.isEmpty() || message.equals("null")) {
+			return;
+		}
+		if (seen.add(message)) {
+			details.add(messageKey);
 		}
 	}
 

@@ -241,6 +241,26 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		for (FormParticipant participant : _participants) {
 			participant.revealAll();
 		}
+		fireValidityChanged();
+	}
+
+	/**
+	 * Whether any participant reports a validation error that is visible to the user.
+	 *
+	 * <p>
+	 * Unlike {@link #hasErrors()}, an error that is still hidden (not yet
+	 * {@link FormParticipant#revealAll() revealed}, because the user has neither touched the field
+	 * nor attempted to save) does not count: a command must stay available as long as the user
+	 * cannot see what is wrong.
+	 * </p>
+	 */
+	public boolean hasVisibleErrors() {
+		for (FormParticipant participant : _participants) {
+			if (!participant.validate()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -417,7 +437,19 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		updateEditModeChannel();
 
 		if (_inputChannel != null && _inputVeto == null) {
-			_inputVeto = (sender, oldVal, newVal) -> isDirty() ? this : null;
+			// The form blocks any object switch while it holds unsaved changes, independent of
+			// which object would come next.
+			_inputVeto = new VetoListener() {
+				@Override
+				public StateHandler checkVeto(ViewChannel sender, Object oldValue, Object newValue) {
+					return checkDirty(sender);
+				}
+
+				@Override
+				public StateHandler checkDirty(ViewChannel sender) {
+					return isDirty() ? FormControl.this : null;
+				}
+			};
 			_inputChannel.addVetoListener(_inputVeto);
 		}
 
@@ -511,14 +543,19 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Validates all participants and throws if any are invalid.
 	 *
 	 * <p>
-	 * Reveals all hidden validation errors first (so model-level errors become visible via
-	 * {@code hasError()}), then iterates all participants without short-circuiting.
+	 * Re-runs all constraint checks first, since stored results can be outdated when persistent
+	 * data has changed after the value was entered (e.g. a uniqueness conflict introduced by
+	 * another commit). Then reveals all hidden validation errors (so model-level errors become
+	 * visible via {@code hasError()}) and iterates all participants without short-circuiting.
 	 * </p>
 	 *
 	 * @throws TopLogicException
 	 *         If any participant reports a validation error.
 	 */
 	public void validateOrThrow() {
+		if (_validationModel != null) {
+			_validationModel.revalidateAll();
+		}
 		revealAllValidation();
 
 		boolean valid = true;
@@ -565,6 +602,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		_overlay = new TLObjectOverlay(_currentObject);
 
+		// Participants announce a changed validity themselves, once they have applied the new
+		// result to their field models - announcing it from here would report the state as seen
+		// before the participants updated.
 		_validityListener = (overlay, attribute, result) -> {
 			putState(VALID, Boolean.valueOf(_validationModel.isValid()));
 		};
@@ -685,6 +725,24 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	private void fireFormStateChanged() {
 		for (FormModelListener listener : _formModelListeners) {
 			listener.onFormStateChanged(this);
+		}
+		// The participants have rebuilt themselves, so what the user sees may differ from before.
+		// The second pass reaches every listener with the settled state, independent of the order
+		// in which the participants were notified above.
+		fireValidityChanged();
+	}
+
+	/**
+	 * Announces that the validation errors visible to the user may have changed.
+	 *
+	 * <p>
+	 * Called by participants whose displayed validation state changed, so that commands gated on
+	 * {@link #hasVisibleErrors()} re-evaluate their executability.
+	 * </p>
+	 */
+	public void fireValidityChanged() {
+		for (FormModelListener listener : new ArrayList<>(_formModelListeners)) {
+			listener.onValidityChanged(this);
 		}
 	}
 

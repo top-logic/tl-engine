@@ -7,8 +7,8 @@
 	</channels>
 	<window width="500px">
 		<title>
-			<en>Edit Item</en>
-			<de>Element bearbeiten</de>
+			<en>Item details</en>
+			<de>Detailanzeige</de>
 		</title>
 		<form
 			editMode="editMode"

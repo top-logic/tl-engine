@@ -495,6 +495,9 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 					_chrome.setWarnings(null);
 				}
 				_chrome.setRequired(source.isMandatory());
+
+				// What the user sees changed, so commands gated on visible errors must re-evaluate.
+				_formControl.fireValidityChanged();
 			}
 		};
 		_model.addListener(_modelListener);

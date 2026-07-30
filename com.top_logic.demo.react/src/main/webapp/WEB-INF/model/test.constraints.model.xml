@@ -15,8 +15,8 @@
 				<instance-presentation icon="css:bi bi-check-circle"/>
 			</annotations>
 			<attributes>
-				<!-- Mandatory string: must not be empty -->
-				<property name="mandatoryString"
+				<!-- The object's name: mandatory, and used as its label -->
+				<property name="name"
 					mandatory="true"
 					type="tl.core:String"
 				/>

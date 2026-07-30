@@ -84,7 +84,20 @@ public final class RouteManager {
 	 */
 	public void unregister(RoutingParticipant participant) {
 		participant.removeRouteChangeListener(_internalListener);
+
+		String urlBefore = currentUrl();
 		_participants.remove(participant);
+
+		if (!currentUrl().equals(urlBefore)) {
+			// The participant contributed a segment that is gone with it: a tab bar shown for one case
+			// of a <switch>, for instance, leaves the display when another case is selected. Its
+			// segment must not stay in the address bar, where it would point at something not
+			// displayed - and would be silently dropped on the next reload.
+			//
+			// Replacing rather than pushing: what disappeared from the display is not a navigation the
+			// user should have to undo with the back button.
+			notifyUrlChange(true);
+		}
 	}
 
 	/**

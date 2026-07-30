@@ -20,7 +20,7 @@
   <properties>
 	  <!-- Use the latest version whenever possible. -->
 	  <jackson.version>2.19.0</jackson.version>
-	  <langchain4j.version>1.18.0</langchain4j.version>
+	  <langchain4j.version>1.18.1</langchain4j.version>
 	</properties>
 
 	<dependencyManagement>

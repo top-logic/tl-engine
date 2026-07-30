@@ -33,16 +33,23 @@ Trac around the job — the job itself only does the Maven/git part.
 ## Scripts
 
 All scripts live in `scripts/` next to this file. The Python scripts need the
-project venv (`./.venv/bin/python`) and authenticate to Trac via the OS keyring.
+project venv (`./.venv/bin/python`) and authenticate to Trac with the same
+credentials as the `trac` MCP server, resolved in the same order: the
+`TRAC_USERNAME`/`TRAC_PASSWORD` environment variables, then the credentials file
+`~/.config/tl-engine-mcp/credentials.env`, then the OS keyring.
 
-> **Sandbox:** the keyring (OS Secret Service) is only reachable when a command
-> runs **outside** the Claude Code command sandbox. Run the Python scripts with
-> `dangerouslyDisableSandbox: true`, otherwise they fail with `NoKeyringError`.
+> **Sandbox:** the OS keyring (Secret Service) is only reachable when a command
+> runs **outside** the Claude Code command sandbox, and only while the login
+> collection is unlocked — a sandboxed run fails with `NoKeyringError`, a locked or
+> absent collection with `InitError: Failed to create the collection`. Run the
+> Python scripts with `dangerouslyDisableSandbox: true`. The credentials file
+> covers the locked-keyring case, so a session whose keyring never unlocks still
+> works.
 
 | Script | Purpose |
 |--------|---------|
 | `list-release-tickets.sh [<since-tag>]` | Unique Trac ticket numbers in commits since the last `TL_*` tag. |
-| `trac_client.py` | Shared Trac XML-RPC connection (keyring auth). Not run directly. |
+| `trac_client.py` | Shared Trac XML-RPC connection (env / credentials file / keyring auth). Not run directly. |
 | `trac-milestone.py {get\|create\|update} <name> ...` | Inspect/create/update a Trac milestone (the MCP server cannot create milestones). |
 | `mark-release-tickets.py <milestone> [--apply]` | Set the `relatedmilestones` field on release tickets. Reads ticket IDs from stdin/args. |
 
@@ -73,15 +80,43 @@ the milestone (step 2) must already exist.
      - List open PRs of the repo: MCP `list_repo_pull_requests`, owner
        `TopLogic`, repo `tl-engine-7`, state `open`.
      - PR titles follow `Ticket #<number>: …`. If **no open PR** references the
-       ticket, all its PRs are closed → the release worker closes the ticket:
-       MCP `update_ticket` with `{"status": "closed", "resolution": "fixed"}`
-       and an explanatory comment.
+       ticket, all its PRs are closed → the release worker closes the ticket
+       (see *Closing tickets* below).
      - If an open PR **does** reference a release ticket → **blocker**. Do not
        release until it is merged or excluded.
    - `new` / `accepted` / `assigned` / `testing` / `reopened` → not finished →
      blocker.
 
 Do not proceed until all release tickets are `closed`.
+
+#### Closing tickets
+
+Trac's workflow only offers **one step at a time**, so a status cannot be written
+directly — an `update_ticket` carrying just `{"status": "closed"}` is refused, and
+a wrong action name fails with *"invalid action"*. Query the legal steps for a
+ticket with `ticket.getActions(<id>)` and walk them:
+
+| From | Action | Extra field |
+|------|--------|-------------|
+| `accepted` | `test` | `action_test_reassign_owner` |
+| `testing` | `approve` | `action_approve_reassign_owner` |
+| `approved` | `resolvefixed` | `action_resolvefixed_resolve_resolution` = `fixed` |
+
+The two transitions out of `accepted`/`testing` **reassign the owner** — pass the
+ticket's current owner in the `…_reassign_owner` field, otherwise the ticket lands
+on the release worker's own account. Closing an `approved` ticket is a single
+`resolvefixed` step and keeps the owner.
+
+Each step needs the ticket's current `_ts` (re-read it after every step, since each
+update bumps it). Put the explanatory comment on the first step only, so a
+multi-step walk does not post the same comment three times.
+
+#### Migration keywords
+
+A ticket whose description has a `== Migration ==` section must carry the
+`RequiresMigration` keyword, or the milestone's migration query (step 2) drops it
+from the release changelog. Cross-check the whole release set — description
+section against keyword — and add the keyword where it is missing.
 
 ### Step 2 — Create the release milestone
 
@@ -92,14 +127,25 @@ The milestone must exist before tickets can be marked with it (step 3).
     create TL_8.0.0-alpha4 --release-description --due 2026-05-21T16:00
 ```
 
-`--release-description` generates the standard body:
+`--release-description` generates the standard body — the feature list, the
+dependency updates split off into their own section, and the migration
+instructions:
 
 ```
-[[TicketQuery(relatedmilestones~=milestone:TL_8.0.0-alpha4)]]
+[[TicketQuery(relatedmilestones~=milestone:TL_8.0.0-alpha4,keywords!~=DependencyUpdate)]]
+
+== Updates ==
+[[TicketQuery(relatedmilestones~=milestone:TL_8.0.0-alpha4,keywords~=DependencyUpdate)]]
 
 == Migration ==
-[[TicketQuery(relatedmilestones~=milestone:TL_8.0.0-alpha4,keywords~=RequiresCodeMigration)]]
+[[TicketQuery(relatedmilestones~=milestone:TL_8.0.0-alpha4,keywords~=RequiresMigration)]]
 ```
+
+> **Keywords:** the queried keywords are `DependencyUpdate` and
+> `RequiresMigration` — the ones tickets actually carry. Querying a keyword nobody
+> sets yields an empty section, which silently drops the whole migration chapter
+> from the changelog. After creating the milestone, **verify each section returns
+> the expected count** with a `ticket.query` on the same three queries.
 
 > **Query operator:** the TicketQuery uses **`~=` (contains)**, not `=`
 > (exact). A ticket that shipped in several releases has a multi-valued

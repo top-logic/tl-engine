@@ -38,21 +38,24 @@ from trac_client import connect
 def release_description(name):
     """Standard release-milestone body: TicketQueries over `relatedmilestones`.
 
-    Three sections, matching the format established with TL_8.0.0-alpha4 and
-    TL_8.0.0-alpha5:
-      * the main list excludes tickets keyworded `Update` (keywords!~=Update),
-      * an `== Updates ==` section lists exactly those (keywords~=Update),
-      * a `== Migration ==` section lists tickets keyworded RequiresCodeMigration
-        or RequiresDataMigration (OR expressed with `|` in the query).
+    Three sections:
+      * the main list excludes dependency updates (keywords!~=DependencyUpdate),
+      * an `== Updates ==` section lists exactly those (keywords~=DependencyUpdate),
+      * a `== Migration ==` section lists tickets keyworded `RequiresMigration`.
+
+    The keywords are the ones Trac tickets actually carry: `DependencyUpdate` for
+    a dependency bump, `RequiresMigration` for a ticket whose description holds a
+    `== Migration ==` section. A query for a keyword nobody sets yields an empty
+    section, which silently drops the migration instructions from the changelog.
     """
     return (
-        "[[TicketQuery(relatedmilestones~=milestone:%s,keywords!~=Update)]]\n"
+        "[[TicketQuery(relatedmilestones~=milestone:%s,keywords!~=DependencyUpdate)]]\n"
         "\n"
         "== Updates ==\n"
-        "[[TicketQuery(relatedmilestones~=milestone:%s,keywords~=Update)]]\n"
+        "[[TicketQuery(relatedmilestones~=milestone:%s,keywords~=DependencyUpdate)]]\n"
         "\n"
         "== Migration ==\n"
-        "[[TicketQuery(relatedmilestones~=milestone:%s,keywords~=RequiresCodeMigration|RequiresDataMigration)]]"
+        "[[TicketQuery(relatedmilestones~=milestone:%s,keywords~=RequiresMigration)]]"
         % (name, name, name)
     )
 

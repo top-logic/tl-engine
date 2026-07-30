@@ -49,6 +49,18 @@ public interface SvgWriter extends AutoCloseable {
 	void endSvg();
 
 	/**
+	 * Writes a <code>style</code> element with the given CSS rules.
+	 *
+	 * <p>
+	 * Only meaningful for writers producing a standalone SVG document. Writers targeting the live
+	 * DOM discard the rules, because there the surrounding page stylesheet applies.
+	 * </p>
+	 */
+	default void style(CharSequence css) {
+		// Ignored: the surrounding document supplies the stylesheet.
+	}
+
+	/**
 	 * Starts a <code>g</code> tag.
 	 */
 	void beginGroup(Object model);

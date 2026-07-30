@@ -26,7 +26,6 @@ import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.overlay.DialogManager;
-import com.top_logic.layout.react.control.table.CellContentReactAdapter;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -54,6 +53,7 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.Sort;
+import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
 import com.top_logic.table.ViewStateStore;
 import com.top_logic.table.impl.DefaultColumn;
@@ -101,6 +101,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** Command name for {@link #handleAddRow()}. */
 	private static final String CMD_ADD_ROW = "addRow";
 
+	/** Panel state: the validation error of the bound attribute, or {@code null}. */
+	private static final String ERROR_MESSAGE = "errorMessage";
+
+	/** Panel state: encoded theme icon displayed in front of the error message. */
+	private static final String ERROR_ICON = "errorIcon";
+
 	/**
 	 * A data column of a row-set table.
 	 *
@@ -130,6 +136,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private ViewStateStore _store;
 
 	private TableId _tableId;
+
+	private SortSpec _defaultSort = SortSpec.NONE;
 
 	private ViewChannel _selectionChannel;
 
@@ -185,10 +193,31 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Row-set tables should span the full form row.
 		putState("fullLine", Boolean.TRUE);
 
+		putState(ERROR_ICON,
+			com.top_logic.layout.react.control.layout.Icons.VALIDATION_ERROR.resolve().toEncodedForm());
+
 		addBeforeWriteAction(() -> {
 			_written = true;
 			attachObserver();
 		});
+	}
+
+	/**
+	 * Pushes the bound attribute's validation error to the panel display.
+	 *
+	 * <p>
+	 * Like regular fields, the error only becomes visible once the field model is revealed - on
+	 * user interaction or on a save attempt.
+	 * </p>
+	 */
+	@Override
+	protected void updateCompositionErrorDisplay() {
+		CompositionFieldModel fieldModel = fieldModel();
+		if (fieldModel != null && fieldModel.hasError()) {
+			putState(ERROR_MESSAGE, Resources.getInstance().getString(fieldModel.getError()));
+		} else {
+			putState(ERROR_MESSAGE, null);
+		}
 	}
 
 	/**
@@ -221,6 +250,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	public void setPersonalization(ViewStateStore store, TableId tableId) {
 		_store = store;
 		_tableId = tableId;
+	}
+
+	/**
+	 * The order the rows are displayed in until the user sorts the table themselves.
+	 */
+	public void setDefaultSort(SortSpec defaultSort) {
+		_defaultSort = defaultSort;
 	}
 
 	/**
@@ -344,9 +380,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
 		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
-		DefaultTableView<TLObject> view = _store != null
-			? DefaultTableView.create(columns, _rowSource, _store, _tableId)
-			: DefaultTableView.create(columns, _rowSource);
+		DefaultTableView<TLObject> view =
+			DefaultTableView.create(columns, _rowSource, _store, _store != null ? _tableId : null, _defaultSort);
 
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();

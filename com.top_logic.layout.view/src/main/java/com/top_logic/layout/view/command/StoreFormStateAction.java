@@ -54,6 +54,11 @@ public class StoreFormStateAction implements ViewAction {
 	}
 
 	@Override
+	public boolean appliesFormState() {
+		return true;
+	}
+
+	@Override
 	public Object execute(ReactContext context, Object input) {
 		if (!(context instanceof ViewContext)) {
 			return input;

@@ -1515,42 +1515,12 @@ public class FlowFactory extends TLScriptFunctions {
 			diagram.setViewBoxY(0);
 		}
 
-		// Render to SVG
+		// Render to SVG. The font defaults the layout measured with are embedded by
+		// Diagram.draw(SvgWriter, RenderContext, CharSequence).
 		StringWriter buffer = new StringWriter();
 		try (TagWriter tagWriter = new TagWriter(buffer);
-				SvgTagWriter svgWriter = new SvgTagWriter(tagWriter) {
-					boolean _svgStarted;
-					@Override
-					public void beginSvg() {
-						super.beginSvg();
-
-						_svgStarted = true;
-					}
-
-					@Override
-					protected void endBeginTag() {
-						super.endBeginTag();
-
-						if (_svgStarted) {
-							// Add default styles to the generated SVG.
-							BinaryData styles = FileManager.getInstance().getDataOrNull(FLOW_CORE_CSS);
-							if (styles == null) {
-								Logger.warn("Missing PDF export styles: " + FLOW_CORE_CSS, FlowFactory.class);
-							} else {
-								tagWriter.beginTag("style");
-								try (InputStream in = styles.getStream()) {
-									StreamUtilities.copyReaderWriterContents(
-										new InputStreamReader(in, StandardCharsets.UTF_8), tagWriter);
-								} catch (IOException ex) {
-									Logger.error("Failed to copy styles.", ex, FlowFactory.class);
-								}
-								tagWriter.endTag("style");
-							}
-							_svgStarted = false;
-						}
-					}
-				}) {
-			diagram.draw(svgWriter);
+				SvgTagWriter svgWriter = new SvgTagWriter(tagWriter)) {
+			diagram.draw(svgWriter, context, exportStyles());
 		} catch (IOException ex) {
 			throw new RuntimeException("Failed to generate SVG: " + ex.getMessage(), ex);
 		}
@@ -1558,6 +1528,28 @@ public class FlowFactory extends TLScriptFunctions {
 		// Convert to binary data
 		byte[] svgBytes = buffer.toString().getBytes(StandardCharsets.UTF_8);
 		return BinaryDataFactory.createBinaryData(svgBytes, "image/svg+xml", filename);
+	}
+
+	/**
+	 * The application's diagram stylesheet, embedded into an exported SVG so that it renders
+	 * outside the application without an external stylesheet.
+	 *
+	 * @return The CSS rules, or {@code null} if the stylesheet cannot be read.
+	 */
+	private static CharSequence exportStyles() {
+		BinaryData styles = FileManager.getInstance().getDataOrNull(FLOW_CORE_CSS);
+		if (styles == null) {
+			Logger.warn("Missing PDF export styles: " + FLOW_CORE_CSS, FlowFactory.class);
+			return null;
+		}
+		StringWriter buffer = new StringWriter();
+		try (InputStream in = styles.getStream()) {
+			StreamUtilities.copyReaderWriterContents(new InputStreamReader(in, StandardCharsets.UTF_8), buffer);
+		} catch (IOException ex) {
+			Logger.error("Failed to copy styles.", ex, FlowFactory.class);
+			return null;
+		}
+		return buffer.toString();
 	}
 
 	/**

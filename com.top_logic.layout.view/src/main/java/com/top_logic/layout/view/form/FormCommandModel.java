@@ -54,7 +54,17 @@ public class FormCommandModel implements CommandModel {
 
 	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
 
-	private final FormModelListener _formModelListener = this::handleFormStateChanged;
+	private final FormModelListener _formModelListener = new FormModelListener() {
+		@Override
+		public void onFormStateChanged(FormModel source) {
+			handleFormStateChanged(source);
+		}
+
+		@Override
+		public void onValidityChanged(FormModel source) {
+			handleFormStateChanged(source);
+		}
+	};
 
 	private FormCommandModel(String name, ResKey labelKey, ThemeImage image, CommandPlacement placement,
 			FormControl form, Consumer<ReactContext> action, Predicate<FormControl> executableWhen,
@@ -94,7 +104,8 @@ public class FormCommandModel implements CommandModel {
 	 * Creates the "Save" command model with default behavior.
 	 *
 	 * <p>
-	 * Executable when the form is in edit mode. Calls {@link FormControl#executeSave()}.
+	 * Executable while the form is in edit mode and displays no validation errors. Calls
+	 * {@link FormControl#executeSave()}.
 	 * </p>
 	 *
 	 * @param form
@@ -105,7 +116,7 @@ public class FormCommandModel implements CommandModel {
 		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
 			CommandPlacement.TOOLBAR, form,
 			ctx -> form.executeSave(),
-			FormControl::isEditMode,
+			FormCommandModel::isSavable,
 			FormControl::isEditMode);
 	}
 
@@ -113,8 +124,8 @@ public class FormCommandModel implements CommandModel {
 	 * Creates the "Save" command model with a custom action chain.
 	 *
 	 * <p>
-	 * Executable when the form is in edit mode. Executes the given action instead of calling
-	 * {@link FormControl#executeSave()}.
+	 * Executable while the form is in edit mode and displays no validation errors. Executes the
+	 * given action instead of calling {@link FormControl#executeSave()}.
 	 * </p>
 	 *
 	 * @param form
@@ -127,8 +138,19 @@ public class FormCommandModel implements CommandModel {
 		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
 			CommandPlacement.TOOLBAR, form,
 			action,
-			FormControl::isEditMode,
+			FormCommandModel::isSavable,
 			FormControl::isEditMode);
+	}
+
+	/**
+	 * Whether the form can currently be saved: it is being edited and shows no validation errors.
+	 *
+	 * <p>
+	 * Errors that are still hidden do not block the save - the save attempt is what reveals them.
+	 * </p>
+	 */
+	private static boolean isSavable(FormControl form) {
+		return form.isEditMode() && !form.hasVisibleErrors();
 	}
 
 	/**

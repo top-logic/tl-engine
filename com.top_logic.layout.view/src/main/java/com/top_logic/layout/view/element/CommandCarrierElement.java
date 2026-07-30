@@ -7,7 +7,6 @@ package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -19,7 +18,6 @@ import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -136,16 +134,10 @@ public abstract class CommandCarrierElement extends ContainerElement {
 
 	/**
 	 * Creates a single content {@link ReactControl} from the children, wrapping multiples in a
-	 * {@link ReactStackControl}.
+	 * {@link com.top_logic.layout.react.control.layout.ReactStackControl}.
 	 */
 	protected ReactControl createContent(ViewContext context) {
 		List<IReactControl> childControls = createChildControls(context);
-		if (childControls.size() == 1) {
-			return (ReactControl) childControls.get(0);
-		}
-		List<ReactControl> reactChildren = childControls.stream()
-			.map(c -> (ReactControl) c)
-			.collect(Collectors.toList());
-		return new ReactStackControl(context, reactChildren);
+		return ContentControls.combine(context, childControls);
 	}
 }

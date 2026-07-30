@@ -213,17 +213,13 @@ public class AppBarElement implements UIElement {
 		ReactControl leadingControl;
 		if (_leading.isEmpty()) {
 			leadingControl = null;
-		} else if (_leading.size() == 1) {
-			ViewContext leadingContext = derivedContext.withChildSlotPath("leading-0");
-			leadingControl = (ReactControl) _leading.get(0).createControl(leadingContext);
 		} else {
 			List<ReactControl> leadingControls = new ArrayList<>(_leading.size());
 			for (int i = 0; i < _leading.size(); i++) {
 				ViewContext leadingContext = derivedContext.withChildSlotPath("leading-" + i);
 				leadingControls.add((ReactControl) _leading.get(i).createControl(leadingContext));
 			}
-			leadingControl = new com.top_logic.layout.react.control.layout.ReactStackControl(derivedContext,
-				leadingControls);
+			leadingControl = ContentControls.combine(derivedContext, leadingControls);
 		}
 
 		// Create the app bar control.

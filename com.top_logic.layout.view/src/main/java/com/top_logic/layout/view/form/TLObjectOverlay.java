@@ -5,7 +5,10 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -75,14 +78,46 @@ public class TLObjectOverlay extends TransientObject {
 	 * value (e.g. a composition table registering its unmodified row list on edit-mode entry, or an
 	 * edit that is typed and reverted) leaves the overlay clean.
 	 * </p>
+	 *
+	 * <p>
+	 * An overlay stands for the object it wraps, so a reference value that only replaces objects by
+	 * their overlays is no change either. Edits <em>within</em> a referenced object are tracked by
+	 * that object's own overlay, not by the reference holding it.
+	 * </p>
 	 */
 	public boolean isDirty() {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-			if (!Objects.equals(entry.getValue(), _base.tValue(entry.getKey()))) {
+			if (isChange(entry.getValue(), _base.tValue(entry.getKey()))) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Whether the stored value differs from the base value, comparing overlays by the objects they
+	 * stand for.
+	 */
+	private static boolean isChange(Object stored, Object baseValue) {
+		if (stored instanceof Collection<?> storedValues && baseValue instanceof Collection<?> baseValues) {
+			return !resolveAll(storedValues).equals(resolveAll(baseValues));
+		}
+		return !Objects.equals(resolve(stored), resolve(baseValue));
+	}
+
+	private static List<Object> resolveAll(Collection<?> values) {
+		List<Object> result = new ArrayList<>(values.size());
+		for (Object value : values) {
+			result.add(resolve(value));
+		}
+		return result;
+	}
+
+	/**
+	 * The object an overlay stands for; any other value unchanged.
+	 */
+	private static Object resolve(Object value) {
+		return value instanceof TLObjectOverlay overlay ? overlay.getBase() : value;
 	}
 
 	/**

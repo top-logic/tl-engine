@@ -131,6 +131,15 @@
 							<de>Fehlerbehandlung</de>
 						</label>
 					</nav-item>
+					<nav-item id="switch-demo"
+						icon="css:bi bi-signpost-split"
+					>
+						<view-ref view="switch-demo.view.xml"/>
+						<label>
+							<en>Switch demo</en>
+							<de>Switch-Demo</de>
+						</label>
+					</nav-item>
 					<separator/>
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"

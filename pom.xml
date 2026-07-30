@@ -303,6 +303,13 @@
 				<type>test-jar</type>
 				<scope>test</scope>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-model-search</artifactId>
+				<version>${tl.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
 
 			<!-- TopLogic -->
 			<dependency>
@@ -865,7 +872,7 @@
 			<dependency>
 			    <groupId>com.oracle.database.jdbc</groupId>
 			    <artifactId>ojdbc11</artifactId>
-			    <version>23.26.2.0.0</version>
+			    <version>23.26.3.0.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.postgresql</groupId>

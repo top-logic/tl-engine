@@ -23,7 +23,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.nav.ReactAppShellControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.view.UIElement;
@@ -37,7 +36,7 @@ import com.top_logic.layout.view.command.CommandScope;
  * Provides three slots: an optional header, a mandatory content area, and an optional footer. Slot
  * properties use list types so that {@code @TagName} resolution works (e.g. {@code <stack>} inside
  * {@code <content>}). If multiple elements are configured in a slot, they are wrapped in a
- * {@link ReactStackControl}.
+ * {@link com.top_logic.layout.react.control.layout.ReactStackControl}.
  * </p>
  */
 @InApp
@@ -146,13 +145,7 @@ public class AppShellElement implements UIElement {
 		if (elements.isEmpty()) {
 			return null;
 		}
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(context);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(context))
-			.collect(Collectors.toList());
-		return new ReactStackControl(context, children);
+		return ContentControls.toControl(elements, context);
 	}
 
 	private static List<UIElement> instantiateAll(InstantiationContext context,

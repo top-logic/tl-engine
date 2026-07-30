@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.ViewContext;
@@ -34,6 +36,7 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.form.StateHandler;
 
 /**
  * {@link ViewAction} that opens a modal dialog.
@@ -44,12 +47,20 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * </p>
  *
  * <p>
+ * When a form bound to one of the shared parent channels holds unsaved changes, the user is asked
+ * what to do with them <em>before</em> the dialog opens: the dialog's own commands write those
+ * channels, so asking only then would force the user to sacrifice either the changes or everything
+ * just entered into the dialog. Declining the question aborts the chain and the dialog stays
+ * closed.
+ * </p>
+ *
+ * <p>
  * This action contains the core dialog-opening logic. {@link OpenDialogCommand} extends this with
  * command presentation options (label, image, executability).
  * </p>
  */
 @InApp
-public class OpenDialogAction implements ViewAction {
+public class OpenDialogAction extends InterruptibleViewAction {
 
 	/**
 	 * Configuration for {@link OpenDialogAction}.
@@ -123,7 +134,46 @@ public class OpenDialogAction implements ViewAction {
 	}
 
 	@Override
-	public Object execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input, Continuation continuation) {
+		List<StateHandler> dirtyHandlers = dirtyHandlers(context);
+		DialogManager dialogManager = context.getDialogManager();
+		if (dirtyHandlers.isEmpty() || dialogManager == null) {
+			continuation.resume(open(context, input));
+			return;
+		}
+
+		// A form bound to one of the shared channels holds unsaved changes that opening this
+		// dialog is going to discard. Ask now - after the user filled in the dialog, the only
+		// answers left would be to lose one input or the other.
+		DirtyConfirmDialogControl.openDialog(context, dialogManager, dirtyHandlers,
+			() -> continuation.resume(open(context, input)),
+			() -> continuation.abort());
+	}
+
+	/**
+	 * The unsaved changes that opening this dialog would put at risk: those of the forms bound to
+	 * the parent channels this dialog shares, and which its commands therefore may overwrite.
+	 */
+	private List<StateHandler> dirtyHandlers(ReactContext context) {
+		if (!(context instanceof ViewContext viewContext)) {
+			return List.of();
+		}
+		List<StateHandler> dirtyHandlers = new ArrayList<>();
+		for (ChannelBindingConfig binding : _bindings) {
+			String parentChannelName = binding.getTo().getChannelName();
+			if (!viewContext.hasChannel(parentChannelName)) {
+				continue;
+			}
+			for (StateHandler handler : viewContext.resolveChannel(binding.getTo()).dirtyHandlers()) {
+				if (!dirtyHandlers.contains(handler)) {
+					dirtyHandlers.add(handler);
+				}
+			}
+		}
+		return dirtyHandlers;
+	}
+
+	private Object open(ReactContext context, Object input) {
 		// Inject the chain's input into the configured dialog channel.
 		Map<String, ?> channelValues =
 			input != null ? Collections.singletonMap(_bindInputTo, input) : Collections.emptyMap();
@@ -136,9 +186,9 @@ public class OpenDialogAction implements ViewAction {
 	 * bindings inherited from the parent context.
 	 *
 	 * <p>
-	 * This is the reusable core of {@link OpenDialogAction#execute(ReactContext, Object)}; it is also
-	 * used to chain follow-up dialogs from Java {@link ViewAction}s (e.g. the forced change-password
-	 * step of the login flow) where more than one named channel must be transferred to the dialog.
+	 * This is the reusable core of {@link OpenDialogAction}; it is also used to chain follow-up
+	 * dialogs from Java {@link ViewAction}s (e.g. the forced change-password step of the login
+	 * flow) where more than one named channel must be transferred to the dialog.
 	 * </p>
 	 *
 	 * @param context

@@ -102,6 +102,11 @@ public class DefaultTableView<R> implements TableView<R> {
 		if (_store != null && _id != null) {
 			restore();
 		}
+		// Whatever the order ends up being - the initial default or the user's persisted choice -
+		// the row source has to be told about it.
+		if (!_state.getSort().isEmpty()) {
+			_source.withOrder(new SortSpec(_state.getSort()));
+		}
 	}
 
 	/**
@@ -132,7 +137,30 @@ public class DefaultTableView<R> implements TableView<R> {
 	 */
 	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
 			ViewStateStore store, TableId id) {
+		return create(columns, source, store, id, SortSpec.NONE);
+	}
+
+	/**
+	 * Creates a {@link DefaultTableView} with an initial state showing all columns in declaration
+	 * order and sorted by the given order, restoring and persisting personalization through the
+	 * given store.
+	 *
+	 * @param columns
+	 *        All column definitions, in initial display order.
+	 * @param source
+	 *        The row source.
+	 * @param store
+	 *        Where personalization is persisted, or {@code null} to disable persistence.
+	 * @param id
+	 *        The stable identity under which the personalization is stored.
+	 * @param defaultSort
+	 *        The order to display until the user sorts the table themselves,
+	 *        {@link SortSpec#NONE} for none.
+	 */
+	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
+			ViewStateStore store, TableId id, SortSpec defaultSort) {
 		TableViewState state = new TableViewState();
+		state.setSort(new ArrayList<>(defaultSort.columns()));
 		List<String> order = new ArrayList<>(columns.size());
 		Map<String, Integer> widths = new LinkedHashMap<>();
 		for (Column<R, ?> column : columns) {
@@ -407,9 +435,10 @@ public class DefaultTableView<R> implements TableView<R> {
 				sort.add(sortColumn);
 			}
 		}
-		_state.setSort(sort);
+		// An empty persisted sort means the user never sorted this table, so the configured
+		// default order stays in effect.
 		if (!sort.isEmpty()) {
-			_source.withOrder(new SortSpec(sort));
+			_state.setSort(sort);
 		}
 
 		List<String> groupColumns = new ArrayList<>();

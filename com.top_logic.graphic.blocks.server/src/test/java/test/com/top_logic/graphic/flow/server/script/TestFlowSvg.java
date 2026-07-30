@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.data.Border;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Diagram;
@@ -149,15 +150,15 @@ public class TestFlowSvg extends TestCase {
 
 		// 12pt * 96/72 = 16px
 		String svg12 = readSvg(toSvg(d12, "TestFlowSvg-default-font-12pt.svg", 12.0, null, null));
-		assertTrue("Default font-family CSS missing: " + svg12,
-			svg12.contains("text:not([font-family]):not([class]){font-family:Arial;}"));
-		assertTrue("Default font-size CSS for 12pt should be 16px: " + svg12,
-			svg12.contains("text:not([font-size]):not([class]){font-size:16px;}"));
+		assertTrue("Default font-family missing from the root element: " + svg12,
+			svg12.contains("font-family=\"" + RenderContext.DEFAULT_FONT_DECLARATION + "\""));
+		assertTrue("Default font size for 12pt should be 16px: " + svg12,
+			svg12.contains("font-size=\"16px\""));
 
 		// 24pt * 96/72 = 32px
 		String svg24 = readSvg(toSvg(d24, "TestFlowSvg-default-font-24pt.svg", 24.0, null, null));
-		assertTrue("Default font-size CSS for 24pt should be 32px: " + svg24,
-			svg24.contains("text:not([font-size]):not([class]){font-size:32px;}"));
+		assertTrue("Default font size for 24pt should be 32px: " + svg24,
+			svg24.contains("font-size=\"32px\""));
 	}
 
 	/**

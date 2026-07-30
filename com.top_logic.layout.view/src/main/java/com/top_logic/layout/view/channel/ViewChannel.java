@@ -5,6 +5,11 @@
  */
 package com.top_logic.layout.view.channel;
 
+import java.util.Collections;
+import java.util.List;
+
+import com.top_logic.layout.view.form.StateHandler;
+
 /**
  * A named reactive value within a view.
  *
@@ -103,9 +108,8 @@ public interface ViewChannel {
 	 * <p>
 	 * Veto listeners are checked <em>before</em> the value is updated and before regular
 	 * {@link ChannelListener}s are notified. If any veto listener returns a non-{@code null}
-	 * {@link com.top_logic.layout.view.form.StateHandler}, the change is blocked and a
-	 * {@link com.top_logic.layout.view.channel.ChannelVetoException} is thrown collecting all dirty
-	 * handlers.
+	 * {@link StateHandler}, the change is blocked and a {@link ChannelVetoException} is thrown
+	 * collecting all dirty handlers.
 	 * </p>
 	 *
 	 * @see #addVetoListener(VetoListener)
@@ -121,11 +125,39 @@ public interface ViewChannel {
 		 *        The current value.
 		 * @param newValue
 		 *        The proposed new value.
-		 * @return A dirty {@link com.top_logic.layout.view.form.StateHandler} if this listener
-		 *         vetoes the change, or {@code null} to allow it.
+		 * @return A dirty {@link StateHandler} if this listener vetoes the change, or {@code null}
+		 *         to allow it.
 		 */
-		com.top_logic.layout.view.form.StateHandler checkVeto(ViewChannel sender, Object oldValue,
-			Object newValue);
+		StateHandler checkVeto(ViewChannel sender, Object oldValue, Object newValue);
+
+		/**
+		 * Checks whether <em>any</em> value change would currently be blocked.
+		 *
+		 * <p>
+		 * Asked before starting an interaction that is going to change the channel (e.g. before
+		 * opening a dialog whose commands write it), so the user decides about the unsaved changes
+		 * while the answer can still prevent wasted input. The default assumes that the veto does
+		 * not depend on the concrete new value.
+		 * </p>
+		 *
+		 * @param sender
+		 *        The channel that is about to be changed.
+		 * @return A dirty {@link StateHandler} if this listener would veto, or {@code null} to
+		 *         allow the change.
+		 */
+		default StateHandler checkDirty(ViewChannel sender) {
+			return checkVeto(sender, sender.get(), null);
+		}
+	}
+
+	/**
+	 * The handlers holding unsaved changes that would block a value change of this channel right
+	 * now, empty if the value can be changed without asking.
+	 *
+	 * @see VetoListener#checkDirty(ViewChannel)
+	 */
+	default List<StateHandler> dirtyHandlers() {
+		return Collections.emptyList();
 	}
 
 	/**

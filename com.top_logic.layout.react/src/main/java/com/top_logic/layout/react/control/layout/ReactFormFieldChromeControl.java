@@ -22,6 +22,8 @@ import com.top_logic.layout.react.control.ReactControl;
  * <li>{@code label} - the field label text</li>
  * <li>{@code required} - whether the field is required</li>
  * <li>{@code error} - error message, or {@code null}</li>
+ * <li>{@code errorIcon} - encoded theme icon displayed in front of the error message</li>
+ * <li>{@code warningIcon} - encoded theme icon displayed in front of each warning message</li>
  * <li>{@code helpText} - help/description text, or {@code null}</li>
  * <li>{@code dirty} - whether the field has been modified</li>
  * <li>{@code labelPosition} - a {@link LabelPosition}, or {@code null} (inherit from layout)</li>
@@ -40,7 +42,11 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 
 	private static final String ERROR = "error";
 
+	private static final String ERROR_ICON = "errorIcon";
+
 	private static final String WARNINGS = "warnings";
+
+	private static final String WARNING_ICON = "warningIcon";
 
 	private static final String HELP_TEXT = "helpText";
 
@@ -130,6 +136,8 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 			boolean fullLine, boolean visible, ReactControl field) {
 		super(context, null, REACT_MODULE);
 		_field = field;
+		putState(ERROR_ICON, Icons.VALIDATION_ERROR.resolve().toEncodedForm());
+		putState(WARNING_ICON, Icons.VALIDATION_WARNING.resolve().toEncodedForm());
 		setLabel(label);
 		setRequired(required);
 		setDirty(dirty);

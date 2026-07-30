@@ -28,7 +28,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.util.Resources;
 import com.top_logic.layout.react.control.sidebar.DrawerToggleControl;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
@@ -449,12 +448,6 @@ public class SidebarElement implements UIElement {
 		ViewContext itemContext = scope != null ? baseContext.withScope(SecurityScope.class, scope) : baseContext;
 		itemContext.setDirtyChannel(dirtyChannel);
 
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(itemContext);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(itemContext))
-			.collect(Collectors.toList());
-		return new ReactStackControl(itemContext, children);
+		return ContentControls.toControl(elements, itemContext);
 	}
 }

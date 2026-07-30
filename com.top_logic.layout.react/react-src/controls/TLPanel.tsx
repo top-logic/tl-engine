@@ -1,5 +1,6 @@
 import { React, useTLState, useTLCommand, TLChild, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import FontIcon from './FontIcon';
 
 const { useCallback } = React;
 
@@ -68,6 +69,8 @@ const IconPopOut = () => (
  *     whose sole content is a bare panel renders flush, dropping its page inset so the panel fills
  *     the area instead of sitting inside an empty frame. A chromed panel omits it / sets it false
  *     and keeps the inset. Set e.g. by the frameless editable table, RowSetTableControl.)
+ * - errorMessage: string (validation error displayed below the content, may be absent)
+ * - errorIcon: string (encoded theme icon displayed in front of the error message)
  */
 const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -83,6 +86,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const fill = state.fill === true;
   const hoverActions = state.hoverActions === true;
   const card = state.appearance === 'card';
+  const errorMessage = state.errorMessage as string | undefined;
 
   const isMinimized = expansionState === 'MINIMIZED';
   const isMaximized = expansionState === 'MAXIMIZED';
@@ -168,6 +172,12 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
       {!isMinimized && (
         <div className="tlPanel__content">
           <TLChild control={state.child} />
+        </div>
+      )}
+      {!isMinimized && errorMessage && (
+        <div className="tlFormField__error tlPanel__error" role="alert">
+          <FontIcon image={state.errorIcon as string | undefined} className="tlFormField__errorIcon" />
+          <span>{errorMessage}</span>
         </div>
       )}
       {!isMinimized && state.buttonBar && (

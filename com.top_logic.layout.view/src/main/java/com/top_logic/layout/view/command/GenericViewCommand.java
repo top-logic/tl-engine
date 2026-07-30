@@ -74,6 +74,11 @@ public class GenericViewCommand implements ViewCommand {
 	}
 
 	@Override
+	public boolean appliesFormState() {
+		return _actions.stream().anyMatch(ViewAction::appliesFormState);
+	}
+
+	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
 		ViewActionChain.run(context, _actions, input, null);
 		return HandlerResult.DEFAULT_RESULT;

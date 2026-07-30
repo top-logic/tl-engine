@@ -47,9 +47,13 @@ import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
+import com.top_logic.layout.view.command.FormValid;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.form.FormCommandModel;
+import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.FormModelListener;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -427,6 +431,10 @@ public class FormElement extends ContainerElement {
 			ViewChannel inputChannel = inputRef != null ? formContext.resolveChannel(inputRef) : null;
 
 			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), formContext);
+			if (cmd.appliesFormState()) {
+				// The form rejects the command while errors are on screen, so do not offer it.
+				rule = CombinedViewExecutabilityRule.combine(List.of(rule, new FormValid(formControl)));
+			}
 
 			ViewCommandModel inner =
 				ViewCommandModel.create(cmd, cmdConfig, inputChannel, rule);
@@ -439,14 +447,28 @@ public class FormElement extends ContainerElement {
 			scope.addCommand(wrapped);
 		}
 
+		FormModelListener validityListener = new FormModelListener() {
+			@Override
+			public void onFormStateChanged(FormModel source) {
+				revalidate(models);
+			}
+
+			@Override
+			public void onValidityChanged(FormModel source) {
+				revalidate(models);
+			}
+		};
+
 		formControl.addBeforeWriteAction(() -> {
 			for (CommandModel model : models) {
 				if (model instanceof FormScopedCommandModel) {
 					((FormScopedCommandModel) model).getInner().attach();
 				}
 			}
+			formControl.addFormModelListener(validityListener);
 		});
 		formControl.addCleanupAction(() -> {
+			formControl.removeFormModelListener(validityListener);
 			for (CommandModel model : models) {
 				scope.removeCommand(model);
 				if (model instanceof FormScopedCommandModel) {
@@ -454,6 +476,18 @@ public class FormElement extends ContainerElement {
 				}
 			}
 		});
+	}
+
+	/**
+	 * Re-evaluates the executability of the given form commands, e.g. after the form's validation
+	 * errors appeared or were fixed.
+	 */
+	private static void revalidate(List<CommandModel> models) {
+		for (CommandModel model : models) {
+			if (model instanceof FormScopedCommandModel formScoped) {
+				formScoped.getInner().revalidate();
+			}
+		}
 	}
 
 

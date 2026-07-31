@@ -118,6 +118,9 @@ public class PostgreSQLHelper extends DBHelper {
 		// According to https://github.com/pgjdbc/pgjdbc/issues/458, PostgreSQL does not support
 		// CLOB types.
 		result.append("TEXT");
+		if (!castContext) {
+			appendCollationDefinition(result, binary);
+		}
 	}
 
 	@Override
@@ -133,6 +136,39 @@ public class PostgreSQLHelper extends DBHelper {
 
 		if (autosave == AutoSave.NEVER) {
 			Logger.error("PostgreSQL connection does not use autosave mode.", PostgreSQLHelper.class);
+		}
+
+		checkCaseInsensitiveCollationSupport(statement);
+	}
+
+	/**
+	 * Verifies that the server can provide the case-insensitive collation used for non-binary string
+	 * columns: a nondeterministic ICU collation requires PostgreSQL 12+ built with ICU support. Logs
+	 * an error otherwise.
+	 */
+	private void checkCaseInsensitiveCollationSupport(Statement statement) throws SQLException {
+		try (ResultSet result = statement.executeQuery("SELECT current_setting('server_version_num')")) {
+			String versionValue = result.next() ? result.getString(1) : null;
+			int versionNum;
+			try {
+				versionNum = versionValue == null ? 0 : Integer.parseInt(versionValue.trim());
+			} catch (NumberFormatException ex) {
+				Logger.error("Cannot determine PostgreSQL version from server_version_num='" + versionValue
+					+ "'; skipping the case-insensitive collation support check.", ex, PostgreSQLHelper.class);
+				return;
+			}
+			if (versionNum < 120000) {
+				Logger.error("PostgreSQL " + versionNum
+					+ " does not support nondeterministic ICU collations (requires 12+); non-binary string columns"
+					+ " cannot be made case-insensitive.", PostgreSQLHelper.class);
+				return;
+			}
+		}
+		try (ResultSet result = statement.executeQuery("SELECT 1 FROM pg_collation WHERE collprovider = 'i' LIMIT 1")) {
+			if (!result.next()) {
+				Logger.error("PostgreSQL has no ICU collations available; the case-insensitive collation \""
+					+ CI_COLLATION + "\" for non-binary string columns cannot be created.", PostgreSQLHelper.class);
+			}
 		}
 	}
 
@@ -182,6 +218,16 @@ public class PostgreSQLHelper extends DBHelper {
 	}
 
 	@Override
+	protected void appendCharType(Appendable result, boolean mandatory, boolean binary, boolean castContext)
+			throws IOException {
+		super.appendCharType(result, mandatory, binary, castContext);
+
+		if (!castContext) {
+			appendCollationDefinition(result, binary);
+		}
+	}
+
+	@Override
 	protected void appendStringType(Appendable result, String columnName, long size, boolean mandatory, boolean binary,
 			boolean castContext) throws IOException {
 		super.appendStringType(result, columnName, size, mandatory, binary, castContext);
@@ -204,7 +250,7 @@ public class PostgreSQLHelper extends DBHelper {
 				break;
 			case NATURAL:
 				super.internalAppendCollatedExpression(buffer, sqlExpression, collationHint);
-				buffer.append(" COLLATE \"default\" ");
+				buffer.append(" COLLATE \"" + CI_COLLATION + "\" ");
 				break;
 		}
 	}
@@ -219,9 +265,23 @@ public class PostgreSQLHelper extends DBHelper {
 		}
 	}
 
+	/** Name of the case-insensitive (nondeterministic ICU) collation created by this dialect. */
+	public static final String CI_COLLATION = "tl_ci";
+
 	private void appendCollationDefinition(Appendable result, boolean binary) throws IOException {
 		if (binary) {
 			result.append(" COLLATE \"C\"");
+		} else {
+			result.append(" COLLATE \"" + CI_COLLATION + "\"");
+		}
+	}
+
+	@Override
+	public void prepareDatabase(PooledConnection connection) throws SQLException {
+		try (Statement statement = connection.createStatement()) {
+			statement.execute(
+				"CREATE COLLATION IF NOT EXISTS \"" + CI_COLLATION
+					+ "\" (provider = icu, locale = 'und-u-ks-level2', deterministic = false)");
 		}
 	}
 
@@ -377,6 +437,13 @@ public class PostgreSQLHelper extends DBHelper {
 	@Override
 	public void appendLikeCaseInsensitive(Appendable sql) throws IOException {
 		sql.append("ILIKE");
+	}
+
+	@Override
+	public void appendLikeCollation(Appendable buffer) throws IOException {
+		// Non-binary columns use a nondeterministic collation, which PostgreSQL rejects for LIKE;
+		// force a deterministic collation for pattern matching.
+		buffer.append(" COLLATE \"C\"");
 	}
 
 	@Override

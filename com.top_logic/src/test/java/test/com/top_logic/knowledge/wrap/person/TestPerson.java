@@ -8,12 +8,12 @@ package test.com.top_logic.knowledge.wrap.person;
 import java.util.Locale;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.TestPersonSetup;
 import test.com.top_logic.basic.AssertNoErrorLogListener;
 import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.DefaultTestFactory;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.context.TLSubSessionContext;
@@ -140,6 +140,21 @@ public class TestPerson extends BasicTestCase {
 		Person person = createPerson("jane.doe@example.com");
 		try {
 			assertEquals("jane.doe@example.com", person.getName());
+		} finally {
+			deletePersonAndUser(person);
+		}
+	}
+
+	/**
+	 * A non-ASCII name (e.g. from a directory account) is valid under the Unicode-aware default
+	 * pattern.
+	 */
+	public void testCreateAcceptsNonAsciiName() {
+		// Encoding-independent literal for "José" (é = U+00E9).
+		String name = "José";
+		Person person = createPerson(name);
+		try {
+			assertEquals(name, person.getName());
 		} finally {
 			deletePersonAndUser(person);
 		}
@@ -417,8 +432,8 @@ public class TestPerson extends BasicTestCase {
      * Return the suite of tests to perform. 
      */
     public static Test suite () {
-		final Test innerTest = PersonManagerSetup.createPersonManagerSetup(
-			TestPersonSetup.wrap(new TestSuite(TestPerson.class)));
+		final Test innerTest = PersonManagerSetup.createPersonManagerSetup(TestPerson.class,
+			TestPersonSetup.wrap(DefaultTestFactory.INSTANCE));
 		return innerTest;
     }
 

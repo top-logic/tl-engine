@@ -122,8 +122,14 @@ public class ResolvePersonNameCollisionsProcessor
 				List<Row> rows = new ArrayList<>();
 				for (PersonRow row : branchRows) {
 					TLID id = LongID.valueOf(row.identifier());
+					// An account without an authentication device (empty AUTH_DEVICE_ID, e.g. the
+					// anonymous or legacy accounts) is not directory-managed. This matches the
+					// logging predicate below and avoids letting a device-less local account win the
+					// keeper choice over a real directory account.
+					String authDevice = authDeviceById.get(id);
 					boolean externallyManaged =
-						!TLSecurityDeviceManager.DB_SECURITY.equals(authDeviceById.get(id));
+						!StringServices.isEmpty(authDevice)
+							&& !TLSecurityDeviceManager.DB_SECURITY.equals(authDevice);
 					rows.add(new Row(id, row.name(), row.minRev(), row.maxRev(), externallyManaged,
 						aliveById.get(id)));
 				}

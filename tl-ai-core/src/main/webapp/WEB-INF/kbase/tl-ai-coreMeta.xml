@@ -64,6 +64,52 @@
 		/>
 	</metaobject>
 
+	<!-- Persisted browser screenshots (see browserScreenshot tool). The scalar string metadata
+	     get dedicated columns; the PNG payload (image, Binary), the capture timestamp (capturedAt,
+	     DateTime) and the owner reference use generic flex/association storage, mirroring how
+	     GeneratedHtmlPage stores its htmlContent/owner. -->
+	<metaobject
+		object_name="Screenshot"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="name"
+			att_type="String"
+			db_size="255"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="sourceUrl"
+			att_type="String"
+			db_size="2048"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="contentType"
+			att_type="String"
+			db_size="255"
+			mandatory="false"
+		/>
+	</metaobject>
+
+	<!-- Persistent, encrypted browser cookie/login pools (see browserSaveCookies / browserUseCookies
+	     and CookiePoolService). Only the scalar name handle gets a dedicated column; the encrypted
+	     storageState (state, Binary), the shared flag (Boolean), the updatedAt timestamp (DateTime)
+	     and the owner reference use generic flex/association storage, mirroring how Screenshot stores
+	     its image/capturedAt/owner. No unique index on name: uniqueness is per-owner (two users may
+	     each have a pool of the same name), enforced in CookiePoolService, not at the table level. -->
+	<metaobject
+		object_name="CookiePool"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="name"
+			att_type="String"
+			db_size="255"
+			mandatory="true"
+		/>
+	</metaobject>
+
 	<!-- tl.ai.agent execution model. References (kind, owner, session, parentExecution,
 	     status, ...) and date attributes use generic flex/association storage. -->
 

@@ -89,7 +89,13 @@ public class ByteBasedTokenEstimator implements TokenEstimator {
 
 	private int estimateToolResult(ToolResultMessage msg) {
 		ToolState state = msg.state();
-		if (state instanceof ToolState.Completed c) return estimateText(c.result());
+		// A completed result may carry an image or a PDF; those are what actually cost tokens, so
+		// they must be counted or compaction would consider a multimodal result nearly free.
+		if (state instanceof ToolState.Completed c) {
+			return c.content().isEmpty()
+				? estimateText(c.result())
+				: estimateContentParts(c.content());
+		}
 		if (state instanceof ToolState.Failed f) return estimateText(f.error());
 		if (state instanceof ToolState.Pending p) return estimateText(p.arguments());
 		if (state instanceof ToolState.Running r) return estimateText(r.arguments());

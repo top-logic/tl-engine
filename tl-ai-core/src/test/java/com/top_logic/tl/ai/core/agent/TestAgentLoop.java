@@ -211,6 +211,106 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
+	 * A distinctive marker planted in the middle of an oversized result. The loop truncates by
+	 * keeping head + tail and dropping the middle, so the marker's survival tells head-tail
+	 * truncation from a whole result far more reliably than a length comparison alone.
+	 */
+	private static final String MIDDLE_MARKER = "CLICKABLE_REF_s1e40";
+
+	/** An oversized result (~4 KB) with {@link #MIDDLE_MARKER} exactly in the middle. */
+	private static final String OVERSIZED_RESULT =
+		"A".repeat(2000) + MIDDLE_MARKER + "B".repeat(2000);
+
+	/** Small enough that {@link #OVERSIZED_RESULT} is well over the loop's global cap. */
+	private static final int SMALL_RESULT_CAP = 1000;
+
+	/**
+	 * A result carrying {@code truncationHint = Integer.MAX_VALUE} (as the browser page verbs do)
+	 * must pass through the loop untouched even when it is far larger than the global cap.
+	 */
+	public void testMaxTruncationHintExemptsResultFromLoopTruncation() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Read the page."))));
+
+		ToolCall toolCall = new ToolCall("tc1", "read_page", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("done")));
+
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(resultTool("read_page", OVERSIZED_RESULT, Integer.MAX_VALUE));
+		registry.freeze();
+
+		List<AgentEvent> events = new ArrayList<>();
+		AgentLoop loop = new AgentLoop(config(10), provider, registry, SMALL_RESULT_CAP);
+		loop.run(conv, events::add);
+
+		ToolState.Completed completed = firstToolResult(conv);
+		assertEquals("browser-sized result must survive whole", OVERSIZED_RESULT, completed.result());
+		assertTrue("the middle (where refs live) must be preserved",
+			completed.result().contains(MIDDLE_MARKER));
+		assertEquals("the exemption hint is preserved on the recorded result",
+			Integer.MAX_VALUE, completed.truncationHint());
+		assertFalse("no truncation event for an exempt result",
+			events.stream().anyMatch(AgentEvent.ToolCallResultTruncated.class::isInstance));
+	}
+
+	/**
+	 * A normal result (no hint) of the very same size is still truncated by the loop: head + tail
+	 * kept, middle dropped. Proves the exemption above is the hint's doing, not the size.
+	 */
+	public void testResultWithoutHintIsTruncatedInTheMiddle() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Read the page."))));
+
+		ToolCall toolCall = new ToolCall("tc1", "read_page", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("done")));
+
+		ToolCatalog registry = new ToolCatalog();
+		// truncationHint -1 -> the global cap applies, exactly like a non-browser tool.
+		registry.register(resultTool("read_page", OVERSIZED_RESULT, -1));
+		registry.freeze();
+
+		List<AgentEvent> events = new ArrayList<>();
+		AgentLoop loop = new AgentLoop(config(10), provider, registry, SMALL_RESULT_CAP);
+		loop.run(conv, events::add);
+
+		ToolState.Completed completed = firstToolResult(conv);
+		assertTrue("result must be shortened", completed.result().length() < OVERSIZED_RESULT.length());
+		assertFalse("the middle must be dropped", completed.result().contains(MIDDLE_MARKER));
+		assertTrue("truncation notice present", completed.result().contains("truncated"));
+		assertTrue("a truncation event is emitted",
+			events.stream().anyMatch(AgentEvent.ToolCallResultTruncated.class::isInstance));
+	}
+
+	/** Extracts the single recorded tool result from a completed conversation. */
+	private static ToolState.Completed firstToolResult(Conversation conv) {
+		ToolResultMessage message = conv.messages().stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.findFirst()
+			.orElseThrow(() -> new AssertionError("no tool result recorded"));
+		assertTrue("tool result completed", message.state() instanceof ToolState.Completed);
+		return (ToolState.Completed) message.state();
+	}
+
+	/** A read tool returning a fixed text with a fixed {@code truncationHint}. */
+	private static Tool resultTool(String name, String text, int truncationHint) {
+		ToolSchema schema = new ToolSchema(name, "Returns a fixed result", "{}");
+		return new Tool() {
+			@Override public String name() { return name; }
+			@Override public String description() { return ""; }
+			@Override public ToolSchema schema() { return schema; }
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+				return new ToolResult(text, null, truncationHint);
+			}
+			@Override public ToolMode mode() { return ToolMode.READ; }
+		};
+	}
+
+	/**
 	 * LLM requests multiple tools in one turn, all get executed.
 	 */
 	public void testMultipleToolCallsPerTurn() {

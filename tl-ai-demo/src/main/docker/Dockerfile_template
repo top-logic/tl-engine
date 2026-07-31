@@ -7,6 +7,39 @@ RUN ln -sf /usr/share/zoneinfo/{timeZone} /etc/localtime
 COPY --chown=root ./*.war $CATALINA_HOME/webapps/
 COPY --chown=root ./context.xml $CATALINA_HOME/conf/
 RUN ln -s /usr/share/java/*.jar $CATALINA_HOME/lib/
+
+# Headless browser runtime for the browser agent tool.
+#
+# The tool drives Chromium through Playwright-for-Java. The jar in the WAR is not enough: the
+# matching Chromium build and its native OS libraries (libnss3, libatk, libgbm, fonts, ...) must be
+# present in the image, otherwise the first browser call fails with "failed to create driver!".
+#
+# The browser is installed with the Playwright CLI taken out of the deployed WAR itself, so the
+# installed browser revision always matches the playwright-java version that is actually shipped -
+# there is no second place holding a version that could drift. "install chromium" provides the full
+# Chromium build (Playwright channel "chromium"), which every session launches: the lighter
+# chrome-headless-shell is deliberately never used, because the switch that disables WebRTC's UDP
+# egress does not exist in it. Do not slim this step down to the shell - that reopens an SSRF hole.
+#
+# No --shm-size is needed when running the container: the tool launches Chromium with
+# --disable-dev-shm-usage, so the default 64 MB /dev/shm is not used.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends unzip \
+ && unzip -j -q $CATALINA_HOME/webapps/*.war \
+      'WEB-INF/lib/playwright.jar' 'WEB-INF/lib/driver.jar' 'WEB-INF/lib/driver-bundle.jar' \
+      -d /tmp/playwright-cli \
+ && java -cp '/tmp/playwright-cli/*' com.microsoft.playwright.CLI install --with-deps chromium \
+ && chmod -R a+rX $PLAYWRIGHT_BROWSERS_PATH \
+ && rm -rf /tmp/playwright-cli /var/lib/apt/lists/*
+
+# Playwright-for-Java otherwise runs a browser download on every Playwright.create() and pulls
+# Firefox and WebKit (~180 MB) into the container's writable layer - on every container start, and
+# fatally so in a deployment without outbound internet access. The browsers this application uses
+# are already in the image, so the runtime download is pure overhead. Declared behind the install
+# step above so that it can never suppress the install itself.
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
 ENV JPDA_OPTS='-XX:+UnlockExperimentalVMOptions -XX:+UseContainerSupport -Xms{JAVA_XMS}m -Xmx{JAVA_XMX}m'
 EXPOSE 8080/tcp
 CMD $CATALINA_HOME/bin/catalina.sh jpda run

@@ -17,6 +17,50 @@
 				</modules>
 			</instance>
 		</config>
+
+		<!--
+			Installation encryption key for the platform EncryptionService, used by CookiePoolService
+			to encrypt browser cookie/login pools at rest (see tl-ai-core CookiePoolService). The
+			platform's default EncryptionService instance installs NO key, so getEncryption() would
+			throw and cookie pools could not be saved.
+
+			DummyEncryptionService installs a real AES SymmetricEncryption from a key embedded in this
+			config. It boots fully unattended (no password prompt), which the cookie-pool feature needs
+			for background/unattended agents and for the demo's unattended startup.
+
+			SECURITY: the key below sits in clear text in this file, so this is a DEV / DEMO setup only.
+			For production, OVERRIDE this instance with the real installation-key service
+			com.top_logic.knowledge.service.encryption.pbe.PasswordBasedEncryptionService (see the
+			platform's top-logic.encrypted.config.xml). CAVEAT: PBE stores its key PBE-encrypted in the
+			DB and can only be unlocked by a human typing the application password through the
+			deferred-boot browser flow, so an app using PBE does NOT boot fully unattended - a
+			background/unattended agent cannot save/use cookie pools until an operator has unlocked
+			encryption. CookiePoolService itself is codec-agnostic: it always encrypts via whichever
+			EncryptionService instance is configured, and refuses to store cookies (never plaintext)
+			when no encryption key is installed.
+		-->
+		<config service-class="com.top_logic.basic.encryption.EncryptionService">
+			<instance class="com.top_logic.basic.encryption.DummyEncryptionService"
+				algorithm="AES"
+				key="7b1f9c2e4a6d8b0f3e5c7a9d1b2f4e60"
+			/>
+		</config>
+
+		<!--
+			Browsing target of the DEMO application. The product default in
+			tl-ai-core.conf.config.xml is an EMPTY allowlist (fail-closed: a fresh installation
+			browses nothing until an administrator configures domains), so the JS-heavy site the
+			browser tool is validated against is allowlisted here, where it belongs - in the demo
+			rather than in every installation.
+
+			Deliberately an override with no class attribute: it can only resolve against the
+			BrowserToolsService instance declared in tl-ai-core.conf.config.xml, so it also proves
+			that file is on this application's configuration load path (see
+			TestBrowserToolsServiceDemoConfig).
+		-->
+		<config service-class="com.top_logic.tl.ai.core.tools.web.BrowserToolsService">
+			<instance allowed-domains="quotes.toscrape.com" />
+		</config>
 	</services>
 
 	<configs>

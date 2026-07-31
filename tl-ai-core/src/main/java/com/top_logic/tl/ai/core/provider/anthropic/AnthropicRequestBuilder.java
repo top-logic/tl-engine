@@ -197,13 +197,23 @@ public final class AnthropicRequestBuilder {
 		return content;
 	}
 
+	/**
+	 * Builds a {@code tool_result} block.
+	 *
+	 * <p>Its {@code content} is a plain string for a text-only result, and a list of
+	 * {@code text}/{@code image}/{@code document} blocks for a result the tool filled with content
+	 * parts — the Messages API permits exactly those types inside a tool result, so an image needs no
+	 * detour through a user message.</p>
+	 */
 	private static Map<String, Object> buildToolResult(ToolResultMessage result, boolean cache,
 			String cacheTtl) {
 		ToolState state = result.state();
-		String content;
+		Object content;
 		boolean isError = false;
 		if (state instanceof ToolState.Completed c) {
-			content = c.result();
+			content = c.content().isEmpty()
+				? c.result()
+				: buildToolResultContent(c.content(), cacheTtl);
 		} else if (state instanceof ToolState.Failed f) {
 			content = f.error();
 			isError = true;
@@ -222,6 +232,20 @@ public final class AnthropicRequestBuilder {
 			block.put("cache_control", buildCacheControl(cacheTtl));
 		}
 		return block;
+	}
+
+	/**
+	 * The nested content blocks of a multimodal {@code tool_result}.
+	 *
+	 * <p>The cache breakpoint stays on the enclosing {@code tool_result} block, so none of the nested
+	 * blocks carries one.</p>
+	 */
+	private static List<Object> buildToolResultContent(List<ContentPart> parts, String cacheTtl) {
+		List<Object> content = new ArrayList<>(parts.size());
+		for (ContentPart part : parts) {
+			content.add(buildContentBlock(part, false, cacheTtl));
+		}
+		return content;
 	}
 
 	private static Map<String, Object> buildContentBlock(ContentPart part, boolean cacheOnThis,

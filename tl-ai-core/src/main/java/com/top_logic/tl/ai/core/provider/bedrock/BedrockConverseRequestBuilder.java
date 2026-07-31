@@ -17,6 +17,7 @@ import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.Message;
+import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
@@ -40,6 +41,15 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * {@code model} field is emitted here.</p>
  */
 public final class BedrockConverseRequestBuilder {
+
+	/**
+	 * The {@code name} of every {@code document} block.
+	 *
+	 * <p>Required by the API, restricted to alphanumerics, whitespace, hyphens, parentheses and
+	 * square brackets, and — per the AWS documentation — read by the model, hence a neutral
+	 * constant rather than a caller-supplied file name.</p>
+	 */
+	private static final String DOCUMENT_NAME = "attachment";
 
 	private BedrockConverseRequestBuilder() {
 		// Static utility class.
@@ -167,21 +177,32 @@ public final class BedrockConverseRequestBuilder {
 	}
 
 	private static Map<String, Object> buildUserMessage(UserMessage user) {
-		List<Object> content = new ArrayList<>();
-		for (ContentPart part : user.content()) {
+		Map<String, Object> entry = new LinkedHashMap<>();
+		entry.put("role", "user");
+		entry.put("content", buildContentBlocks(user.content()));
+		return entry;
+	}
+
+	/**
+	 * Maps content parts to Converse content blocks.
+	 *
+	 * <p>Text, images and PDFs all have a first-class block; {@code ThinkingContent} and
+	 * {@code ToolCall} have no equivalent in a user turn and are skipped.</p>
+	 */
+	private static List<Object> buildContentBlocks(List<ContentPart> parts) {
+		List<Object> content = new ArrayList<>(parts.size());
+		for (ContentPart part : parts) {
 			if (part instanceof TextContent text) {
 				Map<String, Object> block = new LinkedHashMap<>();
 				block.put("text", text.text());
 				content.add(block);
 			} else if (part instanceof ImageContent image) {
 				content.add(buildImageBlock(image));
+			} else if (part instanceof PdfContent pdf) {
+				content.add(buildDocumentBlock(pdf));
 			}
-			// Other content types (PdfContent, etc.) are not supported by Bedrock Converse.
 		}
-		Map<String, Object> entry = new LinkedHashMap<>();
-		entry.put("role", "user");
-		entry.put("content", content);
-		return entry;
+		return content;
 	}
 
 	/**
@@ -212,6 +233,28 @@ public final class BedrockConverseRequestBuilder {
 
 		Map<String, Object> block = new LinkedHashMap<>();
 		block.put("image", imageBlock);
+		return block;
+	}
+
+	/**
+	 * Builds a Bedrock Converse {@code document} content block from a {@link PdfContent}.
+	 *
+	 * <p>Bedrock expects:
+	 * {@code {"document": {"name": "attachment", "format": "pdf", "source": {"bytes": "<base64>"}}}}.
+	 * The name is required; it is deliberately a neutral constant, because AWS documents document
+	 * names as a prompt-injection vector.</p>
+	 */
+	private static Map<String, Object> buildDocumentBlock(PdfContent pdf) {
+		Map<String, Object> source = new LinkedHashMap<>();
+		source.put("bytes", pdf.data());
+
+		Map<String, Object> document = new LinkedHashMap<>();
+		document.put("name", DOCUMENT_NAME);
+		document.put("format", "pdf");
+		document.put("source", source);
+
+		Map<String, Object> block = new LinkedHashMap<>();
+		block.put("document", document);
 		return block;
 	}
 
@@ -257,13 +300,23 @@ public final class BedrockConverseRequestBuilder {
 		return entry;
 	}
 
+	/**
+	 * Builds a {@code toolResult} block.
+	 *
+	 * <p>Its {@code content} is already a block list in this API, so a tool result carrying an image
+	 * or a PDF simply contributes {@code image}/{@code document} blocks next to the text — no extra
+	 * user message, which Converse would reject anyway because it enforces strict user/assistant
+	 * alternation and tool results already travel in a user turn.</p>
+	 */
 	private static Map<String, Object> buildToolResultBlock(ToolResultMessage result) {
 		ToolState state = result.state();
 		String text;
 		String status;
+		List<ContentPart> content = List.of();
 		if (state instanceof ToolState.Completed c) {
 			text = c.result();
 			status = "success";
+			content = c.content();
 		} else if (state instanceof ToolState.Failed f) {
 			text = f.error();
 			status = "error";
@@ -272,10 +325,15 @@ public final class BedrockConverseRequestBuilder {
 			status = "success";
 		}
 
-		List<Object> resultContent = new ArrayList<>();
-		Map<String, Object> textBlock = new LinkedHashMap<>();
-		textBlock.put("text", text);
-		resultContent.add(textBlock);
+		List<Object> resultContent;
+		if (content.isEmpty()) {
+			resultContent = new ArrayList<>();
+			Map<String, Object> textBlock = new LinkedHashMap<>();
+			textBlock.put("text", text);
+			resultContent.add(textBlock);
+		} else {
+			resultContent = buildContentBlocks(content);
+		}
 
 		Map<String, Object> toolResult = new LinkedHashMap<>();
 		toolResult.put("toolUseId", result.toolCallId());

@@ -217,15 +217,22 @@ public class AgentLoop {
 	}
 
 	/**
-	 * Injects results of any completed-but-undelivered subagents (from the thread-bound
-	 * registry) into the conversation as system messages, so the next provider call sees them.
-	 * Realizes the long-standing "memory/attachment injection between turns" intent.
+	 * Appends any completed-but-undelivered subagent results to the conversation.
+	 *
+	 * <p>Called at the start of every turn, i.e. after the previous turn's tool results were
+	 * appended and before the next provider request is built.</p>
 	 */
-	private void injectSubagentResults(Conversation conversation) {
+	private void injectBetweenTurns(Conversation conversation) {
 		injectSubagentResultsForTest(conversation);
 	}
 
-	/** Test-visible entry point for {@link #injectSubagentResults}. */
+	/**
+	 * Injects results of any completed-but-undelivered subagents (from the thread-bound
+	 * registry) into the conversation as system messages, so the next provider call sees them.
+	 * Realizes the long-standing "memory/attachment injection between turns" intent.
+	 *
+	 * <p>Test-visible entry point for the subagent part of {@link #injectBetweenTurns}.</p>
+	 */
 	static void injectSubagentResultsForTest(Conversation conversation) {
 		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
 		if (registry == null) {
@@ -264,7 +271,7 @@ public class AgentLoop {
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
 		try {
-			return runLoop(conversation, context, serialized, runId);
+			return runLoop(conversation, context.withModel(_config.model()), serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
 			// never left waiting for a run that already died.
@@ -288,7 +295,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectSubagentResults(conversation);
+			injectBetweenTurns(conversation);
 
 			AssistantMessage assistantMsg;
 			try {
@@ -377,7 +384,7 @@ public class AgentLoop {
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
 		try {
-			return runWithMemory(_memory, context, serialized, runId);
+			return runWithMemory(_memory, context.withModel(_config.model()), serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
 			// never left waiting for a run that already died.
@@ -425,7 +432,7 @@ public class AgentLoop {
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
-			injectSubagentResults(conversation);
+			injectBetweenTurns(conversation);
 
 			AssistantMessage assistantMsg;
 			try {
@@ -1038,13 +1045,7 @@ public class AgentLoop {
 			return result;
 		}
 
-		int halfBudget = limit / 2;
-		String head = text.substring(0, halfBudget);
-		String tail = text.substring(text.length() - halfBudget);
-		int droppedChars = text.length() - head.length() - tail.length();
-		String truncated = head
-			+ "\n\n[... " + droppedChars + " chars truncated ...]\n\n"
-			+ tail;
+		String truncated = truncateToBudget(text, limit);
 
 		emit(listener, new AgentEvent.ToolCallResultTruncated(runId, turn, now(),
 			result.toolCallId(), result.toolName(), text.length(), truncated.length()));
@@ -1052,7 +1053,37 @@ public class AgentLoop {
 		return new ToolResultMessage(
 			result.id(), result.timestamp(), result.toolCallId(), result.toolName(),
 			new ToolState.Completed(truncated, completed.startTime(), completed.endTime(),
-				false, completed.summary(), -1));
+				false, completed.summary(), -1, truncateTextParts(completed.content(), limit)));
+	}
+
+	/**
+	 * Applies the same character budget to the text parts of a multimodal tool result.
+	 *
+	 * <p>Images and documents pass through untouched: a character budget does not describe them,
+	 * and dropping them would silently cost the model the very content the tool was called for.</p>
+	 */
+	private static List<ContentPart> truncateTextParts(List<ContentPart> content, int limit) {
+		if (content.isEmpty()) {
+			return content;
+		}
+		List<ContentPart> result = new ArrayList<>(content.size());
+		for (ContentPart part : content) {
+			if (part instanceof TextContent text && text.text().length() > limit) {
+				result.add(new TextContent(truncateToBudget(text.text(), limit)));
+			} else {
+				result.add(part);
+			}
+		}
+		return result;
+	}
+
+	/** Keeps the first and last half of the budget, reporting how much was dropped in between. */
+	private static String truncateToBudget(String text, int limit) {
+		int halfBudget = limit / 2;
+		String head = text.substring(0, halfBudget);
+		String tail = text.substring(text.length() - halfBudget);
+		int droppedChars = text.length() - head.length() - tail.length();
+		return head + "\n\n[... " + droppedChars + " chars truncated ...]\n\n" + tail;
 	}
 
 	private static ToolResultMessage errorResult(ToolCall toolCall, String error) {

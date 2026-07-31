@@ -13,6 +13,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ImageContent;
+import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
@@ -596,6 +597,151 @@ public class TestBedrockConverseRequestBuilder extends TestCase {
 		java.util.Map<String, Object> imageBlock =
 			(java.util.Map<String, Object>) imageBlockWrapper.get("image");
 		assertEquals("jpeg", imageBlock.get("format"));
+	}
+
+	/**
+	 * A tool result carrying an image and a PDF contributes native {@code image} and
+	 * {@code document} blocks to {@code toolResult.content}.
+	 */
+	public void testMultimodalToolResultUsesNativeBlocks() throws Exception {
+		String imageBase64 = "iVBORw0KGgoAAAANSUhEUg==";
+		String pdfBase64 = "JVBERi0xLjcKZmFrZQ==";
+
+		java.util.List<Object> messages = multimodalToolResultMessages(List.of(
+			new TextContent("Image content of \"demo.png\" (image/png)."),
+			new ImageContent("data:image/png;base64," + imageBase64, "image/png"),
+			new PdfContent(pdfBase64, "application/pdf")));
+
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> trMsg = (java.util.Map<String, Object>) messages.get(2);
+		@SuppressWarnings("unchecked")
+		java.util.List<Object> trContent = (java.util.List<Object>) trMsg.get("content");
+		// one toolResult block + trailing cachePoint
+		assertEquals(2, trContent.size());
+
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> toolResult = (java.util.Map<String, Object>) ((java.util.Map<String, Object>) trContent
+			.get(0)).get("toolResult");
+		assertNotNull(toolResult);
+		assertEquals("success", toolResult.get("status"));
+
+		@SuppressWarnings("unchecked")
+		java.util.List<Object> resultContent = (java.util.List<Object>) toolResult.get("content");
+		assertEquals("text + image + document", 3, resultContent.size());
+
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> textBlock = (java.util.Map<String, Object>) resultContent.get(0);
+		assertTrue(((String) textBlock.get("text")).contains("demo.png"));
+
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> imageBlock =
+			(java.util.Map<String, Object>) ((java.util.Map<String, Object>) resultContent.get(1))
+				.get("image");
+		assertNotNull("Expected a native image block inside the tool result.", imageBlock);
+		assertEquals("png", imageBlock.get("format"));
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> imageSource =
+			(java.util.Map<String, Object>) imageBlock.get("source");
+		assertEquals(imageBase64, imageSource.get("bytes"));
+
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> documentBlock =
+			(java.util.Map<String, Object>) ((java.util.Map<String, Object>) resultContent.get(2))
+				.get("document");
+		assertNotNull("Expected a native document block inside the tool result.", documentBlock);
+		assertEquals("pdf", documentBlock.get("format"));
+		assertEquals("attachment", documentBlock.get("name"));
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> documentSource =
+			(java.util.Map<String, Object>) documentBlock.get("source");
+		assertEquals(pdfBase64, documentSource.get("bytes"));
+	}
+
+	/**
+	 * The roles still alternate strictly.
+	 *
+	 * <p>Converse rejects consecutive same-role messages with
+	 * {@code ValidationException: A conversation must alternate between user and assistant roles},
+	 * and tool results already travel in a user turn — so delivering an image through an extra user
+	 * message, as the earlier implementation did, was invalid here.</p>
+	 */
+	public void testMultimodalToolResultKeepsRolesAlternating() throws Exception {
+		java.util.List<Object> messages = multimodalToolResultMessages(List.of(
+			new TextContent("Image content of \"demo.png\" (image/png)."),
+			new ImageContent("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==", "image/png")));
+
+		assertEquals("user, assistant, user — no extra message for the image.", 3, messages.size());
+		String previous = null;
+		for (Object message : messages) {
+			@SuppressWarnings("unchecked")
+			String role = (String) ((java.util.Map<String, Object>) message).get("role");
+			assertFalse("Two consecutive '" + role + "' messages: Converse rejects that.",
+				role.equals(previous));
+			previous = role;
+		}
+	}
+
+	/** A PDF in a user message is a {@code document} block — Converse does support documents. */
+	public void testPdfInUserMessageBecomesADocumentBlock() throws Exception {
+		String pdfBase64 = "JVBERi0xLjcKZmFrZQ==";
+
+		UserMessage user = new UserMessage(
+			UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("Here is the invoice."), new PdfContent(pdfBase64, null)));
+
+		String json = BedrockConverseRequestBuilder.buildRequestJson(new ProviderRequest(
+			"anthropic.claude-3-haiku-20240307-v1:0", null, List.of(user), List.of(), 256));
+
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> root =
+			(java.util.Map<String, Object>) JsonUtil.parseJsonValue(json);
+		@SuppressWarnings("unchecked")
+		java.util.List<Object> messages = (java.util.List<Object>) root.get("messages");
+		@SuppressWarnings("unchecked")
+		java.util.List<Object> content =
+			(java.util.List<Object>) ((java.util.Map<String, Object>) messages.get(0)).get("content");
+
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> document =
+			(java.util.Map<String, Object>) ((java.util.Map<String, Object>) content.get(1))
+				.get("document");
+		assertNotNull("A PDF must not be dropped silently.", document);
+		assertEquals("pdf", document.get("format"));
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> source = (java.util.Map<String, Object>) document.get("source");
+		assertEquals(pdfBase64, source.get("bytes"));
+	}
+
+	/** user &#x2192; assistant(toolUse) &#x2192; tool result carrying the given content parts. */
+	private static java.util.List<Object> multimodalToolResultMessages(
+			List<com.top_logic.tl.ai.core.message.ContentPart> toolResultContent) throws Exception {
+		String callId = "tool_use_1";
+
+		UserMessage user = new UserMessage(
+			UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("Show me the screenshot.")));
+
+		AssistantMessage assistant = new AssistantMessage(
+			UUID.randomUUID().toString(), Instant.now(),
+			List.of(new ToolCall(callId, "viewDocument", "{\"tid\":\"Screenshot:42\"}")),
+			new TokenUsage(10, 20, 0, 0, 0), "tool_use");
+
+		ToolResultMessage result = new ToolResultMessage(
+			UUID.randomUUID().toString(), Instant.now(), callId, "viewDocument",
+			new ToolState.Completed("Image content of \"demo.png\".", Instant.now(), Instant.now(),
+				false, null, -1, toolResultContent));
+
+		String json = BedrockConverseRequestBuilder.buildRequestJson(new ProviderRequest(
+			"anthropic.claude-3-haiku-20240307-v1:0", null, List.of(user, assistant, result),
+			List.of(), 512));
+
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> root =
+			(java.util.Map<String, Object>) JsonUtil.parseJsonValue(json);
+		@SuppressWarnings("unchecked")
+		java.util.List<Object> messages = (java.util.List<Object>) root.get("messages");
+		assertNotNull(messages);
+		return messages;
 	}
 
 	private static boolean isCachePoint(Object block) {

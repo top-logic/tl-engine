@@ -461,6 +461,14 @@ public final class AnnotatedTools {
 				if (result == null) {
 					return new ToolResult("null", null, _truncationHint);
 				}
+				if (result instanceof ToolResult toolResult) {
+					// A tool that returns the structured result speaks for itself: keep its summary
+					// and content, and only fill in the truncation hint it did not specify.
+					return toolResult.truncationHint() < 0
+						? new ToolResult(toolResult.text(), toolResult.summary(), _truncationHint,
+							toolResult.content())
+						: toolResult;
+				}
 				return new ToolResult(result.toString(), null, _truncationHint);
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();

@@ -4,6 +4,20 @@
 	Configuration options for testing tl-ai-core with JUnit.
  -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!--
+			Install a real AES encryption key for tests via the platform EncryptionService, so
+			CookiePoolService (which encrypts cookie pools at rest via EncryptionService.getEncryption())
+			round-trips in TestCookiePoolService. DummyEncryptionService boots unattended with the
+			config-embedded key; test-only.
+		-->
+		<config service-class="com.top_logic.basic.encryption.EncryptionService">
+			<instance class="com.top_logic.basic.encryption.DummyEncryptionService"
+				algorithm="AES"
+				key="b8eb777bb2b74f111aa1d65f881a8c1d"
+			/>
+		</config>
+	</services>
 	<configs>
 		<config config:interface="test.com.top_logic.basic.util.AbstractBasicTestAll$GlobalConfig"
 			test-comment="false"

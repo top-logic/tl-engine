@@ -156,6 +156,9 @@ public class ChatProcessor {
 
 			// Build ToolContext with real security, approval, and transaction scope
 			ToolContext toolContext = buildToolContext(interactionStore, taskTracker);
+			// Expose the run's cancellation token so /chat/cancel can fire cooperative-cancellation
+			// listeners in addition to interrupting the agent thread.
+			state.setCancellationToken(toolContext.cancellationToken());
 
 			// Run the entry point agent via AgentLoop
 			String entryPointAgent = agentFactory.getEntryPointAgentName();
@@ -670,6 +673,7 @@ public class ChatProcessor {
 		// SSE handler and thread tracking for push-based updates and cancellation
 		private volatile ChatSSEHandler _sseHandler;
 		private volatile Thread _agentThread;
+		private volatile CancellationToken _cancellationToken;
 		private volatile String _lastAgentResponse;
 
 		// Lifecycle management
@@ -852,6 +856,22 @@ public class ChatProcessor {
 		 */
 		public void setAgentThread(Thread thread) {
 			_agentThread = thread;
+		}
+
+		/** The run's cancellation token, used to signal cooperative cancellation; may be null. */
+		public CancellationToken getCancellationToken() {
+			return _cancellationToken;
+		}
+
+		/**
+		 * Sets the run's cancellation token so a cancel request can fire cooperative-cancellation
+		 * listeners, not just interrupt the thread.
+		 *
+		 * @param token
+		 *        The token; null to clear.
+		 */
+		public void setCancellationToken(CancellationToken token) {
+			_cancellationToken = token;
 		}
 
 		/** The last agent response text; may be null. */

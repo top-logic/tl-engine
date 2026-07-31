@@ -14,16 +14,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.IdentifierUtil;
-import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
@@ -261,36 +255,7 @@ public class InstanceBrowserTool {
 	}
 
 	private InstanceResponse doGetInstance(String tid) throws IOException {
-		// Validate parameter
-		if (tid == null || tid.isEmpty()) {
-			throw new IllegalArgumentException("TID is required");
-		}
-
-		// Parse TID (format: "type-name:hex-id")
-		String[] split = tid.split(":", 2);
-		if (split.length != 2) {
-			throw new IllegalArgumentException(
-				"Invalid TID format. Expected 'TypeName:id', got: " + tid);
-		}
-
-		String typeName = split[0];
-		String id = split[1];
-
-		// Convert string ID to TLID
-		TLID tlid = IdentifierUtil.fromExternalForm(id);
-
-		// Get the knowledge base
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-
-		// Get the knowledge object
-		KnowledgeObject ko = kb.getKnowledgeObject(typeName, tlid);
-
-		if (ko == null) {
-			throw new IllegalArgumentException("Object with TID '" + tid + "' not found");
-		}
-
-		// Wrap it as a TLObject
-		TLObject tlObject = WrapperFactory.getWrapper(ko);
+		TLObject tlObject = TidResolver.resolve(tid);
 
 		// Build response using data class
 		InstanceResponse result = InstanceResponse.create();

@@ -123,10 +123,7 @@ public final class OpenAIResponsesRequestBuilder {
 	}
 
 	private static Map<String, Object> buildUserItem(UserMessage user) {
-		List<Object> content = new ArrayList<>();
-		for (ContentPart part : user.content()) {
-			content.add(buildContentPart(part));
-		}
+		List<Object> content = buildContentParts(user.content());
 		Map<String, Object> item = new LinkedHashMap<>();
 		item.put("role", "user");
 		item.put("content", content);
@@ -162,11 +159,19 @@ public final class OpenAIResponsesRequestBuilder {
 		}
 	}
 
+	/**
+	 * Builds a {@code function_call_output} item.
+	 *
+	 * <p>Its {@code output} is a string for a text-only result, and an array of
+	 * {@code input_text}/{@code input_image}/{@code input_file} parts for a result the tool filled
+	 * with content parts — the same part vocabulary the Responses API takes in a user message, which
+	 * is why {@link #buildContentPart} serves both.</p>
+	 */
 	private static Map<String, Object> buildToolResultItem(ToolResultMessage result) {
 		ToolState state = result.state();
-		String output;
+		Object output;
 		if (state instanceof ToolState.Completed c) {
-			output = c.result();
+			output = c.content().isEmpty() ? c.result() : buildContentParts(c.content());
 		} else if (state instanceof ToolState.Failed f) {
 			output = f.error();
 		} else {
@@ -177,6 +182,14 @@ public final class OpenAIResponsesRequestBuilder {
 		item.put("call_id", result.toolCallId());
 		item.put("output", output);
 		return item;
+	}
+
+	private static List<Object> buildContentParts(List<ContentPart> parts) {
+		List<Object> content = new ArrayList<>(parts.size());
+		for (ContentPart part : parts) {
+			content.add(buildContentPart(part));
+		}
+		return content;
 	}
 
 	private static Map<String, Object> buildContentPart(ContentPart part) {

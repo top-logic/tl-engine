@@ -629,7 +629,9 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		boolean sandboxDisabled = isSandboxDisabled();
 		// Start the outbound filter BEFORE any session can exist: an unproxied browser would not be
 		// bound by the policy for redirects and IP-literal targets.
-		_proxy = FilteringProxy.start(this);
+		// Sized from the session cap: the proxy serves the browsers this service starts and nothing
+		// else, so their number is what bounds the connections - and the threads - it needs.
+		_proxy = FilteringProxy.start(this, getMaxConcurrentSessions());
 		String proxyServer = _proxy.serverUrl();
 		_pool = new BrowserSessionPool<>(
 			getMaxConcurrentSessions(),

@@ -11,8 +11,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import junit.framework.TestCase;
@@ -387,6 +390,130 @@ public class TestFilteringProxy extends TestCase {
 		}
 	}
 
+	// --- Resource bounds. ---
+
+	/** The connection bound is derived from the session cap, and is never zero. */
+	public void testConnectionBoundIsDerivedFromTheSessionCap() throws IOException {
+		assertTrue("more than one connection per session, or a page cannot load",
+			FilteringProxy.maxConnections(1) > 1);
+		assertEquals("and it scales with the number of browsers", 2 * FilteringProxy.maxConnections(1),
+			FilteringProxy.maxConnections(2));
+		assertEquals("a nonsensical cap still leaves a usable proxy", FilteringProxy.maxConnections(1),
+			FilteringProxy.maxConnections(0));
+
+		try (FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, 3)) {
+			assertEquals(FilteringProxy.maxConnections(3), proxy.maxConnections());
+		}
+	}
+
+	/**
+	 * <b>The bound holds.</b> The proxy served every connection from an unbounded thread pool, so
+	 * anything able to open connections to it - a page with many sub-resource hosts, or any other
+	 * process on the loopback interface, since the proxy authenticates nobody - could make it spawn
+	 * threads without limit.
+	 *
+	 * <p>
+	 * Past the bound a connection is <b>dropped</b> rather than queued: every task here lives as long as
+	 * the connection it serves, so a queued one would not start until some page finished. The fixture
+	 * connections say nothing, which parks each handler where a real one waits for the request head and
+	 * keeps its slot occupied.
+	 * </p>
+	 */
+	public void testConnectionsBeyondTheBoundAreDroppedRatherThanQueued() throws IOException {
+		int bound = FilteringProxy.maxConnections(1);
+		List<Socket> clients = new ArrayList<>();
+		try (FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, 1)) {
+			try {
+				for (int i = 0; i < bound + 4; i++) {
+					clients.add(connectTo(proxy.port()));
+				}
+
+				assertTrue("connections past the bound of " + bound + " are dropped (dropped "
+					+ proxy.droppedCount() + ")", awaitDropped(proxy));
+				Socket last = clients.get(clients.size() - 1);
+				last.setSoTimeout(5_000);
+				assertEquals("a dropped connection is closed, not served", -1,
+					last.getInputStream().read());
+			} finally {
+				for (Socket client : clients) {
+					closeQuietly(client);
+				}
+			}
+		}
+	}
+
+	/**
+	 * <b>An upgrade that was not granted does not get a reused connection.</b> An upgrade request is
+	 * exempt from the forced {@code Connection: close}, because a connection that really switched
+	 * protocols belongs to one origin for its whole life - but a server may answer an upgrade request
+	 * with an ordinary {@code 200}, and then the connection is an ordinary keep-alive connection with the
+	 * safeguard left out. A blind pump would deliver the client's next request - which may name a
+	 * <em>different</em> origin - to this origin's already-checked server, which is precisely the hazard
+	 * {@code Connection: close} exists to remove.
+	 */
+	public void testUpgradeRefusedByUpstreamDoesNotCarryASecondRequest() throws IOException {
+		try (KeepAliveServer upstream = KeepAliveServer.start();
+				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, pinnedTo(upstream.port()))) {
+			try (Socket client = connectTo(proxy.port())) {
+				client.setSoTimeout(10_000);
+				OutputStream out = client.getOutputStream();
+				out.write(("GET http://first.example/socket HTTP/1.1\r\nHost: first.example\r\n"
+					+ "Connection: Upgrade\r\nUpgrade: websocket\r\n\r\n")
+						.getBytes(StandardCharsets.ISO_8859_1));
+				out.flush();
+
+				// Only the head: the connection has to still be open for the second request below,
+				// which is the whole point - a browser sends it on the connection it thinks is reusable.
+				String head = readHead(client.getInputStream());
+				assertTrue("the ordinary answer is relayed back: " + statusLine(head),
+					head.startsWith("HTTP/1.1 200"));
+				assertTrue("and the client is told the connection ends here: " + head,
+					head.contains("Connection: close"));
+
+				try {
+					out.write("GET http://second.example/secret HTTP/1.1\r\nHost: second.example\r\n\r\n"
+						.getBytes(StandardCharsets.ISO_8859_1));
+					out.flush();
+				} catch (IOException alreadyClosed) {
+					// Equally correct: the proxy had already closed the connection.
+				}
+			}
+			upstream.awaitDone();
+			assertEquals("only the upgrade request was ever forwarded: " + upstream.requestLines(),
+				List.of("GET /socket HTTP/1.1"), upstream.requestLines());
+		}
+	}
+
+	/**
+	 * A granted upgrade ({@code 101}) is still blind-pumped in both directions, so plain WebSocket keeps
+	 * working: the exemption is withdrawn only where the answer says the connection did not switch.
+	 */
+	public void testGrantedUpgradeIsTunnelledInBothDirections() throws IOException {
+		try (KeepAliveServer upstream = KeepAliveServer.switchingProtocols();
+				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, pinnedTo(upstream.port()))) {
+			try (Socket client = connectTo(proxy.port())) {
+				client.setSoTimeout(10_000);
+				OutputStream out = client.getOutputStream();
+				out.write(("GET http://ws.example/socket HTTP/1.1\r\nHost: ws.example\r\n"
+					+ "Connection: Upgrade\r\nUpgrade: websocket\r\n\r\n")
+						.getBytes(StandardCharsets.ISO_8859_1));
+				out.flush();
+
+				String head = readHead(client.getInputStream());
+				assertTrue("the switch is relayed verbatim: " + statusLine(head),
+					head.startsWith("HTTP/1.1 101"));
+				assertFalse("no Connection: close is forced onto a switched connection: " + head,
+					head.contains("Connection: close"));
+
+				// The tunnel carries client bytes upstream, as a WebSocket frame would be.
+				out.write("ping".getBytes(StandardCharsets.ISO_8859_1));
+				out.flush();
+				assertTrue("the tunnel is pumped in the client-to-upstream direction too",
+					upstream.awaitTunnelledBytes("ping"));
+			}
+		}
+	}
+
 	/** A closed proxy stops listening, so no session can keep using a proxy the service shut down. */
 	public void testClosedProxyStopsListening() throws IOException {
 		FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL);
@@ -410,8 +537,201 @@ public class TestFilteringProxy extends TestCase {
 
 	/** An {@link AddressResolver} that pins every host to the fixture server. */
 	private static AddressResolver pinnedTo(RecordingServer upstream) {
+		return pinnedTo(upstream.port());
+	}
+
+	/** An {@link AddressResolver} that pins every host to a fixture on the given loopback port. */
+	private static AddressResolver pinnedTo(int fixturePort) {
 		return (host, port) -> Target
-			.to(new InetSocketAddress(InetAddress.getLoopbackAddress(), upstream.port()));
+			.to(new InetSocketAddress(InetAddress.getLoopbackAddress(), fixturePort));
+	}
+
+	private static Socket connectTo(int port) throws IOException {
+		Socket socket = new Socket();
+		socket.connect(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port), 5_000);
+		return socket;
+	}
+
+	/** Waits briefly for the proxy to have dropped at least one connection. */
+	private static boolean awaitDropped(FilteringProxy proxy) {
+		for (int i = 0; i < 100; i++) {
+			if (proxy.droppedCount() > 0) {
+				return true;
+			}
+			sleep(50);
+		}
+		return proxy.droppedCount() > 0;
+	}
+
+	/** Reads an HTTP head (status line plus headers), stopping at the blank line that ends it. */
+	private static String readHead(InputStream in) throws IOException {
+		StringBuilder head = new StringBuilder();
+		StringBuilder line = new StringBuilder();
+		int read;
+		while ((read = in.read()) != -1) {
+			if (read == '\n') {
+				if (line.length() == 0) {
+					break;
+				}
+				head.append(line).append('\n');
+				line.setLength(0);
+				continue;
+			}
+			if (read != '\r') {
+				line.append((char) read);
+			}
+		}
+		return head.toString();
+	}
+
+	private static void sleep(long millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+	}
+
+	private static void closeQuietly(Socket socket) {
+		try {
+			socket.close();
+		} catch (IOException ex) {
+			// Going away either way.
+		}
+	}
+
+	/**
+	 * An upstream fixture that keeps its connection open after answering, so what the proxy does with a
+	 * <em>reusable</em> connection can be observed - which {@link RecordingServer} cannot show, since it
+	 * answers {@code Connection: close} and hangs up.
+	 */
+	private static final class KeepAliveServer implements AutoCloseable {
+
+		/** How long the fixture waits for a second request before giving up on one. */
+		private static final int SECOND_REQUEST_WINDOW_MILLIS = 1_500;
+
+		private final ServerSocket _listener;
+
+		private final boolean _switchProtocols;
+
+		private final List<String> _requestLines = Collections.synchronizedList(new ArrayList<>());
+
+		private final StringBuilder _tunnelled = new StringBuilder();
+
+		private final Thread _worker;
+
+		private KeepAliveServer(ServerSocket listener, boolean switchProtocols) {
+			_listener = listener;
+			_switchProtocols = switchProtocols;
+			_worker = new Thread(this::serve, "keep-alive-fixture");
+			_worker.setDaemon(true);
+		}
+
+		/** A fixture answering an upgrade request with an ordinary, keep-alive {@code 200}. */
+		static KeepAliveServer start() throws IOException {
+			return started(false);
+		}
+
+		/** A fixture answering an upgrade request with {@code 101 Switching Protocols}. */
+		static KeepAliveServer switchingProtocols() throws IOException {
+			return started(true);
+		}
+
+		private static KeepAliveServer started(boolean switchProtocols) throws IOException {
+			KeepAliveServer server = new KeepAliveServer(
+				new ServerSocket(0, 16, InetAddress.getByName("127.0.0.1")), switchProtocols);
+			server._worker.start();
+			return server;
+		}
+
+		int port() {
+			return _listener.getLocalPort();
+		}
+
+		/** Every request line this fixture received, in order. */
+		List<String> requestLines() {
+			synchronized (_requestLines) {
+				return new ArrayList<>(_requestLines);
+			}
+		}
+
+		/** Waits for the fixture to have finished serving its connection. */
+		void awaitDone() {
+			try {
+				_worker.join(30_000);
+			} catch (InterruptedException ex) {
+				Thread.currentThread().interrupt();
+			}
+		}
+
+		/** Waits briefly for {@code expected} to arrive through an established tunnel. */
+		boolean awaitTunnelledBytes(String expected) {
+			for (int i = 0; i < 100; i++) {
+				synchronized (_tunnelled) {
+					if (_tunnelled.indexOf(expected) >= 0) {
+						return true;
+					}
+				}
+				sleep(50);
+			}
+			return false;
+		}
+
+		private void serve() {
+			try (Socket client = _listener.accept()) {
+				client.setSoTimeout(SECOND_REQUEST_WINDOW_MILLIS);
+				InputStream in = client.getInputStream();
+				OutputStream out = client.getOutputStream();
+				recordHead(in);
+				byte[] body = "ok".getBytes(StandardCharsets.UTF_8);
+				String head = _switchProtocols
+					? "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n"
+					// No Connection header at all: an ordinary HTTP/1.1 answer is reusable by default,
+					// which is the state this fixture exists to create.
+					: "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + body.length
+						+ "\r\n\r\n";
+				out.write(head.getBytes(StandardCharsets.ISO_8859_1));
+				if (!_switchProtocols) {
+					out.write(body);
+				}
+				out.flush();
+				// Stay open for a while: whatever arrives now is what the proxy forwarded onto a
+				// connection it had already used for another request.
+				if (_switchProtocols) {
+					readTunnelled(in);
+				} else {
+					recordHead(in);
+				}
+			} catch (IOException ex) {
+				// The window closed, or the peer hung up; whatever was recorded is the result.
+			}
+		}
+
+		private void recordHead(InputStream in) throws IOException {
+			String head = readHead(in);
+			if (!head.isBlank()) {
+				_requestLines.add(head.split("\n")[0].trim());
+			}
+		}
+
+		private void readTunnelled(InputStream in) throws IOException {
+			byte[] buffer = new byte[256];
+			int read;
+			while ((read = in.read(buffer)) != -1) {
+				synchronized (_tunnelled) {
+					_tunnelled.append(new String(buffer, 0, read, StandardCharsets.ISO_8859_1));
+				}
+			}
+		}
+
+		@Override
+		public void close() {
+			try {
+				_listener.close();
+			} catch (IOException ex) {
+				// Going away either way.
+			}
+		}
 	}
 
 	/** Sends one request head to the proxy and returns everything it answers, as text. */

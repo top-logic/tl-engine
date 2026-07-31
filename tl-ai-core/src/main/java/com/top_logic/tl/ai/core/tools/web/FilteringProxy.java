@@ -24,7 +24,10 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.top_logic.basic.Logger;
@@ -86,7 +89,10 @@ import com.top_logic.basic.Logger;
  * a proxy connection may otherwise be re-used for a <em>different</em> origin, and a blind pump would
  * then deliver the second request to the first request's server. A protocol upgrade
  * ({@code Upgrade:} / {@code Connection: upgrade}, i.e. plain WebSocket) is exempt from that and
- * forwarded as-is, since an upgraded connection belongs to one origin by definition.
+ * forwarded as-is - but only for as long as it really is one: the exemption holds once upstream has
+ * answered {@code 101 Switching Protocols}, since such a connection belongs to one origin for the rest
+ * of its life, and is withdrawn on any other answer, where the connection is ended instead of pumped.
+ * The number of connections served at once is bounded (see {@link #maxConnections(int)}).
  * </p>
  *
  * <p>
@@ -208,6 +214,15 @@ final class FilteringProxy implements AutoCloseable {
 	/** How many refused hosts are remembered for diagnostics and tests. */
 	private static final int REFUSAL_HISTORY = 64;
 
+	/**
+	 * Chromium's own limit on how many sockets it opens to one proxy server
+	 * ({@code kDefaultMaxSocketsPerProxyChain}), i.e. the most connections one browser process can have
+	 * in flight here at any moment.
+	 *
+	 * @see #maxConnections(int)
+	 */
+	private static final int MAX_SOCKETS_PER_PROXY = 32;
+
 	/** Hop-by-hop headers the proxy must not pass on. */
 	private static final List<String> HOP_BY_HOP =
 		List.of("proxy-connection", "connection", "keep-alive", "proxy-authorization", "te", "trailer");
@@ -218,7 +233,28 @@ final class FilteringProxy implements AutoCloseable {
 
 	private final AddressResolver _resolver;
 
+	/** @see #maxConnections(int) */
+	private final int _maxConnections;
+
+	/**
+	 * Runs one task per accepted client connection: reading its head, deciding it, and pumping the
+	 * upstream-to-client direction. Bounded (see {@link #maxConnections(int)}); a connection that finds
+	 * no thread is dropped rather than queued, because every task here is long-lived and queueing one
+	 * behind them would stall it for the life of a page.
+	 */
 	private final ExecutorService _connections;
+
+	/**
+	 * Runs the client-to-upstream direction of a relayed connection - one thread per <em>relayed</em>
+	 * connection, so bounded by the same number as {@link #_connections}.
+	 *
+	 * <p>
+	 * Separate from {@link #_connections} on purpose: taking the second direction's thread from the same
+	 * bounded pool that the connection tasks occupy would let a full pool starve the pumps of connections
+	 * that are already established, i.e. deadlock traffic that had already been admitted.
+	 * </p>
+	 */
+	private final ExecutorService _pumps;
 
 	/** Every socket currently open, so {@link #close()} can unblock threads pumping a live tunnel. */
 	private final Set<Closeable> _open = ConcurrentHashMap.newKeySet();
@@ -227,19 +263,41 @@ final class FilteringProxy implements AutoCloseable {
 
 	private final AtomicLong _forwardedCount = new AtomicLong();
 
+	private final AtomicLong _droppedCount = new AtomicLong();
+
 	private final Deque<String> _refusedHosts = new ArrayDeque<>();
 
 	private volatile boolean _closed;
 
-	private FilteringProxy(ServerSocket listener, RequestPolicy policy, AddressResolver resolver) {
+	private FilteringProxy(ServerSocket listener, RequestPolicy policy, AddressResolver resolver,
+			int maxConnections) {
 		_listener = listener;
 		_policy = policy;
 		_resolver = resolver;
-		_connections = Executors.newCachedThreadPool(runnable -> {
-			Thread thread = new Thread(runnable, "browser-filter-proxy");
-			thread.setDaemon(true);
-			return thread;
-		});
+		_maxConnections = maxConnections;
+		_connections = boundedPool("browser-filter-proxy", maxConnections);
+		_pumps = boundedPool("browser-filter-proxy-pump", maxConnections);
+	}
+
+	/**
+	 * A pool that grows on demand up to {@code maxThreads}, reaps idle threads, and <b>rejects</b>
+	 * rather than queues once it is full.
+	 *
+	 * <p>
+	 * Rejection is the point: the tasks here live as long as the connection they serve, so a queued one
+	 * would not start until some page finished. The caller answers a rejection by dropping the
+	 * connection, which the browser sees as a connection failure and reports as such - honest, and
+	 * bounded.
+	 * </p>
+	 */
+	private static ExecutorService boundedPool(String threadName, int maxThreads) {
+		ThreadPoolExecutor pool = new ThreadPoolExecutor(0, maxThreads, 60L, TimeUnit.SECONDS,
+			new SynchronousQueue<>(), runnable -> {
+				Thread thread = new Thread(runnable, threadName);
+				thread.setDaemon(true);
+				return thread;
+			});
+		return pool;
 	}
 
 	/**
@@ -250,7 +308,20 @@ final class FilteringProxy implements AutoCloseable {
 	 * @return The started proxy, listening on an ephemeral loopback port.
 	 */
 	static FilteringProxy start(RequestPolicy policy) {
-		return start(policy, ssrfResolver());
+		return start(policy, ssrfResolver(), 1);
+	}
+
+	/**
+	 * Starts a proxy sized for {@code maxSessions} concurrent browser sessions.
+	 *
+	 * @param policy
+	 *        The administrator-owned domain policy to apply to every connection.
+	 * @param maxSessions
+	 *        The service's session cap, from which the connection bound is derived.
+	 * @return The started proxy, listening on an ephemeral loopback port.
+	 */
+	static FilteringProxy start(RequestPolicy policy, int maxSessions) {
+		return start(policy, ssrfResolver(), maxSessions);
 	}
 
 	/**
@@ -264,6 +335,22 @@ final class FilteringProxy implements AutoCloseable {
 	 * @return The started proxy, listening on an ephemeral loopback port.
 	 */
 	static FilteringProxy start(RequestPolicy policy, AddressResolver resolver) {
+		return start(policy, resolver, 1);
+	}
+
+	/**
+	 * Starts a proxy with an explicit {@link AddressResolver}, sized for {@code maxSessions} sessions.
+	 *
+	 * @param policy
+	 *        The administrator-owned domain policy to apply to every connection.
+	 * @param resolver
+	 *        How destinations are resolved and SSRF-checked; production code passes
+	 *        {@link #ssrfResolver()}.
+	 * @param maxSessions
+	 *        The service's session cap, from which the connection bound is derived.
+	 * @return The started proxy, listening on an ephemeral loopback port.
+	 */
+	static FilteringProxy start(RequestPolicy policy, AddressResolver resolver, int maxSessions) {
 		ServerSocket listener;
 		try {
 			// Loopback-only and ephemeral: nothing outside this host can reach the proxy, and no
@@ -273,7 +360,7 @@ final class FilteringProxy implements AutoCloseable {
 			throw new RuntimeException("Could not start the browser filtering proxy on the loopback "
 				+ "interface; the browser tool cannot enforce its SSRF policy without it.", ex);
 		}
-		FilteringProxy proxy = new FilteringProxy(listener, policy, resolver);
+		FilteringProxy proxy = new FilteringProxy(listener, policy, resolver, maxConnections(maxSessions));
 		Thread acceptor = new Thread(proxy::acceptLoop, "browser-filter-proxy-accept");
 		acceptor.setDaemon(true);
 		acceptor.start();
@@ -313,6 +400,14 @@ final class FilteringProxy implements AutoCloseable {
 	/** How many connections this proxy has forwarded. */
 	long forwardedCount() {
 		return _forwardedCount.get();
+	}
+
+	/**
+	 * How many connections this proxy dropped because it was already serving {@link #maxConnections()}
+	 * of them. Non-zero means the bound bit; the browser sees such a connection fail.
+	 */
+	long droppedCount() {
+		return _droppedCount.get();
 	}
 
 	/** The most recently refused hosts (at most {@link #REFUSAL_HISTORY}), oldest first. */
@@ -375,6 +470,26 @@ final class FilteringProxy implements AutoCloseable {
 		return decide(policy, ssrfResolver(), host, port);
 	}
 
+	/**
+	 * How many client connections this proxy serves at once, for a given session cap.
+	 *
+	 * <p>
+	 * Chromium bounds itself to {@value #MAX_SOCKETS_PER_PROXY} sockets per proxy server, and each
+	 * session is its own browser process, so this is the ceiling the browsers can actually reach - a
+	 * page with many sub-resource hosts cannot push past it. What the bound is for is everything else on
+	 * the loopback interface: the proxy authenticates nobody, so without it any local process could make
+	 * it spawn threads without limit.
+	 * </p>
+	 */
+	static int maxConnections(int maxSessions) {
+		return Math.max(1, maxSessions) * MAX_SOCKETS_PER_PROXY;
+	}
+
+	/** How many client connections this proxy serves at once. Package-visible for tests. */
+	int maxConnections() {
+		return _maxConnections;
+	}
+
 	@Override
 	public void close() {
 		_closed = true;
@@ -386,6 +501,7 @@ final class FilteringProxy implements AutoCloseable {
 		}
 		_open.clear();
 		_connections.shutdownNow();
+		_pumps.shutdownNow();
 	}
 
 	private void acceptLoop() {
@@ -402,8 +518,15 @@ final class FilteringProxy implements AutoCloseable {
 			}
 			try {
 				_connections.execute(() -> handle(client));
+			} catch (RejectedExecutionException atCapacity) {
+				// Already serving the maximum number of connections (or shutting down): drop this one
+				// rather than queue a task that could not start until a page finished.
+				if (_droppedCount.getAndIncrement() == 0 && !_closed) {
+					Logger.warn("The browser filtering proxy is at its bound of " + _maxConnections
+						+ " concurrent connections and is dropping further ones.", FilteringProxy.class);
+				}
+				closeQuietly(client);
 			} catch (RuntimeException ex) {
-				// Shutting down, or out of threads: drop the connection rather than leak it.
 				closeQuietly(client);
 			}
 		}
@@ -512,7 +635,8 @@ final class FilteringProxy implements AutoCloseable {
 			return;
 		}
 		relay(client, in, out, upstream, null,
-			head(method, originForm(uri), version, headers).getBytes(StandardCharsets.ISO_8859_1));
+			head(method, originForm(uri), version, headers).getBytes(StandardCharsets.ISO_8859_1),
+			isUpgrade(headers));
 	}
 
 	/**
@@ -528,6 +652,14 @@ final class FilteringProxy implements AutoCloseable {
 	 * which real traffic barely uses, since https is tunnelled per origin anyway. An upgrade request
 	 * is exempt: its connection belongs to a single origin for its whole life, and stripping the
 	 * upgrade headers would break plain WebSocket outright.
+	 * </p>
+	 *
+	 * <p>
+	 * That exemption is only <em>provisional</em>, because an upgrade is a request, not a fact: a server
+	 * is free to answer it with an ordinary {@code 200}, and then the connection is a keep-alive
+	 * connection again with the {@code Connection: close} that would have made it safe left out. It is
+	 * therefore confirmed against the answer rather than the request - see
+	 * {@link #protocolWasSwitched(InputStream, OutputStream)}.
 	 * </p>
 	 */
 	private static String head(String method, String target, String version, List<String> headers) {
@@ -605,10 +737,27 @@ final class FilteringProxy implements AutoCloseable {
 	 */
 	private void relay(Socket client, InputStream in, OutputStream out, Socket upstream,
 			byte[] clientGreeting, byte[] upstreamHead) {
+		relay(client, in, out, upstream, clientGreeting, upstreamHead, false);
+	}
+
+	/**
+	 * @param upgradeRequest
+	 *        Whether the forwarded request asked for a protocol upgrade, in which case the answer
+	 *        decides whether this connection may become a blind tunnel at all.
+	 *
+	 * @see #relay(Socket, InputStream, OutputStream, Socket, byte[], byte[])
+	 */
+	private void relay(Socket client, InputStream in, OutputStream out, Socket upstream,
+			byte[] clientGreeting, byte[] upstreamHead, boolean upgradeRequest) {
+		InputStream fromUpstream;
 		try {
-			// A tunnel or a slow-trickling response must not be killed by the head-read timeout.
+			// A tunnel or a slow-trickling response must not be killed by the head-read timeout; the
+			// upgrade handshake read below is the one exception and sets its own bound.
 			client.setSoTimeout(0);
 			upstream.setSoTimeout(0);
+			// Buffered because the upgrade handshake parses line-wise: whatever it reads ahead has to
+			// stay in the stream the pump then continues from.
+			fromUpstream = new BufferedInputStream(upstream.getInputStream(), PUMP_BUFFER_BYTES);
 			if (upstreamHead != null) {
 				upstream.getOutputStream().write(upstreamHead);
 				upstream.getOutputStream().flush();
@@ -623,23 +772,121 @@ final class FilteringProxy implements AutoCloseable {
 			return;
 		}
 		_forwardedCount.incrementAndGet();
-		_connections.execute(() -> {
-			try {
-				copy(in, upstream.getOutputStream());
-				upstream.shutdownOutput();
-			} catch (IOException | RuntimeException ex) {
-				// The client hung up or the tunnel was closed; the other direction handles teardown.
-			}
-		});
+		if (upgradeRequest && !confirmProtocolSwitch(client, upstream, fromUpstream, out)) {
+			return;
+		}
 		try {
-			copy(upstream.getInputStream(), out);
+			_pumps.execute(() -> {
+				try {
+					copy(in, upstream.getOutputStream());
+					upstream.shutdownOutput();
+				} catch (IOException | RuntimeException ex) {
+					// The client hung up or the tunnel was closed; the other direction handles teardown.
+				}
+			});
+		} catch (RejectedExecutionException noThread) {
+			// No thread left for the client-to-upstream direction: end the connection rather than leave
+			// it half-pumped, which would hang the browser on a request that can never be delivered.
+			endRelay(client, upstream);
+			return;
+		}
+		try {
+			copy(fromUpstream, out);
 		} catch (IOException ex) {
 			// Upstream reset or the client went away mid-response.
 		} finally {
-			_open.remove(upstream);
-			closeQuietly(upstream);
-			closeQuietly(client);
+			endRelay(client, upstream);
 		}
+	}
+
+	/**
+	 * Handles the answer to a forwarded upgrade request: relays it, and reports whether the connection
+	 * may now be blind-pumped in both directions.
+	 *
+	 * <p>
+	 * When upstream did <b>not</b> switch protocols this finishes the exchange itself and tears the
+	 * connection down - the client-to-upstream pump is never started. That is the point: without the
+	 * {@code Connection: close} the upgrade request was exempted from, the client may send a second
+	 * request on this connection, and a blind pump would deliver it to <em>this</em> origin's server
+	 * however different the origin it was addressed to. The relayed response additionally carries
+	 * {@code Connection: close}, so the client knows not to try.
+	 * </p>
+	 *
+	 * @return {@code true} when the answer was {@code 101 Switching Protocols}, i.e. the connection now
+	 *         genuinely belongs to one origin for the rest of its life.
+	 */
+	private boolean confirmProtocolSwitch(Socket client, Socket upstream, InputStream fromUpstream,
+			OutputStream out) {
+		try {
+			// A handshake that never answers must not pin a thread for good.
+			upstream.setSoTimeout(HEADER_READ_TIMEOUT_MILLIS);
+			if (protocolWasSwitched(fromUpstream, out)) {
+				upstream.setSoTimeout(0);
+				return true;
+			}
+			// Drain the rest of the ordinary response the answer turned out to be, under the same
+			// bound: this connection ends here, so there is nothing to keep waiting for.
+			copy(fromUpstream, out);
+		} catch (IOException ex) {
+			// Upstream reset, or the client went away while reading its answer.
+		}
+		endRelay(client, upstream);
+		return false;
+	}
+
+	/**
+	 * Relays the response head of an upgrade request to the client and answers whether it switched
+	 * protocols.
+	 *
+	 * <p>
+	 * The head is passed on as it came, except that a non-switching answer has its {@code Connection}
+	 * header replaced by {@code Connection: close}: this proxy is ending the connection, and saying so is
+	 * what stops the client from sending another request into a pump that is about to be torn down.
+	 * </p>
+	 */
+	private static boolean protocolWasSwitched(InputStream fromUpstream, OutputStream out)
+			throws IOException {
+		String statusLine = readLine(fromUpstream);
+		if (statusLine == null || statusLine.isBlank()) {
+			return false;
+		}
+		List<String> headers = readHeaders(fromUpstream);
+		boolean switched = statusOf(statusLine) == 101;
+		StringBuilder head = new StringBuilder();
+		head.append(statusLine).append("\r\n");
+		for (String header : headers) {
+			if (!switched && "connection".equals(nameOf(header))) {
+				continue;
+			}
+			head.append(header).append("\r\n");
+		}
+		if (!switched) {
+			head.append("Connection: close\r\n");
+		}
+		head.append("\r\n");
+		out.write(head.toString().getBytes(StandardCharsets.ISO_8859_1));
+		out.flush();
+		return switched;
+	}
+
+	/** The status code of an HTTP response status line, or {@code -1} if it carries none. */
+	private static int statusOf(String statusLine) {
+		String[] parts = statusLine.split(" ");
+		if (parts.length < 2) {
+			return -1;
+		}
+		try {
+			return Integer.parseInt(parts[1].trim());
+		} catch (NumberFormatException ex) {
+			return -1;
+		}
+	}
+
+	/** Ends a relayed connection, closing both sockets and unregistering the upstream one. */
+	private void endRelay(Socket client, Socket upstream) {
+		_open.remove(upstream);
+		closeQuietly(upstream);
+		closeQuietly(client);
 	}
 
 	private static void copy(InputStream from, OutputStream to) throws IOException {

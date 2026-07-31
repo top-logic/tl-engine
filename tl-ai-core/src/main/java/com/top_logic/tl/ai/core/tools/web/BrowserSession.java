@@ -537,8 +537,9 @@ final class BrowserSession {
 	 * <p>
 	 * Recorded by the security route when it aborts a main-frame navigation, and by the request
 	 * listener for a redirect hop the route never sees (see {@link #installSecurityRoute} and
-	 * {@link #installRedirectGuard}). Reset at the start of every operation by
-	 * {@link #beginNavigationAttempt()} and consulted by {@link #verifyNavigationPolicy} and
+	 * {@link #installRedirectGuard}). Reset at the start of every navigating operation by
+	 * {@link #beginNavigationAttempt()} and consumed by {@link #takeOffPolicyNavigation()} on behalf of
+	 * {@link #verifyNavigationPolicy}, {@link #verifyCurrentDocumentPolicy} and
 	 * {@link #translateNavigationFailure}, so the tool can report the precise policy reason instead of
 	 * the raw {@code net::ERR_FAILED} / {@code TimeoutError} the aborted request produces.
 	 * </p>
@@ -879,9 +880,22 @@ final class BrowserSession {
 		}, navigationDeadlineMillis());
 	}
 
-	/** Captures the current page without navigating. */
+	/**
+	 * Captures the current page without navigating.
+	 *
+	 * <p>
+	 * The policy re-check runs <em>after</em> the capture although its result is then thrown away: a
+	 * top-level hop the page started on its own is recorded by a Playwright callback, and the capture's
+	 * round trips to the driver are what give that callback the chance to run. Checking first would
+	 * systematically miss the hop this verb is here to catch.
+	 * </p>
+	 */
 	PageView snapshot() {
-		return callOnThread(() -> capture(_page.url(), -1, null, false), navigationDeadlineMillis());
+		return callOnThread(() -> {
+			PageView view = capture(_page.url(), -1, null, false);
+			verifyCurrentDocumentPolicy();
+			return view;
+		}, navigationDeadlineMillis());
 	}
 
 	/**
@@ -934,7 +948,12 @@ final class BrowserSession {
 			} catch (PlaywrightException ex) {
 				throw translateActionFailure(ref, "typed into", ex);
 			}
-			return capture(_page.url(), -1, null, false);
+			// Filling a field can submit a form, so the same check the navigating verbs run applies
+			// here: an off-policy hop, or a refusal page the proxy served, must not come back as
+			// ordinary page content. After the capture, for the reason given on snapshot().
+			PageView view = capture(_page.url(), -1, null, false);
+			verifyCurrentDocumentPolicy();
+			return view;
 		}, navigationDeadlineMillis());
 	}
 
@@ -1027,6 +1046,66 @@ final class BrowserSession {
 	}
 
 	/**
+	 * Takes the off-policy hop recorded since the current observation window opened, clearing it so it
+	 * is reported exactly once.
+	 *
+	 * <p>
+	 * Clearing on read matters for the verbs that do <em>not</em> open a window of their own
+	 * ({@link #snapshot}, and {@link #type} after its fill): they have to honour a hop that was recorded
+	 * after the last navigation returned, which means they must also not re-report one that has already
+	 * been reported - a snapshot of a page the session is legitimately on would otherwise keep failing
+	 * with the previous operation's refusal.
+	 * </p>
+	 *
+	 * @return The recorded refusal message, or {@code null} when no off-policy hop was seen.
+	 */
+	private String takeOffPolicyNavigation() {
+		String recorded = _offPolicyNavigation;
+		_offPolicyNavigation = null;
+		return recorded;
+	}
+
+	/**
+	 * Fails the operation when the document the page is on <em>now</em> is one the policy forbids - the
+	 * check {@link #verifyNavigationPolicy} performs for a navigating verb, for the two verbs that do
+	 * not navigate themselves ({@link #snapshot}, {@link #type}).
+	 *
+	 * <p>
+	 * Both still need it: a page can take its own top-level frame somewhere off-policy at any moment
+	 * (a timer, a form submit), and the {@link FilteringProxy} answers a refused main-frame request with
+	 * a {@code 403} page that commits as the document. Without this check that recorded hop, or that
+	 * refusal page, is handed to the model as ordinary page content - exactly what
+	 * {@link #installProxyRefusalGuard} exists to prevent on the other verbs.
+	 * </p>
+	 *
+	 * <p>
+	 * A document with no http(s) origin is left alone: {@code about:blank} on a session that has not
+	 * navigated yet is the normal starting state, and a {@code data:}/{@code blob:} document was
+	 * produced by a page whose own origin was already judged. Neither carries content fetched from a
+	 * network origin, so there is nothing for the domain policy to decide about.
+	 * </p>
+	 */
+	private void verifyCurrentDocumentPolicy() {
+		String offPolicyHop = takeOffPolicyNavigation();
+		if (offPolicyHop != null) {
+			throw new BrowserPolicyException(offPolicyHop);
+		}
+		String url = _page.url();
+		URI uri;
+		try {
+			uri = URI.create(url);
+		} catch (RuntimeException ex) {
+			// Not a URL this process can judge; there is no origin to compare against a policy.
+			return;
+		}
+		String scheme = uri.getScheme();
+		if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+			return;
+		}
+		verifyNavigationPolicy(url);
+	}
+
+	/**
 	 * Fails the operation when the navigation it performed violated the security policy - either
 	 * because the document the browser ended up on is off-policy, or because some intermediate
 	 * top-level hop was.
@@ -1054,7 +1133,7 @@ final class BrowserSession {
 	 *        The URL of the document the navigation ended on.
 	 */
 	private void verifyNavigationPolicy(String finalUrl) {
-		String offPolicyHop = _offPolicyNavigation;
+		String offPolicyHop = takeOffPolicyNavigation();
 		if (offPolicyHop != null) {
 			throw new BrowserPolicyException(offPolicyHop);
 		}
@@ -1090,7 +1169,7 @@ final class BrowserSession {
 	 * @return The exception to throw instead; never {@code null}.
 	 */
 	private RuntimeException translateNavigationFailure(String url, PlaywrightException failure) {
-		String offPolicyHop = _offPolicyNavigation;
+		String offPolicyHop = takeOffPolicyNavigation();
 		if (offPolicyHop != null) {
 			return new BrowserPolicyException(offPolicyHop);
 		}
@@ -1114,7 +1193,7 @@ final class BrowserSession {
 	 * @return The exception to throw instead; never {@code null}.
 	 */
 	private RuntimeException translateActionFailure(String ref, String action, PlaywrightException failure) {
-		String offPolicyHop = _offPolicyNavigation;
+		String offPolicyHop = takeOffPolicyNavigation();
 		if (offPolicyHop != null) {
 			// The action itself worked but triggered a navigation the policy refused.
 			return new BrowserPolicyException(offPolicyHop);

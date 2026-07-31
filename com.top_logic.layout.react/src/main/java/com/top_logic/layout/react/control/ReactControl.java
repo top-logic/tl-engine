@@ -582,6 +582,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 		// onBeforeWrite hook) reaches the client as part of that output — no events for it.
 		_silentUpdates = true;
 		try {
+			attachOnRender();
 			onBeforeWrite();
 			_rendered = true;
 			// The full state is serialized below; nothing is pending on the client side anymore.
@@ -884,6 +885,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 		// onBeforeWrite hook) reaches the client as part of that output — no events for it.
 		_silentUpdates = true;
 		try {
+			attachOnRender();
 			onBeforeWrite();
 			_rendered = true;
 			// The full state is serialized below; nothing is pending on the client side anymore.
@@ -928,11 +930,43 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	/**
+	 * Attaches this control because it is about to be rendered.
+	 *
+	 * <p>
+	 * Rendering a control is the proof that it is displayed: a control reaches the client only by
+	 * being serialized, either into the page or into an SSE state update, and both go through
+	 * {@link #write(TagWriter)} / {@link #writeAsChild(de.haumacher.msgbuf.json.JsonWriter)}.
+	 * Attaching here therefore establishes "rendered implies attached" for every control, in every
+	 * view - including those whose root nobody attaches explicitly - and makes an
+	 * {@link #addAttachListener(Runnable) attach listener} the reliable place for setup a displayed
+	 * control needs (registering model listeners, attaching command models).
+	 * </p>
+	 *
+	 * <p>
+	 * The reverse does not follow: not rendering a control is not an event, so a control that leaves
+	 * the displayed tree is still detached explicitly by the container that drops it (see
+	 * {@link #propagateDetach()}). Attaching is implicit, detaching stays explicit.
+	 * </p>
+	 *
+	 * <p>
+	 * A control the client has already unmounted is not attached again; a trailing render of a
+	 * disposed control must not resurrect its listeners.
+	 * </p>
+	 */
+	private void attachOnRender() {
+		if (!_disposed) {
+			attach();
+		}
+	}
+
+	/**
 	 * Marks this control as attached (part of the displayed tree) and fires
 	 * {@link #addAttachListener(Runnable) attach listeners}.
 	 *
 	 * <p>
-	 * Idempotent: if already attached, this call is a no-op.
+	 * Idempotent: if already attached, this call is a no-op. Called automatically when the control is
+	 * rendered (see {@link #attachOnRender()}); an explicit call is needed only to attach a control
+	 * that becomes displayed without being rendered again.
 	 * </p>
 	 */
 	public final void attach() {

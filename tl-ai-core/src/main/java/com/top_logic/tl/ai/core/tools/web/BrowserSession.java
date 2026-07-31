@@ -1115,9 +1115,11 @@ final class BrowserSession {
 	 *
 	 * <p>
 	 * A document with no http(s) origin is left alone: {@code about:blank} on a session that has not
-	 * navigated yet is the normal starting state, and a {@code data:}/{@code blob:} document was
-	 * produced by a page whose own origin was already judged. Neither carries content fetched from a
-	 * network origin, so there is nothing for the domain policy to decide about.
+	 * navigated yet is the normal starting state, a {@code data:}/{@code blob:} document was produced by
+	 * a page whose own origin was already judged, and {@code chrome-error://chromewebdata/} is what
+	 * Chromium commits after an aborted navigation - which is where a session ends up once a hop has been
+	 * refused. None of them carries content fetched from a network origin, so there is nothing for the
+	 * domain policy to decide about; the recorded hop above is what fails such an operation.
 	 * </p>
 	 */
 	private void verifyCurrentDocumentPolicy() {

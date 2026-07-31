@@ -291,17 +291,17 @@ final class FilteringProxy implements AutoCloseable {
 	 * </p>
 	 */
 	private static ExecutorService boundedPool(String threadName, int maxThreads) {
-		ThreadPoolExecutor pool = new ThreadPoolExecutor(0, maxThreads, 60L, TimeUnit.SECONDS,
-			new SynchronousQueue<>(), runnable -> {
+		return new ThreadPoolExecutor(0, maxThreads, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
+			runnable -> {
 				Thread thread = new Thread(runnable, threadName);
 				thread.setDaemon(true);
 				return thread;
 			});
-		return pool;
 	}
 
 	/**
-	 * Starts a proxy enforcing SSRF (via {@link UrlSafety}) plus the given domain policy.
+	 * Starts a proxy enforcing SSRF (via {@link UrlSafety}) plus the given domain policy, sized for a
+	 * single browser session; the service passes its own session cap.
 	 *
 	 * @param policy
 	 *        The administrator-owned domain policy to apply to every connection.
@@ -325,7 +325,7 @@ final class FilteringProxy implements AutoCloseable {
 	}
 
 	/**
-	 * Starts a proxy with an explicit {@link AddressResolver}.
+	 * Starts a proxy with an explicit {@link AddressResolver}, sized for a single browser session.
 	 *
 	 * @param policy
 	 *        The administrator-owned domain policy to apply to every connection.

@@ -7,8 +7,6 @@ package com.top_logic.tl.ai.core.tools.web;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
@@ -575,19 +573,26 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	private volatile FilteringProxy _proxy;
 
 	/**
-	 * The {@code storageState} JSON to seed into the next (re)created session for a key, set by
-	 * {@link #seedSession(Object, String)} when a cookie pool is selected.
+	 * The <b>decrypted</b> {@code storageState} to seed into the next session created for a key, set
+	 * by {@link #seedSession(Object, String)} when a cookie pool is selected.
 	 *
 	 * <p>
 	 * This is transient plumbing, not the durable store: the persistent, encrypted truth lives in the
-	 * {@code CookiePool} entities managed by {@code CookiePoolService}. The decrypted JSON is held
-	 * here only to convey a chosen pool into the pool's lazily-created {@link BrowserSession} (whose
-	 * factory sees only the session key), and kept for the session key's lifetime so the seed
-	 * survives an idle/LRU eviction-and-recreate within the conversation. Cleared on shutdown; never
-	 * persisted.
+	 * {@code CookiePool} entities managed by {@code CookiePoolService}. The plaintext is held here
+	 * only to convey a chosen pool into the pool's lazily-created {@link BrowserSession} (whose
+	 * factory sees only the session key), and it is dropped as soon as a context has been seeded from
+	 * it - with a TTL and a size cap as a backstop for an entry nobody consumes. See
+	 * {@link CookieSeedStore} for why the lifetime is bounded so aggressively.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Behavioural consequence.</b> The seed no longer survives an idle/LRU
+	 * eviction-and-recreate: a conversation whose session is evicted comes back anonymous and has to
+	 * select its pool again. That is the price of not holding a logged-in site's live session cookies
+	 * in memory for the whole conversation.
 	 * </p>
 	 */
-	private final Map<Object, String> _seedByKey = new ConcurrentHashMap<>();
+	private final CookieSeedStore _seedByKey = new CookieSeedStore();
 
 	/**
 	 * Creates a {@link BrowserToolsService} from configuration.
@@ -631,9 +636,15 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 			getSessionIdleTimeoutSeconds() * 1000L,
 			getAcquireTimeoutSeconds() * 1000L,
 			System::nanoTime,
-			key -> BrowserSession.open(key, navigationTimeoutMillis, actionTimeoutMillis,
-				navigationSettleMillis, this, _seedByKey.get(key), headed, evadeBotDetection, proxyServer,
-				sandboxDisabled),
+			key -> {
+				BrowserSession session = BrowserSession.open(key, navigationTimeoutMillis,
+					actionTimeoutMillis, navigationSettleMillis, this, _seedByKey.lookup(key), headed,
+					evadeBotDetection, proxyServer, sandboxDisabled);
+				// The context now holds the cookies, so the decrypted copy has served its purpose.
+				// Dropped only after a SUCCESSFUL launch: a failed one must stay retryable.
+				_seedByKey.discard(key);
+				return session;
+			},
 			BrowserSession::close);
 		// State the EFFECTIVE limits, not the configured ones: they are clamped, and an operator
 		// investigating "the cap is not being honoured" needs to be able to rule out a configuration
@@ -1145,9 +1156,9 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	 * with a fresh context carrying the pool's cookies/login.
 	 *
 	 * <p>
-	 * The seed is kept for the session key's lifetime (see {@link #_seedByKey}), so an idle/LRU
-	 * eviction-and-recreate within the conversation stays seeded. Used by the
-	 * {@code browserUseCookies} verb; the next {@code browserNavigate} opens the seeded context.
+	 * The decrypted state is held only until the next session for the key has been created from it
+	 * (see {@link #_seedByKey} and {@link CookieSeedStore}). Used by the {@code browserUseCookies}
+	 * verb; the next {@code browserNavigate} opens the seeded context.
 	 * </p>
 	 *
 	 * @param sessionKey
@@ -1159,13 +1170,22 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		if (storageStateJson == null || storageStateJson.isBlank()) {
 			throw new IllegalArgumentException("storageStateJson must not be blank");
 		}
-		_seedByKey.put(sessionKey, storageStateJson);
+		_seedByKey.install(sessionKey, storageStateJson);
 		BrowserSessionPool<BrowserSession> pool = _pool;
 		if (pool != null) {
 			// Discard any live (unseeded, or differently-seeded) session so the next call recreates
 			// the context from the just-installed seed.
 			pool.invalidate(sessionKey);
 		}
+	}
+
+	/**
+	 * The decrypted {@code storageState} currently parked for {@code sessionKey}, or {@code null}
+	 * when none is - which is what must be true again once a session has been seeded from it.
+	 * Package-visible for testing.
+	 */
+	String seedForTest(Object sessionKey) {
+		return _seedByKey.lookup(sessionKey);
 	}
 
 	/**

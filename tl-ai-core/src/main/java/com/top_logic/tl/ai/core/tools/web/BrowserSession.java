@@ -601,8 +601,7 @@ final class BrowserSession {
 	 * @param initialStorageState
 	 *        A {@code storageState} JSON to seed cookies/tokens into the fresh context, or
 	 *        {@code null} for a clean anonymous context. This is how a chosen cookie pool starts a
-	 *        session already logged in, and how authenticated continuation survives an
-	 *        eviction-and-recreate of the session.
+	 *        session already logged in.
 	 * @param headed
 	 *        When {@code true}, launch Chromium headed (a visible window on the app host's desktop)
 	 *        instead of headless (see {@code BrowserToolsService.Config#getHeadless()}); it requires

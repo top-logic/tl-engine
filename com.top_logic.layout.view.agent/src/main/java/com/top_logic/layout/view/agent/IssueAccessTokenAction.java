@@ -12,10 +12,10 @@ import java.util.UUID;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -39,7 +39,8 @@ import com.top_logic.util.error.TopLogicException;
  * the session it is issued from, which is registered with {@link AgentAccess} here.
  * </p>
  */
-public class IssueAccessTokenAction implements ViewAction {
+public class IssueAccessTokenAction extends AbstractConfiguredInstance<IssueAccessTokenAction.Config>
+		implements ViewAction {
 
 	/**
 	 * Path of the agent endpoint below the application, named in the invitation so that an agent
@@ -52,10 +53,7 @@ public class IssueAccessTokenAction implements ViewAction {
 	 */
 	@TagName("issue-access-token")
 	public interface Config extends PolymorphicConfiguration<IssueAccessTokenAction> {
-
-		@Override
-		@ClassDefault(IssueAccessTokenAction.class)
-		Class<? extends IssueAccessTokenAction> getImplementationClass();
+		// No configuration options.
 	}
 
 	/**
@@ -63,7 +61,7 @@ public class IssueAccessTokenAction implements ViewAction {
 	 */
 	@CalledByReflection
 	public IssueAccessTokenAction(InstantiationContext context, Config config) {
-		// No configuration needed.
+		super(context, config);
 	}
 
 	@Override

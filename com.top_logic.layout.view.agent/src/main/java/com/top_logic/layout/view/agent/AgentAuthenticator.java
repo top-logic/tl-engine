@@ -21,7 +21,7 @@ public interface AgentAuthenticator {
 	/**
 	 * Configuration of an {@link AgentAuthenticator}.
 	 */
-	interface Config extends PolymorphicConfiguration<AgentAuthenticator> {
+	interface Config<I extends AgentAuthenticator> extends PolymorphicConfiguration<I> {
 		// Marker interface.
 	}
 

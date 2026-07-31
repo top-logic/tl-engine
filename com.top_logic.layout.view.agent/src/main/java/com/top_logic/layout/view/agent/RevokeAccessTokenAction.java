@@ -6,10 +6,10 @@
 package com.top_logic.layout.view.agent;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
@@ -27,17 +27,15 @@ import com.top_logic.util.error.TopLogicException;
  * operation and needs the permission the administrative view is guarded with.
  * </p>
  */
-public class RevokeAccessTokenAction implements ViewAction {
+public class RevokeAccessTokenAction extends AbstractConfiguredInstance<RevokeAccessTokenAction.Config>
+		implements ViewAction {
 
 	/**
 	 * Configuration for {@link RevokeAccessTokenAction}.
 	 */
 	@TagName("revoke-access-token")
 	public interface Config extends PolymorphicConfiguration<RevokeAccessTokenAction> {
-
-		@Override
-		@ClassDefault(RevokeAccessTokenAction.class)
-		Class<? extends RevokeAccessTokenAction> getImplementationClass();
+		// No configuration options.
 	}
 
 	/**
@@ -45,7 +43,7 @@ public class RevokeAccessTokenAction implements ViewAction {
 	 */
 	@CalledByReflection
 	public RevokeAccessTokenAction(InstantiationContext context, Config config) {
-		// No configuration needed.
+		super(context, config);
 	}
 
 	@Override

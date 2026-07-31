@@ -7,9 +7,9 @@ package com.top_logic.layout.view.agent;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
@@ -23,17 +23,15 @@ import com.top_logic.util.TLContext;
  * nobody. Every admission is recorded on the token, so its owner sees that an agent is using it.
  * </p>
  */
-public class AccessTokenAuthenticator implements AgentAuthenticator {
+public class AccessTokenAuthenticator extends AbstractConfiguredInstance<AccessTokenAuthenticator.Config>
+		implements AgentAuthenticator {
 
 	/**
 	 * Configuration of {@link AccessTokenAuthenticator}.
 	 */
 	@TagName("access-token")
-	public interface Config extends AgentAuthenticator.Config {
-
-		@Override
-		@ClassDefault(AccessTokenAuthenticator.class)
-		Class<? extends AgentAuthenticator> getImplementationClass();
+	public interface Config extends AgentAuthenticator.Config<AccessTokenAuthenticator> {
+		// No configuration options.
 	}
 
 	/**
@@ -41,7 +39,7 @@ public class AccessTokenAuthenticator implements AgentAuthenticator {
 	 */
 	@CalledByReflection
 	public AccessTokenAuthenticator(InstantiationContext context, Config config) {
-		// No configuration needed.
+		super(context, config);
 	}
 
 	@Override

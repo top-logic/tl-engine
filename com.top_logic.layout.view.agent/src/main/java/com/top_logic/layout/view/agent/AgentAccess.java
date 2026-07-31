@@ -65,7 +65,7 @@ public class AgentAccess extends ConfiguredManagedClass<AgentAccess.Config> {
 		 * The authenticators recognizing the credentials of non-browser callers, asked in order.
 		 */
 		@Name("authenticators")
-		List<AgentAuthenticator.Config> getAuthenticators();
+		List<AgentAuthenticator.Config<?>> getAuthenticators();
 
 	}
 

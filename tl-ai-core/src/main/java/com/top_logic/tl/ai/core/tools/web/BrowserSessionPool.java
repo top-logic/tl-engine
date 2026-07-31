@@ -45,7 +45,7 @@ import com.top_logic.basic.Logger;
  * {@code idleTimeout}, and an admission that finds the pool full evicts the least-recently-used
  * <em>idle</em> session to make room. A session executing a call is never evicted.</li>
  * <li><b>Clean teardown.</b> {@link #close()} stops the sweeper and destroys every remaining
- * resource.</li>
+ * resource - a session executing a call included, but only once that call has handed it back.</li>
  * </ul>
  *
  * <p>
@@ -103,6 +103,18 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 		}
 	}
 
+	/**
+	 * How long {@link #close()} waits for the sessions still executing a call to be handed back before
+	 * destroying them anyway.
+	 *
+	 * <p>
+	 * Short on purpose: this sits on the application's shutdown path, and a call that has not returned by
+	 * now is one that hangs (an ordinary browser operation is bounded by a much tighter per-operation
+	 * deadline of its own).
+	 * </p>
+	 */
+	private static final long DRAIN_TIMEOUT_MILLIS = 5_000;
+
 	private final int _maxSessions;
 
 	private final long _idleTimeoutNanos;
@@ -122,6 +134,12 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 	 * released (a resource finished being destroyed) or a session became idle and so evictable.
 	 */
 	private final Condition _slotFreed = _lock.newCondition();
+
+	/**
+	 * Signalled when a session that was executing a call during {@link #close()} has been handed back,
+	 * so the shutdown can stop waiting for it.
+	 */
+	private final Condition _sessionsDrained = _lock.newCondition();
 
 	private final Map<Object, Entry<S>> _entries = new HashMap<>();
 
@@ -375,6 +393,8 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 			entry._lastAccessNanos = _clock.getAsLong();
 			if ((discard || entry._broken || _closed) && entry._inUse <= 0 && !entry._removed) {
 				removeLocked(entry);
+				// A shutdown may be waiting for exactly this session to come back.
+				_sessionsDrained.signalAll();
 			} else if (entry._inUse <= 0) {
 				// The session just became idle, so it is now evictable: wake anyone waiting for a
 				// slot instead of letting them sit out their whole acquire timeout.
@@ -488,19 +508,35 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 		}
 	}
 
+	/**
+	 * Closes the pool: stops the sweeper and destroys every remaining resource.
+	 *
+	 * <p>
+	 * A session that is <em>executing a call</em> is not torn down under it - the same guarantee that
+	 * holds against eviction and the idle sweep holds against shutdown. Such an entry is left registered
+	 * so its {@link #release} destroys it (the {@code _closed} branch) the moment the call returns, and
+	 * this method waits {@link #DRAIN_TIMEOUT_MILLIS} for that. Destroying it here instead would both
+	 * pull the browser context out from under a running tool call and hand the <em>same</em> resource to
+	 * the destroyer twice, because the returning call would still find its entry unmarked.
+	 * </p>
+	 *
+	 * <p>
+	 * A call that outlasts the drain budget is a wedged one (every browser operation runs under its own
+	 * bounded deadline, so this is not the ordinary case). Its resource is then destroyed here anyway,
+	 * marked removed first so the late release cannot destroy it a second time: leaving a browser process
+	 * alive past service teardown is worse than interrupting a call that is already hanging.
+	 * </p>
+	 */
 	@Override
 	public void close() {
-		List<Entry<S>> remaining;
+		List<Entry<S>> doomed;
 		_lock.lock();
 		try {
 			if (_closed) {
 				return;
 			}
 			_closed = true;
-			remaining = new ArrayList<>(_entries.values());
-			_entries.clear();
-			_activeCount = 0;
-			_pendingTeardownCount = 0;
+			doomed = takeIdleLocked();
 			_slotFreed.signalAll();
 		} finally {
 			_lock.unlock();
@@ -508,14 +544,82 @@ final class BrowserSessionPool<S> implements AutoCloseable {
 		// Destroy synchronously on shutdown so nothing leaks past service teardown. In-flight
 		// teardowns run to completion on their own threads; their slot accounting is moot now that
 		// the pool is closed and admits nothing.
-		for (Entry<S> entry : remaining) {
+		destroyAll(doomed);
+		destroyAll(awaitInUseDrain());
+		_maintenance.shutdownNow();
+		// Not shutdownNow(): a teardown handed over by a call that finished during the drain above is
+		// already queued here and has to run.
+		_teardown.shutdown();
+	}
+
+	/**
+	 * Unregisters and returns every entry that is not currently executing a call. Caller holds the lock.
+	 *
+	 * <p>
+	 * The entries are marked removed, which is what keeps a later {@link #release} from destroying one of
+	 * them a second time. Their slots are not accounted for any further: the pool is closed and admits
+	 * nothing, so nobody is waiting for one.
+	 * </p>
+	 */
+	private List<Entry<S>> takeIdleLocked() {
+		List<Entry<S>> taken = new ArrayList<>();
+		for (Entry<S> entry : new ArrayList<>(_entries.values())) {
+			if (entry._inUse <= 0) {
+				entry._removed = true;
+				_entries.remove(entry._key);
+				taken.add(entry);
+			}
+		}
+		return taken;
+	}
+
+	/**
+	 * Waits up to {@link #DRAIN_TIMEOUT_MILLIS} for the sessions still executing a call to be handed
+	 * back and destroyed by their own {@link #release}.
+	 *
+	 * @return The entries that were still in use when the budget ran out, unregistered and marked
+	 *         removed so their caller cannot destroy them again; empty in the normal case.
+	 */
+	private List<Entry<S>> awaitInUseDrain() {
+		_lock.lock();
+		try {
+			// Wall clock rather than the injected one: this is a shutdown budget, not the idle policy a
+			// test drives with a fake clock (and a fake clock that never advances would never expire).
+			long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(DRAIN_TIMEOUT_MILLIS);
+			while (!_entries.isEmpty()) {
+				long remaining = deadline - System.nanoTime();
+				if (remaining <= 0) {
+					break;
+				}
+				try {
+					_sessionsDrained.awaitNanos(remaining);
+				} catch (InterruptedException ex) {
+					Thread.currentThread().interrupt();
+					break;
+				}
+			}
+			List<Entry<S>> stuck = new ArrayList<>(_entries.values());
+			for (Entry<S> entry : stuck) {
+				entry._removed = true;
+			}
+			_entries.clear();
+			if (!stuck.isEmpty()) {
+				Logger.warn("Destroying " + stuck.size() + " browser session(s) whose call did not return "
+					+ "within " + DRAIN_TIMEOUT_MILLIS + " ms of shutdown.", BrowserSessionPool.class);
+			}
+			return stuck;
+		} finally {
+			_lock.unlock();
+		}
+	}
+
+	private void destroyAll(List<Entry<S>> entries) {
+		for (Entry<S> entry : entries) {
 			try {
 				_destroyer.destroy(entry._session);
 			} catch (RuntimeException ex) {
 				Logger.warn("Failed to destroy a browser session during shutdown.", ex, BrowserSessionPool.class);
 			}
 		}
-		_maintenance.shutdownNow();
-		_teardown.shutdown();
 	}
 }

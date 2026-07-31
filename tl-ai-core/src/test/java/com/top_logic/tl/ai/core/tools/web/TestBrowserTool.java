@@ -15,6 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,6 +24,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.BlockSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.CaptchaSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
@@ -280,7 +282,7 @@ public class TestBrowserTool extends TestCase {
 	public void testEnvelopeNeutralisationCoversTagSpellingVariants() {
 		for (String spelling : List.of("</untrusted_page_content>", "</ untrusted_page_content >",
 			"< / untrusted_page_content >", "</UNTRUSTED_PAGE_CONTENT>", "</Untrusted_Page_Content\t>")) {
-			String neutralised = BrowserTool.neutralizeEnvelopeTags("before " + spelling + " after");
+			String neutralised = UntrustedEnvelope.neutralizeEnvelopeTags("before " + spelling + " after");
 
 			assertFalse("this spelling must not survive as a tag: " + spelling,
 				neutralised.contains("<"));
@@ -293,7 +295,7 @@ public class TestBrowserTool extends TestCase {
 	public void testEnvelopeNeutralisationLeavesOrdinaryMarkupAlone() {
 		String body = "# Title\n\n<div class=\"x\">text</div> a < b and 1 > 0\n";
 
-		assertEquals(body, BrowserTool.neutralizeEnvelopeTags(body));
+		assertEquals(body, UntrustedEnvelope.neutralizeEnvelopeTags(body));
 	}
 
 	/**
@@ -907,6 +909,75 @@ public class TestBrowserTool extends TestCase {
 		}
 	}
 
+	/**
+	 * <b>Shutdown does not tear a session out from under a running call</b> - the guarantee the pool
+	 * documents against eviction and the idle sweep holds against {@code close()} too - and it destroys
+	 * each resource exactly once.
+	 *
+	 * <p>
+	 * {@code close()} used to destroy every registered entry, in use or not, without marking it removed.
+	 * That both closed the browser context of a call that was still executing (a shutdown concurrent
+	 * with a tool call), and left the returning call's {@code release} to find its entry unmarked and
+	 * destroy the <em>same</em> resource a second time.
+	 * </p>
+	 */
+	public void testPoolCloseWaitsForAnInFlightCallInsteadOfDestroyingUnderIt() throws Exception {
+		List<Object> destroyed = new CopyOnWriteArrayList<>();
+		BrowserSessionPool<Object> pool = new BrowserSessionPool<>(2, 60_000, 1_000,
+			System::nanoTime, key -> new Object(), destroyed::add);
+		CountDownLatch inCall = new CountDownLatch(1);
+		CountDownLatch closeStarted = new CountDownLatch(1);
+		CountDownLatch finishCall = new CountDownLatch(1);
+		List<Object> destroyedDuringTheCall = new CopyOnWriteArrayList<>();
+		AtomicReference<Object> inUseSession = new AtomicReference<>();
+
+		Thread holder = new Thread(() -> pool.run("A", session -> {
+			inUseSession.set(session);
+			inCall.countDown();
+			await(closeStarted);
+			// Give close() every chance to have destroyed this session already.
+			sleep(300);
+			destroyedDuringTheCall.addAll(destroyed);
+			await(finishCall);
+			return null;
+		}));
+		holder.setDaemon(true);
+		holder.start();
+		assertTrue("the holder is inside its call", inCall.await(5, TimeUnit.SECONDS));
+
+		Thread closer = new Thread(pool::close);
+		closer.setDaemon(true);
+		closer.start();
+		closeStarted.countDown();
+
+		finishCall.countDown();
+		holder.join(10_000);
+		closer.join(10_000);
+
+		assertTrue("the session executing a call was not destroyed while it was executing it: "
+			+ destroyedDuringTheCall, destroyedDuringTheCall.isEmpty());
+		assertTrue("but it is destroyed once the call handed it back",
+			awaitContains(destroyed, inUseSession.get()));
+		assertEquals("destroyed exactly once, not once by close() and once by the returning call",
+			1, destroyed.size());
+		assertFalse("the closer thread returned rather than waiting out the whole drain budget",
+			closer.isAlive());
+	}
+
+	/** An idle session is still destroyed by {@code close()} straight away, and only once. */
+	public void testPoolCloseDestroysIdleSessionsOnce() {
+		List<Object> destroyed = new CopyOnWriteArrayList<>();
+		BrowserSessionPool<Object> pool = new BrowserSessionPool<>(2, 60_000, 1_000,
+			System::nanoTime, key -> new Object(), destroyed::add);
+		Object session = pool.run("A", each -> each);
+
+		pool.close();
+
+		assertEquals("the idle session was destroyed", List.of(session), destroyed);
+		pool.close();
+		assertEquals("a second close() is a no-op", 1, destroyed.size());
+	}
+
 	public void testPoolIdleSweepClosesExpiredSessions() {
 		AtomicLong now = new AtomicLong(0);
 		List<Object> destroyed = new CopyOnWriteArrayList<>();
@@ -938,6 +1009,14 @@ public class TestBrowserTool extends TestCase {
 			}
 		}
 		return destroyed.contains(item);
+	}
+
+	private static void sleep(long millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	private static void await(CountDownLatch latch) {

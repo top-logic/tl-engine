@@ -377,6 +377,21 @@ final class BrowserSession {
 	private static final String FULL_CHROMIUM_CHANNEL = "chromium";
 
 	/**
+	 * Environment variable of the Playwright driver that suppresses the forced
+	 * {@code --proxy-bypass-list=<-loopback>} of a proxied launch.
+	 *
+	 * <p>
+	 * Read here only to decide whether the {@link FilteringProxy} really sees every request (see
+	 * {@link #_proxyIsAuthoritative}); it is never set by this code. With it set, Chromium keeps its
+	 * implicit "localhost and link-local are never proxied" rules, so a loopback or metadata-endpoint
+	 * request would bypass the proxy - the one case in which the in-browser route has to keep deciding
+	 * sub-resources for itself.
+	 * </p>
+	 */
+	private static final String FORCED_PROXIED_LOOPBACK_OFF_ENV =
+		"PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK";
+
+	/**
 	 * The bounded element-action timeout used by the test-facing {@code open} overloads that do not
 	 * name one; the service passes its configured value
 	 * ({@code BrowserToolsService.Config#getActionTimeoutSeconds()}) explicitly.
@@ -475,6 +490,24 @@ final class BrowserSession {
 	private final String _proxyServer;
 
 	/**
+	 * Whether the {@link FilteringProxy} is the authoritative SSRF layer for <em>every</em> request this
+	 * session's browser makes, so {@link #installSecurityRoute the security route} does not have to
+	 * re-decide a sub-resource.
+	 *
+	 * <p>
+	 * True when a proxy is pinned <em>and</em> Chromium's built-in "never proxy loopback" rule is
+	 * switched off. Both halves are needed: without a proxy (a fixture session with no network) the route
+	 * is the only layer there is, and with the implicit bypass in place a request to
+	 * {@code 127.0.0.1} or {@code 169.254.169.254} - the two destinations that matter most - would go
+	 * out directly and the proxy would never see it. Playwright passes
+	 * {@code --proxy-bypass-list=<-loopback>} with every proxied launch, which subtracts exactly those
+	 * implicit rules, unless the {@link #FORCED_PROXIED_LOOPBACK_OFF_ENV} escape hatch of its driver is
+	 * set in this process' environment.
+	 * </p>
+	 */
+	private final boolean _proxyIsAuthoritative;
+
+	/**
 	 * Whether this session's Chromium is launched without its OS-level sandbox.
 	 *
 	 * @see BrowserToolsService.Config#getBrowserSandbox()
@@ -564,6 +597,8 @@ final class BrowserSession {
 		_headed = headed;
 		_evadeBotDetection = evadeBotDetection;
 		_proxyServer = proxyServer;
+		_proxyIsAuthoritative = proxyServer != null && !proxyServer.isBlank()
+			&& System.getenv(FORCED_PROXIED_LOOPBACK_OFF_ENV) == null;
 		_sandboxDisabled = sandboxDisabled;
 		_executor = Executors.newSingleThreadExecutor(runnable -> {
 			Thread thread = new Thread(runnable, "browser-session");
@@ -1396,6 +1431,19 @@ final class BrowserSession {
 	 * timeout. {@link #translateNavigationFailure} turns the recorded reason back into the policy
 	 * message the abort actually stood for.
 	 * </p>
+	 *
+	 * <p>
+	 * <b>Sub-resources are left to the proxy where the proxy is authoritative</b> (see
+	 * {@link #_proxyIsAuthoritative}). {@link UrlSafety#validateUrl} resolves the host, so running it
+	 * here costs a <em>blocking DNS lookup on the session's single confined thread</em> for every asset
+	 * host of a page - name resolution serialised behind the page load, for a decision the proxy makes
+	 * anyway on its own threads, from the same normaliser and the same {@link UrlSafety} rules, before a
+	 * packet leaves the machine. Nothing is given up by not repeating it: a sub-resource has no
+	 * top-level origin to record and no policy message to carry (a refused one is a missing asset, just
+	 * as an aborted one always was), the allowlist never governed sub-resources here in the first place,
+	 * and the proxy sees requests a context route cannot even observe (worker fetches). The main-frame
+	 * navigation keeps its full in-browser check: that one is what mints the tool's policy message.
+	 * </p>
 	 */
 	private void installSecurityRoute(BrowserContext context) {
 		context.route("**/*", route -> {
@@ -1415,6 +1463,13 @@ final class BrowserSession {
 			}
 			boolean mainFrameNavigation =
 				request.isNavigationRequest() && request.frame().parentFrame() == null;
+			if (!mainFrameNavigation && _proxyIsAuthoritative) {
+				// Sub-resource: the proxy has already decided this one, and asking here as well means a
+				// blocking DNS lookup on the session's single confined thread for every asset host -
+				// serialising name resolution behind the page load for a verdict that changes nothing.
+				route.resume();
+				return;
+			}
 			String ssrf = UrlSafety.validateUrl(uri);
 			if (ssrf != null) {
 				// SSRF: block private/loopback/etc. for ALL requests (main doc and sub-resources).

@@ -70,9 +70,13 @@
 			          sub-domain of a blocklist entry is refused in every mode.
 			       3. Then, unless allow-any-domains is true, the origin must be on
 			          allowed-domains (host or sub-domain match).
-			     Safe-by-default: allow-any-domains is off and, with an empty allowlist,
-			     every navigation is refused. The spike default allowlists the JS-heavy
-			     validation target used by the tests.
+			     Safe-by-default, and that is what ships: allow-any-domains is off and the
+			     allowlist is EMPTY, so a fresh installation browses nothing at all until an
+			     administrator names the domains the agents may reach. Shipping a default
+			     browsing target would mean every installation silently permits an origin
+			     nobody asked for, so the product default is fail-closed. The demo
+			     application allowlists its validation target (quotes.toscrape.com) in
+			     tl-ai-demo.conf.config.xml instead.
 
 			     WHERE this is enforced: the service runs one filtering forward proxy on an
 			     ephemeral loopback port and pins every browser session to it (via Chromium's
@@ -146,7 +150,7 @@
 				navigation-settle-millis="1500"
 				max-page-bytes="5000000"
 				max-page-chars="50000"
-				allowed-domains="quotes.toscrape.com"
+				allowed-domains=""
 				blocked-domains=""
 				allow-any-domains="false"
 				apply-allowlist-to-all-requests="false"

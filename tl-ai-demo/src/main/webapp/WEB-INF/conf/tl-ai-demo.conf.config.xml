@@ -45,6 +45,22 @@
 				key="7b1f9c2e4a6d8b0f3e5c7a9d1b2f4e60"
 			/>
 		</config>
+
+		<!--
+			Browsing target of the DEMO application. The product default in
+			tl-ai-core.conf.config.xml is an EMPTY allowlist (fail-closed: a fresh installation
+			browses nothing until an administrator configures domains), so the JS-heavy site the
+			browser tool is validated against is allowlisted here, where it belongs - in the demo
+			rather than in every installation.
+
+			Deliberately an override with no class attribute: it can only resolve against the
+			BrowserToolsService instance declared in tl-ai-core.conf.config.xml, so it also proves
+			that file is on this application's configuration load path (see
+			TestBrowserToolsServiceDemoConfig).
+		-->
+		<config service-class="com.top_logic.tl.ai.core.tools.web.BrowserToolsService">
+			<instance allowed-domains="quotes.toscrape.com" />
+		</config>
 	</services>
 
 	<configs>

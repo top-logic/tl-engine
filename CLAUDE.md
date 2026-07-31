@@ -302,7 +302,7 @@ This project uses **Trac** for issue tracking. Tickets are referenced using the 
 
 ### MCP Server Integration
 
-A Trac MCP server (installed once per machine from the `tl-dev-mcp` package and registered in Claude Code at user scope) lets Claude Code interact with tickets at `http://tl/trac/`. See `mcp-servers/README.md` for the one-step setup.
+A Trac MCP server (provided by the `tl-dev` Claude Code plugin, installed once per machine) lets Claude Code interact with tickets at `http://tl/trac/`. See `mcp-servers/README.md` for the one-step setup.
 
 **When discussing "tickets" in this project, always use the Trac MCP server tools to retrieve ticket information.**
 
@@ -313,10 +313,14 @@ Available tools include:
 - `search_tickets` - Search for tickets using Trac query syntax
 - `get_ticket_changelog` - Get ticket change history
 - `create_ticket` / `update_ticket` - Create or update tickets
+- `get_ticket_actions` / `close_ticket` - Inspect the workflow steps of a ticket, or walk it to `closed`
+- `get_milestones` / `get_milestone` / `create_milestone` / `update_milestone` - Milestones
 
 **`update_ticket` silently ignores top-level status/owner fields — nest them under `attributes`.** `{"ticket_id": N, "status": "accepted"}` returns "Updated ticket #N" but changes nothing (the Modified timestamp stays untouched, and a later push is rejected by the ticket-status hook). Use `{"ticket_id": N, "attributes": {"status": "accepted", "owner": "…"}}` and verify with `get_ticket`.
 
-**Migration / upgrade instructions go into the ticket DESCRIPTION, not a comment.** The release changelog is generated from ticket descriptions only — comments, PR bodies, and commit messages do not reach it. Append a `== Migration ==` section to the existing description via `update_ticket` (with the full description text) and flag the ticket with the `CodeMigration` keyword.
+**Releases are not cut from this repository's tooling.** Building a release is the Jenkins job; the Trac bookkeeping around it (closing the release tickets, the milestone, the `relatedmilestones` marking, the migration keywords) is the `tl-release` command and the `tl-release` skill, both provided by the `tl-dev` plugin.
+
+**Migration / upgrade instructions go into the ticket DESCRIPTION, not a comment.** The release changelog is generated from ticket descriptions only — comments, PR bodies, and commit messages do not reach it. Append a `== Migration ==` section to the existing description via `update_ticket` (with the full description text) and flag the ticket with the `RequiresMigration` keyword — that is the keyword the release milestones query, so a section without it never reaches the changelog.
 
 **Important**: Trac uses WikiFormatting syntax (not Markdown) for ticket descriptions and comments. Key syntax:
 - Headings: `= Title =`, `== Subtitle ==`

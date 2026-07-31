@@ -11,7 +11,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Describes one argument of a {@link ReactCommandHandler}, so the headless agent interface can advertise
+ * Describes one argument of a {@link ReactCommandHandler}, so the headless interface can advertise
  * the command's argument schema instead of leaving a consumer to guess it.
  *
  * <p>

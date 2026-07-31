@@ -60,7 +60,7 @@ class ReactCommandMap {
 	 * The set of all command IDs handled by this control class.
 	 *
 	 * <p>
-	 * Used by the headless agent interface to advertise the action space of a control without
+	 * Used by the headless interface to advertise the action space of a control without
 	 * actually invoking any command.
 	 * </p>
 	 */
@@ -82,7 +82,7 @@ class ReactCommandMap {
 	 * {@code null} if the command takes a raw {@code Map} (or no arguments).
 	 *
 	 * <p>
-	 * Used by the headless agent interface to advertise a command's argument schema and to render a
+	 * Used by the headless interface to advertise a command's argument schema and to render a
 	 * recorded step, both derived from the one argument interface.
 	 * </p>
 	 */

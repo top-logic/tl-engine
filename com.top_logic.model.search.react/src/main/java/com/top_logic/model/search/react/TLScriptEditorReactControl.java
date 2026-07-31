@@ -98,6 +98,12 @@ public class TLScriptEditorReactControl extends ReactControl {
 
 	@ReactCommandHandler("valueChanged")
 	void handleValueChanged(Map<String, Object> arguments) {
+		if (Boolean.TRUE.equals(getState(READ_ONLY))) {
+			// The editor displays its text without offering an edit; a value arriving nevertheless
+			// comes from a client whose display lags behind the server, or from one sending an edit
+			// the user interface does not offer. Drop it instead of publishing it to the callback.
+			return;
+		}
 		Object rawValue = arguments.get(VALUE);
 		String newValue = rawValue != null ? rawValue.toString() : null;
 		if (_valueCallback != null) {

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.AgentControl;
+import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
@@ -117,7 +117,6 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		if (getState(ACTIVE_CONTENT) == null) {
 			ReactControl activeContent = getOrCreateContent(_activeTabId);
 			putState(ACTIVE_CONTENT, activeContent);
-			findTab(_activeTabId).notifyActivation(true);
 			if (isAttached()) {
 				activeContent.attach();
 			}
@@ -175,14 +174,7 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 			return;
 		}
 		ReactControl previousContent = _contentCache.get(_activeTabId);
-		String previousTabId = _activeTabId;
 		_activeTabId = tabId;
-
-		// Hand over the display before the content changes: a tab losing the display must have
-		// withdrawn its contributions to shared surroundings (e.g. the enclosing toolbar) before the
-		// tab gaining it adds its own.
-		findTab(previousTabId).notifyActivation(false);
-		findTab(tabId).notifyActivation(true);
 
 		if (!isSSEAttached()) {
 			// Not yet rendered; just update state for deferred rendering.
@@ -299,9 +291,9 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	 * content addresses encode which tab they belong to.
 	 */
 	@Override
-	public String agentChildSlot(ReactControl child) {
+	public String scriptingChildSlot(ReactControl child) {
 		if (child == getState(ACTIVE_CONTENT)) {
-			return AgentControl.slotSegment("tab", _activeTabId);
+			return ScriptingControl.slotSegment("tab", _activeTabId);
 		}
 		return null;
 	}

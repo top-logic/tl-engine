@@ -84,10 +84,10 @@ public class ReloadableControl extends ReactCompositeControl implements ViewRelo
 	}
 
 	/**
-	 * Structural: this control is an invisible view-reload boundary and is elided from the headless agent projection.
+	 * Structural: this control is an invisible view-reload boundary and is elided from the headless projection.
 	 */
 	@Override
-	public boolean agentTransparent() {
+	public boolean scriptingTransparent() {
 		return true;
 	}
 }

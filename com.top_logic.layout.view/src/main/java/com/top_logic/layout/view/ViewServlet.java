@@ -140,6 +140,7 @@ public class ViewServlet extends TopLogicServlet {
 					new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 				windowEntry.setRootControl(rootControl);
 				sseQueue.setRootControl(rootControl);
+				rootControl.attach();
 				renderPage(request, response, rootControl, displayContext);
 				return;
 			}
@@ -173,6 +174,13 @@ public class ViewServlet extends TopLogicServlet {
 		ReactControl rootControl =
 			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);
+
+		// The page about to be rendered is the displayed one, so its controls are attached. Without
+		// this, only a view rooted in an <app-shell> would ever be attached (the shell attaches
+		// itself), and everything keyed on the display state - a form contributing its commands to the
+		// enclosing toolbar, the registration of routing participants - would silently not happen in
+		// e.g. a <window>-rooted login view.
+		rootControl.attach();
 
 		renderPage(request, response, rootControl, displayContext);
 	}

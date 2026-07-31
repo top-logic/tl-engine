@@ -160,10 +160,10 @@ public class ReactStackControl extends ReactControl {
 	}
 
 	/**
-	 * Rendering-only state keys, omitted from the headless agent projection.
+	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override
-	protected java.util.Set<String> agentPresentationKeys() {
+	protected java.util.Set<String> scriptingPresentationKeys() {
 		return java.util.Set.of(CSS_CLASS);
 	}
 
@@ -221,10 +221,10 @@ public class ReactStackControl extends ReactControl {
 
 
 	/**
-	 * Structural: this control is a flex layout container and is elided from the headless agent projection.
+	 * Structural: this control is a flex layout container and is elided from the headless projection.
 	 */
 	@Override
-	public boolean agentTransparent() {
+	public boolean scriptingTransparent() {
 		return true;
 	}
 }

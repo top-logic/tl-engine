@@ -621,17 +621,19 @@ public class LayoutTemplateUtils {
 	 *         When the arguments of the given {@link LayoutTemplateCall} could not be parsed.
 	 */
 	public static void writeTemplate(File file, TLLayout layout, boolean markFinal) throws ConfigurationException {
-		FileUtilities.ensureFileExisting(file);
-
 		/* Write and normalize a temporary sibling file, then atomically move it into place. This way,
 		 * a concurrent reader (e.g. the LayoutStorage background prefetch) observes either the complete
-		 * old or the complete new file, but never a partially written one. The temporary file is created
-		 * in the target's own directory, so the move stays within one file system and is guaranteed to
-		 * be atomic. */
+		 * old or the complete new file, but never a partially written one, and a layout that is written
+		 * for the first time becomes visible with its content. The temporary file is created in the
+		 * target's own directory, so the move stays within one file system and is guaranteed to be
+		 * atomic. Its name marks it as a hidden file, which makes it invisible to the FileManager and
+		 * to the layout invalidation watching the layout directory. */
 		Path target = file.toPath();
 		Path directory = file.getAbsoluteFile().getParentFile().toPath();
 		try {
-			Path tmp = Files.createTempFile(directory, file.getName(), ".tmp");
+			Files.createDirectories(directory);
+
+			Path tmp = Files.createTempFile(directory, "." + file.getName(), ".tmp");
 			try {
 				try (OutputStream outputStream = new FileOutputStream(tmp.toFile())) {
 					layout.writeTo(outputStream, markFinal);

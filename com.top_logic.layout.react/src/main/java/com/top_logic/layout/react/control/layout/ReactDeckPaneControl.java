@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.AgentControl;
+import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -199,9 +199,9 @@ public class ReactDeckPaneControl extends ReactControl {
 	 * addresses encode which card they belong to.
 	 */
 	@Override
-	public String agentChildSlot(ReactControl child) {
+	public String scriptingChildSlot(ReactControl child) {
 		if (child == getState(ACTIVE_CHILD)) {
-			return AgentControl.slotSegment("pane", Integer.toString(_activeIndex));
+			return ScriptingControl.slotSegment("pane", Integer.toString(_activeIndex));
 		}
 		return null;
 	}

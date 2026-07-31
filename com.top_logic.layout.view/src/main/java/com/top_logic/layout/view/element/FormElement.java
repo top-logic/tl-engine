@@ -19,6 +19,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -103,6 +104,9 @@ public class FormElement extends ContainerElement {
 
 		/** Configuration name for {@link #getCommands()}. */
 		String COMMANDS = "commands";
+
+		/** Configuration name for {@link #getEditExecutability()}. */
+		String EDIT_EXECUTABILITY = "edit-executability";
 
 		/** Configuration name for {@link #getSaveActions()}. */
 		String SAVE_ACTIONS = "save-action";
@@ -217,6 +221,27 @@ public class FormElement extends ContainerElement {
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 
 		/**
+		 * Rules deciding whether this form offers editing its object.
+		 *
+		 * <p>
+		 * Guards the transition into edit mode, wherever it is triggered: the Edit button is
+		 * disabled or hidden according to the rules, and the form refuses the transition when a
+		 * client requests it nonetheless. The remaining lifecycle commands (apply, save, cancel)
+		 * are reachable only from within an edit session and are therefore guarded through it.
+		 * </p>
+		 *
+		 * <p>
+		 * A {@link com.top_logic.layout.view.security.SecurityRule} checks the user's roles for a
+		 * command group on the enclosing security scope; a
+		 * {@link com.top_logic.layout.view.command.VisibleIf} evaluates a script predicate over the
+		 * displayed object. Without a rule, every user who sees the form may edit it.
+		 * </p>
+		 */
+		@Name(EDIT_EXECUTABILITY)
+		@EntryTag("rule")
+		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getEditExecutability();
+
+		/**
 		 * Optional action chain to execute on save instead of the default behavior.
 		 *
 		 * <p>
@@ -329,8 +354,9 @@ public class FormElement extends ContainerElement {
 		// 4. Create FormControl with initial object.
 		FormControl formControl = new FormControl(context, initialObject, noModelMessage, _lockHandler);
 
-		// 5. Wire channels.
+		// 5. Wire channels and the edit guard.
 		formControl.setInputChannel(inputChannel);
+		formControl.setEditRule(ViewExecutabilityRules.build(_config.getEditExecutability(), context));
 
 		ChannelRef editModeRef = _config.getEditMode();
 		if (editModeRef != null) {
@@ -444,7 +470,6 @@ public class FormElement extends ContainerElement {
 			FormScopedCommandModel wrapped = new FormScopedCommandModel(inner, formContext);
 
 			models.add(wrapped);
-			scope.addCommand(wrapped);
 		}
 
 		FormModelListener validityListener = new FormModelListener() {
@@ -459,6 +484,8 @@ public class FormElement extends ContainerElement {
 			}
 		};
 
+		contributeWhileDisplayed(formControl, scope, models);
+
 		formControl.addBeforeWriteAction(() -> {
 			for (CommandModel model : models) {
 				if (model instanceof FormScopedCommandModel) {
@@ -470,7 +497,6 @@ public class FormElement extends ContainerElement {
 		formControl.addCleanupAction(() -> {
 			formControl.removeFormModelListener(validityListener);
 			for (CommandModel model : models) {
-				scope.removeCommand(model);
 				if (model instanceof FormScopedCommandModel) {
 					((FormScopedCommandModel) model).getInner().detach();
 				}
@@ -587,9 +613,7 @@ public class FormElement extends ContainerElement {
 			models.add(FormCommandModel.cancelCommand(formControl));
 		}
 
-		for (FormCommandModel model : models) {
-			scope.addCommand(model);
-		}
+		contributeWhileDisplayed(formControl, scope, models);
 
 		formControl.addBeforeWriteAction(() -> {
 			for (FormCommandModel model : models) {
@@ -598,8 +622,47 @@ public class FormElement extends ContainerElement {
 		});
 		formControl.addCleanupAction(() -> {
 			for (FormCommandModel model : models) {
-				scope.removeCommand(model);
 				model.detach();
+			}
+		});
+	}
+
+	/**
+	 * Puts the given commands into the scope while the form is displayed, and takes them out again
+	 * while it is not.
+	 *
+	 * <p>
+	 * Bound to the control's attach/detach rather than to its creation/disposal, because content that
+	 * exists but is not displayed - the inactive tab of a {@code <tab-bar>}, the hidden child of any
+	 * one-of-N container - keeps its state and thus its controls. Its commands must not stay in the
+	 * enclosing panel's toolbar meanwhile: the panel would show a second edit button, operating on a
+	 * form the user cannot see.
+	 * </p>
+	 *
+	 * @param formControl
+	 *        The control whose display state decides whether the commands are in the scope.
+	 * @param scope
+	 *        The enclosing scope rendering the commands.
+	 * @param models
+	 *        The commands to contribute.
+	 */
+	private static void contributeWhileDisplayed(FormControl formControl, CommandScope scope,
+			List<? extends CommandModel> models) {
+		formControl.addAttachListener(() -> {
+			for (CommandModel model : models) {
+				scope.addCommand(model);
+			}
+		});
+		formControl.addDetachListener(() -> {
+			for (CommandModel model : models) {
+				scope.removeCommand(model);
+			}
+		});
+		formControl.addCleanupAction(() -> {
+			// Disposal while not displayed: the detach listener did not run (or ran already), so make
+			// sure nothing is left behind.
+			for (CommandModel model : models) {
+				scope.removeCommand(model);
 			}
 		});
 	}

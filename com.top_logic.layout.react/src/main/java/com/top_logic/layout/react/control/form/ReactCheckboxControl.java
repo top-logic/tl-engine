@@ -32,7 +32,7 @@ public class ReactCheckboxControl extends ReactFormFieldControl {
 	 */
 	@ReactCommandHandler(CMD_VALUE_CHANGED)
 	void handleChecked(CheckboxValueArguments args) {
-		applyClientValue(parseClientValue(args.isChecked()));
+		clientValueChanged(args.isChecked());
 	}
 
 	@Override

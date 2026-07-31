@@ -16,7 +16,10 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.layout.view.channel.DirtyChannel;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
@@ -104,6 +107,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private ModelScope _modelScope;
 
+	private ViewExecutabilityRule _editRule = ViewExecutabilityRule.ALWAYS_EXECUTABLE;
+
 	/**
 	 * Creates a new {@link FormControl}.
 	 *
@@ -152,6 +157,35 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	@Override
 	public boolean isEditMode() {
 		return _editMode;
+	}
+
+	/**
+	 * Sets the rule deciding whether this form offers editing its object, evaluated against the
+	 * displayed object.
+	 *
+	 * @param rule
+	 *        The rule, {@link ViewExecutabilityRule#ALWAYS_EXECUTABLE} to offer editing to everyone
+	 *        who sees the form.
+	 *
+	 * @see #editPermission()
+	 */
+	public void setEditRule(ViewExecutabilityRule rule) {
+		_editRule = rule;
+		fireFormStateChanged();
+	}
+
+	/**
+	 * Whether the current user may edit the displayed object here.
+	 *
+	 * <p>
+	 * The permission alone, independent of the form's lifecycle state: a form already in edit mode
+	 * still reports the permission that got it there. The Edit command combines this with its state
+	 * condition, and {@link #handleEdit()} rejects a transition the permission denies — so the same
+	 * decision governs the button and a command a client sends directly.
+	 * </p>
+	 */
+	public ExecutableState editPermission() {
+		return _editRule.isExecutable(getCurrentObject());
 	}
 
 	@Override
@@ -820,33 +854,73 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	/**
 	 * Command that enters edit mode.
+	 *
+	 * <p>
+	 * Refused unless the form offers editing, i.e. it displays an object, is not already in edit
+	 * mode, and the user has the {@link #editPermission() permission to edit it} — the condition
+	 * under which {@link FormCommandModel#editCommand(FormControl) the Edit command} is executable.
+	 * The lifecycle commands are dispatched to this control directly, so they repeat the condition
+	 * instead of inheriting it from the toolbar button.
+	 * </p>
 	 */
 	@ReactCommandHandler("formEdit")
-	void handleEdit() {
+	HandlerResult handleEdit() {
+		if (_currentObject == null || _editMode || !editPermission().isExecutable()) {
+			return notExecutable();
+		}
 		enterEditMode();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Command that applies overlay changes without leaving edit mode.
+	 *
+	 * <p>
+	 * Refused outside an edit session, see {@link #handleEdit()}.
+	 * </p>
 	 */
 	@ReactCommandHandler("formApply")
-	void handleApply() {
+	HandlerResult handleApply() {
+		if (!_editMode) {
+			return notExecutable();
+		}
 		executeApply();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Command that saves changes (applies and exits edit mode).
+	 *
+	 * <p>
+	 * Refused outside an edit session, see {@link #handleEdit()}.
+	 * </p>
 	 */
 	@ReactCommandHandler("formSave")
-	void handleSave() {
+	HandlerResult handleSave() {
+		if (!_editMode) {
+			return notExecutable();
+		}
 		executeSave();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Command that cancels editing, discarding changes.
+	 *
+	 * <p>
+	 * Refused outside an edit session, see {@link #handleEdit()}.
+	 * </p>
 	 */
 	@ReactCommandHandler("formCancel")
-	void handleCancel() {
+	HandlerResult handleCancel() {
+		if (!_editMode) {
+			return notExecutable();
+		}
 		executeCancel();
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private static HandlerResult notExecutable() {
+		return HandlerResult.error(I18NConstants.ERROR_FORM_COMMAND_NOT_EXECUTABLE);
 	}
 }

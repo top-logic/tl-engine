@@ -267,6 +267,12 @@ public final class UrlSafety {
 			// 192.0.0.0/24 IETF protocol assignments, 192.0.2.0/24 documentation.
 			return true;
 		}
+		if (b0 == 192 && b1 == 88 && b2 == 99) {
+			// 192.88.99.0/24 - the deprecated 6to4 relay anycast prefix (RFC 7526). Deprecated is not
+			// unreachable: a packet to it is still routed to whatever relay a network kept, so it is as
+			// much a way out of the intended destination set as any other special-purpose range.
+			return true;
+		}
 		if (b0 == 198 && (b1 == 18 || b1 == 19)) {
 			// 198.18.0.0/15 - benchmarking.
 			return true;

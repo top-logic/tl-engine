@@ -936,11 +936,20 @@ final class BrowserSession {
 	/**
 	 * Captures a PNG screenshot of the current page (the viewport when {@code fullPage} is
 	 * {@code false}, the full scrolling page when {@code true}), on this session's confined thread.
+	 *
+	 * <p>
+	 * An image of the page is page content handed to the model exactly as a {@link #snapshot}'s text
+	 * is - it is persisted and read back later - so the same policy re-check governs it, and a failing
+	 * check discards the capture. It runs <em>after</em> the capture for the reason given on
+	 * {@link #snapshot}.
+	 * </p>
 	 */
 	ScreenshotCapture screenshot(boolean fullPage) {
 		return callOnThread(() -> {
 			byte[] png = _page.screenshot(new Page.ScreenshotOptions().setFullPage(fullPage));
-			return new ScreenshotCapture(_page.url(), png);
+			ScreenshotCapture capture = new ScreenshotCapture(_page.url(), png);
+			verifyCurrentDocumentPolicy();
+			return capture;
 		}, navigationDeadlineMillis());
 	}
 
@@ -1086,10 +1095,10 @@ final class BrowserSession {
 	 *
 	 * <p>
 	 * Clearing on read matters for the verbs that do <em>not</em> open a window of their own
-	 * ({@link #snapshot}, and {@link #type} after its fill): they have to honour a hop that was recorded
-	 * after the last navigation returned, which means they must also not re-report one that has already
-	 * been reported - a snapshot of a page the session is legitimately on would otherwise keep failing
-	 * with the previous operation's refusal.
+	 * ({@link #snapshot}, {@link #screenshot}, and {@link #type} after its fill): they have to honour a
+	 * hop that was recorded after the last navigation returned, which means they must also not re-report
+	 * one that has already been reported - a snapshot of a page the session is legitimately on would
+	 * otherwise keep failing with the previous operation's refusal.
 	 * </p>
 	 *
 	 * @return The recorded refusal message, or {@code null} when no off-policy hop was seen.
@@ -1102,14 +1111,14 @@ final class BrowserSession {
 
 	/**
 	 * Fails the operation when the document the page is on <em>now</em> is one the policy forbids - the
-	 * check {@link #verifyNavigationPolicy} performs for a navigating verb, for the two verbs that do
-	 * not navigate themselves ({@link #snapshot}, {@link #type}).
+	 * check {@link #verifyNavigationPolicy} performs for a navigating verb, for the three verbs that do
+	 * not navigate themselves ({@link #snapshot}, {@link #screenshot}, {@link #type}).
 	 *
 	 * <p>
-	 * Both still need it: a page can take its own top-level frame somewhere off-policy at any moment
-	 * (a timer, a form submit), and the {@link FilteringProxy} answers a refused main-frame request with
-	 * a {@code 403} page that commits as the document. Without this check that recorded hop, or that
-	 * refusal page, is handed to the model as ordinary page content - exactly what
+	 * All three still need it: a page can take its own top-level frame somewhere off-policy at any
+	 * moment (a timer, a form submit), and the {@link FilteringProxy} answers a refused main-frame
+	 * request with a {@code 403} page that commits as the document. Without this check that recorded
+	 * hop, or that refusal page, is handed to the model as ordinary page content - exactly what
 	 * {@link #installProxyRefusalGuard} exists to prevent on the other verbs.
 	 * </p>
 	 *

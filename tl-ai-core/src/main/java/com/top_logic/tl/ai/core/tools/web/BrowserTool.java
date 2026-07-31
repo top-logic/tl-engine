@@ -349,6 +349,10 @@ public class BrowserTool {
 		ScreenshotCapture capture;
 		try {
 			capture = service.screenshot(sessionKey, fullPage != null && fullPage.booleanValue());
+		} catch (BrowserPolicyException ex) {
+			// The page the screenshot would have shown is one the policy refuses; the capture was
+			// discarded. Not a defect - report the policy reason as-is, as the other verbs do.
+			return "Error: " + ex.getMessage();
 		} catch (BrowserBusyException ex) {
 			return "Error: the browser is busy right now (" + ex.getMessage() + "). Please retry shortly.";
 		} catch (BrowserSessionBrokenException ex) {

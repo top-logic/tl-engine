@@ -14,20 +14,23 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
+import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.ScreenshotCapture;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.AddressResolver;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.RequestPolicy;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
 
 /**
  * End-to-end tests, with a real Chromium, that <b>every</b> verb re-checks the document it is about to
- * hand to the model - including the two that do not navigate themselves.
+ * hand to the model - including the three that do not navigate themselves.
  *
  * <p>
- * <b>The defect.</b> {@code browserSnapshot} performed no final-URL re-validation at all, and
- * {@code browserType} never consulted the recorded off-policy hop. A page can take its own top-level
- * frame somewhere the policy forbids at any moment - a timer, a form submit - and the
+ * <b>The defect.</b> {@code browserSnapshot} performed no final-URL re-validation at all,
+ * {@code browserType} never consulted the recorded off-policy hop, and {@code browserScreenshot} did
+ * neither - it captured the image and persisted it, so the allowlist was bypassed for the image path
+ * even though the text path caught the very same page. A page can take its own top-level frame
+ * somewhere the policy forbids at any moment - a timer, a form submit, a server-side redirect - and the
  * {@link FilteringProxy} answers a refused main-frame request with a {@code 403} page that
- * <em>commits as the document</em>. On those two verbs the result was therefore returned as ordinary
+ * <em>commits as the document</em>. On those verbs the result was therefore returned as ordinary
  * page content, which is exactly what the navigating verbs' policy re-check and the proxy-refusal
  * guard exist to prevent.
  * </p>
@@ -76,6 +79,11 @@ public class TestBrowserPolicyRecheck extends TestCase {
 		+ "<script>setTimeout(function() { location.href = 'http://" + OFF_POLICY_HOST + "/'; }, "
 		+ HOP_DELAY_MILLIS + ");</script>"
 		+ "</body></html>";
+
+	/** The page behind the off-policy host - what a leaked capture would show. */
+	private static final String OFF_POLICY_FIXTURE = ""
+		+ "<!doctype html><html><head><title>off-allowlist</title></head><body>"
+		+ "<h1>off-allowlist page content</h1></body></html>";
 
 	/** A page whose text field takes the top-level frame off-policy as soon as it is filled. */
 	private static final String HOP_ON_INPUT_FIXTURE = ""
@@ -158,6 +166,102 @@ public class TestBrowserPolicyRecheck extends TestCase {
 				PageView afterwards = session.snapshot();
 				assertFalse("... and the session is not stuck reporting it: " + afterwards.finalUrl(),
 					afterwards.finalUrl().contains(OFF_POLICY_HOST));
+			} finally {
+				session.close();
+			}
+		}
+	}
+
+	/**
+	 * <b>browserScreenshot.</b> An image of the page is page content too: when the session sits on a
+	 * document the policy forbids, the capture must be refused rather than handed back.
+	 *
+	 * <p>
+	 * Nothing can be persisted from a refused capture, and that is what the assertion checks: the verb
+	 * that stores the {@code Screenshot} object ({@code BrowserTool.browserScreenshot}) creates it from
+	 * the returned {@link ScreenshotCapture}, so as long as no capture is ever returned there are no
+	 * bytes to persist and none to read back later through {@code viewDocument}. A screenshot taken
+	 * before the page misbehaves is unaffected, which is asserted first.
+	 * </p>
+	 */
+	public void testScreenshotReportsAnOffPolicyHopInsteadOfImageBytes() {
+		if (!e2eEnabled() || !resolvable()) {
+			return;
+		}
+		try (RecordingServer origin = RecordingServer.serving(DELAYED_HOP_FIXTURE);
+				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, resolvingTo(origin))) {
+			BrowserSession session = openSession("screenshot-recheck", proxy);
+			try {
+				PageView loaded = session.navigate("http://" + PERMITTED_HOST + "/");
+				assertTrue("the permitted page itself still loads: " + loaded.finalUrl(),
+					loaded.html().contains("permitted fixture page"));
+
+				// Before the hop is due: an ordinary capture of an ordinary page.
+				ScreenshotCapture permitted = session.screenshot(false);
+				assertTrue("the permitted page is captured as before: " + permitted.url(),
+					permitted.png() != null && permitted.png().length > 0);
+
+				// Let the page attempt its hop; the route aborts it and records it.
+				sleep(HOP_DELAY_MILLIS + 2_000);
+
+				try {
+					ScreenshotCapture offPolicy = session.screenshot(false);
+					fail("a screenshot taken after an off-policy hop must not return image bytes: "
+						+ offPolicy.png().length + " bytes from " + offPolicy.url());
+				} catch (BrowserPolicyException expected) {
+					assertTrue("names the origin the policy refused: " + expected.getMessage(),
+						expected.getMessage().contains(OFF_POLICY_HOST));
+					assertTrue("and says the page was not loaded: " + expected.getMessage(),
+						expected.getMessage().contains("NOT loaded"));
+				}
+			} finally {
+				session.close();
+			}
+		}
+	}
+
+	/**
+	 * <b>browserScreenshot, on a document the browser really did commit.</b> A screenshot of an
+	 * off-allowlist document the session is sitting on must be refused on that document's own origin.
+	 *
+	 * <p>
+	 * The shipped default configuration ({@code apply-allowlist-to-all-requests} off) lets the proxy
+	 * forward a server-side redirect off the allowlist, so the off-allowlist document is fetched and
+	 * <em>commits</em>. The navigation that pulled it in is refused - and in being refused it consumes
+	 * the recorded hop, leaving the session on that document. The screenshot that follows therefore has
+	 * nothing recorded to go by, only the current URL, which is the second half of the re-check.
+	 * </p>
+	 */
+	public void testScreenshotOfACommittedOffPolicyDocumentIsRefused() {
+		if (!e2eEnabled() || !resolvable()) {
+			return;
+		}
+		try (RecordingServer offPolicy = RecordingServer.serving(OFF_POLICY_FIXTURE);
+				RecordingServer origin = RecordingServer
+					.start(target -> RecordingServer.Reply.redirect("http://" + OFF_POLICY_HOST + "/"));
+				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, resolvingTo(origin, offPolicy))) {
+			BrowserSession session = openSession("screenshot-redirect-recheck", proxy);
+			try {
+				try {
+					session.navigate("http://" + PERMITTED_HOST + "/");
+					fail("a server-side redirect off the allowlist must be refused");
+				} catch (BrowserPolicyException expected) {
+					// Reported once, and consumed with it - which is what leaves the session on the
+					// document below.
+				}
+				assertTrue("the off-allowlist document really was fetched and committed; without that "
+					+ "this test would not be exercising the leak at all", offPolicy.contactCount() > 0);
+
+				try {
+					ScreenshotCapture leaked = session.screenshot(false);
+					fail("a screenshot of the committed off-allowlist document must not return image "
+						+ "bytes: " + leaked.png().length + " bytes from " + leaked.url());
+				} catch (BrowserPolicyException expected) {
+					assertTrue("names the origin the policy refused: " + expected.getMessage(),
+						expected.getMessage().contains(OFF_POLICY_HOST));
+					assertTrue("and says the page was not loaded: " + expected.getMessage(),
+						expected.getMessage().contains("NOT loaded"));
+				}
 			} finally {
 				session.close();
 			}
@@ -248,10 +352,23 @@ public class TestBrowserPolicyRecheck extends TestCase {
 	 * destination to the real, production SSRF resolver.
 	 */
 	private static AddressResolver resolvingTo(RecordingServer fixture) {
+		return resolvingTo(fixture, null);
+	}
+
+	/**
+	 * As {@link #resolvingTo(RecordingServer)}, additionally pinning {@link #OFF_POLICY_HOST} to a
+	 * second local fixture so a hop that the policy forbids stays offline too - needed where the hop is
+	 * not aborted in the browser but forwarded, and the document it answers with is the point.
+	 */
+	private static AddressResolver resolvingTo(RecordingServer fixture, RecordingServer offPolicyFixture) {
 		AddressResolver real = FilteringProxy.ssrfResolver();
 		return (host, port) -> {
 			if (PERMITTED_HOST.equalsIgnoreCase(host)) {
 				return Target.to(new InetSocketAddress(InetAddress.getLoopbackAddress(), fixture.port()));
+			}
+			if (offPolicyFixture != null && OFF_POLICY_HOST.equalsIgnoreCase(host)) {
+				return Target
+					.to(new InetSocketAddress(InetAddress.getLoopbackAddress(), offPolicyFixture.port()));
 			}
 			return real.resolve(host, port);
 		};

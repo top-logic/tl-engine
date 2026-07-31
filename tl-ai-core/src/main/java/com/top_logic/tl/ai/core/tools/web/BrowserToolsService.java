@@ -13,10 +13,13 @@ import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.CommaSeparatedStrings;
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.EnumDefaultValue;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -81,6 +84,42 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  */
 public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsService.Config<?>>
 		implements BrowserSession.DomainPolicy, FilteringProxy.RequestPolicy {
+
+	/**
+	 * Whether Chromium's OS-level sandbox is used for the browser sessions.
+	 *
+	 * @see Config#getBrowserSandbox()
+	 */
+	public enum SandboxMode {
+
+		/**
+		 * The default: the sandbox is used everywhere except inside a container, where the default
+		 * runtime profile prevents Chromium from setting one up.
+		 */
+		AUTO,
+
+		/**
+		 * The sandbox is always used, containers included. Chromium refuses to start where it cannot
+		 * set one up.
+		 */
+		ENABLED,
+
+		/**
+		 * The sandbox is never used, whatever the environment looks like. This weakens the isolation
+		 * of every browsed page.
+		 */
+		DISABLED;
+	}
+
+	/**
+	 * {@link EnumDefaultValue} providing {@link SandboxMode#AUTO} as the default.
+	 */
+	public static final class AutoSandboxDefault extends EnumDefaultValue {
+		@Override
+		public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
+			return SandboxMode.AUTO;
+		}
+	}
 
 	/**
 	 * Configuration of {@link BrowserToolsService}.
@@ -191,6 +230,13 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		 * @see #isCookiePoolsEnabled()
 		 */
 		String COOKIE_POOLS_ENABLED = "cookie-pools-enabled";
+
+		/**
+		 * Configuration property name for the Chromium sandbox mode.
+		 *
+		 * @see #getBrowserSandbox()
+		 */
+		String BROWSER_SANDBOX = "browser-sandbox";
 
 		/**
 		 * Timeout for a <b>page load</b> (navigate, back), in seconds.
@@ -477,6 +523,40 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		@Name(COOKIE_POOLS_ENABLED)
 		@BooleanDefault(true)
 		boolean isCookiePoolsEnabled();
+
+		/**
+		 * Whether the browser sessions run inside Chromium's own OS-level sandbox.
+		 *
+		 * <p>
+		 * The sandbox is the boundary between a renderer executing <em>attacker-controlled page
+		 * JavaScript</em> and the host the application runs on: without it, a renderer exploit is
+		 * simply code running with the application's own privileges, inside the application's process
+		 * tree. It is therefore on wherever it can be, and it is not a performance knob.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link SandboxMode#AUTO} (the default) keeps it on and gives it up only inside a container,
+		 * recognised by the marker files and cgroup layout a container runtime leaves behind. That is
+		 * the one environment where it cannot simply stay on: the default Docker/Podman seccomp
+		 * profile denies the {@code clone}/{@code unshare} calls Chromium's namespace sandbox needs,
+		 * so a sandboxed launch fails outright there. The right answer for a container is a runtime
+		 * profile that permits those calls (tracked as the deploy-image ticket) - until then, the
+		 * sandbox is dropped in containers and only in containers.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link SandboxMode#ENABLED} and {@link SandboxMode#DISABLED} are the escape hatches:
+		 * {@code ENABLED} keeps the sandbox even in a container (correct once the image carries a
+		 * seccomp profile that allows it; the browser will fail to start if it does not), and
+		 * {@code DISABLED} gives it up unconditionally, which weakens the isolation of every browsed
+		 * page and should only ever be a temporary diagnostic.
+		 * </p>
+		 *
+		 * @see #BROWSER_SANDBOX
+		 */
+		@Name(BROWSER_SANDBOX)
+		@ComplexDefault(AutoSandboxDefault.class)
+		SandboxMode getBrowserSandbox();
 	}
 
 	private static volatile BrowserToolsService _instance;
@@ -539,6 +619,9 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 				+ "host has no local display for a browser window. Set headless=true for this environment.");
 		}
 		boolean evadeBotDetection = isEvadeBotDetection();
+		// Resolved once at startup rather than per launch: the environment does not change while the
+		// service runs, and an operator has to be able to read the effective decision off the log.
+		boolean sandboxDisabled = isSandboxDisabled();
 		// Start the outbound filter BEFORE any session can exist: an unproxied browser would not be
 		// bound by the policy for redirects and IP-literal targets.
 		_proxy = FilteringProxy.start(this);
@@ -549,7 +632,8 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 			getAcquireTimeoutSeconds() * 1000L,
 			System::nanoTime,
 			key -> BrowserSession.open(key, navigationTimeoutMillis, actionTimeoutMillis,
-				navigationSettleMillis, this, _seedByKey.get(key), headed, evadeBotDetection, proxyServer),
+				navigationSettleMillis, this, _seedByKey.get(key), headed, evadeBotDetection, proxyServer,
+				sandboxDisabled),
 			BrowserSession::close);
 		// State the EFFECTIVE limits, not the configured ones: they are clamped, and an operator
 		// investigating "the cap is not being honoured" needs to be able to rule out a configuration
@@ -560,7 +644,12 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 			+ getNavigationSettleMillis() + " ms, acquire timeout " + getAcquireTimeoutSeconds()
 			+ " s, idle timeout " + getSessionIdleTimeoutSeconds() + " s. Every browser connection is "
 			+ "filtered through " + proxyServer
-			+ (isApplyAllowlistToAllRequests() ? " (allowlist governs every request)." : "."),
+			+ (isApplyAllowlistToAllRequests() ? " (allowlist governs every request)." : ".")
+			+ (sandboxDisabled
+				? " WARNING: Chromium runs WITHOUT its OS-level sandbox (browser-sandbox="
+					+ getConfig().getBrowserSandbox() + "), so page JavaScript is not isolated from the "
+					+ "application host by the operating system."
+				: " Chromium runs inside its OS-level sandbox."),
 			BrowserToolsService.class);
 		_instance = this;
 	}
@@ -600,6 +689,39 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	 */
 	public boolean isCookiePoolsEnabled() {
 		return getConfig().isCookiePoolsEnabled();
+	}
+
+	/**
+	 * Whether the sessions must be launched <b>without</b> Chromium's OS-level sandbox, resolving
+	 * {@link Config#getBrowserSandbox()} against the detected environment.
+	 *
+	 * <p>
+	 * Package-visible and static so the decision can be asserted for both branches in a unit test
+	 * without launching a browser.
+	 * </p>
+	 *
+	 * @param mode
+	 *        The configured sandbox mode; {@code null} is read as {@link SandboxMode#AUTO}.
+	 * @return {@code true} when {@code --no-sandbox} has to be passed at launch.
+	 */
+	static boolean isSandboxDisabled(SandboxMode mode) {
+		if (mode == SandboxMode.ENABLED) {
+			return false;
+		}
+		if (mode == SandboxMode.DISABLED) {
+			return true;
+		}
+		// AUTO: give the sandbox up only where it provably cannot be set up.
+		return ContainerEnvironment.isContainer();
+	}
+
+	/**
+	 * Whether this installation launches its browsers without Chromium's OS-level sandbox.
+	 *
+	 * @see Config#getBrowserSandbox()
+	 */
+	public boolean isSandboxDisabled() {
+		return isSandboxDisabled(getConfig().getBrowserSandbox());
 	}
 
 	/**

@@ -334,6 +334,17 @@ final class BrowserSession {
 		"--webrtc-ip-handling-policy=disable_non_proxied_udp";
 
 	/**
+	 * The Chromium switch that gives up the OS-level renderer sandbox.
+	 *
+	 * <p>
+	 * Added only where the sandbox provably cannot be set up - see the SANDBOX paragraph of
+	 * {@link #buildLaunchOptions(boolean, boolean, String, boolean)} and
+	 * {@code BrowserToolsService.Config#getBrowserSandbox()}.
+	 * </p>
+	 */
+	private static final String NO_SANDBOX_SWITCH = "--no-sandbox";
+
+	/**
 	 * Playwright channel selecting the <b>full</b> Chromium distribution
 	 * ({@code chromium-<rev>/chrome-linux/chrome}) instead of the light, stripped
 	 * {@code chrome-headless-shell}.
@@ -443,6 +454,13 @@ final class BrowserSession {
 	 */
 	private final String _proxyServer;
 
+	/**
+	 * Whether this session's Chromium is launched without its OS-level sandbox.
+	 *
+	 * @see BrowserToolsService.Config#getBrowserSandbox()
+	 */
+	private final boolean _sandboxDisabled;
+
 	private final ExecutorService _executor;
 
 	private volatile Playwright _playwright;
@@ -493,7 +511,7 @@ final class BrowserSession {
 
 	private BrowserSession(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
 			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
-			boolean evadeBotDetection, String proxyServer) {
+			boolean evadeBotDetection, String proxyServer, boolean sandboxDisabled) {
 		_key = key;
 		_navigationTimeoutMillis = navigationTimeoutMillis;
 		_actionTimeoutMillis = actionTimeoutMillis;
@@ -503,6 +521,7 @@ final class BrowserSession {
 		_headed = headed;
 		_evadeBotDetection = evadeBotDetection;
 		_proxyServer = proxyServer;
+		_sandboxDisabled = sandboxDisabled;
 		_executor = Executors.newSingleThreadExecutor(runnable -> {
 			Thread thread = new Thread(runnable, "browser-session");
 			thread.setDaemon(true);
@@ -525,6 +544,15 @@ final class BrowserSession {
 	static BrowserSession open(Object key, int navigationTimeoutMillis, DomainPolicy policy) {
 		return open(key, navigationTimeoutMillis, DEFAULT_ACTION_TIMEOUT_MILLIS, 1500, policy, null, false,
 			false, null);
+	}
+
+	/**
+	 * The sandbox setting the test-facing {@code open} overloads use: the same
+	 * {@link BrowserToolsService.SandboxMode#AUTO auto-detected} answer a default installation gets,
+	 * so a session opened without naming one is launched exactly the way production launches it.
+	 */
+	private static boolean defaultSandboxDisabled() {
+		return BrowserToolsService.isSandboxDisabled(BrowserToolsService.SandboxMode.AUTO);
 	}
 
 	/**
@@ -584,8 +612,8 @@ final class BrowserSession {
 	 *        {@code BrowserToolsService.Config#isEvadeBotDetection()}): add the
 	 *        {@code --disable-blink-features=AutomationControlled} launch switch, set a realistic
 	 *        Chrome user-agent/locale, and install a fingerprint-masking init script (see
-	 *        {@link #buildLaunchOptions(boolean, boolean, String)}). The <b>full</b> Chromium build
-	 *        that evasion also relies on is selected for every launch now, evasion or not (see
+	 *        {@link #buildLaunchOptions(boolean, boolean, String, boolean)}). The <b>full</b> Chromium
+	 *        build that evasion also relies on is selected for every launch now, evasion or not (see
 	 *        {@link #FULL_CHROMIUM_CHANNEL}).
 	 * @param proxyServer
 	 *        The {@code --proxy-server} value of the {@link FilteringProxy} every connection of this
@@ -596,8 +624,31 @@ final class BrowserSession {
 	static BrowserSession open(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
 			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
 			boolean evadeBotDetection, String proxyServer) {
+		return open(key, navigationTimeoutMillis, actionTimeoutMillis, navigationSettleMillis, policy,
+			initialStorageState, headed, evadeBotDetection, proxyServer, defaultSandboxDisabled());
+	}
+
+	/**
+	 * Opens a new isolated session, naming explicitly whether Chromium's OS-level sandbox is given up.
+	 *
+	 * <p>
+	 * Every other parameter is as documented on
+	 * {@link #open(Object, int, int, int, DomainPolicy, String, boolean, boolean, String)}, which is
+	 * this method with the sandbox setting auto-detected.
+	 * </p>
+	 *
+	 * @param sandboxDisabled
+	 *        Whether to launch with {@code --no-sandbox}. Decided by
+	 *        {@code BrowserToolsService.isSandboxDisabled(SandboxMode)}, which keeps the sandbox on
+	 *        outside a container; see {@code BrowserToolsService.Config#getBrowserSandbox()}.
+	 * @return A started session.
+	 */
+	static BrowserSession open(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
+			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
+			boolean evadeBotDetection, String proxyServer, boolean sandboxDisabled) {
 		BrowserSession session = new BrowserSession(key, navigationTimeoutMillis, actionTimeoutMillis,
-			navigationSettleMillis, policy, initialStorageState, headed, evadeBotDetection, proxyServer);
+			navigationSettleMillis, policy, initialStorageState, headed, evadeBotDetection, proxyServer,
+			sandboxDisabled);
 		try {
 			session.startOnThread();
 		} catch (RuntimeException ex) {
@@ -626,6 +677,17 @@ final class BrowserSession {
 	 * fingerprint that some bot walls / consent managers suppress content for even when the
 	 * user-agent and {@code navigator.webdriver} are already masked; evasion adds the UA, locale,
 	 * stealth init-script and {@code --disable-blink-features=AutomationControlled} on top.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Sandbox.</b> {@code --no-sandbox} is added <em>only</em> when the caller says the sandbox has
+	 * to be given up. Chromium's OS-level sandbox is the boundary between a renderer running
+	 * attacker-controlled page JavaScript and the application host, so passing the switch
+	 * unconditionally - which this method used to do, for the sake of one container image - removed
+	 * that boundary on every host the application runs on. The decision belongs to
+	 * {@code BrowserToolsService.isSandboxDisabled(SandboxMode)}, which keeps the sandbox on unless
+	 * this JVM is in a container (or an operator has forced the matter); it is passed in rather than
+	 * taken here so this seam stays side-effect-free and both branches can be asserted in a test.
 	 * </p>
 	 *
 	 * <p>
@@ -658,17 +720,25 @@ final class BrowserSession {
 	 * @param proxyServer
 	 *        The filtering forward proxy to pin the browser to (e.g. {@code http://127.0.0.1:41234}),
 	 *        or {@code null} to leave the browser unproxied.
+	 * @param sandboxDisabled
+	 *        Whether to add {@code --no-sandbox}; see the paragraph above. Resolved by
+	 *        {@code BrowserToolsService.isSandboxDisabled(SandboxMode)}, never decided here.
 	 * @return The launch options; never {@code null}.
 	 */
 	static BrowserType.LaunchOptions buildLaunchOptions(boolean headed, boolean evadeBotDetection,
-			String proxyServer) {
+			String proxyServer, boolean sandboxDisabled) {
 		// /dev/shm is only 64 MB in the default Docker sandbox; without this Chromium crashes
 		// under memory pressure. Harmless on a normal host.
-		List<String> launchArgs = new ArrayList<>(List.of("--disable-dev-shm-usage", "--no-sandbox",
+		List<String> launchArgs = new ArrayList<>(List.of("--disable-dev-shm-usage",
 			// Take WebRTC's UDP egress away: it does NOT honour --proxy-server, so without this a
 			// page could reach any address over UDP straight past the FilteringProxy. See the
 			// constant's comment for the evidence and for why the channel below is load-bearing.
 			DISABLE_NON_PROXIED_UDP_SWITCH));
+		if (sandboxDisabled) {
+			// Hands the renderer the application's own privileges: only added where the sandbox
+			// provably cannot be set up (see the SANDBOX paragraph above).
+			launchArgs.add(NO_SANDBOX_SWITCH);
+		}
 		if (evadeBotDetection) {
 			// Drop the AutomationControlled blink feature (which sets navigator.webdriver and is a
 			// cheap bot tell). Evasion-only: the default path stays an ordinary headless Chromium.
@@ -694,7 +764,8 @@ final class BrowserSession {
 		callOnThread(() -> {
 			_playwright = Playwright.create();
 			BrowserType chromium = _playwright.chromium();
-			_browser = chromium.launch(buildLaunchOptions(_headed, _evadeBotDetection, _proxyServer));
+			_browser = chromium.launch(
+				buildLaunchOptions(_headed, _evadeBotDetection, _proxyServer, _sandboxDisabled));
 			_context = _browser.newContext(newContextOptions());
 			_context.setDefaultTimeout(_navigationTimeoutMillis);
 			_context.setDefaultNavigationTimeout(_navigationTimeoutMillis);

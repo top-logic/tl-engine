@@ -294,7 +294,7 @@ final class FilteringProxy implements AutoCloseable {
 	/**
 	 * The {@code --proxy-server} value pinning a browser to this proxy.
 	 *
-	 * @see BrowserSession#buildLaunchOptions(boolean, boolean, String)
+	 * @see BrowserSession#buildLaunchOptions(boolean, boolean, String, boolean)
 	 */
 	String serverUrl() {
 		return "http://127.0.0.1:" + port();

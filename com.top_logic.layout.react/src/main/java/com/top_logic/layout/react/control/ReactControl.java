@@ -334,6 +334,26 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 		return result;
 	}
 
+	/**
+	 * The controls this control renders, i.e. the ones embedded in its state.
+	 *
+	 * <p>
+	 * A control reaches the client only by being serialized as part of some control's state, so the
+	 * controls found here are exactly the children this control displays. This is the notion the
+	 * lifecycle propagation ({@link #propagateAttach()}, {@link #propagateDetach()}) works on, so a
+	 * container does not have to enumerate its children a second time.
+	 * </p>
+	 *
+	 * @implNote Unordered, because attaching and detaching a set of children does not depend on their
+	 *           order. {@link #agentChildren()} sorts, because the agent projection reports a child
+	 *           list that must be stable across calls.
+	 */
+	protected final List<ReactControl> childControls() {
+		List<ReactControl> result = new ArrayList<>();
+		collectChildControls(_reactState, result);
+		return result;
+	}
+
 	private static void collectChildControls(Object value, List<ReactControl> out) {
 		if (value instanceof ReactControl child) {
 			out.add(child);
@@ -341,8 +361,8 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			for (Object element : map.values()) {
 				collectChildControls(element, out);
 			}
-		} else if (value instanceof List<?> list) {
-			for (Object element : list) {
+		} else if (value instanceof Iterable<?> elements) {
+			for (Object element : elements) {
 				collectChildControls(element, out);
 			}
 		}
@@ -559,8 +579,8 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			}
 			return false;
 		}
-		if (value instanceof List<?> list) {
-			for (Object element : list) {
+		if (value instanceof Iterable<?> elements) {
+			for (Object element : elements) {
 				if (containsControl(element)) {
 					return true;
 				}
@@ -1074,19 +1094,33 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	/**
-	 * Hook for subclasses to propagate an {@link #attach()} call to their currently displayed
-	 * children. The default does nothing.
+	 * Propagates an {@link #attach()} call to the {@link #childControls() children this control
+	 * renders}.
+	 *
+	 * <p>
+	 * Deriving the children from the state rather than from a per-container field is what makes the
+	 * lifecycle complete: a container that holds a child in its state cannot forget to pass the call
+	 * on. Overriding is needed only for children this control does not render itself - see
+	 * {@code SlotContentControl}, whose contributed controls are rendered by the matched
+	 * {@code <slot>} placeholder while their lifecycle belongs to the contribution.
+	 * </p>
 	 */
 	protected void propagateAttach() {
-		// Default: no children to propagate to.
+		for (ReactControl child : childControls()) {
+			child.attach();
+		}
 	}
 
 	/**
-	 * Hook for subclasses to propagate a {@link #detach()} call to their currently displayed
-	 * children. The default does nothing.
+	 * Propagates a {@link #detach()} call to the {@link #childControls() children this control
+	 * renders}.
+	 *
+	 * @see #propagateAttach()
 	 */
 	protected void propagateDetach() {
-		// Default: no children to propagate to.
+		for (ReactControl child : childControls()) {
+			child.detach();
+		}
 	}
 
 	/**
@@ -1212,9 +1246,9 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			writeJsonMap(context, writer, (Map<String, Object>) value);
 		} else if (value instanceof ReactControl) {
 			((ReactControl) value).writeAsChild(writer);
-		} else if (value instanceof List) {
+		} else if (value instanceof Iterable<?> elements) {
 			writer.beginArray();
-			for (Object element : (List<?>) value) {
+			for (Object element : elements) {
 				writeJsonValue(context, writer, element);
 			}
 			writer.endArray();

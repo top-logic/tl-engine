@@ -93,6 +93,10 @@ public class CookiePoolService extends ConfiguredManagedClass<CookiePoolService.
 
 	/**
 	 * The running instance.
+	 *
+	 * @throws IllegalStateException
+	 *         If the service is not started. Callers that have to <em>report</em> that case rather than
+	 *         fail on it ask {@code Module.INSTANCE.isActive()} first.
 	 */
 	public static CookiePoolService getInstance() {
 		return Module.INSTANCE.getImplementationInstance();

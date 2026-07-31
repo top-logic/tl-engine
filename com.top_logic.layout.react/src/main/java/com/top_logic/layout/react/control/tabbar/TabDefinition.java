@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.react.control.tabbar;
 
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.react.control.ReactControl;
@@ -32,8 +31,6 @@ public class TabDefinition {
 	private String _route;
 
 	private String _icon;
-
-	private Consumer<Boolean> _activationListener;
 
 	/**
 	 * Creates a new {@link TabDefinition}.
@@ -118,43 +115,6 @@ public class TabDefinition {
 	 */
 	public TabDefinition withIcon(String icon) {
 		_icon = icon;
-		return this;
-	}
-
-	/**
-	 * Informs the {@link #withActivation(Consumer) activation listener} that this tab became the
-	 * displayed one, or stopped being it.
-	 *
-	 * <p>
-	 * Called for the tab losing and the tab gaining the display, in that order, so that a listener
-	 * moving something into a shared place (e.g. the enclosing toolbar) never has both tabs'
-	 * contributions there at once.
-	 * </p>
-	 *
-	 * @param active
-	 *        Whether this tab is now the displayed one.
-	 */
-	public void notifyActivation(boolean active) {
-		if (_activationListener != null) {
-			_activationListener.accept(active);
-		}
-	}
-
-	/**
-	 * Sets the listener informed whenever this tab becomes the displayed one or stops being it.
-	 *
-	 * <p>
-	 * Unlike the attach/detach lifecycle of the content control, this is signaled even for a tab bar
-	 * that is itself not attached, so it is the reliable hook for content that must not contribute to
-	 * its surroundings while hidden.
-	 * </p>
-	 *
-	 * @param listener
-	 *        The listener receiving whether this tab is the displayed one, or {@code null} for none.
-	 * @return This instance for fluent chaining.
-	 */
-	public TabDefinition withActivation(Consumer<Boolean> listener) {
-		_activationListener = listener;
 		return this;
 	}
 

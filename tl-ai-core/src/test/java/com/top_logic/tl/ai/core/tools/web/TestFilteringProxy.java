@@ -390,6 +390,20 @@ public class TestFilteringProxy extends TestCase {
 		}
 	}
 
+	/**
+	 * The refusal history records the host in the <b>normalised</b> spelling every other layer uses, so
+	 * a trailing-dot refusal does not read {@code blocked.example.} in the diagnostics while the policy
+	 * message calls it {@code blocked.example}.
+	 */
+	public void testRefusalHistoryRecordsTheNormalisedHost() throws IOException {
+		RequestPolicy blocking = newService(List.of(), List.of("blocked.example"), true, false);
+		try (FilteringProxy proxy = FilteringProxy.start(blocking)) {
+			exchange(proxy, "GET http://BLOCKED.Example./ HTTP/1.1\r\nHost: BLOCKED.Example.\r\n\r\n");
+
+			assertEquals(List.of("blocked.example"), proxy.refusedHosts());
+		}
+	}
+
 	// --- Resource bounds. ---
 
 	/** The connection bound is derived from the session cap, and is never zero. */

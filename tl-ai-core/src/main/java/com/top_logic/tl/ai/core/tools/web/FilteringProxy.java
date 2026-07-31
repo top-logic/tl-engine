@@ -442,15 +442,7 @@ final class FilteringProxy implements AutoCloseable {
 		if (host == null || host.isBlank()) {
 			return Target.refused("the request names no host.");
 		}
-		// Lower-case and drop the trailing dot of the fully qualified form, through the SAME
-		// normalisation the tool's pre-flight check and UrlSafety use - otherwise "blocked.example.com."
-		// would reach the domain policy as a host it does not recognise and be forwarded.
-		String target = UrlSafety.normalizeHost(host);
-		// java.net.URI keeps the brackets of an IPv6 literal while a CONNECT target arrives without
-		// them; normalize so the policy and the resolver always see the same spelling.
-		if (target.length() > 1 && target.charAt(0) == '[' && target.charAt(target.length() - 1) == ']') {
-			target = target.substring(1, target.length() - 1);
-		}
+		String target = normalizeTarget(host);
 		if (target.isEmpty()) {
 			return Target.refused("the request names no host.");
 		}
@@ -459,6 +451,34 @@ final class FilteringProxy implements AutoCloseable {
 			return Target.refused(refusal);
 		}
 		return resolver.resolve(target, port);
+	}
+
+	/**
+	 * The single spelling of a destination host every layer of this proxy compares, decides and reports:
+	 * lower case, without the trailing dot of the fully qualified form, and without the brackets of an
+	 * IPv6 literal.
+	 *
+	 * <p>
+	 * The first two come from {@link UrlSafety#normalizeHost(String)}, the same normalisation the tool's
+	 * pre-flight check uses - otherwise {@code blocked.example.com.} would reach the domain policy as a
+	 * host it does not recognise and be forwarded. The brackets are stripped because
+	 * {@link java.net.URI} keeps them while a {@code CONNECT} target arrives without them, and the policy
+	 * and the resolver must not see two spellings of one address.
+	 * </p>
+	 *
+	 * @param host
+	 *        The host as it was spelled in the request; may be {@code null}.
+	 * @return The normalised host; the empty string when no host was named.
+	 */
+	private static String normalizeTarget(String host) {
+		String target = UrlSafety.normalizeHost(host);
+		if (target == null) {
+			return "";
+		}
+		if (target.length() > 1 && target.charAt(0) == '[' && target.charAt(target.length() - 1) == ']') {
+			target = target.substring(1, target.length() - 1);
+		}
+		return target;
 	}
 
 	/**
@@ -898,14 +918,23 @@ final class FilteringProxy implements AutoCloseable {
 		}
 	}
 
-	/** Records and answers a refusal: a {@code 403} the forbidden origin never learns about. */
+	/**
+	 * Records and answers a refusal: a {@code 403} the forbidden origin never learns about.
+	 *
+	 * <p>
+	 * The history keeps the <em>normalised</em> host - the same spelling {@link #decide} judged and the
+	 * policy message names. Recording the raw one instead made a trailing-dot refusal read
+	 * {@code blocked.example.} in the diagnostics while every other layer called it
+	 * {@code blocked.example}.
+	 * </p>
+	 */
 	private void refuse(OutputStream out, String host, String reason) throws IOException {
 		_refusedCount.incrementAndGet();
 		synchronized (_refusedHosts) {
 			if (_refusedHosts.size() >= REFUSAL_HISTORY) {
 				_refusedHosts.removeFirst();
 			}
-			_refusedHosts.addLast(host == null ? "" : host);
+			_refusedHosts.addLast(normalizeTarget(host));
 		}
 		Logger.info("Browser filtering proxy refused a connection to " + host + ": " + reason,
 			FilteringProxy.class);

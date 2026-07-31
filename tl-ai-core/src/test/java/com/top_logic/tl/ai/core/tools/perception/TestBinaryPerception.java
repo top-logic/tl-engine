@@ -252,6 +252,51 @@ public class TestBinaryPerception extends TestCase {
 		assertTrue(plan.message().contains("above the"));
 	}
 
+	/**
+	 * <b>The decompression bomb.</b> An image declaring more pixels than may be decoded is refused with
+	 * a message naming the limit, instead of being handed to a decoder that allocates from those
+	 * numbers and dies with an {@link OutOfMemoryError} no {@code catch} on the path would have caught.
+	 */
+	public void testDecompressionBombIsRefused() {
+		byte[] bomb = TestImageDownscaler.pngHeaderDeclaring(60_000, 60_000);
+
+		BinaryPerception.Plan plan = BinaryPerception.plan("bomb.png", bomb, "image/png", vision());
+
+		assertFalse("a bomb is never attached", plan.attaches());
+		assertTrue("names the pixel limit: " + plan.message(),
+			plan.message().contains(Long.toString(ImageDownscaler.MAX_PIXELS)));
+		assertTrue("says it was not read: " + plan.message(), plan.message().contains("not read"));
+	}
+
+	/**
+	 * The image size limit is the <b>encoded</b> one, as it is documented to be: base64 inflates by 4/3,
+	 * so an image just under the limit raw is a megabyte over it on the wire. It used to pass here and
+	 * be refused by the provider instead, with a message the model could do nothing with.
+	 */
+	public void testImageLimitIsAppliedToTheEncodedSize() {
+		// Undecodable bytes skip downscaling, so this size is what is judged. Under the limit raw,
+		// over it once base64 has added its third.
+		byte[] justUnderRaw = new byte[BinaryPerception.MAX_IMAGE_BYTES - 1024];
+		justUnderRaw[0] = 'x';
+
+		BinaryPerception.Plan plan =
+			BinaryPerception.plan("big.webp", justUnderRaw, "image/webp", vision());
+
+		assertFalse("over the limit once encoded, so it must not be attached", plan.attaches());
+		assertTrue("the message names the encoded size: " + plan.message(),
+			plan.message().contains("base64-encoded"));
+	}
+
+	/** An image whose encoded size fits is attached as before. */
+	public void testImageWithinTheEncodedLimitIsAttached() {
+		byte[] fits = new byte[3 * 1024 * 1024];
+		fits[0] = 'x';
+
+		BinaryPerception.Plan plan = BinaryPerception.plan("ok.webp", fits, "image/webp", vision());
+
+		assertTrue("3 MB raw is 4 MB encoded, inside the 5 MB limit", plan.attaches());
+	}
+
 	private static int count(String text, String needle) {
 		int found = 0;
 		int at = text.indexOf(needle);

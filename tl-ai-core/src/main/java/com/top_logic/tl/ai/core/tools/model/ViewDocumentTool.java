@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.tools.model;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,6 +81,14 @@ public class ViewDocumentTool {
 	/**
 	 * Loads the content stored on the given object into the agent's context.
 	 *
+	 * <p>
+	 * The stored payload is an adversarial input, not merely a large one: which object is read is
+	 * decided by a model-supplied TID, and {@link SecurityContext#hasReadAccess(Object)} is still a
+	 * framework-wide placeholder returning {@code true}. Its size is therefore bounded before anything
+	 * is buffered ({@link BinaryPerception#MAX_SOURCE_BYTES}), and its content - stored text included -
+	 * is treated as untrusted by {@link BinaryPerception}.
+	 * </p>
+	 *
 	 * @param tid
 	 *        The identifier of the object holding the content, in the format {@code "TypeName:id"}.
 	 * @param attribute
@@ -139,9 +148,17 @@ public class ViewDocumentTool {
 			return ToolResult.of("Error: attribute '" + part.getName() + "' of " + tid + " is empty.");
 		}
 
+		long declaredSize = binary.getSize();
+		if (declaredSize > BinaryPerception.MAX_SOURCE_BYTES) {
+			return ToolResult.of(tooLargeMessage(tid, part, declaredSize));
+		}
+
 		byte[] data;
 		try {
-			data = readBytes(binary);
+			data = readBytes(binary, BinaryPerception.MAX_SOURCE_BYTES);
+		} catch (ContentTooLargeException ex) {
+			// The declared size was wrong or unknown (-1); the read stopped at the bound either way.
+			return ToolResult.of(tooLargeMessage(tid, part, -1));
 		} catch (IOException | RuntimeException ex) {
 			Logger.error("viewDocument() could not read '" + part.getName() + "' of " + tid + ": "
 				+ ex.getMessage(), ex, ViewDocumentTool.class);
@@ -226,9 +243,89 @@ public class ViewDocumentTool {
 		return fileName == null || fileName.isBlank() ? origin : "\"" + fileName + "\" (" + origin + ")";
 	}
 
-	private static byte[] readBytes(BinaryDataSource source) throws IOException {
+	/**
+	 * The message for a payload this tool will not read.
+	 *
+	 * @param declaredSize
+	 *        The size the stored data claims, or {@code -1} when it did not claim one and the bound was
+	 *        hit while reading.
+	 */
+	private static String tooLargeMessage(String tid, TLStructuredTypePart part, long declaredSize) {
+		return "Error: the content of attribute '" + part.getName() + "' of " + tid + " is "
+			+ (declaredSize >= 0 ? declaredSize + " bytes" : "larger than " + BinaryPerception.MAX_SOURCE_BYTES
+				+ " bytes")
+			+ ", above the " + BinaryPerception.MAX_SOURCE_BYTES + " byte limit for content this tool "
+			+ "loads into your context. It was not read. Nothing that large can be shown to a model "
+			+ "anyway; work from an extract or a smaller rendition of it.";
+	}
+
+	/**
+	 * Reads the stored bytes, refusing to buffer more than {@code maxBytes} of them.
+	 *
+	 * <p>
+	 * The bound is enforced <em>while</em> reading rather than from
+	 * {@link BinaryDataSource#getSize()} alone: that size is documented as {@code -1} when unknown, and
+	 * the object to read is named by the model, so a size-less binary of any length would otherwise be
+	 * materialised whole.
+	 * </p>
+	 *
+	 * <p>
+	 * Package-visible so the bound can be asserted without a knowledge base.
+	 * </p>
+	 *
+	 * @throws ContentTooLargeException
+	 *         As soon as the source delivers more than {@code maxBytes}.
+	 */
+	static byte[] readBytes(BinaryDataSource source, int maxBytes) throws IOException {
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		source.deliverTo(buffer);
+		source.deliverTo(new BoundedOutputStream(buffer, maxBytes));
 		return buffer.toByteArray();
+	}
+
+	/** Signals that the stored content exceeds the size this tool is prepared to buffer. */
+	private static final class ContentTooLargeException extends IOException {
+
+		ContentTooLargeException(int maxBytes) {
+			super("The content exceeds the " + maxBytes + " byte limit for a viewable document.");
+		}
+	}
+
+	/**
+	 * An {@link OutputStream} that passes at most {@code maxBytes} through and then refuses the rest,
+	 * so a producer-driven {@link BinaryDataSource#deliverTo(OutputStream)} can be bounded from the
+	 * consuming side.
+	 */
+	private static final class BoundedOutputStream extends OutputStream {
+
+		private final OutputStream _out;
+
+		private final int _maxBytes;
+
+		private long _written;
+
+		BoundedOutputStream(OutputStream out, int maxBytes) {
+			_out = out;
+			_maxBytes = maxBytes;
+		}
+
+		@Override
+		public void write(int b) throws IOException {
+			checkRoomFor(1);
+			_out.write(b);
+			_written++;
+		}
+
+		@Override
+		public void write(byte[] bytes, int offset, int length) throws IOException {
+			checkRoomFor(length);
+			_out.write(bytes, offset, length);
+			_written += length;
+		}
+
+		private void checkRoomFor(int length) throws IOException {
+			if (_written + length > _maxBytes) {
+				throw new ContentTooLargeException(_maxBytes);
+			}
+		}
 	}
 }

@@ -26,14 +26,27 @@ import com.top_logic.tl.ai.tool.api.ToolContent;
  * decision testable in isolation.
  * </p>
  *
+ * <p>
+ * Every path is bounded, and the bounds are the point rather than housekeeping: the payload is named
+ * by the model and written by whoever supplied the document, so its size, its declared pixel count and
+ * its text are all adversarial inputs. See {@link #MAX_SOURCE_BYTES}, {@link ImageDownscaler#MAX_PIXELS}
+ * and {@link #MAX_IMAGE_BYTES}.
+ * </p>
  *
  * @see com.top_logic.tl.ai.core.tools.model.ViewDocumentTool
  */
 public final class BinaryPerception {
 
 	/**
-	 * Maximum encoded image size accepted as an attachment. Providers reject larger base64 image
+	 * Maximum <b>base64-encoded</b> image size accepted as an attachment. Providers reject larger
 	 * payloads outright; the {@link ImageDownscaler} normally keeps real screenshots far below it.
+	 *
+	 * <p>
+	 * Compared against the encoded size rather than the raw one, because that is what is actually sent:
+	 * base64 inflates by 4/3, so an image just under this limit raw is a megabyte over it on the wire -
+	 * which used to pass here and be refused by the provider instead, with a message nobody could act
+	 * on.
+	 * </p>
 	 */
 	public static final int MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
@@ -42,6 +55,21 @@ public final class BinaryPerception {
 
 	/** Maximum number of characters returned for a text document. */
 	public static final int MAX_TEXT_CHARS = 100_000;
+
+	/**
+	 * Largest stored payload a tool may read into memory to bring it here at all.
+	 *
+	 * <p>
+	 * The caps above bound what leaves for the provider; this one bounds the {@code byte[]} on the way
+	 * in, which is the allocation a caller controls least: the object to read from is named by the model,
+	 * so without a bound a single tool call can be pointed at an arbitrarily large stored binary. It is
+	 * the largest payload any of the three paths can still do something with - the PDF cap - so nothing
+	 * that could have been shown is refused by it.
+	 * </p>
+	 *
+	 * @see com.top_logic.tl.ai.core.tools.model.ViewDocumentTool
+	 */
+	public static final int MAX_SOURCE_BYTES = MAX_PDF_BYTES;
 
 	private BinaryPerception() {
 		// Static utility.
@@ -128,11 +156,21 @@ public final class BinaryPerception {
 				+ " " + label + " is a " + contentType + " image of " + data.length + " bytes.", null);
 		}
 
+		if (ImageDownscaler.exceedsPixelBudget(data)) {
+			// A decompression bomb: a small file declaring enormous dimensions. Refused from its header,
+			// before anything allocates a raster from those dimensions and dies of it.
+			return new Plan("Cannot show " + label + ": the image declares "
+				+ ImageDownscaler.headerPixelCount(data) + " pixels, above the "
+				+ ImageDownscaler.MAX_PIXELS + " pixel limit for images that may be decoded. It was not "
+				+ "read.", null);
+		}
+
 		ImageDownscaler.Scaled scaled = ImageDownscaler.downscale(data, contentType);
-		if (scaled.data().length > MAX_IMAGE_BYTES) {
+		long encodedBytes = base64Length(scaled.data().length);
+		if (encodedBytes > MAX_IMAGE_BYTES) {
 			return new Plan("Cannot show " + label + ": the image is " + scaled.data().length
-				+ " bytes even after downscaling, above the " + MAX_IMAGE_BYTES
-				+ " byte limit for images sent to a model.", null);
+				+ " bytes even after downscaling (" + encodedBytes + " base64-encoded), above the "
+				+ MAX_IMAGE_BYTES + " byte limit for images sent to a model.", null);
 		}
 
 		ToolContent.Image image = new ToolContent.Image(
@@ -162,6 +200,11 @@ public final class BinaryPerception {
 		String caption = "PDF content of " + label + " (" + data.length + " bytes)";
 		return new Plan(caption + ", shown to you with this result."
 			+ unknownSupportHint(support, model, "PDF documents"), pdf);
+	}
+
+	/** The length base64 encoding turns {@code rawBytes} into: four output bytes per three input ones. */
+	private static long base64Length(int rawBytes) {
+		return 4L * ((rawBytes + 2L) / 3L);
 	}
 
 	private static PerceptionSupport support(ModelPerception model, Modality modality) {

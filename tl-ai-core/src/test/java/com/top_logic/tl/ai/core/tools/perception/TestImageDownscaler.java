@@ -12,6 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.zip.CRC32;
 
 import javax.imageio.ImageIO;
 
@@ -97,6 +98,79 @@ public class TestImageDownscaler extends TestCase {
 		} catch (IllegalArgumentException expected) {
 			assertTrue(expected.getMessage().contains("maxEdge"));
 		}
+	}
+
+	/**
+	 * <b>The decompression bomb.</b> A PNG header declaring a gigapixel canvas is refused from its
+	 * header, before anything allocates a raster from those numbers.
+	 *
+	 * <p>
+	 * The payload is a header alone on purpose: this fixture must not be an image the JVM could
+	 * actually decode, because decoding it is precisely what the guard prevents (and what raises the
+	 * {@link OutOfMemoryError} the surrounding {@code catch} clauses were never going to catch). What is
+	 * asserted is therefore the verdict taken from the declared dimensions - which is what a real bomb,
+	 * whose pixel data <em>is</em> present and compresses to a few kilobytes, is judged by too.
+	 * </p>
+	 */
+	public void testRefusesADecompressionBombFromItsHeader() {
+		byte[] bomb = pngHeaderDeclaring(60_000, 60_000);
+
+		assertEquals("the header is read without decoding", 3_600_000_000L,
+			ImageDownscaler.headerPixelCount(bomb));
+		assertTrue("above the pixel budget", ImageDownscaler.exceedsPixelBudget(bomb));
+
+		ImageDownscaler.Scaled scaled = ImageDownscaler.downscale(bomb, "image/png");
+
+		assertFalse("nothing was decoded, so no dimensions are reported", scaled.hasDimensions());
+		assertFalse(scaled.resized());
+		assertSame(bomb, scaled.data());
+	}
+
+	/** An ordinary image is under the budget and is decoded as before. */
+	public void testOrdinaryImageIsWithinThePixelBudget() throws IOException {
+		assertFalse(ImageDownscaler.exceedsPixelBudget(png(800, 600)));
+		assertEquals(480_000L, ImageDownscaler.headerPixelCount(png(800, 600)));
+	}
+
+	/** A payload with no readable header is not accused of exceeding anything. */
+	public void testUnknownDimensionsAreNotTreatedAsABomb() {
+		byte[] data = "not an image at all".getBytes(StandardCharsets.UTF_8);
+
+		assertEquals(-1L, ImageDownscaler.headerPixelCount(data));
+		assertFalse(ImageDownscaler.exceedsPixelBudget(data));
+		assertEquals(-1L, ImageDownscaler.headerPixelCount(null));
+		assertFalse(ImageDownscaler.exceedsPixelBudget(new byte[0]));
+	}
+
+	/**
+	 * A PNG signature plus a valid {@code IHDR} chunk declaring the given dimensions, and nothing else.
+	 * Enough for any {@code ImageIO} reader to answer the image's size, which is all a header check
+	 * needs - and all a bomb needs to make a decoder allocate.
+	 */
+	static byte[] pngHeaderDeclaring(int width, int height) {
+		byte[] header = new byte[] { (byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A };
+		byte[] ihdr = new byte[] { 'I', 'H', 'D', 'R',
+			(byte) (width >>> 24), (byte) (width >>> 16), (byte) (width >>> 8), (byte) width,
+			(byte) (height >>> 24), (byte) (height >>> 16), (byte) (height >>> 8), (byte) height,
+			8, // bit depth
+			6, // colour type: RGBA
+			0, 0, 0 // compression, filter, interlace
+		};
+		CRC32 crc = new CRC32();
+		crc.update(ihdr);
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		out.write(header, 0, header.length);
+		writeInt(out, ihdr.length - 4);
+		out.write(ihdr, 0, ihdr.length);
+		writeInt(out, (int) crc.getValue());
+		return out.toByteArray();
+	}
+
+	private static void writeInt(ByteArrayOutputStream out, int value) {
+		out.write(value >>> 24);
+		out.write(value >>> 16);
+		out.write(value >>> 8);
+		out.write(value);
 	}
 
 	static byte[] png(int width, int height) throws IOException {

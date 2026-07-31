@@ -12,9 +12,12 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Locale;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 
 import com.top_logic.basic.Logger;
 
@@ -35,6 +38,23 @@ public final class ImageDownscaler {
 	 * downsample server-side.
 	 */
 	public static final int DEFAULT_MAX_EDGE = 1568;
+
+	/**
+	 * Largest pixel count this class is willing to <b>decode</b>.
+	 *
+	 * <p>
+	 * A decompression bomb is a tiny file declaring enormous dimensions - a few kilobytes of PNG can
+	 * expand to a gigapixel canvas - and {@link ImageIO#read} allocates from the header, so decoding one
+	 * raises {@link OutOfMemoryError} rather than an exception a caller could handle. The budget is
+	 * expressed in pixels because that, not the file size, is what the allocation follows: an
+	 * {@code ARGB} raster costs four bytes per pixel, so 25 megapixels is about 100 MB of transient
+	 * heap. That is far above anything this tool legitimately sees (a 4K screenshot is 8 MP, a 300 dpi
+	 * A4 scan 9 MP) and far below what kills a server.
+	 * </p>
+	 *
+	 * @see #headerPixelCount(byte[])
+	 */
+	public static final long MAX_PIXELS = 25_000_000L;
 
 	private ImageDownscaler() {
 		// Static utility.
@@ -153,8 +173,67 @@ public final class ImageDownscaler {
 			: "image/png";
 	}
 
+	/**
+	 * The pixel count the image's own <em>header</em> declares, read without decoding a single row.
+	 *
+	 * <p>
+	 * This is the guard against a decompression bomb: the caller can refuse an image whose declared
+	 * dimensions are absurd before any allocation follows from them. Reading the header uses the same
+	 * {@link ImageIO} readers as the decode, so a format this JVM cannot read answers "unknown" here
+	 * exactly as it does there.
+	 * </p>
+	 *
+	 * @param data
+	 *        The encoded image; may be {@code null}.
+	 * @return The declared {@code width * height}, or {@code -1} when the dimensions cannot be
+	 *         determined (no reader for the format, or a corrupt header).
+	 */
+	public static long headerPixelCount(byte[] data) {
+		if (data == null || data.length == 0) {
+			return -1L;
+		}
+		try (ImageInputStream stream = ImageIO.createImageInputStream(new ByteArrayInputStream(data))) {
+			if (stream == null) {
+				return -1L;
+			}
+			Iterator<ImageReader> readers = ImageIO.getImageReaders(stream);
+			if (!readers.hasNext()) {
+				return -1L;
+			}
+			ImageReader reader = readers.next();
+			try {
+				reader.setInput(stream, true, true);
+				return (long) reader.getWidth(0) * (long) reader.getHeight(0);
+			} finally {
+				reader.dispose();
+			}
+		} catch (IOException | RuntimeException ex) {
+			Logger.info("Cannot read the image header: " + ex.getMessage(), ImageDownscaler.class);
+			return -1L;
+		}
+	}
+
+	/**
+	 * Whether decoding this image would exceed {@link #MAX_PIXELS}, judged from its header alone.
+	 *
+	 * @param data
+	 *        The encoded image; may be {@code null}.
+	 * @return {@code true} only when the header declares more pixels than the budget allows; an image
+	 *         whose dimensions cannot be determined is not accused of anything.
+	 */
+	public static boolean exceedsPixelBudget(byte[] data) {
+		return headerPixelCount(data) > MAX_PIXELS;
+	}
+
 	private static BufferedImage read(byte[] data) {
 		if (data == null || data.length == 0) {
+			return null;
+		}
+		if (exceedsPixelBudget(data)) {
+			// Belt and braces: callers refuse such an image outright (with a message the model can act
+			// on), but nothing here may allocate a gigapixel raster just because someone forgot to ask.
+			Logger.warn("Refusing to decode an image of " + headerPixelCount(data) + " pixels (budget "
+				+ MAX_PIXELS + "), sending it unchanged.", ImageDownscaler.class);
 			return null;
 		}
 		try {
@@ -162,6 +241,13 @@ public final class ImageDownscaler {
 		} catch (IOException | RuntimeException ex) {
 			Logger.info("Cannot decode image for downscaling, sending it unchanged: " + ex.getMessage(),
 				ImageDownscaler.class);
+			return null;
+		} catch (OutOfMemoryError ex) {
+			// The header check above bounds what is allocated here, so this is the residual case of a
+			// header that does not describe what the decoder ends up allocating. Sending the image
+			// unchanged is a worse answer than downscaling it, and a far better one than dying.
+			Logger.warn("Ran out of memory decoding an image of " + data.length
+				+ " bytes, sending it unchanged.", ImageDownscaler.class);
 			return null;
 		}
 	}

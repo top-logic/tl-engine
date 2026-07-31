@@ -567,7 +567,7 @@ function Yg() {
       controlId: "",
       command: "windowClosed",
       windowName: c,
-      arguments: { windowId: c }
+      arguments: { windowId: c, unload: !0 }
     }), f = new Blob([o], { type: "application/json" });
     navigator.sendBeacon(`${i}/react-api/command`, f);
   });

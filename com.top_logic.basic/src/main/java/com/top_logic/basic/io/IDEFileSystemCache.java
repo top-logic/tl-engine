@@ -151,7 +151,7 @@ public class IDEFileSystemCache extends FileSystemCache {
 
 	private void addPathByEventKind(Set<Path> creations, Set<Path> changes, Set<Path> deletions, Path path,
 			Kind<?> kind) {
-		if (kind != null) {
+		if (kind != null && !isHidden(path)) {
 			if (kind == ENTRY_CREATE) {
 				if (Files.isDirectory(path)) {
 					walkAndRegisterDirectories(path);
@@ -164,6 +164,31 @@ public class IDEFileSystemCache extends FileSystemCache {
 				deletions.add(path);
 			}
 		}
+	}
+
+	/**
+	 * Whether the given path is a hidden resource, i.e. it or one of its directories below the
+	 * containing root path starts with a dot.
+	 *
+	 * <p>
+	 * Such a path is not indexed by this cache and not visible through the {@link FileManager}, so a
+	 * change to it is not a change of a resource and must not be reported as one. A path outside all
+	 * root paths has no resource name at all and is dropped when the resource name is computed.
+	 * </p>
+	 */
+	private boolean isHidden(Path path) {
+		int rootIndex = getIndexOfRootPath(path);
+		if (rootIndex < 0) {
+			return false;
+		}
+
+		for (Path name : getPathFromRoot(path, rootIndex)) {
+			if (name.toString().startsWith(".")) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private WatchKey poll() {

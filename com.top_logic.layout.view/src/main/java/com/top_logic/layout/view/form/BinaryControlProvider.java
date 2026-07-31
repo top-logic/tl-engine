@@ -11,7 +11,6 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
-import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * {@link ReactFieldControlProvider} for binary ({@code tl.core:Binary}) attributes.

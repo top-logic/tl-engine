@@ -11,9 +11,6 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
-import com.top_logic.model.TLPrimitive;
-import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.TLType;
 
 /**
  * {@link ReactFieldControlProvider} for integer and floating-point attributes.

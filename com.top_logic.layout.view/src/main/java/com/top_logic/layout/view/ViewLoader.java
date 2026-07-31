@@ -149,7 +149,7 @@ public class ViewLoader {
 		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
 		// A copy, because the reader probes the list for null entries, which an immutable list
 		// rejects with an exception instead of answering.
-		reader.setSources(new ArrayList<Content>(sources));
+		reader.setSources(new ArrayList<>(sources));
 
 		ViewElement.Config config = (ViewElement.Config) reader.read();
 		context.checkErrors();

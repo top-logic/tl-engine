@@ -11,7 +11,6 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
-import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * {@link ReactFieldControlProvider} for string, tristate, binary, and other text-representable

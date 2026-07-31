@@ -17,12 +17,11 @@ import com.top_logic.basic.config.annotation.TagName;
  *
  * <p>
  * A property is normally edited by the control registered for its value type, see
- * {@link FieldControlRegistry}. This annotation names a different
- * {@link ReactFieldControlProvider} for one property, e.g. to edit a string as a code editor rather
- * than as a plain text input.
+ * {@link FieldControlRegistry}. This annotation names a different {@link ReactFieldControlProvider}
+ * for one property, e.g. to edit a string as a code editor rather than as a plain text input.
  * </p>
  *
- * @see com.top_logic.model.annotate.ui.TLInputControl The equivalent for a model attribute.
+ * @see "com.top_logic.layout.view.form.TLInputControl The equivalent for a model attribute."
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)

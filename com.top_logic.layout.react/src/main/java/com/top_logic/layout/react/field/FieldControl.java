@@ -20,8 +20,6 @@ import com.top_logic.basic.config.annotation.TagName;
  * {@link FieldControlRegistry}. This annotation names a different {@link ReactFieldControlProvider}
  * for one property, e.g. to edit a string as a code editor rather than as a plain text input.
  * </p>
- *
- * @see "com.top_logic.layout.view.form.TLInputControl The equivalent for a model attribute."
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)

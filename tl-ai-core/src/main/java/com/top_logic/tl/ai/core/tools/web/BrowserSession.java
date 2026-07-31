@@ -5,11 +5,13 @@
  */
 package com.top_logic.tl.ai.core.tools.web;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -382,6 +384,24 @@ final class BrowserSession {
 	static final int DEFAULT_ACTION_TIMEOUT_MILLIS = 8_000;
 
 	/**
+	 * How long {@link #close()} gives the orderly, API-level teardown on the session thread before it
+	 * falls back to destroying the driver process tree.
+	 */
+	private static final long GRACEFUL_CLOSE_TIMEOUT_MILLIS = 30_000L;
+
+	/**
+	 * How long a process gets to exit after {@code SIGTERM} before it is killed outright. Short,
+	 * because this path is only reached after the graceful teardown has already failed.
+	 */
+	private static final long PROCESS_TERMINATION_GRACE_MILLIS = 2_000L;
+
+	/**
+	 * The private field of {@code com.microsoft.playwright.impl.PlaywrightImpl} holding the driver
+	 * {@link Process}; see {@link #driverProcessOf(Playwright)} for why it is read reflectively.
+	 */
+	private static final String DRIVER_PROCESS_FIELD = "driverProcess";
+
+	/**
 	 * Small, standard "stealth" shim applied (before any page script) only when bot-detection evasion
 	 * is on, masking the cheap automation tells a headless Chromium exposes. Deliberately minimal and
 	 * dependency-free: it only fixes the giveaways that ordinary desktop Chrome would not present.
@@ -464,6 +484,28 @@ final class BrowserSession {
 	private final ExecutorService _executor;
 
 	private volatile Playwright _playwright;
+
+	/**
+	 * The Playwright <em>driver</em> process this session launched (a bundled {@code node} running the
+	 * Playwright CLI), or {@code null} when it could not be identified.
+	 *
+	 * <p>
+	 * Retained purely so {@link #close()} has a teardown path that does <b>not</b> go through the
+	 * session thread. Every Playwright object of this session is confined to that one thread, so when
+	 * it wedges - typically blocked in a native read on the driver pipe, which
+	 * {@link Future#cancel(boolean)} cannot interrupt - there is no API-level way left to close
+	 * anything: a teardown task submitted to the same executor simply queues behind the wedged call
+	 * and is dropped by {@code shutdownNow()}. Without this handle the Chromium and driver processes
+	 * then outlive the session for the JVM's lifetime, while the pool has already handed the slot to
+	 * someone else - so {@code max-concurrent-sessions} stops bounding memory on exactly the path the
+	 * broken-session exception exists for. The browser process tree hangs off this driver, so
+	 * destroying it (and its descendants) reclaims everything.
+	 * </p>
+	 */
+	private volatile ProcessHandle _driverProcess;
+
+	/** Whether {@link #close(long)} has already run, so a second call is a no-op. */
+	private boolean _closed;
 
 	private volatile Browser _browser;
 
@@ -762,6 +804,9 @@ final class BrowserSession {
 	private void startOnThread() {
 		callOnThread(() -> {
 			_playwright = Playwright.create();
+			// Grab the OS-level handle now, while the session thread is healthy: once it wedges, the
+			// only teardown left is destroying this process tree from another thread (see close()).
+			_driverProcess = driverProcessOf(_playwright);
 			BrowserType chromium = _playwright.chromium();
 			_browser = chromium.launch(
 				buildLaunchOptions(_headed, _evadeBotDetection, _proxyServer, _sandboxDisabled));
@@ -1522,8 +1567,67 @@ final class BrowserSession {
 		}, navigationDeadlineMillis());
 	}
 
-	/** Closes the page, context, browser and Playwright instance, and stops the session thread. */
+	/**
+	 * Test-only: the OS handle of this session's Playwright driver process, or {@code null} when it
+	 * could not be identified. Lets a test assert that the process tree is really gone after a
+	 * teardown. Package-visible for testing.
+	 */
+	ProcessHandle driverProcessForTest() {
+		return _driverProcess;
+	}
+
+	/**
+	 * Test-only: occupies the session thread for {@code millis} in a way that {@link Thread#interrupt()
+	 * interruption} cannot end, reproducing the state a session is in after a
+	 * {@link BrowserSessionBrokenException} - blocked in a native Playwright pipe read, which the
+	 * {@code cancel(true)} in {@link #callOnThread} provably cannot break out of. Returns immediately;
+	 * the wedge runs on the session thread. Package-visible for testing.
+	 */
+	void wedgeSessionThreadForTest(long millis) {
+		long until = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(millis);
+		_executor.execute(() -> {
+			// Deliberately a spin rather than a sleep: a sleep would end on interrupt, and a wedge
+			// that interruption can end is not the failure this reproduces.
+			while (System.nanoTime() < until) {
+				Thread.onSpinWait();
+			}
+		});
+	}
+
+	/**
+	 * Closes the page, context, browser and Playwright instance, and stops the session thread -
+	 * falling back to destroying the driver process tree when the session thread is unresponsive.
+	 *
+	 * <p>
+	 * Must never return while a Chromium of this session is still running: the pool releases the
+	 * session's slot the moment this returns, so a browser that outlives it is a process the
+	 * {@code max-concurrent-sessions} cap no longer counts.
+	 * </p>
+	 */
 	void close() {
+		close(GRACEFUL_CLOSE_TIMEOUT_MILLIS);
+	}
+
+	/**
+	 * {@link #close()} with an explicit budget for the graceful, API-level teardown.
+	 *
+	 * <p>
+	 * Package-visible so the broken-session path can be exercised in a test without waiting out the
+	 * production budget; production always uses {@link #GRACEFUL_CLOSE_TIMEOUT_MILLIS}.
+	 * </p>
+	 *
+	 * @param gracefulTimeoutMillis
+	 *        How long the orderly close on the session thread is given before the process tree is
+	 *        destroyed instead.
+	 */
+	synchronized void close(long gracefulTimeoutMillis) {
+		if (_closed) {
+			// Idempotent: a second call has nothing left to close, and must not report the already
+			// released driver handle as one that could never be identified.
+			return;
+		}
+		_closed = true;
+		boolean closedCleanly = false;
 		try {
 			// Give teardown its own bounded task so a wedged page can't hang shutdown forever.
 			Future<Void> closed = _executor.submit(() -> {
@@ -1533,7 +1637,8 @@ final class BrowserSession {
 				return null;
 			});
 			try {
-				closed.get(30_000L, TimeUnit.MILLISECONDS);
+				closed.get(gracefulTimeoutMillis, TimeUnit.MILLISECONDS);
+				closedCleanly = true;
 			} catch (TimeoutException | ExecutionException | InterruptedException ex) {
 				if (ex instanceof InterruptedException) {
 					Thread.currentThread().interrupt();
@@ -1545,6 +1650,102 @@ final class BrowserSession {
 		} finally {
 			_executor.shutdownNow();
 		}
+		// Last resort, and the whole point of retaining the handle: the teardown above runs on the
+		// SESSION thread, which is precisely the thread that is wedged whenever a
+		// BrowserSessionBrokenException was raised. Its task then never ran, shutdownNow() dropped it,
+		// and nothing has closed the browser. Destroy the process tree from HERE - the pool's teardown
+		// thread - so no Chromium survives a session the pool has already written off.
+		destroyDriverProcessTree(closedCleanly);
+	}
+
+	/**
+	 * Destroys the driver process and everything below it (the Chromium browser process and its
+	 * renderers), unless it is already gone.
+	 *
+	 * <p>
+	 * On the clean path this is a no-op: {@code Playwright.close()} waits for the driver to exit, so
+	 * there is nothing left alive. It is only reached for real when the orderly teardown could not
+	 * run, which is why surviving processes are logged as an error rather than silently reaped - an
+	 * operator seeing this repeatedly is seeing sessions wedge.
+	 * </p>
+	 *
+	 * @param closedCleanly
+	 *        Whether the API-level teardown completed; only used to phrase the log.
+	 */
+	private void destroyDriverProcessTree(boolean closedCleanly) {
+		ProcessHandle driver = _driverProcess;
+		_driverProcess = null;
+		if (driver == null || !driver.isAlive()) {
+			if (driver == null && !closedCleanly) {
+				Logger.error("Browser session " + _key + " could not be closed and its driver process was "
+					+ "never identified, so its Chromium may survive this session. Check for a Playwright "
+					+ "version change breaking driver-process detection.", BrowserSession.class);
+			}
+			return;
+		}
+		// Snapshot the descendants BEFORE killing anything: once the driver dies its children are
+		// reparented and would no longer be reachable from this handle.
+		List<ProcessHandle> tree = new ArrayList<>(driver.descendants().toList());
+		tree.add(driver);
+		Logger.error("Browser session " + _key + " did not shut down through Playwright"
+			+ (closedCleanly ? " completely" : " (its session thread is unresponsive)")
+			+ "; destroying its driver process and " + (tree.size() - 1)
+			+ " descendant process(es) so no browser outlives the session.", BrowserSession.class);
+		tree.forEach(ProcessHandle::destroy);
+		awaitExit(tree);
+		for (ProcessHandle process : tree) {
+			if (process.isAlive()) {
+				process.destroyForcibly();
+			}
+		}
+	}
+
+	/** Waits at most {@link #PROCESS_TERMINATION_GRACE_MILLIS} for every process to have exited. */
+	private static void awaitExit(List<ProcessHandle> processes) {
+		CompletableFuture<?>[] exits =
+			processes.stream().map(ProcessHandle::onExit).toArray(CompletableFuture[]::new);
+		try {
+			CompletableFuture.allOf(exits).get(PROCESS_TERMINATION_GRACE_MILLIS, TimeUnit.MILLISECONDS);
+		} catch (TimeoutException | ExecutionException ex) {
+			// Whatever is still alive is killed forcibly by the caller.
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+	}
+
+	/**
+	 * The OS handle of the {@code node} driver process behind {@code playwright}.
+	 *
+	 * <p>
+	 * Read reflectively because the Java client exposes no accessor for it: {@code PlaywrightImpl}
+	 * keeps the {@link Process} it spawned in a private field and offers only {@code close()}, which
+	 * is exactly the call that is unavailable once the owning thread has wedged. There is no
+	 * supported alternative - inferring the process from {@code ProcessHandle.current().children()}
+	 * would be a guess, and guessing wrong means destroying an unrelated process, which is far worse
+	 * than the leak this closes. A failure to read the field is therefore reported and tolerated
+	 * (the session still works; only the last-resort teardown is unavailable) rather than fatal.
+	 * </p>
+	 *
+	 * @param playwright
+	 *        The freshly created Playwright instance.
+	 * @return The driver's process handle, or {@code null} when it could not be determined.
+	 */
+	private static ProcessHandle driverProcessOf(Playwright playwright) {
+		try {
+			Field field = playwright.getClass().getDeclaredField(DRIVER_PROCESS_FIELD);
+			field.setAccessible(true);
+			Object value = field.get(playwright);
+			if (value instanceof Process process) {
+				return process.toHandle();
+			}
+			Logger.warn("The Playwright driver process could not be identified: field '"
+				+ DRIVER_PROCESS_FIELD + "' does not hold a Process. A wedged browser session cannot be "
+				+ "force-terminated.", BrowserSession.class);
+		} catch (ReflectiveOperationException | RuntimeException ex) {
+			Logger.warn("The Playwright driver process could not be identified. A wedged browser session "
+				+ "cannot be force-terminated.", ex, BrowserSession.class);
+		}
+		return null;
 	}
 
 	private static void closeQuietly(AutoCloseable closeable) {

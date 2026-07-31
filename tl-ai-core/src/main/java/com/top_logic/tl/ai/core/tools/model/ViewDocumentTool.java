@@ -37,7 +37,7 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  * stored bytes and brings them to the model in the right modality: images and PDFs ride along in the
  * tool result as multimodal content (so a vision-capable model actually <em>sees</em> them), text is
  * returned inline, and anything else produces a plain explanation. It is not tied to any particular
- * type — a browser screenshot, an uploaded invoice PDF and an attached CSV all go through the same
+ * type - a browser screenshot, an uploaded invoice PDF and an attached CSV all go through the same
  * path.
  * </p>
  *

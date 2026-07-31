@@ -380,7 +380,7 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		 * windowless) that evasion also depends on - the light {@code chrome-headless-shell} is itself
 		 * a fingerprint some bot walls suppress content for, even when the UA and
 		 * {@code navigator.webdriver} are masked - is launched for every session regardless of this
-		 * setting, because it is what allows WebRTC's UDP egress to be turned off. See
+		 * setting, because it is what allows the UDP egress of {@code WebRTC} to be turned off. See
 		 * {@code BrowserSession.buildLaunchOptions}, including the deployment prerequisite that
 		 * carries.
 		 * </p>

@@ -108,8 +108,8 @@ public class ReactSwitchControl extends ReactControl implements ModelListener {
 		_input.addListener(_inputListener);
 		addCleanupAction(() -> _input.removeListener(_inputListener));
 
-		addBeforeWriteAction(this::attachModelListeners);
-		addCleanupAction(this::detachModelListeners);
+		addAttachListener(this::attachModelListeners);
+		addDetachListener(this::detachModelListeners);
 
 		renderActive();
 	}

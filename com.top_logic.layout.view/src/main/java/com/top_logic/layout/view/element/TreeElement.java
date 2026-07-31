@@ -328,11 +328,11 @@ public class TreeElement implements UIElement {
 			inputChannels
 		);
 
-		// 8. Lazy attach on render, cleanup on dispose.
-		treeControl.addBeforeWriteAction(() -> {
+		// 8. Observe the model only while the tree is displayed.
+		treeControl.addAttachListener(() -> {
 			observableModel.attach(context.getModelScope());
 		});
-		treeControl.addCleanupAction(observableModel::detach);
+		treeControl.addDetachListener(observableModel::detach);
 
 		return treeControl;
 	}

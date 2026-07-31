@@ -155,9 +155,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private RowSourceObserver<TLObject> _observer;
 
-	/** Whether the first client write happened (the point from which observers attach directly). */
-	private boolean _written;
-
 	/** Guard breaking the notification cycle between selection channel and table selection. */
 	private boolean _applyingFromChannel;
 
@@ -195,11 +192,23 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		putState(ERROR_ICON,
 			com.top_logic.layout.react.control.layout.Icons.VALIDATION_ERROR.resolve().toEncodedForm());
+	}
 
-		addBeforeWriteAction(() -> {
-			_written = true;
-			attachObserver();
-		});
+	@Override
+	protected void onAttach() {
+		super.onAttach();
+		attachObserver();
+	}
+
+	@Override
+	protected void onDetach() {
+		// Pause the observer rather than dropping it: the table keeps its rows while it is not
+		// displayed, and becoming displayed again resumes observing. Dropping it is reserved for a
+		// table rebuild and for disposal, where a new observer is created (or none at all).
+		if (_observer != null) {
+			_observer.detach();
+		}
+		super.onDetach();
 	}
 
 	/**
@@ -410,7 +419,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 					table.refreshData();
 					reapplySelectionFromChannel();
 				});
-			if (_written) {
+			if (isAttached()) {
 				attachObserver();
 			}
 		}

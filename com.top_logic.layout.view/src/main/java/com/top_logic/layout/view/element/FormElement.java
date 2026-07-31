@@ -455,7 +455,7 @@ public class FormElement extends ContainerElement {
 
 		contributeWhileDisplayed(formControl, scope, models);
 
-		formControl.addBeforeWriteAction(() -> {
+		formControl.addAttachListener(() -> {
 			for (CommandModel model : models) {
 				if (model instanceof FormScopedCommandModel) {
 					((FormScopedCommandModel) model).getInner().attach();
@@ -463,7 +463,7 @@ public class FormElement extends ContainerElement {
 			}
 			formControl.addFormModelListener(validityListener);
 		});
-		formControl.addCleanupAction(() -> {
+		formControl.addDetachListener(() -> {
 			formControl.removeFormModelListener(validityListener);
 			for (CommandModel model : models) {
 				if (model instanceof FormScopedCommandModel) {
@@ -584,12 +584,12 @@ public class FormElement extends ContainerElement {
 
 		contributeWhileDisplayed(formControl, scope, models);
 
-		formControl.addBeforeWriteAction(() -> {
+		formControl.addAttachListener(() -> {
 			for (FormCommandModel model : models) {
 				model.attach();
 			}
 		});
-		formControl.addCleanupAction(() -> {
+		formControl.addDetachListener(() -> {
 			for (FormCommandModel model : models) {
 				model.detach();
 			}

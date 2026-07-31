@@ -111,7 +111,10 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	 * Registers listeners on the given {@link ModelScope} and input channels.
 	 *
 	 * <p>
-	 * Called lazily on first render (via {@code addBeforeWriteAction}).
+	 * Called while the tree is displayed (via
+	 * {@link com.top_logic.layout.react.control.ReactControl#addAttachListener(Runnable)}), and
+	 * undone by {@link #detach()} when it stops being displayed. Idempotent, so an attach/detach
+	 * cycle registers the listeners exactly once each time.
 	 * </p>
 	 */
 	public void attach(ModelScope scope) {

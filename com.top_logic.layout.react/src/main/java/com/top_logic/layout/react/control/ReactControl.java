@@ -148,8 +148,6 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 
 	private List<Runnable> _cleanupActions;
 
-	private List<Runnable> _beforeWriteActions;
-
 	/**
 	 * Creates a new {@link ReactControl}.
 	 *
@@ -631,18 +629,21 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * Hook called before the control is rendered.
 	 *
 	 * <p>
-	 * Subclasses override to perform initialization that must happen before rendering, such as
-	 * registering model listeners or rebuilding state caches. Scoped resources installed here can be
+	 * Subclasses override to prepare what the rendering needs, e.g. to lazily create the child that
+	 * is about to be serialized or to rebuild a state cache. Scoped resources installed here can be
 	 * cleaned up in {@link #onAfterWrite()}.
+	 * </p>
+	 *
+	 * <p>
+	 * Not the place to register model listeners: rendering happens whenever the client needs the
+	 * state again, while listeners belong to the span in which the control is displayed - see
+	 * {@link #addAttachListener(Runnable)} and {@link #addDetachListener(Runnable)}.
 	 * </p>
 	 *
 	 * @see #onAfterWrite()
 	 */
 	protected void onBeforeWrite() {
-		if (_beforeWriteActions != null) {
-			_beforeWriteActions.forEach(Runnable::run);
-			_beforeWriteActions = null;
-		}
+		// Default: nothing to prepare.
 	}
 
 	/**
@@ -686,25 +687,6 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			_cleanupActions = new ArrayList<>();
 		}
 		_cleanupActions.add(action);
-	}
-
-	/**
-	 * Registers an action to run once before this control is first rendered.
-	 *
-	 * <p>
-	 * Use this to defer resource-intensive setup (e.g. registering model listeners) until the
-	 * control is actually displayed. Actions run during {@link #onBeforeWrite()} and are
-	 * discarded afterwards.
-	 * </p>
-	 *
-	 * @param action
-	 *        The action to run before first render.
-	 */
-	public void addBeforeWriteAction(Runnable action) {
-		if (_beforeWriteActions == null) {
-			_beforeWriteActions = new ArrayList<>();
-		}
-		_beforeWriteActions.add(action);
 	}
 
 	/**

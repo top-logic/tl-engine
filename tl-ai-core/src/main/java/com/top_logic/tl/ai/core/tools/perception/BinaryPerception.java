@@ -12,6 +12,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.Base64;
 import java.util.Locale;
 
+import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.ToolContent;
 
 /**
@@ -19,10 +20,12 @@ import com.top_logic.tl.ai.tool.api.ToolContent;
  *
  * <p>
  * Dispatches on content type: images and PDFs become {@link ToolContent} attachments the calling
- * tool hands back inside its own result, text is returned inline as plain text, and anything else
- * produces a plain explanation. Nothing here touches the knowledge base or the agent loop, which
- * keeps the whole decision testable in isolation.
+ * tool hands back inside its own result, text is returned inline inside the
+ * {@link UntrustedEnvelope untrusted-content envelope}, and anything else produces a plain
+ * explanation. Nothing here touches the knowledge base or the agent loop, which keeps the whole
+ * decision testable in isolation.
  * </p>
+ *
  *
  * @see com.top_logic.tl.ai.core.tools.model.ViewDocumentTool
  */
@@ -99,14 +102,22 @@ public final class BinaryPerception {
 			null);
 	}
 
+	/**
+	 * Returns the document's text inline, inside the untrusted-content envelope.
+	 *
+	 * <p>
+	 * A stored document is as attacker-controlled as a web page: an upload, a saved download or a
+	 * mail attachment is written by whoever supplied it, and it lands in the model's context verbatim.
+	 * It therefore gets the same barrier as every browser verb, from the same
+	 * {@link UntrustedEnvelope} - the content cannot close it, so instructions hidden in a document
+	 * cannot escape into the model's instruction channel.
+	 * </p>
+	 */
 	private static Plan planText(String label, byte[] data, String contentType) {
 		String text = new String(data, charsetOf(contentType));
-		if (text.length() > MAX_TEXT_CHARS) {
-			text = text.substring(0, MAX_TEXT_CHARS)
-				+ "\n[... truncated, " + (text.length() - MAX_TEXT_CHARS) + " more characters ...]";
-		}
+		String body = UntrustedEnvelope.DOCUMENT_CONTENT.wrap(label, text, MAX_TEXT_CHARS);
 		return new Plan("Content of " + label + " (" + contentType + ", " + data.length
-			+ " bytes):\n\n" + text, null);
+			+ " bytes):\n\n" + body, null);
 	}
 
 	private static Plan planImage(String label, byte[] data, String contentType,

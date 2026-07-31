@@ -108,10 +108,10 @@ public class SlotPlaceholderControl extends ReactControl implements SlotPlacehol
 	// attach/detach/cleanup lifecycle. The placeholder only borrows them for rendering.
 
 	/**
-	 * Structural: this control is a slot placeholder and is elided from the headless agent projection.
+	 * Structural: this control is a slot placeholder and is elided from the headless projection.
 	 */
 	@Override
-	public boolean agentTransparent() {
+	public boolean scriptingTransparent() {
 		return true;
 	}
 }

@@ -32,7 +32,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.I18NConstants;
-import com.top_logic.layout.react.control.AgentModelKey;
+import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
@@ -431,13 +431,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * </p>
 	 */
 	@Override
-	public Map<String, Object> agentScalarState() {
-		Map<String, Object> result = super.agentScalarState();
-		result.put("rows", agentRows());
+	public Map<String, Object> scriptingScalarState() {
+		Map<String, Object> result = super.scriptingScalarState();
+		result.put("rows", scriptingRows());
 		return result;
 	}
 
-	private List<Map<String, Object>> agentRows() {
+	private List<Map<String, Object>> scriptingRows() {
 		int maxRows = 100;
 		int total = _view.rowCount();
 		int start = Math.max(0, Math.min(_viewportStart, total));
@@ -452,7 +452,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			rowState.put(ARG_ROW_INDEX, Integer.valueOf(index));
 			rowState.put("selected", Boolean.valueOf(_selectedKeys.contains(row.key())));
-			Object key = AgentModelKey.toKey(null, row.data());
+			Object key = ScriptingModelKey.toKey(null, row.data());
 			if (key != null) {
 				rowState.put(ARG_KEY, key);
 			}
@@ -713,7 +713,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	/**
-	 * Selects the single row whose business object is named by the given {@link AgentModelKey key} —
+	 * Selects the single row whose business object is named by the given {@link ScriptingModelKey key} —
 	 * the replay-stable counterpart of {@link #handleSelect} by {@link #ARG_ROW_INDEX}, which a
 	 * recorded selection is captured as so it survives sorting, filtering and a fresh session.
 	 *
@@ -785,7 +785,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				&& !Boolean.TRUE.equals(arguments.get(ARG_SHIFT_KEY))) {
 			List<Row<R>> single = _view.rows(rowIndex.intValue(), rowIndex.intValue() + 1);
 			if (!single.isEmpty()) {
-				ModelName key = AgentModelKey.name(null, single.get(0).data());
+				ModelName key = ScriptingModelKey.name(null, single.get(0).data());
 				if (key != null) {
 					SelectByKeyArguments recorded = TypedConfiguration.newConfigItem(SelectByKeyArguments.class);
 					recorded.setName(CMD_SELECT_BY_KEY);

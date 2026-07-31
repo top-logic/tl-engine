@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control.button;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -222,9 +223,18 @@ public class ReactButtonControl extends ReactControl {
 
 	/**
 	 * Handles the click command from the React client.
+	 *
+	 * <p>
+	 * A button that is not offered — hidden or disabled — is not pressed, whatever the client
+	 * sends. The {@link CommandModel} behind the button decides; a model that grants execution
+	 * unconditionally keeps its behavior.
+	 * </p>
 	 */
 	@ReactCommandHandler(CMD_CLICK)
 	HandlerResult handleClick(ReactContext context) {
+		if (_model != null && (!_model.isVisible() || !_model.isExecutable())) {
+			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+		}
 		return _action.execute(context);
 	}
 
@@ -258,10 +268,10 @@ public class ReactButtonControl extends ReactControl {
 
 
 	/**
-	 * Rendering-only state keys, omitted from the headless agent projection.
+	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override
-	protected java.util.Set<String> agentPresentationKeys() {
+	protected java.util.Set<String> scriptingPresentationKeys() {
 		return java.util.Set.of("appearance", "size", "keyGesture", "image");
 	}
 }

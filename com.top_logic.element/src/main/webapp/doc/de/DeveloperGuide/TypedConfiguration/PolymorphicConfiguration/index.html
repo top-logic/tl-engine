@@ -6,19 +6,21 @@
 </ul>
 <p>Im folgenden Beispiel deklariert eine abstrakte konfigurierbare Komponente <code class="hljs inlineCode">Component</code> ein Konfigurationsinterface <code class="hljs inlineCode">Component.Config</code>, und referenziert dieses in ihrem Konfigurationskonstruktor. Für den Komponentennamen und den Namen des Konfigurationsinterfaces gibt es keine Einschränkungen.</p>
 <pre><code class="language-java">public abstract class Component {
-   public interface Config extends PolymorphicConfiguration&lt;Component&gt; {
+   public interface Config&lt;I extends Component&gt; extends PolymorphicConfiguration&lt;I&gt; {
       int getOption();
    }
 
    /** Konfigurationskonstruktor */
-   Component(InstantiationContext context, Config config) {
+   Component(InstantiationContext context, Config&lt;?&gt; config) {
       ...
    }
 }
 </code></pre>
+<p>Der Typparameter von <code class="hljs inlineCode">PolymorphicConfiguration</code> benennt den Typ, der aus der Konfiguration instanziiert wird, und aus der Schranke dieses Parameters wird der Defaultwert des Properties <code class="hljs inlineCode">class</code> abgeleitet. Deshalb bindet das Konfigurationsinterface eines Basistyps den Parameter nicht, sondern hält ihn offen und schränkt ihn auf diesen Basistyp ein; erst das Konfigurationsinterface einer konkreten Implementierungsklasse bindet ihn auf diese Klasse. Das Binden des Parameters ist die Art, in der eine Konfiguration ihre Implementierungsklasse angibt; ein abgeleitetes Konfigurationsinterface deklariert das Property <code class="hljs inlineCode">class</code> deshalb nicht erneut.</p>
+<p>Bindet ein Basisinterface den Typparameter dagegen selbst, bleibt einer Spezialisierung nichts mehr zu binden. Jede Spezialisierung muss das Property <code class="hljs inlineCode">class</code> dann erneut deklarieren und mit <code class="hljs inlineCode">@ClassDefault</code> annotieren — andernfalls ist bei der Verwendung über den Tag-Namen nur der Konfigurationstyp bekannt, nicht aber die Implementierungsklasse. Genau diese Wiederholungen entfallen, wenn der Parameter offen bleibt.</p>
 <p>Die konkrete Ableitung <code class="hljs inlineCode">MyComponent1</code> verwendet dieselben (geerbten) Konfigurationsoptionen (liefert lediglich einen Implementierungsanteil):</p>
 <pre><code class="language-java">public class MyComponent1 extends Component {
-   MyComponent1(InstantiationContext context, Config config) {
+   MyComponent1(InstantiationContext context, Config&lt;?&gt; config) {
       ...
    }
 }
@@ -30,7 +32,7 @@
 </code></pre>
 <p><code class="hljs inlineCode">MyComponent2</code> deklariert ein spezialisiertes Konfigurationsinterface und erlaubt damit neben der Konfigurationsoption <code class="hljs inlineCode">option</code> aus <code class="hljs inlineCode">Component</code> die zusätzliche Option <code class="hljs inlineCode">other-option</code>:</p>
 <pre><code class="language-java">public class MyComponent2 extends Component {
-   public interface Config extends Component.Config {
+   public interface Config extends Component.Config&lt;MyComponent2&gt; {
       String getOtherOption();
    }
 
@@ -46,3 +48,4 @@
 /&gt;
 </code></pre>
 <p>Die Kombination der Implementierungsklasse <code class="hljs inlineCode">MyComponent1</code> mit der Konfigurationsoption <code class="hljs inlineCode">other-option</code> würde als Konfiguationsfehler erkannt werden.</p>
+<p>Eine konfigurierbare Komponente leitet von <code class="hljs inlineCode">AbstractConfiguredInstance</code> ab und übergibt ihre Konfiguration an den Basiskonstruktor. Sie ist damit ein <code class="hljs inlineCode">ConfiguredInstance</code>, und die Konfiguration, aus der eine Instanz gebaut wurde, bleibt an der Instanz lesbar — etwa für den Konfigurationseditor, der sie anzeigt, oder für Code, der eine Variante davon ableitet. Ein Konfigurationskonstruktor, der die Konfiguration entgegennimmt und verwirft, nimmt der Instanz diese Auskunft.</p>

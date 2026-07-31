@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.AgentControl;
+import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
@@ -291,9 +291,9 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	 * content addresses encode which tab they belong to.
 	 */
 	@Override
-	public String agentChildSlot(ReactControl child) {
+	public String scriptingChildSlot(ReactControl child) {
 		if (child == getState(ACTIVE_CONTENT)) {
-			return AgentControl.slotSegment("tab", _activeTabId);
+			return ScriptingControl.slotSegment("tab", _activeTabId);
 		}
 		return null;
 	}

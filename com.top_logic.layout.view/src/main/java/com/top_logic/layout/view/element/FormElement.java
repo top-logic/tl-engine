@@ -18,6 +18,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -101,6 +102,9 @@ public class FormElement extends ContainerElement {
 
 		/** Configuration name for {@link #getCommands()}. */
 		String COMMANDS = "commands";
+
+		/** Configuration name for {@link #getEditExecutability()}. */
+		String EDIT_EXECUTABILITY = "edit-executability";
 
 		/** Configuration name for {@link #getSaveActions()}. */
 		String SAVE_ACTIONS = "save-action";
@@ -214,6 +218,27 @@ public class FormElement extends ContainerElement {
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 
 		/**
+		 * Rules deciding whether this form offers editing its object.
+		 *
+		 * <p>
+		 * Guards the transition into edit mode, wherever it is triggered: the Edit button is
+		 * disabled or hidden according to the rules, and the form refuses the transition when a
+		 * client requests it nonetheless. The remaining lifecycle commands (apply, save, cancel)
+		 * are reachable only from within an edit session and are therefore guarded through it.
+		 * </p>
+		 *
+		 * <p>
+		 * A {@link com.top_logic.layout.view.security.SecurityRule} checks the user's roles for a
+		 * command group on the enclosing security scope; a
+		 * {@link com.top_logic.layout.view.command.VisibleIf} evaluates a script predicate over the
+		 * displayed object. Without a rule, every user who sees the form may edit it.
+		 * </p>
+		 */
+		@Name(EDIT_EXECUTABILITY)
+		@EntryTag("rule")
+		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getEditExecutability();
+
+		/**
 		 * Optional action chain to execute on save instead of the default behavior.
 		 *
 		 * <p>
@@ -324,8 +349,9 @@ public class FormElement extends ContainerElement {
 		// 4. Create FormControl with initial object.
 		FormControl formControl = new FormControl(context, initialObject, noModelMessage, _lockHandler);
 
-		// 5. Wire channels.
+		// 5. Wire channels and the edit guard.
 		formControl.setInputChannel(inputChannel);
+		formControl.setEditRule(ViewExecutabilityRules.build(_config.getEditExecutability(), context));
 
 		ChannelRef editModeRef = _config.getEditMode();
 		if (editModeRef != null) {

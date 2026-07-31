@@ -28,7 +28,7 @@ import com.top_logic.model.listen.ModelScope;
  * <p>
  * A {@code valueChanged} dispatched by the browser client is not echoed back — the client holds
  * the value optimistically, and a late echo would overwrite newer keystrokes. The same command
- * dispatched programmatically (script replay, headless agent) must be pushed, since no browser
+ * dispatched programmatically (script replay, headless interface) must be pushed, since no browser
  * has anticipated it. In both cases the server-side state must reflect the applied value, so
  * later renders and agent observations see it.
  * </p>

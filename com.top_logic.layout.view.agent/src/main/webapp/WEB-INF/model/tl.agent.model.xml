@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.agent">
+		<!--
+			An access token lets an agent outside the browser drive the session its owner issued it
+			from. Only the hash of the secret is stored, so the token cannot be recovered from the
+			database; the plain secret is shown to the owner exactly once, when the token is issued.
+			Withdrawing a token deletes it: a token that no longer admits anyone has no further use,
+			and its secret cannot be recovered to revive it.
+		-->
+		<class name="AccessToken">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="owner"
+					type="tl.accounts:Person"
+				/>
+				<property name="tokenId"
+					type="tl.core:String"
+				/>
+				<property name="label"
+					type="tl.core:String"
+				/>
+				<property name="secretHash"
+					type="tl.core:String"
+				/>
+				<property name="mayAct"
+					type="tl.core:Boolean"
+				/>
+				<property name="sessionKey"
+					type="tl.core:String"
+				/>
+				<property name="issued"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<format>
+							<date-time
+								date-style="SHORT"
+								time-style="SHORT"
+							/>
+						</format>
+					</annotations>
+				</property>
+				<property name="expires"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<format>
+							<date-time
+								date-style="SHORT"
+								time-style="SHORT"
+							/>
+						</format>
+					</annotations>
+				</property>
+				<property name="lastUsed"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<format>
+							<date-time
+								date-style="SHORT"
+								time-style="SHORT"
+							/>
+						</format>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type holding the input of the "new access token" form. Instances are
+			created with new(`tl.agent:NewAccessToken`, transient: true) and never persisted; the
+			issue action creates the token from these values and returns the plain secret, which the
+			dialog displays the one time it is readable.
+		-->
+		<class name="NewAccessToken">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="label"
+					type="tl.core:String"
+				/>
+				<property name="validHours"
+					type="tl.core:Integer"
+				/>
+				<property name="mayAct"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+		<!--
+			Transient-only type carrying a freshly issued invitation from the issue action to the
+			dialog that displays it. Never persisted: the token itself is stored as a hash, and this
+			instance holds the plain invitation only for as long as it is shown.
+		-->
+		<class name="IssuedAccessToken">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="invitation"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -64,9 +64,9 @@ import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
-import com.top_logic.layout.react.headless.AgentSession;
-import com.top_logic.layout.react.headless.ReactWindowReplay;
-import com.top_logic.layout.react.headless.ScriptRecorder;
+import com.top_logic.layout.react.scripting.ScriptingSession;
+import com.top_logic.layout.react.scripting.ReactWindowReplay;
+import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.protocol.Property;
@@ -496,7 +496,7 @@ public class ReactServlet extends TopLogicServlet {
 	 * the window's {@link ScriptRecorder} is active.
 	 *
 	 * <p>
-	 * The target control is translated to its stable semantic {@link AgentSession#addressOf(ReactControl)
+	 * The target control is translated to its stable semantic {@link ScriptingSession#addressOf(ReactControl)
 	 * address}; a control that is not in the visible projection (e.g. a table cell sub-control) records
 	 * with a {@code null} address rather than failing the command.
 	 * </p>
@@ -514,7 +514,7 @@ public class ReactServlet extends TopLogicServlet {
 		// Let the control rewrite session-bound arguments (e.g. option ids → business keys) into a
 		// replay-stable typed item before capture.
 		RecordedCommand recorded = reactControl.recordCommand(commandName, arguments);
-		recorded.command().setAddress(AgentSession.forRoot(queue.getRootControl()).addressOf(reactControl));
+		recorded.command().setAddress(ScriptingSession.forRoot(queue.getRootControl()).addressOf(reactControl));
 		recorder.record(recorded.command(), recorded.coalescing());
 	}
 

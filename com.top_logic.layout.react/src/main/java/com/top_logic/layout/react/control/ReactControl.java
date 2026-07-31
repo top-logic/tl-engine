@@ -61,7 +61,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * {@code child.write(context, out)} in traditional controls.
  * </p>
  */
-public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
+public class ReactControl implements HTMLFragment, IReactControl, ScriptingControl {
 
 	/** State key for whether the control is hidden on the client. */
 	private static final String HIDDEN = "hidden";
@@ -125,7 +125,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 
 	/**
 	 * Whether the currently executing command was dispatched by the browser client (via
-	 * {@link #executeClientCommand(String, Map)}), as opposed to programmatically (headless agent,
+	 * {@link #executeClientCommand(String, Map)}), as opposed to programmatically (headless interface,
 	 * script replay, server-side code).
 	 */
 	private boolean _clientDispatch;
@@ -298,22 +298,22 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	@Override
-	public boolean agentTransparent() {
+	public boolean scriptingTransparent() {
 		return false;
 	}
 
 	@Override
-	public String agentName() {
+	public String scriptingName() {
 		return null;
 	}
 
 	@Override
-	public String agentRole() {
+	public String scriptingRole() {
 		return null;
 	}
 
 	@Override
-	public String agentChildSlot(ReactControl child) {
+	public String scriptingChildSlot(ReactControl child) {
 		return null;
 	}
 
@@ -326,7 +326,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 *           calls.
 	 */
 	@Override
-	public List<ReactControl> agentChildren() {
+	public List<ReactControl> scriptingChildren() {
 		List<ReactControl> result = new ArrayList<>();
 		_reactState.entrySet().stream()
 			.sorted(Map.Entry.comparingByKey())
@@ -349,8 +349,8 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	@Override
-	public Map<String, Object> agentScalarState() {
-		Set<String> presentation = agentPresentationKeys();
+	public Map<String, Object> scriptingScalarState() {
+		Set<String> presentation = scriptingPresentationKeys();
 		Map<String, Object> result = new LinkedHashMap<>();
 		_reactState.entrySet().stream()
 			.sorted(Map.Entry.comparingByKey())
@@ -374,8 +374,8 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	/**
-	 * The names of state keys this control sets for rendering only, which the headless agent
-	 * projection omits from {@link #agentScalarState()}.
+	 * The names of state keys this control sets for rendering only, which the headless interface
+	 * projection omits from {@link #scriptingScalarState()}.
 	 *
 	 * <p>
 	 * Presentation properties (padding, variant, size, css class, …) carry no task-level meaning for
@@ -386,7 +386,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 *
 	 * @return The rendering-only state keys; empty by default.
 	 */
-	protected Set<String> agentPresentationKeys() {
+	protected Set<String> scriptingPresentationKeys() {
 		return Set.of();
 	}
 
@@ -396,13 +396,13 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * projection omits from a node's advertised actions.
 	 *
 	 * <p>
-	 * Like {@link #agentPresentationKeys()}, each control declares its own; the projector subtracts
+	 * Like {@link #scriptingPresentationKeys()}, each control declares its own; the projector subtracts
 	 * these from the {@link #commandNames() command set} without switching on control types.
 	 * </p>
 	 *
 	 * @return The chrome command names; empty by default.
 	 */
-	protected Set<String> agentHiddenCommands() {
+	protected Set<String> scriptingHiddenCommands() {
 		return Set.of();
 	}
 
@@ -411,7 +411,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * (scrolling, column resizing) or chrome, not meaningful user intent worth replaying.
 	 *
 	 * <p>
-	 * Defaults to the {@link #agentHiddenCommands() chrome commands} — what is not advertised to an
+	 * Defaults to the {@link #scriptingHiddenCommands() chrome commands} — what is not advertised to an
 	 * agent is also not recorded. A control with transient view-only commands adds them (typically
 	 * unioning with {@code super.nonRecordableCommands()}).
 	 * </p>
@@ -425,11 +425,11 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	/**
 	 * The commands omitted from the agent action space and never recorded: the union of the
 	 * {@link ReactCommandHandler#technical() technical}-flagged commands (co-located on the handler) and the
-	 * manually declared {@link #agentHiddenCommands() chrome commands}.
+	 * manually declared {@link #scriptingHiddenCommands() chrome commands}.
 	 */
 	private Set<String> effectiveChromeCommands() {
 		Set<String> technical = COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).technicalCommands();
-		Set<String> manual = agentHiddenCommands();
+		Set<String> manual = scriptingHiddenCommands();
 		if (technical.isEmpty()) {
 			return manual;
 		}
@@ -453,7 +453,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	@Override
-	public Set<String> agentCommands() {
+	public Set<String> scriptingCommands() {
 		Set<String> hidden = effectiveChromeCommands();
 		if (hidden.isEmpty()) {
 			return commandNames();
@@ -464,12 +464,12 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	@Override
-	public ReactParam[] agentCommandParams(String command) {
+	public ReactParam[] scriptingCommandParams(String command) {
 		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).paramsFor(command);
 	}
 
 	@Override
-	public ConfigurationDescriptor agentCommandArgsType(String command) {
+	public ConfigurationDescriptor scriptingCommandArgsType(String command) {
 		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).argTypeFor(command);
 	}
 
@@ -518,7 +518,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 
 	/**
 	 * The typed {@link ReactCommand} item representing a dispatch of the given command on this
-	 * control: the arguments bound into the command's {@link #agentCommandArgsType(String) argument
+	 * control: the arguments bound into the command's {@link #scriptingCommandArgsType(String) argument
 	 * interface} (a bare {@link ReactCommand} for argument-less commands), with the {@link
 	 * ReactCommand#getName() command name} set.
 	 *
@@ -530,7 +530,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 *         servlet fills it in).
 	 */
 	public final ReactCommand commandItem(String command, Map<String, Object> arguments) {
-		ConfigurationDescriptor argType = agentCommandArgsType(command);
+		ConfigurationDescriptor argType = scriptingCommandArgsType(command);
 		ReactCommand item;
 		if (argType != null) {
 			try {
@@ -761,7 +761,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 *
 	 * <p>
 	 * The client-already-holds assumption is only valid for commands the browser itself
-	 * dispatched. When the same handler runs programmatically (script replay, headless agent), the
+	 * dispatched. When the same handler runs programmatically (script replay, headless interface), the
 	 * framework corrects the omission by resending the control's state after the command — see
 	 * {@link #executeCommand(String, Map)}. Handlers need not distinguish the two cases.
 	 * </p>

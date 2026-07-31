@@ -14,7 +14,6 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
@@ -63,9 +62,7 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 	}
 
 	@Override
-	@ReactCommandHandler(CMD_VALUE_CHANGED)
-	void handleValueChanged(FieldValueArguments args) {
-		Object rawValue = args.getValue();
+	protected void applyRawClientValue(Object rawValue) {
 		FieldModel model = getFieldModel();
 
 		AbstractFieldModel abstractModel =

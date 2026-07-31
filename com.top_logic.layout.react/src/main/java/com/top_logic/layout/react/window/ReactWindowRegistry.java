@@ -281,6 +281,22 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
+	 * The entry representing the given browser window, created on first sight.
+	 *
+	 * <p>
+	 * Unlike {@link #openWindow(ReactContext, WindowOptions)}, this is for a window the browser opened
+	 * by itself - a tab the user navigated to. Such a window has no opener, no display options and no
+	 * control provider, but it holds the same per-window state as any other: the tree it currently
+	 * displays, which {@link #windowUnloaded(String)} detaches and {@link #windowClosed(String)}
+	 * disposes.
+	 * </p>
+	 */
+	public WindowEntry getOrCreateWindow(String windowId) {
+		return _windows.computeIfAbsent(windowId,
+			id -> new WindowEntry(id, null, new WindowOptions(), null));
+	}
+
+	/**
 	 * Called when a window is closed (either by the user or programmatically).
 	 * Invokes the close callback (if any), then cleans up the control tree and removes the entry.
 	 */
@@ -342,6 +358,17 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			return;
 		}
 		_unloaded.put(windowId, Long.valueOf(System.currentTimeMillis()));
+
+		// Nothing is displayed until the page comes back, so the tree stops observing the model. It
+		// re-attaches by being rendered again; a page that does not come back is collected by
+		// sweepUnloadedWindows().
+		WindowEntry entry = _windows.get(windowId);
+		if (entry != null) {
+			ReactControl rootControl = entry.getRootControl();
+			if (rootControl != null) {
+				rootControl.detach();
+			}
+		}
 	}
 
 	/**

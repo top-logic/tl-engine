@@ -121,10 +121,19 @@ public class TestBrowserPolicyRecheck extends TestCase {
 	}
 
 	/**
-	 * A snapshot of a page that did <b>not</b> misbehave is unaffected, and a hop is reported once
-	 * rather than poisoning every later snapshot of a page the session is legitimately on.
+	 * A snapshot of a page that did <b>not</b> misbehave is unaffected, and a refused hop is reported
+	 * once rather than on every later snapshot.
+	 *
+	 * <p>
+	 * Reporting it repeatedly is the failure mode that consuming the record avoids, and there is no way
+	 * back to the page for the second snapshot to return either: aborting a main-frame navigation makes
+	 * Chromium commit its own error document ({@code chrome-error://chromewebdata/}), so the session is
+	 * left on a page with no origin at all. What the second snapshot must not do is keep failing with a
+	 * refusal that has already been reported - the model would have no way to tell that it is looking at
+	 * a stale verdict rather than a fresh one.
+	 * </p>
 	 */
-	public void testSnapshotOfAPermittedPageStillWorks() {
+	public void testAnOffPolicyHopIsReportedOnceNotOnEverySnapshot() {
 		if (!e2eEnabled() || !resolvable()) {
 			return;
 		}
@@ -147,8 +156,8 @@ public class TestBrowserPolicyRecheck extends TestCase {
 					// Reported once ...
 				}
 				PageView afterwards = session.snapshot();
-				assertTrue("... and not again on every later snapshot of the page the session is on: "
-					+ afterwards.finalUrl(), afterwards.html().contains("permitted fixture page"));
+				assertFalse("... and the session is not stuck reporting it: " + afterwards.finalUrl(),
+					afterwards.finalUrl().contains(OFF_POLICY_HOST));
 			} finally {
 				session.close();
 			}

@@ -347,16 +347,23 @@ final class FilteringProxy implements AutoCloseable {
 		if (host == null || host.isBlank()) {
 			return Target.refused("the request names no host.");
 		}
+		// Lower-case and drop the trailing dot of the fully qualified form, through the SAME
+		// normalisation the tool's pre-flight check and UrlSafety use - otherwise "blocked.example.com."
+		// would reach the domain policy as a host it does not recognise and be forwarded.
+		String target = UrlSafety.normalizeHost(host);
 		// java.net.URI keeps the brackets of an IPv6 literal while a CONNECT target arrives without
 		// them; normalize so the policy and the resolver always see the same spelling.
-		if (host.length() > 1 && host.charAt(0) == '[' && host.charAt(host.length() - 1) == ']') {
-			host = host.substring(1, host.length() - 1);
+		if (target.length() > 1 && target.charAt(0) == '[' && target.charAt(target.length() - 1) == ']') {
+			target = target.substring(1, target.length() - 1);
 		}
-		String refusal = policy.refuseRequest(host);
+		if (target.isEmpty()) {
+			return Target.refused("the request names no host.");
+		}
+		String refusal = policy.refuseRequest(target);
 		if (refusal != null) {
 			return Target.refused(refusal);
 		}
-		return resolver.resolve(host, port);
+		return resolver.resolve(target, port);
 	}
 
 	/**

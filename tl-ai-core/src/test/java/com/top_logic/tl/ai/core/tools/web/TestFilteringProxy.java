@@ -147,6 +147,57 @@ public class TestFilteringProxy extends TestCase {
 	public void testMissingHostIsRefused() {
 		assertFalse(FilteringProxy.decide(PERMIT_ALL, null, 80).permitted());
 		assertFalse(FilteringProxy.decide(PERMIT_ALL, "  ", 80).permitted());
+		assertFalse("a host of nothing but the root label names no host either",
+			FilteringProxy.decide(PERMIT_ALL, ".", 80).permitted());
+	}
+
+	/**
+	 * <b>The trailing-dot bypass, at the proxy.</b> {@code blocked.example.} is the fully qualified
+	 * spelling of a blocklisted host: it resolves to the same server, but it matches neither the
+	 * blocklist entry nor a sub-domain of it unless the host is normalised first. The proxy normalises
+	 * through the same {@link UrlSafety#normalizeHost(String)} the tool's pre-flight check uses, so
+	 * the two layers cannot disagree about which host this is.
+	 */
+	public void testTrailingDotSpellingIsRefusedByTheDomainPolicy() {
+		RequestPolicy blocking = newService(List.of(), List.of("blocked.example"), true, false);
+
+		Target refused = FilteringProxy.decide(blocking, "blocked.example.", 80);
+		assertFalse("the fully qualified spelling is the same blocked host", refused.permitted());
+		assertTrue("named as a blocklist refusal: " + refused.refusal(),
+			refused.refusal().contains("blocklist"));
+		assertFalse("a trailing-dot sub-domain of a blocked domain too",
+			FilteringProxy.decide(blocking, "www.blocked.example.", 80).permitted());
+		assertFalse("upper case plus the root label",
+			FilteringProxy.decide(blocking, "BLOCKED.Example.", 443).permitted());
+	}
+
+	/**
+	 * And the blocked origin is <b>never contacted</b> under that spelling - the property that
+	 * distinguishes a real refusal from an error message. The resolver is pinned to a local recording
+	 * server, so if the policy failed to recognise the host the proxy would forward to it and the
+	 * connection count would rise; it must stay at zero.
+	 */
+	public void testTrailingDotSpellingNeverReachesTheBlockedOrigin() throws IOException {
+		RequestPolicy blocking = newService(List.of(), List.of("blocked.example"), true, false);
+		try (RecordingServer victim = RecordingServer.serving("<html>blocked site content</html>");
+				FilteringProxy proxy = FilteringProxy.start(blocking, pinnedTo(victim))) {
+			String response = exchange(proxy, "GET http://blocked.example./ HTTP/1.1\r\n"
+				+ "Host: blocked.example.\r\n\r\n");
+
+			assertTrue("refused with 403: " + statusLine(response), response.startsWith("HTTP/1.1 403"));
+			assertEquals("the blocklisted origin was never contacted", 0, victim.contactCount());
+			assertFalse("no content from the blocklisted origin leaked",
+				response.contains("blocked site content"));
+
+			String tunnel = exchange(proxy, "CONNECT blocked.example.:443 HTTP/1.1\r\n"
+				+ "Host: blocked.example.\r\n\r\n");
+
+			assertTrue("the https path is refused too: " + statusLine(tunnel),
+				tunnel.startsWith("HTTP/1.1 403"));
+			assertFalse("no tunnel was established", tunnel.contains("200 Connection Established"));
+			assertEquals("still never contacted", 0, victim.contactCount());
+			assertEquals("nothing was forwarded", 0, proxy.forwardedCount());
+		}
 	}
 
 	// --- The real proxy over a socket: the forbidden destination is never contacted. ---

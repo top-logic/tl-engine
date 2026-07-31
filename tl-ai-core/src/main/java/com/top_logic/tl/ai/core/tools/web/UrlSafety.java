@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.tools.web;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.Locale;
 
 /**
  * Shared SSRF (server-side request forgery) protection for the web tools - the single source of
@@ -54,6 +55,41 @@ public final class UrlSafety {
 	}
 
 	/**
+	 * Normalises a destination host to the <b>single spelling</b> every policy layer compares against:
+	 * trimmed, lower case, and without the trailing dot of the fully qualified form.
+	 *
+	 * <p>
+	 * <b>Why this has to exist in exactly one place.</b> {@code blocked.example.com.} - the
+	 * fully qualified name, with the explicit root label - is a perfectly ordinary host: it survives
+	 * {@code URI.getHost()}, resolves through {@code InetAddress.getAllByName} and is served by the
+	 * same site as {@code blocked.example.com}. It is however neither {@code equals} to nor a
+	 * {@code endsWith(".")} sub-domain of the blocklist entry, so a domain-list check that compares raw
+	 * hosts silently lets it through. The same argument applies to case. Every layer that decides
+	 * "which host is this" - the tool's pre-flight check, the {@link FilteringProxy} and
+	 * {@link #resolveHost(String)} - therefore normalises through this one method, so the three cannot
+	 * drift apart and reopen the bypass in one of them.
+	 * </p>
+	 *
+	 * @param host
+	 *        The host as it was spelled in the URL or in the configuration; may be {@code null}.
+	 * @return The normalised host, {@code null} if {@code host} was {@code null}, or the empty string
+	 *         if nothing but dots and whitespace was given (which no layer may treat as a match).
+	 */
+	public static String normalizeHost(String host) {
+		if (host == null) {
+			return null;
+		}
+		String trimmed = host.trim();
+		// Strip the root label. Repeated, because "example.com.." is refused by nobody's parser and
+		// must not become a spelling that slips past the comparison either.
+		int end = trimmed.length();
+		while (end > 0 && trimmed.charAt(end - 1) == '.') {
+			end--;
+		}
+		return trimmed.substring(0, end).toLowerCase(Locale.ROOT);
+	}
+
+	/**
 	 * Validates a URL for outbound fetching.
 	 *
 	 * @param uri
@@ -87,13 +123,16 @@ public final class UrlSafety {
 	 * @param host
 	 *        The destination host - a registered name or an IP literal. An IP literal is validated
 	 *        without any name lookup, so an IP-literal target is refused just as reliably as a name.
+	 *        It is {@link #normalizeHost(String) normalised} first, so the fully qualified spelling
+	 *        with a trailing dot is judged as the host it actually is.
 	 * @return The resolution outcome; never {@code null}.
 	 */
 	public static HostResolution resolveHost(String host) {
-		if (host == null || host.isEmpty()) {
+		String normalized = normalizeHost(host);
+		if (normalized == null || normalized.isEmpty()) {
 			return new HostResolution(null, "the URL has no host.");
 		}
-		String name = stripIpv6Brackets(host);
+		String name = stripIpv6Brackets(normalized);
 		InetAddress[] addresses;
 		try {
 			addresses = InetAddress.getAllByName(name);

@@ -103,6 +103,71 @@ public class TestBrowserTool extends TestCase {
 		assertFalse(BrowserToolsService.matchesDomainList(null, list));
 	}
 
+	/**
+	 * <b>The trailing-dot bypass.</b> {@code blocked.example.com.} - the fully qualified spelling with
+	 * the explicit root label - survives {@code URI.getHost()} and resolves normally, so it reaches the
+	 * same site; but it is neither {@code equals} to the list entry nor a {@code ".entry"} sub-domain
+	 * of it, so a raw comparison lets it straight through the blocklist. Both sides are normalised now,
+	 * so it matches - including when the configured entry is the one carrying the dot.
+	 */
+	public void testDomainListMatchesTheFullyQualifiedTrailingDotSpelling() {
+		List<String> list = List.of("example.org");
+		assertTrue("a trailing-dot FQDN is the same host",
+			BrowserToolsService.matchesDomainList("example.org.", list));
+		assertTrue("a trailing-dot sub-domain is still a sub-domain",
+			BrowserToolsService.matchesDomainList("ads.example.org.", list));
+		assertTrue("case and the root label together",
+			BrowserToolsService.matchesDomainList("Ads.Example.ORG.", list));
+		assertTrue("a trailing dot on the CONFIGURED entry matches the plain host too",
+			BrowserToolsService.matchesDomainList("ads.example.org", List.of("example.org.")));
+		assertFalse("normalising must not turn an off-list host into a match",
+			BrowserToolsService.matchesDomainList("example.org.evil.com.", list));
+		assertFalse("a host of nothing but dots matches nothing",
+			BrowserToolsService.matchesDomainList("...", list));
+	}
+
+	/**
+	 * The same spelling cannot slip past the layered policy either: the blocklist refuses it, and it
+	 * does so in {@code allow-any-domains} mode, where the blocklist is the <em>only</em> domain
+	 * control and the bypass therefore had nothing else standing behind it.
+	 */
+	public void testPolicyRefusesTheTrailingDotSpellingOfABlockedDomain() {
+		BrowserToolsService allowAny = newService(List.of(), List.of("evil.com"), true);
+		assertFalse("a trailing-dot FQDN of a blocked domain is refused",
+			allowAny.isNavigationPermitted("evil.com."));
+		assertFalse("and so is a trailing-dot sub-domain of it",
+			allowAny.isNavigationPermitted("mail.evil.com."));
+		assertTrue("recognised as blocklisted, not merely off-allowlist",
+			allowAny.isBlockedDomain("evil.com."));
+
+		// The proxy asks the same service through its own entry point; it must answer the same.
+		assertNotNull("the proxy-side policy refuses it too", allowAny.refuseRequest("evil.com."));
+		assertNotNull("...for a sub-domain as well", allowAny.refuseRequest("mail.evil.com."));
+	}
+
+	/**
+	 * The tool's own pre-flight check - the first of the two layers the bypass slipped past - refuses
+	 * the trailing-dot spelling before any browser is involved. Needs no browser: the navigation is
+	 * rejected before a session would be created.
+	 */
+	public void testPreFlightRefusesTrailingDotSpellingOfBlockedDomain() {
+		BrowserToolsService service = newService(List.of(), List.of("evil.com"), true);
+		service.startUp();
+		try {
+			BrowserTool tool = new BrowserTool();
+			ToolContext context = ToolContext.createUnrestricted();
+
+			String refused = tool.browserNavigate("http://evil.com./", context);
+
+			assertTrue("the pre-flight check names the blocklist: " + refused,
+				refused.startsWith("Error:") && refused.contains("blocklist"));
+			assertEquals("no browser session was created for a refused navigation", 0,
+				service.liveSessionCountForTest());
+		} finally {
+			service.shutDown();
+		}
+	}
+
 	// --- Layered domain policy: SSRF (separate) > blocklist > allowlist / allow-any. ---
 
 	public void testPolicyAllowlistEnforcedByDefault() {

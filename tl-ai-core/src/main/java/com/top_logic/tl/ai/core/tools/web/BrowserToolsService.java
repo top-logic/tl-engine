@@ -7,7 +7,6 @@ package com.top_logic.tl.ai.core.tools.web;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -800,18 +799,26 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	}
 
 	/**
-	 * Whether {@code host} matches one of the {@code domains} entries (equal host or sub-domain,
-	 * case-insensitive). An empty or {@code null} list matches nothing, and a {@code null} host
-	 * matches nothing. Package-visible for testing.
+	 * Whether {@code host} matches one of the {@code domains} entries (equal host or sub-domain).
+	 * An empty or {@code null} list matches nothing, and a {@code null} host matches nothing.
+	 * Package-visible for testing.
+	 *
+	 * <p>
+	 * Both sides go through {@link UrlSafety#normalizeHost(String)}, so the comparison is
+	 * case-insensitive and the fully qualified spelling with a trailing dot
+	 * ({@code blocked.example.com.}) is matched as the host it is rather than slipping past the
+	 * blocklist. That normalisation is shared with the {@link FilteringProxy} and with
+	 * {@link UrlSafety} itself precisely so the layers cannot disagree about what a host is.
+	 * </p>
 	 */
 	static boolean matchesDomainList(String host, List<String> domains) {
-		if (host == null || host.isEmpty()) {
+		String normalized = UrlSafety.normalizeHost(host);
+		if (normalized == null || normalized.isEmpty()) {
 			return false;
 		}
-		String normalized = host.toLowerCase(Locale.ROOT);
 		for (String entry : domains) {
-			String domain = entry.trim().toLowerCase(Locale.ROOT);
-			if (domain.isEmpty()) {
+			String domain = UrlSafety.normalizeHost(entry);
+			if (domain == null || domain.isEmpty()) {
 				continue;
 			}
 			if (normalized.equals(domain) || normalized.endsWith("." + domain)) {

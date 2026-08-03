@@ -44,9 +44,11 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AccessRightsConfig;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.RoleConfig;
+import com.top_logic.model.config.SingletonMapping;
 import com.top_logic.model.config.TLModelPartMapping;
 import com.top_logic.model.util.AllAttributes;
 import com.top_logic.model.util.AllClasses;
+import com.top_logic.model.util.AllSingletons;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundChecker;
@@ -120,7 +122,12 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	@TagName("singleton")
 	@Label("Singleton access rights")
 	public static interface TLSingletonAccessRights extends ModelAccessRights {
-		// marker interface
+
+		@Options(fun = AllSingletons.class, mapping = SingletonMapping.class)
+		@ControlProvider(SelectionControlProvider.class)
+		@Override
+		String getName();
+
 	}
 
 	/**

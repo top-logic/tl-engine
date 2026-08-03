@@ -28,15 +28,20 @@
 	// One read-only tool per capability the fixture grants somebody, plus the
 	// three that nobody is granted, plus the classified/unclassified script
 	// tool pair. Every one of them is harmless: no entry here writes.
+	// One caveat, for the two lines that do something when they are ALLOWED:
+	// askUser has no interaction surface in the console and returns an empty
+	// string rather than waiting for anybody; webFetch really does fetch, so
+	// running this as "root" (which bypasses the policy) makes one outbound
+	// request to example.com. Every other probe is a local read.
 	probes = [
-		["interaction    (baseline)", "user-interaction.askUser",
-			{"question": "probe", "options": ["ok"]}],
+		["interaction     (baseline, granted to everyone)", "user-interaction.askUser",
+			{"question": "probe", "header": "Probe", "type": "text"}],
 		["model.read", "model-browser.listModules", null],
 		["data.read", "model-instances.listInstances",
 			{"moduleName": "secdemo", "typeName": "Note", "limit": 3}],
-		["data.read  (script tool, classified by wildcard)",
+		["data.read       (script tool, classified by a factory wildcard)",
 			"secdemo-reporting.countNotes", null],
-		["(unclassified script tool, same body)",
+		["(the same script tool body, deliberately NOT classified)",
 			"secdemo-unclassified.countNotesUnclassified", null],
 		["agent.meta", "framework-wiring.listFrameworkAgents", null],
 		["script          (privileged)", "script-exec.validateTLScript",
@@ -47,7 +52,7 @@
 			"model-modification.createClass", null],
 		["egress          (granted to nobody)", "web-fetch.webFetch",
 			{"url": "https://example.com"}],
-		["(hallucinated name - must say Unknown/not found, never Permission)",
+		["(hallucinated name - must say 'not found', never 'Permission denied')",
 			"model-instances.listEverything", null]
 	];
 

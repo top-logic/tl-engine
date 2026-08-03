@@ -23,6 +23,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -79,11 +80,10 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * The same is true for component access. The engine reads it declaratively from
- * {@code WEB-INF/conf/security.xml} ({@link AccessConfigurationSetupService}), but that path is
- * fixed and the import <em>resets</em> the access of every view in the application before applying
- * the file. An opt-in aspect must not do that, so this service applies the very same
- * {@link AccessConfiguration} format additively.
+ * The same is true for component access. The engine's {@link AccessConfigurationSetupService} reads
+ * it declaratively, but only from one fixed path, and its import <em>resets</em> the access of every
+ * view in the application before applying that file. An opt-in aspect must not do either, so this
+ * service applies the very same {@link AccessConfiguration} format additively.
  * </p>
  *
  * @see com.top_logic.model.security.SecurityConfigurationService
@@ -238,6 +238,7 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		 * Login name of the account to create.
 		 */
 		@Name(LOGIN)
+		@Label("Login name")
 		@Mandatory
 		String getLogin();
 

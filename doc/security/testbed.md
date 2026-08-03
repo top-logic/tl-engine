@@ -228,6 +228,14 @@ line. The fixture ships two otherwise identical tools to make that visible.
 | **S5** | see it break | any | edit config | comment out the `<tool-groups>` entry for `secdemo-reporting.*`, restart | S2 now behaves like S1 for everyone. This is the migration in reverse |
 
 > `secdemo-editing.addNote` writes. Run [`reset.tlscript`](harness/reset.tlscript) afterwards.
+>
+> **These are console scenarios, not chat scenarios**, and deliberately so: no framework agent lists
+> the fixture's script tools in its `<tools>`, so `TL_SingleAgent` cannot call them however the policy
+> is configured. Asking it to in the chat produces a confident but wrong explanation - it names a
+> capability the persona happens to lack rather than saying the tool is not in its own tool list, which
+> is the one of the three absences the [capability notice](#43-what-the-agent-is-told---skills-and-the-capability-notice)
+> cannot distinguish. `aiCallTool` in the console has no agent tool list in the way, so it shows the
+> classification decision and nothing else.
 
 ### 4.3 What the agent is told - skills and the capability notice
 
@@ -371,6 +379,7 @@ Or one class at a time - the class name says which behaviour broke:
 | `SecDemoCapabilityNoticeTest` | skills dropped / partially loaded / tool-less; what `loadSkill` announces; the capability notice; the `LEGACY` prompt unchanged | C1, C2, C3, C4, C5 |
 | `SecDemoBackgroundAccessTest` | the background ceiling in both directions; that it binds administrators; that an enforcing policy has an allowlist; the MCP refusal rule | A1, A2, A3, A4, P1 |
 | `SecDemoModelSecurityTest` | the engine's model rights per persona, evaluated through TL-Script compiled with security on | M1, M2, M3, M4 |
+| `SecDemoHarnessScriptsTest` | every `harness/*.tlscript` still compiles against the model and the registered script functions, and the ones this page names still exist | the harness itself |
 
 For example:
 
@@ -412,6 +421,11 @@ refusal message.
   [e2e-security-test.md](e2e-security-test.md#44-running-it).
 - **The console's Result column is narrow.** Drag the right border of the column header, or maximize the
   result panel with the ⛶ button, to read `probe.tlscript` output in full.
+- **Approval is a third mechanism and it will interrupt you.** A tool classified as changing shared
+  data - `executeTLScript`, `secdemo-editing.addNote` - asks the user to confirm before it runs,
+  whatever the policy grants. In the chat that is a prompt with **Allow** / **Allow for Session** /
+  **Deny**; answer it, or the call times out after two minutes and the agent retries. There is
+  deliberately no way to pre-approve a role. Scenarios C2, S4 and M2 all hit this.
 - **`data.write` has no annotated tool anywhere in the framework.** `secdemo-editing.addNote` is the only
   member of that group, and it is a member only because the fixture classified it. A `data.write` grant in
   an application with no script tools reaches nothing.

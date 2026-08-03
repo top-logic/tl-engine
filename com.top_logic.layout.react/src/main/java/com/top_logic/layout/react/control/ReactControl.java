@@ -352,8 +352,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * </p>
 	 *
 	 * @implNote Unordered, because attaching and detaching a set of children does not depend on their
-	 *           order. {@link #agentChildren()} sorts, because the agent projection reports a child
-	 *           list that must be stable across calls.
+	 *           order. {@link #scriptingChildren()} sorts, because the scripting projection reports a
+	 *           child list that must be stable across calls.
 	 */
 	protected final List<ReactControl> childControls() {
 		List<ReactControl> result = new ArrayList<>();

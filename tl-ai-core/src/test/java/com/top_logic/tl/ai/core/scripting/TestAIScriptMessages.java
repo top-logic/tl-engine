@@ -18,6 +18,7 @@ import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 
 /**
@@ -154,6 +155,31 @@ public class TestAIScriptMessages extends TestCase {
 		assertEquals(new TextContent("Read this invoice:"), message.content().get(0));
 		assertTrue(message.content().get(1) instanceof PdfContent);
 		assertEquals(new TextContent("42"), message.content().get(2));
+	}
+
+	/** The transcript records the text as sent and names an attachment instead of inlining it. */
+	public void testTranscriptNamesAttachmentsInsteadOfInliningThem() {
+		UserMessage message = AIScriptFunctions.createUserMessage(List.of(
+			new TextContent("Extract the price."),
+			new PdfContent("JVBERi0xLjcK", "application/pdf")));
+
+		assertEquals("Extract the price.\n[PDF document: application/pdf]",
+			AIScriptFunctions.transcriptText(message));
+	}
+
+	/**
+	 * A part kind the transcript does not know is still announced, and contributes no empty line:
+	 * any {@link ContentPart} a caller builds reaches the message unchanged, so silence would leave
+	 * a transcript that does not say anything was sent.
+	 */
+	public void testTranscriptNamesAnUnrecognisedPart() {
+		UserMessage message = AIScriptFunctions.createUserMessage(List.of(
+			new TextContent("Before."),
+			new ThinkingContent("reasoning", null),
+			new TextContent("After.")));
+
+		assertEquals("Before.\n[Attachment: ThinkingContent]\nAfter.",
+			AIScriptFunctions.transcriptText(message));
 	}
 
 	/**

@@ -754,22 +754,46 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * A document's base64 is nothing the transcript can display and megabytes it would have to
 	 * carry, so the transcript records that an attachment was sent, not its bytes.
 	 * </p>
+	 *
+	 * <p>
+	 * Package-visible for testing.
+	 * </p>
 	 */
-	private static String transcriptText(UserMessage request) {
+	static String transcriptText(UserMessage request) {
 		StringBuilder text = new StringBuilder();
 		for (ContentPart part : request.content()) {
+			String rendered = transcriptText(part);
+			if (rendered.isEmpty()) {
+				continue;
+			}
 			if (text.length() > 0) {
 				text.append('\n');
 			}
-			if (part instanceof TextContent content) {
-				text.append(content.text());
-			} else if (part instanceof ImageContent image) {
-				text.append("[Image: ").append(image.mediaType()).append("]");
-			} else if (part instanceof PdfContent pdf) {
-				text.append("[PDF document: ").append(pdf.mediaType()).append("]");
-			}
+			text.append(rendered);
 		}
 		return text.toString();
+	}
+
+	/**
+	 * How a single part appears in the transcript: text as it was sent, anything else named.
+	 *
+	 * <p>
+	 * A part kind this does not know is still announced rather than passed over: any
+	 * {@link ContentPart} a caller built reaches the message unchanged, so staying silent would
+	 * leave a transcript that does not say anything was sent at all.
+	 * </p>
+	 */
+	private static String transcriptText(ContentPart part) {
+		if (part instanceof TextContent content) {
+			return content.text();
+		}
+		if (part instanceof ImageContent image) {
+			return "[Image: " + image.mediaType() + "]";
+		}
+		if (part instanceof PdfContent pdf) {
+			return "[PDF document: " + pdf.mediaType() + "]";
+		}
+		return "[Attachment: " + part.getClass().getSimpleName() + "]";
 	}
 
 	/**

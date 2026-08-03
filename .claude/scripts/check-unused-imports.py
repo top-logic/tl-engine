@@ -18,6 +18,12 @@ matching what the IDE reports. Occurrences in a line comment, in a non-JavaDoc b
 comment, or inside a string literal do not count - that is the case a text edit
 introduces when it deletes the last real use but leaves the type named in a comment.
 
+An occurrence as part of a qualified name does not count either: a file that writes
+`java.util.Map<...>` in full does not need an import of `java.util.Map`, and neither does
+a JavaDoc that links `{@link java.util.Map}`. The same holds for a nested type imported as
+`a.b.Outer.Inner` but always written `Outer.Inner`, and for a static import whose member is
+always addressed through its class.
+
 Only sources in a Maven `src` tree are checked. That leaves out generated code (the
 compiled JSPs under an application's `tmp`, anything under `target`) and, because they are
 repackaged external libraries, the sources of an `ext.*` module.
@@ -33,6 +39,11 @@ LITERAL = re.compile(r'"(?:\\.|[^"\\\n])*"|\'(?:\\.|[^\'\\\n])*\'')
 
 # A single-type import, optionally static. On-demand imports (ending in `.*`) are skipped.
 IMPORT = re.compile(r'^import\s+(static\s+)?([\w.]+)\s*;', re.M)
+
+# A use of an imported simple name: the name on its own, not as a segment of a qualified
+# name. The leading `.` in the look-behind is what distinguishes `Map` from `java.util.Map`;
+# `$` is legal in Java identifiers and is excluded on both sides for the same reason as `\w`.
+USE = r'(?<![\w.$])%s(?![\w$])'
 
 # Directories not descended into when a whole tree is checked.
 SKIPPED_DIRS = {'target', 'tmp', 'bin', '.git', 'node_modules'}
@@ -97,7 +108,7 @@ def findings(path):
             continue
         declared[name] = line
         simple = name.rsplit('.', 1)[-1]
-        if not re.search(r'\b%s\b' % re.escape(simple), body):
+        if not re.search(USE % re.escape(simple), body):
             result.append((line, ('static ' if static else '') + name, 'unused import'))
     return result
 
@@ -164,6 +175,12 @@ def main(argv):
     if '--hook' in argv:
         return hook()
     paths = [arg for arg in argv if not arg.startswith('-')] or ['.']
+    for path in paths:
+        # Say so when a file named on the command line is not checked at all. Skipping is
+        # silent while walking a tree, where it is the point; for an explicit file it would
+        # look like a clean result.
+        if path.endswith('.java') and os.path.isfile(path) and not checked(path):
+            print('%s: not checked: no Maven `src` tree in its path.' % path, file=sys.stderr)
     return 1 if report(paths, sys.stdout) else 0
 
 

@@ -12,6 +12,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService;
 import com.top_logic.tl.ai.htmlpages.GeneratedHtmlPage;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContext;
@@ -57,7 +58,7 @@ public class PublishHtmlPageTool {
 		description = "Publishes an HTML page and returns a URL. After generating the full HTML "
 			+ "document following the chosen design skill's spec, call this tool. Embed the "
 			+ "returned URL in your reply as a markdown link.",
-		mode = ToolMode.USER_SCOPED)
+		mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE)
 	public String publishPage(
 			@P("Short human-readable title for the page. Used in the admin list and as default link text. "
 				+ "If the HTML omits <title>, browsers may show this in the tab.") String title,

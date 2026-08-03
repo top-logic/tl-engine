@@ -6,17 +6,22 @@
 package com.top_logic.tl.ai.core.agent;
 
 import com.top_logic.tl.ai.core.message.ToolCall;
+import com.top_logic.tl.ai.core.security.AiSecurityMode;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Security context for tool execution.
  *
- * <p>Combines three concerns:</p>
+ * <p>Combines four concerns:</p>
  * <ul>
  *   <li><b>User-level access</b> ({@link #hasToolPermission}) — can this user invoke this tool at all?
- *       Currently always returns {@code true}; will integrate with TopLogic's per-user security
- *       when ready.</li>
+ *       Answered against the roles the run's principal holds, but only where the run's
+ *       {@link #securityMode() mode} enforces tool access; unenforced by default, so an application
+ *       that has configured no {@code <tool-access>} policy sees {@code true} throughout.</li>
+ *   <li><b>Model access</b> ({@link #modelSecurity}) - may the run's principal read or change a
+ *       given model object? Consulted only when {@link #securityMode()} enforces it.</li>
  *   <li><b>System execution mode</b> ({@link #executionMode}) — is the system in development,
  *       production, or maintenance mode? The agent loop uses this to gate STRUCTURAL tools.</li>
  *   <li><b>Approval policy</b> ({@link #checkApproval}) — does this tool call need user
@@ -26,6 +31,7 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * @see ToolContext
  * @see ExecutionMode
  * @see PermissionDecision
+ * @see AiSecurityMode
  */
 public interface SecurityContext {
 
@@ -56,29 +62,68 @@ public interface SecurityContext {
 	}
 
 	/**
-	 * Whether the current user has read access to the given object.
+	 * Why {@link #hasToolPermission(Tool)} refused the given tool.
 	 *
-	 * <p>Placeholder — always returns {@code true}. Override in the bridge module
-	 * to integrate with TopLogic's {@code BoundChecker}/{@code AccessManager}.</p>
+	 * <p>
+	 * Only meaningful after {@code hasToolPermission} returned {@code false}; implementations must
+	 * agree with it. The default returns <code>null</code>, which means "no specific reason" and lets
+	 * the caller state a generic one.
+	 * </p>
 	 *
-	 * @param ref the object to check (typically a TLObject in the bridge)
-	 * @return {@code true} if the user may read the object
+	 * <p>
+	 * Exists so that a denial can name the <em>missing capability</em> rather than merely the fact of
+	 * denial: "why can this user not use this tool?" must be answerable both by the model, which has
+	 * to decide what to do instead, and by an operator reading the log. The reason names the
+	 * capability, the rule and the role - never the data that was withheld.
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool that was refused.
+	 * @return The reason, or <code>null</code> if none more specific than "denied" is available.
 	 */
-	default boolean hasReadAccess(Object ref) {
-		return true;
+	default String toolDenialReason(Tool tool) {
+		return null;
 	}
 
 	/**
-	 * Whether the current user has write access to the given object.
+	 * Why {@link #hasToolPermission(String)} refused the tool of the given name.
 	 *
-	 * <p>Placeholder — always returns {@code true}. Override in the bridge module
-	 * to integrate with TopLogic's {@code BoundChecker}/{@code AccessManager}.</p>
-	 *
-	 * @param ref the object to check (typically a TLObject in the bridge)
-	 * @return {@code true} if the user may write the object
+	 * @param toolName
+	 *        The tool name that was refused.
+	 * @return The reason, or <code>null</code> if none more specific than "denied" is available.
+	 * @see #toolDenialReason(Tool)
 	 */
-	default boolean hasWriteAccess(Object ref) {
-		return true;
+	default String toolDenialReason(String toolName) {
+		return null;
+	}
+
+	/**
+	 * The effective security mode of the run this context belongs to.
+	 *
+	 * <p>
+	 * Resolved once, before the first provider call, and never re-derived afterwards, so neither a
+	 * tool nor an agent definition can widen it mid-run. The default is
+	 * {@link AiSecurityMode#LEGACY}: a context that says nothing about its mode is one from an
+	 * application that has not configured agent security, and must keep behaving as it did before
+	 * the modes existed.
+	 * </p>
+	 */
+	default AiSecurityMode securityMode() {
+		return AiSecurityMode.LEGACY;
+	}
+
+	/**
+	 * Per-object model access checks for the run's principal.
+	 *
+	 * <p>
+	 * Tools use this to filter what they return and to refuse changes the principal may not make.
+	 * The default is {@link ModelSecurity#UNCHECKED}, matching the {@link #securityMode() default
+	 * mode}: checks are only meaningful once a mode that
+	 * {@link AiSecurityMode#enforcesModelAccess() enforces} them is configured.
+	 * </p>
+	 */
+	default ModelSecurity modelSecurity() {
+		return ModelSecurity.UNCHECKED;
 	}
 
 	/**
@@ -117,12 +162,25 @@ public interface SecurityContext {
 		};
 	}
 
-	/** Context with no restrictions — for tests and trusted internal use. */
+	/**
+	 * Context with no restrictions - for tests and trusted internal use.
+	 *
+	 * <p>
+	 * Reports {@link AiSecurityMode#SYSTEM}: this context has no user identity, which is what that
+	 * mode names. Reporting {@link AiSecurityMode#LEGACY} instead would be a lie about the reason
+	 * nothing is checked here.
+	 * </p>
+	 */
 	SecurityContext UNRESTRICTED = new SecurityContext() {
 
 		@Override
 		public boolean hasToolPermission(Tool tool) {
 			return true;
+		}
+
+		@Override
+		public AiSecurityMode securityMode() {
+			return AiSecurityMode.SYSTEM;
 		}
 
 		@Override

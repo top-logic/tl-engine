@@ -18,6 +18,7 @@ import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -100,7 +101,7 @@ public class SkillTool {
 		description = "Loads a skill by its id. Returns specialized instructions you MUST follow for the related task. When a skill provides tools, they become available immediately. Check the Available Skills section in your system instructions for skill ids and when to use them.",
 		mode = ToolMode.READ,
 		concurrencySafe = true,
-		truncationHint = Integer.MAX_VALUE)
+		truncationHint = Integer.MAX_VALUE, group = ToolGroups.INTERACTION)
 	public String loadSkill(@P("Skill id from the catalog") String skillId) {
 		Skill skill = _skills.get(skillId);
 		if (skill == null) {

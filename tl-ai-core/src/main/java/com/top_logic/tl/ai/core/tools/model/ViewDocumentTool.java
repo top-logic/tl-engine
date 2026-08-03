@@ -26,6 +26,7 @@ import com.top_logic.tl.ai.core.tools.perception.BinaryPerception;
 import com.top_logic.tl.ai.core.tools.perception.ModelPerception;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
@@ -43,12 +44,13 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  * </p>
  *
  * <p>
- * Read access is checked through the security context, whose read check is still a framework-wide
- * placeholder that returns {@code true} for everyone.
+ * Read access is checked through the run's {@link SecurityContext#modelSecurity() model security},
+ * which consults the engine's model access rights when the run's mode enforces them and grants
+ * everything otherwise.
  * </p>
  *
  * @see BinaryPerception
- * @see SecurityContext#hasReadAccess(Object)
+ * @see SecurityContext#modelSecurity()
  */
 public class ViewDocumentTool {
 
@@ -83,10 +85,10 @@ public class ViewDocumentTool {
 	 *
 	 * <p>
 	 * The stored payload is an adversarial input, not merely a large one: which object is read is
-	 * decided by a model-supplied TID, and {@link SecurityContext#hasReadAccess(Object)} is still a
-	 * framework-wide placeholder returning {@code true}. Its size is therefore bounded before anything
-	 * is buffered ({@link BinaryPerception#MAX_SOURCE_BYTES}), and its content - stored text included -
-	 * is treated as untrusted by {@link BinaryPerception}.
+	 * decided by a model-supplied TID, and {@link SecurityContext#modelSecurity()} grants everything
+	 * in a run whose mode does not enforce model access - which is the default. Its size is therefore
+	 * bounded before anything is buffered ({@link BinaryPerception#MAX_SOURCE_BYTES}), and its content
+	 * - stored text included - is treated as untrusted by {@link BinaryPerception}.
 	 * </p>
 	 *
 	 * @param tid
@@ -105,7 +107,8 @@ public class ViewDocumentTool {
 			+ "result, text documents are returned inline. Use it to see a saved screenshot, a "
 			+ "stored image or an attached document. Pass the object's TID; pass 'attribute' only "
 			+ "when the object stores more than one binary and the tool asks for it.",
-		mode = ToolMode.READ)
+		mode = ToolMode.READ,
+		group = ToolGroups.DATA_READ)
 	public ToolResult viewDocument(
 			@P("The TopLogic identifier (TID) of the object holding the content, "
 				+ "format 'TypeName:id'.") String tid,
@@ -123,9 +126,10 @@ public class ViewDocumentTool {
 			return ToolResult.of("Error: cannot resolve TID '" + tid + "': " + ex.getMessage());
 		}
 
-		// Single access-control seam for this tool. Today SecurityContext.hasReadAccess is a
-		// framework-wide placeholder returning true; when it becomes real, this call enforces it.
-		if (!readAccess(context).hasReadAccess(object)) {
+		// Single access-control seam for this tool: the run's model security, which delegates to the
+		// engine's model access rights when the run's mode enforces them and grants everything in a
+		// LEGACY run.
+		if (!readAccess(context).modelSecurity().canRead(object)) {
 			return ToolResult.of("Error: you do not have read access to " + tid + ".");
 		}
 

@@ -917,8 +917,10 @@ public class AgentLoop {
 			}
 		} else {
 			if (!security.hasToolPermission(toolCall.name())) {
-				String reason = "Permission denied: you do not have access to tool '"
-					+ toolCall.name() + "'.";
+				String specific = security.toolDenialReason(toolCall.name());
+				String reason = specific != null
+					? specific
+					: "Permission denied: you do not have access to tool '" + toolCall.name() + "'.";
 				emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
 				markDenied(toolCall.id());
 				return errorResult(toolCall, reason);

@@ -8,8 +8,13 @@ package com.top_logic.tl.ai.core.agent;
 import java.util.Objects;
 import java.util.Set;
 
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
+import com.top_logic.tl.ai.core.security.AiSecurityMode;
+import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -44,6 +49,41 @@ public class ToolContext implements ToolExecutionContext {
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
 			new TransactionScope(cancellationToken), cancellationToken);
+	}
+
+	/**
+	 * Creates a context acting as the user bound to the calling thread, with a live transaction scope.
+	 *
+	 * <p>
+	 * For the TL-Script entry points, which run on the thread of whoever executed the script. Their
+	 * tool calls should be authorized against that account's roles rather than run unrestricted, which
+	 * is what they did before this layer existed.
+	 * </p>
+	 *
+	 * <p>
+	 * Falls back to {@link #createUnrestricted()} when tool authorization is not enforced or when no
+	 * user is bound. Deliberately, and for two distinct reasons. Not enforced means the application has
+	 * configured no {@code <tool-access>} policy and must keep behaving exactly as before - and the
+	 * behaviour that would otherwise change is not only authorization: an unrestricted context reports
+	 * {@link ExecutionMode#DEVELOPMENT}, while a real one reports {@link ExecutionMode#PRODUCTION} in a
+	 * deployed application, which would newly block {@code STRUCTURAL} tools. No user bound means there
+	 * is no principal to authorize against, which is the honest system case.
+	 * </p>
+	 *
+	 * <p>
+	 * Auto-approves, like {@link #createUnrestricted()}: a script has no approval surface. The run is
+	 * not treated as a background run, because the account that executed the script is present and
+	 * watching it - unlike {@code aiAgentChatAsync}, which detaches.
+	 * </p>
+	 */
+	public static ToolContext forCurrentUser() {
+		Person principal = TLContext.currentUser();
+		if (principal == null || !AiToolAccessService.ceiling().enforcesToolAccess()) {
+			return createUnrestricted();
+		}
+		CancellationToken cancellationToken = new CancellationToken();
+		return new ToolContext(TopLogicSecurityContext.forRun(principal, false),
+			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 
 	private final SecurityContext _security;
@@ -176,6 +216,33 @@ public class ToolContext implements ToolExecutionContext {
 	 */
 	public SecurityContext security() {
 		return _security;
+	}
+
+	/**
+	 * Per-object model access checks for the run's principal.
+	 *
+	 * <p>
+	 * The seam tools use to filter what they return ({@link ModelSecurity#filterReadable}) and to
+	 * refuse changes the principal may not make ({@link ModelSecurity#requireWrite}). Reached through
+	 * the context tools already receive, so no extra plumbing is needed at the call sites.
+	 * </p>
+	 *
+	 * <p>
+	 * Grants everything unless the run's {@link SecurityContext#securityMode() mode} enforces model
+	 * access, which no application gets by default.
+	 * </p>
+	 */
+	public ModelSecurity modelSecurity() {
+		return _security.modelSecurity();
+	}
+
+	/**
+	 * The effective security mode of the run this context belongs to.
+	 *
+	 * @see SecurityContext#securityMode()
+	 */
+	public AiSecurityMode securityMode() {
+		return _security.securityMode();
 	}
 
 	/**

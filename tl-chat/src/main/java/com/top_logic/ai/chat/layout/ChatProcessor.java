@@ -33,9 +33,11 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
+import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
@@ -496,8 +498,13 @@ public class ChatProcessor {
 		// Share one cancellation token between context and transaction scope so lock-retry
 		// waits also end promptly when the user cancels the run.
 		CancellationToken cancellationToken = new CancellationToken();
+		// The chat user is the run's principal: their roles decide which tools the agent may use, and
+		// their model access rights which objects those tools may touch. An interactive run always
+		// has a human who can answer an approval prompt, so it is not a background run.
+		// Without a configured <tool-access> policy this resolves to LEGACY, i.e. unchanged behaviour.
+		SecurityContext security = TopLogicSecurityContext.forRun(TLContext.currentUser(), false);
 		return new ToolContext(
-			new TopLogicSecurityContext(), approvalCallback, new TransactionScope(cancellationToken),
+			security, approvalCallback, new TransactionScope(cancellationToken),
 			taskTracker.getSessionApprovedTools(), cancellationToken);
 	}
 

@@ -32,6 +32,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -110,6 +111,20 @@ public class DelegationTool implements Tool {
 	@Override
 	public ToolMode mode() {
 		return ToolMode.READ;
+	}
+
+	/**
+	 * {@link ToolGroups#INTERACTION}.
+	 *
+	 * <p>
+	 * Delegation is a conversation primitive: the sub-agent it starts is bounded by the child
+	 * agent's own tool list and inherits this run's security context unchanged, so it can never
+	 * widen the caller's authority.
+	 * </p>
+	 */
+	@Override
+	public String group() {
+		return ToolGroups.INTERACTION;
 	}
 
 	@Override

@@ -38,6 +38,7 @@ import com.top_logic.tl.ai.core.tools.authoring.messages.ToolSummary;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -89,7 +90,7 @@ public class AgentAuthoringTool {
 	 *        The skill's instruction content (markdown).
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Create a new skill (instruction text + optional tools) in the application")
+	@ToolMethod(description = "Create a new skill (instruction text + optional tools) in the application", group = ToolGroups.AGENT_AUTHORING)
 	public String createSkill(
 			@P("Unique skill name — do NOT use the TL_ prefix (reserved for TopLogic)") String name,
 			@P("Short description that tells the agent WHEN to load this skill, not what it does internally") String description,
@@ -136,7 +137,7 @@ public class AgentAuthoringTool {
 	 *        New content, or {@code null} to leave unchanged.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Update an existing application skill. Omitted fields are left unchanged.")
+	@ToolMethod(description = "Update an existing application skill. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING)
 	public String updateSkill(
 			@P("Name of the skill to update") String name,
 			@P(value = "New description — tells the agent WHEN to load (omit to leave unchanged)", required = false) String description,
@@ -185,7 +186,7 @@ public class AgentAuthoringTool {
 	 *        Name of the skill to delete.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Delete a application skill by name")
+	@ToolMethod(description = "Delete a application skill by name", group = ToolGroups.AGENT_AUTHORING)
 	public String deleteSkill(@P("Name of the skill to delete") String name) {
 		try {
 			OperationResult result = doDeleteSkill(name);
@@ -217,7 +218,7 @@ public class AgentAuthoringTool {
 	 *
 	 * @return JSON-serialized {@link SkillListResult} with one summary per skill.
 	 */
-	@ToolMethod(description = "List all application skills", mode = ToolMode.READ)
+	@ToolMethod(description = "List all application skills", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String listSkills() {
 		SkillListResult result = SkillListResult.create();
 		for (Skill skill : allKBSkills()) {
@@ -237,7 +238,7 @@ public class AgentAuthoringTool {
 	 *        Skill name.
 	 * @return JSON-serialized {@link SkillDetail}; {@code exists} is {@code false} if no such skill.
 	 */
-	@ToolMethod(description = "Get the full definition of a application skill", mode = ToolMode.READ)
+	@ToolMethod(description = "Get the full definition of a application skill", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String getSkill(@P("Skill name") String name) {
 		SkillDetail detail = SkillDetail.create();
 		detail.setName(name);
@@ -274,7 +275,7 @@ public class AgentAuthoringTool {
 	 *        Names of agents this agent may delegate to, or {@code null} for none.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Create a new agent in the application")
+	@ToolMethod(description = "Create a new agent in the application", group = ToolGroups.AGENT_AUTHORING)
 	public String createAgent(
 			@P("Unique agent name — do NOT use the TL_ prefix (reserved for TopLogic)") String name,
 			@P("Short description of the agent") String description,
@@ -337,7 +338,7 @@ public class AgentAuthoringTool {
 	 *        New delegation list, or {@code null} to leave unchanged (an empty list replaces with none).
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Update an existing application agent. Omitted fields are left unchanged.")
+	@ToolMethod(description = "Update an existing application agent. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING)
 	public String updateAgent(
 			@P("Name of the agent to update") String name,
 			@P(value = "New description (omit to leave unchanged)", required = false) String description,
@@ -400,7 +401,7 @@ public class AgentAuthoringTool {
 	 *        Name of the agent to delete.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Delete a application agent by name")
+	@ToolMethod(description = "Delete a application agent by name", group = ToolGroups.AGENT_AUTHORING)
 	public String deleteAgent(@P("Name of the agent to delete") String name) {
 		try {
 			OperationResult result = doDeleteAgent(name);
@@ -432,7 +433,7 @@ public class AgentAuthoringTool {
 	 *
 	 * @return JSON-serialized {@link AgentListResult} with one summary per agent.
 	 */
-	@ToolMethod(description = "List all application agents", mode = ToolMode.READ)
+	@ToolMethod(description = "List all application agents", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String listAgents() {
 		AgentListResult result = AgentListResult.create();
 		for (Agent agent : allKBAgents()) {
@@ -451,7 +452,7 @@ public class AgentAuthoringTool {
 	 *        Agent name.
 	 * @return JSON-serialized {@link AgentDetail}; {@code exists} is {@code false} if no such agent.
 	 */
-	@ToolMethod(description = "Get the full definition of a application agent", mode = ToolMode.READ)
+	@ToolMethod(description = "Get the full definition of a application agent", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String getAgent(@P("Agent name") String name) {
 		AgentDetail detail = AgentDetail.create();
 		detail.setName(name);
@@ -476,7 +477,7 @@ public class AgentAuthoringTool {
 	 * @return JSON-serialized {@link ToolListResult} with one summary per registered tool.
 	 */
 	@ToolMethod(description = "List all tools available to give to an agent (qualified names + descriptions)",
-		mode = ToolMode.READ)
+		mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String listAvailableTools() {
 		ToolListResult result = ToolListResult.create();
 		ToolRegistryService registry = ToolRegistryService.getInstance();

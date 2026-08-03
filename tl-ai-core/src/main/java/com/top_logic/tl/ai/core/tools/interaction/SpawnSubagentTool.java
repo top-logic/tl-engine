@@ -12,6 +12,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -82,6 +83,19 @@ public class SpawnSubagentTool implements Tool {
 	@Override
 	public ToolMode mode() {
 		return ToolMode.READ;
+	}
+
+	/**
+	 * {@link ToolGroups#INTERACTION}.
+	 *
+	 * <p>
+	 * Like delegation, a subagent inherits this run's security context and is bounded by the child
+	 * agent's tool list.
+	 * </p>
+	 */
+	@Override
+	public String group() {
+		return ToolGroups.INTERACTION;
 	}
 
 	@Override

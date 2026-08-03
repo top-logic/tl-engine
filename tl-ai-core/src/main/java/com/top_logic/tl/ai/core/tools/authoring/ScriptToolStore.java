@@ -15,6 +15,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.i18n.DefaultHtmlResKey;
+import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.model.search.configured.ScriptParameter;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -155,7 +156,7 @@ public class ScriptToolStore {
 		p.setMandatory(spec.mandatory());
 		p.setMultiple(spec.multiple());
 		if (spec.description() != null && !spec.description().isBlank()) {
-			p.setDescription(ResKey.text(spec.description()));
+			p.setDescription(new DefaultHtmlResKey(ResKey.text(spec.description())));
 		}
 		if (spec.defaultValue() != null && !spec.defaultValue().isBlank()) {
 			try {
@@ -255,7 +256,7 @@ public class ScriptToolStore {
 			: ToolDescriptions.englishPlainText(cfg.getDescription());
 	}
 
-	private static String descriptionText(ResKey key) {
+	private static String descriptionText(HtmlResKey key) {
 		return key == null ? null
 			: ToolDescriptions.englishPlainText(key);
 	}

@@ -57,4 +57,22 @@ public interface Tool {
 		return true;
 	}
 
+	/**
+	 * The tool group this tool declares for itself - the unit an administrator grants to a security
+	 * role.
+	 *
+	 * <p>
+	 * The empty string means ungrouped, which is the fail-closed default: with deny-by-default tool
+	 * authorization, a tool that declares no group cannot slip into an existing grant by accident and
+	 * is reachable only through an explicit per-tool grant. Tools that arrive at runtime and have no
+	 * annotation to carry a group - remote MCP tools above all - are ungrouped by construction and
+	 * are classified in the access policy instead.
+	 * </p>
+	 *
+	 * @see ToolMethod#group()
+	 */
+	default String group() {
+		return "";
+	}
+
 }

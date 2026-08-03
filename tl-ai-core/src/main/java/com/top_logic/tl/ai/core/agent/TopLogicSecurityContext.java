@@ -7,24 +7,150 @@ package com.top_logic.tl.ai.core.agent;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.basic.core.workspace.Environment;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tl.ai.core.security.AiSecurityMode;
+import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
+import com.top_logic.tl.ai.core.security.ToolAuthorization;
 import com.top_logic.tl.ai.tool.api.Tool;
 
 /**
  * {@link SecurityContext} implementation backed by TopLogic's runtime.
  *
  * <p>Maps TopLogic's {@link MaintenanceWindowManager} and {@link Environment} to
- * {@link ExecutionMode}. User-level security ({@link #hasToolPermission}) always returns
- * {@code true} for now — TopLogic's per-user security model is still evolving.</p>
+ * {@link ExecutionMode}. User-level security ({@link #hasToolPermission}) is answered against the
+ * roles the run's principal holds, but only where the run's {@link #securityMode() mode} enforces
+ * tool access - which no application gets until it configures a {@code <tool-access>} policy.</p>
  *
  * <p>The execution mode is resolved dynamically on each call (not cached),
- * because maintenance mode can change at runtime.</p>
+ * because maintenance mode can change at runtime. The {@link #securityMode() security mode}, the
+ * {@link #modelSecurity() model access checks} and the tool authorization are the opposite: they are
+ * bound once, when the context for a run is created, so nothing can widen them mid-run.</p>
+ *
+ * @see #forRun(Person, boolean)
  */
 public class TopLogicSecurityContext implements SecurityContext {
 
-	/** */
+	private final AiSecurityMode _securityMode;
+
+	private final ModelSecurity _modelSecurity;
+
+	private final ToolAuthorization _toolAuthorization;
+
+	/**
+	 * Creates a {@link TopLogicSecurityContext} with agent security unenforced.
+	 *
+	 * <p>
+	 * The behaviour-preserving default: {@link AiSecurityMode#LEGACY} with
+	 * {@link ModelSecurity#UNCHECKED} and {@link ToolAuthorization#UNCHECKED}. Use
+	 * {@link #forRun(Person, boolean)} to honour an application's configured policy.
+	 * </p>
+	 */
+	public TopLogicSecurityContext() {
+		this(AiSecurityMode.LEGACY, ModelSecurity.UNCHECKED, ToolAuthorization.UNCHECKED);
+	}
+
+	private TopLogicSecurityContext(AiSecurityMode securityMode, ModelSecurity modelSecurity,
+			ToolAuthorization toolAuthorization) {
+		_securityMode = securityMode;
+		_modelSecurity = modelSecurity;
+		_toolAuthorization = toolAuthorization;
+	}
+
+	/**
+	 * Creates the {@link SecurityContext} for one agent run under the deployment's configured policy.
+	 *
+	 * <p>
+	 * The single entry point every caller that has an acting user should use. An application that has
+	 * configured no {@link AiToolAccessService} policy gets {@link AiSecurityMode#LEGACY} and therefore
+	 * exactly its previous behaviour: no tool authorization, no model checks.
+	 * </p>
+	 *
+	 * @param principal
+	 *        The authenticated user the run acts as, or <code>null</code> for a run with no user
+	 *        identity.
+	 * @param background
+	 *        Whether the run has no human to answer approval prompts (a scheduler, an MCP client or
+	 *        an {@code aiAgentChatAsync} run). Approval is the compensating control that makes
+	 *        write-classified tools safe, so a run that has lost it is additionally bounded by the
+	 *        policy's background allowlist.
+	 * @throws IllegalStateException
+	 *         If the resolved mode {@link AiSecurityMode#requiresUser() requires a user} and
+	 *         {@code principal} is <code>null</code>.
+	 */
+	public static TopLogicSecurityContext forRun(Person principal, boolean background) {
+		return build(AiToolAccessService.ceiling(), principal, background);
+	}
+
+	/**
+	 * Creates the {@link SecurityContext} for one agent run, resolving its effective security mode
+	 * against an explicitly supplied policy.
+	 *
+	 * <p>
+	 * <b>A test seam.</b> It is the only way to exercise a policy without booting
+	 * {@link AiToolAccessService}, which is why it survives; production code has no policy that is
+	 * not the running service's and uses {@link #forRun(Person, boolean)}.
+	 * </p>
+	 *
+	 * @param deployment
+	 *        The deployment-wide policy, or <code>null</code> if the application configures none.
+	 * @param principal
+	 *        The authenticated user the run acts as, or <code>null</code> for a run with no user
+	 *        identity.
+	 * @throws IllegalStateException
+	 *         If the resolved mode {@link AiSecurityMode#requiresUser() requires a user} and
+	 *         {@code principal} is <code>null</code>. Refusing here rather than at the first tool
+	 *         call is deliberate: a run without a principal cannot be authorized, and failing later
+	 *         wastes a provider round trip and produces a confusing half-run.
+	 */
+	public static TopLogicSecurityContext forRun(ToolAccessPolicy deployment, Person principal) {
+		return build(AiSecurityMode.resolve(deployment), principal, false);
+	}
+
+	private static TopLogicSecurityContext build(AiSecurityMode mode, Person principal, boolean background) {
+		if (mode.requiresUser() && principal == null) {
+			throw new IllegalStateException("Agent security mode " + mode
+				+ " requires an authenticated user, but this run has none.");
+		}
+		ModelSecurity modelSecurity = mode.enforcesModelAccess()
+			? new ModelAccessRightsSecurity(principal)
+			: ModelSecurity.UNCHECKED;
+		ToolAuthorization toolAuthorization = mode.enforcesToolAccess()
+			? AiToolAccessService.authorizationFor(principal, background)
+			: ToolAuthorization.UNCHECKED;
+		return new TopLogicSecurityContext(mode, modelSecurity, toolAuthorization);
+	}
+
 	@Override
 	public boolean hasToolPermission(Tool tool) {
-		return true;
+		return _toolAuthorization.allows(tool);
+	}
+
+	@Override
+	public boolean hasToolPermission(String toolName) {
+		return _toolAuthorization.allows(toolName);
+	}
+
+	@Override
+	public String toolDenialReason(Tool tool) {
+		return _toolAuthorization.denialReason(tool);
+	}
+
+	@Override
+	public String toolDenialReason(String toolName) {
+		return _toolAuthorization.denialReason(toolName);
+	}
+
+	@Override
+	public AiSecurityMode securityMode() {
+		return _securityMode;
+	}
+
+	@Override
+	public ModelSecurity modelSecurity() {
+		return _modelSecurity;
 	}
 
 	/** */

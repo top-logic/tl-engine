@@ -12,6 +12,7 @@ import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -50,6 +51,18 @@ public class ListAgentsTool implements Tool {
 	@Override
 	public ToolMode mode() {
 		return ToolMode.READ;
+	}
+
+	/**
+	 * {@link ToolGroups#INTERACTION}.
+	 *
+	 * <p>
+	 * Listing the delegation targets is part of the delegation primitive itself.
+	 * </p>
+	 */
+	@Override
+	public String group() {
+		return ToolGroups.INTERACTION;
 	}
 
 	@Override

@@ -182,8 +182,17 @@ public class AIScriptFunctions extends TLScriptFunctions {
 				+ String.join(", ", ToolRegistryService.getInstance().getToolNames());
 		}
 
-		ToolContext context = ToolContext.createUnrestricted();
+		ToolContext context = ToolContext.forCurrentUser();
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
+			// This function dispatches a tool directly, bypassing the agent loop and therefore the
+			// loop's invocation gate. Apply the same tool authorization here, or a Script Console user
+			// would have a path to every registered tool regardless of what their roles grant.
+			if (!context.security().hasToolPermission(tool)) {
+				String reason = context.security().toolDenialReason(tool);
+				return "Error invoking tool '" + toolName + "': " + (reason != null
+					? reason
+					: "Permission denied: you do not have access to tool '" + toolName + "'.");
+			}
 			Map<String, Object> args = parameters != null ? parameters : Map.of();
 			return ToolExecutions.execute(tool, args, context).text();
 		} catch (Exception ex) {
@@ -288,7 +297,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			modelOptions.isEmpty() ? Map.of() : Map.copyOf(modelOptions));
 
 		AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
-		ToolContext context = ToolContext.createUnrestricted();
+		ToolContext context = ToolContext.forCurrentUser();
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			int messageCountBefore = conversation.size();
 
@@ -343,7 +352,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		Conversation conversation = new Conversation();
 		conversation.add(request);
 
-		ToolContext context = ToolContext.createUnrestricted();
+		ToolContext context = ToolContext.forCurrentUser();
 
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			recordUserTurn(env.logListener().log(), request);
@@ -390,7 +399,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * <b>Warning - unattended auto-approval:</b> a background run has no human to answer tool-approval
 	 * prompts, so every tool call is auto-approved. An async run can therefore perform any
 	 * write/destructive tool action (delete data, call external systems, ...) unattended. Only start
-	 * async runs for agents you trust to act without supervision.
+	 * async runs for agents you trust to act without supervision. An application that has configured a
+	 * {@code <tool-access>} policy can bound this: the run is additionally restricted to the policy's
+	 * {@code <background-allowlist>}, precisely because approval is the control it has lost.
 	 * </p>
 	 *
 	 * <p>
@@ -472,7 +483,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		// Own transaction lifecycle on the background thread, detached from any caller transaction.
 		// Auto-approve every tool call: a background run has no human to answer approval prompts.
 		CancellationToken cancellationToken = new CancellationToken();
-		ToolContext context = new ToolContext(new TopLogicSecurityContext(),
+		// Runs as the account that started it - agentChatAsync re-entered that sub-session on this
+		// thread - and is marked as a background run, so the policy's background allowlist applies as
+		// an additional ceiling. Auto-approval is exactly the compensating control that allowlist
+		// replaces: a run with nobody to ask must not reach write tools by default.
+		ToolContext context = new ToolContext(
+			TopLogicSecurityContext.forRun(TLContext.currentUser(), true),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 
 		// Cluster-safe cancellation: this node runs the job and holds the token, so a listener on

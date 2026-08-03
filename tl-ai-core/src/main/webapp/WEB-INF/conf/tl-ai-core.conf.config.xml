@@ -41,8 +41,29 @@
 					<module key="com.top_logic.tl.ai.core.tools.web.BrowserToolsService$Module" value="true"/>
 					<!-- Cookie Pool Service: encrypted, persistent login state for browserSaveCookies / browserUseCookies -->
 					<module key="com.top_logic.tl.ai.core.cookiepool.CookiePoolService$Module" value="true"/>
+					<!--
+						Role-based tool access. Active by default but unenforced by default: with no
+						<tool-access> configured it resolves to LEGACY, which is exactly the behaviour
+						an application had before this service existed. Keeping the module on means an
+						administrator enables enforcement by writing the policy and nothing else -
+						a policy present while the module was off would be silently ignored, which is
+						the failure mode this layer must never have.
+
+						See doc/security/tool-access-configuration.md.
+					-->
+					<module key="com.top_logic.tl.ai.core.security.AiToolAccessService$Module" value="true"/>
 				</modules>
 			</instance>
+		</config>
+
+		<!--
+			The role-to-tool policy. Empty as shipped, i.e. unenforced. An application overrides this
+			with a <tool-access> block; see doc/security/tool-access-configuration.md for a minimal
+			working example and doc/security/agent-security-architecture.md section 4.1 for the full
+			specification.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService"/>
 		</config>
 
 		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">

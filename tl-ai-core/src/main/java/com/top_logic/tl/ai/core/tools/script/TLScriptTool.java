@@ -15,6 +15,7 @@ import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor.ExecutionResult;
 import com.top_logic.tl.ai.core.tools.script.messages.ErrorResult;
 import com.top_logic.tl.ai.core.tools.script.messages.ValidationResult;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -70,7 +71,7 @@ public class TLScriptTool {
 	 *        The TLScript code to validate.
 	 * @return JSON object indicating validation success or containing error details.
 	 */
-	@ToolMethod(description = "Validate TLScript code syntax, model references, and type compatibility. Returns validation status and error details if invalid.", mode = ToolMode.READ)
+	@ToolMethod(description = "Validate TLScript code syntax, model references, and type compatibility. Returns validation status and error details if invalid.", mode = ToolMode.READ, group = ToolGroups.SCRIPT)
 	public String validateTLScript(
 			@P("TLScript code to validate") String script) {
 		return doValidateTLScript(script);
@@ -112,7 +113,7 @@ public class TLScriptTool {
 	 *        Optional arguments to pass to the script ($arg1, $arg2, ...).
 	 * @return JSON object containing execution result or error details.
 	 */
-	@ToolMethod(description = "Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications.", mode = ToolMode.DATA_WRITE)
+	@ToolMethod(description = "Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications.", mode = ToolMode.DATA_WRITE, group = ToolGroups.SCRIPT)
 	public String executeTLScript(
 			@P("TLScript code to execute") String script,
 			@P("If true, execute within transaction and commit changes (default: false)") Boolean withCommit,

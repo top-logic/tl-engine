@@ -49,9 +49,9 @@ import com.top_logic.util.model.ModelService;
  * false}, and is selectable only by its owner. A pool with {@code shared = true} (an admin/explicit
  * choice, not something the agent verbs set) is selectable by any session, including an unattended
  * one - the intended shared-login use case. Selection therefore returns the caller's own pools plus
- * shared pools; this owner/shared filter is enforced explicitly here because the platform
- * {@code SecurityContext.hasReadAccess}/{@code hasWriteAccess} hooks are currently stubs that return
- * {@code true} and cannot enforce isolation. Model-level access enforcement is a follow-up.
+ * shared pools; this owner/shared filter is enforced explicitly here rather than left to
+ * {@code SecurityContext.modelSecurity()}, which grants everything in a run whose mode does not
+ * enforce model access - which is the default - and therefore cannot carry this isolation.
  * </p>
  *
  * <p>

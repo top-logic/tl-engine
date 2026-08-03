@@ -25,6 +25,7 @@ import com.top_logic.tl.ai.core.tools.script.messages.FunctionDocResult;
 import com.top_logic.tl.ai.core.tools.script.messages.FunctionListResult;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -70,7 +71,7 @@ public class TLScriptReferenceTool {
 	 *
 	 * @return JSON object containing the list of function names.
 	 */
-	@ToolMethod(description = "List all available TLScript functions and methods. Returns function names that can be used in TLScript expressions.", mode = ToolMode.READ)
+	@ToolMethod(description = "List all available TLScript functions and methods. Returns function names that can be used in TLScript expressions.", mode = ToolMode.READ, group = ToolGroups.SCRIPT)
 	public String listTLScriptFunctions() {
 		Map<String, Object> args = new HashMap<>();
 
@@ -107,7 +108,7 @@ public class TLScriptReferenceTool {
 	 * @return JSON object containing the function documentation if available, or an error message
 	 *         if not found.
 	 */
-	@ToolMethod(description = "Get detailed documentation for a specific TLScript function. Returns signature, description, and usage information.", mode = ToolMode.READ)
+	@ToolMethod(description = "Get detailed documentation for a specific TLScript function. Returns signature, description, and usage information.", mode = ToolMode.READ, group = ToolGroups.SCRIPT)
 	public String getTLScriptFunctionDocumentation(
 			@P("Name of the TLScript function") String functionName) {
 

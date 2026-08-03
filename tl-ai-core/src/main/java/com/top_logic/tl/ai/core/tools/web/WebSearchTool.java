@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -39,7 +40,7 @@ public class WebSearchTool {
 		description = "Search the web and return ranked results (title, URL, snippet). "
 			+ "Use this to find current information or sources on the public internet. "
 			+ "Cite any sources you rely on as markdown links.",
-		mode = ToolMode.READ)
+		mode = ToolMode.READ, group = ToolGroups.EGRESS)
 	public String webSearch(
 			@P("The search query.") String query,
 			@P(value = "Optional: restrict results to these domains, e.g. [\"docs.oracle.com\"].",

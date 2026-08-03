@@ -133,25 +133,12 @@ Use the `{factory}.{tool}` name from the application configuration - the same na
 lists. A trailing `*` matches a prefix (`<grant tool="mcp__jira__*"/>`), but a wildcard never reaches a
 tool in a privileged group.
 
-### Give a TL-Script tool a capability
-
-A TL-Script tool has no annotation to carry a group, so it arrives ungrouped and is denied to
-everyone until it is classified. It can classify itself: the entries under a `ScriptToolFactory`'s
-`<tools>` take a `group` attribute next to the `mode` they already have, for example
-`group="data.read"`.
-
-Omit `group` and the tool stays ungrouped, which is what every script tool authored before this
-property existed does - fail-closed, and unchanged for them. Note that under enforced access an
-ungrouped tool is also invisible to the agents whose skills reference it: a skill none of whose tools
-the acting user may use is not offered at all (the drop is logged at INFO with the skill name and the
-reason). Classifying the tool, or naming it in `<tool-groups>` below, is what brings it back.
-
 ### Classify tools that cannot declare their own group
 
-Remote MCP tools have no annotation to carry a group, so they arrive ungrouped and denied. Put them
-in a group here - and an entry here also *overrides* a group a tool declared, which is how you move a
-tool into `egress` that its author did not classify as such, or how you classify a TL-Script tool
-whose configuration you would rather not edit:
+Remote MCP tools and TL-Script tools authored in the running application have no annotation to carry
+a group, so they arrive ungrouped and denied. Put them in a group here - and an entry here also
+*overrides* a group a tool declared, which is how you move a tool into `egress` that its author did
+not classify as such:
 
 ```xml
 <tool-groups>
@@ -162,6 +149,41 @@ whose configuration you would rather not edit:
     </group>
 </tool-groups>
 ```
+
+A trailing `*` matches a prefix, and it matches **any** of a tool's names - the bare name the model
+calls, the `{factory}.{tool}` name written in configuration, and the provider-safe `factory__tool`
+form. Since a TL-Script tool is referenced as `{factory}.{name}`, a factory wildcard classifies the
+whole factory in one line:
+
+```xml
+<tool-groups>
+    <group name="data.read">
+        <tools>
+            <tool name="reporting.*"/>
+        </tools>
+    </group>
+</tool-groups>
+```
+
+**This is the mechanism for TL-Script tools.** There is deliberately no way for a tool to declare its
+own group in its configuration - see the warning below.
+
+Note what an ungrouped tool costs under enforced access, beyond being uncallable: it is also
+invisible to the agents whose skills reference it. A skill none of whose tools the acting user may
+use is not offered at all, and the drop is logged at INFO with the skill name and the reason.
+Classifying the factory is what brings the skill back.
+
+> **A factory wildcard delegates classification authority for that namespace.** A tool's group is
+> supposed to say what the tool *does*, while the check asks what the *user* holds - so whoever
+> decides a tool's group decides which capability it costs to call. `createScriptTool` lets its
+> caller pick the factory name freely, and holding `agent.authoring` is not the same as holding
+> `data.write`. Map `reporting.*` to `data.read`, and anyone who can author into `reporting` can put
+> a tool that *writes* under a capability their user only holds for *reading*.
+>
+> Therefore: map only factories whose contents you control, keep the factories agents author into
+> (`custom` by default) out of `<tool-groups>`, and never point a factory wildcard at a privileged
+> group (`script`, `model.structure`, `agent.authoring`). Naming individual tools rather than a
+> wildcard removes the delegation entirely, at the cost of one line per tool.
 
 ### Cap what an unattended run can do
 

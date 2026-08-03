@@ -491,6 +491,31 @@ Two code fixes and one piece of prompt text address that:
 It is emitted only where the run's mode `enforcesToolAccess()`, so a `LEGACY` prompt is byte-identical
 to what it was before this existed.
 
+#### 3.2.8 Why a tool must not declare its own group when its author is not trusted
+
+Dropping a whole skill (3.2.7) makes the ungrouped TL-Script tool a live problem rather than a
+theoretical one: under `ENFORCED` every script tool is denied to everyone, so a skill built out of
+them disappears - for its author too. The obvious fix is to let the tool's configuration name its own
+group. **That fix is wrong, and it is not implemented.**
+
+A tool's group states what the tool *does*; the check asks what the *user* holds. Whoever decides the
+group therefore decides which capability it costs to call the tool. `ScriptToolAuthoringTool` is
+reachable with `agent.authoring` and holding that is not holding `data.write`, so a self-declared
+group is a crossing of the group boundary: author a tool whose TL-Script body writes, declare it
+`data.read`, and a user with only `data.read` may now write. Today's behaviour is the correct one -
+an unclassified tool is denied to everyone, which is fail-closed and unforgeable.
+
+Classification stays with the administrator, in `<tool-groups>`, which already supports a
+`{factory}.*` wildcard against the qualified name (`RoleToolAccess.matchConfiguredGroup`, matched
+across all of `ToolIdentity.names()`; pinned by
+`TestRoleToolAccess.testFactoryWildcardClassifiesAnUngroupedScriptTool`). One line classifies a
+factory.
+
+That wildcard has a cost of its own and the administrator doc states it: mapping a factory delegates
+classification authority over that namespace, because `createScriptTool` lets its caller choose the
+factory freely. Map only factories you control, leave the agent-authored default (`custom`) out, and
+never point a factory wildcard at a privileged group.
+
 ### 3.3 L2 - Data authorization via `ModelAccessRights` (#29088)
 
 #### 3.3.1 The typed façade
@@ -564,7 +589,7 @@ The tools that need it, in dependency order:
 | `ModelEditorTool.*`, `ModelAnnotationEditorTool.*` | Structural: gated by the `model.structure` group at L1; L4 backstops the commit |
 | `TLScriptTool.executeTLScript` | Already enforced by the engine inside TL-Script as of `8.0.0-alpha7`; assert user context, never a system interaction. Note this enforcement is **not** gated by `AiSecurityMode`, so it also applies in `LEGACY` - and it denies by default, see section 6 |
 | `VectorIndexSearchTool` | Section 3.4.3 |
-| `McpTool` (all remote tools) | Cannot be introspected and declares no group, so it is ungrouped and therefore denied until an administrator classifies it in `<tool-groups>`. A TL-Script tool (`ScriptToolExecutor`) can now classify itself through the `group` property of its configuration; one authored before that property existed stays ungrouped, hence denied |
+| `McpTool` (all remote tools) | Cannot be introspected and declares no group, so it is ungrouped and therefore denied until an administrator classifies it in `<tool-groups>`. Same for `ScriptToolExecutor`, i.e. every TL-Script tool authored in the running application. Classification stays with the administrator on purpose - a self-declared group would let whoever authors a tool choose which capability it costs to call (see 3.2.8) |
 
 #### 3.3.3 Declared types - designed, not built
 

@@ -25,6 +25,7 @@ import com.top_logic.ai.mcp.server.resources.TypePartsResource;
 import com.top_logic.ai.mcp.server.resources.TypeUsagesResource;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -229,11 +230,34 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			// Build the server
 			_mcpServer = builder.build();
 
+			warnAboutUnauthenticatedEndpoint();
+
 		} catch (RuntimeException ex) {
 			throw ex;
 		} catch (Exception ex) {
 			throw new RuntimeException("Failed to start MCP server: " + ex.getMessage(), ex);
 		}
+	}
+
+	/**
+	 * States in the boot log that this endpoint authenticates nobody.
+	 *
+	 * <p>
+	 * A warning at every boot rather than a line in a document, because the fact is a property of the
+	 * running deployment: {@code MCPTransportServlet} is mapped to {@code /mcp/*} in this module's
+	 * {@code web-fragment.xml} with no filter and no {@code security-constraint}, and the transport's
+	 * security validator is the SDK default that validates nothing. Whoever reaches the port reaches
+	 * the protocol. Tracked as issue #261.
+	 * </p>
+	 */
+	private void warnAboutUnauthenticatedEndpoint() {
+		Logger.warn("MCP server started on " + MCP_ENDPOINT
+			+ "/* WITHOUT transport authentication: the servlet is registered with no filter and no"
+			+ " security-constraint, so every registered agent tool and every exposed model resource"
+			+ " is reachable by anyone who can reach this endpoint. Restrict access to it at the"
+			+ " network or reverse-proxy level. Applications that enforce role-based agent tool"
+			+ " access (<tool-access>) refuse MCP tool execution outright, because an unauthenticated"
+			+ " caller cannot be authorized. See issue #261.", MCPServerService.class);
 	}
 
 	/**

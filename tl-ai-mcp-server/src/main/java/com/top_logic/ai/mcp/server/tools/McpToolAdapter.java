@@ -10,7 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -106,10 +109,28 @@ public class McpToolAdapter {
 
 	/**
 	 * Handles an MCP tool call by delegating to the tool.
+	 *
+	 * <p>
+	 * The call runs in a real {@link com.top_logic.tl.ai.core.agent.ToolContext} - see
+	 * {@link McpToolContexts} for which principal it names (none) and why an enforcing deployment
+	 * refuses the call outright instead. Passing no context at all, as this method used to, meant
+	 * every adapted tool reached the model with no security context, no tool authorization and no
+	 * approval: a complete bypass of {@code <tool-access>}.
+	 * </p>
 	 */
 	private static McpSchema.CallToolResult handleToolCall(
 			CallToolRequest request,
 			Tool tool) {
+
+		String refusal = McpToolContexts.refusalReason();
+		if (refusal != null) {
+			Logger.warn("Refused MCP tool call '" + request.name() + "': " + refusal,
+				McpToolAdapter.class);
+			return McpSchema.CallToolResult.builder()
+				.content(List.of(new McpSchema.TextContent(refusal)))
+				.isError(true)
+				.build();
+		}
 
 		try {
 			Map<String, Object> arguments = request.arguments();
@@ -117,7 +138,17 @@ public class McpToolAdapter {
 				arguments = Map.of();
 			}
 
-			String result = ToolExecutions.execute(tool, arguments, null).text();
+			String result;
+			CancellationToken cancellation = new CancellationToken();
+			// Committed here rather than by an agent loop, which this call does not run in. On any
+			// exception close() rolls the transaction back.
+			try (TransactionScope transaction = new TransactionScope(cancellation)) {
+				ToolContext context = McpToolContexts.forCall(transaction, cancellation);
+				result = ToolExecutions.execute(tool, arguments, context).text();
+				if (transaction.isActive()) {
+					transaction.commit();
+				}
+			}
 
 			return McpSchema.CallToolResult.builder()
 				.content(List.of(new McpSchema.TextContent(result)))

@@ -4,7 +4,8 @@
 layer still staged. Enforcement is opt-in per application: an application that has written no
 `<tool-access>` policy stays on mode `LEGACY` and behaves exactly as it did before. Section 6 is the
 per-artifact map; [tool-access-configuration.md](tool-access-configuration.md) is the administrator's
-guide to the part that works.
+guide to the part that works; [testbed.md](testbed.md) is the runnable fixture that shows it, one
+persona and one expected result per behaviour.
 **Depends on:** engine ticket **#29088** (`ModelAccessRights` / `SecurityConfigurationService`),
 **released** in engine `8.0.0-alpha7`, which tl-ai now builds against. All API references below are
 verified against that released artifact.

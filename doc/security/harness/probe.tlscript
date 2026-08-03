@@ -1,0 +1,86 @@
+// ===========================================================================
+// Agent security test bed - TOOL LAYER PROBE
+//
+// Prints the tool-layer decision for the account you are logged in as, one
+// line per capability, in about a second. NO LLM API KEY IS NEEDED: aiCallTool
+// dispatches a tool directly and the permission check happens before any model
+// call.
+//
+// Where to run it: Administration > Development > Script console, logged in as
+// whichever persona you want to see. The "execute" button (the plain one) is
+// enough - nothing here commits.
+//
+// What to expect: log in as two personas in turn and diff the two outputs.
+// That comparison is the whole point of the fixture. The expectation column of
+// doc/security/testbed.md says which lines must differ for which pair.
+//
+//   ALLOWED  the tool ran. For a read-only probe tool the result follows.
+//   DENIED   the tool layer refused, and the reason names either the missing
+//            capability or the missing classification.
+//
+// A DENIED line that names "no tool group" is a different problem from one
+// that names a capability: the first is fixed by a <tool-groups> entry, the
+// second by granting a role. Do not confuse them.
+// ===========================================================================
+{
+	// [ label, qualified tool name, parameters ]
+	//
+	// One read-only tool per capability the fixture grants somebody, plus the
+	// three that nobody is granted, plus the classified/unclassified script
+	// tool pair. Every one of them is harmless: no entry here writes.
+	probes = [
+		["interaction    (baseline)", "user-interaction.askUser",
+			{"question": "probe", "options": ["ok"]}],
+		["model.read", "model-browser.listModules", null],
+		["data.read", "model-instances.listInstances",
+			{"moduleName": "secdemo", "typeName": "Note", "limit": 3}],
+		["data.read  (script tool, classified by wildcard)",
+			"secdemo-reporting.countNotes", null],
+		["(unclassified script tool, same body)",
+			"secdemo-unclassified.countNotesUnclassified", null],
+		["agent.meta", "framework-wiring.listFrameworkAgents", null],
+		["script          (privileged)", "script-exec.validateTLScript",
+			{"script": "1 + 1"}],
+		["workspace", "task.listTasks", null],
+		["agent.authoring (privileged)", "agent-authoring.listAgents", null],
+		["model.structure (privileged, granted to nobody)",
+			"model-modification.createClass", null],
+		["egress          (granted to nobody)", "web-fetch.webFetch",
+			{"url": "https://example.com"}],
+		["(hallucinated name - must say Unknown/not found, never Permission)",
+			"model-instances.listEverything", null]
+	];
+
+	me = currentUser().get(`tl.accounts:Person#name`);
+
+	// A denial from aiCallTool always starts with "Error invoking tool", and
+	// carries the reason the policy produced. Anything else is the tool's own
+	// result, i.e. the call was allowed.
+	report = $probes.map(p -> {
+		result = aiCallTool($p[1], $p[2]);
+		denied = $result.stringStartsWith("Error invoking tool");
+		// One line per probe, so the console's row-per-line table stays readable;
+		// long tool results are cut rather than wrapped.
+		summary = $result.split("\n").firstElement();
+
+		"  " + ($denied ? "DENIED " : "ALLOWED") + "  " + $p[0]
+			+ "  ->  " + $p[1] + "  ::  " + ($summary.length() > 200
+				? $summary.subString(0, 200) + " ..."
+				: $summary);
+	});
+
+	[
+		"-- agent security test bed: tool layer, as '" + $me + "' --",
+		$me == "root"
+			? "WARNING: administrators bypass the tool layer. Every line below will"
+				+ " say ALLOWED and the deny lines prove nothing. That is the"
+				+ " documented administrator baseline, not a finding - log in as a"
+				+ " persona to see the policy."
+			: "Role-based account: the expectations in doc/security/testbed.md apply.",
+		""
+	].concat($report).concat([
+		"",
+		"Log in as another persona and run this again; the diff between the two",
+		"outputs is what the fixture exists to show."
+	]);
+}

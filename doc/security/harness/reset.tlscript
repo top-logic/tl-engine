@@ -1,32 +1,102 @@
 // ===========================================================================
-// Agent security end-to-end test - RESET
+// Agent security test bed - RESET
 //
-// Cases 3.2 and 3.4 attempt to create notes. 3.2 must fail, but 3.4 succeeds
-// and persists an "Editor note" instance, so repeated runs accumulate them.
-// This script removes everything the harness may have created and leaves the
-// three seeded notes and the two seeded secrets alone.
+// Puts the seeded data back the way SecDemoSetupService created it, so a
+// scenario can be replayed without rebuilding the database:
+//
+//   * deletes every secdemo:Note and secdemo:Secret a scenario created,
+//     whatever it is called - the previous version only knew two fixed
+//     titles, so anything else a persona wrote survived a "reset",
+//   * restores a seeded note or secret a scenario deleted (secwriter1 and
+//     seceditor1 hold Write on Note, so that can happen),
+//   * reports what it did, so the output is a verification and not a promise.
+//
+// It does NOT touch the accounts, the groups, the role assignments or the
+// component access. Those are idempotent and SecDemoSetupService re-applies
+// them on every boot, so there is nothing to reset.
 //
 // Where to run it: Administration > Development > Script console as "root",
 // with the "execute and save changes" button (the one with the database icon).
-// A role-based demo account cannot run it: it holds only the "Read" command
-// group on the console, and no demo role is granted deletion anyway.
+// A role-based persona cannot run it: it holds only the "Read" command group
+// on the console, and no persona role is granted deletion anyway.
 //
 // The alternative reset is a fresh database (delete tl-ai-demo/tmp).
+//
+// See doc/security/testbed.md, "Enabling and resetting the fixture".
 // ===========================================================================
 {
-	harnessTitles = ["Editor note", "Reader was here"];
+	// The three notes and two secrets SecDemoSetupService seeds - kept in step
+	// with seedInstances() in that class. Anything of these types that is not
+	// listed here was created by a scenario and goes away.
+	seededNotes = [
+		["Release checklist", "Cut the branch, run the tests, tag the build."],
+		["Team offsite", "Agenda for the next offsite: retro, roadmap, dinner."],
+		["Open questions", "Which of the staged enforcement layers ships first?"]
+	];
+	seededSecrets = [
+		["Payroll export", "salary-2026-Q3: 4711"],
+		["Deploy key", "ssh-ed25519 AAAA-not-a-real-key"]
+	];
 
+	seededNoteTitles = $seededNotes.map(n -> $n[0]);
+	seededSecretLabels = $seededSecrets.map(s -> $s[0]);
+
+	// -- read the report data BEFORE deleting -----------------------------
+	// An attribute read on an object deleted earlier in the same script
+	// fails, so everything the report needs is collected up front.
 	notes = all(`secdemo:Note`);
-	obsolete = $notes.filter(n -> $harnessTitles.containsElement($n.get(`secdemo:Note#title`)));
+	secrets = all(`secdemo:Secret`);
 
-	// Read the report data before deleting: an attribute read on an object
-	// deleted earlier in the same script fails.
-	removed = $obsolete.size();
-	remaining = $notes.filter(n -> !$harnessTitles.containsElement($n.get(`secdemo:Note#title`)))
-		.get(`secdemo:Note#title`);
+	obsoleteNotes =
+		$notes.filter(n -> !$seededNoteTitles.containsElement($n.get(`secdemo:Note#title`)));
+	obsoleteSecrets =
+		$secrets.filter(s -> !$seededSecretLabels.containsElement($s.get(`secdemo:Secret#label`)));
 
-	$obsolete.foreach(n -> $n.delete());
+	removedNoteTitles = $obsoleteNotes.get(`secdemo:Note#title`);
+	removedSecretLabels = $obsoleteSecrets.get(`secdemo:Secret#label`);
 
-	"Deleted " + $removed + " note(s) created by the harness. Remaining titles: "
-		+ $remaining.join(separator: ", ");
+	presentNoteTitles =
+		$notes.get(`secdemo:Note#title`).filter(t -> $seededNoteTitles.containsElement($t));
+	presentSecretLabels =
+		$secrets.get(`secdemo:Secret#label`).filter(l -> $seededSecretLabels.containsElement($l));
+
+	missingNotes = $seededNotes.filter(n -> !$presentNoteTitles.containsElement($n[0]));
+	missingSecrets = $seededSecrets.filter(s -> !$presentSecretLabels.containsElement($s[0]));
+
+	// -- delete what the scenarios added ----------------------------------
+	$obsoleteNotes.foreach(n -> $n.delete());
+	$obsoleteSecrets.foreach(s -> $s.delete());
+
+	// -- restore what a scenario removed ----------------------------------
+	$missingNotes.foreach(n -> new(`secdemo:Note`)
+		..set(`secdemo:Note#title`, $n[0])
+		..set(`secdemo:Note#body`, $n[1]));
+	$missingSecrets.foreach(s -> new(`secdemo:Secret`)
+		..set(`secdemo:Secret#label`, $s[0])
+		..set(`secdemo:Secret#value`, $s[1]));
+
+	// -- report -----------------------------------------------------------
+	// Counted from the data as it was read, not re-read afterwards: this
+	// request pinned its knowledge-base revision before the deletes, so a
+	// re-read here would not see them. Run the script twice to verify - the
+	// second run must report "none" on all four lines.
+	[
+		"-- agent security test bed: reset --",
+		"deleted notes    : " + ($removedNoteTitles.size() == 0
+			? "none"
+			: $removedNoteTitles.size() + " (" + $removedNoteTitles.join(separator: ", ") + ")"),
+		"deleted secrets  : " + ($removedSecretLabels.size() == 0
+			? "none"
+			: $removedSecretLabels.size() + " (" + $removedSecretLabels.join(separator: ", ") + ")"),
+		"restored notes   : " + ($missingNotes.size() == 0
+			? "none - all three seeded notes were present"
+			: $missingNotes.map(n -> $n[0]).join(separator: ", ")),
+		"restored secrets : " + ($missingSecrets.size() == 0
+			? "none - both seeded secrets were present"
+			: $missingSecrets.map(s -> $s[0]).join(separator: ", ")),
+		"",
+		"The fixture now holds exactly the 3 seeded notes and 2 seeded secrets.",
+		"Run this script a second time to verify: it must then report 'none' on",
+		"all four lines. If it does not, something is still creating data."
+	];
 }

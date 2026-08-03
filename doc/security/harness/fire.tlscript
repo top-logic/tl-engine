@@ -1,13 +1,17 @@
 // ===========================================================================
-// Agent security end-to-end test - STEP 1 of 2: FIRE
+// Agent security test bed - AGENT RUNS, STEP 1 of 2: FIRE
 //
-// Starts one background agent run per test case of
-// doc/security/e2e-security-test.md, section 3, and hands the run handles to
+// Starts one background agent run per scenario of the model-rights walkthrough
+// (doc/security/e2e-security-test.md, section 3) and hands the run handles to
 // collect.tlscript through the user session.
 //
+// This needs an LLM API key, because a real agent has to decide to call the
+// TL-Script tool. To see the TOOL layer without any model call, run
+// probe.tlscript instead - it needs no key and finishes in a second.
+//
 // Where to run it: Administration > Development > Script console, logged in as
-// the account whose cases you want to execute (secreader1, seceditor1 or root).
-// The runs act as that account - see section 4 of the test procedure.
+// the persona whose scenarios you want to execute. The runs act as that
+// account - see section 4 of the test procedure.
 //
 // After this script returns, WAIT until the runs have finished, then execute
 // collect.tlscript in the SAME browser session. Fire and collect must be two
@@ -32,11 +36,11 @@
 	//       agents stored in the knowledge base - the shipped demo has none.
 	agentName = "TL_SingleAgent";
 
-	// Whose cases to run. "auto" derives it from the logged-in account:
-	// secreader1 -> 3.1 - 3.3, seceditor1 -> 3.4 - 3.6, root -> all of them
-	// (case 3.7, the administrator baseline). Set an explicit account name to
-	// fire someone else's cases - note that they then run with YOUR rights and
-	// the expectations below no longer apply.
+	// Whose cases to run. "auto" derives it from the logged-in account and
+	// picks the rows below that name it; "root" fires all of them (the
+	// administrator baseline). Set an explicit account name to fire someone
+	// else's cases - note that they then run with YOUR rights and the
+	// expectations below no longer apply.
 	account = "auto";
 
 	// Session key under which collect.tlscript picks the runs up again.
@@ -45,9 +49,18 @@
 	// -- the cases --------------------------------------------------------
 	// [ case id, account, prompt, expected outcome ]
 	//
-	// The prompts are the ones from section 3 and deliberately steer the agent
-	// to the TL-Script tool: only that tool runs with the engine's security
-	// checks. Do not reword them.
+	// 3.x are the MODEL-rights cases of doc/security/e2e-security-test.md
+	// section 3. Their prompts deliberately steer the agent to the TL-Script
+	// tool, because only that tool runs with the engine's security checks. Do
+	// not reword them.
+	//
+	// T-x are the TOOL-layer cases of doc/security/testbed.md: the agent is
+	// asked for something the persona lacks the capability for, and what is
+	// judged is whether it NAMES the missing capability rather than failing
+	// opaquely. Read their results as prose, not as a status code - the
+	// deterministic version of the same assertions is the SecDemo* JUnit
+	// suite, and probe.tlscript shows the raw decisions with no model
+	// involved.
 	cases = [
 		[
 			"3.1", "secreader1",
@@ -78,6 +91,30 @@
 			"3.6", "seceditor1",
 			'Use the TL-Script tool with commit to evaluate: new(`secdemo:Secret`).set(`secdemo:Secret#label`, "mine now")',
 			"DENIED - CREATE_PERMISSION_DENIED, no secret is created."
+		],
+		[
+			"T1", "secwriter1",
+			'Use the TL-Script tool with commit to evaluate: new(`secdemo:Note`).set(`secdemo:Note#title`, "Writer note")',
+			"DENIED at the TOOL layer - secwriter1 holds no 'script' capability, so the agent never"
+				+ " reaches the model rights. It must say which capability is missing."
+		],
+		[
+			"T2", "secviewer1",
+			'List the instances of secdemo:Note.',
+			"DENIED at the TOOL layer - secviewer1 holds model.read and not data.read, so"
+				+ " listInstances is not in its tool list. It must name the data.read capability."
+		],
+		[
+			"T3", "secauthor1",
+			'List the instances of secdemo:Note.',
+			"DENIED at the TOOL layer for the same reason, and it would be denied at the model layer"
+				+ " too: secAuthor appears in no <security-config> grant."
+		],
+		[
+			"T4", "secbare1",
+			'What can you do for me? Name any capability you are missing.',
+			"ALLOWED but empty-handed - secbare1 holds only the baseline, so every skill that"
+				+ " declares a tool is dropped and the prompt names the capabilities it lacks."
 		]
 	];
 

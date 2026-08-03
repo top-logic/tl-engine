@@ -1,5 +1,11 @@
 # End-to-end security test: model access rights and tool access
 
+> **Not the entry point.** Start at **[testbed.md](testbed.md)** - it maps every behaviour of the
+> feature to a persona, a thing to type and an expected result, and it is where the persona matrix, the
+> `LEGACY` / `ENFORCED` switch and the automated coverage are described. **This** page is the depth
+> behind one part of it: the engine's model access rights, and the TL-Script harness that drives agent
+> runs against them.
+
 **Scope:** this walkthrough exercises the two enforcement layers that are live today.
 
 - **Model rights** (sections 2 to 5): the engine's `ModelAccessRights` on `8.0.0-alpha7`, driven by a
@@ -28,10 +34,10 @@ A dedicated example model plus a minimal role system, all behind one opt-in swit
 |---|---|
 | Module | `secdemo` |
 | Types | `secdemo:Note {title, body}`, `secdemo:Secret {label, value}` |
-| Roles | `secReader`, `secEditor` |
-| Groups | `secReaders`, `secEditors` |
-| Accounts | `secreader1` (in `secReaders`), `seceditor1` (in `secEditors`) |
-| Password | `Sec-Demo-1` (both accounts; configurable, see below) |
+| Roles | `secReader`, `secEditor`, and four more - see [testbed.md](testbed.md#3-the-persona-matrix) |
+| Groups | `secReaders`, `secEditors`, and four more |
+| Accounts | `secreader1` (in `secReaders`), `seceditor1` (in `secEditors`), and four more |
+| Password | `Sec-Demo-1` (all accounts; configurable, see below) |
 | Seed data | 3 `Note`s, 2 `Secret`s |
 | Visible UI | the **Albert** tab (the agent chat) and the **Script console**, for both roles |
 | Tool policy | `<tool-access>` granting the roles different tool capabilities, see [section 6](#6-the-tool-layer-which-roles-may-use-which-tools) |
@@ -40,7 +46,7 @@ The model policy (`WEB-INF/conf/secdemo.config.xml`):
 
 | Type | Read | Create | Write |
 |---|---|---|---|
-| `secdemo:Note` | `secReader`, `secEditor` | `secEditor` | `secEditor` |
+| `secdemo:Note` | `secReader`, `secEditor`, `secWriter`, `secViewer` | `secEditor`, `secWriter` | `secEditor`, `secWriter` |
 | `secdemo:Secret` | *(no grant)* | *(no grant)* | *(no grant)* |
 
 `secdemo:Secret` has no grant at all - that is what makes it inaccessible. The engine's model
@@ -98,15 +104,18 @@ uses for `WEB-INF/conf/security.xml`:
 
 ```xml
 <component-access>
-    <profile name="secReader">
+    <profile name="*">
         <view name="tl-chat/chat/tabLayout.layout.xml#TabLayout">
             <commandGroup name="Read"/>
         </view>
         ...
     </profile>
-    ...
 </component-access>
 ```
+
+The profile name `*` is expanded by `SecDemoSetupService` to the role of every configured
+`<persona>`. A profile named after a single role still works, for a persona that deliberately needs
+different views.
 
 **Why not `WEB-INF/conf/security.xml` directly?** That path is fixed and read on every boot, and the
 engine's importer *resets* the access of every view in the application before applying the file. An
@@ -115,9 +124,10 @@ opt-in aspect must not do either. `SecDemoSetupService` applies the same configu
 the demo exactly as shipped. Unknown roles, views or command groups fail the boot rather than
 silently producing an empty application.
 
-Note that both roles get the *same* view access. That is deliberate: the difference between
-`secReader` and `secEditor` is a model-access difference, and keeping the UI identical is what makes
-the allow/deny cases in section 3 comparable.
+Note that every persona role gets the *same* view access, which is what the `*` profile says out
+loud. That is deliberate: what distinguishes two personas is their model rights and their tool grants,
+and keeping the UI identical is what makes the allow/deny pairs in section 3 comparable - a difference
+you observe is then attributable to the policy and to nothing else.
 
 ---
 
@@ -187,16 +197,16 @@ With the aspect enabled you should see, in order:
 ```
 DynamicModelService - Adding module 'secdemo'.
 InitialRolesManager - Created system wide role ... name: secReader
-InitialRolesManager - Created system wide role ... name: secEditor
+... one line per persona role ...
 InitialGroupManager - Created system wide group ... name: secReaders
-InitialGroupManager - Created system wide group ... name: secEditors
+... one line per persona group ...
 BasicRuntimeModule  - Service 'com.top_logic.ai.demo.secdemo.SecDemoSetupService' successfully started.
 ```
 
 The tool policy reports itself in the same boot (in the `tl-ai` log file, see below):
 
 ```
-AiToolAccessService - Agent tool access: mode=ENFORCED roles=2 baseline=1 backgroundAllowlist=5
+AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=1 backgroundAllowlist=5
 ```
 
 `SecDemoSetupService` logs its own steps under the logger `com.top_logic.ai`, which the demo routes to
@@ -208,9 +218,9 @@ SecDemoSetupService - Granted 'Read' on view 'tl-chat/chat/agent.layout.xml#agen
 SecDemoSetupService - Granted 'Read' on view 'admin/index.layout.xml#adminView' to role 'secReader'.
 SecDemoSetupService - Granted 'Read' on view 'admin/studio/index.layout.xml#studioView' to role 'secReader'.
 SecDemoSetupService - Granted 'Read' on view 'com.top_logic.model.search/admin/scriptConsole.layout.xml#view' to role 'secReader'.
-... the same five lines for role 'secEditor' ...
-SecDemoSetupService - Created security demo account 'secreader1'.
-SecDemoSetupService - Created security demo account 'seceditor1'.
+... the same five lines for each of the other five persona roles ...
+SecDemoSetupService - Created security demo persona 'secreader1' (role 'secReader'): read-only plus TL-Script - reads notes, cannot create one, sees no secret
+... one line per persona, each naming what it is in the fixture to demonstrate ...
 SecDemoSetupService - Created 3 example instances of 'secdemo:Note'.
 SecDemoSetupService - Created 2 example instances of 'secdemo:Secret'.
 ```
@@ -225,10 +235,13 @@ message naming it - an empty application is never the result of a typo.
 
 ### 2.4 Logins
 
+The two this walkthrough uses; the full matrix is in
+[testbed.md](testbed.md#3-the-persona-matrix).
+
 | Login | Password | Role | Sees |
 |---|---|---|---|
 | `secreader1` | `Sec-Demo-1` | `secReader` | **Albert** and *Administration → Development → Script console* |
-| `seceditor1` | `Sec-Demo-1` | `secEditor` | **Albert** and *Administration → Development → Script console* |
+| `seceditor1` | `Sec-Demo-1` | `secEditor` | the same |
 | `root` | your usual dev password | administrator (bypasses everything) | every tab |
 
 To change the seeded password, add it to the aspect:
@@ -336,7 +349,8 @@ To run these cases from TL-Script instead of typing them into the chat, see
 
 Cases 3.2 and 3.4 change data. To reset, run
 [`harness/reset.tlscript`](harness/reset.tlscript) as `root`, or start with a fresh database
-(`tl-ai-demo/tmp`).
+(`tl-ai-demo/tmp`). Run the reset script twice to verify it: the second run must report `none` on all
+four of its lines. See [testbed.md](testbed.md#23-reset-between-scenarios).
 
 ---
 
@@ -348,11 +362,17 @@ agent run per case, a second one collects status, result and expectation side by
 
 The scripts live next to this document:
 
-| File | Purpose |
-|---|---|
-| [`harness/fire.tlscript`](harness/fire.tlscript) | starts one background agent run per case and remembers the handles |
-| [`harness/collect.tlscript`](harness/collect.tlscript) | reads status, result and expectation back, plus the post-conditions |
-| [`harness/reset.tlscript`](harness/reset.tlscript) | removes the notes the cases created (run as `root`) |
+| File | Purpose | Needs an LLM key |
+|---|---|---|
+| [`harness/probe.tlscript`](harness/probe.tlscript) | prints the **tool**-layer decision for the logged-in persona, one line per capability | no |
+| [`harness/fire.tlscript`](harness/fire.tlscript) | starts one background agent run per case and remembers the handles | yes |
+| [`harness/collect.tlscript`](harness/collect.tlscript) | reads status, result and expectation back, plus the post-conditions | no |
+| [`harness/reset.tlscript`](harness/reset.tlscript) | puts the seeded data back the way it was (run as `root`) | no |
+
+`fire.tlscript` also carries four tool-layer cases (`T1` to `T4`) that ask a persona for something it
+lacks the capability for, and are judged on whether the agent **names** the missing capability. The
+deterministic version of those assertions is the `SecDemo*` JUnit suite; see
+[testbed.md](testbed.md#7-the-deterministic-backbone).
 
 ### 4.1 Why the agent runs as the calling user
 
@@ -393,8 +413,9 @@ prompts, expected to be allowed throughout. For everything else, log in as `secr
 
 ### 4.3 The Script console grant
 
-The two demo accounts can reach the console because the aspect grants them the `Read` command group
-on the three nested views listed in [1.1](#11-component-access-why-the-accounts-see-a-tab-at-all).
+Every persona can reach the console because the aspect grants the `Read` command group on the three
+nested views listed in [1.1](#11-component-access-why-the-accounts-see-a-tab-at-all) to every persona
+role.
 Without it they cannot run TL-Script at all: the shipped demo has no `WEB-INF/conf/security.xml`, so
 no role holds a command group on any view, and the console is invisible.
 
@@ -521,7 +542,9 @@ the **tool** rights, the other, independent authorization: whether a role may in
 at all. A role can hold the TL-Script tool and be denied every object it asks for, and it can have broad
 data rights and no tool to reach them with.
 
-The aspect configures a `<tool-access>` for the two demo roles. They differ in exactly one capability:
+The aspect configures a `<tool-access>` for six persona roles, described in full in
+[testbed.md](testbed.md#3-the-persona-matrix). The pair this section is about differs in exactly one
+capability:
 
 | | `secReader` | `secEditor` |
 |---|---|---|
@@ -555,11 +578,12 @@ that differs is which role the account holds.
 At boot, in `tmp/app-data/logs/top-logic.tl-ai.log`:
 
 ```
-AiToolAccessService - Agent tool access: mode=ENFORCED roles=2 baseline=1 backgroundAllowlist=5
+AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=1 backgroundAllowlist=5
 ```
 
 With the aspect switched off it reads `mode=LEGACY roles=0 ... (not enforced)`, and every tool is
-callable by anyone - the behaviour the demo has as shipped.
+callable by anyone - the behaviour the demo has as shipped. To get `LEGACY` while keeping the fixture,
+see [testbed.md](testbed.md#5-switching-between-legacy-and-enforced).
 
 Every denial is logged at `WARN`, naming the tool, its group, the account, the roles it holds and the
 rule that decided:
@@ -618,7 +642,7 @@ Administrator-facing documentation for writing such a policy in your own applica
 - Administrator bypass, i.e. the positive-side demonstration requested in #234.
 
 - **tl-ai's role→tool matrix** (`RoleToolAccess`): the aspect configures a `<tool-access>`, so the
-  tool-level gate is enforced for the two demo accounts. See
+  tool-level gate is enforced for every persona. See
   [6. The tool layer](#6-the-tool-layer-which-roles-may-use-which-tools) below.
 
 **It does not test (staged, not wired on this branch):**

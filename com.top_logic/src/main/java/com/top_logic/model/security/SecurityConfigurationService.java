@@ -21,6 +21,8 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -32,7 +34,9 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
@@ -56,6 +60,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -102,12 +107,51 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
+	 * Base configuration for access rights on all objects of a {@link TLClass}, or of all
+	 * {@link TLClass}es of a {@link TLModule}.
+	 */
+	@Abstract
+	public interface TypeBasedAccessRights extends ModelAccessRights {
+
+		/** Configuration name for {@link #isTechnical()}. */
+		String TECHNICAL = "technical";
+
+		/**
+		 * Whether the configured types are technical.
+		 *
+		 * <p>
+		 * An object of a technical type is not access controlled: Every user may access the object
+		 * and its attribute values, no matter which roles the user has on it, and every user may
+		 * create such an object. Only a restricted user, who must not perform the operation at all,
+		 * stays excluded.
+		 * </p>
+		 *
+		 * <p>
+		 * A specialization of a technical type is technical, too. Declaring a {@link TLModule}
+		 * technical therefore makes every class of that module and all their specializations
+		 * technical.
+		 * </p>
+		 */
+		@Name(TECHNICAL)
+		boolean isTechnical();
+
+		/**
+		 * @see #isTechnical() The grants of a technical type are not displayed, since access to its
+		 *      objects is not controlled.
+		 */
+		@Override
+		@DynamicMode(fun = HideActiveIf.class, args = @Ref(TECHNICAL))
+		Map<CommandGroupReference, AccessGrant> getGrants();
+
+	}
+
+	/**
 	 * Configuration of access rights on objects of a {@link TLClass}. The {@link TLClass} is
 	 * identified by its qualified name.
 	 */
 	@TagName("class")
 	@Label("Class based access rights")
-	public static interface TLClassAccessRights extends ModelAccessRights {
+	public static interface TLClassAccessRights extends TypeBasedAccessRights {
 
 		@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
 		@ControlProvider(SelectionControlProvider.class)
@@ -151,7 +195,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	@TagName("module")
 	@Label("Module based access rights")
-	public static interface TLModuleAccessRights extends ModelAccessRights {
+	public static interface TLModuleAccessRights extends TypeBasedAccessRights {
 
 		@Options(fun = TLModelPartRef.AllModules.class, mapping = TLModelPartMapping.class)
 		@ControlProvider(SelectionControlProvider.class)
@@ -167,6 +211,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _classRights = new HashMap<>();
 
 	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _expandedClassRights = new HashMap<>();
+
+	private Set<TLClass> _technicalTypes = new HashSet<>();
 
 	private CommandGroupRegistry _commandGroups;
 
@@ -207,6 +253,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 		TLModule module = (TLModule) part;
 		Collection<TLClass> classes = module.getClasses();
+		if (config.isTechnical()) {
+			classes.forEach(this::markTechnical);
+		}
 		processRights(context, config, (group, roles, inherit) -> {
 			for (TLClass clazz : classes) {
 				storeClassRights(clazz, group, roles, inherit);
@@ -247,7 +296,43 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return;
 		}
 		TLClass clazz = (TLClass) part;
+		if (config.isTechnical()) {
+			markTechnical(clazz);
+		}
 		processRights(context, config, (group, roles, inherit) -> storeClassRights(clazz, group, roles, inherit));
+	}
+
+	/**
+	 * Marks the given type and all its specializations as technical.
+	 *
+	 * @see TypeBasedAccessRights#isTechnical()
+	 */
+	private void markTechnical(TLClass type) {
+		if (_technicalTypes.add(type)) {
+			for (TLClass specialization : type.getSpecializations()) {
+				markTechnical(specialization);
+			}
+		}
+	}
+
+	/**
+	 * Whether the given object is an instance of a technical type.
+	 *
+	 * @param instance
+	 *        The object to access. May be <code>null</code>, which is not technical.
+	 *
+	 * @see TypeBasedAccessRights#isTechnical()
+	 */
+	private boolean isTechnical(TLObject instance) {
+		return instance != null && instance.tType() instanceof TLClass type && isTechnical(type);
+	}
+
+	/**
+	 * @see TypeBasedAccessRights#isTechnical() The configuration declaring a type as technical.
+	 */
+	@Override
+	public boolean isTechnical(TLClass type) {
+		return _technicalTypes.contains(type);
 	}
 
 	private void processRights(InstantiationContext context, ModelAccessRights config,
@@ -331,6 +416,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return getAllowedRoles(clazz, group);
 	}
 
+	/**
+	 * @implNote For a {@link #isTechnical(TLClass) technical} type, the result is the configured
+	 *           (typically empty) set of roles, which must not be mistaken for a denial.
+	 */
 	@Override
 	public Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup) {
 		return _expandedClassRights
@@ -359,6 +448,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (allowedBypass != null) {
 			return allowedBypass;
 		}
+		if (isTechnical(instance)) {
+			// A technical object is not access controlled.
+			return true;
+		}
 		Set<? extends BoundRole> roles = getRoles(instance, commandGroup);
 		return accessManager().hasRole(person, (BoundObject) instance, roles);
 	}
@@ -376,6 +469,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
 		if (allowedBypass != null) {
 			return allowedBypass;
+		}
+		if (isTechnical(instance)) {
+			// A technical object is not access controlled, neither on the object, nor on its
+			// attribute values.
+			return true;
 		}
 		Set<? extends BoundRole> roles = getRoles(instance, commandGroup);
 		boolean allowedOnInstance = accessManager().hasRole(person, (BoundObject) instance, roles);
@@ -429,6 +527,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		Boolean allowedBypass = isAllowedBypass(person, SimpleBoundCommandGroup.CREATE);
 		if (allowedBypass != null) {
 			return allowedBypass.booleanValue();
+		}
+		if (isTechnical(type)) {
+			// Objects of a technical type are not access controlled, so everybody may create them.
+			return true;
 		}
 		if (context != null && !isCommitted(context)) {
 			// The context is being built in the current transaction (no computed roles yet); its own
@@ -492,6 +594,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				result.add(entry.getKey());
 			}
 		}
+		// A technical type is accessible without any role, no matter whether rights are configured
+		// for it.
+		result.addAll(_technicalTypes);
 		return result;
 	}
 

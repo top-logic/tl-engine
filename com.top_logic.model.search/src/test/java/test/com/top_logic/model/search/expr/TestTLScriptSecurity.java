@@ -32,6 +32,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
@@ -56,7 +57,9 @@ import com.top_logic.util.error.TopLogicException;
  * </ul>
  * <p>
  * {@code Employee} has no grant and is therefore not readable for non-administrative users
- * (deny-by-default).
+ * (deny-by-default). {@code TechnicalData} has no grant either, but is declared technical, so its
+ * objects &ndash; and those of its specialization {@code TechnicalDataSub} &ndash; are accessible
+ * for everybody.
  * </p>
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -807,6 +810,84 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		becomeUser(_root);
 		assertTrue(accessRights.isAllowed(_root, _p1, secret, SimpleBoundCommandGroup.WRITE));
 		assertTrue(accessRights.isReadAllowed(_root, _p1, secret));
+	}
+
+	/**
+	 * An object of a technical type is accessible for everybody, including its attribute values and
+	 * the creation of such an object.
+	 *
+	 * <p>
+	 * {@code TechnicalData} is declared technical and has no grant at all (see the test config).
+	 * Therefore a user without any role may read, write and delete the object as well as
+	 * {@code TechnicalData#data}, and may create objects of that type. The same user has no access
+	 * to a non-technical type without a matching grant.
+	 * </p>
+	 */
+	public void testTechnicalTypeAccessibleForEverybody() throws Exception {
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		TLClass technicalType = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:TechnicalData");
+		TLStructuredTypePart data = part("TechnicalData", "data");
+		TLStructuredTypePart budget = part("Project", "budget");
+
+		TLObject technical;
+		try (Transaction tx = beginTx()) {
+			technical = newObject("TechnicalData");
+			technical.tUpdateByName("data", "some technical value");
+			tx.commit();
+		}
+
+		assertTrue(accessRights.isTechnical(technicalType));
+
+		becomeUser(_other);
+		// The attribute values.
+		assertTrue(accessRights.isReadAllowed(_other, technical, data));
+		assertTrue(accessRights.isAllowed(_other, technical, data, SimpleBoundCommandGroup.WRITE));
+		// The object itself.
+		assertTrue(accessRights.isReadAllowed(_other, technical));
+		assertTrue(accessRights.isAllowed(_other, technical, SimpleBoundCommandGroup.WRITE));
+		assertTrue(accessRights.isAllowed(_other, technical, SimpleBoundCommandGroup.DELETE));
+		// The creation of such an object. Note: The cast selects the type-based overload, since a
+		// TLClass is a TLObject, too.
+		assertTrue(accessRights.isAllowedCreate(_other, technicalType, (TLObject) null));
+		// The type is reported as accessible, although no rights are configured for it.
+		assertTrue(accessRights.getAccessibleTypes(_other, SimpleBoundCommandGroup.READ)
+			.contains(technicalType));
+
+		// A non-technical type without a matching grant stays inaccessible.
+		assertFalse(accessRights.isReadAllowed(_other, _p1, budget));
+		assertFalse(accessRights.isAllowed(_other, _p1, SimpleBoundCommandGroup.WRITE));
+	}
+
+	/**
+	 * A specialization of a technical type is technical, too.
+	 *
+	 * <p>
+	 * {@code TechnicalDataSub} specializes the technical {@code TechnicalData} and has no own
+	 * configuration entry (see the test config), yet its objects are accessible for a user without
+	 * any role.
+	 * </p>
+	 */
+	public void testSpecializationOfTechnicalTypeIsTechnical() throws Exception {
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		TLStructuredTypePart data = part("TechnicalData", "data");
+
+		TLObject sub;
+		try (Transaction tx = beginTx()) {
+			sub = newObject("TechnicalDataSub");
+			tx.commit();
+		}
+
+		assertTrue(accessRights.isTechnical((TLClass) TLModelUtil.findType("TestTLScriptSecurity:TechnicalDataSub")));
+
+		becomeUser(_other);
+		assertTrue(accessRights.isReadAllowed(_other, sub, data));
+		assertTrue(accessRights.isAllowed(_other, sub, data, SimpleBoundCommandGroup.WRITE));
+		assertTrue(accessRights.isAllowed(_other, sub, SimpleBoundCommandGroup.DELETE));
+	}
+
+	private TLStructuredTypePart part(String className, String partName) {
+		TLClass type = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className);
+		return type.getPart(partName);
 	}
 
 	@SuppressWarnings("unchecked")

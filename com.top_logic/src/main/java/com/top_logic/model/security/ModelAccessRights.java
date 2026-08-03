@@ -28,8 +28,36 @@ public interface ModelAccessRights {
 	 * Returns the roles that are permitted to perform the given command group on instances of the
 	 * given type. Applies to both built-in command groups (Read, Write, Delete) and custom business
 	 * operations (Approve, Cancel, etc.).
+	 *
+	 * <p>
+	 * An empty set means that no role may perform the command group. For a {@link #isTechnical(TLClass)
+	 * technical} type however, the result is meaningless, since access to such a type is granted
+	 * independent of roles.
+	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup);
+
+	/**
+	 * Whether objects of the given type are not access controlled at all.
+	 *
+	 * <p>
+	 * Every user may access the objects of a technical type, no matter which roles the user has on
+	 * them. That cannot be expressed as a set of roles, therefore
+	 * {@link #getAllowedRoles(TLClass, BoundCommandGroup)} must not be used to decide access for
+	 * such a type. The access checks ({@link #isAllowed(Person, TLObject, BoundCommandGroup)} and
+	 * its variants) already take the technical types into account.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects to access, typically {@link TLObject#tType()} of the object in
+	 *        question.
+	 *
+	 * @implSpec An implementation without a notion of technical types answers <code>false</code> for
+	 *           every type.
+	 */
+	default boolean isTechnical(TLClass type) {
+		return false;
+	}
 
 	/**
 	 * Returns the roles of which the user must hold at least one <em>in addition</em> to the

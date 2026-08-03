@@ -48,6 +48,13 @@
 							roles="TestTLScriptSecurity.ProjectResponsible"
 						/>
 					</class>
+					<class name="TestTLScriptSecurity:TechnicalData"
+						technical="true"
+					>
+						<!-- No grant at all: access is nevertheless allowed for everybody
+							(technical type), also for objects of the specialization
+							TechnicalDataSub. -->
+					</class>
 					<part name="TestTLScriptSecurity:Project#secret">
 						<!-- Present grant with no roles: reading and writing this attribute is denied
 							for every role (only a bypassing super-user is unaffected). -->

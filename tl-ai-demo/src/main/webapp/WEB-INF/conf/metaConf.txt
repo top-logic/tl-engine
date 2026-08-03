@@ -1,7 +1,12 @@
 db-default.xml
 tl-ai-demo.conf.xml
 
-# Agent security end-to-end test scaffold (secdemo model, roles, accounts, seed data).
+# Agent security test bed (secdemo model, persona roles, accounts, tool policy, seed data).
 # Uncomment the following line to enable it, comment it out again to disable it.
-# See doc/security/e2e-security-test.md.
+# See doc/security/testbed.md - it maps every behaviour to a persona and a thing to type.
 #secdemo.config.xml
+
+# Turns tool authorization off while keeping the whole fixture, so enforced and unenforced
+# behaviour can be compared without editing any policy. Only meaningful together with the
+# line above. See doc/security/testbed.md, "Switching between LEGACY and ENFORCED".
+#secdemo-legacy.config.xml

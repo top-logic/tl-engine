@@ -124,9 +124,21 @@ public class ViewServlet extends TopLogicServlet {
 		WindowEntry windowEntry = windowRegistry.getOrCreateWindow(windowName);
 		windowEntry.markConnected();
 
+		// A reload renders the tree the window still holds instead of replacing it: everything the tree
+		// holds - a table's selection, its scroll position and expansion, the input of a form, the
+		// position of a pager - is state the user produced, and a rebuild throws all of it away.
+		ReactControl displayed = windowEntry.getRootControl();
+
 		// A programmatically opened window brings its own control provider instead of a view file.
 		ReactControlProvider controlProvider = windowEntry.getControlProvider();
 		if (controlProvider != null) {
+			// The provider and the model of a window never change, so a tree it already has always
+			// fits - unlike a view, which has to be the same one.
+			if (displayed != null) {
+				renderAgain(request, response, displayed, sseQueue, routePath);
+				return;
+			}
+
 			ReactContext baseContext = new DefaultReactContext(
 				request.getContextPath(), windowName, sseQueue, windowRegistry);
 			wireRouteManager(baseContext, sseQueue, routePath);
@@ -153,11 +165,7 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		// A reload of the same view in the same tab renders the tree the window still holds, instead of
-		// replacing it: everything the tree holds - a table's selection, scroll position and expansion,
-		// the input of a form, the position of a pager - is state the user produced, and a rebuild
-		// throws all of it away.
-		ReactControl displayed = windowEntry.getRootControl();
+		// Reuse is correct only for the same view.
 		RenderedView rendered = RenderedView.lookup(subSession);
 		if (displayed != null && rendered != null && rendered.matches(viewPath, view)) {
 			renderAgain(request, response, displayed, sseQueue, routePath);

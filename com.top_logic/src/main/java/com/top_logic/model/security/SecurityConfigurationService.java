@@ -45,6 +45,7 @@ import com.top_logic.model.annotate.AccessRightsConfig;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.config.TLModelPartMapping;
+import com.top_logic.model.util.AllAttributes;
 import com.top_logic.model.util.AllClasses;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
@@ -129,7 +130,12 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	@TagName("part")
 	@Label("Attribute value access rights")
 	public static interface TLPartAccessRights extends ModelAccessRights {
-		// marker interface
+
+		@Options(fun = AllAttributes.class, mapping = TLModelPartMapping.class)
+		@ControlProvider(SelectionControlProvider.class)
+		@Override
+		String getName();
+
 	}
 
 	/**

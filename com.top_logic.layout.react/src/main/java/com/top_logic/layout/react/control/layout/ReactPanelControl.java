@@ -246,34 +246,6 @@ public class ReactPanelControl extends ToolbarControl {
 	}
 
 	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_child != null) {
-			_child.attach();
-		}
-		if (_toolbar != null) {
-			_toolbar.attach();
-		}
-		if (_buttonBar != null) {
-			_buttonBar.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_child != null) {
-			_child.detach();
-		}
-		if (_toolbar != null) {
-			_toolbar.detach();
-		}
-		if (_buttonBar != null) {
-			_buttonBar.detach();
-		}
-	}
-
-	@Override
 	protected void cleanupChildren() {
 		_child.cleanupTree();
 		if (_titleContent != null) {

@@ -184,21 +184,6 @@ public class ReactStackControl extends ReactControl {
 		}
 	}
 
-	@Override
-	protected void propagateAttach() {
-		for (ReactControl child : _children) {
-			child.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		for (ReactControl child : _children) {
-			child.detach();
-		}
-	}
-
-
 	/**
 	 * Structural: this control is a flex layout container and is elided from the headless agent projection.
 	 */

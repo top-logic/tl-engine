@@ -72,20 +72,4 @@ public abstract class ToolbarControl extends ReactControl {
 			button.cleanupTree();
 		}
 	}
-
-	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		for (ReactControl btn : _toolbarButtons) {
-			btn.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		for (ReactControl btn : _toolbarButtons) {
-			btn.detach();
-		}
-	}
 }

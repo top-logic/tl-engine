@@ -176,34 +176,6 @@ public class ReactAppShellControl extends ReactControl {
 	}
 
 	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_header != null) {
-			_header.attach();
-		}
-		_content.attach();
-		if (_footer != null) {
-			_footer.attach();
-		}
-		_snackbar.attach();
-		_dialogManager.attach();
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_header != null) {
-			_header.detach();
-		}
-		_content.detach();
-		if (_footer != null) {
-			_footer.detach();
-		}
-		_snackbar.detach();
-		_dialogManager.detach();
-	}
-
-	@Override
 	protected void cleanupChildren() {
 		if (_header != null) {
 			_header.cleanupTree();

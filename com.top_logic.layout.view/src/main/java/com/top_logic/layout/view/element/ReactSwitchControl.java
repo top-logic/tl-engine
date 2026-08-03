@@ -260,22 +260,6 @@ public class ReactSwitchControl extends ReactControl implements ModelListener {
 	}
 
 	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_current != null) {
-			_current.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_current != null) {
-			_current.detach();
-		}
-	}
-
-	@Override
 	protected void onCleanup() {
 		_disposed = true;
 		super.onCleanup();

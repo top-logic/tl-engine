@@ -124,28 +124,6 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	}
 
 	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_activeTabId != null) {
-			ReactControl content = _contentCache.get(_activeTabId);
-			if (content != null) {
-				content.attach();
-			}
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_activeTabId != null) {
-			ReactControl content = _contentCache.get(_activeTabId);
-			if (content != null) {
-				content.detach();
-			}
-		}
-	}
-
-	@Override
 	protected void cleanupChildren() {
 		if (_activeTabId != null) {
 			ReactControl active = _contentCache.get(_activeTabId);

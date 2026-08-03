@@ -97,22 +97,6 @@ public class ReactDialogControl extends ReactControl {
 	}
 
 	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_open && _child != null) {
-			_child.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_open && _child != null) {
-			_child.detach();
-		}
-	}
-
-	@Override
 	protected void cleanupChildren() {
 		if (_child != null) {
 			_child.cleanupTree();

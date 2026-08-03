@@ -103,9 +103,11 @@ public class SlotPlaceholderControl extends ReactControl implements SlotPlacehol
 		super.onDetach();
 	}
 
-	// Note: propagateAttach/propagateDetach/cleanupChildren are deliberately not overridden.
-	// The routed controls are owned by their <slot-content> contributions, which manage their
-	// attach/detach/cleanup lifecycle. The placeholder only borrows them for rendering.
+	// Note: cleanupChildren is deliberately not overridden. The routed controls are owned by their
+	// <slot-content> contributions, which dispose them; the placeholder only borrows them for
+	// rendering. Attach and detach, in contrast, do reach them through the default propagation:
+	// they are part of the state this placeholder renders, and a borrowed control is displayed
+	// exactly while a placeholder shows it.
 
 	/**
 	 * Structural: this control is a slot placeholder and is elided from the headless agent projection.

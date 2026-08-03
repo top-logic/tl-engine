@@ -242,52 +242,6 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	}
 
 	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_headerContent != null) {
-			_headerContent.attach();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.attach();
-		}
-		if (_footerContent != null) {
-			_footerContent.attach();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.attach();
-		}
-		if (_activeItemId != null) {
-			ReactControl content = _contentCache.get(_activeItemId);
-			if (content != null) {
-				content.attach();
-			}
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_headerContent != null) {
-			_headerContent.detach();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.detach();
-		}
-		if (_footerContent != null) {
-			_footerContent.detach();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.detach();
-		}
-		if (_activeItemId != null) {
-			ReactControl content = _contentCache.get(_activeItemId);
-			if (content != null) {
-				content.detach();
-			}
-		}
-	}
-
-	@Override
 	protected void cleanupChildren() {
 		if (_activeItemId != null) {
 			ReactControl active = _contentCache.get(_activeItemId);

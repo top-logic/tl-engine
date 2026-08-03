@@ -68,16 +68,6 @@ public class AnchorControl extends ReactControl {
 		_child.cleanupTree();
 	}
 
-	@Override
-	protected void propagateAttach() {
-		_child.attach();
-	}
-
-	@Override
-	protected void propagateDetach() {
-		_child.detach();
-	}
-
 	/**
 	 * The stable, DOM-safe anchor id for a model object: the external form of its persistent
 	 * identifier, or {@code null} when the value is not a persistent {@link TLObject}.

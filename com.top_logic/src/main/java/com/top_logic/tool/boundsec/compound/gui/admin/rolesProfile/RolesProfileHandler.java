@@ -53,6 +53,7 @@ import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.RoleProfileConfig;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.ViewConfig;
 import com.top_logic.tool.boundsec.gui.profile.CommandGroupCollector;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 
@@ -306,7 +307,7 @@ public class RolesProfileHandler {
 	private BoundCommandGroup[] sortedCopy(Collection<BoundCommandGroup> allCommandGroups) {
 		BoundCommandGroup[] sortedGroups =
 			allCommandGroups.toArray(new BoundCommandGroup[allCommandGroups.size()]);
-		Arrays.sort(sortedGroups, Comparator.comparing(BoundCommandGroup::getID));
+		Arrays.sort(sortedGroups, SimpleBoundCommandGroup.COMPARE_BY_ID);
 		return sortedGroups;
 	}
 

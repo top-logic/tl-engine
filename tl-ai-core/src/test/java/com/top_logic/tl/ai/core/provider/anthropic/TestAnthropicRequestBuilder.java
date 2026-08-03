@@ -28,10 +28,11 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import de.haumacher.msgbuf.json.JsonUtil;
 
 /**
- * Tests how {@link AnthropicRequestBuilder} puts a multimodal tool result on the wire.
+ * Tests how {@link AnthropicRequestBuilder} puts multimodal content on the wire.
  *
  * <p>The Messages API permits {@code text}, {@code image} and {@code document} blocks inside a
- * {@code tool_result}, so an image a tool produced needs no follow-up user message.</p>
+ * {@code tool_result}, so an image a tool produced needs no follow-up user message. The same blocks
+ * carry attachments a caller put on a user turn.</p>
  */
 public class TestAnthropicRequestBuilder extends TestCase {
 
@@ -75,6 +76,32 @@ public class TestAnthropicRequestBuilder extends TestCase {
 		assertEquals("base64", pdfSource.get("type"));
 		assertEquals("application/pdf", pdfSource.get("media_type"));
 		assertEquals(PDF_BASE64, pdfSource.get("data"));
+	}
+
+	/**
+	 * A PDF attached to a user turn - what a caller hands to {@code aiAgentChat} - becomes a native
+	 * {@code document} block, so the model reads the document instead of base64 text.
+	 */
+	public void testPdfInUserMessageIsADocumentBlock() throws Exception {
+		UserMessage user = new UserMessage(UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("Extract the price."), new PdfContent(PDF_BASE64, "application/pdf")));
+
+		String json = AnthropicRequestBuilder.buildRequestJson(new ProviderRequest(
+			"claude-sonnet-4-20250514", "You are helpful.", List.<Message> of(user), List.of(), 256));
+
+		Map<String, Object> turn = asMap(messages(json).get(0));
+		assertEquals("user", turn.get("role"));
+
+		List<?> blocks = (List<?>) turn.get("content");
+		assertEquals(2, blocks.size());
+		assertEquals("text", asMap(blocks.get(0)).get("type"));
+
+		Map<String, Object> document = asMap(blocks.get(1));
+		assertEquals("document", document.get("type"));
+		Map<String, Object> source = asMap(document.get("source"));
+		assertEquals("base64", source.get("type"));
+		assertEquals("application/pdf", source.get("media_type"));
+		assertEquals(PDF_BASE64, source.get("data"));
 	}
 
 	/** A text-only tool result still serializes as a plain string, exactly as before. */

@@ -1,0 +1,32 @@
+// ===========================================================================
+// Agent security end-to-end test - RESET
+//
+// Cases 3.2 and 3.4 attempt to create notes. 3.2 must fail, but 3.4 succeeds
+// and persists an "Editor note" instance, so repeated runs accumulate them.
+// This script removes everything the harness may have created and leaves the
+// three seeded notes and the two seeded secrets alone.
+//
+// Where to run it: Administration > Development > Script console as "root",
+// with the "execute and save changes" button (the one with the database icon).
+// A role-based demo account cannot run it: it holds only the "Read" command
+// group on the console, and no demo role is granted deletion anyway.
+//
+// The alternative reset is a fresh database (delete tl-ai-demo/tmp).
+// ===========================================================================
+{
+	harnessTitles = ["Editor note", "Reader was here"];
+
+	notes = all(`secdemo:Note`);
+	obsolete = $notes.filter(n -> $harnessTitles.containsElement($n.get(`secdemo:Note#title`)));
+
+	// Read the report data before deleting: an attribute read on an object
+	// deleted earlier in the same script fails.
+	removed = $obsolete.size();
+	remaining = $notes.filter(n -> !$harnessTitles.containsElement($n.get(`secdemo:Note#title`)))
+		.get(`secdemo:Note#title`);
+
+	$obsolete.foreach(n -> $n.delete());
+
+	"Deleted " + $removed + " note(s) created by the harness. Remaining titles: "
+		+ $remaining.join(separator: ", ");
+}

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Opt-in aspect for the agent security end-to-end test.
+
+	Enable it by adding the line
+
+		secdemo.config.xml
+
+	to "WEB-INF/conf/metaConf.txt" (a commented-out line is already there); disable it by
+	commenting the line out again. Nothing in this file is active while the line is commented
+	out, so the demo boots unchanged.
+
+	Note when disabling: withdrawing the "secdemo" model declaration makes the engine's model
+	upgrade delete the module on the next boot, which fails while Note / Secret instances still
+	exist. Start from a fresh database, or delete those instances first. See
+	doc/security/e2e-security-test.md, section 2.1.
+
+	What it wires:
+	  * the "secdemo" example model (Note / Secret),
+	  * the roles "secReader" / "secEditor" and the groups carrying them,
+	  * the <security-config> that the engine's ModelAccessRights evaluates,
+	  * the component (layout) access both roles need to reach the agent chat and the
+	    TL-Script console (the latter drives the agent runs, see section 4 of the test
+	    procedure),
+	  * SecDemoSetupService, which seeds the two demo accounts and a few instances.
+
+	See doc/security/e2e-security-test.md for the test procedure.
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/secdemo.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<!--
+			The roles referenced by the <security-config> below. They must exist before
+			SecurityConfigurationService starts, which is guaranteed because that service
+			declares a dependency on InitialRolesManager.
+		-->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="secReader"/>
+					<role name="secEditor"/>
+				</roles>
+			</instance>
+		</config>
+
+		<!--
+			Members of these groups get the corresponding role on the security root; the
+			assignment itself is done by SecDemoSetupService.
+		-->
+		<config service-class="com.top_logic.base.services.InitialGroupManager">
+			<instance>
+				<groups>
+					<group name="secReaders"/>
+					<group name="secEditors"/>
+				</groups>
+			</instance>
+		</config>
+
+		<!--
+			Make the security root the security parent of every model object that does not define
+			one itself. Without this, a role granted on the security root would not reach the
+			"secdemo:Note" instances, and every instance-level check would deny.
+		-->
+		<config service-class="com.top_logic.tool.boundsec.BoundHelper">
+			<instance use-default-security-parent="true"/>
+		</config>
+
+		<!--
+			The policy the engine enforces. Deny-by-default: an operation on a type without a
+			matching grant is denied for every role-based user (administrators bypass).
+
+			"secdemo:Secret" is deliberately absent - that is what makes it inaccessible.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="secdemo:Note">
+						<grant operation="Read"
+							roles="secReader, secEditor"
+						/>
+						<grant operation="Create"
+							roles="secEditor"
+						/>
+						<grant operation="Write"
+							roles="secEditor"
+						/>
+					</class>
+				</security-config>
+			</instance>
+		</config>
+
+		<!--
+			The tl-ai tool layer (L1): which roles may execute which agent tools. Independent of the
+			<security-config> above, which governs the data - a role can be granted the TL-Script tool
+			and still be denied every object it tries to touch, and vice versa.
+
+			Writing this block is what turns tool authorization on. Without it the service resolves to
+			LEGACY and every tool an agent carries is callable by anyone, which is how the demo behaves
+			with this aspect switched off.
+
+			The two demo roles differ in exactly one capability - "agent.meta", read-only inspection of
+			the agent and tool registry - so the allow/deny pair is comparable:
+
+			  secReader  model.read + data.read + script
+			  secEditor  the same plus agent.meta
+
+			Both keep "script" on purpose. The cases in sections 3 and 4 of the test procedure ask the
+			agent to use the TL-Script tool in order to exercise the *model* rights, and denying it at
+			the tool layer would make those cases stop before they reach the layer they are about. The
+			difference between the two roles therefore sits on a capability nothing else in this demo
+			depends on.
+
+			"script" is a privileged group: no wildcard grant reaches it and an administrator must name
+			it explicitly, which both entries do. "model.structure" and "agent.authoring" are granted to
+			nobody, so the model editor and the agent authoring tools are denied to both accounts -
+			deny-by-default, no <deny> needed.
+
+			See doc/security/tool-access-configuration.md and section 5 of
+			doc/security/e2e-security-test.md.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+				<tool-access>
+					<role name="secReader">
+						<grants>
+							<grant group="model.read"/>
+							<grant group="data.read"/>
+							<grant group="script"/>
+						</grants>
+					</role>
+					<role name="secEditor">
+						<grants>
+							<grant group="model.read"/>
+							<grant group="data.read"/>
+							<grant group="script"/>
+							<grant group="agent.meta"/>
+						</grants>
+					</role>
+				</tool-access>
+
+				<!-- Without this an agent cannot even ask the user a question. -->
+				<baseline>
+					<grant group="interaction"/>
+				</baseline>
+
+				<!--
+					The ceiling for a run with nobody to answer an approval prompt - aiAgentChatAsync,
+					which the harness of section 4 uses. "script" is on the list here only because that
+					harness needs it; a real deployment would leave a group containing a DATA_WRITE tool
+					off an unattended run's allowlist, which is the whole point of the mechanism.
+				-->
+				<background-allowlist>
+					<grant group="model.read"/>
+					<grant group="data.read"/>
+					<grant group="agent.meta"/>
+					<grant group="interaction"/>
+					<grant group="script"/>
+				</background-allowlist>
+			</instance>
+		</config>
+
+		<!--
+			The second, independent security layer: component (layout) access. The policy above
+			decides what a role may do with the data, this decides which views a role may open at
+			all. Both are needed - a role with model rights but no view rights logs in to an
+			application without a single tab.
+
+			The format is the engine's own "WEB-INF/conf/security.xml" format
+			(com.top_logic.tool.boundsec.config.AccessConfiguration). It is applied here instead of
+			in that file because the engine's import resets the access of every view in the
+			application before applying it, which an opt-in aspect must not do. The entries below
+			are added, nothing else is touched.
+
+			View names are the names of the enclosing "securityLayout" components; only those can
+			hold access rights. "Read" is the command group that decides visibility.
+
+			Nesting does not inherit, so every securityLayout on the way to a view needs its own
+			grant. The script console sits three levels deep (the tabs labelled "Administration",
+			"Development" and "Script console"), hence three entries; the sibling views on those
+			levels stay closed because they are security components of their own with no grant.
+
+			Granting the script console to a non-administrator role lets that role execute
+			arbitrary TL-Script. That is deliberate here and confined to this opt-in aspect: the
+			test in section 4 of doc/security/e2e-security-test.md asserts that the model access
+			rights hold even for a user who can run any expression. Only "Read" is granted, which
+			covers opening the view and its "execute" button; the "execute and save changes"
+			button is bound to "Write" and stays disabled - the agent runs started from the console
+			do their own writes in their own transaction on the background thread.
+		-->
+		<config service-class="com.top_logic.ai.demo.secdemo.SecDemoSetupService">
+			<instance class="com.top_logic.ai.demo.secdemo.SecDemoSetupService">
+				<component-access>
+					<profile name="secReader">
+						<!-- The "Albert" tab. -->
+						<view name="tl-chat/chat/tabLayout.layout.xml#TabLayout">
+							<commandGroup name="Read"/>
+						</view>
+						<!-- The chat itself, a security component of its own. -->
+						<view name="tl-chat/chat/agent.layout.xml#agent">
+							<commandGroup name="Read"/>
+						</view>
+						<!-- The three nested tabs leading to the script console. -->
+						<view name="admin/index.layout.xml#adminView">
+							<commandGroup name="Read"/>
+						</view>
+						<view name="admin/studio/index.layout.xml#studioView">
+							<commandGroup name="Read"/>
+						</view>
+						<view name="com.top_logic.model.search/admin/scriptConsole.layout.xml#view">
+							<commandGroup name="Read"/>
+						</view>
+					</profile>
+					<profile name="secEditor">
+						<view name="tl-chat/chat/tabLayout.layout.xml#TabLayout">
+							<commandGroup name="Read"/>
+						</view>
+						<view name="tl-chat/chat/agent.layout.xml#agent">
+							<commandGroup name="Read"/>
+						</view>
+						<view name="admin/index.layout.xml#adminView">
+							<commandGroup name="Read"/>
+						</view>
+						<view name="admin/studio/index.layout.xml#studioView">
+							<commandGroup name="Read"/>
+						</view>
+						<view name="com.top_logic.model.search/admin/scriptConsole.layout.xml#view">
+							<commandGroup name="Read"/>
+						</view>
+					</profile>
+				</component-access>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+					<!-- Seeds the demo accounts, their group memberships and the example data. -->
+					<module key="com.top_logic.ai.demo.secdemo.SecDemoSetupService$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+	</services>
+</application>

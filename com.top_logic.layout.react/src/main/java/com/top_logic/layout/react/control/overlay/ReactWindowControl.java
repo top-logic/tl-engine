@@ -184,23 +184,6 @@ public class ReactWindowControl extends ToolbarControl {
 		}
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		if (_child != null) {
-			_child.cleanupTree();
-		}
-		for (ReactControl action : _actions) {
-			action.cleanupTree();
-		}
-		if (_toolbar != null) {
-			_toolbar.cleanupTree();
-		}
-		if (_buttonBar != null) {
-			_buttonBar.cleanupTree();
-		}
-		cleanupToolbarButtons();
-	}
-
 	/**
 	 * Handles the close button click.
 	 */

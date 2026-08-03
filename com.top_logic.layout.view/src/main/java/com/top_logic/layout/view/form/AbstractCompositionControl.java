@@ -787,8 +787,9 @@ public abstract class AbstractCompositionControl extends ReactControl
 	}
 
 	@Override
-	protected void cleanupChildren() {
+	protected void onCleanup() {
 		_formControl.removeFormModelListener(this);
 		cleanupEditState();
+		super.onCleanup();
 	}
 }

@@ -652,22 +652,18 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	@Override
-	protected void cleanupChildren() {
-		super.cleanupChildren();
+	protected void onCleanup() {
 		detachObserver();
 		if (_selectionChannel != null && _selectionChannelListener != null) {
 			_selectionChannel.removeListener(_selectionChannelListener);
 			_selectionChannelListener = null;
 		}
-		if (_toolbar != null) {
-			_toolbar.cleanupTree();
-			_toolbar = null;
-			_addButton = null;
-		}
-		if (_tableControl != null) {
-			_tableControl.cleanupTree();
-			_tableControl = null;
-		}
+		// The toolbar and the table itself are part of the state and are disposed with it; only the
+		// references are dropped here, so a trailing event cannot reach a torn-down control.
+		_toolbar = null;
+		_addButton = null;
+		_tableControl = null;
+		super.onCleanup();
 	}
 
 	/**

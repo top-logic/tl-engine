@@ -292,11 +292,4 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		return new TooltipContent(_tooltipHtml, _tooltipCaption, _tooltipInteractive);
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		if (_field != null) {
-			_field.cleanupTree();
-		}
-	}
-
 }

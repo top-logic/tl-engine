@@ -265,11 +265,4 @@ public class ReactSwitchControl extends ReactControl implements ModelListener {
 		super.onCleanup();
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		if (_current != null) {
-			_current.cleanupTree();
-			_current = null;
-		}
-	}
 }

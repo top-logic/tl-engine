@@ -315,13 +315,6 @@ public class ReactSplitPanelControl extends ReactControl {
 		_indexInParent = indexInParent;
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		for (ChildEntry entry : _children) {
-			entry._control.cleanupTree();
-		}
-	}
-
 	private void patchChildren() {
 		putState(CHILDREN, _childDescriptors);
 	}

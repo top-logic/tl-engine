@@ -129,17 +129,6 @@ public class ReactAppBarControl extends ToolbarControl {
 	}
 
 	@Override
-	protected void cleanupChildren() {
-		if (_leading != null) {
-			_leading.cleanupTree();
-		}
-		cleanupToolbarButtons();
-		for (ReactControl child : _children) {
-			child.cleanupTree();
-		}
-	}
-
-	@Override
 	public void addToolbarButton(ReactControl button) {
 		super.addToolbarButton(button);
 		putState(ACTIONS, getState(TOOLBAR_BUTTONS));

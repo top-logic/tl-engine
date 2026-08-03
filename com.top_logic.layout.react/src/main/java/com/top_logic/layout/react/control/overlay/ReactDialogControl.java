@@ -96,13 +96,6 @@ public class ReactDialogControl extends ReactControl {
 		}
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		if (_child != null) {
-			_child.cleanupTree();
-		}
-	}
-
 	/**
 	 * Handles the close command sent when the dialog overlay is dismissed.
 	 */

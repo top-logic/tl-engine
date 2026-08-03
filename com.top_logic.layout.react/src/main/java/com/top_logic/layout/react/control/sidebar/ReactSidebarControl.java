@@ -241,33 +241,17 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		}
 	}
 
+	/**
+	 * Also disposes the contents of items visited earlier: only the active item's content is part of
+	 * the state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
-		if (_activeItemId != null) {
-			ReactControl active = _contentCache.get(_activeItemId);
-			if (active != null) {
-				active.detach();
-			}
-		}
+		super.cleanupChildren();
 		for (ReactControl cached : _contentCache.values()) {
 			cached.cleanupTree();
 		}
 		_contentCache.clear();
-		if (_headerContent != null) {
-			_headerContent.cleanupTree();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.cleanupTree();
-		}
-		if (_footerContent != null) {
-			_footerContent.cleanupTree();
-		}
-		if (_footerCollapsedContent != null) {
-			_footerCollapsedContent.cleanupTree();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.cleanupTree();
-		}
 	}
 
 	/**

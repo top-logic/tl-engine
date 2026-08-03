@@ -175,20 +175,4 @@ public class ReactAppShellControl extends ReactControl {
 		DisplayClassModel.forCurrentSubSession().setDisplayClass(displayClass);
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		if (_header != null) {
-			_header.cleanupTree();
-		}
-		_content.cleanupTree();
-		if (_footer != null) {
-			_footer.cleanupTree();
-		}
-		_snackbar.cleanupTree();
-		_dialogManager.cleanupTree();
-		if (_menuControl != null) {
-			_menuControl.cleanupTree();
-		}
-	}
-
 }

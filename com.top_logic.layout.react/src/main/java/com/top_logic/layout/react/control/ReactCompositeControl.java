@@ -126,11 +126,4 @@ public class ReactCompositeControl extends ReactControl {
 		}
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		for (ReactControl child : _children) {
-			child.cleanupTree();
-		}
-	}
-
 }

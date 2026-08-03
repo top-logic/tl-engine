@@ -504,8 +504,13 @@ public class ReactTreeControl extends ReactControl {
 		_nodeControlCache.clear();
 	}
 
+	/**
+	 * Also disposes the controls of nodes that are currently collapsed or scrolled out: only the
+	 * rendered nodes are part of the state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
+		super.cleanupChildren();
 		cleanupNodeControls();
 	}
 

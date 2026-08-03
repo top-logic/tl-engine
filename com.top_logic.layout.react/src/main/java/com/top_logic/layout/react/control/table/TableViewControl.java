@@ -497,8 +497,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		return cells;
 	}
 
+	/**
+	 * Also disposes the cells built for rows outside the current viewport: only the rendered rows are
+	 * part of the state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
+		super.cleanupChildren();
 		for (Map<String, ReactControl> cells : _cellCache.values()) {
 			cells.values().forEach(ReactControl::cleanupTree);
 		}

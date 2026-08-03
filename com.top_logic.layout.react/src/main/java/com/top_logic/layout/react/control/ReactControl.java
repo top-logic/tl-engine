@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -77,6 +78,14 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	private final String _reactModule;
 
 	private Map<String, Object> _reactState;
+
+	/**
+	 * The state properties holding controls this control renders but does not own, or {@code null}
+	 * while it owns everything it renders.
+	 *
+	 * @see #borrowedState(String)
+	 */
+	private Set<String> _borrowedState;
 
 	private SSEUpdateQueue _sseQueue;
 
@@ -350,6 +359,48 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 		List<ReactControl> result = new ArrayList<>();
 		collectChildControls(_reactState, result);
 		return result;
+	}
+
+	/**
+	 * The controls this control owns, i.e. the {@link #childControls() ones it renders} without the
+	 * ones it only {@link #borrowedState(String) borrows}.
+	 *
+	 * <p>
+	 * Rendering a control and owning it are different relations: displaying it is what the
+	 * {@link #propagateAttach() lifecycle} follows, having built it is what
+	 * {@link #cleanupChildren() disposal} follows. They coincide for every container that renders what
+	 * it built, and part ways where a control displays something another one created.
+	 * </p>
+	 */
+	protected final List<ReactControl> ownedChildControls() {
+		List<ReactControl> result = new ArrayList<>();
+		for (Map.Entry<String, Object> entry : _reactState.entrySet()) {
+			if (_borrowedState == null || !_borrowedState.contains(entry.getKey())) {
+				collectChildControls(entry.getValue(), result);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Declares that the given state property holds controls this control renders but does not own.
+	 *
+	 * <p>
+	 * Such a control is displayed here while another one is responsible for creating and disposing it -
+	 * the routed contributions of a {@code <slot>} placeholder are the canonical case. Declaring the
+	 * property keeps it out of {@link #cleanupChildren() disposal} while the
+	 * {@link #propagateAttach() lifecycle} still reaches it, because a borrowed control is displayed
+	 * exactly as long as the borrower displays it.
+	 * </p>
+	 *
+	 * @param name
+	 *        The state property name, as passed to {@link #putState(String, Object)}.
+	 */
+	protected final void borrowedState(String name) {
+		if (_borrowedState == null) {
+			_borrowedState = new HashSet<>();
+		}
+		_borrowedState.add(name);
 	}
 
 	private static void collectChildControls(Object value, List<ReactControl> out) {
@@ -1106,15 +1157,25 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	/**
-	 * Hook for composite controls to clean up their children during detach.
+	 * Disposes the children this control owns.
 	 *
 	 * <p>
-	 * Composite controls override this to call {@link #cleanupTree()} on each of their children.
-	 * The default implementation does nothing (leaf controls have no children).
+	 * By default the {@link #ownedChildControls() children in the state} are disposed, which covers a
+	 * container that displays exactly what it built. Overriding is needed for children the state does
+	 * not show: a container that caches controls it does not display right now (an inactive tab, an
+	 * off-screen table cell) must dispose those as well, since nothing else will.
+	 * </p>
+	 *
+	 * <p>
+	 * A child the control only borrows must not be disposed here. Declare the state property holding
+	 * it with {@link #borrowedState(String)} rather than overriding this method - the declaration also
+	 * documents the borrowing at the place where it happens.
 	 * </p>
 	 */
 	protected void cleanupChildren() {
-		// Leaf controls have no children.
+		for (ReactControl child : ownedChildControls()) {
+			child.cleanupTree();
+		}
 	}
 
 	/**
@@ -1136,8 +1197,17 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * until the notification has unwound (view channels provide
 	 * {@code ChannelNotificationScope.current().afterNotification(old::cleanupTree)} for this).
 	 * </p>
+	 *
+	 * <p>
+	 * Idempotent: disposing an already disposed control is a no-op. A container may therefore dispose
+	 * both the children in its state and the ones it keeps in a cache without having to work out which
+	 * control appears in both.
+	 * </p>
 	 */
 	public final void cleanupTree() {
+		if (_disposed) {
+			return;
+		}
 		_disposed = true;
 		detach();
 		cleanupChildren();

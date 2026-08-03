@@ -63,11 +63,6 @@ public class AnchorControl extends ReactControl {
 		putState(ANCHOR, key);
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		_child.cleanupTree();
-	}
-
 	/**
 	 * The stable, DOM-safe anchor id for a model object: the external form of its persistent
 	 * identifier, or {@code null} when the value is not a persistent {@link TLObject}.

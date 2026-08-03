@@ -245,21 +245,6 @@ public class ReactPanelControl extends ToolbarControl {
 		_maximizeRoot = root;
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		_child.cleanupTree();
-		if (_titleContent != null) {
-			_titleContent.cleanupTree();
-		}
-		cleanupToolbarButtons();
-		if (_toolbar != null) {
-			_toolbar.cleanupTree();
-		}
-		if (_buttonBar != null) {
-			_buttonBar.cleanupTree();
-		}
-	}
-
 	/**
 	 * Expansion states for a panel.
 	 */

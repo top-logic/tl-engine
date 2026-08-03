@@ -13,8 +13,8 @@ import java.util.List;
  *
  * <p>
  * Provides a managed list of toolbar button controls with add/remove operations that automatically
- * synchronize the {@code toolbarButtons} state key. Subclasses inherit the toolbar button management
- * and must call {@link #cleanupToolbarButtons()} from their {@link #cleanupChildren()} override.
+ * synchronize the {@code toolbarButtons} state key. Since the buttons live in that state, the
+ * inherited lifecycle covers them: they are attached, detached and disposed with the control.
  * </p>
  */
 public abstract class ToolbarControl extends ReactControl {
@@ -64,12 +64,4 @@ public abstract class ToolbarControl extends ReactControl {
 		return removed;
 	}
 
-	/**
-	 * Cleans up all toolbar button controls. Must be called from {@link #cleanupChildren()}.
-	 */
-	protected void cleanupToolbarButtons() {
-		for (ReactControl button : _toolbarButtons) {
-			button.cleanupTree();
-		}
-	}
 }

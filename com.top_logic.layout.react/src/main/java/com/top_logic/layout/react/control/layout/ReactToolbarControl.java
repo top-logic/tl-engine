@@ -113,10 +113,4 @@ public class ReactToolbarControl extends ReactControl {
 		putState(GROUPS, _groups);
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		for (ReactControl child : _allChildren) {
-			child.cleanupTree();
-		}
-	}
 }

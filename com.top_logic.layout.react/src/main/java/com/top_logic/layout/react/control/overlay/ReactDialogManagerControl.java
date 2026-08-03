@@ -109,9 +109,7 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 
 	@Override
 	protected void cleanupChildren() {
-		for (DialogEntry entry : _stack) {
-			entry.dialog().cleanupTree();
-		}
+		super.cleanupChildren();
 		_stack.clear();
 	}
 

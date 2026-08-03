@@ -177,13 +177,6 @@ public class ReactStackControl extends ReactControl {
 		putState(GROW_FIRST, Boolean.valueOf(growFirst));
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		for (ReactControl child : _children) {
-			child.cleanupTree();
-		}
-	}
-
 	/**
 	 * Structural: this control is a flex layout container and is elided from the headless agent projection.
 	 */

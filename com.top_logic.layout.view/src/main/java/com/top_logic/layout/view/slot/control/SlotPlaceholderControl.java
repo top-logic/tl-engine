@@ -65,6 +65,9 @@ public class SlotPlaceholderControl extends ReactControl implements SlotPlacehol
 		_slotPath = slotPath;
 		_slotRegistry = slotRegistry;
 		putState(SLOT_NAME, slotName);
+		// The routed controls belong to the <slot-content> contributions that created them; the
+		// placeholder only borrows them for rendering and must not dispose them.
+		borrowedState(CHILDREN);
 		putState(CHILDREN, _routedControls);
 	}
 
@@ -103,11 +106,9 @@ public class SlotPlaceholderControl extends ReactControl implements SlotPlacehol
 		super.onDetach();
 	}
 
-	// Note: cleanupChildren is deliberately not overridden. The routed controls are owned by their
-	// <slot-content> contributions, which dispose them; the placeholder only borrows them for
-	// rendering. Attach and detach, in contrast, do reach them through the default propagation:
-	// they are part of the state this placeholder renders, and a borrowed control is displayed
-	// exactly while a placeholder shows it.
+	// Note: attach and detach do reach the routed controls through the default propagation - they are
+	// part of the state this placeholder renders, and a borrowed control is displayed exactly while a
+	// placeholder shows it. Only disposal stops here, see the borrowedState() declaration above.
 
 	/**
 	 * Structural: this control is a slot placeholder and is elided from the headless agent projection.

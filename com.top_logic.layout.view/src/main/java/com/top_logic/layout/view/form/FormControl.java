@@ -797,11 +797,6 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	@Override
-	protected void cleanupChildren() {
-		// No-op: child controls are managed by the React rendering tree.
-	}
-
-	@Override
 	protected void onCleanup() {
 		if (_scopeDirtyChannel != null) {
 			_scopeDirtyChannel.removeHandler(this);

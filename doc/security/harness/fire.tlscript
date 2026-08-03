@@ -1,0 +1,109 @@
+// ===========================================================================
+// Agent security end-to-end test - STEP 1 of 2: FIRE
+//
+// Starts one background agent run per test case of
+// doc/security/e2e-security-test.md, section 3, and hands the run handles to
+// collect.tlscript through the user session.
+//
+// Where to run it: Administration > Development > Script console, logged in as
+// the account whose cases you want to execute (secreader1, seceditor1 or root).
+// The runs act as that account - see section 4 of the test procedure.
+//
+// After this script returns, WAIT until the runs have finished, then execute
+// collect.tlscript in the SAME browser session. Fire and collect must be two
+// separate script executions: a request pins its knowledge-base revision, so a
+// run started here stays invisible for the rest of this request.
+// ===========================================================================
+{
+	// -- configuration ----------------------------------------------------
+
+	// The agent that executes the cases. The default is the demo's chat entry
+	// point, so a case run here goes through the same agent as the manual
+	// walkthrough of section 3.
+	//
+	// To see which names exist, run (as "root", because both readings are
+	// subject to model access rights):
+	//
+	//   aiCallTool("framework-wiring.listFrameworkAgents", null)
+	//       agents defined in the application configuration - this is where
+	//       TL_SingleAgent comes from,
+	//
+	//   all(`tl.ai.core:Agent`).get(`tl.ai.core:Agent#name`)
+	//       agents stored in the knowledge base - the shipped demo has none.
+	agentName = "TL_SingleAgent";
+
+	// Whose cases to run. "auto" derives it from the logged-in account:
+	// secreader1 -> 3.1 - 3.3, seceditor1 -> 3.4 - 3.6, root -> all of them
+	// (case 3.7, the administrator baseline). Set an explicit account name to
+	// fire someone else's cases - note that they then run with YOUR rights and
+	// the expectations below no longer apply.
+	account = "auto";
+
+	// Session key under which collect.tlscript picks the runs up again.
+	handleKey = "secdemo-e2e-handles";
+
+	// -- the cases --------------------------------------------------------
+	// [ case id, account, prompt, expected outcome ]
+	//
+	// The prompts are the ones from section 3 and deliberately steer the agent
+	// to the TL-Script tool: only that tool runs with the engine's security
+	// checks. Do not reword them.
+	cases = [
+		[
+			"3.1", "secreader1",
+			'Use the TL-Script tool to evaluate: all(`secdemo:Note`).get(`secdemo:Note#title`)',
+			"ALLOWED - the three seeded note titles (Release checklist, Team offsite, Open questions)."
+		],
+		[
+			"3.2", "secreader1",
+			'Use the TL-Script tool with commit to evaluate: new(`secdemo:Note`).set(`secdemo:Note#title`, "Reader was here")',
+			"DENIED - CREATE_PERMISSION_DENIED__TYPE, no object is created."
+		],
+		[
+			"3.3", "secreader1",
+			'Use the TL-Script tool to evaluate: all(`secdemo:Secret`).get(`secdemo:Secret#value`)',
+			"DENIED / EMPTY - an empty list, no secret values."
+		],
+		[
+			"3.4", "seceditor1",
+			'Use the TL-Script tool with commit to evaluate: new(`secdemo:Note`).set(`secdemo:Note#title`, "Editor note")',
+			"ALLOWED - a new object; the note 'Editor note' is persisted."
+		],
+		[
+			"3.5", "seceditor1",
+			'Use the TL-Script tool to evaluate: all(`secdemo:Note`).get(`secdemo:Note#body`)',
+			"ALLOWED - the note bodies."
+		],
+		[
+			"3.6", "seceditor1",
+			'Use the TL-Script tool with commit to evaluate: new(`secdemo:Secret`).set(`secdemo:Secret#label`, "mine now")',
+			"DENIED - CREATE_PERMISSION_DENIED, no secret is created."
+		]
+	];
+
+	// -- fire -------------------------------------------------------------
+
+	me = $account == "auto" ? currentUser().get(`tl.accounts:Person#name`) : $account;
+	selected = $cases.filter(c -> $me == "root" or $c[1] == $me);
+
+	// Each row keeps its case metadata next to the handle, so collect.tlscript
+	// needs no second copy of the table above.
+	fired = $selected.map(c -> [$c[0], $c[1], $c[2], $c[3], aiAgentChatAsync($agentName, $c[2])]);
+	$fired.storeInSession(key: $handleKey);
+
+	[
+		"Started " + $fired.size() + " agent run(s) as '" + $me + "' on agent '" + $agentName + "'.",
+		$me == "root"
+			? "WARNING: running as an administrator. Administrators bypass ModelAccessRights, so"
+				+ " every case is expected to be ALLOWED and the deny cases prove nothing. This is"
+				+ " only meaningful as the administrator baseline of case 3.7."
+			: "Running as a role-based account: the per-case expectations apply as written.",
+		"",
+		"Handles (also stored in this session under '" + $handleKey + "'):"
+	].concat($fired.map(f -> "   " + $f[0] + "  ->  " + $f[4]))
+	 .concat([
+		"",
+		"Now wait until the runs have finished, then execute collect.tlscript",
+		"in this same browser session."
+	]);
+}

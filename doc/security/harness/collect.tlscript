@@ -1,0 +1,80 @@
+// ===========================================================================
+// Agent security end-to-end test - STEP 2 of 2: COLLECT
+//
+// Reads back the runs started by fire.tlscript and prints case, status,
+// result and expectation side by side, followed by the post-conditions
+// evaluated directly against the data.
+//
+// Where to run it: the SAME Script console session that ran fire.tlscript,
+// after the runs have finished. Re-run it as often as you like; while a run is
+// still going, its status is RUNNING and its result is empty.
+//
+// Reading the output:
+//   status COMPLETE  - the agent finished; compare "result" against "expected".
+//   status ERROR     - the run failed. "errors" carries the failure reason
+//                      taken from the run transcript. "x-api-key header is
+//                      required" (or a comparable authentication message)
+//                      means no LLM API key is configured - a harness/setup
+//                      problem, not a security finding.
+//   status RUNNING   - not finished yet, wait and run this script again.
+//   status <unknown> - the handle could not be resolved; the session state was
+//                      lost (new browser session?). Fire again.
+// ===========================================================================
+{
+	handleKey = "secdemo-e2e-handles";
+
+	fired = loadFromSession($handleKey);
+
+	report = $fired == null
+		? ["No runs found in this session under '" + $handleKey + "'.",
+		   "Execute fire.tlscript first, in this same browser session."]
+		: $fired.map(row -> {
+			id = $row[0];
+			login = $row[1];
+			expected = $row[3];
+			handle = $row[4];
+
+			status = aiAgentRunStatus($handle);
+			result = aiAgentRunResult($handle);
+			transcript = aiAgentRunTranscript($handle);
+
+			// Every error recorded in the run transcript, in order. This is
+			// what distinguishes "the agent was denied by the engine" (the
+			// point of the test) from "the run never reached the model".
+			errors = $transcript == null
+				? []
+				: regex("\"errorMessage\":\"([^\"]*)\"").regexSearch($transcript)
+					.map(m -> $m.regexGroup(1));
+
+			[
+				"== " + $id + "  [" + $login + "]  status: "
+					+ ($status == null ? "<unknown handle>" : $status),
+				"   expected : " + $expected,
+				"   result   : " + ($result == null ? "(none - the run is not COMPLETE)" : $result),
+				"   errors   : " + ($errors.size() == 0 ? "-" : $errors.join(separator: " / ")),
+				""
+			];
+		}).flatten();
+
+	// -- post conditions ---------------------------------------------------
+	// Evaluated here, directly and with the engine's security checks on,
+	// rather than trusting what the agent says it did.
+	titles = all(`secdemo:Note`).get(`secdemo:Note#title`);
+	secrets = all(`secdemo:Secret`).get(`secdemo:Secret#value`);
+
+	$report.concat([
+		"-- post conditions, evaluated directly as the logged-in account --",
+		"   secdemo:Note titles readable here : "
+			+ ($titles.size() == 0 ? "(none)" : $titles.join(separator: ", ")),
+		"   case 3.2 must not have persisted 'Reader was here' : "
+			+ ($titles.filter(t -> $t == "Reader was here").size() == 0 ? "OK" : "FAILED"),
+		"   case 3.4 note 'Editor note' present : "
+			+ ($titles.filter(t -> $t == "Editor note").size() == 0 ? "no" : "yes"),
+		"   secdemo:Secret values readable here : "
+			+ ($secrets.size() == 0
+				? "no - expected for secReader / secEditor"
+				: "YES - expected only for an administrator"),
+		"",
+		"Cases 3.2 and 3.4 change data. To reset, run reset.tlscript as root."
+	]);
+}

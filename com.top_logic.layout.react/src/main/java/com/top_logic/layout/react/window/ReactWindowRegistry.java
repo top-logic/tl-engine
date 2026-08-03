@@ -6,7 +6,6 @@
 package com.top_logic.layout.react.window;
 
 import java.security.SecureRandom;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -25,12 +24,13 @@ import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.model.listen.ModelScope;
 
 /**
- * Per-session registry that manages programmatically opened React windows and per-window SSE
- * queues.
+ * Per-session registry of the browser windows of that session.
  *
  * <p>
- * Stored as an HTTP session attribute. Tracks open windows, their control trees, and owns
- * per-window {@link SSEUpdateQueue} instances.
+ * Stored as an HTTP session attribute, so it dies with the session - a login or logout therefore
+ * discards every window it knows. Each window is represented by one {@link WindowEntry} that owns its
+ * per-window state; the registry only maps window IDs to entries, resolves singleton windows, and
+ * decides when a window whose page was unloaded has stayed away long enough to be torn down.
  * </p>
  */
 public class ReactWindowRegistry implements HttpSessionBindingListener {
@@ -40,10 +40,6 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	private static final SecureRandom RANDOM = new SecureRandom();
 
 	private final ConcurrentHashMap<String, WindowEntry> _windows = new ConcurrentHashMap<>();
-
-	private final ConcurrentHashMap<String, SSEUpdateQueue> _windowQueues = new ConcurrentHashMap<>();
-
-	private final ConcurrentHashMap<String, GlobalModelEventForwarder> _windowModelScopes = new ConcurrentHashMap<>();
 
 	/** Maps singleton keys to window IDs for singleton window reuse. */
 	private final ConcurrentHashMap<String, String> _singletonKeys = new ConcurrentHashMap<>();
@@ -57,9 +53,6 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * </p>
 	 */
 	private static final long UNLOAD_GRACE_MILLIS = 30_000;
-
-	/** Windows whose page was unloaded, by the time the unload was reported. */
-	private final ConcurrentHashMap<String, Long> _unloaded = new ConcurrentHashMap<>();
 
 	private final java.util.Map<String, PendingViewPick> _pendingPicks = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -93,20 +86,18 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * Gets or creates the {@link SSEUpdateQueue} for the given window.
 	 */
 	public SSEUpdateQueue getOrCreateQueue(String windowId) {
+		WindowEntry entry = getOrCreateWindow(windowId);
 		// The window is being displayed again - a reload rather than a close.
-		_unloaded.remove(windowId);
-		return _windowQueues.computeIfAbsent(windowId, id -> {
-			SSEUpdateQueue queue = new SSEUpdateQueue();
-			queue.setWindowName(id);
-			return queue;
-		});
+		entry.markDisplayed();
+		return entry.getQueue();
 	}
 
 	/**
 	 * Gets the {@link SSEUpdateQueue} for the given window, or {@code null} if none exists.
 	 */
 	public SSEUpdateQueue getQueue(String windowId) {
-		return _windowQueues.get(windowId);
+		WindowEntry entry = _windows.get(windowId);
+		return entry == null ? null : entry.getQueue();
 	}
 
 	/**
@@ -118,7 +109,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * </p>
 	 */
 	public java.util.Set<String> windowNames() {
-		return java.util.Collections.unmodifiableSet(_windowQueues.keySet());
+		return java.util.Collections.unmodifiableSet(_windows.keySet());
 	}
 
 	/**
@@ -131,8 +122,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * </p>
 	 */
 	public ModelScope getOrCreateModelScope(String windowId) {
-		return _windowModelScopes.computeIfAbsent(windowId,
-			id -> GlobalModelEventForwarder.createForWindow());
+		return getOrCreateWindow(windowId).getOrCreateModelScope();
 	}
 
 	/**
@@ -142,9 +132,9 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 *        The window to synthesize events for.
 	 */
 	public void synthesizeModelEvents(String windowId) {
-		GlobalModelEventForwarder forwarder = _windowModelScopes.get(windowId);
-		if (forwarder != null) {
-			forwarder.synthesizeModelEvents();
+		WindowEntry entry = _windows.get(windowId);
+		if (entry != null) {
+			entry.synthesizeModelEvents();
 		}
 	}
 
@@ -304,7 +294,6 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		if (windowId == null) {
 			return;
 		}
-		_unloaded.remove(windowId);
 		Logger.info("windowClosed(" + windowId + "), known windows: " + _windows.keySet(),
 			ReactWindowRegistry.class);
 		WindowEntry entry = _windows.remove(windowId);
@@ -333,12 +322,10 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			if (rootControl != null) {
 				rootControl.cleanupTree();
 			}
+
+			// After the tree: disposing it unregisters its controls from the queue.
+			entry.getQueue().shutdown();
 		}
-		SSEUpdateQueue queue = _windowQueues.remove(windowId);
-		if (queue != null) {
-			queue.shutdown();
-		}
-		_windowModelScopes.remove(windowId);
 	}
 
 	/**
@@ -357,17 +344,18 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		if (windowId == null) {
 			return;
 		}
-		_unloaded.put(windowId, Long.valueOf(System.currentTimeMillis()));
+		WindowEntry entry = _windows.get(windowId);
+		if (entry == null) {
+			return;
+		}
+		entry.markUnloaded();
 
 		// Nothing is displayed until the page comes back, so the tree stops observing the model. It
 		// re-attaches by being rendered again; a page that does not come back is collected by
 		// sweepUnloadedWindows().
-		WindowEntry entry = _windows.get(windowId);
-		if (entry != null) {
-			ReactControl rootControl = entry.getRootControl();
-			if (rootControl != null) {
-				rootControl.detach();
-			}
+		ReactControl rootControl = entry.getRootControl();
+		if (rootControl != null) {
+			rootControl.detach();
 		}
 	}
 
@@ -384,11 +372,12 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	public void sweepUnloadedWindows() {
 		long now = System.currentTimeMillis();
-		for (Map.Entry<String, Long> entry : _unloaded.entrySet()) {
-			if (now - entry.getValue().longValue() < UNLOAD_GRACE_MILLIS) {
+		for (WindowEntry entry : _windows.values()) {
+			long unloadedAt = entry.getUnloadedAt();
+			if (unloadedAt == 0 || now - unloadedAt < UNLOAD_GRACE_MILLIS) {
 				continue;
 			}
-			String windowId = entry.getKey();
+			String windowId = entry.getWindowId();
 			// Mirrors ReactServlet's window-close handling: the callbacks run by windowClosed patch
 			// the opener's state and flush SSE events, and must not race with concurrent commands.
 			_requestLock.lock();
@@ -407,15 +396,12 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	@Override
 	public void valueUnbound(HttpSessionBindingEvent event) {
-		for (SSEUpdateQueue queue : _windowQueues.values()) {
-			queue.shutdown();
-		}
-		_windowQueues.clear();
 		for (WindowEntry entry : _windows.values()) {
 			ReactControl rootControl = entry.getRootControl();
 			if (rootControl != null) {
 				rootControl.cleanupTree();
 			}
+			entry.getQueue().shutdown();
 		}
 		_windows.clear();
 		_singletonKeys.clear();

@@ -16,13 +16,17 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.tl.ai.core.agent.ExecutionMode;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
+import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolContent;
@@ -222,6 +226,104 @@ public class TestToolCatalog extends TestCase {
 			failed.error().contains("Unknown tool"));
 		assertTrue("Should list available tool names, got: " + failed.error(),
 			failed.error().contains("echo"));
+	}
+
+	/**
+	 * A name the registry cannot resolve is reported as "no such tool" with the list of names the
+	 * principal may actually call - never as a permission problem, and never disclosing the names of
+	 * tools they may not use.
+	 *
+	 * <p>
+	 * Under enforced tool access an unresolvable name has no tool group, so routing it through the
+	 * permission check would answer every typo with "belongs to no tool group ... denied to
+	 * everyone" and strip the hint the model corrects itself with.
+	 * </p>
+	 */
+	public void testExecuteUnknownToolUnderRestrictedSecurity() {
+		ToolCatalog catalog = new ToolCatalog();
+		catalog.register(echoTool());
+		catalog.register(secretTool());
+
+		ToolCall call = new ToolCall("call-1", "ecko", "{}");
+		ToolResultMessage result = catalog.execute(call, restrictedTo("echo"));
+
+		ToolState.Failed failed = (ToolState.Failed) result.state();
+		assertTrue("Should mention 'Unknown tool', got: " + failed.error(),
+			failed.error().contains("Unknown tool"));
+		assertFalse("Must not be reported as a permission problem, got: " + failed.error(),
+			failed.error().contains("Permission denied"));
+		assertTrue("Should list the permitted tool, got: " + failed.error(),
+			failed.error().contains("echo"));
+		assertFalse("Must not list a tool the user may not call, got: " + failed.error(),
+			failed.error().contains("secret"));
+	}
+
+	/** The same message, and the same filtering, for a catalog that grows through skills. */
+	public void testDynamicCatalogUnknownToolListsPermittedTools() {
+		ToolCatalog base = new ToolCatalog();
+		base.register(echoTool());
+		base.register(secretTool());
+		DynamicToolCatalog catalog = new DynamicToolCatalog(base.freeze());
+
+		ToolCall call = new ToolCall("call-1", "ecko", "{}");
+		ToolResultMessage result = catalog.execute(call, restrictedTo("echo"));
+
+		ToolState.Failed failed = (ToolState.Failed) result.state();
+		assertTrue("Should mention 'Unknown tool', got: " + failed.error(),
+			failed.error().contains("Unknown tool"));
+		assertTrue("Should list the permitted tool, got: " + failed.error(),
+			failed.error().contains("echo"));
+		assertFalse("Must not list a tool the user may not call, got: " + failed.error(),
+			failed.error().contains("secret"));
+	}
+
+	private static ToolContext restrictedTo(String permittedToolName) {
+		SecurityContext security = new SecurityContext() {
+			@Override
+			public boolean hasToolPermission(Tool tool) {
+				return permittedToolName.equals(tool.name());
+			}
+
+			@Override
+			public AiSecurityMode securityMode() {
+				return AiSecurityMode.ENFORCED;
+			}
+
+			@Override
+			public ExecutionMode executionMode() {
+				return ExecutionMode.DEVELOPMENT;
+			}
+		};
+		return new ToolContext(security, ApprovalCallback.AUTO_APPROVE);
+	}
+
+	private static Tool secretTool() {
+		return new Tool() {
+			@Override
+			public String name() {
+				return "secret";
+			}
+
+			@Override
+			public String description() {
+				return "A tool the test user may not call.";
+			}
+
+			@Override
+			public ToolSchema schema() {
+				return new ToolSchema("secret", description(), "{\"type\":\"object\",\"properties\":{}}");
+			}
+
+			@Override
+			public ToolMode mode() {
+				return ToolMode.READ;
+			}
+
+			@Override
+			public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+				return ToolResult.of("nope");
+			}
+		};
 	}
 
 	/** Malformed JSON arguments -> Failed state with "Invalid JSON". */

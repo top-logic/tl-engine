@@ -39,13 +39,19 @@ public class ScriptToolExecutor implements Tool {
 
 	private final ToolMode _mode;
 
+	private final String _group;
+
 	private final boolean _concurrencySafe;
 
 	/**
 	 * Creates a new {@link ScriptToolExecutor}.
+	 *
+	 * @param group
+	 *        The tool group this tool declares for itself, or the empty string for an ungrouped
+	 *        tool - see {@link Tool#group()}.
 	 */
 	public ScriptToolExecutor(String name, String description, String inputSchemaJson,
-			QueryExecutor executor, ScriptParamCoercion coercion, ToolMode mode,
+			QueryExecutor executor, ScriptParamCoercion coercion, ToolMode mode, String group,
 			boolean concurrencySafe) {
 		_name = name;
 		_description = description;
@@ -53,6 +59,7 @@ public class ScriptToolExecutor implements Tool {
 		_executor = executor;
 		_coercion = coercion;
 		_mode = mode;
+		_group = group != null ? group : "";
 		_concurrencySafe = concurrencySafe;
 	}
 
@@ -74,6 +81,20 @@ public class ScriptToolExecutor implements Tool {
 	@Override
 	public ToolMode mode() {
 		return _mode;
+	}
+
+	/**
+	 * The group configured for this script tool, or the empty string.
+	 *
+	 * <p>
+	 * A TL-Script tool has no annotation to carry a group, so it is ungrouped - and therefore denied
+	 * to every role under enforced tool access - unless its configuration classifies it or the
+	 * access policy does.
+	 * </p>
+	 */
+	@Override
+	public String group() {
+		return _group;
 	}
 
 	@Override

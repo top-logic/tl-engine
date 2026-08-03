@@ -15,6 +15,7 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Predicate;
 
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
@@ -154,11 +155,33 @@ public class ToolCatalog implements ToolRegistry {
 
 		Tool tool = _tools.get(toolCall.name());
 		if (tool == null) {
-			return failedResult(toolCall, start,
-				"Unknown tool: '" + toolCall.name() + "'. Available: " + _tools.keySet());
+			return failedResult(toolCall, start, unknownToolMessage(toolCall, this, context));
 		}
 
 		return executeTool(tool, toolCall, context);
+	}
+
+	/**
+	 * The message for a tool call the registry cannot resolve.
+	 *
+	 * <p>
+	 * "No such tool" and "you may not use that tool" are different answers and the model acts on
+	 * them differently: the first is corrected by picking a name from the list, the second is final.
+	 * The list therefore holds exactly the tools this run's principal may call - the same set the
+	 * model was sent schemas for - so that following the hint cannot walk into a denial, and so that
+	 * a typo does not disclose the names of capabilities the user does not have.
+	 * </p>
+	 *
+	 * <p>
+	 * Package-private: shared between {@link ToolCatalog} and {@link DynamicToolCatalog}.
+	 * </p>
+	 */
+	static String unknownToolMessage(ToolCall toolCall, ToolRegistry registry, ToolContext context) {
+		Predicate<Tool> visible = context == null
+			? tool -> true
+			: new ToolPermissionFilter(context.security());
+		List<String> available = registry.toolSchemas(visible).stream().map(ToolSchema::name).toList();
+		return "Unknown tool: '" + toolCall.name() + "'. Available: " + available;
 	}
 
 	/**

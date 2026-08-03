@@ -121,7 +121,7 @@ public class TestSkillTool extends TestCase {
 				"FRONTMATTER RULE content", List.of("test.toolA", "test.toolB")));
 
 		Set<String> preloaded = Set.of("test/frontmatter-skill");
-		SkillTool tool = new SkillTool(skills, catalog, TestSkillTool::resolveTool, preloaded);
+		SkillTool tool = new SkillTool(skills, catalog, TestSkillTool::resolveTool, null, preloaded);
 
 		// Tools should be available immediately without calling loadSkill
 		assertNotNull("toolA available after preload", catalog.getTool("test__toolA"));
@@ -142,7 +142,55 @@ public class TestSkillTool extends TestCase {
 
 		Set<String> preloaded = Set.of("removed/skill");
 		// Should not throw
-		new SkillTool(skills, catalog, TestSkillTool::resolveTool, preloaded);
+		new SkillTool(skills, catalog, TestSkillTool::resolveTool, null, preloaded);
+	}
+
+	/**
+	 * A tool the principal may not use is neither registered nor announced as available.
+	 *
+	 * <p>
+	 * The bug this pins: announcing it puts an authoritative tool result in the conversation that
+	 * the next turn's schema filter contradicts, and a model that believes it earns a denial.
+	 * </p>
+	 */
+	public void testDeniedToolIsNeitherRegisteredNorAnnounced() {
+		ToolCatalog base = new ToolCatalog();
+		base.freeze();
+		DynamicToolCatalog catalog = new DynamicToolCatalog(base);
+
+		Map<String, Skill> skills = new LinkedHashMap<>();
+		skills.put("test/mixed-skill",
+			new Skill("test/mixed-skill", "Partly permitted", "MIXED content",
+				List.of("test.toolA", "test.toolB")));
+
+		SkillTool tool = new SkillTool(skills, catalog, TestSkillTool::resolveTool,
+			t -> "test__toolA".equals(t.name()), null);
+
+		String result = tool.loadSkill("test/mixed-skill");
+
+		assertNotNull("The permitted tool is registered", catalog.getTool("test__toolA"));
+		assertNull("The denied tool is not registered", catalog.getTool("test__toolB"));
+		assertTrue("The permitted tool is announced: " + result, result.contains("test__toolA"));
+		assertFalse("The denied tool is not announced: " + result, result.contains("test__toolB"));
+		assertTrue("The skill's instructions still arrive", result.contains("MIXED content"));
+	}
+
+	/** Restoring a session's skills applies the same filter as loading them. */
+	public void testPreloadedSkillWithholdsDeniedTools() {
+		ToolCatalog base = new ToolCatalog();
+		base.freeze();
+		DynamicToolCatalog catalog = new DynamicToolCatalog(base);
+
+		Map<String, Skill> skills = new LinkedHashMap<>();
+		skills.put("test/mixed-skill",
+			new Skill("test/mixed-skill", "Partly permitted", "MIXED content",
+				List.of("test.toolA", "test.toolB")));
+
+		new SkillTool(skills, catalog, TestSkillTool::resolveTool,
+			t -> "test__toolA".equals(t.name()), Set.of("test/mixed-skill"));
+
+		assertNotNull("The permitted tool is restored", catalog.getTool("test__toolA"));
+		assertNull("The denied tool is not restored", catalog.getTool("test__toolB"));
 	}
 
 	// ===== Helpers =====

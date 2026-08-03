@@ -18,11 +18,13 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.model.search.configured.ConfiguredScript;
 import com.top_logic.model.search.configured.ScriptConfiguration;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
 
@@ -68,7 +70,8 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 	 * <p>
 	 * Inherits name, parameters (with full {@link com.top_logic.model.TLType} picker), label,
 	 * description, and implementation expression from {@link ScriptConfiguration}. Adds the
-	 * AI-specific {@link #getMode() mode} and {@link #isConcurrencySafe() concurrency} flags.
+	 * AI-specific {@link #getMode() mode}, {@link #getGroup() group} and
+	 * {@link #isConcurrencySafe() concurrency} flags.
 	 * </p>
 	 */
 	@DisplayOrder({
@@ -77,6 +80,7 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		ScriptConfiguration.DESCRIPTION,
 		ScriptConfiguration.PARAMETERS,
 		ScriptToolConfig.MODE,
+		ScriptToolConfig.GROUP,
 		ScriptToolConfig.CONCURRENCY_SAFE,
 		ScriptConfiguration.IMPLEMENTATION,
 	})
@@ -88,6 +92,13 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		 * @see #getMode()
 		 */
 		String MODE = "mode";
+
+		/**
+		 * Configuration property name for group.
+		 *
+		 * @see #getGroup()
+		 */
+		String GROUP = "group";
 
 		/**
 		 * Configuration property name for concurrency-safe.
@@ -104,6 +115,24 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		@Name(MODE)
 		@FormattedDefault("DATA_WRITE")
 		ToolMode getMode();
+
+		/**
+		 * The tool group this tool belongs to - the unit a security role is granted.
+		 *
+		 * <p>
+		 * Classify the tool with one of the names in {@link ToolGroups}, or an application's own,
+		 * to make it grantable by capability. Empty by default, which means ungrouped: with
+		 * role-based tool access enforced, an ungrouped tool is reachable only through an explicit
+		 * per-tool grant. That is the fail-closed reading, and it is what every script tool
+		 * authored before this property existed keeps, so nothing silently widens. An administrator
+		 * can still override the choice from the tool-group assignment in the access policy.
+		 * </p>
+		 *
+		 * @see Tool#group()
+		 */
+		@Name(GROUP)
+		@StringDefault("")
+		String getGroup();
 
 		/**
 		 * Whether this tool can safely run in parallel with other concurrency-safe tools.
@@ -144,6 +173,7 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 				executor,
 				new ScriptParamCoercion(toolConfig.getParameters()),
 				mode,
+				toolConfig.getGroup(),
 				toolConfig.isConcurrencySafe()));
 		}
 	}

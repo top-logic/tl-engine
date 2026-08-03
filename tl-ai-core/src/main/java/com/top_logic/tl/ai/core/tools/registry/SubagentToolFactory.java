@@ -11,6 +11,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.ListAgentsTool;
 import com.top_logic.tl.ai.core.tools.interaction.SpawnSubagentTool;
@@ -48,13 +49,13 @@ public class SubagentToolFactory implements ToolFactory {
 	private static final DelegationTool.AgentLoopFactory LOOP_FACTORY = new DelegationTool.AgentLoopFactory() {
 
 		@Override
-		public AgentLoop buildAgentLoop(String agentName) {
-			return AgentFactory.getInstance().buildAgentLoop(agentName);
+		public AgentLoop buildAgentLoop(String agentName, SecurityContext security) {
+			return AgentFactory.getInstance().buildAgentLoop(agentName, security);
 		}
 
 		@Override
-		public AgentLoop buildSubagentLoop(String agentName) {
-			return AgentFactory.getInstance().buildSubagentLoop(agentName);
+		public AgentLoop buildSubagentLoop(String agentName, SecurityContext security) {
+			return AgentFactory.getInstance().buildSubagentLoop(agentName, security);
 		}
 	};
 

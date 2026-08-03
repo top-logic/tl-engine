@@ -180,6 +180,28 @@ public class ToolAuthorization {
 	}
 
 	/**
+	 * The capability (tool group) the given tool requires, as this run's policy classifies it.
+	 *
+	 * <p>
+	 * The name a denial would put in front of the user, resolved for a tool that has not been denied
+	 * yet. Used to tell an agent which capabilities its principal lacks without listing the tools
+	 * behind them: {@code data.write} is one line an administrator can act on, where the twenty-nine
+	 * tool names in it are not.
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool to classify.
+	 * @return The capability name, or <code>null</code> for an ungrouped tool - one no capability
+	 *         grant can reach.
+	 */
+	public String capabilityOf(Tool tool) {
+		if (_access == null) {
+			return ToolIdentity.of(tool).declaredGroup();
+		}
+		return _access.groupOf(_identities.identify(tool));
+	}
+
+	/**
 	 * Whether the run's principal may use the given tool, without logging a denial.
 	 */
 	public boolean allows(Tool tool) {

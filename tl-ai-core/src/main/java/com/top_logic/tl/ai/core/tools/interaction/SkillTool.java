@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
@@ -30,6 +31,14 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * and descriptions in its system prompt and calls {@code loadSkill} to retrieve the full content.
  * When a skill declares tools, they are dynamically added to the agent's tool catalog.
  * </p>
+ *
+ * <p>
+ * Tools the run's principal may not use are withheld: they are neither added to the catalog nor
+ * named in the load message. Announcing them would put an authoritative tool result in the
+ * conversation that the next turn's schema filter immediately contradicts, and a model that took it
+ * at its word would earn a denial. Which skills are offered here at all is decided one level up, in
+ * {@code AgentFactory}.
+ * </p>
  */
 public class SkillTool {
 
@@ -38,6 +47,8 @@ public class SkillTool {
 	private final DynamicToolCatalog _dynamicCatalog;
 
 	private final Function<String, Tool> _toolResolver;
+
+	private final Predicate<Tool> _permitted;
 
 	private final Set<String> _loadedSkills = new HashSet<>();
 
@@ -51,15 +62,20 @@ public class SkillTool {
 	 * @param toolResolver
 	 *        resolves qualified tool names to {@link Tool} instances, or {@code null} for legacy
 	 *        behavior
+	 * @param permitted
+	 *        whether the run's principal may use a given tool; tools it rejects are neither
+	 *        registered nor announced. May be {@code null}, which permits everything.
 	 * @param preloadedSkillIds
 	 *        skill IDs to restore from a previous session; their tools are added to the catalog
 	 *        immediately. May be {@code null} or empty.
 	 */
 	public SkillTool(Map<String, Skill> skills, DynamicToolCatalog dynamicCatalog,
-			Function<String, Tool> toolResolver, Set<String> preloadedSkillIds) {
+			Function<String, Tool> toolResolver, Predicate<Tool> permitted,
+			Set<String> preloadedSkillIds) {
 		_skills = skills;
 		_dynamicCatalog = dynamicCatalog;
 		_toolResolver = toolResolver;
+		_permitted = permitted != null ? permitted : tool -> true;
 
 		if (preloadedSkillIds != null) {
 			for (String skillId : preloadedSkillIds) {
@@ -78,7 +94,7 @@ public class SkillTool {
 	 */
 	public SkillTool(Map<String, Skill> skills, DynamicToolCatalog dynamicCatalog,
 			Function<String, Tool> toolResolver) {
-		this(skills, dynamicCatalog, toolResolver, null);
+		this(skills, dynamicCatalog, toolResolver, null, null);
 	}
 
 	/**
@@ -151,6 +167,7 @@ public class SkillTool {
 
 		ToolCatalog overlay = new ToolCatalog();
 		List<String> added = new ArrayList<>();
+		List<String> withheld = new ArrayList<>();
 
 		for (String toolName : skill.tools()) {
 			Tool tool = _toolResolver.apply(toolName);
@@ -159,12 +176,24 @@ public class SkillTool {
 					SkillTool.class);
 				continue;
 			}
+			// A tool the principal may not use is neither registered nor reported as available:
+			// the per-turn schema filter would remove it again anyway, and an authoritative tool
+			// result naming a tool the model cannot call is worse than not mentioning it.
+			if (!_permitted.test(tool)) {
+				withheld.add(tool.name());
+				continue;
+			}
 			// Skip if already in the catalog (from another skill)
 			if (_dynamicCatalog.getTool(tool.name()) != null) {
 				continue;
 			}
 			overlay.register(tool);
 			added.add(tool.name());
+		}
+
+		if (!withheld.isEmpty()) {
+			Logger.info("Skill '" + skill.id() + "' loaded without " + withheld.size()
+				+ " tools the current user may not use: " + withheld, SkillTool.class);
 		}
 
 		if (!overlay.tools().isEmpty()) {

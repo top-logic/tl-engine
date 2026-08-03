@@ -133,12 +133,25 @@ Use the `{factory}.{tool}` name from the application configuration - the same na
 lists. A trailing `*` matches a prefix (`<grant tool="mcp__jira__*"/>`), but a wildcard never reaches a
 tool in a privileged group.
 
+### Give a TL-Script tool a capability
+
+A TL-Script tool has no annotation to carry a group, so it arrives ungrouped and is denied to
+everyone until it is classified. It can classify itself: the entries under a `ScriptToolFactory`'s
+`<tools>` take a `group` attribute next to the `mode` they already have, for example
+`group="data.read"`.
+
+Omit `group` and the tool stays ungrouped, which is what every script tool authored before this
+property existed does - fail-closed, and unchanged for them. Note that under enforced access an
+ungrouped tool is also invisible to the agents whose skills reference it: a skill none of whose tools
+the acting user may use is not offered at all (the drop is logged at INFO with the skill name and the
+reason). Classifying the tool, or naming it in `<tool-groups>` below, is what brings it back.
+
 ### Classify tools that cannot declare their own group
 
-Remote MCP tools and TL-Script tools authored in the running application have no annotation to carry a
-group, so they arrive ungrouped and denied. Put them in a group here - and an entry here also
-*overrides* a group a tool declared, which is how you move a tool into `egress` that its author did not
-classify as such:
+Remote MCP tools have no annotation to carry a group, so they arrive ungrouped and denied. Put them
+in a group here - and an entry here also *overrides* a group a tool declared, which is how you move a
+tool into `egress` that its author did not classify as such, or how you classify a TL-Script tool
+whose configuration you would rather not edit:
 
 ```xml
 <tool-groups>
@@ -210,6 +223,21 @@ reason=Permission denied: tool 'framework-wiring.listFrameworkAgents' requires t
 The agent gets the same sentence, so it can tell the user what is missing instead of failing opaquely.
 Neither the log nor the message ever contains data that was withheld - tool names, group names,
 operations and role names only.
+
+An agent whose whole skill was withheld says so too. Under an enforcing policy, the generated
+`### Available Skills` section of every agent's system prompt is followed by the capabilities the
+acting account does *not* hold, among those the agent's own tools and its skills' tools need - so the
+agent can name the missing capability rather than reporting a vague inability. Skills none of whose
+tools the account may use are left out of that catalog and out of `loadSkill`, and each omission is
+logged:
+
+```
+INFO ... AgentFactory - Agent 'TL_SingleAgent': skill 'TL_topLogicModeling' is not offered
+to the current user - none of its 16 known tools is permitted; they require [model.structure]
+```
+
+That prompt text is **user experience, not a control**: it helps the agent explain itself and is
+never what stops a tool from running. The gate is the Java check on the call path, unchanged.
 
 At boot the service states what it read:
 

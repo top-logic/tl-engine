@@ -144,6 +144,11 @@ public class TopLogicSecurityContext implements SecurityContext {
 	}
 
 	@Override
+	public String toolCapability(Tool tool) {
+		return _toolAuthorization.capabilityOf(tool);
+	}
+
+	@Override
 	public AiSecurityMode securityMode() {
 		return _securityMode;
 	}

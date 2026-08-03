@@ -10,6 +10,7 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.AgentLoop;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
@@ -32,12 +33,12 @@ public class TestSpawnSubagentTool extends TestCase {
 			// quickly. The point is non-blocking return + registration, not subagent success.
 			DelegationTool.AgentLoopFactory fakeFactory = new DelegationTool.AgentLoopFactory() {
 				@Override
-				public AgentLoop buildAgentLoop(String agentName) {
+				public AgentLoop buildAgentLoop(String agentName, SecurityContext security) {
 					throw new UnsupportedOperationException("Should not be called in async path");
 				}
 
 				@Override
-				public AgentLoop buildSubagentLoop(String agentName) {
+				public AgentLoop buildSubagentLoop(String agentName, SecurityContext security) {
 					throw new RuntimeException("Fake failure: no real LLM available in test");
 				}
 			};
@@ -71,7 +72,7 @@ public class TestSpawnSubagentTool extends TestCase {
 	 */
 	public void testNoRegistryReturnsError() {
 		// No SubagentRegistryBinding.bind(...) — registry is null on this thread.
-		DelegationTool.AgentLoopFactory factory = agentName -> {
+		DelegationTool.AgentLoopFactory factory = (agentName, security) -> {
 			throw new UnsupportedOperationException("Should not be reached");
 		};
 

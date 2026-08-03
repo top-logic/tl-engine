@@ -915,17 +915,12 @@ public class AgentLoop {
 				markDenied(toolCall.id());
 				return errorResult(toolCall, reason);
 			}
-		} else {
-			if (!security.hasToolPermission(toolCall.name())) {
-				String specific = security.toolDenialReason(toolCall.name());
-				String reason = specific != null
-					? specific
-					: "Permission denied: you do not have access to tool '" + toolCall.name() + "'.";
-				emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
-				markDenied(toolCall.id());
-				return errorResult(toolCall, reason);
-			}
 		}
+		// A name the registry does not resolve is deliberately not run through the permission
+		// check: it belongs to no tool group, so the check would report a hallucinated or
+		// misspelled name as a permission problem and swallow the "Available:" hint the model
+		// needs to correct itself. Such a name cannot execute either way - the registry refuses
+		// it below with a message that says so and lists what this user does have.
 
 		// Step 2: Approval (only for registered tools with metadata)
 		if (tool != null) {

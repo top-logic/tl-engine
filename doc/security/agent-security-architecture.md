@@ -451,13 +451,45 @@ Exactly the two existing seams, with unchanged responsibilities:
   not narrate a denial. It is *not* the enforcement point (a model can hallucinate a tool name; a
   cached conversation can replay an older tool set).
 - **`AgentLoop.java:885-919`** - `executeWithSecurityCheck` is the **enforcement point**. Every call
-  passes here, including calls for tools that are not in the registry (`:911-919`, the `String`
-  overload) and including tools injected mid-run by a skill through `DynamicToolCatalog`.
+  passes here, including tools injected mid-run by a skill through `DynamicToolCatalog`. A name the
+  run's registry does *not* resolve is deliberately **not** run through the permission check: such a
+  name has no group, so the check would answer every hallucinated or misspelled name with "belongs to
+  no tool group ... denied to everyone" and take away the `Available:` hint the model corrects itself
+  with. Nothing is lost by not asking - an unresolvable name cannot execute either way, and the
+  catalog refuses it with `Unknown tool: 'x'. Available: [...]`, the list holding exactly the tools
+  the principal may call.
 
 `ToolPermissionFilter.denialReason` (`:55-66`) already produces the LLM-facing message; the RBAC
 denial adds one line naming the missing capability without naming the data:
 
 > `Permission denied: tool 'model-editor.createClass' requires the 'model.structure' capability, which none of your roles grants.`
+
+#### 3.2.7 Telling the agent what it lacks - UX, not a control
+
+Filtering the schemas leaves the model unable to tell "you are not permitted" from "that skill is
+not loaded yet" from "that does not exist": all three look like absence, so the agent answers the
+user with a vague "I can't do that" or goes hunting for a skill it may also not use.
+
+Two code fixes and one piece of prompt text address that:
+
+- **Skills whose every tool is denied are not offered** (`AgentFactory.injectSkills`,
+  `buildDynamicSkillTool`, `buildSkillTool`, all through `AgentCapabilities.unusableReason`). A skill
+  with no tools at all is pure instruction text and is kept; a partly denied skill is kept and loads
+  only the permitted subset; a skill whose tool names do not resolve is kept, because a typo is not a
+  denial. Every dropped skill is logged at INFO with the deciding reason - silent capability loss is
+  the failure mode this must not have.
+- **`loadSkill` no longer advertises tools the principal cannot call** (`SkillTool.addSkillTools`).
+  It used to register and announce every resolvable tool of a skill; the next turn's schema filter
+  then removed exactly the denied ones, so an authoritative tool result contradicted the tool list.
+- **The generated skill catalog names the capabilities the principal lacks**
+  (`AgentCapabilities.notice`), computed from the tools *this agent* can reach - its own `<tools>`
+  plus its skills' - rather than from every group in the deployment. A denied capability then costs
+  one short line instead of a full JSON schema, and the agent can name it to the user.
+
+**This prompt text is UX, not a control**, and must not be read as closing anything: see section 2.2
+- all gates in this design are deterministic Java checks on the call path, never prompt instructions.
+It is emitted only where the run's mode `enforcesToolAccess()`, so a `LEGACY` prompt is byte-identical
+to what it was before this existed.
 
 ### 3.3 L2 - Data authorization via `ModelAccessRights` (#29088)
 
@@ -532,7 +564,7 @@ The tools that need it, in dependency order:
 | `ModelEditorTool.*`, `ModelAnnotationEditorTool.*` | Structural: gated by the `model.structure` group at L1; L4 backstops the commit |
 | `TLScriptTool.executeTLScript` | Already enforced by the engine inside TL-Script as of `8.0.0-alpha7`; assert user context, never a system interaction. Note this enforcement is **not** gated by `AiSecurityMode`, so it also applies in `LEGACY` - and it denies by default, see section 6 |
 | `VectorIndexSearchTool` | Section 3.4.3 |
-| `McpTool` (all remote tools) | Cannot be introspected and declares no group, so it is ungrouped and therefore denied until an administrator classifies it in `<tool-groups>`. Same for `ScriptToolExecutor`, i.e. every TL-Script tool authored in the running application |
+| `McpTool` (all remote tools) | Cannot be introspected and declares no group, so it is ungrouped and therefore denied until an administrator classifies it in `<tool-groups>`. A TL-Script tool (`ScriptToolExecutor`) can now classify itself through the `group` property of its configuration; one authored before that property existed stays ungrouped, hence denied |
 
 #### 3.3.3 Declared types - designed, not built
 

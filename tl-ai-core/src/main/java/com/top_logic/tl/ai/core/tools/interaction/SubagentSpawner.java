@@ -144,7 +144,7 @@ public class SubagentSpawner {
 					SubagentRegistryBinding.Binding noRegistry = SubagentRegistryBinding.bind(null)) {
 
 					Instant start = Instant.now();
-					AgentLoop targetLoop = loopFactory.buildSubagentLoop(targetAgentName);
+					AgentLoop targetLoop = loopFactory.buildSubagentLoop(targetAgentName, toolContext.security());
 					Conversation conversation = new Conversation();
 					conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 						List.of(new TextContent(userPrompt))));

@@ -14,6 +14,7 @@ import java.util.UUID;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
@@ -178,7 +179,7 @@ public class DelegationTool implements Tool {
 		}
 
 		try {
-			AgentLoop targetLoop = _loopFactory.buildAgentLoop(_targetAgentName);
+			AgentLoop targetLoop = _loopFactory.buildAgentLoop(_targetAgentName, toolContext.security());
 
 			Conversation conversation = new Conversation();
 			UserMessage userMessage = new UserMessage(
@@ -287,15 +288,24 @@ public class DelegationTool implements Tool {
 	@FunctionalInterface
 	public interface AgentLoopFactory {
 
-		/** Builds an agent loop for the named agent. */
-		AgentLoop buildAgentLoop(String agentName);
+		/**
+		 * Builds an agent loop for the named agent.
+		 *
+		 * @param agentName
+		 *        The agent to build.
+		 * @param security
+		 *        The calling run's security context, passed on unchanged. The child's skill catalog
+		 *        and its prompt's capability list are per user, so whatever computes them has to know
+		 *        the user; the child is bounded by the same authority as its parent.
+		 */
+		AgentLoop buildAgentLoop(String agentName, SecurityContext security);
 
 		/**
 		 * Builds a read-only, non-spawning agent loop for an asynchronous subagent run.
 		 * Defaults to {@link #buildAgentLoop} for callers that do not distinguish.
 		 */
-		default AgentLoop buildSubagentLoop(String agentName) {
-			return buildAgentLoop(agentName);
+		default AgentLoop buildSubagentLoop(String agentName, SecurityContext security) {
+			return buildAgentLoop(agentName, security);
 		}
 	}
 }

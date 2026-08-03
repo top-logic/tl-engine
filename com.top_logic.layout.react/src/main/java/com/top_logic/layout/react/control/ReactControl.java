@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -78,6 +79,14 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 
 	private Map<String, Object> _reactState;
 
+	/**
+	 * The state properties holding controls this control renders but does not own, or {@code null}
+	 * while it owns everything it renders.
+	 *
+	 * @see #borrowedState(String)
+	 */
+	private Set<String> _borrowedState;
+
 	private SSEUpdateQueue _sseQueue;
 
 	/**
@@ -147,8 +156,6 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	private boolean _silentChanges;
 
 	private List<Runnable> _cleanupActions;
-
-	private List<Runnable> _beforeWriteActions;
 
 	/**
 	 * Creates a new {@link ReactControl}.
@@ -334,6 +341,68 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		return result;
 	}
 
+	/**
+	 * The controls this control renders, i.e. the ones embedded in its state.
+	 *
+	 * <p>
+	 * A control reaches the client only by being serialized as part of some control's state, so the
+	 * controls found here are exactly the children this control displays. This is the notion the
+	 * lifecycle propagation ({@link #propagateAttach()}, {@link #propagateDetach()}) works on, so a
+	 * container does not have to enumerate its children a second time.
+	 * </p>
+	 *
+	 * @implNote Unordered, because attaching and detaching a set of children does not depend on their
+	 *           order. {@link #agentChildren()} sorts, because the agent projection reports a child
+	 *           list that must be stable across calls.
+	 */
+	protected final List<ReactControl> childControls() {
+		List<ReactControl> result = new ArrayList<>();
+		collectChildControls(_reactState, result);
+		return result;
+	}
+
+	/**
+	 * The controls this control owns, i.e. the {@link #childControls() ones it renders} without the
+	 * ones it only {@link #borrowedState(String) borrows}.
+	 *
+	 * <p>
+	 * Rendering a control and owning it are different relations: displaying it is what the
+	 * {@link #propagateAttach() lifecycle} follows, having built it is what
+	 * {@link #cleanupChildren() disposal} follows. They coincide for every container that renders what
+	 * it built, and part ways where a control displays something another one created.
+	 * </p>
+	 */
+	protected final List<ReactControl> ownedChildControls() {
+		List<ReactControl> result = new ArrayList<>();
+		for (Map.Entry<String, Object> entry : _reactState.entrySet()) {
+			if (_borrowedState == null || !_borrowedState.contains(entry.getKey())) {
+				collectChildControls(entry.getValue(), result);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Declares that the given state property holds controls this control renders but does not own.
+	 *
+	 * <p>
+	 * Such a control is displayed here while another one is responsible for creating and disposing it -
+	 * the routed contributions of a {@code <slot>} placeholder are the canonical case. Declaring the
+	 * property keeps it out of {@link #cleanupChildren() disposal} while the
+	 * {@link #propagateAttach() lifecycle} still reaches it, because a borrowed control is displayed
+	 * exactly as long as the borrower displays it.
+	 * </p>
+	 *
+	 * @param name
+	 *        The state property name, as passed to {@link #putState(String, Object)}.
+	 */
+	protected final void borrowedState(String name) {
+		if (_borrowedState == null) {
+			_borrowedState = new HashSet<>();
+		}
+		_borrowedState.add(name);
+	}
+
 	private static void collectChildControls(Object value, List<ReactControl> out) {
 		if (value instanceof ReactControl child) {
 			out.add(child);
@@ -341,8 +410,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			for (Object element : map.values()) {
 				collectChildControls(element, out);
 			}
-		} else if (value instanceof List<?> list) {
-			for (Object element : list) {
+		} else if (value instanceof Iterable<?> elements) {
+			for (Object element : elements) {
 				collectChildControls(element, out);
 			}
 		}
@@ -559,8 +628,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			}
 			return false;
 		}
-		if (value instanceof List<?> list) {
-			for (Object element : list) {
+		if (value instanceof Iterable<?> elements) {
+			for (Object element : elements) {
 				if (containsControl(element)) {
 					return true;
 				}
@@ -582,6 +651,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		// onBeforeWrite hook) reaches the client as part of that output — no events for it.
 		_silentUpdates = true;
 		try {
+			attachOnRender();
 			onBeforeWrite();
 			_rendered = true;
 			// The full state is serialized below; nothing is pending on the client side anymore.
@@ -610,18 +680,21 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * Hook called before the control is rendered.
 	 *
 	 * <p>
-	 * Subclasses override to perform initialization that must happen before rendering, such as
-	 * registering model listeners or rebuilding state caches. Scoped resources installed here can be
+	 * Subclasses override to prepare what the rendering needs, e.g. to lazily create the child that
+	 * is about to be serialized or to rebuild a state cache. Scoped resources installed here can be
 	 * cleaned up in {@link #onAfterWrite()}.
+	 * </p>
+	 *
+	 * <p>
+	 * Not the place to register model listeners: rendering happens whenever the client needs the
+	 * state again, while listeners belong to the span in which the control is displayed - see
+	 * {@link #addAttachListener(Runnable)} and {@link #addDetachListener(Runnable)}.
 	 * </p>
 	 *
 	 * @see #onAfterWrite()
 	 */
 	protected void onBeforeWrite() {
-		if (_beforeWriteActions != null) {
-			_beforeWriteActions.forEach(Runnable::run);
-			_beforeWriteActions = null;
-		}
+		// Default: nothing to prepare.
 	}
 
 	/**
@@ -665,25 +738,6 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			_cleanupActions = new ArrayList<>();
 		}
 		_cleanupActions.add(action);
-	}
-
-	/**
-	 * Registers an action to run once before this control is first rendered.
-	 *
-	 * <p>
-	 * Use this to defer resource-intensive setup (e.g. registering model listeners) until the
-	 * control is actually displayed. Actions run during {@link #onBeforeWrite()} and are
-	 * discarded afterwards.
-	 * </p>
-	 *
-	 * @param action
-	 *        The action to run before first render.
-	 */
-	public void addBeforeWriteAction(Runnable action) {
-		if (_beforeWriteActions == null) {
-			_beforeWriteActions = new ArrayList<>();
-		}
-		_beforeWriteActions.add(action);
 	}
 
 	/**
@@ -884,6 +938,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		// onBeforeWrite hook) reaches the client as part of that output — no events for it.
 		_silentUpdates = true;
 		try {
+			attachOnRender();
 			onBeforeWrite();
 			_rendered = true;
 			// The full state is serialized below; nothing is pending on the client side anymore.
@@ -928,11 +983,43 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
+	 * Attaches this control because it is about to be rendered.
+	 *
+	 * <p>
+	 * Rendering a control is the proof that it is displayed: a control reaches the client only by
+	 * being serialized, either into the page or into an SSE state update, and both go through
+	 * {@link #write(TagWriter)} / {@link #writeAsChild(de.haumacher.msgbuf.json.JsonWriter)}.
+	 * Attaching here therefore establishes "rendered implies attached" for every control, in every
+	 * view - including those whose root nobody attaches explicitly - and makes an
+	 * {@link #addAttachListener(Runnable) attach listener} the reliable place for setup a displayed
+	 * control needs (registering model listeners, attaching command models).
+	 * </p>
+	 *
+	 * <p>
+	 * The reverse does not follow: not rendering a control is not an event, so a control that leaves
+	 * the displayed tree is still detached explicitly by the container that drops it (see
+	 * {@link #propagateDetach()}). Attaching is implicit, detaching stays explicit.
+	 * </p>
+	 *
+	 * <p>
+	 * A control the client has already unmounted is not attached again; a trailing render of a
+	 * disposed control must not resurrect its listeners.
+	 * </p>
+	 */
+	private void attachOnRender() {
+		if (!_disposed) {
+			attach();
+		}
+	}
+
+	/**
 	 * Marks this control as attached (part of the displayed tree) and fires
 	 * {@link #addAttachListener(Runnable) attach listeners}.
 	 *
 	 * <p>
-	 * Idempotent: if already attached, this call is a no-op.
+	 * Idempotent: if already attached, this call is a no-op. Called automatically when the control is
+	 * rendered (see {@link #attachOnRender()}); an explicit call is needed only to attach a control
+	 * that becomes displayed without being rendered again.
 	 * </p>
 	 */
 	public final void attach() {
@@ -1040,31 +1127,55 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
-	 * Hook for subclasses to propagate an {@link #attach()} call to their currently displayed
-	 * children. The default does nothing.
-	 */
-	protected void propagateAttach() {
-		// Default: no children to propagate to.
-	}
-
-	/**
-	 * Hook for subclasses to propagate a {@link #detach()} call to their currently displayed
-	 * children. The default does nothing.
-	 */
-	protected void propagateDetach() {
-		// Default: no children to propagate to.
-	}
-
-	/**
-	 * Hook for composite controls to clean up their children during detach.
+	 * Propagates an {@link #attach()} call to the {@link #childControls() children this control
+	 * renders}.
 	 *
 	 * <p>
-	 * Composite controls override this to call {@link #cleanupTree()} on each of their children.
-	 * The default implementation does nothing (leaf controls have no children).
+	 * Deriving the children from the state rather than from a per-container field is what makes the
+	 * lifecycle complete: a container that holds a child in its state cannot forget to pass the call
+	 * on. Overriding is needed only for children this control does not render itself - see
+	 * {@code SlotContentControl}, whose contributed controls are rendered by the matched
+	 * {@code <slot>} placeholder while their lifecycle belongs to the contribution.
+	 * </p>
+	 */
+	protected void propagateAttach() {
+		for (ReactControl child : childControls()) {
+			child.attach();
+		}
+	}
+
+	/**
+	 * Propagates a {@link #detach()} call to the {@link #childControls() children this control
+	 * renders}.
+	 *
+	 * @see #propagateAttach()
+	 */
+	protected void propagateDetach() {
+		for (ReactControl child : childControls()) {
+			child.detach();
+		}
+	}
+
+	/**
+	 * Disposes the children this control owns.
+	 *
+	 * <p>
+	 * By default the {@link #ownedChildControls() children in the state} are disposed, which covers a
+	 * container that displays exactly what it built. Overriding is needed for children the state does
+	 * not show: a container that caches controls it does not display right now (an inactive tab, an
+	 * off-screen table cell) must dispose those as well, since nothing else will.
+	 * </p>
+	 *
+	 * <p>
+	 * A child the control only borrows must not be disposed here. Declare the state property holding
+	 * it with {@link #borrowedState(String)} rather than overriding this method - the declaration also
+	 * documents the borrowing at the place where it happens.
 	 * </p>
 	 */
 	protected void cleanupChildren() {
-		// Leaf controls have no children.
+		for (ReactControl child : ownedChildControls()) {
+			child.cleanupTree();
+		}
 	}
 
 	/**
@@ -1086,8 +1197,17 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * until the notification has unwound (view channels provide
 	 * {@code ChannelNotificationScope.current().afterNotification(old::cleanupTree)} for this).
 	 * </p>
+	 *
+	 * <p>
+	 * Idempotent: disposing an already disposed control is a no-op. A container may therefore dispose
+	 * both the children in its state and the ones it keeps in a cache without having to work out which
+	 * control appears in both.
+	 * </p>
 	 */
 	public final void cleanupTree() {
+		if (_disposed) {
+			return;
+		}
 		_disposed = true;
 		detach();
 		cleanupChildren();
@@ -1178,9 +1298,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			writeJsonMap(context, writer, (Map<String, Object>) value);
 		} else if (value instanceof ReactControl) {
 			((ReactControl) value).writeAsChild(writer);
-		} else if (value instanceof List) {
+		} else if (value instanceof Iterable<?> elements) {
 			writer.beginArray();
-			for (Object element : (List<?>) value) {
+			for (Object element : elements) {
 				writeJsonValue(context, writer, element);
 			}
 			writer.endArray();

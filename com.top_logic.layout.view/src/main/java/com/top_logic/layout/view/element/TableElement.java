@@ -409,8 +409,10 @@ public class TableElement implements UIElement {
 			resolveObservedTypes(),
 			inputChannels,
 			refresh);
-		control.addBeforeWriteAction(() -> observer.attach(context.getModelScope()));
-		control.addCleanupAction(observer::detach);
+		// Observe the model only while the table is displayed: a table that is not attached - the
+		// inactive child of a tab bar, a page nobody looks at - must not react to model changes.
+		control.addAttachListener(() -> observer.attach(context.getModelScope()));
+		control.addDetachListener(observer::detach);
 
 		return control;
 	}
@@ -503,11 +505,9 @@ public class TableElement implements UIElement {
 			com.top_logic.layout.view.I18NConstants.COMPOSITION_TABLE_ADD, Icons.COMPOSITION_TABLE_ADD,
 			formControl, ctx -> control.addRow());
 		scope.addCommand(addCommand);
-		formControl.addBeforeWriteAction(addCommand::attach);
-		formControl.addCleanupAction(() -> {
-			scope.removeCommand(addCommand);
-			addCommand.detach();
-		});
+		formControl.addAttachListener(addCommand::attach);
+		formControl.addDetachListener(addCommand::detach);
+		formControl.addCleanupAction(() -> scope.removeCommand(addCommand));
 	}
 
 	/**

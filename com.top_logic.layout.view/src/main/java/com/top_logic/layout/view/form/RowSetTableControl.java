@@ -155,9 +155,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private RowSourceObserver<TLObject> _observer;
 
-	/** Whether the first client write happened (the point from which observers attach directly). */
-	private boolean _written;
-
 	/** Guard breaking the notification cycle between selection channel and table selection. */
 	private boolean _applyingFromChannel;
 
@@ -195,11 +192,23 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		putState(ERROR_ICON,
 			com.top_logic.layout.react.control.layout.Icons.VALIDATION_ERROR.resolve().toEncodedForm());
+	}
 
-		addBeforeWriteAction(() -> {
-			_written = true;
-			attachObserver();
-		});
+	@Override
+	protected void onAttach() {
+		super.onAttach();
+		attachObserver();
+	}
+
+	@Override
+	protected void onDetach() {
+		// Pause the observer rather than dropping it: the table keeps its rows while it is not
+		// displayed, and becoming displayed again resumes observing. Dropping it is reserved for a
+		// table rebuild and for disposal, where a new observer is created (or none at all).
+		if (_observer != null) {
+			_observer.detach();
+		}
+		super.onDetach();
 	}
 
 	/**
@@ -410,7 +419,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 					table.refreshData();
 					reapplySelectionFromChannel();
 				});
-			if (_written) {
+			if (isAttached()) {
 				attachObserver();
 			}
 		}
@@ -643,22 +652,18 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	@Override
-	protected void cleanupChildren() {
-		super.cleanupChildren();
+	protected void onCleanup() {
 		detachObserver();
 		if (_selectionChannel != null && _selectionChannelListener != null) {
 			_selectionChannel.removeListener(_selectionChannelListener);
 			_selectionChannelListener = null;
 		}
-		if (_toolbar != null) {
-			_toolbar.cleanupTree();
-			_toolbar = null;
-			_addButton = null;
-		}
-		if (_tableControl != null) {
-			_tableControl.cleanupTree();
-			_tableControl = null;
-		}
+		// The toolbar and the table itself are part of the state and are disposed with it; only the
+		// references are dropped here, so a trailing event cannot reach a torn-down control.
+		_toolbar = null;
+		_addButton = null;
+		_tableControl = null;
+		super.onCleanup();
 	}
 
 	/**

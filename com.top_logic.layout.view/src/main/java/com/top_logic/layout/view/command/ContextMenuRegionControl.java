@@ -67,13 +67,6 @@ public class ContextMenuRegionControl extends ReactControl {
 		putState(CHILD_ID, child.getID());
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		if (_child != null) {
-			_child.cleanupTree();
-		}
-	}
-
 	/**
 	 * Opens the context menu at the given client coordinates, using the current target supplier
 	 * value as the selection target.

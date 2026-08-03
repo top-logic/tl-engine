@@ -126,25 +126,4 @@ public class ReactCompositeControl extends ReactControl {
 		}
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		for (ReactControl child : _children) {
-			child.cleanupTree();
-		}
-	}
-
-	@Override
-	protected void propagateAttach() {
-		for (ReactControl child : _children) {
-			child.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		for (ReactControl child : _children) {
-			child.detach();
-		}
-	}
-
 }

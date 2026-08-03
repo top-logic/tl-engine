@@ -142,11 +142,4 @@ public class ReactTileStackControl extends ReactControl {
 			(ReactControl) frameView.createControl(frameContext));
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		if (_currentChild != null) {
-			_currentChild.cleanupTree();
-			_currentChild = null;
-		}
-	}
 }

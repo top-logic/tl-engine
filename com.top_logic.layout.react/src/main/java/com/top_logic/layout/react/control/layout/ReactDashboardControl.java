@@ -176,13 +176,6 @@ public class ReactDashboardControl extends ReactControl {
 		_editModeListeners.remove(listener);
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		for (Tile t : _tiles) {
-			t._control.cleanupTree();
-		}
-	}
-
 	/**
 	 * Handles the {@code reorder} command sent by the React client after a
 	 * drag-and-drop reorder.

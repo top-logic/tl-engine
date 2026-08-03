@@ -108,8 +108,8 @@ public class ReactSwitchControl extends ReactControl implements ModelListener {
 		_input.addListener(_inputListener);
 		addCleanupAction(() -> _input.removeListener(_inputListener));
 
-		addBeforeWriteAction(this::attachModelListeners);
-		addCleanupAction(this::detachModelListeners);
+		addAttachListener(this::attachModelListeners);
+		addDetachListener(this::detachModelListeners);
 
 		renderActive();
 	}
@@ -260,32 +260,9 @@ public class ReactSwitchControl extends ReactControl implements ModelListener {
 	}
 
 	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_current != null) {
-			_current.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_current != null) {
-			_current.detach();
-		}
-	}
-
-	@Override
 	protected void onCleanup() {
 		_disposed = true;
 		super.onCleanup();
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		if (_current != null) {
-			_current.cleanupTree();
-			_current = null;
-		}
-	}
 }

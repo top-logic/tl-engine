@@ -380,6 +380,13 @@ public class ReactServlet extends TopLogicServlet {
 		if ("windowClosed".equals(commandName)) {
 			String closedWindowId = arguments != null ? (String) arguments.get("windowId") : null;
 			ReactWindowRegistry registry = ReactWindowRegistry.forSession(request.getSession());
+			if (arguments != null && Boolean.TRUE.equals(arguments.get("unload"))) {
+				// Reported on beforeunload, which fires for a reload as well: keep the window's state
+				// for a grace period instead of tearing it down.
+				registry.windowUnloaded(closedWindowId);
+				sendSuccess(response);
+				return;
+			}
 			// Acquire the request lock so the close callback (which may patch the opener's
 			// snackbar state and flush SSE events) does not race with concurrent commands.
 			ReentrantLock requestLock = registry.getRequestLock();

@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
@@ -43,6 +44,7 @@ import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.ImageContent;
+import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.knowledge.service.KBUtils;
@@ -337,13 +339,14 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 */
 	public static String agentChat(String agentName, Object userMessage) {
 		AgentFactory factory = AgentFactory.getInstance();
+		UserMessage request = createUserMessage(userMessage);
 		Conversation conversation = new Conversation();
-		conversation.add(createUserMessage(userMessage));
+		conversation.add(request);
 
 		ToolContext context = ToolContext.createUnrestricted();
 
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
-			recordUserTurn(env.logListener().log(), userMessage);
+			recordUserTurn(env.logListener().log(), request);
 			AgentSession session = createScriptSession("ai.agentChat: " + agentName);
 			AgentRunner.RecordedRun run = AgentRunner.run(agentName, conversation, null, context,
 				NO_LISTENER, null, env.logListener().log(), session, null);
@@ -462,8 +465,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * re-established user, in its own transaction, recording the execution against {@code session}.
 	 */
 	private static void runAsync(String agentName, Object userMessage, AgentSession session) {
+		UserMessage request = createUserMessage(userMessage);
 		Conversation conversation = new Conversation();
-		conversation.add(createUserMessage(userMessage));
+		conversation.add(request);
 
 		// Own transaction lifecycle on the background thread, detached from any caller transaction.
 		// Auto-approve every tool call: a background run has no human to answer approval prompts.
@@ -479,7 +483,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			new CancelSignalObserver(context.executionHandle(), cancellationToken);
 
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
-			recordUserTurn(env.logListener().log(), userMessage);
+			recordUserTurn(env.logListener().log(), request);
 			AgentRunner.run(agentName, conversation, null, context, cancelObserver, null,
 				env.logListener().log(), session, null);
 		} catch (Throwable ex) {
@@ -736,10 +740,60 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * {@link AgentRunner}.
 	 * </p>
 	 */
-	private static void recordUserTurn(ConversationLog log, Object userMessage) {
+	private static void recordUserTurn(ConversationLog log, UserMessage request) {
 		Turn turn = log.startTurn();
 		turn.setUserParts(List.of(new Part.TextPart(
-			UUID.randomUUID().toString(), Instant.now(), toString(userMessage))));
+			UUID.randomUUID().toString(), Instant.now(), transcriptText(request))));
+	}
+
+	/**
+	 * Renders a request for the transcript: the text as sent, attachments named rather than
+	 * inlined.
+	 *
+	 * <p>
+	 * A document's base64 is nothing the transcript can display and megabytes it would have to
+	 * carry, so the transcript records that an attachment was sent, not its bytes.
+	 * </p>
+	 *
+	 * <p>
+	 * Package-visible for testing.
+	 * </p>
+	 */
+	static String transcriptText(UserMessage request) {
+		StringBuilder text = new StringBuilder();
+		for (ContentPart part : request.content()) {
+			String rendered = transcriptText(part);
+			if (rendered.isEmpty()) {
+				continue;
+			}
+			if (text.length() > 0) {
+				text.append('\n');
+			}
+			text.append(rendered);
+		}
+		return text.toString();
+	}
+
+	/**
+	 * How a single part appears in the transcript: text as it was sent, anything else named.
+	 *
+	 * <p>
+	 * A part kind this does not know is still announced rather than passed over: any
+	 * {@link ContentPart} a caller built reaches the message unchanged, so staying silent would
+	 * leave a transcript that does not say anything was sent at all.
+	 * </p>
+	 */
+	private static String transcriptText(ContentPart part) {
+		if (part instanceof TextContent content) {
+			return content.text();
+		}
+		if (part instanceof ImageContent image) {
+			return "[Image: " + image.mediaType() + "]";
+		}
+		if (part instanceof PdfContent pdf) {
+			return "[PDF document: " + pdf.mediaType() + "]";
+		}
+		return "[Attachment: " + part.getClass().getSimpleName() + "]";
 	}
 
 	/**
@@ -760,48 +814,95 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 	/**
 	 * Creates a {@link UserMessage} from mixed content (text, images, documents).
+	 *
+	 * <p>
+	 * A {@link List} contributes one part per element, anything else a single part.
+	 * </p>
+	 *
+	 * <p>
+	 * Package-visible for testing.
+	 * </p>
 	 */
-	private static UserMessage createUserMessage(Object content) {
+	static UserMessage createUserMessage(Object content) {
 		List<ContentPart> parts = new ArrayList<>();
-		if (content instanceof String text) {
-			parts.add(new TextContent(text));
-		} else if (content instanceof BinaryDataSource binary) {
-			parts.add(createBinaryContent(binary));
-		} else if (content instanceof List<?> list) {
+		if (content instanceof List<?> list) {
 			for (Object item : list) {
-				if (item instanceof BinaryDataSource binary) {
-					parts.add(createBinaryContent(binary));
-				} else {
-					parts.add(new TextContent(toString(item)));
-				}
+				parts.add(createContentPart(item));
 			}
 		} else {
-			parts.add(new TextContent(toString(content)));
+			parts.add(createContentPart(content));
 		}
 		return new UserMessage(UUID.randomUUID().toString(), Instant.now(), parts);
 	}
 
 	/**
+	 * Creates the {@link ContentPart} for a single element of a message.
+	 *
+	 * <p>
+	 * An element that already is a {@link ContentPart} is kept unchanged. A caller that built a
+	 * {@link PdfContent} or {@link ImageContent} itself has said exactly what the model should
+	 * perceive; stringifying it would hand the model base64 as plain text and the document would be
+	 * lost even though every provider can send it.
+	 * </p>
+	 */
+	private static ContentPart createContentPart(Object item) {
+		if (item instanceof ContentPart part) {
+			return part;
+		}
+		if (item instanceof BinaryDataSource binary) {
+			return createBinaryContent(binary);
+		}
+		return new TextContent(toString(item));
+	}
+
+	/**
 	 * Creates an {@link AssistantMessage} from content.
 	 */
-	private static AssistantMessage createAssistantMessage(Object content) {
+	static AssistantMessage createAssistantMessage(Object content) {
 		return new AssistantMessage(
 			UUID.randomUUID().toString(),
 			Instant.now(),
-			List.of(new TextContent(toString(content))),
+			List.of(new TextContent(assistantText(content))),
 			com.top_logic.tl.ai.core.message.TokenUsage.EMPTY,
 			"stop");
+	}
+
+	/**
+	 * The text of an assistant turn replayed as conversation history.
+	 *
+	 * <p>
+	 * Assistant history stays text, unlike a user message: providers accept only text in that role
+	 * (besides the thinking and tool blocks the model produced itself), so an image or a document
+	 * there would be refused. A {@link TextContent} handed in by the caller therefore contributes
+	 * its text rather than its record representation.
+	 * </p>
+	 */
+	private static String assistantText(Object content) {
+		if (content instanceof TextContent text) {
+			return text.text();
+		}
+		if (content instanceof List<?> list) {
+			return list.stream()
+				.map(AIScriptFunctions::assistantText)
+				.collect(Collectors.joining("\n"));
+		}
+		return toString(content);
 	}
 
 	/**
 	 * Creates appropriate content from a {@link BinaryDataSource} based on its content type.
 	 *
 	 * <p>
-	 * Currently encodes binary data as a base64 text representation. Proper multimodal content
-	 * types (ImageContent, AudioContent, etc.) will be added to tl-ai-core as needed.
+	 * Text is inlined, images become {@link ImageContent} and PDFs {@link PdfContent}. Any other
+	 * binary type is still described as a base64 text representation; proper content types (audio,
+	 * ...) will be added to tl-ai-core as needed.
+	 * </p>
+	 *
+	 * <p>
+	 * Package-visible for testing.
 	 * </p>
 	 */
-	private static ContentPart createBinaryContent(BinaryDataSource binary) {
+	static ContentPart createBinaryContent(BinaryDataSource binary) {
 		try {
 			String contentType = binary.getContentType();
 			byte[] bytes = StreamUtilities.readStreamContents(binary);
@@ -816,6 +917,14 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			if (contentType != null && contentType.startsWith("image/")) {
 				String url = "data:" + contentType + ";base64," + base64;
 				return new ImageContent(url, contentType);
+			}
+
+			if (contentType != null && contentType.startsWith("application/pdf") && bytes.length > 0) {
+				// The bare media type, not the declared content type: providers accept exactly
+				// "application/pdf", so a content type carrying parameters would be rejected. An
+				// empty payload is no document and falls through to the description below rather
+				// than failing the whole script call.
+				return new PdfContent(base64, "application/pdf");
 			}
 
 			return new TextContent("[Binary content: " + contentType + ", base64: " + base64 + "]");

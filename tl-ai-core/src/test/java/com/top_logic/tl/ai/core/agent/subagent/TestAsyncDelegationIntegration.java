@@ -131,7 +131,7 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 		LLMProvider childProvider = mockProvider(List.of(new TextContent(childReplyText)));
 		AgentLoop childLoop = new AgentLoop(testParams(), childProvider, emptyRegistry());
 		return new DelegationTool(toolName, "test delegate", targetAgentName, "parent",
-			name -> childLoop);
+			(name, security) -> childLoop);
 	}
 
 	// -----------------------------------------------------------------------

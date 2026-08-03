@@ -38,6 +38,7 @@ import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
+import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
@@ -1178,9 +1179,16 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * hasToolPermission(String) is checked for tools not found in the registry.
+	 * A tool name the registry cannot resolve is "no such tool", never a permission problem.
+	 *
+	 * <p>
+	 * The name has no tool group by construction, so asking the permission check about it would
+	 * answer every hallucinated or misspelled name with "belongs to no tool group ... denied to
+	 * everyone" and take away the hint the model uses to correct itself. Nothing is lost by not
+	 * asking: a name the registry does not resolve cannot execute either way.
+	 * </p>
 	 */
-	public void testPermissionCheckForUnknownTool() {
+	public void testUnknownToolIsNotReportedAsDenied() {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
 
@@ -1190,25 +1198,38 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("OK")));
 
-		SecurityContext denyAll = new SecurityContext() {
+		SecurityContext denyByName = new SecurityContext() {
 			@Override public boolean hasToolPermission(Tool tool) { return true; }
 			@Override public boolean hasToolPermission(String toolName) { return false; }
 			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
 		};
 
-		List<String> events = new ArrayList<>();
+		List<String> denials = new ArrayList<>();
+		List<String> results = new ArrayList<>();
 		AgentEventListener listener = e -> {
 			if (e instanceof AgentEvent.ToolCallDenied d) {
-				events.add("denied:" + d.toolName());
+				denials.add("denied:" + d.toolName());
 			}
 		};
 
-		ToolContext ctx = new ToolContext(denyAll, ApprovalCallback.AUTO_APPROVE);
+		ToolContext ctx = new ToolContext(denyByName, ApprovalCallback.AUTO_APPROVE);
 		AgentLoop loop = new AgentLoop(config(10), provider, emptyRegistry());
 		AgentResult result = loop.run(conv, ctx, listener);
 
+		for (Message message : conv.messages()) {
+			if (message instanceof ToolResultMessage toolResult
+					&& toolResult.state() instanceof ToolState.Failed failed) {
+				results.add(failed.error());
+			}
+		}
+
 		assertEquals(StopReason.COMPLETE, result.stopReason());
-		assertEquals(List.of("denied:external_tool"), events);
+		assertEquals("An unresolvable name is not a denial.", List.of(), denials);
+		assertEquals(1, results.size());
+		assertTrue("Should say the tool does not exist, got: " + results.get(0),
+			results.get(0).contains("Unknown tool"));
+		assertFalse("Should not be phrased as a permission problem, got: " + results.get(0),
+			results.get(0).contains("Permission denied"));
 	}
 
 	/**

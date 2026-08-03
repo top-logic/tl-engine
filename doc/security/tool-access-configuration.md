@@ -135,10 +135,10 @@ tool in a privileged group.
 
 ### Classify tools that cannot declare their own group
 
-Remote MCP tools and TL-Script tools authored in the running application have no annotation to carry a
-group, so they arrive ungrouped and denied. Put them in a group here - and an entry here also
-*overrides* a group a tool declared, which is how you move a tool into `egress` that its author did not
-classify as such:
+Remote MCP tools and TL-Script tools authored in the running application have no annotation to carry
+a group, so they arrive ungrouped and denied. Put them in a group here - and an entry here also
+*overrides* a group a tool declared, which is how you move a tool into `egress` that its author did
+not classify as such:
 
 ```xml
 <tool-groups>
@@ -149,6 +149,41 @@ classify as such:
     </group>
 </tool-groups>
 ```
+
+A trailing `*` matches a prefix, and it matches **any** of a tool's names - the bare name the model
+calls, the `{factory}.{tool}` name written in configuration, and the provider-safe `factory__tool`
+form. Since a TL-Script tool is referenced as `{factory}.{name}`, a factory wildcard classifies the
+whole factory in one line:
+
+```xml
+<tool-groups>
+    <group name="data.read">
+        <tools>
+            <tool name="reporting.*"/>
+        </tools>
+    </group>
+</tool-groups>
+```
+
+**This is the mechanism for TL-Script tools.** There is deliberately no way for a tool to declare its
+own group in its configuration - see the warning below.
+
+Note what an ungrouped tool costs under enforced access, beyond being uncallable: it is also
+invisible to the agents whose skills reference it. A skill none of whose tools the acting user may
+use is not offered at all, and the drop is logged at INFO with the skill name and the reason.
+Classifying the factory is what brings the skill back.
+
+> **A factory wildcard delegates classification authority for that namespace.** A tool's group is
+> supposed to say what the tool *does*, while the check asks what the *user* holds - so whoever
+> decides a tool's group decides which capability it costs to call. `createScriptTool` lets its
+> caller pick the factory name freely, and holding `agent.authoring` is not the same as holding
+> `data.write`. Map `reporting.*` to `data.read`, and anyone who can author into `reporting` can put
+> a tool that *writes* under a capability their user only holds for *reading*.
+>
+> Therefore: map only factories whose contents you control, keep the factories agents author into
+> (`custom` by default) out of `<tool-groups>`, and never point a factory wildcard at a privileged
+> group (`script`, `model.structure`, `agent.authoring`). Naming individual tools rather than a
+> wildcard removes the delegation entirely, at the cost of one line per tool.
 
 ### Cap what an unattended run can do
 
@@ -210,6 +245,21 @@ reason=Permission denied: tool 'framework-wiring.listFrameworkAgents' requires t
 The agent gets the same sentence, so it can tell the user what is missing instead of failing opaquely.
 Neither the log nor the message ever contains data that was withheld - tool names, group names,
 operations and role names only.
+
+An agent whose whole skill was withheld says so too. Under an enforcing policy, the generated
+`### Available Skills` section of every agent's system prompt is followed by the capabilities the
+acting account does *not* hold, among those the agent's own tools and its skills' tools need - so the
+agent can name the missing capability rather than reporting a vague inability. Skills none of whose
+tools the account may use are left out of that catalog and out of `loadSkill`, and each omission is
+logged:
+
+```
+INFO ... AgentFactory - Agent 'TL_SingleAgent': skill 'TL_topLogicModeling' is not offered
+to the current user - none of its 16 known tools is permitted; they require [model.structure]
+```
+
+That prompt text is **user experience, not a control**: it helps the agent explain itself and is
+never what stops a tool from running. The gate is the Java check on the call path, unchanged.
 
 At boot the service states what it read:
 

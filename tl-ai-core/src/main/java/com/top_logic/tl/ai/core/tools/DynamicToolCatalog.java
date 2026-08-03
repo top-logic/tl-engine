@@ -88,7 +88,7 @@ public class DynamicToolCatalog implements ToolRegistry {
 		if (tool == null) {
 			Instant start = Instant.now();
 			return ToolCatalog.failedResult(toolCall, start,
-				"Unknown tool: '" + toolCall.name() + "'.");
+				ToolCatalog.unknownToolMessage(toolCall, this, context));
 		}
 		return ToolCatalog.executeTool(tool, toolCall, context);
 	}

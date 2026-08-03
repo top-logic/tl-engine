@@ -50,9 +50,15 @@ public interface SecurityContext {
 	/**
 	 * Whether the current user has permission to invoke a tool by name.
 	 *
-	 * <p>Used for tools whose metadata is not available (e.g., external/MCP tools).
-	 * The default returns {@code true} — permissive for unknown tools. Override
-	 * to integrate with a role-based permission system.</p>
+	 * <p>For a caller that holds a tool name but no {@link Tool}. The default returns {@code true} -
+	 * permissive for unknown names. Override to integrate with a role-based permission system.</p>
+	 *
+	 * <p>
+	 * <b>Not the agent loop's path.</b> A name the run's registry does not resolve cannot execute at
+	 * all, and such a name has no group, so answering it here would report every hallucinated or
+	 * misspelled name as a permission problem. The loop reports "no such tool" instead and reserves
+	 * {@link #hasToolPermission(Tool)} for names that resolve.
+	 * </p>
 	 *
 	 * @param toolName the tool name
 	 * @return {@code true} if the user has permission
@@ -95,6 +101,25 @@ public interface SecurityContext {
 	 */
 	default String toolDenialReason(String toolName) {
 		return null;
+	}
+
+	/**
+	 * The capability (tool group) the given tool requires under this run's policy.
+	 *
+	 * <p>
+	 * The same name a denial would put in front of the user, resolved for a tool that has not been
+	 * denied yet, so that an agent can be told which capabilities its principal lacks without
+	 * enumerating the tools behind them. The default answers with what the tool declares about
+	 * itself, which is all a context without a policy knows.
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool to classify.
+	 * @return The capability name, or <code>null</code> for an ungrouped tool.
+	 */
+	default String toolCapability(Tool tool) {
+		String declared = tool.group();
+		return declared == null || declared.isBlank() ? null : declared;
 	}
 
 	/**

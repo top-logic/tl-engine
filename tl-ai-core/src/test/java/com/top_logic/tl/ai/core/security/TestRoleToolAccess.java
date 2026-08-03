@@ -276,6 +276,44 @@ public class TestRoleToolAccess extends TestCase {
 		assertTrue(access(policy).check(Set.of("Clerk"), tool) instanceof Decision.Granted);
 	}
 
+	/**
+	 * A {@code {factory}.*} wildcard classifies a whole factory, which is how an administrator
+	 * grants TL-Script tools.
+	 *
+	 * <p>
+	 * A TL-Script tool has no annotation to carry a group, so it is ungrouped and denied to everyone
+	 * until the policy classifies it. Naming each one is not workable for a namespace agents author
+	 * into, so this is the mechanism that has to work - and it has to match the
+	 * <code>{factory}.{tool}</code> form, which is the name the tool is configured under and the one
+	 * an administrator writes.
+	 * </p>
+	 *
+	 * <p>
+	 * Note what this delegates: everything the factory ever contains gets the group, including tools
+	 * created later. See {@code doc/security/tool-access-configuration.md}.
+	 * </p>
+	 */
+	public void testFactoryWildcardClassifiesAnUngroupedScriptTool() {
+		ToolAccessPolicy policy = policy(role("Clerk", grants(group(ToolGroups.DATA_READ)), grants()));
+		GroupMembership dataRead = TypedConfiguration.newConfigItem(GroupMembership.class);
+		dataRead.setName(ToolGroups.DATA_READ);
+		dataRead.getTools().put("reporting.*", toolRef("reporting.*"));
+		policy.getToolGroups().put(ToolGroups.DATA_READ, dataRead);
+
+		RoleToolAccess access = access(policy);
+
+		// As the registry identifies it: bare name, qualified {factory}.{tool}, no declared group.
+		ToolIdentity scriptTool = new ToolIdentity("listOpenTickets", "reporting.listOpenTickets", null);
+
+		assertEquals(ToolGroups.DATA_READ, access.groupOf(scriptTool));
+		assertTrue(access.check(Set.of("Clerk"), scriptTool) instanceof Decision.Granted);
+
+		// A tool of another factory is untouched by the wildcard and stays ungrouped.
+		ToolIdentity other = new ToolIdentity("wipeEverything", "custom.wipeEverything", null);
+		assertNull(access.groupOf(other));
+		assertTrue(access.check(Set.of("Clerk"), other) instanceof Decision.Denied);
+	}
+
 	/** A denial says which capability is missing, so the model and an operator can both act on it. */
 	public void testDenialNamesTheMissingCapability() {
 		RoleToolAccess access = access(policy(

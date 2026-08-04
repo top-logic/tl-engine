@@ -5,155 +5,198 @@
  */
 package com.top_logic.ai.demo;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
-
-import test.com.top_logic.basic.BasicTestCase;
-import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
-import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.layout.provider.LabelProviderService;
-import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
-import com.top_logic.util.TLContext;
-import com.top_logic.util.model.ModelService;
 
 /**
- * End-to-end test of the tool layer (L1) of the security scaffold in
- * {@code WEB-INF/conf/secdemo.config.xml}: the {@code <tool-access>} policy is evaluated against the
- * roles the acting account actually holds on the security root, with the real tool registry.
+ * The invocation gate of the tool layer (L1), one persona at a time.
+ *
+ * <p>
+ * This is the enforcement point: {@code AgentLoop.executeWithSecurityCheck} asks exactly the
+ * {@link TopLogicSecurityContext#hasToolPermission} this test asks, so an allow or a denial here is
+ * an allow or a denial of a real tool call. The per-turn schema filter is a separate question and
+ * lives in {@link SecDemoSchemaFilterTest}; what a denial does to the agent's <em>prompt</em> lives
+ * in {@link SecDemoCapabilityNoticeTest}.
+ * </p>
  *
  * <p>
  * The counterpart of {@link SecDemoModelSecurityTest}, which covers the model layer (L2). The two are
  * independent: a role can be granted a tool and still be denied every object that tool touches, and
- * the other way round.
+ * the other way round - {@link #testAuthorHoldsToolsAndNoDataRights()} is that contrast made
+ * explicit.
  * </p>
  *
- * <p>
- * Nothing here is stubbed. The roles come from {@code InitialRolesManager}, the group memberships from
- * {@code SecDemoSetupService}, the accounts from the same, the policy from the shipped aspect file, and
- * the tools from the running {@code ToolRegistryService} with their {@code @ToolMethod(group = ...)}
- * declarations. What is not covered is the agent loop calling the gate, because that needs a model
- * provider; see section 5 of {@code doc/security/e2e-security-test.md}.
- * </p>
- *
- * @see com.top_logic.ai.demo.secdemo.SecDemoSetupService
+ * @see SecDemoPersonaTest
  */
-public class SecDemoToolAccessTest extends BasicTestCase {
-
-	/** In {@code agent.meta}, granted to secEditor only. Read-only, so calling it is harmless. */
-	private static final String AGENT_META_TOOL = "framework-wiring.listFrameworkAgents";
-
-	/** In {@code script}, a privileged group, granted to both demo roles. */
-	private static final String SCRIPT_TOOL = "script-exec.executeTLScript";
-
-	/** In {@code model.structure}, a privileged group, granted to nobody. */
-	private static final String STRUCTURE_TOOL = "model-modification.createClass";
-
-	/** In {@code data.read}, granted to both demo roles. */
-	private static final String DATA_READ_TOOL = "model-instances.listInstances";
-
-	private Person _previousUser;
-
-	@Override
-	protected void tearDown() throws Exception {
-		if (_previousUser != null) {
-			TLContext.getContext().setCurrentPerson(_previousUser);
-		}
-		super.tearDown();
-	}
+public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 
 	/** Precondition: writing {@code <tool-access>} is what turned enforcement on. */
 	public void testPolicyIsEnforced() {
 		assertTrue("The secdemo aspect must be enabled for this test.",
 			AiToolAccessService.Module.INSTANCE.isActive());
-		assertEquals("A non-empty <tool-access> must resolve to ENFORCED.",
+		assertEquals("A non-empty <tool-access> must resolve to ENFORCED. If this reports LEGACY,"
+			+ " 'secdemo-legacy.config.xml' is on the metaConf and has to come off for this test.",
 			AiSecurityMode.ENFORCED, AiToolAccessService.ceiling());
 	}
 
 	/** Precondition: the group taxonomy actually reached the registered tools. */
 	public void testToolsDeclareTheirGroups() {
+		assertEquals(ToolGroups.MODEL_READ, tool(MODEL_READ_TOOL).group());
+		assertEquals(ToolGroups.DATA_READ, tool(DATA_READ_TOOL).group());
 		assertEquals(ToolGroups.AGENT_META, tool(AGENT_META_TOOL).group());
+		assertEquals(ToolGroups.AGENT_AUTHORING, tool(AGENT_AUTHORING_TOOL).group());
 		assertEquals(ToolGroups.SCRIPT, tool(SCRIPT_TOOL).group());
 		assertEquals(ToolGroups.MODEL_STRUCTURE, tool(STRUCTURE_TOOL).group());
-		assertEquals(ToolGroups.DATA_READ, tool(DATA_READ_TOOL).group());
+		assertEquals(ToolGroups.WORKSPACE, tool(WORKSPACE_TOOL).group());
+		assertEquals(ToolGroups.EGRESS, tool(EGRESS_TOOL).group());
 	}
 
 	/**
-	 * Precondition: the accounts hold the roles the policy grants to.
+	 * Precondition: every configured persona exists, holds exactly its own role, and is not an
+	 * administrator.
 	 *
 	 * <p>
-	 * Note what else they hold: the engine gives every account {@code SecurityStructure.user} on the
-	 * security root. It is not a defect and not something this layer adds - it is simply another role
-	 * name a {@code <tool-access>} entry may be written against, and the closest thing to an "every
-	 * authenticated account" row short of the policy's own {@code <baseline>}. An administrator who
-	 * grants it is granting every account.
+	 * Note what else each of them holds: the engine gives every account
+	 * {@code SecurityStructure.user} on the security root. It is not a defect and not something this
+	 * layer adds - it is simply another role name a {@code <tool-access>} entry may be written
+	 * against, and the closest thing to an "every authenticated account" row short of the policy's
+	 * own {@code <baseline>}. An administrator who grants it is granting every account.
 	 * </p>
 	 */
-	public void testAccountsHoldTheDemoRoles() {
-		Set<String> readerRoles = AiToolAccessService.heldRoleNames(account("secreader1"));
-		Set<String> editorRoles = AiToolAccessService.heldRoleNames(account("seceditor1"));
+	public void testEveryPersonaHoldsExactlyItsOwnRole() {
+		Map<String, String> expected = SecDemoSetupService.personaRoles();
+		assertEquals("The aspect must configure six personas; adjust this test bed if it changed.",
+			6, expected.size());
 
-		assertTrue("secreader1 holds secReader, got " + readerRoles, readerRoles.contains("secReader"));
-		assertFalse("secreader1 must not hold secEditor, got " + readerRoles,
-			readerRoles.contains("secEditor"));
-		assertTrue("seceditor1 holds secEditor, got " + editorRoles, editorRoles.contains("secEditor"));
-		assertFalse("seceditor1 must not hold secReader, got " + editorRoles,
-			editorRoles.contains("secReader"));
+		for (Map.Entry<String, String> persona : expected.entrySet()) {
+			String login = persona.getKey();
+			Set<String> held = AiToolAccessService.heldRoleNames(account(login));
+
+			assertTrue(login + " must hold '" + persona.getValue() + "', got " + held,
+				held.contains(persona.getValue()));
+			for (String otherRole : expected.values()) {
+				if (!otherRole.equals(persona.getValue())) {
+					assertFalse(login + " must not hold '" + otherRole + "', got " + held,
+						held.contains(otherRole));
+				}
+			}
+		}
+	}
+
+	/** The bare persona reaches nothing but the baseline, not even a read-only model tool. */
+	public void testBarePersonaIsDeniedEvenModelRead() {
+		assertDenied(BARE, MODEL_READ_TOOL, ToolGroups.MODEL_READ);
+		assertDenied(BARE, DATA_READ_TOOL, ToolGroups.DATA_READ);
+		assertDenied(BARE, AGENT_META_TOOL, ToolGroups.AGENT_META);
 	}
 
 	/**
-	 * The denial: {@code secReader} is granted no {@code agent.meta}, so the tool is refused.
+	 * The baseline applies to everyone, including the persona whose role grants nothing.
+	 *
+	 * <p>
+	 * Without it an agent cannot even ask the user a question, which is why the baseline exists and
+	 * why it is worth pinning that the narrowest persona still has it.
+	 * </p>
 	 */
-	public void testReaderDeniedAgentMetaTool() {
-		assertDenied("secreader1", AGENT_META_TOOL, ToolGroups.AGENT_META);
+	public void testBaselineReachesEvenTheBarePersona() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			assertAllowed(login, "user-interaction.askUser");
+		}
+	}
+
+	/** {@code model.read} without {@code data.read}: the narrowest granted persona. */
+	public void testViewerReadsTheModelButNotTheData() {
+		assertAllowed(VIEWER, MODEL_READ_TOOL);
+		assertDenied(VIEWER, DATA_READ_TOOL, ToolGroups.DATA_READ);
+	}
+
+	/** The read-only persona reaches both read groups and no write capability. */
+	public void testReaderReadsModelAndData() {
+		assertAllowed(READER, MODEL_READ_TOOL);
+		assertAllowed(READER, DATA_READ_TOOL);
+		assertDenied(READER, WORKSPACE_TOOL, ToolGroups.WORKSPACE);
+		assertDenied(READER, EGRESS_TOOL, ToolGroups.EGRESS);
 	}
 
 	/**
-	 * The allow, on the same tool for the other role - the pair that makes the denial meaningful.
+	 * The one-capability pair: the same tool, denied to {@link #READER} and allowed to
+	 * {@link #EDITOR}.
+	 *
+	 * <p>
+	 * The sharpest single assertion in the tool layer, because the two personas differ in
+	 * {@code agent.meta} and in nothing else. Anything that broke enforcement in general would break
+	 * one half of this; anything that broke role resolution would break the other.
+	 * </p>
 	 */
-	public void testEditorAllowedAgentMetaTool() {
-		assertAllowed("seceditor1", AGENT_META_TOOL);
+	public void testAgentMetaSeparatesReaderFromEditor() {
+		assertDenied(READER, AGENT_META_TOOL, ToolGroups.AGENT_META);
+		assertAllowed(EDITOR, AGENT_META_TOOL);
 	}
 
-	/** A privileged group named explicitly in the policy is granted, to both roles here. */
-	public void testExplicitlyGrantedPrivilegedGroupAllowed() {
-		assertAllowed("secreader1", SCRIPT_TOOL);
-		assertAllowed("seceditor1", SCRIPT_TOOL);
+	/** A privileged group named explicitly in the policy is granted; a wildcard could not reach it. */
+	public void testExplicitlyGrantedPrivilegedGroupsAreReachable() {
+		assertAllowed(READER, SCRIPT_TOOL);
+		assertAllowed(EDITOR, SCRIPT_TOOL);
+		assertAllowed(AUTHOR, AGENT_AUTHORING_TOOL);
 	}
 
-	/** Deny-by-default: a group no role is granted needs no {@code <deny>} to be unreachable. */
-	public void testUngrantedStructureToolDeniedToBoth() {
-		assertDenied("secreader1", STRUCTURE_TOOL, ToolGroups.MODEL_STRUCTURE);
-		assertDenied("seceditor1", STRUCTURE_TOOL, ToolGroups.MODEL_STRUCTURE);
+	/** A privileged group granted to nobody needs no {@code <deny>} to be unreachable. */
+	public void testUngrantedStructureToolDeniedToEveryPersona() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			assertDenied(login, STRUCTURE_TOOL, ToolGroups.MODEL_STRUCTURE);
+		}
 	}
 
-	/** A group both roles hold is reachable by both. */
-	public void testDataReadAllowedToBoth() {
-		assertAllowed("secreader1", DATA_READ_TOOL);
-		assertAllowed("seceditor1", DATA_READ_TOOL);
+	/** {@code egress} is granted to nobody: no persona can send data out of the application. */
+	public void testEgressDeniedToEveryPersona() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			assertDenied(login, EGRESS_TOOL, ToolGroups.EGRESS);
+		}
+	}
+
+	/** {@code workspace} separates the writer from every other persona. */
+	public void testWorkspaceIsTheWritersAlone() {
+		assertAllowed(WRITER, WORKSPACE_TOOL);
+		for (String login : List.of(BARE, VIEWER, READER, EDITOR, AUTHOR)) {
+			assertDenied(login, WORKSPACE_TOOL, ToolGroups.WORKSPACE);
+		}
+	}
+
+	/**
+	 * The two layers are independent: the agent author holds privileged tool grants and no data
+	 * rights at all.
+	 *
+	 * <p>
+	 * It may create an agent and may not list an instance. That combination is not a
+	 * misconfiguration, it is the point of separating "which tool" from "which data": a tool grant is
+	 * not a data grant, and the {@code <security-config>} that would give this persona data rights
+	 * deliberately does not mention its role.
+	 * </p>
+	 */
+	public void testAuthorHoldsToolsAndNoDataRights() {
+		assertAllowed(AUTHOR, AGENT_AUTHORING_TOOL);
+		assertAllowed(AUTHOR, AGENT_META_TOOL);
+		assertDenied(AUTHOR, DATA_READ_TOOL, ToolGroups.DATA_READ);
+		assertDenied(AUTHOR, MODEL_READ_TOOL, ToolGroups.MODEL_READ);
 	}
 
 	/**
 	 * A remote MCP tool has no annotation to carry a group, so it is ungrouped and denied - the
 	 * deny-by-default answer to "what happens when a tool arrives that nobody classified".
 	 */
-	public void testUnclassifiedToolDeniedToBoth() {
-		for (String login : List.of("secreader1", "seceditor1")) {
-			String reason = securityFor(login, false).toolDenialReason("mcp__unknown__doThing");
+	public void testUnclassifiedToolDeniedToEveryPersona() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			String reason = securityFor(login).toolDenialReason("mcp__unknown__doThing");
 
 			assertNotNull("An unclassified tool must be denied to " + login + ".", reason);
 			assertTrue(reason, reason.contains("no tool group"));
@@ -173,114 +216,19 @@ public class SecDemoToolAccessTest extends BasicTestCase {
 
 		TopLogicSecurityContext security = TopLogicSecurityContext.forRun(administrator, false);
 
-		assertTrue("An administrator reaches even an ungranted privileged tool.",
-			security.hasToolPermission(tool(STRUCTURE_TOOL)));
-		assertNull(security.toolDenialReason(tool(STRUCTURE_TOOL)));
-	}
-
-	/**
-	 * A background run is bounded by the allowlist even for a capability its role holds.
-	 *
-	 * <p>
-	 * The demo allowlist covers everything the harness needs, so what is asserted here is the
-	 * mechanism rather than a denial: a tool outside the allowlist is refused to an account that
-	 * otherwise holds it. {@code model.structure} is not on the allowlist and not granted, so the
-	 * message must name the allowlist rather than the missing capability.
-	 * </p>
-	 */
-	public void testBackgroundRunIsBoundedByTheAllowlist() {
-		String reason = securityFor("seceditor1", true).toolDenialReason(tool(STRUCTURE_TOOL));
-
-		assertNotNull(reason);
-		assertTrue("A background denial must say it is the allowlist, not the role: " + reason,
-			reason.contains("background allowlist"));
-	}
-
-	/** A denial names the tool and the missing capability, and nothing about withheld data. */
-	private void assertDenied(String login, String qualifiedToolName, String expectedGroup) {
-		Tool tool = tool(qualifiedToolName);
-		TopLogicSecurityContext security = securityFor(login, false);
-
-		assertFalse(login + " must not be allowed to use '" + qualifiedToolName + "'.",
-			security.hasToolPermission(tool));
-
-		String reason = security.toolDenialReason(tool);
-		assertNotNull("A denial must state a reason.", reason);
-		assertTrue("The reason must name the tool: " + reason,
-			reason.contains(qualifiedToolName) || reason.contains(tool.name()));
-		assertTrue("The reason must name the missing capability: " + reason,
-			reason.contains(expectedGroup));
-	}
-
-	private void assertAllowed(String login, String qualifiedToolName) {
-		Tool tool = tool(qualifiedToolName);
-		TopLogicSecurityContext security = securityFor(login, false);
-
-		String reason = security.toolDenialReason(tool);
-		assertNull(login + " must be allowed to use '" + qualifiedToolName + "', but: " + reason,
-			reason);
-		assertTrue(security.hasToolPermission(tool));
-	}
-
-	/**
-	 * The security context of a run acting as the given account, built exactly as the chat and
-	 * TL-Script entry points build it.
-	 */
-	private TopLogicSecurityContext securityFor(String login, boolean background) {
-		return TopLogicSecurityContext.forRun(actAs(login), background);
-	}
-
-	private Person actAs(String login) {
-		TLContext context = TLContext.getContext();
-		if (_previousUser == null) {
-			_previousUser = context.getPerson();
+		for (String toolName : List.of(STRUCTURE_TOOL, EGRESS_TOOL, AGENT_AUTHORING_TOOL,
+			WORKSPACE_TOOL, UNCLASSIFIED_SCRIPT_TOOL)) {
+			assertTrue("An administrator reaches '" + toolName + "', which the policy grants nobody.",
+				security.hasToolPermission(tool(toolName)));
+			assertNull(security.toolDenialReason(tool(toolName)));
 		}
-		Person account = account(login);
-		context.setCurrentPerson(account);
-		return account;
-	}
-
-	private static Person anyAdministrator() {
-		for (Person person : Person.all()) {
-			if (person.isAdmin()) {
-				return person;
-			}
-		}
-		return null;
-	}
-
-	private static Person account(String login) {
-		Person account = Person.byName(login);
-		assertNotNull("The demo account '" + login + "' must have been seeded by "
-			+ SecDemoSetupService.class.getSimpleName() + ".", account);
-		assertFalse("The demo account '" + login + "' must not be an administrator, "
-			+ "otherwise it would bypass the checks under test.", account.isAdmin());
-		return account;
-	}
-
-	private static Tool tool(String qualifiedName) {
-		Tool tool = ToolRegistryService.getInstance().getTool(qualifiedName);
-		assertNotNull("The tool '" + qualifiedName + "' must be registered.", tool);
-		return tool;
 	}
 
 	/**
 	 * Creates the test suite.
 	 */
 	public static Test suite() {
-		List<BasicRuntimeModule<?>> modules = new ArrayList<>();
-		modules.add(SearchBuilder.Module.INSTANCE);
-		modules.add(ModelService.Module.INSTANCE);
-		modules.add(LabelProviderService.Module.INSTANCE);
-		modules.add(PersonManager.Module.INSTANCE);
-		modules.add(SecDemoSetupService.Module.INSTANCE);
-		modules.add(ToolRegistryService.Module.INSTANCE);
-		modules.add(AiToolAccessService.Module.INSTANCE);
-
-		return KBSetup.getSingleKBTest(
-			ServiceTestSetup.createSetup(
-				new TestSuite(SecDemoToolAccessTest.class),
-				modules.toArray(new BasicRuntimeModule<?>[modules.size()])));
+		return suite(SecDemoToolAccessTest.class);
 	}
 
 }

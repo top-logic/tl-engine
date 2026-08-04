@@ -5,8 +5,13 @@
  */
 package com.top_logic.ai.demo.secdemo;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
@@ -14,7 +19,12 @@ import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -50,9 +60,9 @@ import com.top_logic.util.LayoutBasedSecurity;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Seeds the fixtures for the agent security end-to-end test: two demo accounts, their group
- * memberships, the role assignments on the security root, the component (layout) access the demo
- * roles need to reach the agent chat, and a handful of example instances.
+ * Seeds the fixtures of the agent security test bed: one account per persona, its group membership,
+ * the role that group carries on the security root, the component (layout) access every persona
+ * needs to reach the agent chat, and a handful of example instances.
  *
  * <p>
  * The service is only started when the opt-in aspect {@code WEB-INF/conf/secdemo.config.xml} is
@@ -64,18 +74,20 @@ import com.top_logic.util.model.ModelService;
  * The roles themselves are created by {@link InitialRolesManager}, the groups by
  * {@link InitialGroupManager}; both are configured in the same aspect. What is left - assigning a
  * role to a group <em>on the security root</em> and creating accounts - has no declarative
- * counterpart in the engine, hence this service.
+ * counterpart in the engine, hence this service. It reads which accounts to create from
+ * {@link Config#getPersonas()}, so the whole persona matrix lives in the aspect file rather than
+ * half of it here.
  * </p>
  *
  * <p>
- * The same is true for component access. The engine reads it declaratively from
- * {@code WEB-INF/conf/security.xml} ({@link AccessConfigurationSetupService}), but that path is
- * fixed and the import <em>resets</em> the access of every view in the application before applying
- * the file. An opt-in aspect must not do that, so this service applies the very same
- * {@link AccessConfiguration} format additively.
+ * The same is true for component access. The engine's {@link AccessConfigurationSetupService} reads
+ * it declaratively, but only from one fixed path, and its import <em>resets</em> the access of every
+ * view in the application before applying that file. An opt-in aspect must not do either, so this
+ * service applies the very same {@link AccessConfiguration} format additively.
  * </p>
  *
  * @see com.top_logic.model.security.SecurityConfigurationService
+ * @see Config#getPersonas()
  * @see Config#getComponentAccess()
  */
 @ServiceDependencies({
@@ -93,23 +105,18 @@ import com.top_logic.util.model.ModelService;
 })
 public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupService.Config<?>> {
 
-	/** Qualified name of the type the demo roles may work with. */
+	/** Qualified name of the type the personas may work with. */
 	private static final String NOTE_TYPE = "secdemo:Note";
 
-	/** Qualified name of the type no demo role may touch. */
+	/** Qualified name of the type no persona may touch. */
 	private static final String SECRET_TYPE = "secdemo:Secret";
 
-	private static final String READER_ROLE = "secReader";
-
-	private static final String EDITOR_ROLE = "secEditor";
-
-	private static final String READER_GROUP = "secReaders";
-
-	private static final String EDITOR_GROUP = "secEditors";
-
-	private static final String READER_ACCOUNT = "secreader1";
-
-	private static final String EDITOR_ACCOUNT = "seceditor1";
+	/**
+	 * Profile name in {@link Config#getComponentAccess()} that stands for every persona role.
+	 *
+	 * @see Config#getComponentAccess()
+	 */
+	private static final String EVERY_PERSONA_ROLE = "*";
 
 	/**
 	 * Configuration options for {@link SecDemoSetupService}.
@@ -124,6 +131,13 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		String INITIAL_PASSWORD = "initial-password";
 
 		/**
+		 * Configuration property name for the personas.
+		 *
+		 * @see #getPersonas()
+		 */
+		String PERSONAS = "personas";
+
+		/**
 		 * Configuration property name for the component access.
 		 *
 		 * @see #getComponentAccess()
@@ -131,7 +145,7 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		String COMPONENT_ACCESS = "component-access";
 
 		/**
-		 * Password given to the demo accounts when they are created.
+		 * Password given to the persona accounts when they are created.
 		 *
 		 * <p>
 		 * Must satisfy the password policy of the configured authentication device (by default: at
@@ -143,14 +157,37 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		String getInitialPassword();
 
 		/**
-		 * The views (layout components) the demo roles may open, in the format of the engine's
+		 * The accounts to seed, indexed by login.
+		 *
+		 * <p>
+		 * One entry per persona of the test bed. Kept in configuration rather than in code so that
+		 * the matrix a tester has to hold in their head - which login holds which role, and what
+		 * each one demonstrates - is readable in one place, next to the {@code <tool-access>} policy
+		 * and the {@code <security-config>} that give those roles their meaning.
+		 * </p>
+		 */
+		@Name(PERSONAS)
+		@Key(PersonaConfig.LOGIN)
+		@EntryTag("persona")
+		List<PersonaConfig> getPersonas();
+
+		/**
+		 * The views (layout components) the persona roles may open, in the format of the engine's
 		 * {@code WEB-INF/conf/security.xml}.
 		 *
 		 * <p>
 		 * Model access rights alone do not make an application usable: a role that may read a type
 		 * still sees no tab until it holds a command group on the enclosing
 		 * {@link com.top_logic.tool.boundsec.compound.CompoundSecurityLayout}. This is where the
-		 * demo roles get that.
+		 * persona roles get that.
+		 * </p>
+		 *
+		 * <p>
+		 * A profile named {@code "*"} is applied to the role of every configured
+		 * {@link #getPersonas() persona}. That is how the test bed states that all personas see the
+		 * same UI: the only thing distinguishing two of them is then the policy, never what they can
+		 * reach, which is what makes an allow/deny pair on one prompt comparable. A profile named
+		 * after a single role still works, for a persona that deliberately needs different views.
 		 * </p>
 		 *
 		 * <p>
@@ -161,6 +198,82 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		 */
 		@Name(COMPONENT_ACCESS)
 		AccessConfiguration getComponentAccess();
+
+	}
+
+	/**
+	 * One persona of the test bed: an account, the group it joins, and the role that group carries.
+	 */
+	public interface PersonaConfig extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for the login.
+		 *
+		 * @see #getLogin()
+		 */
+		String LOGIN = "login";
+
+		/**
+		 * Configuration property name for the group.
+		 *
+		 * @see #getGroup()
+		 */
+		String GROUP = "group";
+
+		/**
+		 * Configuration property name for the role.
+		 *
+		 * @see #getRole()
+		 */
+		String ROLE = "role";
+
+		/**
+		 * Configuration property name for the purpose.
+		 *
+		 * @see #getPurpose()
+		 */
+		String PURPOSE = "purpose";
+
+		/**
+		 * Login name of the account to create.
+		 */
+		@Name(LOGIN)
+		@Label("Login name")
+		@Mandatory
+		String getLogin();
+
+		/**
+		 * Name of the group this account joins.
+		 *
+		 * <p>
+		 * Must be declared on {@link InitialGroupManager} in the same aspect.
+		 * </p>
+		 */
+		@Name(GROUP)
+		@Mandatory
+		String getGroup();
+
+		/**
+		 * Name of the role the {@link #getGroup() group} is granted on the security root.
+		 *
+		 * <p>
+		 * Must be declared on {@link InitialRolesManager} in the same aspect. This is the name the
+		 * {@code <security-config>} and the {@code <tool-access>} policy are written against.
+		 * </p>
+		 */
+		@Name(ROLE)
+		@Mandatory
+		String getRole();
+
+		/**
+		 * One line saying what this persona is in the fixture to demonstrate.
+		 *
+		 * <p>
+		 * Logged at boot, so the boot log doubles as an index of the test bed.
+		 * </p>
+		 */
+		@Name(PURPOSE)
+		String getPurpose();
 
 	}
 
@@ -187,10 +300,8 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	private void setup() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction(ResKey.text("Setting up the security demo fixtures."))) {
-			assignRoles();
+			setupPersonas();
 			grantComponentAccess();
-			setupAccount(READER_ACCOUNT, READER_GROUP);
-			setupAccount(EDITOR_ACCOUNT, EDITOR_GROUP);
 			seedInstances();
 			tx.commit();
 		} catch (RuntimeException ex) {
@@ -199,62 +310,69 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	}
 
 	/**
-	 * Grants each demo role to its group on the security root.
+	 * Creates every configured persona: its account, its group membership and the role its group
+	 * holds on the security root.
 	 *
 	 * <p>
 	 * The security root is the common security parent of every model object, so a role assigned
 	 * there is visible for the instance checks of
 	 * {@link com.top_logic.model.security.SecurityConfigurationService} as well as for its
-	 * type-level {@code CREATE} check, which falls back to the security root as context.
+	 * type-level {@code CREATE} check, which falls back to the security root as context. It is also
+	 * where {@code AiToolAccessService} reads the roles it authorizes tool calls against.
 	 * </p>
 	 */
-	private void assignRoles() {
+	private void setupPersonas() {
 		BoundObject securityRoot = BoundHelper.getInstance().getDefaultObject();
 		if (securityRoot == null) {
-			throw new RuntimeException("No security root available, cannot assign the demo roles.");
+			throw new RuntimeException("No security root available, cannot assign the persona roles.");
 		}
 
-		assignRole(securityRoot, READER_GROUP, READER_ROLE);
-		assignRole(securityRoot, EDITOR_GROUP, EDITOR_ROLE);
+		for (PersonaConfig persona : getConfig().getPersonas()) {
+			assignRole(securityRoot, persona.getGroup(), persona.getRole());
+			setupAccount(persona);
+		}
 	}
 
 	private void assignRole(BoundObject securityRoot, String groupName, String roleName) {
-		Group group = Group.getGroupByName(groupName);
-		if (group == null) {
-			throw new RuntimeException("Group '" + groupName + "' does not exist, check the InitialGroupManager"
-				+ " configuration in 'secdemo.config.xml'.");
-		}
-		BoundedRole role = BoundedRole.getRoleByName(roleName);
-		if (role == null) {
-			throw new RuntimeException("Role '" + roleName + "' does not exist, check the InitialRolesManager"
-				+ " configuration in 'secdemo.config.xml'.");
-		}
-		BoundedRole.assignRole(securityRoot, group, role);
+		BoundedRole.assignRole(securityRoot, group(groupName), role(roleName));
 	}
 
 	/**
 	 * Grants the configured command groups on the configured views to the configured roles.
 	 *
 	 * <p>
-	 * This is the component-security half of the setup: without it, the demo accounts hold model
-	 * access rights but no role may open any view, so the application shows no tab at all.
+	 * This is the component-security half of the setup: without it, the persona accounts hold model
+	 * access rights and tool grants but no role may open any view, so the application shows no tab
+	 * at all.
 	 * </p>
 	 *
 	 * @see Config#getComponentAccess()
 	 */
 	private void grantComponentAccess() {
 		for (ProfileConfig profile : getConfig().getComponentAccess().getProfiles()) {
-			String roleName = profile.getRole();
-			BoundedRole role = BoundedRole.getRoleByName(roleName);
-			if (role == null) {
-				throw new RuntimeException("Role '" + roleName + "' does not exist, check the '"
-					+ Config.COMPONENT_ACCESS + "' configuration in 'secdemo.config.xml'.");
-			}
-
-			for (ViewConfig view : profile.getViews()) {
-				grantViewAccess(role, view);
+			for (String roleName : rolesOfProfile(profile)) {
+				BoundedRole role = role(roleName);
+				for (ViewConfig view : profile.getViews()) {
+					grantViewAccess(role, view);
+				}
 			}
 		}
+	}
+
+	/**
+	 * The roles a {@code <profile>} applies to: the wildcard expands to every persona role.
+	 */
+	private Set<String> rolesOfProfile(ProfileConfig profile) {
+		String profileName = profile.getRole();
+		if (!EVERY_PERSONA_ROLE.equals(profileName)) {
+			return Set.of(profileName);
+		}
+		// LinkedHashSet: stable log order, and two personas may share a role.
+		Set<String> roleNames = new LinkedHashSet<>();
+		for (PersonaConfig persona : getConfig().getPersonas()) {
+			roleNames.add(persona.getRole());
+		}
+		return roleNames;
 	}
 
 	private void grantViewAccess(BoundedRole role, ViewConfig view) {
@@ -282,23 +400,25 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	}
 
 	/**
-	 * Ensures that the given account exists, can log in and is a member of the given group.
+	 * Ensures that the persona's account exists, can log in and is a member of its group.
 	 */
-	private void setupAccount(String login, String groupName) {
+	private void setupAccount(PersonaConfig persona) {
+		String login = persona.getLogin();
 		Person account = Person.byName(login);
 		if (account == null) {
 			AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
 			account = Person.create(PersistencyLayer.getKnowledgeBase(), login, device);
 			setInitialPassword(device, account);
-			Logger.info("Created security demo account '" + login + "'.", SecDemoSetupService.class);
+			Logger.info("Created security demo persona '" + login + "' (role '" + persona.getRole() + "'): "
+				+ purposeOf(persona), SecDemoSetupService.class);
 		}
 
-		Group group = Group.getGroupByName(groupName);
-		if (group == null) {
-			throw new RuntimeException("Group '" + groupName + "' does not exist, check the InitialGroupManager"
-				+ " configuration in 'secdemo.config.xml'.");
-		}
-		group.addMember(account);
+		group(persona.getGroup()).addMember(account);
+	}
+
+	private static String purposeOf(PersonaConfig persona) {
+		String purpose = persona.getPurpose();
+		return purpose == null || purpose.isBlank() ? "(no purpose documented)" : purpose;
 	}
 
 	private void setInitialPassword(AuthenticationDevice device, Person account) {
@@ -314,6 +434,24 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		} finally {
 			Arrays.fill(password, (char) 0);
 		}
+	}
+
+	private static Group group(String groupName) {
+		Group group = Group.getGroupByName(groupName);
+		if (group == null) {
+			throw new RuntimeException("Group '" + groupName + "' does not exist, check the InitialGroupManager"
+				+ " configuration in 'secdemo.config.xml'.");
+		}
+		return group;
+	}
+
+	private static BoundedRole role(String roleName) {
+		BoundedRole role = BoundedRole.getRoleByName(roleName);
+		if (role == null) {
+			throw new RuntimeException("Role '" + roleName + "' does not exist, check the InitialRolesManager"
+				+ " configuration in 'secdemo.config.xml'.");
+		}
+		return role;
 	}
 
 	/**
@@ -344,6 +482,45 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		}
 		Logger.info("Created " + values.size() + " example instances of '" + typeName + "'.",
 			SecDemoSetupService.class);
+	}
+
+	/**
+	 * The logins of the configured personas, in configuration order.
+	 *
+	 * <p>
+	 * For tests that want to walk the whole matrix without repeating it: the fixture is the aspect
+	 * file, and a test that hard-codes the list can silently stop covering a persona that was added
+	 * there.
+	 * </p>
+	 *
+	 * @return The logins, never <code>null</code>.
+	 */
+	public static List<String> personaLogins() {
+		List<String> logins = new ArrayList<>();
+		for (PersonaConfig persona : getInstance().getConfig().getPersonas()) {
+			logins.add(persona.getLogin());
+		}
+		return logins;
+	}
+
+	/**
+	 * The role each configured persona holds, indexed by login.
+	 *
+	 * @return The mapping, never <code>null</code>.
+	 */
+	public static Map<String, String> personaRoles() {
+		Map<String, String> roles = new LinkedHashMap<>();
+		for (PersonaConfig persona : getInstance().getConfig().getPersonas()) {
+			roles.put(persona.getLogin(), persona.getRole());
+		}
+		return roles;
+	}
+
+	/**
+	 * The singleton {@link SecDemoSetupService} instance.
+	 */
+	public static SecDemoSetupService getInstance() {
+		return Module.INSTANCE.getImplementationInstance();
 	}
 
 	/**

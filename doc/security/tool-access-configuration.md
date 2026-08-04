@@ -254,8 +254,8 @@ tools the account may use are left out of that catalog and out of `loadSkill`, a
 logged:
 
 ```
-INFO ... AgentFactory - Agent 'TL_SingleAgent': skill 'TL_topLogicModeling' is not offered
-to the current user - none of its 16 known tools is permitted; they require [model.structure]
+INFO ... AgentFactory - Agent 'TL_SingleAgent': skill 'TL_taskManagement' is not offered
+to the current user - none of its 3 known tools is permitted; they require [workspace]
 ```
 
 That prompt text is **user experience, not a control**: it helps the agent explain itself and is
@@ -295,6 +295,10 @@ regardless of which role they hold. There is no way to pre-approve a role, on pu
 ## Trying it out
 
 The demo carries a working example behind one switch: uncomment `secdemo.config.xml` in
-`tl-ai-demo/src/main/webapp/WEB-INF/conf/metaConf.txt`. That brings two roles, two accounts and a
-`<tool-access>` granting them different capabilities. See
-[e2e-security-test.md](e2e-security-test.md) for the walkthrough.
+`tl-ai-demo/src/main/webapp/WEB-INF/conf/metaConf.txt`. That brings six roles, six accounts, a
+`<tool-access>` granting each of them a different set of capabilities, and three TL-Script tool
+factories - two classified by a factory wildcard, one deliberately not.
+
+**[testbed.md](testbed.md) is where to start.** It maps every behaviour of this layer to a persona, a
+thing to type and an expected result, including a one-line switch between `LEGACY` and `ENFORCED` so the
+two can be compared side by side.

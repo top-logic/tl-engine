@@ -43,6 +43,8 @@ import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactFormBuilder;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.layout.LabelPosition;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
@@ -577,7 +579,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			// exactly like every other form.
 			ReactFormBuilder form = new ReactFormBuilder(context);
 			for (FilterField field : editor.fields()) {
-				form.addField(label(resources, field.label()), fieldControl(context, field));
+				ReactControl input = fieldControl(context, field);
+				ReactFormFieldChromeControl chrome = form.addField(label(resources, field.label()), input);
+				if (input instanceof ReactCheckboxControl) {
+					// A checkbox reads as its own statement ("Yes", "case sensitive"), so the label
+					// belongs next to the box - above it, the two look like unrelated lines.
+					chrome.setLabelPosition(LabelPosition.AFTER);
+				}
 			}
 			body = form.build();
 			readState = editor::read;

@@ -3196,6 +3196,25 @@ button.tlMenu__item--disabled:hover {
 	grid-column: 1 / -1;
 }
 
+/* Label after the input — for a checkbox, whose label states what ticking it means, so the two
+   belong on one line. The markup has the label first, hence the explicit order. */
+.tlFormField--after {
+	grid-template-columns: auto 1fr;
+	align-items: center;
+	gap: var(--spacing-03, 0.5rem);
+}
+
+.tlFormField--after > .tlFormField__input {
+	grid-column: 1;
+	grid-row: 1;
+	flex: 0 0 auto;
+}
+
+.tlFormField--after > .tlFormField__label {
+	grid-column: 2;
+	grid-row: 1;
+}
+
 /* Side-by-side label layout */
 .tlFormField--side {
 	grid-template-columns: minmax(6rem, 10rem) 1fr;

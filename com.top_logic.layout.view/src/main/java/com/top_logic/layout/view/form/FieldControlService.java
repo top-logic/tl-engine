@@ -305,6 +305,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			TLPrimitive primitive = (TLPrimitive) type;
 			switch (primitive.getKind()) {
 				case BOOLEAN:
+				case TRISTATE:
+					// Both are checkboxes; the tri-state one has a third state for "no value".
 					return _checkboxProvider.createControl(context, part, model);
 				case INT:
 				case FLOAT:
@@ -314,7 +316,6 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 				case BINARY:
 					return _binaryProvider.createControl(context, part, model);
 				case STRING:
-				case TRISTATE:
 				case CUSTOM:
 				default:
 					return _textProvider.createControl(context, part, model);

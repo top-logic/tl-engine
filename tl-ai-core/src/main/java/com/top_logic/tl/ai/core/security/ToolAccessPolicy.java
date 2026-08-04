@@ -8,10 +8,12 @@ package com.top_logic.tl.ai.core.security;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -33,11 +35,9 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * <config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
  *     <instance security-mode="ENFORCED">
  *         <tool-groups>
- *             <group name="egress">
- *                 <tools>
- *                     <tool name="mcp__jira__*"/>
- *                 </tools>
- *             </group>
+ *             <group name="egress"
+ *                 tools="mcp__jira__createIssue, mcp__jira__addComment"
+ *             />
  *         </tool-groups>
  *         <tool-access>
  *             <role name="SalesAssistantUser">
@@ -298,25 +298,22 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		 * The tools belonging to this group, by their qualified name.
 		 *
 		 * <p>
-		 * A name ending in {@code *} covers every tool whose name starts with it, which classifies a
-		 * whole MCP server or a whole tool factory in one line.
+		 * Pick every tool that belongs here. A tool that is not listed keeps the group it declares
+		 * itself, and has none at all if it declares none.
 		 * </p>
+		 *
+		 * @see AllToolNames
 		 */
 		@Name(TOOLS)
-		@Key(ToolRef.NAME_ATTRIBUTE)
-		@EntryTag("tool")
-		Map<String, ToolRef> getTools();
-	}
+		@Format(CommaSeparatedStrings.class)
+		@Options(fun = AllToolNames.class)
+		@OptionLabels(ToolNameResources.class)
+		List<String> getTools();
 
-	/**
-	 * The qualified name of a tool.
-	 *
-	 * <p>
-	 * A name ending in {@code *} covers every tool whose name starts with it.
-	 * </p>
-	 */
-	interface ToolRef extends NamedConfigMandatory {
-		// Marker: the name carries the reference.
+		/**
+		 * Setter for {@link #getTools()}.
+		 */
+		void setTools(List<String> value);
 	}
 
 	/**
@@ -339,6 +336,20 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		String DENIES = "denies";
 
 		/**
+		 * The security role this entry is about.
+		 *
+		 * @implNote Redeclared from {@link NamedConfigMandatory} only to carry the option
+		 *           annotation; the property itself is inherited. The editor then offers the roles
+		 *           of the application instead of a text field, while the stored value stays the
+		 *           role name, so a hand-written policy parses unchanged.
+		 *
+		 * @see AllSecurityRoles
+		 */
+		@Override
+		@Options(fun = AllSecurityRoles.class)
+		String getName();
+
+		/**
 		 * The capabilities and single tools this role may use.
 		 */
 		@Name(GRANTS)
@@ -359,8 +370,8 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	}
 
 	/**
-	 * One entry of a list of permissions or refusals: either a whole capability group or a single
-	 * tool.
+	 * One entry of a list of permissions or refusals: either a whole capability group, or named
+	 * single tools.
 	 */
 	interface Grant extends ConfigurationItem {
 
@@ -372,17 +383,17 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		String GROUP = "group";
 
 		/**
-		 * Configuration property name for {@link #getTool()}.
+		 * Configuration property name for {@link #getTools()}.
 		 *
-		 * @see #getTool()
+		 * @see #getTools()
 		 */
-		String TOOL = "tool";
+		String TOOLS = "tools";
 
 		/**
 		 * The capability group this entry refers to.
 		 *
 		 * <p>
-		 * Leave this empty if the entry names a single tool instead.
+		 * Leave this empty if the entry names single tools instead.
 		 * </p>
 		 *
 		 * @see ToolGroups
@@ -403,24 +414,24 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		void setGroup(String value);
 
 		/**
-		 * The qualified name of the single tool this entry refers to.
+		 * The single tools this entry refers to, by their qualified name.
 		 *
 		 * <p>
-		 * Leave this empty if the entry names a capability group instead. A name ending in {@code *}
-		 * covers every tool whose name starts with it, but never reaches a privileged group - those
-		 * tools have to be named in full.
+		 * Pick one or several. Leave this empty if the entry names a capability group instead: an
+		 * entry says either a group or tools, never both.
 		 * </p>
+		 *
+		 * @see AllToolNames
 		 */
-		/*
-		 * Free text on purpose, unlike getGroup(): mcp__jira__* is not among any list of registered
-		 * tool names, and it is the form most entries here take.
-		 */
-		@Name(TOOL)
-		String getTool();
+		@Name(TOOLS)
+		@Format(CommaSeparatedStrings.class)
+		@Options(fun = AllToolNames.class)
+		@OptionLabels(ToolNameResources.class)
+		List<String> getTools();
 
 		/**
-		 * Setter for {@link #getTool()}.
+		 * Setter for {@link #getTools()}.
 		 */
-		void setTool(String value);
+		void setTools(List<String> value);
 	}
 }

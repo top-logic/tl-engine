@@ -55,8 +55,9 @@ groups rather than eighty tools.
 | `model.structure` | **Privileged.** Change the model, its annotations and layouts. |
 | `agent.authoring` | **Privileged.** Create and rewire agents, skills and tools. |
 
-A **privileged** group is one whose holder can escalate their own rights, so it is never reached by a
-wildcard and you have to name it explicitly. Granting one is a deliberate act.
+A **privileged** group is one whose holder can escalate their own rights. Nothing about granting it is
+technically special - nothing at all is reached implicitly here - but it is the grant worth arguing
+about before you write it.
 
 `egress` is not privileged but deserves the same care: `webFetch` is a read-only tool and the best way
 to get data *out* of the application.
@@ -73,23 +74,29 @@ to get data *out* of the application.
 ### The same table, in the editor
 
 You do not have to keep this page open while writing a policy. In **Administration → Development →
-Service Editor → AiToolAccessService**, the group of a `<grant>` and the group a `<tool-groups>` entry
-assigns tools to are **selection lists**, not text fields, and hovering an entry shows the sentence
-from the table above:
+Service Editor → AiToolAccessService**, the names a policy refers to are **selection lists**, not text
+fields, and hovering a group shows the sentence from the table above:
 
 | Field | In the editor |
 |---|---|
 | `<grant group="...">`, `<deny group="...">` | a list of the known groups, each with a tooltip saying what granting it lets an agent do |
 | `<tool-groups><group name="...">` | the same list |
-| `<grant tool="...">`, `<tool name="...">` | **free text**, deliberately: `mcp__jira__*` is the form most entries take and no list of registered names contains it |
+| `<role name="...">` | the roles of the application |
+| `<grant tools="...">`, `<tool-groups><group tools="...">` | the registered tools, several selectable at once, each with the tool's own description as its tooltip |
 
-The list holds every group the framework ships, every group a registered tool declares, and every
+The group list holds every group the framework ships, every group a registered tool declares, and every
 group the policy in effect already defines - so an application's own group is selectable as soon as one
 of its tools declares it. A group that is in none of the three is the case the boot warning below calls
 out, and it is nearly always a typo.
 
-**Nothing about the stored format changes.** What is written to the file is the technical group name;
-a policy written by hand parses exactly as before, and the labels exist only in the editor.
+The role and tool lists work the same way: what the application has, plus whatever the policy already
+names. That second half is what lets a policy mention a role an aspect creates only when it is switched
+on, or a tool of an MCP server that is offline right now, without an open-and-save of the editor
+dropping the entry.
+
+**The stored format is the technical name throughout.** What is written to the file is the group name,
+the role name and the tool names; a policy written by hand parses exactly as one written in the editor,
+and the labels exist only in the editor.
 
 ---
 
@@ -101,10 +108,12 @@ a policy written by hand parses exactly as before, and the labels exist only in 
 - **A `<deny>` always wins**, over any grant, including one from the user's other roles and including
   the baseline. That is how you carve one capability out of an otherwise broad grant without
   re-listing everything.
-- **A tool in no group is denied to everyone** unless you name it in a `<grant tool="...">`. This is
+- **A tool in no group is denied to everyone** unless you name it in a `<grant tools="...">`. This is
   what happens to a remote MCP tool, or to a tool whose author forgot to classify it.
+- **Nothing is reached by a pattern.** Groups and tools are named one at a time, so a tool that appears
+  after you wrote the policy is denied until you name it. Fail-closed, on purpose.
 - **`script` does not include writing.** Committing through `executeTLScript` costs `data.write` as
-  well - see the note above. A `<grant tool="...">` naming the tool does not substitute for it: the
+  well - see the note above. A `<grant tools="...">` naming the tool does not substitute for it: the
   capability is granted with `<grant group="data.write"/>` and nothing else.
 - **Administrators bypass all of it**, exactly as they bypass the model access rights.
 - **Unattended runs are additionally capped** by `<background-allowlist>`, which you must declare
@@ -156,15 +165,18 @@ a policy written by hand parses exactly as before, and the labels exist only in 
 A `<deny>` is worth writing even where deny-by-default already covers it: it survives someone later
 granting the group to another role the same person holds.
 
-### Grant a single tool rather than its whole group
+### Grant single tools rather than a whole group
 
 ```xml
-<grant tool="task-tools.createTask"/>
+<grant tools="task-tools.createTask, task-tools.listTasks"/>
 ```
 
 Use the `{factory}.{tool}` name from the application configuration - the same name an agent definition
-lists. A trailing `*` matches a prefix (`<grant tool="mcp__jira__*"/>`), but a wildcard never reaches a
-tool in a privileged group.
+lists. One entry may name any number of tools; in the editor it is a selection list of the registered
+ones. There is **no pattern syntax**: a name matches that tool and nothing that merely starts like it.
+
+An entry says either a group or tools, never both. One that says both, or neither, is a **boot error** -
+it would otherwise look like it grants something and not.
 
 ### Grant a capability to every account
 
@@ -187,48 +199,39 @@ not classify as such:
 
 ```xml
 <tool-groups>
-    <group name="egress">
-        <tools>
-            <tool name="mcp__jira__*"/>
-        </tools>
-    </group>
+    <group name="egress"
+        tools="mcp__jira__createIssue, mcp__jira__addComment"
+    />
 </tool-groups>
 ```
 
-A trailing `*` matches a prefix, and it matches **any** of a tool's names - the bare name the model
-calls, the `{factory}.{tool}` name written in configuration, and the provider-safe `factory__tool`
-form. Since a TL-Script tool is referenced as `{factory}.{name}`, a factory wildcard classifies the
-whole factory in one line:
+A name matches **any** of a tool's names - the bare name the model calls, the `{factory}.{tool}` name
+written in configuration, and the provider-safe `factory__tool` form - so whichever of the three you
+have at hand will do. A TL-Script tool is referenced as `{factory}.{name}`:
 
 ```xml
 <tool-groups>
-    <group name="data.read">
-        <tools>
-            <tool name="reporting.*"/>
-        </tools>
-    </group>
+    <group name="data.read"
+        tools="reporting.listOpenTickets, reporting.countOverdue"
+    />
 </tool-groups>
 ```
 
 **This is the mechanism for TL-Script tools.** There is deliberately no way for a tool to declare its
-own group in its configuration - see the warning below.
+own group in its configuration - see the note below.
+
+Every tool is named, one at a time, and there is deliberately no way to say "everything from this
+factory" or "everything from this server". A tool that appears later - one a `createScriptTool` call
+adds, one a connected MCP server grows - is therefore denied until you name it. That is the point: a
+tool's group says what the tool *does* while the check asks what the *user* holds, so whoever picks the
+group picks which capability it costs to call the tool. `createScriptTool` is reachable with
+`agent.authoring`, which is not the same as holding `data.write` - and a pattern that swallowed a whole
+namespace would hand that choice to whoever can author into it.
 
 Note what an ungrouped tool costs under enforced access, beyond being uncallable: it is also
 invisible to the agents whose skills reference it. A skill none of whose tools the acting user may
 use is not offered at all, and the drop is logged at INFO with the skill name and the reason.
-Classifying the factory is what brings the skill back.
-
-> **A factory wildcard delegates classification authority for that namespace.** A tool's group is
-> supposed to say what the tool *does*, while the check asks what the *user* holds - so whoever
-> decides a tool's group decides which capability it costs to call. `createScriptTool` lets its
-> caller pick the factory name freely, and holding `agent.authoring` is not the same as holding
-> `data.write`. Map `reporting.*` to `data.read`, and anyone who can author into `reporting` can put
-> a tool that *writes* under a capability their user only holds for *reading*.
->
-> Therefore: map only factories whose contents you control, keep the factories agents author into
-> (`custom` by default) out of `<tool-groups>`, and never point a factory wildcard at a privileged
-> group (`script`, `model.structure`, `agent.authoring`). Naming individual tools rather than a
-> wildcard removes the delegation entirely, at the cost of one line per tool.
+Classifying the tool is what brings the skill back.
 
 ### Cap what an unattended run can do
 
@@ -360,7 +363,7 @@ regardless of which role they hold. There is no way to pre-approve a role, on pu
 The demo carries a working example behind one switch: uncomment `secdemo.config.xml` in
 `tl-ai-demo/src/main/webapp/WEB-INF/conf/metaConf.txt`. That brings six roles, six accounts, a
 `<tool-access>` granting each of them a different set of capabilities, and three TL-Script tool
-factories - two classified by a factory wildcard, one deliberately not.
+factories - the tool of two of them named in `<tool-groups>`, the third deliberately not.
 
 **[testbed.md](testbed.md) is where to start.** It maps every behaviour of this layer to a persona, a
 thing to type and an expected result.

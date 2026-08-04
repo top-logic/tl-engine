@@ -39,7 +39,7 @@
 		["model.read", "model-browser.listModules", null],
 		["data.read", "model-instances.listInstances",
 			{"moduleName": "secdemo", "typeName": "Note", "limit": 3}],
-		["data.read       (script tool, classified by a factory wildcard)",
+		["data.read       (script tool, named in tool-groups)",
 			"secdemo-reporting.countNotes", null],
 		["(the same script tool body, deliberately NOT classified)",
 			"secdemo-unclassified.countNotesUnclassified", null],

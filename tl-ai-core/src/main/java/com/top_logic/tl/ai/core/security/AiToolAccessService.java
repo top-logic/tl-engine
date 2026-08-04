@@ -5,11 +5,14 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 
@@ -116,6 +119,7 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 		_access = new RoleToolAccess(policy, AiToolAccessService::declaredGroupOf);
 
 		checkRolesExist(policy);
+		checkEntriesSayOneThing(policy);
 		checkBackgroundAllowlistDeclared(policy);
 		warnAboutUnknownGroups(policy);
 
@@ -232,6 +236,58 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 			}
 		}
 		return unknown;
+	}
+
+	/**
+	 * Reports every permission entry that does not say exactly one thing, as a configuration error.
+	 *
+	 * <p>
+	 * An entry names a capability group or it names tools. One that names both is two decisions written
+	 * as one and the reader cannot tell which was meant; one that names neither reaches nothing and says
+	 * so nowhere. Both are the failure mode this layer refuses to have - a policy that looks like it
+	 * grants something and does not.
+	 * </p>
+	 */
+	private void checkEntriesSayOneThing(ToolAccessPolicy policy) {
+		for (String problem : underspecifiedEntries(policy)) {
+			_context.error("The agent tool access configuration has an entry that does not name exactly"
+				+ " one thing: " + problem + ". An entry says either a capability group or one or more"
+				+ " tools.");
+		}
+	}
+
+	/**
+	 * The permission entries of the policy that name a group and tools at once, or neither.
+	 *
+	 * @param policy
+	 *        The policy to inspect.
+	 * @return A description of each offending entry, in a stable order; empty if the policy is sound.
+	 */
+	static List<String> underspecifiedEntries(ToolAccessPolicy policy) {
+		List<String> problems = new ArrayList<>();
+		collectUnderspecified(policy.getBaseline(), "<baseline>", problems);
+		ToolAccessPolicy.BackgroundAllowlist background = policy.getBackgroundAllowlist();
+		if (background != null) {
+			collectUnderspecified(background.getGrants(), "<background-allowlist>", problems);
+		}
+		for (RoleAccess role : new TreeMap<>(policy.getToolAccess()).values()) {
+			collectUnderspecified(role.getGrants(), "role '" + role.getName() + "' <grants>", problems);
+			collectUnderspecified(role.getDenies(), "role '" + role.getName() + "' <denies>", problems);
+		}
+		return problems;
+	}
+
+	private static void collectUnderspecified(List<Grant> entries, String where, List<String> problems) {
+		for (int n = 0, size = entries.size(); n < size; n++) {
+			Grant entry = entries.get(n);
+			boolean hasGroup = entry.getGroup() != null && !entry.getGroup().isBlank();
+			boolean hasTools = !entry.getTools().isEmpty();
+			if (hasGroup == hasTools) {
+				problems.add(where + " entry " + (n + 1)
+					+ (hasGroup ? " names the group '" + entry.getGroup() + "' and tools "
+						+ entry.getTools() : " names nothing"));
+			}
+		}
 	}
 
 	/**

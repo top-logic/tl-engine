@@ -14,7 +14,6 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ToolRef;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
@@ -128,7 +127,7 @@ public class RoleToolAccess {
 
 	private final DeclaredGroups _declaredGroups;
 
-	/** Policy-configured group membership: exact tool name or {@code prefix*} pattern to group. */
+	/** Policy-configured group membership: qualified tool name to group. */
 	private final Map<String, String> _configuredGroups;
 
 	/**
@@ -149,8 +148,8 @@ public class RoleToolAccess {
 	private static Map<String, String> indexConfiguredGroups(ToolAccessPolicy policy) {
 		Map<String, String> result = new HashMap<>();
 		for (Map.Entry<String, GroupMembership> entry : policy.getToolGroups().entrySet()) {
-			for (ToolRef tool : entry.getValue().getTools().values()) {
-				result.put(tool.getName(), entry.getKey());
+			for (String toolName : entry.getValue().getTools()) {
+				result.put(toolName, entry.getKey());
 			}
 		}
 		return result;
@@ -189,25 +188,12 @@ public class RoleToolAccess {
 	 */
 	public String groupOf(ToolIdentity tool) {
 		for (String name : tool.names()) {
-			String configured = matchConfiguredGroup(name);
+			String configured = _configuredGroups.get(name);
 			if (configured != null) {
 				return configured;
 			}
 		}
 		return tool.declaredGroup();
-	}
-
-	private String matchConfiguredGroup(String toolName) {
-		String exact = _configuredGroups.get(toolName);
-		if (exact != null) {
-			return exact;
-		}
-		for (Map.Entry<String, String> entry : _configuredGroups.entrySet()) {
-			if (matches(entry.getKey(), toolName)) {
-				return entry.getValue();
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -242,19 +228,19 @@ public class RoleToolAccess {
 
 		for (String roleName : heldRoleNames) {
 			RoleAccess role = _policy.getToolAccess().get(roleName);
-			if (role != null && matchesAny(role.getDenies(), tool, group, false)) {
+			if (role != null && matchesAny(role.getDenies(), tool, group)) {
 				return new Decision.Denied("Permission denied: tool '" + label
 					+ "' is explicitly denied to your role '" + roleName + "'.");
 			}
 		}
 
-		if (isImplicitBaseline(group) || matchesAny(_policy.getBaseline(), tool, group, true)) {
+		if (isImplicitBaseline(group) || matchesAny(_policy.getBaseline(), tool, group)) {
 			return new Decision.Granted(BASELINE_ROLE, group);
 		}
 
 		for (String roleName : heldRoleNames) {
 			RoleAccess role = _policy.getToolAccess().get(roleName);
-			if (role != null && matchesAny(role.getGrants(), tool, group, true)) {
+			if (role != null && matchesAny(role.getGrants(), tool, group)) {
 				return new Decision.Granted(roleName, group);
 			}
 		}
@@ -412,7 +398,7 @@ public class RoleToolAccess {
 			// The explicit opt-out: unattended runs are bounded only by the user's own grants.
 			return true;
 		}
-		return matchesAny(allowlist.getGrants(), tool, group, true);
+		return matchesAny(allowlist.getGrants(), tool, group);
 	}
 
 	/**
@@ -429,42 +415,26 @@ public class RoleToolAccess {
 	/**
 	 * Whether any entry of {@code entries} covers the given tool.
 	 *
-	 * @param forGrant
-	 *        Whether the entries are grants. A wildcard tool pattern in a grant never reaches a
-	 *        {@link ToolGroups#PRIVILEGED privileged} group; in a deny it may, since a deny can only
-	 *        narrow access.
+	 * <p>
+	 * A per-tool entry has to name the tool, by any one of {@link ToolIdentity#names() its names}.
+	 * There is no pattern syntax: a tool of any origin - a new Java tool, a TL-Script tool authored in
+	 * the running application, a tool a connected MCP server grew - is denied until an administrator
+	 * says otherwise.
+	 * </p>
 	 */
-	private static boolean matchesAny(Collection<Grant> entries, ToolIdentity tool, String group,
-			boolean forGrant) {
-		boolean wildcardIntoPrivileged = forGrant && ToolGroups.isPrivileged(group);
+	private static boolean matchesAny(Collection<Grant> entries, ToolIdentity tool, String group) {
+		List<String> names = tool.names();
 		for (Grant entry : entries) {
 			if (!isBlank(entry.getGroup()) && entry.getGroup().equals(group)) {
 				return true;
 			}
-			String toolPattern = entry.getTool();
-			if (isBlank(toolPattern)) {
-				continue;
-			}
-			for (String name : tool.names()) {
-				if (toolPattern.equals(name)) {
-					return true;
-				}
-				if (!wildcardIntoPrivileged && matches(toolPattern, name)) {
+			for (String granted : entry.getTools()) {
+				if (names.contains(granted)) {
 					return true;
 				}
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Whether {@code pattern} - an exact name or a {@code prefix*} wildcard - covers {@code name}.
-	 */
-	private static boolean matches(String pattern, String name) {
-		if (pattern.endsWith("*")) {
-			return name.startsWith(pattern.substring(0, pattern.length() - 1));
-		}
-		return pattern.equals(name);
 	}
 
 	private static boolean isBlank(String value) {

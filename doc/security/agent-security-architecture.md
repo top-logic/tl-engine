@@ -386,12 +386,13 @@ group**; groups are the unit of granting.
 | `workspace` | `createTask`, `updateTask`, `listTasks`, `publishPage` | grantable |
 | `egress` | `webFetch`, `webSearch`, `createGiteaIssue`, all `mcp__*` tools | grantable, **never** in the baseline |
 
-**Privileged** groups behave differently in three ways: they are excluded from every wildcard grant,
-they require an explicit `<grant group="..."/>` naming them, and granting them is itself an audited
-configuration change. `script`, `model.structure` and `agent.authoring` are privileged because each is
-a general-purpose escalation primitive - `executeTLScript` can express any data operation,
-`model.structure` can change the shape the security policy is written against, and `agent.authoring`
-can rewire who gets which tools (T8).
+**Privileged** groups are the ones whose holder can escalate their own rights: `script`,
+`model.structure` and `agent.authoring`, because each is a general-purpose escalation primitive -
+`executeTLScript` can express any data operation, `model.structure` can change the shape the security
+policy is written against, and `agent.authoring` can rewire who gets which tools (T8). The
+classification is documentary, not mechanical: no group is reached except by a `<grant>` naming it, so
+there is no implicit path a privileged group would have to be excluded from. What it says is that
+granting one is an audited configuration change worth arguing about first.
 
 Note `executeTLScript` sits in a privileged group *and* is `DATA_WRITE`-classified *and* rides on the
 engine's TL-Script enforcement (which #29088 already applies). Three independent reasons for it to be
@@ -427,7 +428,7 @@ primitive in the catalog (T4): an injected instruction that says "fetch
 
 Being in `egress` has two consequences beyond ordinary granting:
 
-- Never included in the built-in baseline or in any wildcard grant.
+- Never included in the built-in baseline.
 - An egress call in the same *turn* as a `data.read` call against a restricted type is recorded in the
   audit log as a correlated pair. This is detection, not prevention - prevention is L2 ensuring the
   agent never held the data.
@@ -531,16 +532,19 @@ group is a crossing of the group boundary: author a tool whose TL-Script body wr
 `data.read`, and a user with only `data.read` may now write. Today's behaviour is the correct one -
 an unclassified tool is denied to everyone, which is fail-closed and unforgeable.
 
-Classification stays with the administrator, in `<tool-groups>`, which already supports a
-`{factory}.*` wildcard against the qualified name (`RoleToolAccess.matchConfiguredGroup`, matched
-across all of `ToolIdentity.names()`; pinned by
-`TestRoleToolAccess.testFactoryWildcardClassifiesAnUngroupedScriptTool`). One line classifies a
-factory.
+Classification stays with the administrator, in `<tool-groups>`, where each tool is named by any of
+`ToolIdentity.names()` (`RoleToolAccess.groupOf`; pinned by
+`TestRoleToolAccess.testConfiguredGroupClassifiesAnUngroupedScriptTool`). The entry is a multi-valued
+property whose options come from the tool registry, so the editor offers a selection of the tools that
+exist.
 
-That wildcard has a cost of its own and the administrator doc states it: mapping a factory delegates
-classification authority over that namespace, because `createScriptTool` lets its caller choose the
-factory freely. Map only factories you control, leave the agent-authored default (`custom`) out, and
-never point a factory wildcard at a privileged group.
+There is deliberately **no** pattern syntax - no `{factory}.*`, no per-server catch-all. A pattern would
+hand the same authority back: `createScriptTool` lets its caller choose the factory name freely, so
+`reporting.*` mapped to `data.read` would let anyone who can author into `reporting` put a *writing*
+tool under a capability their user holds only for *reading*. Naming tools one at a time costs a line per
+tool and keeps the decision where the argument above puts it. The consequence is that a tool which
+appears after the policy was written - a new Java tool, a newly authored script tool, a tool a connected
+MCP server grew - is denied until an administrator names it.
 
 ### 3.3 L2 - Data authorization via `ModelAccessRights` (#29088)
 
@@ -857,16 +861,12 @@ interface is `ToolAccessPolicy` (scaffolded on this branch), which the service's
              This section only *overrides* it, or assigns a group to tools that
              cannot be annotated (MCP tools, TL-Script tools authored at runtime). -->
         <tool-groups>
-            <group name="egress">
-                <tools>
-                    <tool name="mcp__jira__*"/>
-                </tools>
-            </group>
-            <group name="data.read">
-                <tools>
-                    <tool name="script-tools.findOverdueInvoices"/>
-                </tools>
-            </group>
+            <group name="egress"
+                tools="mcp__jira__createIssue, mcp__jira__addComment"
+            />
+            <group name="data.read"
+                tools="script-tools.findOverdueInvoices"
+            />
         </tool-groups>
 
         <!-- The role x tool matrix. Deny-by-default: a role with no entry gets nothing. -->
@@ -876,7 +876,7 @@ interface is `ToolAccessPolicy` (scaffolded on this branch), which the service's
                     <grant group="model.read"/>
                     <grant group="data.read"/>
                     <grant group="agent.meta"/>
-                    <grant tool="task-tools.createTask"/>
+                    <grant tools="task-tools.createTask"/>
                 </grants>
                 <denies>
                     <deny group="model.structure"/>
@@ -897,7 +897,7 @@ interface is `ToolAccessPolicy` (scaffolded on this branch), which the service's
                 </denies>
             </role>
 
-            <!-- Privileged groups must be named explicitly; no wildcard reaches them. -->
+            <!-- Every group is reached only by a grant naming it, this one included. -->
             <role name="ApplicationDeveloper">
                 <grants>
                     <grant group="model.read"/>
@@ -939,9 +939,9 @@ Semantics, stated precisely:
 | `interaction` | Granted to every role and every run implicitly, whatever `<baseline>` says; a `<deny>` still wins |
 | Multiple held roles | Grants **union**; then denies subtract |
 | `<deny>` anywhere among the held roles | Wins over any `<grant>`, from any role |
-| `<grant group>` for a **privileged** group | Allowed, but only when the group is named explicitly |
-| A tool with no group and no explicit `<grant tool>` | Denied |
-| `<grant tool="prefix__*">` | Glob on the qualified tool name; may not match a privileged group's member (a wildcard cannot reach a privileged tool) |
+| A tool with no group and no `<grant tools>` naming it | Denied |
+| `<grant tools="a, b">` | Grants exactly the named tools, matched against any of `ToolIdentity.names()`. No pattern syntax: a tool the policy does not name is denied |
+| An entry naming a group and tools at once, or neither | Boot-time `context.error(...)` - it would otherwise look like a grant and be none |
 | Roles referenced must exist | Boot-time `context.error(...)`, same as `SecurityConfigurationService.processRights` does for unknown roles - a typo must not silently widen or narrow access |
 
 Note this is **static application configuration**, consistent with #29088's own choice
@@ -964,8 +964,8 @@ accident.
 
 One implementation consequence worth stating, because it is invisible in the XML: a tool has **three**
 names - the bare `Tool.name()` the model calls, the configured `{factory}.{tool}` name an administrator
-writes, and the provider-safe `factory__tool` form the registry keys it by. A `<grant tool="...">`
-matches any of them. Matching only the registry's form (the first implementation) made a correctly
+writes, and the provider-safe `factory__tool` form the registry keys it by. A `<grant tools="...">`
+entry matches any of them. Matching only the registry's form (the first implementation) made a correctly
 spelled dot-notation grant reach nothing at all.
 
 ### 4.2 Interaction with the per-agent tool list · **not built**
@@ -1047,14 +1047,14 @@ interactively can be committed to version control - the same round-trip administ
 
 1. Tool author sets `group` on `@ToolMethod`. If they forget: ungrouped -> denied to everyone ->
    appears in the review queue.
-2. If the group is **privileged**, no existing wildcard grant reaches it; an administrator must add it
-   deliberately.
+2. No existing grant reaches a group it does not name, so a tool in a new group needs an administrator
+   to add that group deliberately - a **privileged** one above all.
 3. If the group is ordinary, roles already granted that group get it. This is the deliberate trade-off
    that makes groups worth having: adding `getInvoiceById` to `data.read` grants it to everyone with
    `data.read`, and the compensating control is L2 - the tool still cannot return an object the user
    may not read.
 4. MCP tools arrive at runtime and cannot be annotated. They default to **ungrouped/denied** and must
-   be granted through `<tool-groups>` (section 4.1) - explicitly, per server, ideally into `egress`.
+   be granted through `<tool-groups>` (section 4.1) - explicitly, tool by tool, ideally into `egress`.
 
 ---
 

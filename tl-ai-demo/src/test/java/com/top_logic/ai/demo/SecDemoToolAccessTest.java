@@ -170,8 +170,8 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 		assertAllowed(EDITOR, AGENT_META_TOOL);
 	}
 
-	/** A privileged group named explicitly in the policy is granted; a wildcard could not reach it. */
-	public void testExplicitlyGrantedPrivilegedGroupsAreReachable() {
+	/** A group an escalation primitive lives in is reachable once the policy names it. */
+	public void testExplicitlyGrantedEscalationGroupsAreReachable() {
 		assertAllowed(READER, SCRIPT_TOOL);
 		assertAllowed(EDITOR, SCRIPT_TOOL);
 		assertAllowed(AUTHOR, AGENT_AUTHORING_TOOL);

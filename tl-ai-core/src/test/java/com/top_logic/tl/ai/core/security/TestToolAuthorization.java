@@ -184,7 +184,7 @@ public class TestToolAuthorization extends TestCase {
 	/** A per-tool grant reaches a tool the catalog cannot resolve. */
 	public void testPerToolGrantReachesUnresolvableToolName() {
 		ToolAccessPolicy policy = clerkPolicy();
-		policy.getToolAccess().get("Clerk").getGrants().add(tool("mcp__jira__createIssue"));
+		policy.getToolAccess().get("Clerk").getGrants().add(tools("mcp__jira__createIssue"));
 
 		assertTrue(auth(policy, Set.of("Clerk"), false).allows("mcp__jira__createIssue"));
 	}
@@ -198,7 +198,7 @@ public class TestToolAuthorization extends TestCase {
 	 */
 	public void testIdentitiesSupplyTheQualifiedName() {
 		ToolAccessPolicy policy = policy(role("Clerk",
-			grants(tool("instance-browser.listInstances")), grants()));
+			grants(tools("instance-browser.listInstances")), grants()));
 		Tool listInstances = tool("listInstances", "");
 
 		RoleToolAccess access = new RoleToolAccess(policy, DeclaredGroups.NONE);
@@ -274,7 +274,7 @@ public class TestToolAuthorization extends TestCase {
 	 * </p>
 	 */
 	public void testPerToolGrantDoesNotReachTheCapability() {
-		ToolAccessPolicy policy = policy(role("Clerk", grants(tool("executeTLScript")), grants()));
+		ToolAccessPolicy policy = policy(role("Clerk", grants(tools("executeTLScript")), grants()));
 		ToolAuthorization auth = auth(policy, Set.of("Clerk"), false);
 
 		assertNull("The tool is granted by name.", auth.denialReason(tool("executeTLScript", ToolGroups.SCRIPT)));
@@ -378,9 +378,9 @@ public class TestToolAuthorization extends TestCase {
 		return grant;
 	}
 
-	private static Grant tool(String name) {
+	private static Grant tools(String... names) {
 		Grant grant = TypedConfiguration.newConfigItem(Grant.class);
-		grant.setTool(name);
+		grant.setTools(List.of(names));
 		return grant;
 	}
 

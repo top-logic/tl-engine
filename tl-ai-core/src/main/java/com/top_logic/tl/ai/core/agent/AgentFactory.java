@@ -762,45 +762,60 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	}
 
 	/**
-	 * The generated {@code ### Available Skills} section, empty if the agent declares no skills.
+	 * The generated {@code ### Available Skills} section, followed by the run's capability notice.
+	 *
+	 * <p>
+	 * Either part can be absent. An agent that declares no skills gets no skill section - and still gets
+	 * the notice, because what it cannot do is not a property of its skills: it is the one thing its user
+	 * has to be told, and an agent whose run is unattended learns that here too. An unenforced run gets
+	 * no notice, so an application that has configured no {@code <tool-access>} policy keeps the section
+	 * byte for byte.
+	 * </p>
 	 *
 	 * @param skills
 	 *        Resolves a skill name to its definition, or <code>null</code> if there is none.
 	 */
 	static String skillCatalog(String agentName, List<String> skillNames, List<String> agentToolNames,
 			Function<String, SkillDefinition> skills, AgentCapabilities capabilities) {
-		if (skillNames.isEmpty()) {
-			return "";
-		}
-
 		StringBuilder catalog = new StringBuilder();
-		catalog.append("### Available Skills\n\n");
-		catalog.append("You have specialized skills. ");
-		catalog.append("Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
-
 		List<SkillDefinition> declared = new ArrayList<>();
-		for (String skillName : skillNames) {
-			SkillDefinition sd = skills.apply(skillName);
-			if (sd == null) {
-				continue;
+
+		if (!skillNames.isEmpty()) {
+			catalog.append("### Available Skills\n\n");
+			catalog.append("You have specialized skills. ");
+			catalog.append(
+				"Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
+
+			for (String skillName : skillNames) {
+				SkillDefinition sd = skills.apply(skillName);
+				if (sd == null) {
+					continue;
+				}
+				declared.add(sd);
+				String unusable = capabilities.unusableReason(sd);
+				if (unusable != null) {
+					// Silent capability loss is the failure mode this filter must not have: an
+					// operator asked why the agent "forgot how to do X" must find the answer here.
+					Logger.info("Agent '" + agentName + "': skill '" + sd.name()
+						+ "' is not offered to the current user - " + unusable, AgentFactory.class);
+					continue;
+				}
+				catalog.append("- `").append(sd.name()).append("`: ");
+				catalog.append(sd.description() != null ? sd.description() : "No description");
+				catalog.append("\n");
 			}
-			declared.add(sd);
-			String unusable = capabilities.unusableReason(sd);
-			if (unusable != null) {
-				// Silent capability loss is the failure mode this filter must not have: an
-				// operator asked why the agent "forgot how to do X" must find the answer here.
-				Logger.info("Agent '" + agentName + "': skill '" + sd.name()
-					+ "' is not offered to the current user - " + unusable, AgentFactory.class);
-				continue;
-			}
-			catalog.append("- `").append(sd.name()).append("`: ");
-			catalog.append(sd.description() != null ? sd.description() : "No description");
-			catalog.append("\n");
 		}
 
 		// Every declared skill, not only the offered ones: the capabilities behind a skill that was
 		// dropped entirely are exactly the ones worth naming.
-		catalog.append(capabilities.notice(agentToolNames, declared));
+		String notice = capabilities.notice(agentToolNames, declared);
+		if (catalog.isEmpty()) {
+			// The notice separates itself from the skill list above it with a leading newline. With no
+			// list, that newline would be the section's first character, and land as a blank line after
+			// the rule replacePlaceholderOrAppend writes.
+			return notice.stripLeading();
+		}
+		catalog.append(notice);
 
 		return catalog.toString();
 	}

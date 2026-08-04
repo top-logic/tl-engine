@@ -602,6 +602,15 @@ Four code fixes and one piece of prompt text address that:
   as being about the data model. The section also states all three absences and tells the agent not to
   blame a capability unless the message it got names one.
 
+  **Independent of whether the agent declares skills.** The notice is appended to the generated skill
+  catalog, and that catalog used to be empty for an agent with no skills - so the one agent shape with
+  nothing to load was the one shape never told which capabilities its user lacks, and (once a detached
+  subagent became a background run) never told that its own run is unattended either. What an agent
+  cannot do is not a property of its skills. An agent *with* skills gets the same bytes as before, and
+  one with neither skills nor anything to report still gets nothing at all - no empty heading and no
+  stray whitespace. This does change the system prompt of a skill-less agent under enforcement, which
+  is the fix.
+
 **This prompt text is UX, not a control**, and must not be read as closing anything: see section 2.2
 - all gates in this design are deterministic Java checks on the call path, never prompt instructions.
 It is emitted only where the run's mode `enforcesToolAccess()`, so a `LEGACY` prompt is byte-identical

@@ -11,7 +11,7 @@ import java.util.Set;
 import com.top_logic.basic.util.ResKey;
 
 /**
- * The built-in tool groups and their privilege classification.
+ * The built-in tool groups.
  *
  * <p>
  * A tool group is the unit an administrator grants: with more than thirty tools in a typical
@@ -45,18 +45,18 @@ public final class ToolGroups {
 	/** Modification of business data. */
 	public static final String DATA_WRITE = "data.write";
 
-	/** TL-Script execution and its reference tools. Privileged: expresses any data operation. */
+	/** TL-Script execution and its reference tools. Grant with care: expresses any data operation. */
 	public static final String SCRIPT = "script";
 
 	/**
-	 * Modification of the application model, annotations and layouts. Privileged: changes the shape
-	 * the security policy is written against.
+	 * Modification of the application model, annotations and layouts. Grant with care: changes the
+	 * shape the security policy is written against.
 	 */
 	public static final String MODEL_STRUCTURE = "model.structure";
 
 	/**
-	 * Creation and rewiring of agents, skills and script tools. Privileged: an agent that may edit
-	 * agents can grant itself any tool.
+	 * Creation and rewiring of agents, skills and script tools. Grant with care: an agent that may
+	 * edit agents can grant itself any tool.
 	 */
 	public static final String AGENT_AUTHORING = "agent.authoring";
 
@@ -80,16 +80,6 @@ public final class ToolGroups {
 	 * </p>
 	 */
 	public static final String EGRESS = "egress";
-
-	/**
-	 * Groups that a wildcard grant never reaches and that an administrator must name explicitly.
-	 *
-	 * <p>
-	 * Each of these is a general-purpose escalation primitive, so granting one is a deliberate
-	 * decision that is itself audited.
-	 * </p>
-	 */
-	public static final Set<String> PRIVILEGED = Set.of(SCRIPT, MODEL_STRUCTURE, AGENT_AUTHORING);
 
 	/**
 	 * Every group the framework itself ships.
@@ -122,17 +112,6 @@ public final class ToolGroups {
 
 	private ToolGroups() {
 		// Constant holder.
-	}
-
-	/**
-	 * Whether the named group is privileged.
-	 *
-	 * @param group
-	 *        The group name, may be <code>null</code>.
-	 * @return Whether a wildcard grant must not reach this group.
-	 */
-	public static boolean isPrivileged(String group) {
-		return group != null && PRIVILEGED.contains(group);
 	}
 
 	/**

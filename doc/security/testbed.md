@@ -210,7 +210,7 @@ Everything a human might want to see, in one place. The **Where** column says wh
 | **T3** | the whole matrix at once | any | probe | run `probe.tlscript` | one `ALLOWED` / `DENIED` line per capability. Log in as a second persona, run it again, diff the two |
 | **T4** | a narrower persona loses `data.read` | `secviewer1` | probe | run `probe.tlscript` | `model.read` ALLOWED, `data.read` DENIED - the pair that shows the groups are independent |
 | **T5** | the bare persona reaches only the implicit grant | `secbare1` | probe | run `probe.tlscript` | only the `interaction` line is ALLOWED; everything else DENIED. Nothing in the policy grants it - it is implicit |
-| **T6** | a privileged group must be named explicitly | `secauthor1` | console | `aiCallTool("agent-authoring.listAgents", null)` | ✅ allowed - `agent.authoring` is granted by name. No wildcard could have reached it |
+| **T6** | an escalation group is reached only by naming it | `secauthor1` | console | `aiCallTool("agent-authoring.listAgents", null)` | ✅ allowed - `agent.authoring` is granted by name. Nothing in the policy reaches a group it does not name |
 | **T7** | a group granted to nobody | any persona | console | `aiCallTool("model-modification.createClass", null)` | ❌ `requires the 'model.structure' capability`. Deny-by-default; no `<deny>` was written |
 | **T8** | an unclassified tool | any persona | console | `aiCallTool("mcp__anything__doThing", null)` | ❌ `belongs to no tool group and has no explicit grant`. A different problem from T7 - fixed by `<tool-groups>`, not by a role |
 | **T9** | committing a TL-Script costs `data.write` on top of `script` | `secreader1`, then `seceditor1` | console | ``aiCallTool("script-exec.executeTLScript", {"script": "new(`secdemo:Note`)", "withCommit": true})`` | ❌ for the reader: `executing TL-Script with withCommit=true requires the 'data.write' capability, which none of your roles grants.` ✅ for the editor: a new note. Same tool, same script, one capability apart. With `"withCommit": false` both succeed |
@@ -219,16 +219,16 @@ Everything a human might want to see, in one place. The **Where** column says wh
 ### 4.2 Classifying a TL-Script tool - the migration path
 
 A TL-Script tool carries no annotation, so it arrives ungrouped and is denied to everyone. The only way
-to give it a group is a `<tool-groups>` entry, and a `{factory}.*` wildcard covers a whole factory in one
-line. The fixture ships two otherwise identical tools to make that visible.
+to give it a group is to name it in a `<tool-groups>` entry - one tool at a time, since there is no
+pattern syntax. The fixture ships two otherwise identical tools to make that visible.
 
 | # | Behaviour | Persona | Where | Do this | You should see |
 |---|---|---|---|---|---|
 | **S1** | an unclassified script tool is denied | `secreader1` | console | `aiCallTool("secdemo-unclassified.countNotesUnclassified", null)` | ❌ `belongs to no tool group` |
-| **S2** | the wildcard makes the same tool reachable | `secreader1` | console | `aiCallTool("secdemo-reporting.countNotes", null)` | ✅ `3`. Same body, same mode - the only difference is one `<tool-groups>` line |
-| **S3** | classifying is not granting | `secviewer1` | console | `aiCallTool("secdemo-reporting.countNotes", null)` | ❌ `requires the 'data.read' capability`. The wildcard assigned a group; holding it is still the role's business |
-| **S4** | a second factory lands in its own group | `secwriter1` | console | `aiCallTool("secdemo-editing.addNote", {"title": "Writer note"})` | ✅ a new note. Then `secreader1` on the same call: ❌ `requires the 'data.write' capability` |
-| **S5** | see it break | any | edit config | comment out the `<tool-groups>` entry for `secdemo-reporting.*`, restart | S2 now behaves like S1 for everyone. This is the migration in reverse |
+| **S2** | classifying makes the same tool reachable | `secreader1` | console | `aiCallTool("secdemo-reporting.countNotes", null)` | ✅ `3`. Same body, same mode - the only difference is one name in one `<tool-groups>` entry |
+| **S3** | classifying is not granting | `secviewer1` | console | `aiCallTool("secdemo-reporting.countNotes", null)` | ❌ `requires the 'data.read' capability`. The entry assigned a group; holding it is still the role's business |
+| **S4** | a second tool lands in its own group | `secwriter1` | console | `aiCallTool("secdemo-editing.addNote", {"title": "Writer note"})` | ✅ a new note. Then `secreader1` on the same call: ❌ `requires the 'data.write' capability` |
+| **S5** | see it break | any | edit config | remove `secdemo-reporting.countNotes` from the `data.read` `<tool-groups>` entry, restart | S2 now behaves like S1 for everyone. This is the migration in reverse |
 
 > `secdemo-editing.addNote` writes. Run [`reset.tlscript`](harness/reset.tlscript) afterwards.
 >
@@ -339,7 +339,7 @@ Or one class at a time - the class name says which behaviour broke:
 |---|---|---|
 | `SecDemoToolAccessTest` | the invocation gate per persona; the baseline; privileged groups; deny-by-default; the administrator bypass; the `data.write` requirement on the TL-Script commit path | T1, T2, T4, T5, T6, T7, T8, T9, B1 |
 | `SecDemoSchemaFilterTest` | a denied tool's schema is absent from the provider request; the execution-mode half told apart from authorization; the kinds of absence told apart, each with the permitted-only available list | C6, C7, C8 |
-| `SecDemoScriptToolClassificationTest` | the `{factory}.*` wildcard end to end: unclassified is denied to everyone, classified is reachable, classifying is not granting | S1, S2, S3, S4 |
+| `SecDemoScriptToolClassificationTest` | `<tool-groups>` end to end: unclassified is denied to everyone, classified is reachable, classifying is not granting | S1, S2, S3, S4 |
 | `SecDemoCapabilityNoticeTest` | skills dropped / partially loaded / tool-less; what `loadSkill` announces; the capability notice | C1, C2, C3, C4, C5 |
 | `SecDemoBackgroundAccessTest` | the background ceiling in both directions; that it binds administrators; that an allowlisted `script` does not admit a commit; that an enforcing policy has an allowlist; the MCP refusal rule | A1, A2, A3, A4, A5, P1 |
 | `SecDemoModelSecurityTest` | the engine's model rights per persona, evaluated through TL-Script compiled with security on | M1, M2, M3, M4 |

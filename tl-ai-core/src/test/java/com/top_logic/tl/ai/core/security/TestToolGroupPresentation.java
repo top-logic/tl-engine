@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import java.util.Collection;
 import java.util.List;
 
 import junit.framework.Test;
@@ -154,6 +155,73 @@ public class TestToolGroupPresentation extends TestCase {
 	/** Without a role store and without a policy there is nothing to offer, and nothing breaks. */
 	public void testRoleOptionsSurviveWithoutARoleStore() {
 		assertEquals(List.of(), new AllSecurityRoles().apply());
+	}
+
+	/** A grant's tools are picked from the registered ones, and each explains itself. */
+	public void testGrantToolsAreAnExplainedChoice() {
+		assertToolOptions(property(Grant.class, Grant.TOOLS));
+	}
+
+	/** So are the tools a {@code <tool-groups>} entry classifies. */
+	public void testGroupMembershipToolsAreAnExplainedChoice() {
+		assertToolOptions(property(GroupMembership.class, GroupMembership.TOOLS));
+	}
+
+	/**
+	 * A tool the policy already names stays selectable even when nothing can call it.
+	 *
+	 * <p>
+	 * The state of an MCP server that is offline right now, and of an entry written ahead of its tool.
+	 * Both are legal, both keep working, and neither may be dropped by an open-and-save of the editor.
+	 * </p>
+	 */
+	public void testConfiguredToolStaysAmongTheOptions() {
+		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		GroupMembership egress = TypedConfiguration.newConfigItem(GroupMembership.class);
+		egress.setName(ToolGroups.EGRESS);
+		egress.setTools(List.of("mcp__offline__doThing"));
+		policy.getToolGroups().put(egress.getName(), egress);
+
+		RoleAccess role = TypedConfiguration.newConfigItem(RoleAccess.class);
+		role.setName("Clerk");
+		Grant grant = TypedConfiguration.newConfigItem(Grant.class);
+		grant.setTools(List.of("not-yet-written.aTool"));
+		role.getGrants().add(grant);
+		policy.getToolAccess().put(role.getName(), role);
+
+		assertEquals(List.of("mcp__offline__doThing", "not-yet-written.aTool", "registry.aTool"),
+			AllToolNames.union(List.of("registry.aTool"), policy));
+	}
+
+	/** A tool nobody registered keeps its name and explains nothing it cannot. */
+	public void testUnregisteredToolKeepsItsName() {
+		ToolNameResources resources = new ToolNameResources();
+
+		assertEquals("mcp__offline__doThing", resources.getLabel("mcp__offline__doThing"));
+		assertNull(resources.getTooltip("mcp__offline__doThing"));
+	}
+
+	/**
+	 * A tool property offers the registered tools, explains each of them, and takes several at once.
+	 *
+	 * <p>
+	 * A collection type is what makes the editor render a selection popup rather than a single choice
+	 * ({@code ValueEditor} asks exactly this question), so it is the thing to assert - the popup itself
+	 * is not reachable from a unit test.
+	 * </p>
+	 */
+	private static void assertToolOptions(PropertyDescriptor property) {
+		assertTrue("Property '" + property.getPropertyName() + "' must accept several tools, so that the"
+			+ " editor offers a selection rather than one choice; its type is " + property.getType(),
+			Collection.class.isAssignableFrom(property.getType()));
+
+		Options options = property.getAnnotation(Options.class);
+		assertNotNull("Property '" + property.getPropertyName() + "' must offer options.", options);
+		assertEquals(AllToolNames.class, options.fun());
+
+		OptionLabels labels = property.getAnnotation(OptionLabels.class);
+		assertNotNull("Property '" + property.getPropertyName() + "' must explain its options.", labels);
+		assertEquals(ToolNameResources.class, labels.value());
 	}
 
 	private static void assertOptionsWithLabels(PropertyDescriptor property) {

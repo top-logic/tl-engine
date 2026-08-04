@@ -23,7 +23,6 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ToolRef;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
@@ -177,30 +176,53 @@ public class TestRoleToolAccess extends TestCase {
 	/** An ungrouped tool becomes usable through an explicit per-tool grant. */
 	public void testPerToolGrantReachesUngroupedTool() {
 		RoleToolAccess access = access(policy(
-			role("Clerk", grants(tool("mcp__jira__createIssue")), grants())));
+			role("Clerk", grants(tools("mcp__jira__createIssue")), grants())));
 
 		assertTrue(access.check(Set.of("Clerk"), "mcp__jira__createIssue") instanceof Decision.Granted);
 	}
 
-	/** A wildcard grant never reaches a privileged group. */
-	public void testWildcardDoesNotReachPrivilegedGroup() {
+	/** One entry may name several tools; each of them is reached. */
+	public void testOneEntryNamesSeveralTools() {
 		RoleToolAccess access = access(policy(
-			role("Clerk", grants(tool("model-editor.*"), tool("instance-browser.*")), grants())));
+			role("Clerk",
+				grants(tools("mcp__jira__createIssue", "mcp__jira__addComment")), grants())));
 
-		assertTrue(access.check(Set.of("Clerk"), "model-editor.createClass") instanceof Decision.Denied);
-		assertTrue(access.check(Set.of("Clerk"), "instance-browser.listInstances") instanceof Decision.Granted);
+		assertTrue(access.check(Set.of("Clerk"), "mcp__jira__createIssue") instanceof Decision.Granted);
+		assertTrue(access.check(Set.of("Clerk"), "mcp__jira__addComment") instanceof Decision.Granted);
+		assertTrue("A third tool of the same server was not named.",
+			access.check(Set.of("Clerk"), "mcp__jira__deleteIssue") instanceof Decision.Denied);
 	}
 
-	/** A privileged tool named in full is granted - the administrator was explicit. */
-	public void testExplicitPrivilegedToolGrant() {
+	/**
+	 * A per-tool grant names a tool, and nothing that merely starts like it.
+	 *
+	 * <p>
+	 * There is no pattern syntax: a tool that appears later - a new Java tool, one a
+	 * {@code createScriptTool} call added to a factory, one a connected MCP server grew - is denied
+	 * until an administrator names it. That is the fail-closed reading, and it is what keeps the group
+	 * a tool costs a decision an administrator made rather than one whoever created the tool made.
+	 * </p>
+	 */
+	public void testPerToolGrantIsNotAPrefix() {
 		RoleToolAccess access = access(policy(
-			role("Developer", grants(tool("model-editor.createClass")), grants())));
+			role("Clerk", grants(tools("mcp__jira__create")), grants())));
+
+		assertTrue(access.check(Set.of("Clerk"), "mcp__jira__createIssue") instanceof Decision.Denied);
+		assertTrue(access.check(Set.of("Clerk"), "mcp__jira__create") instanceof Decision.Granted);
+	}
+
+	/** A tool an escalation group holds is granted by name, like any other. */
+	public void testPerToolGrantOfAnEscalationTool() {
+		RoleToolAccess access = access(policy(
+			role("Developer", grants(tools("model-editor.createClass")), grants())));
 
 		assertTrue(access.check(Set.of("Developer"), "model-editor.createClass") instanceof Decision.Granted);
+		assertTrue("Its sibling in the same group was not named.",
+			access.check(Set.of("Developer"), "model-editor.deleteModelElement") instanceof Decision.Denied);
 	}
 
-	/** A privileged group named in full is granted - the wildcard rule narrows nothing else. */
-	public void testExplicitPrivilegedGroupGrant() {
+	/** The group of an escalation tool grants every tool in it, as any group grant does. */
+	public void testGroupGrantOfAnEscalationGroup() {
 		RoleToolAccess access = access(policy(
 			role("Developer", grants(group(ToolGroups.MODEL_STRUCTURE)), grants())));
 
@@ -210,22 +232,17 @@ public class TestRoleToolAccess extends TestCase {
 		assertEquals(ToolGroups.MODEL_STRUCTURE, ((Decision.Granted) decision).viaGroup());
 	}
 
-	/**
-	 * A wildcard <em>deny</em> may reach a privileged group, unlike a wildcard grant.
-	 *
-	 * <p>
-	 * The asymmetry is the point: the rule exists so that a broad pattern cannot accidentally hand out
-	 * an escalation primitive. A deny can only ever narrow access, so there is nothing to protect
-	 * against.
-	 * </p>
-	 */
-	public void testWildcardDenyMayReachPrivilegedGroup() {
+	/** A per-tool deny carves one tool out of a group another held role grants. */
+	public void testPerToolDenyBeatsAnotherRolesGroupGrant() {
 		RoleToolAccess access = access(policy(
 			role("Developer", grants(group(ToolGroups.MODEL_STRUCTURE)), grants()),
-			role("Probation", grants(), grants(tool("model-editor.*")))));
+			role("Probation", grants(), grants(tools("model-editor.createClass")))));
 
 		assertTrue(access.check(Set.of("Developer", "Probation"), "model-editor.createClass")
 			instanceof Decision.Denied);
+		assertTrue("The rest of the group is untouched.",
+			access.check(Set.of("Developer", "Probation"), "model-editor.deleteModelElement")
+				instanceof Decision.Granted);
 	}
 
 	/** A deny by tool name beats a grant of that tool's whole group. */
@@ -233,7 +250,7 @@ public class TestRoleToolAccess extends TestCase {
 		RoleToolAccess access = access(policy(
 			role("Clerk",
 				grants(group(ToolGroups.DATA_READ)),
-				grants(tool("model-search.searchModel")))));
+				grants(tools("model-search.searchModel")))));
 
 		assertTrue(access.check(Set.of("Clerk"), "instance-browser.listInstances")
 			instanceof Decision.Granted);
@@ -274,9 +291,9 @@ public class TestRoleToolAccess extends TestCase {
 	 */
 	public void testPerToolGrantMatchesEitherName() {
 		RoleToolAccess byQualified = access(policy(
-			role("Clerk", grants(tool("instance-browser.listInstances")), grants())));
+			role("Clerk", grants(tools("instance-browser.listInstances")), grants())));
 		RoleToolAccess bySimple = access(policy(
-			role("Clerk", grants(tool("listInstances")), grants())));
+			role("Clerk", grants(tools("listInstances")), grants())));
 
 		ToolIdentity tool =
 			new ToolIdentity("listInstances", "instance-browser.listInstances", ToolGroups.DATA_READ);
@@ -295,7 +312,7 @@ public class TestRoleToolAccess extends TestCase {
 	 */
 	public void testPerToolGrantMatchesProviderSafeName() {
 		RoleToolAccess access = access(policy(
-			role("Clerk", grants(tool("instance-browser__listInstances")), grants())));
+			role("Clerk", grants(tools("instance-browser__listInstances")), grants())));
 
 		ToolIdentity tool =
 			new ToolIdentity("listInstances", "instance-browser.listInstances", ToolGroups.DATA_READ);
@@ -306,10 +323,7 @@ public class TestRoleToolAccess extends TestCase {
 	/** A group assignment in the policy matches either of a tool's two names, too. */
 	public void testConfiguredGroupMatchesEitherName() {
 		ToolAccessPolicy policy = policy(role("Clerk", grants(group(ToolGroups.EGRESS)), grants()));
-		GroupMembership egress = TypedConfiguration.newConfigItem(GroupMembership.class);
-		egress.setName(ToolGroups.EGRESS);
-		egress.getTools().put("gitea.createGiteaIssue", toolRef("gitea.createGiteaIssue"));
-		policy.getToolGroups().put(ToolGroups.EGRESS, egress);
+		classify(policy, ToolGroups.EGRESS, "gitea.createGiteaIssue");
 
 		ToolIdentity tool = new ToolIdentity("createGiteaIssue", "gitea.createGiteaIssue", null);
 
@@ -318,28 +332,24 @@ public class TestRoleToolAccess extends TestCase {
 	}
 
 	/**
-	 * A {@code {factory}.*} wildcard classifies a whole factory, which is how an administrator
-	 * grants TL-Script tools.
+	 * A {@code <tool-groups>} entry classifies an otherwise ungrouped TL-Script tool, which is how an
+	 * administrator makes one usable at all.
 	 *
 	 * <p>
 	 * A TL-Script tool has no annotation to carry a group, so it is ungrouped and denied to everyone
-	 * until the policy classifies it. Naming each one is not workable for a namespace agents author
-	 * into, so this is the mechanism that has to work - and it has to match the
-	 * <code>{factory}.{tool}</code> form, which is the name the tool is configured under and the one
-	 * an administrator writes.
+	 * until the policy classifies it. The entry has to match the <code>{factory}.{tool}</code> form,
+	 * which is the name the tool is configured under and the one an administrator writes.
 	 * </p>
 	 *
 	 * <p>
-	 * Note what this delegates: everything the factory ever contains gets the group, including tools
-	 * created later. See {@code doc/security/tool-access-configuration.md}.
+	 * Every tool is named, one by one. A second tool of the same factory is a second decision, and it
+	 * is denied until an administrator takes it - which is what keeps whoever may call
+	 * {@code createScriptTool} from choosing the capability their new tool costs.
 	 * </p>
 	 */
-	public void testFactoryWildcardClassifiesAnUngroupedScriptTool() {
+	public void testConfiguredGroupClassifiesAnUngroupedScriptTool() {
 		ToolAccessPolicy policy = policy(role("Clerk", grants(group(ToolGroups.DATA_READ)), grants()));
-		GroupMembership dataRead = TypedConfiguration.newConfigItem(GroupMembership.class);
-		dataRead.setName(ToolGroups.DATA_READ);
-		dataRead.getTools().put("reporting.*", toolRef("reporting.*"));
-		policy.getToolGroups().put(ToolGroups.DATA_READ, dataRead);
+		classify(policy, ToolGroups.DATA_READ, "reporting.listOpenTickets");
 
 		RoleToolAccess access = access(policy);
 
@@ -349,10 +359,10 @@ public class TestRoleToolAccess extends TestCase {
 		assertEquals(ToolGroups.DATA_READ, access.groupOf(scriptTool));
 		assertTrue(access.check(Set.of("Clerk"), scriptTool) instanceof Decision.Granted);
 
-		// A tool of another factory is untouched by the wildcard and stays ungrouped.
-		ToolIdentity other = new ToolIdentity("wipeEverything", "custom.wipeEverything", null);
-		assertNull(access.groupOf(other));
-		assertTrue(access.check(Set.of("Clerk"), other) instanceof Decision.Denied);
+		// A second tool of the same factory was not named, so it stays ungrouped and denied.
+		ToolIdentity sibling = new ToolIdentity("wipeEverything", "reporting.wipeEverything", null);
+		assertNull(access.groupOf(sibling));
+		assertTrue(access.check(Set.of("Clerk"), sibling) instanceof Decision.Denied);
 	}
 
 	/** A denial says which capability is missing, so the model and an operator can both act on it. */
@@ -383,11 +393,7 @@ public class TestRoleToolAccess extends TestCase {
 	/** The policy can group tools that carry no declaration, and overrides one that does. */
 	public void testConfiguredGroupOverridesDeclaredGroup() {
 		ToolAccessPolicy policy = policy(role("Clerk", grants(group(ToolGroups.EGRESS)), grants()));
-		GroupMembership egress = TypedConfiguration.newConfigItem(GroupMembership.class);
-		egress.setName(ToolGroups.EGRESS);
-		egress.getTools().put("mcp__jira__*", toolRef("mcp__jira__*"));
-		egress.getTools().put("model-search.searchModel", toolRef("model-search.searchModel"));
-		policy.getToolGroups().put(ToolGroups.EGRESS, egress);
+		classify(policy, ToolGroups.EGRESS, "mcp__jira__createIssue", "model-search.searchModel");
 
 		RoleToolAccess access = access(policy);
 
@@ -497,25 +503,18 @@ public class TestRoleToolAccess extends TestCase {
 		return grant;
 	}
 
-	private static Grant tool(String name) {
+	private static Grant tools(String... names) {
 		Grant grant = TypedConfiguration.newConfigItem(Grant.class);
-		grant.setTool(name);
+		grant.setTools(List.of(names));
 		return grant;
 	}
 
-	private static ToolRef toolRef(String name) {
-		ToolRef ref = TypedConfiguration.newConfigItem(ToolRef.class);
-		ref.setName(name);
-		return ref;
-	}
-
-	/** Guards the assumption that the three escalation primitives stay privileged. */
-	public void testPrivilegedGroups() {
-		assertEquals(Set.of(ToolGroups.SCRIPT, ToolGroups.MODEL_STRUCTURE, ToolGroups.AGENT_AUTHORING),
-			ToolGroups.PRIVILEGED);
-		assertTrue(ToolGroups.isPrivileged(ToolGroups.SCRIPT));
-		assertFalse(ToolGroups.isPrivileged(ToolGroups.DATA_READ));
-		assertFalse(ToolGroups.isPrivileged(null));
+	/** Puts the named tools into the named group of the given policy. */
+	private static void classify(ToolAccessPolicy policy, String group, String... toolNames) {
+		GroupMembership membership = TypedConfiguration.newConfigItem(GroupMembership.class);
+		membership.setName(group);
+		membership.setTools(List.of(toolNames));
+		policy.getToolGroups().put(group, membership);
 	}
 
 	/** A tool with neither a declared nor a configured group has none. */

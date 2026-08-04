@@ -21,8 +21,8 @@
 	  * six security roles and the groups carrying them - the persona matrix,
 	  * the <security-config> that the engine's ModelAccessRights evaluates,
 	  * the <tool-access> policy that tl-ai's tool layer evaluates,
-	  * three TL-Script tool factories, two of them classified by a factory wildcard and one
-	    deliberately left unclassified,
+	  * three TL-Script tool factories, the tool of two of them classified in <tool-groups> and the
+	    tool of the third deliberately left unclassified,
 	  * the component (layout) access every persona needs to reach the agent chat and the
 	    TL-Script console,
 	  * SecDemoSetupService, which seeds the persona accounts and a few instances.
@@ -123,13 +123,13 @@
 
 			A TL-Script tool has no @ToolMethod annotation to carry a group, so it arrives
 			ungrouped and is therefore denied to everyone under an enforcing policy. The only way
-			to give it one is a <tool-groups> entry, typically a "{factory}.*" wildcard - see the
-			<tool-groups> block below. That is the migration path every application with script
-			tools will have to walk.
+			to give it one is to name it in a <tool-groups> entry - see the <tool-groups> block
+			below. That is the migration path every application with script tools will have to
+			walk.
 
 			"secdemo-reporting.countNotes" and "secdemo-unclassified.countNotesUnclassified" have
 			the same body, the same mode and the same parameters. The single difference between
-			them is that a wildcard classifies the first factory and not the second, so the pair
+			them is that the first is named in <tool-groups> and the second is not, so the pair
 			isolates the mechanism exactly.
 		-->
 		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
@@ -142,8 +142,8 @@
 									mode="READ"
 								>
 									<description>
-										<en>Counts the notes visible to the acting account. Classified into data.read by a factory wildcard.</en>
-										<de>Zählt die für das ausführende Konto sichtbaren Notizen. Wird über einen Factory-Platzhalter der Gruppe data.read zugeordnet.</de>
+										<en>Counts the notes visible to the acting account. Named in tool-groups, which puts it in data.read.</en>
+										<de>Zählt die für das ausführende Konto sichtbaren Notizen. Ist in tool-groups eingetragen und gehört damit zur Gruppe data.read.</de>
 									</description>
 									<implementation>all(`secdemo:Note`).size()</implementation>
 								</tool>
@@ -157,8 +157,8 @@
 									mode="DATA_WRITE"
 								>
 									<description>
-										<en>Creates a note with the given title. Classified into data.write by a factory wildcard.</en>
-										<de>Erzeugt eine Notiz mit dem angegebenen Titel. Wird über einen Factory-Platzhalter der Gruppe data.write zugeordnet.</de>
+										<en>Creates a note with the given title. Named in tool-groups, which puts it in data.write.</en>
+										<de>Erzeugt eine Notiz mit dem angegebenen Titel. Ist in tool-groups eingetragen und gehört damit zur Gruppe data.write.</de>
 									</description>
 									<parameters>
 										<parameter name="title"
@@ -221,39 +221,33 @@
 			exercise the *model* rights ask the agent to use the TL-Script tool, and denying it at the
 			tool layer would stop them before the layer they are about.
 
-			"script", "model.structure" and "agent.authoring" are privileged groups: no wildcard grant
-			reaches them and an administrator must name them explicitly. "model.structure" is granted to
-			nobody, so the model editor is denied to every persona - deny-by-default, no <deny> needed.
-			"egress" is granted to nobody either.
+			Nothing is reached implicitly: every group and every single tool a persona may use is named
+			above. "model.structure" is granted to nobody, so the model editor is denied to every
+			persona - deny-by-default, no <deny> needed. "egress" is granted to nobody either.
 
 			See doc/security/tool-access-configuration.md and doc/security/testbed.md.
 		-->
 		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
 			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService">
 				<!--
-					A TL-Script tool declares no group, so this is the only place it can get one. One
-					line per factory classifies everything that factory contributes.
+					A TL-Script tool declares no group, so this is the only place it can get one. Every
+					tool is named, one at a time: there is no pattern syntax, and a tool that appears
+					later - one a createScriptTool call adds to a factory, one a connected MCP server
+					grows - is denied until an administrator names it here. That is deliberate, and it
+					is what keeps the capability a tool costs a decision the administrator made rather
+					than one whoever created the tool made.
 
-					"secdemo-unclassified" is deliberately absent: an unclassified tool must stay
-					denied to everyone, and the pair of otherwise identical tools is what proves the
-					wildcard is what makes the difference.
-
-					Note what the administrator guide warns about this mechanism: mapping a factory
-					delegates classification authority over that namespace, because createScriptTool
-					lets its caller choose the factory freely. Both factories mapped here are shipped
-					in this aspect; the factory agents author into by default ("custom") is left out.
+					"secdemo-unclassified.countNotesUnclassified" is deliberately absent: an
+					unclassified tool must stay denied to everyone, and the pair of otherwise
+					identical tools is what proves this one line is what makes the difference.
 				-->
 				<tool-groups>
-					<group name="data.read">
-						<tools>
-							<tool name="secdemo-reporting.*"/>
-						</tools>
-					</group>
-					<group name="data.write">
-						<tools>
-							<tool name="secdemo-editing.*"/>
-						</tools>
-					</group>
+					<group name="data.read"
+						tools="secdemo-reporting.countNotes"
+					/>
+					<group name="data.write"
+						tools="secdemo-editing.addNote"
+					/>
 				</tool-groups>
 
 				<tool-access>

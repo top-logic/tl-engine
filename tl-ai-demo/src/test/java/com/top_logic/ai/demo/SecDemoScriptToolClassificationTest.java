@@ -16,7 +16,7 @@ import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
- * Classifying a TL-Script tool with a {@code {factory}.*} wildcard, end to end.
+ * Classifying a TL-Script tool in {@code <tool-groups>}, end to end.
  *
  * <p>
  * A TL-Script tool has no {@code @ToolMethod} annotation to carry a group, so it arrives ungrouped
@@ -25,13 +25,13 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * the <em>user</em> holds, so whoever picks the group picks which capability it costs to call the
  * tool, and {@code createScriptTool} is reachable with {@code agent.authoring} rather than with
  * {@code data.write}. Classification therefore stays with the administrator, in
- * {@code <tool-groups>}, where one {@code {factory}.*} line covers a whole factory.
+ * {@code <tool-groups>}, one named tool at a time.
  * </p>
  *
  * <p>
  * That mechanism is the migration path every application with script tools has to walk, which is why
  * it is tested against a real boot rather than only against a hand-built policy
- * ({@code TestRoleToolAccess.testFactoryWildcardClassifiesAnUngroupedScriptTool} does the latter).
+ * ({@code TestRoleToolAccess.testConfiguredGroupClassifiesAnUngroupedScriptTool} does the latter).
  * The fixture ships three one-tool factories:
  * </p>
  * <ul>
@@ -42,9 +42,9 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  *
  * <p>
  * The first and the last have the same body, the same mode, the same parameters and the same
- * description apart from one sentence. The single difference between them is the wildcard, so the
- * pair isolates the mechanism: whatever makes one reachable and the other not can only be the
- * classification.
+ * description apart from one sentence. The single difference between them is one name in one
+ * {@code <tool-groups>} entry, so the pair isolates the mechanism: whatever makes one reachable and
+ * the other not can only be the classification.
  * </p>
  */
 public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
@@ -94,15 +94,15 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * The other half: the wildcard makes the otherwise identical tool reachable to whoever holds the
-	 * group it maps to.
+	 * The other half: naming the tool makes the otherwise identical tool reachable to whoever holds the
+	 * group it is named in.
 	 *
 	 * <p>
-	 * This pair is the whole test. One line of {@code <tool-groups>} is the difference between a script
-	 * tool nobody can call and a script tool the {@code data.read} holders can.
+	 * This pair is the whole test. One name in one {@code <tool-groups>} entry is the difference between
+	 * a script tool nobody can call and a script tool the {@code data.read} holders can.
 	 * </p>
 	 */
-	public void testFactoryWildcardMakesTheSameToolReachable() {
+	public void testClassificationMakesTheSameToolReachable() {
 		assertAllowed(READER, CLASSIFIED_READ_SCRIPT_TOOL);
 		assertDenied(READER, UNCLASSIFIED_SCRIPT_TOOL, "no tool group");
 	}
@@ -112,9 +112,9 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 	 * denied.
 	 *
 	 * <p>
-	 * {@code secviewer1} holds {@code model.read} and not {@code data.read}, so the wildcard that
-	 * classifies the factory does nothing for it. Were classification a grant in disguise, mapping a
-	 * factory would hand its tools to everybody.
+	 * {@code secviewer1} holds {@code model.read} and not {@code data.read}, so the entry that
+	 * classifies the tool does nothing for it. Were classification a grant in disguise, classifying a
+	 * tool would hand it to everybody.
 	 * </p>
 	 */
 	public void testClassifyingIsNotGranting() {
@@ -137,7 +137,7 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 		assertAllowed(WRITER, CLASSIFIED_WRITE_SCRIPT_TOOL);
 		assertAllowed(WRITER, CLASSIFIED_READ_SCRIPT_TOOL);
 
-		// secreader1 holds data.read and not data.write, so the wildcards do not bleed into each other.
+		// secreader1 holds data.read and not data.write, so the two groups do not bleed into each other.
 		// secEditor is deliberately not the contrast here: it holds data.write, because committing
 		// through executeTLScript costs that capability and the matrix promises it can create a note.
 		assertDenied(READER, CLASSIFIED_WRITE_SCRIPT_TOOL, ToolGroups.DATA_WRITE);
@@ -145,17 +145,17 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * A wildcard reaches every name a tool has, which is why one line per factory is enough.
+	 * A classification reaches every name a tool has, which is why one entry is enough.
 	 *
 	 * <p>
 	 * A tool has three: the bare name the model calls, the {@code {factory}.{tool}} name an
 	 * administrator writes, and the provider-safe {@code factory__tool} form the registry keys it by.
-	 * The wildcard is written in the second form, and the check that matters happens on the
-	 * {@link Tool} object the agent loop holds - so if matching only looked at one of the three, this
-	 * would fail while the unit test still passed.
+	 * The {@code <tool-groups>} entry is written in the second form, and the check that matters happens
+	 * on the {@link Tool} object the agent loop holds - so if matching only looked at one of the three,
+	 * this would fail while the unit test still passed.
 	 * </p>
 	 */
-	public void testTheWildcardMatchesTheToolTheAgentLoopHolds() {
+	public void testTheClassificationMatchesTheToolTheAgentLoopHolds() {
 		Tool tool = tool(CLASSIFIED_READ_SCRIPT_TOOL);
 
 		assertEquals("The bare name the model calls is not the configured name.",

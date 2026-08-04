@@ -108,18 +108,18 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	public static final String EGRESS_TOOL = "web-fetch.webFetch";
 
 	/**
-	 * A TL-Script tool the policy classifies into {@code data.read} with a factory wildcard.
+	 * A TL-Script tool the policy names in its {@code data.read} {@code <tool-groups>} entry.
 	 *
 	 * @see #UNCLASSIFIED_SCRIPT_TOOL
 	 */
 	public static final String CLASSIFIED_READ_SCRIPT_TOOL = "secdemo-reporting.countNotes";
 
-	/** A TL-Script tool the policy classifies into {@code data.write} with a factory wildcard. */
+	/** A TL-Script tool the policy names in its {@code data.write} {@code <tool-groups>} entry. */
 	public static final String CLASSIFIED_WRITE_SCRIPT_TOOL = "secdemo-editing.addNote";
 
 	/**
 	 * The same TL-Script tool as {@link #CLASSIFIED_READ_SCRIPT_TOOL} in every respect except that
-	 * no {@code <tool-groups>} entry names its factory.
+	 * no {@code <tool-groups>} entry names it.
 	 */
 	public static final String UNCLASSIFIED_SCRIPT_TOOL = "secdemo-unclassified.countNotesUnclassified";
 

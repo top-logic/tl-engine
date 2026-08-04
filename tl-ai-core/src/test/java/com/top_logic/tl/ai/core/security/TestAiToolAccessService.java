@@ -175,6 +175,50 @@ public class TestAiToolAccessService extends TestCase {
 		assertEquals(Set.of(), AiToolAccessService.unknownGroups(policy, known));
 	}
 
+	/**
+	 * A permission entry that says two things at once is refused.
+	 *
+	 * <p>
+	 * A group and a tool list in the same entry are two decisions written as one, and nothing about the
+	 * XML says which the author meant. It is a boot error rather than an interpretation, for the same
+	 * reason an unknown role name is.
+	 * </p>
+	 */
+	public void testEntryNamingAGroupAndToolsIsRefused() {
+		Grant both = group(ToolGroups.DATA_READ);
+		both.setTools(List.of("instance-browser.listInstances"));
+		ToolAccessPolicy policy = policy(role("Clerk", grants(both), grants()));
+
+		List<String> problems = AiToolAccessService.underspecifiedEntries(policy);
+
+		assertEquals(String.valueOf(problems), 1, problems.size());
+		assertTrue(problems.get(0), problems.get(0).contains("role 'Clerk' <grants> entry 1"));
+		assertTrue(problems.get(0), problems.get(0).contains(ToolGroups.DATA_READ));
+	}
+
+	/** An entry that says nothing is refused too: it reaches nothing and admits it nowhere. */
+	public void testEntryNamingNothingIsRefused() {
+		ToolAccessPolicy policy = policy();
+		policy.getBaseline().add(TypedConfiguration.newConfigItem(Grant.class));
+		allow(policy, TypedConfiguration.newConfigItem(Grant.class));
+
+		assertEquals(List.of("<baseline> entry 1 names nothing",
+			"<background-allowlist> entry 1 names nothing"),
+			AiToolAccessService.underspecifiedEntries(policy));
+	}
+
+	/** A policy whose entries each say one thing reports nothing. */
+	public void testWellFormedEntriesAreAccepted() {
+		Grant byName = TypedConfiguration.newConfigItem(Grant.class);
+		byName.setTools(List.of("mcp__jira__createIssue", "mcp__jira__addComment"));
+		ToolAccessPolicy policy = policy(
+			role("Clerk", grants(group(ToolGroups.DATA_READ), byName), grants(group(ToolGroups.EGRESS))));
+		policy.getBaseline().add(group(ToolGroups.MODEL_READ));
+		allow(policy, group(ToolGroups.DATA_READ));
+
+		assertEquals(List.of(), AiToolAccessService.underspecifiedEntries(policy));
+	}
+
 	private static ToolAccessPolicy policy(RoleAccess... roles) {
 		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
 		for (RoleAccess role : roles) {

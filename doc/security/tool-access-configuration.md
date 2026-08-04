@@ -251,6 +251,14 @@ This is a **ceiling**, not a grant: a background run gets the intersection of th
 this list. It applies to administrators too, because the missing approval prompt is the reason for it,
 not the user's authority.
 
+**A detached subagent is a background run.** `spawn_subagent` is fire-and-forget: it hands the calling
+agent a handle, the chat turn ends, and the subagent works on with nobody watching it - so this list
+caps it as well. Expect that: a subagent may not be able to do what the same agent does when you talk
+to it directly in the chat. The drop is logged at INFO with the subagent's id and the capabilities it
+lost, and the subagent's own prompt says which ones and that the reason is the allowlist rather than
+the account's roles. If you want subagents to write, put the capability on this list. A *synchronous*
+delegation is unaffected - it finishes inside the turn you are watching.
+
 **`script` on this list does not admit writes.** Committing through `executeTLScript` needs
 `data.write`, and the ceiling is applied to that capability exactly as it is to a tool - so a list
 carrying `script` without `data.write` lets an unattended run *read* with TL-Script and refuses to let

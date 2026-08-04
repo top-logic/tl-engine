@@ -224,8 +224,12 @@ public class AgentCapabilities {
 		StringBuilder notice = new StringBuilder();
 		notice.append("\n### Capability Limits\n\n");
 		notice.append("Your tool list is filtered for the current user. A tool that is not in it is"
-			+ " either one this user is not permitted to use or one whose skill is not loaded yet -"
-			+ " never a defect, and never something to search for.\n\n");
+			+ " absent for exactly one of three reasons, and the call that fails says which:\n\n"
+			+ "- this user is not permitted to use it, which is final;\n"
+			+ "- it belongs to a skill you have not loaded yet, so load that skill;\n"
+			+ "- this agent does not carry it at all, which only an administrator can change.\n\n"
+			+ "Never a defect, and never something to search for. Do not name a capability as the"
+			+ " reason unless the message you got names one.\n\n");
 		if (nothingDenied) {
 			// Only when nothing at all was withheld. A denied tool that is ungrouped has no
 			// capability name to report, and claiming the user holds everything would be a lie.

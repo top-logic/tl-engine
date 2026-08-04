@@ -695,6 +695,10 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 				skillToolOverlay.register(tool);
 			}
 			dynamicCatalog.addOverlay(skillToolOverlay.freeze());
+
+			// Not for lookup - so that a call for one of these before its skill is loaded is answered
+			// with "load that skill" rather than with "no such tool".
+			dynamicCatalog.setReachableBySkill(skillTool.declaredToolNames());
 		}
 
 		return dynamicCatalog;

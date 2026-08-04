@@ -21,6 +21,7 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
@@ -38,10 +39,18 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  *
  * <p>
  * The two questions are deliberately in one class, because they are two halves of the same promise:
- * the model is shown exactly the tools it may call, and a name outside that set is answered with
- * "there is no such tool, here is what there is" rather than with a permission message. Following the
- * hint can therefore never walk into a denial, and a typo cannot disclose the name of a capability
- * the user does not hold.
+ * the model is shown exactly the tools it may call, and a name outside that set is answered with what
+ * is actually the matter rather than with a permission message. Following the hint can therefore never
+ * walk into a denial, and a typo cannot disclose the name of a capability the user does not hold.
+ * </p>
+ *
+ * <p>
+ * A name the catalog cannot resolve takes one of four answers, and which one it gets is the whole
+ * point: no such tool (pick another name), a tool of an unloaded skill (load it), a tool the
+ * application has but this agent does not carry (ask an administrator), and a tool the application has
+ * that this user may not use (a refusal, naming the capability). Only the last is a permission problem,
+ * and answering one of the others as if it were is what
+ * {@link #testExistingToolNoAgentCarriesIsNotAPermissionProblem()} exists for.
  * </p>
  */
 public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
@@ -181,6 +190,62 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 			text.contains("Permission denied"));
 		assertFalse("...nor name a capability the user does not hold: " + text,
 			text.contains("capability"));
+	}
+
+	/**
+	 * A tool that exists but that this agent does not carry is not a permission problem either.
+	 *
+	 * <p>
+	 * The observation this pins, from a real session, as a persona that <b>holds</b>
+	 * {@code data.write}: <em>"This agent lacks the {@code agent.authoring} capability, which is
+	 * required to load and use agentic authoring tools."</em> The real cause was that
+	 * {@code secdemo-editing.addNote} is in no framework agent's {@code <tools>} list and in no
+	 * skill, so it never reached the catalog - a third kind of absence the model had no wording for
+	 * and filled in with the nearest capability it could find.
+	 * </p>
+	 *
+	 * <p>
+	 * {@code secwriter1} is the sharpest persona for it: it is granted {@code data.write}, so a
+	 * capability sentence here would be provably false.
+	 * </p>
+	 */
+	public void testExistingToolNoAgentCarriesIsNotAPermissionProblem() {
+		assertNotNull("Precondition: the tool exists in this application.",
+			tool(CLASSIFIED_WRITE_SCRIPT_TOOL));
+		assertAllowed(WRITER, CLASSIFIED_WRITE_SCRIPT_TOOL);
+
+		String text = resultTextOf("call-3", CLASSIFIED_WRITE_SCRIPT_TOOL, WRITER);
+
+		assertTrue("The message must say the tool exists: " + text,
+			text.contains("exists in this application"));
+		assertTrue("...and that this agent is what does not carry it: " + text,
+			text.contains("not carried by this agent"));
+		assertTrue("...and who can change that: " + text, text.contains("administrator"));
+		assertFalse("A tool this persona is granted must not be reported as unknown: " + text,
+			text.contains("Unknown tool"));
+		assertFalse("...nor as a permission problem: " + text, text.contains("Permission denied"));
+		assertFalse("...nor blamed on a capability: " + text, text.contains("capability"));
+	}
+
+	/**
+	 * The same tool, asked for by a persona that really is denied it, does name the capability.
+	 *
+	 * <p>
+	 * The counterpart of the case above, and the reason it is safe to say "not a permission problem"
+	 * there: the answer distinguishes the two rather than picking one for everybody. A capability is
+	 * named only where the application has the tool and this user may not use it - never for a name
+	 * that resolves nowhere, so a typo still discloses nothing.
+	 * </p>
+	 */
+	public void testExistingToolThisPersonaMayNotUseIsRefusedByName() {
+		String text = resultTextOf("call-4", CLASSIFIED_WRITE_SCRIPT_TOOL, READER);
+
+		assertTrue("secreader1 holds no data.write, so this is a refusal: " + text,
+			text.contains("Permission denied"));
+		assertTrue("...and it must name the capability an operator has to grant: " + text,
+			text.contains(ToolGroups.DATA_WRITE));
+		assertFalse("A tool that exists must not be reported as unknown: " + text,
+			text.contains("Unknown tool"));
 	}
 
 	/**

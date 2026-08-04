@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 
@@ -33,6 +34,8 @@ public class DynamicToolCatalog implements ToolRegistry {
 
 	private final CopyOnWriteArrayList<ToolCatalog> _overlays = new CopyOnWriteArrayList<>();
 
+	private Set<String> _reachableBySkill = Set.of();
+
 	/**
 	 * Creates a dynamic catalog backed by the given frozen base catalog.
 	 */
@@ -41,6 +44,27 @@ public class DynamicToolCatalog implements ToolRegistry {
 			throw new IllegalArgumentException("Base catalog must be frozen.");
 		}
 		_base = base;
+	}
+
+	/**
+	 * Declares which tools an unloaded skill of this agent would bring.
+	 *
+	 * <p>
+	 * Not used for lookup - a skill's tools only become callable when it is loaded. It is used to
+	 * tell the model <em>why</em> a tool is absent: a name in this set means "load the skill", a name
+	 * outside it means this agent does not carry the tool at all.
+	 * </p>
+	 *
+	 * @param names
+	 *        Every tool name declared by any skill this agent offers.
+	 */
+	public void setReachableBySkill(Set<String> names) {
+		_reachableBySkill = Set.copyOf(names);
+	}
+
+	@Override
+	public boolean isReachableBySkill(String name) {
+		return _reachableBySkill.contains(name);
 	}
 
 	/**

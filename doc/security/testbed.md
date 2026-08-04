@@ -234,11 +234,10 @@ line. The fixture ships two otherwise identical tools to make that visible.
 >
 > **These are console scenarios, not chat scenarios**, and deliberately so: no framework agent lists
 > the fixture's script tools in its `<tools>`, so `TL_SingleAgent` cannot call them however the policy
-> is configured. Asking it to in the chat produces a confident but wrong explanation - it names a
-> capability the persona happens to lack rather than saying the tool is not in its own tool list, which
-> is the one of the three absences the [capability notice](#43-what-the-agent-is-told---skills-and-the-capability-notice)
-> cannot distinguish. `aiCallTool` in the console has no agent tool list in the way, so it shows the
-> classification decision and nothing else.
+> is configured. Asking it to in the chat now says exactly that (scenario **C7**) rather than naming a
+> capability the persona happens to lack, but it still tells you nothing about the classification.
+> `aiCallTool` in the console has no agent tool list in the way, so it shows the classification
+> decision and nothing else.
 
 ### 4.3 What the agent is told - skills and the capability notice
 
@@ -251,8 +250,10 @@ This is user experience, not a control: it is why the agent can say *"you lack `
 | **C2** | the same skill is usable one persona over | `secwriter1` | chat | the same prompt | the skill loads and `createTask` runs |
 | **C3** | a partly denied skill survives | `secviewer1` | chat | ask *"Load the model-exploration skill, then list the instances of secdemo:Note."* | the skill loads and announces its `model.read` tools only. `listInstances` is not among them, and the agent says it lacks `data.read` |
 | **C4** | a tool-less skill always survives | `secbare1` | chat | ask *"Which skills do you have?"* | the tool-less ones (`TL_promptModelExplorer`, `TL_promptModelEditor`, `TL_tlScriptInstanceCreation`) are still offered; every skill with a tool is gone |
-| **C5** | the prompt names the missing capabilities | `secviewer1` | chat | ask *"What can you not do for me, and what capability is missing?"* | the reply names capability group names such as `data.read`. They come from the generated `### Capability Limits` section, which lists exactly the groups the persona lacks |
+| **C5** | the prompt names the missing capabilities | `secviewer1` | chat | ask *"What can you not do for me, and what capability is missing?"* | the reply names capability group names such as `data.read`, each with the one-line explanation the `### Capability Limits` section carries. That section lists exactly the groups the persona lacks |
 | **C6** | a hallucinated tool name is not a permission problem | any | chat | ask *"Call the tool listEverythingEverywhere."* | `Unknown tool: 'listEverythingEverywhere'. Available: [...]`, and the list holds exactly the tools this persona may call. Never a capability message |
+| **C7** | a tool that exists but no agent carries is not one either | `secwriter1` | chat | ask *"Use secdemo-editing.addNote to add a note titled Chat note."* | the reply says the tool exists but is not carried by this agent and that an administrator would have to add it - **not** that a capability is missing. `secwriter1` holds `data.write`, so a capability answer here would be provably false. The same call works from the console (**S4**) |
+| **C8** | ...and a persona that really is denied it still hears why | `secreader1` | chat | the same prompt | `Permission denied: ... requires the 'data.write' capability`. The pair with **C7** is the point: one name, two personas, two different true answers |
 
 ### 4.4 Unattended runs - the background allowlist
 
@@ -337,7 +338,7 @@ Or one class at a time - the class name says which behaviour broke:
 | Class | Covers | Scenarios |
 |---|---|---|
 | `SecDemoToolAccessTest` | the invocation gate per persona; the baseline; privileged groups; deny-by-default; the administrator bypass; the `data.write` requirement on the TL-Script commit path | T1, T2, T4, T5, T6, T7, T8, T9, B1 |
-| `SecDemoSchemaFilterTest` | a denied tool's schema is absent from the provider request; the execution-mode half told apart from authorization; `Unknown tool` with the permitted-only available list | C6 |
+| `SecDemoSchemaFilterTest` | a denied tool's schema is absent from the provider request; the execution-mode half told apart from authorization; the kinds of absence told apart, each with the permitted-only available list | C6, C7, C8 |
 | `SecDemoScriptToolClassificationTest` | the `{factory}.*` wildcard end to end: unclassified is denied to everyone, classified is reachable, classifying is not granting | S1, S2, S3, S4 |
 | `SecDemoCapabilityNoticeTest` | skills dropped / partially loaded / tool-less; what `loadSkill` announces; the capability notice | C1, C2, C3, C4, C5 |
 | `SecDemoBackgroundAccessTest` | the background ceiling in both directions; that it binds administrators; that an allowlisted `script` does not admit a commit; that an enforcing policy has an allowlist; the MCP refusal rule | A1, A2, A3, A4, A5, P1 |

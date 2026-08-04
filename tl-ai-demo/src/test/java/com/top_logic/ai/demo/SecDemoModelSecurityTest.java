@@ -139,9 +139,10 @@ public class SecDemoModelSecurityTest extends BasicTestCase {
 	 * The writer persona has the same data rights as the editor: it may create a note.
 	 *
 	 * <p>
-	 * What distinguishes the two is the <em>tool</em> layer - the writer holds {@code data.write} and
-	 * {@code workspace} where the editor holds {@code script} and {@code agent.meta} - so giving them
-	 * the same data rights keeps that difference attributable to the policy under test.
+	 * What distinguishes the two is the <em>tool</em> layer - the writer holds {@code workspace} where
+	 * the editor holds {@code script} and {@code agent.meta}, and only the editor can therefore create
+	 * this note through TL-Script - so giving them the same data rights keeps that difference
+	 * attributable to the policy under test.
 	 * </p>
 	 */
 	public void testWriterCreatesNote() {

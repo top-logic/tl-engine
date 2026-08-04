@@ -11,10 +11,13 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor.ExecutionResult;
 import com.top_logic.tl.ai.core.tools.script.messages.ErrorResult;
 import com.top_logic.tl.ai.core.tools.script.messages.ValidationResult;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -28,9 +31,16 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * </p>
  *
  * @see #validateTLScript(String)
- * @see #executeTLScript(String, Boolean, List)
+ * @see #executeTLScript(String, Boolean, List, ToolExecutionContext)
  */
 public class TLScriptTool {
+
+	/**
+	 * What a refused commit says it was trying to do.
+	 *
+	 * @see #executeTLScript(String, Boolean, List, ToolExecutionContext)
+	 */
+	private static final String COMMIT_OPERATION = "executing TL-Script with withCommit=true";
 
 	/**
 	 * Configuration for {@link TLScriptTool}.
@@ -108,20 +118,25 @@ public class TLScriptTool {
 	 *        The TLScript code to execute.
 	 * @param withCommit
 	 *        If true, execute within transaction and commit changes; if false (default), discard
-	 *        modifications.
+	 *        modifications. Requires the {@link ToolGroups#DATA_WRITE} capability in addition to the
+	 *        {@link ToolGroups#SCRIPT} the tool itself is classified as.
 	 * @param args
 	 *        Optional arguments to pass to the script ($arg1, $arg2, ...).
+	 * @param context
+	 *        Injected execution context, supplying the capability check for the commit path.
 	 * @return JSON object containing execution result or error details.
 	 */
 	@ToolMethod(description = "Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications.", mode = ToolMode.DATA_WRITE, group = ToolGroups.SCRIPT)
 	public String executeTLScript(
 			@P("TLScript code to execute") String script,
 			@P("If true, execute within transaction and commit changes (default: false)") Boolean withCommit,
-			@P("Optional arguments to pass to the script") List<Object> args) {
-		return doExecuteTLScript(script, withCommit, args);
+			@P("Optional arguments to pass to the script") List<Object> args,
+			ToolExecutionContext context) {
+		return doExecuteTLScript(script, withCommit, args, context);
 	}
 
-	private String doExecuteTLScript(String script, Boolean withCommit, List<Object> args) {
+	private String doExecuteTLScript(String script, Boolean withCommit, List<Object> args,
+			ToolExecutionContext context) {
 		try {
 			// Validate parameter
 			if (script == null || script.trim().isEmpty()) {
@@ -130,6 +145,16 @@ public class TLScriptTool {
 
 			// Default to false if not specified
 			boolean commit = withCommit != null && withCommit;
+
+			if (commit) {
+				// The invocation gate decides per tool and cannot see this argument, so the capability
+				// the argument costs is checked here: a run granted 'script' alone may read with
+				// TL-Script and must not persist with it.
+				String denial = commitDenialReason(context);
+				if (denial != null) {
+					return toJson(ErrorResult.create().setError(denial));
+				}
+			}
 
 			// Execute the script and return JSON directly
 			ExecutionResult execResult = TLScriptExecutor.execute(script, commit, args);
@@ -140,6 +165,23 @@ public class TLScriptTool {
 			Logger.error(error, ex, TLScriptTool.class);
 			return toJson(ErrorResult.create().setError(error));
 		}
+	}
+
+	/**
+	 * Why this run may not commit what the script changes, or <code>null</code> if it may.
+	 *
+	 * <p>
+	 * Asks the run's own authorization rather than re-deciding anything: the same policy, the same
+	 * order - background allowlist, administrator bypass, role grants - that a {@code data.write} tool
+	 * would be decided by. Outside an agent loop (scripting entry points, tests) there is no run to
+	 * ask, and {@link SecurityContext#UNRESTRICTED} answers as an unconfigured application does.
+	 * </p>
+	 */
+	private static String commitDenialReason(ToolExecutionContext context) {
+		SecurityContext security = context instanceof ToolContext toolContext
+			? toolContext.security()
+			: SecurityContext.UNRESTRICTED;
+		return security.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT_OPERATION);
 	}
 
 	/**

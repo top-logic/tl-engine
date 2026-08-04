@@ -69,12 +69,15 @@
 		"   case 3.2 must not have persisted 'Reader was here' : "
 			+ ($titles.filter(t -> $t == "Reader was here").size() == 0 ? "OK" : "FAILED"),
 		"   case 3.4 note 'Editor note' present : "
-			+ ($titles.filter(t -> $t == "Editor note").size() == 0 ? "no" : "yes"),
+			+ ($titles.filter(t -> $t == "Editor note").size() == 0
+				? "no - expected: an unattended run may not commit, see the fire.tlscript header"
+				: "yes - only a chat run or an earlier leftover can have persisted it"),
 		"   secdemo:Secret values readable here : "
 			+ ($secrets.size() == 0
 				? "no - expected for secReader / secEditor"
 				: "YES - expected only for an administrator"),
 		"",
-		"Cases 3.2 and 3.4 change data. To reset, run reset.tlscript as root."
+		"Cases 3.2 and 3.4 ask to change data and are refused unattended, so normally there is"
+			+ " nothing to reset. Run reset.tlscript as root if a chat run persisted something."
 	]);
 }

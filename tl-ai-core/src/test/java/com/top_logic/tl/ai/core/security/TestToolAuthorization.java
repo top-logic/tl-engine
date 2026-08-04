@@ -36,8 +36,19 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * belongs to the run rather than to the policy - the administrator bypass, the background ceiling, and
  * the guarantee that an application which configured no policy is not checked at all.
  * </p>
+ *
+ * <p>
+ * Including the capability-level check
+ * ({@link ToolAuthorization#capabilityDenialReason(String, String)}), which an operation uses when the
+ * capability it costs depends on an argument the invocation gate cannot see - the commit path of
+ * {@code executeTLScript}. It must be decided by the same rules in the same order as a tool, which is
+ * what the {@code testCapability*} methods pin.
+ * </p>
  */
 public class TestToolAuthorization extends TestCase {
+
+	/** The operation a capability-level check is asked about, as {@code TLScriptTool} phrases it. */
+	private static final String COMMIT = "executing TL-Script with withCommit=true";
 
 	/** Instantiating a {@link ToolAccessPolicy} resolves nested config types through the TypeIndex. */
 	public static Test suite() {
@@ -198,6 +209,127 @@ public class TestToolAuthorization extends TestCase {
 
 		assertFalse(withoutQualifiedName.allows(listInstances));
 		assertTrue(withQualifiedName.allows(listInstances));
+	}
+
+	/**
+	 * A capability the role does not hold is refused even though the tool that asks for it is granted.
+	 *
+	 * <p>
+	 * The rule that closes the commit path of {@code executeTLScript}: the tool is classified
+	 * {@link ToolGroups#SCRIPT}, which the role holds, and committing costs
+	 * {@link ToolGroups#DATA_WRITE}, which it does not.
+	 * </p>
+	 */
+	public void testCapabilityWithoutAGrantIsDenied() {
+		ToolAccessPolicy policy = clerkPolicy();
+		policy.getToolAccess().get("Clerk").getGrants().add(group(ToolGroups.SCRIPT));
+		ToolAuthorization auth = auth(policy, Set.of("Clerk"), false);
+
+		assertNull("The tool itself is granted.", auth.denialReason(tool("executeTLScript", ToolGroups.SCRIPT)));
+
+		String reason = auth.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT);
+
+		assertNotNull("A capability no held role grants must be refused.", reason);
+		assertTrue(reason, reason.contains(ToolGroups.DATA_WRITE));
+		assertTrue("The refusal must say what was refused: " + reason, reason.contains(COMMIT));
+		assertTrue(reason, reason.contains("none of your roles grants"));
+	}
+
+	/** A role holding the capability may use it. */
+	public void testGrantedCapabilityIsAllowed() {
+		ToolAccessPolicy policy = clerkPolicy();
+		policy.getToolAccess().get("Clerk").getGrants().add(group(ToolGroups.DATA_WRITE));
+
+		assertNull(auth(policy, Set.of("Clerk"), false)
+			.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT));
+	}
+
+	/** The baseline grants a capability to everyone, as it does a tool. */
+	public void testBaselineGrantsTheCapability() {
+		ToolAccessPolicy policy = clerkPolicy();
+		policy.getBaseline().add(group(ToolGroups.DATA_WRITE));
+
+		assertNull(auth(policy, Set.of(), false).capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT));
+	}
+
+	/** A {@code <deny>} wins over the grant, and the denial names the role that carries it. */
+	public void testExplicitDenyOverridesTheCapabilityGrant() {
+		ToolAccessPolicy policy = policy(role("Clerk",
+			grants(group(ToolGroups.DATA_WRITE)), grants(group(ToolGroups.DATA_WRITE))));
+
+		String reason = auth(policy, Set.of("Clerk"), false)
+			.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT);
+
+		assertNotNull(reason);
+		assertTrue(reason, reason.contains("explicitly denied to your role 'Clerk'"));
+	}
+
+	/**
+	 * A per-tool grant does not reach the capability.
+	 *
+	 * <p>
+	 * Granting {@code executeTLScript} by name says the role may run TL-Script; it says nothing about
+	 * the second capability that tool can reach through an argument, and reading it as a
+	 * {@code data.write} grant would reopen the bypass this check exists to close.
+	 * </p>
+	 */
+	public void testPerToolGrantDoesNotReachTheCapability() {
+		ToolAccessPolicy policy = policy(role("Clerk", grants(tool("executeTLScript")), grants()));
+		ToolAuthorization auth = auth(policy, Set.of("Clerk"), false);
+
+		assertNull("The tool is granted by name.", auth.denialReason(tool("executeTLScript", ToolGroups.SCRIPT)));
+		assertNotNull("...which is not a grant of data.write.",
+			auth.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT));
+	}
+
+	/**
+	 * The background allowlist caps a capability exactly as it caps a tool: a role holding
+	 * {@code data.write} cannot use it unattended unless an administrator allowlisted it.
+	 */
+	public void testBackgroundAllowlistCapsTheCapability() {
+		ToolAccessPolicy policy = clerkPolicy();
+		policy.getToolAccess().get("Clerk").getGrants().add(group(ToolGroups.DATA_WRITE));
+		allow(policy, group(ToolGroups.SCRIPT), group(ToolGroups.DATA_READ));
+
+		assertNull("Interactively the role's grant applies.",
+			auth(policy, Set.of("Clerk"), false).capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT));
+
+		String reason = auth(policy, Set.of("Clerk"), true)
+			.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT);
+
+		assertNotNull("An allowlist carrying 'script' and not 'data.write' must refuse the commit.",
+			reason);
+		assertTrue(reason, reason.contains("background allowlist"));
+		assertTrue(reason, reason.contains(ToolGroups.DATA_WRITE));
+		assertFalse("Blaming the role would send an operator to the wrong configuration: " + reason,
+			reason.contains("none of your roles grants"));
+	}
+
+	/** An allowlisted capability the role holds survives an unattended run. */
+	public void testAllowlistedCapabilitySurvivesABackgroundRun() {
+		ToolAccessPolicy policy = clerkPolicy();
+		policy.getToolAccess().get("Clerk").getGrants().add(group(ToolGroups.DATA_WRITE));
+		allow(policy, group(ToolGroups.DATA_WRITE));
+
+		assertNull(auth(policy, Set.of("Clerk"), true)
+			.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT));
+	}
+
+	/** Without a declared allowlist an unattended run reaches no capability either. */
+	public void testBackgroundCapabilityDeniedWithoutAllowlist() {
+		ToolAccessPolicy policy = clerkPolicy();
+		policy.getToolAccess().get("Clerk").getGrants().add(group(ToolGroups.DATA_WRITE));
+
+		String reason = auth(policy, Set.of("Clerk"), true)
+			.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT);
+
+		assertNotNull(reason);
+		assertTrue(reason, reason.contains("background allowlist"));
+	}
+
+	/** An application that configured no policy is not checked here either. */
+	public void testUncheckedAllowsEveryCapability() {
+		assertNull(ToolAuthorization.UNCHECKED.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT));
 	}
 
 	private static ToolAuthorization auth(ToolAccessPolicy policy, Set<String> roles, boolean background) {

@@ -12,6 +12,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.Decision;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * The tool-authorization decision of one agent run, bound to that run's principal.
@@ -180,6 +181,58 @@ public class ToolAuthorization {
 	}
 
 	/**
+	 * Why the run's principal may not use the given capability, recording the denial in the audit log.
+	 *
+	 * <p>
+	 * The capability-level counterpart of {@link #denialReason(Tool)}, for an operation that costs a
+	 * capability the tool it belongs to is not classified as. The gate at the invocation point decides
+	 * per tool and without arguments; {@code executeTLScript} is classified {@link ToolGroups#SCRIPT}
+	 * and yet persists arbitrary writes when called with {@code withCommit=true}, so that argument
+	 * additionally costs {@link ToolGroups#DATA_WRITE} and only the tool itself can ask.
+	 * </p>
+	 *
+	 * <p>
+	 * Decided in the same order as {@link #decide(ToolIdentity)} - background allowlist first, which
+	 * binds administrators too, then the administrator bypass, then the role grants - so that a
+	 * capability cannot be reached through an argument where the same capability's tools are out of
+	 * reach.
+	 * </p>
+	 *
+	 * @param capability
+	 *        The name of the required capability (tool group).
+	 * @param operation
+	 *        What the run is about to do, for the denial message - e.g.
+	 *        {@code "executing TL-Script with withCommit=true"}.
+	 * @return A message naming the missing capability, safe to feed back to the model, or
+	 *         <code>null</code> if the capability is allowed.
+	 */
+	public String capabilityDenialReason(String capability, String operation) {
+		String reason = decideCapability(capability, operation);
+		return reason == null ? null : auditCapability(capability, reason);
+	}
+
+	/**
+	 * The denial reason for the given capability, or <code>null</code> if it is allowed. No side
+	 * effects.
+	 */
+	private String decideCapability(String capability, String operation) {
+		if (_access == null) {
+			// No policy configured: the application has not opted in, so nothing is checked.
+			return null;
+		}
+		if (_background && !_access.capabilityAllowedInBackground(capability)) {
+			return "Permission denied: " + operation + " requires the '" + capability
+				+ "' capability, which is not on the background allowlist. This run has no user who"
+				+ " could approve it, so only the allowlisted capabilities are reachable.";
+		}
+		if (_principal != null && _principal.isAdmin()) {
+			return null;
+		}
+		Decision decision = _access.checkCapability(_heldRoleNames, capability, operation);
+		return decision instanceof Decision.Denied denied ? denied.reason() : null;
+	}
+
+	/**
 	 * The capability (tool group) the given tool requires, as this run's policy classifies it.
 	 *
 	 * <p>
@@ -260,10 +313,25 @@ public class ToolAuthorization {
 	private String audit(ToolIdentity tool, String reason) {
 		Logger.warn("Tool access denied: tool='" + tool.displayName()
 			+ "' group=" + _access.groupOf(tool)
-			+ " user=" + (_principal == null ? "(none)" : _principal.getName())
-			+ " roles=" + _heldRoleNames
-			+ (_background ? " background=true" : "")
+			+ principalSuffix()
 			+ " reason=" + reason, ToolAuthorization.class);
 		return reason;
+	}
+
+	/**
+	 * Records a capability-level denial in the same form as a tool denial, so that one log format
+	 * answers "why was this refused?" for both.
+	 */
+	private String auditCapability(String capability, String reason) {
+		Logger.warn("Tool access denied: capability='" + capability + "'"
+			+ principalSuffix()
+			+ " reason=" + reason, ToolAuthorization.class);
+		return reason;
+	}
+
+	private String principalSuffix() {
+		return " user=" + (_principal == null ? "(none)" : _principal.getName())
+			+ " roles=" + _heldRoleNames
+			+ (_background ? " background=true" : "");
 	}
 }

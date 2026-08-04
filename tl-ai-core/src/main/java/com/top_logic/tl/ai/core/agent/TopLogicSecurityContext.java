@@ -144,6 +144,11 @@ public class TopLogicSecurityContext implements SecurityContext {
 	}
 
 	@Override
+	public String capabilityDenialReason(String capability, String operation) {
+		return _toolAuthorization.capabilityDenialReason(capability, operation);
+	}
+
+	@Override
 	public String toolCapability(Tool tool) {
 		return _toolAuthorization.capabilityOf(tool);
 	}

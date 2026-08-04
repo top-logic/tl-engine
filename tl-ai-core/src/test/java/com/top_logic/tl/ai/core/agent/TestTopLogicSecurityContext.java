@@ -83,6 +83,10 @@ public class TestTopLogicSecurityContext extends TestCase {
 
 		assertNull("The generic filter must find nothing to complain about either.",
 			new ToolPermissionFilter(context).denialReason(privileged));
+
+		assertNull("Committing through TL-Script must not be capped while unenforced either.",
+			context.capabilityDenialReason(ToolGroups.DATA_WRITE,
+				"executing TL-Script with withCommit=true"));
 	}
 
 	/** A minimal {@link Tool} carrying a name and a declared group. */
@@ -151,6 +155,10 @@ public class TestTopLogicSecurityContext extends TestCase {
 	public void testUnrestrictedActsAsSystem() {
 		assertEquals(AiSecurityMode.SYSTEM, SecurityContext.UNRESTRICTED.securityMode());
 		assertSame(ModelSecurity.UNCHECKED, SecurityContext.UNRESTRICTED.modelSecurity());
+		assertNull("It restricts no capability either - the TL-Script entry points outside an agent"
+			+ " loop run against this context.",
+			SecurityContext.UNRESTRICTED.capabilityDenialReason(ToolGroups.DATA_WRITE,
+				"executing TL-Script with withCommit=true"));
 	}
 
 	private static ToolAccessPolicy policy(AiSecurityMode mode) {

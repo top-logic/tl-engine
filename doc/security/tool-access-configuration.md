@@ -46,12 +46,12 @@ groups rather than eighty tools.
 |---|---|
 | `model.read` | Inspect the application model, layouts and configuration schema. Read-only. |
 | `data.read` | Read business data: browse instances, search, semantic search. |
-| `data.write` | Change business data. Always needs the user's approval as well. |
+| `data.write` | Change business data. Always needs the user's approval as well. In the framework itself this is what **committing** through `executeTLScript` costs - see the note under `script`. |
 | `agent.meta` | Inspect which agents, skills and tools exist. Read-only. |
 | `interaction` | Ask the user a question, load a skill, delegate to a sub-agent. |
 | `workspace` | The user's own tasks and published pages. |
 | `egress` | Send data out of the application: web fetch/search, issue trackers, remote MCP servers. |
-| `script` | **Privileged.** Execute TL-Script - which can express any data operation. |
+| `script` | **Privileged.** Execute TL-Script. Read-only by itself: **persisting** what a script changes (`executeTLScript` with `withCommit=true`) requires `data.write` on top. |
 | `model.structure` | **Privileged.** Change the model, its annotations and layouts. |
 | `agent.authoring` | **Privileged.** Create and rewire agents, skills and tools. |
 
@@ -60,6 +60,15 @@ wildcard and you have to name it explicitly. Granting one is a deliberate act.
 
 `egress` is not privileged but deserves the same care: `webFetch` is a read-only tool and the best way
 to get data *out* of the application.
+
+> **One rule depends on an argument, not on a tool.** `executeTLScript` is in `script`, and calling it
+> with `withCommit=true` persists whatever the script changes. That call therefore requires `data.write`
+> **in addition** to `script`; the same call with `withCommit` absent or `false`, and
+> `validateTLScript`, need `script` alone. The decision is the one a `data.write` tool would get -
+> `<deny>` first, then the baseline, then your role grants, capped by the `<background-allowlist>` and
+> bypassed by administrators - and the refusal is a normal tool error naming `data.write`, which the
+> agent can relay. Granting `script` alone is therefore a read-only grant, and a role that needs to
+> *change* data with TL-Script needs both groups.
 
 ---
 
@@ -73,6 +82,9 @@ to get data *out* of the application.
   re-listing everything.
 - **A tool in no group is denied to everyone** unless you name it in a `<grant tool="...">`. This is
   what happens to a remote MCP tool, or to a tool whose author forgot to classify it.
+- **`script` does not include writing.** Committing through `executeTLScript` costs `data.write` as
+  well - see the note above. A `<grant tool="...">` naming the tool does not substitute for it: the
+  capability is granted with `<grant group="data.write"/>` and nothing else.
 - **Administrators bypass all of it**, exactly as they bypass the model access rights.
 - **Unattended runs are additionally capped** by `<background-allowlist>`, which you must declare
   explicitly once enforcement is on - see below.
@@ -215,6 +227,12 @@ This is a **ceiling**, not a grant: a background run gets the intersection of th
 this list. It applies to administrators too, because the missing approval prompt is the reason for it,
 not the user's authority.
 
+**`script` on this list does not admit writes.** Committing through `executeTLScript` needs
+`data.write`, and the ceiling is applied to that capability exactly as it is to a tool - so a list
+carrying `script` without `data.write` lets an unattended run *read* with TL-Script and refuses to let
+it persist, administrators included. Allowlisting `script` used to be the whole of it, which made every
+allowlist that carried it silently carry every write TL-Script can express.
+
 **You have to declare it.** Once your `<tool-access>` turns enforcement on, a policy with no
 `<background-allowlist>` element is a **configuration error** and the application refuses to start:
 
@@ -256,6 +274,16 @@ reason=Permission denied: tool 'framework-wiring.listFrameworkAgents' requires t
 The agent gets the same sentence, so it can tell the user what is missing instead of failing opaquely.
 Neither the log nor the message ever contains data that was withheld - tool names, group names,
 operations and role names only.
+
+A refusal that was decided for a **capability** rather than for a tool - today only the commit path of
+`executeTLScript` - names the capability and the operation instead of a tool:
+
+```
+WARN com.top_logic.tl.ai.core.security.ToolAuthorization - Tool access denied:
+capability='data.write' user=secreader1 roles=[SecurityStructure.user, secReader]
+reason=Permission denied: executing TL-Script with withCommit=true requires the
+'data.write' capability, which none of your roles grants.
+```
 
 An agent whose whole skill was withheld says so too. Under an enforcing policy, the generated
 `### Available Skills` section of every agent's system prompt is followed by the capabilities the

@@ -269,6 +269,96 @@ public class RoleToolAccess {
 	}
 
 	/**
+	 * Whether the roles held by a user grant them a capability as such, independently of any tool.
+	 *
+	 * <p>
+	 * For an operation that is not a tool of its own but costs a capability anyway: executing
+	 * TL-Script with {@code withCommit=true} persists arbitrary writes, so it requires
+	 * {@link ToolGroups#DATA_WRITE} in addition to the {@link ToolGroups#SCRIPT} the tool itself is
+	 * classified as. The argument that decides is known only inside the tool, which is why this
+	 * question is asked separately from {@link #check(Collection, ToolIdentity)} and answered by the
+	 * same rules.
+	 * </p>
+	 *
+	 * <p>
+	 * Only {@code <grant group="...">} entries are consulted, never per-tool grants: the question is
+	 * about the capability itself, and a grant of one tool says nothing about a second capability that
+	 * tool can reach through an argument.
+	 * </p>
+	 *
+	 * @param heldRoleNames
+	 *        The names of the roles the user holds on the security root. Never <code>null</code>;
+	 *        may be empty, in which case only the baseline applies.
+	 * @param capability
+	 *        The name of the required capability (tool group).
+	 * @param operation
+	 *        What the caller is about to do, for the denial message - e.g.
+	 *        {@code "executing TL-Script with withCommit=true"}.
+	 * @return The decision, carrying the granting role or the denial reason.
+	 */
+	public Decision checkCapability(Collection<String> heldRoleNames, String capability, String operation) {
+		for (String roleName : heldRoleNames) {
+			RoleAccess role = _policy.getToolAccess().get(roleName);
+			if (role != null && grantsGroup(role.getDenies(), capability)) {
+				return new Decision.Denied("Permission denied: " + operation + " requires the '"
+					+ capability + "' capability, which is explicitly denied to your role '"
+					+ roleName + "'.");
+			}
+		}
+
+		if (grantsGroup(_policy.getBaseline(), capability)) {
+			return new Decision.Granted(BASELINE_ROLE, capability);
+		}
+
+		for (String roleName : heldRoleNames) {
+			RoleAccess role = _policy.getToolAccess().get(roleName);
+			if (role != null && grantsGroup(role.getGrants(), capability)) {
+				return new Decision.Granted(roleName, capability);
+			}
+		}
+
+		return new Decision.Denied("Permission denied: " + operation + " requires the '" + capability
+			+ "' capability, which none of your roles grants.");
+	}
+
+	/**
+	 * Whether a capability as such is reachable in a run that has no human to answer approval
+	 * prompts.
+	 *
+	 * <p>
+	 * The counterpart of {@link #allowedInBackground(ToolIdentity)} for
+	 * {@link #checkCapability(Collection, String, String)}, and applied in addition to it.
+	 * </p>
+	 *
+	 * @param capability
+	 *        The name of the required capability (tool group).
+	 * @return Whether the background allowlist admits the capability.
+	 */
+	public boolean capabilityAllowedInBackground(String capability) {
+		BackgroundAllowlist allowlist = _policy.getBackgroundAllowlist();
+		if (allowlist == null) {
+			// An absent declaration admits nothing - see allowedInBackground(ToolIdentity).
+			return false;
+		}
+		if (allowlist.isAll()) {
+			return true;
+		}
+		return grantsGroup(allowlist.getGrants(), capability);
+	}
+
+	/**
+	 * Whether any entry of {@code entries} names the given group.
+	 */
+	private static boolean grantsGroup(Collection<Grant> entries, String group) {
+		for (Grant entry : entries) {
+			if (!isBlank(entry.getGroup()) && entry.getGroup().equals(group)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Whether the given tool is reachable in a run that has no human to answer approval prompts.
 	 *
 	 * <p>

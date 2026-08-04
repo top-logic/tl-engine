@@ -126,19 +126,22 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 	 * A second factory mapped to a second group behaves independently of the first.
 	 *
 	 * <p>
-	 * {@code data.write} has no annotated tool anywhere in the framework, so
-	 * {@code secdemo-editing.addNote} is the only thing in it. That makes this the cleanest possible
-	 * statement about the mechanism: the capability exists in the taxonomy and reaches exactly the one
-	 * tool an administrator put in it.
+	 * {@code secdemo-editing.addNote} is the only <em>annotated-tool-like</em> member of
+	 * {@code data.write} in this fixture; the framework's own consumer of that capability is the commit
+	 * path of {@code executeTLScript}, which is an argument rather than a tool of its own. That makes
+	 * this a clean statement about the mechanism: the capability reaches exactly the one tool an
+	 * administrator put in it.
 	 * </p>
 	 */
 	public void testEachFactoryLandsInItsOwnGroup() {
 		assertAllowed(WRITER, CLASSIFIED_WRITE_SCRIPT_TOOL);
 		assertAllowed(WRITER, CLASSIFIED_READ_SCRIPT_TOOL);
 
-		// The readers hold data.read and not data.write, so the wildcards do not bleed into each other.
+		// secreader1 holds data.read and not data.write, so the wildcards do not bleed into each other.
+		// secEditor is deliberately not the contrast here: it holds data.write, because committing
+		// through executeTLScript costs that capability and the matrix promises it can create a note.
 		assertDenied(READER, CLASSIFIED_WRITE_SCRIPT_TOOL, ToolGroups.DATA_WRITE);
-		assertDenied(EDITOR, CLASSIFIED_WRITE_SCRIPT_TOOL, ToolGroups.DATA_WRITE);
+		assertDenied(VIEWER, CLASSIFIED_WRITE_SCRIPT_TOOL, ToolGroups.DATA_WRITE);
 	}
 
 	/**

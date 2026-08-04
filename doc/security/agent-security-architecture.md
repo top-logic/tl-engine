@@ -377,8 +377,8 @@ group**; groups are the unit of granting.
 |---|---|---|
 | `model.read` | `listModules`, `listTypes`, `listTypeParts`, `listClassifiers`, `outlineModel`, `describeAnnotation`, `getCurrentAnnotations`, `listAvailableAnnotations`, `findTypeUsages`, `findPartUsages`, `getConfigSchema`, `listLayoutTemplates`, `getLayout`, `getTopLevelLayoutKey` | grantable |
 | `data.read` | `listInstances`, `getInstance`, `searchModel`, `searchVectorIndex`, `checkLock` | grantable |
-| `data.write` | (currently only via `executeTLScript`; future typed instance-write tools) | grantable, approval |
-| `script` | `validateTLScript`, `executeTLScript`, `listTLScriptFunctions`, `getTLScriptFunctionDocumentation` | **privileged** |
+| `data.write` | (currently only `executeTLScript` with `withCommit=true`, checked inside the tool; future typed instance-write tools) | grantable, approval |
+| `script` | `validateTLScript`, `executeTLScript`, `listTLScriptFunctions`, `getTLScriptFunctionDocumentation` | **privileged**, read-only - the commit path additionally costs `data.write` |
 | `model.structure` | `createModule`, `updateModule`, `createClass`, `updateClass`, `createProperty`, `updateProperty`, `createReference`, `createBackwardReference`, `createEnumeration`, `updateEnumeration`, `deleteModelElement`, `addAnnotation`, `removeAnnotation`, `createLayout` | **privileged** |
 | `agent.authoring` | `createAgent`, `updateAgent`, `deleteAgent`, `createSkill`, `updateSkill`, `deleteSkill`, `createScriptTool`, `updateScriptTool`, `deleteScriptTool`, `addToolToAgent`, `removeToolFromAgent`, `addSkillToAgent`, `removeSkillFromAgent`, `addDelegationToAgent`, `removeDelegationFromAgent`, `addToolToSkill`, `removeToolFromSkill` | **privileged** |
 | `agent.meta` | `listAgents`, `getAgent`, `listSkills`, `getSkill`, `listScriptTools`, `getScriptTool`, `listAvailableTools`, `listFrameworkAgents`, `getFrameworkAgent`, `listFrameworkSkills`, `getFrameworkSkill`, `listScriptToolFactories` | grantable |
@@ -396,6 +396,14 @@ can rewire who gets which tools (T8).
 Note `executeTLScript` sits in a privileged group *and* is `DATA_WRITE`-classified *and* rides on the
 engine's TL-Script enforcement (which #29088 already applies). Three independent reasons for it to be
 safe; each one alone would be insufficient.
+
+A fourth, and the one that makes the `data.write` row above true rather than aspirational: the group
+gates the *tool*, and `withCommit=true` is what makes the call persist, so **the commit path requires
+`data.write` in addition to `script`**. The gate cannot enforce that - it decides per tool, before the
+arguments - so the tool asks the run's own `ToolAuthorization` for the capability, which applies the same
+order (background allowlist, administrator bypass, role grants) it applies to a tool. Without it, every
+holder of `script` held every write TL-Script can express, and an allowlisted `script` handed that to
+unattended runs, which auto-approve.
 
 A tool's group is declared on the tool, not in the policy file, so a new tool cannot be silently
 ungrouped:

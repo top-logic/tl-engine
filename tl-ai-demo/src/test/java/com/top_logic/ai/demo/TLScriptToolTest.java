@@ -17,6 +17,7 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.script.TLScriptTool;
 import com.top_logic.util.model.ModelService;
 
@@ -98,7 +99,7 @@ public class TLScriptToolTest extends BasicTestCase {
 		TLScriptTool tool = new TLScriptTool();
 
 		// Test number result
-		String result1 = tool.executeTLScript("42", null, null);
+		String result1 = tool.executeTLScript("42", null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result1);
 		assertTrue("Result should contain success", result1.contains("\"success\":true") || result1.contains("\"success\": true"));
 		assertTrue("Result should contain executed flag",
@@ -106,19 +107,19 @@ public class TLScriptToolTest extends BasicTestCase {
 		assertTrue("Result should contain number value", result1.contains("42"));
 
 		// Test string result
-		String result2 = tool.executeTLScript("\"hello\"", null, null);
+		String result2 = tool.executeTLScript("\"hello\"", null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result2);
 		assertTrue("Result should contain success", result2.contains("\"success\":true") || result2.contains("\"success\": true"));
 		assertTrue("Result should contain string value", result2.contains("hello"));
 
 		// Test boolean result
-		String result3 = tool.executeTLScript("true", null, null);
+		String result3 = tool.executeTLScript("true", null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result3);
 		assertTrue("Result should contain success", result3.contains("\"success\":true") || result3.contains("\"success\": true"));
 		assertTrue("Result should contain boolean value", result3.contains("true"));
 
 		// Test list result
-		String result4 = tool.executeTLScript("[1, 2, 3]", null, null);
+		String result4 = tool.executeTLScript("[1, 2, 3]", null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result4);
 		assertTrue("Result should contain success", result4.contains("\"success\":true") || result4.contains("\"success\": true"));
 		assertTrue("Result should contain collection type",
@@ -132,24 +133,24 @@ public class TLScriptToolTest extends BasicTestCase {
 		TLScriptTool tool = new TLScriptTool();
 
 		// Test let binding
-		String result1 = tool.executeTLScript("{x = 10; $x + 5}", null, null);
+		String result1 = tool.executeTLScript("{x = 10; $x + 5}", null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result1);
 		assertTrue("Result should contain success", result1.contains("\"success\":true") || result1.contains("\"success\": true"));
 		assertTrue("Result should contain computed value", result1.contains("15"));
 
 		// Test filter
-		String result2 = tool.executeTLScript("[1, 2, 3].filter(x -> $x > 1)", null, null);
+		String result2 = tool.executeTLScript("[1, 2, 3].filter(x -> $x > 1)", null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result2);
 		assertTrue("Result should contain success", result2.contains("\"success\":true") || result2.contains("\"success\": true"));
 
 		// Test toString function
-		String result3 = tool.executeTLScript("toString(\"a\", \"b\", \"c\")", null, null);
+		String result3 = tool.executeTLScript("toString(\"a\", \"b\", \"c\")", null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result3);
 		assertTrue("Result should contain success", result3.contains("\"success\":true") || result3.contains("\"success\": true"));
 		assertTrue("Result should contain string", result3.contains("abc"));
 
 		// Test size function
-		String result4 = tool.executeTLScript("size([1, 2, 3])", null, null);
+		String result4 = tool.executeTLScript("size([1, 2, 3])", null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result4);
 		assertTrue("Result should contain success", result4.contains("\"success\":true") || result4.contains("\"success\": true"));
 		assertTrue("Result should contain size", result4.contains("3"));
@@ -162,7 +163,7 @@ public class TLScriptToolTest extends BasicTestCase {
 		TLScriptTool tool = new TLScriptTool();
 
 		// Execute with commit=true
-		String result = tool.executeTLScript("1 + 1", true, null);
+		String result = tool.executeTLScript("1 + 1", true, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain success", result.contains("\"success\":true") || result.contains("\"success\": true"));
 		assertTrue("Result should contain executed flag",
@@ -177,12 +178,12 @@ public class TLScriptToolTest extends BasicTestCase {
 		TLScriptTool tool = new TLScriptTool();
 
 		// Execute with commit=false (explicit)
-		String result1 = tool.executeTLScript("1 + 1", false, null);
+		String result1 = tool.executeTLScript("1 + 1", false, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result1);
 		assertTrue("Result should contain success", result1.contains("\"success\":true") || result1.contains("\"success\": true"));
 
 		// Execute with commit=null (default should be false/read-only)
-		String result2 = tool.executeTLScript("1 + 1", null, null);
+		String result2 = tool.executeTLScript("1 + 1", null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result2);
 		assertTrue("Result should contain success", result2.contains("\"success\":true") || result2.contains("\"success\": true"));
 	}
@@ -194,12 +195,12 @@ public class TLScriptToolTest extends BasicTestCase {
 		TLScriptTool tool = new TLScriptTool();
 
 		// Null input
-		String result1 = tool.executeTLScript(null, null, null);
+		String result1 = tool.executeTLScript(null, null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result1);
 		assertTrue("Result should contain error", result1.contains("\"error\""));
 
 		// Empty input
-		String result2 = tool.executeTLScript("", null, null);
+		String result2 = tool.executeTLScript("", null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result2);
 		assertTrue("Result should contain error", result2.contains("\"error\""));
 	}
@@ -211,7 +212,7 @@ public class TLScriptToolTest extends BasicTestCase {
 		TLScriptTool tool = new TLScriptTool();
 
 		// Incomplete expression
-		String result = tool.executeTLScript("1 +", null, null);
+		String result = tool.executeTLScript("1 +", null, null, ToolContext.EMPTY);
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\"") || result.contains("\"success\":false"));
 	}

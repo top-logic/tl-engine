@@ -213,10 +213,12 @@
 			             its eight model.read tools and loses its three data.read ones.
 			  secReader  model.read + data.read + script. The read-only persona of the model-rights
 			             walkthrough; TL_taskManagement is fully denied to it, so the skill is dropped.
-			  secEditor  the same plus agent.meta - one capability apart from secReader, which is what
-			             makes the allow/deny pair on a single tool comparable.
-			  secWriter  model.read + data.read + data.write + workspace. The only role that reaches a
-			             write tool, and only in the foreground: data.write is off the
+			             It may run TL-Script and may not commit with it - "script" reaches
+			             executeTLScript, committing costs "data.write" on top.
+			  secEditor  the same plus agent.meta - the allow half of the pair on a single tool - and
+			             data.write, without which its promise "can create a note" would not hold.
+			  secWriter  model.read + data.read + data.write + workspace. The role that reaches a
+			             write *tool*, and only in the foreground: data.write is off the
 			             <background-allowlist> on purpose.
 			  secAuthor  agent.meta + agent.authoring, and no data rights at all.
 
@@ -286,6 +288,15 @@
 							<grant group="data.read"/>
 							<grant group="script"/>
 							<grant group="agent.meta"/>
+							<!--
+								What lets this persona actually create a note through TL-Script.
+								"script" alone reaches executeTLScript, but committing with it costs
+								"data.write" on top - the capability the write it performs belongs
+								to. secReader deliberately stops here, which is what makes "can
+								create a note" / "cannot create a note" a policy difference rather
+								than a model-rights accident.
+							-->
+							<grant group="data.write"/>
 						</grants>
 					</role>
 					<role name="secWriter">
@@ -317,10 +328,15 @@
 					which the TL-Script harness uses, and the MCP endpoint.
 
 					"script" is on the list only because that harness needs it. "data.write" and
-					"workspace" are deliberately off it, so secWriter - the one role that holds
-					data.write - reaches "secdemo-editing.addNote" in the chat and is refused it in a
-					background run. That contrast is the whole point of the mechanism, and
-					SecDemoBackgroundAccessTest pins it.
+					"workspace" are deliberately off it, so a role that holds data.write reaches
+					"secdemo-editing.addNote" in the chat and is refused it in a background run. That
+					contrast is the whole point of the mechanism, and SecDemoBackgroundAccessTest pins
+					it.
+
+					Note what "script" on this list does *not* buy: executing TL-Script with
+					withCommit=true additionally costs "data.write", which is off the list, so an
+					unattended run cannot persist through the script tool either - not even as an
+					administrator, since the allowlist binds them too.
 
 					"interaction" is absent here for the same reason it is absent above: an
 					unattended run reaches it implicitly.
@@ -395,7 +411,7 @@
 					<persona login="seceditor1"
 						group="secEditors"
 						role="secEditor"
-						purpose="secreader1 plus agent.meta - the allow half of the one-capability pair"
+						purpose="secreader1 plus agent.meta - the allow half of the one-capability pair - and data.write, so it can commit a note through TL-Script"
 					/>
 					<persona login="secwriter1"
 						group="secWriters"

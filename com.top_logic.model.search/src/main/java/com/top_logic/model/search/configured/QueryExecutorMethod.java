@@ -84,9 +84,16 @@ public class QueryExecutorMethod extends GenericMethodWithSecurity {
 		return getTypeComputation().apply(argumentTypes);
 	}
 
+	/**
+	 * @implNote The configured function is called from within an ongoing script evaluation, so its
+	 *           result is an intermediate result of the calling script and must not be filtered for
+	 *           the current user's read rights, see
+	 *           {@link QueryExecutor#executeIntermediate(Object...)}. The result of the calling script is
+	 *           secured by the execution that started it.
+	 */
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		return getExecutor().execute(arguments);
+		return getExecutor().executeIntermediate(arguments);
 	}
 
 	/**

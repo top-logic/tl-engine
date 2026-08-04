@@ -33,7 +33,6 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
@@ -81,6 +80,13 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			+ ".get(`TestTLScriptSecurity:Employee#salary`) > 1000)";
 
 	private static final String ALL_EMPLOYEES = "all(`TestTLScriptSecurity:Employee`)";
+
+	/** Navigates to the responsible employee of the given project. */
+	private static final String RESPONSIBLE_OF = "p -> $p.get(`TestTLScriptSecurity:Project#responsible`)";
+
+	/** Reads the salary of the responsible employee of the given project. */
+	private static final String SALARY_OF_RESPONSIBLE =
+		RESPONSIBLE_OF + ".get(`TestTLScriptSecurity:Employee#salary`)";
 
 	private KnowledgeBase _kb;
 
@@ -227,16 +233,16 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 
 	/**
 	 * Employees are not readable for a non-administrative user (deny-by-default), so the result
-	 * filter removes them.
+	 * filter of the {@link QueryExecutor} removes them.
 	 */
 	public void testEmployeesNotReadable() throws Exception {
 		QueryExecutor query = QueryExecutor.compile(kb(), model(), search(ALL_EMPLOYEES));
 
 		becomeUser(_root);
-		assertEquals(set(_e1, _e2, _m1), asSet(SearchExpression.filterSecurity(query.execute())));
+		assertEquals(set(_e1, _e2, _m1), asSet(query.execute()));
 
 		becomeUser(_user);
-		assertEquals(set(), asSet(SearchExpression.filterSecurity(query.execute())));
+		assertEquals(set(), asSet(query.execute()));
 	}
 
 	/**
@@ -248,7 +254,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		QueryExecutor query = QueryExecutor.compile(kb(), model(), search("all(`TestTLScriptSecurity:Project`)"));
 
 		becomeUser(_user);
-		assertEquals(set(_p1, _p2), asSet(SearchExpression.filterSecurity(query.execute())));
+		assertEquals(set(_p1, _p2), asSet(query.execute()));
 	}
 
 	/**
@@ -286,6 +292,82 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			QueryExecutor.compile(kb(), model(), search(PROJECTS_WITH_WELL_PAID_RESPONSIBLE));
 		unsecured.disableSecurity();
 		assertEquals(set(_p1), asSet(unsecured.execute()));
+	}
+
+	/**
+	 * The result of an execution is secured by the {@link QueryExecutor}: the reference navigation
+	 * itself delivers the referenced employee unfiltered, but the employee is not readable for the
+	 * user, so the result of the execution is {@code null}.
+	 */
+	public void testResultSecuredByExecutor() throws Exception {
+		QueryExecutor responsible = QueryExecutor.compile(kb(), model(), search(RESPONSIBLE_OF));
+
+		becomeUser(_root);
+		assertEquals(_e1, responsible.execute(_p1));
+
+		becomeUser(_user);
+		assertNull("The user must not read the navigated employee.", responsible.execute(_p1));
+	}
+
+	/**
+	 * Disabling the security switches off the result filter as well.
+	 */
+	public void testDisableSecurityKeepsForbiddenResults() throws Exception {
+		becomeUser(_user);
+
+		QueryExecutor secured = QueryExecutor.compile(kb(), model(), search(ALL_EMPLOYEES));
+		assertEquals(set(), asSet(secured.execute()));
+
+		QueryExecutor unsecured = QueryExecutor.compile(kb(), model(), search(ALL_EMPLOYEES));
+		unsecured.disableSecurity();
+		assertEquals(set(_e1, _e2, _m1), asSet(unsecured.execute()));
+	}
+
+	/**
+	 * The result filter keeps model elements: they are meta-data a computation works with, not
+	 * business objects.
+	 *
+	 * <p>
+	 * No rights are configured for the meta-model, so a non-administrative user holds no role on a
+	 * {@code TLClass}. A script delivering a type (or the type of an object) must nevertheless return
+	 * it, otherwise the computation would silently lose its meta-data.
+	 * </p>
+	 */
+	public void testModelElementsNotFiltered() throws Exception {
+		becomeUser(_other);
+		assertFalse("Test premise: the user holds no read right on the meta-model.",
+			ModelAccessRights.getInstance().isReadAllowed(_other, (TLObject) projectType()));
+
+		assertEquals(projectType(), execute(search("`TestTLScriptSecurity:Project`")));
+		assertEquals(part("Project", "budget"), execute(search("`TestTLScriptSecurity:Project#budget`")));
+
+		becomeUser(_user);
+		assertEquals(projectType(), execute(search("p -> $p.type()"), _p1));
+	}
+
+	private TLClass projectType() {
+		return (TLClass) TLModelUtil.findType("TestTLScriptSecurity:Project");
+	}
+
+	/**
+	 * A nested execution (a script called from within an ongoing evaluation) delivers its result
+	 * unfiltered, since it is an intermediate result of the calling script.
+	 *
+	 * <p>
+	 * The security of the executed expression itself is unaffected, therefore the salary of the
+	 * navigated employee stays inaccessible even in a nested execution.
+	 * </p>
+	 */
+	public void testNestedResultNotFiltered() throws Exception {
+		becomeUser(_user);
+
+		QueryExecutor responsible = QueryExecutor.compile(kb(), model(), search(RESPONSIBLE_OF));
+		assertEquals("A nested result must keep the objects the calling script computes with.",
+			_e1, responsible.executeIntermediate(_p1));
+
+		QueryExecutor salary = QueryExecutor.compile(kb(), model(), search(SALARY_OF_RESPONSIBLE));
+		assertNull("The attribute of an unreadable object stays inaccessible in a nested execution.",
+			salary.executeIntermediate(_p1));
 	}
 
 	/**
@@ -471,7 +553,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 
 		becomeUser(_reader);
 		// _reader is a member of p1 only, so it may read p1 but not p2.
-		assertEquals(set(_p1), asSet(SearchExpression.filterSecurity(allProjects.execute())));
+		assertEquals(set(_p1), asSet(allProjects.execute()));
 
 		// ProjectReader has no write grant: updating the project is denied.
 		assertPermissionDenied(() -> {

@@ -75,6 +75,25 @@ public class TestToolGroupPresentation extends TestCase {
 
 		assertEquals("mcp.jira", resources.getLabel("mcp.jira"));
 		assertNull(resources.getTooltip("mcp.jira"));
+		assertNull(ToolGroupResources.englishDescription("mcp.jira"));
+	}
+
+	/**
+	 * The sentence the capability notice embeds is the same one, in the prompt's language.
+	 *
+	 * @see com.top_logic.tl.ai.core.agent.AgentCapabilities#notice
+	 */
+	public void testCapabilityNoticeGetsAnEnglishSentencePerGroup() {
+		for (String group : ToolGroups.ALL) {
+			String description = ToolGroupResources.englishDescription(group);
+
+			assertNotNull("The notice must be able to say what '" + group + "' covers.", description);
+			assertFalse("Unresolved resource for '" + group + "': " + description,
+				description.contains("["));
+		}
+		assertTrue("agent.authoring is about authoring agents, not the data model.",
+			ToolGroupResources.englishDescription(ToolGroups.AGENT_AUTHORING)
+				.contains("agents, skills and TL-Script tools"));
 	}
 
 	/** A group nobody documented has no resource, rather than a made-up one. */

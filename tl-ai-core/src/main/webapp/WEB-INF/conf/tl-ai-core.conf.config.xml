@@ -185,7 +185,7 @@
 			<instance class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
 				<skills>
 					<skill name="TL_agenticAuthoring"
-						description="Load when creating, editing, or discussing agents, skills, or TL-Script tools. Covers the philosophy of skills vs agents, tool assignment, authoring TL-Script-backed tools, prompt writing best practices, and post-creation wiring."
+						description="Load when creating or editing agents, skills, or TL-Script tools - NOT for executing a script and NOT for editing the data model. Covers skills versus agents, tool assignment, authoring TL-Script-backed tools, prompt writing, and post-creation wiring. To run TL-Script or create an instance, load TL_tlScriptWriting; to change modules, types or attributes, load TL_topLogicModeling."
 					>
 						<content><![CDATA[<philosophy>
 Agents start lean — minimal tools, minimal context. Skills are the delivery mechanism for capabilities: when an agent loads a skill, it gets the instructions AND the tools together, on demand. This keeps the agent's context window clean and focused.
@@ -362,7 +362,7 @@ Editing an existing tool:
 					</tools>
 					</skill>
 					<skill name="TL_promptModelEditor"
-						description="How to delegate to TL_ModelEditor — send domain intent and business requirements, never modeling instructions. Load when delegating model creation or modification tasks."
+						description="Load when you will delegate the creation or modification of the data model to the TL_ModelEditor agent: send domain intent and business requirements, never modeling instructions."
 					>
 						<content><![CDATA[# How to Delegate to TL_ModelEditor
 
@@ -438,7 +438,7 @@ Pass ALL gathered context to the TL_ModelEditor. It uses this to avoid duplicate
 ]]></content>
 					</skill>
 					<skill name="TL_promptModelExplorer"
-						description="How to delegate to TL_ModelExplorer for raw model context only—especially extracting TLScript from annotations verbatim—then chain analysis to the appropriate agent."
+						description="Load when you will delegate to the TL_ModelExplorer agent: it explains how to ask for raw model context only - especially extracting TL-Script from annotations verbatim - and how to chain the analysis to the right agent afterwards. To explore the model yourself instead, load TL_modelExploration."
 					>
 						<content><![CDATA[# How to Write Effective Delegation Work Orders (ModelExplorer Caller)
 
@@ -761,7 +761,7 @@ addAnnotation("module:Type#attr",
 					</tools>
 					</skill>
 					<skill name="TL_topLogicModeling"
-						description="TopLogic modeling expertise — modeling philosophy, reasoning process, framework discovery protocol, and modeling patterns. Load before planning any model creation involving new types."
+						description="Load before planning any change to the data model that introduces new types - modules, classes, enumerations. Covers modeling philosophy, the reasoning process, the framework discovery protocol, and modeling patterns."
 					>
 						<content><![CDATA[# TopLogic Modeling Expertise
 
@@ -964,7 +964,7 @@ Annotations: `model-annotation-editor.addAnnotation` / `removeAnnotation`, `conf
 					</tools>
 					</skill>
 					<skill name="TL_tlScriptWriting"
-						description="TLScript syntax, idioms, validation workflow, and function discovery. Load before writing, explaining, or validating TLScript."
+						description="Load when you need to write, validate, or execute TL-Script - including creating or modifying instances. This is the skill that carries executeTLScript and validateTLScript. Covers syntax, idioms, the validation workflow, and function discovery."
 					>
 						<content><![CDATA[<core_rules>
 TOOL-FIRST — Before writing ANY TLScript or explaining ANY function, verify the function exists and check its signature using documentation tools. An answer that uses unverified functions is INVALID.
@@ -1027,7 +1027,7 @@ Choosing `.` vs `..`:
 					</tools>
 					</skill>
 					<skill name="TL_modelExploration"
-						description="How to effectively explore the TopLogic application model: exploration strategy, annotation discovery, framework type assessment, output formatting."
+						description="Load when you need to inspect the application model or read instances yourself - it carries the model browser, model search and instance tools. Covers exploration strategy, annotation discovery, framework type assessment, and output formatting."
 					>
 						<content><![CDATA[<core_rules>
 Call at least one exploration tool before stating any fact about the model. Training data is not valid evidence. Only tool calls made in this session count as evidence.
@@ -1096,7 +1096,7 @@ Available tools:
 					</tools>
 					</skill>
 					<skill name="TL_tlScriptInstanceCreation"
-						description="Load when creating instances, test data, or sample entries via TLScript. Covers new(...) patterns, composition placement, mandatory values, I18N/HTML value types, enum references, and filtering by business key."
+						description="Guidance only - it carries no tools, so load it together with TL_tlScriptWriting, which has executeTLScript. Read it when creating instances, test data, or sample entries: new(...) patterns, composition placement, mandatory values, I18N/HTML value types, enum references, and filtering by business key."
 					>
 						<content><![CDATA[# TLScript Instance Creation
 
@@ -1392,7 +1392,7 @@ saved image or PDF - a screenshot you just took, say - call `view-document.viewD
 						</tools>
 					</skill>
 					<skill name="TL_spawnSubagents"
-						description="Load when delegating work to other agents — to run one or more predefined agents asynchronously and collect their results. Especially for fanning out independent sub-tasks in parallel."
+						description="Load when delegating work to other agents - to run one or more predefined agents asynchronously and collect their results. Especially for fanning out independent sub-tasks in parallel."
 					>
 						<content><![CDATA[# Spawning Subagents
 

@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.tl.ai.core.security.ToolGroupResources;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
@@ -234,7 +235,14 @@ public class AgentCapabilities {
 			notice.append("This user does **not** hold these capabilities, so the tools that require"
 				+ " them are absent:\n\n");
 			for (String capability : lacking) {
-				notice.append("- `").append(capability).append("`\n");
+				notice.append("- `").append(capability).append("`");
+				// Named without saying what it covers, a capability invites the model to guess -
+				// "agent.authoring" was read out to a user as being about the data model.
+				String description = ToolGroupResources.englishDescription(capability);
+				if (description != null) {
+					notice.append(" - ").append(description);
+				}
+				notice.append("\n");
 			}
 			notice.append("\n");
 		}

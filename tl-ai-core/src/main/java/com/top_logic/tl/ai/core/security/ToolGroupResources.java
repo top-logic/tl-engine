@@ -5,8 +5,11 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.AbstractResourceProvider;
+import com.top_logic.tl.ai.core.tools.registry.ToolDescriptions;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.util.Resources;
 
@@ -42,19 +45,31 @@ public class ToolGroupResources extends AbstractResourceProvider {
 
 	@Override
 	public String getTooltip(Object object) {
-		return description(groupName(object));
+		ResKey label = ToolGroups.labelKey(groupName(object));
+		return label == null ? null : Resources.getInstance().getString(label.tooltipOptional());
 	}
 
 	/**
-	 * The one sentence saying what the named group covers.
+	 * The one sentence saying what the named group covers, in English.
+	 *
+	 * <p>
+	 * For the capability notice an agent is given: that text is part of a system prompt, which is
+	 * English throughout, so it does not follow the acting user's language the way
+	 * {@link #getTooltip(Object)} does.
+	 * </p>
 	 *
 	 * @param group
 	 *        The technical group name, may be <code>null</code>.
-	 * @return The explanation, or <code>null</code> for a group no resource describes.
+	 * @return The explanation, or <code>null</code> for a group no resource describes and for a
+	 *         runtime with no resources - a group named without its sentence is a smaller loss than a
+	 *         prompt that cannot be assembled.
 	 */
-	public static String description(String group) {
+	public static String englishDescription(String group) {
 		ResKey label = ToolGroups.labelKey(group);
-		return label == null ? null : Resources.getInstance().getString(label.tooltipOptional());
+		if (label == null || !ResourcesModule.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		return StringServices.nonEmpty(ToolDescriptions.englishPlainText(label.tooltip()));
 	}
 
 	private static String groupName(Object object) {

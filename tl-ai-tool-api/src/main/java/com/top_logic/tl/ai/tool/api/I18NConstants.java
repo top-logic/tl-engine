@@ -34,8 +34,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Read the model
 	 * @de Modell lesen
-	 * @tooltip Inspect the application model, its layouts and the configuration schema. Read-only,
-	 *          and about the model rather than the data in it.
+	 * @tooltip Inspect the application model, its layouts and the configuration schema, read-only -
+	 *          the model, not the data in it.
 	 */
 	public static ResKey GROUP_MODEL_READ;
 
@@ -45,7 +45,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Read data
 	 * @de Daten lesen
 	 * @tooltip Read business data: browse instances, search the model for them, search semantically.
-	 *          Which objects are then returned is the model access rights' decision, not this one.
 	 */
 	public static ResKey GROUP_DATA_READ;
 
@@ -54,8 +53,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Change data
 	 * @de Daten ändern
-	 * @tooltip Change business data. A call still asks the acting user to approve it, and an
-	 *          unattended run reaches it only if the background allowlist names it.
+	 * @tooltip Change business data, which still asks the acting user to approve the call.
 	 */
 	public static ResKey GROUP_DATA_WRITE;
 
@@ -64,8 +62,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Execute TL-Script
 	 * @de TL-Script ausführen
-	 * @tooltip Privileged: execute TL-Script and read its function reference. A script can express
-	 *          any data operation, so this reaches further than every read or write group together.
+	 * @tooltip Privileged: execute TL-Script, which can express any data operation, and read its
+	 *          function reference.
 	 */
 	public static ResKey GROUP_SCRIPT;
 
@@ -75,7 +73,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Change the model
 	 * @de Modell ändern
 	 * @tooltip Privileged: create and change modules, types, attributes, enumerations, annotations
-	 *          and layouts - the shape this very policy is written against.
+	 *          and layouts - the shape the access policy itself is written against.
 	 */
 	public static ResKey GROUP_MODEL_STRUCTURE;
 
@@ -84,9 +82,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Author agents
 	 * @de Agenten erstellen
-	 * @tooltip Privileged: create and rewire agents, skills and TL-Script tools. An agent that may
-	 *          edit agents can grant itself any tool. This is not about the data model - that is
-	 *          "Change the model".
+	 * @tooltip Privileged: create and rewire agents, skills and TL-Script tools - not the data
+	 *          model, which is "model.structure".
 	 */
 	public static ResKey GROUP_AGENT_AUTHORING;
 
@@ -95,8 +92,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Inspect agents
 	 * @de Agenten einsehen
-	 * @tooltip List which agents, skills and tools the application has. Read-only: it says what
-	 *          exists, it changes nothing.
+	 * @tooltip List which agents, skills and tools the application has, read-only.
 	 */
 	public static ResKey GROUP_AGENT_META;
 
@@ -105,8 +101,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Converse
 	 * @de Interagieren
-	 * @tooltip Ask the user a question, load a skill, delegate to a sub-agent. Without it an agent
-	 *          cannot even ask what it should do, which is why it belongs in the baseline.
+	 * @tooltip Ask the user a question, load a skill, delegate to a sub-agent - without it an agent
+	 *          cannot even ask what it should do.
 	 */
 	public static ResKey GROUP_INTERACTION;
 
@@ -115,8 +111,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Use the workspace
 	 * @de Arbeitsbereich nutzen
-	 * @tooltip The acting user's own tasks and published pages. Scoped to that user, so it touches
-	 *          nothing anyone else sees.
+	 * @tooltip The acting user's own tasks and published pages, scoped to that user.
 	 */
 	public static ResKey GROUP_WORKSPACE;
 
@@ -125,8 +120,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Send data out
 	 * @de Daten nach außen senden
-	 * @tooltip Reach outside the application: web fetch and search, issue trackers, remote MCP
-	 *          servers. Not privileged, but the best way to get data out of the application.
+	 * @tooltip Reach outside the application - web fetch and search, issue trackers, remote MCP
+	 *          servers - which is how data leaves it.
 	 */
 	public static ResKey GROUP_EGRESS;
 

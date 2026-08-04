@@ -479,7 +479,7 @@ Filtering the schemas leaves the model unable to tell "you are not permitted" fr
 not loaded yet" from "that does not exist": all three look like absence, so the agent answers the
 user with a vague "I can't do that" or goes hunting for a skill it may also not use.
 
-Two code fixes and one piece of prompt text address that:
+Three code fixes and one piece of prompt text address that:
 
 - **Skills whose every tool is denied are not offered** (`AgentFactory.injectSkills`,
   `buildDynamicSkillTool`, `buildSkillTool`, all through `AgentCapabilities.unusableReason`). A skill
@@ -490,10 +490,27 @@ Two code fixes and one piece of prompt text address that:
 - **`loadSkill` no longer advertises tools the principal cannot call** (`SkillTool.addSkillTools`).
   It used to register and announce every resolvable tool of a skill; the next turn's schema filter
   then removed exactly the denied ones, so an authoritative tool result contradicted the tool list.
+- **A call for an absent tool says which absence it is** (`ToolCatalog.absenceReason`). A name no skill
+  declares and no registry knows stays `Unknown tool` with the permitted-only available list. A name
+  one of the agent's own skills declares is answered with "load that skill". A name the service
+  registry resolves but the agent carries nowhere - the case of a TL-Script tool that no framework
+  agent lists - says so, and says that an administrator would have to add it to the agent or to a
+  skill. That last one used to read as `Unknown tool`, and an agent bridged the gap by reporting a
+  capability the user happened to lack: *"This agent lacks the `agent.authoring` capability"*, to a
+  user who was fully authorized. `DynamicToolCatalog.setReachableBySkill` is what separates the
+  skill case from the not-carried case; it is used for the message only, never for lookup.
+  A capability *is* named where the application really has the tool and the acting user really is
+  denied it - that is the ordinary denial reason, not a guess. A name that resolves nowhere never goes
+  through the permission check at all, so a typo still cannot make the answer disclose which
+  capabilities the user lacks.
 - **The generated skill catalog names the capabilities the principal lacks**
   (`AgentCapabilities.notice`), computed from the tools *this agent* can reach - its own `<tools>`
   plus its skills' - rather than from every group in the deployment. A denied capability then costs
-  one short line instead of a full JSON schema, and the agent can name it to the user.
+  one short line instead of a full JSON schema, and the agent can name it to the user. Each name
+  carries the group's own one-sentence description (`ToolGroups.labelKey`), because a group named
+  without one invites the model to read the name and guess: `agent.authoring` was explained to a user
+  as being about the data model. The section also states all three absences and tells the agent not to
+  blame a capability unless the message it got names one.
 
 **This prompt text is UX, not a control**, and must not be read as closing anything: see section 2.2
 - all gates in this design are deterministic Java checks on the call path, never prompt instructions.

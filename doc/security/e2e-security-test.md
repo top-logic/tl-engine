@@ -1,10 +1,9 @@
 # End-to-end security test: model access rights and tool access
 
 > **Not the entry point.** Start at **[testbed.md](testbed.md)** - it maps every behaviour of the
-> feature to a persona, a thing to type and an expected result, and it is where the persona matrix, the
-> `LEGACY` / `ENFORCED` switch and the automated coverage are described. **This** page is the depth
-> behind one part of it: the engine's model access rights, and the TL-Script harness that drives agent
-> runs against them.
+> feature to a persona, a thing to type and an expected result, and it is where the persona matrix and
+> the automated coverage are described. **This** page is the depth behind one part of it: the engine's
+> model access rights, and the TL-Script harness that drives agent runs against them.
 
 **Scope:** this walkthrough exercises the two enforcement layers that are live today.
 
@@ -379,7 +378,7 @@ The scripts live next to this document:
 `fire.tlscript` also carries four tool-layer cases (`T1` to `T4`) that ask a persona for something it
 lacks the capability for, and are judged on whether the agent **names** the missing capability. The
 deterministic version of those assertions is the `SecDemo*` JUnit suite; see
-[testbed.md](testbed.md#7-the-deterministic-backbone).
+[testbed.md](testbed.md#6-the-deterministic-backbone).
 
 ### 4.1 Why the agent runs as the calling user
 
@@ -601,8 +600,7 @@ AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=0(+inter
 ```
 
 With the aspect switched off it reads `mode=LEGACY roles=0 ... (not enforced)`, and every tool is
-callable by anyone - the behaviour the demo has as shipped. To get `LEGACY` while keeping the fixture,
-see [testbed.md](testbed.md#5-switching-between-legacy-and-enforced).
+callable by anyone - the behaviour the demo has as shipped.
 
 Every denial is logged at `WARN`, naming the tool, its group, the account, the roles it holds and the
 rule that decided:

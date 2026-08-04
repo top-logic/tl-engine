@@ -11,10 +11,6 @@
 	commenting the line out again. Nothing in this file is active while the line is commented
 	out, so the demo boots unchanged.
 
-	To compare enforced against unenforced behaviour, add "secdemo-legacy.config.xml" on the
-	following line - it overrides nothing but the mode. See doc/security/testbed.md, section
-	"Switching between LEGACY and ENFORCED".
-
 	Note when disabling: withdrawing the "secdemo" model declaration makes the engine's model
 	upgrade delete the module on the next boot, which fails while Note / Secret instances still
 	exist. Start from a fresh database, or delete those instances first. See
@@ -201,8 +197,7 @@
 
 			Writing this block is what turns tool authorization on. Without it the service resolves to
 			LEGACY and every tool an agent carries is callable by anyone, which is how the demo behaves
-			with this aspect switched off. To keep the fixture and compare against LEGACY anyway, add
-			"secdemo-legacy.config.xml" to metaConf.txt.
+			with this aspect switched off.
 
 			The six roles, ordered from the narrowest to the widest, and what each one is here to
 			demonstrate:

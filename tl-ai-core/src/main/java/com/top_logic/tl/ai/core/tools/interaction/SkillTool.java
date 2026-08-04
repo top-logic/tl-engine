@@ -105,6 +105,30 @@ public class SkillTool {
 	}
 
 	/**
+	 * Every tool name any of these skills declares, loaded or not.
+	 *
+	 * <p>
+	 * What the agent could reach by loading a skill. Handed to the {@link DynamicToolCatalog} so that
+	 * a call for an absent tool can say "load the skill that has it" rather than "no such tool".
+	 * </p>
+	 */
+	public Set<String> declaredToolNames() {
+		Set<String> names = new HashSet<>();
+		for (Skill skill : _skills.values()) {
+			for (String toolName : skill.tools()) {
+				names.add(toolName);
+				Tool tool = _toolResolver == null ? null : _toolResolver.apply(toolName);
+				if (tool != null) {
+					// The model calls a tool by its bare name, not by the qualified name a skill
+					// lists it under.
+					names.add(tool.name());
+				}
+			}
+		}
+		return names;
+	}
+
+	/**
 	 * Loads a skill by its id, returning its full content.
 	 * If the skill declares tools and this is the first load, those tools are added
 	 * to the agent's active tool catalog.

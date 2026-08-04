@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.tl.ai.core.security.ToolGroupResources;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
@@ -223,8 +224,12 @@ public class AgentCapabilities {
 		StringBuilder notice = new StringBuilder();
 		notice.append("\n### Capability Limits\n\n");
 		notice.append("Your tool list is filtered for the current user. A tool that is not in it is"
-			+ " either one this user is not permitted to use or one whose skill is not loaded yet -"
-			+ " never a defect, and never something to search for.\n\n");
+			+ " absent for exactly one of three reasons, and the call that fails says which:\n\n"
+			+ "- this user is not permitted to use it, which is final;\n"
+			+ "- it belongs to a skill you have not loaded yet, so load that skill;\n"
+			+ "- this agent does not carry it at all, which only an administrator can change.\n\n"
+			+ "Never a defect, and never something to search for. Do not name a capability as the"
+			+ " reason unless the message you got names one.\n\n");
 		if (nothingDenied) {
 			// Only when nothing at all was withheld. A denied tool that is ungrouped has no
 			// capability name to report, and claiming the user holds everything would be a lie.
@@ -234,7 +239,14 @@ public class AgentCapabilities {
 			notice.append("This user does **not** hold these capabilities, so the tools that require"
 				+ " them are absent:\n\n");
 			for (String capability : lacking) {
-				notice.append("- `").append(capability).append("`\n");
+				notice.append("- `").append(capability).append("`");
+				// Named without saying what it covers, a capability invites the model to guess -
+				// "agent.authoring" was read out to a user as being about the data model.
+				String description = ToolGroupResources.englishDescription(capability);
+				if (description != null) {
+					notice.append(" - ").append(description);
+				}
+				notice.append("\n");
 			}
 			notice.append("\n");
 		}

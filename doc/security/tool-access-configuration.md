@@ -70,6 +70,27 @@ to get data *out* of the application.
 > agent can relay. Granting `script` alone is therefore a read-only grant, and a role that needs to
 > *change* data with TL-Script needs both groups.
 
+### The same table, in the editor
+
+You do not have to keep this page open while writing a policy. In **Administration → Development →
+Service Editor → AiToolAccessService**, the group of a `<grant>` and the group a `<tool-groups>` entry
+assigns tools to are **selection lists**, not text fields, and hovering an entry shows the sentence
+from the table above:
+
+| Field | In the editor |
+|---|---|
+| `<grant group="...">`, `<deny group="...">` | a list of the known groups, each with a tooltip saying what granting it lets an agent do |
+| `<tool-groups><group name="...">` | the same list |
+| `<grant tool="...">`, `<tool name="...">` | **free text**, deliberately: `mcp__jira__*` is the form most entries take and no list of registered names contains it |
+
+The list holds every group the framework ships, every group a registered tool declares, and every
+group the policy in effect already defines - so an application's own group is selectable as soon as one
+of its tools declares it. A group that is in none of the three is the case the boot warning below calls
+out, and it is nearly always a typo.
+
+**Nothing about the stored format changes.** What is written to the file is the technical group name;
+a policy written by hand parses exactly as before, and the labels exist only in the editor.
+
 ---
 
 ## The rules, in one place
@@ -342,5 +363,4 @@ The demo carries a working example behind one switch: uncomment `secdemo.config.
 factories - two classified by a factory wildcard, one deliberately not.
 
 **[testbed.md](testbed.md) is where to start.** It maps every behaviour of this layer to a persona, a
-thing to type and an expected result, including a one-line switch between `LEGACY` and `ENFORCED` so the
-two can be compared side by side.
+thing to type and an expected result.

@@ -5,7 +5,10 @@
  */
 package com.top_logic.tl.ai.tool.api;
 
+import java.util.Map;
 import java.util.Set;
+
+import com.top_logic.basic.util.ResKey;
 
 /**
  * The built-in tool groups and their privilege classification.
@@ -99,6 +102,24 @@ public final class ToolGroups {
 	public static final Set<String> ALL = Set.of(MODEL_READ, DATA_READ, DATA_WRITE, SCRIPT,
 		MODEL_STRUCTURE, AGENT_AUTHORING, AGENT_META, INTERACTION, WORKSPACE, EGRESS);
 
+	/**
+	 * The resource carrying the display name and the explanation of every {@link #ALL framework
+	 * group}.
+	 *
+	 * @see #labelKey(String)
+	 */
+	private static final Map<String, ResKey> LABELS = Map.of(
+		MODEL_READ, I18NConstants.GROUP_MODEL_READ,
+		DATA_READ, I18NConstants.GROUP_DATA_READ,
+		DATA_WRITE, I18NConstants.GROUP_DATA_WRITE,
+		SCRIPT, I18NConstants.GROUP_SCRIPT,
+		MODEL_STRUCTURE, I18NConstants.GROUP_MODEL_STRUCTURE,
+		AGENT_AUTHORING, I18NConstants.GROUP_AGENT_AUTHORING,
+		AGENT_META, I18NConstants.GROUP_AGENT_META,
+		INTERACTION, I18NConstants.GROUP_INTERACTION,
+		WORKSPACE, I18NConstants.GROUP_WORKSPACE,
+		EGRESS, I18NConstants.GROUP_EGRESS);
+
 	private ToolGroups() {
 		// Constant holder.
 	}
@@ -112,5 +133,23 @@ public final class ToolGroups {
 	 */
 	public static boolean isPrivileged(String group) {
 		return group != null && PRIVILEGED.contains(group);
+	}
+
+	/**
+	 * The resource describing the named group: its display name, and its explanation under
+	 * {@link ResKey#tooltip()}.
+	 *
+	 * <p>
+	 * Only the framework's own groups have one. A group an application, an MCP server or a
+	 * {@code <tool-groups>} entry contributes is an arbitrary string with nobody to write a sentence
+	 * about it, and is shown under its technical name.
+	 * </p>
+	 *
+	 * @param group
+	 *        The group name, may be <code>null</code>.
+	 * @return The resource, or <code>null</code> for a group this class does not ship.
+	 */
+	public static ResKey labelKey(String group) {
+		return group == null ? null : LABELS.get(group);
 	}
 }

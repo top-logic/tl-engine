@@ -16,6 +16,8 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
+import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /*
@@ -278,6 +280,22 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		String TOOLS = "tools";
 
 		/**
+		 * The capability group the tools listed here belong to.
+		 *
+		 * @see AllToolGroups
+		 */
+		/*
+		 * Redeclared from NamedConfigMandatory only to carry the option annotations; the property
+		 * itself is inherited. The editor then offers the known groups and explains each of them,
+		 * while the stored value stays the technical group name, so a hand-written policy parses
+		 * unchanged.
+		 */
+		@Override
+		@Options(fun = AllToolGroups.class)
+		@OptionLabels(ToolGroupResources.class)
+		String getName();
+
+		/**
 		 * The tools belonging to this group, by their qualified name.
 		 *
 		 * <p>
@@ -369,8 +387,15 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		 * </p>
 		 *
 		 * @see ToolGroups
+		 * @see AllToolGroups
+		 */
+		/*
+		 * The editor offers the known groups and explains each of them, while the stored value stays
+		 * the technical group name, so a hand-written policy parses unchanged.
 		 */
 		@Name(GROUP)
+		@Options(fun = AllToolGroups.class)
+		@OptionLabels(ToolGroupResources.class)
 		String getGroup();
 
 		/**
@@ -386,6 +411,10 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		 * covers every tool whose name starts with it, but never reaches a privileged group - those
 		 * tools have to be named in full.
 		 * </p>
+		 */
+		/*
+		 * Free text on purpose, unlike getGroup(): mcp__jira__* is not among any list of registered
+		 * tool names, and it is the form most entries here take.
 		 */
 		@Name(TOOL)
 		String getTool();

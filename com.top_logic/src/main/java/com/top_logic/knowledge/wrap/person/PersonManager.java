@@ -164,6 +164,22 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 		return Person.byName(kb(), getAnonymousUserName());
 	}
 
+	/**
+	 * Whether the given account is the {@link #getAnonymous() anonymous account}.
+	 *
+	 * <p>
+	 * In contrast to {@link #getAnonymous()}, this check does not look the account up and therefore
+	 * also recognizes the anonymous account while it is being created, see
+	 * {@link #ensureAnonymousAccount()}.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account to check, may be <code>null</code>.
+	 */
+	public boolean isAnonymous(Person account) {
+		return account != null && Person.normalizeName(getAnonymousUserName()).equals(account.getName());
+	}
+
 	private String getAnonymousUserName() {
 		return getConfig().getAnonymousUserName();
 	}

@@ -207,7 +207,8 @@
 			The six roles, ordered from the narrowest to the widest, and what each one is here to
 			demonstrate:
 
-			  secBare    nothing beyond the <baseline>. Every skill that declares a tool disappears.
+			  secBare    nothing beyond the implicit "interaction" grant. Every skill that declares a
+			             tool disappears.
 			  secViewer  model.read only. Shows a *partially* denied skill: TL_modelExploration keeps
 			             its eight model.read tools and loses its three data.read ones.
 			  secReader  model.read + data.read + script. The read-only persona of the model-rights
@@ -303,10 +304,13 @@
 					</role>
 				</tool-access>
 
-				<!-- Without this an agent cannot even ask the user a question. -->
-				<baseline>
-					<grant group="interaction"/>
-				</baseline>
+				<!--
+					No <baseline> on purpose. "interaction" - asking a question, loading a skill,
+					delegating - is granted implicitly to every role and every run, so the narrowest
+					persona here holds it without any configuration saying so. This aspect leaves the
+					element out to demonstrate exactly that; an application that wants further
+					always-granted groups adds them here.
+				-->
 
 				<!--
 					The ceiling for a run with nobody to answer an approval prompt - aiAgentChatAsync,
@@ -317,12 +321,14 @@
 					data.write - reaches "secdemo-editing.addNote" in the chat and is refused it in a
 					background run. That contrast is the whole point of the mechanism, and
 					SecDemoBackgroundAccessTest pins it.
+
+					"interaction" is absent here for the same reason it is absent above: an
+					unattended run reaches it implicitly.
 				-->
 				<background-allowlist>
 					<grant group="model.read"/>
 					<grant group="data.read"/>
 					<grant group="agent.meta"/>
-					<grant group="interaction"/>
 					<grant group="script"/>
 				</background-allowlist>
 			</instance>

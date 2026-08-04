@@ -34,7 +34,7 @@
 	// running this as "root" (which bypasses the policy) makes one outbound
 	// request to example.com. Every other probe is a local read.
 	probes = [
-		["interaction     (baseline, granted to everyone)", "user-interaction.askUser",
+		["interaction     (implicit, granted to everyone)", "user-interaction.askUser",
 			{"question": "probe", "header": "Probe", "type": "text"}],
 		["model.read", "model-browser.listModules", null],
 		["data.read", "model-instances.listInstances",

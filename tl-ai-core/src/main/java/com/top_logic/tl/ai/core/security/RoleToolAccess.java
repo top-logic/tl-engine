@@ -31,7 +31,8 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * </p>
  * <ol>
  * <li>An explicit deny from <em>any</em> held role rejects the tool outright.</li>
- * <li>The baseline grants apply to every user.</li>
+ * <li>{@link #IMPLICIT_BASELINE} is granted to every user without being configured.</li>
+ * <li>The configured baseline grants apply to every user.</li>
  * <li>The grants of all held roles are unioned.</li>
  * <li>Anything not reached by the above is denied.</li>
  * </ol>
@@ -103,6 +104,25 @@ public class RoleToolAccess {
 	}
 
 	private static final String BASELINE_ROLE = "(baseline)";
+
+	/**
+	 * The capability every policy grants, whether or not it says so.
+	 *
+	 * <p>
+	 * {@link ToolGroups#INTERACTION} is the one group no administrator has to configure: an agent that
+	 * cannot ask a question is broken, and a forgotten {@code <baseline>} must not be able to produce
+	 * that state. It therefore reaches every role - including a role that appears with an empty grant
+	 * list, and a user with no role at all - and it reaches unattended runs too, so that the same
+	 * omission cannot silence a background run either.
+	 * </p>
+	 *
+	 * <p>
+	 * An explicit deny still wins, because denies are evaluated first: an administrator who takes the
+	 * capability away from a role has said so out loud, which is a different thing from never having
+	 * mentioned it. Declaring it in {@code <baseline>} stays legal and is a no-op.
+	 * </p>
+	 */
+	public static final String IMPLICIT_BASELINE = ToolGroups.INTERACTION;
 
 	private final ToolAccessPolicy _policy;
 
@@ -228,7 +248,7 @@ public class RoleToolAccess {
 			}
 		}
 
-		if (matchesAny(_policy.getBaseline(), tool, group, true)) {
+		if (isImplicitBaseline(group) || matchesAny(_policy.getBaseline(), tool, group, true)) {
 			return new Decision.Granted(BASELINE_ROLE, group);
 		}
 
@@ -274,12 +294,12 @@ public class RoleToolAccess {
 	 * </p>
 	 *
 	 * <p>
-	 * <b>An absent declaration admits nothing.</b> The allowlist is the compensating control for the
-	 * approval prompt an unattended run cannot show, so "the administrator said nothing" must not be
-	 * the state that allows everything - a policy that enables enforcement and forgets the allowlist
-	 * would otherwise hand unattended runs the user's full grant set, auto-approved.
-	 * {@link AiToolAccessService} refuses such a policy at boot; this method is the same rule at the
-	 * decision point, for the policies that never pass through the service.
+	 * <b>An absent declaration admits nothing beyond {@link #IMPLICIT_BASELINE}.</b> The allowlist is
+	 * the compensating control for the approval prompt an unattended run cannot show, so "the
+	 * administrator said nothing" must not be the state that allows everything - a policy that enables
+	 * enforcement and forgets the allowlist would otherwise hand unattended runs the user's full grant
+	 * set, auto-approved. {@link AiToolAccessService} refuses such a policy at boot; this method is the
+	 * same rule at the decision point, for the policies that never pass through the service.
 	 * </p>
 	 *
 	 * @param tool
@@ -287,6 +307,13 @@ public class RoleToolAccess {
 	 * @return Whether the background allowlist admits the tool.
 	 */
 	public boolean allowedInBackground(ToolIdentity tool) {
+		String group = groupOf(tool);
+		if (isImplicitBaseline(group)) {
+			// The implicit grant is not a capability an allowlist rations: it exists so that no
+			// omission can leave a run unable to talk to anyone, and an unattended run is exactly
+			// the kind of run an omission is easy to make about.
+			return true;
+		}
 		BackgroundAllowlist allowlist = _policy.getBackgroundAllowlist();
 		if (allowlist == null) {
 			return false;
@@ -295,7 +322,18 @@ public class RoleToolAccess {
 			// The explicit opt-out: unattended runs are bounded only by the user's own grants.
 			return true;
 		}
-		return matchesAny(allowlist.getGrants(), tool, groupOf(tool), true);
+		return matchesAny(allowlist.getGrants(), tool, group, true);
+	}
+
+	/**
+	 * Whether the given group is granted to everyone without being configured.
+	 *
+	 * @param group
+	 *        The group a tool belongs to, may be <code>null</code>.
+	 * @return Whether {@link #IMPLICIT_BASELINE} covers it.
+	 */
+	private static boolean isImplicitBaseline(String group) {
+		return IMPLICIT_BASELINE.equals(group);
 	}
 
 	/**

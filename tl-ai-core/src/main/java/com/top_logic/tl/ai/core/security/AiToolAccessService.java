@@ -112,7 +112,7 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 
 		Logger.info("Agent tool access: mode=" + _ceiling
 			+ " roles=" + policy.getToolAccess().size()
-			+ " baseline=" + policy.getBaseline().size()
+			+ " baseline=" + policy.getBaseline().size() + "(+" + RoleToolAccess.IMPLICIT_BASELINE + ")"
 			+ " backgroundAllowlist=" + describeBackgroundAllowlist(policy)
 			+ (_ceiling.enforcesToolAccess() ? "" : " (not enforced)"), AiToolAccessService.class);
 	}

@@ -51,6 +51,13 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * </p>
  *
  * <p>
+ * The same predicate refuses a spawn that could only come back empty-handed - see
+ * {@link com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner#detachedSpawnRefusal}. There it is
+ * asked against the context the <em>child</em> will get rather than this turn's, because a detached
+ * subagent is an unattended run and loses whatever the {@code <background-allowlist>} withholds.
+ * </p>
+ *
+ * <p>
  * <b>Authorization only, not the execution-mode gate.</b> Everything here asks
  * {@link SecurityContext#hasToolPermission(Tool)}, which is bound once per run and cannot change
  * while it lasts. The {@link ExecutionMode} half of {@link ToolPermissionFilter} is deliberately not
@@ -487,8 +494,7 @@ public class AgentCapabilities {
 			// An unattended run loses capabilities its principal does hold, to the background
 			// allowlist. Reporting those as rights the user lacks would send whoever reads it to the
 			// wrong configuration - and would tell the agent something false about its user.
-			Set<String> unattended = new TreeSet<>(_security.capabilitiesWithheldInBackground());
-			unattended.retainAll(lacking);
+			Set<String> unattended = lostToBackgroundCeiling(lacking);
 			Set<String> notHeld = new TreeSet<>(lacking);
 			notHeld.removeAll(unattended);
 
@@ -513,6 +519,29 @@ public class AgentCapabilities {
 	}
 
 	/**
+	 * Which of the given capabilities this run cannot reach because it is
+	 * {@link SecurityContext#isBackgroundRun() unattended}, rather than because its principal does not
+	 * hold them.
+	 *
+	 * <p>
+	 * Every message that names a missing capability has to tell the two apart, because they call for
+	 * different things: the first for an administrator to widen the {@code <background-allowlist>}, the
+	 * second for a role grant. {@link #notice} does it for the system prompt, and a refused
+	 * {@code spawn_subagent} does it for the tool error - see
+	 * {@link com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner#detachedSpawnRefusal}.
+	 * </p>
+	 *
+	 * @param capabilities
+	 *        The capabilities to split, typically the ones some tool needs and this run is denied.
+	 * @return The subset withheld by the allowlist, in a stable order; empty for an attended run.
+	 */
+	public Set<String> lostToBackgroundCeiling(Collection<String> capabilities) {
+		Set<String> unattended = new TreeSet<>(_security.capabilitiesWithheldInBackground());
+		unattended.retainAll(capabilities);
+		return unattended;
+	}
+
+	/**
 	 * How the prompt names one capability the principal lacks.
 	 *
 	 * <p>
@@ -521,7 +550,7 @@ public class AgentCapabilities {
 	 * as being about the data model.
 	 * </p>
 	 */
-	static String describeCapability(String capability) {
+	public static String describeCapability(String capability) {
 		String description = ToolGroupResources.englishDescription(capability);
 		return description == null ? "`" + capability + "`" : "`" + capability + "` - " + description;
 	}

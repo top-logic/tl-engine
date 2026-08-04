@@ -485,8 +485,8 @@ Being in `egress` has two consequences beyond ordinary granting:
   parent could use. That is the point - it also lost the control that made them safe - and it is made
   legible rather than silent.
 
-The *exposure* of delegates - which sub-agents an agent is offered at all - is filtered separately and
-for UX reasons only; see 3.2.7.
+The *exposure* of delegates - which sub-agents an agent is offered at all, and which ones it may spawn -
+is filtered separately and for UX reasons only; see 3.2.7.
 
 #### 3.2.6 Where it hooks in
 
@@ -557,6 +557,26 @@ Four code fixes and one piece of prompt text address that:
   instead would be worse still: it would remove a capability the user actually holds. A delegate the
   principal can use in full is not annotated at all, so the notice only ever appears where there is
   something to say.
+- **A spawn that could only come back empty-handed is refused** (`SubagentSpawner.detachedSpawnRefusal`).
+  `spawn_subagent` names its target at call time, so there is no list to leave it out of: the same
+  predicate is applied to the name the model asked for, and the answer is an **ordinary tool error**
+  rather than an exception, because what the user has to hear is which capability to ask for. Without it
+  the two surfaces contradicted each other - `list_agents` is the surface that feeds the spawn decision
+  and it already filters, so an agent could read a name out of a filtered listing and spawn it anyway.
+
+  **Judged against the context the child will get, not the parent turn's.** A detached spawn is a
+  background run (3.2.5), so the predicate is asked of `security().withBackgroundCeiling()`: an agent the
+  parent turn reaches in full can be out of reach once the allowlist applies, and that case is refused
+  with the unattended wording - *"A spawned subagent runs unattended ... it cannot reach the capabilities
+  its tools require, even though this user holds them"*. Telling a user they lack a right they do hold
+  would send them to their administrator for the wrong change; the split is
+  `AgentCapabilities.lostToBackgroundCeiling`, the same one the capability notice uses.
+
+  A **synchronous** delegation is untouched. It inherits the parent's context unchanged and completes
+  inside the parent turn, so nothing about it is filtered here. The refusal never says or implies that
+  the agent does not exist - it does, and a model told otherwise looks for another name for the same
+  work. An agent that really is unknown is not refused here either: that is not a denial, and the spawn
+  fails where it always did. `LEGACY` refuses nothing, and does not even walk the agent graph.
 - **`loadSkill` no longer advertises tools the principal cannot call** (`SkillTool.addSkillTools`).
   It used to register and announce every resolvable tool of a skill; the next turn's schema filter
   then removed exactly the denied ones, so an authoritative tool result contradicted the tool list.

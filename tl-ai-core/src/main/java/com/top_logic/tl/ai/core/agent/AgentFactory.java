@@ -366,7 +366,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		String systemPrompt = agent.systemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt, capabilities);
-		systemPrompt = injectDelegateDescriptions(agent, systemPrompt);
+		systemPrompt = injectDelegateDescriptions(agent, systemPrompt, capabilities);
 
 		// maxOutputTokens: assignment override > catalog
 		Integer assignedMaxTokens = assignment.maxTokens();
@@ -596,22 +596,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		// Inject delegation tools from the agent's delegations list
 		if (includeDelegation) {
-			List<String> delegationNames = agent.delegations();
-			if (!delegationNames.isEmpty()) {
-				String parentName = agent.name();
-				AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-				for (String targetName : delegationNames) {
-					AgentDefinition target = query.findAgentByName(targetName);
-					String targetDesc = target != null ? target.description() : "No description";
-					String toolName = "delegate_to_" + targetName.replace('-', '_');
-					registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this));
-				}
-				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it,
-				// unless the agent already selected it explicitly (subagent.wait_for_subagent).
-				if (registry.getTool(WaitForSubagentTool.NAME) == null) {
-					registry.register(new WaitForSubagentTool());
-				}
-			}
+			registerDelegationTools(registry, agent, capabilities);
 		}
 
 		return registry.freeze();
@@ -665,23 +650,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		// Delegation tools go in the base (architectural)
 		if (includeDelegation) {
-			List<String> delegationNames = agent.delegations();
-			if (!delegationNames.isEmpty()) {
-				String parentName = agent.name();
-				AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-				for (String targetName : delegationNames) {
-					AgentDefinition target = query.findAgentByName(targetName);
-					String targetDesc = target != null ? target.description() : "No description";
-					String toolName = "delegate_to_" + targetName.replace('-', '_');
-					baseCatalog.register(
-						new DelegationTool(toolName, targetDesc, targetName, parentName, this));
-				}
-				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it,
-				// unless the agent already selected it explicitly (subagent.wait_for_subagent).
-				if (baseCatalog.getTool(WaitForSubagentTool.NAME) == null) {
-					baseCatalog.register(new WaitForSubagentTool());
-				}
-			}
+			registerDelegationTools(baseCatalog, agent, capabilities);
 		}
 
 		DynamicToolCatalog dynamicCatalog = new DynamicToolCatalog(baseCatalog.freeze());
@@ -834,28 +803,179 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 	/**
 	 * Injects descriptions of available delegate agents into the system prompt.
+	 *
+	 * <p>
+	 * Delegates that can do nothing for the run's principal are left out, and one that can do only
+	 * part of what it declares is offered with the capabilities it cannot use named - see
+	 * {@link #delegateCatalog}.
+	 * </p>
 	 */
-	private String injectDelegateDescriptions(AgentDefinition agent, String systemPrompt) {
-		List<String> delegationNames = agent.delegations();
+	private String injectDelegateDescriptions(AgentDefinition agent, String systemPrompt,
+			AgentCapabilities capabilities) {
 		String base = systemPrompt != null ? systemPrompt : "";
 
-		if (delegationNames.isEmpty()) {
+		if (agent.delegations().isEmpty()) {
 			return base.replace(DELEGATES_PLACEHOLDER, "");
+		}
+
+		return replacePlaceholderOrAppend(base, DELEGATES_PLACEHOLDER,
+			delegateCatalog(agent.name(), delegateOffers(agent, capabilities)));
+	}
+
+	/**
+	 * The generated {@code ### Available Delegates} section, empty if the agent has no delegate the
+	 * run's principal can use.
+	 *
+	 * <p>
+	 * The single place a dropped delegate is logged, as {@link #skillCatalog} is for a dropped skill:
+	 * every surface filters, and logging in each of them would say the same thing three times.
+	 * </p>
+	 *
+	 * @param agentName
+	 *        The delegating agent, for the log line.
+	 * @param offers
+	 *        Its delegates, already judged.
+	 */
+	static String delegateCatalog(String agentName, List<DelegateOffer> offers) {
+		List<DelegateOffer> offered = new ArrayList<>();
+		for (DelegateOffer offer : offers) {
+			if (offer.offered()) {
+				offered.add(offer);
+				continue;
+			}
+			// Silent capability loss is the failure mode this filter must not have: an operator asked
+			// why the agent "stopped handing work to X" must find the answer here.
+			Logger.info("Agent '" + agentName + "': delegate '" + offer.targetName()
+				+ "' is not offered to the current user - " + offer.unusableReason(), AgentFactory.class);
+		}
+		if (offered.isEmpty()) {
+			return "";
 		}
 
 		StringBuilder section = new StringBuilder();
 		section.append("\n\n### Available Delegates\n\n");
 		section.append("You can delegate tasks to these specialized agents:\n\n");
 
-		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-		for (String targetName : delegationNames) {
-			AgentDefinition target = query.findAgentByName(targetName);
-			String targetDesc = target != null ? target.description() : "No description";
-			String toolName = "delegate_to_" + targetName.replace('-', '_');
-			section.append("- **").append(targetName).append("** (`").append(toolName).append("`): ");
-			section.append(targetDesc != null ? targetDesc : "No description").append("\n");
+		boolean anyLimited = false;
+		for (DelegateOffer offer : offered) {
+			section.append("- **").append(offer.targetName()).append("** (`")
+				.append(offer.toolName()).append("`): ");
+			section.append(offer.description() != null ? offer.description() : "No description")
+				.append("\n");
+			if (offer.limited()) {
+				anyLimited = true;
+				section.append("  Limited for this user - it cannot use:");
+				for (String capability : offer.unreachableCapabilities()) {
+					section.append("\n    - ").append(AgentCapabilities.describeCapability(capability));
+				}
+				section.append("\n");
+			}
+		}
+		if (anyLimited) {
+			// A delegate inherits this run's permissions unchanged, so the parent finding out by
+			// sending work that comes back refused is a wasted child run and a wasted turn.
+			section.append("\nA delegate marked limited still works, for whatever the capabilities it"
+				+ " keeps allow. Do not send it work that needs one of the capabilities named under"
+				+ " it: it acts with this user's permissions and would come back refused.\n");
 		}
 
-		return replacePlaceholderOrAppend(base, DELEGATES_PLACEHOLDER, section.toString());
+		return section.toString();
+	}
+
+	/**
+	 * Registers a {@code delegate_to_*} tool for every delegate the run's principal can use.
+	 *
+	 * <p>
+	 * Shared by both catalog paths, because a delegate the prompt does not offer and a
+	 * {@code delegate_to_*} tool the model can still call would contradict each other: filtering only
+	 * the prompt text would be cosmetic.
+	 * </p>
+	 */
+	void registerDelegationTools(ToolCatalog catalog, AgentDefinition agent,
+			AgentCapabilities capabilities) {
+		boolean anyOffered = false;
+		for (DelegateOffer offer : delegateOffers(agent, capabilities)) {
+			if (!offer.offered()) {
+				// Logged once per run where the catalog is generated - see delegateCatalog.
+				continue;
+			}
+			catalog.register(new DelegationTool(offer.toolName(), offer.description(),
+				offer.targetName(), agent.name(), this));
+			anyOffered = true;
+		}
+		if (anyOffered && catalog.getTool(WaitForSubagentTool.NAME) == null) {
+			// delegate_to_* runs asynchronously, so the await tool is wired in alongside it, unless
+			// the agent already selected it explicitly (subagent.wait_for_subagent). With nothing to
+			// delegate to there is nothing to await either.
+			catalog.register(new WaitForSubagentTool());
+		}
+	}
+
+	/**
+	 * The delegates the given agent declares, each judged for the run's principal.
+	 *
+	 * <p>
+	 * Computed once per surface rather than per surface differently: the prompt catalog and the
+	 * {@code delegate_to_*} registration both read this list, so they cannot drift apart.
+	 * </p>
+	 */
+	static List<DelegateOffer> delegateOffers(AgentDefinition agent, AgentCapabilities capabilities) {
+		List<DelegateOffer> offers = new ArrayList<>();
+		for (String targetName : agent.delegations()) {
+			AgentDefinition target = capabilities.graph().agent(targetName);
+			offers.add(new DelegateOffer(targetName, delegationToolName(targetName),
+				target != null ? target.description() : null,
+				capabilities.unusableReason(target),
+				capabilities.unreachableCapabilities(target)));
+		}
+		return offers;
+	}
+
+	/**
+	 * The delegates of the given agent that are offered to the run's principal, in declaration order.
+	 */
+	public static List<String> offeredDelegates(AgentDefinition agent, AgentCapabilities capabilities) {
+		List<String> offered = new ArrayList<>();
+		for (DelegateOffer offer : delegateOffers(agent, capabilities)) {
+			if (offer.offered()) {
+				offered.add(offer.targetName());
+			}
+		}
+		return offered;
+	}
+
+	/** The name of the tool that delegates to the agent of the given name. */
+	public static String delegationToolName(String targetAgentName) {
+		return "delegate_to_" + targetAgentName.replace('-', '_');
+	}
+
+	/**
+	 * One delegation edge of an agent, judged for the principal of one run.
+	 *
+	 * @param targetName
+	 *        The delegate's agent name.
+	 * @param toolName
+	 *        The name of the {@code delegate_to_*} tool that reaches it.
+	 * @param description
+	 *        The delegate's own description, or <code>null</code> if it declares none - or if no agent
+	 *        of that name exists.
+	 * @param unusableReason
+	 *        Why the delegate can do nothing for the principal, or <code>null</code> if it can do
+	 *        something.
+	 * @param unreachableCapabilities
+	 *        The capabilities some of the delegate's tools need and the principal does not hold.
+	 */
+	record DelegateOffer(String targetName, String toolName, String description,
+			String unusableReason, Set<String> unreachableCapabilities) {
+
+		/** Whether the delegate is offered to the run at all. */
+		boolean offered() {
+			return unusableReason == null;
+		}
+
+		/** Whether the delegate is offered but cannot do everything it declares. */
+		boolean limited() {
+			return offered() && !unreachableCapabilities.isEmpty();
+		}
 	}
 }

@@ -7,9 +7,14 @@ package com.top_logic.tl.ai.core.tools.interaction;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -18,7 +23,15 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
- * Lists all predefined agents available to spawn as subagents.
+ * Lists the predefined agents available to spawn as subagents.
+ *
+ * <p>
+ * Filtered the way the prompt's delegate catalog is filtered: an agent whose every reachable tool is
+ * denied to the acting user is left out, and one that is only partly reachable is listed with the
+ * capabilities it cannot use. Listing what a spawn would spend a provider round trip failing at is
+ * what this filter exists to stop; see {@link AgentCapabilities#unusableReason(AgentDefinition)} and
+ * {@code doc/security/agent-security-architecture.md} section 3.2.7.
+ * </p>
  */
 public class ListAgentsTool implements Tool {
 
@@ -73,20 +86,59 @@ public class ListAgentsTool implements Tool {
 	@Override
 	public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 		Collection<AgentDefinition> agents = AgentDefinitionQuery.getInstance().getAllAgents();
+		AgentCapabilities capabilities = AgentCapabilities.forRun(security(context));
 
 		StringBuilder json = new StringBuilder("[");
 		boolean first = true;
 		for (AgentDefinition agent : agents) {
+			String unusable = capabilities.unusableReason(agent);
+			if (unusable != null) {
+				// Capability must not vanish silently: an operator asked why an agent is no longer
+				// offered for spawning must find the answer here.
+				Logger.info("Agent '" + agent.name() + "' is not offered for spawning to the current"
+					+ " user - " + unusable, ListAgentsTool.class);
+				continue;
+			}
 			if (!first) {
 				json.append(",");
 			}
 			first = false;
 			json.append("{\"name\":\"").append(jsonEscape(agent.name())).append("\",");
-			json.append("\"description\":\"").append(jsonEscape(agent.description())).append("\"}");
+			json.append("\"description\":\"").append(jsonEscape(agent.description())).append("\"");
+			Set<String> unreachable = capabilities.unreachableCapabilities(agent);
+			if (!unreachable.isEmpty()) {
+				// The same thing the prompt's delegate catalog says: it works, but not for these.
+				json.append(",\"cannotUse\":[");
+				boolean firstCapability = true;
+				for (String capability : unreachable) {
+					if (!firstCapability) {
+						json.append(",");
+					}
+					firstCapability = false;
+					json.append("\"").append(jsonEscape(capability)).append("\"");
+				}
+				json.append("]");
+			}
+			json.append("}");
 		}
 		json.append("]");
 
 		return ToolResult.of(json.toString());
+	}
+
+	/**
+	 * The security context of the run this call belongs to.
+	 *
+	 * <p>
+	 * Outside an agent loop (scripting entry points, tests) there is no run to ask, and
+	 * {@link SecurityContext#UNRESTRICTED} answers as an unconfigured application does - so the listing
+	 * stays what it was before this filter existed.
+	 * </p>
+	 */
+	private static SecurityContext security(ToolExecutionContext context) {
+		return context instanceof ToolContext toolContext
+			? toolContext.security()
+			: SecurityContext.UNRESTRICTED;
 	}
 
 	/** Escapes a string for JSON embedding. */

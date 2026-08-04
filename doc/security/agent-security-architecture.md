@@ -450,7 +450,8 @@ Being in `egress` has two consequences beyond ordinary granting:
 - **Delegated sub-agents** (`DelegationTool`, `SpawnSubagentTool`) inherit the parent's
   `SecurityContext` unchanged (`ToolContext.forDelegation` already does this - `ToolContext.java:290`)
   and are additionally bounded by the child agent's own tool list. A child can therefore only ever be
-  a *subset* of the parent's authority (T8): delegation is not an escalation path.
+  a *subset* of the parent's authority (T8): delegation is not an escalation path. The *exposure* of
+  delegates is filtered separately and for UX reasons only - see 3.2.7.
 
 #### 3.2.6 Where it hooks in
 
@@ -480,7 +481,7 @@ Filtering the schemas leaves the model unable to tell "you are not permitted" fr
 not loaded yet" from "that does not exist": all three look like absence, so the agent answers the
 user with a vague "I can't do that" or goes hunting for a skill it may also not use.
 
-Three code fixes and one piece of prompt text address that:
+Four code fixes and one piece of prompt text address that:
 
 - **Skills whose every tool is denied are not offered** (`AgentFactory.injectSkills`,
   `buildDynamicSkillTool`, `buildSkillTool`, all through `AgentCapabilities.unusableReason`). A skill
@@ -488,6 +489,39 @@ Three code fixes and one piece of prompt text address that:
   only the permitted subset; a skill whose tool names do not resolve is kept, because a typo is not a
   denial. Every dropped skill is logged at INFO with the deciding reason - silent capability loss is
   the failure mode this must not have.
+- **Delegates whose every reachable tool is denied are not offered** (#264,
+  `AgentCapabilities.unusableReason(AgentDefinition)`). The recursive form of the skill rule: a
+  delegate's effective tool set is its own `<tools>` **plus** every tool of every skill it declares
+  **plus** its MCP servers' tools **plus**, transitively, everything its own delegates reach
+  (`reachableTools`). The walk visits each agent once, so a delegation cycle (A → B → A) terminates and
+  the revisit contributes nothing. Three cases keep a delegate, for the reasons they keep a skill: one
+  that reaches no tool at all (a **delegation-only** agent must not fall to the vacuous "all zero of
+  its tools are denied"), one that is partly reachable (below), and one whose tool names resolve
+  nowhere (a typo is not a denial). Every dropped delegate is logged at INFO naming the capabilities it
+  needed. `LEGACY` filters nothing - the generated `### Available Delegates` section stays
+  byte-identical, pinned by `TestDelegateFilter.testLegacyCatalogIsUnchanged`.
+
+  All **three** exposure surfaces filter, from the one judged list (`AgentFactory.delegateOffers`), so
+  they cannot drift: the prompt catalog (`delegateCatalog`), the `delegate_to_*` registration in both
+  catalog paths (`registerDelegationTools`, static and dynamic), and `list_agents`
+  (`ListAgentsTool.execute`). Filtering only the prompt text would be cosmetic, exactly as it would
+  have been for skills - the model can call a tool the prompt never mentioned. With no delegate left,
+  `wait_for_subagent` is not wired in either: there is nothing to await.
+
+  This takes nothing away from anyone. A child inherits the parent's `SecurityContext` unchanged
+  (3.2.5), so a delegate whose every tool is denied could only ever have started, filtered its own
+  schemas to nothing, spent a provider round trip and reported failure.
+
+  **Partial reachability: the delegate stays, and is told to be limited.** A delegate some of whose
+  tools the principal may call is still worth having - it can do that part of the job - so it is
+  offered, and the catalog line under it names the capabilities it *cannot* use, in the same register
+  as the capability notice below (`Limited for this user - it cannot use: ...`, each capability with its
+  group description). `list_agents` says the same thing in its `cannotUse` field. The alternative -
+  offering it silently - makes the parent discover the limit by sending work that comes back refused,
+  which costs a child run and a turn and teaches the model nothing it can tell the user. Dropping it
+  instead would be worse still: it would remove a capability the user actually holds. A delegate the
+  principal can use in full is not annotated at all, so the notice only ever appears where there is
+  something to say.
 - **`loadSkill` no longer advertises tools the principal cannot call** (`SkillTool.addSkillTools`).
   It used to register and announce every resolvable tool of a skill; the next turn's schema filter
   then removed exactly the denied ones, so an authoritative tool result contradicted the tool list.

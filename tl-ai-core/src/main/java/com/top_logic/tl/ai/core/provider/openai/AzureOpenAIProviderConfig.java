@@ -117,10 +117,10 @@ public class AzureOpenAIProviderConfig implements LLMProviderConfig {
 		/**
 		 * The HTTP authentication scheme used to send the API key.
 		 *
-		 * <p>{@link AuthScheme#BEARER} (the default) places the key in
-		 * {@code Authorization: Bearer <key>}, which is used by Nexus and Carina gateways.
-		 * {@link AuthScheme#API_KEY} places the key in {@code api-key: <key>}, which is required
-		 * by real Azure <code>OpenAI</code> resource endpoints.</p>
+		 * <p>{@link AuthScheme#BEARER} (the default) places the key in the {@code Authorization}
+		 * header, which is what Nexus and Carina gateways expect. {@link AuthScheme#API_KEY}
+		 * places it in the {@code api-key} header, which is required by real Azure
+		 * <code>OpenAI</code> resource endpoints.</p>
 		 */
 		@Name(AUTH_SCHEME)
 		@ComplexDefault(BearerDefault.class)

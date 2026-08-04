@@ -12,8 +12,8 @@ import com.top_logic.basic.config.annotation.Name;
  * A named string value for use in config maps.
  *
  * <p>
- * Used for environment variables and HTTP headers in MCP transport configs. In XML:
- * {@code <entry name="KEY" value="VALUE"/>}
+ * Used for the environment variables and HTTP headers of an MCP transport: one entry carries
+ * the name to set and the value to set it to.
  * </p>
  */
 public interface NamedValueConfig extends NamedConfigMandatory {

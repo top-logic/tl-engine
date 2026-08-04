@@ -52,17 +52,14 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * Upsert semantics depend on the resolver declared in the {@code <resolvers>} block of the
- * XML file. With {@link NameBasedInstanceResolver}, an existing instance with the same
- * {@code name} is deleted and re-created from the XML — making the file the authoritative
+ * Upsert semantics depend on the resolver declared in the &lt;resolvers&gt; block of the XML
+ * file. With {@link NameBasedInstanceResolver}, an existing instance with the same
+ * {@code name} is deleted and re-created from the XML, making the file the authoritative
  * source of truth.
  * </p>
  *
  * <p>
- * After a successful import, the {@code initial-data.<fileName>} marker in {@link DBProperties}
- * is left in its current state. If the marker was already "loaded" (typical case) it stays
- * loaded, so a restart will not re-import again. If the marker was cleared by the
- * sibling export command, it is re-set, so the same restart-safe behaviour applies.
+ * A restart after the import does not import the file a second time.
  * </p>
  */
 public class ImportFromDataFolderCommand extends AbstractCommandHandler {
@@ -238,8 +235,14 @@ public class ImportFromDataFolderCommand extends AbstractCommandHandler {
 
 	/**
 	 * Stamps the {@code initial-data.<fileName>} flag in {@link DBProperties} so the
-	 * {@code InitialDataSetupService} skips this file on the next startup — matching the
+	 * {@code InitialDataSetupService} skips this file on the next startup, matching the
 	 * post-startup-load behaviour and avoiding a second re-import on the next boot.
+	 *
+	 * <p>
+	 * If the marker was already "loaded" (the typical case) it stays loaded. If the sibling
+	 * {@link ExportToDataFolderCommand} cleared it, it is re-set here, so the same
+	 * restart-safe behaviour applies either way.
+	 * </p>
 	 */
 	private void markAsLoaded(String fileName) {
 		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();

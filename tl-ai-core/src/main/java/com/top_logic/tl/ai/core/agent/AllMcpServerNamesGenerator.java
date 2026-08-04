@@ -22,8 +22,7 @@ import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
  * {@link ListGeneratorAdaptor} providing all configured MCP server names as options.
  *
  * <p>
- * Used as {@code <options>} generator on the {@code mcpServers} attribute of
- * {@code tl.ai.core:Agent}.
+ * Provides the options for the {@code mcpServers} attribute of {@code tl.ai.core:Agent}.
  * </p>
  *
  * @see McpServerRegistry#getServerNames()

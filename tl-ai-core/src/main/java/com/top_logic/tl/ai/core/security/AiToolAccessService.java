@@ -33,26 +33,32 @@ import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
+/*
+ * The JavaDoc of this class is exported to META-INF/messages_en.properties by the build's doclet and
+ * shown as the tooltip of this service in the service editor, so it is written for an administrator.
+ * The design is documented here instead.
+ *
+ * Deliberately shaped like the engine's SecurityConfigurationService (ticket #29088) so that an
+ * administrator meets one idiom rather than two: static application configuration, role names resolved
+ * and validated at boot, deny-by-default semantics. See doc/security/tool-access-configuration.md for
+ * the five-line version an administrator starts from, and section 4.1 of
+ * doc/security/agent-security-architecture.md for the full design.
+ *
+ * Enforcement is opt-in. Writing a non-empty <tool-access> is what turns it on; until then the
+ * effective mode is LEGACY and every agent behaves exactly as it did before this service existed. That
+ * asymmetry is intentional and explained on AiSecurityMode.resolve(ToolAccessPolicy): both this layer
+ * and the engine's model security deny by default, so switching them on for an application that has
+ * authored no policy would turn every existing agent into one that can do nothing. Once a policy is
+ * written, every decision inside it fails closed - including the <background-allowlist>, whose absence
+ * is a boot error rather than a permissive default.
+ */
+
 /**
- * Holds the administrator-authored mapping of security roles to the agent tools they may use.
+ * Decides which security roles may use which agent tools.
  *
  * <p>
- * Deliberately shaped like the engine's {@code SecurityConfigurationService} (ticket #29088) so that
- * an administrator meets one idiom rather than two: static application configuration, role names
- * resolved and validated at boot, deny-by-default semantics. See
- * {@code doc/security/tool-access-configuration.md} for the five-line version an administrator starts
- * from, and section 4.1 of {@code doc/security/agent-security-architecture.md} for the full design.
- * </p>
- *
- * <p>
- * <b>Enforcement is opt-in.</b> Writing a non-empty {@code <tool-access>} is what turns it on; until
- * then the effective mode is {@link AiSecurityMode#LEGACY} and every agent behaves exactly as it did
- * before this service existed. That asymmetry is intentional and explained on
- * {@link AiSecurityMode#resolve(ToolAccessPolicy)}: both this layer and the engine's model security
- * deny by default, so switching them on for an application that has authored no policy would turn
- * every existing agent into one that can do nothing. Once a policy <em>is</em> written, every
- * decision inside it fails closed - including the {@code <background-allowlist>}, whose absence is a
- * boot error rather than a permissive default.
+ * As long as no role is configured, no tool call is checked and every agent behaves as it did before
+ * this service existed. A configured role is the switch that turns the checks on.
  * </p>
  *
  * @see RoleToolAccess
@@ -72,12 +78,15 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessService.Config<?>> {
 
 	/**
-	 * Configuration of the {@link AiToolAccessService}.
+	 * The tool access policy of this application.
 	 *
 	 * <p>
-	 * The policy itself is {@link ToolAccessPolicy}; this interface only adds the service plumbing, so
-	 * that the XML an administrator writes is the policy and nothing else.
+	 * Every setting of it is described on {@link ToolAccessPolicy}.
 	 * </p>
+	 */
+	/*
+	 * This interface adds nothing but the service plumbing, so that the XML an administrator writes is
+	 * the policy and nothing else.
 	 */
 	public interface Config<I extends AiToolAccessService>
 			extends ConfiguredManagedClass.Config<I>, ToolAccessPolicy {
@@ -170,6 +179,15 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 * administrator says "enforce this" - and its absence keeps the application on
 	 * {@link AiSecurityMode#LEGACY}. This mirrors the design's rule that the presence of a policy is
 	 * the opt-in signal (section 3.1).
+	 * </p>
+	 *
+	 * <p>
+	 * This is why {@link ToolAccessPolicy#getSecurityMode()} is both {@code @Nullable} and
+	 * {@code @NullDefault}: an unconfigured mode has to stay distinguishable from an explicitly
+	 * configured {@link AiSecurityMode#LEGACY}. The latter says "do not enforce even though I wrote a
+	 * matrix", the former says nothing and leaves the decision to this method. Without both
+	 * annotations an enum property would default to its first constant and the distinction would be
+	 * unavailable.
 	 * </p>
 	 */
 	static AiSecurityMode resolveCeiling(ToolAccessPolicy policy) {

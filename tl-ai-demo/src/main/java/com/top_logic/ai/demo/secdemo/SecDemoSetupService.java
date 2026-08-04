@@ -162,8 +162,8 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		 * <p>
 		 * One entry per persona of the test bed. Kept in configuration rather than in code so that
 		 * the matrix a tester has to hold in their head - which login holds which role, and what
-		 * each one demonstrates - is readable in one place, next to the {@code <tool-access>} policy
-		 * and the {@code <security-config>} that give those roles their meaning.
+		 * each one demonstrates - is readable in one place, next to the &lt;tool-access&gt; policy
+		 * and the &lt;security-config&gt; that give those roles their meaning.
 		 * </p>
 		 */
 		@Name(PERSONAS)
@@ -258,7 +258,7 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		 *
 		 * <p>
 		 * Must be declared on {@link InitialRolesManager} in the same aspect. This is the name the
-		 * {@code <security-config>} and the {@code <tool-access>} policy are written against.
+		 * &lt;security-config&gt; and the &lt;tool-access&gt; policy are written against.
 		 * </p>
 		 */
 		@Name(ROLE)

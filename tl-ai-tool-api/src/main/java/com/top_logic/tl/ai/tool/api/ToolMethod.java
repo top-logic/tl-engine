@@ -60,7 +60,7 @@ public @interface ToolMethod {
 	 * </p>
 	 *
 	 * <p>
-	 * Enforced only where a deployment has configured a {@code <tool-access>} policy; without one,
+	 * Enforced only where a deployment has configured a &lt;tool-access&gt; policy; without one,
 	 * tool authorization stays unenforced and this value is inert. See
 	 * {@code doc/security/agent-security-architecture.md}, section 3.2, and
 	 * {@code doc/security/tool-access-configuration.md} for the administrator's view.

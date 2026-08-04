@@ -5,20 +5,22 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+/*
+ * The JavaDoc of this enum and of its constants is exported to META-INF/messages_en.properties by the
+ * build's doclet and shown in the service editor, where the security mode is chosen. It is therefore
+ * written for an administrator; the design behind the modes is documented on resolve(ToolAccessPolicy)
+ * and in section 3.1 of doc/security/agent-security-architecture.md, neither of which the doclet
+ * exports.
+ *
+ * The effective mode of a run is resolved once from the deployment-wide policy, before the first
+ * provider call, then carried on the run's security context and never re-derived - so nothing can
+ * widen it mid-run. Informally ENFORCED is the strictest and LEGACY the laxest, but the modes are not
+ * composed with each other anywhere: exactly one deployment-wide policy decides the mode, and every
+ * question about it is asked through the predicates below rather than by comparing modes.
+ */
+
 /**
- * How strictly security is enforced for an agent run.
- *
- * <p>
- * The effective mode of a run is resolved <b>once</b> from the deployment-wide policy, before the
- * first provider call (see {@link #resolve(ToolAccessPolicy)}). It is then carried on the run's
- * security context and never re-derived, so nothing can widen it mid-run.
- * </p>
- *
- * <p>
- * Informally {@link #ENFORCED} is the strictest and {@link #LEGACY} the laxest, but the modes are
- * not composed with each other anywhere: exactly one deployment-wide policy decides the mode, and
- * every question about it is asked through the predicates below rather than by comparing modes.
- * </p>
+ * How strictly security is enforced when an agent runs.
  *
  * @see ModelSecurity
  * @see RoleToolAccess
@@ -26,38 +28,43 @@ package com.top_logic.tl.ai.core.security;
 public enum AiSecurityMode {
 
 	/**
-	 * Unenforced: no role-based tool authorization and no model access checks.
+	 * Nothing is checked: neither which tools the acting user may use nor which data they may see.
 	 *
 	 * <p>
-	 * The <b>default</b> and the migration mode for applications that have not yet written a
-	 * {@code <security-config>}; without one, the engine's deny-by-default model security would leave
-	 * the agent unable to read anything. Removed once applications have migrated.
+	 * The state of an application that has configured no policy of its own.
 	 * </p>
 	 *
 	 * @see #resolve(ToolAccessPolicy)
 	 */
+	/*
+	 * The default and the migration mode: without a <security-config> the engine's deny-by-default
+	 * model security would leave the agent unable to read anything. Removed once applications have
+	 * migrated.
+	 */
 	LEGACY,
 
 	/**
-	 * Audited bypass: the system, not a user, is the principal.
+	 * The run acts as the application itself rather than as a user, and every such run is recorded in
+	 * the security audit log.
 	 *
 	 * <p>
-	 * For trusted automation that deliberately has no user identity. Not "no security" - every use
-	 * is audit-logged with the reason it was requested, so bypasses stay countable. This is the
-	 * honest name for what {@code ToolContext.createUnrestricted()} does silently today.
+	 * For automation that deliberately has no user identity.
 	 * </p>
+	 */
+	/*
+	 * Not "no security": the audit entry names the reason the bypass was requested, so bypasses stay
+	 * countable. This is the honest name for what ToolContext.createUnrestricted() does silently today.
 	 */
 	SYSTEM,
 
 	/**
-	 * Full enforcement: an authenticated user is required, tool authorization and model access
-	 * checks apply.
-	 *
-	 * <p>
-	 * A run whose context has no {@code Person} is refused up front rather than at the first tool
-	 * call: a run without a principal cannot be authorized, and failing later wastes a provider
-	 * round trip and produces a confusing half-run.
-	 * </p>
+	 * Everything is checked: the run needs a logged-in user, and both the tools it may call and the
+	 * data it may touch are checked against that user's roles.
+	 */
+	/*
+	 * A run whose context has no Person is refused up front rather than at the first tool call: a run
+	 * without a principal cannot be authorized, and failing later wastes a provider round trip and
+	 * produces a confusing half-run.
 	 */
 	ENFORCED;
 

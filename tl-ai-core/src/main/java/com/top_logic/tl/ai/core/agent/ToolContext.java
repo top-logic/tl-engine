@@ -372,12 +372,21 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
-	 * Creates a copy of this context for a delegated sub-agent run.
+	 * Creates a copy of this context for a synchronous delegated sub-agent run.
 	 *
 	 * <p>The returned context has the delegation depth incremented by one and uses the given
 	 * {@code childTransaction}, which must be a fresh {@link TransactionScope}. The parent's
 	 * transaction is intentionally not visible to the child: the child's begin/commit/rollback
 	 * lifecycle is independent so it cannot interfere with the parent's turn.</p>
+	 *
+	 * <p>
+	 * The run's classification is carried over unchanged, including whether it is a
+	 * {@link SecurityContext#isBackgroundRun() background run}. A synchronous delegation completes
+	 * <em>inside</em> the parent turn, so whoever was there to answer an approval prompt before it
+	 * started is still there - the child has exactly the parent's reach, and the
+	 * {@code <background-allowlist>} applies to it if and only if it applied to the parent. The
+	 * detached counterpart is {@link #forDetachedSubagent(TransactionScope, CancellationToken)}.
+	 * </p>
 	 *
 	 * @param childTransaction the transaction scope for the sub-agent run
 	 */
@@ -388,19 +397,39 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
-	 * Creates a copy of this context for a detached asynchronous subagent run.
+	 * Creates a copy of this context for a detached (fire-and-forget) asynchronous subagent run.
 	 *
 	 * <p>Like {@link #forDelegation(TransactionScope)}, the delegation depth is incremented
 	 * and a fresh {@code childTransaction} is used. Unlike {@code forDelegation}, the child
 	 * gets its <b>own</b> {@code childToken} instead of sharing the parent's, so cancelling
 	 * one background job (or the parent turn ending) does not cancel unrelated subagents.</p>
 	 *
+	 * <p>
+	 * <b>The child is a background run.</b> {@code spawn_subagent} returns a handle immediately and
+	 * the parent turn ends while the child keeps working on a pool thread; from then on there is no
+	 * human on the other end to answer an approval prompt, which is the design's own definition of an
+	 * unattended run. Its tool ceiling is therefore the intersection of the acting user's grants and
+	 * the policy's {@code <background-allowlist>} - the same bound a scheduler job or an
+	 * {@code aiAgentChatAsync} run gets. Without it a detached child ran with the acting user's full
+	 * interactive grant set, and under
+	 * {@link com.top_logic.tl.ai.core.agent.approval.ApprovalMode#AUTO_APPROVE} it self-approved every
+	 * write tool after the parent turn had ended.
+	 * </p>
+	 *
+	 * <p>
+	 * The child keeps the parent's {@link #approval() approval callback} deliberately. It is not what
+	 * bounds the run - {@code AgentLoop} authorizes before it asks for approval, so a tool off the
+	 * allowlist is refused whatever the callback would have answered - and in an
+	 * {@code ALWAYS_ASK} session an open browser window can still answer the child's prompts, which is
+	 * worth keeping.
+	 * </p>
+	 *
 	 * @param childTransaction the transaction scope for the subagent run
 	 * @param childToken       the subagent's own cancellation token
 	 */
-	public ToolContext forSubagent(TransactionScope childTransaction, CancellationToken childToken) {
-		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
-			_delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
+	public ToolContext forDetachedSubagent(TransactionScope childTransaction, CancellationToken childToken) {
+		return new ToolContext(_security.withBackgroundCeiling(), _approval, childTransaction,
+			_sessionApprovedTools, _delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
 			new ExecutionHandle(), _model);
 	}
 }

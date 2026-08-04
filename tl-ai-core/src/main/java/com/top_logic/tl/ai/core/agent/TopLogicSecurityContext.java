@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.util.Set;
+
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.basic.core.workspace.Environment;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -109,6 +111,25 @@ public class TopLogicSecurityContext implements SecurityContext {
 		return build(AiSecurityMode.resolve(deployment), principal, false);
 	}
 
+	/**
+	 * The context of an {@link AiSecurityMode#ENFORCED} run whose tool authorization is already
+	 * resolved.
+	 *
+	 * <p>
+	 * <b>A test seam.</b> Production code resolves the authorization from the acting {@link Person}
+	 * through {@link #forRun(Person, boolean)}, which needs a {@code KnowledgeBase} to read that
+	 * person's roles. A unit test about how an enforced context <em>behaves</em> has a policy but no
+	 * {@code Person}, and {@link AiSecurityMode#ENFORCED} refuses a run without one. Package-visible
+	 * so it cannot quietly become a second production entry point.
+	 * </p>
+	 *
+	 * @param authorization
+	 *        The resolved tool authorization of the run.
+	 */
+	static TopLogicSecurityContext enforcedRun(ToolAuthorization authorization) {
+		return new TopLogicSecurityContext(AiSecurityMode.ENFORCED, ModelSecurity.UNCHECKED, authorization);
+	}
+
 	private static TopLogicSecurityContext build(AiSecurityMode mode, Person principal, boolean background) {
 		if (mode.requiresUser() && principal == null) {
 			throw new IllegalStateException("Agent security mode " + mode
@@ -151,6 +172,33 @@ public class TopLogicSecurityContext implements SecurityContext {
 	@Override
 	public String toolCapability(Tool tool) {
 		return _toolAuthorization.capabilityOf(tool);
+	}
+
+	@Override
+	public boolean isBackgroundRun() {
+		return _toolAuthorization.isBackground();
+	}
+
+	@Override
+	public Set<String> capabilitiesWithheldInBackground() {
+		return _toolAuthorization.capabilitiesWithheldInBackground();
+	}
+
+	/**
+	 * The same context with the tool authorization additionally bounded by the background allowlist.
+	 *
+	 * <p>
+	 * The mode and the model-access checks are carried over untouched: they are about <em>who</em> the
+	 * run acts as, which losing the approval prompt does not change. Only the tool ceiling does.
+	 * </p>
+	 */
+	@Override
+	public SecurityContext withBackgroundCeiling() {
+		ToolAuthorization bounded = _toolAuthorization.asBackground();
+		if (bounded == _toolAuthorization) {
+			return this;
+		}
+		return new TopLogicSecurityContext(_securityMode, _modelSecurity, bounded);
 	}
 
 	@Override

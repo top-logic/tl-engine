@@ -89,8 +89,10 @@ public class SpawnSubagentTool implements Tool {
 	 * {@link ToolGroups#INTERACTION}.
 	 *
 	 * <p>
-	 * Like delegation, a subagent inherits this run's security context and is bounded by the child
-	 * agent's tool list.
+	 * Like delegation, a subagent is bounded by the child agent's tool list and can never widen the
+	 * caller's authority. It is in fact bounded more tightly: the spawn is fire-and-forget, so the
+	 * child is an unattended run and the policy's {@code <background-allowlist>} caps it - see
+	 * {@link com.top_logic.tl.ai.core.agent.ToolContext#forDetachedSubagent}.
 	 * </p>
 	 */
 	@Override

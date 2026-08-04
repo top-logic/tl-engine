@@ -10,19 +10,24 @@ import junit.framework.TestCase;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
- * Test for {@link ToolContext#forSubagent}.
+ * Test for {@link ToolContext#forDetachedSubagent}.
+ *
+ * <p>
+ * The security classification of a detached subagent is covered by
+ * {@link TestDetachedSubagentCeiling}; what is tested here is the run's own lifecycle.
+ * </p>
  */
 public class TestToolContextSubagent extends TestCase {
 
 	/**
-	 * forSubagent uses its own cancellation token and increments delegation depth.
+	 * forDetachedSubagent uses its own cancellation token and increments delegation depth.
 	 */
 	public void testForSubagentUsesOwnTokenAndIncrementsDepth() {
 		ToolContext parent = ToolContext.EMPTY;
 		int parentDepth = parent.delegationDepth();
 
 		CancellationToken childToken = new CancellationToken();
-		ToolContext child = parent.forSubagent(new TransactionScope(), childToken);
+		ToolContext child = parent.forDetachedSubagent(new TransactionScope(), childToken);
 
 		assertSame(childToken, child.cancellationToken());
 		assertEquals(parentDepth + 1, child.delegationDepth());

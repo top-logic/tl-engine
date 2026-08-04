@@ -118,9 +118,12 @@ public class DelegationTool implements Tool {
 	 * {@link ToolGroups#INTERACTION}.
 	 *
 	 * <p>
-	 * Delegation is a conversation primitive: the sub-agent it starts is bounded by the child
-	 * agent's own tool list and inherits this run's security context unchanged, so it can never
-	 * widen the caller's authority.
+	 * Delegation is a conversation primitive: the sub-agent it starts is bounded by the child agent's
+	 * own tool list and inherits this run's security context, so it can never widen the caller's
+	 * authority. A synchronous delegation completes inside the parent turn and therefore keeps the
+	 * parent's classification exactly; where a chat session makes it asynchronous, the child is a
+	 * detached run and the {@code <background-allowlist>} caps it - see
+	 * {@link ToolContext#forDetachedSubagent}.
 	 * </p>
 	 */
 	@Override

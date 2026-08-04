@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.util.Set;
+
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
@@ -149,6 +151,55 @@ public interface SecurityContext {
 	default String toolCapability(Tool tool) {
 		String declared = tool.group();
 		return declared == null || declared.isBlank() ? null : declared;
+	}
+
+	/**
+	 * Whether this run has no human who could answer an approval prompt, and is therefore
+	 * additionally bounded by the policy's {@code <background-allowlist>}.
+	 *
+	 * <p>
+	 * Read by the parts that have to <em>explain</em> the ceiling rather than apply it - the
+	 * capability notice in the system prompt - so that a run which lost a capability to the allowlist
+	 * does not report it as a right the user lacks. The default is {@code false}: a context that says
+	 * nothing about this is an attended one.
+	 * </p>
+	 */
+	default boolean isBackgroundRun() {
+		return false;
+	}
+
+	/**
+	 * The capabilities this run's principal could otherwise use that this run cannot, because it is
+	 * unattended.
+	 *
+	 * <p>
+	 * Empty unless {@link #isBackgroundRun()}. Purely descriptive - nothing decides anything from it.
+	 * </p>
+	 *
+	 * @return The withheld capability names, in a stable order; never <code>null</code>.
+	 */
+	default Set<String> capabilitiesWithheldInBackground() {
+		return Set.of();
+	}
+
+	/**
+	 * This context, additionally bounded by the policy's {@code <background-allowlist>}.
+	 *
+	 * <p>
+	 * For a run that becomes unattended after its context was built. The one caller is
+	 * {@link ToolContext#forDetachedSubagent(TransactionScope, com.top_logic.tl.ai.tool.api.CancellationToken)}:
+	 * a fire-and-forget subagent keeps running on a pool thread after the parent turn ended, so from
+	 * that moment there is no human to answer an approval prompt - which is precisely the condition
+	 * the allowlist exists for.
+	 * </p>
+	 *
+	 * <p>
+	 * Narrows and never widens; the principal and its roles are unchanged. The default returns
+	 * {@code this}, which is correct for every context that authorizes nothing anyway.
+	 * </p>
+	 */
+	default SecurityContext withBackgroundCeiling() {
+		return this;
 	}
 
 	/**

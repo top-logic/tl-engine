@@ -20,8 +20,7 @@ import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
  * {@link ListGeneratorAdaptor} providing all available skill names as options.
  *
  * <p>
- * Used as {@code <options>} generator on the {@code skills} attribute of
- * {@code tl.ai.core:Agent}.
+ * Provides the options for the {@code skills} attribute of {@code tl.ai.core:Agent}.
  * </p>
  *
  * @see AgentDefinitionQuery#getAllSkills()

@@ -378,15 +378,6 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * A {@link String} handle (rather than the live {@link AgentSession} wrapper) is returned
-	 * deliberately: the session is committed out-of-band on the {@link AgentExecutionStore} writer
-	 * thread at a revision newer than the caller's pinned request revision, so returning the wrapper
-	 * would fail with {@code DeletedObjectAccess} wherever the caller's context accesses it in its
-	 * older revision (e.g. the Script Console typing the result row). A {@code String} is
-	 * revision-independent; the poll functions resolve it back to the session.
-	 * </p>
-	 *
-	 * <p>
 	 * The background run re-enters the calling user's sub-session (captured synchronously here on the
 	 * calling thread, as it cannot be read off-thread), so the agent and its tools act as that user
 	 * with that user's permissions. A {@code BACKGROUND}-kind {@link AgentSession} is created up front
@@ -399,9 +390,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * <b>Warning - unattended auto-approval:</b> a background run has no human to answer tool-approval
 	 * prompts, so every tool call is auto-approved. An async run can therefore perform any
 	 * write/destructive tool action (delete data, call external systems, ...) unattended. Only start
-	 * async runs for agents you trust to act without supervision. An application that has configured a
-	 * {@code <tool-access>} policy can bound this: the run is additionally restricted to the policy's
-	 * {@code <background-allowlist>}, precisely because approval is the control it has lost.
+	 * async runs for agents you trust to act without supervision. An application that has configured
+	 * a tool access policy can bound this: the run is additionally restricted to that policy's
+	 * background allowlist, precisely because approval is the control it has lost.
 	 * </p>
 	 *
 	 * <p>
@@ -434,6 +425,14 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @see AgentRunner
 	 */
 	public static String agentChatAsync(String agentName, Object userMessage) {
+		/*
+		 * A String handle (rather than the live AgentSession wrapper) is returned deliberately: the
+		 * session is committed out-of-band on the AgentExecutionStore writer thread at a revision
+		 * newer than the caller's pinned request revision, so returning the wrapper would fail with
+		 * DeletedObjectAccess wherever the caller's context accesses it in its older revision (e.g.
+		 * the Script Console typing the result row). A String is revision-independent; the poll
+		 * functions resolve it back to the session.
+		 */
 		// Capture the caller's sub-session synchronously: it lives on the calling thread and
 		// cannot be read off-thread. The background run re-enters it to act as this user.
 		TLSubSessionContext callerSession = TLContextManager.getSubSession();

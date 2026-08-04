@@ -71,8 +71,8 @@ public class StdioMcpTransport implements McpTransportConfig {
 		 * Environment variables for the subprocess.
 		 *
 		 * <p>
-		 * Use this to pass API keys without putting them in config:
-		 * {@code <entry name="GITHUB_TOKEN" value="${env:GITHUB_TOKEN}"/>}
+		 * Use this to pass API keys without writing them into the configuration: an entry value
+		 * of {@code ${env:GITHUB_TOKEN}} is resolved from the server's own environment.
 		 * </p>
 		 */
 		@Name(ENV)

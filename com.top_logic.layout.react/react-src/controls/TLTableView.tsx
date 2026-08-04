@@ -40,6 +40,7 @@ const I18N_KEYS = {
   'js.table.freezeUpTo': 'Freeze up to here',
   'js.table.unfreezeAll': 'Unfreeze all',
   'js.table.filter': 'Filter',
+  'js.table.columns': 'Columns',
 };
 
 interface ColumnState {
@@ -160,6 +161,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const cursorIndex = (state.cursorIndex as number) ?? -1;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
+  const columnSelect = (state.columnSelect as boolean) ?? false;
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -564,6 +566,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('openFilter', { column: columnName });
   }, [sendCommand]);
 
+  // -- Column selection: open the server-side dialog choosing the displayed columns. --
+  const handleOpenColumnSelect = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    sendCommand('openColumnSelect', {});
+  }, [sendCommand]);
+
   // -- Computed values --
   const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
     + (isMulti ? checkboxWidth : 0);
@@ -606,7 +615,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       }}
       onDrop={handleDrop}
     >
-      {/* Header */}
+      {/* Header, plus the column selection sitting above the body's vertical scrollbar */}
+      <div className="tlTableView__headerArea">
       <div className="tlTableView__header" ref={headerRef}>
         <div className="tlTableView__headerRow" style={{ width: tableWidth }}>
           {isMulti && (
@@ -713,6 +723,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           />
         </div>
       </div>
+        {columnSelect && (
+          <button
+            type="button"
+            className="tlTableView__columnsButton"
+            title={i18n['js.table.columns']}
+            aria-label={i18n['js.table.columns']}
+            onClick={handleOpenColumnSelect}
+          >
+            <i className="bi bi-gear" />
+          </button>
+        )}
+      </div>
 
       {/* Scrollable body (focusable so keyboard row navigation can target it) */}
       <div
@@ -806,10 +828,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                         ) : (
                           <span className="tlTableView__treeToggleSpacer" />
                         )}
-                        <TLChild control={row.cells[col.name]} />
+                        {/* A row that predates the current columns has no control for a newly shown
+                            column yet \u2014 leave that cell empty rather than tearing down the table. */}
+                        {row.cells[col.name] && <TLChild control={row.cells[col.name]} />}
                       </div>
                     ) : (
-                      <TLChild control={row.cells[col.name]} />
+                      row.cells[col.name] && <TLChild control={row.cells[col.name]} />
                     )}
                   </div>
                 );

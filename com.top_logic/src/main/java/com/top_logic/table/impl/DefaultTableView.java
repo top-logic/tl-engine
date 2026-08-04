@@ -7,12 +7,15 @@ package com.top_logic.table.impl;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterCodec;
 import com.top_logic.table.FilterSpec;
@@ -223,6 +226,28 @@ public class DefaultTableView<R> implements TableView<R> {
 		return _state.getFrozenCount();
 	}
 
+	@Override
+	public List<ColumnOption> columnOptions() {
+		List<ColumnOption> result = new ArrayList<>(_columns.size());
+		for (String name : _state.getColumnOrder()) {
+			Column<R, ?> column = _columns.get(name);
+			if (column != null) {
+				result.add(new ColumnOption(name, column.label(), true));
+			}
+		}
+		for (Map.Entry<String, Column<R, ?>> entry : _columns.entrySet()) {
+			if (!_state.getColumnOrder().contains(entry.getKey())) {
+				result.add(new ColumnOption(entry.getKey(), entry.getValue().label(), false));
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public List<String> defaultColumnOrder() {
+		return new ArrayList<>(_columns.keySet());
+	}
+
 	// ---- data window ----
 
 	@Override
@@ -326,6 +351,27 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	@Override
+	public void setColumnOrder(List<String> columns) {
+		List<String> order = new ArrayList<>(columns.size());
+		for (String column : columns) {
+			if (_columns.containsKey(column) && !order.contains(column)) {
+				order.add(column);
+			}
+		}
+		_state.setColumnOrder(order);
+		// The caller decided about every column of this table, so everything left out is hidden on
+		// purpose - it must not come back as a "new" column on the next restore.
+		Set<String> hidden = new LinkedHashSet<>(_columns.keySet());
+		hidden.removeAll(order);
+		_state.setHiddenColumns(hidden);
+		// A column that was frozen may have been hidden or moved out of the frozen range; the
+		// frozen prefix can never reach beyond the columns that are left.
+		_state.setFrozenCount(Math.min(_state.getFrozenCount(), order.size()));
+		persist();
+		fireColumnsChanged();
+	}
+
+	@Override
 	public void resizeColumn(String column, int width) {
 		_state.getWidths().put(column, width);
 		persist();
@@ -338,8 +384,10 @@ public class DefaultTableView<R> implements TableView<R> {
 		boolean present = order.contains(column);
 		if (visible && !present) {
 			order.add(column);
+			_state.getHiddenColumns().remove(column);
 		} else if (!visible && present) {
 			order.remove(column);
+			_state.getHiddenColumns().add(column);
 		} else {
 			return;
 		}
@@ -411,13 +459,22 @@ public class DefaultTableView<R> implements TableView<R> {
 				order.add(name);
 			}
 		}
+		Set<String> hidden = new LinkedHashSet<>();
+		for (String name : persisted.getHiddenColumns()) {
+			if (_columns.containsKey(name) && !order.contains(name)) {
+				hidden.add(name);
+			}
+		}
+		// A column the persisted state knows nothing about is one this table has gained since - it
+		// appears, while a column the user hid stays hidden.
 		for (String name : _columns.keySet()) {
-			if (!order.contains(name)) {
+			if (!order.contains(name) && !hidden.contains(name)) {
 				order.add(name);
 			}
 		}
 		if (!order.isEmpty()) {
 			_state.setColumnOrder(order);
+			_state.setHiddenColumns(hidden);
 		}
 
 		for (Map.Entry<String, Integer> entry : persisted.getWidths().entrySet()) {

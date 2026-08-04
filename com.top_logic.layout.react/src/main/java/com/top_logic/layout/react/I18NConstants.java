@@ -476,6 +476,17 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_CLEAR;
 
 	/**
+	 * @en Columns
+	 */
+	@CustomKey("js.table.columns")
+	public static ResKey JS_TABLE_COLUMNS;
+
+	/**
+	 * @en Show all columns
+	 */
+	public static ResKey TABLE_COLUMNS_RESET;
+
+	/**
 	 * @en Selection changed.
 	 */
 	public static ResKey REACT_DROPDOWN_SELECT_VALUE_CHANGED;

@@ -36,6 +36,27 @@ public interface TableView<R> {
 	 */
 	int frozenColumnCount();
 
+	/**
+	 * All columns the table can display - the {@link #columns() visible} ones in display order,
+	 * followed by the hidden ones - each flagged whether it is currently displayed.
+	 *
+	 * <p>
+	 * This is what a column selection UI offers; the choice it produces is applied through
+	 * {@link #setColumnOrder(List)}.
+	 * </p>
+	 */
+	List<ColumnOption> columnOptions();
+
+	/**
+	 * The columns as the table was defined: all of them, in declaration order.
+	 *
+	 * <p>
+	 * This is the arrangement a column selection UI restores when the user resets their
+	 * personalization, and the state a table starts from before anything is persisted.
+	 * </p>
+	 */
+	List<String> defaultColumnOrder();
+
 	// ---- data window ----
 
 	/**
@@ -87,6 +108,22 @@ public interface TableView<R> {
 	 * Moves a column to a new visible index.
 	 */
 	void moveColumn(String column, int toIndex);
+
+	/**
+	 * Replaces the displayed columns and their order in one step.
+	 *
+	 * <p>
+	 * This is the bulk form of {@link #moveColumn(String, int)} and
+	 * {@link #setColumnVisible(String, boolean)} for a column selection UI, which decides
+	 * visibility and order together: applying the result column by column would persist and
+	 * report every intermediate arrangement.
+	 * </p>
+	 *
+	 * @param columns
+	 *        The columns to display, in display order. Names that are no columns of this table,
+	 *        and repetitions, are ignored.
+	 */
+	void setColumnOrder(List<String> columns);
 
 	/**
 	 * Sets the display width of a column.

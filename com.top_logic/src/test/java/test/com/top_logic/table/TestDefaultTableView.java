@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
@@ -200,6 +201,64 @@ public class TestDefaultTableView extends TestCase {
 		view.setColumnVisible("age", false);
 		assertEquals(List.of("name"),
 			view.columns().stream().map(ColumnView::name).toList());
+	}
+
+	public void testColumnOptionsOfferHiddenColumnsLast() {
+		TableView<Person> view = newView();
+		view.setColumnVisible("age", false);
+
+		List<ColumnOption> options = view.columnOptions();
+		assertEquals(List.of("name", "age"), options.stream().map(ColumnOption::name).toList());
+		assertTrue(options.get(0).visible());
+		assertFalse("A hidden column is still offered as an option.", options.get(1).visible());
+	}
+
+	public void testColumnOptionsFollowDisplayOrder() {
+		TableView<Person> view = newView();
+		view.moveColumn("age", 0);
+		assertEquals(List.of("age", "name"), view.columnOptions().stream().map(ColumnOption::name).toList());
+	}
+
+	public void testSetColumnOrderAppliesSelectionAndOrder() {
+		TableView<Person> view = newView();
+		view.setColumnOrder(List.of("age"));
+		assertEquals(List.of("age"), view.columns().stream().map(ColumnView::name).toList());
+
+		// The dropped column comes back through the same command, in the requested position.
+		view.setColumnOrder(List.of("name", "age"));
+		assertEquals(List.of("name", "age"), view.columns().stream().map(ColumnView::name).toList());
+	}
+
+	public void testSetColumnOrderIgnoresUnknownAndRepeatedColumns() {
+		TableView<Person> view = newView();
+		view.setColumnOrder(List.of("age", "missing", "age", "name"));
+		assertEquals(List.of("age", "name"), view.columns().stream().map(ColumnView::name).toList());
+	}
+
+	public void testSetColumnOrderShrinksFrozenPrefix() {
+		TableView<Person> view = newView();
+		view.setFrozenColumnCount(2);
+		view.setColumnOrder(List.of("name"));
+		assertEquals("The frozen prefix cannot reach beyond the remaining columns.", 1, view.frozenColumnCount());
+	}
+
+	public void testDefaultColumnOrderIsDeclarationOrder() {
+		TableView<Person> view = newView();
+		view.setColumnOrder(List.of("age"));
+		assertEquals(List.of("name", "age"), view.defaultColumnOrder());
+	}
+
+	public void testColumnSelectionPersistedAndRestored() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-columns");
+
+		TableView<Person> view1 = newView(store, id);
+		view1.setColumnOrder(List.of("age"));
+
+		TableView<Person> view2 = newView(store, id);
+		// The hidden column is restored as an option, not as a displayed column.
+		assertEquals(List.of("age"), view2.columns().stream().map(ColumnView::name).toList());
+		assertEquals(List.of("age", "name"), view2.columnOptions().stream().map(ColumnOption::name).toList());
 	}
 
 	public void testListenerNotifiedOnSortAndFilter() {

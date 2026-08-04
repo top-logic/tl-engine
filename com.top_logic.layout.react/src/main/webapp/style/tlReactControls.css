@@ -2479,10 +2479,48 @@ button.tlMenu__item--disabled:hover {
 	overflow: hidden;
 }
 
-.tlTableView__header {
+/* The header row with the column selection button over its right edge, above the body's vertical
+   scrollbar. The button must not take width from the header: a header narrower than the body keeps
+   its last 2rem permanently out of view, so the last column's heading stays cut off however far the
+   user scrolls. Overlaying instead keeps every heading complete; only while the table is scrolled
+   fully right does the button cover the tail of the last column - which is why it is opaque. */
+.tlTableView__headerArea {
+	position: relative;
+	display: flex;
 	flex-shrink: 0;
+	align-items: stretch;
+}
+
+.tlTableView__header {
+	flex: 1 1 auto;
+	min-width: 0;
 	overflow: hidden;
 	border-bottom: 2px solid var(--border-subtle, #e0e0e0);
+}
+
+.tlTableView__columnsButton {
+	position: absolute;
+	top: 0;
+	right: 0;
+	/* Leaves the header's bottom border uncovered, so the line runs through below the button. */
+	bottom: 2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	padding: 0;
+	border: none;
+	/* Opaque: while the table is scrolled, a column label may pass underneath. */
+	background: var(--layer-01, #fff);
+	color: var(--text-secondary, #525252);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	cursor: pointer;
+	box-sizing: border-box;
+}
+
+.tlTableView__columnsButton:hover {
+	background: var(--layer-hover, #e8e8e8);
+	color: var(--text-primary, #161616);
 }
 
 .tlTableView__headerRow {
@@ -2765,6 +2803,59 @@ button.tlMenu__item--disabled:hover {
 	display: inline-block;
 	width: 20px;
 	flex-shrink: 0;
+}
+
+/* --- TLColumnSelect ---------------------------------------------------- */
+
+.tlColumnSelect {
+	display: flex;
+	flex-direction: column;
+	padding: var(--spacing-03, 0.5rem) 0;
+}
+
+.tlColumnSelect__row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03, 0.5rem);
+	padding: var(--spacing-02, 0.25rem) var(--spacing-05, 1rem);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	/* The drop indicator is drawn as a border, so reserve its space on both edges to keep the
+	   rows from jumping while dragging across them. */
+	border-top: 2px solid transparent;
+	border-bottom: 2px solid transparent;
+}
+
+.tlColumnSelect__row:hover {
+	background: var(--layer-hover, #e8e8e8);
+}
+
+.tlColumnSelect__row--dragOver-top {
+	border-top-color: var(--color-primary, #1a73e8);
+}
+
+.tlColumnSelect__row--dragOver-bottom {
+	border-bottom-color: var(--color-primary, #1a73e8);
+}
+
+.tlColumnSelect__handle {
+	flex-shrink: 0;
+	color: var(--text-secondary, #525252);
+	cursor: grab;
+}
+
+.tlColumnSelect__label {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03, 0.5rem);
+	flex: 1 1 auto;
+	min-width: 0;
+	cursor: pointer;
+}
+
+.tlColumnSelect__label > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* --- TLFormLayout ------------------------------------------------------ */

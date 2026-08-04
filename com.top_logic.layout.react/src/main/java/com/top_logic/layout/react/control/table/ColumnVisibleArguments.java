@@ -11,36 +11,35 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.control.ReactCommand;
 
 /**
- * Typed arguments of the {@code columnReorder} command of the {@link TableViewControl} (dragging a
- * column header) and of the {@link ReactColumnSelectControl} (dragging a row of the column
- * selection): which column to move and the target position.
+ * Typed arguments of the {@link ReactColumnSelectControl} {@code columnVisible} command: which
+ * column to show or hide.
  *
  * <p>
  * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
  * template that renders a recorded step for humans.
  * </p>
  */
-@Label("Move column '{column}' to position {targetIndex}")
-public interface ColumnReorderArguments extends ReactCommand {
+@Label("Set column '{column}' visible: {visible}")
+public interface ColumnVisibleArguments extends ReactCommand {
 
 	/** @see #getColumn() */
 	String COLUMN = "column";
 
-	/** @see #getTargetIndex() */
-	String TARGET_INDEX = "targetIndex";
+	/** @see #isVisible() */
+	String VISIBLE = "visible";
 
 	/**
-	 * The name of the column to move.
+	 * The name of the column to show or hide.
 	 */
 	@Name(COLUMN)
 	@Mandatory
 	String getColumn();
 
 	/**
-	 * Zero-based index to move the column to.
+	 * Whether the column is to be displayed.
 	 */
-	@Name(TARGET_INDEX)
+	@Name(VISIBLE)
 	@Mandatory
-	int getTargetIndex();
+	boolean isVisible();
 
 }

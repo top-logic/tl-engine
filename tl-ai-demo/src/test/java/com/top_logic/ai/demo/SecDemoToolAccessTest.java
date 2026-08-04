@@ -93,7 +93,7 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 		}
 	}
 
-	/** The bare persona reaches nothing but the baseline, not even a read-only model tool. */
+	/** The bare persona reaches nothing but {@code interaction}, not even a read-only model tool. */
 	public void testBarePersonaIsDeniedEvenModelRead() {
 		assertDenied(BARE, MODEL_READ_TOOL, ToolGroups.MODEL_READ);
 		assertDenied(BARE, DATA_READ_TOOL, ToolGroups.DATA_READ);
@@ -101,14 +101,19 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * The baseline applies to everyone, including the persona whose role grants nothing.
+	 * {@code interaction} reaches everyone, including the persona whose role grants nothing.
 	 *
 	 * <p>
-	 * Without it an agent cannot even ask the user a question, which is why the baseline exists and
-	 * why it is worth pinning that the narrowest persona still has it.
+	 * The deployed policy declares no {@code <baseline>} at all, so what this pins is the implicit
+	 * grant: an agent that cannot ask the user a question is broken, and a policy that forgot to say so
+	 * must not be able to produce that state. Asserted against the real application configuration
+	 * rather than a fixture, because "nothing in the XML grants this" is the whole point.
 	 * </p>
 	 */
 	public void testBaselineReachesEvenTheBarePersona() {
+		assertEquals("The precondition of this test: the policy grants interaction nowhere.",
+			List.of(), AiToolAccessService.policy().getBaseline());
+
 		for (String login : SecDemoSetupService.personaLogins()) {
 			assertAllowed(login, "user-interaction.askUser");
 		}

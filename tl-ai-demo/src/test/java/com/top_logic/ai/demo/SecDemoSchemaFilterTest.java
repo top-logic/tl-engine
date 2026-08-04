@@ -143,7 +143,14 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 		assertFalse(schemaNamesFor(WRITER).contains(tool(EGRESS_TOOL).name()));
 	}
 
-	/** The bare persona is offered nothing but its baseline. */
+	/**
+	 * The bare persona is offered nothing but the implicitly granted {@code interaction} tool.
+	 *
+	 * <p>
+	 * The deployed policy declares no {@code <baseline>}, so the one tool that survives the filter is
+	 * the one no configuration had to mention.
+	 * </p>
+	 */
 	public void testBarePersonaIsOfferedOnlyTheBaseline() {
 		List<String> offered = schemaNamesFor(BARE);
 

@@ -883,8 +883,9 @@ interface is `ToolAccessPolicy` (scaffolded on this branch), which the service's
             </role>
         </tool-access>
 
-        <!-- Granted to every authenticated user, on top of their role grants.
-             Intentionally tiny: without it an agent cannot even ask a question. -->
+        <!-- Granted to every authenticated user, on top of their role grants. "interaction" is
+             granted implicitly and needs no entry here - it is spelled out in this example only
+             to show the element, and writing it changes nothing. -->
         <baseline>
             <grant group="interaction"/>
         </baseline>
@@ -910,6 +911,7 @@ Semantics, stated precisely:
 | Rule | Behaviour |
 |---|---|
 | No `<role>` entry for any role the user holds | All tools denied (baseline only) |
+| `interaction` | Granted to every role and every run implicitly, whatever `<baseline>` says; a `<deny>` still wins |
 | Multiple held roles | Grants **union**; then denies subtract |
 | `<deny>` anywhere among the held roles | Wins over any `<grant>`, from any role |
 | `<grant group>` for a **privileged** group | Allowed, but only when the group is named explicitly |

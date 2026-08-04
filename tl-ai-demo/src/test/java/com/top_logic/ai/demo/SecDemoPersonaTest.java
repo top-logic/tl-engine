@@ -51,7 +51,7 @@ import com.top_logic.util.model.ModelService;
  */
 public abstract class SecDemoPersonaTest extends BasicTestCase {
 
-	/** Holds nothing beyond the policy's {@code <baseline>}. */
+	/** Holds nothing beyond the implicitly granted {@code interaction} capability. */
 	public static final String BARE = "secbare1";
 
 	/** Holds {@code model.read} and nothing else. */

@@ -19,9 +19,6 @@ specification; this page is the part you need to get started.
                 </grants>
             </role>
         </tool-access>
-        <baseline>
-            <grant group="interaction"/>
-        </baseline>
     </instance>
 </config>
 ```
@@ -34,7 +31,9 @@ Put that in any application configuration file (an aspect, or your
 use that agent, which is how the framework behaved before this layer existed. Writing a non-empty
 `<tool-access>` is the whole opt-in.
 
-Keep the `<baseline>`: without `interaction` an agent cannot even ask the user a question.
+You do not have to grant `interaction`: asking the user a question, loading a skill and delegating to a
+sub-agent are granted to every role implicitly, because an agent that cannot ask a question is broken.
+Use `<baseline>` only if you want *further* groups granted to everyone - see below.
 
 ---
 
@@ -66,7 +65,8 @@ to get data *out* of the application.
 
 ## The rules, in one place
 
-- **Nothing is granted unless you grant it.** A role with no entry gets only the `<baseline>`.
+- **Nothing is granted unless you grant it**, with one exception: `interaction` is always granted, so a
+  role with no entry can still ask a question and nothing else.
 - **Several roles add up.** A user holding two roles gets the union of their grants.
 - **A `<deny>` always wins**, over any grant, including one from the user's other roles and including
   the baseline. That is how you carve one capability out of an otherwise broad grant without
@@ -133,6 +133,18 @@ Use the `{factory}.{tool}` name from the application configuration - the same na
 lists. A trailing `*` matches a prefix (`<grant tool="mcp__jira__*"/>`), but a wildcard never reaches a
 tool in a privileged group.
 
+### Grant a capability to every account
+
+```xml
+<baseline>
+    <grant group="model.read"/>
+</baseline>
+```
+
+`<baseline>` is added to every account's grants, whatever roles it holds. `interaction` is in it
+implicitly and needs no entry; writing it anyway is legal and changes nothing. A `<deny>` on a role
+still wins over the baseline, the implicit `interaction` included.
+
 ### Classify tools that cannot declare their own group
 
 Remote MCP tools and TL-Script tools authored in the running application have no annotation to carry
@@ -196,7 +208,6 @@ has lost it should not reach one:
     <grant group="model.read"/>
     <grant group="data.read"/>
     <grant group="agent.meta"/>
-    <grant group="interaction"/>
 </background-allowlist>
 ```
 
@@ -224,7 +235,7 @@ can say are:
 | Declaration | Meaning |
 |---|---|
 | `<background-allowlist>` with `<grant>` entries | Unattended runs reach the intersection of the user's grants and these capabilities. The normal choice. |
-| `<background-allowlist/>` | Unattended runs reach **nothing**. The strictest choice, and correct if you run no schedulers and use no `aiAgentChatAsync`. |
+| `<background-allowlist/>` | Unattended runs reach **nothing** beyond the always-granted `interaction`. The strictest choice, and correct if you run no schedulers and use no `aiAgentChatAsync`. |
 | `<background-allowlist all="true"/>` | Unattended runs are bounded only by the acting user's grants. The explicit opt-out - it gives up the compensating control, so it has to be said out loud. |
 
 ---
@@ -264,8 +275,11 @@ never what stops a tool from running. The gate is the Java check on the call pat
 At boot the service states what it read:
 
 ```
-INFO ... AiToolAccessService - Agent tool access: mode=ENFORCED roles=2 baseline=1 backgroundAllowlist=4
+INFO ... AiToolAccessService - Agent tool access: mode=ENFORCED roles=2 baseline=0(+interaction) backgroundAllowlist=3
 ```
+
+`baseline=0(+interaction)` means "no `<baseline>` entries were configured, plus the implicit
+`interaction` grant every policy carries".
 
 `mode=LEGACY ... (not enforced)` means no policy is in effect. If you wrote one and see this, the
 `<tool-access>` is empty or did not reach the service.

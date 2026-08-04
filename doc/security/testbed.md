@@ -107,7 +107,7 @@ SecDemoSetupService - Created security demo persona 'secviewer1' (role 'secViewe
 SecDemoSetupService - Granted 'Read' on view 'tl-chat/chat/tabLayout.layout.xml#TabLayout' to role 'secBare'.
 ... five views x six roles ...
 SecDemoSetupService - Created 3 example instances of 'secdemo:Note'.
-AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=1 backgroundAllowlist=5
+AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=0(+interaction) backgroundAllowlist=4
 ```
 
 That last line is the one to check first. `mode=LEGACY ... (not enforced)` means the tool layer is off -
@@ -162,7 +162,7 @@ policy and to nothing else.
 
 | Login | Role | Tool capabilities held | Must be able to | Must be refused |
 |---|---|---|---|---|
-| `secbare1` | `secBare` | *(baseline only: `interaction`)* | ask a question, load a tool-less skill | every tool: `model.read`, `data.read`, everything. Every skill that declares a tool disappears from its prompt |
+| `secbare1` | `secBare` | *(`interaction` only, and that implicitly - its role grants nothing and the policy declares no `<baseline>`)* | ask a question, load a tool-less skill | every tool: `model.read`, `data.read`, everything. Every skill that declares a tool disappears from its prompt |
 | `secviewer1` | `secViewer` | `model.read` | inspect modules, types, layouts | `listInstances` and every other `data.read` tool. `TL_modelExploration` survives and loads **only** its 8 `model.read` tools |
 | `secreader1` | `secReader` | `model.read`, `data.read`, `script` *(privileged)* | read notes, run TL-Script, list instances | `agent.meta`, `workspace`, `egress`. `TL_taskManagement` is dropped entirely. At the model layer: cannot create a note, sees no secret value |
 | `seceditor1` | `secEditor` | `secreader1` **+ `agent.meta`** | everything `secreader1` can, plus `listFrameworkAgents` | the same as `secreader1` minus `agent.meta`. At the model layer: **can** create a note |
@@ -207,7 +207,7 @@ Everything a human might want to see, in one place. The **Where** column says wh
 | **T2** | the same tool is denied to a persona one capability away | `secreader1` | console | the same expression | ❌ `Permission denied: tool 'framework-wiring.listFrameworkAgents' requires the 'agent.meta' capability, which none of your roles grants.` |
 | **T3** | the whole matrix at once | any | probe | run `probe.tlscript` | one `ALLOWED` / `DENIED` line per capability. Log in as a second persona, run it again, diff the two |
 | **T4** | a narrower persona loses `data.read` | `secviewer1` | probe | run `probe.tlscript` | `model.read` ALLOWED, `data.read` DENIED - the pair that shows the groups are independent |
-| **T5** | the bare persona reaches only the baseline | `secbare1` | probe | run `probe.tlscript` | only the `interaction` line is ALLOWED; everything else DENIED |
+| **T5** | the bare persona reaches only the implicit grant | `secbare1` | probe | run `probe.tlscript` | only the `interaction` line is ALLOWED; everything else DENIED. Nothing in the policy grants it - it is implicit |
 | **T6** | a privileged group must be named explicitly | `secauthor1` | console | `aiCallTool("agent-authoring.listAgents", null)` | ✅ allowed - `agent.authoring` is granted by name. No wildcard could have reached it |
 | **T7** | a group granted to nobody | any persona | console | `aiCallTool("model-modification.createClass", null)` | ❌ `requires the 'model.structure' capability`. Deny-by-default; no `<deny>` was written |
 | **T8** | an unclassified tool | any persona | console | `aiCallTool("mcp__anything__doThing", null)` | ❌ `belongs to no tool group and has no explicit grant`. A different problem from T7 - fixed by `<tool-groups>`, not by a role |
@@ -302,13 +302,13 @@ secdemo-legacy.config.xml    <-- remove the leading '#' to turn enforcement OFF
 Restart. The boot log flips from
 
 ```
-AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=1 backgroundAllowlist=5
+AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=0(+interaction) backgroundAllowlist=4
 ```
 
 to
 
 ```
-AiToolAccessService - Agent tool access: mode=LEGACY roles=6 baseline=1 backgroundAllowlist=5 (not enforced)
+AiToolAccessService - Agent tool access: mode=LEGACY roles=6 baseline=0(+interaction) backgroundAllowlist=4 (not enforced)
 ```
 
 Note `roles=6` in both: the policy is still there, one property overrode what it resolves to. Nothing

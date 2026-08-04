@@ -76,7 +76,7 @@ public class TestAiToolAccessService extends TestCase {
 	 */
 	public void testBaselineAloneDoesNotEnforce() {
 		ToolAccessPolicy policy = policy();
-		policy.getBaseline().add(group(ToolGroups.INTERACTION));
+		policy.getBaseline().add(group(ToolGroups.MODEL_READ));
 		allow(policy, group(ToolGroups.DATA_READ));
 
 		assertEquals(AiSecurityMode.LEGACY, AiToolAccessService.resolveCeiling(policy));

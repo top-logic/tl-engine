@@ -206,7 +206,7 @@ BasicRuntimeModule  - Service 'com.top_logic.ai.demo.secdemo.SecDemoSetupService
 The tool policy reports itself in the same boot (in the `tl-ai` log file, see below):
 
 ```
-AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=1 backgroundAllowlist=5
+AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=0(+interaction) backgroundAllowlist=4
 ```
 
 `SecDemoSetupService` logs its own steps under the logger `com.top_logic.ai`, which the demo routes to
@@ -578,7 +578,7 @@ that differs is which role the account holds.
 At boot, in `tmp/app-data/logs/top-logic.tl-ai.log`:
 
 ```
-AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=1 backgroundAllowlist=5
+AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=0(+interaction) backgroundAllowlist=4
 ```
 
 With the aspect switched off it reads `mode=LEGACY roles=0 ... (not enforced)`, and every tool is

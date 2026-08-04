@@ -115,12 +115,51 @@ public class TestRoleToolAccess extends TestCase {
 	/** The baseline applies to everyone, including a user with no roles at all. */
 	public void testBaselineAppliesWithoutRoles() {
 		ToolAccessPolicy policy = policy(role("Clerk", grants(group(ToolGroups.DATA_READ)), grants()));
-		policy.getBaseline().add(group(ToolGroups.INTERACTION));
+		policy.getBaseline().add(group(ToolGroups.EGRESS));
 
-		Decision decision = access(policy).check(Set.of(), "ask-user.askUser");
+		Decision decision = access(policy).check(Set.of(), "web.webFetch");
 
 		assertTrue(String.valueOf(decision), decision instanceof Decision.Granted);
 		assertEquals("(baseline)", ((Decision.Granted) decision).byRole());
+	}
+
+	/**
+	 * {@link ToolGroups#INTERACTION} needs no configuration at all.
+	 *
+	 * <p>
+	 * The policy below declares no {@code <baseline>} and gives its one role an empty grant list, which
+	 * is the state a forgotten baseline produces. An agent that cannot ask a question is broken, so this
+	 * capability is not left to configuration.
+	 * </p>
+	 */
+	public void testInteractionIsGrantedWithoutAnyConfiguration() {
+		ToolAccessPolicy policy = policy(role("Clerk", grants(), grants()));
+		assertEquals("The precondition of this test: nothing declares the baseline.",
+			List.of(), policy.getBaseline());
+
+		RoleToolAccess access = access(policy);
+
+		for (Set<String> heldRoles : List.of(Set.<String>of(), Set.of("Clerk"), Set.of("Stranger"))) {
+			Decision decision = access.check(heldRoles, "ask-user.askUser");
+
+			assertTrue(heldRoles + ": " + decision, decision instanceof Decision.Granted);
+			assertEquals("(baseline)", ((Decision.Granted) decision).byRole());
+		}
+
+		assertTrue("Nothing else becomes reachable through it.",
+			access.check(Set.of("Clerk"), "instance-browser.listInstances") instanceof Decision.Denied);
+	}
+
+	/** The implicit grant reaches an unattended run too, whatever the allowlist says. */
+	public void testInteractionIsAllowedInBackgroundWithoutBeingListed() {
+		ToolAccessPolicy policy = policy(role("Clerk", grants(), grants()));
+
+		assertTrue("An undeclared allowlist must not silence a background run.",
+			access(policy).allowedInBackground("ask-user.askUser"));
+
+		allow(policy, group(ToolGroups.DATA_READ));
+		assertTrue("Nor must an allowlist that simply does not mention it.",
+			access(policy).allowedInBackground("ask-user.askUser"));
 	}
 
 	/** A tool in no group is denied even to a broadly granted role. */
@@ -204,17 +243,19 @@ public class TestRoleToolAccess extends TestCase {
 	}
 
 	/**
-	 * A deny beats the baseline too.
+	 * A deny beats the baseline too - including the implicit {@link RoleToolAccess#IMPLICIT_BASELINE}
+	 * grant.
 	 *
 	 * <p>
 	 * The baseline is a grant, and the table says a deny wins over any grant. Evaluating denies first
-	 * is what makes "carve this out for everyone with this role" mean what it says.
+	 * is what makes "carve this out for everyone with this role" mean what it says. The implicit grant
+	 * exists so that <em>silence</em> cannot leave an agent unable to ask a question; an administrator
+	 * who writes the deny has said the opposite out loud, and that decision stands.
 	 * </p>
 	 */
 	public void testDenyBeatsBaseline() {
 		ToolAccessPolicy policy = policy(
 			role("Probation", grants(), grants(group(ToolGroups.INTERACTION))));
-		policy.getBaseline().add(group(ToolGroups.INTERACTION));
 
 		assertTrue(access(policy).check(Set.of("Probation"), "ask-user.askUser")
 			instanceof Decision.Denied);
@@ -376,9 +417,14 @@ public class TestRoleToolAccess extends TestCase {
 			access.allowedInBackground("model-editor.createClass"));
 		assertFalse("Not even a tool the role is granted interactively.",
 			access.allowedInBackground("instance-browser.listInstances"));
+		assertTrue("The implicit grant is the one exception - see IMPLICIT_BASELINE.",
+			access.allowedInBackground("ask-user.askUser"));
 	}
 
-	/** An empty declaration is the strictest setting: no tool at all without a human. */
+	/**
+	 * An empty declaration is the strictest setting: nothing without a human, beyond the implicit
+	 * {@link RoleToolAccess#IMPLICIT_BASELINE} grant.
+	 */
 	public void testEmptyAllowlistAdmitsNothing() {
 		ToolAccessPolicy policy = policy(role("Clerk", grants(group(ToolGroups.DATA_READ)), grants()));
 		allow(policy);

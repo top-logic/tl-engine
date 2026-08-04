@@ -404,12 +404,20 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         pendingFocusRef.current = { index: rowIndex, col: col ?? undefined };
       }
     }
+    // Operating a control inside an already selected row is not a selection gesture. Sending one
+    // anyway would have the server re-render the row, and that answer overwrites the value the
+    // control is sending at the same moment - the edit would be lost.
+    const row = rows.find((r) => r.index === rowIndex);
+    if (isInteractiveTarget(event) && row?.selected
+        && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+      return;
+    }
     sendCommand('select', {
       rowIndex,
       ctrlKey: event.ctrlKey || event.metaKey,
       shiftKey: event.shiftKey,
     });
-  }, [sendCommand]);
+  }, [sendCommand, rows]);
 
   // -- Keyboard navigation (server-resolved; see moveSelection) --
   const handleMove = React.useCallback((direction: string, extend: boolean, move: boolean) => {

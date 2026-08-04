@@ -282,13 +282,12 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		/**
 		 * The capability group the tools listed here belong to.
 		 *
+		 * @implNote Redeclared from {@link NamedConfigMandatory} only to carry the option
+		 *           annotations; the property itself is inherited. The editor then offers the known
+		 *           groups and explains each of them, while the stored value stays the technical
+		 *           group name, so a hand-written policy parses unchanged.
+		 *
 		 * @see AllToolGroups
-		 */
-		/*
-		 * Redeclared from NamedConfigMandatory only to carry the option annotations; the property
-		 * itself is inherited. The editor then offers the known groups and explains each of them,
-		 * while the stored value stays the technical group name, so a hand-written policy parses
-		 * unchanged.
 		 */
 		@Override
 		@Options(fun = AllToolGroups.class)

@@ -1,5 +1,9 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+
+const I18N_KEYS = {
+  'js.table.columnSearch': 'Find column',
+};
 
 interface ColumnEntry {
   name: string;
@@ -17,9 +21,19 @@ interface ColumnEntry {
 const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const i18n = useI18N(I18N_KEYS);
 
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
   const visibleCount = entries.filter((entry) => entry.visible).length;
+
+  // A table over a large type offers a column per attribute, which is a long list to scroll. The
+  // search narrows what is rendered; the full list stays the reference for the drop position, so a
+  // row can be dropped next to a row the search has hidden.
+  const [search, setSearch] = React.useState('');
+  const needle = search.trim().toLowerCase();
+  const shown = needle
+    ? entries.filter((entry) => entry.label.toLowerCase().includes(needle))
+    : entries;
 
   // The row being dragged, and the row it currently hovers over — the drop lands above or below
   // that row depending on which half the pointer is in, mirroring the column header drag.
@@ -87,9 +101,27 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [entries, sendCommand, setDragTarget]);
 
+  const searchable = entries.length > 10;
+
   return (
     <div id={controlId} className="tlColumnSelect" onDrop={handleDrop}>
-      {entries.map((entry) => {
+      {searchable && (
+        <div className="tlColumnSelect__search">
+          <i className="bi bi-search" aria-hidden="true" />
+          <input
+            type="search"
+            className="tlColumnSelect__searchInput"
+            placeholder={i18n['js.table.columnSearch']}
+            aria-label={i18n['js.table.columnSearch']}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
+      {/* Alongside the search the list scrolls within a fixed height: a list that grows and shrinks
+          with the number of matches would resize the dialog under the pointer on every keystroke. */}
+      <div className={'tlColumnSelect__list' + (searchable ? ' tlColumnSelect__list--fixed' : '')}>
+      {shown.map((entry) => {
         // Keep the table from losing its last column: there would be nothing left to click.
         const lastVisible = entry.visible && visibleCount <= 1;
         let cls = 'tlColumnSelect__row';
@@ -120,6 +152,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
           </div>
         );
       })}
+      </div>
     </div>
   );
 };

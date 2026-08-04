@@ -2813,6 +2813,44 @@ button.tlMenu__item--disabled:hover {
 	padding: var(--spacing-03, 0.5rem) 0;
 }
 
+.tlColumnSelect__search {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03, 0.5rem);
+	margin: 0 var(--spacing-05, 1rem) var(--spacing-03, 0.5rem);
+	padding: 0 var(--spacing-03, 0.5rem);
+	border: 1px solid var(--border-strong, #8d8d8d);
+	background: var(--field-01, #f4f4f4);
+	color: var(--text-secondary, #525252);
+}
+
+.tlColumnSelect__searchInput {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 2rem;
+	border: none;
+	background: transparent;
+	color: var(--text-primary, #161616);
+	font-family: inherit;
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+}
+
+.tlColumnSelect__searchInput:focus {
+	outline: none;
+}
+
+.tlColumnSelect__list {
+	display: flex;
+	flex-direction: column;
+}
+
+/* Scrolls within a height of its own, so narrowing the list by a search leaves the dialog - and
+   with it the buttons under the pointer - exactly where it was. */
+.tlColumnSelect__list--fixed {
+	height: 50vh;
+	overflow-y: auto;
+}
+
 .tlColumnSelect__row {
 	display: flex;
 	align-items: center;

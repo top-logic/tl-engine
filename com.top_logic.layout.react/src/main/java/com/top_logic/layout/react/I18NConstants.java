@@ -482,6 +482,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLUMNS;
 
 	/**
+	 * @en Find column
+	 */
+	@CustomKey("js.table.columnSearch")
+	public static ResKey JS_TABLE_COLUMN_SEARCH;
+
+	/**
 	 * @en Restore default
 	 */
 	public static ResKey TABLE_COLUMNS_RESET;

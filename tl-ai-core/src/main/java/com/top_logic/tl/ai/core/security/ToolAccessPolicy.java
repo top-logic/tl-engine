@@ -339,6 +339,20 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		String DENIES = "denies";
 
 		/**
+		 * The security role this entry is about.
+		 *
+		 * @implNote Redeclared from {@link NamedConfigMandatory} only to carry the option
+		 *           annotation; the property itself is inherited. The editor then offers the roles
+		 *           of the application instead of a text field, while the stored value stays the
+		 *           role name, so a hand-written policy parses unchanged.
+		 *
+		 * @see AllSecurityRoles
+		 */
+		@Override
+		@Options(fun = AllSecurityRoles.class)
+		String getName();
+
+		/**
 		 * The capabilities and single tools this role may use.
 		 */
 		@Name(GRANTS)

@@ -73,23 +73,28 @@ to get data *out* of the application.
 ### The same table, in the editor
 
 You do not have to keep this page open while writing a policy. In **Administration → Development →
-Service Editor → AiToolAccessService**, the group of a `<grant>` and the group a `<tool-groups>` entry
-assigns tools to are **selection lists**, not text fields, and hovering an entry shows the sentence
-from the table above:
+Service Editor → AiToolAccessService**, the names a policy refers to are **selection lists**, not text
+fields, and hovering a group shows the sentence from the table above:
 
 | Field | In the editor |
 |---|---|
 | `<grant group="...">`, `<deny group="...">` | a list of the known groups, each with a tooltip saying what granting it lets an agent do |
 | `<tool-groups><group name="...">` | the same list |
+| `<role name="...">` | the roles of the application |
 | `<grant tool="...">`, `<tool name="...">` | **free text**, deliberately: `mcp__jira__*` is the form most entries take and no list of registered names contains it |
 
-The list holds every group the framework ships, every group a registered tool declares, and every
+The group list holds every group the framework ships, every group a registered tool declares, and every
 group the policy in effect already defines - so an application's own group is selectable as soon as one
 of its tools declares it. A group that is in none of the three is the case the boot warning below calls
 out, and it is nearly always a typo.
 
-**Nothing about the stored format changes.** What is written to the file is the technical group name;
-a policy written by hand parses exactly as before, and the labels exist only in the editor.
+The role list works the same way: the roles the application has, plus whatever the policy already names.
+That second half is what lets a policy mention a role an aspect creates only when it is switched on,
+without an open-and-save of the editor dropping the entry.
+
+**Nothing about the stored format changes.** What is written to the file is the technical group name and
+the role name; a policy written by hand parses exactly as before, and the labels exist only in the
+editor.
 
 ---
 

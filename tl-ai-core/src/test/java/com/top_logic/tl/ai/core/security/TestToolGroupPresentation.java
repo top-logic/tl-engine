@@ -20,15 +20,18 @@ import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
- * How a tool group presents itself where an administrator has to choose one.
+ * How the choices of the policy editor present themselves: tool groups, roles and tools.
  *
  * <p>
  * The point of this class is that the presentation cannot fall behind the taxonomy: a group added to
  * {@link ToolGroups#ALL} without a resource would show up in the policy editor as a bare technical
- * name with nothing explaining it, which is the state this whole mechanism exists to end.
+ * name with nothing explaining it, which is the state this whole mechanism exists to end. The same
+ * holds for the properties themselves - a policy field that lost its {@link Options} annotation would
+ * quietly become a text field again, and nothing but a test says otherwise.
  * </p>
  */
 public class TestToolGroupPresentation extends TestCase {
@@ -120,13 +123,37 @@ public class TestToolGroupPresentation extends TestCase {
 		assertOptionsWithLabels(property(GroupMembership.class, GroupMembership.NAME_ATTRIBUTE));
 	}
 
+	/** A role is picked from the application's roles, not typed. */
+	public void testRoleIsAChoice() {
+		Options options = property(RoleAccess.class, RoleAccess.NAME_ATTRIBUTE).getAnnotation(Options.class);
+
+		assertNotNull("A misspelled role name reaches nobody, so it must not be typeable.", options);
+		assertEquals(AllSecurityRoles.class, options.fun());
+	}
+
 	/**
-	 * A tool reference stays free text: {@code secdemo-editing.*} is the whole point of it, and a
-	 * wildcard is not among any list of registered names.
+	 * A role the policy already names stays selectable even when the application has no such role.
+	 *
+	 * <p>
+	 * That is the state an aspect which is currently switched off produces, and the state of a policy
+	 * written ahead of the role. Offering the existing roles alone would let an open-and-save of the
+	 * editor drop the entry, silently widening or narrowing access - which is what the boot-time check
+	 * on unknown role names exists to make loud.
+	 * </p>
 	 */
-	public void testToolReferenceStaysFreeText() {
-		assertNull("A closed list would make a wildcard unwritable.",
-			property(Grant.class, Grant.TOOL).getAnnotation(Options.class));
+	public void testConfiguredRoleStaysAmongTheOptions() {
+		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		RoleAccess role = TypedConfiguration.newConfigItem(RoleAccess.class);
+		role.setName("RoleCreatedByAnAspectThatIsOff");
+		policy.getToolAccess().put(role.getName(), role);
+
+		assertEquals(List.of("Existing", "RoleCreatedByAnAspectThatIsOff"),
+			AllSecurityRoles.union(List.of("Existing"), policy));
+	}
+
+	/** Without a role store and without a policy there is nothing to offer, and nothing breaks. */
+	public void testRoleOptionsSurviveWithoutARoleStore() {
+		assertEquals(List.of(), new AllSecurityRoles().apply());
 	}
 
 	private static void assertOptionsWithLabels(PropertyDescriptor property) {

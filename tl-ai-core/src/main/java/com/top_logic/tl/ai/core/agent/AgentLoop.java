@@ -627,8 +627,25 @@ public class AgentLoop {
 			emit(listener, new AgentEvent.TransactionCommitted(runId, turn, now(), revNum));
 		} catch (TransactionException e) {
 			scope.rollback();
-			emit(listener, new AgentEvent.TransactionRolledBack(runId, turn, now(), "Commit failed: " + e.getMessage()));
+			emit(listener, new AgentEvent.TransactionRolledBack(runId, turn, now(), rollbackReason(e)));
 		}
+	}
+
+	/**
+	 * The reason to report for a rollback caused by a failed commit.
+	 *
+	 * <p>
+	 * Only the reason: the event says a rollback happened, and the chat prefixes it once more with
+	 * "Rolled back: ". Adding {@link TransactionScope#COMMIT_FAILED_PREFIX} here as well is what
+	 * produced the "Rolled back: Commit failed: Commit failed: ..." a real session reported.
+	 * </p>
+	 */
+	private static String rollbackReason(TransactionException failure) {
+		String message = failure.getMessage();
+		if (message != null && message.startsWith(TransactionScope.COMMIT_FAILED_PREFIX)) {
+			return message.substring(TransactionScope.COMMIT_FAILED_PREFIX.length());
+		}
+		return message;
 	}
 
 	/** */

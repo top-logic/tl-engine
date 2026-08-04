@@ -422,6 +422,23 @@ public class TLScriptExecutor {
 	}
 
 	/**
+	 * The failure of a script execution, as a {@link ResKey} the engine can embed in the message of
+	 * the transaction it poisons.
+	 *
+	 * <p>
+	 * A veto - a denied create, a failed constraint - arrives as an {@link I18NRuntimeException} and
+	 * already carries a translated sentence. Anything else has only a Java message.
+	 * </p>
+	 */
+	private static ResKey failureKey(RuntimeException failure) {
+		if (failure instanceof I18NRuntimeException i18n) {
+			return i18n.getErrorKey();
+		}
+		String message = failure.getMessage();
+		return ResKey.text(message != null ? message : failure.getClass().getName());
+	}
+
+	/**
 	 * Prepares script arguments from a list.
 	 */
 	private static Args prepareArgs(List<?> argsList) {
@@ -439,9 +456,21 @@ public class TLScriptExecutor {
 		if (withCommit) {
 			// Execute within transaction - commit changes
 			try (Transaction tx = kb.beginTransaction(ResKey.text("Execute TLScript"))) {
-				Object result = executor.executeWith(
-					executor.context(true, null, null),
-					scriptArgs);
+				Object result;
+				try {
+					result = executor.executeWith(
+						executor.context(true, null, null),
+						scriptArgs);
+				} catch (RuntimeException ex) {
+					// Name the reason on the rollback. This transaction is nested inside the
+					// agent turn's transaction, and the engine poisons the outer one with
+					// NESTED_TRANSACTION_ROLLED_BACK__COMMIT_REASON, filling in whatever reason
+					// the rollback was given. Rolling back without one - which is what the
+					// try-with-resources close() does - leaves the agent's later commit failing
+					// with "rolled back: " and nothing after the colon.
+					tx.rollback(failureKey(ex), ex);
+					throw ex;
+				}
 				tx.commit();
 				return result;
 			}

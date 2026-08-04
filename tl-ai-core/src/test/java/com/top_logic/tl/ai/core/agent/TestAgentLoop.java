@@ -1498,8 +1498,10 @@ public class TestAgentLoop extends TestCase {
 		TransactionScope failingCommitScope = new TestableTransactionScope() {
 			@Override
 			public void commit() {
-				// Simulate a KB commit failure — leave state intact so rollback() can clean up
-				throw new TransactionException("KB commit failed: constraint violation");
+				// Simulate a KB commit failure — leave state intact so rollback() can clean up.
+				// The message is shaped exactly as the real TransactionScope shapes it, because
+				// the loop is expected to pass it on unchanged rather than prefix it again.
+				throw new TransactionException("Commit failed: constraint violation");
 			}
 		};
 		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE,
@@ -1512,8 +1514,11 @@ public class TestAgentLoop extends TestCase {
 		assertTrue("Transaction should begin", events.contains("tx_begin"));
 		assertFalse("Transaction should NOT report commit on failure",
 			events.contains("tx_commit"));
-		assertTrue("Transaction should rollback with commit-failure reason",
-			events.stream().anyMatch(e -> e.startsWith("tx_rollback:Commit failed:")));
+		String rollback = events.stream().filter(e -> e.startsWith("tx_rollback:")).findFirst()
+			.orElse(null);
+		assertNotNull("Transaction should rollback with the commit-failure reason", rollback);
+		assertEquals("The event carries the bare reason: it already says a rollback happened, and"
+			+ " the chat prefixes it once more.", "tx_rollback:constraint violation", rollback);
 	}
 
 	/**

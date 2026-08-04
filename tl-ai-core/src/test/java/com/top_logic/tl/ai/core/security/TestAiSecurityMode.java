@@ -50,6 +50,68 @@ public class TestAiSecurityMode extends TestCase {
 		assertEquals(AiSecurityMode.LEGACY, AiSecurityMode.resolve(policy(AiSecurityMode.LEGACY)));
 	}
 
+	/** An agent that declares nothing leaves the deployment's decision alone. */
+	public void testAbsentFloorLeavesTheCeilingAlone() {
+		for (AiSecurityMode ceiling : AiSecurityMode.values()) {
+			assertEquals(ceiling, AiSecurityMode.stricter(ceiling, null));
+		}
+		assertEquals(AiSecurityMode.LEGACY, AiSecurityMode.resolve(policy(null), null));
+		assertEquals(AiSecurityMode.ENFORCED,
+			AiSecurityMode.resolve(policy(AiSecurityMode.ENFORCED), null));
+	}
+
+	/** A floor stricter than the deployment wins - the whole point of having one. */
+	public void testStricterFloorWins() {
+		assertEquals(AiSecurityMode.ENFORCED,
+			AiSecurityMode.stricter(AiSecurityMode.LEGACY, AiSecurityMode.ENFORCED));
+		assertEquals(AiSecurityMode.SYSTEM,
+			AiSecurityMode.stricter(AiSecurityMode.LEGACY, AiSecurityMode.SYSTEM));
+		assertEquals(AiSecurityMode.ENFORCED,
+			AiSecurityMode.stricter(AiSecurityMode.SYSTEM, AiSecurityMode.ENFORCED));
+	}
+
+	/**
+	 * A floor laxer than the deployment is ignored.
+	 *
+	 * <p>
+	 * The direction that must not exist: editing an agent definition is itself a privileged action,
+	 * and it must not be a way around what the deployment decided.
+	 * </p>
+	 */
+	public void testLaxerFloorIsIgnored() {
+		assertEquals(AiSecurityMode.ENFORCED,
+			AiSecurityMode.stricter(AiSecurityMode.ENFORCED, AiSecurityMode.LEGACY));
+		assertEquals(AiSecurityMode.ENFORCED,
+			AiSecurityMode.stricter(AiSecurityMode.ENFORCED, AiSecurityMode.SYSTEM));
+		assertEquals(AiSecurityMode.SYSTEM,
+			AiSecurityMode.stricter(AiSecurityMode.SYSTEM, AiSecurityMode.LEGACY));
+	}
+
+	/** An equal floor changes nothing, whatever the mode. */
+	public void testEqualFloorChangesNothing() {
+		for (AiSecurityMode mode : AiSecurityMode.values()) {
+			assertSame(mode, AiSecurityMode.stricter(mode, mode));
+		}
+	}
+
+	/**
+	 * An agent demanding {@link AiSecurityMode#ENFORCED} in an unmigrated deployment really is
+	 * enforced.
+	 *
+	 * <p>
+	 * The case the whole feature exists for: a deployment that has written no policy is
+	 * {@link AiSecurityMode#LEGACY}, and one agent inside it can still insist on being checked.
+	 * </p>
+	 */
+	public void testEnforcedAgentInALegacyDeployment() {
+		AiSecurityMode effective = AiSecurityMode.resolve(null, AiSecurityMode.ENFORCED);
+
+		assertEquals(AiSecurityMode.ENFORCED, effective);
+		assertTrue(effective.enforcesToolAccess());
+		assertTrue(effective.enforcesModelAccess());
+		assertTrue(effective.requiresUser());
+	}
+
 	/** Only ENFORCED enforces; only SYSTEM is audited for existing. */
 	public void testCapabilityFlags() {
 		assertTrue(AiSecurityMode.ENFORCED.requiresUser());

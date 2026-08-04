@@ -151,6 +151,107 @@ public class TestTopLogicSecurityContext extends TestCase {
 		}
 	}
 
+	/** An agent that declares nothing leaves the deployment's mode alone. */
+	public void testAbsentFloorLeavesTheDeploymentAlone() {
+		assertEquals(AiSecurityMode.LEGACY,
+			TopLogicSecurityContext.forRun(policy(null), null, null).securityMode());
+		assertEquals(AiSecurityMode.SYSTEM,
+			TopLogicSecurityContext.forRun(policy(AiSecurityMode.SYSTEM), null, null).securityMode());
+	}
+
+	/** A floor stricter than the deployment is what the run carries. */
+	public void testStricterFloorIsCarried() {
+		assertEquals(AiSecurityMode.SYSTEM,
+			TopLogicSecurityContext.forRun(policy(null), null, AiSecurityMode.SYSTEM).securityMode());
+		assertEquals(AiSecurityMode.SYSTEM,
+			TopLogicSecurityContext.forRun(policy(AiSecurityMode.LEGACY), null, AiSecurityMode.SYSTEM)
+				.securityMode());
+	}
+
+	/** A floor laxer than the deployment is ignored: the deployment's mode stands. */
+	public void testLaxerFloorIsIgnored() {
+		assertEquals(AiSecurityMode.SYSTEM,
+			TopLogicSecurityContext.forRun(policy(AiSecurityMode.SYSTEM), null, AiSecurityMode.LEGACY)
+				.securityMode());
+	}
+
+	/**
+	 * An agent demanding {@link AiSecurityMode#ENFORCED} in an unmigrated deployment really enforces -
+	 * observable here as the up-front refusal of a run with no principal.
+	 *
+	 * <p>
+	 * A {@link AiSecurityMode#LEGACY} deployment happily runs without a user (the case above). That
+	 * the very same policy now refuses is the floor taking effect, and it is deterministic without a
+	 * booted application.
+	 * </p>
+	 */
+	public void testEnforcedFloorInALegacyDeploymentReallyEnforces() {
+		try {
+			TopLogicSecurityContext.forRun(policy(null), null, AiSecurityMode.ENFORCED);
+			fail("An agent floor of ENFORCED must refuse a run without a principal, even though the"
+				+ " deployment would have allowed one.");
+		} catch (IllegalStateException expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().contains("authenticated user"));
+			assertTrue(expected.getMessage(),
+				expected.getMessage().contains(AiSecurityMode.ENFORCED.name()));
+		}
+	}
+
+	/**
+	 * A child run of an agent that declares a laxer mode than its parent's stays at the parent's.
+	 *
+	 * <p>
+	 * A delegated child inherits its parent's context and the child's loop can only narrow it, so
+	 * this is the composition the {@link AgentLoop} performs for a child - the same call, with the
+	 * child agent's declaration.
+	 * </p>
+	 */
+	public void testChildIsNeverLaxerThanItsParent() {
+		SecurityContext parent = TopLogicSecurityContext.forRun(policy(AiSecurityMode.SYSTEM), null);
+
+		assertSame("A child declaring a laxer mode must not get a different context at all.",
+			parent, parent.restrictedTo(AiSecurityMode.LEGACY));
+		assertSame("A child declaring nothing must not get a different context either.",
+			parent, parent.restrictedTo(null));
+		assertEquals(AiSecurityMode.SYSTEM, parent.restrictedTo(AiSecurityMode.LEGACY).securityMode());
+	}
+
+	/** A child agent declaring a stricter mode than its parent's keeps it. */
+	public void testChildKeepsItsOwnStricterFloor() {
+		SecurityContext parent = TopLogicSecurityContext.forRun(policy(null), null);
+		assertEquals(AiSecurityMode.LEGACY, parent.securityMode());
+
+		SecurityContext child = parent.restrictedTo(AiSecurityMode.SYSTEM);
+
+		assertEquals(AiSecurityMode.SYSTEM, child.securityMode());
+		assertEquals("The parent's own context is untouched - the mode is resolved per run.",
+			AiSecurityMode.LEGACY, parent.securityMode());
+	}
+
+	/**
+	 * A context with no principal refuses to be tightened rather than dropping the floor silently.
+	 *
+	 * <p>
+	 * {@link SecurityContext#UNRESTRICTED} is the context a TL-Script entry point falls back to while
+	 * nothing is enforced, and it has no principal to authorize against. Answering itself would turn
+	 * an agent that asked to be checked into one that is not, so it refuses - which is why the entry
+	 * points resolve the floor <em>before</em> they choose that fallback.
+	 * </p>
+	 */
+	public void testAContextWithoutAPrincipalRefusesToBeTightened() {
+		assertSame("Nothing to do without a floor.",
+			SecurityContext.UNRESTRICTED, SecurityContext.UNRESTRICTED.restrictedTo(null));
+		assertSame("SYSTEM is what this context already is.",
+			SecurityContext.UNRESTRICTED, SecurityContext.UNRESTRICTED.restrictedTo(AiSecurityMode.SYSTEM));
+
+		try {
+			SecurityContext.UNRESTRICTED.restrictedTo(AiSecurityMode.ENFORCED);
+			fail("An unrestricted context must not silently drop an ENFORCED floor.");
+		} catch (IllegalStateException expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().contains("no principal"));
+		}
+	}
+
 	/** The unrestricted context is honest about acting as the system rather than claiming LEGACY. */
 	public void testUnrestrictedActsAsSystem() {
 		assertEquals(AiSecurityMode.SYSTEM, SecurityContext.UNRESTRICTED.securityMode());

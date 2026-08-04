@@ -113,6 +113,12 @@ function editableInRow(
     const inCol = target?.querySelector<HTMLElement>(EDITABLE_SELECTOR);
     if (inCol) return inCol;
   }
+  if (opts.col) {
+    // Asked for one specific column: a cell whose control takes no caret (a dropdown, a checkbox)
+    // must not send the focus to some other column - that would move the focus, and the horizontal
+    // scroll position with it, away from the cell the user addressed.
+    return null;
+  }
   const ordered = opts.last ? [...cells].reverse() : cells;
   for (const c of ordered) {
     const found = c.querySelector<HTMLElement>(EDITABLE_SELECTOR);
@@ -458,12 +464,25 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (!row) {
       return;
     }
+    // The row has to be editable first; until then this is a no-op and waits out the select
+    // round-trip. Once it is, the request is answered - successfully or not.
+    if (!editableInRow(body, row.id)) {
+      return;
+    }
+    pendingFocusRef.current = null;
+    // A click that opened a control of its own (a dropdown's option list, a date picker) has moved
+    // the focus out of the table on purpose; taking it back would close what was just opened.
+    const active = document.activeElement;
+    if (active && active !== document.body && !body.contains(active)) {
+      return;
+    }
     const input = editableInRow(body, row.id, { col: pending.col, last: pending.last });
     if (!input) {
       return;
     }
-    pendingFocusRef.current = null;
-    input.focus({ preventScroll: false });
+    // The cell was just clicked, so it is on screen: scrolling to it can only move the viewport away
+    // from where the user is looking.
+    input.focus({ preventScroll: true });
     if (input instanceof HTMLInputElement) {
       input.select();
     }

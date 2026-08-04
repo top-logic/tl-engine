@@ -164,8 +164,8 @@ policy and to nothing else.
 |---|---|---|---|---|
 | `secbare1` | `secBare` | *(`interaction` only, and that implicitly - its role grants nothing and the policy declares no `<baseline>`)* | ask a question, load a tool-less skill | every tool: `model.read`, `data.read`, everything. Every skill that declares a tool disappears from its prompt |
 | `secviewer1` | `secViewer` | `model.read` | inspect modules, types, layouts | `listInstances` and every other `data.read` tool. `TL_modelExploration` survives and loads **only** its 8 `model.read` tools |
-| `secreader1` | `secReader` | `model.read`, `data.read`, `script` *(privileged)* | read notes, run TL-Script, list instances | `agent.meta`, `workspace`, `egress`. `TL_taskManagement` is dropped entirely. At the model layer: cannot create a note, sees no secret value |
-| `seceditor1` | `secEditor` | `secreader1` **+ `agent.meta`** | everything `secreader1` can, plus `listFrameworkAgents` | the same as `secreader1` minus `agent.meta`. At the model layer: **can** create a note |
+| `secreader1` | `secReader` | `model.read`, `data.read`, `script` *(privileged)* | read notes, run TL-Script read-only, list instances | `agent.meta`, `workspace`, `egress`, and `executeTLScript` with `withCommit=true` - that costs `data.write`. At the model layer: cannot create a note, sees no secret value |
+| `seceditor1` | `secEditor` | `secreader1` **+ `agent.meta` + `data.write`** | everything `secreader1` can, plus `listFrameworkAgents` and **committing** a TL-Script - which is how it creates a note | `workspace`, `egress`. At the tool layer as well as the model layer, it is the persona that **can** create a note |
 | `secwriter1` | `secWriter` | `model.read`, `data.read`, `data.write`, `workspace` | `secdemo-editing.addNote`, `createTask`; create a note at the model layer | `script`, `agent.meta`, `egress`. And `data.write` / `workspace` in a **background** run |
 | `secauthor1` | `secAuthor` | `agent.meta`, `agent.authoring` *(privileged)* | create agents, skills and script tools | `model.read`, `data.read` - and it has **no data rights at all**, so even a permitted tool would return nothing |
 | `root` | administrator | *(bypasses both layers)* | everything, including the unclassified script tool | nothing. Useful only as the deliberate baseline - see the warning below |
@@ -177,9 +177,13 @@ policy and to nothing else.
 
 ### 3.1 The capabilities nobody holds
 
-`model.structure`, `egress` and `data.write`-beyond-`secwriter1` are granted to no role. That is
-deny-by-default, and no `<deny>` element was needed to achieve it. Trying a model-editor tool as any
-persona is therefore a valid scenario (**T7**) and its answer is always the same.
+`model.structure` and `egress` are granted to no role. That is deny-by-default, and no `<deny>` element
+was needed to achieve it. Trying a model-editor tool as any persona is therefore a valid scenario
+(**T7**) and its answer is always the same.
+
+`data.write` is held by `secwriter1` and `seceditor1` and by nobody else - `secreader1` most
+deliberately not, since the pair "editor commits a TL-Script / reader is refused" is what shows that
+`script` alone does not include writing (**T9**).
 
 ### 3.2 Adding a persona
 
@@ -211,6 +215,7 @@ Everything a human might want to see, in one place. The **Where** column says wh
 | **T6** | a privileged group must be named explicitly | `secauthor1` | console | `aiCallTool("agent-authoring.listAgents", null)` | ✅ allowed - `agent.authoring` is granted by name. No wildcard could have reached it |
 | **T7** | a group granted to nobody | any persona | console | `aiCallTool("model-modification.createClass", null)` | ❌ `requires the 'model.structure' capability`. Deny-by-default; no `<deny>` was written |
 | **T8** | an unclassified tool | any persona | console | `aiCallTool("mcp__anything__doThing", null)` | ❌ `belongs to no tool group and has no explicit grant`. A different problem from T7 - fixed by `<tool-groups>`, not by a role |
+| **T9** | committing a TL-Script costs `data.write` on top of `script` | `secreader1`, then `seceditor1` | console | ``aiCallTool("script-exec.executeTLScript", {"script": "new(`secdemo:Note`)", "withCommit": true})`` | ❌ for the reader: `executing TL-Script with withCommit=true requires the 'data.write' capability, which none of your roles grants.` ✅ for the editor: a new note. Same tool, same script, one capability apart. With `"withCommit": false` both succeed |
 | **B1** | the administrator bypass | `root` | console | any of T2, T7, T8 | ✅ allowed throughout. The documented bypass, mirroring the engine's own |
 
 ### 4.2 Classifying a TL-Script tool - the migration path
@@ -255,7 +260,8 @@ This is user experience, not a control: it is why the agent can say *"you lack `
 
 A run with no human to answer an approval prompt auto-approves every tool call, so it is additionally
 capped by `<background-allowlist>`. The fixture leaves `data.write` and `workspace` off that list, which
-is what makes this observable.
+is what makes this observable. `script` **is** on it, because the harness needs it - and that is exactly
+why **A5** matters.
 
 | # | Behaviour | Persona | Where | Do this | You should see |
 |---|---|---|---|---|---|
@@ -263,6 +269,7 @@ is what makes this observable.
 | **A2** | the allowlist narrows, it never widens | `secviewer1` | console | as A1 but asking for `listInstances` | denied naming `data.read` - the capability is allowlisted but the role does not hold it, so the role is what the message blames |
 | **A3** | it binds administrators too | `root` | console | as A1 | still refused. The missing approval prompt is the justification, not the principal's authority |
 | **A4** | an enforcing policy must declare one | - | edit config | delete the whole `<background-allowlist>` element from `secdemo.config.xml`, restart | the application refuses to start, with the message quoted in [tool-access-configuration.md](tool-access-configuration.md#cap-what-an-unattended-run-can-do). Silence is not read as a decision in either direction |
+| **A5** | an allowlisted `script` does not admit writes | `root` | console | `aiAgentChatAsync("TL_SingleAgent", "Use executeTLScript with withCommit true to create a secdemo:Note.")`, then `collect.tlscript` | refused with `executing TL-Script with withCommit=true requires the 'data.write' capability, which is not on the background allowlist` - and no note is created. The read-only script in the same run still works. This is the unattended-write bypass, pinned closed |
 
 ### 4.5 Model access - what a permitted tool may then touch
 
@@ -373,11 +380,11 @@ Or one class at a time - the class name says which behaviour broke:
 
 | Class | Covers | Scenarios |
 |---|---|---|
-| `SecDemoToolAccessTest` | the invocation gate per persona; the baseline; privileged groups; deny-by-default; the administrator bypass | T1, T2, T4, T5, T6, T7, T8, B1 |
+| `SecDemoToolAccessTest` | the invocation gate per persona; the baseline; privileged groups; deny-by-default; the administrator bypass; the `data.write` requirement on the TL-Script commit path | T1, T2, T4, T5, T6, T7, T8, T9, B1 |
 | `SecDemoSchemaFilterTest` | a denied tool's schema is absent from the provider request; the execution-mode half told apart from authorization; `Unknown tool` with the permitted-only available list | C6 |
 | `SecDemoScriptToolClassificationTest` | the `{factory}.*` wildcard end to end: unclassified is denied to everyone, classified is reachable, classifying is not granting | S1, S2, S3, S4 |
 | `SecDemoCapabilityNoticeTest` | skills dropped / partially loaded / tool-less; what `loadSkill` announces; the capability notice; the `LEGACY` prompt unchanged | C1, C2, C3, C4, C5 |
-| `SecDemoBackgroundAccessTest` | the background ceiling in both directions; that it binds administrators; that an enforcing policy has an allowlist; the MCP refusal rule | A1, A2, A3, A4, P1 |
+| `SecDemoBackgroundAccessTest` | the background ceiling in both directions; that it binds administrators; that an allowlisted `script` does not admit a commit; that an enforcing policy has an allowlist; the MCP refusal rule | A1, A2, A3, A4, A5, P1 |
 | `SecDemoModelSecurityTest` | the engine's model rights per persona, evaluated through TL-Script compiled with security on | M1, M2, M3, M4 |
 | `SecDemoHarnessScriptsTest` | every `harness/*.tlscript` still compiles against the model and the registered script functions, and the ones this page names still exist | the harness itself |
 
@@ -426,6 +433,13 @@ refusal message.
   whatever the policy grants. In the chat that is a prompt with **Allow** / **Allow for Session** /
   **Deny**; answer it, or the call times out after two minutes and the agent retries. There is
   deliberately no way to pre-approve a role. Scenarios C2, S4 and M2 all hit this.
-- **`data.write` has no annotated tool anywhere in the framework.** `secdemo-editing.addNote` is the only
-  member of that group, and it is a member only because the fixture classified it. A `data.write` grant in
-  an application with no script tools reaches nothing.
+- **`data.write` has no annotated tool anywhere in the framework - its consumer is an argument.**
+  `executeTLScript` with `withCommit=true` is what costs the capability in a stock application; the tool
+  itself is classified `script`, and the commit path asks for `data.write` on top, because the invocation
+  gate decides per tool and never sees an argument. In this fixture `secdemo-editing.addNote` is the only
+  *tool* in the group, and it is one only because the fixture classified it. So a `data.write` grant is
+  never pointless: without it, TL-Script is read-only.
+- **`script` on the `<background-allowlist>` is not a write grant.** The commit path is capped by the
+  allowlist like any capability, so an unattended run reaching `executeTLScript` still cannot persist
+  with it - `root` included (**A5**). Before this, allowlisting `script` for the harness handed unattended
+  runs every write TL-Script can express.

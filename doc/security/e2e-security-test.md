@@ -280,6 +280,13 @@ To run these cases from TL-Script instead of typing them into the chat, see
 > layer that is still staged (#234). Each prompt below therefore asks for TL-Script explicitly. If
 > the agent answers from a different tool, say *"do that with the TL-Script tool"* and repeat.
 
+> **The cases that write need the chat, not the background harness.** Committing through TL-Script
+> requires the `data.write` capability on top of `script`, and `data.write` is deliberately off the
+> demo's `<background-allowlist>`. The runs of [section 4](#4-running-the-cases-as-background-agent-runs-from-tl-script)
+> are unattended, so every commit is refused there before the model rights are consulted - as intended,
+> see [testbed.md](testbed.md#44-unattended-runs---the-background-allowlist) scenario **A5**. Read cases
+> behave identically on both surfaces.
+
 ### 3.1 `secReader` - read is allowed
 
 | | |
@@ -295,8 +302,8 @@ To run these cases from TL-Script instead of typing them into the chat, see
 |---|---|
 | **Login** | `secreader1` |
 | **Prompt** | `Use the TL-Script tool with commit to evaluate: new(\`secdemo:Note\`).set(\`secdemo:Note#title\`, "Reader was here")` |
-| **Expect** | ❌ **DENIED** - the tool result is an error, not an object. The message is the engine's `CREATE_PERMISSION_DENIED__TYPE` key, rendered as *"No permission to create an object of type ..."*. |
-| **Why** | `secdemo:Note` grants `Create` only to `secEditor`. |
+| **Expect** | ❌ **DENIED** - the tool result is an error, not an object: *"executing TL-Script with withCommit=true requires the 'data.write' capability, which none of your roles grants."* |
+| **Why** | The **tool** layer refuses first now: `secReader` holds `script`, which reaches `executeTLScript` read-only, and committing costs `data.write` on top. The model layer would refuse too - `secdemo:Note` grants `Create` only to `secEditor` and `secWriter` - but this account no longer gets that far. To see the engine's `CREATE_PERMISSION_DENIED__TYPE` through this tool, use case 3.6, whose persona may commit and still may not create a `Secret`. |
 | **Also check** | Re-run case 3.1 - still exactly three notes, nothing was persisted. |
 
 ### 3.3 `secReader` - secrets are not readable
@@ -315,7 +322,7 @@ To run these cases from TL-Script instead of typing them into the chat, see
 |---|---|
 | **Login** | `seceditor1` |
 | **Prompt** | `Use the TL-Script tool with commit to evaluate: new(\`secdemo:Note\`).set(\`secdemo:Note#title\`, "Editor note")` |
-| **Expect** | ✅ **ALLOWED** - a new object is returned. |
+| **Expect** | ✅ **ALLOWED** - a new object is returned. **In the chat only**: `secEditor` holds `data.write`, which the commit requires, but the background harness of section 4 is capped by the allowlist and refuses it. |
 | **Verify** | Ask again: `Use the TL-Script tool to evaluate: all(\`secdemo:Note\`).get(\`secdemo:Note#title\`)` → four titles now, including `Editor note`. |
 
 ### 3.5 `secEditor` - read is allowed
@@ -332,8 +339,8 @@ To run these cases from TL-Script instead of typing them into the chat, see
 |---|---|
 | **Login** | `seceditor1` |
 | **Prompt** | `Use the TL-Script tool with commit to evaluate: new(\`secdemo:Secret\`).set(\`secdemo:Secret#label\`, "mine now")` |
-| **Expect** | ❌ **DENIED** - `CREATE_PERMISSION_DENIED`. Reading works no better: `all(\`secdemo:Secret\`).get(\`secdemo:Secret#value\`)` is empty. |
-| **Why** | No role has any grant on `secdemo:Secret`. |
+| **Expect** | ❌ **DENIED** - `CREATE_PERMISSION_DENIED` in the chat, where the commit itself is permitted. Reading works no better: `all(\`secdemo:Secret\`).get(\`secdemo:Secret#value\`)` is empty. |
+| **Why** | No role has any grant on `secdemo:Secret`. This is the case that shows the model layer through the tool: the persona holds `data.write`, so the tool layer lets the commit through, and the engine denies the create anyway. Unattended (section 4) the tool layer refuses earlier and the model layer is not reached. |
 
 ### 3.7 `root` - the administrator baseline
 
@@ -487,12 +494,16 @@ the agent's narration, and therefore with the engine's security checks on:
 -- post conditions, evaluated directly as the logged-in account --
    secdemo:Note titles readable here : Release checklist, Team offsite, Open questions
    case 3.2 must not have persisted 'Reader was here' : OK
-   case 3.4 note 'Editor note' present : no
+   case 3.4 note 'Editor note' present : no - expected: an unattended run may not commit, ...
    secdemo:Secret values readable here : no - expected for secReader / secEditor
 ```
 
 The last line is the sharpest single check in the harness: it must say `no` for `secreader1` and
 `seceditor1` and `YES` for `root`.
+
+The `case 3.4` line says `no` for every account, `root` included: these runs are unattended and the
+`<background-allowlist>` does not admit `data.write`, so no commit reaches the database from here. A
+`yes` means a chat run persisted the note earlier - `reset.tlscript` clears it.
 
 > The console's result table shows one row per line and its **Result** column is narrow by default.
 > Drag the right border of the column header (or maximize the result panel with the ⛶ button) to
@@ -500,10 +511,11 @@ The last line is the sharpest single check in the harness: it must say `no` for 
 
 ### 4.6 Re-running
 
-Case 3.2 must fail, so it leaves nothing behind. Case 3.4 succeeds and persists a note titled
-`Editor note`, which accumulates over runs. `harness/reset.tlscript`, executed as `root` with the
-**execute and save changes** button, deletes every note titled `Editor note` or `Reader was here`
-and leaves the three seeded ones. A fresh database (`tl-ai-demo/tmp`) is the other way.
+Neither write case leaves anything behind here: 3.2 must fail, and 3.4 is refused as well because these
+runs are unattended and cannot commit. Only the chat persists `Editor note`, and it then accumulates over
+runs. `harness/reset.tlscript`, executed as `root` with the **execute and save changes** button, deletes
+every `Note` and `Secret` that is not one of the seeded ones and restores any seeded one a scenario
+removed. A fresh database (`tl-ai-demo/tmp`) is the other way.
 
 Everything else in the harness is idempotent: the runs are new each time, and the handles in the
 session are overwritten by the next `fire.tlscript`.
@@ -543,19 +555,24 @@ at all. A role can hold the TL-Script tool and be denied every object it asks fo
 data rights and no tool to reach them with.
 
 The aspect configures a `<tool-access>` for six persona roles, described in full in
-[testbed.md](testbed.md#3-the-persona-matrix). The pair this section is about differs in exactly one
-capability:
+[testbed.md](testbed.md#3-the-persona-matrix). The pair this section is about:
 
 | | `secReader` | `secEditor` |
 |---|---|---|
 | `model.read`, `data.read` | granted | granted |
 | `script` (privileged) | granted | granted |
 | `agent.meta` | **not granted** | granted |
-| `model.structure`, `agent.authoring`, `egress`, `workspace`, `data.write` | not granted | not granted |
+| `data.write` | **not granted** | granted |
+| `model.structure`, `agent.authoring`, `egress`, `workspace` | not granted | not granted |
 
 Both keep `script` deliberately: the cases in sections 3 and 4 ask the agent to use the TL-Script tool in
 order to reach the model rights, and denying it here would stop them before the layer they are about.
-The difference therefore sits on `agent.meta`, which nothing else in this demo depends on.
+The `agent.meta` difference is what the one-tool comparison below rests on, and nothing else in this demo
+depends on it.
+
+`data.write` is the second difference and it is what the write cases of section 3 rest on: `script`
+reaches `executeTLScript` read-only, and `withCommit=true` requires `data.write` as well - so `secEditor`
+may persist what a script changes and `secReader` may not, before any model right is consulted.
 
 ### 6.1 Driving it from the Script console
 
@@ -568,6 +585,8 @@ any model call. Log in, open *Administration → Development → Script Konsole*
 | `seceditor1` | the same expression | ✅ **ALLOWED** - a JSON list of the configured agents |
 | either | `aiCallTool("model-modification.createClass", null)` | ❌ **DENIED** - `requires the 'model.structure' capability`. Deny-by-default: no role is granted that privileged group, and no `<deny>` was needed |
 | either | `aiCallTool("mcp__anything__doThing", null)` | ❌ **DENIED** - `belongs to no tool group and has no explicit grant`. A tool nobody classified is denied to everyone |
+| `secreader1` | ``aiCallTool("script-exec.executeTLScript", {"script": "new(`secdemo:Note`)", "withCommit": true})`` | ❌ **DENIED** - `executing TL-Script with withCommit=true requires the 'data.write' capability, which none of your roles grants.` The same call with `"withCommit": false` succeeds |
+| `seceditor1` | the same expression | ✅ **ALLOWED** - a note is created. It holds `data.write`; clean up with `reset.tlscript` |
 | `root` | any of the above | ✅ **ALLOWED** - administrators bypass the tool layer exactly as they bypass the model rights |
 
 The reader/editor pair on the *same* expression in the *same* application is the point: the only thing

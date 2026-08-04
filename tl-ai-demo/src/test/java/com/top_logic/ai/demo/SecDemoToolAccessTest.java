@@ -13,6 +13,7 @@ import junit.framework.Test;
 
 import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
@@ -59,6 +60,25 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 		assertEquals(ToolGroups.MODEL_STRUCTURE, tool(STRUCTURE_TOOL).group());
 		assertEquals(ToolGroups.WORKSPACE, tool(WORKSPACE_TOOL).group());
 		assertEquals(ToolGroups.EGRESS, tool(EGRESS_TOOL).group());
+	}
+
+	/**
+	 * Precondition: the execution context the commit check needs is injected, not asked of the model.
+	 *
+	 * <p>
+	 * The check on the commit path reads the run's authorization from an injected
+	 * {@code ToolExecutionContext} parameter. Were that parameter to reach the JSON schema, the model
+	 * would see a required argument it cannot supply and the tool would become uncallable - a far worse
+	 * failure than the one the check prevents.
+	 * </p>
+	 */
+	public void testTheInjectedContextIsInvisibleToTheModel() {
+		String schema = tool(SCRIPT_TOOL).schema().inputSchemaJson();
+
+		assertTrue("The declared arguments must be there: " + schema, schema.contains("script"));
+		assertTrue(schema, schema.contains("withCommit"));
+		assertFalse("The injected context must not be a schema property: " + schema,
+			schema.contains("context"));
 	}
 
 	/**
@@ -138,9 +158,11 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 * {@link #EDITOR}.
 	 *
 	 * <p>
-	 * The sharpest single assertion in the tool layer, because the two personas differ in
-	 * {@code agent.meta} and in nothing else. Anything that broke enforcement in general would break
-	 * one half of this; anything that broke role resolution would break the other.
+	 * The sharpest single assertion in the tool layer: the same tool, one capability, two answers.
+	 * Anything that broke enforcement in general would break one half of this; anything that broke role
+	 * resolution would break the other. ({@code agent.meta} is not the personas' only difference any
+	 * more - {@link #EDITOR} also holds {@code data.write}, which is what lets it commit through
+	 * TL-Script - but it is the only one this tool is classified as.)
 	 * </p>
 	 */
 	public void testAgentMetaSeparatesReaderFromEditor() {
@@ -153,6 +175,66 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 		assertAllowed(READER, SCRIPT_TOOL);
 		assertAllowed(EDITOR, SCRIPT_TOOL);
 		assertAllowed(AUTHOR, AGENT_AUTHORING_TOOL);
+	}
+
+	/**
+	 * Committing through TL-Script costs {@code data.write} on top of the {@code script} capability the
+	 * tool is classified as.
+	 *
+	 * <p>
+	 * The gate lets both personas call {@code executeTLScript} - they hold {@code script} - and cannot
+	 * see the argument that decides whether the call persists anything. So the commit path asks
+	 * separately, which is the difference between "may run a script" and "may change the database with
+	 * one". Without this, every holder of {@code script} silently held every write TL-Script can
+	 * express.
+	 * </p>
+	 */
+	public void testTLScriptCommitNeedsDataWriteOnTopOfScript() {
+		assertAllowed(READER, SCRIPT_TOOL);
+		assertAllowed(EDITOR, SCRIPT_TOOL);
+
+		List<TLObject> seeded = notes();
+
+		String refused = executeScriptAs(READER, CREATE_NOTE, true);
+		assertTrue("secreader1 holds no data.write, so the commit must be refused: " + refused,
+			refused.contains(ToolGroups.DATA_WRITE));
+		assertTrue("The refusal must say which call was refused: " + refused,
+			refused.contains("withCommit=true"));
+		assertTrue("...and that the role is what lacks the capability: " + refused,
+			refused.contains("none of your roles grants"));
+		assertEquals("A refused commit must not have written anything.",
+			seeded.size(), notes().size());
+
+		try {
+			String committed = executeScriptAs(EDITOR, CREATE_NOTE, true);
+
+			assertFalse("seceditor1 holds data.write, so its commit must go through: " + committed,
+				committed.contains("Permission denied"));
+			assertEquals("The persona matrix promises seceditor1 can create a note: " + committed,
+				seeded.size() + 1, notes().size());
+		} finally {
+			deleteNotesBeyond(seeded);
+		}
+	}
+
+	/**
+	 * A read-only script is unchanged for both of them: {@code script} alone still reaches it.
+	 *
+	 * <p>
+	 * The other half of the rule, and the one that keeps it proportionate - the new requirement is on
+	 * the commit path only, so the model-rights walkthrough of {@code doc/security/e2e-security-test.md}
+	 * still runs as {@code secreader1}.
+	 * </p>
+	 */
+	public void testReadOnlyTLScriptStillNeedsOnlyScript() {
+		for (String login : List.of(READER, EDITOR)) {
+			String result = executeScriptAs(login, "all(`secdemo:Note`).size()", false);
+
+			assertFalse(login + " must reach a read-only script with 'script' alone: " + result,
+				result.contains("Permission denied"));
+			assertTrue("The script must actually have run: " + result,
+				result.contains("\"success\":true") || result.contains("\"success\": true"));
+		}
 	}
 
 	/** A privileged group granted to nobody needs no {@code <deny>} to be unreachable. */

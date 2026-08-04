@@ -10,6 +10,7 @@ import java.util.List;
 import junit.framework.Test;
 
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
@@ -28,9 +29,9 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * </p>
  *
  * <p>
- * The fixture is set up so this is observable rather than vacuous: {@code secwriter1} is the one
- * persona holding {@code data.write}, and {@code data.write} is deliberately <em>off</em> the demo's
- * allowlist. The same account, the same tool, two run kinds, two answers.
+ * The fixture is set up so this is observable rather than vacuous: {@code secwriter1} holds
+ * {@code data.write} and {@code data.write} is deliberately <em>off</em> the demo's allowlist. The same
+ * account, the same tool, two run kinds, two answers.
  * </p>
  */
 public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
@@ -107,6 +108,52 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 		assertTrue("The foreground administrator run is not.",
 			TopLogicSecurityContext.forRun(administrator, false)
 				.hasToolPermission(tool(CLASSIFIED_WRITE_SCRIPT_TOOL)));
+	}
+
+	/**
+	 * An unattended run cannot commit through TL-Script, not even as an administrator.
+	 *
+	 * <p>
+	 * The bypass this closes, end to end: {@code script} is on the demo's allowlist because the harness
+	 * needs it, {@code data.write} is deliberately off it, and {@code executeTLScript} used to be gated
+	 * by {@code script} alone. An unattended run - which auto-approves every call because no human is
+	 * there to ask - could therefore read a write tool's implementation, re-run it through
+	 * {@code executeTLScript} with {@code withCommit=true} and persist it, in a policy whose whole
+	 * intent is "no {@code data.write} unattended". Administrators are the sharpest case: the allowlist
+	 * binds them too, so not even the account that bypasses every role grant gets the commit.
+	 * </p>
+	 */
+	public void testBackgroundRunCannotCommitThroughTLScript() {
+		Person administrator = anyAdministrator();
+		assertNotNull("The application must have at least one administrator account.", administrator);
+		assertNull("Precondition: 'script' is on the allowlist, so the tool itself is reachable.",
+			securityFor(READER, true).toolDenialReason(tool(SCRIPT_TOOL)));
+
+		List<TLObject> seeded = notes();
+		try {
+			String refused =
+				executeScript(TopLogicSecurityContext.forRun(administrator, true), CREATE_NOTE, true);
+
+			assertTrue("The refusal must name the capability that is missing from the allowlist: "
+				+ refused, refused.contains(ToolGroups.DATA_WRITE));
+			assertTrue("...and blame the allowlist rather than the roles: " + refused,
+				refused.contains("background allowlist"));
+			assertEquals("Nothing may have been written.", seeded.size(), notes().size());
+		} finally {
+			deleteNotesBeyond(seeded);
+		}
+	}
+
+	/**
+	 * A read-only script is unaffected: the harness of {@code doc/security/testbed.md} runs unattended.
+	 */
+	public void testBackgroundRunStillReadsThroughTLScript() {
+		String result = executeScript(securityFor(READER, true), "all(`secdemo:Note`).size()", false);
+
+		assertFalse("'script' is allowlisted, so a read-only script must go through: " + result,
+			result.contains("Permission denied"));
+		assertTrue("The script must actually have run: " + result,
+			result.contains("\"success\":true") || result.contains("\"success\": true"));
 	}
 
 	/**

@@ -6,7 +6,10 @@
 package com.top_logic.ai.demo;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -17,12 +20,23 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.basic.module.BasicRuntimeModule;
+import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.TLContext;
@@ -60,7 +74,7 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	/** Holds {@code model.read}, {@code data.read}, {@code script}. */
 	public static final String READER = "secreader1";
 
-	/** {@link #READER} plus {@code agent.meta}. */
+	/** {@link #READER} plus {@code agent.meta} and {@code data.write}. */
 	public static final String EDITOR = "seceditor1";
 
 	/** Holds {@code model.read}, {@code data.read}, {@code data.write}, {@code workspace}. */
@@ -108,6 +122,14 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	 * no {@code <tool-groups>} entry names its factory.
 	 */
 	public static final String UNCLASSIFIED_SCRIPT_TOOL = "secdemo-unclassified.countNotesUnclassified";
+
+	/**
+	 * A TL-Script that persists something, for the tests of the commit path.
+	 *
+	 * @see #executeScriptAs(String, String, boolean)
+	 */
+	public static final String CREATE_NOTE =
+		"new(`secdemo:Note`)..set(`secdemo:Note#title`, \"Commit gate test\")";
 
 	private Person _previousUser;
 
@@ -179,6 +201,71 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 			reason.contains(qualifiedToolName) || reason.contains(tool.name()));
 		assertTrue("The reason must name the missing capability: " + reason,
 			reason.contains(expectedCapability));
+	}
+
+	/**
+	 * Runs the registered TL-Script tool as the given persona, the way a tool call in a run does.
+	 *
+	 * <p>
+	 * Goes through {@link ToolExecutions} and the tool's own argument dispatch rather than calling the
+	 * Java method, because what is under test on the commit path is a check the tool performs on an
+	 * <em>argument</em> - and the injected execution context that carries the answer arrives through
+	 * exactly that dispatch.
+	 * </p>
+	 *
+	 * @param login
+	 *        The persona to act as.
+	 * @param script
+	 *        The TL-Script to execute.
+	 * @param withCommit
+	 *        Whether to ask for the changes to be persisted.
+	 * @return The tool result text, a JSON object either way - a refusal is a tool error, not an
+	 *         exception.
+	 */
+	protected String executeScriptAs(String login, String script, boolean withCommit) {
+		return executeScript(securityFor(login), script, withCommit);
+	}
+
+	/**
+	 * Runs the registered TL-Script tool under the given security context.
+	 *
+	 * <p>
+	 * For the runs no persona login describes: an administrator, or a background run.
+	 * </p>
+	 *
+	 * @see #executeScriptAs(String, String, boolean)
+	 */
+	protected static String executeScript(SecurityContext security, String script, boolean withCommit) {
+		Map<String, Object> args = new HashMap<>();
+		args.put("script", script);
+		args.put("withCommit", withCommit);
+
+		ToolContext context = new ToolContext(security, ApprovalCallback.AUTO_APPROVE);
+		return ToolExecutions.execute(tool(SCRIPT_TOOL), args, context).text();
+	}
+
+	/**
+	 * Every {@code secdemo:Note} instance, for a test that checks whether a commit landed.
+	 */
+	protected static List<TLObject> notes() {
+		return MetaElementUtil.getAllInstancesOf((TLClass) TLModelUtil.findType("secdemo:Note"),
+			TLObject.class);
+	}
+
+	/**
+	 * Deletes every note that is not one of {@code keep}, so a test that committed one leaves the
+	 * fixture as it found it.
+	 */
+	protected static void deleteNotesBeyond(Collection<TLObject> keep) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction()) {
+			for (TLObject note : notes()) {
+				if (!keep.contains(note)) {
+					note.tDelete();
+				}
+			}
+			tx.commit();
+		}
 	}
 
 	/**

@@ -364,6 +364,12 @@ and it can have broad data rights and no tool to reach them with. Configure both
 Approval is a third, separate thing: a tool classified as changing shared data asks the user to confirm
 regardless of which role they hold. There is no way to pre-approve a role, on purpose.
 
+One setting lives outside this file: a single agent definition may carry a `security-mode` of its own -
+in the *Service Editor* for a framework agent, in the *Agent Editor* for an application agent. It is a
+**floor**. It can make that one agent stricter than the mode configured here, never laxer, so an agent
+asking for a laxer mode than the deployment's changes nothing at all. Use it for the one agent that
+must be checked in an application that has not migrated yet; leave it empty everywhere else.
+
 ---
 
 ## Trying it out

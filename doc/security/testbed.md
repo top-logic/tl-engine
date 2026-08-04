@@ -32,6 +32,7 @@ configured, with six personas whose only difference is what the policy grants th
 | Password | `Sec-Demo-1` for all of them |
 | Script tools | `secdemo-reporting.countNotes`, `secdemo-editing.addNote`, `secdemo-unclassified.countNotesUnclassified` |
 | Visible UI | the **Albert** tab (the agent chat) and *Administration → Development → Script console*, identical for every persona |
+| Fixture agent | `TL_secDemoLaxAgent` - declares `security-mode="LEGACY"` and is enforced anyway (scenario **F1**) |
 | Mode | `ENFORCED` - writing the `<tool-access>` matrix is what turns it on |
 
 Files:
@@ -289,7 +290,26 @@ knowing here.
 > showed me the secret" observation through those tools is a *known* staged gap, not a new finding - see
 > [e2e-security-test.md](e2e-security-test.md#7-what-this-does-and-does-not-test).
 
-### 4.6 The MCP endpoint
+### 4.6 An agent that names a security mode of its own
+
+An agent definition may carry a `security-mode`, and it is a **floor**: it can make that one agent
+stricter than the deployment, never laxer. This deployment is already `ENFORCED`, which is the
+strictest mode there is, so what the fixture can show is the direction that says no. The agent
+`TL_secDemoLaxAgent` exists only for this row - it carries no tools, so nothing but the mode is in
+play.
+
+| # | Behaviour | Persona | Where | Do this | You should see |
+|---|---|---|---|---|---|
+| **F1** | an agent cannot make itself laxer than its deployment | `secreader1` | console, **needs a key** | `aiAgentChat("TL_secDemoLaxAgent", "List the configured framework agents.")` | the run is enforced anyway: `Permission denied: ... requires the 'agent.meta' capability`. The agent declares `security-mode="LEGACY"` in `secdemo.config.xml` and it changes nothing - authoring an agent is not a way around the deployment's decision |
+| **F2** | ...and the declaration really is read, not ignored | - | tests | `mvn -o -pl tl-ai-demo -am test -DskipTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dtest='SecDemoAgentFloorTest'` | green. Same statement as F1 without a key: the definition carries `LEGACY`, the resolved mode is `ENFORCED`, and a run of that agent is still refused what the persona's roles do not grant. Also covers the knowledge-base half - an agent created in the Agent Editor carries its mode through the storage mapping |
+
+> The other direction - an agent demanding `ENFORCED` where the deployment asks for nothing - cannot be
+> shown here, because a `LEGACY` deployment is the opposite of what this fixture configures. It is
+> pinned by the unit tests instead (`TestAiSecurityMode`, `TestTopLogicSecurityContext`,
+> `TestAgentSecurityFloor` in `tl-ai-core`), including that such a run is **refused** rather than run
+> unrestricted when it has no authenticated user to check against.
+
+### 4.7 The MCP endpoint
 
 | # | Behaviour | Where | Do this | You should see |
 |---|---|---|---|---|
@@ -346,6 +366,7 @@ Or one class at a time - the class name says which behaviour broke:
 | `SecDemoDelegateFilterTest` | the delegate list per persona on the shipped framework agents; the drop reason; a partly reachable delegate offered and annotated; the same filter in `list_agents` | C9, C10 |
 | `SecDemoBackgroundAccessTest` | the background ceiling in both directions; that it binds administrators; that an allowlisted `script` does not admit a commit; that an enforcing policy has an allowlist; the MCP refusal rule | A1, A2, A3, A4, A5, P1 |
 | `SecDemoModelSecurityTest` | the engine's model rights per persona, evaluated through TL-Script compiled with security on | M1, M2, M3, M4 |
+| `SecDemoAgentFloorTest` | the security mode an agent declares for itself: read from the configuration, read from the knowledge base, and losing to a stricter deployment | F1, F2 |
 | `SecDemoHarnessScriptsTest` | every `harness/*.tlscript` still compiles against the model and the registered script functions, and the ones this page names still exist | the harness itself |
 
 For example:
@@ -361,8 +382,9 @@ mvn -o -pl tl-ai-demo -am test -DskipTests=false \
 
 The unit-level counterparts live in `tl-ai-core`, against hand-built policies rather than a booted
 application - `TestRoleToolAccess`, `TestToolAuthorization`, `TestAiToolAccessService`,
-`TestAgentCapabilities`, `TestDelegateFilter`, `TestSkillTool` - plus `TestMcpToolContexts` in
-`tl-ai-mcp-server` for the MCP refusal message.
+`TestAgentCapabilities`, `TestDelegateFilter`, `TestSkillTool`, and `TestAiSecurityMode` /
+`TestTopLogicSecurityContext` / `TestAgentSecurityFloor` for the mode composition an `ENFORCED`
+fixture cannot show - plus `TestMcpToolContexts` in `tl-ai-mcp-server` for the MCP refusal message.
 
 ---
 

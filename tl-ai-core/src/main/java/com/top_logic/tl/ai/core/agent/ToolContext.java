@@ -8,7 +8,6 @@ package com.top_logic.tl.ai.core.agent;
 import java.util.Objects;
 import java.util.Set;
 
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.security.AiSecurityMode;
@@ -61,13 +60,12 @@ public class ToolContext implements ToolExecutionContext {
 	 * </p>
 	 *
 	 * <p>
-	 * Falls back to {@link #createUnrestricted()} when tool authorization is not enforced or when no
-	 * user is bound. Deliberately, and for two distinct reasons. Not enforced means the application has
-	 * configured no {@code <tool-access>} policy and must keep behaving exactly as before - and the
-	 * behaviour that would otherwise change is not only authorization: an unrestricted context reports
-	 * {@link ExecutionMode#DEVELOPMENT}, while a real one reports {@link ExecutionMode#PRODUCTION} in a
-	 * deployed application, which would newly block {@code STRUCTURAL} tools. No user bound means there
-	 * is no principal to authorize against, which is the honest system case.
+	 * Falls back to {@link #createUnrestricted()} when tool authorization is not enforced.
+	 * Deliberately: not enforced means the application has configured no {@code <tool-access>} policy
+	 * and must keep behaving exactly as before - and the behaviour that would otherwise change is not
+	 * only authorization: an unrestricted context reports {@link ExecutionMode#DEVELOPMENT}, while a
+	 * real one reports {@link ExecutionMode#PRODUCTION} in a deployed application, which would newly
+	 * block {@code STRUCTURAL} tools.
 	 * </p>
 	 *
 	 * <p>
@@ -77,12 +75,46 @@ public class ToolContext implements ToolExecutionContext {
 	 * </p>
 	 */
 	public static ToolContext forCurrentUser() {
-		Person principal = TLContext.currentUser();
-		if (principal == null || !AiToolAccessService.ceiling().enforcesToolAccess()) {
+		return forCurrentUser(null);
+	}
+
+	/**
+	 * Creates a context acting as the user bound to the calling thread, for a run of an agent that
+	 * declares a security mode of its own.
+	 *
+	 * <p>
+	 * Like {@link #forCurrentUser()}, except that the agent's declared mode takes part in the decision:
+	 * an agent may demand enforcement the deployment does not, and this is the entry point where that
+	 * demand has to be honoured, because the fallback below cannot be tightened afterwards - an
+	 * unrestricted context has no principal to authorize against.
+	 * </p>
+	 *
+	 * <p>
+	 * A run whose effective mode needs an authenticated user and has none is <b>refused</b> rather than
+	 * run unrestricted. That is what makes the declaration worth anything; the alternative is an agent
+	 * that asked to be checked and silently was not.
+	 * </p>
+	 *
+	 * @param agentFloor
+	 *        The mode the agent definition declares, or <code>null</code> for a call that runs no named
+	 *        agent (a single tool, a bare chat completion).
+	 * @throws IllegalStateException
+	 *         If the effective mode {@link AiSecurityMode#requiresUser() requires a user} and no user
+	 *         is bound to the calling thread.
+	 * @see AiSecurityMode#stricter(AiSecurityMode, AiSecurityMode)
+	 */
+	public static ToolContext forCurrentUser(AiSecurityMode agentFloor) {
+		AiSecurityMode effective =
+			AiSecurityMode.stricter(AiToolAccessService.ceiling(), agentFloor);
+		if (!effective.enforcesToolAccess()) {
+			// Neither the deployment nor the agent asks for enforcement. Unchanged behaviour - and
+			// honest about the mode: an unrestricted context reports SYSTEM, which is what a run
+			// without a principal is.
 			return createUnrestricted();
 		}
 		CancellationToken cancellationToken = new CancellationToken();
-		return new ToolContext(TopLogicSecurityContext.forRun(principal, false),
+		return new ToolContext(
+			TopLogicSecurityContext.forRun(TLContext.currentUser(), false, agentFloor),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 
@@ -342,6 +374,34 @@ public class ToolContext implements ToolExecutionContext {
 	 */
 	public String model() {
 		return _model;
+	}
+
+	/**
+	 * Returns a copy of this context whose {@link #security() security} is tightened to the security
+	 * mode an agent definition declares for itself.
+	 *
+	 * <p>
+	 * Returns {@code this} whenever the declaration is absent or not stricter than this context's
+	 * {@link #securityMode() mode} - the agent's value is a floor, so this can only narrow. The
+	 * {@link AgentLoop} applies it once per run, before the first provider call, which is what makes a
+	 * delegated child run inherit its parent's mode and still honour a stricter floor of its own.
+	 * </p>
+	 *
+	 * @param agentFloor
+	 *        The mode the agent definition declares, or <code>null</code> if it declares none.
+	 * @throws IllegalStateException
+	 *         If the declared mode is stricter than this context and this context cannot produce a
+	 *         stricter one, because it has no principal to authorize against.
+	 * @see SecurityContext#restrictedTo(AiSecurityMode)
+	 */
+	public ToolContext restrictedTo(AiSecurityMode agentFloor) {
+		SecurityContext tightened = _security.restrictedTo(agentFloor);
+		if (tightened == _security) {
+			return this;
+		}
+		return new ToolContext(tightened, _approval, _transaction, _sessionApprovedTools,
+			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
+			_model);
 	}
 
 	/**

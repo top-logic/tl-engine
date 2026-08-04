@@ -8,6 +8,22 @@
 				interface-package="com.top_logic.tl.ai.core.model"
 			/>
 		</annotations>
+		<!--
+			The security mode an agent may declare for itself, stored as the name of the Java enum the
+			framework already uses for the deployment-wide setting. A <datatype> with <enum-storage>
+			rather than a TL <enum> with classifiers: the value has to reach Java code as an
+			AiSecurityMode, and a classifier would have to be mapped back to one by hand - two places
+			naming the same three modes, which is one place too many for a security decision.
+		-->
+		<datatype name="AiSecurityMode"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="ENUM"/>
+			</annotations>
+			<enum-storage enum="com.top_logic.tl.ai.core.security.AiSecurityMode"/>
+		</datatype>
 		<class name="Agent">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -60,6 +76,11 @@
 							attribute="delegations"
 							fullQualifiedName="tl.ai.core:Agent#delegations"
 							type="tl.core:String"
+						/>
+						<field
+							attribute="securityMode"
+							fullQualifiedName="tl.ai.core:Agent#securityMode"
+							type="tl.ai.core:AiSecurityMode"
 						/>
 					</form>
 				</form-definition>
@@ -132,6 +153,14 @@
 						</options>
 					</annotations>
 				</property>
+				<!--
+					Optional on purpose: no value means "no floor", which is not the same statement as
+					an explicitly chosen 'legacy'. See TopLogicAgentDefinitions.AgentConfig for the
+					configuration counterpart of this attribute and why the value can only tighten.
+				-->
+				<property name="securityMode"
+					type="AiSecurityMode"
+				/>
 			</attributes>
 		</class>
 		<class name="Skill">

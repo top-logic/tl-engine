@@ -18,6 +18,7 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.model.Skill;
 import com.top_logic.tl.ai.core.model.impl.AgentBase;
+import com.top_logic.tl.ai.core.security.AiSecurityMode;
 
 /**
  * Unified resolution layer for agent and skill definitions.
@@ -62,6 +63,26 @@ public class AgentDefinitionQuery {
 			return getConfigService().getConfigAgent(name);
 		}
 		return null;
+	}
+
+	/**
+	 * The security mode the agent of the given name declares for itself.
+	 *
+	 * <p>
+	 * For an entry point that has to resolve the run's effective mode <em>before</em> it builds the
+	 * security context - which is every entry point that cannot tighten the context afterwards.
+	 * </p>
+	 *
+	 * @param name
+	 *        The agent name.
+	 * @return The declared floor, or <code>null</code> if the agent declares none or does not exist.
+	 *         An unknown name is not this method's problem to report: whoever starts the run says so
+	 *         with a better message than a security context could.
+	 * @see AgentDefinition#securityFloor()
+	 */
+	public AiSecurityMode securityFloorOf(String name) {
+		AgentDefinition definition = findAgentByName(name);
+		return definition == null ? null : definition.securityFloor();
 	}
 
 	/**
@@ -195,6 +216,7 @@ public class AgentDefinitionQuery {
 			new ArrayList<>(agent.getMcpServers()),
 			skillNames,
 			delegationNames,
+			agent.getSecurityMode(),
 			source);
 	}
 

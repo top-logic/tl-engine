@@ -12,15 +12,21 @@ package com.top_logic.tl.ai.core.security;
  * and in section 3.1 of doc/security/agent-security-architecture.md, neither of which the doclet
  * exports.
  *
- * The effective mode of a run is resolved once from the deployment-wide policy, before the first
- * provider call, then carried on the run's security context and never re-derived - so nothing can
- * widen it mid-run. Informally ENFORCED is the strictest and LEGACY the laxest, but the modes are not
- * composed with each other anywhere: exactly one deployment-wide policy decides the mode, and every
- * question about it is asked through the predicates below rather than by comparing modes.
+ * The effective mode of a run is resolved once, before the first provider call, as the stricter of
+ * the deployment-wide ceiling and the agent definition's floor, then carried on the run's security
+ * context and never re-derived - so nothing can widen it mid-run. The ordering is
+ * ENFORCED > SYSTEM > LEGACY and stricter(AiSecurityMode, AiSecurityMode) is the only place it is
+ * used; every other question about a mode is asked through the predicates below rather than by
+ * comparing modes.
  */
 
 /**
  * How strictly security is enforced when an agent runs.
+ *
+ * <p>
+ * A single agent may name a <i>stricter</i> mode for itself than the application uses; it can never
+ * name a laxer one.
+ * </p>
  *
  * @see ModelSecurity
  * @see RoleToolAccess
@@ -41,7 +47,7 @@ public enum AiSecurityMode {
 	 * model security would leave the agent unable to read anything. Removed once applications have
 	 * migrated.
 	 */
-	LEGACY,
+	LEGACY(0),
 
 	/**
 	 * The run acts as the application itself rather than as a user, and every such run is recorded in
@@ -55,7 +61,7 @@ public enum AiSecurityMode {
 	 * Not "no security": the audit entry names the reason the bypass was requested, so bypasses stay
 	 * countable. This is the honest name for what ToolContext.createUnrestricted() does silently today.
 	 */
-	SYSTEM,
+	SYSTEM(1),
 
 	/**
 	 * Everything is checked: the run needs a logged-in user, and both the tools it may call and the
@@ -66,7 +72,18 @@ public enum AiSecurityMode {
 	 * without a principal cannot be authorized, and failing later wastes a provider round trip and
 	 * produces a confusing half-run.
 	 */
-	ENFORCED;
+	ENFORCED(2);
+
+	/*
+	 * Written out rather than derived from ordinal(): the declaration order is what an administrator
+	 * sees in the mode selector, and a future reordering there must not silently redefine which mode is
+	 * stricter than which.
+	 */
+	private final int _strictness;
+
+	private AiSecurityMode(int strictness) {
+		_strictness = strictness;
+	}
 
 	/**
 	 * Whether this mode requires an authenticated user for the run to start.
@@ -123,7 +140,51 @@ public enum AiSecurityMode {
 	 * @return The mode to carry on the run's {@code SecurityContext}, never <code>null</code>.
 	 */
 	public static AiSecurityMode resolve(ToolAccessPolicy deployment) {
+		return resolve(deployment, null);
+	}
+
+	/**
+	 * The effective mode of a run of an agent that declares the given floor, under the given
+	 * deployment policy.
+	 *
+	 * @param deployment
+	 *        The deployment-wide policy, or <code>null</code> if the application configures none.
+	 *        See {@link #resolve(ToolAccessPolicy)} for why its absence means {@link #LEGACY}.
+	 * @param agentFloor
+	 *        The mode the agent definition names for itself, or <code>null</code> if it names none.
+	 *        Can only make the run stricter.
+	 * @return The mode to carry on the run's {@code SecurityContext}, never <code>null</code>.
+	 */
+	public static AiSecurityMode resolve(ToolAccessPolicy deployment, AiSecurityMode agentFloor) {
 		AiSecurityMode configured = deployment == null ? null : deployment.getSecurityMode();
-		return configured == null ? LEGACY : configured;
+		return stricter(configured == null ? LEGACY : configured, agentFloor);
+	}
+
+	/**
+	 * The stricter of the deployment-wide ceiling and an agent definition's floor.
+	 *
+	 * <p>
+	 * The whole composition rule: the effective mode of a run is
+	 * {@code stricter(deploymentCeiling, agentFloor)}, resolved once before the first provider call.
+	 * Reading the per-agent value as a floor rather than as an override removes the escalation
+	 * direction - editing an agent definition is itself a privileged action, and it must not be a way
+	 * to loosen what the deployment decided. So an agent can demand {@link #ENFORCED} in a
+	 * {@link #LEGACY} deployment, and an agent asking for {@link #LEGACY} in an {@link #ENFORCED}
+	 * deployment gets nothing.
+	 * </p>
+	 *
+	 * @param ceiling
+	 *        The deployment-wide mode. Never <code>null</code> - both
+	 *        {@link #resolve(ToolAccessPolicy)} and {@code AiToolAccessService.ceiling()} answer
+	 *        {@link #LEGACY} rather than nothing for an application that configured no policy.
+	 * @param floor
+	 *        The agent definition's mode, or <code>null</code> if it names none.
+	 * @return The stricter of the two, never <code>null</code>.
+	 */
+	public static AiSecurityMode stricter(AiSecurityMode ceiling, AiSecurityMode floor) {
+		if (floor == null) {
+			return ceiling;
+		}
+		return floor._strictness > ceiling._strictness ? floor : ceiling;
 	}
 }

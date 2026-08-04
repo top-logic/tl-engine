@@ -7,6 +7,8 @@ package com.top_logic.tl.ai.core.agent;
 
 import java.util.List;
 
+import com.top_logic.tl.ai.core.security.AiSecurityMode;
+
 /**
  * Source-agnostic representation of an agent definition.
  *
@@ -29,6 +31,13 @@ import java.util.List;
  * @param mcpServers            MCP server names
  * @param skills                skill names (resolved via layered lookup)
  * @param delegations           agent names this agent can delegate to
+ * @param securityFloor         the security mode this agent declares for itself, or {@code null} if
+ *                              it declares none. A <em>floor</em>: a run of this agent is the
+ *                              stricter of the deployment's mode and this one, so an agent can
+ *                              demand enforcement the deployment does not require but can never
+ *                              relax what it does require. Named a floor here and
+ *                              {@code security-mode} in the configuration an administrator writes,
+ *                              where it stands next to the deployment's property of that name.
  * @param source                where this definition originated
  */
 public record AgentDefinition(
@@ -39,6 +48,7 @@ public record AgentDefinition(
 		List<String> mcpServers,
 		List<String> skills,
 		List<String> delegations,
+		AiSecurityMode securityFloor,
 		AgentSource source) {
 
 	/** */

@@ -48,11 +48,14 @@ public interface TableView<R> {
 	List<ColumnOption> columnOptions();
 
 	/**
-	 * The columns as the table was defined: all of them, in declaration order.
+	 * The columns as the table was defined: those displayed without any personalization, in
+	 * declaration order.
 	 *
 	 * <p>
 	 * This is the arrangement a column selection UI restores when the user resets their
-	 * personalization, and the state a table starts from before anything is persisted.
+	 * personalization, and the state a table starts from before anything is persisted. It does not
+	 * cover columns a table only offers - those stay hidden until the user selects them, exactly as
+	 * on a first visit.
 	 * </p>
 	 */
 	List<String> defaultColumnOrder();

@@ -8,6 +8,7 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -139,6 +140,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private SortSpec _defaultSort = SortSpec.NONE;
 
+	/** @see #setHiddenByDefault(Collection) */
+	private Set<String> _hiddenByDefault = Set.of();
+
 	private ViewChannel _selectionChannel;
 
 	private ViewChannel.ChannelListener _selectionChannelListener;
@@ -269,6 +273,17 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * The columns offered but not displayed until the user selects them in the column selection.
+	 *
+	 * @param columns
+	 *        Attribute names among the table's {@link TableColumn columns}; unknown names are
+	 *        ignored.
+	 */
+	public void setHiddenByDefault(Collection<String> columns) {
+		_hiddenByDefault = new LinkedHashSet<>(columns);
+	}
+
+	/**
 	 * Binds the table's selection two-way to the given channel.
 	 */
 	public void setSelectionChannel(ViewChannel selectionChannel) {
@@ -369,6 +384,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDetailButton(ctx, row))))
 				.width(48)
 				.frozenEligible(false)
+				// Holds a per-row button, not data: nothing to offer in the column selection.
+				.selectable(false)
 				.build());
 		}
 
@@ -383,14 +400,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row))))
 				.width(48)
 				.frozenEligible(false)
+				// Holds a per-row button, not data: nothing to offer in the column selection.
+				.selectable(false)
 				.build());
 		}
 
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
 		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
-		DefaultTableView<TLObject> view =
-			DefaultTableView.create(columns, _rowSource, _store, _store != null ? _tableId : null, _defaultSort);
+		DefaultTableView<TLObject> view = DefaultTableView.create(columns, _rowSource, _store,
+			_store != null ? _tableId : null, _defaultSort, _hiddenByDefault);
 
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();

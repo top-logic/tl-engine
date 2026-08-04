@@ -482,7 +482,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLUMNS;
 
 	/**
-	 * @en Show all columns
+	 * @en Restore default
 	 */
 	public static ResKey TABLE_COLUMNS_RESET;
 

@@ -6,6 +6,7 @@
 package com.top_logic.table.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -62,6 +63,9 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	private final TableId _id;
 
+	/** @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection) */
+	private final Set<String> _hiddenByDefault;
+
 	/**
 	 * Creates a {@link DefaultTableView} without personalization persistence.
 	 *
@@ -94,6 +98,19 @@ public class DefaultTableView<R> implements TableView<R> {
 	 */
 	public DefaultTableView(List<Column<R, ?>> columns, RowSource<R> source, TableViewState state,
 			ViewStateStore store, TableId id) {
+		this(columns, source, state, store, id, Set.of());
+	}
+
+	/**
+	 * Creates a {@link DefaultTableView} that offers columns the user has to switch on first.
+	 *
+	 * @param hiddenByDefault
+	 *        The columns not displayed until the user selects them - offered by the column
+	 *        selection, and kept hidden when a personalization that predates them is restored.
+	 * @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId)
+	 */
+	public DefaultTableView(List<Column<R, ?>> columns, RowSource<R> source, TableViewState state,
+			ViewStateStore store, TableId id, Collection<String> hiddenByDefault) {
 		for (Column<R, ?> column : columns) {
 			_columns.put(column.name(), column);
 		}
@@ -101,6 +118,8 @@ public class DefaultTableView<R> implements TableView<R> {
 		_state = state;
 		_store = store;
 		_id = id;
+		_hiddenByDefault = new LinkedHashSet<>(hiddenByDefault);
+		_hiddenByDefault.retainAll(_columns.keySet());
 		_source.addListener(_sourceListener);
 		if (_store != null && _id != null) {
 			restore();
@@ -162,17 +181,37 @@ public class DefaultTableView<R> implements TableView<R> {
 	 */
 	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
 			ViewStateStore store, TableId id, SortSpec defaultSort) {
+		return create(columns, source, store, id, defaultSort, Set.of());
+	}
+
+	/**
+	 * Creates a {@link DefaultTableView} whose initial state displays all columns but the ones
+	 * hidden by default, in declaration order, sorted by the given order.
+	 *
+	 * @param hiddenByDefault
+	 *        The columns offered but not displayed until the user selects them - e.g. the further
+	 *        attributes of the row type, next to the columns a table configures explicitly.
+	 * @see #create(List, RowSource, ViewStateStore, TableId, SortSpec)
+	 */
+	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
+			ViewStateStore store, TableId id, SortSpec defaultSort, Collection<String> hiddenByDefault) {
 		TableViewState state = new TableViewState();
 		state.setSort(new ArrayList<>(defaultSort.columns()));
 		List<String> order = new ArrayList<>(columns.size());
+		Set<String> hidden = new LinkedHashSet<>();
 		Map<String, Integer> widths = new LinkedHashMap<>();
 		for (Column<R, ?> column : columns) {
-			order.add(column.name());
+			if (hiddenByDefault.contains(column.name())) {
+				hidden.add(column.name());
+			} else {
+				order.add(column.name());
+			}
 			widths.put(column.name(), column.defaultWidth());
 		}
 		state.setColumnOrder(order);
+		state.setHiddenColumns(hidden);
 		state.setWidths(widths);
-		return new DefaultTableView<>(columns, source, state, store, id);
+		return new DefaultTableView<>(columns, source, state, store, id, hiddenByDefault);
 	}
 
 	// ---- structure ----
@@ -231,12 +270,12 @@ public class DefaultTableView<R> implements TableView<R> {
 		List<ColumnOption> result = new ArrayList<>(_columns.size());
 		for (String name : _state.getColumnOrder()) {
 			Column<R, ?> column = _columns.get(name);
-			if (column != null) {
+			if (column != null && column.selectable()) {
 				result.add(new ColumnOption(name, column.label(), true));
 			}
 		}
 		for (Map.Entry<String, Column<R, ?>> entry : _columns.entrySet()) {
-			if (!_state.getColumnOrder().contains(entry.getKey())) {
+			if (entry.getValue().selectable() && !_state.getColumnOrder().contains(entry.getKey())) {
 				result.add(new ColumnOption(entry.getKey(), entry.getValue().label(), false));
 			}
 		}
@@ -245,7 +284,13 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	@Override
 	public List<String> defaultColumnOrder() {
-		return new ArrayList<>(_columns.keySet());
+		List<String> result = new ArrayList<>(_columns.size());
+		for (String name : _columns.keySet()) {
+			if (!_hiddenByDefault.contains(name)) {
+				result.add(name);
+			}
+		}
+		return result;
 	}
 
 	// ---- data window ----
@@ -354,21 +399,79 @@ public class DefaultTableView<R> implements TableView<R> {
 	public void setColumnOrder(List<String> columns) {
 		List<String> order = new ArrayList<>(columns.size());
 		for (String column : columns) {
-			if (_columns.containsKey(column) && !order.contains(column)) {
+			Column<R, ?> definition = _columns.get(column);
+			if (definition != null && definition.selectable() && !order.contains(column)) {
 				order.add(column);
 			}
 		}
+		// A column the user cannot decide about (an action column) keeps its place: it is not part
+		// of the given arrangement, but dropping it would take its action away for good. Its place is
+		// kept relative to the columns around it - a leading action column stays in front of them all,
+		// a trailing one behind them all, however many the new arrangement holds.
+		for (String name : unselectableColumns()) {
+			order.add(insertPosition(name, order.size()), name);
+		}
 		_state.setColumnOrder(order);
-		// The caller decided about every column of this table, so everything left out is hidden on
-		// purpose - it must not come back as a "new" column on the next restore.
-		Set<String> hidden = new LinkedHashSet<>(_columns.keySet());
-		hidden.removeAll(order);
+		// The caller decided about every column they can decide about, so everything left out is
+		// hidden on purpose - it must not come back as a "new" column on the next restore.
+		Set<String> hidden = new LinkedHashSet<>();
+		for (Map.Entry<String, Column<R, ?>> entry : _columns.entrySet()) {
+			if (entry.getValue().selectable() && !order.contains(entry.getKey())) {
+				hidden.add(entry.getKey());
+			}
+		}
 		_state.setHiddenColumns(hidden);
 		// A column that was frozen may have been hidden or moved out of the frozen range; the
 		// frozen prefix can never reach beyond the columns that are left.
 		_state.setFrozenCount(Math.min(_state.getFrozenCount(), order.size()));
 		persist();
 		fireColumnsChanged();
+	}
+
+	/** The currently displayed columns the user cannot decide about, in display order. */
+	private List<String> unselectableColumns() {
+		List<String> result = new ArrayList<>();
+		for (String name : _state.getColumnOrder()) {
+			Column<R, ?> definition = _columns.get(name);
+			if (definition != null && !definition.selectable()) {
+				result.add(name);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Where to re-insert an unselectable column into a rearranged column order.
+	 *
+	 * @param name
+	 *        The unselectable column, still at its old place in the current order.
+	 * @param size
+	 *        The number of columns the new order holds so far.
+	 * @return The index to insert at: in front of everything if the column led the current order,
+	 *         behind everything if it trailed it, otherwise after those of its previous predecessors
+	 *         that are still displayed.
+	 */
+	private int insertPosition(String name, int size) {
+		List<String> previous = _state.getColumnOrder();
+		int index = previous.indexOf(name);
+		int predecessors = 0;
+		for (int n = 0; n < index; n++) {
+			Column<R, ?> definition = _columns.get(previous.get(n));
+			if (definition != null && definition.selectable()) {
+				predecessors++;
+			}
+		}
+		if (predecessors == 0) {
+			return 0;
+		}
+		for (int n = index + 1; n < previous.size(); n++) {
+			Column<R, ?> definition = _columns.get(previous.get(n));
+			if (definition != null && definition.selectable()) {
+				// Columns follow it, so keep it after its predecessors rather than at the very end.
+				return Math.min(predecessors, size);
+			}
+		}
+		return size;
 	}
 
 	@Override
@@ -466,10 +569,15 @@ public class DefaultTableView<R> implements TableView<R> {
 			}
 		}
 		// A column the persisted state knows nothing about is one this table has gained since - it
-		// appears, while a column the user hid stays hidden.
+		// appears, unless it is one of the columns that are offered but not displayed by default,
+		// while a column the user hid stays hidden.
 		for (String name : _columns.keySet()) {
 			if (!order.contains(name) && !hidden.contains(name)) {
-				order.add(name);
+				if (_hiddenByDefault.contains(name)) {
+					hidden.add(name);
+				} else {
+					order.add(name);
+				}
 			}
 		}
 		if (!order.isEmpty()) {

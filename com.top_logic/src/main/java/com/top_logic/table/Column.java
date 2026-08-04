@@ -5,6 +5,7 @@
  */
 package com.top_logic.table;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.top_logic.basic.util.ResKey;
@@ -92,6 +93,21 @@ public interface Column<R, V> {
 	 * Whether this column may be frozen (fixed) by the user.
 	 */
 	default boolean frozenEligible() {
+		return true;
+	}
+
+	/**
+	 * Whether the user may decide about this column, i.e. show, hide and move it.
+	 *
+	 * <p>
+	 * Switch this off for a column that is part of what the table <em>does</em> rather than of the
+	 * data it shows - an action column holding a per-row button, for instance. Such a column has no
+	 * header label to offer in a column selection, and hiding it would take away the action with no
+	 * way to bring it back. It is therefore left out of {@link TableView#columnOptions()} and stays
+	 * where it is when {@link TableView#setColumnOrder(List)} rearranges the rest.
+	 * </p>
+	 */
+	default boolean selectable() {
 		return true;
 	}
 

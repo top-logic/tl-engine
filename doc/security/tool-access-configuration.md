@@ -342,5 +342,4 @@ The demo carries a working example behind one switch: uncomment `secdemo.config.
 factories - two classified by a factory wildcard, one deliberately not.
 
 **[testbed.md](testbed.md) is where to start.** It maps every behaviour of this layer to a persona, a
-thing to type and an expected result, including a one-line switch between `LEGACY` and `ENFORCED` so the
-two can be compared side by side.
+thing to type and an expected result.

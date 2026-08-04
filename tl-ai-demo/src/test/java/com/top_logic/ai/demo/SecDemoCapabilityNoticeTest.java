@@ -16,7 +16,6 @@ import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.SkillDefinition;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
-import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
@@ -230,29 +229,6 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 	 */
 	public void testUnresolvableToolNameContributesNothing() {
 		assertEquals(Set.of(), capabilitiesOf(BARE).lacking(List.of("no-such-factory.noSuchTool")));
-	}
-
-	/**
-	 * The unenforced half: a {@code LEGACY} run's prompt is byte-identical to what it was before this
-	 * layer existed, and no skill is dropped.
-	 *
-	 * <p>
-	 * Built with the default {@link TopLogicSecurityContext} constructor, which is the
-	 * behaviour-preserving one an application without a {@code <tool-access>} policy gets. This is what
-	 * {@code secdemo-legacy.config.xml} produces for the whole deployment.
-	 * </p>
-	 */
-	public void testLegacyRunEmitsNoNoticeAndDropsNoSkill() {
-		AgentCapabilities legacy = new AgentCapabilities(
-			name -> ToolRegistryService.getInstance().getTool(name), new TopLogicSecurityContext());
-
-		assertFalse("A LEGACY run must not enforce tool access.", legacy.enforced());
-		assertEquals("A LEGACY prompt must gain nothing at all.", "",
-			legacy.notice(List.of(STRUCTURE_TOOL, EGRESS_TOOL),
-				List.of(skill(WORKSPACE_SKILL), skill(SCRIPT_SKILL))));
-		assertNull("No skill is dropped under LEGACY.",
-			legacy.unusableReason(skill(WORKSPACE_SKILL)));
-		assertEquals(Set.of(), legacy.lacking(List.of(STRUCTURE_TOOL, EGRESS_TOOL)));
 	}
 
 	/**

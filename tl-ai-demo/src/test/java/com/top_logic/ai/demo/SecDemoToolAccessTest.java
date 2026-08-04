@@ -46,7 +46,7 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 		assertTrue("The secdemo aspect must be enabled for this test.",
 			AiToolAccessService.Module.INSTANCE.isActive());
 		assertEquals("A non-empty <tool-access> must resolve to ENFORCED. If this reports LEGACY,"
-			+ " 'secdemo-legacy.config.xml' is on the metaConf and has to come off for this test.",
+			+ " something overrode the mode the fixture's policy resolves to.",
 			AiSecurityMode.ENFORCED, AiToolAccessService.ceiling());
 	}
 

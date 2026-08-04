@@ -71,14 +71,25 @@ const MIN_COL_WIDTH = 50;
  * multi-selection with checkbox column, and column resize.
  */
 /**
+ * Elements that handle a click themselves: the native form controls, and the controls that carry
+ * their role through ARIA instead of an element name — a dropdown, for one, is a `div` with
+ * `role="combobox"`, so leaving those out made a click on it look like a click on plain cell text.
+ */
+const INTERACTIVE_SELECTOR =
+  'input, textarea, select, button, a, [contenteditable="true"], '
+  + '[role="combobox"], [role="listbox"], [role="option"], [role="button"], [role="link"], '
+  + '[role="checkbox"], [role="radio"], [role="switch"], [role="textbox"], [role="spinbutton"], '
+  + '[role="slider"], [role="menu"], [role="menuitem"]';
+
+/**
  * Whether the event originates from an interactive element inside a cell (input, button, link,
- * editor). Row-level gestures must leave such clicks alone: neither steal the element's focus for
- * the table's keyboard scope nor suppress its default mouse handling (e.g. double-click word
- * selection in a text input).
+ * editor, dropdown). Row-level gestures must leave such clicks alone: neither steal the element's
+ * focus for the table's keyboard scope, nor suppress its default mouse handling (e.g. double-click
+ * word selection in a text input), nor read them as a row selection.
  */
 function isInteractiveTarget(event: React.SyntheticEvent): boolean {
   const target = event.target as Element | null;
-  return !!target?.closest?.('input, textarea, select, button, a, [contenteditable="true"]');
+  return !!target?.closest?.(INTERACTIVE_SELECTOR);
 }
 
 /**

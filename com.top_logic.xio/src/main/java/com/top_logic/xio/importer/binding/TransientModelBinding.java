@@ -29,15 +29,22 @@ public class TransientModelBinding extends AbstractModelBinding {
 	 *
 	 * @param model
 	 *        See {@link #getModel()}
+	 * @param usesSecurity
+	 *        See {@link #usesSecurity()}. An import of external data normally passes
+	 *        <code>false</code>.
 	 */
-	public TransientModelBinding(TLModel model) {
-		super(model);
+	public TransientModelBinding(TLModel model, boolean usesSecurity) {
+		super(model, usesSecurity);
 	}
 
 	@Override
 	public Object eval(Expr expr, Object... args) {
-		return QueryExecutor
-			.interpret(null, getModel(), SearchBuilder.toSearchExpression(getModel(), expr)).execute(args);
+		QueryExecutor executor =
+			QueryExecutor.interpret(null, getModel(), SearchBuilder.toSearchExpression(getModel(), expr));
+		if (!usesSecurity()) {
+			executor.disableSecurity();
+		}
+		return executor.execute(args);
 	}
 
 	@Override

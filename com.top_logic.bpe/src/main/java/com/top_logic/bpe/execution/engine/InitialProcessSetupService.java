@@ -390,7 +390,9 @@ public class InitialProcessSetupService extends ManagedClass {
 	public static Collaboration importBPML(DisplayContext context, KnowledgeBase kb, BinaryContent data)
 			throws XMLStreamException, IOException {
 		try (InputStream in = data.getStream()) {
-			ModelBinding binding = new ApplicationModelBinding(kb, ModelService.getApplicationModel());
+			// Importing a process model runs with definer's rights, see
+			// AbstractModelBinding#usesSecurity().
+			ModelBinding binding = new ApplicationModelBinding(kb, ModelService.getApplicationModel(), false);
 			return importBPML(new StreamSource(in), binding);
 		}
 	}

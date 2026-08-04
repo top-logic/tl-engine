@@ -24,19 +24,21 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  * Access operations in TL-Script return referenced objects <em>unfiltered</em> (consistent with the
  * user interface, which always shows a referenced object by its label and only secures navigation
  * into it); only the access to the <em>attributes</em> of an object is denied if the user must not
- * read the object. As a consequence, the result of a search expression is not secured
- * automatically. This expression applies {@link SearchExpression#filterSecurity(Object)} to its
- * argument and thereby removes the objects that the current user is not allowed to read (recursively:
- * a single forbidden object becomes <code>null</code>, forbidden elements are dropped from
- * collections, primitive values are kept).
+ * read the object. As a consequence, an intermediate result of a search expression may well contain
+ * objects the user must not read. This expression applies
+ * {@link SearchExpression#filterSecurity(Object)} to its argument and thereby removes them
+ * (recursively: a single forbidden object becomes <code>null</code>, forbidden elements are dropped
+ * from collections, primitive values are kept).
  * </p>
  *
  * <p>
- * It is intended to secure the <em>final result</em> of a search expression and should therefore be
- * applied at the top-level entry points that evaluate a script whose result is handed to a user (so
- * that only readable objects are returned). It must not be applied to intermediate results, since
- * that could drop objects still needed for the computation (e.g. for a filter) even though the final
- * result would be readable.
+ * The <em>final result</em> of a script does not need this expression: it is secured by the
+ * {@link com.top_logic.model.search.expr.query.QueryExecutor} that executes the script, see
+ * {@link com.top_logic.model.search.expr.query.QueryExecutor#executeWith(EvalContext, com.top_logic.model.search.expr.query.Args)}.
+ * This expression secures a value <em>within</em> a script, e.g. a partial result that is rendered
+ * or handed to another context during the evaluation. It must not be applied to an intermediate
+ * result that the script still computes with, since that could drop objects the computation needs
+ * (e.g. for a filter) even though the final result would be readable.
  * </p>
  *
  * <p>
@@ -52,24 +54,6 @@ public class FilterSecurity extends GenericMethodWithSecurity {
 	 */
 	protected FilterSecurity(String name, SearchExpression[] arguments, boolean usesSecurity) {
 		super(name, arguments, usesSecurity);
-	}
-
-	/**
-	 * Wraps a {@link FilterSecurity} around the given base expression, if it is not already a
-	 * {@link FilterSecurity} instance.
-	 * 
-	 * @param base
-	 *        The base expression whose result must be filtered for security.
-	 * 
-	 * @return either the given base expression or a {@link FilterSecurity} with the given
-	 *         {@link SearchExpression} as base.
-	 */
-	public static SearchExpression ensureOnlyAllowedResults(SearchExpression base) {
-		if (base instanceof FilterSecurity) {
-			// Already secured.
-			return base;
-		}
-		return new FilterSecurity("filterSecurity", new SearchExpression[] { base }, true);
 	}
 
 	@Override

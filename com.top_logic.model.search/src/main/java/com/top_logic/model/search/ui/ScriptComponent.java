@@ -169,10 +169,9 @@ public class ScriptComponent extends BoundLayout {
 
 
 	private Collection<?> getResults(QueryExecutor executor) {
-		// Secure the final result: access operations return referenced objects unfiltered, so the
-		// top-level result of an interactively executed script must be filtered for read access.
-		Object result =
-			SearchExpression.filterSecurity(executor.executeWith(executor.context(true, null, null), Args.none()));
+		// Note: The final result contains only objects the current user is allowed to read, the
+		// executor secures it, see QueryExecutor#executeWith(EvalContext, Args).
+		Object result = executor.executeWith(executor.context(true, null, null), Args.none());
 
 		// Note: Do not use SearchExpression.asCollection(result), since this decomposes maps into
 		// entry sets, which makes results hard to interpret.

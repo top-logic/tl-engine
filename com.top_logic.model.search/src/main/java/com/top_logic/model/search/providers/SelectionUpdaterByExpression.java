@@ -13,7 +13,6 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.form.component.SelectionUpdater;
-import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -64,9 +63,9 @@ public class SelectionUpdaterByExpression extends AbstractConfiguredInstance<Sel
 	@Override
 	public void updateSelection(Selectable selectable) {
 		Object currentSelection = selectable.getSelected();
-		// Secure the computed selection: only objects the current user is allowed to read.
-		Object newSelection =
-			SearchExpression.filterSecurity(_algorithm.execute(selectable.getModel(), currentSelection));
+		// Note: The computed selection contains only objects the current user is allowed to read, the
+		// executor secures it, see QueryExecutor#executeWith(EvalContext, Args).
+		Object newSelection = _algorithm.execute(selectable.getModel(), currentSelection);
 		selectable.setSelected(newSelection);
 
 	}

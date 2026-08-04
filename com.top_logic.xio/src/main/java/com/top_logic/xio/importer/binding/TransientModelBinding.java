@@ -37,6 +37,11 @@ public class TransientModelBinding extends AbstractModelBinding {
 		super(model, usesSecurity);
 	}
 
+	/**
+	 * @implNote Like {@link ApplicationModelBinding#eval(Expr, Object...)}, the result is an
+	 *           intermediate value of the import and is therefore not filtered for the importing
+	 *           user's read rights.
+	 */
 	@Override
 	public Object eval(Expr expr, Object... args) {
 		QueryExecutor executor =
@@ -44,7 +49,7 @@ public class TransientModelBinding extends AbstractModelBinding {
 		if (!usesSecurity()) {
 			executor.disableSecurity();
 		}
-		return executor.execute(args);
+		return executor.executeIntermediate(args);
 	}
 
 	@Override

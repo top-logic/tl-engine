@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -162,10 +163,76 @@ public class TestAgentCapabilities extends TestCase {
 			+ "- `typo`: typo\n", catalog);
 	}
 
-	/** An agent with no skills gets no section at all, enforced or not. */
-	public void testNoSkillsProducesNoSection() {
-		assertEquals("", AgentFactory.skillCatalog("agent", List.of(), List.of(READ_TOOL),
-			name -> null, capabilities(AiSecurityMode.ENFORCED, Set.of())));
+	/**
+	 * An agent that declares no skills still learns what it cannot do.
+	 *
+	 * <p>
+	 * The notice is appended to the generated skill catalog, and that catalog used to be empty for an
+	 * agent with no skills - so the one agent shape that has nothing to load was the one shape that was
+	 * never told which capabilities its user lacks, and (since a detached subagent became a background
+	 * run) never told that its own run is unattended either. What an agent cannot do is not a property
+	 * of its skills.
+	 * </p>
+	 */
+	public void testSkilllessAgentStillGetsTheNotice() {
+		String catalog = skilllessCatalog(AiSecurityMode.ENFORCED);
+
+		assertTrue("The paragraph must be there for an agent with no skills: " + catalog,
+			catalog.contains("### Capability Limits"));
+		assertTrue("...and name the capability its one tool needs: " + catalog,
+			catalog.contains("`" + ToolGroups.DATA_READ + "`"));
+		assertFalse("There is no skill list, so there must be no heading for one: " + catalog,
+			catalog.contains("### Available Skills"));
+		assertEquals("The section must not start with the blank line that separates it from a skill"
+			+ " list that is not there: " + catalog, catalog.stripLeading(), catalog);
+	}
+
+	/** With nothing to report there is no section at all - no empty heading, no stray whitespace. */
+	public void testSkilllessAgentOfAnUnenforcedRunGetsNothing() {
+		assertEquals("", skilllessCatalog(AiSecurityMode.LEGACY));
+	}
+
+	/**
+	 * An agent that declares skills gets exactly the catalog it got before the notice was made
+	 * independent of them: the skill section byte for byte, and the notice appended to it with nothing
+	 * in between.
+	 *
+	 * <p>
+	 * The unenforced half of the same claim is {@link #testLegacyCatalogIsUnchanged}, where the whole
+	 * catalog is a literal because there is no notice.
+	 * </p>
+	 */
+	public void testCatalogOfAnAgentWithSkillsIsUnchanged() {
+		AgentCapabilities capabilities = capabilities(AiSecurityMode.ENFORCED, Set.of(READ_TOOL));
+		String catalog = AgentFactory.skillCatalog("agent", skillNames(), List.of(READ_TOOL),
+			skillLookup(), capabilities);
+		String notice = capabilities.notice(List.of(READ_TOOL), declaredSkills());
+
+		assertTrue("The notice must still be the tail of the catalog: " + catalog,
+			catalog.endsWith(notice));
+		assertEquals("The skill section above it must be byte for byte what it was.",
+			"### Available Skills\n\n"
+				+ "You have specialized skills. "
+				+ "Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n"
+				+ "- `promptOnly`: promptOnly\n"
+				+ "- `mixed`: mixed\n"
+				+ "- `typo`: typo\n",
+			catalog.substring(0, catalog.length() - notice.length()));
+	}
+
+	/** The skill catalog of an agent that declares no skills and carries one {@code data.read} tool. */
+	private static String skilllessCatalog(AiSecurityMode mode) {
+		return AgentFactory.skillCatalog("agent", List.of(), List.of(READ_TOOL), name -> null,
+			capabilities(mode, Set.of()));
+	}
+
+	/** Every skill of {@link #skillNames()} the lookup resolves, in declaration order. */
+	private static List<SkillDefinition> declaredSkills() {
+		List<SkillDefinition> declared = new ArrayList<>();
+		for (String skillName : skillNames()) {
+			declared.add(skillLookup().apply(skillName));
+		}
+		return declared;
 	}
 
 	/** Under enforcement the catalog keeps what is usable, drops what is not, and names the gap. */

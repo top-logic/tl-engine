@@ -7,8 +7,10 @@ package com.top_logic.tl.ai.core.tools.interaction;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import com.top_logic.basic.Logger;
@@ -16,6 +18,8 @@ import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.tl.ai.core.agent.AgentCapabilities;
+import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
@@ -77,6 +81,12 @@ public class SubagentSpawner {
 	 * child's own prompt reports what it can actually call.
 	 * </p>
 	 *
+	 * <p>
+	 * That same bounded context decides whether the spawn happens at all: a child that can reach no tool
+	 * this run may call is refused here rather than started, with a tool error the model can relay. See
+	 * {@link #detachedSpawnRefusal}.
+	 * </p>
+	 *
 	 * @param targetAgentName
 	 *        Name of the agent to build (passed to {@link DelegationTool.AgentLoopFactory#buildSubagentLoop}).
 	 * @param task
@@ -89,11 +99,19 @@ public class SubagentSpawner {
 	 *        Factory used to construct the subagent's {@link AgentLoop}.
 	 * @param registry
 	 *        The active {@link SubagentJobRegistry} for this session.
-	 * @return A handle {@link ToolResult} containing the subagent id.
+	 * @return A handle {@link ToolResult} containing the subagent id, or the tool error refusing a
+	 *         spawn that could not have done anything - see {@link #detachedSpawnRefusal}.
 	 */
 	public static ToolResult spawnAsync(String targetAgentName, String task, String contextStr,
 			ToolContext toolContext, DelegationTool.AgentLoopFactory loopFactory,
 			SubagentJobRegistry registry) {
+
+		// Before anything is registered or a thread is taken: a child that can reach no tool this run
+		// may call would burn a provider round trip and come back with nothing.
+		String refusal = detachedSpawnRefusal(targetAgentName, childCapabilities(toolContext));
+		if (refusal != null) {
+			return ToolResult.of(refusal);
+		}
 
 		String userPrompt = buildUserPrompt(task, contextStr);
 
@@ -245,6 +263,92 @@ public class SubagentSpawner {
 		return ToolResult.of("Subagent " + targetAgentName + " started (id=" + job.subagentId()
 			+ "). It runs in the background; its result will arrive in a later turn or via "
 			+ "wait_for_subagent.");
+	}
+
+	/**
+	 * The capability view of the run the detached child <em>will be</em>, over the deployed agent graph.
+	 *
+	 * <p>
+	 * Deliberately not the parent turn's view. A detached subagent is an unattended run, so
+	 * {@link ToolContext#forDetachedSubagent} bounds it by the policy's {@code <background-allowlist>},
+	 * and an agent the parent turn reaches in full can be out of reach once that applies. Judging the
+	 * spawn by the parent's context would let through exactly the useless child run
+	 * {@link #detachedSpawnRefusal} exists to prevent.
+	 * </p>
+	 */
+	private static AgentCapabilities childCapabilities(ToolContext toolContext) {
+		return AgentCapabilities.forRun(toolContext.security().withBackgroundCeiling());
+	}
+
+	/**
+	 * The tool error refusing to spawn the named agent, or <code>null</code> if it is worth spawning.
+	 *
+	 * <p>
+	 * The spawn counterpart of the delegate filter: {@code list_agents} and the prompt's delegate
+	 * catalog already leave out an agent that can reach no tool the run may call
+	 * ({@link AgentCapabilities#unusableReason(com.top_logic.tl.ai.core.agent.AgentDefinition)}), and a
+	 * spawn the model can still make would contradict them. What it saves is a child run, a provider
+	 * round trip and a result that says nothing.
+	 * </p>
+	 *
+	 * <p>
+	 * An <b>ordinary tool error</b> rather than an exception, because the model has to be able to relay
+	 * it: the user's answer is a capability grant, and only the user can go and ask for one. It never
+	 * suggests the agent does not exist - it does, and saying otherwise would send the model looking for
+	 * a different name for the same work. An agent that really is unknown is not refused here at all:
+	 * that is not a denial, and the spawn fails where it always did.
+	 * </p>
+	 *
+	 * @param targetAgentName
+	 *        Name of the agent the model asked for.
+	 * @param childCapabilities
+	 *        The capability view of the run the child will be - {@link #childCapabilities}, not the
+	 *        parent turn's.
+	 */
+	public static String detachedSpawnRefusal(String targetAgentName,
+			AgentCapabilities childCapabilities) {
+		if (!childCapabilities.enforced()) {
+			// No policy: no filtering, exactly as for delegates. Also keeps an unmigrated application
+			// away from the agent graph and the tool registry on its spawn path.
+			return null;
+		}
+		AgentDefinition target = childCapabilities.graph().agent(targetAgentName);
+		if (childCapabilities.unusableReason(target) == null) {
+			return null;
+		}
+
+		Set<String> required = childCapabilities.unreachableCapabilities(target);
+		Set<String> unattended = childCapabilities.lostToBackgroundCeiling(required);
+		Set<String> notHeld = new TreeSet<>(required);
+		notHeld.removeAll(unattended);
+
+		StringBuilder refusal = new StringBuilder();
+		refusal.append("ERROR: Subagent '").append(targetAgentName).append("' was not started: not one"
+			+ " of the tools it can reach is available to this run, so it could only have come back"
+			+ " empty-handed.\n\n");
+		if (!notHeld.isEmpty()) {
+			refusal.append("This user does not hold the capabilities its tools require:\n");
+			appendCapabilities(refusal, notHeld);
+		}
+		if (!unattended.isEmpty()) {
+			// The subtle half: the user does hold these, and telling them otherwise would send them to
+			// their administrator for a role grant they already have.
+			refusal.append("A spawned subagent runs unattended - nobody is present to approve a tool"
+				+ " call - so it is bounded by the deployment's background allowlist. It cannot reach"
+				+ " the capabilities its tools require, even though this user holds them:\n");
+			appendCapabilities(refusal, unattended);
+		}
+		refusal.append("Say which capability is missing and continue with what you can do; spawning it"
+			+ " again will not help.");
+		return refusal.toString();
+	}
+
+	/** One bullet per capability, each saying what it covers where the deployment describes it. */
+	private static void appendCapabilities(StringBuilder refusal, Collection<String> capabilities) {
+		for (String capability : capabilities) {
+			refusal.append("- ").append(AgentCapabilities.describeCapability(capability)).append("\n");
+		}
+		refusal.append("\n");
 	}
 
 	/**

@@ -58,6 +58,7 @@ allow before anything happens:
 | **Component access** | `<component-access>` in the aspect | whether a tab opens at all | *"No tabs to choose from."* |
 | **Tool access** (tl-ai, L1) | `<tool-access>` in the aspect | whether this account may invoke this tool | `Permission denied: tool '...' requires the '...' capability` |
 | **Model access** (engine, L2) | `<security-config>` in the aspect | whether this account may read or write this object | empty attribute values, or `CREATE_PERMISSION_DENIED` |
+| **Pre-commit guard** (tl-ai, L4) | the same `<security-config>`, read again at the end of the turn | whether every change the turn accumulated may be persisted | the turn's changes are gone and the agent reports `The data changes of this turn were rolled back` |
 
 The tool layer is the one this page is mostly about. It says nothing about *which data* a permitted
 tool then returns - a persona can hold the TL-Script tool and be denied every object it asks for, and
@@ -315,6 +316,37 @@ play.
 |---|---|---|---|---|
 | **P1** | MCP cannot execute tools while enforcement is on | external MCP client | call any tool on `/mcp/*` | an error explaining that the endpoint authenticates nobody, so the call has no user to authorize, and that it is refused rather than run as the system. Tracked as issue #261 |
 
+### 4.7 The pre-commit guard - what catches an uncooperative tool
+
+Every layer above assumes the tool cooperates. L4 does not: it reads the changes the turn accumulated
+straight out of the engine's transaction and asks the same `<security-config>` whether the acting
+account may persist them. It is the only layer that catches a tool which never checked - a remote MCP
+tool, a runtime-authored script tool, or a Java tool whose author forgot.
+
+The fixture's own TL-Script tools **do** check: TL-Script compiled by `QueryExecutor.compile` asks
+`ModelAccessRights` before `new`, `set`, `add` and `delete`, so `secdemo-editing.addNote` is refused a
+`secdemo:Secret` at L2 and never reaches L4. To see L4 do its job you need a tool that asks nobody, and
+the shipped fixture deliberately does not contain one - a demo application must not ship an unchecked
+write tool. `SecDemoPreCommitGuardTest` registers one in the catalog of the agent run it builds, and
+that is where these rows are observed.
+
+| # | Behaviour | Persona | Where | Do this | You should see |
+|---|---|---|---|---|---|
+| **G1** | the tool layer is not what refuses it | `secwriter1` | test | run `SecDemoPreCommitGuardTest` | ✅ the unchecked tool declares `data.write`, which `secwriter1` holds, so L1 lets the call through. Every row below is therefore attributable to L4 |
+| **G2** | a permitted write still commits | `secwriter1` | test | the tool creates a `secdemo:Note` | ✅ committed. The guard does not stand in the way of legitimate work |
+| **G3** | a forbidden creation is caught | `secwriter1` | test | the tool creates a `secdemo:Secret` | ❌ rolled back, no secret persisted, and the agent is told `you attempted 'Create on objects of type 'secdemo:Secret''` - the operation and the type, never the value |
+| **G4** | a forbidden update is caught | `secwriter1` | test | the tool writes `secdemo:Secret#value` on a seeded secret | ❌ rolled back, the committed value unchanged |
+| **G5** | delete is its own right | `secwriter1` | test | the tool deletes a seeded `secdemo:Note` | ❌ rolled back. The fixture grants `secWriter` Read, Create and Write on `Note` and **no** Delete, so a Write grant is not a licence to delete |
+| **G6** | the rollback is all-or-nothing | `secwriter1` | test | one turn creates a permitted `Note` **and** a forbidden `Secret` | ❌ **both** are gone. A partial commit would leave a state no user could have produced, and the model would have no way to learn which half survived |
+| **G7** | a persona with no data rights is refused too | `secauthor1` | test | the tool creates a `Note` | ❌ rolled back. `secauthor1` is already refused at L1; the row exists to show L4 would refuse it even if a future policy handed it `data.write` |
+
+> **What L4 does not cover**, stated so an observation is not mistaken for a finding: attribute writes
+> to an object created in the *same* turn (the engine allows every instance-level check on an
+> uncommitted object, so the creation is what gets checked - see
+> [agent-security-architecture.md](agent-security-architecture.md) section 3.5); side effects outside
+> the KnowledgeBase, which a KB rollback cannot undo; and a `LEGACY` or `SYSTEM` run, where the guard is
+> a complete no-op.
+
 ---
 
 ## 5. What needs an LLM key
@@ -367,6 +399,7 @@ Or one class at a time - the class name says which behaviour broke:
 | `SecDemoBackgroundAccessTest` | the background ceiling in both directions; that it binds administrators; that an allowlisted `script` does not admit a commit; that an enforcing policy has an allowlist; the MCP refusal rule | A1, A2, A3, A4, A5, P1 |
 | `SecDemoModelSecurityTest` | the engine's model rights per persona, evaluated through TL-Script compiled with security on | M1, M2, M3, M4 |
 | `SecDemoAgentFloorTest` | the security mode an agent declares for itself: read from the configuration, read from the knowledge base, and losing to a stricter deployment | F1, F2 |
+| `SecDemoPreCommitGuardTest` | the pre-commit guard: a tool that checks nothing, a real agent turn, and what survives the commit | G1 - G7 |
 | `SecDemoHarnessScriptsTest` | every `harness/*.tlscript` still compiles against the model and the registered script functions, and the ones this page names still exist | the harness itself |
 
 For example:
@@ -382,9 +415,10 @@ mvn -o -pl tl-ai-demo -am test -DskipTests=false \
 
 The unit-level counterparts live in `tl-ai-core`, against hand-built policies rather than a booted
 application - `TestRoleToolAccess`, `TestToolAuthorization`, `TestAiToolAccessService`,
-`TestAgentCapabilities`, `TestDelegateFilter`, `TestSkillTool`, and `TestAiSecurityMode` /
+`TestAgentCapabilities`, `TestDelegateFilter`, `TestSkillTool`, `TestAiSecurityMode` /
 `TestTopLogicSecurityContext` / `TestAgentSecurityFloor` for the mode composition an `ENFORCED`
-fixture cannot show - plus `TestMcpToolContexts` in `tl-ai-mcp-server` for the MCP refusal message.
+fixture cannot show, and `TestPreCommitGuard` plus the transaction cases of `TestAgentLoop` for L4 -
+plus `TestMcpToolContexts` in `tl-ai-mcp-server` for the MCP refusal message.
 
 ---
 
@@ -421,6 +455,10 @@ fixture cannot show - plus `TestMcpToolContexts` in `tl-ai-mcp-server` for the M
   gate decides per tool and never sees an argument. In this fixture `secdemo-editing.addNote` is the only
   *tool* in the group, and it is one only because the fixture classified it. So a `data.write` grant is
   never pointless: without it, TL-Script is read-only.
+- **A rollback message is L4, not L1 or L2.** `Permission denied: tool '...' requires the '...'
+  capability` is the tool layer, an empty attribute value or `CREATE_PERMISSION_DENIED` is the model
+  layer inside a cooperating tool, and `The data changes of this turn were rolled back` is the
+  pre-commit guard catching a tool that did not ask. Three messages, three files to look in.
 - **`script` on the `<background-allowlist>` is not a write grant.** The commit path is capped by the
   allowlist like any capability, so an unattended run reaching `executeTLScript` still cannot persist
   with it - `root` included (**A5**). Before this, allowlisting `script` for the harness handed unattended

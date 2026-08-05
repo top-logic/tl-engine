@@ -661,6 +661,11 @@ Administrator-facing documentation for writing such a policy in your own applica
 - **tl-ai's role→tool matrix** (`RoleToolAccess`): the aspect configures a `<tool-access>`, so the
   tool-level gate is enforced for every persona. See
   [6. The tool layer](#6-the-tool-layer-which-roles-may-use-which-tools) below.
+- **The pre-commit guard** (`PreCommitGuard`): the end-of-turn verification of everything the turn
+  wrote, which is what covers a tool that ran *no* check of its own. Not exercised by the walkthrough
+  here - a TL-Script tool always checks, so there is nothing for the guard to catch on this surface -
+  but covered deterministically by `SecDemoPreCommitGuardTest` and described in
+  [testbed.md](testbed.md#47-the-pre-commit-guard---what-catches-an-uncooperative-tool).
 
 **It does not test (staged, not wired on this branch):**
 
@@ -670,7 +675,6 @@ Administrator-facing documentation for writing such a policy in your own applica
   a "the agent showed me the secret" observation through those tools is a *known* gap, not a new
   finding. Note the tool layer is no substitute: it decides *whether* a role may call `listInstances`,
   not *which instances* the call returns.
-- **The pre-commit guard**: transaction-scoped verification before commit is not active.
 - **Row-level / instance-level policies**: the scaffold grants on *types*. Per-instance rules
   (`RoleRule`s on a security structure) are a separate engine mechanism and are not exercised here.
 - **Component security itself.** The `<component-access>` block is a *precondition* for this test, not

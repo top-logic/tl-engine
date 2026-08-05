@@ -32,7 +32,7 @@ This document specifies:
 3. The **admin-facing configuration** for the role-to-tool mapping the product needs (section 4),
    including config XML, tool groups and an administration-UI concept.
 4. A **rollout plan** that keeps existing applications working (section 5).
-5. What was **scaffolded on this branch** and what is reference code only (section 6).
+5. What is **built** and what is reference code only (section 6).
 
 The two central design commitments:
 
@@ -138,7 +138,7 @@ All gates in this design are deterministic Java checks on the call path, never p
 | **T9** | **Privilege escalation via self-selected security level.** Nothing stops a caller from constructing a permissive `SecurityContext` or picking a laxer mode. | Yes | 3.1 (the mode is static application configuration, resolved once per run, immutable) |
 | **T10** | **RAG / vector-index leakage.** `searchVectorIndex` returns chunks derived from indexed objects with no per-user filter; the index is built by a background daemon under system rights. | Yes | 3.4.3 |
 | **T11** | **Schema disclosure.** The model digest injected into the system prompt enumerates every module, type and attribute of the application. | Yes | 3.4.2 |
-| **T12** | **Write without authority reaching the commit.** Any tool that forgot its check (or a future/MCP tool that never had one) writes through the shared `TransactionScope`, and the end-of-turn commit (`AgentLoop.java:578`) persists it. | Yes | 3.5 (pre-commit guard) |
+| **T12** | **Write without authority reaching the commit.** Any tool that forgot its check (or a future/MCP tool that never had one) writes through the shared `TransactionScope`, and the end-of-turn commit persists it. **Closed for an enforcing run** by 3.5. | Yes | 3.5 (pre-commit guard) · **implemented** |
 | **T13** | **Cross-session/transcript disclosure.** Session transcripts persist whatever the agent read; a later reader of the session sees data they may no longer be entitled to. | Partially | Out of scope here, see 2.5 |
 
 ### 2.4 Objectives
@@ -212,7 +212,7 @@ All gates in this design are deterministic Java checks on the call path, never p
                                            │
                        ┌───────────────────▼─────────────────────────┐
    end of turn  ──────▶│ L4  Pre-commit action guard                 │  every commit
-                       │     assert rights on every touched object   │
+                       │     PreCommitGuard @ commitTransaction      │
                        └───────────────────┬─────────────────────────┘
                                            │
                        ┌───────────────────▼─────────────────────────┐
@@ -801,39 +801,45 @@ unrestricted by construction. Filtering must therefore happen **at query time**,
 Embedding-level leakage (the embedding vector itself being derived from restricted text) is out of
 scope; the mitigation is that the chunk text never reaches the context.
 
-### 3.5 L4 - Pre-commit action guard (design only, no code)
+### 3.5 L4 - Pre-commit action guard · **implemented**
 
-> **Nothing in this section exists in code.** A `PreCommitGuard` interface and a `ToolChangeSet` record
-> were committed with no implementation, no registration and no caller, self-labelled "not wired in
-> yet", while their javadoc called this "the highest-value layer of the design" - which reads as a
-> shipped guarantee. Both files are **removed**; the design stays here, where a reader can tell it apart
-> from what runs. Tracked as **#259**.
+The highest-value layer, because it is the only one that catches tools that never had a check: MCP
+tools, TL-Script tools authored at runtime, and any future Java tool whose author forgot. Every other
+layer assumes the tool cooperates; this one does not.
 
-This would be the highest-value layer, because it is the only one that catches tools that never had a
-check: MCP tools, TL-Script tools authored at runtime, and any future Java tool whose author forgot.
-
-**Where.** `AgentLoop.commitTransaction` (`AgentLoop.java:611-625`), immediately before
-`scope.commit()`. There is exactly one commit per turn, so there is exactly one place to guard.
+**Where.** `AgentLoop.commitTransaction`, immediately before `scope.commit()`. There is exactly one
+commit per turn, so there is exactly one place to guard.
 
 **What.**
 
 ```java
 public interface PreCommitGuard {
 
-    /**
-     * Verifies that the run's principal may persist every change accumulated in the
-     * current transaction.
-     *
-     * @return the violations found; empty means the commit may proceed.
-     */
-    List<Violation> check(SecurityContext security, ChangeSet changes);
+    /** Accepts every change. The behaviour of AiSecurityMode.LEGACY. */
+    PreCommitGuard PERMISSIVE = ...;
 
-    record Violation(TLObject object, BoundCommandGroup operation, String reason) {}
+    /** The violations found; empty means the commit may proceed. */
+    List<Violation> check(SecurityContext security, ToolChangeSet changes);
+
+    /** Whether this guard checks anything at all - asked before the change set is built. */
+    default boolean enforces() { return true; }
+
+    /** PERMISSIVE unless the run's mode enforces model access. */
+    static PreCommitGuard forRun(SecurityContext security) { ... }
+
+    record Violation(TLObject object, String typeName, BoundCommandGroup operation, String reason) {}
 }
 ```
 
-The change set is obtained from the KB transaction: created, updated (with the touched attributes) and
-deleted objects. For each:
+`ModelSecurityPreCommitGuard` is the implementation. It adds **no policy of its own**: every question
+goes to the run's `ModelSecurity`, hence to the engine's `ModelAccessRights`, so a tool that bypassed
+its own check ends up bounded by exactly the rights the acting user would have had in the UI.
+
+**Where the change set comes from.** `TransactionScope.changes()` reads the engine's own transaction
+bookkeeping - `DefaultDBContext.getNewObjects()` / `getChangedObjects()` / `getDroppedObjects()`, plus
+the per-item `ChangeInspectable.getChange()` record the engine also uses to build its commit event.
+Nothing asks a tool what it wrote: a tool that forgot to check would equally forget to report. Only
+attribute *names* are read from the change record, never values.
 
 | Change | Check |
 |---|---|
@@ -841,12 +847,21 @@ deleted objects. For each:
 | updated | `canWrite(obj)` and `canWrite(obj, attr)` for every touched attribute |
 | deleted | `canDelete(obj)` |
 
-**On violation:** roll back the whole turn's transaction (the loop already has this path -
-`AgentLoop.java:563-576` rolls back on tool failure and tells the model its writes are gone), emit an
-audit record per violation, and feed the model a framework notice naming the operation and type but
-**not** the values:
+**On violation:** the whole turn is rolled back through `AgentLoop.rollbackTurn` - the *same* route a
+failed tool call takes, so all-or-nothing means the same thing in both cases - one audit record per
+violation is written by the guard, and the model is given a framework notice naming the operation and
+the type but **not** the values:
 
-> `[Framework notice] The changes in this turn were rolled back: you attempted to modify 3 objects of type myapp:Contract without write permission.`
+> `[Framework notice] The data changes of this turn were rolled back and NOT persisted, because your
+> account is not permitted to make all of them: you attempted 'Create on objects of type
+> 'myapp:Contract'' for 3 objects without permission. The rollback is all-or-nothing, so the permitted
+> changes of this turn are gone as well. ...`
+
+**The checks run in the committed view** (`KnowledgeBase.withoutModifications`), forced by the engine
+in two ways. An object deleted in the current transaction refuses attribute access, and
+`ModelAccessRights` has to read its type and its security parent to decide - in the committed view the
+object is visible again, which is where its DELETE right is meaningful anyway. And an object created in
+the current transaction is allowed everything by construction, so asking about it would answer nothing.
 
 **Ordering caveat, verified against the engine.** `ModelAccessRights.isAllowed` returns `true` for
 objects that are not yet committed (`SecurityConfigurationService.isCommitted`), because rule-derived
@@ -854,13 +869,35 @@ roles are computed at commit time. So the guard **cannot** validate a freshly cr
 instance-level rights - by construction those do not exist yet. What it validates for creations is
 condition 1 + condition 2 of spec 2.3.6 (CREATE on the type in the committed parent context, WRITE on
 the composition attribute of the committed parent), which is precisely the check the engine itself
-performs. Updates and deletes of pre-existing objects are checked fully. This is a real limit of the
-layer and is stated rather than papered over.
+performs. A parent created in the same turn is equally unvalidatable and is covered by *its* creation
+being checked against *its* container, up to the first committed ancestor. Updates and deletes of
+pre-existing objects are checked fully. This is a real limit of the layer and is stated rather than
+papered over.
 
-**Cost.** One `ModelAccessRights` call per touched object and attribute, once per turn. Turns that
-write nothing (the overwhelming majority) skip the guard entirely, because `scope.isActive()` is false
-(`AgentLoop.java:613`) - no transaction was ever begun (`ensureTransaction` only begins one for
-non-READ tools, `:602-606`).
+**What the layer does not cover.**
+
+- Attribute writes to an object created in the same turn. Booked by the engine as part of the creation,
+  and unvalidatable per the caveat above. The creation itself is checked.
+- Change-set items that carry no application type - the link items of a multi-valued reference, and the
+  engine's own bookkeeping items. Not a silent hole: the object at the writing end of such a link is
+  itself booked as changed, so the write is checked through that object. A storage-level attribute that
+  maps to no model attribute likewise costs attribute granularity, not the check - the object-level
+  right is always asked as well.
+- Side effects outside the KnowledgeBase. A tool that wrote a file, sent a mail or called an HTTP
+  endpoint is not rolled back by a KB rollback. That is L1's business (`egress`) and the approval
+  prompt's, not this layer's.
+- A `LEGACY` or `SYSTEM` run. Neither enforces model access, so `forRun` hands back `PERMISSIVE` and no
+  change set is read at all.
+
+**Cost.** One `ModelAccessRights` call per touched object and per touched attribute, once per turn,
+plus one pass over the transaction's own change lists. Turns that write nothing - the overwhelming
+majority - skip the guard entirely, because `scope.isActive()` is false: no transaction was ever begun,
+since `ensureTransaction` only begins one for non-READ tools. A turn that *does* write pays this in
+addition to whatever the tools already paid; the guard is deliberately not the place to economise.
+
+**Tested by** `TestPreCommitGuard` and the transaction cases of `TestAgentLoop` in `tl-ai-core`, and
+`SecDemoPreCommitGuardTest` against a real fixture boot - see
+[testbed.md](testbed.md#47-the-pre-commit-guard---what-catches-an-uncooperative-tool).
 
 ### 3.6 L5 - Output / reference guard
 
@@ -901,14 +938,15 @@ One structured event type, `AgentEvent.SecurityAudit`, alongside the existing 25
 | Every `SYSTEM`-mode context creation, with its reason | Bypasses must be countable |
 | Every RBAC denial (L1) | Detects both misconfiguration and probing |
 | Every `ToolSecurityException` (L2) | The tool asked and was told no |
-| Every pre-commit rollback, one record per violation (L4) | The highest-signal event in the system - it means a tool tried to write without authority |
+| Every pre-commit rollback, one record per violation (L4) · **implemented as a log line** | The highest-signal event in the system - it means a tool tried to write without authority. `ModelSecurityPreCommitGuard` writes one `ERROR` per violation, in the field shape of a `ToolAuthorization` denial. What is still missing is the structured `AgentEvent.SecurityAudit` and the `ConversationLog` entry |
 | Every reference stripped (L5) | Low volume, high signal |
 | Every `egress` call correlated with a restricted `data.read` in the same turn (3.2.4) | Exfiltration detection |
 | Every effective-mode resolution at run start | Answers "under what policy did this run execute" |
 
-Denials are logged at `WARN` and rollback violations at `ERROR`; both go to the `ConversationLog` as
-well, so the audit trail lives with the transcript that produced it. **Audit records never contain
-withheld values** - type names, ids and operations only.
+Denials are logged at `WARN` and rollback violations at `ERROR`. Both should also go to the
+`ConversationLog`, so the audit trail lives with the transcript that produced it - that part is **not
+built** for either layer; today both write to the application log only. **Audit records never contain
+withheld values** - type names and operations only.
 
 ---
 
@@ -1168,12 +1206,20 @@ mechanical, they compile-break every bypass call site into visibility, and they 
 MCP authentication lands here rather than later because it is the only externally reachable
 unauthenticated path, and it is independent of any application writing a `<security-config>`.
 
-### Phase 2 - Pre-commit guard and result filtering
+### Phase 2 - Pre-commit guard · **implemented** - and result filtering
 
 L4 and L3. Deliberately **before** L1/L2 enforcement: these are the layers that stop unauthorized
 writes and data leaving, they work without any per-application tool policy, and they are the ones that
-still protect an application that never gets round to writing a policy. In `LEGACY` mode they run in
-dry-run (log only); in `ENFORCED` they enforce.
+still protect an application that never gets round to writing a policy.
+
+**Built:** L4, the pre-commit guard of section 3.5 - `PreCommitGuard`, `ModelSecurityPreCommitGuard`,
+`ToolChangeSet` and the call in `AgentLoop.commitTransaction`. It enforces in `ENFORCED` and is a
+complete no-op in `LEGACY` and `SYSTEM`: `PreCommitGuard.forRun` hands back `PERMISSIVE`, and the change
+set is never even read. The dry-run-in-`LEGACY` variant this section used to propose was dropped - a
+`LEGACY` application has no `<security-config>`, so every object would be reported as a violation and
+the log would say nothing.
+
+**Still open:** L3, data-tool result filtering, which is absent regardless of mode.
 
 ### Phase 3 - Tool RBAC · **implemented, except the administration UI**
 
@@ -1242,19 +1288,19 @@ compiles against the real API - nothing here is reference code any more. All new
 | `SecurityContext.hasToolPermission` + `toolDenialReason` | **Enforcing.** `TopLogicSecurityContext` answers both from the policy; `ToolPermissionFilter` and `AgentLoop` prefer the specific reason over a generic "denied" |
 | `TopLogicSecurityContext.forRun(principal, background, agentFloor)` | Resolves the run's mode once as `stricter(ceiling, floor)`, refuses an `ENFORCED` run with no principal, and binds the tool authorization. **Called by the chat, TL-Script and MCP entry points** |
 | `SecurityContext.restrictedTo(agentFloor)` / `ToolContext.restrictedTo(...)` | The composition seam. Returns `this` unless the floor really tightens; refuses rather than dropping the floor when the context has no principal to build a stricter one from. **Applied once per run by `AgentLoop`**, which is what gives delegated children and subagents the rule of 3.1 |
-| `PreCommitGuard` + `ToolChangeSet` - the L4 hook signature | **Removed** (#259). Design in 3.5 / A.2; no code |
+| `PreCommitGuard` + `ModelSecurityPreCommitGuard` + `ToolChangeSet` - the L4 guard | **Implemented and wired** (#259). Called once per turn from `AgentLoop.commitTransaction`, only when a transaction is active; reads the change set from the engine's transaction bookkeeping; rolls the turn back through the existing failed-tool-call route. Unit-tested (`TestPreCommitGuard`, `TestAgentLoop`) and end-to-end against the fixture (`SecDemoPreCommitGuardTest`) |
 | `@ToolMethod(group = ...)` in `tl-ai-tool-api` | **Enforced.** All 75 registered tools carry a group; `Tool.group()` is the runtime seam |
 | `@ToolMethod(types = ...)` | **Removed** (#258). Design in 3.3.3; no code |
 | Per-agent `security-mode` (4.2) | **Built** (#260), on both agent-definition layers, unit-tested in `tl-ai-core` and against a booted fixture in `SecDemoAgentFloorTest` |
 | Per-agent `required-groups` (4.2) | **Not built.** A self-imposed narrowing of the tool list, independent of the mode above |
-| The two retrofit examples (A.1, A.2) | Appendix A - illustrative, not applied to any tool |
+| The retrofit example A.1 | Appendix A - illustrative, not applied to any tool. A.2 is no longer an example: it is the shipped shape of the pre-commit guard |
 
 **Behaviour is unchanged until an application writes `<tool-access>`.** The `AiToolAccessService` module
 is active by default and resolves to `LEGACY` with an empty policy, which grants every tool and reports
 no reason - asserted by `TestTopLogicSecurityContext`. The module is on by default deliberately: a
 policy present while the module was off would be silently ignored, which is the one failure mode this
-layer must not have. Data-tool result filtering is still absent regardless of mode, and the pre-commit
-guard is still unwired.
+layer must not have. Data-tool result filtering is still absent regardless of mode; the pre-commit guard
+is wired and enforcing, subject to the limits section 3.5 states.
 
 One behaviour change does arrive for TL-Script callers, but only under a configured policy:
 `aiCallTool` / `aiChat` / `aiAgentChat` now act as the account that ran the script instead of
@@ -1327,34 +1373,47 @@ private InstanceListResponse doListInstances(String moduleName, String typeName,
 }
 ```
 
-### A.2 Retrofit example: the pre-commit guard in `AgentLoop.commitTransaction`
+### A.2 The pre-commit guard in `AgentLoop.commitTransaction` · **implemented**
 
-Sketch of the layer proposed in section 3.5, which has **no code today** (#259) - `PreCommitGuard`,
-`Violation` and `scope.changes()` below all still have to be written.
+The shape the layer of section 3.5 actually has. `PreCommitGuard.forRun` is the one place its mode gate
+lives, and it is asked whether it `enforces()` *before* the change set is read, so an unenforcing run
+pays nothing.
 
 ```java
-private void commitTransaction(ToolContext context, AgentEventListener listener,
-        String runId, int turn) {
+private void commitTransaction(ToolContext context, Conversation conversation,
+        AgentEventListener listener, String runId, int turn) {
     TransactionScope scope = context.transaction();
     if (!scope.isActive()) {
-        // No write tool ran this turn: nothing to guard.
+        // No write tool ran this turn: nothing to commit and nothing to guard.
         return;
     }
-
-    // NEW: assert the principal may persist every accumulated change. Catches tools that
-    // performed no check of their own - MCP tools, runtime-authored script tools, and any
-    // Java tool whose author forgot.
-    List<PreCommitGuard.Violation> violations = _preCommitGuard.check(context.security(), scope.changes());
-    if (!violations.isEmpty()) {
-        scope.rollback();
-        emit(listener, new AgentEvent.TransactionRolledBack(runId, turn, now(),
-            "Pre-commit security check failed"));
-        for (PreCommitGuard.Violation v : violations) {
-            emit(listener, SecurityAudit.violation(runId, turn, now(), context.security(), v));
-        }
+    if (!preCommitGuardPasses(context, conversation, listener, runId, turn)) {
         return;
     }
-
     // ... existing commit path ...
 }
+
+private boolean preCommitGuardPasses(ToolContext context, Conversation conversation,
+        AgentEventListener listener, String runId, int turn) {
+    SecurityContext security = context.security();
+    PreCommitGuard guard = PreCommitGuard.forRun(security);
+    if (!guard.enforces()) {
+        return true;
+    }
+    List<PreCommitGuard.Violation> violations =
+        guard.check(security, context.transaction().changes());
+    if (violations.isEmpty()) {
+        return true;
+    }
+    rollbackTurn(context, conversation, listener, runId, turn, "Pre-commit security check failed",
+        "The data changes of this turn were rolled back and NOT persisted, because your account is"
+            + " not permitted to make all of them: " + PreCommitGuard.describe(violations) + " ...");
+    return false;
+}
 ```
+
+`rollbackTurn` is the route a failed tool call already took: it rolls the transaction back, emits
+`AgentEvent.TransactionRolledBack`, and appends the `[Framework notice]` that corrects the picture the
+model was left with. There is deliberately **one** such route - a second one would mean "all-or-nothing"
+could come to mean two different things. The per-violation audit record is written by the guard itself,
+where the principal is bound, in the same shape as a `ToolAuthorization` denial.

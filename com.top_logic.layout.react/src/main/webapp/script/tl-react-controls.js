@@ -132,7 +132,7 @@ const { useCallback: wt, useRef: sn } = e, cn = 300, un = ({ controlId: l, state
   return /* @__PURE__ */ e.createElement("span", { id: l }, /* @__PURE__ */ e.createElement(
     "input",
     {
-      type: "date",
+      type: t.inputType ?? "date",
       value: n ?? "",
       onChange: c,
       disabled: t.disabled === !0,

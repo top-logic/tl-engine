@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,9 +30,10 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
+import com.top_logic.layout.view.form.DatePickerControlProvider;
 import com.top_logic.layout.view.form.FieldControlService;
-import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLObject;
@@ -277,10 +279,13 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 						break;
 					case DATE:
 						if (Date.class.isAssignableFrom(applicationType)) {
+							// A date, a time of day and a date with a time of day share this kind;
+							// which one it is decides the format a filter bound is entered in.
+							ReactDatePickerControl.Kind temporalKind = DatePickerControlProvider.kind(part);
 							return typedColumn(attribute, label, part, Date.class,
 								Comparator.<Date> naturalOrder(),
 								new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
-									ColumnProviderService::parseDate));
+									text -> parseTemporal(temporalKind, text)));
 						}
 						break;
 					case STRING:
@@ -394,12 +399,20 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
 	}
 
-	private static Date parseDate(String text) {
-		try {
-			return HTMLFormatter.getInstance().getDateFormat().parse(text.trim());
-		} catch (ParseException ex) {
-			return null;
+	/**
+	 * Parses a filter bound of a temporal column in the formats belonging to its kind: a time of day
+	 * is entered as a time, not as a date.
+	 */
+	private static Date parseTemporal(ReactDatePickerControl.Kind kind, String text) {
+		String trimmed = text.trim();
+		for (DateFormat format : kind.inputFormats()) {
+			try {
+				return format.parse(trimmed);
+			} catch (ParseException ex) {
+				// Try the next accepted format; an unparsable bound leaves the filter unbounded.
+			}
 		}
+		return null;
 	}
 
 	/**

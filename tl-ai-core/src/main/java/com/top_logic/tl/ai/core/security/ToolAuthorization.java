@@ -337,6 +337,41 @@ public class ToolAuthorization {
 	}
 
 	/**
+	 * Whether the given tool is out of reach only because this run is unattended.
+	 *
+	 * <p>
+	 * The attribution behind the two different sentences an unattended run has to be able to produce:
+	 * "your roles do not grant this" sends the user to an administrator who can grant a role, and "this
+	 * run has no one who could approve it" sends them to the {@code <background-allowlist>}. Saying the
+	 * first where the second is true is a wrong instruction, not merely a vague one.
+	 * </p>
+	 *
+	 * <p>
+	 * Quiet, like {@link #allows(Tool)}: this answers a question about a decision that was already
+	 * made and audited, and logging it again would double every denial line.
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool to attribute.
+	 * @return Whether the same principal in an attended run would have been allowed it.
+	 */
+	public boolean withheldByBackgroundCeiling(Tool tool) {
+		if (_access == null || !_background) {
+			return false;
+		}
+		ToolIdentity identity = _identities.identify(tool);
+		if (_access.allowedInBackground(identity)) {
+			return false;
+		}
+		// Decided in the order of decide(ToolIdentity) with the ceiling left out, so that the answer
+		// is "an attended run would have allowed it" and nothing else.
+		if (_principal != null && _principal.isAdmin()) {
+			return true;
+		}
+		return !(_access.check(_heldRoleNames, identity) instanceof Decision.Denied);
+	}
+
+	/**
 	 * Whether the run's principal may use the given tool, without logging a denial.
 	 */
 	public boolean allows(Tool tool) {

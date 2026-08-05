@@ -135,6 +135,32 @@ public interface SecurityContext {
 	}
 
 	/**
+	 * Whether the given tool is denied to this run <em>only</em> because the run is unattended.
+	 *
+	 * <p>
+	 * Tells the two reasons a tool can be missing from an unattended run apart: the principal's roles
+	 * do not grant it, or they do and the background allowlist is the ceiling that removed it. Both
+	 * are {@link #hasToolPermission(Tool) denials}, and a message that blamed the user's roles for the
+	 * second would send them to an administrator who has nothing to grant - the fix is a
+	 * {@code <background-allowlist>} entry.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Not a gate and never asked instead of one.</b> {@link #hasToolPermission(Tool)} decides;
+	 * this only attributes a decision it already made. The default answers <code>false</code>, which
+	 * reads as "no reason to believe the ceiling did it" - correct for every context that has no
+	 * background ceiling.
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool to attribute.
+	 * @return Whether an attended run with the same principal would have permitted it.
+	 */
+	default boolean withheldByBackgroundCeiling(Tool tool) {
+		return false;
+	}
+
+	/**
 	 * The capability (tool group) the given tool requires under this run's policy.
 	 *
 	 * <p>

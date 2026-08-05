@@ -516,7 +516,7 @@ Filtering the schemas leaves the model unable to tell "you are not permitted" fr
 not loaded yet" from "that does not exist": all three look like absence, so the agent answers the
 user with a vague "I can't do that" or goes hunting for a skill it may also not use.
 
-Four code fixes and one piece of prompt text address that:
+Five code fixes and one piece of prompt text address that:
 
 - **Skills whose every tool is denied are not offered** (`AgentFactory.injectSkills`,
   `buildDynamicSkillTool`, `buildSkillTool`, all through `AgentCapabilities.unusableReason`). A skill
@@ -580,6 +580,32 @@ Four code fixes and one piece of prompt text address that:
 - **`loadSkill` no longer advertises tools the principal cannot call** (`SkillTool.addSkillTools`).
   It used to register and announce every resolvable tool of a skill; the next turn's schema filter
   then removed exactly the denied ones, so an authoritative tool result contradicted the tool list.
+- **A `loadSkill` for a skill that is not there says which absence it is** (#281,
+  `AgentCapabilities.skillAbsenceReason`, wired in `AgentFactory.absenceReason`). The same trichotomy
+  as `ToolCatalog.absenceReason` above, in the same vocabulary, for the other surface the model
+  discovers absence on. A skill this agent declares and the acting user may use nothing in is
+  *withheld from the current user*, naming the capabilities its tools require. The same skill in an
+  **unattended** run, where the `<background-allowlist>` is the ceiling that removed it
+  (`SecurityContext.withheldByBackgroundCeiling` → `AgentCapabilities.lostToBackgroundCeiling`), says
+  *this run is unattended* instead: the acting user's roles are not the reason and an administrator
+  asked to grant a role they already granted finds nothing to do. A skill the application has and this
+  agent never declared says so and names an administrator, exactly as the not-carried tool case does,
+  and names no capability. An id that resolves nowhere keeps the plain "not available for this agent"
+  with the loadable-skill list, so a typo still discloses nothing. Each permission case ends with the
+  anti-guessing sentence the notice below carries. Before this, all four read "Skill '...' is not
+  available for this agent", and an agent refused `TL_agenticAuthoring` reported the missing
+  capability as `script` - to a user for whom `script` was the reason for nothing.
+- **A skill's description must not point at a skill the reader cannot load** (#281). A cross-reference
+  between framework skills - added deliberately, because agents used to load the wrong one - becomes a
+  dead end as soon as the referenced skill is filtered for the acting user. Where the referring skill
+  can simply *carry* the tool its guidance depends on, it does, and the filter then drops the pair
+  together: `TL_tlScriptInstanceCreation` declares `executeTLScript` rather than telling the reader to
+  load `TL_tlScriptWriting` for it. A guidance-only skill declares no tools, always survives the
+  filter, and is therefore the one shape that can be offered to a user who cannot act on it. Where the
+  referenced skill belongs to a different domain and carrying its tools would drop the referrer for the
+  users who need it (`TL_agenticAuthoring` → `TL_tlScriptWriting`), the description says what to do
+  when the reference is unreachable instead. `TestFrameworkSkillReferences` fails on a cross-reference
+  that does neither.
 - **A call for an absent tool says which absence it is** (`ToolCatalog.absenceReason`). A name no skill
   declares and no registry knows stays `Unknown tool` with the permitted-only available list. A name
   one of the agent's own skills declares is answered with "load that skill". A name the service

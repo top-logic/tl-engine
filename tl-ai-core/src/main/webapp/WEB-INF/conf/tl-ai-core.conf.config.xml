@@ -185,7 +185,7 @@
 			<instance class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
 				<skills>
 					<skill name="TL_agenticAuthoring"
-						description="Load when creating or editing agents, skills, or TL-Script tools - NOT for executing a script and NOT for editing the data model. Covers skills versus agents, tool assignment, authoring TL-Script-backed tools, prompt writing, and post-creation wiring. To run TL-Script or create an instance, load TL_tlScriptWriting; to change modules, types or attributes, load TL_topLogicModeling."
+						description="Load when creating or editing agents, skills, or TL-Script tools - NOT for executing a script and NOT for editing the data model. Covers skills versus agents, tool assignment, authoring TL-Script-backed tools, prompt writing, and post-creation wiring. To run TL-Script or create an instance, load TL_tlScriptWriting; to change modules, types or attributes, load TL_topLogicModeling. If one of those is not available to you, relay the reason loadSkill gives and stop - it names the capability, and there is no other route to it."
 					>
 						<content><![CDATA[<philosophy>
 Agents start lean — minimal tools, minimal context. Skills are the delivery mechanism for capabilities: when an agent loads a skill, it gets the instructions AND the tools together, on demand. This keeps the agent's context window clean and focused.
@@ -438,7 +438,7 @@ Pass ALL gathered context to the TL_ModelEditor. It uses this to avoid duplicate
 ]]></content>
 					</skill>
 					<skill name="TL_promptModelExplorer"
-						description="Load when you will delegate to the TL_ModelExplorer agent: it explains how to ask for raw model context only - especially extracting TL-Script from annotations verbatim - and how to chain the analysis to the right agent afterwards. To explore the model yourself instead, load TL_modelExploration."
+						description="Load when you will delegate to the TL_ModelExplorer agent: it explains how to ask for raw model context only - especially extracting TL-Script from annotations verbatim - and how to chain the analysis to the right agent afterwards. To explore the model yourself instead, load TL_modelExploration - and if it is not available to you, relay the reason loadSkill gives and stop, rather than looking for another route."
 					>
 						<content><![CDATA[# How to Write Effective Delegation Work Orders (ModelExplorer Caller)
 
@@ -1096,7 +1096,7 @@ Available tools:
 					</tools>
 					</skill>
 					<skill name="TL_tlScriptInstanceCreation"
-						description="Guidance only - it carries no tools, so load it together with TL_tlScriptWriting, which has executeTLScript. Read it when creating instances, test data, or sample entries: new(...) patterns, composition placement, mandatory values, I18N/HTML value types, enum references, and filtering by business key."
+						description="Load when creating instances, test data, or sample entries - it carries executeTLScript and covers new(...) patterns, composition placement, mandatory values, I18N/HTML value types, enum references, and filtering by business key."
 					>
 						<content><![CDATA[# TLScript Instance Creation
 
@@ -1221,6 +1221,9 @@ Lambda helper for repeated creations of the same type:
 - Missing mandatory attribute — execution rejected; round-trip wasted.
 </failure_modes>
 ]]></content>
+					<tools>
+						<tool name="script-exec.executeTLScript"/>
+					</tools>
 					</skill>
 					<skill name="TL_DesignHtmlPage"
 						description="Design and persist one self-contained HTML page for the user's request, then reply with a markdown link to the served URL. Use whenever the user asks for a report, dashboard, slideshow, infographic, essay, or any other visual artefact."
@@ -1458,7 +1461,7 @@ You are an autonomous agent. Keep working until the user's request is fully reso
 <tool_loading>
 You start with minimal tools. Full capabilities live in skills — load them on demand.
 - Check the Available Skills list below first — each entry names the skill and what it does. Match the request against those descriptions and call loadSkill for the one that fits.
-- When the user names a specific tool — especially one shaped like `{factory}__{name}` or `{factory}.{name}` — do not assume it is absent. Load `TL_agenticAuthoring` and confirm with `listScriptToolFactories` / `listScriptTools` / `getScriptTool`, deriving the factory from the prefix (e.g. `pizzashop__findX` → factory `pizzashop`), before telling the user it does not exist.
+- When the user names a specific tool — especially one shaped like `{factory}__{name}` or `{factory}.{name}` — do not assume it is absent. Load `TL_agenticAuthoring` and confirm with `listScriptToolFactories` / `listScriptTools` / `getScriptTool`, deriving the factory from the prefix (e.g. `pizzashop__findX` → factory `pizzashop`), before telling the user it does not exist. If `TL_agenticAuthoring` is not available to you, relay the reason loadSkill gives verbatim and stop - never name a capability that message does not name.
 - Once loaded, a skill's tools are immediately available. Never load the same skill twice.
 - NEVER call a tool you don't have yet — load its skill first.
 - NEVER fabricate tool names or results.

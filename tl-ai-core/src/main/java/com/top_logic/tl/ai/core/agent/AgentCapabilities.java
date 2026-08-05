@@ -121,6 +121,19 @@ public class AgentCapabilities {
 		List<Tool> mcpTools(String serverName);
 	}
 
+	/**
+	 * The sentence that closes every message which names a capability, or deliberately names none.
+	 *
+	 * <p>
+	 * The same instruction the {@link #notice(Collection, Collection) capability notice} gives for the
+	 * general case, repeated where the model is actually holding a refusal: a message that explains
+	 * itself and then leaves the model free to add a cause of its own has not fixed the guessing. This
+	 * is prompt text, not a control - the gate is unaffected by whether the model obeys it.
+	 * </p>
+	 */
+	static final String NO_GUESSING =
+		"Do not attribute this to a capability unless this message names one.";
+
 	private final Function<String, Tool> _toolResolver;
 
 	private final SecurityContext _security;
@@ -230,6 +243,48 @@ public class AgentCapabilities {
 			return null;
 		}
 		return unusableReason(resolve(skill.tools()), "known tools");
+	}
+
+	/**
+	 * Whether the given skill lost its tools to the background ceiling rather than to the principal's
+	 * roles.
+	 *
+	 * <p>
+	 * An unattended run has no one to answer an approval prompt, so it is additionally capped by the
+	 * policy's {@code <background-allowlist>} - see
+	 * {@link SecurityContext#withheldByBackgroundCeiling(Tool)}. A skill the ceiling removed must not be
+	 * explained by naming the user's roles: the same user in the chat would have it, and an
+	 * administrator asked to grant a role they already granted finds nothing to do.
+	 * </p>
+	 *
+	 * <p>
+	 * True as soon as <em>one</em> of the skill's tools would have been permitted in an attended run:
+	 * that tool alone would have kept the skill, so the run being unattended is what decided.
+	 * </p>
+	 *
+	 * <p>
+	 * The skill-level form of {@link SecurityContext#withheldByBackgroundCeiling(Tool)}, and a
+	 * different question from {@link #lostToBackgroundCeiling(Collection)}: this one decides
+	 * <em>whether</em> the ceiling is the explanation for one skill, by asking per tool; that one
+	 * reports <em>which</em> of a set of capability names the ceiling withheld, for a message that
+	 * lists them. Deciding by capability name would misjudge a skill whose tools declare no group at
+	 * all, which is why this walks the tools instead.
+	 * </p>
+	 *
+	 * @param skill
+	 *        The skill to attribute, already known to be {@link #unusableReason(SkillDefinition)
+	 *        unusable}.
+	 */
+	public boolean withheldByBackgroundCeiling(SkillDefinition skill) {
+		if (!enforced()) {
+			return false;
+		}
+		for (Tool tool : resolve(skill.tools())) {
+			if (_security.withheldByBackgroundCeiling(tool)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -539,6 +594,125 @@ public class AgentCapabilities {
 		Set<String> unattended = new TreeSet<>(_security.capabilitiesWithheldInBackground());
 		unattended.retainAll(capabilities);
 		return unattended;
+	}
+
+	/**
+	 * Why {@code loadSkill} cannot hand over the named skill, or <code>null</code> if this view has no
+	 * honest answer.
+	 *
+	 * <p>
+	 * The {@code loadSkill} counterpart of {@link com.top_logic.tl.ai.core.tools.ToolCatalog}'s
+	 * absence reason, and deliberately the same trichotomy in the same vocabulary: a skill can be
+	 * missing because the acting user may use nothing in it, because this agent never declared it, or
+	 * because there is no such skill. They all looked alike - "not available for this agent" - and the
+	 * model was observed filling the gap with the nearest capability it could name: asked for a tool no
+	 * agent carries, it reported that the user lacked {@code script}, which was neither true nor
+	 * actionable.
+	 * </p>
+	 *
+	 * <p>
+	 * A capability is named only where the application really has the skill, this agent really declares
+	 * it, and the acting user really is denied its tools. An unknown id is answered with
+	 * <code>null</code> so that the caller states the plain "no such skill" - a typo must not disclose
+	 * which capabilities the user lacks.
+	 * </p>
+	 *
+	 * <p>
+	 * See {@code doc/security/agent-security-architecture.md} section 3.2.7.
+	 * </p>
+	 *
+	 * @param skillId
+	 *        The skill the model asked for, known not to be loadable.
+	 * @param agentSkillNames
+	 *        The skills this agent declares, loadable or not.
+	 * @return One or two sentences the model can relay verbatim, or <code>null</code> if there is
+	 *         nothing to say beyond "no such skill".
+	 */
+	public String skillAbsenceReason(String skillId, Collection<String> agentSkillNames) {
+		SkillDefinition skill = _graph.skill(skillId);
+		if (skill == null) {
+			// Not a skill of this application at all: a typo, or a name from a transcript of another
+			// deployment. Nothing here may be answered with a capability.
+			return null;
+		}
+		if (!agentSkillNames.contains(skillId)) {
+			return "Skill '" + skillId + "' exists in this application but is not carried by this"
+				+ " agent - it is not in this agent's skill list. This is not a permission problem and"
+				+ " nothing you do here can reach it: an administrator would have to add it to this"
+				+ " agent.";
+		}
+		if (unusableReason(skill) == null) {
+			// Declared, usable, and still not loadable - a definition without content, which is logged
+			// as a configuration warning where the skill map is built. No capability is involved.
+			return null;
+		}
+		return withheldSkillReason(skillId, skill);
+	}
+
+	/**
+	 * The reason a declared skill was withheld from this run, naming the capabilities behind it.
+	 *
+	 * <p>
+	 * Two cases, because their remedies are different: the acting user's roles are short of a
+	 * capability, which an administrator grants, or the run is unattended and the policy's
+	 * {@code <background-allowlist>} is the ceiling, which no role grant changes.
+	 * </p>
+	 */
+	private String withheldSkillReason(String skillId, SkillDefinition skill) {
+		Set<String> lacking = lacking(skill.tools());
+		StringBuilder reason = new StringBuilder();
+		if (withheldByBackgroundCeiling(skill)) {
+			reason.append("Skill '").append(skillId).append("' is withheld because this run is"
+				+ " unattended: it has no user who could approve a tool call, so only the capabilities"
+				+ " on the background allowlist are reachable, and every tool of this skill needs one"
+				+ " that is not");
+			reason.append(capabilityList(lacking)).append(". This is not about the acting user's roles"
+				+ " - the same request in the chat would have this skill - and only a"
+				+ " <background-allowlist> entry changes it.");
+		} else {
+			reason.append("Skill '").append(skillId).append("' is carried by this agent but withheld"
+				+ " from the current user: every tool in it requires a capability this user does not"
+				+ " hold");
+			reason.append(capabilityList(lacking)).append(". Loading it would hand you no tools, so it"
+				+ " is not offered; that is final, and only an administrator granting one of those"
+				+ " capabilities changes it.");
+		}
+		reason.append(" ").append(NO_GUESSING);
+		return reason.toString();
+	}
+
+	/**
+	 * The capabilities of a withheld skill, described, or nothing at all for tools that have none.
+	 *
+	 * <p>
+	 * An ungrouped tool has no capability to name and no grant that would reach it - the deployment's
+	 * answer is a {@code <tool-groups>} entry - so the sentence ends without a list rather than with an
+	 * empty one. {@link #NO_GUESSING} then forbids the model to supply a name of its own.
+	 * </p>
+	 *
+	 * <p>
+	 * Inline in a sentence rather than as the bulleted list the notice uses, so each group description
+	 * gives up its full stop: the sentence carries on afterwards, and the message is meant to be
+	 * relayed to a user as prose.
+	 * </p>
+	 */
+	private static String capabilityList(Set<String> lacking) {
+		if (lacking.isEmpty()) {
+			return "";
+		}
+		StringBuilder list = new StringBuilder(": ");
+		boolean first = true;
+		for (String capability : lacking) {
+			if (!first) {
+				list.append("; ");
+			}
+			first = false;
+			String described = describeCapability(capability);
+			list.append(described.endsWith(".")
+				? described.substring(0, described.length() - 1)
+				: described);
+		}
+		return list.toString();
 	}
 
 	/**

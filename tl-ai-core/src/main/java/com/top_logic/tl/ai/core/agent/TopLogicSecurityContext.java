@@ -273,6 +273,11 @@ public class TopLogicSecurityContext implements SecurityContext {
 		return _toolAuthorization.capabilitiesWithheldInBackground();
 	}
 
+	@Override
+	public boolean withheldByBackgroundCeiling(Tool tool) {
+		return _toolAuthorization.withheldByBackgroundCeiling(tool);
+	}
+
 	/**
 	 * The same context with the tool authorization additionally bounded by the background allowlist.
 	 *

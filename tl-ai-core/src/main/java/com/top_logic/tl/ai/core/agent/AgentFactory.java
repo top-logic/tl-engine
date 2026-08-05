@@ -533,8 +533,15 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * tools; skill tools are loaded on demand via {@code loadSkill}. Otherwise returns a
 	 * frozen {@link ToolCatalog} with all tools pre-registered.
 	 * </p>
+	 *
+	 * <p>
+	 * Public because it is the one place an agent's reachable tool set exists as an object: what a
+	 * given user's run can call, what {@code loadSkill} will hand over and what each of the messages
+	 * for an absent name says are all answerable from it, and a test that rebuilt an approximation of
+	 * it by hand would be asserting about the approximation.
+	 * </p>
 	 */
-	ToolRegistry buildToolCatalog(AgentDefinition agent, AgentCapabilities capabilities) {
+	public ToolRegistry buildToolCatalog(AgentDefinition agent, AgentCapabilities capabilities) {
 		if (!agent.skills().isEmpty()) {
 			return buildDynamicToolCatalog(agent, true, false, capabilities);
 		}
@@ -690,7 +697,23 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 
 		Function<String, Tool> resolver = name -> ToolRegistryService.getInstance().getTool(name);
-		return new SkillTool(skillMap, dynamicCatalog, resolver, capabilities.permitted(), preloadedSkillIds);
+		return new SkillTool(skillMap, dynamicCatalog, resolver, capabilities.permitted(),
+			preloadedSkillIds, absenceReason(agent, capabilities));
+	}
+
+	/**
+	 * Why a skill the agent's {@link SkillTool} cannot hand over is not there.
+	 *
+	 * <p>
+	 * The skill map is already filtered, so a withheld skill and a misspelled id both arrive as "no
+	 * such entry". Handing the reason down keeps the decision in one place - {@link AgentCapabilities}
+	 * - and stops the refusal from being the one message the model has to guess about.
+	 * </p>
+	 */
+	static Function<String, String> absenceReason(AgentDefinition agent,
+			AgentCapabilities capabilities) {
+		List<String> declared = agent.skills();
+		return skillId -> capabilities.skillAbsenceReason(skillId, declared);
 	}
 
 	/**
@@ -704,7 +727,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 
 		Map<String, Skill> skillMap = buildSkillMap(skillNames, skillLookup(), capabilities);
-		return skillMap.isEmpty() ? null : new SkillTool(skillMap);
+		return skillMap.isEmpty() ? null
+			: new SkillTool(skillMap, null, null, null, null, absenceReason(agent, capabilities));
 	}
 
 	/** Resolves a skill name against the merged config and knowledge-base definitions. */

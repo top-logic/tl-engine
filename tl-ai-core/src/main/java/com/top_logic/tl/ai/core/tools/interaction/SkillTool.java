@@ -39,6 +39,13 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * at its word would earn a denial. Which skills are offered here at all is decided one level up, in
  * {@code AgentFactory}.
  * </p>
+ *
+ * <p>
+ * A skill that decision withheld is <em>explained</em> rather than merely refused - see
+ * {@code AgentCapabilities.skillAbsenceReason}. "Not available for this agent" covered a withheld
+ * skill, a skill this agent never declared and a misspelled id alike, and the model filled the gap
+ * with a capability of its own choosing.
+ * </p>
  */
 public class SkillTool {
 
@@ -50,7 +57,20 @@ public class SkillTool {
 
 	private final Predicate<Tool> _permitted;
 
+	private final Function<String, String> _absenceReason;
+
 	private final Set<String> _loadedSkills = new HashSet<>();
+
+	/**
+	 * Creates a skill tool with dynamic tool loading, refusing an absent skill without explaining it.
+	 *
+	 * @see #SkillTool(Map, DynamicToolCatalog, Function, Predicate, Set, Function)
+	 */
+	public SkillTool(Map<String, Skill> skills, DynamicToolCatalog dynamicCatalog,
+			Function<String, Tool> toolResolver, Predicate<Tool> permitted,
+			Set<String> preloadedSkillIds) {
+		this(skills, dynamicCatalog, toolResolver, permitted, preloadedSkillIds, null);
+	}
 
 	/**
 	 * Creates a skill tool with dynamic tool loading.
@@ -68,14 +88,19 @@ public class SkillTool {
 	 * @param preloadedSkillIds
 	 *        skill IDs to restore from a previous session; their tools are added to the catalog
 	 *        immediately. May be {@code null} or empty.
+	 * @param absenceReason
+	 *        why a skill that is not in {@code skills} is not there, for an id the caller can explain -
+	 *        typically {@code AgentCapabilities.skillAbsenceReason}. May be {@code null} or answer
+	 *        {@code null}, which leaves the plain "no such skill" message.
 	 */
 	public SkillTool(Map<String, Skill> skills, DynamicToolCatalog dynamicCatalog,
 			Function<String, Tool> toolResolver, Predicate<Tool> permitted,
-			Set<String> preloadedSkillIds) {
+			Set<String> preloadedSkillIds, Function<String, String> absenceReason) {
 		_skills = skills;
 		_dynamicCatalog = dynamicCatalog;
 		_toolResolver = toolResolver;
 		_permitted = permitted != null ? permitted : tool -> true;
+		_absenceReason = absenceReason != null ? absenceReason : skillId -> null;
 
 		if (preloadedSkillIds != null) {
 			for (String skillId : preloadedSkillIds) {
@@ -145,8 +170,7 @@ public class SkillTool {
 	public String loadSkill(@P("Skill id from the catalog") String skillId) {
 		Skill skill = _skills.get(skillId);
 		if (skill == null) {
-			return "Skill '" + skillId + "' is not available for this agent. Available: "
-				+ _skills.keySet();
+			return absenceMessage(skillId);
 		}
 
 		// Return short message if skill was already loaded (avoid dumping content twice)
@@ -174,6 +198,24 @@ public class SkillTool {
 
 		result.append(skill.content());
 		return result.toString();
+	}
+
+	/**
+	 * The answer to a {@code loadSkill} for a skill this agent cannot hand over.
+	 *
+	 * <p>
+	 * The list is the skills this agent really can load, so that following it cannot walk into a second
+	 * refusal - the same rule the unknown-tool message follows. An id nobody can explain keeps the
+	 * plain sentence it always had: a typo must disclose nothing about capabilities.
+	 * </p>
+	 */
+	private String absenceMessage(String skillId) {
+		String reason = _absenceReason.apply(skillId);
+		if (reason == null) {
+			return "Skill '" + skillId + "' is not available for this agent. Available: "
+				+ _skills.keySet();
+		}
+		return reason + " Available: " + _skills.keySet();
 	}
 
 	private List<String> addSkillTools(Skill skill) {

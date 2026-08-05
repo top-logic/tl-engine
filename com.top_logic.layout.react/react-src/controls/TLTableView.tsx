@@ -218,6 +218,28 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // -- Frozen column splitter state: the boundary the running drag would drop the frozen area at. --
   const [frozenPreview, setFrozenPreview] = React.useState<{ x: number; count: number } | null>(null);
 
+  // Width of the body's vertical scrollbar. The header has none, so its viewport is that much wider
+  // than the body's - and its scroll range that much shorter. Scrolled to the right end, the header
+  // would stop before the body does and the headings would sit beside the wrong columns; the header
+  // therefore ends with a reserve of this width. Measured rather than assumed: it depends on the
+  // platform, and it is zero for an overlay scrollbar or a table short enough not to scroll.
+  const [scrollbarWidth, setScrollbarWidth] = React.useState(0);
+
+  React.useEffect(() => {
+    const body = scrollContainerRef.current;
+    if (!body) {
+      return;
+    }
+    const measure = () => {
+      const width = body.offsetWidth - body.clientWidth;
+      setScrollbarWidth((previous) => (previous === width ? previous : width));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(body);
+    return () => observer.disconnect();
+  }, []);
+
 
   // Clear overrides when server pushes updated columns (resize confirmed).
   React.useEffect(() => {
@@ -726,7 +748,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       {/* Header, plus the column selection sitting above the body's vertical scrollbar */}
       <div className="tlTableView__headerArea" ref={headerAreaRef}>
       <div className="tlTableView__header" ref={headerRef}>
-        <div className="tlTableView__headerRow" style={{ width: tableWidth, paddingRight: buttonReserve }}>
+        <div className="tlTableView__headerRow"
+          style={{ width: tableWidth, paddingRight: buttonReserve + scrollbarWidth }}>
           {isMulti && (
             <div className={'tlTableView__headerCell tlTableView__checkboxCell'
                 + (frozenColumnCount > 0 ? ' tlTableView__headerCell--frozen' : '')}

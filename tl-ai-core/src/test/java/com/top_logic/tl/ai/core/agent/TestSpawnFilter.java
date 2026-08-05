@@ -329,7 +329,7 @@ public class TestSpawnFilter extends TestCase {
 		agents.put(READER, withTools(READER, READ_TOOL));
 		agents.put(TOOLLESS, withTools(TOOLLESS));
 		agents.put(SCRIPTED, new AgentDefinition(SCRIPTED, SCRIPTED, "", List.of(), List.of(),
-			List.of("scripting"), List.of(), AgentSource.CONFIG));
+			List.of("scripting"), List.of(), null, AgentSource.CONFIG));
 
 		SkillDefinition scripting = new SkillDefinition("scripting", "scripting", "content",
 			List.of(SCRIPT_TOOL), AgentSource.CONFIG);
@@ -353,7 +353,7 @@ public class TestSpawnFilter extends TestCase {
 	}
 
 	private static AgentDefinition withTools(String name, String... tools) {
-		return new AgentDefinition(name, name, "", List.of(tools), List.of(), List.of(), List.of(),
+		return new AgentDefinition(name, name, "", List.of(tools), List.of(), List.of(), List.of(), null,
 			AgentSource.CONFIG);
 	}
 

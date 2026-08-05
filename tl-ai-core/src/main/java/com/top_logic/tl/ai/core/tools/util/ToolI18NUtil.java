@@ -10,6 +10,7 @@ import java.util.Locale;
 import com.top_logic.base.config.i18n.Internationalized;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.basic.util.ResourceTransaction;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.layout.meta.TLMetaModelUtil;
@@ -127,10 +128,11 @@ public class ToolI18NUtil {
 			? buildResKey(texts.labelEn(), texts.labelDe())
 			: readExisting(partKey));
 
-		// Description: use new values if provided, otherwise preserve existing
-		i18N.setDescription(texts.hasDescription()
+		// Description: use new values if provided, otherwise preserve existing. Descriptions are
+		// authored as rich text, so the engine expects them wrapped in a DefaultHtmlResKey.
+		i18N.setDescription(new DefaultHtmlResKey(texts.hasDescription()
 			? buildResKey(texts.descEn(), texts.descDe())
-			: readExisting(partKey.tooltip()));
+			: readExisting(partKey.tooltip())));
 
 		try (ResourceTransaction tx = ResourcesModule.getInstance().startResourceTransaction()) {
 			TLMetaModelUtil.saveI18NForPart(part, i18N, tx);

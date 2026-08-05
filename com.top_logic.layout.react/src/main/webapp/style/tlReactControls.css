@@ -2590,11 +2590,13 @@ button.tlMenu__item--disabled:hover {
 	overflow-x: auto;
 }
 
+/* Must not clip: an ancestor with a clipping overflow between a sticky cell and the scroll container
+   turns the row into the cell's scroll context, and a frozen cell would scroll away with the row
+   instead of sticking to the left edge. Each cell clips its own content anyway. */
 .tlTableView__row {
 	display: flex;
 	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
 	box-sizing: border-box;
-	overflow: hidden;
 	cursor: pointer;
 }
 

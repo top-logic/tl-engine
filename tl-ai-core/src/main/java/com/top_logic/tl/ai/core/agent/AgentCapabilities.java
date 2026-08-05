@@ -594,6 +594,7 @@ public class AgentCapabilities {
 		Set<String> unattended = new TreeSet<>(_security.capabilitiesWithheldInBackground());
 		unattended.retainAll(capabilities);
 		return unattended;
+	}
 
 	/**
 	 * Why {@code loadSkill} cannot hand over the named skill, or <code>null</code> if this view has no

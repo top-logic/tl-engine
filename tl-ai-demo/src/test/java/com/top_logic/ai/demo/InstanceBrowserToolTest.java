@@ -20,10 +20,13 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.module.BasicRuntimeModule;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
@@ -35,6 +38,7 @@ import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -45,6 +49,36 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	private static final String PIZZASHOP_MODULE = "luigis.pizzashop";
 	private static final String PRODUCT_CLASS = "Product";
 	private static final String INGREDIENT_CLASS = "Ingredient";
+
+	private Person _previousUser;
+
+	/**
+	 * Runs each test as the root account in super-user mode.
+	 *
+	 * <p>
+	 * Since engine {@code 8.0.0-alpha7}, TL-Script applies the model access rights of
+	 * {@code TLContext.currentUser()}, which deny by default. The fixtures of these tests are
+	 * created with TL-Script {@code new(...)}, so without a bypass they cannot be created at all.
+	 * What these tests are about is instance listing and pagination, not authorization.
+	 * </p>
+	 *
+	 * @see ScriptToolFactoryTest#setUp()
+	 */
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		TLContext context = TLContext.getContext();
+		_previousUser = context.getPerson();
+		context.setCurrentPerson(PersonManager.getManager().getRoot());
+		ThreadContext.pushSuperUser();
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		ThreadContext.popSuperUser();
+		TLContext.getContext().setCurrentPerson(_previousUser);
+		super.tearDown();
+	}
 
 	/**
 	 * Tests listing instances of a type without pagination.
@@ -576,6 +610,8 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 		modules.add(SearchBuilder.Module.INSTANCE);
 		modules.add(ModelService.Module.INSTANCE);
 		modules.add(LabelProviderService.Module.INSTANCE);
+		// Needed to run the tests as the root account, see setUp().
+		modules.add(PersonManager.Module.INSTANCE);
 
 		modules.addAll(Arrays.asList(additionalModules));
 

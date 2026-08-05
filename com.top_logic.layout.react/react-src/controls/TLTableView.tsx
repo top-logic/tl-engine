@@ -615,6 +615,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
     + (isMulti ? checkboxWidth : 0);
 
+  // Both the header row and the body end this much behind the last column, keeping the column
+  // button clear of it: otherwise the button covers the last column's funnel as soon as the columns
+  // fill the available width, and that filter cannot be opened at all. Matches the button's CSS
+  // width (2rem), and applies to the body as well so that scrolling to the right end frees the
+  // funnel there, too.
+  // Kept as padding rather than width: the last body cell grows into the remaining space, so adding
+  // the reserve to the width would make that cell wider than its header cell. Padding widens the
+  // scroll range without offering the cells any space to grow into.
+  const buttonReserve = columnSelect ? 32 : 0;
+
   const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
   const someSelected = selectedCount > 0 && selectedCount < totalRowCount;
 
@@ -656,7 +666,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       {/* Header, plus the column selection sitting above the body's vertical scrollbar */}
       <div className="tlTableView__headerArea">
       <div className="tlTableView__header" ref={headerRef}>
-        <div className="tlTableView__headerRow" style={{ width: tableWidth }}>
+        <div className="tlTableView__headerRow" style={{ width: tableWidth, paddingRight: buttonReserve }}>
           {isMulti && (
             <div className={'tlTableView__headerCell tlTableView__checkboxCell'
                 + (frozenColumnCount > 0 ? ' tlTableView__headerCell--frozen' : '')}
@@ -783,7 +793,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         tabIndex={0}
       >
         {/* Spacer for virtual scrolling */}
-        <div style={{ height: totalHeight, position: 'relative', width: tableWidth }}>
+        <div style={{ height: totalHeight, position: 'relative', width: tableWidth, paddingRight: buttonReserve }}>
           {rows.map((row) => (
             <div
               key={row.id}
@@ -797,6 +807,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 top: row.index * rowHeight,
                 height: rowHeight,
                 width: tableWidth,
+                paddingRight: buttonReserve,
                 ...(row.index === cursorIndex
                   ? { outline: '2px solid var(--color-primary, #1a73e8)', outlineOffset: '-2px' }
                   : {}),

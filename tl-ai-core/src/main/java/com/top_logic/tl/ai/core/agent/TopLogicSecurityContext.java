@@ -215,7 +215,8 @@ public class TopLogicSecurityContext implements SecurityContext {
 	 *        The resolved tool authorization of the run.
 	 */
 	static TopLogicSecurityContext enforcedRun(ToolAuthorization authorization) {
-		return new TopLogicSecurityContext(AiSecurityMode.ENFORCED, ModelSecurity.UNCHECKED, authorization);
+		return new TopLogicSecurityContext(AiSecurityMode.ENFORCED, ModelSecurity.UNCHECKED, authorization,
+			null, authorization.isBackground());
 	}
 
 	private static TopLogicSecurityContext build(AiSecurityMode mode, Person principal, boolean background) {
@@ -286,7 +287,7 @@ public class TopLogicSecurityContext implements SecurityContext {
 		if (bounded == _toolAuthorization) {
 			return this;
 		}
-		return new TopLogicSecurityContext(_securityMode, _modelSecurity, bounded);
+		return new TopLogicSecurityContext(_securityMode, _modelSecurity, bounded, _principal, true);
 	}
 
 	@Override

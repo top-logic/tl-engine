@@ -56,6 +56,7 @@ import com.top_logic.table.GroupKey;
 import com.top_logic.table.Sort;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
+import com.top_logic.table.TableViewState;
 import com.top_logic.table.ViewStateStore;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -142,6 +143,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/** @see #setHiddenByDefault(Collection) */
 	private Set<String> _hiddenByDefault = Set.of();
+
+	/** @see #setFixedColumns(int) */
+	private int _fixedColumns;
 
 	private ViewChannel _selectionChannel;
 
@@ -284,6 +288,18 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * How many of the leading data columns stay in place while the table is scrolled horizontally.
+	 *
+	 * <p>
+	 * Counted among the data columns: a leading action column (the detail button) is carried along,
+	 * because it sits left of them all.
+	 * </p>
+	 */
+	public void setFixedColumns(int fixedColumns) {
+		_fixedColumns = fixedColumns;
+	}
+
+	/**
 	 * Binds the table's selection two-way to the given channel.
 	 */
 	public void setSelectionChannel(ViewChannel selectionChannel) {
@@ -408,8 +424,23 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
 		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
-		DefaultTableView<TLObject> view = DefaultTableView.create(columns, _rowSource, _store,
-			_store != null ? _tableId : null, _defaultSort, _hiddenByDefault);
+		TableViewState initialState =
+			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
+		if (_fixedColumns > 0) {
+			// The configured number counts data columns; a leading action column has to be added on
+			// top of it, or freezing "the first two columns" would freeze the detail button and one
+			// data column.
+			int leadingActions = 0;
+			for (Column<TLObject, ?> column : columns) {
+				if (column.selectable()) {
+					break;
+				}
+				leadingActions++;
+			}
+			initialState.setFrozenCount(Math.min(_fixedColumns + leadingActions, columns.size()));
+		}
+		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
+			_store != null ? _tableId : null, _hiddenByDefault);
 
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();

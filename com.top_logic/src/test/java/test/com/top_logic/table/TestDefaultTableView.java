@@ -367,6 +367,33 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals(List.of("_detail", "age", "name"), view.columns().stream().map(ColumnView::name).toList());
 	}
 
+	public void testConfiguredFrozenCountIsTheInitialState() {
+		List<Column<Person, ?>> columns = personColumns();
+		TableViewState initial = DefaultTableView.initialState(columns, SortSpec.NONE, List.of());
+		initial.setFrozenCount(1);
+		TableView<Person> view =
+			new DefaultTableView<>(columns, new ListRowSource<>(people(), columns), initial, null, null, List.of());
+		assertEquals(1, view.frozenColumnCount());
+	}
+
+	public void testFrozenAreaDoesNotEndBehindAnActionColumn() {
+		List<Column<Person, ?>> columns = new java.util.ArrayList<>();
+		columns.add(DefaultColumn.<Person, Person> builder("_detail", row -> row)
+			.label(ResKey.text(""))
+			.frozenEligible(false)
+			.selectable(false)
+			.build());
+		columns.addAll(personColumns());
+		TableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+
+		view.setFrozenColumnCount(1);
+		assertEquals("A column holding a button is carried along, it does not end the frozen area.",
+			0, view.frozenColumnCount());
+
+		view.setFrozenColumnCount(2);
+		assertEquals(2, view.frozenColumnCount());
+	}
+
 	public void testListenerNotifiedOnSortAndFilter() {
 		TableView<Person> view = newView();
 		int[] columnsChanged = {0};

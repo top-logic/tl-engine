@@ -464,6 +464,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_UNFREEZE_ALL;
 
 	/**
+	 * @en Drag to choose the columns that stay in place while scrolling
+	 */
+	@CustomKey("js.table.freezeSplitter")
+	public static ResKey JS_TABLE_FREEZE_SPLITTER;
+
+	/**
 	 * @en Filter
 	 */
 	@CustomKey("js.table.filter")

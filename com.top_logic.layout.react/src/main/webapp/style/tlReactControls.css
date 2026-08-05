@@ -2473,6 +2473,8 @@ button.tlMenu__item--disabled:hover {
 .tlTableView {
 	display: flex;
 	flex-direction: column;
+	/* Anchor for the preview of the dragged frozen-column boundary, which spans header and rows. */
+	position: relative;
 	width: 100%;
 	height: 100%;
 	font-family: var(--font-family);
@@ -2770,6 +2772,48 @@ button.tlMenu__item--disabled:hover {
 .tlTableView__cell--frozenLast {
 	box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
 	clip-path: inset(0 -4px 0 0);
+}
+
+/* Grip to drag the boundary of the frozen area to another column. Sits above the sticky header cells
+   (z-index 2) and stops at the header's bottom border, so the line below it stays unbroken. When no
+   column is frozen, the grip waits at the left edge of the table, where it can pull a frozen area
+   out. */
+.tlTableView__frozenSplitter {
+	position: absolute;
+	top: 0;
+	bottom: 2px;
+	z-index: 3;
+	width: 7px;
+	margin-left: -3px;
+	cursor: col-resize;
+}
+
+.tlTableView__frozenSplitter::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 3px;
+	width: 1px;
+	background: var(--interactive, #0f62fe);
+	opacity: 0;
+}
+
+.tlTableView__frozenSplitter:hover::after,
+.tlTableView__frozenSplitter--active::after {
+	opacity: 1;
+}
+
+/* Preview of the dragged boundary, spanning header and rows. */
+.tlTableView__frozenPreview {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	z-index: 4;
+	width: 2px;
+	margin-left: -1px;
+	background: var(--interactive, #0f62fe);
+	pointer-events: none;
 }
 
 /* -- Tree table -- */

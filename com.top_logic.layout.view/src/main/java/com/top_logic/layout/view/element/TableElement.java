@@ -65,6 +65,7 @@ import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
+import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
@@ -102,6 +103,9 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getColumns()}. */
 		String COLUMNS = "columns";
+
+		/** Configuration name for {@link #getFixedColumns()}. */
+		String FIXED_COLUMNS = "fixed-columns";
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
@@ -148,6 +152,19 @@ public class TableElement implements UIElement {
 		 */
 		@Name(COLUMNS)
 		ColumnsConfig getColumns();
+
+		/**
+		 * How many of the leading columns stay in place while the table is scrolled horizontally.
+		 *
+		 * <p>
+		 * With a table wider than its viewport, the columns beyond these disappear behind them. The
+		 * user can move the boundary (by dragging it, or through the column header's context menu);
+		 * the value configured here is what a table starts with, until a personalization of its own
+		 * exists. Zero (default) keeps no column in place.
+		 * </p>
+		 */
+		@Name(FIXED_COLUMNS)
+		int getFixedColumns();
 
 		/**
 		 * Optional {@link ViewChannel} to write the selected row object(s) to.
@@ -345,9 +362,11 @@ public class TableElement implements UIElement {
 			columns.add(setup.binding().createColumn(setup));
 		}
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
-		DefaultTableView<Object> view = DefaultTableView.create(columns, source,
-			PersonalConfigViewStateStore.INSTANCE, tableId(), defaultSort(),
-			hiddenByDefault(setups.stream().map(ColumnSetup::attribute).toList()));
+		Set<String> hiddenByDefault = hiddenByDefault(setups.stream().map(ColumnSetup::attribute).toList());
+		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
+		initialState.setFrozenCount(_config.getFixedColumns());
+		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
+			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault);
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 
@@ -452,6 +471,7 @@ public class TableElement implements UIElement {
 		control.setHiddenByDefault(
 			hiddenByDefault(editColumns.stream().map(RowSetTableControl.TableColumn::attribute).toList()));
 		control.setDefaultSort(defaultSort());
+		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
 		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), resolveObservedTypes(), inputChannels);
 		control.init();

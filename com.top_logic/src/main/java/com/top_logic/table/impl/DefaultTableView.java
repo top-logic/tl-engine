@@ -195,6 +195,23 @@ public class DefaultTableView<R> implements TableView<R> {
 	 */
 	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
 			ViewStateStore store, TableId id, SortSpec defaultSort, Collection<String> hiddenByDefault) {
+		return new DefaultTableView<>(columns, source, initialState(columns, defaultSort, hiddenByDefault),
+			store, id, hiddenByDefault);
+	}
+
+	/**
+	 * The view state a table starts from: all columns but the ones hidden by default, in declaration
+	 * order, with their default widths, sorted by the given order.
+	 *
+	 * <p>
+	 * A caller that wants more of the initial state than the {@code create} methods offer - a number
+	 * of frozen columns, for instance - fills it in here and passes the result to
+	 * {@link #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection)}.
+	 * A persisted personalization still wins over it, exactly as it does over the default sort.
+	 * </p>
+	 */
+	public static <R> TableViewState initialState(List<Column<R, ?>> columns, SortSpec defaultSort,
+			Collection<String> hiddenByDefault) {
 		TableViewState state = new TableViewState();
 		state.setSort(new ArrayList<>(defaultSort.columns()));
 		List<String> order = new ArrayList<>(columns.size());
@@ -211,7 +228,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		state.setColumnOrder(order);
 		state.setHiddenColumns(hidden);
 		state.setWidths(widths);
-		return new DefaultTableView<>(columns, source, state, store, id, hiddenByDefault);
+		return state;
 	}
 
 	// ---- structure ----
@@ -500,9 +517,33 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	@Override
 	public void setFrozenColumnCount(int count) {
-		_state.setFrozenCount(count);
+		_state.setFrozenCount(frozenPrefix(count));
 		persist();
 		fireColumnsChanged();
+	}
+
+	/**
+	 * The largest frozen prefix no longer than the requested one that ends behind a column the user
+	 * may freeze.
+	 *
+	 * <p>
+	 * A column declining to be {@link Column#frozenEligible() frozen} - an action column holding a
+	 * button, say - must not be the one the frozen area ends with. Leading columns of that kind are
+	 * carried along: they sit left of everything the user can decide about, so freezing anything at
+	 * all includes them.
+	 * </p>
+	 */
+	private int frozenPrefix(int count) {
+		List<String> order = _state.getColumnOrder();
+		int result = Math.max(0, Math.min(count, order.size()));
+		while (result > 0) {
+			Column<R, ?> last = _columns.get(order.get(result - 1));
+			if (last == null || last.frozenEligible()) {
+				return result;
+			}
+			result--;
+		}
+		return 0;
 	}
 
 	@Override

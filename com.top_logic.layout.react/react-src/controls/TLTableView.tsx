@@ -39,6 +39,7 @@ const TableKeyBindings: React.FC<{
 const I18N_KEYS = {
   'js.table.freezeUpTo': 'Freeze up to here',
   'js.table.unfreezeAll': 'Unfreeze all',
+  'js.table.freezeSplitter': 'Drag to choose the columns that stay in place while scrolling',
   'js.table.filter': 'Filter',
   'js.table.columns': 'Columns',
 };
@@ -190,6 +191,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const treeIndentWidth = 20;
 
   const headerRef = React.useRef<HTMLDivElement>(null);
+  const headerAreaRef = React.useRef<HTMLDivElement>(null);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = React.useRef<number | null>(null);
 
@@ -213,6 +215,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     x: number; y: number; colIdx: number;
   } | null>(null);
 
+  // -- Frozen column splitter state: the boundary the running drag would drop the frozen area at. --
+  const [frozenPreview, setFrozenPreview] = React.useState<{ x: number; count: number } | null>(null);
+
 
   // Clear overrides when server pushes updated columns (resize confirmed).
   React.useEffect(() => {
@@ -233,6 +238,19 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       left += getColWidth(columns[i]);
     }
     return offsets;
+  }, [columns, frozenColumnCount, isMulti, checkboxWidth, getColWidth]);
+
+  // Where the frozen area ends, measured from the left edge of the table: the frozen cells stick to
+  // that edge, so this is a fixed position independent of the horizontal scroll offset.
+  const frozenWidth = React.useMemo(() => {
+    if (frozenColumnCount <= 0) {
+      return 0;
+    }
+    let width = isMulti ? checkboxWidth : 0;
+    for (let i = 0; i < frozenColumnCount && i < columns.length; i++) {
+      width += getColWidth(columns[i]);
+    }
+    return width;
   }, [columns, frozenColumnCount, isMulti, checkboxWidth, getColWidth]);
 
   const totalHeight = totalRowCount * rowHeight;
@@ -588,6 +606,48 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     setContextMenu(null);
   }, [sendCommand]);
 
+  // -- Frozen column splitter: drag the boundary of the frozen area onto another column border. --
+  const handleFrozenSplitStart = React.useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const area = headerAreaRef.current;
+    const header = headerRef.current;
+    if (!area || !header) {
+      return;
+    }
+
+    // The boundary snaps to a column border that is on screen right now. Measuring the rendered
+    // header cells covers the frozen columns (sticky, at their fixed offsets) and the scrolled ones
+    // alike, and it keeps the frozen area from growing wider than the visible table: a border that
+    // has scrolled out of view is no candidate.
+    const areaWidth = area.clientWidth;
+    const options: { x: number; count: number }[] = [{ x: 0, count: 0 }];
+    header.querySelectorAll<HTMLElement>('[data-col-idx]').forEach((cell) => {
+      const x = cell.getBoundingClientRect().right - area.getBoundingClientRect().left;
+      if (x > 0 && x <= areaWidth) {
+        options.push({ x, count: Number(cell.dataset.colIdx) + 1 });
+      }
+    });
+
+    let target = { x: frozenWidth, count: frozenColumnCount };
+    const move = (e: MouseEvent) => {
+      const x = e.clientX - area.getBoundingClientRect().left;
+      target = options.reduce(
+        (best, option) => (Math.abs(option.x - x) < Math.abs(best.x - x) ? option : best), options[0]);
+      setFrozenPreview(target);
+    };
+    const up = () => {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      setFrozenPreview(null);
+      if (target.count !== frozenColumnCount) {
+        sendCommand('setFrozenColumnCount', { count: target.count });
+      }
+    };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  }, [frozenWidth, frozenColumnCount, sendCommand]);
+
   // Close context menu on outside click; Escape is handled by the shared keyboard dispatcher.
   React.useEffect(() => {
     if (!contextMenu) return;
@@ -664,7 +724,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onDrop={handleDrop}
     >
       {/* Header, plus the column selection sitting above the body's vertical scrollbar */}
-      <div className="tlTableView__headerArea">
+      <div className="tlTableView__headerArea" ref={headerAreaRef}>
       <div className="tlTableView__header" ref={headerRef}>
         <div className="tlTableView__headerRow" style={{ width: tableWidth, paddingRight: buttonReserve }}>
           {isMulti && (
@@ -708,6 +768,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <div
                 key={col.name}
                 className={cellClass}
+                data-col-idx={colIdx}
                 style={{
                   width: w, minWidth: w,
                   position: isFrozen ? 'sticky' as const : 'relative' as const,
@@ -771,6 +832,15 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           />
         </div>
       </div>
+        {/* Grip on the boundary of the frozen columns. Confined to the header: a grip running down
+            the body would swallow the clicks on the cells behind it. */}
+        <div
+          className={'tlTableView__frozenSplitter'
+            + (frozenPreview ? ' tlTableView__frozenSplitter--active' : '')}
+          style={{ left: frozenWidth }}
+          title={i18n['js.table.freezeSplitter']}
+          onMouseDown={handleFrozenSplitStart}
+        />
         {columnSelect && (
           <button
             type="button"
@@ -891,6 +961,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           ))}
         </div>
       </div>
+
+      {/* Where the frozen area would end if the splitter were dropped now. Drawn over the whole
+          table, so the boundary can be judged against the rows, not only against the headings. */}
+      {frozenPreview && (
+        <div className="tlTableView__frozenPreview" style={{ left: frozenPreview.x }} />
+      )}
 
       {/* Column context menu */}
       {contextMenu && (

@@ -182,7 +182,7 @@ public class TestDelegateFilter extends TestCase {
 	/** An ungrouped tool keeps a delegate alive for nobody, and names no capability. */
 	public void testUngroupedToolNamesNoCapability() {
 		AgentDefinition delegate = new AgentDefinition("ungrouped", "ungrouped", "", List.of(UNGROUPED_TOOL),
-			List.of(), List.of(), List.of(), AgentSource.CONFIG);
+			List.of(), List.of(), List.of(), null, AgentSource.CONFIG);
 		AgentCapabilities capabilities = readOnlyPrincipal();
 
 		assertNotNull(capabilities.unusableReason(delegate));
@@ -222,7 +222,7 @@ public class TestDelegateFilter extends TestCase {
 	 */
 	public void testLegacyCatalogIsUnchanged() {
 		AgentDefinition parent = new AgentDefinition(PARENT, "p", "", List.of(), List.of(), List.of(),
-			List.of(READER_DELEGATE, WRITER_DELEGATE), AgentSource.CONFIG);
+			List.of(READER_DELEGATE, WRITER_DELEGATE), null, AgentSource.CONFIG);
 
 		assertEquals("\n\n### Available Delegates\n\n"
 			+ "You can delegate tasks to these specialized agents:\n\n"
@@ -268,7 +268,7 @@ public class TestDelegateFilter extends TestCase {
 	/** With every delegate dropped there is no section at all, rather than an empty heading. */
 	public void testCatalogIsEmptyWhenEveryDelegateIsDropped() {
 		AgentDefinition parent = new AgentDefinition(PARENT, "p", "", List.of(), List.of(), List.of(),
-			List.of(WRITER_DELEGATE, MCP_DELEGATE), AgentSource.CONFIG);
+			List.of(WRITER_DELEGATE, MCP_DELEGATE), null, AgentSource.CONFIG);
 
 		assertEquals("", catalogOf(parent, readOnlyPrincipal()));
 	}
@@ -329,7 +329,7 @@ public class TestDelegateFilter extends TestCase {
 	/** With nothing left to delegate to there is nothing to await either. */
 	public void testAwaitToolIsAbsentWhenEveryDelegateIsDropped() {
 		AgentDefinition parent = new AgentDefinition(PARENT, "p", "", List.of(), List.of(), List.of(),
-			List.of(WRITER_DELEGATE), AgentSource.CONFIG);
+			List.of(WRITER_DELEGATE), null, AgentSource.CONFIG);
 
 		assertNull(registrationOf(parent, readOnlyPrincipal()).getTool("wait_for_subagent"));
 	}
@@ -379,13 +379,13 @@ public class TestDelegateFilter extends TestCase {
 		agents.put(TOOLLESS_DELEGATE, withTools(TOOLLESS_DELEGATE));
 		agents.put(ROUTER_DELEGATE, delegating(ROUTER_DELEGATE, READER_DELEGATE, WRITER_DELEGATE));
 		agents.put(SKILLED_DELEGATE, new AgentDefinition(SKILLED_DELEGATE, SKILLED_DELEGATE, "",
-			List.of(), List.of(), List.of("scripting"), List.of(), AgentSource.CONFIG));
+			List.of(), List.of(), List.of("scripting"), List.of(), null, AgentSource.CONFIG));
 		agents.put(TYPO_DELEGATE, withTools(TYPO_DELEGATE, "no.suchTool"));
 		agents.put(MCP_DELEGATE, new AgentDefinition(MCP_DELEGATE, MCP_DELEGATE, "",
-			List.of(), List.of("remote"), List.of(), List.of(), AgentSource.CONFIG));
+			List.of(), List.of("remote"), List.of(), List.of(), null, AgentSource.CONFIG));
 		agents.put(CYCLE_A, delegating(CYCLE_A, CYCLE_B));
 		agents.put(CYCLE_B, new AgentDefinition(CYCLE_B, CYCLE_B, "", List.of(WRITE_TOOL), List.of(),
-			List.of(), List.of(CYCLE_A), AgentSource.CONFIG));
+			List.of(), List.of(CYCLE_A), null, AgentSource.CONFIG));
 
 		Map<String, SkillDefinition> skills = Map.of("scripting",
 			new SkillDefinition("scripting", "scripting", "content", List.of(SCRIPT_TOOL),
@@ -412,12 +412,12 @@ public class TestDelegateFilter extends TestCase {
 	}
 
 	private static AgentDefinition withTools(String name, String... tools) {
-		return new AgentDefinition(name, name, "", List.of(tools), List.of(), List.of(), List.of(),
+		return new AgentDefinition(name, name, "", List.of(tools), List.of(), List.of(), List.of(), null,
 			AgentSource.CONFIG);
 	}
 
 	private static AgentDefinition delegating(String name, String... delegations) {
-		return new AgentDefinition(name, name, "", List.of(), List.of(), List.of(), List.of(delegations),
+		return new AgentDefinition(name, name, "", List.of(), List.of(), List.of(), List.of(delegations), null,
 			AgentSource.CONFIG);
 	}
 

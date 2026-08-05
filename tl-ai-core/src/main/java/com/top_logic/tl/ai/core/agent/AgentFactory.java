@@ -397,7 +397,11 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		return new AgentParams(model, systemPrompt, maxTurns,
 			maxOutputTokens, modelOptions, contextWindowTokens,
-			maxRetries, timeoutSeconds, toolChoice, msg -> true);
+			maxRetries, timeoutSeconds, toolChoice, msg -> true,
+			// The agent's declared security mode travels with the loop's parameters, so that every
+			// run of it - a top-level run, a delegated child, an asynchronous subagent - resolves the
+			// same floor at the same point.
+			agent.securityFloor());
 	}
 
 	private static int resolveMaxToolResultChars(AgentModelAssignment assignment) {

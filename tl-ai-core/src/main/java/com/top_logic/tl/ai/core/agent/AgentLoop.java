@@ -263,6 +263,8 @@ public class AgentLoop {
 		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
 
+		ToolContext runContext = securedContext(context);
+
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
 
 		AgentEventListener serialized =
@@ -271,7 +273,7 @@ public class AgentLoop {
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
 		try {
-			return runLoop(conversation, context.withModel(_config.model()), serialized, runId);
+			return runLoop(conversation, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
 			// never left waiting for a run that already died.
@@ -279,6 +281,32 @@ public class AgentLoop {
 			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY));
 			throw e;
 		}
+	}
+
+	/**
+	 * The context this run executes with: the caller's, bound to this loop's model and tightened to
+	 * the security mode the agent definition declares for itself.
+	 *
+	 * <p>
+	 * Resolved here, once, before the first provider call and before any run event is emitted, so a
+	 * run that must be refused produces no half-run at all.
+	 * </p>
+	 *
+	 * @see AgentParams#securityFloor()
+	 */
+	/*
+	 * This is the one point every run passes through - an entry point's top-level run, a delegated
+	 * child, an asynchronous subagent - which is why the agent definition's floor is applied here
+	 * rather than at each entry point. A child inherits its parent's context and this can only narrow
+	 * it, so the child of an enforced parent can never come out laxer, whatever it declares, while a
+	 * child declaring something stricter keeps it.
+	 *
+	 * The entry points resolve the same floor a second time when they build the context (see
+	 * ToolContext.forCurrentUser(AiSecurityMode)), and have to: an unrestricted context has no
+	 * principal, so it cannot be tightened here at all - it can only be refused.
+	 */
+	private ToolContext securedContext(ToolContext context) {
+		return context.restrictedTo(_config.securityFloor()).withModel(_config.model());
 	}
 
 	private AgentResult runLoop(Conversation conversation, ToolContext context,
@@ -376,6 +404,8 @@ public class AgentLoop {
 		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
 
+		ToolContext runContext = securedContext(context);
+
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
 
 		AgentEventListener serialized =
@@ -384,7 +414,7 @@ public class AgentLoop {
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
 		try {
-			return runWithMemory(_memory, context.withModel(_config.model()), serialized, runId);
+			return runWithMemory(_memory, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
 			// never left waiting for a run that already died.

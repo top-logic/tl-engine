@@ -32,6 +32,7 @@ import com.top_logic.tl.ai.tool.api.Tool;
  * bound once, when the context for a run is created, so nothing can widen them mid-run.</p>
  *
  * @see #forRun(Person, boolean)
+ * @see #forRun(Person, boolean, AiSecurityMode)
  */
 public class TopLogicSecurityContext implements SecurityContext {
 
@@ -40,6 +41,17 @@ public class TopLogicSecurityContext implements SecurityContext {
 	private final ModelSecurity _modelSecurity;
 
 	private final ToolAuthorization _toolAuthorization;
+
+	/*
+	 * Kept only so that restrictedTo(AiSecurityMode) can rebuild this context in a stricter mode. A
+	 * mode is not a filter that can be tightened in place: it decides which ModelSecurity and which
+	 * ToolAuthorization the context holds, and those two need the principal and the background flag to
+	 * construct. Nothing reads them per check - see the class comment on why the principal is bound
+	 * once.
+	 */
+	private final Person _principal;
+
+	private final boolean _background;
 
 	/**
 	 * Creates a {@link TopLogicSecurityContext} with agent security unenforced.
@@ -51,14 +63,16 @@ public class TopLogicSecurityContext implements SecurityContext {
 	 * </p>
 	 */
 	public TopLogicSecurityContext() {
-		this(AiSecurityMode.LEGACY, ModelSecurity.UNCHECKED, ToolAuthorization.UNCHECKED);
+		this(AiSecurityMode.LEGACY, ModelSecurity.UNCHECKED, ToolAuthorization.UNCHECKED, null, false);
 	}
 
 	private TopLogicSecurityContext(AiSecurityMode securityMode, ModelSecurity modelSecurity,
-			ToolAuthorization toolAuthorization) {
+			ToolAuthorization toolAuthorization, Person principal, boolean background) {
 		_securityMode = securityMode;
 		_modelSecurity = modelSecurity;
 		_toolAuthorization = toolAuthorization;
+		_principal = principal;
+		_background = background;
 	}
 
 	/**
@@ -83,7 +97,37 @@ public class TopLogicSecurityContext implements SecurityContext {
 	 *         {@code principal} is <code>null</code>.
 	 */
 	public static TopLogicSecurityContext forRun(Person principal, boolean background) {
-		return build(AiToolAccessService.ceiling(), principal, background);
+		return forRun(principal, background, null);
+	}
+
+	/**
+	 * Creates the {@link SecurityContext} for one agent run of an agent that declares a security mode
+	 * of its own.
+	 *
+	 * <p>
+	 * The run's mode is the stricter of the deployment's and the agent's, resolved here - once, before
+	 * the first provider call - and then carried unchanged.
+	 * </p>
+	 *
+	 * @param principal
+	 *        The authenticated user the run acts as, or <code>null</code> for a run with no user
+	 *        identity.
+	 * @param background
+	 *        Whether the run has no human to answer approval prompts. See
+	 *        {@link #forRun(Person, boolean)}.
+	 * @param agentFloor
+	 *        The mode the agent definition declares for itself, or <code>null</code> if it declares
+	 *        none. Can only make the run stricter.
+	 * @throws IllegalStateException
+	 *         If the resolved mode {@link AiSecurityMode#requiresUser() requires a user} and
+	 *         {@code principal} is <code>null</code> - which an agent floor can newly cause in a
+	 *         deployment that would not have required one.
+	 * @see AiSecurityMode#stricter(AiSecurityMode, AiSecurityMode)
+	 */
+	public static TopLogicSecurityContext forRun(Person principal, boolean background,
+			AiSecurityMode agentFloor) {
+		return build(AiSecurityMode.stricter(AiToolAccessService.ceiling(), agentFloor), principal,
+			background);
 	}
 
 	/**
@@ -108,7 +152,51 @@ public class TopLogicSecurityContext implements SecurityContext {
 	 *         wastes a provider round trip and produces a confusing half-run.
 	 */
 	public static TopLogicSecurityContext forRun(ToolAccessPolicy deployment, Person principal) {
-		return build(AiSecurityMode.resolve(deployment), principal, false);
+		return forRun(deployment, principal, null);
+	}
+
+	/**
+	 * Creates the {@link SecurityContext} for one agent run, resolving its effective security mode
+	 * against an explicitly supplied policy and an agent's declared mode.
+	 *
+	 * <p>
+	 * <b>A test seam</b>, like {@link #forRun(ToolAccessPolicy, Person)}.
+	 * </p>
+	 *
+	 * @param deployment
+	 *        The deployment-wide policy, or <code>null</code> if the application configures none.
+	 * @param principal
+	 *        The authenticated user the run acts as, or <code>null</code> for a run with no user
+	 *        identity.
+	 * @param agentFloor
+	 *        The mode the agent definition declares for itself, or <code>null</code> if it declares
+	 *        none. Can only make the run stricter.
+	 * @throws IllegalStateException
+	 *         If the resolved mode {@link AiSecurityMode#requiresUser() requires a user} and
+	 *         {@code principal} is <code>null</code>.
+	 */
+	public static TopLogicSecurityContext forRun(ToolAccessPolicy deployment, Person principal,
+			AiSecurityMode agentFloor) {
+		return build(AiSecurityMode.resolve(deployment, agentFloor), principal, false);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Rebuilds this context in the stricter mode rather than tightening it in place: the mode decides
+	 * <em>which</em> {@link ModelSecurity} and which {@link ToolAuthorization} a context holds, so a
+	 * stricter mode means different objects - constructed from the same principal and the same
+	 * background flag this context was built for.
+	 * </p>
+	 */
+	@Override
+	public TopLogicSecurityContext restrictedTo(AiSecurityMode agentFloor) {
+		AiSecurityMode effective = AiSecurityMode.stricter(_securityMode, agentFloor);
+		if (effective == _securityMode) {
+			return this;
+		}
+		return build(effective, _principal, _background);
 	}
 
 	/**
@@ -127,7 +215,8 @@ public class TopLogicSecurityContext implements SecurityContext {
 	 *        The resolved tool authorization of the run.
 	 */
 	static TopLogicSecurityContext enforcedRun(ToolAuthorization authorization) {
-		return new TopLogicSecurityContext(AiSecurityMode.ENFORCED, ModelSecurity.UNCHECKED, authorization);
+		return new TopLogicSecurityContext(AiSecurityMode.ENFORCED, ModelSecurity.UNCHECKED, authorization,
+			null, authorization.isBackground());
 	}
 
 	private static TopLogicSecurityContext build(AiSecurityMode mode, Person principal, boolean background) {
@@ -141,7 +230,7 @@ public class TopLogicSecurityContext implements SecurityContext {
 		ToolAuthorization toolAuthorization = mode.enforcesToolAccess()
 			? AiToolAccessService.authorizationFor(principal, background)
 			: ToolAuthorization.UNCHECKED;
-		return new TopLogicSecurityContext(mode, modelSecurity, toolAuthorization);
+		return new TopLogicSecurityContext(mode, modelSecurity, toolAuthorization, principal, background);
 	}
 
 	@Override
@@ -198,7 +287,7 @@ public class TopLogicSecurityContext implements SecurityContext {
 		if (bounded == _toolAuthorization) {
 			return this;
 		}
-		return new TopLogicSecurityContext(_securityMode, _modelSecurity, bounded);
+		return new TopLogicSecurityContext(_securityMode, _modelSecurity, bounded, _principal, true);
 	}
 
 	@Override

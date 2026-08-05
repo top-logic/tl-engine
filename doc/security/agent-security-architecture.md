@@ -246,29 +246,50 @@ public enum AiSecurityMode {
 `SYSTEM`-mode run emits an audit record naming the configured reason (section 3.8). It is the honest
 name for what `createUnrestricted()` does silently today.
 
-#### Resolution: one deployment-wide mode
+#### Resolution: the deployment ceiling and the agent's floor
 
 ```
-effectiveMode = deploymentMode      where an absent policy means LEGACY
+effectiveMode = stricter(deploymentCeiling, agentFloor)     where an absent policy means LEGACY
+                                                           and an absent floor means "no floor"
 ```
 
-The mode is service configuration (`AiToolAccessService`), set by whoever operates the application,
-and every run of that application carries it. `AiSecurityMode.resolve(ToolAccessPolicy)` is the whole
-rule.
+The ceiling is service configuration (`AiToolAccessService`), set by whoever operates the application,
+and every run of that application carries at least it. The floor is the optional `security-mode` of
+one agent definition, and the ordering `ENFORCED > SYSTEM > LEGACY` decides between them:
+`AiSecurityMode.resolve(ToolAccessPolicy, AiSecurityMode)` is the whole rule.
 
-Threat **T9** is escalation by self-selection, and the answer is that there is nothing for a caller
-to select: the mode comes from static application configuration, not from the run's inputs.
-Resolution happens **once**, in the entry point that builds the `ToolContext`, and the result is a
-final field on the `SecurityContext`. It is never re-derived mid-run and never re-derived per tool
-call, so a tool cannot influence it.
+Reading the per-agent value as a **floor** rather than as an override is what makes it safe to expose
+at all. Authoring an agent is a privileged action, but it is a *different* privilege from operating
+the deployment - so an agent may demand `ENFORCED` in a `LEGACY` deployment, and an agent asking for
+`LEGACY` in an `ENFORCED` deployment gets nothing. There is no escalation direction to abuse. The one
+uncomfortable corner is that the laxer value is then silently inert; it is stated in the property's
+own tooltip rather than left to be discovered.
 
-> **Design note - the per-agent floor.** An earlier revision of this design let an agent definition
-> pin itself *stricter* than the deployment (`stricter(ceiling, floor)`), so that a "customer-support"
-> agent could demand `ENFORCED` in a `LEGACY` deployment while no agent could pin itself laxer. It was
-> built as a parameter and then never wired: no agent definition carried a value and every entry point
-> passed `null`, so the composition rule was unreachable code documented as a feature. Both the
-> parameter and `stricter(...)` are **removed** - the shape is worth revisiting only together with the
-> per-agent configuration of section 4.2 that would give it a value. Tracked as **#260**.
+Threat **T9** is escalation by self-selection, and the answer is that neither input comes from the
+run: the ceiling is static application configuration and the floor is the agent definition, not
+anything the caller or the model supplies. Resolution happens **once** - the entry point resolves it
+when it builds the `ToolContext`, and `AgentLoop` resolves it again for the agent it is about to run,
+before the first provider call - and the result is a final field on the `SecurityContext`. It is never
+re-derived mid-run and never re-derived per tool call, so a tool cannot influence it.
+
+**Why twice.** The loop is the point every run passes through, including a delegated child and an
+asynchronous subagent, so applying the floor there is what gives child runs the rule below without
+each entry point knowing about it. But tightening needs the run's principal, and the fallback context
+a TL-Script entry point uses while nothing is enforced has none - so an entry point that ignored the
+floor would leave the loop able only to *refuse* the run. Both applications are idempotent
+(`SecurityContext.restrictedTo` returns `this` unless the floor really tightens), so resolving twice
+is not resolving differently.
+
+**Delegation and subagents.** A child run inherits its parent's `SecurityContext` unchanged and its
+own loop can only narrow it. So a child is **never laxer than its parent's effective mode**, whatever
+the child agent declares, and a child agent declaring something stricter keeps it. Nothing special is
+needed at the delegation seam; the invariant follows from the composition being one-directional.
+
+**What an `ENFORCED` floor actually buys** depends on what the deployment has to enforce with. Model
+access is the engine's, so it applies immediately. Tool authorization is the policy's, and a
+deployment that configured no `AiToolAccessService` at all has no matrix to check against - the run
+then carries `ENFORCED` with `ToolAuthorization.UNCHECKED`. A floor raises the mode; it does not
+invent a policy.
 
 Defaults:
 
@@ -1017,14 +1038,11 @@ writes, and the provider-safe `factory__tool` form the registry keys it by. A `<
 entry matches any of them. Matching only the registry's form (the first implementation) made a correctly
 spelled dot-notation grant reach nothing at all.
 
-### 4.2 Interaction with the per-agent tool list · **not built**
+### 4.2 Interaction with the per-agent tool list
 
-Both properties below are proposals. Neither exists (#260): the `stricter(...)` composition that
-`security-mode-floor` would have fed was built ahead of them, stayed unreachable because nothing ever
-set a floor, and has been removed. Implement the property and the composition together.
-
-Unchanged from today's `AgentDefinition.tools()` (`AgentDefinition.java:36`); the role policy is an
-additional, independent filter. New per-agent security properties:
+The tool list is unchanged from today's `AgentDefinition.tools()`; the role policy is an additional,
+independent filter. The per-agent security mode of section 3.1 is **built** (#260); `required-groups`
+below is still a proposal.
 
 ```xml
 <agent name="sales-assistant">
@@ -1034,13 +1052,30 @@ additional, independent filter. New per-agent security properties:
         <tool name="model-search.searchModel"/>
     </tools>
     <!-- Floor: this agent is never laxer than ENFORCED, whatever the deployment mode. -->
-    <security-mode-floor>ENFORCED</security-mode-floor>
-    <!-- Optional: additionally narrow this agent below what the user's roles allow. -->
+    <security-mode>ENFORCED</security-mode>
+    <!-- NOT BUILT. Optional: additionally narrow this agent below what the user's roles allow. -->
     <required-groups>
         <group name="data.read"/>
     </required-groups>
 </agent>
 ```
+
+The property is named `security-mode`, not `security-mode-floor` as an earlier draft of this section
+proposed: it is the same setting an administrator already knows from the deployment policy, and
+spelling the composition rule into the name buys less than having one name for one concept. That the
+value can only tighten is said in its tooltip, in 3.1, and in the resource an administrator reads.
+
+Both layers carry it, because both are places an agent definition is expressed:
+
+| Layer | Where | How |
+|---|---|---|
+| Framework agents | the `TopLogicAgentDefinitions` service XML | `<agent security-mode="ENFORCED">`, edited in *Service Editor → TopLogic Agents and Skills* |
+| Application agents | the knowledge base | the `securityMode` attribute of `tl.ai.core:Agent`, edited in the *Agent Editor* |
+
+Both are optional and both distinguish "not set" from an explicit `LEGACY` - `@Nullable` plus
+`@NullDefault` on the configuration property, a non-mandatory attribute in the model. An enum
+configuration property otherwise defaults to its first constant, which would make "the author of this
+agent said nothing" indistinguishable from "this author chose the laxest mode".
 
 `required-groups` is a self-imposed narrowing: the agent declares it needs nothing beyond these
 groups, so even a user with broad roles gets only these tools through *this* agent. It shrinks blast
@@ -1193,7 +1228,7 @@ compiles against the real API - nothing here is reference code any more. All new
 
 | Artifact | Status |
 |---|---|
-| `AiSecurityMode` - the three modes and `resolve(policy)` | Implemented, unit-tested. The per-agent floor and `stricter(...)` are removed (#260) |
+| `AiSecurityMode` - the three modes, `resolve(policy, agentFloor)` and `stricter(...)` | Implemented, unit-tested. The per-agent floor is built (#260): `security-mode` on both agent-definition layers, resolved by the entry points and by `AgentLoop` |
 | `ToolGroups` - the built-in group names and the privileged set | Implemented, unit-tested. **Lives in `tl-ai-tool-api`**, not next to the policy: a tool must be able to name its group without depending on the module that enforces it, and `tl-ai-vector-index` (which depends on `tl-ai-tool-api` alone) proved the point |
 | `ToolAccessPolicy` - the admin config interface of section 4.1 | Implemented; the XML in 4.1 is what it produces. **Read by `AiToolAccessService`** |
 | `AiToolAccessService` - the service of section 4.1 | **Implemented.** Reads the policy, resolves the effective ceiling, validates role names at boot with `context.error(...)`, resolves the roles a principal holds on the security root, and indexes the tool registry for name resolution |
@@ -1205,11 +1240,13 @@ compiles against the real API - nothing here is reference code any more. All new
 | `ToolSecurityException` - the denial a tool raises | Implemented; **no tool raises it yet** (that is L2, phase 4) |
 | `SecurityContext.securityMode()` / `.modelSecurity()`, `ToolContext.modelSecurity()` | The seam every tool reaches; defaults to `LEGACY` + `UNCHECKED` |
 | `SecurityContext.hasToolPermission` + `toolDenialReason` | **Enforcing.** `TopLogicSecurityContext` answers both from the policy; `ToolPermissionFilter` and `AgentLoop` prefer the specific reason over a generic "denied" |
-| `TopLogicSecurityContext.forRun(principal, background)` | Resolves the run's mode once, refuses an `ENFORCED` run with no principal, and binds the tool authorization. **Called by the chat, TL-Script and MCP entry points** |
+| `TopLogicSecurityContext.forRun(principal, background, agentFloor)` | Resolves the run's mode once as `stricter(ceiling, floor)`, refuses an `ENFORCED` run with no principal, and binds the tool authorization. **Called by the chat, TL-Script and MCP entry points** |
+| `SecurityContext.restrictedTo(agentFloor)` / `ToolContext.restrictedTo(...)` | The composition seam. Returns `this` unless the floor really tightens; refuses rather than dropping the floor when the context has no principal to build a stricter one from. **Applied once per run by `AgentLoop`**, which is what gives delegated children and subagents the rule of 3.1 |
 | `PreCommitGuard` + `ToolChangeSet` - the L4 hook signature | **Removed** (#259). Design in 3.5 / A.2; no code |
 | `@ToolMethod(group = ...)` in `tl-ai-tool-api` | **Enforced.** All 75 registered tools carry a group; `Tool.group()` is the runtime seam |
 | `@ToolMethod(types = ...)` | **Removed** (#258). Design in 3.3.3; no code |
-| Per-agent `security-mode-floor` / `required-groups` (4.2) | **Not built** (#260). The floor parameter that used to exist on `forRun` is gone, since no agent definition ever carried a value |
+| Per-agent `security-mode` (4.2) | **Built** (#260), on both agent-definition layers, unit-tested in `tl-ai-core` and against a booted fixture in `SecDemoAgentFloorTest` |
+| Per-agent `required-groups` (4.2) | **Not built.** A self-imposed narrowing of the tool list, independent of the mode above |
 | The two retrofit examples (A.1, A.2) | Appendix A - illustrative, not applied to any tool |
 
 **Behaviour is unchanged until an application writes `<tool-access>`.** The `AiToolAccessService` module

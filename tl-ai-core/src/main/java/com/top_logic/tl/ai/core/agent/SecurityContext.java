@@ -218,6 +218,43 @@ public interface SecurityContext {
 	}
 
 	/**
+	 * This context, tightened to the security mode an agent definition declares for itself.
+	 *
+	 * <p>
+	 * The composition seam for {@link AiSecurityMode#stricter(AiSecurityMode, AiSecurityMode)}: the
+	 * agent's value is a <em>floor</em>, so this returns {@code this} whenever the floor is absent or
+	 * not stricter than {@link #securityMode()}, and never a context laxer than this one. It is what
+	 * makes a delegated child run inherit its parent's mode and still honour a stricter floor of its
+	 * own.
+	 * </p>
+	 *
+	 * <p>
+	 * The default implementation can only answer the no-op case: a context that does not know the
+	 * run's principal has nothing to build a stricter one from, and answering {@code this} anyway
+	 * would silently drop the floor. It therefore refuses instead.
+	 * </p>
+	 *
+	 * @param agentFloor
+	 *        The mode the agent definition declares, or <code>null</code> if it declares none.
+	 * @return A context whose {@link #securityMode()} is
+	 *         {@code stricter(securityMode(), agentFloor)}, possibly {@code this}.
+	 * @throws IllegalStateException
+	 *         If the floor is stricter than this context and this context cannot produce a stricter
+	 *         one.
+	 */
+	default SecurityContext restrictedTo(AiSecurityMode agentFloor) {
+		AiSecurityMode effective = AiSecurityMode.stricter(securityMode(), agentFloor);
+		if (effective == securityMode()) {
+			return this;
+		}
+		throw new IllegalStateException("This agent declares security mode " + agentFloor
+			+ ", which is stricter than the " + securityMode() + " mode of the run it was started"
+			+ " from, but that run's security context cannot be tightened: it has no principal to"
+			+ " authorize against. Start such an agent through an entry point that resolves its"
+			+ " declared mode before building the context.");
+	}
+
+	/**
 	 * Per-object model access checks for the run's principal.
 	 *
 	 * <p>

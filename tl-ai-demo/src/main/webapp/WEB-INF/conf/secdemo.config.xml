@@ -340,6 +340,34 @@
 		</config>
 
 		<!--
+			One agent that names a security mode of its own, so the composition of the two is
+			observable in a booted application.
+
+			The deployment above is ENFORCED, which is already the strictest mode, so no agent can
+			raise anything here - which makes this fixture the interesting half of the rule: an agent
+			asking to be treated more leniently than the deployment gets nothing. Its declaration is
+			read (it reaches AgentDefinition.securityFloor()) and then loses to the ceiling, and a run
+			of it is checked exactly like a run of any other agent.
+
+			Deliberately no tools, no skills and no delegations: what is under test is the mode
+			resolution, and an agent with a tool list would additionally depend on which tools the
+			acting persona holds. SecDemoAgentFloorTest is the assertion; scenario F1 in
+			doc/security/testbed.md is the same thing by hand.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+			<instance>
+				<agents>
+					<agent name="TL_secDemoLaxAgent"
+						security-mode="LEGACY"
+						description="Test bed fixture: an agent that asks to be unenforced. The deployment is ENFORCED, so it is enforced anyway."
+					>
+						<system-prompt>You exist to demonstrate that an agent cannot make itself laxer than its deployment.</system-prompt>
+					</agent>
+				</agents>
+			</instance>
+		</config>
+
+		<!--
 			The second, independent security layer: component (layout) access. The policies above
 			decide what a role may do with the data and which tools it may call, this decides which
 			views a role may open at all. All three are needed - a role with model rights and tool

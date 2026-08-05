@@ -22,6 +22,11 @@ public class TlAiCoreFactory extends com.top_logic.element.meta.kbbased.Abstract
 	public static final String TL_AI_CORE_STRUCTURE = "tl.ai.core";
 
 	/**
+	 * Name of the data type <code>AiSecurityMode</code> in module {@value #TL_AI_CORE_STRUCTURE}.
+	 */
+	public static final String AI_SECURITY_MODE_TYPE = "AiSecurityMode";
+
+	/**
 	 * Lookup {@link Agent} type.
 	 */
 	public static com.top_logic.model.TLClass getAgentType() {
@@ -54,6 +59,13 @@ public class TlAiCoreFactory extends com.top_logic.element.meta.kbbased.Abstract
 	 */
 	public static com.top_logic.model.TLProperty getNameAgentAttr() {
 		return (com.top_logic.model.TLProperty) getAgentType().getPart(Agent.NAME_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Agent#SECURITY_MODE_ATTR} of {@link Agent}.
+	 */
+	public static com.top_logic.model.TLProperty getSecurityModeAgentAttr() {
+		return (com.top_logic.model.TLProperty) getAgentType().getPart(Agent.SECURITY_MODE_ATTR);
 	}
 
 	/**
@@ -103,6 +115,13 @@ public class TlAiCoreFactory extends com.top_logic.element.meta.kbbased.Abstract
 	 */
 	public static com.top_logic.model.TLProperty getNameSkillAttr() {
 		return (com.top_logic.model.TLProperty) getSkillType().getPart(Skill.NAME_ATTR);
+	}
+
+	/**
+	 * Lookup {@value #AI_SECURITY_MODE_TYPE} data type.
+	 */
+	public static com.top_logic.model.TLPrimitive getAiSecurityModeType() {
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_AI_CORE_STRUCTURE).getType(AI_SECURITY_MODE_TYPE);
 	}
 
 	/**

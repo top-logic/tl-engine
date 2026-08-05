@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
+import com.top_logic.tl.ai.core.security.AiSecurityMode;
 
 /**
  * Immutable parameters for an {@link AgentLoop} run.
@@ -28,6 +29,10 @@ import com.top_logic.tl.ai.core.provider.ToolChoice;
  * @param toolChoice          tool selection behaviour, or {@code null} for provider default
  * @param responseValidator   predicate tested after each LLM response; returning {@code false}
  *                            stops the loop with {@link StopReason#REJECTED}
+ * @param securityFloor       the security mode the agent definition declares for itself, or
+ *                            {@code null} if it declares none. A <em>floor</em>: the loop resolves
+ *                            the run's effective mode as the stricter of the mode the caller's
+ *                            context already carries and this one, so it can only narrow.
  *
  * @see AgentLoop
  */
@@ -41,7 +46,8 @@ public record AgentParams(
 		int maxRetries,
 		int timeoutSeconds,
 		ToolChoice toolChoice,
-		Predicate<AssistantMessage> responseValidator) {
+		Predicate<AssistantMessage> responseValidator,
+		AiSecurityMode securityFloor) {
 
 	/** Default maximum turns. */
 	public static final int DEFAULT_MAX_TURNS = 25;
@@ -87,7 +93,7 @@ public record AgentParams(
 	public AgentParams(String model, String systemPrompt, int maxTurns, int maxOutputTokens) {
 		this(model, systemPrompt, maxTurns, maxOutputTokens, Map.of(),
 			DEFAULT_CONTEXT_WINDOW_TOKENS, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
-			null, msg -> true);
+			null, msg -> true, null);
 	}
 
 	/**
@@ -97,7 +103,7 @@ public record AgentParams(
 			int maxOutputTokens, Map<String, Object> modelOptions) {
 		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
 			DEFAULT_CONTEXT_WINDOW_TOKENS, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
-			null, msg -> true);
+			null, msg -> true, null);
 	}
 
 	/**
@@ -108,7 +114,7 @@ public record AgentParams(
 			Predicate<AssistantMessage> responseValidator) {
 		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
 			DEFAULT_CONTEXT_WINDOW_TOKENS, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
-			null, responseValidator);
+			null, responseValidator, null);
 	}
 
 	/**
@@ -119,6 +125,6 @@ public record AgentParams(
 			int contextWindowTokens, Predicate<AssistantMessage> responseValidator) {
 		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
 			contextWindowTokens, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
-			null, responseValidator);
+			null, responseValidator, null);
 	}
 }

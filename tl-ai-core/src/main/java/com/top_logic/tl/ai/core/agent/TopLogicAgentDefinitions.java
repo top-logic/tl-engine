@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -29,6 +30,7 @@ import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.tl.ai.core.security.AiSecurityMode;
 
 /**
  * TopLogic-provided agent and skill definitions.
@@ -71,12 +73,20 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		AgentConfig.SKILLS,
 		AgentConfig.DELEGATIONS,
 		AgentConfig.MCP_SERVERS,
+		AgentConfig.SECURITY_MODE,
 		AgentConfig.SYSTEM_PROMPT,
 	})
 	public interface AgentConfig extends NamedConfigMandatory {
 
 		/** Configuration property name for {@link #getDescription()}. */
 		String DESCRIPTION = "description";
+
+		/**
+		 * Configuration property name for {@link #getSecurityMode()}.
+		 *
+		 * @see #getSecurityMode()
+		 */
+		String SECURITY_MODE = "security-mode";
 
 		/** Configuration property name for {@link #getSystemPrompt()}. */
 		String SYSTEM_PROMPT = "system-prompt";
@@ -110,6 +120,34 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@LabelPositioning(LabelPosition.ABOVE)
 		@ControlProvider(MultiLineText.class)
 		String getDescription();
+
+		/**
+		 * How strictly security is enforced when this agent runs.
+		 *
+		 * <p>
+		 * Only ever stricter than the application's own setting, never laxer: choosing a mode the
+		 * application does not use makes this one agent checked more thoroughly than the rest, while
+		 * choosing a laxer one changes nothing. Leave it empty unless this agent needs more than the
+		 * application asks for.
+		 * </p>
+		 */
+		/*
+		 * Nullable with a null default, both needed and for the same reason as on
+		 * ToolAccessPolicy.getSecurityMode(): an enum property otherwise defaults to its first
+		 * constant, and "the author of this agent said nothing" has to stay distinguishable from an
+		 * explicit LEGACY. Here the distinction is between "no floor at all" and "a floor of LEGACY",
+		 * which is a floor that happens to raise nothing.
+		 *
+		 * A laxer value being silently inert is the one uncomfortable corner of reading this as a
+		 * floor, and it is the price of removing the escalation direction: an agent definition is
+		 * editable by anyone who may author agents, so it must not be a way around the deployment's
+		 * decision. Said out loud in the tooltip above rather than left for an administrator to
+		 * discover.
+		 */
+		@Name(SECURITY_MODE)
+		@Nullable
+		@NullDefault
+		AiSecurityMode getSecurityMode();
 
 		/**
 		 * The agent's system prompt text.
@@ -328,6 +366,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 				toNames(cfg.getMcpServers()),
 				effectiveNames(cfg.getSkills(), cfg.getRemovedSkills()),
 				effectiveNames(cfg.getDelegations(), cfg.getRemovedDelegations()),
+				cfg.getSecurityMode(),
 				AgentSource.CONFIG));
 		}
 		_agents = Collections.unmodifiableMap(agents);

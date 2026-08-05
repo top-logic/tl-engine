@@ -13,13 +13,13 @@
       <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
     </license>
   </licenses>
-  <version>2.0.1</version>
+  <version>2.0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <scm>
     <connection>scm:git:https://github.com/top-logic/tl-ai.git</connection>
     <developerConnection>scm:git:http://tl.bos.local:3000/TopLogic/tl-ai.git</developerConnection>
     <url>https://github.com/top-logic/tl-ai</url>
-    <tag>TL_2.0.1</tag>
+    <tag>HEAD</tag>
   </scm>
   <modules>
     <module>tl-ai-mcp-server</module>

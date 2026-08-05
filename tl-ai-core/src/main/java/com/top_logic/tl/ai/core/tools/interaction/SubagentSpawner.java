@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.tools.interaction;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import com.top_logic.basic.Logger;
@@ -66,6 +67,15 @@ public class SubagentSpawner {
 	 * recorded as an {@code AgentExecution} with {@code parentExecution} set when the parent
 	 * run is recorded — emits {@code SubagentCompleted/Cancelled/Failed}, and stores the
 	 * result in the job.</p>
+	 *
+	 * <p>
+	 * The spawn is fire-and-forget, so the child is an <b>unattended</b> run: it keeps working after
+	 * the parent turn that started it has ended, with nobody to answer an approval prompt. Its context
+	 * is therefore built with
+	 * {@link com.top_logic.tl.ai.core.agent.ToolContext#forDetachedSubagent}, which bounds it by the
+	 * policy's {@code <background-allowlist>}, and its loop is built from that bounded context so the
+	 * child's own prompt reports what it can actually call.
+	 * </p>
 	 *
 	 * @param targetAgentName
 	 *        Name of the agent to build (passed to {@link DelegationTool.AgentLoopFactory#buildSubagentLoop}).
@@ -144,13 +154,23 @@ public class SubagentSpawner {
 					SubagentRegistryBinding.Binding noRegistry = SubagentRegistryBinding.bind(null)) {
 
 					Instant start = Instant.now();
-					AgentLoop targetLoop = loopFactory.buildSubagentLoop(targetAgentName, toolContext.security());
+
+					// The child's context first, the loop second, and the loop from the child's own
+					// security context - not the parent's. This spawn is fire-and-forget: the parent
+					// turn ends while the child keeps working here, so the child is an unattended run
+					// and forDetachedSubagent bounds it by the <background-allowlist>. Building the
+					// loop from the parent's context instead would leave the child's prompt claiming
+					// capabilities its own gate then refuses.
+					ToolContext childContext =
+						toolContext.forDetachedSubagent(new TransactionScope(), j.cancellationToken());
+					reportBackgroundCeiling(targetAgentName, j.subagentId(), childContext);
+
+					AgentLoop targetLoop = loopFactory.buildSubagentLoop(targetAgentName, childContext.security());
 					Conversation conversation = new Conversation();
 					conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 						List.of(new TextContent(userPrompt))));
 					int before = conversation.messages().size();
 
-					ToolContext childContext = toolContext.forSubagent(new TransactionScope(), j.cancellationToken());
 					AgentEventListener childListener = subagentListener(logListener, j.subagentId());
 
 					// Capture the child run id from the RunStarted event as a plain string. Reading
@@ -225,6 +245,30 @@ public class SubagentSpawner {
 		return ToolResult.of("Subagent " + targetAgentName + " started (id=" + job.subagentId()
 			+ "). It runs in the background; its result will arrive in a later turn or via "
 			+ "wait_for_subagent.");
+	}
+
+	/**
+	 * Records what being unattended costs this subagent, so the loss is legible rather than silent.
+	 *
+	 * <p>
+	 * Silent capability loss is the failure mode this classification must not have: an operator asked
+	 * why a subagent "cannot do what the same agent does in the chat" has to find the answer here. Says
+	 * nothing when nothing is withheld, which is every application that configures no
+	 * {@code <tool-access>} policy.
+	 * </p>
+	 *
+	 * @see com.top_logic.tl.ai.core.agent.ToolContext#forDetachedSubagent
+	 */
+	private static void reportBackgroundCeiling(String targetAgentName, String subagentId,
+			ToolContext childContext) {
+		Set<String> withheld = childContext.security().capabilitiesWithheldInBackground();
+		if (withheld.isEmpty()) {
+			return;
+		}
+		Logger.info("Subagent '" + targetAgentName + "' (id=" + subagentId + ") runs detached, so it"
+			+ " has no user who could approve a tool call and the background allowlist applies -"
+			+ " capabilities withheld from it that the acting user otherwise holds: " + withheld,
+			SubagentSpawner.class);
 	}
 
 	/** Returns the current sub-session or {@code null} when the module is not started (e.g. in tests). */

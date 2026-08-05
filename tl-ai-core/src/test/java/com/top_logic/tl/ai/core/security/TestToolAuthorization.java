@@ -332,6 +332,113 @@ public class TestToolAuthorization extends TestCase {
 		assertNull(ToolAuthorization.UNCHECKED.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT));
 	}
 
+	/**
+	 * A run that <em>becomes</em> unattended is narrowed to exactly what it would have been had it
+	 * started that way.
+	 *
+	 * <p>
+	 * The derivation a detached subagent needs: its context is built during the parent turn, where a
+	 * human still is, and the parent turn then ends while the child keeps working. See
+	 * {@code ToolContext#forDetachedSubagent}.
+	 * </p>
+	 */
+	public void testAsBackgroundNarrowsTheRunAfterTheFact() {
+		ToolAccessPolicy policy = clerkPolicy();
+		policy.getToolAccess().get("Clerk").getGrants().add(group(ToolGroups.DATA_WRITE));
+		allow(policy, group(ToolGroups.DATA_READ));
+
+		ToolAuthorization foreground = auth(policy, Set.of("Clerk"), false);
+		Tool write = tool("addNote", ToolGroups.DATA_WRITE);
+
+		assertFalse(foreground.isBackground());
+		assertTrue("Precondition: the role holds data.write.", foreground.allows(write));
+
+		ToolAuthorization derived = foreground.asBackground();
+
+		assertTrue(derived.isBackground());
+		assertFalse("The derived authorization is bounded by the allowlist.", derived.allows(write));
+		assertTrue("...and its denial blames the allowlist: " + derived.denialReason(write),
+			derived.denialReason(write).contains("background allowlist"));
+		assertTrue("The allowlisted capability survives.",
+			derived.allows(tool("listInstances", ToolGroups.DATA_READ)));
+		assertTrue("Deriving must not change the run it was derived from.", foreground.allows(write));
+		assertNotNull("The capability ceiling is derived too, so the commit path is closed as well.",
+			derived.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT));
+	}
+
+	/** Deriving twice, or from a run that never checks anything, changes nothing. */
+	public void testAsBackgroundIsIdempotentAndLeavesUncheckedAlone() {
+		ToolAuthorization background = auth(clerkPolicy(), Set.of("Clerk"), true);
+
+		assertSame("A run that is already unattended has nothing to derive.",
+			background, background.asBackground());
+		assertSame("An application that configured no policy must see no derivation at all.",
+			ToolAuthorization.UNCHECKED, ToolAuthorization.UNCHECKED.asBackground());
+		assertFalse(ToolAuthorization.UNCHECKED.isBackground());
+		assertEquals(Set.of(), ToolAuthorization.UNCHECKED.capabilitiesWithheldInBackground());
+	}
+
+	/**
+	 * What the ceiling costs is nameable, in the unit an administrator grants.
+	 *
+	 * <p>
+	 * Silent capability loss is the failure mode this classification must not have: the caller that
+	 * detaches a subagent logs this set, and the child's own prompt reports it.
+	 * </p>
+	 */
+	public void testWithheldCapabilitiesNameWhatTheCeilingCosts() {
+		ToolAccessPolicy policy = clerkPolicy();
+		policy.getToolAccess().get("Clerk").getGrants().add(group(ToolGroups.DATA_WRITE));
+		policy.getToolAccess().get("Clerk").getGrants().add(group(ToolGroups.SCRIPT));
+		allow(policy, group(ToolGroups.DATA_READ));
+
+		ToolAuthorization foreground = auth(policy, Set.of("Clerk"), false);
+
+		assertEquals("An attended run loses nothing, so it must claim nothing.",
+			Set.of(), foreground.capabilitiesWithheldInBackground());
+		assertEquals("Exactly the held capabilities the allowlist does not carry.",
+			Set.of(ToolGroups.DATA_WRITE, ToolGroups.SCRIPT),
+			foreground.asBackground().capabilitiesWithheldInBackground());
+	}
+
+	/**
+	 * A capability the roles do not hold is not reported as withheld by the ceiling: it was never
+	 * within reach, and naming it would send an operator to the wrong configuration.
+	 */
+	public void testWithheldCapabilitiesReportOnlyWhatTheRolesHold() {
+		ToolAuthorization background = auth(clerkPolicy(), Set.of("Clerk"), true);
+
+		Set<String> withheld = background.capabilitiesWithheldInBackground();
+
+		assertFalse("model.structure is granted to nobody here: " + withheld,
+			withheld.contains(ToolGroups.MODEL_STRUCTURE));
+		assertEquals("data.read is the only capability the role holds, and no allowlist admits it.",
+			Set.of(ToolGroups.DATA_READ), withheld);
+	}
+
+	/**
+	 * {@code interaction} is never reported as withheld, because it is never withheld: an unattended
+	 * run reaches it whatever the allowlist says.
+	 */
+	public void testTheImplicitBaselineIsNeverWithheld() {
+		ToolAccessPolicy policy = clerkPolicy();
+		policy.getBaseline().add(group(RoleToolAccess.IMPLICIT_BASELINE));
+		ToolAuthorization background = auth(policy, Set.of("Clerk"), true);
+
+		assertTrue("Precondition: the implicit baseline reaches an unattended run.",
+			background.allows(tool("askUser", RoleToolAccess.IMPLICIT_BASELINE)));
+		assertFalse(background.capabilitiesWithheldInBackground().toString(),
+			background.capabilitiesWithheldInBackground().contains(RoleToolAccess.IMPLICIT_BASELINE));
+	}
+
+	/** The explicit opt-out withholds nothing, so there is nothing to report. */
+	public void testTheOptOutWithholdsNothing() {
+		ToolAccessPolicy policy = clerkPolicy();
+		allow(policy).setAll(true);
+
+		assertEquals(Set.of(), auth(policy, Set.of("Clerk"), true).capabilitiesWithheldInBackground());
+	}
+
 	private static ToolAuthorization auth(ToolAccessPolicy policy, Set<String> roles, boolean background) {
 		// No principal: the administrator bypass needs a Person, which cannot be created without a
 		// KnowledgeBase. It is covered where it can be, in the demo's end-to-end procedure.

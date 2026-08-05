@@ -11,9 +11,14 @@ import junit.framework.Test;
 
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
+import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
@@ -22,10 +27,11 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * the MCP endpoint's refusal.
  *
  * <p>
- * An {@code aiAgentChatAsync} run, a scheduler job and an MCP call all auto-approve every tool call,
- * because there is no human on the other end. Approval is the compensating control that makes a
- * write-classified tool safe, so a run that has lost it must not reach one without an explicit
- * administrative decision - and {@code <background-allowlist>} is that decision.
+ * An {@code aiAgentChatAsync} run, a scheduler job, an MCP call and a detached (fire-and-forget)
+ * subagent all auto-approve every tool call, because there is no human on the other end. Approval is
+ * the compensating control that makes a write-classified tool safe, so a run that has lost it must not
+ * reach one without an explicit administrative decision - and {@code <background-allowlist>} is that
+ * decision.
  * </p>
  *
  * <p>
@@ -154,6 +160,75 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 			result.contains("Permission denied"));
 		assertTrue("The script must actually have run: " + result,
 			result.contains("\"success\":true") || result.contains("\"success\": true"));
+	}
+
+	/**
+	 * A fire-and-forget subagent is an unattended run, so the ceiling reaches it too - issue #266.
+	 *
+	 * <p>
+	 * {@code spawn_subagent} returns a handle immediately and the parent turn ends while the child keeps
+	 * working on a pool thread, so from that moment there is no human to answer an approval prompt.
+	 * Before this was classified, the detached child ran with {@code secwriter1}'s full interactive
+	 * grant set - and in an {@code AUTO_APPROVE} session it self-approved every write tool it reached.
+	 * The parent context here carries exactly that callback, which is what makes the refusal below a
+	 * statement about the authorization gate rather than about approval.
+	 * </p>
+	 *
+	 * @see com.top_logic.tl.ai.core.agent.ToolContext#forDetachedSubagent
+	 */
+	public void testDetachedSubagentIsRefusedAWriteToolItsParentTurnMayUse() {
+		ToolContext parentTurn = new ToolContext(securityFor(WRITER), ApprovalCallback.AUTO_APPROVE,
+			TransactionScope.NOOP);
+		Tool write = tool(CLASSIFIED_WRITE_SCRIPT_TOOL);
+
+		assertTrue("Precondition: secwriter1 reaches the write tool in the foreground chat.",
+			parentTurn.security().hasToolPermission(write));
+
+		ToolContext detached =
+			parentTurn.forDetachedSubagent(TransactionScope.NOOP, new CancellationToken());
+
+		assertTrue("A detached subagent has nobody to approve its calls.",
+			detached.security().isBackgroundRun());
+		assertFalse("...so 'data.write' - which this policy keeps off the allowlist - is out of reach.",
+			detached.security().hasToolPermission(write));
+
+		String reason = detached.security().toolDenialReason(write);
+		assertTrue("The denial must blame the allowlist, not the role - secwriter1 does hold"
+			+ " data.write: " + reason, reason.contains("background allowlist"));
+		assertFalse("Blaming the role would send an operator to the wrong configuration: " + reason,
+			reason.contains("none of your roles grants"));
+		assertTrue("The loss must be nameable, so it can be logged and put in the child's prompt: "
+			+ detached.security().capabilitiesWithheldInBackground(),
+			detached.security().capabilitiesWithheldInBackground().contains(ToolGroups.DATA_WRITE));
+	}
+
+	/**
+	 * A synchronous delegation is untouched: it completes inside the parent turn, where the human who
+	 * could answer an approval prompt still is.
+	 */
+	public void testSynchronousDelegationKeepsTheParentTurnsReach() {
+		ToolContext parentTurn = new ToolContext(securityFor(WRITER), ApprovalCallback.AUTO_APPROVE,
+			TransactionScope.NOOP);
+
+		ToolContext delegate = parentTurn.forDelegation(TransactionScope.NOOP);
+
+		assertFalse(delegate.security().isBackgroundRun());
+		assertTrue("A synchronous delegate of secwriter1 keeps data.write.",
+			delegate.security().hasToolPermission(tool(CLASSIFIED_WRITE_SCRIPT_TOOL)));
+	}
+
+	/** What the allowlist admits still works in a detached subagent, so the ceiling is not a wall. */
+	public void testDetachedSubagentKeepsTheAllowlistedCapabilities() {
+		ToolContext parentTurn = new ToolContext(securityFor(READER), ApprovalCallback.AUTO_APPROVE,
+			TransactionScope.NOOP);
+
+		ToolContext detached =
+			parentTurn.forDetachedSubagent(TransactionScope.NOOP, new CancellationToken());
+
+		for (String toolName : List.of(MODEL_READ_TOOL, DATA_READ_TOOL, SCRIPT_TOOL)) {
+			assertNull("secreader1's detached subagent must reach '" + toolName + "'.",
+				detached.security().toolDenialReason(tool(toolName)));
+		}
 	}
 
 	/**

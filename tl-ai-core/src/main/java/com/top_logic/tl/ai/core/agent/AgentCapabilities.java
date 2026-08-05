@@ -441,6 +441,14 @@ public class AgentCapabilities {
 	 * actual instructions.
 	 * </p>
 	 *
+	 * <p>
+	 * A capability an {@link SecurityContext#isBackgroundRun() unattended} run lost to the
+	 * {@code <background-allowlist>} is reported as such and separately from one the user does not
+	 * hold. They call for different things - the first for an administrator to widen the allowlist, the
+	 * second for a role grant - and a detached subagent that reported the first as the second would
+	 * tell its user something false about their own account.
+	 * </p>
+	 *
 	 * @param agentToolNames
 	 *        Qualified names of the agent's own tools.
 	 * @param skills
@@ -476,12 +484,26 @@ public class AgentCapabilities {
 			notice.append("This user holds every capability the tools of this agent and its skills"
 				+ " require.\n\n");
 		} else if (!lacking.isEmpty()) {
-			notice.append("This user does **not** hold these capabilities, so the tools that require"
-				+ " them are absent:\n\n");
-			for (String capability : lacking) {
-				notice.append("- ").append(describeCapability(capability)).append("\n");
+			// An unattended run loses capabilities its principal does hold, to the background
+			// allowlist. Reporting those as rights the user lacks would send whoever reads it to the
+			// wrong configuration - and would tell the agent something false about its user.
+			Set<String> unattended = new TreeSet<>(_security.capabilitiesWithheldInBackground());
+			unattended.retainAll(lacking);
+			Set<String> notHeld = new TreeSet<>(lacking);
+			notHeld.removeAll(unattended);
+
+			if (!notHeld.isEmpty()) {
+				notice.append("This user does **not** hold these capabilities, so the tools that require"
+					+ " them are absent:\n\n");
+				appendCapabilities(notice, notHeld);
 			}
-			notice.append("\n");
+			if (!unattended.isEmpty()) {
+				notice.append("This run is **unattended**: nobody is present to approve a tool call, so"
+					+ " it is additionally bounded by the deployment's background allowlist. These"
+					+ " capabilities are out of reach in this run even though the user holds them, and"
+					+ " no retry and no other tool will get around that:\n\n");
+				appendCapabilities(notice, unattended);
+			}
 		}
 		notice.append("Loading a skill may still not hand you every tool it mentions. If a call comes"
 			+ " back \"Permission denied\", that is final: say plainly which capability the user"
@@ -502,5 +524,13 @@ public class AgentCapabilities {
 	static String describeCapability(String capability) {
 		String description = ToolGroupResources.englishDescription(capability);
 		return description == null ? "`" + capability + "`" : "`" + capability + "` - " + description;
+	}
+
+	/** Appends one bullet per capability, each with its description where the deployment has one. */
+	private static void appendCapabilities(StringBuilder notice, Collection<String> capabilities) {
+		for (String capability : capabilities) {
+			notice.append("- ").append(describeCapability(capability)).append("\n");
+		}
+		notice.append("\n");
 	}
 }

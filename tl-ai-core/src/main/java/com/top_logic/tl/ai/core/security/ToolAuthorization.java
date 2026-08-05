@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.security;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -129,6 +130,87 @@ public class ToolAuthorization {
 		_heldRoleNames = heldRoleNames == null ? Set.of() : Set.copyOf(heldRoleNames);
 		_background = background;
 		_identities = identities == null ? Identities.DECLARED_ONLY : identities;
+	}
+
+	/**
+	 * Whether this run is bounded by the policy's background allowlist because it has no human to
+	 * answer an approval prompt.
+	 */
+	public boolean isBackground() {
+		return _background;
+	}
+
+	/**
+	 * The same authorization, additionally bounded by the policy's background allowlist.
+	 *
+	 * <p>
+	 * For a run that <em>becomes</em> unattended after its context was built: a fire-and-forget
+	 * subagent keeps running on a pool thread after the parent turn that spawned it has ended, so
+	 * from that moment on there is nobody to answer an approval prompt - which is the whole
+	 * justification of the allowlist. See {@code ToolContext#forDetachedSubagent}.
+	 * </p>
+	 *
+	 * <p>
+	 * Narrows and never widens: the principal, the held roles and the policy are carried over
+	 * unchanged, so the derived authorization is the intersection of this one and the allowlist. An
+	 * unenforced run ({@link #UNCHECKED}) and a run that is already background return themselves.
+	 * </p>
+	 */
+	public ToolAuthorization asBackground() {
+		if (_background || _access == null) {
+			return this;
+		}
+		return new ToolAuthorization(_access, _principal, _heldRoleNames, true, _identities);
+	}
+
+	/**
+	 * The capabilities this run's principal could otherwise use that this run cannot, because it is
+	 * unattended.
+	 *
+	 * <p>
+	 * What the background ceiling costs, in the unit an administrator grants. Empty for a run that is
+	 * not {@link #isBackground() background} and for one that enforces nothing, so that naming the
+	 * loss never invents one.
+	 * </p>
+	 *
+	 * <p>
+	 * Answers about capabilities, not about tools: a role that reaches a tool through an explicit
+	 * per-tool grant rather than through its group is not reported here, because there is no
+	 * capability name to report for it. The candidate set is
+	 * {@link RoleToolAccess#knownCapabilities()}.
+	 * </p>
+	 *
+	 * @return The withheld capability names, in a stable order.
+	 */
+	public Set<String> capabilitiesWithheldInBackground() {
+		if (_access == null || !_background) {
+			return Set.of();
+		}
+		Set<String> withheld = new TreeSet<>();
+		for (String capability : _access.knownCapabilities()) {
+			if (RoleToolAccess.IMPLICIT_BASELINE.equals(capability)) {
+				// Reachable unattended whatever the allowlist says - see
+				// RoleToolAccess#allowedInBackground - so it is never withheld.
+				continue;
+			}
+			if (_access.capabilityAllowedInBackground(capability)) {
+				continue;
+			}
+			if (holdsCapability(capability)) {
+				withheld.add(capability);
+			}
+		}
+		return withheld;
+	}
+
+	/**
+	 * Whether the principal's own grants reach the given capability, ignoring the background ceiling.
+	 */
+	private boolean holdsCapability(String capability) {
+		if (_principal != null && _principal.isAdmin()) {
+			return true;
+		}
+		return _access.checkCapability(_heldRoleNames, capability, "using it") instanceof Decision.Granted;
 	}
 
 	/**

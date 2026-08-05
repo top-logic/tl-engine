@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
@@ -330,6 +332,30 @@ public class RoleToolAccess {
 			return true;
 		}
 		return grantsGroup(allowlist.getGrants(), capability);
+	}
+
+	/**
+	 * The capability names this policy could decide about.
+	 *
+	 * <p>
+	 * The groups the framework ships ({@link ToolGroups#ALL}) plus the ones the policy itself assigns
+	 * tools to. Group names are an open string space, so this is a list of what is <em>known</em>
+	 * rather than of what is legal - the same reading {@link AllToolGroups} takes. A group a tool
+	 * declares for itself and no policy mentions is not in it, because {@link DeclaredGroups} answers
+	 * per tool name and cannot be enumerated.
+	 * </p>
+	 *
+	 * <p>
+	 * Used to answer "what does this ceiling withhold?" - a question that needs the candidate set,
+	 * unlike every decision above, which is asked about one named group.
+	 * </p>
+	 *
+	 * @return The known capability names, in a stable order.
+	 */
+	public Set<String> knownCapabilities() {
+		Set<String> result = new TreeSet<>(ToolGroups.ALL);
+		result.addAll(_policy.getToolGroups().keySet());
+		return result;
 	}
 
 	/**

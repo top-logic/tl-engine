@@ -447,11 +447,25 @@ Being in `egress` has two consequences beyond ordinary granting:
   policy that declares none is therefore a **boot-time configuration error**, and the explicit opt-out
   `<background-allowlist all="true"/>` exists so that "bounded only by the user's grants" remains
   sayable - out loud.
-- **Delegated sub-agents** (`DelegationTool`, `SpawnSubagentTool`) inherit the parent's
-  `SecurityContext` unchanged (`ToolContext.forDelegation` already does this - `ToolContext.java:290`)
-  and are additionally bounded by the child agent's own tool list. A child can therefore only ever be
-  a *subset* of the parent's authority (T8): delegation is not an escalation path. The *exposure* of
-  delegates is filtered separately and for UX reasons only - see 3.2.7.
+- **Synchronously delegated sub-agents** (`DelegationTool` without an async session) inherit the
+  parent's `SecurityContext` unchanged (`ToolContext.forDelegation`) and are additionally bounded by
+  the child agent's own tool list. A child can therefore only ever be a *subset* of the parent's
+  authority (T8): delegation is not an escalation path. The classification is carried over as it
+  stands, background flag included, because a synchronous delegation completes *inside* the parent
+  turn - whoever could answer an approval prompt before it started still can.
+- **Detached sub-agents** (`SpawnSubagentTool`, and `DelegationTool` in a chat session) are
+  **background runs**. `spawn_subagent` is fire-and-forget: it returns a handle immediately, the
+  parent turn ends, and the child keeps working on a pool thread with nobody on the other end to
+  answer an approval prompt - which is this section's own definition of unattended. Their ceiling is
+  therefore the intersection of the acting user's grants and the `<background-allowlist>`, applied by
+  `ToolContext.forDetachedSubagent`, and their loop is built from that bounded context so the child's
+  prompt reports what it can actually call. What the ceiling costs the child is logged at INFO by
+  `SubagentSpawner`, named by capability. The deliberate consequence: a detached child loses tools its
+  parent could use. That is the point - it also lost the control that made them safe - and it is made
+  legible rather than silent.
+
+The *exposure* of delegates - which sub-agents an agent is offered at all - is filtered separately and
+for UX reasons only; see 3.2.7.
 
 #### 3.2.6 Where it hooks in
 
@@ -994,6 +1008,7 @@ accident.
 | Does the `<background-allowlist>` apply to administrators? | **Yes** | Its justification is the missing approval prompt, not the principal's authority: an unattended administrator run has nobody to ask either. An administrator who needs a write tool in a scheduled run says so by putting its group on the allowlist - which is the "explicit administrative decision" 3.2.5 asks for. |
 | What if the `<background-allowlist>` is missing? | **Boot error** naming the three things that can be said instead | It is the only control that stands in for the approval prompt an unattended run cannot show, so its absent state must not be the permissive one. See 3.2.5. |
 | What if it is present but empty? | Unattended runs reach **nothing** | A legitimate and stricter answer, and distinguishable from silence - which is exactly why silence has to be rejected rather than interpreted. |
+| Does it apply to a sub-agent? | **To a detached one, yes; to a synchronous delegation, no** | The question is only ever whether somebody is there to answer an approval prompt. A synchronous delegation completes inside the parent turn, where that human still is; `spawn_subagent` is fire-and-forget, so the parent turn ends and the child works on with nobody to ask. See 3.2.5 - and note the accepted consequence: a detached child loses tools its parent could use, and says so in its own prompt. |
 | Where do the group constants live? | `tl-ai-tool-api`, not next to the policy | A tool declares its group on `@ToolMethod`, so the legal values must be nameable from every module that can define a tool. `tl-ai-vector-index` depends on `tl-ai-tool-api` alone and could not otherwise classify `searchVectorIndex`. |
 
 One implementation consequence worth stating, because it is invisible in the XML: a tool has **three**

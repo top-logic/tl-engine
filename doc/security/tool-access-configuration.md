@@ -27,10 +27,12 @@ Put that in any application configuration file (an aspect, or your
 `WEB-INF/conf/<app>.config.xml`). `YourRole` must be a role that exists - a name that does not is a
 **boot error**, deliberately, so that a typo cannot silently hand out nothing.
 
-**Without this block your agent can do almost nothing.** This check is always applied - there is no
-setting that turns it off - and it denies by default, so a role with no entry here reaches nothing
-beyond the implicit `interaction` grant. Not writing the block is not an opt-out; it is a denial of
-everything.
+**Without this block your agent can read, and change nothing.** This check is always applied - there
+is no setting that turns it off - and it denies by default. What an application that configures nothing
+gets is the **default baseline**: `model.read` and `data.read` for everyone, plus the implicit
+`interaction` grant. Enough for a usable, read-only assistant; not enough to change, script or send
+anything anywhere. See [The default baseline](#the-default-baseline) below for what is in it and how to
+replace it.
 
 **The same holds one layer down, and it is the mistake to expect.** The engine's
 `SecurityConfigurationService` is active in *every* TopLogic 8 application whether you configure it or
@@ -113,8 +115,8 @@ and the labels exist only in the editor.
 
 ## The rules, in one place
 
-- **Nothing is granted unless you grant it**, with one exception: `interaction` is always granted, so a
-  role with no entry can still ask a question and nothing else.
+- **Nothing is granted unless you grant it**, with two exceptions: `interaction` is always granted, and
+  a policy that writes no `<baseline>` at all gets the read-only default one - see below.
 - **Several roles add up.** A user holding two roles gets the union of their grants.
 - **A `<deny>` always wins**, over any grant, including one from the user's other roles and including
   the baseline. That is how you carve one capability out of an otherwise broad grant without
@@ -204,6 +206,36 @@ it would otherwise look like it grants something and not.
 `<baseline>` is added to every account's grants, whatever roles it holds. `interaction` is in it
 implicitly and needs no entry; writing it anyway is legal and changes nothing. A `<deny>` on a role
 still wins over the baseline, the implicit `interaction` included.
+
+### The default baseline
+
+**If you write no `<baseline>` at all, every account gets `model.read` and `data.read`.** That is the
+shipped default, and it exists so that an application which has configured nothing has a usable agent
+instead of one that can only ask questions. It is read-only on purpose: `data.write`,
+`model.structure`, `agent.authoring`, `agent.meta` and `workspace` all change something; `egress` sends
+data out of the application; and `script` reaches every type and can persist a write through its own
+argument. None of them is in it.
+
+The element has **three** states, and they are all different:
+
+| What you write | What every account gets |
+|---|---|
+| nothing at all | `model.read` + `data.read`, the read-only default |
+| `<baseline/>` | nothing beyond `interaction`. The explicit "no capability for everyone" |
+| `<baseline>` with entries | exactly what you list. The default is **replaced**, not added to |
+
+The last row is the one to be sure of: writing `<baseline><grant group="workspace"/></baseline>` gives
+everyone `workspace` and **not** the two read capabilities. If you want the default plus something,
+list all three.
+
+> ⚠️ **This is not a per-object guarantee, yet.** The argument that a default `data.read` is safe rests
+> on the second layer deciding per object what is actually visible - the account's model access rights.
+> The data tools do not consult that layer yet: `listInstances` and the TL-Script tool return what they
+> find. Per-object read filtering arrives with **issue #289**. Until then, a default `data.read` in an
+> application that has written no `<security-config>` means unfiltered reads. That is not worse than
+> what it replaces - the removed permissive mode granted *everything*, write tools included - but do not
+> read it as "safe by default". If that matters to you before #289 lands, write `<baseline/>` and grant
+> `data.read` per role.
 
 ### Classify tools that cannot declare their own group
 
@@ -356,11 +388,13 @@ At boot the service states what it read:
 INFO ... AiToolAccessService - Agent tool access: roles=2 baseline=0(+interaction) backgroundAllowlist=3
 ```
 
-`baseline=0(+interaction)` means "no `<baseline>` entries were configured, plus the implicit
-`interaction` grant every policy carries".
+`baseline=0(+interaction)` means "a `<baseline>` element is there and it lists no entry, plus the
+implicit `interaction` grant every policy carries". An application that wrote no element at all reads
+`baseline=default[model.read, data.read]` instead - the two are different states and the log says
+which one you have.
 
 `roles=0` means the service read no grant table. If you wrote one and see this, the `<tool-access>` did
-not reach the service - and until it does, every account reaches only `interaction`.
+not reach the service - and until it does, every account reaches only the baseline.
 
 Two things to know when reading the roles in a denial:
 

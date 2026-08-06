@@ -2,9 +2,10 @@
 
 **Status:** design, with **layer L1 (tool RBAC, sections 3.2 and 4.1) implemented** and every other
 layer still staged. **Enforcement is unconditional and unconfigurable** (issue **#288**): there is no
-security mode, both layers apply to every run, and an application that has written no `<tool-access>`
-policy and no `<security-config>` gets an agent that can do almost nothing rather than one that is
-unchecked. Section 6 is the per-artifact map; [role-model-worked-example.md](role-model-worked-example.md) explains the role model
+security mode and both layers apply to every run. An application that has configured nothing is not
+unchecked - it gets the read-only default baseline of issue **#293** (`model.read` + `data.read`) at the
+tool layer, and whatever its `<security-config>` grants at the data layer, which is nothing until it
+writes one. Section 6 is the per-artifact map; [role-model-worked-example.md](role-model-worked-example.md) explains the role model
 this design sits on and is the page to read *before* this one;
 [tool-access-configuration.md](tool-access-configuration.md) is the administrator's guide to the part
 that works; [testbed.md](testbed.md) is the runnable fixture that shows it, one persona and one expected
@@ -41,8 +42,10 @@ The two central design commitments:
 
 - **Deny by default, everywhere.** A tool with no grant is not offered and not executable. A model
   type with no `<security-config>` grant is not readable. Both engine and agent layer already behave
-  this way, and there is no longer any setting that softens it. An application that configures neither
-  layer gets an agent that can do almost nothing - see
+  this way, and there is no longer any setting that softens it. The one deliberate exception is the
+  **read-only default baseline** (#293): an application that writes no `<baseline>` grants every account
+  `model.read` and `data.read`, so that configuring nothing yields a usable read-only agent rather than
+  an inert one. Nothing that mutates or exports is in it. See
   [role-model-worked-example.md](role-model-worked-example.md) for the configuration to write.
 - **Two independent authorizations per tool call.** A call is permitted only if
   *(a)* the user's roles grant the **tool** (RBAC, section 3.2) **and**
@@ -56,7 +59,7 @@ The two central design commitments:
 
 | Concern | Current state | Evidence |
 |---|---|---|
-| Tool permission | **Enforced for every run** (was hardcoded `true`) | `TopLogicSecurityContext.hasToolPermission` answers from `ToolAuthorization`, always over the running service's policy. An empty policy denies everything but `RoleToolAccess.IMPLICIT_BASELINE` |
+| Tool permission | **Enforced for every run** (was hardcoded `true`) | `TopLogicSecurityContext.hasToolPermission` answers from `ToolAuthorization`, always over the running service's policy. A policy that configures nothing grants `RoleToolAccess.IMPLICIT_BASELINE` plus `RoleToolAccess.DEFAULT_BASELINE` |
 | Tool permission by name | Same | `SecurityContext.hasToolPermission(String)` still defaults to `true` for implementations that do not override it |
 | Data read/write check | Dead stubs, `Object`-typed, **no callers** | `SecurityContext.java:67`, `:80`; a repo-wide grep finds only the declarations |
 | Execution-mode gate | Live | `ToolPermissionFilter.java:36-45` denies `STRUCTURAL` in `PRODUCTION` |
@@ -317,8 +320,21 @@ state to be permissive about.
 `SecurityConfigurationService` is registered active by default in every TL 8 application (`tl-core`'s
 web fragment sets its module to `value="true"`) and instantiates with empty rights, which is deny-all
 for role-based users. An application that writes no `<security-config>` has not opted out of model
-security; it has denied everything. The same holds one layer up: an absent `<tool-access>` matrix
-grants only `RoleToolAccess.IMPLICIT_BASELINE`.
+security; it has denied everything.
+
+The tool layer is deliberately kinder about the same silence, and only there. An absent `<tool-access>`
+matrix grants `RoleToolAccess.IMPLICIT_BASELINE` plus `RoleToolAccess.DEFAULT_BASELINE` - `model.read`
+and `data.read` - so that an application which has configured nothing has a usable, read-only agent
+instead of an inert one (issue **#293**). Nothing in that default mutates (`data.write`,
+`model.structure`, `agent.authoring`, `agent.meta`, `workspace`), sends data outward (`egress`) or
+reaches every type (`script`). An application that writes a `<baseline>` replaces it; `<baseline/>`
+says "nothing for everyone".
+
+> **The default is not a per-object guarantee, yet.** The argument that a default `data.read` is safe
+> is that L1 grants the *ability to ask* and L2 answers per object - which is only true once **#289**
+> lands, because the data tools do not consult L2 today. Until then a default `data.read` means
+> unfiltered reads in an application with no `<security-config>`. That is not a regression against the
+> permissive mode it replaces, which granted everything, but nothing here claims otherwise.
 
 Administrators and engine super-users bypass all of it, and so does any code in a system context, so
 **testing with an admin account proves nothing**.
@@ -1103,7 +1119,9 @@ accident.
 
 | Question | Decision | Why |
 |---|---|---|
-| When exactly does enforcement turn on? | **It is always on.** There is no setting, and an absent `<tool-access>` matrix is not an opt-out: it grants only `RoleToolAccess.IMPLICIT_BASELINE` (issue **#288**). | A switch whose default was permissive masked every enforcement gap and existed to migrate an installed base that does not exist. What survives of the old reading is that writing the matrix is still what makes an application *usable*, not what makes it *checked*. |
+| When exactly does enforcement turn on? | **It is always on.** There is no setting, and an absent `<tool-access>` matrix is not an opt-out (issue **#288**). | A switch whose default was permissive masked every enforcement gap and existed to migrate an installed base that does not exist. What survives of the old reading is that writing the matrix is still what makes an application *fully* usable, not what makes it *checked*. |
+| What does an application that configures nothing get? | `IMPLICIT_BASELINE` plus **`DEFAULT_BASELINE`** - `model.read` and `data.read` (issue **#293**). | Fail-closed was right and unhelpful: an agent that boots and can only ask questions reads as a defect rather than as an unconfigured application, and it would hit every consuming application on day one. Read-only keeps the default honest - nothing in it mutates, exports or reaches every type. |
+| Where does that default live, and how does it compose? | In Java (`RoleToolAccess.DEFAULT_BASELINE`), **not** as a `<baseline>` element in `tl-ai-core.conf.config.xml`. | A keyless configuration list composes *additively* across configuration files - the engine's `SimpleListStorage` seeds itself from the base value and appends - so a shipped element would be unioned with an application's own rather than replaced by it, and an application asking for one capability would silently also get these two. Resolving it in Java keeps "writing `<baseline>` replaces the default" exactly true. It also forced `getBaseline()` to become a nullable *item* rather than a nullable list, because the engine rejects a nullable `LIST` property outright - the same shape `<background-allowlist>` already has, and `@DefaultContainer` keeps the XML unchanged. |
 | A `<grant group="...">` naming a group no tool is in | Boot **warning**, not error, listing the unknown names and the known ones | Unlike roles, group names are an open string space by design - applications, MCP servers and TL-Script tools authored in the running application contribute their own, and one can appear after boot. A group nobody claims *at boot* is therefore not proof of a typo. It is still said out loud, because a grant of a misspelled group reaches nothing. |
 | Does the `<background-allowlist>` apply to administrators? | **Yes** | Its justification is the missing approval prompt, not the principal's authority: an unattended administrator run has nobody to ask either. An administrator who needs a write tool in a scheduled run says so by putting its group on the allowlist - which is the "explicit administrative decision" 3.2.5 asks for. |
 | What if the `<background-allowlist>` is missing? | **Boot error** naming the three things that can be said instead - for a policy that grants at least one role something. A policy with no `<tool-access>` entries at all has nothing to have forgotten and boots. | It is the only control that stands in for the approval prompt an unattended run cannot show, so its absent state must not be the permissive one. See 3.2.5. |
@@ -1287,8 +1305,8 @@ because no human can approve. That is strictly more supervision than `SYSTEM` ga
 
 | Application | Behaviour |
 |---|---|
-| No `<security-config>`, no `<tool-access>` | The agent can do almost nothing: model access is deny-all (`SecurityConfigurationService` is active by default with empty rights) and tool access grants only `RoleToolAccess.IMPLICIT_BASELINE`. **This is the state to fix, not a working default** - see [role-model-worked-example.md](role-model-worked-example.md) |
-| `<security-config>` present, no `<tool-access>` | Data rights apply per object, and the agent reaches almost no tool to use them with |
+| No `<security-config>`, no `<tool-access>` | The agent may call the read tools (`DEFAULT_BASELINE`) and model access is deny-all, so it can ask and be told nothing. **Still the state to fix** - see [role-model-worked-example.md](role-model-worked-example.md) - but the agent is usable the moment a `<security-config>` appears |
+| `<security-config>` present, no `<tool-access>` | The intended smallest working setup: read tools from the default baseline, data rights per object from the engine |
 | Both present | The intended state |
 | Uses `/mcp/*` from an external client | **Tool calls are refused**, until #261 gives the endpoint an authenticated principal. Deliberate: this is the exposure with the worst blast radius (T7). Resources and prompts still work |
 | Uses `aiAgentChat` from TL-Script | Runs as the calling account. A script that relied on the unrestricted fallback fails with a clear message instead of running unchecked |
@@ -1306,9 +1324,9 @@ compiles against the real API - nothing here is reference code any more. All new
 |---|---|
 | `AiSecurityMode` - the three modes, `resolve(...)` and `stricter(...)` | **Removed** (#288). Enforcement is unconditional; identity is the only input. See 3.1 |
 | `ToolGroups` - the built-in group names and the privileged set | Implemented, unit-tested. **Lives in `tl-ai-tool-api`**, not next to the policy: a tool must be able to name its group without depending on the module that enforces it, and `tl-ai-vector-index` (which depends on `tl-ai-tool-api` alone) proved the point |
-| `ToolAccessPolicy` - the admin config interface of section 4.1 | Implemented; the XML in 4.1 is what it produces. **Read by `AiToolAccessService`** |
+| `ToolAccessPolicy` - the admin config interface of section 4.1 | Implemented; the XML in 4.1 is what it produces. **Read by `AiToolAccessService`**. Its `<baseline>` is a nullable item with three states - absent (the default), empty (nothing), declared (exactly that) - see #293 |
 | `AiToolAccessService` - the service of section 4.1 | **Implemented.** Reads the policy, validates role names at boot with `context.error(...)`, refuses a granting policy with no `<background-allowlist>`, resolves the roles a principal holds on the security root, and indexes the tool registry for name resolution. `authorizationFor` throws if the service is down rather than granting everything |
-| `RoleToolAccess` - the role-to-tool decision | **Fully implemented and unit-tested** (24 cases: one per row of the 4.1 table, plus name matching and the background allowlist). **Called by `ToolAuthorization`** |
+| `RoleToolAccess` - the role-to-tool decision | **Fully implemented and unit-tested** (one case per row of the 4.1 table, plus name matching, the background allowlist and the default baseline). Carries `DEFAULT_BASELINE` (#293) with the reasoning for every group left out of it. **Called by `ToolAuthorization`** |
 | `ToolAuthorization` - the run-scoped decision | **Implemented and unit-tested.** Binds the policy to the run's principal, held roles and background flag; applies the administrator bypass and the background ceiling; audits denials |
 | `ToolIdentity` - how the policy names a tool | **Implemented.** A grant matches the bare tool name, the configured `{factory}.{tool}` name, or the provider-safe `factory__tool` form, so a correctly spelled grant cannot silently miss |
 | `ModelSecurity` - the typed façade | Implemented. `UNCHECKED` survives only as a test seam; every production context carries `ModelAccessRightsSecurity` |
@@ -1325,12 +1343,16 @@ compiles against the real API - nothing here is reference code any more. All new
 | Per-agent `required-groups` (4.2) | **Not built.** A self-imposed narrowing of the tool list |
 | The retrofit example A.1 | Appendix A - illustrative, not applied to any tool. A.2 is no longer an example: it is the shipped shape of the pre-commit guard |
 
-**An application that writes no `<tool-access>` gets an agent that can do almost nothing.** The
-`AiToolAccessService` module is active by default and evaluates an empty policy, which grants only
-`RoleToolAccess.IMPLICIT_BASELINE` - asserted by `TestTopLogicSecurityContext`. The module is on by
-default deliberately: a policy present while the module was off would be silently ignored, which is the
-one failure mode this layer must not have. Data-tool result filtering is still absent everywhere
-(**#289**); the pre-commit guard is wired and enforcing, subject to the limits section 3.5 states.
+**An application that writes no `<tool-access>` gets a read-only agent.** The `AiToolAccessService`
+module is active by default and evaluates an empty policy, which grants
+`RoleToolAccess.IMPLICIT_BASELINE` plus `RoleToolAccess.DEFAULT_BASELINE` - `model.read` and
+`data.read`, asserted by `TestDefaultBaseline`. Every role grant beyond that has to be authored, and
+`TestTopLogicSecurityContext` pins that a role the policy does not mention reaches nothing. The module
+is on by default deliberately: a policy present while the module was off would be silently ignored,
+which is the one failure mode this layer must not have. Data-tool result filtering is still absent
+everywhere (**#289**), which is what keeps the default's `data.read` from being the per-object
+guarantee section 3.1 says it is not yet; the pre-commit guard is wired and enforcing, subject to the
+limits section 3.5 states.
 
 Two behaviour changes arrive for TL-Script callers. `aiAgentChat` and `aiAgentChatAsync` act as the
 account that ran the script, and a call from a thread with no bound account is **refused** rather than

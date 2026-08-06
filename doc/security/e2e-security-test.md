@@ -600,9 +600,9 @@ At boot, in `tmp/app-data/logs/top-logic.tl-ai.log`:
 AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=0(+interaction) backgroundAllowlist=4
 ```
 
-With the aspect switched off it reads `roles=0`, and then every account reaches only the implicit
-`interaction` grant - enforcement is unconditional, so an absent grant table denies rather than
-permits.
+With the aspect switched off it reads `roles=0 baseline=default[model.read, data.read]`, and then every
+account holds the shipped read-only default and nothing else - enforcement is unconditional, so an
+absent grant table grants no write, script or egress capability to anyone.
 
 Every denial is logged at `WARN`, naming the tool, its group, the account, the roles it holds and the
 rule that decided:

@@ -34,6 +34,7 @@ configured, with six personas whose only difference is what the policy grants th
 | Script tools | `secdemo-reporting.countNotes`, `secdemo-editing.addNote`, `secdemo-unclassified.countNotesUnclassified` |
 | Visible UI | the **Albert** tab (the agent chat) and *Administration → Development → Script console*, identical for every persona |
 | Enforcement | unconditional. The `<tool-access>` matrix decides *what* each persona reaches, not whether it is checked |
+| Baseline | an explicit `<baseline/>` - **empty on purpose**. Leaving the element out would mean the shipped read-only default (`model.read` + `data.read`) and would destroy the `secBare` persona |
 
 Files:
 
@@ -114,10 +115,13 @@ AiToolAccessService - Agent tool access: roles=6 baseline=0(+interaction) backgr
 ```
 
 That last line is the one to check first, and every number in it is readable off the aspect: six
-`<role>` entries in `<tool-access>`, no `<baseline>` element at all - `interaction` is the implicit
-grant no policy has to declare - and four `<grant>`s in `<background-allowlist>`.
-`roles=0` means `secdemo.config.xml` did not reach the application, and every persona then reaches only
-`interaction`.
+`<role>` entries in `<tool-access>`, an empty `<baseline/>` - `interaction` is the implicit grant no
+policy has to declare - and four `<grant>`s in `<background-allowlist>`.
+
+`baseline=default[model.read, data.read]` instead of `baseline=0` means the aspect's `<baseline/>` did
+not reach the service, and every persona then holds both read capabilities - which silently invalidates
+the whole persona matrix, starting with **C1**. `roles=0` means `secdemo.config.xml` did not reach the
+application at all.
 
 Everything is idempotent: on a restart against the same database these lines simply do not reappear.
 
@@ -168,7 +172,7 @@ policy and to nothing else.
 
 | Login | Role | Tool capabilities held | Must be able to | Must be refused |
 |---|---|---|---|---|
-| `secbare1` | `secBare` | *(`interaction` only, and that implicitly - its role grants nothing and the policy declares no `<baseline>`)* | ask a question, delegate, and load `TL_spawnSubagents` - the one skill of the chat's agent whose every tool is `interaction` | every tool: `model.read`, `data.read`, everything. Every other skill disappears from its prompt, because no tool in it is permitted |
+| `secbare1` | `secBare` | *(`interaction` only, and that implicitly - its role grants nothing and the policy declares an empty `<baseline/>`)* | ask a question, delegate, and load `TL_spawnSubagents` - the one skill of the chat's agent whose every tool is `interaction` | every tool: `model.read`, `data.read`, everything. Every other skill disappears from its prompt, because no tool in it is permitted |
 | `secviewer1` | `secViewer` | `model.read` | inspect modules, types, layouts | `listInstances` and every other `data.read` tool. `TL_modelExploration` survives and loads **only** its 8 `model.read` tools |
 | `secreader1` | `secReader` | `model.read`, `data.read`, `script` *(privileged)* | read notes, run TL-Script read-only, list instances | `agent.meta`, `workspace`, `egress`, and `executeTLScript` with `withCommit=true` - that costs `data.write`. At the model layer: cannot create a note, sees no secret value |
 | `seceditor1` | `secEditor` | `secreader1` **+ `agent.meta` + `data.write`** | everything `secreader1` can, plus `listFrameworkAgents` and **committing** a TL-Script - which is how it creates a note | `workspace`, `egress`. At the tool layer as well as the model layer, it is the persona that **can** create a note |

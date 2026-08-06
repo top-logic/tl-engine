@@ -22,6 +22,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.tools.perception.BinaryPerception;
 import com.top_logic.tl.ai.core.tools.perception.ModelPerception;
 import com.top_logic.tl.ai.tool.api.P;
@@ -45,8 +46,9 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  *
  * <p>
  * Read access is checked through the run's {@link SecurityContext#modelSecurity() model security},
- * which consults the engine's model access rights when the run's mode enforces them and grants
- * everything otherwise.
+ * which consults the engine's model access rights for the run's principal. The check is where the TID
+ * is resolved: {@link TidResolver} refuses an object the principal may not read, so this tool never
+ * holds one.
  * </p>
  *
  * @see BinaryPerception
@@ -85,10 +87,9 @@ public class ViewDocumentTool {
 	 *
 	 * <p>
 	 * The stored payload is an adversarial input, not merely a large one: which object is read is
-	 * decided by a model-supplied TID, and {@link SecurityContext#modelSecurity()} grants everything
-	 * in a run whose mode does not enforce model access - which is the default. Its size is therefore
-	 * bounded before anything is buffered ({@link BinaryPerception#MAX_SOURCE_BYTES}), and its content
-	 * - stored text included - is treated as untrusted by {@link BinaryPerception}.
+	 * decided by a model-supplied TID. Its size is therefore bounded before anything is buffered
+	 * ({@link BinaryPerception#MAX_SOURCE_BYTES}), and its content - stored text included - is treated
+	 * as untrusted by {@link BinaryPerception}.
 	 * </p>
 	 *
 	 * @param tid
@@ -115,22 +116,21 @@ public class ViewDocumentTool {
 			@P(value = "Name of the binary attribute to read; only needed when the object has "
 				+ "several.", required = false) String attribute,
 			ToolExecutionContext context) {
+		// Resolved outside the try on purpose: a call that cannot name its principal is a programming
+		// error and must not be reported to the model as a failed lookup.
+		ModelSecurity security = readAccess(context).modelSecurity();
+
 		TLObject object;
 		try {
-			object = TidResolver.resolve(tid);
+			// Single access-control seam for this tool: resolving a TID is a read check against the
+			// run's principal, and an object this run may not read is refused here as a missing one.
+			object = TidResolver.resolve(tid, security);
 		} catch (IllegalArgumentException ex) {
 			return ToolResult.of("Error: " + ex.getMessage() + ".");
 		} catch (RuntimeException ex) {
 			Logger.error("viewDocument() could not resolve TID '" + tid + "': " + ex.getMessage(), ex,
 				ViewDocumentTool.class);
 			return ToolResult.of("Error: cannot resolve TID '" + tid + "': " + ex.getMessage());
-		}
-
-		// Single access-control seam for this tool: the run's model security, which delegates to the
-		// engine's model access rights when the run's mode enforces them and grants everything in a
-		// LEGACY run.
-		if (!readAccess(context).modelSecurity().canRead(object)) {
-			return ToolResult.of("Error: you do not have read access to " + tid + ".");
 		}
 
 		List<TLStructuredTypePart> binaries = binaryAttributes(object);

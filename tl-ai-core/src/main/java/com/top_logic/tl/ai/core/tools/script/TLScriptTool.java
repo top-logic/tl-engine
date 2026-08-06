@@ -13,6 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor.ExecutionResult;
 import com.top_logic.tl.ai.core.tools.script.messages.ErrorResult;
 import com.top_logic.tl.ai.core.tools.script.messages.ValidationResult;
@@ -123,10 +124,12 @@ public class TLScriptTool {
 	 * @param args
 	 *        Optional arguments to pass to the script ($arg1, $arg2, ...).
 	 * @param context
-	 *        Injected execution context, supplying the capability check for the commit path.
-	 * @return JSON object containing execution result or error details.
+	 *        Injected execution context, supplying the capability check for the commit path and the
+	 *        {@link ReadFilter} the result is disclosed through.
+	 * @return JSON object containing execution result or error details. Model objects in the result
+	 *         carry only what the run's principal may read; ones it may not read are absent.
 	 */
-	@ToolMethod(description = "Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications.", mode = ToolMode.DATA_WRITE, group = ToolGroups.SCRIPT)
+	@ToolMethod(description = "Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications. Objects in the result that you may not read are omitted; note that a count or a sum computed inside the script is not filtered.", mode = ToolMode.DATA_WRITE, group = ToolGroups.SCRIPT)
 	public String executeTLScript(
 			@P("TLScript code to execute") String script,
 			@P("If true, execute within transaction and commit changes (default: false)") Boolean withCommit,
@@ -156,9 +159,12 @@ public class TLScriptTool {
 				}
 			}
 
-			// Execute the script and return JSON directly
+			// Execute the script, then disclose only what this run's principal may read of the result.
+			// The filter is resolved before the script runs so a context that cannot name a principal
+			// fails before anything is read rather than after.
+			ReadFilter readFilter = ReadFilter.of(context);
 			ExecutionResult execResult = TLScriptExecutor.execute(script, commit, args);
-			return execResult.toJson();
+			return execResult.toJson(readFilter);
 
 		} catch (Exception ex) {
 			String error = "Execution failed: " + ex.getMessage();

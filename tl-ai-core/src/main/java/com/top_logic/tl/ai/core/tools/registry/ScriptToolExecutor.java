@@ -11,6 +11,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -23,6 +24,13 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * <p>
  * Named arguments arriving from the LLM are translated to the positional {@link Args} array
  * matching the body's {@code Define}-lambda nesting order by {@link ScriptParamCoercion}.
+ * </p>
+ *
+ * <p>
+ * A configured script body may return anything, model objects included, so the result goes through the
+ * run's {@link ReadFilter} rather than straight into
+ * {@link SearchExpression#asString(Object)} - which labels a model object, and a label is business
+ * data. Object-typed arguments are checked the same way, where their TID is resolved.
  * </p>
  */
 public class ScriptToolExecutor implements Tool {
@@ -83,10 +91,16 @@ public class ScriptToolExecutor implements Tool {
 
 	@Override
 	public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		// Resolved before the script runs, and outside the catch: a call that cannot name its principal
+		// is a programming error, not a failed tool call.
+		ReadFilter readFilter = ReadFilter.of(context);
 		try {
-			Object[] positional = _coercion.coerce(args);
+			// Both directions are filtered. An object argument the principal may not read is refused
+			// where the TID is resolved, and the result is disclosed through the same filter -
+			// SearchExpression.asString labels a model object, and a label is business data.
+			Object[] positional = _coercion.coerce(args, readFilter.security());
 			Object result = _executor.executeWith(Args.some(positional));
-			return ToolResult.of(SearchExpression.asString(result));
+			return ToolResult.of(readFilter.text(result));
 		} catch (Exception ex) {
 			Logger.error("Error executing script tool '" + _name + "': " + ex.getMessage(), ex,
 				ScriptToolExecutor.class);

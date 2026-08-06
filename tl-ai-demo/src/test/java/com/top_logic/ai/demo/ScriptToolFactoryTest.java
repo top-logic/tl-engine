@@ -47,6 +47,7 @@ import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.Config;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
@@ -97,7 +98,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 			"$message",
 			param("message", "tl.core:String", /*mandatory*/ true)));
 
-		ToolResult result = tool.execute(Map.of("message", "hello"), null);
+		ToolResult result = tool.execute(Map.of("message", "hello"), ToolContext.EMPTY);
 
 		assertEquals("hello", result.text());
 	}
@@ -114,7 +115,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 		p.setDefaultValue(parseExpr("\"hi\""));
 
 		Tool tool = singleTool(scriptConfig("greet", ToolMode.READ, "$greeting + \"!\"", p));
-		ToolResult result = tool.execute(Map.of(), null);
+		ToolResult result = tool.execute(Map.of(), ToolContext.EMPTY);
 
 		assertEquals("hi!", result.text());
 	}
@@ -127,7 +128,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message",
 			param("message", "tl.core:String", /*mandatory*/ true)));
 
-		ToolResult result = tool.execute(Map.of(), null);
+		ToolResult result = tool.execute(Map.of(), ToolContext.EMPTY);
 
 		// ScriptToolExecutor catches exceptions and returns them as the result text.
 		assertTrue("Expected missing-parameter error, got: " + result.text(),
@@ -146,7 +147,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 		p.setMandatory(true);
 
 		Tool tool = singleTool(scriptConfig("count", ToolMode.READ, "$items.size()", p));
-		ToolResult result = tool.execute(Map.of("items", List.of("a", "b", "c")), null);
+		ToolResult result = tool.execute(Map.of("items", List.of("a", "b", "c")), ToolContext.EMPTY);
 
 		assertEquals("3", result.text());
 	}
@@ -186,7 +187,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 			Tool tool = singleTool(scriptConfig("readName", ToolMode.READ,
 				"$target.get(`luigis.pizzashop:NamedEntities#name`)", p));
 
-			ToolResult result = tool.execute(Map.of("target", tid), null);
+			ToolResult result = tool.execute(Map.of("target", tid), ToolContext.EMPTY);
 
 			assertEquals("fixture-ingredient", result.text());
 		} finally {
@@ -254,7 +255,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 			Tool tool = singleTool(scriptConfig("listNames", ToolMode.READ,
 				"$targets.map(x -> $x.get(`luigis.pizzashop:NamedEntities#name`)).join(\",\")", p));
 
-			ToolResult result = tool.execute(Map.of("targets", List.of(tidA, tidB, tidC)), null);
+			ToolResult result = tool.execute(Map.of("targets", List.of(tidA, tidB, tidC)), ToolContext.EMPTY);
 
 			assertEquals("a,b,c", result.text());
 		} finally {
@@ -287,14 +288,14 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 			"$first + \"-\" + $second", first, second));
 
 		// Declaration-order call
-		ToolResult result = tool.execute(Map.of("first", "a", "second", "b"), null);
+		ToolResult result = tool.execute(Map.of("first", "a", "second", "b"), ToolContext.EMPTY);
 		assertEquals("a-b", result.text());
 
 		// Reversed insertion order in the map — result must be identical because binding is by name
 		Map<String, Object> reversed = new LinkedHashMap<>();
 		reversed.put("second", "b");
 		reversed.put("first", "a");
-		assertEquals("a-b", tool.execute(reversed, null).text());
+		assertEquals("a-b", tool.execute(reversed, ToolContext.EMPTY).text());
 	}
 
 	/**
@@ -346,7 +347,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 		Tool tool = singleTool(scriptConfig("readName", ToolMode.READ,
 			"$target.get(`luigis.pizzashop:NamedEntities#name`)", p));
 
-		ToolResult result = tool.execute(Map.of("target", ghostTid), null);
+		ToolResult result = tool.execute(Map.of("target", ghostTid), ToolContext.EMPTY);
 
 		assertTrue("Expected 'not found' in error result, got: " + result.text(),
 			result.text().contains("not found"));

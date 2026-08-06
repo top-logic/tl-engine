@@ -16,6 +16,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.search.configured.ScriptParameter;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
 
 /**
@@ -26,6 +27,12 @@ import com.top_logic.tl.ai.core.tools.model.TidResolver;
  * Orders arguments by the parameter declaration order so the {@code Define}-wrapped script binds
  * them to the right names; applies per-parameter default {@link Expr} values when absent; resolves
  * TID strings to {@link TLObject} wrappers when a parameter is typed as a {@link TLClass}.
+ * </p>
+ *
+ * <p>
+ * That last step is a read: the TID comes from the language model, so an object the run's principal may
+ * not read must not become an argument a script body can then report on. {@link TidResolver} refuses it
+ * as a missing object, which is why {@link #coerce(Map, ModelSecurity)} takes the run's rights.
  * </p>
  */
 public final class ScriptParamCoercion {
@@ -54,8 +61,13 @@ public final class ScriptParamCoercion {
 	/**
 	 * Builds the positional argument array from a named map. Missing optional parameters with
 	 * a configured default value are evaluated; missing mandatory parameters raise.
+	 *
+	 * @param namedArgs
+	 *        The arguments as the model named them.
+	 * @param security
+	 *        The rights of the run's principal, applied to every TID an object-typed parameter carries.
 	 */
-	public Object[] coerce(Map<String, Object> namedArgs) {
+	public Object[] coerce(Map<String, Object> namedArgs, ModelSecurity security) {
 		Map<String, Object> args = namedArgs == null ? Map.of() : namedArgs;
 		Object[] positional = new Object[_parameters.size()];
 		for (int i = 0; i < _parameters.size(); i++) {
@@ -71,12 +83,12 @@ public final class ScriptParamCoercion {
 			} else {
 				value = null;
 			}
-			positional[i] = resolveIfReference(p, value);
+			positional[i] = resolveIfReference(p, value, security);
 		}
 		return positional;
 	}
 
-	private static Object resolveIfReference(ScriptParameter p, Object value) {
+	private static Object resolveIfReference(ScriptParameter p, Object value, ModelSecurity security) {
 		if (value == null) {
 			return null;
 		}
@@ -88,11 +100,11 @@ public final class ScriptParamCoercion {
 		if (p.isMultiple() && value instanceof Iterable<?> it) {
 			List<TLObject> resolved = new ArrayList<>();
 			for (Object element : it) {
-				resolved.add(resolveTid(element));
+				resolved.add(resolveTid(element, security));
 			}
 			return resolved;
 		}
-		return resolveTid(value);
+		return resolveTid(value, security);
 	}
 
 	/**
@@ -102,9 +114,11 @@ public final class ScriptParamCoercion {
 	 *        Expected to be a {@code String} TID in the format {@code "TypeName:id"}. Any other type
 	 *        is converted via {@code String.valueOf} and must still produce a valid TID, otherwise
 	 *        the lookup fails fast.
+	 * @param security
+	 *        The rights of the run's principal. An object it may not read is refused as a missing one.
 	 */
-	private static TLObject resolveTid(Object raw) {
-		return TidResolver.resolve(String.valueOf(raw));
+	private static TLObject resolveTid(Object raw, ModelSecurity security) {
+		return TidResolver.resolve(String.valueOf(raw), security);
 	}
 
 }

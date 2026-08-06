@@ -37,6 +37,7 @@ import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
@@ -86,7 +87,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesBasic() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, null, null);
+			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain module", result.contains("\"module\""));
@@ -110,7 +111,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesWithLimit() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 2, null);
+			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 2, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain limit", result.contains("\"limit\":2"));
@@ -128,7 +129,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
 
 			// Get first page with limit 2
-			String firstPage = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 2, null);
+			String firstPage = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 2, null, ToolContext.EMPTY);
 			assertNotNull("First page should not be null", firstPage);
 
 			// Extract next cursor (simple string matching since we don't want to parse JSON)
@@ -137,7 +138,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String cursor = firstPage.substring(cursorStart, cursorEnd);
 
 			// Get second page using cursor
-			String secondPage = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 2, cursor);
+			String secondPage = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 2, cursor, ToolContext.EMPTY);
 			assertNotNull("Second page should not be null", secondPage);
 			assertTrue("Second page should have offset 2", secondPage.contains("\"offset\":2"));
 			// With 3 total, offset 2 should have no more results
@@ -151,7 +152,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesLimitClamping() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 10000, null);
+			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 10000, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			// Limit should be clamped to 1000 (MAX_LIMIT)
@@ -171,7 +172,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String tid = product.tId().asString();
 
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance(tid);
+			String result = tool.getInstance(tid, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain tid", result.contains("\"tid\""));
@@ -198,7 +199,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String tid = product.tId().asString();
 
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance(tid);
+			String result = tool.getInstance(tid, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			// Product1 has name="Margherita Pizza"
@@ -217,7 +218,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String tid = product.tId().asString();
 
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance(tid);
+			String result = tool.getInstance(tid, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Should contain metadata", result.contains("\"metadata\""));
@@ -231,7 +232,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesNullModule() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(null, PRODUCT_CLASS, null, null);
+			String result = tool.listInstances(null, PRODUCT_CLASS, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -246,7 +247,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesEmptyModule() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances("", PRODUCT_CLASS, null, null);
+			String result = tool.listInstances("", PRODUCT_CLASS, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -261,7 +262,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesNullType() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, null, null, null);
+			String result = tool.listInstances(PIZZASHOP_MODULE, null, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -276,7 +277,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesEmptyType() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, "", null, null);
+			String result = tool.listInstances(PIZZASHOP_MODULE, "", null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -291,7 +292,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesTypeNotFound() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, "NonExistentType", null, null);
+			String result = tool.listInstances(PIZZASHOP_MODULE, "NonExistentType", null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -306,7 +307,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesInvalidLimitNegative() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, -1, null);
+			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, -1, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -321,7 +322,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesInvalidLimitZero() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 0, null);
+			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 0, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -336,7 +337,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testGetInstanceNullTid() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance(null);
+			String result = tool.getInstance(null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -351,7 +352,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testGetInstanceEmptyTid() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance("");
+			String result = tool.getInstance("", ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -366,7 +367,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testGetInstanceInvalidTidFormat() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance("InvalidTid");
+			String result = tool.getInstance("InvalidTid", ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -381,7 +382,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testGetInstanceTidNotFound() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance("Product:99999");
+			String result = tool.getInstance("Product:99999", ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -396,12 +397,12 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
 
 			// List products
-			String productsResult = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, null, null);
+			String productsResult = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, null, null, ToolContext.EMPTY);
 			assertNotNull("Products result should not be null", productsResult);
 			assertTrue("Should have products", productsResult.contains("\"totalCount\":3"));
 
 			// List ingredients
-			String ingredientsResult = tool.listInstances(PIZZASHOP_MODULE, INGREDIENT_CLASS, null, null);
+			String ingredientsResult = tool.listInstances(PIZZASHOP_MODULE, INGREDIENT_CLASS, null, null, ToolContext.EMPTY);
 			assertNotNull("Ingredients result should not be null", ingredientsResult);
 			assertTrue("Should have ingredients", ingredientsResult.contains("\"totalCount\":2"));
 		});
@@ -413,7 +414,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesEmptyCursor() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, null, "");
+			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, null, "", ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Empty cursor should start at offset 0", result.contains("\"offset\":0"));

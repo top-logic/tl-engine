@@ -10,8 +10,6 @@ import java.util.Set;
 
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -31,90 +29,48 @@ import com.top_logic.tl.ai.core.tools.ToolExecutor;
  */
 public class ToolContext implements ToolExecutionContext {
 
-	/** Context with no security restrictions, auto-approval, and no-op scope. For tests only. */
+	/**
+	 * Context with no security restrictions, auto-approval, and no-op scope.
+	 *
+	 * <p>
+	 * <b>A test seam.</b> It carries {@link SecurityContext#UNRESTRICTED}, which has no principal and
+	 * therefore permits everything. No production path builds a context this way - see
+	 * {@link #forCurrentUser()} and {@code ChatProcessor}, both of which resolve the acting account
+	 * and refuse without one.
+	 * </p>
+	 */
 	public static final ToolContext EMPTY =
 		new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
 			TransactionScope.NOOP, CancellationToken.UNCANCELLABLE);
 
 	/**
-	 * Creates a new unrestricted context with a live transaction scope.
-	 *
-	 * <p>Use this for programmatic agent invocations (TL-Script, background jobs) where
-	 * tools need locking and transaction support. Each call creates a fresh scope that
-	 * shares the context's cancellation token, so lock waits end promptly when the run
-	 * is cancelled.</p>
-	 */
-	public static ToolContext createUnrestricted() {
-		CancellationToken cancellationToken = new CancellationToken();
-		return new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
-			new TransactionScope(cancellationToken), cancellationToken);
-	}
-
-	/**
 	 * Creates a context acting as the user bound to the calling thread, with a live transaction scope.
 	 *
 	 * <p>
-	 * For the TL-Script entry points, which run on the thread of whoever executed the script. Their
-	 * tool calls should be authorized against that account's roles rather than run unrestricted, which
-	 * is what they did before this layer existed.
+	 * For the TL-Script entry points, which run on the thread of whoever executed the script: their
+	 * tool calls are authorized against that account's roles and their model access against that
+	 * account's rights.
 	 * </p>
 	 *
 	 * <p>
-	 * Falls back to {@link #createUnrestricted()} when tool authorization is not enforced.
-	 * Deliberately: not enforced means the application has configured no {@code <tool-access>} policy
-	 * and must keep behaving exactly as before - and the behaviour that would otherwise change is not
-	 * only authorization: an unrestricted context reports {@link ExecutionMode#DEVELOPMENT}, while a
-	 * real one reports {@link ExecutionMode#PRODUCTION} in a deployed application, which would newly
-	 * block {@code STRUCTURAL} tools.
+	 * Each call creates a fresh transaction scope that shares the context's cancellation token, so lock
+	 * waits end promptly when the run is cancelled.
 	 * </p>
 	 *
 	 * <p>
-	 * Auto-approves, like {@link #createUnrestricted()}: a script has no approval surface. The run is
-	 * not treated as a background run, because the account that executed the script is present and
-	 * watching it - unlike {@code aiAgentChatAsync}, which detaches.
+	 * Auto-approves: a script has no approval surface. The run is not treated as a background run,
+	 * because the account that executed the script is present and watching it - unlike
+	 * {@code aiAgentChatAsync}, which detaches.
 	 * </p>
+	 *
+	 * @throws IllegalStateException
+	 *         If no user is bound to the calling thread. A run that cannot name its principal cannot
+	 *         be authorized, and there is no unchecked mode to fall back to.
 	 */
 	public static ToolContext forCurrentUser() {
-		return forCurrentUser(null);
-	}
-
-	/**
-	 * Creates a context acting as the user bound to the calling thread, for a run of an agent that
-	 * declares a security mode of its own.
-	 *
-	 * <p>
-	 * Like {@link #forCurrentUser()}, except that the agent's declared mode takes part in the decision:
-	 * an agent may demand enforcement the deployment does not, and this is the entry point where that
-	 * demand has to be honoured, because the fallback below cannot be tightened afterwards - an
-	 * unrestricted context has no principal to authorize against.
-	 * </p>
-	 *
-	 * <p>
-	 * A run whose effective mode needs an authenticated user and has none is <b>refused</b> rather than
-	 * run unrestricted. That is what makes the declaration worth anything; the alternative is an agent
-	 * that asked to be checked and silently was not.
-	 * </p>
-	 *
-	 * @param agentFloor
-	 *        The mode the agent definition declares, or <code>null</code> for a call that runs no named
-	 *        agent (a single tool, a bare chat completion).
-	 * @throws IllegalStateException
-	 *         If the effective mode {@link AiSecurityMode#requiresUser() requires a user} and no user
-	 *         is bound to the calling thread.
-	 * @see AiSecurityMode#stricter(AiSecurityMode, AiSecurityMode)
-	 */
-	public static ToolContext forCurrentUser(AiSecurityMode agentFloor) {
-		AiSecurityMode effective =
-			AiSecurityMode.stricter(AiToolAccessService.ceiling(), agentFloor);
-		if (!effective.enforcesToolAccess()) {
-			// Neither the deployment nor the agent asks for enforcement. Unchanged behaviour - and
-			// honest about the mode: an unrestricted context reports SYSTEM, which is what a run
-			// without a principal is.
-			return createUnrestricted();
-		}
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
-			TopLogicSecurityContext.forRun(TLContext.currentUser(), false, agentFloor),
+			TopLogicSecurityContext.forRun(TLContext.currentUser(), false),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 
@@ -260,21 +216,12 @@ public class ToolContext implements ToolExecutionContext {
 	 * </p>
 	 *
 	 * <p>
-	 * Grants everything unless the run's {@link SecurityContext#securityMode() mode} enforces model
-	 * access, which no application gets by default.
+	 * Always the real thing for a production run: the engine's model access rights, evaluated for the
+	 * run's principal.
 	 * </p>
 	 */
 	public ModelSecurity modelSecurity() {
 		return _security.modelSecurity();
-	}
-
-	/**
-	 * The effective security mode of the run this context belongs to.
-	 *
-	 * @see SecurityContext#securityMode()
-	 */
-	public AiSecurityMode securityMode() {
-		return _security.securityMode();
 	}
 
 	/**
@@ -374,34 +321,6 @@ public class ToolContext implements ToolExecutionContext {
 	 */
 	public String model() {
 		return _model;
-	}
-
-	/**
-	 * Returns a copy of this context whose {@link #security() security} is tightened to the security
-	 * mode an agent definition declares for itself.
-	 *
-	 * <p>
-	 * Returns {@code this} whenever the declaration is absent or not stricter than this context's
-	 * {@link #securityMode() mode} - the agent's value is a floor, so this can only narrow. The
-	 * {@link AgentLoop} applies it once per run, before the first provider call, which is what makes a
-	 * delegated child run inherit its parent's mode and still honour a stricter floor of its own.
-	 * </p>
-	 *
-	 * @param agentFloor
-	 *        The mode the agent definition declares, or <code>null</code> if it declares none.
-	 * @throws IllegalStateException
-	 *         If the declared mode is stricter than this context and this context cannot produce a
-	 *         stricter one, because it has no principal to authorize against.
-	 * @see SecurityContext#restrictedTo(AiSecurityMode)
-	 */
-	public ToolContext restrictedTo(AiSecurityMode agentFloor) {
-		SecurityContext tightened = _security.restrictedTo(agentFloor);
-		if (tightened == _security) {
-			return this;
-		}
-		return new ToolContext(tightened, _approval, _transaction, _sessionApprovedTools,
-			_delegationDepth, _toolCallId, _cancellationToken, _progressReporter, _executionHandle,
-			_model);
 	}
 
 	/**

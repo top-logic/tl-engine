@@ -195,7 +195,7 @@ public class TestBrowserFailureSurfaces extends TestCase {
 			long startNanos = System.nanoTime();
 			String result = tool.browserNavigate(
 				"https://httpbingo.org/redirect-to?url=https%3A%2F%2Fexample.com%2F",
-				ToolContext.createUnrestricted());
+				ToolContext.EMPTY);
 			long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
 
 			if (!result.contains("example.com")) {

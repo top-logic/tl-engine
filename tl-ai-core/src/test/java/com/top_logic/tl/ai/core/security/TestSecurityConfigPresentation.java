@@ -163,7 +163,7 @@ public class TestSecurityConfigPresentation extends BasicTestCase {
 			assertTrue("No security resource found for '" + language + "'. Either the bundle moved or"
 				+ " the doclet did not run; this test would silently check nothing.",
 				resources.size() > 20);
-			for (String property : List.of(ToolAccessPolicy.SECURITY_MODE, ToolAccessPolicy.TOOL_GROUPS,
+			for (String property : List.of(ToolAccessPolicy.TOOL_GROUPS,
 				ToolAccessPolicy.TOOL_ACCESS, ToolAccessPolicy.BASELINE,
 				ToolAccessPolicy.BACKGROUND_ALLOWLIST)) {
 				String key = SECURITY_PREFIX + ToolAccessPolicy.class.getSimpleName() + "." + property;

@@ -28,9 +28,8 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * {@link ModelAccessRightsSecurity} - the implementation used when the run's mode
- * {@link AiSecurityMode#enforcesModelAccess() enforces} model access - delegates to the engine's
- * {@code ModelAccessRights} and adds <b>no policy of its own</b>: two places deciding "may this be
+ * {@link ModelAccessRightsSecurity} - the implementation every production run carries - delegates to
+ * the engine's {@code ModelAccessRights} and adds <b>no policy of its own</b>: two places deciding "may this be
  * read" is one place too many. The principal is bound once when the run's context is built rather
  * than read from the thread on each check - a concurrent tool batch runs on worker threads that
  * re-establish the sub-session, and a design that re-reads thread state per check is one thread-local
@@ -38,13 +37,12 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * Every other mode uses {@link #UNCHECKED}, which is also what the default
- * {@code SecurityContext.modelSecurity()} returns, so an application that has not configured agent
- * security is unaffected.
+ * There is no mode that turns this off. An application that writes no {@code <security-config>} does
+ * not get an unchecked agent - the engine's rights are deny-by-default, so it gets an agent that can
+ * read nothing. See {@code doc/security/role-model-worked-example.md}.
  * </p>
  *
  * @see ModelAccessRightsSecurity
- * @see AiSecurityMode#enforcesModelAccess()
  */
 public interface ModelSecurity {
 
@@ -52,9 +50,10 @@ public interface ModelSecurity {
 	 * Grants everything and checks nothing.
 	 *
 	 * <p>
-	 * The behaviour of {@link AiSecurityMode#LEGACY} and of runs that deliberately act as the system
-	 * - and, since {@link AiSecurityMode#LEGACY} is the default, the behaviour of every run in an
-	 * application that has not opted into enforcement.
+	 * <b>A test seam.</b> The engine's rights need a booted {@code SecurityConfigurationService},
+	 * which a unit test about how a context behaves does not have. No production run carries it:
+	 * {@code TopLogicSecurityContext.forRun(Person, boolean)} always constructs a
+	 * {@link ModelAccessRightsSecurity}.
 	 * </p>
 	 */
 	ModelSecurity UNCHECKED = new ModelSecurity() {

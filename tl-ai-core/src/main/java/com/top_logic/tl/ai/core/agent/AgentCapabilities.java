@@ -190,23 +190,10 @@ public class AgentCapabilities {
 	}
 
 	/**
-	 * Whether the run authorizes tools at all.
-	 *
-	 * <p>
-	 * Everything this class produces is empty or permissive when it does not, so that an application
-	 * which has configured no {@code <tool-access>} policy keeps exactly its previous behaviour -
-	 * including a byte-identical system prompt.
-	 * </p>
-	 */
-	public boolean enforced() {
-		return _security.securityMode().enforcesToolAccess();
-	}
-
-	/**
 	 * Whether the run's principal may use the given tool.
 	 */
 	public boolean permits(Tool tool) {
-		return !enforced() || _security.hasToolPermission(tool);
+		return _security.hasToolPermission(tool);
 	}
 
 	/**
@@ -239,9 +226,6 @@ public class AgentCapabilities {
 	 *         usable.
 	 */
 	public String unusableReason(SkillDefinition skill) {
-		if (!enforced()) {
-			return null;
-		}
 		return unusableReason(resolve(skill.tools()), "known tools");
 	}
 
@@ -276,9 +260,6 @@ public class AgentCapabilities {
 	 *        unusable}.
 	 */
 	public boolean withheldByBackgroundCeiling(SkillDefinition skill) {
-		if (!enforced()) {
-			return false;
-		}
 		for (Tool tool : resolve(skill.tools())) {
 			if (_security.withheldByBackgroundCeiling(tool)) {
 				return true;
@@ -320,7 +301,7 @@ public class AgentCapabilities {
 	 *         usable.
 	 */
 	public String unusableReason(AgentDefinition delegate) {
-		if (!enforced() || delegate == null) {
+		if (delegate == null) {
 			return null;
 		}
 		return unusableReason(reachableTools(delegate), "reachable tools");
@@ -344,11 +325,10 @@ public class AgentCapabilities {
 	 *
 	 * @param delegate
 	 *        The delegate to inspect, or <code>null</code>.
-	 * @return The lacking capability names, in a stable order; empty when the run does not enforce tool
-	 *         access.
+	 * @return The lacking capability names, in a stable order.
 	 */
 	public Set<String> unreachableCapabilities(AgentDefinition delegate) {
-		if (!enforced() || delegate == null) {
+		if (delegate == null) {
 			return new TreeSet<>();
 		}
 		return lackingOf(reachableTools(delegate));
@@ -468,13 +448,9 @@ public class AgentCapabilities {
 	 *
 	 * @param toolNames
 	 *        Qualified names of the tools to inspect.
-	 * @return The lacking capability names, in a stable order; empty when the run does not enforce
-	 *         tool access.
+	 * @return The lacking capability names, in a stable order.
 	 */
 	public Set<String> lacking(Collection<String> toolNames) {
-		if (!enforced()) {
-			return new TreeSet<>();
-		}
 		return lackingOf(resolve(toolNames));
 	}
 
@@ -498,9 +474,8 @@ public class AgentCapabilities {
 	 * principal lacks.
 	 *
 	 * <p>
-	 * Empty unless the run enforces tool access, so an unenforced run's prompt is unchanged. Kept to
-	 * a few sentences plus one list: this is per-turn prompt text and it competes with the agent's
-	 * actual instructions.
+	 * Kept to a few sentences plus one list: this is per-turn prompt text and it competes with the
+	 * agent's actual instructions.
 	 * </p>
 	 *
 	 * <p>
@@ -518,9 +493,6 @@ public class AgentCapabilities {
 	 * @return The section to append to the generated skill catalog, or the empty string.
 	 */
 	public String notice(Collection<String> agentToolNames, Collection<SkillDefinition> skills) {
-		if (!enforced()) {
-			return "";
-		}
 		List<String> reachable = new ArrayList<>(agentToolNames);
 		for (SkillDefinition skill : skills) {
 			reachable.addAll(skill.tools());

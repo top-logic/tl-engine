@@ -286,56 +286,48 @@ public class TestPreCommitGuard extends TestCase {
 	}
 
 	/**
-	 * {@link AiSecurityMode#LEGACY} - the mode of every application that configured no policy - gets a
-	 * guard that enforces nothing, so the loop never even reads the change set.
+	 * Every run gets the real guard.
+	 *
+	 * <p>
+	 * There is no mode that skips this layer: a turn that opened a transaction is verified before it
+	 * commits, whatever the run is.
+	 * </p>
 	 */
-	public void testLegacyEnforcesNothing() {
-		assertFalse(PreCommitGuard.forRun(context(AiSecurityMode.LEGACY)).enforces());
-		assertEquals(List.of(),
-			PreCommitGuard.forRun(context(AiSecurityMode.LEGACY))
-				.check(context(AiSecurityMode.LEGACY), ToolChangeSet.EMPTY));
-	}
-
-	/** A run acting as the system has no user to check against and is equally unenforced. */
-	public void testSystemModeEnforcesNothing() {
-		assertFalse(PreCommitGuard.forRun(context(AiSecurityMode.SYSTEM)).enforces());
-	}
-
-	/** An enforcing run gets the real guard. */
-	public void testEnforcedModeGetsTheModelSecurityGuard() {
-		PreCommitGuard guard = PreCommitGuard.forRun(context(AiSecurityMode.ENFORCED));
+	public void testEveryRunGetsTheModelSecurityGuard() {
+		PreCommitGuard guard = PreCommitGuard.forRun();
 
 		assertTrue(guard.enforces());
 		assertTrue(guard instanceof ModelSecurityPreCommitGuard);
 	}
 
-	/** {@link PreCommitGuard#PERMISSIVE} accepts every change. */
+	/**
+	 * {@link PreCommitGuard#PERMISSIVE} accepts every change.
+	 *
+	 * <p>
+	 * The test seam, and no longer anything {@link PreCommitGuard#forRun} can answer with.
+	 * </p>
+	 */
 	public void testPermissiveAcceptsEverything() {
 		assertFalse(PreCommitGuard.PERMISSIVE.enforces());
-		assertEquals(List.of(), PreCommitGuard.PERMISSIVE.check(context(AiSecurityMode.ENFORCED),
+		assertEquals(List.of(), PreCommitGuard.PERMISSIVE.check(context(),
 			new ToolChangeSet(List.of(new Creation(NOTE1, NOTE, PROJECT, NOTES)),
 				Map.of(SECRET1, Set.of(VALUE)), List.of(NOTE1))));
 	}
 
 	private static List<Violation> check(ModelSecurity model, ToolChangeSet changes) {
-		return new ModelSecurityPreCommitGuard().check(context(AiSecurityMode.ENFORCED, model), changes);
+		return new ModelSecurityPreCommitGuard().check(context(model), changes);
 	}
 
-	private static SecurityContext context(AiSecurityMode mode) {
-		return context(mode, ModelSecurity.UNCHECKED);
+	private static SecurityContext context() {
+		return context(ModelSecurity.UNCHECKED);
 	}
 
-	private static SecurityContext context(AiSecurityMode mode, ModelSecurity model) {
+	private static SecurityContext context(ModelSecurity model) {
 		return new SecurityContext() {
 
 			@Override
 			public boolean hasToolPermission(Tool tool) {
 				return true;
-			}
-
-			@Override
-			public AiSecurityMode securityMode() {
-				return mode;
 			}
 
 			@Override

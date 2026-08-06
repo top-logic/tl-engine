@@ -154,28 +154,14 @@ public class TestDetachedSubagentCeiling extends TestCase {
 	}
 
 	/**
-	 * An application that has configured no {@code <tool-access>} policy sees no change at all.
+	 * A context with nothing to narrow answers itself rather than deriving a new one.
 	 *
 	 * <p>
-	 * The most important test in this class: {@link com.top_logic.tl.ai.core.security.AiSecurityMode#LEGACY}
-	 * is what every unmigrated application runs in, and a detached subagent there must keep behaving
-	 * exactly as it did before this ceiling existed.
+	 * {@link ToolContext#EMPTY} is the test seam, and it authorizes nothing, so bounding it by an
+	 * allowlist it does not have would produce a context indistinguishable from this one.
 	 * </p>
 	 */
-	public void testLegacyRunIsUnaffected() {
-		ToolContext parent = new ToolContext(new TopLogicSecurityContext(),
-			ApprovalCallback.AUTO_APPROVE, TransactionScope.NOOP);
-
-		ToolContext child = detachedChild(parent);
-
-		assertSame("Nothing to derive, so not even a new context.", parent.security(), child.security());
-		assertFalse(child.security().isBackgroundRun());
-		assertTrue(child.security().hasToolPermission(WRITE_TOOL));
-		assertEquals(Set.of(), child.security().capabilitiesWithheldInBackground());
-	}
-
-	/** The unrestricted context of a test or a trusted internal run is not narrowed either. */
-	public void testUnrestrictedRunIsUnaffected() {
+	public void testAContextWithNothingToNarrowIsUnaffected() {
 		ToolContext child = detachedChild(ToolContext.EMPTY);
 
 		assertSame(ToolContext.EMPTY.security(), child.security());

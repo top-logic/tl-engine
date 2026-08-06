@@ -37,7 +37,6 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -377,11 +376,6 @@ public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 			@Override
 			public boolean hasToolPermission(Tool tool) {
 				return true;
-			}
-
-			@Override
-			public AiSecurityMode securityMode() {
-				return real.securityMode();
 			}
 
 			@Override

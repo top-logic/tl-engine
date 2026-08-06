@@ -47,7 +47,15 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  */
 public interface PreCommitGuard {
 
-	/** Accepts every change. The behaviour of {@link AiSecurityMode#LEGACY}. */
+	/**
+	 * Accepts every change.
+	 *
+	 * <p>
+	 * <b>A test seam.</b> {@link #forRun(SecurityContext)} never answers with it: the guard runs for
+	 * every agent turn that opened a transaction, whatever the run is. A test that needs a turn to
+	 * commit without a booted {@code SecurityConfigurationService} uses this.
+	 * </p>
+	 */
 	PreCommitGuard PERMISSIVE = new PreCommitGuard() {
 
 		@Override
@@ -70,7 +78,7 @@ public interface PreCommitGuard {
 	 * </p>
 	 *
 	 * @param security
-	 *        The run's security context, carrying the principal and the effective mode.
+	 *        The run's security context, carrying the principal's model access rights.
 	 * @param changes
 	 *        The changes accumulated in the current transaction.
 	 * @return The violations found; empty means the commit may proceed.
@@ -81,9 +89,9 @@ public interface PreCommitGuard {
 	 * Whether this guard checks anything at all.
 	 *
 	 * <p>
-	 * Answered before the change set is built, so that a run which enforces nothing pays nothing:
-	 * reading the engine's transaction bookkeeping is cheap but not free, and a turn that could not
-	 * produce a violation must not be charged for it.
+	 * Answered before the change set is built, so that a guard which checks nothing costs nothing:
+	 * reading the engine's transaction bookkeeping is cheap but not free. Only {@link #PERMISSIVE}
+	 * answers {@code false}.
 	 * </p>
 	 */
 	default boolean enforces() {
@@ -91,23 +99,18 @@ public interface PreCommitGuard {
 	}
 
 	/**
-	 * The guard to use for a run with the given security context.
+	 * The guard to use for an agent run.
 	 *
 	 * <p>
-	 * The one place the mode gate for this layer lives. A run whose mode does not
-	 * {@link AiSecurityMode#enforcesModelAccess() enforce model access} - which is every run in an
-	 * application that has configured no policy, and every {@link AiSecurityMode#SYSTEM} run - gets
-	 * {@link #PERMISSIVE} and is not charged for the change set either.
+	 * Always a real guard: model access is checked for every run, so every turn that opened a
+	 * transaction is verified before it commits. It used to take the run's security context and answer
+	 * {@link #PERMISSIVE} for a run whose mode enforced nothing; there is no such run any more, and the
+	 * guard is stateless because {@link #check} receives the context it decides against.
 	 * </p>
 	 *
-	 * @param security
-	 *        The run's security context.
 	 * @return The guard for this run, never <code>null</code>.
 	 */
-	static PreCommitGuard forRun(SecurityContext security) {
-		if (security == null || !security.securityMode().enforcesModelAccess()) {
-			return PERMISSIVE;
-		}
+	static PreCommitGuard forRun() {
 		return new ModelSecurityPreCommitGuard();
 	}
 

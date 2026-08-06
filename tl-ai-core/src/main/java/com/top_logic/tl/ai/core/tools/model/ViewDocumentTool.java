@@ -188,14 +188,19 @@ public class ViewDocumentTool {
 	}
 
 	/**
-	 * The security context used for the read check, falling back to
-	 * {@link SecurityContext#UNRESTRICTED} when the tool runs outside an agent loop (scripting,
-	 * tests).
+	 * The security context used for the read check.
+	 *
+	 * <p>
+	 * Every caller passes the {@link ToolContext} of a run, which names the acting principal. There is
+	 * no permissive fallback: a read check that cannot name whom it is for would grant everything.
+	 * </p>
 	 */
 	private static SecurityContext readAccess(ToolExecutionContext context) {
-		return context instanceof ToolContext toolContext
-			? toolContext.security()
-			: SecurityContext.UNRESTRICTED;
+		if (context instanceof ToolContext toolContext) {
+			return toolContext.security();
+		}
+		throw new IllegalStateException("Reading a document is checked against the run's principal, and"
+			+ " this call has no run to ask. Execute the tool with the ToolContext of an agent run.");
 	}
 
 	/**

@@ -212,40 +212,6 @@ public class TestSpawnFilter extends TestCase {
 		assertTrue(refusal, refusal.contains(ToolGroups.SCRIPT));
 	}
 
-	/**
-	 * An application that has configured no {@code <tool-access>} policy refuses nothing.
-	 *
-	 * <p>
-	 * The most important test in this class: {@code LEGACY} is what every unmigrated application runs
-	 * in, and a spawn there must behave exactly as it did before this filter existed. The graph fails
-	 * the test if it is consulted at all, because an unenforced run must not even look.
-	 * </p>
-	 */
-	public void testLegacyRunRefusesNothing() {
-		AgentGraph forbidden = new AgentGraph() {
-			@Override
-			public AgentDefinition agent(String name) {
-				throw new AssertionError("An unenforced run must not walk the agent graph.");
-			}
-
-			@Override
-			public SkillDefinition skill(String name) {
-				throw new AssertionError("An unenforced run must not walk the agent graph.");
-			}
-
-			@Override
-			public List<Tool> mcpTools(String serverName) {
-				throw new AssertionError("An unenforced run must not walk the agent graph.");
-			}
-		};
-		ToolContext legacyParent = new ToolContext(new TopLogicSecurityContext(),
-			ApprovalCallback.AUTO_APPROVE, TransactionScope.NOOP);
-		AgentCapabilities capabilities = new AgentCapabilities(TestSpawnFilter::resolve,
-			detachedChild(legacyParent).security(), forbidden);
-
-		assertNull(SubagentSpawner.detachedSpawnRefusal(WRITER, capabilities));
-	}
-
 	// ===== Helpers =====
 
 	/**
@@ -329,7 +295,7 @@ public class TestSpawnFilter extends TestCase {
 		agents.put(READER, withTools(READER, READ_TOOL));
 		agents.put(TOOLLESS, withTools(TOOLLESS));
 		agents.put(SCRIPTED, new AgentDefinition(SCRIPTED, SCRIPTED, "", List.of(), List.of(),
-			List.of("scripting"), List.of(), null, AgentSource.CONFIG));
+			List.of("scripting"), List.of(), AgentSource.CONFIG));
 
 		SkillDefinition scripting = new SkillDefinition("scripting", "scripting", "content",
 			List.of(SCRIPT_TOOL), AgentSource.CONFIG);
@@ -353,7 +319,7 @@ public class TestSpawnFilter extends TestCase {
 	}
 
 	private static AgentDefinition withTools(String name, String... tools) {
-		return new AgentDefinition(name, name, "", List.of(tools), List.of(), List.of(), List.of(), null,
+		return new AgentDefinition(name, name, "", List.of(tools), List.of(), List.of(), List.of(),
 			AgentSource.CONFIG);
 	}
 

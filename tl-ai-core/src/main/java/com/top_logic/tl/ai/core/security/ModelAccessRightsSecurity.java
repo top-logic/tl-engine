@@ -37,11 +37,9 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * </p>
  *
  * <p>
- * Only constructed for a run in {@link AiSecurityMode#ENFORCED}; every other mode uses
- * {@link ModelSecurity#UNCHECKED}.
+ * Constructed for every run. {@link ModelSecurity#UNCHECKED} is a test seam and no production path
+ * uses it.
  * </p>
- *
- * @see AiSecurityMode#enforcesModelAccess()
  */
 public class ModelAccessRightsSecurity implements ModelSecurity {
 
@@ -54,15 +52,13 @@ public class ModelAccessRightsSecurity implements ModelSecurity {
 	 * engine's configured model access rights.
 	 *
 	 * @param person
-	 *        The authenticated user the agent run acts as. A run in
-	 *        {@link AiSecurityMode#ENFORCED} is refused up front when it has no principal (see
-	 *        {@code TopLogicSecurityContext.forRun}), so this is expected to be non-<code>null</code>
-	 *        in production; a <code>null</code> principal is not a hole either, since the engine
-	 *        grants no rights without a user.
+	 *        The authenticated user the agent run acts as. A run with no principal is refused up front
+	 *        (see {@code TopLogicSecurityContext.forRun}), so this is non-<code>null</code> in
+	 *        production; a <code>null</code> principal is not a hole either, since the engine grants
+	 *        no rights without a user.
 	 * @throws IllegalStateException
-	 *         If the engine's model security service is not running. Failing here is deliberate: in
-	 *         {@link AiSecurityMode#ENFORCED} a missing service must stop the run rather than
-	 *         silently grant everything.
+	 *         If the engine's model security service is not running. Failing here is deliberate: a
+	 *         missing service must stop the run rather than silently grant everything.
 	 */
 	public ModelAccessRightsSecurity(Person person) {
 		this(person, activeRights());
@@ -84,9 +80,9 @@ public class ModelAccessRightsSecurity implements ModelSecurity {
 	private static ModelAccessRights activeRights() {
 		if (!SecurityConfigurationService.Module.INSTANCE.isActive()) {
 			throw new IllegalStateException(
-				"Model access rights are enforced for this agent run, but the engine's model security"
-					+ " service is not running. Configure it, or run the agent in "
-					+ AiSecurityMode.LEGACY + " mode.");
+				"Model access rights are checked for every agent run, but the engine's model security"
+					+ " service is not running. Re-activate it and write a <security-config>; there is"
+					+ " no unchecked mode to fall back to.");
 		}
 		return ModelAccessRights.getInstance();
 	}

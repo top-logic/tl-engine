@@ -54,15 +54,6 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	String NAME_ATTR = "name";
 
 	/**
-	 * Part <code>securityMode</code> of <code>Agent</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.ai.core:AiSecurityMode</code> in configuration.
-	 * </p>
-	 */
-	String SECURITY_MODE_ATTR = "securityMode";
-
-	/**
 	 * Part <code>skills</code> of <code>Agent</code>
 	 * 
 	 * <p>
@@ -159,20 +150,6 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	 */
 	default void removeMcpServer(String oldValue) {
 		tRemoveByName(MCP_SERVERS_ATTR, oldValue);
-	}
-
-	/**
-	 * Getter for part {@link #SECURITY_MODE_ATTR}.
-	 */
-	default com.top_logic.tl.ai.core.security.AiSecurityMode getSecurityMode() {
-		return (com.top_logic.tl.ai.core.security.AiSecurityMode) tValueByName(SECURITY_MODE_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #SECURITY_MODE_ATTR}.
-	 */
-	default void setSecurityMode(com.top_logic.tl.ai.core.security.AiSecurityMode newValue) {
-		tUpdateByName(SECURITY_MODE_ATTR, newValue);
 	}
 
 	/**

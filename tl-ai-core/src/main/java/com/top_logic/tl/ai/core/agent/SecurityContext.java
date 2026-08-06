@@ -8,7 +8,6 @@ package com.top_logic.tl.ai.core.agent;
 import java.util.Set;
 
 import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -19,21 +18,26 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * <p>Combines four concerns:</p>
  * <ul>
  *   <li><b>User-level access</b> ({@link #hasToolPermission}) — can this user invoke this tool at all?
- *       Answered against the roles the run's principal holds, but only where the run's
- *       {@link #securityMode() mode} enforces tool access; unenforced by default, so an application
- *       that has configured no {@code <tool-access>} policy sees {@code true} throughout.</li>
+ *       Answered against the roles the run's principal holds.</li>
  *   <li><b>Model access</b> ({@link #modelSecurity}) - may the run's principal read or change a
- *       given model object? Consulted only when {@link #securityMode()} enforces it.</li>
+ *       given model object?</li>
  *   <li><b>System execution mode</b> ({@link #executionMode}) — is the system in development,
  *       production, or maintenance mode? The agent loop uses this to gate STRUCTURAL tools.</li>
  *   <li><b>Approval policy</b> ({@link #checkApproval}) — does this tool call need user
  *       confirmation before executing?</li>
  * </ul>
  *
+ * <p>
+ * Both security concerns are unconditional. There is no configuration that turns them off, and no
+ * run-level mode to consult: what a run may do follows from <em>who it acts as</em>, and a run that
+ * cannot name a principal is refused where its context is built
+ * ({@link TopLogicSecurityContext#forRun(com.top_logic.knowledge.wrap.person.Person, boolean)}). The
+ * permissive defaults below therefore describe only {@link #UNRESTRICTED}, which is a test seam.
+ * </p>
+ *
  * @see ToolContext
  * @see ExecutionMode
  * @see PermissionDecision
- * @see AiSecurityMode
  */
 public interface SecurityContext {
 
@@ -118,8 +122,8 @@ public interface SecurityContext {
 	 * </p>
 	 *
 	 * <p>
-	 * The default permits, matching {@link #hasToolPermission(String)}: a context from an application
-	 * that configured no policy must keep behaving as it did before this layer existed.
+	 * The default permits, matching {@link #hasToolPermission(String)}: it is what
+	 * {@link #UNRESTRICTED} answers, and that context is a test seam.
 	 * </p>
 	 *
 	 * @param capability
@@ -229,65 +233,13 @@ public interface SecurityContext {
 	}
 
 	/**
-	 * The effective security mode of the run this context belongs to.
-	 *
-	 * <p>
-	 * Resolved once, before the first provider call, and never re-derived afterwards, so neither a
-	 * tool nor an agent definition can widen it mid-run. The default is
-	 * {@link AiSecurityMode#LEGACY}: a context that says nothing about its mode is one from an
-	 * application that has not configured agent security, and must keep behaving as it did before
-	 * the modes existed.
-	 * </p>
-	 */
-	default AiSecurityMode securityMode() {
-		return AiSecurityMode.LEGACY;
-	}
-
-	/**
-	 * This context, tightened to the security mode an agent definition declares for itself.
-	 *
-	 * <p>
-	 * The composition seam for {@link AiSecurityMode#stricter(AiSecurityMode, AiSecurityMode)}: the
-	 * agent's value is a <em>floor</em>, so this returns {@code this} whenever the floor is absent or
-	 * not stricter than {@link #securityMode()}, and never a context laxer than this one. It is what
-	 * makes a delegated child run inherit its parent's mode and still honour a stricter floor of its
-	 * own.
-	 * </p>
-	 *
-	 * <p>
-	 * The default implementation can only answer the no-op case: a context that does not know the
-	 * run's principal has nothing to build a stricter one from, and answering {@code this} anyway
-	 * would silently drop the floor. It therefore refuses instead.
-	 * </p>
-	 *
-	 * @param agentFloor
-	 *        The mode the agent definition declares, or <code>null</code> if it declares none.
-	 * @return A context whose {@link #securityMode()} is
-	 *         {@code stricter(securityMode(), agentFloor)}, possibly {@code this}.
-	 * @throws IllegalStateException
-	 *         If the floor is stricter than this context and this context cannot produce a stricter
-	 *         one.
-	 */
-	default SecurityContext restrictedTo(AiSecurityMode agentFloor) {
-		AiSecurityMode effective = AiSecurityMode.stricter(securityMode(), agentFloor);
-		if (effective == securityMode()) {
-			return this;
-		}
-		throw new IllegalStateException("This agent declares security mode " + agentFloor
-			+ ", which is stricter than the " + securityMode() + " mode of the run it was started"
-			+ " from, but that run's security context cannot be tightened: it has no principal to"
-			+ " authorize against. Start such an agent through an entry point that resolves its"
-			+ " declared mode before building the context.");
-	}
-
-	/**
 	 * Per-object model access checks for the run's principal.
 	 *
 	 * <p>
 	 * Tools use this to filter what they return and to refuse changes the principal may not make.
-	 * The default is {@link ModelSecurity#UNCHECKED}, matching the {@link #securityMode() default
-	 * mode}: checks are only meaningful once a mode that
-	 * {@link AiSecurityMode#enforcesModelAccess() enforces} them is configured.
+	 * The default is {@link ModelSecurity#UNCHECKED}, which is what {@link #UNRESTRICTED} answers -
+	 * a test seam. Every production context is a {@link TopLogicSecurityContext} and carries a real
+	 * {@code ModelAccessRightsSecurity}.
 	 * </p>
 	 */
 	default ModelSecurity modelSecurity() {
@@ -331,12 +283,15 @@ public interface SecurityContext {
 	}
 
 	/**
-	 * Context with no restrictions - for tests and trusted internal use.
+	 * Context with no restrictions.
 	 *
 	 * <p>
-	 * Reports {@link AiSecurityMode#SYSTEM}: this context has no user identity, which is what that
-	 * mode names. Reporting {@link AiSecurityMode#LEGACY} instead would be a lie about the reason
-	 * nothing is checked here.
+	 * <b>A test seam.</b> It has no principal, so it cannot answer any question this interface asks
+	 * about one; it permits instead. Its only production-shaped use is {@link ToolContext#EMPTY}, which
+	 * is a test seam for the same reason. Nothing in production builds a context this way - every run
+	 * goes through
+	 * {@link TopLogicSecurityContext#forRun(com.top_logic.knowledge.wrap.person.Person, boolean)},
+	 * which requires a principal.
 	 * </p>
 	 */
 	SecurityContext UNRESTRICTED = new SecurityContext() {
@@ -344,11 +299,6 @@ public interface SecurityContext {
 		@Override
 		public boolean hasToolPermission(Tool tool) {
 			return true;
-		}
-
-		@Override
-		public AiSecurityMode securityMode() {
-			return AiSecurityMode.SYSTEM;
 		}
 
 		@Override

@@ -15,7 +15,6 @@ import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
@@ -41,13 +40,14 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  */
 public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 
-	/** Precondition: writing {@code <tool-access>} is what turned enforcement on. */
-	public void testPolicyIsEnforced() {
+	/** Precondition: the fixture's policy is the one being evaluated. */
+	public void testPolicyIsTheFixtures() {
 		assertTrue("The secdemo aspect must be enabled for this test.",
 			AiToolAccessService.Module.INSTANCE.isActive());
-		assertEquals("A non-empty <tool-access> must resolve to ENFORCED. If this reports LEGACY,"
-			+ " something overrode the mode the fixture's policy resolves to.",
-			AiSecurityMode.ENFORCED, AiToolAccessService.ceiling());
+		assertFalse("The fixture's <tool-access> matrix must have reached the service. If this is"
+			+ " empty, something replaced the deployed policy and every assertion below would pass"
+			+ " vacuously by denying everything.",
+			AiToolAccessService.policy().getToolAccess().isEmpty());
 	}
 
 	/** Precondition: the group taxonomy actually reached the registered tools. */

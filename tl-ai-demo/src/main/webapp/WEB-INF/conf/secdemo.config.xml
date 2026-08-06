@@ -195,9 +195,9 @@
 			<security-config> above, which governs the data - a role can be granted the TL-Script tool
 			and still be denied every object it tries to touch, and vice versa.
 
-			Writing this block is what turns tool authorization on. Without it the service resolves to
-			LEGACY and every tool an agent carries is callable by anyone, which is how the demo behaves
-			with this aspect switched off.
+			Tool authorization is always applied, so this block is not a switch: it is the whole grant
+			table. Without it every persona would reach nothing but the implicit "interaction" grant,
+			which is how the demo behaves with this aspect switched off.
 
 			The six roles, ordered from the narrowest to the widest, and what each one is here to
 			demonstrate:
@@ -337,34 +337,6 @@
 					<grant group="agent.meta"/>
 					<grant group="script"/>
 				</background-allowlist>
-			</instance>
-		</config>
-
-		<!--
-			One agent that names a security mode of its own, so the composition of the two is
-			observable in a booted application.
-
-			The deployment above is ENFORCED, which is already the strictest mode, so no agent can
-			raise anything here - which makes this fixture the interesting half of the rule: an agent
-			asking to be treated more leniently than the deployment gets nothing. Its declaration is
-			read (it reaches AgentDefinition.securityFloor()) and then loses to the ceiling, and a run
-			of it is checked exactly like a run of any other agent.
-
-			Deliberately no tools, no skills and no delegations: what is under test is the mode
-			resolution, and an agent with a tool list would additionally depend on which tools the
-			acting persona holds. SecDemoAgentFloorTest is the assertion; scenario F1 in
-			doc/security/testbed.md is the same thing by hand.
-		-->
-		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
-			<instance>
-				<agents>
-					<agent name="TL_secDemoLaxAgent"
-						security-mode="LEGACY"
-						description="Test bed fixture: an agent that asks to be unenforced. The deployment is ENFORCED, so it is enforced anyway."
-					>
-						<system-prompt>You exist to demonstrate that an agent cannot make itself laxer than its deployment.</system-prompt>
-					</agent>
-				</agents>
 			</instance>
 		</config>
 

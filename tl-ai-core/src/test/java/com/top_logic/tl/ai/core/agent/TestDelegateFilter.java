@@ -20,7 +20,6 @@ import com.top_logic.basic.listener.Listener;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities.AgentGraph;
 import com.top_logic.tl.ai.core.agent.AgentFactory.DelegateOffer;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -95,9 +94,9 @@ public class TestDelegateFilter extends TestCase {
 
 	// ===== The predicate =====
 
-	/** An unenforced run drops no delegate, not even one whose every tool would be denied. */
-	public void testLegacyFiltersNothing() {
-		AgentCapabilities capabilities = capabilities(AiSecurityMode.LEGACY, Set.of());
+	/** A principal who may use every tool keeps every delegate, in declaration order. */
+	public void testPrincipalWhoMayUseEverythingKeepsEveryDelegate() {
+		AgentCapabilities capabilities = capabilities(everyTool());
 
 		assertNull(capabilities.unusableReason(agent(WRITER_DELEGATE)));
 		assertEquals(Set.of(), capabilities.unreachableCapabilities(agent(WRITER_DELEGATE)));
@@ -134,7 +133,7 @@ public class TestDelegateFilter extends TestCase {
 	 * true and must not delete it.
 	 */
 	public void testToollessDelegateSurvives() {
-		assertNull(capabilities(AiSecurityMode.ENFORCED, Set.of())
+		assertNull(capabilities(Set.of())
 			.unusableReason(agent(TOOLLESS_DELEGATE)));
 	}
 
@@ -146,14 +145,14 @@ public class TestDelegateFilter extends TestCase {
 		assertNull("It reaches the reader's data.read tool, so it can do something.",
 			readOnlyPrincipal().unusableReason(agent(ROUTER_DELEGATE)));
 
-		String reason = capabilities(AiSecurityMode.ENFORCED, Set.of()).unusableReason(agent(ROUTER_DELEGATE));
+		String reason = capabilities(Set.of()).unusableReason(agent(ROUTER_DELEGATE));
 		assertNotNull("With everything its delegates reach denied, it can do nothing.", reason);
 	}
 
 	/** A delegate reaches the tools of the skills it declares. */
 	public void testSkillToolsCountTowardsReachability() {
 		assertNull("Its skill's tool is permitted, so the delegate is usable.",
-			capabilities(AiSecurityMode.ENFORCED, Set.of(SCRIPT_TOOL))
+			capabilities(Set.of(SCRIPT_TOOL))
 				.unusableReason(agent(SKILLED_DELEGATE)));
 
 		assertNotNull("With the skill's only tool denied, nothing is left.",
@@ -164,25 +163,25 @@ public class TestDelegateFilter extends TestCase {
 	public void testMcpToolsCountTowardsReachability() {
 		assertNotNull("Its only tool is an MCP tool in data.write.",
 			readOnlyPrincipal().unusableReason(agent(MCP_DELEGATE)));
-		assertNull(capabilities(AiSecurityMode.ENFORCED, Set.of(MCP_TOOL))
+		assertNull(capabilities(Set.of(MCP_TOOL))
 			.unusableReason(agent(MCP_DELEGATE)));
 	}
 
 	/** A typo in a delegate's tool list is not a denial and must not remove the delegate. */
 	public void testDelegateOfOnlyUnresolvableToolsSurvives() {
-		assertNull(capabilities(AiSecurityMode.ENFORCED, Set.of())
+		assertNull(capabilities(Set.of())
 			.unusableReason(agent(TYPO_DELEGATE)));
 	}
 
 	/** A delegation naming an agent that does not exist is not a denial either. */
 	public void testUnknownDelegateSurvives() {
-		assertNull(capabilities(AiSecurityMode.ENFORCED, Set.of()).unusableReason((AgentDefinition) null));
+		assertNull(capabilities(Set.of()).unusableReason((AgentDefinition) null));
 	}
 
 	/** An ungrouped tool keeps a delegate alive for nobody, and names no capability. */
 	public void testUngroupedToolNamesNoCapability() {
 		AgentDefinition delegate = new AgentDefinition("ungrouped", "ungrouped", "", List.of(UNGROUPED_TOOL),
-			List.of(), List.of(), List.of(), null, AgentSource.CONFIG);
+			List.of(), List.of(), List.of(), AgentSource.CONFIG);
 		AgentCapabilities capabilities = readOnlyPrincipal();
 
 		assertNotNull(capabilities.unusableReason(delegate));
@@ -205,7 +204,7 @@ public class TestDelegateFilter extends TestCase {
 
 	/** A principal who may use everything sees every delegate, unlimited. */
 	public void testPrincipalWhoMayUseEverythingSeesEveryDelegate() {
-		AgentCapabilities capabilities = capabilities(AiSecurityMode.ENFORCED,
+		AgentCapabilities capabilities = capabilities(
 			Set.of(READ_TOOL, WRITE_TOOL, SCRIPT_TOOL, UNGROUPED_TOOL, MCP_TOOL));
 
 		assertEquals(List.of(READER_DELEGATE, WRITER_DELEGATE, MIXED_DELEGATE, TOOLLESS_DELEGATE,
@@ -217,18 +216,18 @@ public class TestDelegateFilter extends TestCase {
 	// ===== Surface 1: the generated catalog =====
 
 	/**
-	 * An unenforced run produces the very delegate catalog it produced before this existed: the same
-	 * delegates, in the same order, and nothing appended.
+	 * A principal who may use every tool is offered every delegate, in declaration order, and nothing
+	 * is appended about capabilities it lacks.
 	 */
-	public void testLegacyCatalogIsUnchanged() {
+	public void testCatalogOfAPrincipalWhoMayUseEverything() {
 		AgentDefinition parent = new AgentDefinition(PARENT, "p", "", List.of(), List.of(), List.of(),
-			List.of(READER_DELEGATE, WRITER_DELEGATE), null, AgentSource.CONFIG);
+			List.of(READER_DELEGATE, WRITER_DELEGATE), AgentSource.CONFIG);
 
 		assertEquals("\n\n### Available Delegates\n\n"
 			+ "You can delegate tasks to these specialized agents:\n\n"
 			+ "- **reader** (`delegate_to_reader`): reader\n"
 			+ "- **writer** (`delegate_to_writer`): writer\n",
-			catalogOf(parent, capabilities(AiSecurityMode.LEGACY, Set.of())));
+			catalogOf(parent, capabilities(everyTool())));
 	}
 
 	/** Under enforcement the catalog keeps what is usable and drops what is not. */
@@ -259,7 +258,7 @@ public class TestDelegateFilter extends TestCase {
 
 	/** A catalog in which nothing is limited says nothing about limits. */
 	public void testCatalogIsSilentWhenNothingIsLimited() {
-		String catalog = catalogOf(agent(PARENT), capabilities(AiSecurityMode.ENFORCED,
+		String catalog = catalogOf(agent(PARENT), capabilities(
 			Set.of(READ_TOOL, WRITE_TOOL, SCRIPT_TOOL, UNGROUPED_TOOL, MCP_TOOL)));
 
 		assertFalse(catalog, catalog.contains("Limited for this user"));
@@ -268,7 +267,7 @@ public class TestDelegateFilter extends TestCase {
 	/** With every delegate dropped there is no section at all, rather than an empty heading. */
 	public void testCatalogIsEmptyWhenEveryDelegateIsDropped() {
 		AgentDefinition parent = new AgentDefinition(PARENT, "p", "", List.of(), List.of(), List.of(),
-			List.of(WRITER_DELEGATE, MCP_DELEGATE), null, AgentSource.CONFIG);
+			List.of(WRITER_DELEGATE, MCP_DELEGATE), AgentSource.CONFIG);
 
 		assertEquals("", catalogOf(parent, readOnlyPrincipal()));
 	}
@@ -312,9 +311,9 @@ public class TestDelegateFilter extends TestCase {
 		assertNull(catalog.getTool("delegate_to_mcpUser"));
 	}
 
-	/** An unenforced run registers every declared delegate. */
-	public void testLegacyRegistrationKeepsEveryDelegate() {
-		ToolCatalog catalog = registrationOf(agent(PARENT), capabilities(AiSecurityMode.LEGACY, Set.of()));
+	/** A principal who may use every tool gets every declared delegate registered. */
+	public void testPrincipalWhoMayUseEverythingGetsEveryDelegateRegistered() {
+		ToolCatalog catalog = registrationOf(agent(PARENT), capabilities(everyTool()));
 
 		for (String targetName : agent(PARENT).delegations()) {
 			assertNotNull(targetName, catalog.getTool(AgentFactory.delegationToolName(targetName)));
@@ -329,7 +328,7 @@ public class TestDelegateFilter extends TestCase {
 	/** With nothing left to delegate to there is nothing to await either. */
 	public void testAwaitToolIsAbsentWhenEveryDelegateIsDropped() {
 		AgentDefinition parent = new AgentDefinition(PARENT, "p", "", List.of(), List.of(), List.of(),
-			List.of(WRITER_DELEGATE), null, AgentSource.CONFIG);
+			List.of(WRITER_DELEGATE), AgentSource.CONFIG);
 
 		assertNull(registrationOf(parent, readOnlyPrincipal()).getTool("wait_for_subagent"));
 	}
@@ -338,7 +337,7 @@ public class TestDelegateFilter extends TestCase {
 
 	/** Holds {@link #READ_TOOL} and nothing else. */
 	private static AgentCapabilities readOnlyPrincipal() {
-		return capabilities(AiSecurityMode.ENFORCED, Set.of(READ_TOOL));
+		return capabilities(Set.of(READ_TOOL));
 	}
 
 	private static String catalogOf(AgentDefinition parent, AgentCapabilities capabilities) {
@@ -379,13 +378,13 @@ public class TestDelegateFilter extends TestCase {
 		agents.put(TOOLLESS_DELEGATE, withTools(TOOLLESS_DELEGATE));
 		agents.put(ROUTER_DELEGATE, delegating(ROUTER_DELEGATE, READER_DELEGATE, WRITER_DELEGATE));
 		agents.put(SKILLED_DELEGATE, new AgentDefinition(SKILLED_DELEGATE, SKILLED_DELEGATE, "",
-			List.of(), List.of(), List.of("scripting"), List.of(), null, AgentSource.CONFIG));
+			List.of(), List.of(), List.of("scripting"), List.of(), AgentSource.CONFIG));
 		agents.put(TYPO_DELEGATE, withTools(TYPO_DELEGATE, "no.suchTool"));
 		agents.put(MCP_DELEGATE, new AgentDefinition(MCP_DELEGATE, MCP_DELEGATE, "",
-			List.of(), List.of("remote"), List.of(), List.of(), null, AgentSource.CONFIG));
+			List.of(), List.of("remote"), List.of(), List.of(), AgentSource.CONFIG));
 		agents.put(CYCLE_A, delegating(CYCLE_A, CYCLE_B));
 		agents.put(CYCLE_B, new AgentDefinition(CYCLE_B, CYCLE_B, "", List.of(WRITE_TOOL), List.of(),
-			List.of(), List.of(CYCLE_A), null, AgentSource.CONFIG));
+			List.of(), List.of(CYCLE_A), AgentSource.CONFIG));
 
 		Map<String, SkillDefinition> skills = Map.of("scripting",
 			new SkillDefinition("scripting", "scripting", "content", List.of(SCRIPT_TOOL),
@@ -412,16 +411,21 @@ public class TestDelegateFilter extends TestCase {
 	}
 
 	private static AgentDefinition withTools(String name, String... tools) {
-		return new AgentDefinition(name, name, "", List.of(tools), List.of(), List.of(), List.of(), null,
+		return new AgentDefinition(name, name, "", List.of(tools), List.of(), List.of(), List.of(),
 			AgentSource.CONFIG);
 	}
 
 	private static AgentDefinition delegating(String name, String... delegations) {
-		return new AgentDefinition(name, name, "", List.of(), List.of(), List.of(), List.of(delegations), null,
+		return new AgentDefinition(name, name, "", List.of(), List.of(), List.of(), List.of(delegations),
 			AgentSource.CONFIG);
 	}
 
-	private static AgentCapabilities capabilities(AiSecurityMode mode, Set<String> permittedTools) {
+	/** Every tool the stub registry knows, plus the one it deliberately does not. */
+	private static Set<String> everyTool() {
+		return Set.of(READ_TOOL, WRITE_TOOL, SCRIPT_TOOL, UNGROUPED_TOOL, MCP_TOOL);
+	}
+
+	private static AgentCapabilities capabilities(Set<String> permittedTools) {
 		Map<String, Tool> registry = new HashMap<>();
 		registry.put(READ_TOOL, tool(READ_TOOL, ToolGroups.DATA_READ));
 		registry.put(WRITE_TOOL, tool(WRITE_TOOL, ToolGroups.DATA_WRITE));
@@ -432,11 +436,6 @@ public class TestDelegateFilter extends TestCase {
 			@Override
 			public boolean hasToolPermission(Tool tool) {
 				return permittedTools.contains(tool.name());
-			}
-
-			@Override
-			public AiSecurityMode securityMode() {
-				return mode;
 			}
 
 			@Override

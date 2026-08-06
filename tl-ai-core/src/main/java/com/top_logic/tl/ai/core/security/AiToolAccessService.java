@@ -47,21 +47,20 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * the five-line version an administrator starts from, and section 4.1 of
  * doc/security/agent-security-architecture.md for the full design.
  *
- * Enforcement is opt-in. Writing a non-empty <tool-access> is what turns it on; until then the
- * effective mode is LEGACY and every agent behaves exactly as it did before this service existed. That
- * asymmetry is intentional and explained on AiSecurityMode.resolve(ToolAccessPolicy): both this layer
- * and the engine's model security deny by default, so switching them on for an application that has
- * authored no policy would turn every existing agent into one that can do nothing. Once a policy is
- * written, every decision inside it fails closed - including the <background-allowlist>, whose absence
- * is a boot error rather than a permissive default.
+ * Enforcement is unconditional: there is no mode, no opt-in and no way to switch this layer off. An
+ * application that authors no <tool-access> matrix has not opted out - it has granted its agents
+ * nothing beyond RoleToolAccess.IMPLICIT_BASELINE, exactly as an empty <security-config> denies every
+ * operation on data. Every decision inside a policy fails closed too, including the
+ * <background-allowlist>, whose absence in a policy that names roles is a boot error rather than a
+ * permissive default.
  */
 
 /**
  * Decides which security roles may use which agent tools.
  *
  * <p>
- * As long as no role is configured, no tool call is checked and every agent behaves as it did before
- * this service existed. A configured role is the switch that turns the checks on.
+ * Always applied. A role that is not configured here may use no tool, so an application that
+ * configures nothing leaves its agents with nothing but the few capabilities every run gets.
  * </p>
  *
  * @see RoleToolAccess
@@ -98,8 +97,6 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 
 	private final InstantiationContext _context;
 
-	private AiSecurityMode _ceiling;
-
 	private RoleToolAccess _access;
 
 	/**
@@ -115,7 +112,6 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 		super.startUp();
 
 		Config<?> policy = getConfig();
-		_ceiling = resolveCeiling(policy);
 		_access = new RoleToolAccess(policy, AiToolAccessService::declaredGroupOf);
 
 		checkRolesExist(policy);
@@ -123,15 +119,14 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 		checkBackgroundAllowlistDeclared(policy);
 		warnAboutUnknownGroups(policy);
 
-		Logger.info("Agent tool access: mode=" + _ceiling
+		Logger.info("Agent tool access:"
 			+ " roles=" + policy.getToolAccess().size()
 			+ " baseline=" + policy.getBaseline().size() + "(+" + RoleToolAccess.IMPLICIT_BASELINE + ")"
-			+ " backgroundAllowlist=" + describeBackgroundAllowlist(policy)
-			+ (_ceiling.enforcesToolAccess() ? "" : " (not enforced)"), AiToolAccessService.class);
+			+ " backgroundAllowlist=" + describeBackgroundAllowlist(policy), AiToolAccessService.class);
 	}
 
 	/**
-	 * Refuses an enforcing policy that says nothing about unattended runs.
+	 * Refuses a policy that names roles and says nothing about unattended runs.
 	 *
 	 * <p>
 	 * Unattended runs ({@code aiAgentChatAsync}, schedulers, MCP clients) auto-approve every tool
@@ -146,23 +141,32 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 		if (!needsBackgroundAllowlist(policy)) {
 			return;
 		}
-		_context.error("Agent tool access is enforced (" + _ceiling
-			+ ") but the policy declares no <background-allowlist>. Unattended agent runs approve"
-			+ " every tool call themselves, so the allowlist is what bounds them and it has to be"
-			+ " stated. Write <background-allowlist> with the groups such runs may use, or"
-			+ " <background-allowlist/> to forbid them every tool, or <background-allowlist"
-			+ " all=\"true\"/> to accept unattended runs bounded only by the acting user's grants.");
+		_context.error("The agent tool access policy names roles but declares no"
+			+ " <background-allowlist>. Unattended agent runs approve every tool call themselves, so"
+			+ " the allowlist is what bounds them and it has to be stated. Write"
+			+ " <background-allowlist> with the groups such runs may use, or <background-allowlist/>"
+			+ " to forbid them every tool, or <background-allowlist all=\"true\"/> to accept"
+			+ " unattended runs bounded only by the acting user's grants.");
 	}
 
 	/**
-	 * Whether the given policy enforces tool access without declaring what unattended runs may reach.
+	 * Whether the given policy grants anything to a role without declaring what unattended runs may
+	 * reach.
+	 *
+	 * <p>
+	 * Keyed on the presence of a {@code <tool-access>} matrix rather than on enforcement, which is now
+	 * unconditional: the rule protects an administrator who authored grants from having forgotten the
+	 * one control that bounds runs nobody watches. An application that authored no grants has nothing
+	 * to forget - every run, attended or not, already reaches only
+	 * {@link RoleToolAccess#IMPLICIT_BASELINE}.
+	 * </p>
 	 *
 	 * @param policy
 	 *        The policy to inspect.
 	 * @return Whether the policy is under-specified and must be rejected.
 	 */
 	static boolean needsBackgroundAllowlist(ToolAccessPolicy policy) {
-		return resolveCeiling(policy).enforcesToolAccess() && policy.getBackgroundAllowlist() == null;
+		return !policy.getToolAccess().isEmpty() && policy.getBackgroundAllowlist() == null;
 	}
 
 	/** The configured background ceiling, for the boot log line. */
@@ -172,34 +176,6 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 			return "(undeclared)";
 		}
 		return allowlist.isAll() ? "all" : String.valueOf(allowlist.getGrants().size());
-	}
-
-	/**
-	 * The deployment-wide enforcement ceiling.
-	 *
-	 * <p>
-	 * An explicitly configured {@code security-mode} always wins. Without one, the presence of a
-	 * non-empty {@code <tool-access>} is the opt-in signal - writing the matrix is how an
-	 * administrator says "enforce this" - and its absence keeps the application on
-	 * {@link AiSecurityMode#LEGACY}. This mirrors the design's rule that the presence of a policy is
-	 * the opt-in signal (section 3.1).
-	 * </p>
-	 *
-	 * <p>
-	 * This is why {@link ToolAccessPolicy#getSecurityMode()} is both {@code @Nullable} and
-	 * {@code @NullDefault}: an unconfigured mode has to stay distinguishable from an explicitly
-	 * configured {@link AiSecurityMode#LEGACY}. The latter says "do not enforce even though I wrote a
-	 * matrix", the former says nothing and leaves the decision to this method. Without both
-	 * annotations an enum property would default to its first constant and the distinction would be
-	 * unavailable.
-	 * </p>
-	 */
-	static AiSecurityMode resolveCeiling(ToolAccessPolicy policy) {
-		AiSecurityMode configured = policy.getSecurityMode();
-		if (configured != null) {
-			return configured;
-		}
-		return policy.getToolAccess().isEmpty() ? AiSecurityMode.LEGACY : AiSecurityMode.ENFORCED;
 	}
 
 	/**
@@ -360,18 +336,6 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	}
 
 	/**
-	 * The deployment-wide enforcement mode, which every run of this application carries.
-	 *
-	 * <p>
-	 * Not the same as {@code getConfig().getSecurityMode()}: that is what the administrator wrote,
-	 * this is what it resolves to. See {@link #resolveCeiling(ToolAccessPolicy)}.
-	 * </p>
-	 */
-	public AiSecurityMode getEffectiveMode() {
-		return _ceiling;
-	}
-
-	/**
 	 * The policy evaluation for this deployment.
 	 */
 	public RoleToolAccess getAccess() {
@@ -466,16 +430,23 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 * The tool-authorization decision for one agent run.
 	 *
 	 * @param principal
-	 *        The user the run acts as, or <code>null</code> for a run with no user identity.
+	 *        The user the run acts as. Never <code>null</code> in production - a run without a
+	 *        principal is refused where its context is built.
 	 * @param background
 	 *        Whether the run has no human to answer approval prompts, in which case the policy's
 	 *        background allowlist applies as an additional ceiling.
-	 * @return The authorization to carry on the run's security context, or
-	 *         {@link ToolAuthorization#UNCHECKED} if this service is not configured.
+	 * @return The authorization to carry on the run's security context, never <code>null</code>.
+	 * @throws IllegalStateException
+	 *         If this service is not running. Failing here is deliberate, and mirrors
+	 *         {@code ModelAccessRightsSecurity}: tool authorization is unconditional, so a missing
+	 *         service must stop the run rather than silently grant everything. This service is
+	 *         registered active by default, so its absence is a deliberate deactivation.
 	 */
 	public static ToolAuthorization authorizationFor(Person principal, boolean background) {
 		if (!Module.INSTANCE.isActive()) {
-			return ToolAuthorization.UNCHECKED;
+			throw new IllegalStateException("Agent tool access is checked for every run, but the "
+				+ AiToolAccessService.class.getSimpleName() + " is not running. Re-activate it; there"
+				+ " is no unchecked mode to fall back to.");
 		}
 		AiToolAccessService service = getInstance();
 		return new ToolAuthorization(service.getAccess(), principal, heldRoleNames(principal),
@@ -483,19 +454,16 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	}
 
 	/**
-	 * The configured policy, or <code>null</code> if this service is not running - which is the
-	 * unmigrated application, and therefore {@link AiSecurityMode#LEGACY}.
+	 * The configured policy, or <code>null</code> if this service is not running.
+	 *
+	 * <p>
+	 * For the editor's option providers, which have to offer what the policy mentions and must stay
+	 * usable while the service is down. A run never asks this - see
+	 * {@link #authorizationFor(Person, boolean)}, which refuses instead.
+	 * </p>
 	 */
 	public static ToolAccessPolicy policy() {
 		return Module.INSTANCE.isActive() ? getInstance().getConfig() : null;
-	}
-
-	/**
-	 * The deployment-wide enforcement ceiling, or {@link AiSecurityMode#LEGACY} if this service is not
-	 * running.
-	 */
-	public static AiSecurityMode ceiling() {
-		return Module.INSTANCE.isActive() ? getInstance().getEffectiveMode() : AiSecurityMode.LEGACY;
 	}
 
 	/**

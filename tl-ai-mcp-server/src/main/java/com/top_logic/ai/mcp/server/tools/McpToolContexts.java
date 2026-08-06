@@ -5,17 +5,8 @@
  */
 package com.top_logic.ai.mcp.server.tools;
 
-import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
-import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-
 /**
- * The execution context an MCP tool call runs in.
+ * The decision whether an MCP tool call may execute at all.
  *
  * <p>
  * <b>The MCP endpoint has no caller identity.</b> {@code /mcp/*} is served by
@@ -32,20 +23,16 @@ import com.top_logic.tl.ai.tool.api.CancellationToken;
  * Two consequences follow, and this class is where both are stated:
  * </p>
  * <ul>
- * <li>The run has <b>no principal</b>. No principal is invented - not the account that deployed the
+ * <li>The run would have <b>no principal</b>. None is invented - not the account that deployed the
  * application, not a service user - because a fabricated identity would make the audit log lie about
  * who acted.</li>
- * <li>The run is <b>unattended</b>: there is no human on the other end of the protocol to answer an
- * approval prompt, so the policy's {@code <background-allowlist>} applies as it does to a scheduled
- * run.</li>
+ * <li>Agent tool execution is authorized against the acting principal's roles and per-object rights,
+ * always. A run that cannot name its principal cannot be authorized.</li>
  * </ul>
  *
  * <p>
- * Under {@link AiSecurityMode#ENFORCED} those two facts are irreconcilable - a run that cannot name
- * its principal cannot be authorized - so tool execution over MCP is refused outright rather than
- * running as the system. Under {@link AiSecurityMode#LEGACY}, the default and the state of every
- * application that has not written a {@code <tool-access>} policy, nothing is checked anyway and the
- * endpoint behaves exactly as it did before this class existed.
+ * Those two facts are irreconcilable, so tool execution over MCP is <b>refused outright</b> - for
+ * every deployment, not only for some. Resources and prompts are unaffected; only tool calls are.
  * </p>
  *
  * @see McpToolAdapter
@@ -57,55 +44,23 @@ final class McpToolContexts {
 	}
 
 	/**
-	 * Why this deployment must not execute tools over MCP, or <code>null</code> if it may.
+	 * Why this deployment must not execute tools over MCP.
 	 *
-	 * @return A message for the MCP client, or <code>null</code> when the call may proceed.
+	 * <p>
+	 * Never <code>null</code>: there is no configuration under which an unauthenticated caller may
+	 * execute an agent tool. The method survives as the one place the refusal is worded, and as the
+	 * seam issue #261 will change once the transport can authenticate.
+	 * </p>
+	 *
+	 * @return A message for the MCP client, never <code>null</code>.
 	 */
 	static String refusalReason() {
-		return refusalReason(AiToolAccessService.ceiling());
-	}
-
-	/**
-	 * Why a deployment in the given mode must not execute tools over MCP.
-	 *
-	 * <p>
-	 * The mode is a parameter so that both outcomes are decidable without a running application.
-	 * </p>
-	 *
-	 * @param mode
-	 *        The deployment's effective security mode.
-	 * @return A message for the MCP client, or <code>null</code> when the call may proceed.
-	 */
-	static String refusalReason(AiSecurityMode mode) {
-		if (!mode.requiresUser()) {
-			return null;
-		}
-		return "Error: this application enforces role-based agent tool access (mode " + mode
-			+ "), which authorizes every tool call against the roles of a known user - and the MCP"
-			+ " endpoint /mcp/* does not authenticate its callers, so this run has no user to"
-			+ " authorize. Executing the tool anyway would bypass the <tool-access> policy, so it is"
-			+ " refused. Reach these tools through an authenticated entry point instead (the chat UI,"
-			+ " or a TL-Script call, both of which act as the logged-in account). Transport"
-			+ " authentication for /mcp/* is tracked as issue #261.";
-	}
-
-	/**
-	 * The context for one MCP tool call: no principal, unattended.
-	 *
-	 * <p>
-	 * Only meaningful when {@link #refusalReason()} returned <code>null</code>; the caller checks
-	 * that first, because under an enforcing mode building this context would fail by design.
-	 * </p>
-	 *
-	 * @param transaction
-	 *        The scope the caller opened for this call and will commit or roll back.
-	 * @param cancellation
-	 *        The token shared with {@code transaction}.
-	 */
-	static ToolContext forCall(TransactionScope transaction, CancellationToken cancellation) {
-		SecurityContext security = TopLogicSecurityContext.forRun(null, true);
-		// Auto-approve: the protocol has no approval round trip. That is precisely why the run counts
-		// as unattended above, which is what subjects it to the background allowlist.
-		return new ToolContext(security, ApprovalCallback.AUTO_APPROVE, transaction, cancellation);
+		return "Error: executing an agent tool requires an authenticated caller, because every tool"
+			+ " call is authorized against the roles and the model access rights of the account it acts"
+			+ " as - and the MCP endpoint /mcp/* does not authenticate its callers, so this call has no"
+			+ " account to act as. No principal is invented for it, so the call is refused. Reach these"
+			+ " tools through an authenticated entry point instead (the chat UI, or a TL-Script call,"
+			+ " both of which act as the logged-in account). Transport authentication for /mcp/* is"
+			+ " tracked as issue #261.";
 	}
 }

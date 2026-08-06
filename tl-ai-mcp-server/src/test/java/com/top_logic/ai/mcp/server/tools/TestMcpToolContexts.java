@@ -7,15 +7,13 @@ package com.top_logic.ai.mcp.server.tools;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
-
 /**
  * Tests the decision {@link McpToolContexts} makes for an unauthenticated MCP caller.
  *
  * <p>
- * The mode is injected rather than configured, because what is under test is the rule and not the
- * service that resolves it: {@code /mcp/*} names no user, so a mode that
- * {@link AiSecurityMode#requiresUser() requires} one cannot execute a tool there.
+ * There is nothing to inject: {@code /mcp/*} names no user, agent tool execution is authorized
+ * against the acting account for every run, and the two cannot be reconciled. The refusal is
+ * therefore unconditional and decidable without a running application.
  * </p>
  *
  * <p>
@@ -27,50 +25,46 @@ import com.top_logic.tl.ai.core.security.AiSecurityMode;
 public class TestMcpToolContexts extends TestCase {
 
 	/**
-	 * An application that has not opted into enforcement keeps its previous behaviour.
+	 * Tool execution over MCP is refused, whatever the deployment configures.
 	 *
 	 * <p>
-	 * The compatibility half of the change: no existing MCP client stops working, because nothing was
-	 * being enforced for it to start failing against.
+	 * The closed door that used to be {@code ToolExecutions.execute(tool, args, null)}, and that used
+	 * to open again for a deployment which had configured no policy.
 	 * </p>
 	 */
-	public void testUnenforcedDeploymentMayExecute() {
-		assertNull(McpToolContexts.refusalReason(AiSecurityMode.LEGACY));
+	public void testExecutionIsAlwaysRefused() {
+		assertNotNull("An unauthenticated tool call must never execute.",
+			McpToolContexts.refusalReason());
 	}
 
-	/** A deployment that deliberately acts as the system may execute too - it named no user either. */
-	public void testSystemModeMayExecute() {
-		assertNull(McpToolContexts.refusalReason(AiSecurityMode.SYSTEM));
-	}
+	/** The refusal says why in terms an administrator can act on. */
+	public void testRefusalNamesTheCauseAndTheWayRound() {
+		String reason = McpToolContexts.refusalReason();
 
-	/**
-	 * An enforcing deployment refuses, and says why in terms an administrator can act on.
-	 *
-	 * <p>
-	 * The security half: this is the closed door that used to be
-	 * {@code ToolExecutions.execute(tool, args, null)}.
-	 * </p>
-	 */
-	public void testEnforcedDeploymentRefuses() {
-		String reason = McpToolContexts.refusalReason(AiSecurityMode.ENFORCED);
-
-		assertNotNull("An enforced deployment must not execute an unauthenticated tool call.", reason);
 		assertTrue(reason, reason.contains("/mcp/*"));
 		assertTrue("The message must name the cause, not just the refusal.",
 			reason.contains("does not authenticate"));
-		assertTrue("The message must name the policy that would be bypassed.",
-			reason.contains("<tool-access>"));
+		assertTrue("The message must say what authorization needs and this call lacks.",
+			reason.contains("authenticated caller"));
 		assertTrue("The message must point at the tracked follow-up.", reason.contains("#261"));
 		assertTrue("The message must name an entry point that does work.",
 			reason.contains("chat") || reason.contains("TL-Script"));
 	}
 
-	/** Every mode is decided one way or the other; none falls through. */
-	public void testEveryModeIsDecided() {
-		for (AiSecurityMode mode : AiSecurityMode.values()) {
-			String reason = McpToolContexts.refusalReason(mode);
-			assertEquals("Refusal must follow exactly from whether the mode requires a user: " + mode,
-				mode.requiresUser(), reason != null);
-		}
+	/**
+	 * The refusal no longer talks about security modes.
+	 *
+	 * <p>
+	 * A message naming a mode would send an administrator looking for a setting to change, and there is
+	 * none: the fix is transport authentication (#261), not configuration.
+	 * </p>
+	 */
+	public void testRefusalDoesNotOfferAModeToChange() {
+		String reason = McpToolContexts.refusalReason();
+
+		assertFalse(reason, reason.contains("security mode"));
+		assertFalse(reason, reason.contains("(mode "));
+		assertFalse(reason, reason.contains("LEGACY"));
+		assertFalse(reason, reason.contains("ENFORCED"));
 	}
 }

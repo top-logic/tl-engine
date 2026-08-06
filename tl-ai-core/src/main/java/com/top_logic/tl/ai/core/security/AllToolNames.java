@@ -88,7 +88,9 @@ public class AllToolNames extends Function0<List<String>> {
 			for (GroupMembership group : policy.getToolGroups().values()) {
 				names.addAll(group.getTools());
 			}
-			addNamedTools(names, policy.getBaseline());
+			if (policy.getBaseline() != null) {
+				addNamedTools(names, policy.getBaseline().getGrants());
+			}
 			BackgroundAllowlist allowlist = policy.getBackgroundAllowlist();
 			if (allowlist != null) {
 				addNamedTools(names, allowlist.getGrants());

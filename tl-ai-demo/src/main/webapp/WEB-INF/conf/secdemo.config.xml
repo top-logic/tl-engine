@@ -306,12 +306,22 @@
 				</tool-access>
 
 				<!--
-					No <baseline> on purpose. "interaction" - asking a question, loading a skill,
-					delegating - is granted implicitly to every role and every run, so the narrowest
-					persona here holds it without any configuration saying so. This aspect leaves the
-					element out to demonstrate exactly that; an application that wants further
-					always-granted groups adds them here.
+					An explicitly *empty* baseline, which is not the same as leaving the element out.
+
+					Omitting it means "give every user the read-only default" - model.read and
+					data.read, so that an application which configured nothing still has a usable agent
+					(#293). This fixture needs the opposite: "secBare" exists to show that a role with
+					no grants reaches nothing, and the default would hand it both read capabilities and
+					silently destroy the narrowest persona of the matrix.
+
+					So the element is written and left empty, which says out loud that nothing is
+					granted to everyone here. "interaction" - asking a question, loading a skill,
+					delegating - is granted implicitly to every role and every run anyway, so the
+					narrowest persona still holds that without any configuration saying so, and
+					SecDemoToolAccessTest pins it. An application that wants further always-granted
+					groups lists them inside this element.
 				-->
+				<baseline/>
 
 				<!--
 					The ceiling for a run with nobody to answer an approval prompt - aiAgentChatAsync,

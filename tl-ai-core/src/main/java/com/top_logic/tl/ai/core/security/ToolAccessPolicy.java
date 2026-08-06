@@ -64,9 +64,8 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * group out of an otherwise broad grant without re-enumerating.
  *
  * There is no switch that turns this off. An application that writes no policy at all does not get an
- * unchecked agent; it gets one whose principal holds nothing beyond IMPLICIT_BASELINE, which is the
- * same answer the engine's <security-config> gives for data. See
- * doc/security/tool-access-configuration.md.
+ * unchecked agent; it gets one whose principal holds RoleToolAccess.DEFAULT_BASELINE - the read-only
+ * default of #293 - and nothing else. See doc/security/tool-access-configuration.md.
  *
  * This is static application configuration, deliberately shaped like the engine's <security-config>
  * (ticket #29088) so administrators meet one idiom rather than two.
@@ -78,7 +77,7 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * <p>
  * Nothing is allowed that is not granted here: a role that is not listed may use no tool at all, and
  * so may a user who holds no listed role. This is always applied - there is no setting that switches
- * it off - so an application that lists nothing gives its agents almost nothing.
+ * it off. An application that lists nothing leaves its agents with the read-only capabilities below.
  * </p>
  *
  * @see RoleToolAccess
@@ -133,7 +132,7 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 *
 	 * <p>
 	 * A role that is not listed here may use no tool. An empty list therefore leaves every user with
-	 * nothing but what {@link #getBaseline()} adds.
+	 * nothing but what {@link #getBaseline()} grants.
 	 * </p>
 	 */
 	@Name(TOOL_ACCESS)
@@ -146,12 +145,73 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 *
 	 * <p>
 	 * Asking the user a question, loading a skill and delegating to a sub-agent are granted anyway and
-	 * need no entry here. Leave this empty unless you want a further capability for everyone.
+	 * need no entry here. If you write nothing at all, every user may additionally read the model and
+	 * read business data, so that an application which has configured nothing still has a working,
+	 * read-only agent. Write this element to say something else - or write it empty to grant nothing
+	 * beyond asking a question.
 	 * </p>
+	 *
+	 * @see RoleToolAccess#DEFAULT_BASELINE
+	 */
+	/*
+	 * An item rather than a plain list, and nullable, for the same reason getBackgroundAllowlist() is:
+	 * three states have to stay distinguishable.
+	 *
+	 *   absent  -> RoleToolAccess.DEFAULT_BASELINE, the read-only default an unconfigured application
+	 *              gets so that it looks unconfigured rather than broken (#293).
+	 *   <baseline/>  -> nothing beyond RoleToolAccess.IMPLICIT_BASELINE. An explicit "no extra grants",
+	 *              which the secdemo fixture depends on to keep demonstrating deny-by-default.
+	 *   <baseline>..</baseline> -> exactly what is listed, replacing the default entirely.
+	 *
+	 * Reading an *empty* list as "absent" would make the middle state unsayable, and the default would
+	 * then silently widen a policy that had explicitly asked for nothing - the failure mode this layer
+	 * refuses to have. A list property cannot express it either way: the engine rejects a nullable
+	 * LIST/MAP/ARRAY property outright ("Properties of kind 'LIST', 'MAP', and 'ARRAY' cannot be
+	 * nullable"), which is exactly why the background allowlist wraps its grants in an item. This does
+	 * the same, and @DefaultContainer keeps the XML an administrator writes unchanged - the <grant>
+	 * elements still sit directly inside <baseline>.
+	 *
+	 * The default is deliberately NOT shipped as XML in tl-ai-core.conf.config.xml. A keyless
+	 * configuration list composes additively across configuration files (the engine's
+	 * SimpleListStorage seeds itself from the base value and appends), so a shipped <baseline> would be
+	 * unioned with an application's own instead of replaced by it - and an application asking for one
+	 * capability would silently also get these two. Resolving the default in Java keeps
+	 * "an application that writes this element replaces it" exactly true.
 	 */
 	@Name(BASELINE)
-	@EntryTag("grant")
-	List<Grant> getBaseline();
+	@Nullable
+	Baseline getBaseline();
+
+	/**
+	 * Setter for {@link #getBaseline()}.
+	 */
+	void setBaseline(Baseline value);
+
+	/**
+	 * The capabilities granted to every user, whatever their roles.
+	 *
+	 * <p>
+	 * An entry without any capability is legal and grants nothing - which is how an application says
+	 * that no capability at all is given to everyone.
+	 * </p>
+	 */
+	interface Baseline extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getGrants()}.
+		 *
+		 * @see #getGrants()
+		 */
+		String GRANTS = "grants";
+
+		/**
+		 * The capabilities and single tools every user may use.
+		 */
+		@Name(GRANTS)
+		@EntryTag("grant")
+		@DefaultContainer
+		List<Grant> getGrants();
+	}
 
 	/**
 	 * What an agent run with nobody to ask may use: a scheduled or asynchronous run, or a request from

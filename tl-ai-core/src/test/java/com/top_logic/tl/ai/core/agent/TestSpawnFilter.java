@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.DeclaredGroups;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAuthorization;
@@ -258,7 +259,20 @@ public class TestSpawnFilter extends TestCase {
 		BackgroundAllowlist allowlist = TypedConfiguration.newConfigItem(BackgroundAllowlist.class);
 		allowlist.getGrants().add(group(ToolGroups.DATA_READ));
 		policy.setBackgroundAllowlist(allowlist);
+		policy.setBaseline(noBaseline());
 		return policy;
+	}
+
+	/**
+	 * An explicitly empty baseline, so these tests see only the role grants they configure.
+	 *
+	 * <p>
+	 * An <em>absent</em> {@code <baseline>} would mean {@link RoleToolAccess#DEFAULT_BASELINE} - the
+	 * read-only default of #293 - and would grant every capability in it to every persona here.
+	 * </p>
+	 */
+	private static Baseline noBaseline() {
+		return TypedConfiguration.newConfigItem(Baseline.class);
 	}
 
 	private static RoleAccess role(String name, String... groups) {

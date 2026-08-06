@@ -48,19 +48,18 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * doc/security/agent-security-architecture.md for the full design.
  *
  * Enforcement is unconditional: there is no mode, no opt-in and no way to switch this layer off. An
- * application that authors no <tool-access> matrix has not opted out - it has granted its agents
- * nothing beyond RoleToolAccess.IMPLICIT_BASELINE, exactly as an empty <security-config> denies every
- * operation on data. Every decision inside a policy fails closed too, including the
- * <background-allowlist>, whose absence in a policy that names roles is a boot error rather than a
- * permissive default.
+ * application that authors no <tool-access> matrix has not opted out - its users hold
+ * RoleToolAccess.DEFAULT_BASELINE, the read-only default of #293, and nothing else. Every decision
+ * inside a policy fails closed too, including the <background-allowlist>, whose absence in a policy
+ * that names roles is a boot error rather than a permissive default.
  */
 
 /**
  * Decides which security roles may use which agent tools.
  *
  * <p>
- * Always applied. A role that is not configured here may use no tool, so an application that
- * configures nothing leaves its agents with nothing but the few capabilities every run gets.
+ * Always applied. A role that is not configured here may use no tool; an application that configures
+ * nothing leaves its agents able to read the model and the data, and to change nothing.
  * </p>
  *
  * @see RoleToolAccess
@@ -121,7 +120,7 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 
 		Logger.info("Agent tool access:"
 			+ " roles=" + policy.getToolAccess().size()
-			+ " baseline=" + policy.getBaseline().size() + "(+" + RoleToolAccess.IMPLICIT_BASELINE + ")"
+			+ " baseline=" + describeBaseline() + "(+" + RoleToolAccess.IMPLICIT_BASELINE + ")"
 			+ " backgroundAllowlist=" + describeBackgroundAllowlist(policy), AiToolAccessService.class);
 	}
 
@@ -157,8 +156,10 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 * Keyed on the presence of a {@code <tool-access>} matrix rather than on enforcement, which is now
 	 * unconditional: the rule protects an administrator who authored grants from having forgotten the
 	 * one control that bounds runs nobody watches. An application that authored no grants has nothing
-	 * to forget - every run, attended or not, already reaches only
-	 * {@link RoleToolAccess#IMPLICIT_BASELINE}.
+	 * to forget, and the read-only default baseline does not change that - an absent
+	 * {@code <background-allowlist>} admits nothing beyond {@link RoleToolAccess#IMPLICIT_BASELINE},
+	 * so an unattended run in an unconfigured application reaches neither
+	 * {@code model.read} nor {@code data.read}.
 	 * </p>
 	 *
 	 * @param policy
@@ -167,6 +168,22 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 */
 	static boolean needsBackgroundAllowlist(ToolAccessPolicy policy) {
 		return !policy.getToolAccess().isEmpty() && policy.getBackgroundAllowlist() == null;
+	}
+
+	/**
+	 * What the baseline grants every user, for the boot log line.
+	 *
+	 * <p>
+	 * Says <em>default</em> rather than a count when the policy declares no {@code <baseline>}, because
+	 * "the shipped read-only default" and "an explicitly empty list" are different answers and used to
+	 * be spelled the same way.
+	 * </p>
+	 */
+	private String describeBaseline() {
+		if (_access.usesDefaultBaseline()) {
+			return "default" + RoleToolAccess.DEFAULT_BASELINE;
+		}
+		return String.valueOf(_access.baselineGroups().size());
 	}
 
 	/** The configured background ceiling, for the boot log line. */
@@ -241,7 +258,10 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 */
 	static List<String> underspecifiedEntries(ToolAccessPolicy policy) {
 		List<String> problems = new ArrayList<>();
-		collectUnderspecified(policy.getBaseline(), "<baseline>", problems);
+		ToolAccessPolicy.Baseline baseline = policy.getBaseline();
+		if (baseline != null) {
+			collectUnderspecified(baseline.getGrants(), "<baseline>", problems);
+		}
 		ToolAccessPolicy.BackgroundAllowlist background = policy.getBackgroundAllowlist();
 		if (background != null) {
 			collectUnderspecified(background.getGrants(), "<background-allowlist>", problems);
@@ -305,7 +325,10 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 */
 	static Set<String> unknownGroups(ToolAccessPolicy policy, Set<String> known) {
 		Set<String> unknown = new TreeSet<>();
-		collectGroups(policy.getBaseline(), known, unknown);
+		ToolAccessPolicy.Baseline baseline = policy.getBaseline();
+		if (baseline != null) {
+			collectGroups(baseline.getGrants(), known, unknown);
+		}
 		ToolAccessPolicy.BackgroundAllowlist background = policy.getBackgroundAllowlist();
 		if (background != null) {
 			collectGroups(background.getGrants(), known, unknown);

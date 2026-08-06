@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -17,6 +18,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -80,7 +82,7 @@ public class TestAiToolAccessService extends TestCase {
 		assertFalse(AiToolAccessService.needsBackgroundAllowlist(policy()));
 
 		ToolAccessPolicy baselineOnly = policy();
-		baselineOnly.getBaseline().add(group(ToolGroups.MODEL_READ));
+		baseline(baselineOnly, group(ToolGroups.MODEL_READ));
 		assertFalse("A baseline is not a grant table either.",
 			AiToolAccessService.needsBackgroundAllowlist(baselineOnly));
 	}
@@ -127,7 +129,7 @@ public class TestAiToolAccessService extends TestCase {
 		ToolAccessPolicy policy = policy(
 			role("Clerk", grants(group("data.reed"), group(ToolGroups.DATA_READ)), grants()),
 			role("Developer", grants(), grants(group("modle.structure"))));
-		policy.getBaseline().add(group(ToolGroups.INTERACTION));
+		baseline(policy, group(ToolGroups.INTERACTION));
 
 		Set<String> unknown = AiToolAccessService.unknownGroups(policy, ToolGroups.ALL);
 
@@ -167,7 +169,7 @@ public class TestAiToolAccessService extends TestCase {
 	/** An entry that says nothing is refused too: it reaches nothing and admits it nowhere. */
 	public void testEntryNamingNothingIsRefused() {
 		ToolAccessPolicy policy = policy();
-		policy.getBaseline().add(TypedConfiguration.newConfigItem(Grant.class));
+		baseline(policy, TypedConfiguration.newConfigItem(Grant.class));
 		allow(policy, TypedConfiguration.newConfigItem(Grant.class));
 
 		assertEquals(List.of("<baseline> entry 1 names nothing",
@@ -181,7 +183,7 @@ public class TestAiToolAccessService extends TestCase {
 		byName.setTools(List.of("mcp__jira__createIssue", "mcp__jira__addComment"));
 		ToolAccessPolicy policy = policy(
 			role("Clerk", grants(group(ToolGroups.DATA_READ), byName), grants(group(ToolGroups.EGRESS))));
-		policy.getBaseline().add(group(ToolGroups.MODEL_READ));
+		baseline(policy, group(ToolGroups.MODEL_READ));
 		allow(policy, group(ToolGroups.DATA_READ));
 
 		assertEquals(List.of(), AiToolAccessService.underspecifiedEntries(policy));
@@ -192,8 +194,26 @@ public class TestAiToolAccessService extends TestCase {
 		for (RoleAccess role : roles) {
 			policy.getToolAccess().put(role.getName(), role);
 		}
+		baseline(policy);
 		return policy;
 	}
+
+	/**
+	 * Declares the policy's baseline with the given entries.
+	 *
+	 * <p>
+	 * Called with no entries by {@link #policy(RoleAccess...)}, so that these tests assert role grants
+	 * against an explicitly empty baseline rather than against
+	 * {@link RoleToolAccess#DEFAULT_BASELINE}. The default is what an <em>absent</em> element means, and
+	 * it is tested where it belongs - see {@code TestDefaultBaseline}.
+	 * </p>
+	 */
+	private static void baseline(ToolAccessPolicy policy, Grant... entries) {
+		Baseline baseline = TypedConfiguration.newConfigItem(Baseline.class);
+		baseline.getGrants().addAll(List.of(entries));
+		policy.setBaseline(baseline);
+	}
+
 
 	/** Declares the policy's background allowlist with the given entries. */
 	private static BackgroundAllowlist allow(ToolAccessPolicy policy, Grant... entries) {

@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
@@ -33,7 +35,8 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * <ol>
  * <li>An explicit deny from <em>any</em> held role rejects the tool outright.</li>
  * <li>{@link #IMPLICIT_BASELINE} is granted to every user without being configured.</li>
- * <li>The configured baseline grants apply to every user.</li>
+ * <li>The baseline grants apply to every user - the configured ones, or {@link #DEFAULT_BASELINE}
+ * when the policy declares no {@code <baseline>} at all.</li>
  * <li>The grants of all held roles are unioned.</li>
  * <li>Anything not reached by the above is denied.</li>
  * </ol>
@@ -124,6 +127,60 @@ public class RoleToolAccess {
 	 * </p>
 	 */
 	public static final String IMPLICIT_BASELINE = ToolGroups.INTERACTION;
+
+	/**
+	 * The capabilities every user gets when the policy declares no {@code <baseline>} at all.
+	 *
+	 * <p>
+	 * The point of this default is that an application which has configured nothing should look
+	 * <em>unconfigured</em> rather than broken. Without it, the only capability left after #288 removed
+	 * the permissive security mode is {@link #IMPLICIT_BASELINE} - the agent boots, answers questions
+	 * and can do nothing useful, which reads as a defect.
+	 * </p>
+	 *
+	 * <p>
+	 * Exactly two groups, and the list must stay exactly these two:
+	 * </p>
+	 * <ul>
+	 * <li>{@link ToolGroups#MODEL_READ} - browse the meta-model: modules, types, attributes. No
+	 * business data.</li>
+	 * <li>{@link ToolGroups#DATA_READ} - read business instances.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * An application that writes a {@code <baseline>} replaces this entirely, and
+	 * {@code <baseline/>} says "nothing beyond {@link #IMPLICIT_BASELINE}".
+	 * </p>
+	 *
+	 * @see ToolAccessPolicy#getBaseline()
+	 */
+	/*
+	 * Issue #293. What is excluded, and why, so that nobody widens this casually:
+	 *
+	 *   data.write, model.structure, agent.authoring, agent.meta, workspace
+	 *       All of them mutate something. A default must not.
+	 *   egress
+	 *       Web fetch and the browser tools send data outward. A default that can exfiltrate is not a
+	 *       read-only default.
+	 *   script
+	 *       TL-Script reaches every type; its enumeration results are the leak of #289; and its own
+	 *       withCommit argument is a path to a persisted write. Never a default.
+	 *
+	 * A word on why data.read is defensible here, and on the ordering hazard that makes the usual
+	 * argument premature. The intended justification is that L1 grants the *ability to ask* and L2
+	 * decides per object what is actually visible - so an application with no <security-config> is
+	 * answered "nothing" by the engine's deny-all rights, and one with a <security-config> gets exactly
+	 * what it configured.
+	 *
+	 * That argument is not yet true. The data tools do not consult L2: InstanceBrowserTool serializes
+	 * every attribute through unchecked Java access and TLScriptExecutor returns unfiltered results.
+	 * Per-object read filtering arrives with #289. Until then this default means unfiltered reads in an
+	 * application that has written no <security-config>. That is not a regression against the
+	 * permissive mode it replaces - which granted everything, including the write tools - but it is not
+	 * a per-object guarantee either, and nothing in the documentation may claim one.
+	 */
+	public static final List<String> DEFAULT_BASELINE =
+		List.of(ToolGroups.MODEL_READ, ToolGroups.DATA_READ);
 
 	private final ToolAccessPolicy _policy;
 
@@ -236,7 +293,7 @@ public class RoleToolAccess {
 			}
 		}
 
-		if (isImplicitBaseline(group) || matchesAny(_policy.getBaseline(), tool, group)) {
+		if (isImplicitBaseline(group) || baselineGrants(tool, group)) {
 			return new Decision.Granted(BASELINE_ROLE, group);
 		}
 
@@ -294,7 +351,7 @@ public class RoleToolAccess {
 			}
 		}
 
-		if (grantsGroup(_policy.getBaseline(), capability)) {
+		if (baselineGrantsGroup(capability)) {
 			return new Decision.Granted(BASELINE_ROLE, capability);
 		}
 
@@ -436,6 +493,81 @@ public class RoleToolAccess {
 	 */
 	private static boolean isImplicitBaseline(String group) {
 		return IMPLICIT_BASELINE.equals(group);
+	}
+
+	/**
+	 * Whether the policy's baseline reaches the given tool.
+	 *
+	 * <p>
+	 * The one place the {@code <baseline>} element's three states are read, together with
+	 * {@link #baselineGrantsGroup(String)}: a declared list is evaluated as written, and an absent one
+	 * means {@link #DEFAULT_BASELINE}. An explicitly empty list is a declared list, so it grants
+	 * nothing - which is what makes "no extra grants" sayable at all.
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool being checked.
+	 * @param group
+	 *        Its resolved group, may be <code>null</code>.
+	 */
+	private boolean baselineGrants(ToolIdentity tool, String group) {
+		Baseline declared = _policy.getBaseline();
+		if (declared != null) {
+			return matchesAny(declared.getGrants(), tool, group);
+		}
+		// The default names groups only, so an ungrouped tool is not reached by it - deliberately: a
+		// tool nobody classified must not become callable because nobody configured a baseline either.
+		return group != null && DEFAULT_BASELINE.contains(group);
+	}
+
+	/**
+	 * Whether the policy's baseline grants the given capability as such.
+	 *
+	 * @param capability
+	 *        The name of the capability (tool group).
+	 * @see #baselineGrants(ToolIdentity, String)
+	 */
+	private boolean baselineGrantsGroup(String capability) {
+		Baseline declared = _policy.getBaseline();
+		if (declared != null) {
+			return grantsGroup(declared.getGrants(), capability);
+		}
+		return DEFAULT_BASELINE.contains(capability);
+	}
+
+	/**
+	 * The capabilities the baseline grants every user under this policy, for a boot log or a
+	 * diagnostic.
+	 *
+	 * @return {@link #DEFAULT_BASELINE} when the policy declares no {@code <baseline>}, otherwise the
+	 *         groups it lists; never <code>null</code>.
+	 */
+	public List<String> baselineGroups() {
+		Baseline declared = _policy.getBaseline();
+		if (declared == null) {
+			return DEFAULT_BASELINE;
+		}
+		List<String> groups = new ArrayList<>();
+		for (Grant grant : declared.getGrants()) {
+			String group = grant.getGroup();
+			if (group != null && !group.isBlank()) {
+				groups.add(group);
+			}
+		}
+		return groups;
+	}
+
+	/**
+	 * Whether the policy leaves the baseline to {@link #DEFAULT_BASELINE}.
+	 *
+	 * <p>
+	 * Told apart from a declared baseline so that the boot log can say which of the two an
+	 * administrator is looking at - {@code baseline=default} and {@code baseline=0} mean very different
+	 * things and used to be spelled the same.
+	 * </p>
+	 */
+	public boolean usesDefaultBaseline() {
+		return _policy.getBaseline() == null;
 	}
 
 	/**

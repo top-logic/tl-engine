@@ -18,7 +18,9 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -180,9 +182,19 @@ public class TestTopLogicSecurityContext extends TestCase {
 		};
 	}
 
-	/** An empty policy, which grants nothing beyond the implicit baseline. */
+	/**
+	 * An empty policy, which grants nothing beyond the implicit baseline.
+	 *
+	 * <p>
+	 * The {@code <baseline>} is declared and left empty on purpose. Leaving it out would mean
+	 * {@link RoleToolAccess#DEFAULT_BASELINE} - the read-only default of #293, tested by
+	 * {@code TestDefaultBaseline} - and these tests are about what a role grant reaches.
+	 * </p>
+	 */
 	private static ToolAccessPolicy policy() {
-		return TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		policy.setBaseline(TypedConfiguration.newConfigItem(Baseline.class));
+		return policy;
 	}
 
 	/** A role entry granting the given capability groups. */

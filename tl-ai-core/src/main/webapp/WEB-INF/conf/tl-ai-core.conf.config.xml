@@ -42,12 +42,12 @@
 					<!-- Cookie Pool Service: encrypted, persistent login state for browserSaveCookies / browserUseCookies -->
 					<module key="com.top_logic.tl.ai.core.cookiepool.CookiePoolService$Module" value="true"/>
 					<!--
-						Role-based tool access. Active by default but unenforced by default: with no
-						<tool-access> configured it resolves to LEGACY, which is exactly the behaviour
-						an application had before this service existed. Keeping the module on means an
-						administrator enables enforcement by writing the policy and nothing else -
-						a policy present while the module was off would be silently ignored, which is
-						the failure mode this layer must never have.
+						Role-based tool access, applied to every agent run. Active by default and not
+						switchable: a policy present while the module was off would be silently
+						ignored, which is the failure mode this layer must never have.
+
+						With no <tool-access> configured, every user holds the read-only default
+						baseline below and nothing more.
 
 						See doc/security/tool-access-configuration.md.
 					-->
@@ -57,10 +57,20 @@
 		</config>
 
 		<!--
-			The role-to-tool policy. Empty as shipped, i.e. unenforced. An application overrides this
-			with a <tool-access> block; see doc/security/tool-access-configuration.md for a minimal
-			working example and doc/security/agent-security-architecture.md section 4.1 for the full
-			specification.
+			The role-to-tool policy. Empty as shipped, which is not the same as unenforced: the policy is
+			evaluated for every run, and an empty one grants each user only the implicit "interaction"
+			capability plus the read-only default baseline - model.read and data.read - so that an
+			application which has configured nothing still has a working, read-only agent (#293).
+
+			The default baseline lives in Java (RoleToolAccess.DEFAULT_BASELINE), deliberately not as a
+			<baseline> element here: a keyless configuration list composes additively across
+			configuration files, so a shipped element would be unioned with an application's own rather
+			than replaced by it. Resolving it in Java keeps "an application that writes <baseline>
+			replaces the default" exactly true, and lets <baseline/> mean "grant nothing to everyone".
+
+			An application authors its own policy with a <tool-access> block; see
+			doc/security/tool-access-configuration.md for a minimal working example and
+			doc/security/agent-security-architecture.md section 4.1 for the full specification.
 		-->
 		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
 			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService"/>

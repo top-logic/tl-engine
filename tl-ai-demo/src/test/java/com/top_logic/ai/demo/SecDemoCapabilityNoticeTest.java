@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.SkillDefinition;
@@ -43,11 +44,19 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * </p>
  * <ul>
  * <li>{@code TL_modelExploration} - eight {@code model.read} tools and three {@code data.read} ones,
- * so it is the partial case.</li>
+ * both of which every persona of this fixture holds, so it is the nothing-denied case.</li>
  * <li>{@code TL_taskManagement} - three tools, all {@code workspace}, so it is the all-or-nothing
  * case.</li>
  * <li>{@code TL_promptModelExplorer} - no tools at all, so it must survive for everyone.</li>
  * </ul>
+ *
+ * <p>
+ * The <em>partially</em> denied skill - one whose tools sit in a granted and a denied group at once -
+ * is not expressible against this fixture: the two roles differ in {@code data.write} alone, and no
+ * shipped skill mixes it with a read capability. {@code TestAgentCapabilities} in {@code tl-ai-core}
+ * covers that shape against hand-built policies, which is where a shape the deployed configuration
+ * cannot produce belongs.
+ * </p>
  *
  * @see AgentCapabilities
  */
@@ -67,7 +76,7 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 
 	/** Precondition: the skills this test reasons about have the shape it assumes. */
 	public void testFixtureSkillsHaveTheAssumedShape() {
-		assertEquals("TL_modelExploration is the partial case and needs both read groups.",
+		assertEquals("TL_modelExploration needs both read groups, which both roles hold.",
 			Set.of(ToolGroups.MODEL_READ, ToolGroups.DATA_READ), groupsOf(MIXED_SKILL));
 		assertEquals("TL_taskManagement is the all-or-nothing case and must sit in one group.",
 			Set.of(ToolGroups.WORKSPACE), groupsOf(WORKSPACE_SKILL));
@@ -81,62 +90,27 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 	 * A skill every one of whose tools is denied is not offered at all.
 	 *
 	 * <p>
-	 * {@code secreader1} holds no {@code workspace}, so {@code TL_taskManagement} can do nothing for
-	 * it. Offering it would cost a prompt line and a wasted {@code loadSkill} turn that comes back with
-	 * no tools.
+	 * No role of this fixture holds {@code workspace}, so {@code TL_taskManagement} can do nothing for
+	 * any persona. Offering it would cost a prompt line and a wasted {@code loadSkill} turn that comes
+	 * back with no tools.
 	 * </p>
 	 */
 	public void testFullyDeniedSkillIsDropped() {
-		String reason = capabilitiesOf(READER).unusableReason(skill(WORKSPACE_SKILL));
+		String reason = capabilitiesOf(BEN).unusableReason(skill(WORKSPACE_SKILL));
 
 		assertNotNull("TL_taskManagement must be dropped for a persona without workspace.", reason);
 		assertTrue("The log line must name the capability an operator has to grant: " + reason,
 			reason.contains(ToolGroups.WORKSPACE));
 	}
 
-	/**
-	 * A partly denied skill survives, because its instructions still apply to the tools that remain.
-	 */
-	public void testPartiallyDeniedSkillSurvives() {
-		assertNull("TL_modelExploration must survive for a persona holding model.read alone.",
-			capabilitiesOf(VIEWER).unusableReason(skill(MIXED_SKILL)));
-	}
-
-	/**
-	 * A partly denied skill hands over only the tools the persona may call.
-	 *
-	 * <p>
-	 * {@code loadSkill} used to register and announce every resolvable tool of a skill; the next turn's
-	 * schema filter then removed exactly the denied ones, so an authoritative tool result contradicted
-	 * the tool list the model was working from.
-	 * </p>
-	 */
-	public void testLoadSkillWithholdsTheDeniedTools() {
-		SkillDefinition definition = skill(MIXED_SKILL);
-		String loaded = loadSkillAs(VIEWER, definition);
-
-		for (String toolName : definition.tools()) {
-			Tool tool = ToolRegistryService.getInstance().getTool(toolName);
-			assertNotNull("Precondition: " + toolName + " must be registered.", tool);
-
-			if (ToolGroups.DATA_READ.equals(tool.group())) {
-				assertFalse("A tool the persona may not call must not be announced: " + tool.name()
-					+ "\n" + loaded, loaded.contains("- " + tool.name() + ":"));
-			} else {
-				assertTrue("A tool it may call must be announced: " + tool.name() + "\n" + loaded,
-					loaded.contains("- " + tool.name() + ":"));
-			}
-		}
-	}
-
-	/** The same skill loaded by a persona holding both groups hands over every tool. */
+	/** A skill every tool of which the persona may call hands over every tool. */
 	public void testLoadSkillHandsOverEverythingWhenNothingIsDenied() {
 		SkillDefinition definition = skill(MIXED_SKILL);
-		String loaded = loadSkillAs(READER, definition);
+		String loaded = loadSkillAs(BEN, definition);
 
 		for (String toolName : definition.tools()) {
 			String bareName = ToolRegistryService.getInstance().getTool(toolName).name();
-			assertTrue("secreader1 holds both capabilities, so " + bareName + " must be announced:\n"
+			assertTrue("Ben holds both read capabilities, so " + bareName + " must be announced:\n"
 				+ loaded, loaded.contains("- " + bareName + ":"));
 		}
 	}
@@ -150,19 +124,23 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testToollessSkillSurvivesForEveryPersona() {
-		for (String login : List.of(BARE, VIEWER, READER, EDITOR, WRITER, AUTHOR)) {
+		for (String login : SecDemoSetupService.personaLogins()) {
 			assertNull("A skill with no tools must survive for " + login + ".",
 				capabilitiesOf(login).unusableReason(skill(TOOLLESS_SKILL)));
 		}
 	}
 
-	/** The bare persona loses every skill that declares a tool, and keeps the ones that do not. */
-	public void testBarePersonaKeepsOnlyToollessSkills() {
-		AgentCapabilities capabilities = capabilitiesOf(BARE);
+	/**
+	 * A persona keeps the skills whose capabilities it holds and loses the ones it does not, and the
+	 * split follows the policy rather than the skill's size.
+	 */
+	public void testSkillsAreKeptOrDroppedByCapability() {
+		AgentCapabilities capabilities = capabilitiesOf(BEN);
 
-		assertNotNull(capabilities.unusableReason(skill(MIXED_SKILL)));
-		assertNotNull(capabilities.unusableReason(skill(WORKSPACE_SKILL)));
-		assertNotNull(capabilities.unusableReason(skill(SCRIPT_SKILL)));
+		assertNull("Both read groups are granted.", capabilities.unusableReason(skill(MIXED_SKILL)));
+		assertNull("script is granted to both roles.", capabilities.unusableReason(skill(SCRIPT_SKILL)));
+		assertNotNull("workspace is granted to nobody.",
+			capabilities.unusableReason(skill(WORKSPACE_SKILL)));
 		assertNull(capabilities.unusableReason(skill(TOOLLESS_SKILL)));
 	}
 
@@ -176,21 +154,21 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testNoticeNamesExactlyTheLackingCapabilities() {
-		Set<String> lacking = capabilitiesOf(VIEWER).lacking(List.of(MODEL_READ_TOOL, DATA_READ_TOOL,
-			WORKSPACE_TOOL, AGENT_META_TOOL));
+		Set<String> lacking = capabilitiesOf(BEN).lacking(List.of(MODEL_READ_TOOL, LIST_TOOL,
+			CLASSIFIED_WRITE_SCRIPT_TOOL, WORKSPACE_TOOL, AGENT_META_TOOL));
 
-		assertEquals("secviewer1 holds model.read and nothing else.",
-			Set.of(ToolGroups.DATA_READ, ToolGroups.WORKSPACE, ToolGroups.AGENT_META), lacking);
+		assertEquals("Ben holds model.read, data.read and script, and nothing else.",
+			Set.of(ToolGroups.DATA_WRITE, ToolGroups.WORKSPACE, ToolGroups.AGENT_META), lacking);
 	}
 
 	/** The notice text carries those names, so the agent can quote one to the user. */
 	public void testNoticeTextCarriesTheCapabilityNames() {
-		String notice = capabilitiesOf(READER).notice(
-			List.of(MODEL_READ_TOOL, DATA_READ_TOOL, WORKSPACE_TOOL),
+		String notice = capabilitiesOf(BEN).notice(
+			List.of(MODEL_READ_TOOL, LIST_TOOL, WORKSPACE_TOOL),
 			List.of(skill(MIXED_SKILL), skill(WORKSPACE_SKILL)));
 
 		assertTrue(notice, notice.contains("Capability Limits"));
-		assertTrue("The capability secreader1 lacks must be named: " + notice,
+		assertTrue("The capability Ben lacks must be named: " + notice,
 			notice.contains(ToolGroups.WORKSPACE));
 		assertFalse("A capability it holds must not be named as lacking: " + notice,
 			notice.contains(ToolGroups.DATA_READ));
@@ -205,8 +183,8 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testNoticeSaysSoWhenNothingIsWithheld() {
-		String notice = capabilitiesOf(READER).notice(
-			List.of(MODEL_READ_TOOL, DATA_READ_TOOL), List.of(skill(MIXED_SKILL)));
+		String notice = capabilitiesOf(BEN).notice(
+			List.of(MODEL_READ_TOOL, LIST_TOOL), List.of(skill(MIXED_SKILL)));
 
 		assertTrue(notice, notice.contains("holds every capability"));
 	}
@@ -221,14 +199,14 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 	 */
 	public void testUngroupedToolContributesNoCapabilityName() {
 		assertEquals("An unclassified script tool names no capability.",
-			Set.of(), capabilitiesOf(WRITER).lacking(List.of(UNCLASSIFIED_SCRIPT_TOOL)));
+			Set.of(), capabilitiesOf(ANNA).lacking(List.of(UNCLASSIFIED_SCRIPT_TOOL)));
 	}
 
 	/**
 	 * A tool the registry cannot resolve contributes nothing either - a typo is not a denial.
 	 */
 	public void testUnresolvableToolNameContributesNothing() {
-		assertEquals(Set.of(), capabilitiesOf(BARE).lacking(List.of("no-such-factory.noSuchTool")));
+		assertEquals(Set.of(), capabilitiesOf(BEN).lacking(List.of("no-such-factory.noSuchTool")));
 	}
 
 	/**

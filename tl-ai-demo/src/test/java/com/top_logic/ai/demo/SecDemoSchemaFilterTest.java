@@ -11,7 +11,10 @@ import junit.framework.Test;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
+import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
+import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
@@ -63,12 +66,12 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testDeniedToolSchemaIsAbsentFromTheRequest() {
-		List<String> viewerSees = schemaNamesFor(VIEWER);
+		List<String> benSees = schemaNamesFor(BEN);
 
-		assertTrue("A tool the persona may use must be offered: " + viewerSees,
-			viewerSees.contains(tool(MODEL_READ_TOOL).name()));
-		assertFalse("A denied tool must not be offered to the model: " + viewerSees,
-			viewerSees.contains(tool(DATA_READ_TOOL).name()));
+		assertTrue("A tool the persona may use must be offered: " + benSees,
+			benSees.contains(tool(LIST_TOOL).name()));
+		assertFalse("A denied tool must not be offered to the model: " + benSees,
+			benSees.contains(tool(CLASSIFIED_WRITE_SCRIPT_TOOL).name()));
 	}
 
 	/**
@@ -76,14 +79,14 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 *
 	 * <p>
 	 * The comparison is what makes it a statement about the policy rather than about the catalog: one
-	 * catalog, two personas, and {@code agent.meta} is the only capability between them.
+	 * catalog, two personas, and {@code data.write} is the only capability between them.
 	 * </p>
 	 */
 	public void testTheSameCatalogIsFilteredDifferentlyPerPersona() {
-		String agentMeta = tool(AGENT_META_TOOL).name();
+		String writeTool = tool(CLASSIFIED_WRITE_SCRIPT_TOOL).name();
 
-		assertFalse("secreader1 holds no agent.meta.", schemaNamesFor(READER).contains(agentMeta));
-		assertTrue("seceditor1 does.", schemaNamesFor(EDITOR).contains(agentMeta));
+		assertFalse("Ben holds no data.write.", schemaNamesFor(BEN).contains(writeTool));
+		assertTrue("Anna does.", schemaNamesFor(ANNA).contains(writeTool));
 	}
 
 	/**
@@ -106,17 +109,20 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 */
 	public void testTheExecutionModeHalfWithholdsStructuralToolsIndependently() {
 		Tool structural = tool(AGENT_AUTHORING_TOOL);
-		SecurityContext security = securityFor(AUTHOR);
+		Person administrator = anyAdministrator();
+		assertNotNull("The test application must have an administrator.", administrator);
+		SecurityContext security = TopLogicSecurityContext.forRun(administrator, false);
 
 		assertEquals("Precondition: an agent-authoring tool is STRUCTURAL.",
 			ToolMode.STRUCTURAL, structural.mode());
 		assertEquals("Precondition: the test application reports PRODUCTION.",
 			ExecutionMode.PRODUCTION, security.executionMode());
 
-		assertTrue("secauthor1 is authorized for it - the policy grants agent.authoring.",
+		assertTrue("An administrator is authorized for it - the bypass covers every capability, which is"
+			+ " what makes this a statement about the mode and not about the policy.",
 			security.hasToolPermission(structural));
-		assertFalse("...and the execution-mode half withholds it anyway: " + schemaNamesFor(AUTHOR),
-			schemaNamesFor(AUTHOR).contains(structural.name()));
+		assertFalse("...and the execution-mode half withholds it anyway: "
+			+ schemaNamesFor(security), schemaNamesFor(security).contains(structural.name()));
 
 		String reason = new ToolPermissionFilter(security).denialReason(structural);
 		assertTrue("The reason must name the mode rather than a capability: " + reason,
@@ -135,7 +141,7 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testUngrantedCapabilitiesReachNoRequest() {
-		for (String login : List.of(BARE, VIEWER, READER, EDITOR, AUTHOR)) {
+		for (String login : SecDemoSetupService.personaLogins()) {
 			List<String> offered = schemaNamesFor(login);
 
 			assertFalse(login + " must not be offered a workspace tool: " + offered,
@@ -144,27 +150,30 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 				offered.contains(tool(EGRESS_TOOL).name()));
 			assertFalse(login + " must not be offered an unclassified script tool: " + offered,
 				offered.contains(tool(UNCLASSIFIED_SCRIPT_TOOL).name()));
-		}
 
-		// secwriter1 is the one persona holding workspace, so it is excluded above and asserted here -
-		// a filter that withheld everything would otherwise pass the loop vacuously.
-		assertTrue(schemaNamesFor(WRITER).contains(tool(WORKSPACE_TOOL).name()));
-		assertFalse(schemaNamesFor(WRITER).contains(tool(EGRESS_TOOL).name()));
+			// A filter that withheld everything would pass the three assertions above vacuously.
+			assertTrue(login + " must be offered the read tools it does hold: " + offered,
+				offered.contains(tool(LIST_TOOL).name()));
+		}
 	}
 
 	/**
-	 * The bare persona is offered nothing but the implicitly granted {@code interaction} tool.
+	 * What the implicitly granted {@code interaction} capability buys is offered without any
+	 * configuration saying so.
 	 *
 	 * <p>
-	 * The deployed policy declares no {@code <baseline>}, so the one tool that survives the filter is
-	 * the one no configuration had to mention.
+	 * The deployed policy declares an <em>empty</em> {@code <baseline/>}, so nothing in the XML grants
+	 * this. The narrower form of the row - a persona offered <em>nothing but</em> the interaction tool -
+	 * needs a role that holds no capability at all, which this fixture deliberately does not have:
+	 * every persona is a partner or a reader. {@code TestRoleToolAccess} in {@code tl-ai-core} covers
+	 * the empty-role case against a hand-built policy.
 	 * </p>
 	 */
-	public void testBarePersonaIsOfferedOnlyTheBaseline() {
-		List<String> offered = schemaNamesFor(BARE);
-
-		assertEquals("Only the interaction tool of the catalog survives the filter: " + offered,
-			List.of("askUser"), offered);
+	public void testTheImplicitBaselineReachesEveryPersona() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			assertTrue("askUser must survive the filter for " + login + ": " + schemaNamesFor(login),
+				schemaNamesFor(login).contains("askUser"));
+		}
 	}
 
 	/**
@@ -180,7 +189,7 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testUnknownToolNameIsNotAPermissionProblem() {
-		String text = resultTextOf("call-1", "listEverythingEverywhere", READER);
+		String text = resultTextOf("call-1", "listEverythingEverywhere", BEN);
 
 		assertTrue("Expected an unknown-tool message, got: " + text,
 			text.contains("Unknown tool: 'listEverythingEverywhere'"));
@@ -199,22 +208,22 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 * The observation this pins, from a real session, as a persona that <b>holds</b>
 	 * {@code data.write}: <em>"This agent lacks the {@code agent.authoring} capability, which is
 	 * required to load and use agentic authoring tools."</em> The real cause was that
-	 * {@code secdemo-editing.addNote} is in no framework agent's {@code <tools>} list and in no
+	 * {@code secdemo-editing.addTicket} is in no framework agent's {@code <tools>} list and in no
 	 * skill, so it never reached the catalog - a third kind of absence the model had no wording for
 	 * and filled in with the nearest capability it could find.
 	 * </p>
 	 *
 	 * <p>
-	 * {@code secwriter1} is the sharpest persona for it: it is granted {@code data.write}, so a
+	 * {@code Anna} is the sharpest persona for it: it is granted {@code data.write}, so a
 	 * capability sentence here would be provably false.
 	 * </p>
 	 */
 	public void testExistingToolNoAgentCarriesIsNotAPermissionProblem() {
 		assertNotNull("Precondition: the tool exists in this application.",
 			tool(CLASSIFIED_WRITE_SCRIPT_TOOL));
-		assertAllowed(WRITER, CLASSIFIED_WRITE_SCRIPT_TOOL);
+		assertAllowed(ANNA, CLASSIFIED_WRITE_SCRIPT_TOOL);
 
-		String text = resultTextOf("call-3", CLASSIFIED_WRITE_SCRIPT_TOOL, WRITER);
+		String text = resultTextOf("call-3", CLASSIFIED_WRITE_SCRIPT_TOOL, ANNA);
 
 		assertTrue("The message must say the tool exists: " + text,
 			text.contains("exists in this application"));
@@ -238,9 +247,9 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testExistingToolThisPersonaMayNotUseIsRefusedByName() {
-		String text = resultTextOf("call-4", CLASSIFIED_WRITE_SCRIPT_TOOL, READER);
+		String text = resultTextOf("call-4", CLASSIFIED_WRITE_SCRIPT_TOOL, BEN);
 
-		assertTrue("secreader1 holds no data.write, so this is a refusal: " + text,
+		assertTrue("Ben holds no data.write, so this is a refusal: " + text,
 			text.contains("Permission denied"));
 		assertTrue("...and it must name the capability an operator has to grant: " + text,
 			text.contains(ToolGroups.DATA_WRITE));
@@ -257,13 +266,15 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testUnknownToolMessageListsOnlyPermittedTools() {
-		String text = resultTextOf("call-2", "nope", VIEWER);
+		String text = resultTextOf("call-2", "nope", BEN);
 
-		assertTrue("A tool the viewer may call belongs in the list: " + text,
+		assertTrue("A tool Ben may call belongs in the list: " + text,
 			text.contains(tool(MODEL_READ_TOOL).name()));
-		assertFalse("A tool it may not call does not: " + text,
-			text.contains(tool(DATA_READ_TOOL).name()));
+		assertFalse("A tool he may not call does not - he holds no data.write: " + text,
+			text.contains(tool(CLASSIFIED_WRITE_SCRIPT_TOOL).name()));
 		assertFalse(text, text.contains(tool(STRUCTURE_TOOL).name()));
+		assertFalse("...nor one no <tool-groups> entry classified: " + text,
+			text.contains(tool(UNCLASSIFIED_SCRIPT_TOOL).name()));
 	}
 
 	/**
@@ -277,16 +288,19 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 */
 	private ToolCatalog catalog() {
 		ToolCatalog catalog = new ToolCatalog();
-		for (String name : List.of("user-interaction.askUser", MODEL_READ_TOOL, DATA_READ_TOOL,
+		for (String name : List.of("user-interaction.askUser", MODEL_READ_TOOL, LIST_TOOL,
 			AGENT_META_TOOL, AGENT_AUTHORING_TOOL, STRUCTURE_TOOL, WORKSPACE_TOOL, EGRESS_TOOL,
-			CLASSIFIED_READ_SCRIPT_TOOL, UNCLASSIFIED_SCRIPT_TOOL)) {
+			CLASSIFIED_READ_SCRIPT_TOOL, CLASSIFIED_WRITE_SCRIPT_TOOL, UNCLASSIFIED_SCRIPT_TOOL)) {
 			catalog.register(tool(name));
 		}
 		return catalog.freeze();
 	}
 
 	private List<String> schemaNamesFor(String login) {
-		SecurityContext security = securityFor(login);
+		return schemaNamesFor(securityFor(login));
+	}
+
+	private List<String> schemaNamesFor(SecurityContext security) {
 		return catalog().toolSchemas(new ToolPermissionFilter(security)).stream()
 			.map(ToolSchema::name)
 			.toList();

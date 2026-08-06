@@ -4,16 +4,18 @@
 // Puts the seeded data back the way SecDemoSetupService created it, so a
 // scenario can be replayed without rebuilding the database:
 //
-//   * deletes every secdemo:Note and secdemo:Secret a scenario created,
-//     whatever it is called - the previous version only knew two fixed
-//     titles, so anything else a persona wrote survived a "reset",
-//   * restores a seeded note or secret a scenario deleted (secwriter1 and
-//     seceditor1 hold Write on Note, so that can happen),
+//   * deletes every pm:Ticket a scenario created, whatever it is called,
+//   * restores a seeded ticket a scenario deleted, in the project it belongs
+//     to (nobody holds Delete on pm:Ticket, so this should never be needed -
+//     it is here so a reset that finds one missing says so rather than
+//     silently leaving the fixture short of a ticket),
 //   * reports what it did, so the output is a verification and not a promise.
 //
-// It does NOT touch the accounts, the groups, the role assignments or the
-// component access. Those are idempotent and SecDemoSetupService re-applies
-// them on every boot, so there is nothing to reset.
+// It does NOT touch the projects themselves, the accounts, the groups or the
+// component access. The projects carry the "partners" attribute the scope role
+// rule reads, so deleting and recreating one would recompute security for no
+// reason; and every persona is refused Delete on pm:Ticket and Write on a
+// project it does not partner on, so a scenario cannot damage them.
 //
 // Where to run it: Administration > Development > Script console as "root",
 // with the "execute and save changes" button (the one with the database icon).
@@ -25,78 +27,67 @@
 // See doc/security/testbed.md, "Enabling and resetting the fixture".
 // ===========================================================================
 {
-	// The three notes and two secrets SecDemoSetupService seeds - kept in step
-	// with seedInstances() in that class. Anything of these types that is not
-	// listed here was created by a scenario and goes away.
-	seededNotes = [
-		["Release checklist", "Cut the branch, run the tests, tag the build."],
-		["Team offsite", "Agenda for the next offsite: retro, roadmap, dinner."],
-		["Open questions", "Which of the staged enforcement layers ships first?"]
-	];
-	seededSecrets = [
-		["Payroll export", "salary-2026-Q3: 4711"],
-		["Deploy key", "ssh-ed25519 AAAA-not-a-real-key"]
+	// The tickets SecDemoSetupService seeds, as [project, title, body] - kept in
+	// step with the <projects> list of secdemo.config.xml. Anything of this type
+	// that is not listed here was created by a scenario and goes away.
+	seededTickets = [
+		["Alpha", "Alpha: cut the release branch", "Tag the build, then update the changelog."],
+		["Alpha", "Alpha: fix the login timeout", "Sessions expire after 30s instead of 30min."],
+		["Beta", "Beta: import the customer list", "The CSV export of the old system has a BOM."]
 	];
 
-	seededNoteTitles = $seededNotes.map(n -> $n[0]);
-	seededSecretLabels = $seededSecrets.map(s -> $s[0]);
+	seededTitles = $seededTickets.map(t -> $t[1]);
 
 	// -- read the report data BEFORE deleting -----------------------------
 	// An attribute read on an object deleted earlier in the same script
 	// fails, so everything the report needs is collected up front.
-	notes = all(`secdemo:Note`);
-	secrets = all(`secdemo:Secret`);
+	tickets = all(`pm:Ticket`);
+	projects = all(`pm:Project`);
 
-	obsoleteNotes =
-		$notes.filter(n -> !$seededNoteTitles.containsElement($n.get(`secdemo:Note#title`)));
-	obsoleteSecrets =
-		$secrets.filter(s -> !$seededSecretLabels.containsElement($s.get(`secdemo:Secret#label`)));
+	obsoleteTickets =
+		$tickets.filter(t -> !$seededTitles.containsElement($t.get(`pm:Ticket#title`)));
 
-	removedNoteTitles = $obsoleteNotes.get(`secdemo:Note#title`);
-	removedSecretLabels = $obsoleteSecrets.get(`secdemo:Secret#label`);
+	removedTitles = $obsoleteTickets.get(`pm:Ticket#title`);
 
-	presentNoteTitles =
-		$notes.get(`secdemo:Note#title`).filter(t -> $seededNoteTitles.containsElement($t));
-	presentSecretLabels =
-		$secrets.get(`secdemo:Secret#label`).filter(l -> $seededSecretLabels.containsElement($l));
+	presentTitles =
+		$tickets.get(`pm:Ticket#title`).filter(t -> $seededTitles.containsElement($t));
 
-	missingNotes = $seededNotes.filter(n -> !$presentNoteTitles.containsElement($n[0]));
-	missingSecrets = $seededSecrets.filter(s -> !$presentSecretLabels.containsElement($s[0]));
+	missingTickets = $seededTickets.filter(t -> !$presentTitles.containsElement($t[1]));
 
 	// -- delete what the scenarios added ----------------------------------
-	$obsoleteNotes.foreach(n -> $n.delete());
-	$obsoleteSecrets.foreach(s -> $s.delete());
+	$obsoleteTickets.foreach(t -> $t.delete());
 
 	// -- restore what a scenario removed ----------------------------------
-	$missingNotes.foreach(n -> new(`secdemo:Note`)
-		..set(`secdemo:Note#title`, $n[0])
-		..set(`secdemo:Note#body`, $n[1]));
-	$missingSecrets.foreach(s -> new(`secdemo:Secret`)
-		..set(`secdemo:Secret#label`, $s[0])
-		..set(`secdemo:Secret#value`, $s[1]));
+	// Into the project it belongs to, because a ticket outside a project has no
+	// security parent, so a project partner could not reach it - which would
+	// quietly change what the persona matrix says.
+	$missingTickets.foreach(t -> {
+		project = $projects.filter(p -> $p.get(`pm:Project#name`) == $t[0]).firstElement();
+		restored = new(`pm:Ticket`)
+			..set(`pm:Ticket#title`, $t[1])
+			..set(`pm:Ticket#body`, $t[2]);
+		$project.set(`pm:Project#tickets`,
+			$project.get(`pm:Project#tickets`).concat($restored));
+	});
 
 	// -- report -----------------------------------------------------------
 	// Counted from the data as it was read, not re-read afterwards: this
 	// request pinned its knowledge-base revision before the deletes, so a
 	// re-read here would not see them. Run the script twice to verify - the
-	// second run must report "none" on all four lines.
+	// second run must report "none" on both lines.
 	[
 		"-- agent security test bed: reset --",
-		"deleted notes    : " + ($removedNoteTitles.size() == 0
+		"deleted tickets  : " + ($removedTitles.size() == 0
 			? "none"
-			: $removedNoteTitles.size() + " (" + $removedNoteTitles.join(separator: ", ") + ")"),
-		"deleted secrets  : " + ($removedSecretLabels.size() == 0
-			? "none"
-			: $removedSecretLabels.size() + " (" + $removedSecretLabels.join(separator: ", ") + ")"),
-		"restored notes   : " + ($missingNotes.size() == 0
-			? "none - all three seeded notes were present"
-			: $missingNotes.map(n -> $n[0]).join(separator: ", ")),
-		"restored secrets : " + ($missingSecrets.size() == 0
-			? "none - both seeded secrets were present"
-			: $missingSecrets.map(s -> $s[0]).join(separator: ", ")),
+			: $removedTitles.size() + " (" + $removedTitles.join(separator: ", ") + ")"),
+		"restored tickets : " + ($missingTickets.size() == 0
+			? "none - all three seeded tickets were present"
+			: $missingTickets.map(t -> $t[1]).join(separator: ", ")),
+		"projects         : " + $projects.size() + " ("
+			+ $projects.get(`pm:Project#name`).join(separator: ", ") + ") - untouched",
 		"",
-		"The fixture now holds exactly the 3 seeded notes and 2 seeded secrets.",
+		"The fixture now holds exactly the 3 seeded tickets in their 2 projects.",
 		"Run this script a second time to verify: it must then report 'none' on",
-		"all four lines. If it does not, something is still creating data."
+		"both lines. If it does not, something is still creating data."
 	];
 }

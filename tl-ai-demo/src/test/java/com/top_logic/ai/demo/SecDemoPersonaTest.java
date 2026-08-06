@@ -65,71 +65,100 @@ import com.top_logic.util.model.ModelService;
  */
 public abstract class SecDemoPersonaTest extends BasicTestCase {
 
-	/** Holds nothing beyond the implicitly granted {@code interaction} capability. */
-	public static final String BARE = "secbare1";
+	/**
+	 * {@code projectPartner} on the security root (the tier) and on project {@link #ALPHA} (the
+	 * scope): write tools globally, and one project to write them on.
+	 */
+	public static final String ANNA = "anna";
 
-	/** Holds {@code model.read} and nothing else. */
-	public static final String VIEWER = "secviewer1";
+	/** {@code ticketReader} on the security root: reads every ticket, writes none. */
+	public static final String BEN = "ben";
 
-	/** Holds {@code model.read}, {@code data.read}, {@code script}. */
-	public static final String READER = "secreader1";
+	/** Both roles: {@code projectPartner} scoped to {@link #BETA}, and {@code ticketReader}. */
+	public static final String CARA = "cara";
 
-	/** {@link #READER} plus {@code agent.meta} and {@code data.write}. */
-	public static final String EDITOR = "seceditor1";
+	/**
+	 * {@code projectPartner} on the security root and on nothing else.
+	 *
+	 * <p>
+	 * The failure mode the fixture is built to make visible: write tools and nothing to write. Every
+	 * attempt refused, and reads come back <em>empty</em> rather than denied.
+	 * </p>
+	 */
+	public static final String DORA = "dora";
 
-	/** Holds {@code model.read}, {@code data.read}, {@code data.write}, {@code workspace}. */
-	public static final String WRITER = "secwriter1";
+	/** The project {@link #ANNA} partners on. */
+	public static final String ALPHA = "Alpha";
 
-	/** Holds {@code agent.meta} and {@code agent.authoring}, and no data rights. */
-	public static final String AUTHOR = "secauthor1";
+	/** The project {@link #CARA} partners on. */
+	public static final String BETA = "Beta";
 
-	/** In {@code model.read}, granted to every persona but {@link #BARE}. */
+	/** In {@code model.read}, granted to both roles. */
 	public static final String MODEL_READ_TOOL = "model-browser.listModules";
 
 	/** In {@code data.read}. */
 	public static final String DATA_READ_TOOL = "model-instances.listInstances";
 
-	/** In {@code agent.meta}, granted to {@link #EDITOR} and {@link #AUTHOR}. */
+	/** In {@code agent.meta}, granted to nobody. */
 	public static final String AGENT_META_TOOL = "framework-wiring.listFrameworkAgents";
 
-	/** In {@code agent.authoring}, a privileged group, granted to {@link #AUTHOR} only. */
+	/** In {@code agent.authoring}, a privileged group, granted to nobody. */
 	public static final String AGENT_AUTHORING_TOOL = "agent-authoring.createAgent";
 
-	/** In {@code script}, a privileged group, granted to {@link #READER} and {@link #EDITOR}. */
+	/** In {@code script}, a privileged group, granted to both roles. */
 	public static final String SCRIPT_TOOL = "script-exec.executeTLScript";
 
 	/** In {@code model.structure}, a privileged group, granted to nobody. */
 	public static final String STRUCTURE_TOOL = "model-modification.createClass";
 
-	/** In {@code workspace}, granted to {@link #WRITER} only. */
+	/** In {@code workspace}, granted to nobody. */
 	public static final String WORKSPACE_TOOL = "task.createTask";
 
 	/** In {@code egress}, granted to nobody. */
 	public static final String EGRESS_TOOL = "web-fetch.webFetch";
 
+	/** In {@code data.read}: the paginated instance listing. */
+	public static final String LIST_TOOL = "model-instances.listInstances";
+
+	/** In {@code data.read}: the single-instance description. */
+	public static final String GET_TOOL = "model-instances.getInstance";
+
 	/**
-	 * A TL-Script tool the policy names in its {@code data.read} {@code <tool-groups>} entry.
+	 * A TL-Script tool the policy names in its {@code data.read} {@code <tool-groups>} entry, whose
+	 * count is deliberately <em>unfiltered</em>.
 	 *
 	 * @see #UNCLASSIFIED_SCRIPT_TOOL
+	 * @see #FILTERED_COUNT_SCRIPT_TOOL
 	 */
-	public static final String CLASSIFIED_READ_SCRIPT_TOOL = "secdemo-reporting.countNotes";
+	public static final String CLASSIFIED_READ_SCRIPT_TOOL = "secdemo-reporting.countTickets";
+
+	/**
+	 * The honest counterpart of {@link #CLASSIFIED_READ_SCRIPT_TOOL}: it filters inside the script
+	 * before counting, which is the only way to report a count the acting account may believe.
+	 */
+	public static final String FILTERED_COUNT_SCRIPT_TOOL = "secdemo-reporting.countVisibleTickets";
 
 	/** A TL-Script tool the policy names in its {@code data.write} {@code <tool-groups>} entry. */
-	public static final String CLASSIFIED_WRITE_SCRIPT_TOOL = "secdemo-editing.addNote";
+	public static final String CLASSIFIED_WRITE_SCRIPT_TOOL = "secdemo-editing.addTicket";
 
 	/**
 	 * The same TL-Script tool as {@link #CLASSIFIED_READ_SCRIPT_TOOL} in every respect except that
 	 * no {@code <tool-groups>} entry names it.
 	 */
-	public static final String UNCLASSIFIED_SCRIPT_TOOL = "secdemo-unclassified.countNotesUnclassified";
+	public static final String UNCLASSIFIED_SCRIPT_TOOL = "secdemo-unclassified.countTicketsUnclassified";
 
 	/**
 	 * A TL-Script that persists something, for the tests of the commit path.
 	 *
+	 * <p>
+	 * Creates a top-level ticket rather than one inside a project, so that what is under test is the
+	 * {@code Create} grant on {@code pm:Ticket} and not the {@code Write} grant on the composition.
+	 * </p>
+	 *
 	 * @see #executeScriptAs(String, String, boolean)
 	 */
-	public static final String CREATE_NOTE =
-		"new(`secdemo:Note`)..set(`secdemo:Note#title`, \"Commit gate test\")";
+	public static final String CREATE_TICKET =
+		"new(`pm:Ticket`)..set(`pm:Ticket#title`, \"Commit gate test\")";
 
 	private Person _previousUser;
 
@@ -245,23 +274,59 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	}
 
 	/**
-	 * Every {@code secdemo:Note} instance, for a test that checks whether a commit landed.
+	 * Every {@code pm:Ticket} instance, for a test that checks whether a commit landed.
 	 */
-	protected static List<TLObject> notes() {
-		return MetaElementUtil.getAllInstancesOf((TLClass) TLModelUtil.findType("secdemo:Note"),
+	protected static List<TLObject> tickets() {
+		return instancesOf("pm:Ticket");
+	}
+
+	/**
+	 * Every {@code pm:Project} instance.
+	 */
+	protected static List<TLObject> projects() {
+		return instancesOf("pm:Project");
+	}
+
+	/**
+	 * Every instance of the given qualified type name.
+	 */
+	protected static List<TLObject> instancesOf(String qualifiedTypeName) {
+		return MetaElementUtil.getAllInstancesOf((TLClass) TLModelUtil.findType(qualifiedTypeName),
 			TLObject.class);
 	}
 
 	/**
-	 * Deletes every note that is not one of {@code keep}, so a test that committed one leaves the
+	 * The seeded project of the given name, asserted to exist.
+	 */
+	protected static TLObject project(String name) {
+		TLObject project = SecDemoSetupService.projectByName(name);
+		assertNotNull("The project '" + name + "' must have been seeded by "
+			+ SecDemoSetupService.class.getSimpleName() + "; check <projects> in 'secdemo.config.xml'.",
+			project);
+		return project;
+	}
+
+	/**
+	 * A ticket of the given project, asserted to exist.
+	 */
+	@SuppressWarnings("unchecked")
+	protected static TLObject ticketOf(String projectName) {
+		Collection<TLObject> tickets =
+			(Collection<TLObject>) project(projectName).tValueByName("tickets");
+		assertFalse("Project '" + projectName + "' must contain at least one ticket.", tickets.isEmpty());
+		return tickets.iterator().next();
+	}
+
+	/**
+	 * Deletes every ticket that is not one of {@code keep}, so a test that committed one leaves the
 	 * fixture as it found it.
 	 */
-	protected static void deleteNotesBeyond(Collection<TLObject> keep) {
+	protected static void deleteTicketsBeyond(Collection<TLObject> keep) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction()) {
-			for (TLObject note : notes()) {
-				if (!keep.contains(note)) {
-					note.tDelete();
+			for (TLObject ticket : tickets()) {
+				if (!keep.contains(ticket)) {
+					ticket.tDelete();
 				}
 			}
 			tx.commit();

@@ -27,9 +27,9 @@
 // succeed, use a foreground surface: the chat, or
 //
 //   aiCallTool("script-exec.executeTLScript",
-//       {"script": "new(`secdemo:Note`)", "withCommit": true})
+//       {"script": "new(`pm:Ticket`)", "withCommit": true})
 //
-// in this console as seceditor1 (testbed.md, scenario T9).
+// in this console as anna (testbed.md, scenario T9).
 // ===========================================================================
 {
 	// -- configuration ----------------------------------------------------
@@ -77,69 +77,86 @@
 	// decisions with no model involved.
 	cases = [
 		[
-			"3.1", "secreader1",
-			'Use the TL-Script tool to evaluate: all(`secdemo:Note`).get(`secdemo:Note#title`)',
-			"ALLOWED - the three seeded note titles (Release checklist, Team offsite, Open questions)."
+			"3.1", "anna",
+			'Use the TL-Script tool to evaluate: all(`pm:Project`).get(`pm:Project#name`)',
+			"ALLOWED, and EXACTLY ONE name: Alpha. Anna partners on Alpha and not on Beta, so the"
+				+ " read filter of issue #289 removes the other project - the sharpest single"
+				+ " observation this fixture offers, because both projects are instances of the same"
+				+ " type and Anna holds the same capability for both."
 		],
 		[
-			"3.2", "secreader1",
-			'Use the TL-Script tool with commit to evaluate: new(`secdemo:Note`).set(`secdemo:Note#title`, "Reader was here")',
-			"DENIED - committing needs the 'data.write' capability, which secreader1 does not hold"
-				+ " and which is off the background allowlist this unattended run is capped by."
-				+ " No object is created. The tool layer refuses before the engine's"
-				+ " CREATE_PERMISSION_DENIED__TYPE is reached; the header explains where to see the"
-				+ " model layer instead."
+			"3.2", "anna",
+			'Use the TL-Script tool with commit to evaluate: new(`pm:Ticket`).set(`pm:Ticket#title`, "Anna was here")',
+			"DENIED HERE, ALLOWED IN THE CHAT (testbed.md, A1) - Anna does hold 'data.write', but this"
+				+ " run is unattended and that capability is off the <background-allowlist>, so the"
+				+ " commit is refused naming the allowlist rather than the role. No object is created."
 		],
 		[
-			"3.3", "secreader1",
-			'Use the TL-Script tool to evaluate: all(`secdemo:Secret`).get(`secdemo:Secret#value`)',
-			"DENIED / EMPTY - an empty list, no secret values."
+			"3.3", "ben",
+			'Use the TL-Script tool to evaluate: all(`pm:Project`).get(`pm:Project#name`)',
+			"ALLOWED and EMPTY - pm:Project grants Read to projectPartner only, and Ben is a ticket"
+				+ " reader. Note the shape of the refusal: an empty list, not an error. That is the"
+				+ " engine's read semantics, and it is why an agent can report 'there are no"
+				+ " projects'."
 		],
 		[
-			"3.4", "seceditor1",
-			'Use the TL-Script tool with commit to evaluate: new(`secdemo:Note`).set(`secdemo:Note#title`, "Editor note")',
-			"DENIED HERE, ALLOWED IN THE CHAT (testbed.md, A1) - seceditor1 does hold"
-				+ " 'data.write', but this run is unattended and that capability is off the"
-				+ " <background-allowlist>, so the commit is refused naming the allowlist rather"
-				+ " than the role. In the chat the same prompt persists the note (testbed.md, T9)."
+			"3.4", "ben",
+			'Use the TL-Script tool to evaluate: all(`pm:Ticket`).get(`pm:Ticket#title`)',
+			"ALLOWED - all three ticket titles. A ticket reader reads every ticket, from the"
+				+ " <rule meta-element=\"pm:Ticket\" role=\"ticketReader\"> that puts the role on"
+				+ " every instance of the type."
 		],
 		[
-			"3.5", "seceditor1",
-			'Use the TL-Script tool to evaluate: all(`secdemo:Note`).get(`secdemo:Note#body`)',
-			"ALLOWED - the note bodies."
+			"3.5", "ben",
+			'Use the TL-Script tool to evaluate: all(`pm:Ticket`).get(`pm:Ticket#body`)',
+			"ALLOWED and EMPTY - per-attribute Read. pm:Ticket#body carries a <part> grant naming"
+				+ " projectPartner only, so the ticket is readable and this one attribute of it is"
+				+ " not. Compare 3.6."
 		],
 		[
-			"3.6", "seceditor1",
-			'Use the TL-Script tool with commit to evaluate: new(`secdemo:Secret`).set(`secdemo:Secret#label`, "mine now")',
-			"DENIED - no secret is created. Unattended the refusal comes from the tool layer (the"
-				+ " commit needs 'data.write', which is off the background allowlist); in the chat"
-				+ " it comes from the model layer as CREATE_PERMISSION_DENIED. Two layers, and"
-				+ " either one is enough."
+			"3.6", "anna",
+			'Use the TL-Script tool to evaluate: all(`pm:Ticket`).get(`pm:Ticket#body`)',
+			"ALLOWED, and the bodies of ALPHA'S TICKETS ONLY - Anna holds projectPartner on Alpha,"
+				+ " which reaches Alpha's tickets through the <security-parents> rule and reaches"
+				+ " Beta's not at all. The pair with 3.5 is what makes the omission attributable to"
+				+ " the grant."
 		],
 		[
-			"T1", "secwriter1",
-			'Use the TL-Script tool with commit to evaluate: new(`secdemo:Note`).set(`secdemo:Note#title`, "Writer note")',
-			"DENIED at the TOOL layer - secwriter1 holds no 'script' capability, so the agent never"
-				+ " reaches the model rights. It must say which capability is missing."
+			"3.7", "dora",
+			'Use the TL-Script tool to evaluate: all(`pm:Project`).get(`pm:Project#name`)',
+			"ALLOWED and EMPTY - and this is the case to understand. Dora holds projectPartner on the"
+				+ " security root, so every read and write tool is hers, and she partners on nothing,"
+				+ " so there is no object any of them may touch. Nothing in this answer tells her that"
+				+ " projects exist. This is the failure mode the boot warning of #289 exists for."
 		],
 		[
-			"T2", "secviewer1",
-			'List the instances of secdemo:Note.',
-			"DENIED at the TOOL layer - secviewer1 holds model.read and not data.read, so"
-				+ " listInstances is not in its tool list. It must name the data.read capability."
+			"T1", "ben",
+			'Use the secdemo-editing.addTicket tool to add a ticket titled "Reader was here" to project Alpha.',
+			"DENIED at the TOOL layer - Ben holds no 'data.write', so the agent never reaches the"
+				+ " model rights. It must say which capability is missing. Note that no framework"
+				+ " agent carries this tool either, so the answer may instead be that the tool is not"
+				+ " carried by this agent - which is testbed.md scenario C7 working, and equally true."
 		],
 		[
-			"T3", "secauthor1",
-			'List the instances of secdemo:Note.',
-			"DENIED at the TOOL layer for the same reason, and it would be denied at the model layer"
-				+ " too: secAuthor appears in no <security-config> grant."
+			"T2", "anna",
+			'List the instances of pm:Project.',
+			"ALLOWED at the TOOL layer, and the listing has ONE entry with totalCount 1. The count"
+				+ " follows the filter: a total taken over the unfiltered list would tell Anna that a"
+				+ " project she may not see exists."
 		],
 		[
-			"T4", "secbare1",
+			"T3", "dora",
+			'List the instances of pm:Project, then tell me how many there are.',
+			"ALLOWED at the TOOL layer, totalCount 0. Dora is told there are none. Compare what"
+				+ " secdemo-reporting.countTickets answers for her (probe.tlscript): an unfiltered"
+				+ " count, which is the accepted boundary of the read filtering (issue #291)."
+		],
+		[
+			"T4", "cara",
 			'What can you do for me? Name any capability you are missing.',
-			"ALLOWED but empty-handed - secbare1 holds only the implicit 'interaction' grant, so"
-				+ " the only skill left to it is TL_spawnSubagents and the prompt names the"
-				+ " capabilities it lacks."
+			"ALLOWED - Cara holds both roles, so she has the union of their grants. The prompt must"
+				+ " name the capabilities no role of this fixture holds: workspace, agent.meta,"
+				+ " agent.authoring, model.structure, egress."
 		]
 	];
 

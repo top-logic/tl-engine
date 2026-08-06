@@ -41,7 +41,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *
  * <p>
  * Compilation is the check that catches the failures these scripts actually suffer, because TL-Script
- * resolves model literals and function names at compile time: a `secdemo:Note#title` that no longer
+ * resolves model literals and function names at compile time: a `pm:Ticket#title` that no longer
  * exists, or an {@code aiCallTool} that was renamed, fails here rather than in front of a tester.
  * </p>
  */

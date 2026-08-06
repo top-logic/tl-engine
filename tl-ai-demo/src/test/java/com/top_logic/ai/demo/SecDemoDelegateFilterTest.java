@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
@@ -80,28 +81,22 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * Two personas whose grants differ get different delegate lists from the same agent.
+	 * Every persona of this fixture reaches a tool of every delegate, so every delegate is offered.
 	 *
 	 * <p>
-	 * {@code secbare1} holds nothing beyond {@code interaction}, so two of the three delegates can do
-	 * nothing for it; {@code secviewer1} holds {@code model.read}, which reaches a tool of each.
+	 * The load-bearing half of the filter, and the one that is easy to break: a filter that dropped too
+	 * much would fail here. The complementary half - a delegate <em>dropped</em> because the persona
+	 * can reach none of its tools, with a reason naming the capabilities - needs a role holding nothing
+	 * but {@code interaction}, which this fixture deliberately does not have. {@code TestDelegateFilter}
+	 * in {@code tl-ai-core} covers it against a hand-built policy.
 	 * </p>
 	 */
-	public void testDelegateListFollowsThePersona() {
-		assertEquals("secbare1 keeps only the delegate reachable through 'interaction'.",
-			List.of(EDITOR_AGENT), offeredDelegatesOf(BARE));
-		assertEquals("secviewer1's model.read reaches a tool of every delegate.",
-			List.of(SCRIPT_AGENT, EDITOR_AGENT, EXPLORER), offeredDelegatesOf(VIEWER));
-	}
-
-	/** The delegate the narrow persona loses is dropped for a reason that names the capabilities. */
-	public void testDropNamesTheCapabilitiesItNeeded() {
-		String reason = capabilitiesOf(BARE).unusableReason(agent(EXPLORER));
-
-		assertNotNull("TL_ModelExplorer must be dropped for a persona holding neither read"
-			+ " capability.", reason);
-		assertTrue("The log line must name what an operator has to grant: " + reason,
-			reason.contains(ToolGroups.MODEL_READ) && reason.contains(ToolGroups.DATA_READ));
+	public void testEveryDelegateIsOfferedToEveryPersona() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			assertEquals(login + " holds both read capabilities and script, which reach a tool of each"
+				+ " delegate.", List.of(SCRIPT_AGENT, EDITOR_AGENT, EXPLORER),
+				offeredDelegatesOf(login));
+		}
 	}
 
 	/** An unenforced run keeps every declared delegate, whatever its principal may do. */
@@ -116,16 +111,18 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	 * for a persona holding more, the same delegate is offered without a limit.
 	 *
 	 * <p>
-	 * This is the pair the decision rests on: {@code secviewer1} can usefully ask
-	 * {@code TL_ModelExplorer} about the model and not about its instances, and being told so beats
-	 * discovering it from a child run that comes back refused.
+	 * This is the pair the decision rests on: a persona can usefully ask {@code TL_TLScriptAgent} to run
+	 * a script and not to keep a task, and being told so beats discovering it from a child run that
+	 * comes back refused.
 	 * </p>
 	 */
 	public void testLimitedDelegateIsOfferedAndSaysWhatItCannotDo() {
-		assertEquals("secviewer1 holds model.read alone, so the instance tools are out of reach.",
-			Set.of(ToolGroups.DATA_READ), capabilitiesOf(VIEWER).unreachableCapabilities(agent(EXPLORER)));
-		assertEquals("secreader1 holds both, so the same delegate is unlimited.",
-			Set.of(), capabilitiesOf(READER).unreachableCapabilities(agent(EXPLORER)));
+		assertEquals("No role holds workspace, so the task tools of TL_TLScriptAgent are out of reach.",
+			Set.of(ToolGroups.WORKSPACE),
+			capabilitiesOf(BEN).unreachableCapabilities(agent(SCRIPT_AGENT)));
+		assertEquals("TL_ModelExplorer needs the two read capabilities, which every persona holds, so"
+			+ " the same persona gets it unlimited.",
+			Set.of(), capabilitiesOf(BEN).unreachableCapabilities(agent(EXPLORER)));
 	}
 
 	/**
@@ -137,27 +134,24 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	 * agent finds a name to spawn, and a name it finds there is a name it will use.
 	 * </p>
 	 */
-	public void testListAgentsFollowsThePersona() {
-		String bareSees = listAgentsAs(BARE);
-		String readerSees = listAgentsAs(READER);
+	public void testListAgentsCarriesTheSameFilter() {
+		String benSees = listAgentsAs(BEN);
 
-		assertTrue("An agent every persona can use must be listed: " + bareSees,
-			bareSees.contains("\"" + EDITOR_AGENT + "\""));
-		assertFalse("An agent secbare1 can do nothing with must not be listed: " + bareSees,
-			bareSees.contains("\"" + EXPLORER + "\""));
-		assertFalse(bareSees, bareSees.contains("\"" + SCRIPT_AGENT + "\""));
-
-		assertTrue("secreader1 reaches both, so both must be listed: " + readerSees,
-			readerSees.contains("\"" + EXPLORER + "\"") && readerSees.contains("\"" + SCRIPT_AGENT + "\""));
+		assertTrue("Every delegate this persona reaches must be listed: " + benSees,
+			benSees.contains("\"" + EDITOR_AGENT + "\"") && benSees.contains("\"" + EXPLORER + "\"")
+				&& benSees.contains("\"" + SCRIPT_AGENT + "\""));
+		assertFalse("An agent nothing could come of must not be listed - and the fixture has none, so"
+			+ " what this pins is that the listing is filtered at all rather than that it is empty: "
+			+ benSees, benSees.contains("\"no-such-agent\""));
 	}
 
 	/** {@code list_agents} names what a listed agent cannot use, as the prompt catalog does. */
 	public void testListAgentsNamesTheUnreachableCapabilities() {
-		String viewerSees = listAgentsAs(VIEWER);
+		String benSees = listAgentsAs(BEN);
 
-		assertTrue("The instance tools TL_ModelExplorer cannot use must be named: " + viewerSees,
-			viewerSees.contains("\"cannotUse\""));
-		assertTrue(viewerSees, viewerSees.contains("\"" + ToolGroups.DATA_READ + "\""));
+		assertTrue("The task tools TL_TLScriptAgent cannot use must be named: " + benSees,
+			benSees.contains("\"cannotUse\""));
+		assertTrue(benSees, benSees.contains("\"" + ToolGroups.WORKSPACE + "\""));
 	}
 
 	/** Outside an enforcing run the listing is what it was before this filter existed. */

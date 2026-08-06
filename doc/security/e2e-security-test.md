@@ -527,7 +527,8 @@ The same allow/deny matrix runs as a JUnit test that evaluates the identical TL-
 the way the agent's TL-Script tool does (compiled with security checks on):
 
 ```bash
-mvn -B -o -pl tl-ai-demo -am test -DskipTests=false -Dtest=SecDemoModelSecurityTest
+mvn -B -o -pl tl-ai-demo -am test -DskipTests=false \
+    -Dsurefire.failIfNoSpecifiedTests=false -Dtest=SecDemoModelSecurityTest
 ```
 
 `tl-ai-demo/src/test/java/com/top_logic/ai/demo/SecDemoModelSecurityTest.java` covers: reader reads
@@ -631,7 +632,8 @@ entire point of the mechanism.
 ### 6.4 Automated counterpart
 
 ```bash
-mvn -B -o -pl tl-ai-demo -am test -DskipTests=false -Dtest=SecDemoToolAccessTest
+mvn -B -o -pl tl-ai-demo -am test -DskipTests=false \
+    -Dsurefire.failIfNoSpecifiedTests=false -Dtest=SecDemoToolAccessTest
 ```
 
 `tl-ai-demo/src/test/java/com/top_logic/ai/demo/SecDemoToolAccessTest.java` runs the matrix above
@@ -665,7 +667,7 @@ Administrator-facing documentation for writing such a policy in your own applica
   wrote, which is what covers a tool that ran *no* check of its own. Not exercised by the walkthrough
   here - a TL-Script tool always checks, so there is nothing for the guard to catch on this surface -
   but covered deterministically by `SecDemoPreCommitGuardTest` and described in
-  [testbed.md](testbed.md#47-the-pre-commit-guard---what-catches-an-uncooperative-tool).
+  [testbed.md](testbed.md#48-the-pre-commit-guard---what-catches-an-uncooperative-tool).
 
 **It does not test (staged, not wired on this branch):**
 

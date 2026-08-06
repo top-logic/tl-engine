@@ -952,7 +952,7 @@ addition to whatever the tools already paid; the guard is deliberately not the p
 
 **Tested by** `TestPreCommitGuard` and the transaction cases of `TestAgentLoop` in `tl-ai-core`, and
 `SecDemoPreCommitGuardTest` against a real fixture boot - see
-[testbed.md](testbed.md#47-the-pre-commit-guard---what-catches-an-uncooperative-tool).
+[testbed.md](testbed.md#48-the-pre-commit-guard---what-catches-an-uncooperative-tool).
 
 ### 3.6 L5 - Output / reference guard
 

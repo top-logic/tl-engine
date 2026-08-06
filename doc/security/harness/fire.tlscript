@@ -67,13 +67,14 @@
 	// tool, because only that tool runs with the engine's security checks. Do
 	// not reword them.
 	//
-	// T-x are the TOOL-layer cases of doc/security/testbed.md: the agent is
-	// asked for something the persona lacks the capability for, and what is
-	// judged is whether it NAMES the missing capability rather than failing
-	// opaquely. Read their results as prose, not as a status code - the
-	// deterministic version of the same assertions is the SecDemo* JUnit
-	// suite, and probe.tlscript shows the raw decisions with no model
-	// involved.
+	// T-x are tool-layer cases of this script's own - the ids are local here
+	// and are NOT the T-rows of doc/security/testbed.md, which are console
+	// scenarios with no model in them. The agent is asked for something the
+	// persona lacks the capability for, and what is judged is whether it NAMES
+	// the missing capability rather than failing opaquely. Read their results
+	// as prose, not as a status code - the deterministic version of the same
+	// assertions is the SecDemo* JUnit suite, and probe.tlscript shows the raw
+	// decisions with no model involved.
 	cases = [
 		[
 			"3.1", "secreader1",
@@ -97,10 +98,10 @@
 		[
 			"3.4", "seceditor1",
 			'Use the TL-Script tool with commit to evaluate: new(`secdemo:Note`).set(`secdemo:Note#title`, "Editor note")',
-			"DENIED HERE, ALLOWED IN THE CHAT - seceditor1 does hold 'data.write', but this run is"
-				+ " unattended and that capability is off the <background-allowlist>, so the commit"
-				+ " is refused naming the allowlist rather than the role. In the chat the same"
-				+ " prompt persists the note (testbed.md, T9)."
+			"DENIED HERE, ALLOWED IN THE CHAT (testbed.md, A1) - seceditor1 does hold"
+				+ " 'data.write', but this run is unattended and that capability is off the"
+				+ " <background-allowlist>, so the commit is refused naming the allowlist rather"
+				+ " than the role. In the chat the same prompt persists the note (testbed.md, T9)."
 		],
 		[
 			"3.5", "seceditor1",
@@ -136,8 +137,9 @@
 		[
 			"T4", "secbare1",
 			'What can you do for me? Name any capability you are missing.',
-			"ALLOWED but empty-handed - secbare1 holds only the baseline, so every skill that"
-				+ " declares a tool is dropped and the prompt names the capabilities it lacks."
+			"ALLOWED but empty-handed - secbare1 holds only the implicit 'interaction' grant, so"
+				+ " the only skill left to it is TL_spawnSubagents and the prompt names the"
+				+ " capabilities it lacks."
 		]
 	];
 

@@ -34,7 +34,7 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * </p>
  *
  * <p>
- * The fixture is set up so this is observable rather than vacuous: {@code secwriter1} holds
+ * The fixture is set up so this is observable rather than vacuous: {@code Anna} holds
  * {@code data.write} and {@code data.write} is deliberately <em>off</em> the demo's allowlist. The same
  * account, the same tool, two run kinds, two answers.
  * </p>
@@ -45,14 +45,14 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	 * The whole mechanism in one pair: a capability the role holds is out of reach unattended.
 	 *
 	 * <p>
-	 * Nothing about {@code secwriter1} changes between the two calls. Only the absence of a human to
+	 * Nothing about {@code Anna} changes between the two calls. Only the absence of a human to
 	 * approve does.
 	 * </p>
 	 */
 	public void testWriteToolIsReachableInTheForegroundAndNotInTheBackground() {
-		assertAllowed(WRITER, CLASSIFIED_WRITE_SCRIPT_TOOL);
+		assertAllowed(ANNA, CLASSIFIED_WRITE_SCRIPT_TOOL);
 
-		String reason = securityFor(WRITER, true).toolDenialReason(tool(CLASSIFIED_WRITE_SCRIPT_TOOL));
+		String reason = securityFor(ANNA, true).toolDenialReason(tool(CLASSIFIED_WRITE_SCRIPT_TOOL));
 
 		assertNotNull("An unattended run must not reach a data.write tool under this policy.", reason);
 		assertTrue("The denial must blame the allowlist, not the role - the role does hold the"
@@ -61,35 +61,39 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 			reason.contains("none of your roles grants"));
 	}
 
-	/** The same for {@code workspace}, the fixture's other capability left off the allowlist. */
-	public void testWorkspaceToolIsAlsoOffTheAllowlist() {
-		assertAllowed(WRITER, WORKSPACE_TOOL);
-
-		String reason = securityFor(WRITER, true).toolDenialReason(tool(WORKSPACE_TOOL));
-
-		assertNotNull(reason);
-		assertTrue(reason, reason.contains("background allowlist"));
-	}
-
 	/**
-	 * The allowlist narrows and never widens: an allowlisted capability the role does not hold stays
-	 * denied, and the denial names the role.
+	 * The allowlist is asked first, so when both would refuse it is the allowlist that is named.
+	 *
+	 * <p>
+	 * Worth pinning because the message decides where an operator goes looking. A capability that
+	 * neither the role holds nor the allowlist admits is refused by the ceiling, and the ceiling says
+	 * so - which is the right answer for an unattended run, since granting the role more would not help.
+	 * </p>
+	 *
+	 * <p>
+	 * The complementary row - an <em>allowlisted</em> capability the role does not hold, where the
+	 * denial must name the role rather than the allowlist - needs a persona short of an allowlisted
+	 * capability, and this fixture has none: every persona holds all three. {@code TestToolAuthorization}
+	 * in {@code tl-ai-core} is the deterministic form, against a hand-built policy.
+	 * </p>
 	 */
-	public void testAllowlistIsAnIntersectionNotAGrant() {
-		String reason = securityFor(VIEWER, true).toolDenialReason(tool(DATA_READ_TOOL));
+	public void testTheAllowlistIsAskedFirst() {
+		String reason = securityFor(BEN, true).toolDenialReason(tool(WORKSPACE_TOOL));
 
-		assertNotNull("data.read is allowlisted, but secviewer1 does not hold it.", reason);
-		assertTrue("A run denied by the role must say so rather than blaming the allowlist: " + reason,
-			reason.contains(ToolGroups.DATA_READ));
-		assertFalse(reason, reason.contains("background allowlist"));
+		assertNotNull("workspace is granted to no role and is off the allowlist.", reason);
+		assertTrue("The ceiling is what an unattended run meets first: " + reason,
+			reason.contains("background allowlist"));
+
+		assertTrue("...and in the foreground the same tool is refused by the role instead.",
+			securityFor(BEN).toolDenialReason(tool(WORKSPACE_TOOL)).contains(ToolGroups.WORKSPACE));
 	}
 
 	/** What the allowlist does admit still works unattended, so the ceiling is not a blanket refusal. */
 	public void testAllowlistedCapabilitiesSurviveABackgroundRun() {
-		for (String toolName : List.of(MODEL_READ_TOOL, DATA_READ_TOOL, SCRIPT_TOOL)) {
-			assertNull("secreader1 must reach '" + toolName + "' in a background run: the harness of"
+		for (String toolName : List.of(MODEL_READ_TOOL, LIST_TOOL, SCRIPT_TOOL)) {
+			assertNull("Ben must reach '" + toolName + "' in a background run: the harness of"
 				+ " doc/security/testbed.md depends on it.",
-				securityFor(READER, true).toolDenialReason(tool(toolName)));
+				securityFor(BEN, true).toolDenialReason(tool(toolName)));
 		}
 	}
 
@@ -132,20 +136,20 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 		Person administrator = anyAdministrator();
 		assertNotNull("The application must have at least one administrator account.", administrator);
 		assertNull("Precondition: 'script' is on the allowlist, so the tool itself is reachable.",
-			securityFor(READER, true).toolDenialReason(tool(SCRIPT_TOOL)));
+			securityFor(BEN, true).toolDenialReason(tool(SCRIPT_TOOL)));
 
-		List<TLObject> seeded = notes();
+		List<TLObject> seeded = tickets();
 		try {
 			String refused =
-				executeScript(TopLogicSecurityContext.forRun(administrator, true), CREATE_NOTE, true);
+				executeScript(TopLogicSecurityContext.forRun(administrator, true), CREATE_TICKET, true);
 
 			assertTrue("The refusal must name the capability that is missing from the allowlist: "
 				+ refused, refused.contains(ToolGroups.DATA_WRITE));
 			assertTrue("...and blame the allowlist rather than the roles: " + refused,
 				refused.contains("background allowlist"));
-			assertEquals("Nothing may have been written.", seeded.size(), notes().size());
+			assertEquals("Nothing may have been written.", seeded.size(), tickets().size());
 		} finally {
-			deleteNotesBeyond(seeded);
+			deleteTicketsBeyond(seeded);
 		}
 	}
 
@@ -153,7 +157,7 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	 * A read-only script is unaffected: the harness of {@code doc/security/testbed.md} runs unattended.
 	 */
 	public void testBackgroundRunStillReadsThroughTLScript() {
-		String result = executeScript(securityFor(READER, true), "all(`secdemo:Note`).size()", false);
+		String result = executeScript(securityFor(BEN, true), "all(`pm:Ticket`).size()", false);
 
 		assertFalse("'script' is allowlisted, so a read-only script must go through: " + result,
 			result.contains("Permission denied"));
@@ -167,7 +171,7 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	 * <p>
 	 * {@code spawn_subagent} returns a handle immediately and the parent turn ends while the child keeps
 	 * working on a pool thread, so from that moment there is no human to answer an approval prompt.
-	 * Before this was classified, the detached child ran with {@code secwriter1}'s full interactive
+	 * Before this was classified, the detached child ran with {@code Anna}'s full interactive
 	 * grant set - and in an {@code AUTO_APPROVE} session it self-approved every write tool it reached.
 	 * The parent context here carries exactly that callback, which is what makes the refusal below a
 	 * statement about the authorization gate rather than about approval.
@@ -176,11 +180,11 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	 * @see com.top_logic.tl.ai.core.agent.ToolContext#forDetachedSubagent
 	 */
 	public void testDetachedSubagentIsRefusedAWriteToolItsParentTurnMayUse() {
-		ToolContext parentTurn = new ToolContext(securityFor(WRITER), ApprovalCallback.AUTO_APPROVE,
+		ToolContext parentTurn = new ToolContext(securityFor(ANNA), ApprovalCallback.AUTO_APPROVE,
 			TransactionScope.NOOP);
 		Tool write = tool(CLASSIFIED_WRITE_SCRIPT_TOOL);
 
-		assertTrue("Precondition: secwriter1 reaches the write tool in the foreground chat.",
+		assertTrue("Precondition: Anna reaches the write tool in the foreground chat.",
 			parentTurn.security().hasToolPermission(write));
 
 		ToolContext detached =
@@ -192,7 +196,7 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 			detached.security().hasToolPermission(write));
 
 		String reason = detached.security().toolDenialReason(write);
-		assertTrue("The denial must blame the allowlist, not the role - secwriter1 does hold"
+		assertTrue("The denial must blame the allowlist, not the role - Anna does hold"
 			+ " data.write: " + reason, reason.contains("background allowlist"));
 		assertFalse("Blaming the role would send an operator to the wrong configuration: " + reason,
 			reason.contains("none of your roles grants"));
@@ -206,26 +210,26 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	 * could answer an approval prompt still is.
 	 */
 	public void testSynchronousDelegationKeepsTheParentTurnsReach() {
-		ToolContext parentTurn = new ToolContext(securityFor(WRITER), ApprovalCallback.AUTO_APPROVE,
+		ToolContext parentTurn = new ToolContext(securityFor(ANNA), ApprovalCallback.AUTO_APPROVE,
 			TransactionScope.NOOP);
 
 		ToolContext delegate = parentTurn.forDelegation(TransactionScope.NOOP);
 
 		assertFalse(delegate.security().isBackgroundRun());
-		assertTrue("A synchronous delegate of secwriter1 keeps data.write.",
+		assertTrue("A synchronous delegate of Anna keeps data.write.",
 			delegate.security().hasToolPermission(tool(CLASSIFIED_WRITE_SCRIPT_TOOL)));
 	}
 
 	/** What the allowlist admits still works in a detached subagent, so the ceiling is not a wall. */
 	public void testDetachedSubagentKeepsTheAllowlistedCapabilities() {
-		ToolContext parentTurn = new ToolContext(securityFor(READER), ApprovalCallback.AUTO_APPROVE,
+		ToolContext parentTurn = new ToolContext(securityFor(BEN), ApprovalCallback.AUTO_APPROVE,
 			TransactionScope.NOOP);
 
 		ToolContext detached =
 			parentTurn.forDetachedSubagent(TransactionScope.NOOP, new CancellationToken());
 
-		for (String toolName : List.of(MODEL_READ_TOOL, DATA_READ_TOOL, SCRIPT_TOOL)) {
-			assertNull("secreader1's detached subagent must reach '" + toolName + "'.",
+		for (String toolName : List.of(MODEL_READ_TOOL, LIST_TOOL, SCRIPT_TOOL)) {
+			assertNull("Ben's detached subagent must reach '" + toolName + "'.",
 				detached.security().toolDenialReason(tool(toolName)));
 		}
 	}

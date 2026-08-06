@@ -31,7 +31,7 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * What a persona is told when {@code loadSkill} cannot hand over the skill it asked for.
  *
  * <p>
- * The session this pins: as {@code secwriter1}, asked to use {@code secdemo-editing.addNote}, the
+ * The session this pins: as {@code Anna}, asked to use {@code secdemo-editing.addTicket}, the
  * agent followed its own prompt - "when the user names a specific tool, load
  * {@code TL_agenticAuthoring} and confirm before saying it does not exist" - and got
  * <em>"Skill 'TL_agenticAuthoring' is not available for this agent"</em>. It then told the user that
@@ -94,10 +94,10 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 		assertNotNull("The not-carried case needs a skill the application really has.",
 			AgentDefinitionQuery.getInstance().findSkillByName(FOREIGN_SKILL));
 
-		assertEquals("secwriter1 must lack exactly the capabilities of the authoring skill.",
+		assertEquals("Anna must lack exactly the capabilities of the authoring skill.",
 			Set.of(ToolGroups.AGENT_META, ToolGroups.AGENT_AUTHORING),
-			capabilitiesOf(WRITER).lacking(skill(AUTHORING_SKILL).tools()));
-		assertAllowed(WRITER, CLASSIFIED_WRITE_SCRIPT_TOOL);
+			capabilitiesOf(ANNA).lacking(skill(AUTHORING_SKILL).tools()));
+		assertAllowed(ANNA, CLASSIFIED_WRITE_SCRIPT_TOOL);
 	}
 
 	/**
@@ -105,7 +105,7 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 	 * others.
 	 */
 	public void testAuthoringSkillRefusalNamesItsOwnCapabilities() {
-		String message = loadSkillAs(WRITER, AUTHORING_SKILL);
+		String message = loadSkillAs(ANNA, AUTHORING_SKILL);
 
 		assertTrue(message, message.contains("carried by this agent but withheld"));
 		assertTrue("The capability an administrator has to grant must be named: " + message,
@@ -113,14 +113,14 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 		assertTrue(message, message.contains("`" + ToolGroups.AGENT_AUTHORING + "`"));
 		assertFalse("The wrong answer of the reported session, now forbidden by the message"
 			+ " itself: " + message, message.contains("`" + ToolGroups.SCRIPT + "`"));
-		assertFalse("secwriter1 holds data.write, so naming it would be provably false: " + message,
+		assertFalse("Anna holds data.write, so naming it would be provably false: " + message,
 			message.contains("`" + ToolGroups.DATA_WRITE + "`"));
 		assertTrue(message, message.contains(NO_GUESSING));
 	}
 
 	/** An attended chat run must not be explained as an unattended one. */
 	public void testForegroundRefusalDoesNotBlameTheRun() {
-		assertFalse(loadSkillAs(WRITER, AUTHORING_SKILL).contains("unattended"));
+		assertFalse(loadSkillAs(ANNA, AUTHORING_SKILL).contains("unattended"));
 	}
 
 	/**
@@ -128,14 +128,14 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 	 * about the policy rather than about the skill.
 	 */
 	public void testTheScriptPersonaLoadsTheScriptSkillAndNotTheAuthoringOne() {
-		String script = loadSkillAs(READER, SCRIPT_SKILL);
-		assertTrue("secreader1 holds script, so the skill must load: " + script,
+		String script = loadSkillAs(BEN, SCRIPT_SKILL);
+		assertTrue("Ben holds script, so the skill must load: " + script,
 			script.contains("Skill \"" + SCRIPT_SKILL + "\" loaded."));
 		assertTrue("...and hand over its tool: " + script,
 			script.contains("- " + tool(SCRIPT_TOOL).name() + ":"));
 
-		String authoring = loadSkillAs(READER, AUTHORING_SKILL);
-		assertTrue("secreader1 holds no agent.meta: " + authoring,
+		String authoring = loadSkillAs(BEN, AUTHORING_SKILL);
+		assertTrue("Ben holds no agent.meta: " + authoring,
 			authoring.contains("carried by this agent but withheld"));
 		assertTrue(authoring, authoring.contains("`" + ToolGroups.AGENT_META + "`"));
 		assertFalse("A capability it holds must not be named: " + authoring,
@@ -143,56 +143,57 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * The instance-creation skill now stands or falls with the capability its guidance needs.
+	 * The instance-creation skill stands or falls with the capability its guidance needs.
 	 *
 	 * <p>
 	 * It used to declare no tools, so the filter always kept it, and its description sent the reader on
 	 * to {@code TL_tlScriptWriting} "which has {@code executeTLScript}" - a skill a user without
-	 * {@code script} cannot load either. A guidance-only skill cannot be dropped for the capability its
-	 * guidance depends on, which is precisely how it became a visible dead end. Declaring the tool it
-	 * tells the agent to run fixes both halves: the pair is dropped together for a user without
-	 * {@code script}, and a user who holds it gets the tool.
+	 * {@code script} cannot load either. Declaring the tool it tells the agent to run fixes both
+	 * halves. Both roles of this fixture hold {@code script}, so only the loading half is observable
+	 * here; the withheld half is pinned by {@code TestSkillTool} in {@code tl-ai-core}, against a policy
+	 * that withholds the capability.
 	 * </p>
 	 */
-	public void testInstanceCreationSkillFollowsTheScriptCapability() {
-		String withheld = loadSkillAs(WRITER, INSTANCE_CREATION_SKILL);
-		assertTrue("secwriter1 holds no script, so the skill must be withheld: " + withheld,
-			withheld.contains("carried by this agent but withheld"));
-		assertTrue("...naming the capability its guidance needs: " + withheld,
-			withheld.contains("`" + ToolGroups.SCRIPT + "`"));
+	public void testInstanceCreationSkillCarriesTheToolItsGuidanceRuns() {
+		String loaded = loadSkillAs(BEN, INSTANCE_CREATION_SKILL);
 
-		String loaded = loadSkillAs(READER, INSTANCE_CREATION_SKILL);
-		assertTrue("secreader1 holds script, so it must load: " + loaded,
+		assertTrue("Ben holds script, so it must load: " + loaded,
 			loaded.contains("Skill \"" + INSTANCE_CREATION_SKILL + "\" loaded."));
 		assertTrue("...and carry the tool its workflow runs: " + loaded,
 			loaded.contains("- " + tool(SCRIPT_TOOL).name() + ":"));
+		assertEquals("Precondition of the withheld half, asserted here so the tl-ai-core counterpart is"
+			+ " about the same skill: the tool it declares is the script one.",
+			ToolGroups.SCRIPT, tool(SCRIPT_TOOL).group());
 	}
 
 	/**
-	 * An unattended run is told that it is unattended, not that the acting user is short of a role.
+	 * A skill withheld for a reason the run cannot change still names the capability and forbids the
+	 * guess, in a background run as in the chat.
 	 *
 	 * <p>
-	 * {@code secwriter1} holds {@code workspace}, and the fixture leaves it off the
-	 * {@code <background-allowlist>}, so {@code TL_taskManagement} is out of reach in a background run
-	 * and reachable in the chat (**C2**). Blaming the roles here would send the user to an administrator
-	 * who has already granted everything there is to grant.
+	 * The sharper form - a skill the acting user's roles <em>do</em> reach and the
+	 * {@code <background-allowlist>} withholds, where blaming the roles would send the user to an
+	 * administrator who has already granted everything there is to grant - needs a skill whose
+	 * capability is granted to a role and off the allowlist. This fixture's one such capability is
+	 * {@code data.write}, and no shipped skill carries a {@code data.write} tool, so the row is not
+	 * expressible here. {@code TestSkillAbsenceReason} in {@code tl-ai-core} is the deterministic form,
+	 * and {@code SecDemoBackgroundAccessTest} pins the same distinction at the tool level, where the
+	 * fixture <em>can</em> show it.
 	 * </p>
 	 */
-	public void testUnattendedRunIsNotBlamedOnTheUsersRoles() {
-		String message = loadSkillInBackground(WRITER, "TL_taskManagement");
+	public void testUnattendedRefusalStillNamesTheCapability() {
+		String message = loadSkillInBackground(ANNA, "TL_taskManagement");
 
-		assertTrue(message, message.contains("this run is unattended"));
-		assertTrue(message, message.contains("background allowlist"));
-		assertTrue("The capability off the allowlist must be named: " + message,
+		assertTrue("The capability nobody holds must be named: " + message,
 			message.contains("`" + ToolGroups.WORKSPACE + "`"));
-		assertFalse("The user's roles are not the reason - they grant workspace: " + message,
-			message.contains("this user does not hold"));
 		assertTrue(message, message.contains(NO_GUESSING));
+		assertTrue("An administrator is who could change it: " + message,
+			message.contains("administrator"));
 	}
 
 	/** A skill of the application that this agent does not declare is not a permission problem. */
 	public void testSkillThisAgentDoesNotCarryIsNotAPermissionProblem() {
-		String message = loadSkillAs(WRITER, FOREIGN_SKILL);
+		String message = loadSkillAs(ANNA, FOREIGN_SKILL);
 
 		assertTrue(message, message.contains("exists in this application"));
 		assertTrue(message, message.contains("not carried by this agent"));
@@ -202,7 +203,7 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 
 	/** A misspelled skill id discloses nothing about capabilities. */
 	public void testUnknownSkillIdDisclosesNothing() {
-		String message = loadSkillAs(WRITER, AUTHORING_SKILL + "g");
+		String message = loadSkillAs(ANNA, AUTHORING_SKILL + "g");
 
 		assertTrue(message, message.contains("is not available for this agent"));
 		assertNamesNoCapability(message);
@@ -213,30 +214,30 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 	 * The question that started all of this, answered honestly whichever route the model takes.
 	 *
 	 * <p>
-	 * {@code secdemo-editing.addNote} is in no agent's {@code <tools>} and in no skill, so the chat
-	 * cannot reach it however the policy is configured, and {@code secwriter1} is granted it - a
+	 * {@code secdemo-editing.addTicket} is in no agent's {@code <tools>} and in no skill, so the chat
+	 * cannot reach it however the policy is configured, and {@code Anna} is granted it - a
 	 * capability answer here is provably false. Two routes lead there: naming the tool, and hunting for
 	 * a skill that might carry it. Both are asserted, because the model picks one and the user reads
 	 * whichever it picked.
 	 * </p>
 	 */
 	public void testAddNoteIsAnsweredHonestlyOnBothRoutes() {
-		String named = callAs(WRITER, CLASSIFIED_WRITE_SCRIPT_TOOL);
+		String named = callAs(ANNA, CLASSIFIED_WRITE_SCRIPT_TOOL);
 		assertTrue("The tool exists, so this is not an unknown name: " + named,
 			named.contains("exists in this application"));
 		assertTrue("...and it is the agent that does not carry it: " + named,
 			named.contains("not carried by this agent"));
-		assertFalse("secwriter1 is granted this tool: " + named, named.contains("Permission denied"));
+		assertFalse("Anna is granted this tool: " + named, named.contains("Permission denied"));
 		assertNamesNoCapability(named);
 
 		for (String skillName : agent().skills()) {
-			String message = loadSkillAs(WRITER, skillName);
+			String message = loadSkillAs(ANNA, skillName);
 			if (message.contains("loaded.")) {
 				continue;
 			}
 			assertTrue("A withheld skill must say so and forbid the guess: " + skillName + "\n"
 				+ message, message.contains(NO_GUESSING));
-			assertNamesOnly(message, capabilitiesOf(WRITER).lacking(skill(skillName).tools()));
+			assertNamesOnly(message, capabilitiesOf(ANNA).lacking(skill(skillName).tools()));
 		}
 	}
 

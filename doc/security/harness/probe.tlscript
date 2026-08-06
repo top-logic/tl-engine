@@ -18,6 +18,12 @@
 //   DENIED   the tool layer refused, and the reason names either the missing
 //            capability or the missing classification.
 //
+// Read the ALLOWED lines as carefully as the DENIED ones. Both roles of this
+// fixture hold every read capability, so almost nothing differs in this column -
+// what differs is WHAT THE ALLOWED CALLS RETURN, because that is decided by the
+// model access rights and not here. Anna's project listing has one entry and
+// Dora's has none, and both lines say ALLOWED.
+//
 // A DENIED line that names "no tool group" is a different problem from one
 // that names a capability: the first is fixed by a <tool-groups> entry, the
 // second by granting a role. Do not confuse them.
@@ -26,8 +32,9 @@
 	// [ label, qualified tool name, parameters ]
 	//
 	// One read-only tool per capability the fixture grants somebody, plus the
-	// three that nobody is granted, plus the classified/unclassified script
-	// tool pair. Every one of them is harmless: no entry here writes.
+	// ones nobody is granted, plus the classified/unclassified script tool pair,
+	// plus the pair of counts that shows where read filtering stops. Every one of
+	// them is harmless: no entry here writes.
 	// One caveat, for the two lines that do something when they are ALLOWED:
 	// askUser has no interaction surface in the console and returns an empty
 	// string rather than waiting for anybody; webFetch really does fetch, so
@@ -37,12 +44,18 @@
 		["interaction     (implicit, granted to everyone)", "user-interaction.askUser",
 			{"question": "probe", "header": "Probe", "type": "text"}],
 		["model.read", "model-browser.listModules", null],
-		["data.read", "model-instances.listInstances",
-			{"moduleName": "secdemo", "typeName": "Note", "limit": 3}],
-		["data.read       (script tool, named in tool-groups)",
-			"secdemo-reporting.countNotes", null],
+		["data.read       (tickets: filtered per object, see the count)",
+			"model-instances.listInstances",
+			{"moduleName": "pm", "typeName": "Ticket", "limit": 3}],
+		["data.read       (projects: a partner sees only the ones it partners on)",
+			"model-instances.listInstances",
+			{"moduleName": "pm", "typeName": "Project", "limit": 3}],
+		["data.read       (script tool, named in tool-groups; count NOT filtered)",
+			"secdemo-reporting.countTickets", null],
+		["data.read       (the honest count: filtered inside the script)",
+			"secdemo-reporting.countVisibleTickets", null],
 		["(the same script tool body, deliberately NOT classified)",
-			"secdemo-unclassified.countNotesUnclassified", null],
+			"secdemo-unclassified.countTicketsUnclassified", null],
 		["agent.meta", "framework-wiring.listFrameworkAgents", null],
 		["script          (privileged)", "script-exec.validateTLScript",
 			{"script": "1 + 1"}],

@@ -54,7 +54,8 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	/** Precondition: the group taxonomy actually reached the registered tools. */
 	public void testToolsDeclareTheirGroups() {
 		assertEquals(ToolGroups.MODEL_READ, tool(MODEL_READ_TOOL).group());
-		assertEquals(ToolGroups.DATA_READ, tool(DATA_READ_TOOL).group());
+		assertEquals(ToolGroups.DATA_READ, tool(LIST_TOOL).group());
+		assertEquals(ToolGroups.DATA_READ, tool(GET_TOOL).group());
 		assertEquals(ToolGroups.AGENT_META, tool(AGENT_META_TOOL).group());
 		assertEquals(ToolGroups.AGENT_AUTHORING, tool(AGENT_AUTHORING_TOOL).group());
 		assertEquals(ToolGroups.SCRIPT, tool(SCRIPT_TOOL).group());
@@ -94,31 +95,65 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 * own {@code <baseline>}. An administrator who grants it is granting every account.
 	 * </p>
 	 */
-	public void testEveryPersonaHoldsExactlyItsOwnRole() {
-		Map<String, String> expected = SecDemoSetupService.personaRoles();
-		assertEquals("The aspect must configure six personas; adjust this test bed if it changed.",
-			6, expected.size());
+	public void testEveryPersonaHoldsTheRolesTheMatrixClaims() {
+		Map<String, List<String>> expected = SecDemoSetupService.personaRoles();
+		assertEquals("The aspect must configure four personas; adjust this test bed if it changed.",
+			4, expected.size());
 
-		for (Map.Entry<String, String> persona : expected.entrySet()) {
+		for (Map.Entry<String, List<String>> persona : expected.entrySet()) {
 			String login = persona.getKey();
 			Set<String> held = AiToolAccessService.heldRoleNames(account(login));
 
-			assertTrue(login + " must hold '" + persona.getValue() + "', got " + held,
-				held.contains(persona.getValue()));
-			for (String otherRole : expected.values()) {
-				if (!otherRole.equals(persona.getValue())) {
-					assertFalse(login + " must not hold '" + otherRole + "', got " + held,
-						held.contains(otherRole));
-				}
+			for (String expectedRole : persona.getValue()) {
+				assertTrue(login + " must hold '" + expectedRole + "' on the security root, got " + held
+					+ ". Nothing assigns it - the <singleton-rule> tier rules do, from group"
+					+ " membership. SecDemoRoleRuleTest is where that is asserted directly.",
+					held.contains(expectedRole));
 			}
+		}
+
+		assertFalse("Ben partners on nothing and must not hold projectPartner.",
+			AiToolAccessService.heldRoleNames(account(BEN)).contains("projectPartner"));
+		assertTrue("Cara is in both groups, so she holds both roles - the fixture's only account that"
+			+ " does.", AiToolAccessService.heldRoleNames(account(CARA)).containsAll(
+				Set.of("projectPartner", "ticketReader")));
+	}
+
+	/**
+	 * The tier is blind to the scope, which is why L1 cannot be the control.
+	 *
+	 * <p>
+	 * Anna and Dora are indistinguishable here: same role on the security root, same grants, same
+	 * answer for every tool. What separates them is a business attribute on a project, which this layer
+	 * never sees - see {@code SecDemoModelSecurityTest.testDoraCanWriteNothing()}.
+	 * </p>
+	 */
+	public void testTheTierIsBlindToTheScope() {
+		for (String toolName : List.of(MODEL_READ_TOOL, LIST_TOOL, GET_TOOL, SCRIPT_TOOL,
+			CLASSIFIED_WRITE_SCRIPT_TOOL)) {
+			assertAllowed(ANNA, toolName);
+			assertAllowed(DORA, toolName);
 		}
 	}
 
-	/** The bare persona reaches nothing but {@code interaction}, not even a read-only model tool. */
-	public void testBarePersonaIsDeniedEvenModelRead() {
-		assertDenied(BARE, MODEL_READ_TOOL, ToolGroups.MODEL_READ);
-		assertDenied(BARE, DATA_READ_TOOL, ToolGroups.DATA_READ);
-		assertDenied(BARE, AGENT_META_TOOL, ToolGroups.AGENT_META);
+	/**
+	 * A capability no role is granted is denied to every persona, and no {@code <deny>} was written.
+	 *
+	 * <p>
+	 * This is what the empty {@code <baseline/>} buys. An absent element would mean the read-only
+	 * default of #293 - {@code model.read} plus {@code data.read} for everyone - which would not change
+	 * these four but would silently make the fixture unable to show a persona short of a read
+	 * capability at all.
+	 * </p>
+	 */
+	public void testUngrantedCapabilitiesAreDeniedToEveryPersona() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			assertDenied(login, AGENT_META_TOOL, ToolGroups.AGENT_META);
+			assertDenied(login, AGENT_AUTHORING_TOOL, ToolGroups.AGENT_AUTHORING);
+			assertDenied(login, WORKSPACE_TOOL, ToolGroups.WORKSPACE);
+			assertDenied(login, STRUCTURE_TOOL, ToolGroups.MODEL_STRUCTURE);
+			assertDenied(login, EGRESS_TOOL, ToolGroups.EGRESS);
+		}
 	}
 
 	/**
@@ -133,9 +168,8 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 *
 	 * <p>
 	 * The empty declaration is load-bearing for this fixture and not an accident: an <em>absent</em>
-	 * element would mean {@link RoleToolAccess#DEFAULT_BASELINE}, which would hand {@code secbare1}
-	 * both read capabilities and destroy the narrowest persona of the matrix.
-	 * {@link #testBarePersonaIsDeniedEvenModelRead()} is what would start failing.
+	 * element would mean {@link RoleToolAccess#DEFAULT_BASELINE}, which would hand every persona both
+	 * read capabilities whatever its role says, and the matrix would stop being exact.
 	 * </p>
 	 */
 	public void testBaselineReachesEvenTheBarePersona() {
@@ -150,42 +184,37 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 		}
 	}
 
-	/** {@code model.read} without {@code data.read}: the narrowest granted persona. */
-	public void testViewerReadsTheModelButNotTheData() {
-		assertAllowed(VIEWER, MODEL_READ_TOOL);
-		assertDenied(VIEWER, DATA_READ_TOOL, ToolGroups.DATA_READ);
-	}
-
-	/** The read-only persona reaches both read groups and no write capability. */
-	public void testReaderReadsModelAndData() {
-		assertAllowed(READER, MODEL_READ_TOOL);
-		assertAllowed(READER, DATA_READ_TOOL);
-		assertDenied(READER, WORKSPACE_TOOL, ToolGroups.WORKSPACE);
-		assertDenied(READER, EGRESS_TOOL, ToolGroups.EGRESS);
+	/** Both roles reach both read groups: the read half of the matrix is deliberately identical. */
+	public void testBothRolesRead() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			assertAllowed(login, MODEL_READ_TOOL);
+			assertAllowed(login, LIST_TOOL);
+			assertAllowed(login, GET_TOOL);
+		}
 	}
 
 	/**
-	 * The one-capability pair: the same tool, denied to {@link #READER} and allowed to
-	 * {@link #EDITOR}.
+	 * The one-capability pair: the same tool, allowed to a partner and denied to a ticket reader.
 	 *
 	 * <p>
-	 * The sharpest single assertion in the tool layer: the same tool, one capability, two answers.
-	 * Anything that broke enforcement in general would break one half of this; anything that broke role
-	 * resolution would break the other. ({@code agent.meta} is not the personas' only difference any
-	 * more - {@link #EDITOR} also holds {@code data.write}, which is what lets it commit through
-	 * TL-Script - but it is the only one this tool is classified as.)
+	 * The sharpest single assertion in the tool layer: one tool, one capability, two answers. Anything
+	 * that broke enforcement in general would break one half of this; anything that broke role
+	 * resolution would break the other. It is also the fixture's only "refused at L1" row - every other
+	 * refusal in the matrix comes from L2.
 	 * </p>
 	 */
-	public void testAgentMetaSeparatesReaderFromEditor() {
-		assertDenied(READER, AGENT_META_TOOL, ToolGroups.AGENT_META);
-		assertAllowed(EDITOR, AGENT_META_TOOL);
+	public void testDataWriteSeparatesThePartnerFromTheReader() {
+		assertAllowed(ANNA, CLASSIFIED_WRITE_SCRIPT_TOOL);
+		assertDenied(BEN, CLASSIFIED_WRITE_SCRIPT_TOOL, ToolGroups.DATA_WRITE);
+
+		assertTrue("Cara holds both roles, so the union of their grants reaches the write tool - roles"
+			+ " add up.", securityFor(CARA).hasToolPermission(tool(CLASSIFIED_WRITE_SCRIPT_TOOL)));
 	}
 
-	/** A group an escalation primitive lives in is reachable once the policy names it. */
-	public void testExplicitlyGrantedEscalationGroupsAreReachable() {
-		assertAllowed(READER, SCRIPT_TOOL);
-		assertAllowed(EDITOR, SCRIPT_TOOL);
-		assertAllowed(AUTHOR, AGENT_AUTHORING_TOOL);
+	/** A privileged group is reachable once the policy names it, and only then. */
+	public void testExplicitlyGrantedEscalationGroupIsReachable() {
+		assertAllowed(ANNA, SCRIPT_TOOL);
+		assertAllowed(BEN, SCRIPT_TOOL);
 	}
 
 	/**
@@ -201,30 +230,31 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testTLScriptCommitNeedsDataWriteOnTopOfScript() {
-		assertAllowed(READER, SCRIPT_TOOL);
-		assertAllowed(EDITOR, SCRIPT_TOOL);
+		assertAllowed(ANNA, SCRIPT_TOOL);
+		assertAllowed(BEN, SCRIPT_TOOL);
 
-		List<TLObject> seeded = notes();
+		List<TLObject> seeded = tickets();
 
-		String refused = executeScriptAs(READER, CREATE_NOTE, true);
-		assertTrue("secreader1 holds no data.write, so the commit must be refused: " + refused,
+		String refused = executeScriptAs(BEN, CREATE_TICKET, true);
+		assertTrue("Ben holds no data.write, so the commit must be refused: " + refused,
 			refused.contains(ToolGroups.DATA_WRITE));
 		assertTrue("The refusal must say which call was refused: " + refused,
 			refused.contains("withCommit=true"));
 		assertTrue("...and that the role is what lacks the capability: " + refused,
 			refused.contains("none of your roles grants"));
 		assertEquals("A refused commit must not have written anything.",
-			seeded.size(), notes().size());
+			seeded.size(), tickets().size());
 
 		try {
-			String committed = executeScriptAs(EDITOR, CREATE_NOTE, true);
+			String committed = executeScriptAs(ANNA, CREATE_TICKET, true);
 
-			assertFalse("seceditor1 holds data.write, so its commit must go through: " + committed,
+			assertFalse("Anna holds data.write, so the tool layer lets her commit: " + committed,
 				committed.contains("Permission denied"));
-			assertEquals("The persona matrix promises seceditor1 can create a note: " + committed,
-				seeded.size() + 1, notes().size());
+			assertEquals("...and pm:Ticket grants Create to projectPartner, which she holds on the"
+				+ " security root - the context a top-level creation is checked against: " + committed,
+				seeded.size() + 1, tickets().size());
 		} finally {
-			deleteNotesBeyond(seeded);
+			deleteTicketsBeyond(seeded);
 		}
 	}
 
@@ -238,54 +268,14 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testReadOnlyTLScriptStillNeedsOnlyScript() {
-		for (String login : List.of(READER, EDITOR)) {
-			String result = executeScriptAs(login, "all(`secdemo:Note`).size()", false);
+		for (String login : SecDemoSetupService.personaLogins()) {
+			String result = executeScriptAs(login, "all(`pm:Ticket`).size()", false);
 
 			assertFalse(login + " must reach a read-only script with 'script' alone: " + result,
 				result.contains("Permission denied"));
 			assertTrue("The script must actually have run: " + result,
 				result.contains("\"success\":true") || result.contains("\"success\": true"));
 		}
-	}
-
-	/** A privileged group granted to nobody needs no {@code <deny>} to be unreachable. */
-	public void testUngrantedStructureToolDeniedToEveryPersona() {
-		for (String login : SecDemoSetupService.personaLogins()) {
-			assertDenied(login, STRUCTURE_TOOL, ToolGroups.MODEL_STRUCTURE);
-		}
-	}
-
-	/** {@code egress} is granted to nobody: no persona can send data out of the application. */
-	public void testEgressDeniedToEveryPersona() {
-		for (String login : SecDemoSetupService.personaLogins()) {
-			assertDenied(login, EGRESS_TOOL, ToolGroups.EGRESS);
-		}
-	}
-
-	/** {@code workspace} separates the writer from every other persona. */
-	public void testWorkspaceIsTheWritersAlone() {
-		assertAllowed(WRITER, WORKSPACE_TOOL);
-		for (String login : List.of(BARE, VIEWER, READER, EDITOR, AUTHOR)) {
-			assertDenied(login, WORKSPACE_TOOL, ToolGroups.WORKSPACE);
-		}
-	}
-
-	/**
-	 * The two layers are independent: the agent author holds privileged tool grants and no data
-	 * rights at all.
-	 *
-	 * <p>
-	 * It may create an agent and may not list an instance. That combination is not a
-	 * misconfiguration, it is the point of separating "which tool" from "which data": a tool grant is
-	 * not a data grant, and the {@code <security-config>} that would give this persona data rights
-	 * deliberately does not mention its role.
-	 * </p>
-	 */
-	public void testAuthorHoldsToolsAndNoDataRights() {
-		assertAllowed(AUTHOR, AGENT_AUTHORING_TOOL);
-		assertAllowed(AUTHOR, AGENT_META_TOOL);
-		assertDenied(AUTHOR, DATA_READ_TOOL, ToolGroups.DATA_READ);
-		assertDenied(AUTHOR, MODEL_READ_TOOL, ToolGroups.MODEL_READ);
 	}
 
 	/**

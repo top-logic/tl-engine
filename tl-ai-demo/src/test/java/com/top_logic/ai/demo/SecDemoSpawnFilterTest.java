@@ -5,27 +5,20 @@
  */
 package com.top_logic.ai.demo;
 
-import java.util.Map;
+import java.util.List;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
-import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
-import com.top_logic.tl.ai.core.tools.interaction.SpawnSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * What {@code spawn_subagent} does when the agent a persona asks for can reach nothing that persona may
@@ -43,7 +36,7 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  * <p>
  * {@code TL_ModelExplorer} is the agent under test for the same reason it is in
  * {@link SecDemoDelegateFilterTest}: it carries {@code model.read} and {@code data.read} tools only, so
- * {@code secbare1} - which holds neither - can do nothing with it, while {@code secreader1} holds both.
+ * {@code Ben} - which holds neither - can do nothing with it, while {@code Ben} holds both.
  * </p>
  *
  * @see SubagentSpawner#detachedSpawnRefusal(String, AgentCapabilities)
@@ -56,50 +49,28 @@ public class SecDemoSpawnFilterTest extends SecDemoPersonaTest {
 	/** Asks questions, which every persona may do. */
 	private static final String EDITOR_AGENT = "TL_ModelEditor";
 
-	/**
-	 * A persona that can do nothing with the agent it names gets no child run, and is told which
-	 * capability is missing.
-	 */
-	public void testSpawnOfAnUnreachableAgentIsRefused() {
-		String refusal = refusedSpawnOf(BARE, EXPLORER);
-
-		assertTrue("secbare1 holds neither read capability, so the child could only have come back"
-			+ " empty-handed: " + refusal, refusal.startsWith("ERROR:"));
-		assertTrue("The refusal must name the capabilities an operator has to grant: " + refusal,
-			refusal.contains(ToolGroups.MODEL_READ) && refusal.contains(ToolGroups.DATA_READ));
-		assertTrue("...and the agent the model asked for: " + refusal,
-			refusal.contains("'" + EXPLORER + "'"));
-		assertTrue("A persona holding neither must be sent for a role grant rather than blaming the"
-			+ " allowlist: " + refusal, refusal.contains("does not hold"));
-		assertFalse(refusal, refusal.contains("background allowlist"));
-	}
-
-	/** The refusal never suggests the agent is absent - it is configured and shipped. */
-	public void testRefusalDoesNotDenyTheAgentsExistence() {
-		assertNotNull("Precondition: the agent this test says exists does exist.", agent(EXPLORER));
-
-		String refusal = refusedSpawnOf(BARE, EXPLORER);
-
-		assertFalse(refusal, refusal.toLowerCase().contains("does not exist"));
-		assertFalse(refusal, refusal.toLowerCase().contains("not found"));
-		assertTrue("The model must be told to stop rather than to try another name: " + refusal,
-			refusal.contains("again will not help"));
-	}
+	/** Runs TL-Script, and keeps tasks - the second of which no role of this fixture may do. */
+	private static final String SCRIPT_AGENT = "TL_TLScriptAgent";
 
 	/**
-	 * A persona that can use the same agent is not refused it, so the filter is not a blanket one.
+	 * The refusal path is not reachable from this fixture, and the test says so rather than pretending.
 	 *
 	 * <p>
-	 * The decision, not the whole tool call: a spawn that goes ahead takes a pool thread and a
-	 * sub-session, and what it would run into here is the absence of an LLM key rather than anything
-	 * about security. That the tool returns a handle when the decision lets it through is pinned in
-	 * {@code TestSpawnSubagentTool}.
+	 * Every persona holds both read capabilities and {@code script}, so every shipped delegate has at
+	 * least one tool each of them can reach and no spawn is refused - which is the correct outcome and
+	 * not a hole. The refusal itself, its wording, and that no child run is started, are pinned by
+	 * {@code TestSpawnFilter} and {@code TestDetachedSubagentCeiling} in {@code tl-ai-core} against
+	 * hand-built policies, because a policy in which an agent is wholly unreachable is one this fixture
+	 * deliberately does not deploy.
 	 * </p>
 	 */
-	public void testSpawnOfAReachableAgentIsNotRefused() {
-		assertNull("secreader1 holds both read capabilities.", spawnDecisionFor(READER, EXPLORER));
-		assertNull("Every persona reaches TL_ModelEditor through 'interaction'.",
-			spawnDecisionFor(BARE, EDITOR_AGENT));
+	public void testNoSpawnIsRefusedByThisFixture() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			for (String agentName : List.of(EXPLORER, SCRIPT_AGENT, EDITOR_AGENT)) {
+				assertNull(login + " reaches a tool of '" + agentName + "', so the spawn decision must"
+					+ " let it through.", spawnDecisionFor(login, agentName));
+			}
+		}
 	}
 
 	/** An unenforced run spawns whatever it is asked for, as it did before this filter existed. */
@@ -120,52 +91,14 @@ public class SecDemoSpawnFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testTheChildsCeilingIsWhatDecides() {
-		SecurityContext turn = securityFor(WRITER);
+		SecurityContext turn = securityFor(ANNA);
 		AgentDefinition explorer = agent(EXPLORER);
 
-		assertTrue("A detached child of secwriter1's turn is an unattended run.",
+		assertTrue("A detached child of Anna's turn is an unattended run.",
 			turn.withBackgroundCeiling().isBackgroundRun());
 		assertTrue("Whatever the parent turn cannot reach, the child cannot reach either.",
 			AgentCapabilities.forRun(turn.withBackgroundCeiling()).unreachableCapabilities(explorer)
 				.containsAll(AgentCapabilities.forRun(turn).unreachableCapabilities(explorer)));
-	}
-
-	/**
-	 * Runs the real {@code spawn_subagent} tool as the given persona and returns the refusal it answers
-	 * with.
-	 *
-	 * <p>
-	 * The whole tool call, so the refusal is asserted where the model meets it. The loop factory and the
-	 * job registry both fail the test if the spawn gets past the decision, which is what makes "no child
-	 * run and no provider round trip" a statement rather than a claim - and is why this helper is only
-	 * for a spawn that must be refused.
-	 * </p>
-	 */
-	private String refusedSpawnOf(String login, String targetAgentName) {
-		DelegationTool.AgentLoopFactory refusingFactory = new DelegationTool.AgentLoopFactory() {
-			@Override
-			public AgentLoop buildAgentLoop(String agentName, SecurityContext security) {
-				throw new AssertionError("The synchronous path is not involved in a spawn.");
-			}
-
-			@Override
-			public AgentLoop buildSubagentLoop(String agentName, SecurityContext security) {
-				throw new AssertionError("A refused spawn must not build the child's loop.");
-			}
-		};
-		ToolContext parentTurn = parentTurnOf(login);
-
-		SubagentJobRegistry registry = new SubagentJobRegistry(1);
-		try (SubagentRegistryBinding.Binding bound = SubagentRegistryBinding.bind(registry)) {
-			ToolResult result = new SpawnSubagentTool(refusingFactory)
-				.execute(Map.of("agent", targetAgentName, "task", "Say what you can see."), parentTurn);
-
-			assertEquals("A refused spawn must not have registered a job: " + result.text(), 0,
-				registry.byStatus(SubagentJobStatus.values()).size());
-			return result.text();
-		} finally {
-			registry.shutdown();
-		}
 	}
 
 	/**

@@ -35,9 +35,9 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * The fixture ships three one-tool factories:
  * </p>
  * <ul>
- * <li>{@code secdemo-reporting.countNotes}, classified into {@code data.read},</li>
- * <li>{@code secdemo-editing.addNote}, classified into {@code data.write},</li>
- * <li>{@code secdemo-unclassified.countNotesUnclassified}, named by no {@code <tool-groups>} entry.</li>
+ * <li>{@code secdemo-reporting.countTickets} and {@code countVisibleTickets}, classified into {@code data.read},</li>
+ * <li>{@code secdemo-editing.addTicket}, classified into {@code data.write},</li>
+ * <li>{@code secdemo-unclassified.countTicketsUnclassified}, named by no {@code <tool-groups>} entry.</li>
  * </ul>
  *
  * <p>
@@ -103,8 +103,8 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testClassificationMakesTheSameToolReachable() {
-		assertAllowed(READER, CLASSIFIED_READ_SCRIPT_TOOL);
-		assertDenied(READER, UNCLASSIFIED_SCRIPT_TOOL, "no tool group");
+		assertAllowed(BEN, CLASSIFIED_READ_SCRIPT_TOOL);
+		assertDenied(BEN, UNCLASSIFIED_SCRIPT_TOOL, "no tool group");
 	}
 
 	/**
@@ -118,15 +118,17 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testClassifyingIsNotGranting() {
-		assertDenied(VIEWER, CLASSIFIED_READ_SCRIPT_TOOL, ToolGroups.DATA_READ);
-		assertDenied(BARE, CLASSIFIED_READ_SCRIPT_TOOL, ToolGroups.DATA_READ);
+		// Every persona of this fixture holds data.read, so "classifying is not granting" is shown
+		// the other way round: the classified WRITE tool is denied to the role that holds no
+		// data.write, although the <tool-groups> entry classified it just as successfully.
+		assertDenied(BEN, CLASSIFIED_WRITE_SCRIPT_TOOL, ToolGroups.DATA_WRITE);
 	}
 
 	/**
 	 * A second factory mapped to a second group behaves independently of the first.
 	 *
 	 * <p>
-	 * {@code secdemo-editing.addNote} is the only <em>annotated-tool-like</em> member of
+	 * {@code secdemo-editing.addTicket} is the only <em>annotated-tool-like</em> member of
 	 * {@code data.write} in this fixture; the framework's own consumer of that capability is the commit
 	 * path of {@code executeTLScript}, which is an argument rather than a tool of its own. That makes
 	 * this a clean statement about the mechanism: the capability reaches exactly the one tool an
@@ -134,14 +136,13 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testEachFactoryLandsInItsOwnGroup() {
-		assertAllowed(WRITER, CLASSIFIED_WRITE_SCRIPT_TOOL);
-		assertAllowed(WRITER, CLASSIFIED_READ_SCRIPT_TOOL);
+		assertAllowed(ANNA, CLASSIFIED_WRITE_SCRIPT_TOOL);
+		assertAllowed(ANNA, CLASSIFIED_READ_SCRIPT_TOOL);
 
 		// secreader1 holds data.read and not data.write, so the two groups do not bleed into each other.
 		// secEditor is deliberately not the contrast here: it holds data.write, because committing
 		// through executeTLScript costs that capability and the matrix promises it can create a note.
-		assertDenied(READER, CLASSIFIED_WRITE_SCRIPT_TOOL, ToolGroups.DATA_WRITE);
-		assertDenied(VIEWER, CLASSIFIED_WRITE_SCRIPT_TOOL, ToolGroups.DATA_WRITE);
+		assertDenied(BEN, CLASSIFIED_WRITE_SCRIPT_TOOL, ToolGroups.DATA_WRITE);
 	}
 
 	/**
@@ -159,10 +160,10 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 		Tool tool = tool(CLASSIFIED_READ_SCRIPT_TOOL);
 
 		assertEquals("The bare name the model calls is not the configured name.",
-			"countNotes", tool.name());
+			"countTickets", tool.name());
 		assertTrue("The classification must apply to the Tool object, not only to its configured name.",
-			securityFor(READER).hasToolPermission(tool));
-		assertEquals(ToolGroups.DATA_READ, securityFor(READER).toolCapability(tool));
+			securityFor(BEN).hasToolPermission(tool));
+		assertEquals(ToolGroups.DATA_READ, securityFor(BEN).toolCapability(tool));
 	}
 
 	/** An administrator reaches an unclassified tool too - the bypass does not care about groups. */

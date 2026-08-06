@@ -40,7 +40,7 @@ public class InstanceMetadata extends de.haumacher.msgbuf.data.AbstractDataObjec
 	}
 
 	/**
-	 * Container TID (if the instance is contained).
+	 * Container TID, if the instance is contained and the acting account may read the container.
 	 */
 	public final String getContainer() {
 		return _container;

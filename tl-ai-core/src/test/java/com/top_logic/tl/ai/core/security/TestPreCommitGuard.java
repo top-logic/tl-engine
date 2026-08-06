@@ -109,9 +109,9 @@ public class TestPreCommitGuard extends TestCase {
 		}
 	}
 
-	private static final TLClass NOTE = named(TLClass.class, "secdemo:Note");
+	private static final TLClass NOTE = named(TLClass.class, "pm:Ticket");
 
-	private static final TLClass SECRET = named(TLClass.class, "secdemo:Secret");
+	private static final TLClass SECRET = named(TLClass.class, "pm:Project");
 
 	private static final TLObject PROJECT = named(TLObject.class, "project");
 
@@ -170,13 +170,13 @@ public class TestPreCommitGuard extends TestCase {
 	 * @see PreCommitGuard the known limit of this layer
 	 */
 	public void testCreationIsValidatedOnTypeAndContainer() {
-		StubSecurity model = new StubSecurity(Set.of("create:secdemo:Note@project", "create:project/notes"));
+		StubSecurity model = new StubSecurity(Set.of("create:pm:Ticket@project", "create:project/notes"));
 
 		List<Violation> violations = check(model,
 			new ToolChangeSet(List.of(new Creation(NOTE1, NOTE, PROJECT, NOTES)), Map.of(), List.of()));
 
 		assertEquals(List.of(), violations);
-		assertEquals(List.of("create:secdemo:Note@project", "create:project/notes"), model._asked);
+		assertEquals(List.of("create:pm:Ticket@project", "create:project/notes"), model._asked);
 	}
 
 	/** A creation the principal has no CREATE right for is refused. */
@@ -188,9 +188,9 @@ public class TestPreCommitGuard extends TestCase {
 
 		assertEquals(1, violations.size());
 		assertEquals(SimpleBoundCommandGroup.CREATE, violations.get(0).operation());
-		assertEquals("secdemo:Note", violations.get(0).typeName());
+		assertEquals("pm:Ticket", violations.get(0).typeName());
 		assertEquals("Once the type is refused the container question is pointless.",
-			List.of("create:secdemo:Note@project"), model._asked);
+			List.of("create:pm:Ticket@project"), model._asked);
 	}
 
 	/**
@@ -198,25 +198,25 @@ public class TestPreCommitGuard extends TestCase {
 	 * condition 2 of the engine's create check.
 	 */
 	public void testForbiddenCompositionIsAViolation() {
-		StubSecurity model = new StubSecurity(Set.of("create:secdemo:Note@project"));
+		StubSecurity model = new StubSecurity(Set.of("create:pm:Ticket@project"));
 
 		List<Violation> violations = check(model,
 			new ToolChangeSet(List.of(new Creation(NOTE1, NOTE, PROJECT, NOTES)), Map.of(), List.of()));
 
 		assertEquals(1, violations.size());
 		assertEquals(SimpleBoundCommandGroup.CREATE, violations.get(0).operation());
-		assertEquals(List.of("create:secdemo:Note@project", "create:project/notes"), model._asked);
+		assertEquals(List.of("create:pm:Ticket@project", "create:project/notes"), model._asked);
 	}
 
 	/** A top-level creation is checked against the global security root, with no composition. */
 	public void testTopLevelCreationAsksOnlyForTheType() {
-		StubSecurity model = new StubSecurity(Set.of("create:secdemo:Note@null"));
+		StubSecurity model = new StubSecurity(Set.of("create:pm:Ticket@null"));
 
 		List<Violation> violations = check(model,
 			new ToolChangeSet(List.of(new Creation(NOTE1, NOTE, null, null)), Map.of(), List.of()));
 
 		assertEquals(List.of(), violations);
-		assertEquals(List.of("create:secdemo:Note@null"), model._asked);
+		assertEquals(List.of("create:pm:Ticket@null"), model._asked);
 	}
 
 	/** A deletion is asked as DELETE, not derived from write. */

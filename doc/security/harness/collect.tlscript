@@ -59,25 +59,34 @@
 	// -- post conditions ---------------------------------------------------
 	// Evaluated here, directly and with the engine's security checks on,
 	// rather than trusting what the agent says it did.
-	titles = all(`secdemo:Note`).get(`secdemo:Note#title`);
-	secrets = all(`secdemo:Secret`).get(`secdemo:Secret#value`);
+	titles = all(`pm:Ticket`).get(`pm:Ticket#title`);
+	bodies = all(`pm:Ticket`).get(`pm:Ticket#body`);
+	projectNames = all(`pm:Project`).get(`pm:Project#name`);
+	unfilteredCount = all(`pm:Ticket`).size();
+	filteredCount = filterSecurity(all(`pm:Ticket`)).size();
 
 	$report.concat([
 		"-- post conditions, evaluated directly as the logged-in account --",
-		"   secdemo:Note titles readable here : "
+		"   pm:Project names readable here : "
+			+ ($projectNames.size() == 0 ? "(none)" : $projectNames.join(separator: ", ")),
+		"   pm:Ticket titles readable here : "
 			+ ($titles.size() == 0 ? "(none)" : $titles.join(separator: ", ")),
-		"   case 3.2 must not have persisted 'Reader was here' : "
-			+ ($titles.filter(t -> $t == "Reader was here").size() == 0 ? "OK" : "FAILED"),
-		"   case 3.4 note 'Editor note' present : "
-			+ ($titles.filter(t -> $t == "Editor note").size() == 0
-				? "no - expected: an unattended run may not commit, see the fire.tlscript header"
-				: "yes - only a chat run or an earlier leftover can have persisted it"),
-		"   secdemo:Secret values readable here : "
-			+ ($secrets.size() == 0
-				? "no - expected for secReader / secEditor"
-				: "YES - expected only for an administrator"),
+		"   pm:Ticket bodies readable here : "
+			+ ($bodies.size() == 0
+				? "(none) - expected for a ticket reader: the <part> grant on pm:Ticket#body names"
+					+ " projectPartner only"
+				: $bodies.size() + " of them - expected for a project partner, and only for the"
+					+ " tickets of a project it partners on"),
+		"   case 3.2 must not have persisted 'Anna was here' : "
+			+ ($titles.filter(t -> $t == "Anna was here").size() == 0 ? "OK" : "FAILED"),
+		"   the accepted boundary (issue #291): unfiltered count " + $unfilteredCount
+			+ " vs filtered count " + $filteredCount
+			+ ($unfilteredCount == $filteredCount
+				? " - equal, so this account may read every ticket"
+				: " - a count computed without filterSecurity discloses a cardinality this account"
+					+ " may not see, which is accepted and documented rather than fixed"),
 		"",
-		"Cases 3.2 and 3.4 ask to change data and are refused unattended, so normally there is"
-			+ " nothing to reset. Run reset.tlscript as root if a chat run persisted something."
+		"Case 3.2 asks to change data and is refused unattended, so normally there is nothing to"
+			+ " reset. Run reset.tlscript as root if a chat run persisted something."
 	]);
 }

@@ -1,7 +1,7 @@
 db-default.xml
 tl-ai-demo.conf.xml
 
-# Agent security test bed (secdemo model, persona roles, accounts, tool policy, seed data).
+# Agent security test bed (pm model, declarative role rules, accounts, tool policy, seed data).
 # Uncomment the following line to enable it, comment it out again to disable it.
 # See doc/security/testbed.md - it maps every behaviour to a persona and a thing to type.
 #secdemo.config.xml

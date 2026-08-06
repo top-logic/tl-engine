@@ -5,7 +5,6 @@
  */
 package com.top_logic.tl.ai.core.security;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -350,7 +349,7 @@ public class TestToolAuthorization extends TestCase {
 		allow(policy, group(ToolGroups.DATA_READ));
 
 		ToolAuthorization foreground = auth(policy, Set.of("Clerk"), false);
-		Tool write = tool("addNote", ToolGroups.DATA_WRITE);
+		Tool write = tool("addTicket", ToolGroups.DATA_WRITE);
 
 		assertFalse(foreground.isBackground());
 		assertTrue("Precondition: the role holds data.write.", foreground.allows(write));

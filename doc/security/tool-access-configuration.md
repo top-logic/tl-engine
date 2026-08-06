@@ -128,6 +128,14 @@ and the labels exist only in the editor.
 - **`script` does not include writing.** Committing through `executeTLScript` costs `data.write` as
   well - see the note above. A `<grant tools="...">` naming the tool does not substitute for it: the
   capability is granted with `<grant group="data.write"/>` and nothing else.
+- **Roles are matched on the security root, and nowhere else.** A tool call has no object yet when this
+  check runs, so "which roles does this account hold" is asked of the application's security root. A
+  role that your application's role rules only ever produce **on business objects** therefore matches no
+  entry here, however correctly it is spelled: it governs model access and not tool access. A role has
+  to be assigned twice to do both jobs - once on the root (a `<singleton-rule>` naming a group), once on
+  the objects it should scope. The boot log warns about a role granted tools here that no rule can
+  produce on the root, and [role-model-worked-example.md](role-model-worked-example.md) builds both
+  assignments in full.
 - **Administrators bypass all of it**, exactly as they bypass the model access rights.
 - **Unattended runs are additionally capped** by `<background-allowlist>`, which you must declare
   explicitly as soon as you list any role - see below.
@@ -228,14 +236,19 @@ The last row is the one to be sure of: writing `<baseline><grant group="workspac
 everyone `workspace` and **not** the two read capabilities. If you want the default plus something,
 list all three.
 
-> ⚠️ **This is not a per-object guarantee, yet.** The argument that a default `data.read` is safe rests
-> on the second layer deciding per object what is actually visible - the account's model access rights.
-> The data tools do not consult that layer yet: `listInstances` and the TL-Script tool return what they
-> find. Per-object read filtering arrives with **issue #289**. Until then, a default `data.read` in an
-> application that has written no `<security-config>` means unfiltered reads. That is not worse than
-> what it replaces - the removed permissive mode granted *everything*, write tools included - but do not
-> read it as "safe by default". If that matters to you before #289 lands, write `<baseline/>` and grant
-> `data.read` per role.
+> **What the default rests on, and where that stops.** A default `data.read` is safe because the second
+> layer decides per object what is actually visible - the account's model access rights - and since
+> **issue #289** the data tools honour it. `listInstances` lists only the instances the account may read
+> and counts only those; `getInstance` omits an attribute the account may not read and answers for an
+> object it may not read at all exactly as it answers for one that does not exist; a TL-Script result
+> carries no identifier and no label of an object the account may not read. An application that has
+> written no `<security-config>` has denied everything, so its agent reads nothing.
+>
+> ⚠️ **A count is not covered.** ``all(`myapp:Contract`).size()`` is a number by the time any filter
+> sees it, so per-object filtering cannot narrow it, and this is accepted rather than fixed
+> (**issue #291**). Per-object read filtering covers identity, labels and attribute values; aggregates
+> it does not. The control for an account that must not learn how many contracts exist is to withhold
+> the `script` capability - which is not in the default baseline, for this reason among others.
 
 ### Classify tools that cannot declare their own group
 
@@ -347,8 +360,8 @@ the tool, its group, the account, the roles that account holds, and the rule tha
 
 ```
 WARN com.top_logic.tl.ai.core.security.ToolAuthorization - Tool access denied:
-tool='framework-wiring.listFrameworkAgents' group=agent.meta user=secreader1
-roles=[SecurityStructure.user, secReader]
+tool='secdemo-editing.addTicket' group=data.write user=ben
+roles=[SecurityStructure.user, ticketReader]
 reason=Permission denied: tool 'framework-wiring.listFrameworkAgents' requires the
 'agent.meta' capability, which none of your roles grants.
 ```
@@ -362,7 +375,7 @@ A refusal that was decided for a **capability** rather than for a tool - today o
 
 ```
 WARN com.top_logic.tl.ai.core.security.ToolAuthorization - Tool access denied:
-capability='data.write' user=secreader1 roles=[SecurityStructure.user, secReader]
+capability='data.write' user=ben roles=[SecurityStructure.user, ticketReader]
 reason=Permission denied: executing TL-Script with withCommit=true requires the
 'data.write' capability, which none of your roles grants.
 ```
@@ -412,6 +425,14 @@ Tool access is one of two independent authorizations. It answers "may this accou
 says nothing about *which data* the tool may then touch - that is the engine's `<security-config>`
 (model access rights). A role can hold the TL-Script tool and still be denied every object it asks for,
 and it can have broad data rights and no tool to reach them with. Configure both.
+
+**Every per-type and per-object guarantee rests on `<security-config>`, not on this file.** This check
+is structurally incapable of answering "which object": it runs before there is one. So a role granted
+`data.read` here and named in no `Read` grant there has read tools that see nothing - and because a
+refused read comes back *empty* rather than as an error, an agent acting for that account may report
+"there are no projects" instead of "you may not see them". The boot log warns about exactly that
+combination. What it cannot warn about is a filtered **count**: an aggregate computed inside a script
+is not read-filtered (**issue #291**), and the control for it is withholding `script`.
 
 Approval is a third, separate thing: a tool classified as changing shared data asks the user to confirm
 regardless of which role they hold. There is no way to pre-approve a role, on purpose.

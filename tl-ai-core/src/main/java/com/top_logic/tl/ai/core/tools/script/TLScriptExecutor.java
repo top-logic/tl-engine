@@ -6,13 +6,11 @@
 package com.top_logic.tl.ai.core.tools.script;
 
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.script.messages.ErrorType;
 import com.top_logic.tl.ai.core.tools.script.messages.ValidationError;
 import com.top_logic.tl.ai.core.tools.script.messages.ValidationResult;
@@ -21,9 +19,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLModel;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -35,7 +31,6 @@ import com.top_logic.model.search.expr.parser.TokenMgrError;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ModelReferenceChecker;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
@@ -51,7 +46,7 @@ import com.top_logic.util.model.ModelService;
  * <li>Model reference validation (undefined classes/properties/types)</li>
  * <li>Type checking (type compatibility)</li>
  * <li>Script execution with configurable transaction control</li>
- * <li>Result serialization (primitives, collections, TLObjects)</li>
+ * <li>Result serialization, filtered for what the run's principal may read</li>
  * </ul>
  * <p>
  * The tool uses the same validation pipeline as the TLScript console editor, leveraging
@@ -113,63 +108,6 @@ public class TLScriptExecutor {
 		}
 
 		/**
-		 * Converts a TLScript execution result to a JSON-compatible data structure.
-		 *
-		 * @param result
-		 *        The result to convert (may be null).
-		 * @return JSON-compatible object (primitives, Lists, Maps).
-		 */
-		private static Object convertToJsonData(Object result) {
-			if (result == null) {
-				return null;
-			}
-
-			// Primitives - return as-is
-			if (result instanceof String || result instanceof Number || result instanceof Boolean) {
-				return result;
-			}
-
-			// Collections - recursively convert elements
-			if (result instanceof Collection<?>) {
-				List<Object> jsonList = new ArrayList<>();
-				for (Object item : (Collection<?>) result) {
-					jsonList.add(convertToJsonData(item));
-				}
-				return jsonList;
-			}
-
-			// Maps - recursively convert keys and values
-			if (result instanceof Map<?, ?>) {
-				Map<String, Object> jsonMap = new LinkedHashMap<>();
-				for (Map.Entry<?, ?> entry : ((Map<?, ?>) result).entrySet()) {
-					String key = String.valueOf(entry.getKey());
-					Object value = convertToJsonData(entry.getValue());
-					jsonMap.put(key, value);
-				}
-				return jsonMap;
-			}
-
-			// TLObject (model instances) - minimal serialization
-			if (result instanceof TLObject) {
-				TLObject obj = (TLObject) result;
-				Map<String, Object> serialized = new LinkedHashMap<>();
-				serialized.put("_tid", obj.tId().asString());
-				serialized.put("_type", TLModelUtil.qualifiedName(obj.tType()));
-				serialized.put("_display", MetaLabelProvider.INSTANCE.getLabel(obj));
-				return serialized;
-			}
-
-			// Arrays - convert to list and process
-			if (result.getClass().isArray()) {
-				Object[] array = (Object[]) result;
-				return convertToJsonData(Arrays.asList(array));
-			}
-
-			// Fallback: use {@link Object#toString()} representation
-			return String.valueOf(result);
-		}
-
-		/**
 		 * Determines the result type for JSON response.
 		 *
 		 * @param result
@@ -199,7 +137,8 @@ public class TLScriptExecutor {
 		}
 
 		/**
-		 * Serializes this execution result to a JSON string.
+		 * Serializes this execution result to a JSON string, disclosing only what the run's principal
+		 * may read.
 		 *
 		 * <p>
 		 * On success, returns a JSON object with:
@@ -216,9 +155,20 @@ public class TLScriptExecutor {
 		 * On failure, returns the same format as {@link com.top_logic.tl.ai.core.tools.script.messages.ErrorResult}.
 		 * </p>
 		 *
+		 * <p>
+		 * The {@link ReadFilter} is mandatory, and there is no argument-less form. {@code All.all()}'s
+		 * own javadoc says "The result is not filtered for security ... the final result of a script is
+		 * secured by the caller", and every engine channel honours that by calling
+		 * {@link com.top_logic.model.search.expr.SearchExpression#filterSecurity(Object)}. This method
+		 * is where tl-ai holds up its half of that contract, and it used to disclose the identity, the
+		 * type and the display label of every object a script returned.
+		 * </p>
+		 *
+		 * @param readFilter
+		 *        The disclosure filter of the run whose principal executed the script.
 		 * @return JSON string representation of the execution result.
 		 */
-		public String toJson() {
+		public String toJson(ReadFilter readFilter) {
 			if (!_success) {
 				// Use ErrorResult for failures
 				return com.top_logic.tl.ai.core.tools.script.messages.ErrorResult.create()
@@ -236,12 +186,16 @@ public class TLScriptExecutor {
 				json.name("success").value(true);
 				json.name("executed").value(true);
 
-				// Write the result value
-				Object jsonData = convertToJsonData(_result);
-				json.name("result");
-				writeJsonValue(json, jsonData);
+				// Everything this run's principal may read of the result, and nothing else.
+				Object visible = readFilter.visible(_result);
 
-				json.name("resultType").value(determineResultType(_result));
+				json.name("result");
+				writeJsonValue(json, readFilter.disclose(visible));
+
+				// The type of the *filtered* value, not of the raw one: a script that returned a single
+				// object the principal may not read reports "null", because "object" would say that
+				// there was one.
+				json.name("resultType").value(determineResultType(visible));
 				json.name("message").value("Script executed successfully");
 				json.endObject();
 

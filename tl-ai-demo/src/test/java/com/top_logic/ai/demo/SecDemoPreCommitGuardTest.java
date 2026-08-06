@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 
-import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -57,7 +56,7 @@ import com.top_logic.util.model.ModelService;
  * cooperates - {@link SecDemoModelSecurityTest} covers the cooperating case, where TL-Script itself
  * asks {@code ModelAccessRights} before it writes. The tool here does not ask, exactly as a remote MCP
  * tool or a Java tool whose author forgot does not ask, and the persona it runs as
- * ({@code secwriter1}) legitimately holds the {@code data.write} capability, so the tool layer (L1)
+ * (Anna) legitimately holds the {@code data.write} capability, so the tool layer (L1)
  * lets the call through - see {@link #testTheToolLayerLetsTheCallThrough()}. Nothing but L4 is left.
  * </p>
  *
@@ -85,11 +84,11 @@ public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 
 	private static final TokenUsage USAGE = new TokenUsage(10, 5, 0, 0, 0);
 
-	/** The title the tool writes, so a test can tell its note from the seeded ones. */
-	private static final String WRITTEN_TITLE = "Unchecked note";
+	/** The title the tool writes, so a test can tell its ticket from the seeded ones. */
+	private static final String WRITTEN_TITLE = "Unchecked ticket";
 
-	/** The value the tool writes into a secret - must never appear in what the model is told. */
-	private static final String WRITTEN_SECRET = "Unchecked-secret-value";
+	/** The title the tool writes where it may not - must never appear in what the model is told. */
+	private static final String WRITTEN_ELSEWHERE = "Unchecked-foreign-title";
 
 	/**
 	 * What the unchecked tool does when it runs.
@@ -110,7 +109,7 @@ public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testTheToolLayerLetsTheCallThrough() {
-		SecurityContext security = securityFor(WRITER);
+		SecurityContext security = securityFor(ANNA);
 
 		Tool tool = uncheckedTool(() -> {
 			// Never executed: this test only asks the invocation gate.
@@ -125,38 +124,48 @@ public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 	 * way of legitimate work.
 	 */
 	public void testPermittedUncheckedWriteCommits() {
-		List<TLObject> before = new ArrayList<>(notes());
+		List<TLObject> before = new ArrayList<>(tickets());
 		try {
-			Turn turn = runTurnAs(WRITER, () -> createNote(WRITTEN_TITLE));
+			Turn turn = runTurnAs(ANNA, () -> createTicket(WRITTEN_TITLE));
 
-			assertTrue("The turn must commit: secwriter1 holds Create on secdemo:Note.",
-				turn.committed());
+			assertTrue("The turn must commit: projectPartner holds Create on pm:Ticket, and Anna holds"
+				+ " that role on the security root - the context a top-level creation is checked"
+				+ " against.", turn.committed());
 			assertNull("Nothing was rolled back, so nothing has to be corrected.", turn.notice());
-			assertEquals("The note must have been persisted.", before.size() + 1, notes().size());
+			assertEquals("The ticket must have been persisted.", before.size() + 1, tickets().size());
 		} finally {
-			deleteNotesBeyond(before);
+			deleteTicketsBeyond(before);
 		}
 	}
 
 	/**
-	 * Creating an instance of a type no role may create is caught before the commit, and nothing is
-	 * persisted.
+	 * Creating an object inside a container the persona may not write is caught before the commit.
+	 *
+	 * <p>
+	 * A per-object forbidden creation, which is the shape this model can express: Anna holds
+	 * {@code Create} on {@code pm:Ticket} and may not write project Beta, and a creation inside a
+	 * composition needs both - {@code Create} on the created type in the container's context
+	 * <em>and</em> {@code Write} on the container's composition attribute.
+	 * </p>
 	 */
 	public void testForbiddenCreationIsRolledBack() {
-		int secretsBefore = secrets().size();
+		List<TLObject> before = new ArrayList<>(tickets());
+		TLObject foreignProject = project(BETA);
+		try {
+			Turn turn = runTurnAs(ANNA, () -> createTicketIn(foreignProject, WRITTEN_ELSEWHERE));
 
-		Turn turn = runTurnAs(WRITER, () -> createSecret(WRITTEN_SECRET));
+			assertFalse("The turn must not commit.", turn.committed());
+			assertEquals("Pre-commit security check failed", turn.rollbackReason());
+			assertEquals("No ticket may have been persisted.", before.size(), tickets().size());
 
-		assertFalse("The turn must not commit.", turn.committed());
-		assertEquals("Pre-commit security check failed", turn.rollbackReason());
-		assertEquals("No secret may have been persisted.", secretsBefore, secrets().size());
-
-		String notice = turn.notice();
-		assertNotNull("The model must be told that its writes are gone.", notice);
-		assertTrue("The notice must name the operation, but was: " + notice, notice.contains("Create"));
-		assertTrue("The notice must name the type, but was: " + notice, notice.contains("secdemo:Secret"));
-		assertFalse("The notice must not quote the written value, but was: " + notice,
-			notice.contains(WRITTEN_SECRET));
+			String notice = turn.notice();
+			assertNotNull("The model must be told that its writes are gone.", notice);
+			assertTrue("The notice must name the type, but was: " + notice, notice.contains("pm:"));
+			assertFalse("The notice must not quote the written value, but was: " + notice,
+				notice.contains(WRITTEN_ELSEWHERE));
+		} finally {
+			deleteTicketsBeyond(before);
+		}
 	}
 
 	/**
@@ -164,37 +173,37 @@ public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 	 * is untouched.
 	 */
 	public void testForbiddenUpdateIsRolledBack() {
-		TLObject secret = anySecret();
-		TLStructuredTypePart value = part("secdemo:Secret#value");
-		Object valueBefore = secret.tValue(value);
+		TLObject foreignTicket = ticketOf(BETA);
+		TLStructuredTypePart title = part("pm:Ticket#title");
+		Object titleBefore = foreignTicket.tValue(title);
 
-		Turn turn = runTurnAs(WRITER, () -> secret.tUpdate(value, WRITTEN_SECRET));
+		Turn turn = runTurnAs(ANNA, () -> foreignTicket.tUpdate(title, WRITTEN_ELSEWHERE));
 
-		assertFalse("The turn must not commit.", turn.committed());
-		assertEquals("The committed value must be unchanged.", valueBefore, secret.tValue(value));
+		assertFalse("The turn must not commit: Anna does not partner on Beta.", turn.committed());
+		assertEquals("The committed value must be unchanged.", titleBefore, foreignTicket.tValue(title));
 
 		String notice = turn.notice();
 		assertNotNull(notice);
 		assertTrue("The notice must name the operation, but was: " + notice, notice.contains("Write"));
-		assertTrue("The notice must name the type, but was: " + notice, notice.contains("secdemo:Secret"));
+		assertTrue("The notice must name the type, but was: " + notice, notice.contains("pm:Ticket"));
 		assertFalse("The notice must not quote the written value, but was: " + notice,
-			notice.contains(WRITTEN_SECRET));
+			notice.contains(WRITTEN_ELSEWHERE));
 	}
 
 	/**
-	 * A deletion is its own right: the fixture grants {@code secWriter} Read, Create and Write on
-	 * {@code secdemo:Note} and no Delete, so deleting one is refused.
+	 * A deletion is its own right: the fixture grants {@code projectPartner} Read, Create and Write on
+	 * {@code pm:Ticket} and no Delete, so deleting one is refused - even a ticket of the persona's own
+	 * project, which it may otherwise write freely.
 	 */
 	public void testForbiddenDeletionIsRolledBack() {
-		List<TLObject> before = new ArrayList<>(notes());
-		assertFalse("Precondition: the fixture must have seeded notes.", before.isEmpty());
-		TLObject note = before.get(0);
+		List<TLObject> before = new ArrayList<>(tickets());
+		TLObject ticket = ticketOf(ALPHA);
 
-		Turn turn = runTurnAs(WRITER, () -> note.tDelete());
+		Turn turn = runTurnAs(ANNA, () -> ticket.tDelete());
 
 		assertFalse("The turn must not commit.", turn.committed());
-		assertEquals("The note must still be there.", before.size(), notes().size());
-		assertTrue("The note must still be alive.", note.tValid());
+		assertEquals("The ticket must still be there.", before.size(), tickets().size());
+		assertTrue("The ticket must still be alive.", ticket.tValid());
 
 		String notice = turn.notice();
 		assertNotNull(notice);
@@ -212,47 +221,48 @@ public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testRollbackIsAllOrNothing() {
-		List<TLObject> before = new ArrayList<>(notes());
-		int secretsBefore = secrets().size();
+		List<TLObject> before = new ArrayList<>(tickets());
+		TLObject foreignTicket = ticketOf(BETA);
+		TLStructuredTypePart title = part("pm:Ticket#title");
+		Object titleBefore = foreignTicket.tValue(title);
 		try {
-			Turn turn = runTurnAs(WRITER, () -> {
-				createNote(WRITTEN_TITLE);
-				createSecret(WRITTEN_SECRET);
+			Turn turn = runTurnAs(ANNA, () -> {
+				createTicket(WRITTEN_TITLE);
+				foreignTicket.tUpdate(title, WRITTEN_ELSEWHERE);
 			});
 
 			assertFalse("The turn must not commit.", turn.committed());
-			assertEquals("The permitted note must be gone as well.", before.size(), notes().size());
-			assertEquals(secretsBefore, secrets().size());
+			assertEquals("The permitted ticket must be gone as well.", before.size(), tickets().size());
+			assertEquals(titleBefore, foreignTicket.tValue(title));
 			assertTrue("The model must be told that the rollback took everything: " + turn.notice(),
 				turn.notice().contains("all-or-nothing"));
 		} finally {
-			deleteNotesBeyond(before);
+			deleteTicketsBeyond(before);
 		}
 	}
 
 	/**
-	 * A persona with no data rights at all is refused a write it is nevertheless allowed to
-	 * <em>attempt</em>.
+	 * The persona who scopes nothing is refused by the guard as well, and L1 let her through.
 	 *
 	 * <p>
-	 * {@code secauthor1} holds privileged tool capabilities and no model grants, which is the sharpest
-	 * statement the fixture makes about the layers being independent. It does not hold
-	 * {@code data.write}, so it is refused at L1 first - which is why this test asks the guard through
-	 * a context whose tool layer is not consulted: what is under test is that L4 refuses it too, and
-	 * would refuse it even if a future policy handed it the capability.
+	 * Dora holds {@code data.write} on the security root, so the invocation gate is genuinely not what
+	 * refuses this call - {@link #testTheToolLayerLetsTheCallThrough()} for Anna is the same statement,
+	 * and Dora is indistinguishable from Anna at that layer. What refuses her is that she partners on
+	 * nothing, per object, at the end of the turn.
 	 * </p>
 	 */
-	public void testPersonaWithoutDataRightsIsRefusedByTheGuardToo() {
-		List<TLObject> before = new ArrayList<>(notes());
-		try {
-			Turn turn = runTurnAs(AUTHOR, toolPermittingContext(AUTHOR), () -> createNote(WRITTEN_TITLE));
+	public void testPersonaWhoScopesNothingIsRefusedByTheGuardToo() {
+		assertAllowed(DORA, CLASSIFIED_WRITE_SCRIPT_TOOL);
 
-			assertFalse("The turn must not commit.", turn.committed());
-			assertEquals("Nothing may have been persisted.", before.size(), notes().size());
-			assertTrue(turn.notice().contains("secdemo:Note"));
-		} finally {
-			deleteNotesBeyond(before);
-		}
+		TLObject ticket = ticketOf(ALPHA);
+		TLStructuredTypePart title = part("pm:Ticket#title");
+		Object titleBefore = ticket.tValue(title);
+
+		Turn turn = runTurnAs(DORA, () -> ticket.tUpdate(title, WRITTEN_ELSEWHERE));
+
+		assertFalse("The turn must not commit.", turn.committed());
+		assertEquals("Nothing may have been persisted.", titleBefore, ticket.tValue(title));
+		assertTrue(turn.notice().contains("pm:Ticket"));
 	}
 
 	/**
@@ -318,7 +328,7 @@ public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 	 * tool whose author forgot the check.
 	 *
 	 * <p>
-	 * It declares {@link ToolGroups#DATA_WRITE}, which the fixture grants to {@code secwriter1}, so
+	 * It declares {@link ToolGroups#DATA_WRITE}, which the fixture grants to {@code projectPartner}, so
 	 * the invocation gate is not what refuses it. Its {@link ToolMode#DATA_WRITE} mode is what makes
 	 * the loop open a transaction for the turn.
 	 * </p>
@@ -437,42 +447,37 @@ public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 		return null;
 	}
 
-	private static TLObject createNote(String title) {
-		TLClass type = (TLClass) TLModelUtil.findType("secdemo:Note");
-		TLObject note = ModelService.getInstance().getFactory().createObject(type, null);
-		note.tUpdate(part("secdemo:Note#title"), title);
-		return note;
-	}
-
 	/**
-	 * Creates a secret with every mandatory attribute set.
+	 * Creates a top-level ticket with its mandatory title set.
 	 *
 	 * <p>
-	 * The label matters: without it the commit would fail on a model constraint, and a test that
+	 * The title matters: without it the commit would fail on a model constraint, and a test that
 	 * expects the <em>guard</em> to stop the commit would pass for the wrong reason.
 	 * </p>
 	 */
-	private static TLObject createSecret(String value) {
-		TLClass type = (TLClass) TLModelUtil.findType("secdemo:Secret");
-		TLObject secret = ModelService.getInstance().getFactory().createObject(type, null);
-		secret.tUpdate(part("secdemo:Secret#label"), "Unchecked secret");
-		secret.tUpdate(part("secdemo:Secret#value"), value);
-		return secret;
+	private static TLObject createTicket(String title) {
+		TLClass type = (TLClass) TLModelUtil.findType("pm:Ticket");
+		TLObject ticket = ModelService.getInstance().getFactory().createObject(type, null);
+		ticket.tUpdate(part("pm:Ticket#title"), title);
+		return ticket;
+	}
+
+	/**
+	 * Creates a ticket inside the given project's composition.
+	 */
+	@SuppressWarnings("unchecked")
+	private static TLObject createTicketIn(TLObject project, String title) {
+		TLObject ticket = createTicket(title);
+		TLStructuredTypePart tickets = part("pm:Project#tickets");
+		List<TLObject> contained =
+			new ArrayList<>((java.util.Collection<TLObject>) project.tValue(tickets));
+		contained.add(ticket);
+		project.tUpdate(tickets, contained);
+		return ticket;
 	}
 
 	private static TLStructuredTypePart part(String qualifiedName) {
 		return (TLStructuredTypePart) TLModelUtil.findPart(qualifiedName);
-	}
-
-	private static List<TLObject> secrets() {
-		return MetaElementUtil.getAllInstancesOf(
-			(TLClass) TLModelUtil.findType("secdemo:Secret"), TLObject.class);
-	}
-
-	private static TLObject anySecret() {
-		List<TLObject> secrets = secrets();
-		assertFalse("Precondition: the fixture must have seeded secrets.", secrets.isEmpty());
-		return secrets.get(0);
 	}
 
 	/**

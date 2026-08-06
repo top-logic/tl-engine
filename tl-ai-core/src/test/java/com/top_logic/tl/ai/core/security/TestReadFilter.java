@@ -129,7 +129,7 @@ public class TestReadFilter extends TestCase {
 		assertSame(VISIBLE, filter.visible(VISIBLE));
 		assertNull(filter.visible(HIDDEN));
 		assertNull("An object the principal may not read discloses no identity, not even an empty one.",
-			filter.identityOf(HIDDEN));
+			filter.disclose(HIDDEN));
 	}
 
 	/**

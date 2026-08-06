@@ -256,7 +256,8 @@ public final class ReadFilter {
 	 * <p>
 	 * Primitives stay themselves, collections and arrays become {@link List}s, maps become
 	 * {@link Map}s keyed by strings, and a readable {@link TLObject} becomes its
-	 * {@link #identityOf(TLObject) identity}. Anything else becomes its {@code toString()}.
+	 * identity - {@link #TID}, {@link #TYPE} and {@link #DISPLAY}. Anything else becomes its
+	 * {@code toString()}.
 	 * </p>
 	 *
 	 * @param value
@@ -300,22 +301,15 @@ public final class ReadFilter {
 	}
 
 	/**
-	 * The identity of the given object - {@link #TID}, {@link #TYPE} and {@link #DISPLAY} - or
-	 * <code>null</code> if the principal may not read it.
+	 * The identity a readable object discloses.
 	 *
 	 * <p>
 	 * All three fields are disclosure: the label is business data, and the identifier plus the type
-	 * disclose that an object of that type exists. So they are one decision, taken here, rather than
-	 * three fields a caller assembles.
+	 * disclose that an object of that type exists. So they are one decision, taken in {@link #visible},
+	 * rather than three fields a caller assembles - which is why this is private and why nothing outside
+	 * this class writes {@link #TID}, {@link #TYPE} or {@link #DISPLAY}.
 	 * </p>
 	 */
-	public Map<String, Object> identityOf(TLObject obj) {
-		if (obj == null || !_security.canRead(obj)) {
-			return null;
-		}
-		return identity(obj);
-	}
-
 	private static Map<String, Object> identity(TLObject obj) {
 		Map<String, Object> result = new LinkedHashMap<>();
 		result.put(TID, obj.tId().asString());

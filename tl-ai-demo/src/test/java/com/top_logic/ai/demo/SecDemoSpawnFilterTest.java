@@ -6,7 +6,6 @@
 package com.top_logic.ai.demo;
 
 import java.util.List;
-import java.util.Map;
 
 import junit.framework.Test;
 
@@ -14,20 +13,12 @@ import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
-import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
-import com.top_logic.tl.ai.core.tools.interaction.SpawnSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * What {@code spawn_subagent} does when the agent a persona asks for can reach nothing that persona may

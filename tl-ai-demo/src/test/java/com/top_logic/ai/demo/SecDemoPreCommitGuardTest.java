@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 
-import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;

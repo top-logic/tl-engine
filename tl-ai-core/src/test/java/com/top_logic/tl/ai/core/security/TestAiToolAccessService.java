@@ -104,22 +104,22 @@ public class TestAiToolAccessService extends TestCase {
 	 */
 	public void testUnknownRolesAreReported() {
 		ToolAccessPolicy policy = policy(
-			role("secReader", grants(group(ToolGroups.DATA_READ)), grants()),
-			role("secEdtior", grants(group(ToolGroups.SCRIPT)), grants()));
+			role("ticketReader", grants(group(ToolGroups.DATA_READ)), grants()),
+			role("ticektReader", grants(group(ToolGroups.SCRIPT)), grants()));
 
 		Set<String> unknown =
-			AiToolAccessService.unknownRoles(policy, name -> Set.of("secReader", "secEditor").contains(name));
+			AiToolAccessService.unknownRoles(policy, name -> Set.of("ticketReader", "projectPartner").contains(name));
 
 		assertEquals("The misspelled role is named, the correct one is not.",
-			Set.of("secEdtior"), unknown);
+			Set.of("ticektReader"), unknown);
 	}
 
 	/** A policy naming only existing roles reports nothing. */
 	public void testKnownRolesAreAccepted() {
-		ToolAccessPolicy policy = policy(role("secReader", grants(group(ToolGroups.DATA_READ)), grants()));
+		ToolAccessPolicy policy = policy(role("ticketReader", grants(group(ToolGroups.DATA_READ)), grants()));
 
 		assertEquals(Set.of(),
-			AiToolAccessService.unknownRoles(policy, name -> Set.of("secReader").contains(name)));
+			AiToolAccessService.unknownRoles(policy, name -> Set.of("ticketReader").contains(name)));
 	}
 
 	/**
@@ -268,11 +268,11 @@ public class TestAiToolAccessService extends TestCase {
 	/** A data capability reached by naming a single tool counts the same as naming its group. */
 	public void testDataCapabilityReachedByToolNameCounts() {
 		Grant byName = TypedConfiguration.newConfigItem(Grant.class);
-		byName.setTools(List.of("secdemo-editing.addNote"));
+		byName.setTools(List.of("secdemo-editing.addTicket"));
 		ToolAccessPolicy policy = policy(role("dora", grants(byName), grants()));
 
 		Map<String, Set<String>> reported = AiToolAccessService.dataRolesWithoutModelRights(policy,
-			name -> "secdemo-editing.addNote".equals(name) ? ToolGroups.DATA_WRITE : null, Set.of());
+			name -> "secdemo-editing.addTicket".equals(name) ? ToolGroups.DATA_WRITE : null, Set.of());
 
 		assertEquals(Set.of(ToolGroups.DATA_WRITE), reported.get("dora"));
 	}

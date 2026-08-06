@@ -360,8 +360,8 @@ the tool, its group, the account, the roles that account holds, and the rule tha
 
 ```
 WARN com.top_logic.tl.ai.core.security.ToolAuthorization - Tool access denied:
-tool='framework-wiring.listFrameworkAgents' group=agent.meta user=secreader1
-roles=[SecurityStructure.user, secReader]
+tool='secdemo-editing.addTicket' group=data.write user=ben
+roles=[SecurityStructure.user, ticketReader]
 reason=Permission denied: tool 'framework-wiring.listFrameworkAgents' requires the
 'agent.meta' capability, which none of your roles grants.
 ```
@@ -375,7 +375,7 @@ A refusal that was decided for a **capability** rather than for a tool - today o
 
 ```
 WARN com.top_logic.tl.ai.core.security.ToolAuthorization - Tool access denied:
-capability='data.write' user=secreader1 roles=[SecurityStructure.user, secReader]
+capability='data.write' user=ben roles=[SecurityStructure.user, ticketReader]
 reason=Permission denied: executing TL-Script with withCommit=true requires the
 'data.write' capability, which none of your roles grants.
 ```

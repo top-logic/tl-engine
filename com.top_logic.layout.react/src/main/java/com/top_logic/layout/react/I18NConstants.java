@@ -401,6 +401,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_INVALID_DATE__VALUE;
 
 	/**
+	 * @en No value
+	 */
+	public static ResKey VALUE_NONE;
+
+	/**
 	 * @en Languages…
 	 */
 	public static ResKey I18N_EDITOR_OPEN_BUTTON;

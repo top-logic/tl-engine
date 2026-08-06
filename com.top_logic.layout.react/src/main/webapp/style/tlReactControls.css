@@ -3616,6 +3616,50 @@ button.tlMenu__item--disabled:hover {
 	outline-offset: 1px;
 }
 
+/* --- TLBooleanChoice -------------------------------------------------------- */
+
+/* A boolean offered as a choice: radio buttons in a row, or a select.
+   Both classes in the selector, so that this wins over the rule making a control in a table cell a
+   block: as a block the options would flow as text and wrap onto a second line the row is not high
+   enough to show. */
+.tlBooleanChoice.tlBooleanChoice--radio {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+}
+
+.tlBooleanChoice__option {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02, 0.25rem);
+	cursor: pointer;
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+}
+
+/* Enough distance to tell the options apart, little enough for two of them to fit a table cell. */
+.tlBooleanChoice__option + .tlBooleanChoice__option {
+	margin-left: 0.75rem;
+}
+
+.tlBooleanChoice__option input {
+	width: 1rem;
+	height: 1rem;
+	margin: 0;
+	accent-color: var(--interactive, #0f62fe);
+	cursor: pointer;
+}
+
+.tlBooleanChoice__option input:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+.tlBooleanChoice--error .tlBooleanChoice__label,
+.tlBooleanChoice--error.tlReactSelect {
+	color: var(--support-error, #da1e28);
+}
+
 /* --- TLToolbar ------------------------------------------------------------- */
 
 .tlToolbar {

@@ -98,7 +98,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 	private Map<String, ReactFieldControlProvider> _providerByQualifiedType;
 
-	private final ReactFieldControlProvider _checkboxProvider = new CheckboxControlProvider();
+	private final ReactFieldControlProvider _booleanProvider = new BooleanControlProvider();
 
 	private final ReactFieldControlProvider _numberProvider = new NumberInputControlProvider();
 
@@ -306,8 +306,9 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			switch (primitive.getKind()) {
 				case BOOLEAN:
 				case TRISTATE:
-					// Both are checkboxes; the tri-state one has a third state for "no value".
-					return _checkboxProvider.createControl(context, part, model);
+					// Both are boolean inputs - a checkbox unless the attribute asks for a choice;
+					// the tri-state one keeps a state for "no value".
+					return _booleanProvider.createControl(context, part, model);
 				case INT:
 				case FLOAT:
 					return _numberProvider.createControl(context, part, model);

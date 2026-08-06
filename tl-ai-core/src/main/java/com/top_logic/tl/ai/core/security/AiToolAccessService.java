@@ -25,10 +25,17 @@ import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.annotate.security.AccessGrant;
+import com.top_logic.model.annotate.security.RoleConfig;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.manager.AccessManager;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
@@ -75,6 +82,8 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 	BoundHelper.Module.class,
 	// Tool group declarations are read from the registry.
 	ToolRegistryService.Module.class,
+	// The model-access grants the boot warning of #289 compares the tool grants against.
+	SecurityConfigurationService.Module.class,
 })
 public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessService.Config<?>> {
 
@@ -117,6 +126,8 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 		checkEntriesSayOneThing(policy);
 		checkBackgroundAllowlistDeclared(policy);
 		warnAboutUnknownGroups(policy);
+		warnAboutRolesNobodyHoldsOnTheRoot(policy);
+		warnAboutDataRolesWithoutModelRights(policy);
 
 		Logger.info("Agent tool access:"
 			+ " roles=" + policy.getToolAccess().size()
@@ -347,6 +358,206 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 				unknown.add(group);
 			}
 		}
+	}
+
+	/**
+	 * Warns about roles this policy grants tools to that nobody can hold where this policy looks.
+	 *
+	 * <p>
+	 * {@link #checkRolesExist(ToolAccessPolicy)} answers "does the role exist"; this answers the
+	 * question that actually decides whether the grant does anything: "can anybody hold it <b>on the
+	 * security root</b>". A grant naming a role that the application's role rules only ever produce on
+	 * business objects reaches nobody while reading as a deployment-wide statement - the tier half of the
+	 * two assignments the design needs is simply missing, and until now nothing said so.
+	 * </p>
+	 *
+	 * <p>
+	 * The oracle is {@link AccessManager#canHaveRole(TLClass, BoundedRole)}, the same one the engine's
+	 * roles-profile UI trusts to decide which checkboxes to offer. A warning rather than an error: the
+	 * base {@link AccessManager} answers "yes" for everything, so an application not using
+	 * {@code ElementAccessManager} is never warned, and a direct runtime role assignment can still arrive
+	 * after boot.
+	 * </p>
+	 */
+	private void warnAboutRolesNobodyHoldsOnTheRoot(ToolAccessPolicy policy) {
+		TLClass rootType = securityRootType();
+		if (rootType == null) {
+			// No typed security root - nothing to ask canHaveRole about.
+			return;
+		}
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		AccessManager access = AccessManager.getInstance();
+		Set<String> unreachable = rolesUnreachableOnSecurityRoot(policy, roleName -> {
+			BoundedRole role = BoundedRole.getRoleByName(kb, roleName);
+			// A role that does not exist is already a configuration error; do not report it twice.
+			return role == null || access.canHaveRole(rootType, role);
+		});
+		for (String roleName : unreachable) {
+			Logger.warn("The role '" + roleName + "' in the agent tool access configuration is granted"
+				+ " tools, but no role rule of this application can produce it on the security root ("
+				+ TLModelUtil.qualifiedName(rootType) + "), which is where tool access reads roles. Its"
+				+ " grants therefore reach nobody. Add a <singleton-rule target=\"SecurityStructure#ROOT\""
+				+ " role=\"" + roleName + "\"> naming the group whose members should hold it - a rule that"
+				+ " assigns the role on business objects governs model access and not tool access.",
+				AiToolAccessService.class);
+		}
+	}
+
+	/**
+	 * The type of the security root, or <code>null</code> if this application's root is not a model
+	 * object and therefore has no type to ask about.
+	 */
+	private static TLClass securityRootType() {
+		BoundObject root = BoundHelper.getInstance().getDefaultObject();
+		// An application whose root is a plain SimpleBoundObject has no model type, and the engine's own
+		// oracle is asked about a type.
+		return root != null && root.tType() instanceof TLClass rootType ? rootType : null;
+	}
+
+	/**
+	 * The roles the policy grants something to that {@code reachableOnRoot} says nobody can hold there.
+	 *
+	 * @param policy
+	 *        The policy to inspect.
+	 * @param reachableOnRoot
+	 *        Whether a role of the given name can be held on the security root.
+	 * @return The unreachable names, in a stable order.
+	 */
+	static Set<String> rolesUnreachableOnSecurityRoot(ToolAccessPolicy policy,
+			Predicate<String> reachableOnRoot) {
+		Set<String> unreachable = new TreeSet<>();
+		for (RoleAccess role : policy.getToolAccess().values()) {
+			// A role present with no grants says "this role reaches nothing" on purpose; whether anybody
+			// holds it is then irrelevant, and warning about it would punish saying the emptiness out
+			// loud.
+			if (role.getGrants().isEmpty()) {
+				continue;
+			}
+			if (!reachableOnRoot.test(role.getName())) {
+				unreachable.add(role.getName());
+			}
+		}
+		return unreachable;
+	}
+
+	/**
+	 * Warns about roles granted data tools that no model-access grant lets see or change anything.
+	 *
+	 * <p>
+	 * The two layers never talk to each other, which is the design, and the price is that they can
+	 * disagree. A role holding {@code data.read} with no {@code Read} grant in
+	 * {@code <security-config>} reaches every read tool and every one of them returns empty - and the
+	 * engine's read semantics make that look like "there is no data" rather than "you may not see it".
+	 * A role holding {@code data.write} with no {@code Write} or {@code Create} grant has write tools
+	 * and nothing to write. This is the "Dora" case of
+	 * {@code doc/security/role-model-worked-example.md}, and it argues for exactly this warning rather
+	 * than for a different architecture.
+	 * </p>
+	 *
+	 * <p>
+	 * A warning, not an error: the combination is legitimate in an application whose model rights arrive
+	 * from somewhere else - a {@code <part>} or {@code <singleton>} grant, an annotation on the model, a
+	 * role assigned rights at runtime - and this check only reads the {@code <security-config>} written
+	 * in the application configuration.
+	 * </p>
+	 */
+	private void warnAboutDataRolesWithoutModelRights(ToolAccessPolicy policy) {
+		if (!SecurityConfigurationService.Module.INSTANCE.isActive()) {
+			// Nothing to compare against. The service is registered active by default, so this is a
+			// deliberate deactivation, and ModelAccessRightsSecurity already refuses every run in that
+			// state - saying it again here would add noise, not information.
+			return;
+		}
+		Set<String> withModelRights =
+			rolesWithModelRights(SecurityConfigurationService.Module.INSTANCE
+				.getImplementationInstance().getConfig());
+		for (Map.Entry<String, Set<String>> entry :
+				dataRolesWithoutModelRights(policy, _access::groupOf, withModelRights).entrySet()) {
+			Logger.warn("The role '" + entry.getKey() + "' in the agent tool access configuration holds "
+				+ entry.getValue() + ", but appears in no Read, Write or Create grant of the model"
+				+ " security configuration, so its data tools will see nothing and change nothing."
+				+ " Either add a <grant> for it to <security-config>, or drop the data capabilities from"
+				+ " its <tool-access> entry so the policy stops promising something the model rights"
+				+ " deny.", AiToolAccessService.class);
+		}
+	}
+
+	/**
+	 * Every role name that some Read, Write or Create grant of the given model security configuration
+	 * names.
+	 */
+	static Set<String> rolesWithModelRights(SecurityConfigurationService.Config config) {
+		Set<String> result = new TreeSet<>();
+		for (SecurityConfigurationService.ModelAccessRights rights : config.getSecurityConfig().values()) {
+			for (Map.Entry<CommandGroupReference, AccessGrant> grant : rights.getGrants().entrySet()) {
+				if (!MODEL_RIGHTS_THAT_MATTER.contains(grant.getKey().id())) {
+					continue;
+				}
+				for (RoleConfig role : grant.getValue().getRoles()) {
+					result.add(role.getName());
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The operations that make a data tool useful. {@code Delete} is deliberately absent: a role with
+	 * read and write rights and no Delete grant is the normal, intended shape.
+	 */
+	private static final Set<String> MODEL_RIGHTS_THAT_MATTER = Set.of(
+		SimpleBoundCommandGroup.READ_NAME,
+		SimpleBoundCommandGroup.WRITE_NAME,
+		SimpleBoundCommandGroup.CREATE_NAME);
+
+	/**
+	 * The data capabilities that are worthless without a model-access grant.
+	 */
+	private static final Set<String> DATA_GROUPS = Set.of(ToolGroups.DATA_READ, ToolGroups.DATA_WRITE);
+
+	/**
+	 * The roles the policy grants data capabilities to that hold no model rights, and which capabilities
+	 * those are.
+	 *
+	 * <p>
+	 * Reads the role's own {@code <grants>} rather than its effective capabilities: what the baseline
+	 * hands every role is not this role's entry, and blaming a role for the baseline would send an
+	 * administrator to the wrong line.
+	 * </p>
+	 *
+	 * @param policy
+	 *        The policy to inspect.
+	 * @param groupOfTool
+	 *        The capability group a tool named by its qualified name belongs to, or <code>null</code>.
+	 * @param rolesWithModelRights
+	 *        The roles some Read, Write or Create grant names.
+	 * @return The offending roles with the data capabilities they hold, in a stable order; empty if the
+	 *         two configurations agree.
+	 */
+	static Map<String, Set<String>> dataRolesWithoutModelRights(ToolAccessPolicy policy,
+			java.util.function.Function<String, String> groupOfTool, Set<String> rolesWithModelRights) {
+		Map<String, Set<String>> result = new TreeMap<>();
+		for (RoleAccess role : policy.getToolAccess().values()) {
+			if (rolesWithModelRights.contains(role.getName())) {
+				continue;
+			}
+			Set<String> dataGroups = new TreeSet<>();
+			for (Grant entry : role.getGrants()) {
+				if (entry.getGroup() != null && DATA_GROUPS.contains(entry.getGroup())) {
+					dataGroups.add(entry.getGroup());
+				}
+				for (String toolName : entry.getTools()) {
+					String group = groupOfTool.apply(toolName);
+					if (group != null && DATA_GROUPS.contains(group)) {
+						dataGroups.add(group);
+					}
+				}
+			}
+			if (!dataGroups.isEmpty()) {
+				result.put(role.getName(), dataGroups);
+			}
+		}
+		return result;
 	}
 
 	/** The group the registered tool of the given qualified name declares for itself. */

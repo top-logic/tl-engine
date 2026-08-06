@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.security;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Test;
@@ -17,6 +18,10 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.model.annotate.security.AccessGrant;
+import com.top_logic.model.annotate.security.RoleConfig;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
@@ -187,6 +192,126 @@ public class TestAiToolAccessService extends TestCase {
 		allow(policy, group(ToolGroups.DATA_READ));
 
 		assertEquals(List.of(), AiToolAccessService.underspecifiedEntries(policy));
+	}
+
+	/**
+	 * A grant naming a role nobody can hold on the security root is reported.
+	 *
+	 * <p>
+	 * The failure it catches is the one the tier/scope split makes possible: a role that the
+	 * application's rules only ever produce on business objects governs model access and reaches the
+	 * tool layer never, because tool access reads roles on the root. Existing is not the same as
+	 * reachable, and {@link AiToolAccessService#unknownRoles} only answers the first question.
+	 * </p>
+	 */
+	public void testRolesNobodyCanHoldOnTheRootAreReported() {
+		ToolAccessPolicy policy = policy(
+			role("projectPartner", grants(group(ToolGroups.DATA_WRITE)), grants()),
+			role("ticketReader", grants(group(ToolGroups.DATA_READ)), grants()));
+
+		Set<String> unreachable = AiToolAccessService.rolesUnreachableOnSecurityRoot(policy,
+			name -> "projectPartner".equals(name));
+
+		assertEquals("Only the role no rule puts on the root is named.",
+			Set.of("ticketReader"), unreachable);
+	}
+
+	/**
+	 * A role written with an empty grant list is not reported.
+	 *
+	 * <p>
+	 * "This role reaches nothing" is a statement the fixture of the test bed makes on purpose. Whether
+	 * anybody holds such a role changes nothing, and warning about it would punish saying the emptiness
+	 * out loud.
+	 * </p>
+	 */
+	public void testDeliberatelyEmptyRoleIsNotReportedAsUnreachable() {
+		ToolAccessPolicy policy = policy(role("bare", grants(), grants()));
+
+		assertEquals(Set.of(),
+			AiToolAccessService.rolesUnreachableOnSecurityRoot(policy, name -> false));
+	}
+
+	/**
+	 * A role granted data tools that no model-access grant names is reported - the "Dora" case.
+	 *
+	 * <p>
+	 * She holds the tier and scopes nothing, so every read comes back empty and every write is refused,
+	 * and the engine's read semantics make the first look like "there is no data" rather than "you may
+	 * not see it". The two grant tables never talk to each other by design; this is the boot-time
+	 * warning that pays for the design.
+	 * </p>
+	 */
+	public void testDataRolesWithoutModelRightsAreReported() {
+		ToolAccessPolicy policy = policy(
+			role("projectPartner", grants(group(ToolGroups.DATA_READ), group(ToolGroups.DATA_WRITE)),
+				grants()),
+			role("dora", grants(group(ToolGroups.DATA_WRITE), group(ToolGroups.MODEL_READ)), grants()));
+
+		Map<String, Set<String>> reported = AiToolAccessService.dataRolesWithoutModelRights(policy,
+			name -> null, Set.of("projectPartner"));
+
+		assertEquals("Only the role with no model rights is named.", Set.of("dora"), reported.keySet());
+		assertEquals("The message names the capability that is worthless, not the harmless one.",
+			Set.of(ToolGroups.DATA_WRITE), reported.get("dora"));
+	}
+
+	/** A role holding no data capability at all is not reported: it promises nothing about data. */
+	public void testRoleWithoutDataCapabilitiesIsNotReported() {
+		ToolAccessPolicy policy = policy(
+			role("author", grants(group(ToolGroups.AGENT_AUTHORING)), grants()));
+
+		assertEquals(Map.of(),
+			AiToolAccessService.dataRolesWithoutModelRights(policy, name -> null, Set.of()));
+	}
+
+	/** A data capability reached by naming a single tool counts the same as naming its group. */
+	public void testDataCapabilityReachedByToolNameCounts() {
+		Grant byName = TypedConfiguration.newConfigItem(Grant.class);
+		byName.setTools(List.of("secdemo-editing.addNote"));
+		ToolAccessPolicy policy = policy(role("dora", grants(byName), grants()));
+
+		Map<String, Set<String>> reported = AiToolAccessService.dataRolesWithoutModelRights(policy,
+			name -> "secdemo-editing.addNote".equals(name) ? ToolGroups.DATA_WRITE : null, Set.of());
+
+		assertEquals(Set.of(ToolGroups.DATA_WRITE), reported.get("dora"));
+	}
+
+	/** Only Read, Write and Create make a data tool useful, so only those count as model rights. */
+	public void testDeleteAloneIsNotAModelRight() {
+		assertEquals(Set.of("projectPartner", "ticketReader"),
+			AiToolAccessService.rolesWithModelRights(securityConfig(
+				classRights("pm:Project", "Read", "projectPartner"),
+				classRights("pm:Ticket", "Create", "projectPartner, ticketReader"),
+				classRights("pm:Note", "Delete", "janitor"))));
+	}
+
+	private static SecurityConfigurationService.Config securityConfig(
+			SecurityConfigurationService.ModelAccessRights... rights) {
+		SecurityConfigurationService.Config config =
+			TypedConfiguration.newConfigItem(SecurityConfigurationService.Config.class);
+		for (SecurityConfigurationService.ModelAccessRights entry : rights) {
+			config.getSecurityConfig().put(entry.getName(), entry);
+		}
+		return config;
+	}
+
+	private static SecurityConfigurationService.ModelAccessRights classRights(String typeName,
+			String operation, String roles) {
+		SecurityConfigurationService.TLClassAccessRights rights =
+			TypedConfiguration.newConfigItem(SecurityConfigurationService.TLClassAccessRights.class);
+		rights.setName(typeName);
+		AccessGrant grant = TypedConfiguration.newConfigItem(AccessGrant.class);
+		// AccessGrant declares no setter for its operation, so it is updated generically.
+		grant.update(grant.descriptor().getProperty(AccessGrant.OPERATION),
+			new CommandGroupReference(operation));
+		for (String roleName : roles.split(",")) {
+			RoleConfig role = TypedConfiguration.newConfigItem(RoleConfig.class);
+			role.setName(roleName.trim());
+			grant.getRoles().add(role);
+		}
+		rights.getGrants().put(grant.getOperation(), grant);
+		return rights;
 	}
 
 	private static ToolAccessPolicy policy(RoleAccess... roles) {

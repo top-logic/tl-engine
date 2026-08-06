@@ -142,8 +142,8 @@
 									mode="READ"
 								>
 									<description>
-										<en>Counts the notes visible to the acting account. Named in tool-groups, which puts it in data.read.</en>
-										<de>Zählt die für das ausführende Konto sichtbaren Notizen. Ist in tool-groups eingetragen und gehört damit zur Gruppe data.read.</de>
+										<en>Counts every note, including ones the acting account may not read - a count is not read-filtered. Named in tool-groups, which puts it in data.read.</en>
+										<de>Zählt alle Notizen, auch die für das ausführende Konto nicht lesbaren - eine Anzahl wird nicht gefiltert. Ist in tool-groups eingetragen und gehört damit zur Gruppe data.read.</de>
 									</description>
 									<implementation>all(`secdemo:Note`).size()</implementation>
 								</tool>
@@ -178,8 +178,8 @@
 									mode="READ"
 								>
 									<description>
-										<en>Counts the notes. Deliberately left out of tool-groups, so it belongs to no group and is denied to every role.</en>
-										<de>Zählt die Notizen. Absichtlich nicht in tool-groups eingetragen, gehört daher zu keiner Gruppe und ist für jede Rolle gesperrt.</de>
+										<en>Counts every note, unfiltered. Deliberately left out of tool-groups, so it belongs to no group and is denied to every role.</en>
+										<de>Zählt alle Notizen, ungefiltert. Absichtlich nicht in tool-groups eingetragen, gehört daher zu keiner Gruppe und ist für jede Rolle gesperrt.</de>
 									</description>
 									<implementation>all(`secdemo:Note`).size()</implementation>
 								</tool>

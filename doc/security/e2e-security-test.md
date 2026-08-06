@@ -388,8 +388,8 @@ two agent entry points that is a valid surface for this test:
 
 | | `aiAgentChatAsync` | `aiAgentChat` |
 |---|---|---|
-| Security context | captures the caller's `TLSubSessionContext` and re-enters it on the background thread (`ThreadContextManager.inContext(...)`), with a `TopLogicSecurityContext` | builds `ToolContext.createUnrestricted()` |
-| Runs as | **the account that executed the script** | an unrestricted context |
+| Security context | captures the caller's `TLSubSessionContext` and re-enters it on the background thread (`ThreadContextManager.inContext(...)`), with a `TopLogicSecurityContext` | `ToolContext.forCurrentUser()`, i.e. a `TopLogicSecurityContext` for the account bound to the calling thread |
+| Runs as | **the account that executed the script**, marked as a background run | the account that executed the script, as an attended run |
 | Blocks the console | no, returns a handle immediately | yes, until the agent is finished |
 
 Because the async variant re-enters the caller's sub-session, `TLContext.currentUser()` inside the
@@ -600,8 +600,9 @@ At boot, in `tmp/app-data/logs/top-logic.tl-ai.log`:
 AiToolAccessService - Agent tool access: mode=ENFORCED roles=6 baseline=0(+interaction) backgroundAllowlist=4
 ```
 
-With the aspect switched off it reads `mode=LEGACY roles=0 ... (not enforced)`, and every tool is
-callable by anyone - the behaviour the demo has as shipped.
+With the aspect switched off it reads `roles=0`, and then every account reaches only the implicit
+`interaction` grant - enforcement is unconditional, so an absent grant table denies rather than
+permits.
 
 Every denial is logged at `WARN`, naming the tool, its group, the account, the roles it holds and the
 rule that decided:
@@ -687,8 +688,9 @@ Administrator-facing documentation for writing such a policy in your own applica
   needs no model provider. That the *agent loop* refuses a denied tool mid-run, and narrates the
   denial, needs an LLM API key and is not covered here. The gate is the same object either way
   (`SecurityContext.hasToolPermission`), reached from `AgentLoop.executeWithSecurityCheck`.
-- **Per-agent `security-mode-floor` / `required-groups`.** Section 4.2 of the RFC; not built, so no
-  agent definition narrows itself.
+- **Per-agent `required-groups`.** Section 4.2 of the RFC; not built, so no agent definition narrows
+  itself. The per-agent security mode that briefly existed alongside it was removed by issue #288 - an
+  agent definition decides nothing about enforcement.
 
 ---
 

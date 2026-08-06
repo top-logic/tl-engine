@@ -27,9 +27,20 @@ Put that in any application configuration file (an aspect, or your
 `WEB-INF/conf/<app>.config.xml`). `YourRole` must be a role that exists - a name that does not is a
 **boot error**, deliberately, so that a typo cannot silently hand out nothing.
 
-**Without this block, nothing changes.** Every tool an agent carries stays callable by anyone who can
-use that agent, which is how the framework behaved before this layer existed. Writing a non-empty
-`<tool-access>` is the whole opt-in.
+**Without this block your agent can do almost nothing.** This check is always applied - there is no
+setting that turns it off - and it denies by default, so a role with no entry here reaches nothing
+beyond the implicit `interaction` grant. Not writing the block is not an opt-out; it is a denial of
+everything.
+
+**The same holds one layer down, and it is the mistake to expect.** The engine's
+`SecurityConfigurationService` is active in *every* TopLogic 8 application whether you configure it or
+not, and it instantiates with empty rights - which is deny-all for role-based accounts. So an
+application must ship a `<security-config>` as well, or its agent can read no business data at all.
+[role-model-worked-example.md](role-model-worked-example.md) builds both tables from scratch and walks
+four personas through them.
+
+**Administrators bypass all of it**, so testing with an admin account proves nothing. Log in as a
+role-based account.
 
 You do not have to grant `interaction`: asking the user a question, loading a skill and delegating to a
 sub-agent are granted to every role implicitly, because an agent that cannot ask a question is broken.
@@ -117,10 +128,14 @@ and the labels exist only in the editor.
   capability is granted with `<grant group="data.write"/>` and nothing else.
 - **Administrators bypass all of it**, exactly as they bypass the model access rights.
 - **Unattended runs are additionally capped** by `<background-allowlist>`, which you must declare
-  explicitly once enforcement is on - see below.
-- **The MCP endpoint (`/mcp/*`) cannot execute tools while enforcement is on.** It authenticates
-  nobody, so a call there has no user to authorize; it is refused rather than run as the system.
-  Tracked as issue #261.
+  explicitly as soon as you list any role - see below.
+- **The MCP endpoint (`/mcp/*`) cannot execute tools at all.** It authenticates nobody, so a call there
+  has no account to act as; it is refused rather than run as the system, for every application. Tracked
+  as issue #261.
+- **Every agent run needs a logged-in account.** The chat UI and a TL-Script call both act as the
+  logged-in account. A run that cannot name one is refused where it starts, not at its first tool call.
+  An unattended entry point has to be given a **configured service account** - a real account holding
+  real roles - because there is no mode that lets it run without one.
 
 ---
 
@@ -228,7 +243,7 @@ group picks which capability it costs to call the tool. `createScriptTool` is re
 `agent.authoring`, which is not the same as holding `data.write` - and a pattern that swallowed a whole
 namespace would hand that choice to whoever can author into it.
 
-Note what an ungrouped tool costs under enforced access, beyond being uncallable: it is also
+Note what an ungrouped tool costs beyond being uncallable: it is also
 invisible to the agents whose skills reference it. A skill none of whose tools the acting user may
 use is not offered at all, and the drop is logged at INFO with the skill name and the reason.
 Classifying the tool is what brings the skill back.
@@ -265,16 +280,19 @@ carrying `script` without `data.write` lets an unattended run *read* with TL-Scr
 it persist, administrators included. Allowlisting `script` used to be the whole of it, which made every
 allowlist that carried it silently carry every write TL-Script can express.
 
-**You have to declare it.** Once your `<tool-access>` turns enforcement on, a policy with no
+**You have to declare it.** As soon as your `<tool-access>` names a role, a policy with no
 `<background-allowlist>` element is a **configuration error** and the application refuses to start:
 
 ```
-Agent tool access is enforced (ENFORCED) but the policy declares no <background-allowlist>.
-Unattended agent runs approve every tool call themselves, so the allowlist is what bounds them
-and it has to be stated. Write <background-allowlist> with the groups such runs may use, or
+The agent tool access policy names roles but declares no <background-allowlist>. Unattended
+agent runs approve every tool call themselves, so the allowlist is what bounds them and it has
+to be stated. Write <background-allowlist> with the groups such runs may use, or
 <background-allowlist/> to forbid them every tool, or <background-allowlist all="true"/> to
 accept unattended runs bounded only by the acting user's grants.
 ```
+
+A policy with no `<tool-access>` entries at all boots without one: there is nothing you could have
+forgotten, because every run of such an application already reaches only `interaction`.
 
 The allowlist is the *only* thing standing in for the approval prompt an unattended run cannot show,
 so its absent state must not be the permissive one - otherwise writing a careful `<tool-access>` matrix
@@ -335,14 +353,14 @@ never what stops a tool from running. The gate is the Java check on the call pat
 At boot the service states what it read:
 
 ```
-INFO ... AiToolAccessService - Agent tool access: mode=ENFORCED roles=2 baseline=0(+interaction) backgroundAllowlist=3
+INFO ... AiToolAccessService - Agent tool access: roles=2 baseline=0(+interaction) backgroundAllowlist=3
 ```
 
 `baseline=0(+interaction)` means "no `<baseline>` entries were configured, plus the implicit
 `interaction` grant every policy carries".
 
-`mode=LEGACY ... (not enforced)` means no policy is in effect. If you wrote one and see this, the
-`<tool-access>` is empty or did not reach the service.
+`roles=0` means the service read no grant table. If you wrote one and see this, the `<tool-access>` did
+not reach the service - and until it does, every account reaches only `interaction`.
 
 Two things to know when reading the roles in a denial:
 
@@ -364,11 +382,10 @@ and it can have broad data rights and no tool to reach them with. Configure both
 Approval is a third, separate thing: a tool classified as changing shared data asks the user to confirm
 regardless of which role they hold. There is no way to pre-approve a role, on purpose.
 
-One setting lives outside this file: a single agent definition may carry a `security-mode` of its own -
-in the *Service Editor* for a framework agent, in the *Agent Editor* for an application agent. It is a
-**floor**. It can make that one agent stricter than the mode configured here, never laxer, so an agent
-asking for a laxer mode than the deployment's changes nothing at all. Use it for the one agent that
-must be checked in an application that has not migrated yet; leave it empty everywhere else.
+**An agent definition decides nothing about security.** It briefly could name a security mode of its
+own; that setting is gone. What an agent definition decides is which tools it *carries*, and the check
+above then decides which of those the acting account may call. There is no per-agent way to be laxer or
+stricter.
 
 ---
 

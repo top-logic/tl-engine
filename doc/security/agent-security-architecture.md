@@ -1,11 +1,14 @@
 # Security Architecture for TopLogic AI Agents
 
 **Status:** design, with **layer L1 (tool RBAC, sections 3.2 and 4.1) implemented** and every other
-layer still staged. Enforcement is opt-in per application: an application that has written no
-`<tool-access>` policy stays on mode `LEGACY` and behaves exactly as it did before. Section 6 is the
-per-artifact map; [tool-access-configuration.md](tool-access-configuration.md) is the administrator's
-guide to the part that works; [testbed.md](testbed.md) is the runnable fixture that shows it, one
-persona and one expected result per behaviour.
+layer still staged. **Enforcement is unconditional and unconfigurable** (issue **#288**): there is no
+security mode, both layers apply to every run, and an application that has written no `<tool-access>`
+policy and no `<security-config>` gets an agent that can do almost nothing rather than one that is
+unchecked. Section 6 is the per-artifact map; [role-model-worked-example.md](role-model-worked-example.md) explains the role model
+this design sits on and is the page to read *before* this one;
+[tool-access-configuration.md](tool-access-configuration.md) is the administrator's guide to the part
+that works; [testbed.md](testbed.md) is the runnable fixture that shows it, one persona and one expected
+result per behaviour.
 **Depends on:** engine ticket **#29088** (`ModelAccessRights` / `SecurityConfigurationService`),
 **released** in engine `8.0.0-alpha7`, which tl-ai now builds against. All API references below are
 verified against that released artifact.
@@ -20,25 +23,27 @@ discussed here (`doc/architecture.md` is a German stakeholder overview and serve
 
 When a user asks a tl-ai agent for help, the agent must act **as that user** - it may use only the
 tools the user's role permits, read and write only the data the user may, and must never place
-forbidden data into the conversation. Today the agent runs effectively unrestricted: the tool
-permission hook is hardcoded to `true`, the data-access hooks have no callers, and every Java tool
-that touches the `KnowledgeBase` does so without a security check.
+forbidden data into the conversation. What decides that is a single question - **who does this run act
+as** - and there is no mode, flag or agent setting that answers it differently (issue **#288**). A run
+that cannot name an authenticated account does not start.
 
 This document specifies:
 
 1. A **threat model** for agent execution (section 2).
-2. A **layered enforcement architecture** (section 3): execution mode -> tool RBAC -> model ABAC ->
+2. A **layered enforcement architecture** (section 3): identity -> tool RBAC -> model ABAC ->
    result pre-filtering -> pre-commit action guard -> reference guard -> audit.
 3. The **admin-facing configuration** for the role-to-tool mapping the product needs (section 4),
    including config XML, tool groups and an administration-UI concept.
-4. A **rollout plan** that keeps existing applications working (section 5).
+4. What an application has to configure, and what it gets if it configures nothing (section 5).
 5. What is **built** and what is reference code only (section 6).
 
 The two central design commitments:
 
 - **Deny by default, everywhere.** A tool with no grant is not offered and not executable. A model
   type with no `<security-config>` grant is not readable. Both engine and agent layer already behave
-  this way; this design does not soften it, it only makes the transition survivable (section 5).
+  this way, and there is no longer any setting that softens it. An application that configures neither
+  layer gets an agent that can do almost nothing - see
+  [role-model-worked-example.md](role-model-worked-example.md) for the configuration to write.
 - **Two independent authorizations per tool call.** A call is permitted only if
   *(a)* the user's roles grant the **tool** (RBAC, section 3.2) **and**
   *(b)* every model object the tool touches passes the **model check** (ABAC, section 3.3).
@@ -51,7 +56,7 @@ The two central design commitments:
 
 | Concern | Current state | Evidence |
 |---|---|---|
-| Tool permission | **Enforced under a configured policy** (was hardcoded `true`) | `TopLogicSecurityContext.hasToolPermission` answers from `ToolAuthorization`; `true` throughout while no `<tool-access>` is configured |
+| Tool permission | **Enforced for every run** (was hardcoded `true`) | `TopLogicSecurityContext.hasToolPermission` answers from `ToolAuthorization`, always over the running service's policy. An empty policy denies everything but `RoleToolAccess.IMPLICIT_BASELINE` |
 | Tool permission by name | Same | `SecurityContext.hasToolPermission(String)` still defaults to `true` for implementations that do not override it |
 | Data read/write check | Dead stubs, `Object`-typed, **no callers** | `SecurityContext.java:67`, `:80`; a repo-wide grep finds only the declarations |
 | Execution-mode gate | Live | `ToolPermissionFilter.java:36-45` denies `STRUCTURAL` in `PRODUCTION` |
@@ -60,9 +65,9 @@ The two central design commitments:
 | Invocation gate hook | Live but no-op | `AgentLoop.java:885-919` (`executeWithSecurityCheck`) |
 | Chat identity | Correct | `ChatProcessor.buildToolContext` (`ChatProcessor.java:460-499`) installs `TopLogicSecurityContext`; tools run inside the chat user's sub-session |
 | Async agent identity | Correct | `AIScriptFunctions.agentChatAsync` (`:422-436`) refuses to start without a `Person`; the background run re-enters the caller's sub-session (`:448`, `:471`) |
-| TL-Script entry points | **Unrestricted** | `ToolContext.createUnrestricted()` at `AIScriptFunctions.java:183` (`ai.callTool`), `:289` (`ai.chat`), `:343` (`ai.agentChat`) |
-| Test/EMPTY context | **Unrestricted, reachable from production code** | `ToolContext.EMPTY` (`ToolContext.java:31`) is used by `AgentFactory.java:119` and `AgentLoop.java:347` |
-| MCP server | **Still unauthenticated; no longer context-free** | `tl-ai-mcp-server/src/main/resources/META-INF/web-fragment.xml` maps `/mcp/*` with no `security-constraint`, and `tl-ai-demo/.../web.xml` has every filter commented out, so there is no caller identity to resolve (**#261**). `McpToolAdapter` no longer passes a `null` context: it builds an unattended, principal-less `ToolContext` (`McpToolContexts`) and, under `ENFORCED`, **refuses** the call instead of running it as the system. A `LEGACY` deployment is unchanged, i.e. still fully exposed on that endpoint - `MCPServerService` says so at every boot |
+| TL-Script entry points | **Act as the calling account** | `ToolContext.forCurrentUser()` builds a `TopLogicSecurityContext` from `TLContext.currentUser()` and throws when the thread has none |
+| Test/EMPTY context | **Unrestricted, documented as a test seam** | `ToolContext.EMPTY` and `SecurityContext.UNRESTRICTED`; no production path builds a context this way, because `TopLogicSecurityContext.forRun` requires a `Person` |
+| MCP server | **Still unauthenticated; tool execution refused** | `tl-ai-mcp-server/src/main/resources/META-INF/web-fragment.xml` maps `/mcp/*` with no `security-constraint`, and `tl-ai-demo/.../web.xml` has every filter commented out, so there is no caller identity to resolve (**#261**). `McpToolAdapter` therefore refuses every tool call outright, for every deployment - `McpToolContexts` is where the refusal is worded. Resources and prompts are unaffected |
 | Java data tools | **No checks** | e.g. `InstanceBrowserTool.doListInstances` calls `MetaElementUtil.getAllInstancesOf(type, TLObject.class)` and paginates the raw result (`InstanceBrowserTool.java:158`) |
 | Model digest | Unfiltered | `ModelDigestGenerator.generate` walks all modules of the application model (`ModelDigestGenerator.java:46-51`) and is injected into the system prompt |
 
@@ -103,7 +108,7 @@ Two engine behaviours matter for the design and are verified against released `8
  └──────────────┘        └───────────────┬───────────────────┘
                                          │  ToolContext(security, approval, tx)
  ┌──────────────┐        ┌───────────────▼───────────────────┐
- │ External MCP │──HTTP─▶│ MCPTransportServlet  /mcp/*       │──▶ refused under ENFORCED (no principal)
+ │ External MCP │──HTTP─▶│ MCPTransportServlet  /mcp/*       │──▶ tool calls always refused (no principal)
  │ client       │        │  (no auth filter today, #261)     │
  └──────────────┘        └───────────────────────────────────┘
                                          │
@@ -111,7 +116,7 @@ Two engine behaviours matter for the design and are verified against released `8
  │ Scheduler /  │───────▶│ AIScriptFunctions.agentChatAsync  │───────▶│  AgentLoop   │
  │ TL-Script    │        │  (Person required)                │        │  ToolCatalog │
  └──────────────┘        │ AIScriptFunctions.callTool/chat   │        └──────┬───────┘
-                         │  (createUnrestricted)             │               │
+                         │  (acts as the calling account)    │               │
                          └───────────────────────────────────┘               ▼
                                                                     ┌──────────────────┐
     ══════ trust boundary ══════════════════════════════════════════│ KnowledgeBase /  │
@@ -131,11 +136,11 @@ All gates in this design are deterministic Java checks on the call path, never p
 | **T2** | **Data over-read.** `listInstances`/`getInstance`/`searchModel` return objects the user may not see; the answer, the transcript and the SSE stream all carry them. | Yes | L2 (3.3), L3 (3.4) |
 | **T3** | **Prompt-injection-driven tool abuse.** A malicious value stored in a business object, an MCP tool description, or a fetched web page instructs the agent to call a write tool or exfiltrate data. | Yes | L1+L2+L4; approval for write modes; *not* mitigated by prompting |
 | **T4** | **Exfiltration via an outbound tool.** The agent is induced to put secret data into a `webFetch` URL, a Gitea issue body, or an MCP call to an external server. | Yes | L2 on the read side (it never gets the data), plus egress classification (3.2.4) |
-| **T5** | **Unattended/background over-privilege.** `agentChatAsync` runs with `ApprovalCallback.AUTO_APPROVE` (`AIScriptFunctions.java:471-472`): every approval-gated tool self-approves. | Yes - by design, but unbounded | 3.1 (mode), 3.2.5 (background tool floor) |
-| **T6** | **The unrestricted bypasses.** `ToolContext.createUnrestricted()` and `ToolContext.EMPTY` grant `SecurityContext.UNRESTRICTED` + `AUTO_APPROVE` + `DEVELOPMENT` mode. `EMPTY` is reachable from `AgentFactory.runAgent` and `AgentLoop.run`. | Yes | 3.1 |
-| **T7** | **The MCP bypass.** `/mcp/*` is unauthenticated. Every adapted tool used to execute with a `null` `ToolContext` in a system interaction - i.e. with the engine's super-user bypass. | Only under `LEGACY`: an `ENFORCED` deployment now refuses MCP tool execution, because an unauthenticated caller cannot be authorized | 3.1, 3.7, **#261** for the transport half |
+| **T5** | **Unattended/background over-privilege.** `agentChatAsync` runs with `ApprovalCallback.AUTO_APPROVE`: every approval-gated tool self-approves. | **Bounded** by the background allowlist | 3.1 (identity), 3.2.5 (background tool floor) |
+| **T6** | **The unrestricted bypasses.** `ToolContext.createUnrestricted()` used to grant `SecurityContext.UNRESTRICTED` + `AUTO_APPROVE` + `DEVELOPMENT` mode from a production path. | **Closed**: `createUnrestricted` is gone and the remaining permissive constructs are test seams | 3.1 |
+| **T7** | **The MCP bypass.** `/mcp/*` is unauthenticated. Every adapted tool used to execute with a `null` `ToolContext` in a system interaction - i.e. with the engine's super-user bypass. | **Closed**: tool execution over MCP is refused for every deployment, because an unauthenticated caller cannot be authorized | 3.1, 3.7, **#261** for the transport half |
 | **T8** | **Privilege escalation via self-modification.** `AgentAuthoringTool`, `FrameworkWiringTool`, `ScriptToolAuthoringTool` let an agent create agents, add tools to agents and define new script tools. An agent that may edit agents can grant itself any tool. | Yes | 3.2.3 (privileged group), 3.2.6 (delegation cannot widen) |
-| **T9** | **Privilege escalation via self-selected security level.** Nothing stops a caller from constructing a permissive `SecurityContext` or picking a laxer mode. | Yes | 3.1 (the mode is static application configuration, resolved once per run, immutable) |
+| **T9** | **Privilege escalation via self-selected security level.** Nothing stopped a caller from constructing a permissive `SecurityContext` or picking a laxer mode. | **Closed structurally**: there is no mode to pick, and no production path builds a permissive context | 3.1 |
 | **T10** | **RAG / vector-index leakage.** `searchVectorIndex` returns chunks derived from indexed objects with no per-user filter; the index is built by a background daemon under system rights. | Yes | 3.4.3 |
 | **T11** | **Schema disclosure.** The model digest injected into the system prompt enumerates every module, type and attribute of the application. | Yes | 3.4.2 |
 | **T12** | **Write without authority reaching the commit.** Any tool that forgot its check (or a future/MCP tool that never had one) writes through the shared `TransactionScope`, and the end-of-turn commit persists it. **Closed for an enforcing run** by 3.5. | Yes | 3.5 (pre-commit guard) · **implemented** |
@@ -185,8 +190,8 @@ All gates in this design are deterministic Java checks on the call path, never p
 
 ```
                        ┌─────────────────────────────────────────────┐
-   run starts  ───────▶│ L0  Identity + AiSecurityMode               │  once per run
-                       │     Person required; mode from the policy   │
+   run starts  ───────▶│ L0  Identity                                │  once per run
+                       │     Person required, or the run is refused  │
                        └───────────────────┬─────────────────────────┘
                                            │
                        ┌───────────────────▼─────────────────────────┐
@@ -227,118 +232,102 @@ All gates in this design are deterministic Java checks on the call path, never p
 Layers are **independent**: L1 does not assume L2 ran, L4 does not assume L2 ran. That is the point -
 L4 exists precisely because some tool will forget L2.
 
-### 3.1 L0 - Execution mode and identity
+### 3.1 L0 - Identity · **implemented**
 
-#### `AiSecurityMode`
+**There is no security mode.** Both enforcement layers apply to every agent run, unconditionally and
+unconfigurably. What a run may do follows from a single question - *who does it act as* - and a run
+that cannot answer it does not start.
 
-```java
-public enum AiSecurityMode {
-    /** Full enforcement: a Person is required, tool RBAC and model checks apply. */
-    ENFORCED,
-    /** Audited bypass for trusted system automation. Every use is logged. */
-    SYSTEM,
-    /** The default: no tool RBAC, no model checks. Migration only. */
-    LEGACY
-}
-```
+`AiSecurityMode` used to sit here with the values `LEGACY`, `SYSTEM` and `ENFORCED`, and a run's
+effective mode was `stricter(deploymentCeiling, agentFloor)`. All of it is gone (issue **#288**). The
+reasoning is worth keeping, because it is what a future proposal to reintroduce a bypass has to answer:
 
-`SYSTEM` is *not* "no security" - it is "the system is the principal, and we say so out loud". Every
-`SYSTEM`-mode run emits an audit record naming the configured reason (section 3.8). It is the honest
-name for what `createUnrestricted()` does silently today.
+- **`LEGACY` was migration machinery for an installed base that does not exist.** tl-ai runs in no
+  productive application, so nothing needed migrating - and as the default it masked every enforcement
+  gap, because an unfiltered tool result looks harmless when nothing is enforced anyway.
+- **`SYSTEM` was a total bypass, not a bounded one.** `TopLogicSecurityContext.build` set *both*
+  `ModelSecurity` and `ToolAuthorization` to `UNCHECKED` unless the mode was `ENFORCED`, and the
+  `<background-allowlist>` lives inside `ToolAuthorization` - so it never applied to a `SYSTEM` run.
+  `SYSTEM` meant unlimited reach, audited.
+- **`SYSTEM` on an agent only ever worked because `LEGACY` existed.** The comparison was numeric
+  (`LEGACY=0, SYSTEM=1, ENFORCED=2`), so `stricter(ENFORCED, SYSTEM)` returned `ENFORCED`. Once every
+  deployment enforces, an agent's `SYSTEM` declaration is already inert.
+- **Keeping it would have created an escalation path.** With no `LEGACY`, `SYSTEM` is *laxer* than the
+  default, so letting an agent definition ask for it would mean editing an agent definition buys
+  unlimited reach over all data. Reading the per-agent value as a floor existed precisely to remove
+  that direction.
 
-#### Resolution: the deployment ceiling and the agent's floor
+The root cause is that the enum was a single strictness line over two independent questions - *is
+enforcement on* and *who is the principal*. `SYSTEM` answered the second, so it was never comparable
+by strictness to begin with. Splitting them is what this section now does: enforcement is not a
+question, and identity is answered per entry point.
 
-```
-effectiveMode = stricter(deploymentCeiling, agentFloor)     where an absent policy means LEGACY
-                                                           and an absent floor means "no floor"
-```
+#### Identity: every run carries a `Person`, or refuses to start
 
-The ceiling is service configuration (`AiToolAccessService`), set by whoever operates the application,
-and every run of that application carries at least it. The floor is the optional `security-mode` of
-one agent definition, and the ordering `ENFORCED > SYSTEM > LEGACY` decides between them:
-`AiSecurityMode.resolve(ToolAccessPolicy, AiSecurityMode)` is the whole rule.
+`TopLogicSecurityContext.forRun(Person, boolean)` is the single production entry point, and it throws
+when the principal is `null`. Refusing where the context is built rather than at the first tool call is
+deliberate: a run without a principal cannot be authorized, and failing later wastes a provider round
+trip and produces a confusing half-run.
 
-Reading the per-agent value as a **floor** rather than as an override is what makes it safe to expose
-at all. Authoring an agent is a privileged action, but it is a *different* privilege from operating
-the deployment - so an agent may demand `ENFORCED` in a `LEGACY` deployment, and an agent asking for
-`LEGACY` in an `ENFORCED` deployment gets nothing. There is no escalation direction to abuse. The one
-uncomfortable corner is that the laxer value is then silently inert; it is stated in the property's
-own tooltip rather than left to be discovered.
+| Entry point | Principal |
+|---|---|
+| `ChatProcessor` (`/chat/*`) | the logged-in chat user. `ChatSessionFilter` has already rejected an unauthenticated caller |
+| `AIScriptFunctions.aiAgentChat` | the account that executed the script (`ToolContext.forCurrentUser()`) |
+| `AIScriptFunctions.aiAgentChatAsync` | the same account; the function already refuses a sub-session without a `Person`, and the background run re-enters that sub-session |
+| Delegated child, detached subagent | the parent's principal, inherited unchanged |
+| `/mcp/*` | **none, so tool execution is refused outright** (section 3.7, issue **#261**) |
+| A future scheduler entry point | must supply a **configured service account** - a real account holding real roles, administered like any other. There is no mode that lets it run without one |
 
-Threat **T9** is escalation by self-selection, and the answer is that neither input comes from the
-run: the ceiling is static application configuration and the floor is the agent definition, not
-anything the caller or the model supplies. Resolution happens **once** - the entry point resolves it
-when it builds the `ToolContext`, and `AgentLoop` resolves it again for the agent it is about to run,
-before the first provider call - and the result is a final field on the `SecurityContext`. It is never
-re-derived mid-run and never re-derived per tool call, so a tool cannot influence it.
+The resolved `Person` is captured on the `SecurityContext` at construction and is **not** re-read from
+`TLContext` per check: a concurrent tool batch runs on worker threads that re-establish the
+sub-session, and a design that re-reads thread state per check is one thread-local bug away from
+checking the wrong user.
 
-**Why twice.** The loop is the point every run passes through, including a delegated child and an
-asynchronous subagent, so applying the floor there is what gives child runs the rule below without
-each entry point knowing about it. But tightening needs the run's principal, and the fallback context
-a TL-Script entry point uses while nothing is enforced has none - so an entry point that ignored the
-floor would leave the loop able only to *refuse* the run. Both applications are idempotent
-(`SecurityContext.restrictedTo` returns `this` unless the floor really tightens), so resolving twice
-is not resolving differently.
+Threat **T9** was escalation by self-selection. Its answer is now structural rather than a comparison
+rule: there is no mode input at all, from the caller, the model or an agent definition. An agent
+definition declares no security mode, and `AgentDefinition` carries no field for one.
 
-**Delegation and subagents.** A child run inherits its parent's `SecurityContext` unchanged and its
-own loop can only narrow it. So a child is **never laxer than its parent's effective mode**, whatever
-the child agent declares, and a child agent declaring something stricter keeps it. Nothing special is
-needed at the delegation seam; the invariant follows from the composition being one-directional.
+**Delegation and subagents.** A child run inherits its parent's `SecurityContext` unchanged, so it can
+never come out wider than its parent. A detached subagent additionally loses the approval prompt when
+the parent turn ends, so `ToolContext.forDetachedSubagent` narrows it by the
+`<background-allowlist>` - see section 3.2.5. Attendedness is a genuinely separate property from
+identity, which is why the `background` flag stays while the mode goes.
 
-**What an `ENFORCED` floor actually buys** depends on what the deployment has to enforce with. Model
-access is the engine's, so it applies immediately. Tool authorization is the policy's, and a
-deployment that configured no `AiToolAccessService` at all has no matrix to check against - the run
-then carries `ENFORCED` with `ToolAuthorization.UNCHECKED`. A floor raises the mode; it does not
-invent a policy.
+#### What is left of "unrestricted"
 
-Defaults:
+Three permissive constructs survive, all explicitly test seams and none reachable from a production
+path:
 
-| Deployment | Default ceiling | Rationale |
-|---|---|---|
-| New application (no `<security-config>` present at boot, `tl-ai` first installed) | `ENFORCED` | Safe by default |
-| Existing application with no `<security-config>` | `LEGACY` + a boot warning | Deny-by-default model security would otherwise make every agent useless overnight (section 5) |
-| Any application that has a non-empty `<security-config>` | `ENFORCED` | Presence of a policy is the opt-in signal |
+| Construct | Why it exists |
+|---|---|
+| `SecurityContext.UNRESTRICTED` | a context with no principal, for unit tests of anything that merely needs *a* context |
+| `ToolContext.EMPTY` | the same, wrapped with `AUTO_APPROVE` and a no-op transaction scope |
+| `ModelSecurity.UNCHECKED`, `ToolAuthorization.UNCHECKED`, `PreCommitGuard.PERMISSIVE` | the engine's model rights need a booted `SecurityConfigurationService` and the tool policy a booted `AiToolAccessService`; a unit test about how a context *behaves* has neither |
 
-The "existing application" case is detected at boot: `SecurityConfigurationService` has an empty
-`getSecurityConfig()` **and** the application did not explicitly configure a mode. That combination
-logs one prominent warning per boot and selects `LEGACY`. Explicit configuration always wins over the
-heuristic.
+`ToolContext.createUnrestricted()` and the `forCurrentUser` fallback to it are gone, as are
+`SecurityContext.restrictedTo`, `ToolContext.restrictedTo` and
+`AgentDefinitionQuery.securityFloorOf`. `AiToolAccessService.authorizationFor` and
+`ModelAccessRightsSecurity` both throw when their service is down, rather than granting everything -
+both services are registered active by default, so absence is a deliberate deactivation and not a
+state to be permissive about.
 
-#### Identity
+#### The consequence an administrator meets first
 
-In `ENFORCED`, the run is refused **up front** - before the first provider call, not at the first
-tool call - if `TLContext.currentUser()` is `null`. The reason: a run without a principal cannot be
-authorized, and failing at the first tool call wastes a provider round trip and produces a confusing
-half-run. `AIScriptFunctions.agentChatAsync` already does exactly this (`:426-436`); the check moves
-into the shared entry point so all four entry points inherit it.
+**Every application must ship a `<security-config>`, or its agent can read nothing.**
+`SecurityConfigurationService` is registered active by default in every TL 8 application (`tl-core`'s
+web fragment sets its module to `value="true"`) and instantiates with empty rights, which is deny-all
+for role-based users. An application that writes no `<security-config>` has not opted out of model
+security; it has denied everything. The same holds one layer up: an absent `<tool-access>` matrix
+grants only `RoleToolAccess.IMPLICIT_BASELINE`.
 
-The resolved `Person` is captured on the `SecurityContext` at construction. It is **not** re-read from
-`TLContext` per check: a concurrent tool batch runs on worker threads that re-establish the sub-session
-(`AgentLoop.java:776-808`), and a design that re-reads thread state per check is one thread-local bug
-away from checking the wrong user.
+Administrators and engine super-users bypass all of it, and so does any code in a system context, so
+**testing with an admin account proves nothing**.
+[role-model-worked-example.md](role-model-worked-example.md) is the configuration to follow: one role
+vocabulary, two grant tables, four personas walked through every operation.
 
-#### Making the bypasses loud
+Genuine framework-internal bypasses - security storage rebuild, migrations - already have
+`ThreadContext.inSystemContext` in Java. That is where a bypass belongs, not in agent configuration.
 
-| Today | Becomes | Behaviour |
-|---|---|---|
-| `ToolContext.EMPTY` | `ToolContext.forTesting()` | Package-visible where possible; asserts it is not used in a deployed environment |
-| `ToolContext.createUnrestricted()` | `ToolContext.createSystemContext(String auditReason)` | Mandatory non-blank reason; emits an audit record on creation; resolves to `AiSecurityMode.SYSTEM`, which is subject to the global ceiling |
-| `SecurityContext.UNRESTRICTED` | `SecurityContext.systemContext(String reason)` | Same |
-
-`AgentFactory.java:119` and `AgentLoop.java:347`, which currently reach for `ToolContext.EMPTY` from
-production code paths, are re-pointed at an explicit system context with a stated reason.
-
-The three `AIScriptFunctions` call sites are re-pointed as follows:
-
-| Call site | Today | Target |
-|---|---|---|
-| `ai.callTool` (`:183`) | `createUnrestricted()` | Caller's context when a `Person` is bound; otherwise `SYSTEM` with reason `"ai.callTool from a context-less caller"` |
-| `ai.chat` (`:289`) | `createUnrestricted()` | Same |
-| `ai.agentChat` (`:343`) | `createUnrestricted()` | Same |
-
-Note this is a *behaviour* change for TL-Script users: `aiCallTool` invoked from an interactive
-Script Console session currently runs unrestricted and will then run as the console user. That is the
-correct semantics and is called out in the rollout plan (section 5).
 
 ### 3.2 L1 - Tool authorization (role-based) · **implemented**
 
@@ -533,8 +522,9 @@ Five code fixes and one piece of prompt text address that:
   that reaches no tool at all (a **delegation-only** agent must not fall to the vacuous "all zero of
   its tools are denied"), one that is partly reachable (below), and one whose tool names resolve
   nowhere (a typo is not a denial). Every dropped delegate is logged at INFO naming the capabilities it
-  needed. `LEGACY` filters nothing - the generated `### Available Delegates` section stays
-  byte-identical, pinned by `TestDelegateFilter.testLegacyCatalogIsUnchanged`.
+  needed. A principal who may use every tool loses nothing - the generated `### Available Delegates`
+  section is then byte-identical to what it was before this filter existed, pinned by
+  `TestDelegateFilter.testCatalogOfAPrincipalWhoMayUseEverything`.
 
   All **three** exposure surfaces filter, from the one judged list (`AgentFactory.delegateOffers`), so
   they cannot drift: the prompt catalog (`delegateCatalog`), the `delegate_to_*` registration in both
@@ -576,7 +566,7 @@ Five code fixes and one piece of prompt text address that:
   inside the parent turn, so nothing about it is filtered here. The refusal never says or implies that
   the agent does not exist - it does, and a model told otherwise looks for another name for the same
   work. An agent that really is unknown is not refused here either: that is not a denial, and the spawn
-  fails where it always did. `LEGACY` refuses nothing, and does not even walk the agent graph.
+  fails where it always did.
 - **`loadSkill` no longer advertises tools the principal cannot call** (`SkillTool.addSkillTools`).
   It used to register and announce every resolvable tool of a skill; the next turn's schema filter
   then removed exactly the denied ones, so an authoritative tool result contradicted the tool list.
@@ -639,13 +629,13 @@ Five code fixes and one piece of prompt text address that:
 
 **This prompt text is UX, not a control**, and must not be read as closing anything: see section 2.2
 - all gates in this design are deterministic Java checks on the call path, never prompt instructions.
-It is emitted only where the run's mode `enforcesToolAccess()`, so a `LEGACY` prompt is byte-identical
-to what it was before this existed.
+It is emitted for every run, and a principal who holds every capability its tools require is told
+exactly that rather than being given a list of gaps.
 
 #### 3.2.8 Why a tool must not declare its own group when its author is not trusted
 
 Dropping a whole skill (3.2.7) makes the ungrouped TL-Script tool a live problem rather than a
-theoretical one: under `ENFORCED` every script tool is denied to everyone, so a skill built out of
+theoretical one: every script tool is denied to everyone until an administrator classifies it, so a skill built out of
 them disappears - for its author too. The obvious fix is to let the tool's configuration name its own
 group. **That fix is wrong, and it is not implemented.**
 
@@ -726,9 +716,9 @@ helper is `Object`-typed and shape-preserving, so routing a `Collection<T>` thro
 unchecked cast to get a `List<T>` back, for no gain - the per-object check it performs is exactly
 `isReadAllowed`.
 
-In `LEGACY` mode the façade returns `true` everywhere and logs nothing (that is what `LEGACY` means).
-In `SYSTEM` mode it returns `true` and increments an audit counter per distinct type touched, so
-"which types did system-mode automation actually reach" is answerable without logging per object.
+There is no mode in which the façade returns `true` everywhere. `ModelSecurity.UNCHECKED` still exists
+and still does exactly that, but it is a test seam: every production context carries a
+`ModelAccessRightsSecurity` built from the run's principal.
 
 #### 3.3.2 Retrofitting the Java tools
 
@@ -741,7 +731,7 @@ The tools that need it, in dependency order:
 | `ModelSearchTool.searchModel` | TL-Script-backed - inherits engine enforcement; assert the search runs under the user (not a system context) |
 | `ModelBrowserTool.*`, `TypeAnalysisTool.*` | Restrict enumeration to `accessibleTypes(READ)` (section 3.4.2) |
 | `ModelEditorTool.*`, `ModelAnnotationEditorTool.*` | Structural: gated by the `model.structure` group at L1; L4 backstops the commit |
-| `TLScriptTool.executeTLScript` | Already enforced by the engine inside TL-Script as of `8.0.0-alpha7`; assert user context, never a system interaction. Note this enforcement is **not** gated by `AiSecurityMode`, so it also applies in `LEGACY` - and it denies by default, see section 6 |
+| `TLScriptTool.executeTLScript` | Already enforced by the engine inside TL-Script as of `8.0.0-alpha7`; assert user context, never a system interaction. That enforcement was never gated by tl-ai at all, and it denies by default - see section 6 |
 | `VectorIndexSearchTool` | Section 3.4.3 |
 | `McpTool` (all remote tools) | Cannot be introspected and declares no group, so it is ungrouped and therefore denied until an administrator classifies it in `<tool-groups>`. Same for `ScriptToolExecutor`, i.e. every TL-Script tool authored in the running application. Classification stays with the administrator on purpose - a self-declared group would let whoever authors a tool choose which capability it costs to call (see 3.2.8) |
 
@@ -870,7 +860,7 @@ commit per turn, so there is exactly one place to guard.
 ```java
 public interface PreCommitGuard {
 
-    /** Accepts every change. The behaviour of AiSecurityMode.LEGACY. */
+    /** Accepts every change. A test seam; forRun never answers with it. */
     PreCommitGuard PERMISSIVE = ...;
 
     /** The violations found; empty means the commit may proceed. */
@@ -941,8 +931,6 @@ papered over.
 - Side effects outside the KnowledgeBase. A tool that wrote a file, sent a mail or called an HTTP
   endpoint is not rolled back by a KB rollback. That is L1's business (`egress`) and the approval
   prompt's, not this layer's.
-- A `LEGACY` or `SYSTEM` run. Neither enforces model access, so `forRun` hands back `PERMISSIVE` and no
-  change set is read at all.
 
 **Cost.** One `ModelAccessRights` call per touched object and per touched attribute, once per turn,
 plus one pass over the transaction's own change lists. Turns that write nothing - the overwhelming
@@ -975,9 +963,9 @@ in prose, and prose is not checked. That is inherent to the product.
 
 | Route | Today | Design |
 |---|---|---|
-| **MCP server** (`McpToolAdapter.java:120`, `ToolExecutions.execute(t, a, null)`) | Unauthenticated `/mcp/*`, `null` context, system interaction, engine super-user bypass | (1) `/mcp/*` requires authentication and resolves to a `Person` (a `security-constraint` or an authentication filter in `web-fragment.xml`, plus token-to-`Person` mapping). (2) The adapter builds a real `ToolContext` for that `Person` and runs the tool inside their sub-session. (3) With no resolvable `Person`, in `ENFORCED` the call is **refused**, not downgraded to system. (4) The adapted tool set is filtered by the same `ToolPermissionFilter` as the chat path - one policy, two front ends. |
-| **`createUnrestricted()`** (`AIScriptFunctions.java:183`, `:289`, `:343`) | Silent full bypass | Renamed to `createSystemContext(reason)`; prefers the caller's `Person` when one is bound; audited; capped by the global ceiling |
-| **`ToolContext.EMPTY`** (`ToolContext.java:31`, used at `AgentFactory.java:119`, `AgentLoop.java:347`) | Full bypass reachable from production code | Renamed `forTesting()`, asserts non-deployed; the two production call sites take an explicit system context |
+| **MCP server** (`McpToolAdapter`) | Unauthenticated `/mcp/*`, `null` context, system interaction, engine super-user bypass | **Closed now:** every tool call over `/mcp/*` is refused, because the endpoint names no account to authorize against and none is invented. **Later (#261):** `/mcp/*` authenticates and resolves to a `Person` (a `security-constraint` or an authentication filter in `web-fragment.xml`, plus token-to-`Person` mapping), the adapter builds a real `ToolContext` for that `Person`, and the adapted tool set is filtered by the same `ToolPermissionFilter` as the chat path - one policy, two front ends. |
+| **`createUnrestricted()`** (the TL-Script entry points) | Silent full bypass | **Closed:** removed. `ToolContext.forCurrentUser()` acts as the calling account and throws when the thread has none |
+| **`ToolContext.EMPTY`** | Full bypass reachable from production code | **Closed:** documented as a test seam, and no production path builds a context this way - `TopLogicSecurityContext.forRun` requires a `Person` |
 
 The MCP change is the one with real external impact: existing external clients (Claude Desktop,
 Cursor) will need credentials. That is the point - an unauthenticated endpoint that executes
@@ -990,13 +978,12 @@ One structured event type, `AgentEvent.SecurityAudit`, alongside the existing 25
 
 | Occasion | Why |
 |---|---|
-| Every `SYSTEM`-mode context creation, with its reason | Bypasses must be countable |
 | Every RBAC denial (L1) | Detects both misconfiguration and probing |
 | Every `ToolSecurityException` (L2) | The tool asked and was told no |
 | Every pre-commit rollback, one record per violation (L4) · **implemented as a log line** | The highest-signal event in the system - it means a tool tried to write without authority. `ModelSecurityPreCommitGuard` writes one `ERROR` per violation, in the field shape of a `ToolAuthorization` denial. What is still missing is the structured `AgentEvent.SecurityAudit` and the `ConversationLog` entry |
 | Every reference stripped (L5) | Low volume, high signal |
 | Every `egress` call correlated with a restricted `data.read` in the same turn (3.2.4) | Exfiltration detection |
-| Every effective-mode resolution at run start | Answers "under what policy did this run execute" |
+| Every refused run - one that could not name a principal | Answers "what tried to run with no account behind it" |
 
 Denials are logged at `WARN` and rollback violations at `ERROR`. Both should also go to the
 `ConversationLog`, so the audit trail lives with the transcript that produced it - that part is **not
@@ -1016,8 +1003,7 @@ interface is `ToolAccessPolicy` (scaffolded on this branch), which the service's
 
 ```xml
 <config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
-    <!-- security-mode is the deployment-wide mode; every run of this application carries it. -->
-    <instance security-mode="ENFORCED">
+    <instance>
 
         <!-- Group membership is declared on the tool (@ToolMethod(group=...)).
              This section only *overrides* it, or assigns a group to tools that
@@ -1117,10 +1103,10 @@ accident.
 
 | Question | Decision | Why |
 |---|---|---|
-| When exactly does enforcement turn on? | An explicit `security-mode` always wins. Without one, a **non-empty `<tool-access>`** resolves to `ENFORCED` and an empty one to `LEGACY`. | Phase 3 says "an application enables it by writing `<tool-access>`", so writing the matrix has to be sufficient - requiring a second `security-mode="ENFORCED"` would make a written policy silently inert, the failure mode this layer must not have. It also matches 3.1's rule that the presence of a policy is the opt-in signal. Note this needed `@NullDefault` on the property: an enum configuration property otherwise defaults to its first constant, so "not configured" and "`LEGACY`" would be indistinguishable. |
+| When exactly does enforcement turn on? | **It is always on.** There is no setting, and an absent `<tool-access>` matrix is not an opt-out: it grants only `RoleToolAccess.IMPLICIT_BASELINE` (issue **#288**). | A switch whose default was permissive masked every enforcement gap and existed to migrate an installed base that does not exist. What survives of the old reading is that writing the matrix is still what makes an application *usable*, not what makes it *checked*. |
 | A `<grant group="...">` naming a group no tool is in | Boot **warning**, not error, listing the unknown names and the known ones | Unlike roles, group names are an open string space by design - applications, MCP servers and TL-Script tools authored in the running application contribute their own, and one can appear after boot. A group nobody claims *at boot* is therefore not proof of a typo. It is still said out loud, because a grant of a misspelled group reaches nothing. |
 | Does the `<background-allowlist>` apply to administrators? | **Yes** | Its justification is the missing approval prompt, not the principal's authority: an unattended administrator run has nobody to ask either. An administrator who needs a write tool in a scheduled run says so by putting its group on the allowlist - which is the "explicit administrative decision" 3.2.5 asks for. |
-| What if the `<background-allowlist>` is missing? | **Boot error** naming the three things that can be said instead | It is the only control that stands in for the approval prompt an unattended run cannot show, so its absent state must not be the permissive one. See 3.2.5. |
+| What if the `<background-allowlist>` is missing? | **Boot error** naming the three things that can be said instead - for a policy that grants at least one role something. A policy with no `<tool-access>` entries at all has nothing to have forgotten and boots. | It is the only control that stands in for the approval prompt an unattended run cannot show, so its absent state must not be the permissive one. See 3.2.5. |
 | What if it is present but empty? | Unattended runs reach **nothing** | A legitimate and stricter answer, and distinguishable from silence - which is exactly why silence has to be rejected rather than interpreted. |
 | Does it apply to a sub-agent? | **To a detached one, yes; to a synchronous delegation, no** | The question is only ever whether somebody is there to answer an approval prompt. A synchronous delegation completes inside the parent turn, where that human still is; `spawn_subagent` is fire-and-forget, so the parent turn ends and the child works on with nobody to ask. See 3.2.5 - and note the accepted consequence: a detached child loses tools its parent could use, and says so in its own prompt. |
 | Where do the group constants live? | `tl-ai-tool-api`, not next to the policy | A tool declares its group on `@ToolMethod`, so the legal values must be nameable from every module that can define a tool. `tl-ai-vector-index` depends on `tl-ai-tool-api` alone and could not otherwise classify `searchVectorIndex`. |
@@ -1144,8 +1130,6 @@ below is still a proposal.
         <tool name="instance-browser.getInstance"/>
         <tool name="model-search.searchModel"/>
     </tools>
-    <!-- Floor: this agent is never laxer than ENFORCED, whatever the deployment mode. -->
-    <security-mode>ENFORCED</security-mode>
     <!-- NOT BUILT. Optional: additionally narrow this agent below what the user's roles allow. -->
     <required-groups>
         <group name="data.read"/>
@@ -1153,22 +1137,11 @@ below is still a proposal.
 </agent>
 ```
 
-The property is named `security-mode`, not `security-mode-floor` as an earlier draft of this section
-proposed: it is the same setting an administrator already knows from the deployment policy, and
-spelling the composition rule into the name buys less than having one name for one concept. That the
-value can only tighten is said in its tooltip, in 3.1, and in the resource an administrator reads.
-
-Both layers carry it, because both are places an agent definition is expressed:
-
-| Layer | Where | How |
-|---|---|---|
-| Framework agents | the `TopLogicAgentDefinitions` service XML | `<agent security-mode="ENFORCED">`, edited in *Service Editor → TopLogic Agents and Skills* |
-| Application agents | the knowledge base | the `securityMode` attribute of `tl.ai.core:Agent`, edited in the *Agent Editor* |
-
-Both are optional and both distinguish "not set" from an explicit `LEGACY` - `@Nullable` plus
-`@NullDefault` on the configuration property, a non-mandatory attribute in the model. An enum
-configuration property otherwise defaults to its first constant, which would make "the author of this
-agent said nothing" indistinguishable from "this author chose the laxest mode".
+**An agent definition declares no security mode.** It briefly could (#260), on both layers an agent
+definition is expressed in, and issue **#288** removed the declaration, the model attribute and the
+selector in the service editor. Nothing about a run's enforcement comes from an agent definition, and
+an agent definition is editable by whoever may author agents - so any value it carried would have been
+either inert or an escalation path. See 3.1.
 
 `required-groups` is a self-imposed narrowing: the agent declares it needs nothing beyond these
 groups, so even a user with broad roles gets only these tools through *this* agent. It shrinks blast
@@ -1213,8 +1186,8 @@ explicit worklist. This is the UI face of O4.
 - Granting a privileged group requires a confirmation step and writes a security-change audit record.
 - Removing the last grant of `agent.authoring` from all roles warns that no one will be able to
   administer agents.
-- The editor **cannot** grant a role something the deployment's `<security-mode>` ceiling forbids; the
-  affected cells render disabled with the reason.
+- The editor cannot express anything about enforcement, because there is nothing to express: every
+  cell it edits is a grant, and every grant is applied.
 
 **Export.** The matrix exports as the `<tool-access>` XML of section 4.1, so a configuration developed
 interactively can be committed to version control - the same round-trip administrators expect from
@@ -1241,25 +1214,27 @@ The hard constraint: **both layers are deny-by-default**, so switching everythin
 every existing agent into an agent that can do nothing. The sequencing below stops data loss first and
 defers the changes that need application-side policy authoring.
 
-### Phase 0 - Observability (no behaviour change)
+**The phasing below is history, not a plan.** It was written for an installed base and a permissive
+default, and issue **#288** removed both: enforcement is unconditional from now on, so an application
+that has not authored a policy is simply an application whose agent can do almost nothing. The phases
+are kept because they record what was built in which order and why, and because phases 3 to 5 still
+name the work that is open.
+
+### Phase 0 - Observability (no behaviour change) · **dropped**
 
 Ship L6 audit and a **dry-run** evaluator: compute the L1 and L4 decisions, log what *would* have been
-denied, enforce nothing. This produces the input every application needs to write its policy, and
-turns "will this break us?" into a measurement instead of an argument. Also ship the renames of
-section 3.7 (`EMPTY` -> `forTesting`, `createUnrestricted` -> `createSystemContext(reason)`): they are
-mechanical, they compile-break every bypass call site into visibility, and they change no behaviour.
+denied, enforce nothing. It existed to give an installed base the input for writing its policy. With no
+installed base and no permissive mode there is nothing to dry-run against, so it was never built.
 
-### Phase 1 - Mode seam, identity, MCP authentication
+### Phase 1 - Identity, MCP authentication · **done, except #261**
 
-- Introduce `AiSecurityMode` and resolve it once per run (3.1). Default `LEGACY` for existing
-  applications, `ENFORCED` for new ones.
-- Refuse `Person`-less runs in `ENFORCED`.
+- Every run carries a `Person` or refuses to start (3.1). The mode seam this phase originally
+  introduced was deleted again by #288.
 - Require authentication on `/mcp/*` and build a real `ToolContext` for its caller (3.7, issue #261).
-  Done so far: the `ToolContext` is real but principal-less, and an `ENFORCED` deployment refuses the
-  call rather than running it as the system.
+  Until then every tool call over that endpoint is refused.
 
-MCP authentication lands here rather than later because it is the only externally reachable
-unauthenticated path, and it is independent of any application writing a `<security-config>`.
+MCP authentication was pulled forward because it is the only externally reachable unauthenticated
+path, and it is independent of any application writing a `<security-config>`.
 
 ### Phase 2 - Pre-commit guard · **implemented** - and result filtering
 
@@ -1268,18 +1243,17 @@ writes and data leaving, they work without any per-application tool policy, and 
 still protect an application that never gets round to writing a policy.
 
 **Built:** L4, the pre-commit guard of section 3.5 - `PreCommitGuard`, `ModelSecurityPreCommitGuard`,
-`ToolChangeSet` and the call in `AgentLoop.commitTransaction`. It enforces in `ENFORCED` and is a
-complete no-op in `LEGACY` and `SYSTEM`: `PreCommitGuard.forRun` hands back `PERMISSIVE`, and the change
-set is never even read. The dry-run-in-`LEGACY` variant this section used to propose was dropped - a
-`LEGACY` application has no `<security-config>`, so every object would be reported as a violation and
-the log would say nothing.
+`ToolChangeSet` and the call in `AgentLoop.commitTransaction`. It runs for every turn that opened a
+transaction; turns that wrote nothing never open one and pay nothing.
 
-**Still open:** L3, data-tool result filtering, which is absent regardless of mode.
+**Still open:** L3, data-tool result filtering, which is absent everywhere - issue **#289**. Removing
+the permissive mode made those leaks live rather than latent, which is why #289 is next.
 
 ### Phase 3 - Tool RBAC · **implemented, except the administration UI**
 
-`AiToolAccessService`, the group taxonomy and the admin UI. An application enables it by writing
-`<tool-access>`. Until it does, the baseline plus per-agent lists apply - i.e. today's behaviour.
+`AiToolAccessService`, the group taxonomy and the admin UI. The policy is applied to every run; what
+an application decides by writing `<tool-access>` is what its agents can reach, not whether they are
+checked.
 
 **Built:** `AiToolAccessService` reading the section 4.1 XML, with boot-time role validation; all 75
 registered tools assigned to the taxonomy through `@ToolMethod(group = ...)`; `hasToolPermission`
@@ -1290,11 +1264,8 @@ log. Administrator-facing documentation is
 
 **Not built:** the administration UI of section 4.3 - no matrix editor, no effective-permissions
 inspector, no new-tool review queue. The policy is edited as configuration. Nor is there a per-role
-"pre-approved for `data.write`" (open question 6 stays open): approval remains per mode, for every role.
-
-Migration aid: the dry-run evaluator from phase 0 emits a **suggested** `<tool-access>` derived from
-observed usage per role. Suggested, never applied - a machine-generated grant is a proposal for a human
-to review, not a policy. *Still to build - phase 0 has not shipped.*
+"pre-approved for `data.write`" (open question 6 stays open): approval remains per tool mode, for every
+role.
 
 ### Phase 4 - Model ABAC
 
@@ -1304,20 +1275,24 @@ warning rather than a silent empty answer:
 
 > `No model access rights are configured for your roles. The AI assistant cannot access application data until an administrator configures <security-config>.`
 
-### Phase 5 - Remove `LEGACY`
+### Phase 5 - Remove the security mode · **done** (#288)
 
-Once applications have migrated, delete `LEGACY` and the dry-run paths. `SYSTEM` remains: audited
-system automation is a legitimate need, not a migration crutch.
+`LEGACY`, `SYSTEM` and the whole ceiling/floor machinery are deleted. Unattended runs get a
+**configured service account** instead of `SYSTEM`: a real account holding real roles on the security
+root, administered like any other. Such a run is then bounded three ways, all visible and all
+auditable - the account's roles at L1, its per-object rights at L2, and the `<background-allowlist>`
+because no human can approve. That is strictly more supervision than `SYSTEM` gave.
 
-### What existing applications experience
+### What an application has to do
 
-| Application | Behaviour after phases 0-4 |
+| Application | Behaviour |
 |---|---|
-| No `<security-config>`, no `<tool-access>` | `LEGACY`: unchanged behaviour, plus a boot warning and audit logs showing what enforcement would deny |
-| `<security-config>` present, no `<tool-access>` | `ENFORCED`: model security applies to data; all tools remain available per the agent's own list |
-| Both present | Full enforcement |
-| Uses `/mcp/*` from an external client | **Keeps working while the deployment is `LEGACY`; refused the moment `<tool-access>` turns enforcement on**, until #261 gives the endpoint an authenticated principal. Deliberate: this is the exposure with the worst blast radius (T7) |
-| Uses `aiCallTool` / `aiChat` from TL-Script | Runs as the calling user from phase 1 instead of unrestricted. Scripts relying on the bypass must move to an explicit `createSystemContext(reason)` |
+| No `<security-config>`, no `<tool-access>` | The agent can do almost nothing: model access is deny-all (`SecurityConfigurationService` is active by default with empty rights) and tool access grants only `RoleToolAccess.IMPLICIT_BASELINE`. **This is the state to fix, not a working default** - see [role-model-worked-example.md](role-model-worked-example.md) |
+| `<security-config>` present, no `<tool-access>` | Data rights apply per object, and the agent reaches almost no tool to use them with |
+| Both present | The intended state |
+| Uses `/mcp/*` from an external client | **Tool calls are refused**, until #261 gives the endpoint an authenticated principal. Deliberate: this is the exposure with the worst blast radius (T7). Resources and prompts still work |
+| Uses `aiAgentChat` from TL-Script | Runs as the calling account. A script that relied on the unrestricted fallback fails with a clear message instead of running unchecked |
+| An unattended entry point (a scheduler) | Must supply a configured service account. None exists in the code today, so there is nothing wired yet |
 
 ---
 
@@ -1329,46 +1304,43 @@ compiles against the real API - nothing here is reference code any more. All new
 
 | Artifact | Status |
 |---|---|
-| `AiSecurityMode` - the three modes, `resolve(policy, agentFloor)` and `stricter(...)` | Implemented, unit-tested. The per-agent floor is built (#260): `security-mode` on both agent-definition layers, resolved by the entry points and by `AgentLoop` |
+| `AiSecurityMode` - the three modes, `resolve(...)` and `stricter(...)` | **Removed** (#288). Enforcement is unconditional; identity is the only input. See 3.1 |
 | `ToolGroups` - the built-in group names and the privileged set | Implemented, unit-tested. **Lives in `tl-ai-tool-api`**, not next to the policy: a tool must be able to name its group without depending on the module that enforces it, and `tl-ai-vector-index` (which depends on `tl-ai-tool-api` alone) proved the point |
 | `ToolAccessPolicy` - the admin config interface of section 4.1 | Implemented; the XML in 4.1 is what it produces. **Read by `AiToolAccessService`** |
-| `AiToolAccessService` - the service of section 4.1 | **Implemented.** Reads the policy, resolves the effective ceiling, validates role names at boot with `context.error(...)`, resolves the roles a principal holds on the security root, and indexes the tool registry for name resolution |
+| `AiToolAccessService` - the service of section 4.1 | **Implemented.** Reads the policy, validates role names at boot with `context.error(...)`, refuses a granting policy with no `<background-allowlist>`, resolves the roles a principal holds on the security root, and indexes the tool registry for name resolution. `authorizationFor` throws if the service is down rather than granting everything |
 | `RoleToolAccess` - the role-to-tool decision | **Fully implemented and unit-tested** (24 cases: one per row of the 4.1 table, plus name matching and the background allowlist). **Called by `ToolAuthorization`** |
 | `ToolAuthorization` - the run-scoped decision | **Implemented and unit-tested.** Binds the policy to the run's principal, held roles and background flag; applies the administrator bypass and the background ceiling; audits denials |
 | `ToolIdentity` - how the policy names a tool | **Implemented.** A grant matches the bare tool name, the configured `{factory}.{tool}` name, or the provider-safe `factory__tool` form, so a correctly spelled grant cannot silently miss |
-| `ModelSecurity` - the typed façade | Implemented, with `UNCHECKED` as the today-behaviour implementation |
+| `ModelSecurity` - the typed façade | Implemented. `UNCHECKED` survives only as a test seam; every production context carries `ModelAccessRightsSecurity` |
 | `ModelAccessRightsSecurity` - the `ModelAccessRights`-backed implementation | **Real and unit-tested** (8 cases against a stub rights service). Replaces what was appendix A |
 | `ToolSecurityException` - the denial a tool raises | Implemented; **no tool raises it yet** (that is L2, phase 4) |
-| `SecurityContext.securityMode()` / `.modelSecurity()`, `ToolContext.modelSecurity()` | The seam every tool reaches; defaults to `LEGACY` + `UNCHECKED` |
+| `SecurityContext.modelSecurity()`, `ToolContext.modelSecurity()` | The seam every tool reaches. `securityMode()` is gone (#288) |
 | `SecurityContext.hasToolPermission` + `toolDenialReason` | **Enforcing.** `TopLogicSecurityContext` answers both from the policy; `ToolPermissionFilter` and `AgentLoop` prefer the specific reason over a generic "denied" |
-| `TopLogicSecurityContext.forRun(principal, background, agentFloor)` | Resolves the run's mode once as `stricter(ceiling, floor)`, refuses an `ENFORCED` run with no principal, and binds the tool authorization. **Called by the chat, TL-Script and MCP entry points** |
-| `SecurityContext.restrictedTo(agentFloor)` / `ToolContext.restrictedTo(...)` | The composition seam. Returns `this` unless the floor really tightens; refuses rather than dropping the floor when the context has no principal to build a stricter one from. **Applied once per run by `AgentLoop`**, which is what gives delegated children and subagents the rule of 3.1 |
+| `TopLogicSecurityContext.forRun(principal, background)` | The single production entry point. Refuses a run with no principal, and binds the model rights and the tool authorization once. **Called by the chat and TL-Script entry points** |
+| `SecurityContext.restrictedTo(...)` / `ToolContext.restrictedTo(...)` | **Removed** (#288). There is no per-run mode left to compose |
 | `PreCommitGuard` + `ModelSecurityPreCommitGuard` + `ToolChangeSet` - the L4 guard | **Implemented and wired** (#259). Called once per turn from `AgentLoop.commitTransaction`, only when a transaction is active; reads the change set from the engine's transaction bookkeeping; rolls the turn back through the existing failed-tool-call route. Unit-tested (`TestPreCommitGuard`, `TestAgentLoop`) and end-to-end against the fixture (`SecDemoPreCommitGuardTest`) |
 | `@ToolMethod(group = ...)` in `tl-ai-tool-api` | **Enforced.** All 75 registered tools carry a group; `Tool.group()` is the runtime seam |
 | `@ToolMethod(types = ...)` | **Removed** (#258). Design in 3.3.3; no code |
-| Per-agent `security-mode` (4.2) | **Built** (#260), on both agent-definition layers, unit-tested in `tl-ai-core` and against a booted fixture in `SecDemoAgentFloorTest` |
-| Per-agent `required-groups` (4.2) | **Not built.** A self-imposed narrowing of the tool list, independent of the mode above |
+| Per-agent `security-mode` (4.2) | Built (#260) and **removed again** (#288), together with the model attribute, the service-editor selector and `SecDemoAgentFloorTest` |
+| Per-agent `required-groups` (4.2) | **Not built.** A self-imposed narrowing of the tool list |
 | The retrofit example A.1 | Appendix A - illustrative, not applied to any tool. A.2 is no longer an example: it is the shipped shape of the pre-commit guard |
 
-**Behaviour is unchanged until an application writes `<tool-access>`.** The `AiToolAccessService` module
-is active by default and resolves to `LEGACY` with an empty policy, which grants every tool and reports
-no reason - asserted by `TestTopLogicSecurityContext`. The module is on by default deliberately: a
-policy present while the module was off would be silently ignored, which is the one failure mode this
-layer must not have. Data-tool result filtering is still absent regardless of mode; the pre-commit guard
-is wired and enforcing, subject to the limits section 3.5 states.
+**An application that writes no `<tool-access>` gets an agent that can do almost nothing.** The
+`AiToolAccessService` module is active by default and evaluates an empty policy, which grants only
+`RoleToolAccess.IMPLICIT_BASELINE` - asserted by `TestTopLogicSecurityContext`. The module is on by
+default deliberately: a policy present while the module was off would be silently ignored, which is the
+one failure mode this layer must not have. Data-tool result filtering is still absent everywhere
+(**#289**); the pre-commit guard is wired and enforcing, subject to the limits section 3.5 states.
 
-One behaviour change does arrive for TL-Script callers, but only under a configured policy:
-`aiCallTool` / `aiChat` / `aiAgentChat` now act as the account that ran the script instead of
-unrestricted, and `aiCallTool` applies the tool permission check itself, since it dispatches a tool
-directly and never passes the agent loop's gate. Without a policy they fall back to the previous
-unrestricted context - which preserves more than authorization: an unrestricted context reports
-`ExecutionMode.DEVELOPMENT` where a real one reports `PRODUCTION`, and that alone would newly block
-`STRUCTURAL` tools.
+Two behaviour changes arrive for TL-Script callers. `aiAgentChat` and `aiAgentChatAsync` act as the
+account that ran the script, and a call from a thread with no bound account is **refused** rather than
+run unrestricted. `aiCallTool` applies the tool permission check itself, since it dispatches a tool
+directly and never passes the agent loop's gate.
 
 The one behaviour change that does arrive with `8.0.0-alpha7` is the **engine's own**, not tl-ai's:
 TL-Script now applies model access rights (`CreateObject` checks CREATE, attribute reads are
 filtered), and those rights deny by default. An application without a `<security-config>` therefore
-sees TL-Script creates and reads denied for non-administrators, regardless of `AiSecurityMode`. This
+sees TL-Script creates and reads denied for non-administrators. This
 affects `TLScriptTool.executeTLScript` and every script tool. Engine `UpdateSecurityVisitor
 .disableSecurity(expr)` is the documented opt-out for internal queries.
 
@@ -1395,7 +1367,10 @@ See the branch's PR description for the build and test commands that were actual
    the current index stores it needs confirming; if not, re-indexing is a prerequisite.
 6. **Approval semantics under RBAC.** Today `DATA_WRITE` -> `NeedsApproval` for everyone. Should a role
    be able to carry "pre-approved for `data.write`", turning approval into a per-role property rather
-   than a per-mode constant?
+   than a constant of the tool's `ToolMode`?
+7. **The unattended entry point.** #288 settled that an unattended run acts as a configured service
+   account, and no scheduler-initiated agent run exists in the code, so nothing is wired. Where the
+   account is configured - one per scheduler job, one per application - is open.
 
 ---
 

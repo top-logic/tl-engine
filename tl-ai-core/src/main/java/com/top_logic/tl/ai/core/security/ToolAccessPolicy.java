@@ -17,7 +17,6 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -33,7 +32,7 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * The policy an administrator writes, in full:
  *
  * <config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
- *     <instance security-mode="ENFORCED">
+ *     <instance>
  *         <tool-groups>
  *             <group name="egress"
  *                 tools="mcp__jira__createIssue, mcp__jira__addComment"
@@ -64,6 +63,10 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * explicit deny from any held role wins over every grant, so an administrator can carve a privileged
  * group out of an otherwise broad grant without re-enumerating.
  *
+ * There is no switch that turns this off. An application that writes no policy at all does not get an
+ * unchecked agent; it gets one whose principal holds RoleToolAccess.DEFAULT_BASELINE - the read-only
+ * default of #293 - and nothing else. See doc/security/tool-access-configuration.md.
+ *
  * This is static application configuration, deliberately shaped like the engine's <security-config>
  * (ticket #29088) so administrators meet one idiom rather than two.
  */
@@ -72,22 +75,15 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * Which security roles may use which agent tools.
  *
  * <p>
- * Nothing is allowed that is not granted here: a role that is not listed may use no tool at all. As
- * long as no role is listed, the policy is not enforced and every tool an agent carries stays usable
- * by everyone who may use that agent.
+ * Nothing is allowed that is not granted here: a role that is not listed may use no tool at all, and
+ * so may a user who holds no listed role. This is always applied - there is no setting that switches
+ * it off. An application that lists nothing leaves its agents with the read-only capabilities below.
  * </p>
  *
  * @see RoleToolAccess
  * @see ToolGroups
  */
 public interface ToolAccessPolicy extends ConfigurationItem {
-
-	/**
-	 * Configuration property name for {@link #getSecurityMode()}.
-	 *
-	 * @see #getSecurityMode()
-	 */
-	String SECURITY_MODE = "security-mode";
 
 	/**
 	 * Configuration property name for {@link #getToolGroups()}.
@@ -118,32 +114,6 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	String BACKGROUND_ALLOWLIST = "background-allowlist";
 
 	/**
-	 * How strictly this policy is applied.
-	 *
-	 * <p>
-	 * With {@link AiSecurityMode#ENFORCED} every tool call is checked against the roles of the acting
-	 * user; with {@link AiSecurityMode#LEGACY} nothing is checked. If no mode is chosen, the policy is
-	 * enforced as soon as at least one role is configured below.
-	 * </p>
-	 */
-	/*
-	 * Nullable with a null default, both needed: an unconfigured mode must stay distinguishable from an
-	 * explicitly configured LEGACY. The latter says "do not enforce even though I wrote a matrix"; the
-	 * former leaves the decision to AiToolAccessService.resolveCeiling(ToolAccessPolicy), which reads
-	 * the presence of a <tool-access> matrix as the opt-in signal. Without both annotations an enum
-	 * property defaults to its first constant and the distinction would be unavailable.
-	 */
-	@Name(SECURITY_MODE)
-	@Nullable
-	@NullDefault
-	AiSecurityMode getSecurityMode();
-
-	/**
-	 * Setter for {@link #getSecurityMode()}.
-	 */
-	void setSecurityMode(AiSecurityMode value);
-
-	/**
 	 * Assigns tools to a capability group when the tool does not state its own.
 	 *
 	 * <p>
@@ -161,8 +131,8 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 * The roles, and what each of them may use.
 	 *
 	 * <p>
-	 * A role that is not listed here may use no tool. As long as this list is empty, the policy is not
-	 * enforced at all.
+	 * A role that is not listed here may use no tool. An empty list therefore leaves every user with
+	 * nothing but what {@link #getBaseline()} grants.
 	 * </p>
 	 */
 	@Name(TOOL_ACCESS)
@@ -175,12 +145,73 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 *
 	 * <p>
 	 * Asking the user a question, loading a skill and delegating to a sub-agent are granted anyway and
-	 * need no entry here. Leave this empty unless you want a further capability for everyone.
+	 * need no entry here. If you write nothing at all, every user may additionally read the model and
+	 * read business data, so that an application which has configured nothing still has a working,
+	 * read-only agent. Write this element to say something else - or write it empty to grant nothing
+	 * beyond asking a question.
 	 * </p>
+	 *
+	 * @see RoleToolAccess#DEFAULT_BASELINE
+	 */
+	/*
+	 * An item rather than a plain list, and nullable, for the same reason getBackgroundAllowlist() is:
+	 * three states have to stay distinguishable.
+	 *
+	 *   absent  -> RoleToolAccess.DEFAULT_BASELINE, the read-only default an unconfigured application
+	 *              gets so that it looks unconfigured rather than broken (#293).
+	 *   <baseline/>  -> nothing beyond RoleToolAccess.IMPLICIT_BASELINE. An explicit "no extra grants",
+	 *              which the secdemo fixture depends on to keep demonstrating deny-by-default.
+	 *   <baseline>..</baseline> -> exactly what is listed, replacing the default entirely.
+	 *
+	 * Reading an *empty* list as "absent" would make the middle state unsayable, and the default would
+	 * then silently widen a policy that had explicitly asked for nothing - the failure mode this layer
+	 * refuses to have. A list property cannot express it either way: the engine rejects a nullable
+	 * LIST/MAP/ARRAY property outright ("Properties of kind 'LIST', 'MAP', and 'ARRAY' cannot be
+	 * nullable"), which is exactly why the background allowlist wraps its grants in an item. This does
+	 * the same, and @DefaultContainer keeps the XML an administrator writes unchanged - the <grant>
+	 * elements still sit directly inside <baseline>.
+	 *
+	 * The default is deliberately NOT shipped as XML in tl-ai-core.conf.config.xml. A keyless
+	 * configuration list composes additively across configuration files (the engine's
+	 * SimpleListStorage seeds itself from the base value and appends), so a shipped <baseline> would be
+	 * unioned with an application's own instead of replaced by it - and an application asking for one
+	 * capability would silently also get these two. Resolving the default in Java keeps
+	 * "an application that writes this element replaces it" exactly true.
 	 */
 	@Name(BASELINE)
-	@EntryTag("grant")
-	List<Grant> getBaseline();
+	@Nullable
+	Baseline getBaseline();
+
+	/**
+	 * Setter for {@link #getBaseline()}.
+	 */
+	void setBaseline(Baseline value);
+
+	/**
+	 * The capabilities granted to every user, whatever their roles.
+	 *
+	 * <p>
+	 * An entry without any capability is legal and grants nothing - which is how an application says
+	 * that no capability at all is given to everyone.
+	 * </p>
+	 */
+	interface Baseline extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getGrants()}.
+		 *
+		 * @see #getGrants()
+		 */
+		String GRANTS = "grants";
+
+		/**
+		 * The capabilities and single tools every user may use.
+		 */
+		@Name(GRANTS)
+		@EntryTag("grant")
+		@DefaultContainer
+		List<Grant> getGrants();
+	}
 
 	/**
 	 * What an agent run with nobody to ask may use: a scheduled or asynchronous run, or a request from
@@ -188,7 +219,7 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 *
 	 * <p>
 	 * Such a run confirms every tool call itself, so this is its upper limit; the acting user's roles
-	 * apply on top. Once the policy is enforced, an application leaving this out does not start.
+	 * apply on top. An application that lists any role above and leaves this out does not start.
 	 * </p>
 	 *
 	 * @see BackgroundAllowlist

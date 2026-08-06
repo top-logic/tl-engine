@@ -15,8 +15,8 @@ import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
@@ -41,13 +41,14 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  */
 public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 
-	/** Precondition: writing {@code <tool-access>} is what turned enforcement on. */
-	public void testPolicyIsEnforced() {
+	/** Precondition: the fixture's policy is the one being evaluated. */
+	public void testPolicyIsTheFixtures() {
 		assertTrue("The secdemo aspect must be enabled for this test.",
 			AiToolAccessService.Module.INSTANCE.isActive());
-		assertEquals("A non-empty <tool-access> must resolve to ENFORCED. If this reports LEGACY,"
-			+ " something overrode the mode the fixture's policy resolves to.",
-			AiSecurityMode.ENFORCED, AiToolAccessService.ceiling());
+		assertFalse("The fixture's <tool-access> matrix must have reached the service. If this is"
+			+ " empty, something replaced the deployed policy and every assertion below would pass"
+			+ " vacuously by denying everything.",
+			AiToolAccessService.policy().getToolAccess().isEmpty());
 	}
 
 	/** Precondition: the group taxonomy actually reached the registered tools. */
@@ -124,15 +125,25 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 * {@code interaction} reaches everyone, including the persona whose role grants nothing.
 	 *
 	 * <p>
-	 * The deployed policy declares no {@code <baseline>} at all, so what this pins is the implicit
-	 * grant: an agent that cannot ask the user a question is broken, and a policy that forgot to say so
-	 * must not be able to produce that state. Asserted against the real application configuration
-	 * rather than a fixture, because "nothing in the XML grants this" is the whole point.
+	 * The deployed policy declares an <em>empty</em> {@code <baseline>}, so what this pins is the
+	 * implicit grant: an agent that cannot ask the user a question is broken, and a policy that forgot
+	 * to say so must not be able to produce that state. Asserted against the real application
+	 * configuration rather than a fixture, because "nothing in the XML grants this" is the whole point.
+	 * </p>
+	 *
+	 * <p>
+	 * The empty declaration is load-bearing for this fixture and not an accident: an <em>absent</em>
+	 * element would mean {@link RoleToolAccess#DEFAULT_BASELINE}, which would hand {@code secbare1}
+	 * both read capabilities and destroy the narrowest persona of the matrix.
+	 * {@link #testBarePersonaIsDeniedEvenModelRead()} is what would start failing.
 	 * </p>
 	 */
 	public void testBaselineReachesEvenTheBarePersona() {
+		assertNotNull("The fixture must declare <baseline/> explicitly, not leave it out: an absent"
+			+ " element means the read-only default, which secBare must not have.",
+			AiToolAccessService.policy().getBaseline());
 		assertEquals("The precondition of this test: the policy grants interaction nowhere.",
-			List.of(), AiToolAccessService.policy().getBaseline());
+			List.of(), AiToolAccessService.policy().getBaseline().getGrants());
 
 		for (String login : SecDemoSetupService.personaLogins()) {
 			assertAllowed(login, "user-interaction.askUser");

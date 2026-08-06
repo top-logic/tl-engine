@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.DeclaredGroups;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAuthorization;
@@ -212,40 +213,6 @@ public class TestSpawnFilter extends TestCase {
 		assertTrue(refusal, refusal.contains(ToolGroups.SCRIPT));
 	}
 
-	/**
-	 * An application that has configured no {@code <tool-access>} policy refuses nothing.
-	 *
-	 * <p>
-	 * The most important test in this class: {@code LEGACY} is what every unmigrated application runs
-	 * in, and a spawn there must behave exactly as it did before this filter existed. The graph fails
-	 * the test if it is consulted at all, because an unenforced run must not even look.
-	 * </p>
-	 */
-	public void testLegacyRunRefusesNothing() {
-		AgentGraph forbidden = new AgentGraph() {
-			@Override
-			public AgentDefinition agent(String name) {
-				throw new AssertionError("An unenforced run must not walk the agent graph.");
-			}
-
-			@Override
-			public SkillDefinition skill(String name) {
-				throw new AssertionError("An unenforced run must not walk the agent graph.");
-			}
-
-			@Override
-			public List<Tool> mcpTools(String serverName) {
-				throw new AssertionError("An unenforced run must not walk the agent graph.");
-			}
-		};
-		ToolContext legacyParent = new ToolContext(new TopLogicSecurityContext(),
-			ApprovalCallback.AUTO_APPROVE, TransactionScope.NOOP);
-		AgentCapabilities capabilities = new AgentCapabilities(TestSpawnFilter::resolve,
-			detachedChild(legacyParent).security(), forbidden);
-
-		assertNull(SubagentSpawner.detachedSpawnRefusal(WRITER, capabilities));
-	}
-
 	// ===== Helpers =====
 
 	/**
@@ -292,7 +259,20 @@ public class TestSpawnFilter extends TestCase {
 		BackgroundAllowlist allowlist = TypedConfiguration.newConfigItem(BackgroundAllowlist.class);
 		allowlist.getGrants().add(group(ToolGroups.DATA_READ));
 		policy.setBackgroundAllowlist(allowlist);
+		policy.setBaseline(noBaseline());
 		return policy;
+	}
+
+	/**
+	 * An explicitly empty baseline, so these tests see only the role grants they configure.
+	 *
+	 * <p>
+	 * An <em>absent</em> {@code <baseline>} would mean {@link RoleToolAccess#DEFAULT_BASELINE} - the
+	 * read-only default of #293 - and would grant every capability in it to every persona here.
+	 * </p>
+	 */
+	private static Baseline noBaseline() {
+		return TypedConfiguration.newConfigItem(Baseline.class);
 	}
 
 	private static RoleAccess role(String name, String... groups) {
@@ -329,7 +309,7 @@ public class TestSpawnFilter extends TestCase {
 		agents.put(READER, withTools(READER, READ_TOOL));
 		agents.put(TOOLLESS, withTools(TOOLLESS));
 		agents.put(SCRIPTED, new AgentDefinition(SCRIPTED, SCRIPTED, "", List.of(), List.of(),
-			List.of("scripting"), List.of(), null, AgentSource.CONFIG));
+			List.of("scripting"), List.of(), AgentSource.CONFIG));
 
 		SkillDefinition scripting = new SkillDefinition("scripting", "scripting", "content",
 			List.of(SCRIPT_TOOL), AgentSource.CONFIG);
@@ -353,7 +333,7 @@ public class TestSpawnFilter extends TestCase {
 	}
 
 	private static AgentDefinition withTools(String name, String... tools) {
-		return new AgentDefinition(name, name, "", List.of(tools), List.of(), List.of(), List.of(), null,
+		return new AgentDefinition(name, name, "", List.of(tools), List.of(), List.of(), List.of(),
 			AgentSource.CONFIG);
 	}
 

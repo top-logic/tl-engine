@@ -173,15 +173,17 @@ public class TLScriptTool {
 	 * <p>
 	 * Asks the run's own authorization rather than re-deciding anything: the same policy, the same
 	 * order - background allowlist, administrator bypass, role grants - that a {@code data.write} tool
-	 * would be decided by. Outside an agent loop (scripting entry points, tests) there is no run to
-	 * ask, and {@link SecurityContext#UNRESTRICTED} answers as an unconfigured application does.
+	 * would be decided by. There is no permissive fallback: a commit gate that cannot name the
+	 * principal it is deciding for would let every write through.
 	 * </p>
 	 */
 	private static String commitDenialReason(ToolExecutionContext context) {
-		SecurityContext security = context instanceof ToolContext toolContext
-			? toolContext.security()
-			: SecurityContext.UNRESTRICTED;
-		return security.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT_OPERATION);
+		if (!(context instanceof ToolContext toolContext)) {
+			throw new IllegalStateException("Committing what a script changes is checked against the"
+				+ " run's principal, and this call has no run to ask. Execute the tool with the"
+				+ " ToolContext of an agent run.");
+		}
+		return toolContext.security().capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT_OPERATION);
 	}
 
 	/**

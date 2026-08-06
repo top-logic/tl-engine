@@ -15,7 +15,6 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.AgentCapabilities.AgentGraph;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
@@ -172,7 +171,7 @@ public class TestSkillAbsenceReason extends TestCase {
 	 * </p>
 	 */
 	public void testCeilingDoesNotHideARoleDenial() {
-		AgentCapabilities capabilities = capabilities(AiSecurityMode.ENFORCED, Set.of(READ_TOOL),
+		AgentCapabilities capabilities = capabilities(Set.of(READ_TOOL),
 			Set.of(SCRIPT_TOOL));
 		String message = loadSkill(capabilities, UNGROUPED_SKILL);
 
@@ -203,7 +202,7 @@ public class TestSkillAbsenceReason extends TestCase {
 	 * </p>
 	 */
 	public void testSkillThisAgentDoesNotCarryIsPrincipalIndependent() {
-		AgentCapabilities unrestricted = capabilities(AiSecurityMode.ENFORCED,
+		AgentCapabilities unrestricted = capabilities(
 			Set.of(READ_TOOL, WRITE_TOOL, SCRIPT_TOOL, UNGROUPED_TOOL), Set.of());
 
 		assertEquals(reason(loadSkill(readOnlyPrincipal(), FOREIGN_SKILL)),
@@ -264,9 +263,10 @@ public class TestSkillAbsenceReason extends TestCase {
 		assertTrue(withExplanation, withExplanation.contains("content of " + READABLE_SKILL));
 	}
 
-	/** An unenforced run has nothing to explain: no message of it names a capability. */
-	public void testLegacyRunNamesNoCapability() {
-		AgentCapabilities capabilities = capabilities(AiSecurityMode.LEGACY, Set.of(), Set.of());
+	/** A principal who may use every tool has nothing withheld: no message of it names a capability. */
+	public void testPrincipalWhoMayUseEverythingNamesNoCapability() {
+		AgentCapabilities capabilities =
+			capabilities(Set.of(READ_TOOL, WRITE_TOOL, SCRIPT_TOOL, UNGROUPED_TOOL), Set.of());
 
 		assertTrue(loadSkill(capabilities, WITHHELD_SKILL).contains("content of " + WITHHELD_SKILL));
 		assertFalse(loadSkill(capabilities, FOREIGN_SKILL).contains("capability"));
@@ -277,7 +277,7 @@ public class TestSkillAbsenceReason extends TestCase {
 
 	/** Holds {@link #READ_TOOL} and nothing else, in an attended run. */
 	private static AgentCapabilities readOnlyPrincipal() {
-		return capabilities(AiSecurityMode.ENFORCED, Set.of(READ_TOOL), Set.of());
+		return capabilities(Set.of(READ_TOOL), Set.of());
 	}
 
 	/**
@@ -285,7 +285,7 @@ public class TestSkillAbsenceReason extends TestCase {
 	 * anything.
 	 */
 	private static AgentCapabilities unattendedPrincipal() {
-		return capabilities(AiSecurityMode.ENFORCED, Set.of(READ_TOOL),
+		return capabilities(Set.of(READ_TOOL),
 			Set.of(WRITE_TOOL, SCRIPT_TOOL, UNGROUPED_TOOL));
 	}
 
@@ -315,7 +315,7 @@ public class TestSkillAbsenceReason extends TestCase {
 	 *        The tools an attended run with the same principal would have been allowed, and this one is
 	 *        not - the background allowlist is what removed them.
 	 */
-	private static AgentCapabilities capabilities(AiSecurityMode mode, Set<String> permittedTools,
+	private static AgentCapabilities capabilities(Set<String> permittedTools,
 			Set<String> ceilingTools) {
 		SecurityContext security = new SecurityContext() {
 			@Override
@@ -329,11 +329,6 @@ public class TestSkillAbsenceReason extends TestCase {
 			}
 
 			@Override
-			public AiSecurityMode securityMode() {
-				return mode;
-			}
-
-			@Override
 			public ExecutionMode executionMode() {
 				return ExecutionMode.DEVELOPMENT;
 			}
@@ -344,7 +339,7 @@ public class TestSkillAbsenceReason extends TestCase {
 	/** Declares three of the four skills; {@link #FOREIGN_SKILL} is deliberately not one of them. */
 	private static AgentDefinition agent() {
 		return new AgentDefinition(AGENT, AGENT, "", List.of(READ_TOOL), List.of(),
-			List.of(READABLE_SKILL, WITHHELD_SKILL, UNGROUPED_SKILL), List.of(), null, AgentSource.CONFIG);
+			List.of(READABLE_SKILL, WITHHELD_SKILL, UNGROUPED_SKILL), List.of(), AgentSource.CONFIG);
 	}
 
 	/** Every skill the application has, whether this agent declares it or not. */

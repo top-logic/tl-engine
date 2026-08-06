@@ -38,12 +38,14 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 public class ToolAuthorization {
 
 	/**
-	 * Grants every tool without consulting a policy - the behaviour of an application that has
-	 * configured none.
+	 * Grants every tool without consulting a policy.
 	 *
 	 * <p>
-	 * Used for every run whose mode does not {@link AiSecurityMode#enforcesToolAccess() enforce} tool
-	 * access, which is every run until an administrator writes a {@code <tool-access>} policy.
+	 * <b>A test seam.</b> No production run carries it:
+	 * {@code AiToolAccessService.authorizationFor(Person, boolean)} always evaluates the running
+	 * service's policy, and refuses if that service is down. An application that authored no policy
+	 * gets a real authorization over an empty one, which grants only
+	 * {@link RoleToolAccess#IMPLICIT_BASELINE} - not this.
 	 * </p>
 	 */
 	public static final ToolAuthorization UNCHECKED = new ToolAuthorization(null, null, Set.of(), false);
@@ -153,7 +155,8 @@ public class ToolAuthorization {
 	 * <p>
 	 * Narrows and never widens: the principal, the held roles and the policy are carried over
 	 * unchanged, so the derived authorization is the intersection of this one and the allowlist. An
-	 * unenforced run ({@link #UNCHECKED}) and a run that is already background return themselves.
+	 * policy-less authorization ({@link #UNCHECKED}) and a run that is already background return
+	 * themselves.
 	 * </p>
 	 */
 	public ToolAuthorization asBackground() {

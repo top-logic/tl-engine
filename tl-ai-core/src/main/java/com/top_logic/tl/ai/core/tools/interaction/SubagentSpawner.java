@@ -307,11 +307,6 @@ public class SubagentSpawner {
 	 */
 	public static String detachedSpawnRefusal(String targetAgentName,
 			AgentCapabilities childCapabilities) {
-		if (!childCapabilities.enforced()) {
-			// No policy: no filtering, exactly as for delegates. Also keeps an unmigrated application
-			// away from the agent graph and the tool registry on its spawn path.
-			return null;
-		}
 		AgentDefinition target = childCapabilities.graph().agent(targetAgentName);
 		if (childCapabilities.unusableReason(target) == null) {
 			return null;

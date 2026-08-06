@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +20,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.DeclaredGroups;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -103,7 +105,7 @@ public class TestToolAuthorization extends TestCase {
 	/** A run with no principal holds no roles, so only the baseline reaches it. */
 	public void testRunWithoutPrincipalGetsBaselineOnly() {
 		ToolAccessPolicy policy = clerkPolicy();
-		policy.getBaseline().add(group(ToolGroups.INTERACTION));
+		baseline(policy, group(ToolGroups.INTERACTION));
 
 		ToolAuthorization auth = auth(policy, Set.of(), false);
 
@@ -247,7 +249,7 @@ public class TestToolAuthorization extends TestCase {
 	/** The baseline grants a capability to everyone, as it does a tool. */
 	public void testBaselineGrantsTheCapability() {
 		ToolAccessPolicy policy = clerkPolicy();
-		policy.getBaseline().add(group(ToolGroups.DATA_WRITE));
+		baseline(policy, group(ToolGroups.DATA_WRITE));
 
 		assertNull(auth(policy, Set.of(), false).capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT));
 	}
@@ -422,7 +424,7 @@ public class TestToolAuthorization extends TestCase {
 	 */
 	public void testTheImplicitBaselineIsNeverWithheld() {
 		ToolAccessPolicy policy = clerkPolicy();
-		policy.getBaseline().add(group(RoleToolAccess.IMPLICIT_BASELINE));
+		baseline(policy, group(RoleToolAccess.IMPLICIT_BASELINE));
 		ToolAuthorization background = auth(policy, Set.of("Clerk"), true);
 
 		assertTrue("Precondition: the implicit baseline reaches an unattended run.",
@@ -464,8 +466,26 @@ public class TestToolAuthorization extends TestCase {
 		for (RoleAccess role : roles) {
 			policy.getToolAccess().put(role.getName(), role);
 		}
+		baseline(policy);
 		return policy;
 	}
+
+	/**
+	 * Declares the policy's baseline with the given entries.
+	 *
+	 * <p>
+	 * Called with no entries by {@link #policy(RoleAccess...)}, so that these tests assert role grants
+	 * against an explicitly empty baseline rather than against
+	 * {@link RoleToolAccess#DEFAULT_BASELINE}. The default is what an <em>absent</em> element means, and
+	 * it is tested where it belongs - see {@code TestDefaultBaseline}.
+	 * </p>
+	 */
+	private static void baseline(ToolAccessPolicy policy, Grant... entries) {
+		Baseline baseline = TypedConfiguration.newConfigItem(Baseline.class);
+		baseline.getGrants().addAll(List.of(entries));
+		policy.setBaseline(baseline);
+	}
+
 
 	private static RoleAccess role(String name, List<Grant> granted, List<Grant> denied) {
 		RoleAccess role = TypedConfiguration.newConfigItem(RoleAccess.class);

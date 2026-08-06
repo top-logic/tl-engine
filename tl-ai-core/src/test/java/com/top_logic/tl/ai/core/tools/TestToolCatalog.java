@@ -26,7 +26,6 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolContent;
@@ -282,11 +281,6 @@ public class TestToolCatalog extends TestCase {
 			@Override
 			public boolean hasToolPermission(Tool tool) {
 				return permittedToolName.equals(tool.name());
-			}
-
-			@Override
-			public AiSecurityMode securityMode() {
-				return AiSecurityMode.ENFORCED;
 			}
 
 			@Override

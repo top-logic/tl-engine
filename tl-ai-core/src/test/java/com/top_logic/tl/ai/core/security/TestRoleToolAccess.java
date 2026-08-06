@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +21,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.Decision;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.DeclaredGroups;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
@@ -114,7 +116,7 @@ public class TestRoleToolAccess extends TestCase {
 	/** The baseline applies to everyone, including a user with no roles at all. */
 	public void testBaselineAppliesWithoutRoles() {
 		ToolAccessPolicy policy = policy(role("Clerk", grants(group(ToolGroups.DATA_READ)), grants()));
-		policy.getBaseline().add(group(ToolGroups.EGRESS));
+		baseline(policy, group(ToolGroups.EGRESS));
 
 		Decision decision = access(policy).check(Set.of(), "web.webFetch");
 
@@ -126,15 +128,15 @@ public class TestRoleToolAccess extends TestCase {
 	 * {@link ToolGroups#INTERACTION} needs no configuration at all.
 	 *
 	 * <p>
-	 * The policy below declares no {@code <baseline>} and gives its one role an empty grant list, which
-	 * is the state a forgotten baseline produces. An agent that cannot ask a question is broken, so this
-	 * capability is not left to configuration.
+	 * The policy below declares an empty {@code <baseline>} and gives its one role an empty grant list,
+	 * which is the narrowest state a policy can express. An agent that cannot ask a question is broken,
+	 * so this capability is not left to configuration.
 	 * </p>
 	 */
 	public void testInteractionIsGrantedWithoutAnyConfiguration() {
 		ToolAccessPolicy policy = policy(role("Clerk", grants(), grants()));
-		assertEquals("The precondition of this test: nothing declares the baseline.",
-			List.of(), policy.getBaseline());
+		assertEquals("The precondition of this test: the baseline grants nothing.",
+			List.of(), policy.getBaseline().getGrants());
 
 		RoleToolAccess access = access(policy);
 
@@ -474,8 +476,26 @@ public class TestRoleToolAccess extends TestCase {
 		for (RoleAccess role : roles) {
 			policy.getToolAccess().put(role.getName(), role);
 		}
+		baseline(policy);
 		return policy;
 	}
+
+	/**
+	 * Declares the policy's baseline with the given entries.
+	 *
+	 * <p>
+	 * Called with no entries by {@link #policy(RoleAccess...)}, so that these tests assert role grants
+	 * against an explicitly empty baseline rather than against
+	 * {@link RoleToolAccess#DEFAULT_BASELINE}. The default is what an <em>absent</em> element means, and
+	 * it is tested where it belongs - see {@code TestDefaultBaseline}.
+	 * </p>
+	 */
+	private static void baseline(ToolAccessPolicy policy, Grant... entries) {
+		Baseline baseline = TypedConfiguration.newConfigItem(Baseline.class);
+		baseline.getGrants().addAll(List.of(entries));
+		policy.setBaseline(baseline);
+	}
+
 
 	/** Declares the policy's background allowlist with the given entries. */
 	private static BackgroundAllowlist allow(ToolAccessPolicy policy, Grant... entries) {

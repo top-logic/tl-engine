@@ -130,15 +130,17 @@ public class ListAgentsTool implements Tool {
 	 * The security context of the run this call belongs to.
 	 *
 	 * <p>
-	 * Outside an agent loop (scripting entry points, tests) there is no run to ask, and
-	 * {@link SecurityContext#UNRESTRICTED} answers as an unconfigured application does - so the listing
-	 * stays what it was before this filter existed.
+	 * There is no permissive fallback: the listing is filtered to what the run's principal could
+	 * actually delegate to, and a listing that cannot name the principal would advertise agents the
+	 * caller may not use.
 	 * </p>
 	 */
 	private static SecurityContext security(ToolExecutionContext context) {
-		return context instanceof ToolContext toolContext
-			? toolContext.security()
-			: SecurityContext.UNRESTRICTED;
+		if (context instanceof ToolContext toolContext) {
+			return toolContext.security();
+		}
+		throw new IllegalStateException("The agent listing is filtered for the run's principal, and this"
+			+ " call has no run to ask. Execute the tool with the ToolContext of an agent run.");
 	}
 
 	/** Escapes a string for JSON embedding. */

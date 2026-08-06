@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.agent;
 
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -15,9 +16,13 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -26,15 +31,24 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
- * Tests how {@link TopLogicSecurityContext#forRun} resolves the security mode of a run.
+ * Tests what {@link TopLogicSecurityContext} decides for a run.
  *
  * <p>
- * The point of these tests is the <b>default</b>: an application that configures no policy must come
- * out unenforced, because the engine's model security is deny-by-default and enforcing it without a
- * {@code <security-config>} would leave the agent unable to read anything.
+ * The point of these tests is that there is no way <em>out</em>: a run without a principal is refused
+ * where the context is built, and a run with one is authorized against a real policy. There is no
+ * mode to configure and no default that checks nothing.
+ * </p>
+ *
+ * <p>
+ * The policy-taking {@code forRun} overload is the test seam these use, so that a policy can be
+ * exercised without booting {@code AiToolAccessService}. What it pairs with
+ * {@link ModelSecurity#UNCHECKED} - the model layer - needs a booted
+ * {@code SecurityConfigurationService} and is covered in {@code SecDemoModelSecurityTest}.
  * </p>
  */
 public class TestTopLogicSecurityContext extends TestCase {
+
+	private static final String CLERK = "Clerk";
 
 	/** Instantiating a {@link ToolAccessPolicy} resolves nested config types through the TypeIndex. */
 	public static Test suite() {
@@ -42,51 +56,94 @@ public class TestTopLogicSecurityContext extends TestCase {
 			ServiceTestSetup.withThreadContext(new TestSuite(TestTopLogicSecurityContext.class)));
 	}
 
-	/** No configuration at all: unenforced, so behaviour is what it was before the modes existed. */
-	public void testUnconfiguredApplicationIsUnenforced() {
-		TopLogicSecurityContext context = TopLogicSecurityContext.forRun((ToolAccessPolicy) null, null);
-
-		assertEquals(AiSecurityMode.LEGACY, context.securityMode());
-		assertSame(ModelSecurity.UNCHECKED, context.modelSecurity());
-		assertFalse(context.securityMode().enforcesModelAccess());
-		assertAllowsEveryTool(context);
+	/**
+	 * A run with no authenticated user is refused up front rather than at the first tool call.
+	 *
+	 * <p>
+	 * The single production entry point, and the whole posture in one assertion: a run that cannot
+	 * name its principal cannot be authorized, so it does not start. Failing later would waste a
+	 * provider round trip and produce a confusing half-run.
+	 * </p>
+	 */
+	public void testRunWithoutAUserIsRefused() {
+		try {
+			TopLogicSecurityContext.forRun((Person) null, false);
+			fail("A run without a principal must be refused.");
+		} catch (IllegalStateException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("authenticated user"));
+			assertTrue("The message must say where a principal comes from: " + ex.getMessage(),
+				ex.getMessage().contains("service account"));
+		}
 	}
 
-	/** The plain constructor - what every existing caller uses - is unenforced too. */
-	public void testDefaultConstructorIsUnenforced() {
-		TopLogicSecurityContext context = new TopLogicSecurityContext();
-
-		assertEquals(AiSecurityMode.LEGACY, context.securityMode());
-		assertSame(ModelSecurity.UNCHECKED, context.modelSecurity());
-		assertAllowsEveryTool(context);
+	/** An unattended run without a user is refused too - being unattended is not an excuse. */
+	public void testUnattendedRunWithoutAUserIsRefusedAsWell() {
+		try {
+			TopLogicSecurityContext.forRun((Person) null, true);
+			fail("An unattended run without a principal must be refused as well.");
+		} catch (IllegalStateException expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().contains("authenticated user"));
+		}
 	}
 
 	/**
-	 * An unenforced context grants every tool and says nothing about why.
+	 * An application that authored no policy grants no tool - it has not opted out of the check.
 	 *
 	 * <p>
-	 * This is the promise the whole change rests on: until an application writes a
-	 * {@code <tool-access>} policy, the tool permission gate is the {@code true} it always was.
+	 * The inversion this change makes: an empty {@code <tool-access>} used to mean "check nothing",
+	 * and now means what it says. The only capabilities left are the implicit baseline ones, which are
+	 * covered by {@code TestRoleToolAccess}.
 	 * </p>
 	 */
-	private static void assertAllowsEveryTool(TopLogicSecurityContext context) {
+	public void testEmptyPolicyGrantsNoPrivilegedTool() {
+		TopLogicSecurityContext context =
+			TopLogicSecurityContext.forRun(policy(), null, Set.of(CLERK));
 		Tool privileged = tool("executeTLScript", ToolGroups.SCRIPT);
 
-		assertTrue("A tool in a privileged group must pass while unenforced.",
+		assertFalse("An empty policy is deny-all, not check-nothing.",
 			context.hasToolPermission(privileged));
-		assertTrue("An ungrouped tool must pass while unenforced.",
-			context.hasToolPermission(tool("mcp__jira__createIssue", "")));
-		assertTrue("A tool known only by name must pass while unenforced.",
-			context.hasToolPermission("anything.at.all"));
-		assertNull(context.toolDenialReason(privileged));
-		assertNull(context.toolDenialReason("anything.at.all"));
-
-		assertNull("The generic filter must find nothing to complain about either.",
-			new ToolPermissionFilter(context).denialReason(privileged));
-
-		assertNull("Committing through TL-Script must not be capped while unenforced either.",
+		assertNotNull("...and it says which capability is missing.",
+			context.toolDenialReason(privileged));
+		assertNotNull("Committing through TL-Script is capped by the same policy.",
 			context.capabilityDenialReason(ToolGroups.DATA_WRITE,
 				"executing TL-Script with withCommit=true"));
+	}
+
+	/** What a role is granted, it may use; what it is not, it may not. */
+	public void testAGrantedCapabilityIsUsableAndAnUngrantedOneIsNot() {
+		ToolAccessPolicy policy = policy();
+		policy.getToolAccess().put(CLERK, roleGranting(CLERK, ToolGroups.DATA_READ));
+		TopLogicSecurityContext context =
+			TopLogicSecurityContext.forRun(policy, null, Set.of(CLERK));
+
+		assertTrue(context.hasToolPermission(tool("readInstances", ToolGroups.DATA_READ)));
+		assertFalse(context.hasToolPermission(tool("createInstance", ToolGroups.DATA_WRITE)));
+	}
+
+	/** A user holding none of the policy's roles reaches nothing the policy grants. */
+	public void testAUserWithoutTheRoleReachesNothing() {
+		ToolAccessPolicy policy = policy();
+		policy.getToolAccess().put(CLERK, roleGranting(CLERK, ToolGroups.DATA_READ));
+		TopLogicSecurityContext context = TopLogicSecurityContext.forRun(policy, null, Set.of());
+
+		assertFalse(context.hasToolPermission(tool("readInstances", ToolGroups.DATA_READ)));
+	}
+
+	/**
+	 * The unrestricted context refuses nothing and is what tests build on.
+	 *
+	 * <p>
+	 * Pinned here so that the one remaining permissive context stays a recognizable test seam rather
+	 * than something a production path could drift into.
+	 * </p>
+	 */
+	public void testTheUnrestrictedContextIsPermissive() {
+		Tool privileged = tool("executeTLScript", ToolGroups.SCRIPT);
+
+		assertTrue(SecurityContext.UNRESTRICTED.hasToolPermission(privileged));
+		assertSame(ModelSecurity.UNCHECKED, SecurityContext.UNRESTRICTED.modelSecurity());
+		assertNull(SecurityContext.UNRESTRICTED.capabilityDenialReason(ToolGroups.DATA_WRITE,
+			"executing TL-Script with withCommit=true"));
 	}
 
 	/** A minimal {@link Tool} carrying a name and a declared group. */
@@ -125,148 +182,30 @@ public class TestTopLogicSecurityContext extends TestCase {
 		};
 	}
 
-	/** A policy that does not name a mode is still an unmigrated application. */
-	public void testPolicyWithoutModeIsUnenforced() {
-		assertEquals(AiSecurityMode.LEGACY,
-			TopLogicSecurityContext.forRun(policy(null), null).securityMode());
-	}
-
-	/** The mode the administrator configured is the mode the run carries. */
-	public void testConfiguredModeIsCarried() {
-		assertEquals(AiSecurityMode.SYSTEM,
-			TopLogicSecurityContext.forRun(policy(AiSecurityMode.SYSTEM), null).securityMode());
-	}
-
 	/**
-	 * {@link AiSecurityMode#ENFORCED} refuses a run with no principal up front rather than at the
-	 * first tool call.
-	 */
-	public void testEnforcedRefusesRunWithoutUser() {
-		try {
-			TopLogicSecurityContext.forRun(policy(AiSecurityMode.ENFORCED), null);
-			fail("An enforced run without a principal must be refused.");
-		} catch (IllegalStateException ex) {
-			assertTrue(ex.getMessage(), ex.getMessage().contains("authenticated user"));
-			assertTrue(ex.getMessage(), ex.getMessage().contains(AiSecurityMode.ENFORCED.name()));
-		}
-	}
-
-	/** An agent that declares nothing leaves the deployment's mode alone. */
-	public void testAbsentFloorLeavesTheDeploymentAlone() {
-		assertEquals(AiSecurityMode.LEGACY,
-			TopLogicSecurityContext.forRun(policy(null), null, null).securityMode());
-		assertEquals(AiSecurityMode.SYSTEM,
-			TopLogicSecurityContext.forRun(policy(AiSecurityMode.SYSTEM), null, null).securityMode());
-	}
-
-	/** A floor stricter than the deployment is what the run carries. */
-	public void testStricterFloorIsCarried() {
-		assertEquals(AiSecurityMode.SYSTEM,
-			TopLogicSecurityContext.forRun(policy(null), null, AiSecurityMode.SYSTEM).securityMode());
-		assertEquals(AiSecurityMode.SYSTEM,
-			TopLogicSecurityContext.forRun(policy(AiSecurityMode.LEGACY), null, AiSecurityMode.SYSTEM)
-				.securityMode());
-	}
-
-	/** A floor laxer than the deployment is ignored: the deployment's mode stands. */
-	public void testLaxerFloorIsIgnored() {
-		assertEquals(AiSecurityMode.SYSTEM,
-			TopLogicSecurityContext.forRun(policy(AiSecurityMode.SYSTEM), null, AiSecurityMode.LEGACY)
-				.securityMode());
-	}
-
-	/**
-	 * An agent demanding {@link AiSecurityMode#ENFORCED} in an unmigrated deployment really enforces -
-	 * observable here as the up-front refusal of a run with no principal.
+	 * An empty policy, which grants nothing beyond the implicit baseline.
 	 *
 	 * <p>
-	 * A {@link AiSecurityMode#LEGACY} deployment happily runs without a user (the case above). That
-	 * the very same policy now refuses is the floor taking effect, and it is deterministic without a
-	 * booted application.
+	 * The {@code <baseline>} is declared and left empty on purpose. Leaving it out would mean
+	 * {@link RoleToolAccess#DEFAULT_BASELINE} - the read-only default of #293, tested by
+	 * {@code TestDefaultBaseline} - and these tests are about what a role grant reaches.
 	 * </p>
 	 */
-	public void testEnforcedFloorInALegacyDeploymentReallyEnforces() {
-		try {
-			TopLogicSecurityContext.forRun(policy(null), null, AiSecurityMode.ENFORCED);
-			fail("An agent floor of ENFORCED must refuse a run without a principal, even though the"
-				+ " deployment would have allowed one.");
-		} catch (IllegalStateException expected) {
-			assertTrue(expected.getMessage(), expected.getMessage().contains("authenticated user"));
-			assertTrue(expected.getMessage(),
-				expected.getMessage().contains(AiSecurityMode.ENFORCED.name()));
-		}
-	}
-
-	/**
-	 * A child run of an agent that declares a laxer mode than its parent's stays at the parent's.
-	 *
-	 * <p>
-	 * A delegated child inherits its parent's context and the child's loop can only narrow it, so
-	 * this is the composition the {@link AgentLoop} performs for a child - the same call, with the
-	 * child agent's declaration.
-	 * </p>
-	 */
-	public void testChildIsNeverLaxerThanItsParent() {
-		SecurityContext parent = TopLogicSecurityContext.forRun(policy(AiSecurityMode.SYSTEM), null);
-
-		assertSame("A child declaring a laxer mode must not get a different context at all.",
-			parent, parent.restrictedTo(AiSecurityMode.LEGACY));
-		assertSame("A child declaring nothing must not get a different context either.",
-			parent, parent.restrictedTo(null));
-		assertEquals(AiSecurityMode.SYSTEM, parent.restrictedTo(AiSecurityMode.LEGACY).securityMode());
-	}
-
-	/** A child agent declaring a stricter mode than its parent's keeps it. */
-	public void testChildKeepsItsOwnStricterFloor() {
-		SecurityContext parent = TopLogicSecurityContext.forRun(policy(null), null);
-		assertEquals(AiSecurityMode.LEGACY, parent.securityMode());
-
-		SecurityContext child = parent.restrictedTo(AiSecurityMode.SYSTEM);
-
-		assertEquals(AiSecurityMode.SYSTEM, child.securityMode());
-		assertEquals("The parent's own context is untouched - the mode is resolved per run.",
-			AiSecurityMode.LEGACY, parent.securityMode());
-	}
-
-	/**
-	 * A context with no principal refuses to be tightened rather than dropping the floor silently.
-	 *
-	 * <p>
-	 * {@link SecurityContext#UNRESTRICTED} is the context a TL-Script entry point falls back to while
-	 * nothing is enforced, and it has no principal to authorize against. Answering itself would turn
-	 * an agent that asked to be checked into one that is not, so it refuses - which is why the entry
-	 * points resolve the floor <em>before</em> they choose that fallback.
-	 * </p>
-	 */
-	public void testAContextWithoutAPrincipalRefusesToBeTightened() {
-		assertSame("Nothing to do without a floor.",
-			SecurityContext.UNRESTRICTED, SecurityContext.UNRESTRICTED.restrictedTo(null));
-		assertSame("SYSTEM is what this context already is.",
-			SecurityContext.UNRESTRICTED, SecurityContext.UNRESTRICTED.restrictedTo(AiSecurityMode.SYSTEM));
-
-		try {
-			SecurityContext.UNRESTRICTED.restrictedTo(AiSecurityMode.ENFORCED);
-			fail("An unrestricted context must not silently drop an ENFORCED floor.");
-		} catch (IllegalStateException expected) {
-			assertTrue(expected.getMessage(), expected.getMessage().contains("no principal"));
-		}
-	}
-
-	/** The unrestricted context is honest about acting as the system rather than claiming LEGACY. */
-	public void testUnrestrictedActsAsSystem() {
-		assertEquals(AiSecurityMode.SYSTEM, SecurityContext.UNRESTRICTED.securityMode());
-		assertSame(ModelSecurity.UNCHECKED, SecurityContext.UNRESTRICTED.modelSecurity());
-		assertNull("It restricts no capability either - the TL-Script entry points outside an agent"
-			+ " loop run against this context.",
-			SecurityContext.UNRESTRICTED.capabilityDenialReason(ToolGroups.DATA_WRITE,
-				"executing TL-Script with withCommit=true"));
-	}
-
-	private static ToolAccessPolicy policy(AiSecurityMode mode) {
+	private static ToolAccessPolicy policy() {
 		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
-		if (mode != null) {
-			policy.setSecurityMode(mode);
-		}
+		policy.setBaseline(TypedConfiguration.newConfigItem(Baseline.class));
 		return policy;
+	}
+
+	/** A role entry granting the given capability groups. */
+	private static RoleAccess roleGranting(String name, String... groups) {
+		RoleAccess role = TypedConfiguration.newConfigItem(RoleAccess.class);
+		role.setName(name);
+		for (String group : groups) {
+			Grant grant = TypedConfiguration.newConfigItem(Grant.class);
+			grant.setGroup(group);
+			role.getGrants().add(grant);
+		}
+		return role;
 	}
 }

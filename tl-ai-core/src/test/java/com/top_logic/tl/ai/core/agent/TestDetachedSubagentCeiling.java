@@ -25,6 +25,7 @@ import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.DeclaredGroups;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAuthorization;
@@ -154,28 +155,14 @@ public class TestDetachedSubagentCeiling extends TestCase {
 	}
 
 	/**
-	 * An application that has configured no {@code <tool-access>} policy sees no change at all.
+	 * A context with nothing to narrow answers itself rather than deriving a new one.
 	 *
 	 * <p>
-	 * The most important test in this class: {@link com.top_logic.tl.ai.core.security.AiSecurityMode#LEGACY}
-	 * is what every unmigrated application runs in, and a detached subagent there must keep behaving
-	 * exactly as it did before this ceiling existed.
+	 * {@link ToolContext#EMPTY} is the test seam, and it authorizes nothing, so bounding it by an
+	 * allowlist it does not have would produce a context indistinguishable from this one.
 	 * </p>
 	 */
-	public void testLegacyRunIsUnaffected() {
-		ToolContext parent = new ToolContext(new TopLogicSecurityContext(),
-			ApprovalCallback.AUTO_APPROVE, TransactionScope.NOOP);
-
-		ToolContext child = detachedChild(parent);
-
-		assertSame("Nothing to derive, so not even a new context.", parent.security(), child.security());
-		assertFalse(child.security().isBackgroundRun());
-		assertTrue(child.security().hasToolPermission(WRITE_TOOL));
-		assertEquals(Set.of(), child.security().capabilitiesWithheldInBackground());
-	}
-
-	/** The unrestricted context of a test or a trusted internal run is not narrowed either. */
-	public void testUnrestrictedRunIsUnaffected() {
+	public void testAContextWithNothingToNarrowIsUnaffected() {
 		ToolContext child = detachedChild(ToolContext.EMPTY);
 
 		assertSame(ToolContext.EMPTY.security(), child.security());
@@ -248,7 +235,20 @@ public class TestDetachedSubagentCeiling extends TestCase {
 		BackgroundAllowlist allowlist = TypedConfiguration.newConfigItem(BackgroundAllowlist.class);
 		allowlist.getGrants().add(group(ToolGroups.DATA_READ));
 		policy.setBackgroundAllowlist(allowlist);
+		policy.setBaseline(noBaseline());
 		return policy;
+	}
+
+	/**
+	 * An explicitly empty baseline, so these tests see only the role grants they configure.
+	 *
+	 * <p>
+	 * An <em>absent</em> {@code <baseline>} would mean {@link RoleToolAccess#DEFAULT_BASELINE} - the
+	 * read-only default of #293 - and would grant every capability in it to every persona here.
+	 * </p>
+	 */
+	private static Baseline noBaseline() {
+		return TypedConfiguration.newConfigItem(Baseline.class);
 	}
 
 	private static Grant group(String name) {

@@ -47,7 +47,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * precisely the check the engine itself performs.</li>
  * </ul>
  *
- * @see PreCommitGuard#forRun(SecurityContext)
+ * @see PreCommitGuard#forRun()
  */
 public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 

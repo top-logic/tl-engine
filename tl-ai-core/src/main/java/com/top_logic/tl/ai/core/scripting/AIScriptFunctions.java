@@ -24,7 +24,6 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
@@ -353,11 +352,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		Conversation conversation = new Conversation();
 		conversation.add(request);
 
-		// The agent's own security mode takes part in building the context, not only in the loop that
-		// later runs it: an agent demanding enforcement in a deployment that does not require it must
-		// get a context with a principal, and the unrestricted fallback has none to offer.
-		ToolContext context =
-			ToolContext.forCurrentUser(AgentDefinitionQuery.getInstance().securityFloorOf(agentName));
+		// Acts as the account that executed the script, and refuses if the thread has none: a run that
+		// cannot name its principal cannot be authorized.
+		ToolContext context = ToolContext.forCurrentUser();
 
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			recordUserTurn(env.logListener().log(), request);
@@ -491,11 +488,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		// thread - and is marked as a background run, so the policy's background allowlist applies as
 		// an additional ceiling. Auto-approval is exactly the compensating control that allowlist
 		// replaces: a run with nobody to ask must not reach write tools by default.
-		// The agent's own security mode is resolved into the context here, before the run starts, so an
-		// agent that demands enforcement gets it even where the deployment does not require it.
 		ToolContext context = new ToolContext(
-			TopLogicSecurityContext.forRun(TLContext.currentUser(), true,
-				AgentDefinitionQuery.getInstance().securityFloorOf(agentName)),
+			TopLogicSecurityContext.forRun(TLContext.currentUser(), true),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 
 		// Cluster-safe cancellation: this node runs the job and holds the token, so a listener on

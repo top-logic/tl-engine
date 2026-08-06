@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -17,13 +18,18 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
- * Tests how {@link AiToolAccessService} reads a policy: when enforcement turns on, and what it refuses
- * to accept.
+ * Tests what {@link AiToolAccessService} refuses to accept in a policy.
+ *
+ * <p>
+ * There is nothing to turn on: the policy is applied to every run. What is left to check at boot is
+ * that the policy an administrator wrote says what it looks like it says.
+ * </p>
  */
 public class TestAiToolAccessService extends TestCase {
 
@@ -34,56 +40,7 @@ public class TestAiToolAccessService extends TestCase {
 	}
 
 	/**
-	 * The opt-in rule, and the single most important property of this change: an empty policy leaves
-	 * the application unenforced, so nothing about its behaviour changes.
-	 */
-	public void testEmptyPolicyIsUnenforced() {
-		AiSecurityMode mode = AiToolAccessService.resolveCeiling(policy());
-
-		assertEquals(AiSecurityMode.LEGACY, mode);
-		assertFalse(mode.enforcesToolAccess());
-		assertFalse(mode.enforcesModelAccess());
-	}
-
-	/** Writing the matrix is the opt-in: a non-empty {@code <tool-access>} enforces. */
-	public void testToolAccessTurnsEnforcementOn() {
-		ToolAccessPolicy policy = policy(role("Clerk", grants(group(ToolGroups.DATA_READ)), grants()));
-
-		AiSecurityMode mode = AiToolAccessService.resolveCeiling(policy);
-
-		assertEquals(AiSecurityMode.ENFORCED, mode);
-		assertTrue(mode.enforcesToolAccess());
-	}
-
-	/** An explicit mode always wins over the heuristic - in both directions. */
-	public void testExplicitModeWins() {
-		ToolAccessPolicy withMatrix = policy(role("Clerk", grants(group(ToolGroups.DATA_READ)), grants()));
-		withMatrix.setSecurityMode(AiSecurityMode.LEGACY);
-		assertEquals(AiSecurityMode.LEGACY, AiToolAccessService.resolveCeiling(withMatrix));
-
-		ToolAccessPolicy empty = policy();
-		empty.setSecurityMode(AiSecurityMode.ENFORCED);
-		assertEquals(AiSecurityMode.ENFORCED, AiToolAccessService.resolveCeiling(empty));
-	}
-
-	/**
-	 * A baseline or a background allowlist alone does not enforce.
-	 *
-	 * <p>
-	 * Both only ever narrow or widen an enforced decision. Treating them as the opt-in signal would
-	 * turn a deployment that merely stated its background ceiling into one that denies every tool.
-	 * </p>
-	 */
-	public void testBaselineAloneDoesNotEnforce() {
-		ToolAccessPolicy policy = policy();
-		policy.getBaseline().add(group(ToolGroups.MODEL_READ));
-		allow(policy, group(ToolGroups.DATA_READ));
-
-		assertEquals(AiSecurityMode.LEGACY, AiToolAccessService.resolveCeiling(policy));
-	}
-
-	/**
-	 * An enforcing policy that says nothing about unattended runs is rejected.
+	 * A policy that names roles and says nothing about unattended runs is rejected.
 	 *
 	 * <p>
 	 * Unattended runs approve every tool call themselves, and {@code <background-allowlist>} is the
@@ -93,28 +50,41 @@ public class TestAiToolAccessService extends TestCase {
 	 * the engine's behaviour.
 	 * </p>
 	 */
-	public void testEnforcingPolicyMustDeclareBackgroundAllowlist() {
-		ToolAccessPolicy enforcing = policy(role("Clerk", grants(group(ToolGroups.DATA_READ)), grants()));
+	public void testPolicyWithRolesMustDeclareBackgroundAllowlist() {
+		ToolAccessPolicy granting = policy(role("Clerk", grants(group(ToolGroups.DATA_READ)), grants()));
 
-		assertTrue("An enforcing policy without an allowlist is under-specified.",
-			AiToolAccessService.needsBackgroundAllowlist(enforcing));
+		assertTrue("A policy that grants something without an allowlist is under-specified.",
+			AiToolAccessService.needsBackgroundAllowlist(granting));
 
-		allow(enforcing);
+		allow(granting);
 		assertFalse("An empty declaration is a decision: no tool without a human.",
-			AiToolAccessService.needsBackgroundAllowlist(enforcing));
+			AiToolAccessService.needsBackgroundAllowlist(granting));
 	}
 
 	/** The explicit opt-out satisfies the requirement - the administrator said it out loud. */
 	public void testExplicitOptOutSatisfiesTheRequirement() {
-		ToolAccessPolicy enforcing = policy(role("Clerk", grants(group(ToolGroups.DATA_READ)), grants()));
-		allow(enforcing).setAll(true);
+		ToolAccessPolicy granting = policy(role("Clerk", grants(group(ToolGroups.DATA_READ)), grants()));
+		allow(granting).setAll(true);
 
-		assertFalse(AiToolAccessService.needsBackgroundAllowlist(enforcing));
+		assertFalse(AiToolAccessService.needsBackgroundAllowlist(granting));
 	}
 
-	/** An unenforced policy needs no allowlist: nothing is checked in the first place. */
-	public void testUnenforcedPolicyNeedsNoAllowlist() {
+	/**
+	 * A policy that grants no role anything needs no allowlist.
+	 *
+	 * <p>
+	 * There is nothing for the administrator to have forgotten: every run of such an application,
+	 * attended or not, already reaches only {@link RoleToolAccess#IMPLICIT_BASELINE}. Refusing to boot
+	 * would refuse every application that has not written a policy yet.
+	 * </p>
+	 */
+	public void testPolicyWithoutRolesNeedsNoAllowlist() {
 		assertFalse(AiToolAccessService.needsBackgroundAllowlist(policy()));
+
+		ToolAccessPolicy baselineOnly = policy();
+		baseline(baselineOnly, group(ToolGroups.MODEL_READ));
+		assertFalse("A baseline is not a grant table either.",
+			AiToolAccessService.needsBackgroundAllowlist(baselineOnly));
 	}
 
 	/**
@@ -159,7 +129,7 @@ public class TestAiToolAccessService extends TestCase {
 		ToolAccessPolicy policy = policy(
 			role("Clerk", grants(group("data.reed"), group(ToolGroups.DATA_READ)), grants()),
 			role("Developer", grants(), grants(group("modle.structure"))));
-		policy.getBaseline().add(group(ToolGroups.INTERACTION));
+		baseline(policy, group(ToolGroups.INTERACTION));
 
 		Set<String> unknown = AiToolAccessService.unknownGroups(policy, ToolGroups.ALL);
 
@@ -199,7 +169,7 @@ public class TestAiToolAccessService extends TestCase {
 	/** An entry that says nothing is refused too: it reaches nothing and admits it nowhere. */
 	public void testEntryNamingNothingIsRefused() {
 		ToolAccessPolicy policy = policy();
-		policy.getBaseline().add(TypedConfiguration.newConfigItem(Grant.class));
+		baseline(policy, TypedConfiguration.newConfigItem(Grant.class));
 		allow(policy, TypedConfiguration.newConfigItem(Grant.class));
 
 		assertEquals(List.of("<baseline> entry 1 names nothing",
@@ -213,7 +183,7 @@ public class TestAiToolAccessService extends TestCase {
 		byName.setTools(List.of("mcp__jira__createIssue", "mcp__jira__addComment"));
 		ToolAccessPolicy policy = policy(
 			role("Clerk", grants(group(ToolGroups.DATA_READ), byName), grants(group(ToolGroups.EGRESS))));
-		policy.getBaseline().add(group(ToolGroups.MODEL_READ));
+		baseline(policy, group(ToolGroups.MODEL_READ));
 		allow(policy, group(ToolGroups.DATA_READ));
 
 		assertEquals(List.of(), AiToolAccessService.underspecifiedEntries(policy));
@@ -224,8 +194,26 @@ public class TestAiToolAccessService extends TestCase {
 		for (RoleAccess role : roles) {
 			policy.getToolAccess().put(role.getName(), role);
 		}
+		baseline(policy);
 		return policy;
 	}
+
+	/**
+	 * Declares the policy's baseline with the given entries.
+	 *
+	 * <p>
+	 * Called with no entries by {@link #policy(RoleAccess...)}, so that these tests assert role grants
+	 * against an explicitly empty baseline rather than against
+	 * {@link RoleToolAccess#DEFAULT_BASELINE}. The default is what an <em>absent</em> element means, and
+	 * it is tested where it belongs - see {@code TestDefaultBaseline}.
+	 * </p>
+	 */
+	private static void baseline(ToolAccessPolicy policy, Grant... entries) {
+		Baseline baseline = TypedConfiguration.newConfigItem(Baseline.class);
+		baseline.getGrants().addAll(List.of(entries));
+		policy.setBaseline(baseline);
+	}
+
 
 	/** Declares the policy's background allowlist with the given entries. */
 	private static BackgroundAllowlist allow(ToolAccessPolicy policy, Grant... entries) {

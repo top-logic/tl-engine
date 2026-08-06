@@ -51,7 +51,6 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ToolChangeSet;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
@@ -1370,13 +1369,12 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * A context whose mode enforces model access, so the pre-commit guard runs.
+	 * A context carrying the given model access checks, which the pre-commit guard consults.
 	 */
 	private static SecurityContext enforcedSecurity(ModelSecurity model) {
 		return new SecurityContext() {
 			@Override public boolean hasToolPermission(Tool tool) { return true; }
 			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
-			@Override public AiSecurityMode securityMode() { return AiSecurityMode.ENFORCED; }
 			@Override public ModelSecurity modelSecurity() { return model; }
 		};
 	}
@@ -1524,10 +1522,14 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * A run in {@link AiSecurityMode#LEGACY} - every run in an application that configured no policy -
-	 * is unrestricted, and pays nothing for the change set either.
+	 * A writing turn whose principal may make every change it made is committed.
+	 *
+	 * <p>
+	 * The guard runs for every run now, so the change set is read - and read once. What decides is the
+	 * run's model access rights, and here they grant everything.
+	 * </p>
 	 */
-	public void testLegacyRunIsUnrestrictedAndPaysNothing() {
+	public void testWritingTurnThePrincipalMayMakeIsCommitted() {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
 
@@ -1549,14 +1551,14 @@ public class TestAgentLoop extends TestCase {
 
 		TestableTransactionScope scope = new TestableTransactionScope();
 		scope.withChanges(new ToolChangeSet(List.of(), Map.of(someObject("secret1"), Set.of()), List.of()));
-		// developmentSecurity() says nothing about its mode, which is LEGACY.
+		// developmentSecurity() carries ModelSecurity.UNCHECKED, which permits every change.
 		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);
 
 		AgentLoop loop = new AgentLoop(config(), provider, registry);
 		loop.run(conv, ctx, listener);
 
 		assertEquals(List.of("tx_commit"), events);
-		assertEquals("An unenforcing run must not pay for the change set.", 0, scope.changeReads());
+		assertEquals("The guard reads the change set once per writing turn.", 1, scope.changeReads());
 	}
 
 	/**

@@ -125,7 +125,7 @@ public record ToolChangeSet(
 	 * <p>
 	 * <b>Only called for a run that enforces model access.</b> A run that enforces nothing never asks
 	 * for the change set, so it pays none of this - see
-	 * {@link PreCommitGuard#forRun(com.top_logic.tl.ai.core.agent.SecurityContext)}.
+	 * {@link PreCommitGuard#forRun()}.
 	 * </p>
 	 *
 	 * <p>

@@ -7,15 +7,9 @@ package com.top_logic.ai.mcp.server.tools;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.tools.ToolExecutions;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
@@ -111,11 +105,10 @@ public class McpToolAdapter {
 	 * Handles an MCP tool call by delegating to the tool.
 	 *
 	 * <p>
-	 * The call runs in a real {@link com.top_logic.tl.ai.core.agent.ToolContext} - see
-	 * {@link McpToolContexts} for which principal it names (none) and why an enforcing deployment
-	 * refuses the call outright instead. Passing no context at all, as this method used to, meant
-	 * every adapted tool reached the model with no security context, no tool authorization and no
-	 * approval: a complete bypass of {@code <tool-access>}.
+	 * Always refused - see {@link McpToolContexts} for why: {@code /mcp/*} authenticates nobody, and a
+	 * tool call that cannot name the account it acts as cannot be authorized. Executing it anyway, as
+	 * this method used to when it passed no context at all, meant every adapted tool ran with no
+	 * security context, no tool authorization and no approval.
 	 * </p>
 	 */
 	private static McpSchema.CallToolResult handleToolCall(
@@ -123,45 +116,11 @@ public class McpToolAdapter {
 			Tool tool) {
 
 		String refusal = McpToolContexts.refusalReason();
-		if (refusal != null) {
-			Logger.warn("Refused MCP tool call '" + request.name() + "': " + refusal,
-				McpToolAdapter.class);
-			return McpSchema.CallToolResult.builder()
-				.content(List.of(new McpSchema.TextContent(refusal)))
-				.isError(true)
-				.build();
-		}
-
-		try {
-			Map<String, Object> arguments = request.arguments();
-			if (arguments == null) {
-				arguments = Map.of();
-			}
-
-			String result;
-			CancellationToken cancellation = new CancellationToken();
-			// Committed here rather than by an agent loop, which this call does not run in. On any
-			// exception close() rolls the transaction back.
-			try (TransactionScope transaction = new TransactionScope(cancellation)) {
-				ToolContext context = McpToolContexts.forCall(transaction, cancellation);
-				result = ToolExecutions.execute(tool, arguments, context).text();
-				if (transaction.isActive()) {
-					transaction.commit();
-				}
-			}
-
-			return McpSchema.CallToolResult.builder()
-				.content(List.of(new McpSchema.TextContent(result)))
-				.build();
-
-		} catch (Exception ex) {
-			Logger.error("Error executing tool '" + request.name() + "': " + ex.getMessage(),
-				ex, McpToolAdapter.class);
-			String errorJson = "{\"error\":\"" + JsonEscape.escape(ex.getMessage()) + "\"}";
-			return McpSchema.CallToolResult.builder()
-				.content(List.of(new McpSchema.TextContent(errorJson)))
-				.isError(true)
-				.build();
-		}
+		Logger.warn("Refused MCP tool call '" + request.name() + "': " + refusal,
+			McpToolAdapter.class);
+		return McpSchema.CallToolResult.builder()
+			.content(List.of(new McpSchema.TextContent(refusal)))
+			.isError(true)
+			.build();
 	}
 }

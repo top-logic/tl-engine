@@ -15,7 +15,6 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.security.AiSecurityMode;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -232,23 +231,24 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * An enforcing policy that declares no allowlist at all is under-specified, and the deployed policy
-	 * is not.
+	 * A policy that grants roles anything and declares no allowlist is under-specified, and the deployed
+	 * policy is not.
 	 *
 	 * <p>
 	 * {@code AiToolAccessService} rejects such a policy at boot with {@code context.error(...)}: the
 	 * allowlist is the only control standing in for the approval prompt, so its absent state must not
 	 * be the permissive one. That an application <em>can</em> be rejected is pinned by
-	 * {@code TestAiToolAccessService.testEnforcingPolicyMustDeclareBackgroundAllowlist}; what this
-	 * asserts is the other half - that the shipped fixture, which does enforce, satisfies the rule. An
-	 * application whose boot fails on this shows the message quoted in
+	 * {@code TestAiToolAccessService.testPolicyWithRolesMustDeclareBackgroundAllowlist}; what this
+	 * asserts is the other half - that the shipped fixture, which does grant roles, satisfies the rule.
+	 * An application whose boot fails on this shows the message quoted in
 	 * doc/security/tool-access-configuration.md.
 	 * </p>
 	 */
-	public void testTheDeployedEnforcingPolicyDeclaresAnAllowlist() {
-		assertEquals(AiSecurityMode.ENFORCED, AiToolAccessService.ceiling());
-		assertNotNull("An enforcing policy with no <background-allowlist> is a boot error, so a booted"
-			+ " enforcing application always has one.",
+	public void testTheDeployedPolicyDeclaresAnAllowlist() {
+		assertFalse("The precondition: the fixture grants roles something.",
+			AiToolAccessService.policy().getToolAccess().isEmpty());
+		assertNotNull("A granting policy with no <background-allowlist> is a boot error, so a booted"
+			+ " application with a grant table always has one.",
 			AiToolAccessService.policy().getBackgroundAllowlist());
 		assertFalse("The demo allowlist is neither the opt-out nor empty.",
 			AiToolAccessService.policy().getBackgroundAllowlist().isAll());
@@ -260,25 +260,20 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	 *
 	 * <p>
 	 * {@code /mcp/*} authenticates nobody, so an MCP tool call has no principal to authorize and
-	 * {@code McpToolAdapter} refuses it rather than running it as the system. The refusal is decided
-	 * from the deployment's mode, and this is where the demo's own mode is checked against that rule:
-	 * {@code ENFORCED.requiresUser()} is what closes the endpoint, and a principal-less run cannot even
-	 * build a security context. The refusal <em>message</em> is pinned by
-	 * {@code TestMcpToolContexts} in tl-ai-mcp-server.
+	 * {@code McpToolAdapter} refuses it outright. What this pins in a booted application is the reason
+	 * it has to: a run with no principal cannot even build a security context, whatever the policy
+	 * says. The refusal <em>message</em> is pinned by {@code TestMcpToolContexts} in
+	 * tl-ai-mcp-server.
 	 * </p>
 	 */
-	public void testMcpRunHasNoPrincipalAndIsRefusedUnderThisPolicy() {
-		assertTrue("An enforcing deployment requires a user, which is what closes /mcp/*.",
-			AiToolAccessService.ceiling().requiresUser());
-
+	public void testARunWithoutAPrincipalCannotBeBuilt() {
 		try {
-			// Exactly what McpToolContexts.forCall builds: no principal, unattended.
+			// The shape an MCP tool call would have: no principal, unattended.
 			TopLogicSecurityContext.forRun((Person) null, true);
-			fail("A run with no principal must be refused up front under an enforcing policy,"
-				+ " not at the first tool call.");
+			fail("A run with no principal must be refused up front, not at the first tool call.");
 		} catch (IllegalStateException expected) {
-			assertTrue("The refusal must name the mode: " + expected.getMessage(),
-				expected.getMessage().contains(AiSecurityMode.ENFORCED.name()));
+			assertTrue("The refusal must say what is missing: " + expected.getMessage(),
+				expected.getMessage().contains("authenticated user"));
 		}
 	}
 

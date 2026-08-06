@@ -501,7 +501,8 @@ public class ChatProcessor {
 		// The chat user is the run's principal: their roles decide which tools the agent may use, and
 		// their model access rights which objects those tools may touch. An interactive run always
 		// has a human who can answer an approval prompt, so it is not a background run.
-		// Without a configured <tool-access> policy this resolves to LEGACY, i.e. unchanged behaviour.
+		// ChatSessionFilter has already rejected an unauthenticated caller on /chat/*, so there is a
+		// user here; forRun refuses if there is not, rather than running unchecked.
 		SecurityContext security = TopLogicSecurityContext.forRun(TLContext.currentUser(), false);
 		return new ToolContext(
 			security, approvalCallback, new TransactionScope(cancellationToken),

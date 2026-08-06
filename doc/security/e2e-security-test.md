@@ -670,14 +670,25 @@ Administrator-facing documentation for writing such a policy in your own applica
   but covered deterministically by `SecDemoPreCommitGuardTest` and described in
   [testbed.md](testbed.md#48-the-pre-commit-guard---what-catches-an-uncooperative-tool).
 
+- **Result read-filtering in the data tools** (issue **#289**): `listInstances` and `getInstance` now
+  consult the same model rights TL-Script does, through the one `ReadFilter` every
+  `TLObject`-to-result conversion goes through. An instance the account may not read is absent from a
+  listing and absent from its `totalCount`; an attribute it may not read is absent from a description;
+  an object it may not read answers exactly as one that does not exist. `SecDemoReadFilterTest` is the
+  deterministic form, and it asserts each row as a *pair* - the reader sees the data, the author sees
+  none of it - because an empty result on its own would also be what a broken tool returns.
+
 **It does not test (staged, not wired on this branch):**
 
-- **Result pre-filtering in tl-ai tools**: the read-only model tools (`listInstances`, instance
-  browser, model search) bypass the engine check because they query the KnowledgeBase directly.
-  Only TL-Script is enforced. This is the single most important gap to keep in mind while testing -
-  a "the agent showed me the secret" observation through those tools is a *known* gap, not a new
-  finding. Note the tool layer is no substitute: it decides *whether* a role may call `listInstances`,
-  not *which instances* the call returns.
+- **Filtered aggregates.** ``all(`secdemo:Note`).size()`` counts unfiltered, because a count is a
+  number by the time any filter sees it. This is accepted rather than fixed (issue **#291**): per-object
+  read filtering covers identity, labels and attribute values, and cardinality is outside it. An
+  observation that a persona learned *how many* notes exist is therefore expected behaviour; an
+  observation that it learned *which* ones is a finding. The control is withholding `script`.
+- **The MCP resource surface.** `tl-ai-mcp-server`'s `InstanceResource` and `TypeInstancesResource`
+  serialize instances the way the two tools used to. They are closed today only because `/mcp/*`
+  authenticates nobody (issue **#261**) and are not a valid surface for per-user enforcement either
+  way.
 - **Row-level / instance-level policies**: the scaffold grants on *types*. Per-instance rules
   (`RoleRule`s on a security structure) are a separate engine mechanism and are not exercised here.
 - **Component security itself.** The `<component-access>` block is a *precondition* for this test, not

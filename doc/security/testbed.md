@@ -59,7 +59,7 @@ the one that takes changes away again after a tool reported success:
 |---|---|---|---|
 | **Component access** | `<component-access>` in the aspect | whether a tab opens at all | *"No tabs to choose from."* |
 | **Tool access** (tl-ai, L1) | `<tool-access>` in the aspect | whether this account may invoke this tool | `Permission denied: tool '...' requires the '...' capability` |
-| **Model access** (engine, L2) | `<security-config>` in the aspect | whether this account may read or write this object | empty attribute values, or `CREATE_PERMISSION_DENIED` |
+| **Model access** (engine, L2) | `<security-config>` in the aspect | whether this account may read or write this object | empty attribute values, a listing whose `totalCount` is 0, an `Object with TID '...' not found` for an object that does exist, or `CREATE_PERMISSION_DENIED` |
 | **Pre-commit guard** (tl-ai, L4) | the same `<security-config>`, read again at the end of the turn | whether every change the turn accumulated may be persisted | the turn's changes are gone and the agent reports `The data changes of this turn were rolled back` |
 
 The tool layer is the one this page is mostly about, and the pre-commit guard is where to look when a
@@ -297,8 +297,9 @@ why **A5** matters.
 
 ### 4.5 Model access - what a permitted tool may then touch
 
-The depth is in [e2e-security-test.md](e2e-security-test.md) section 3; these are the four rows worth
-knowing here.
+The depth is in [e2e-security-test.md](e2e-security-test.md) section 3. The first four rows are the
+model rights themselves; **M5** to **M7** are the data tools honouring them, which is what issue #289
+built.
 
 | # | Behaviour | Persona | Where | Do this | You should see |
 |---|---|---|---|---|---|
@@ -307,10 +308,15 @@ knowing here.
 | **M3** | a secret stays out of reach for everyone | any persona | console | ``all(`secdemo:Secret`).get(`secdemo:Secret#value`)`` | an empty list. `secdemo:Secret` has no grant for any role |
 | **M4** | a tool grant is not a data grant | `secauthor1` | console | ``all(`secdemo:Note`).get(`secdemo:Note#title`)`` | empty - and yet this persona holds two privileged **tool** capabilities. Two independent authorizations |
 
-> **Known gap.** Only the TL-Script tool runs with the engine's checks. `listInstances`, the instance
-> browser and model search query the KnowledgeBase directly and are **not** filtered yet. A "the agent
-> showed me the secret" observation through those tools is a *known* staged gap, not a new finding - see
-> [e2e-security-test.md](e2e-security-test.md#7-what-this-does-and-does-not-test).
+| **M5** | a listing is filtered, and so is its count | `secreader1`, then `secauthor1` | console | `aiCallTool("model-instances.listInstances", {"moduleName": "secdemo", "typeName": "Note"})` | ✅ for the reader: the three notes and `totalCount: 3`. For the author: `totalCount: 0` and an empty page - it holds no `data.read`, so try it as the reader against `"typeName": "Secret"` for the same answer from L2 alone. `SecDemoReadFilterTest` is the deterministic form of both |
+| **M6** | an unreadable object is reported as missing | `secreader1` | console | `aiCallTool("model-instances.getInstance", {"tid": "<a secret's TID>"})` | ❌ `Object with TID '...' not found` - the same answer a TID that names nothing gets. "Exists but hidden" would disclose that it exists |
+| **M7** | a script result carries no hidden object | `secreader1` | console | ``aiCallTool("script-exec.executeTLScript", {"script": "all(`secdemo:Secret`)"})`` | ✅ the call succeeds and `"result": []`. No `_tid`, no `_type`, no `_display`. Compare ``all(`secdemo:Note`)``, which carries all three |
+
+> ⚠️ **A count is not filtered, and that is accepted.** ``all(`secdemo:Note`).size()`` - and therefore
+> `secdemo-reporting.countNotes` - counts every note, whatever the acting account may read. Per-object
+> read filtering covers identity, labels and attribute values; aggregates computed inside a script are
+> outside it (**issue #291**). A persona learning *how many* notes exist is expected; a persona learning
+> *which* ones would be a finding. The honest control is withholding the `script` capability.
 
 ### 4.6 A run that cannot name its account
 
@@ -405,7 +411,7 @@ mvn -o -pl tl-ai-demo -am test -DskipTests=false \
     -Dsurefire.failIfNoSpecifiedTests=false -Dtest='SecDemo*'
 ```
 
-That is **104 tests in 12 classes**, and they are green on this branch. Or run one class at a time - the
+That is **112 tests in 13 classes**, and they are green on this branch. Or run one class at a time - the
 class name says which behaviour broke:
 
 | Class | Tests | Covers | Scenarios |
@@ -414,6 +420,7 @@ class name says which behaviour broke:
 | `SecDemoCapabilityNoticeTest` | 12 | skills dropped / partially loaded / tool-less; what `loadSkill` announces; the capability notice | C1, C2, C3, C4, C5 |
 | `SecDemoBackgroundAccessTest` | 12 | the background ceiling in both directions; that it binds administrators; that an allowlisted `script` does not admit a commit; that a detached subagent loses what the allowlist withholds; that an enforcing policy has an allowlist; the MCP refusal rule | A1, A2, A3, A4, A5, P1 |
 | `SecDemoModelSecurityTest` | 10 | the engine's model rights per persona, evaluated through TL-Script compiled with security on | M1, M2, M3, M4 |
+| `SecDemoReadFilterTest` | 8 | that the data tools disclose only what the persona may read: a filtered listing and a filtered `totalCount`, an unreadable object reported as missing, a script result carrying no hidden identity or label, and each of them as a **pair** against a persona who may read the data | M5, M6, M7 |
 | `SecDemoSkillAbsenceTest` | 9 | what `loadSkill` says when it refuses: withheld for this user, withheld by the background ceiling, not carried by this agent, no such skill; and that the `addNote` question is answered honestly whichever route the model takes | C7, C13, C14, C15, C16, A7 |
 | `SecDemoSchemaFilterTest` | 9 | a denied tool's schema is absent from the provider request; the execution-mode half told apart from authorization; the kinds of absence told apart, each with the permitted-only available list | C6, C7, C8 |
 | `SecDemoDelegateFilterTest` | 8 | the delegate list per persona on the shipped framework agents; the drop reason; a partly reachable delegate offered and annotated; the same filter in `list_agents` | C9, C10 |
@@ -450,15 +457,16 @@ application:
 
 ```bash
 mvn -o -pl tl-ai-core -am test -DskipTests=false -Dsurefire.failIfNoSpecifiedTests=false \
-    -Dtest='TestRoleToolAccess,TestToolAuthorization,TestAiToolAccessService,TestAgentCapabilities,TestDelegateFilter,TestSpawnFilter,TestDetachedSubagentCeiling,TestSkillTool,TestSkillAbsenceReason,TestFrameworkSkillReferences,TestTopLogicSecurityContext,TestPreCommitGuard'
+    -Dtest='TestRoleToolAccess,TestToolAuthorization,TestAiToolAccessService,TestAgentCapabilities,TestDelegateFilter,TestSpawnFilter,TestDetachedSubagentCeiling,TestSkillTool,TestSkillAbsenceReason,TestFrameworkSkillReferences,TestTopLogicSecurityContext,TestPreCommitGuard,TestReadFilter'
 ```
 
 These are green on this branch. `TestSpawnFilter` and `TestDetachedSubagentCeiling` carry the spawn
 cases the deployed policy cannot show - among them a foreground-reachable agent refused a *detached*
 spawn, which no shipped agent can produce (see **A6**). `TestAgentCapabilities` is where the prompt
 shapes of **C12** are pinned, `TestTopLogicSecurityContext` holds the refusal of a run with no
-principal and the deny-by-default of an empty policy, and `TestPreCommitGuard` plus the transaction
-cases of `TestAgentLoop` are L4. `TestMcpToolContexts` in `tl-ai-mcp-server` holds the MCP refusal
+principal and the deny-by-default of an empty policy, `TestPreCommitGuard` plus the transaction
+cases of `TestAgentLoop` are L4, and `TestReadFilter` holds the omission rules of the read filter -
+including the one case the fixture cannot show, that a count is deliberately *not* filtered. `TestMcpToolContexts` in `tl-ai-mcp-server` holds the MCP refusal
 message.
 
 ---

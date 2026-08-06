@@ -61,7 +61,7 @@ The two central design commitments:
 |---|---|---|
 | Tool permission | **Enforced for every run** (was hardcoded `true`) | `TopLogicSecurityContext.hasToolPermission` answers from `ToolAuthorization`, always over the running service's policy. A policy that configures nothing grants `RoleToolAccess.IMPLICIT_BASELINE` plus `RoleToolAccess.DEFAULT_BASELINE` |
 | Tool permission by name | Same | `SecurityContext.hasToolPermission(String)` still defaults to `true` for implementations that do not override it |
-| Data read/write check | Dead stubs, `Object`-typed, **no callers** | `SecurityContext.java:67`, `:80`; a repo-wide grep finds only the declarations |
+| Data read/write check | **Enforced through one chokepoint** | `ModelSecurity` (typed, principal-bound) is reached as `ToolContext.modelSecurity()`; `ReadFilter` is the only converter of a `TLObject` into a tool result, and `TidResolver.resolve` refuses an object the run may not read |
 | Execution-mode gate | Live | `ToolPermissionFilter.java:36-45` denies `STRUCTURAL` in `PRODUCTION` |
 | Approval gate | Live | `SecurityContext.checkApproval` -> `AgentLoop.java:933`; `USER_SCOPED`/`DATA_WRITE`/`STRUCTURAL` need approval |
 | Schema filter hook | Live but no-op | `AgentLoop.java:1143` builds the provider tool list through `ToolPermissionFilter` |
@@ -71,7 +71,7 @@ The two central design commitments:
 | TL-Script entry points | **Act as the calling account** | `ToolContext.forCurrentUser()` builds a `TopLogicSecurityContext` from `TLContext.currentUser()` and throws when the thread has none |
 | Test/EMPTY context | **Unrestricted, documented as a test seam** | `ToolContext.EMPTY` and `SecurityContext.UNRESTRICTED`; no production path builds a context this way, because `TopLogicSecurityContext.forRun` requires a `Person` |
 | MCP server | **Still unauthenticated; tool execution refused** | `tl-ai-mcp-server/src/main/resources/META-INF/web-fragment.xml` maps `/mcp/*` with no `security-constraint`, and `tl-ai-demo/.../web.xml` has every filter commented out, so there is no caller identity to resolve (**#261**). `McpToolAdapter` therefore refuses every tool call outright, for every deployment - `McpToolContexts` is where the refusal is worded. Resources and prompts are unaffected |
-| Java data tools | **No checks** | e.g. `InstanceBrowserTool.doListInstances` calls `MetaElementUtil.getAllInstancesOf(type, TLObject.class)` and paginates the raw result (`InstanceBrowserTool.java:158`) |
+| Java data tools | **Read-filtered** (#289) | `InstanceBrowserTool` filters through `ReadFilter.readable(...)` before counting and paginating; `getInstance`, the TL-Script result and every configured script tool go through the same filter. Aggregates computed inside a script stay unfiltered and say so (**#291**) |
 | Model digest | Unfiltered | `ModelDigestGenerator.generate` walks all modules of the application model (`ModelDigestGenerator.java:46-51`) and is injected into the system prompt |
 
 Two engine behaviours matter for the design and are verified against released `8.0.0-alpha7`:
@@ -136,7 +136,7 @@ All gates in this design are deterministic Java checks on the call path, never p
 | # | Threat | Realised today? | Addressed by |
 |---|---|---|---|
 | **T1** | **Agent over-privilege.** The agent can invoke any tool in its catalog regardless of who is chatting; a read-only clerk can drive `ModelEditorTool`. | **Addressed** where an application configures `<tool-access>`; otherwise yes | L1 (3.2), built |
-| **T2** | **Data over-read.** `listInstances`/`getInstance`/`searchModel` return objects the user may not see; the answer, the transcript and the SSE stream all carry them. | Yes | L2 (3.3), L3 (3.4) |
+| **T2** | **Data over-read.** `listInstances`/`getInstance`/`searchModel` return objects the user may not see; the answer, the transcript and the SSE stream all carry them. | **Addressed for instances** (#289): identity, labels and attribute values are filtered per object and per attribute. Cardinality computed inside a script is not, and is accepted (**#291**) | L2 (3.3), L3 (3.4) |
 | **T3** | **Prompt-injection-driven tool abuse.** A malicious value stored in a business object, an MCP tool description, or a fetched web page instructs the agent to call a write tool or exfiltrate data. | Yes | L1+L2+L4; approval for write modes; *not* mitigated by prompting |
 | **T4** | **Exfiltration via an outbound tool.** The agent is induced to put secret data into a `webFetch` URL, a Gitea issue body, or an MCP call to an external server. | Yes | L2 on the read side (it never gets the data), plus egress classification (3.2.4) |
 | **T5** | **Unattended/background over-privilege.** `agentChatAsync` runs with `ApprovalCallback.AUTO_APPROVE`: every approval-gated tool self-approves. | **Bounded** by the background allowlist | 3.1 (identity), 3.2.5 (background tool floor) |
@@ -330,11 +330,12 @@ instead of an inert one (issue **#293**). Nothing in that default mutates (`data
 reaches every type (`script`). An application that writes a `<baseline>` replaces it; `<baseline/>`
 says "nothing for everyone".
 
-> **The default is not a per-object guarantee, yet.** The argument that a default `data.read` is safe
-> is that L1 grants the *ability to ask* and L2 answers per object - which is only true once **#289**
-> lands, because the data tools do not consult L2 today. Until then a default `data.read` means
-> unfiltered reads in an application with no `<security-config>`. That is not a regression against the
-> permissive mode it replaces, which granted everything, but nothing here claims otherwise.
+> **What the default rests on.** The argument that a default `data.read` is safe is that L1 grants the
+> *ability to ask* and L2 answers per object. Since **#289** that is true of the data tools: every
+> instance they disclose passes the read filter, and an application with no `<security-config>` has
+> denied everything, so its agent reads nothing. What the default still does not bound is a *count*
+> computed inside TL-Script, which no read filter can see into (**#291**); `script` is not in the
+> default baseline for that reason among others.
 
 Administrators and engine super-users bypass all of it, and so does any code in a system context, so
 **testing with an admin account proves nothing**.
@@ -736,16 +737,55 @@ There is no mode in which the façade returns `true` everywhere. `ModelSecurity.
 and still does exactly that, but it is a test seam: every production context carries a
 `ModelAccessRightsSecurity` built from the run's principal.
 
-#### 3.3.2 Retrofitting the Java tools
+#### 3.3.2 Retrofitting the Java tools · **implemented** (#289)
 
-The tools that need it, in dependency order:
+Every conversion of a `TLObject` into something a model sees goes through **one** class, `ReadFilter`,
+and an instance of it cannot exist without the `ModelSecurity` of the run being served. That shape is
+the point rather than a detail: the three leaks #289 closed were three tools that had each written
+their own serializer and each forgotten the check. So the serializers that made forgetting easy were
+**deleted**, not documented, and what is left takes the principal's rights as an argument.
+
+Two things make the unsafe path absent rather than discouraged:
+
+- **`TidResolver.resolve(String, ModelSecurity)` has no single-argument form.** It is the only place a
+  model-supplied TID becomes a live object in `tl-ai-core`, so a tool cannot reach an object the run
+  named without saying whose rights apply. An object the principal may not read is refused with the
+  message of one that does not exist - "exists but hidden" is itself a disclosure.
+- **`ExecutionResult.toJson(ReadFilter)` has no argument-less form.** `All.all()`'s javadoc says the
+  caller secures the result; this is where tl-ai does.
+
+What `ReadFilter` enforces:
+
+1. An unreadable object contributes **nothing** - no `_tid`, no `_type`, no `_display`, no attribute
+   value - and is *omitted* from a collection rather than replaced by a placeholder, because a
+   placeholder still discloses existence and count.
+2. `attributesOf` respects **per-attribute** Read; an attribute the principal may not read is left out
+   and the object still renders.
+3. Filtering is recursive, through collections, map keys, map values, arrays and object-valued
+   attributes. The traversal mirrors `SearchExpression.filterSecurity` down to returning the input
+   unchanged when nothing had to be removed.
+
+**What it does not claim: aggregates.** A count computed inside TL-Script is a number by the time it
+arrives, and no read filter can tell which objects it counted. Cardinality is accepted, not fixed
+(issue **#291**); the honest control is denying the `script` capability. `TestReadFilter` states that
+boundary as a test so it is not mistaken for an oversight.
+
+The tools that needed the retrofit, and what each got:
 
 | Tool | Change |
 |---|---|
-| `InstanceBrowserTool.listInstances` | Filter the instance list through `filterReadable` **before** pagination, so page sizes and `totalCount` reflect the user's view. Reporting an unfiltered `totalCount` leaks cardinality. |
-| `InstanceBrowserTool.getInstance` | `requireRead(obj)`; per-attribute `canRead` when serializing values |
-| `ModelSearchTool.searchModel` | TL-Script-backed - inherits engine enforcement; assert the search runs under the user (not a system context) |
+| `InstanceBrowserTool.listInstances` | Filters the instance list through `readable(...)` **before** the count is taken and before the page is cut, so `totalCount` is the number of instances the user may see. An unfiltered `totalCount` leaks cardinality; a page cut before the filter leaks it through short pages. |
+| `InstanceBrowserTool.getInstance` | Resolves the TID through the read check, then serializes only the attributes `canRead(obj, attr)` allows. The container is another object's identity and is disclosed only when that object is readable too. |
+| `TLScriptTool.executeTLScript` | The result is disclosed through `ReadFilter`; the reported `resultType` is the type of the *filtered* value, so a script whose whole result is one hidden object reports `null` rather than `object`. |
+| `ScriptToolExecutor` (every configured TL-Script tool) | Result rendered through `ReadFilter.text(...)` instead of `SearchExpression.asString(...)`, which labels a model object. Object-typed *arguments* are read-checked where their TID is resolved, so a script body cannot be handed an object the principal may not read. |
+| `ViewDocumentTool.viewDocument` | Its own `canRead` check replaced by the resolver's, so "no such object" and "not yours" are one answer. |
+Still outstanding, and out of #289's scope:
+
+| Tool | Change |
+|---|---|
+| `ModelSearchTool.searchModel` | Searches *model elements* - types, attributes, labels - not instances, so it discloses model structure rather than business data. Bounded by `accessibleTypes(READ)` in section 3.4.2 rather than by the read filter |
 | `ModelBrowserTool.*`, `TypeAnalysisTool.*` | Restrict enumeration to `accessibleTypes(READ)` (section 3.4.2) |
+| `tl-ai-mcp-server`'s `InstanceResource` / `TypeInstancesResource` | The MCP *resource* surface serializes instances the same way the two tools used to. It is a separate surface with a separate refusal rule today (#261 - `/mcp/*` authenticates nobody, so nothing runs), and it needs the same chokepoint once it does authenticate |
 | `ModelEditorTool.*`, `ModelAnnotationEditorTool.*` | Structural: gated by the `model.structure` group at L1; L4 backstops the commit |
 | `TLScriptTool.executeTLScript` | Already enforced by the engine inside TL-Script as of `8.0.0-alpha7`; assert user context, never a system interaction. That enforcement was never gated by tl-ai at all, and it denies by default - see section 6 |
 | `VectorIndexSearchTool` | Section 3.4.3 |
@@ -798,17 +838,34 @@ their absence costs no security.
         └───────────────────────────────────────────────────────────────────┘
 ```
 
-Worked example - a clerk holding role `SalesAssistantUser` asks "list all customers and raise their
-credit limit":
+**The two layers ask about the same role at different objects, and that is what makes one role name do
+both jobs.** L1 reads roles **on the security root**, because a tool call has no object yet when the
+gate runs; L2 reads them **on the object being touched**. So a role has to be assigned *twice* to be
+useful: once on the root, by a `<singleton-rule>`, which is the *tier*; and once on business objects,
+by a role rule derived from the data, which is the *scope*.
 
-1. **L1** - `SalesAssistantUser` is granted `data.read`. `listInstances` passes. `executeTLScript` is in
-   `script` (privileged, not granted) - denied, and the model is told so.
-2. **L2** - `listInstances` calls `filterReadable`. `ModelAccessRights` finds
+Worked example - a clerk holding role `SalesAssistantUser` asks "list all customers and raise their
+credit limit". `SalesAssistantUser` is assigned by two rules: a `<singleton-rule>` on
+`SecurityStructure#ROOT` for the members of group `salesAssistants`, and a `<rule type="reference">`
+that derives it on each `Customer` of the clerk's own region.
+
+1. **L1** - the clerk holds `SalesAssistantUser` **on the security root**, through the tier rule, and
+   the policy grants that role `data.read`. `listInstances` passes. `executeTLScript` is in `script`
+   (privileged, not granted) - denied, and the model is told so.
+2. **L2** - `listInstances` calls `readable(...)`. `ModelAccessRights` finds
    `TypeAccessRule(Customer, Read) = {Viewer, Editor, Manager, SalesAssistantUser}` and evaluates the
-   role *per instance*: the clerk holds `SalesAssistantUser` on their own region's customers only.
-   Result: their region's customers.
+   role *per instance*: through the scope rule the clerk holds `SalesAssistantUser` on their own
+   region's customers only. Result: their region's customers.
 3. **L3** - the filtered list is serialized; `totalCount` reports the filtered count.
 4. **L4** - no write happened, nothing to guard.
+
+> **Only the scope assignment is not enough**, and this example used to say it was. A role held only on
+> regional customers is invisible to L1, which looks at the root and nowhere else, so step 1 would deny
+> `listInstances` and step 2 would never run. The tier assignment is what makes L1 pass; the scope
+> assignment is what makes L2 narrow. Neither substitutes for the other, and
+> `use-default-security-parent` must stay `false` or the tier assignment swallows the scope one.
+> [role-model-worked-example.md](role-model-worked-example.md) builds exactly this, in full, with four
+> personas and the configuration that produces them.
 
 The clerk sees their customers and a clear denial for the write. Neither layer alone gets this right:
 RBAC alone would return every customer; ABAC alone would let the clerk run arbitrary TL-Script and
@@ -821,16 +878,21 @@ browser, sent to the provider, and written to the transcript.
 
 #### 3.4.1 Tool results
 
-The dispatcher (`ToolCatalog.execute` / `ToolExecutions.execute`) applies
-`SearchExpression.filterSecurity(person, value)` to any `TLObject`, collection or map a tool returns
-**before serialization**. The engine's implementation recurses through collections and maps and drops
-non-readable elements (verified at `SearchExpression.java:278-390`).
+Filtering happens **inside the tool, before serialization**, and not in the dispatcher. That is not a
+compromise, it is the only place it can work: almost every tl-ai tool returns an **already-serialized
+JSON string** built by a msgbuf writer, so by the time `ToolExecutions.execute` sees the result there is
+no object graph left to filter. A dispatcher-level `SearchExpression.filterSecurity` would inspect a
+`String` and pass it through, which is worse than no filter because it looks like one.
 
-Limitation, stated plainly: most tl-ai tools return **already-serialized JSON strings** built by
-msgbuf writers, not object graphs. `filterSecurity` cannot help there. For those tools the filter must
-be applied inside the tool, before serialization - which is exactly the `filterReadable` retrofit of
-section 3.3.2. The dispatcher-level filter is a **backstop for object-returning tools**, not the
-primary mechanism. Claiming otherwise would be the kind of false assurance this design exists to avoid.
+So the filter is the `ReadFilter` of section 3.3.2, applied where the object still is an object, and
+the design leans on it being *one* filter rather than on it being late. Its traversal is the same shape
+as the engine's `filterSecurity` (recurses through collections and maps, drops non-readable elements,
+returns the input unchanged when nothing had to go - `SearchExpression.java:278-390`), so a reader who
+knows one knows the other.
+
+What is still not covered here, stated plainly so an observation is not mistaken for a finding: an
+**aggregate** computed inside a script (`all(...).size()`), the **model digest** (3.4.2) and the
+**vector index** (3.4.3).
 
 #### 3.4.2 The model digest
 
@@ -1264,8 +1326,12 @@ still protect an application that never gets round to writing a policy.
 `ToolChangeSet` and the call in `AgentLoop.commitTransaction`. It runs for every turn that opened a
 transaction; turns that wrote nothing never open one and pay nothing.
 
-**Still open:** L3, data-tool result filtering, which is absent everywhere - issue **#289**. Removing
-the permissive mode made those leaks live rather than latent, which is why #289 is next.
+**Built:** L3 for the data tools - the `ReadFilter` chokepoint of section 3.3.2, issue **#289**.
+Removing the permissive mode made those leaks live rather than latent, which is why #289 came next.
+
+**Still open:** L3 for the model digest (3.4.2) and the vector index (3.4.3), and the MCP *resource*
+surface, which serializes instances the way the two tools used to and is closed today only because
+`/mcp/*` authenticates nobody (**#261**).
 
 ### Phase 3 - Tool RBAC · **implemented, except the administration UI**
 
@@ -1331,7 +1397,8 @@ compiles against the real API - nothing here is reference code any more. All new
 | `ToolIdentity` - how the policy names a tool | **Implemented.** A grant matches the bare tool name, the configured `{factory}.{tool}` name, or the provider-safe `factory__tool` form, so a correctly spelled grant cannot silently miss |
 | `ModelSecurity` - the typed façade | Implemented. `UNCHECKED` survives only as a test seam; every production context carries `ModelAccessRightsSecurity` |
 | `ModelAccessRightsSecurity` - the `ModelAccessRights`-backed implementation | **Real and unit-tested** (8 cases against a stub rights service). Replaces what was appendix A |
-| `ToolSecurityException` - the denial a tool raises | Implemented; **no tool raises it yet** (that is L2, phase 4) |
+| `ToolSecurityException` - the denial a tool raises | Implemented; raised by `ModelSecurity.requireRead`/`requireWrite`. The read path prefers absence to a denial, so a hidden object produces the "not found" of `TidResolver` rather than this exception - saying "exists but hidden" is the disclosure #289 removed |
+| `ReadFilter` - the disclosure chokepoint | **Implemented and unit-tested** (`TestReadFilter`, 18 cases) and end-to-end against the fixture (`SecDemoReadFilterTest`). Cannot be constructed without a `ModelSecurity`; `TidResolver.resolve` has no form that skips the read check, and `ExecutionResult.toJson` none that skips the filter (#289) |
 | `SecurityContext.modelSecurity()`, `ToolContext.modelSecurity()` | The seam every tool reaches. `securityMode()` is gone (#288) |
 | `SecurityContext.hasToolPermission` + `toolDenialReason` | **Enforcing.** `TopLogicSecurityContext` answers both from the policy; `ToolPermissionFilter` and `AgentLoop` prefer the specific reason over a generic "denied" |
 | `TopLogicSecurityContext.forRun(principal, background)` | The single production entry point. Refuses a run with no principal, and binds the model rights and the tool authorization once. **Called by the chat and TL-Script entry points** |
@@ -1341,7 +1408,8 @@ compiles against the real API - nothing here is reference code any more. All new
 | `@ToolMethod(types = ...)` | **Removed** (#258). Design in 3.3.3; no code |
 | Per-agent `security-mode` (4.2) | Built (#260) and **removed again** (#288), together with the model attribute, the service-editor selector and `SecDemoAgentFloorTest` |
 | Per-agent `required-groups` (4.2) | **Not built.** A self-imposed narrowing of the tool list |
-| The retrofit example A.1 | Appendix A - illustrative, not applied to any tool. A.2 is no longer an example: it is the shipped shape of the pre-commit guard |
+| Boot warnings for a policy that reaches nobody | **Implemented** (#289). A `<tool-access>` role that no role rule can produce **on the security root** is warned about through `AccessManager.canHaveRole`, and a role granted `data.read`/`data.write` that appears in no Read/Write/Create grant of `<security-config>` is warned about too - the "Dora" case of the worked example. Warnings, not errors: a direct runtime assignment can still arrive, and model rights can come from a `<part>` grant or an annotation this check does not read |
+| The retrofit examples A.1 / A.2 | **Applied.** A.1 is the shipped shape of `InstanceBrowserTool` and A.2 the shipped shape of the pre-commit guard |
 
 **An application that writes no `<tool-access>` gets a read-only agent.** The `AiToolAccessService`
 module is active by default and evaluates an empty policy, which grants
@@ -1349,10 +1417,10 @@ module is active by default and evaluates an empty policy, which grants
 `data.read`, asserted by `TestDefaultBaseline`. Every role grant beyond that has to be authored, and
 `TestTopLogicSecurityContext` pins that a role the policy does not mention reaches nothing. The module
 is on by default deliberately: a policy present while the module was off would be silently ignored,
-which is the one failure mode this layer must not have. Data-tool result filtering is still absent
-everywhere (**#289**), which is what keeps the default's `data.read` from being the per-object
-guarantee section 3.1 says it is not yet; the pre-commit guard is wired and enforcing, subject to the
-limits section 3.5 states.
+which is the one failure mode this layer must not have. Since **#289** the default's `data.read` *is*
+the per-object guarantee section 3.1 describes, for identity, labels and attribute values; a count
+computed inside a script is outside it and stays so (**#291**). The pre-commit guard is wired and
+enforcing, subject to the limits section 3.5 states.
 
 Two behaviour changes arrive for TL-Script callers. `aiAgentChat` and `aiAgentChatAsync` act as the
 account that ran the script, and a call from a thread with no bound account is **refused** rather than
@@ -1399,31 +1467,31 @@ See the branch's PR description for the build and test commands that were actual
 ## Appendix A - retrofit examples
 
 The `ModelAccessRights` binding that used to be reference code in this appendix is now real: see
-`ModelAccessRightsSecurity` in `tl-ai-core`, unit-tested by `TestModelAccessRightsSecurity`. What
-remains here are the two retrofit examples - illustrative, not applied to any tool yet.
+`ModelAccessRightsSecurity` in `tl-ai-core`, unit-tested by `TestModelAccessRightsSecurity`. Both
+retrofit examples below are now shipped code rather than illustrations.
 
-### A.1 Retrofit example: `InstanceBrowserTool.doListInstances`
+### A.1 `InstanceBrowserTool.doListInstances` · **implemented** (#289)
 
-Filter **before** pagination, and report the filtered count - an unfiltered `totalCount` discloses
-cardinality the user may not see.
+Filter **before** the count and **before** the page is cut. An unfiltered `totalCount` discloses
+cardinality the user may not see, and a page cut before the filter discloses it through short pages.
 
 ```java
 private InstanceListResponse doListInstances(String moduleName, String typeName,
-        Integer limit, String cursor, ToolContext context) {
+        Integer limit, String cursor, ReadFilter readFilter) {
 
     TLClass type = MetaElementUtil.getGlobalType(moduleName, typeName);
     // ... validation as today ...
 
-    List<TLObject> allInstances = MetaElementUtil.getAllInstancesOf(type, TLObject.class);
+    List<TLObject> allInstances =
+        readFilter.readable(MetaElementUtil.getAllInstancesOf(type, TLObject.class));
 
-    // NEW: restrict to what the run's principal may read, before paginating, so both the
-    // page contents and the reported total reflect the user's view.
-    List<TLObject> visible = context.modelSecurity().filterReadable(allInstances);
-
-    int totalCount = visible.size();
-    // ... pagination over `visible` exactly as today ...
+    int totalCount = allInstances.size();
+    // ... pagination over the filtered list ...
 }
 ```
+
+The `ReadFilter` arrives from the injected `ToolExecutionContext` (`ReadFilter.of(context)`), which
+refuses a call that has no agent run to name a principal. There is no overload without it.
 
 ### A.2 The pre-commit guard in `AgentLoop.commitTransaction` · **implemented**
 

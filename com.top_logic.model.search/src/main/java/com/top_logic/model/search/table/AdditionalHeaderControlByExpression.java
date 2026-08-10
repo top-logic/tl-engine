@@ -14,10 +14,18 @@ import java.util.function.Function;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.grid.GridComponent;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.form.decorator.CompareCell;
+import com.top_logic.layout.form.decorator.CompareInfoAccessor;
+import com.top_logic.layout.form.decorator.CompareRowObject;
+import com.top_logic.layout.form.decorator.CompareService;
+import com.top_logic.layout.form.decorator.DecorateService;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.model.AdditionalHeaderControl;
 import com.top_logic.layout.table.model.AdditionalHeaderControlModel;
+import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.SimpleAdditionalHeaderControl;
+import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.tree.model.TLTreeModelUtil;
 import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.layout.tree.model.TreeTableModel;
@@ -160,13 +168,55 @@ public class AdditionalHeaderControlByExpression extends SimpleAdditionalHeaderC
 	 * @return Null, if the rows are the business objects themselves.
 	 */
 	private Function<Object, Object> rowUnwrapping() {
-		if (_component instanceof GridComponent grid) {
+		TableViewModel viewModel = getModel().getTableViewModel();
+		if (_component instanceof GridComponent grid && isGridTable(grid, viewModel)) {
 			return grid::getBusinessObjectFromInternalRow;
 		}
-		if (getModel().getTableViewModel().getApplicationModel() instanceof TreeTableModel) {
-			return TLTreeModelUtil::getInnerBusinessObject;
+		Function<Object, Object> nodeUnwrapping = viewModel.getApplicationModel() instanceof TreeTableModel
+			? TLTreeModelUtil::getInnerBusinessObject : null;
+		if (isCompareTable(viewModel)) {
+			Function<Object, Object> displayedObject = AdditionalHeaderControlByExpression::displayedObject;
+			return nodeUnwrapping == null ? displayedObject : nodeUnwrapping.andThen(displayedObject);
 		}
-		return null;
+		return nodeUnwrapping;
+	}
+
+	/**
+	 * The object displayed in a row of a compare table: The changed object, or the base object for a
+	 * row that has been deleted.
+	 *
+	 * @see CompareCell#getRowObject()
+	 */
+	private static Object displayedObject(Object row) {
+		CompareRowObject compareRow = (CompareRowObject) row;
+		Object changeValue = compareRow.changeValue();
+		return changeValue != null ? changeValue : compareRow.baseValue();
+	}
+
+	/**
+	 * Whether the rendered table displays {@link CompareRowObject}s.
+	 * <p>
+	 * Such a table is created from the configuration of the compared table, see
+	 * {@link CompareService#getCompareTableProvider(TableConfiguration, boolean)}. It therefore
+	 * displays the additional headers of that table, but not its row objects.
+	 * </p>
+	 */
+	private static boolean isCompareTable(TableViewModel viewModel) {
+		ColumnConfiguration decorationColumn =
+			viewModel.getTableConfiguration().getDeclaredColumn(DecorateService.DECORATION_COLUMN);
+		return decorationColumn != null && decorationColumn.getAccessor() instanceof CompareInfoAccessor;
+	}
+
+	/**
+	 * Whether the rendered table is the {@link GridComponent#getTableData() grid's own table}.
+	 * <p>
+	 * A grid displays other tables, too: Its compare view for example is a tree table of comparison
+	 * objects that inherits the column configuration of the grid. Only the rows of the grid's own
+	 * table are grid rows.
+	 * </p>
+	 */
+	private static boolean isGridTable(GridComponent grid, TableViewModel viewModel) {
+		return grid.hasFormContext() && grid.getTableData().getTableModel() == viewModel.getApplicationModel();
 	}
 
 	/** @see AdditionalHeaderControlProviderByExpression.Config#getUseRowObjects() */

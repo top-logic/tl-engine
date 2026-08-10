@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="email,mfaRequirement"
+		fixedColumns="1"
+		type="tl.security.selfservice:Invitation"
+	>
+		<name key="dynamic.89b43786-5551-4da3-b71f-f31075c8d491">
+			<en>Invitations</en>
+			<de>Einladungen</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`tl.security.selfservice:Invitation`)"
+			supportsElement="true"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
+			</button>
+			<button id="deleteRow"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
+			</button>
+			<button id="ID_53ea139e_fe93_4a33_8ccf_f8d7c6090e5a"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				form-apply="false"
+				image="css:fa-solid fa-share"
+				target="selection(self())"
+				transaction="false"
+			>
+				<resourceKey key="dynamic.1e25f11d-c514-46dc-89f4-270d12997212">
+					<en>Send an invitation link</en>
+					<de>Einladungslink versenden</de>
+				</resourceKey>
+				<executability>
+					<rule-by-expression decision="selection -> $selection != null"/>
+				</executability>
+				<operation><![CDATA[invitation -> {
+  sendInvitation($invitation);
+  info(#("Einladungslink wurde verschickt."@de, "Invation link was send."@en));
+}]]></operation>
+			</button>
+		</buttons>
+		<contextMenu class="com.top_logic.element.layout.grid.GridContextMenuProvider">
+			<contextMenuFactory>
+				<titleProvider class="com.top_logic.layout.provider.MetaLabelProvider"/>
+			</contextMenuFactory>
+		</contextMenu>
+	</arguments>
+</config:template-call>

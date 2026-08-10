@@ -187,6 +187,19 @@ Your {$applicationName} Team
 }]]></reset-mfa-mail>
 			</instance>
 		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<security-parents>
+					<rule id="SecRootForInvitation"
+						inherit="true"
+						meta-element="tl.security.selfservice:Invitation"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+				</security-parents>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

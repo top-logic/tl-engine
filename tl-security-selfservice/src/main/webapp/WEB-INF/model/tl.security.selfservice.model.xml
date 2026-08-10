@@ -14,6 +14,7 @@
 			</generalizations>
 			<annotations>
 				<table name="Invitation"/>
+				<id-column value="email"/>
 			</annotations>
 			<attributes>
 				<property name="id"
@@ -73,6 +74,7 @@
 						<storage-algorithm>
 							<query expr="invitation -> person -> null"/>
 						</storage-algorithm>
+						<visibility value="hidden"/>
 					</annotations>
 				</property>
 			</attributes>

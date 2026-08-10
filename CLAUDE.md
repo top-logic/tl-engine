@@ -146,7 +146,7 @@ UI is assembled declaratively in `*.layout.xml` files under `WEB-INF/layouts/`. 
 
 ### React Controls (`com.top_logic.layout.react`)
 
-React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md).
+React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md). For adding a `UIElement` (with a client component of its own), see [docs/faq/new-ui-element.md](docs/faq/new-ui-element.md).
 
 ### Model Definitions
 

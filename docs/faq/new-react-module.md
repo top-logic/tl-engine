@@ -77,7 +77,7 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: 'react-src/controls-entry.ts',
+      entry: 'react-src/my-module-entry.ts',
       fileName: () => 'tl-my-module.js',
       formats: ['es'],
     },
@@ -114,7 +114,7 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: 'react-src/controls-entry.ts',
+      entry: 'react-src/my-module-entry.ts',
       fileName: () => 'tl-my-module.js',
       formats: ['es'],
     },
@@ -157,8 +157,12 @@ export const Fragment = React.Fragment;
 
 ### 4. Entry file
 
+Name it after the bundle, as the existing modules do (`chartjs-entry.ts`, `code-editor-entry.ts`,
+`wysiwyg-entry.ts`); the plain name `controls-entry.ts` belongs to the framework module
+`com.top_logic.layout.react` itself.
+
 ```typescript
-// react-src/controls-entry.ts
+// react-src/my-module-entry.ts
 //
 // IMPORTANT: All components MUST import React from 'tl-react-bridge' (not 'react').
 
@@ -200,23 +204,33 @@ Add to `<build><plugins>`:
 </plugin>
 ```
 
-### 6. `metaConf.txt` + JSFileCompiler config
+### 6. `metaConf.txt` + client resource registration
 
 **`src/main/webapp/WEB-INF/conf/metaConf.txt`:**
 ```
 tl-my-module.conf.config.xml
 ```
 
-**`src/main/webapp/WEB-INF/conf/tl-my-module.conf.config.xml`:**
+**`src/main/webapp/WEB-INF/conf/tl-my-module.conf.config.xml`:** the bundle (and any stylesheet of
+its own) is announced through the `ClientResources` service, the way every React module in this
+repository does it. `requires` orders the bundle after the bridge that owns the React instance.
+
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
   <services>
-    <config service-class="com.top_logic.gui.JSFileCompiler">
-      <instance>
-        <additional-files>
-          <file resource="tl-my-module.js" type="module" />
-        </additional-files>
+    <config service-class="com.top_logic.layout.react.resource.ClientResources">
+      <instance class="com.top_logic.layout.react.resource.ClientResources">
+        <resources>
+          <module-script name="tl-my-module"
+            requires="tl-react-bridge"
+            resource="/script/tl-my-module.js"
+            specifier="tl-my-module"
+          />
+          <stylesheet name="tl-my-module-css"
+            resource="/style/tlMyModule.css"
+          />
+        </resources>
       </instance>
     </config>
   </services>
@@ -240,7 +254,8 @@ export default MyControl;
 
 ### 8. Java UIElement + ReactControl
 
-See `ChartElement.java` and `ReactChartJsControl.java` in `com.top_logic.layout.react.chartjs` for the full pattern, or `DemoCounterElement.java` and `DemoCounterControl` in `com.top_logic.demo` for a minimal example.
+Step by step in [new-ui-element.md](new-ui-element.md). For a full pattern see `ChartElement.java`
+and `ReactChartJsControl.java` in `com.top_logic.layout.react.chartjs`.
 
 ## Build
 
@@ -257,8 +272,8 @@ Never `cd` into the module. Never run `npx vite build` directly.
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| "Component not registered: X" | `metaConf.txt` missing or JS not in `additional-files` | Add `metaConf.txt`, check `conf.config.xml` |
+| "Component not registered: X" | Bundle not announced as a client resource, or the registered name differs from the one the control mounts | Add the `ClientResources` section (step 6), compare the names |
 | "useState is null" / "useRef is null" | Duplicate React instance from third-party lib | Add `resolve.alias` shims in `vite.config.ts` |
 | Script not in HTML page | `metaConf.txt` missing | Create `metaConf.txt` listing the `.conf.config.xml` |
-| CSS not applied | `theme.xml` missing | Create `WEB-INF/themes/core/theme.xml` |
+| CSS not applied | Stylesheet not announced | Add a `<stylesheet>` resource (step 6); a theme-level stylesheet needs `WEB-INF/themes/core/theme.xml` |
 | Build fails with "Cannot find module 'tl-react-bridge'" | `tsconfig.json` paths missing | Add `paths` mapping to `tsconfig.json` |

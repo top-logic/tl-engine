@@ -11,6 +11,9 @@
 		<param name="columns"
 			value="name,state,icon"
 		/>
+		<param name="exportBPMLpretty"
+			optional="true"
+		/>
 	</params>
 
 	<layout name="${namePrefix}Layout"
@@ -68,6 +71,7 @@
 					clique="exportButtons"
 					group="Export"
 					image="theme:ICON_FILE_DOWNLOAD"
+					pretty-print="${exportBPMLpretty}"
 					target="selection(self())"
 				>
 					<executability>

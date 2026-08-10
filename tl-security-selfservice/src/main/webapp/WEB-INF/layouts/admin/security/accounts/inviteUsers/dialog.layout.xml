@@ -41,7 +41,7 @@
 				>
 					<postCreateActions>
 						<execute-script transaction="false">
-							<operation>info(#("Die Einladung wurde angelegt und per Mail verschickt."@de, "The invitation was created and sent by email."@en))</operation>
+							<operation>sent -&gt; if ($sent, info(#("Die Einladung wurde angelegt und per Mail verschickt."@de, "The invitation was created and sent by email."@en)), info(#("Die Einladung wurde angelegt, die E-Mail konnte aber nicht verschickt werden."@de, "The invitation was created, but the email could not be sent."@en), level: "error"))</operation>
 						</execute-script>
 					</postCreateActions>
 				</execute-script>

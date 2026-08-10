@@ -44,8 +44,9 @@
 					<rule-by-expression decision="selection -> $selection != null"/>
 				</executability>
 				<operation><![CDATA[invitation -> {
-  sendInvitation($invitation);
-  info(#("Einladungslink wurde verschickt."@de, "Invation link was send."@en));
+  if (sendInvitation($invitation),
+    info(#("Einladungslink wurde verschickt."@de, "Invitation link was sent."@en)),
+    info(#("Einladungslink konnte nicht verschickt werden."@de, "Invitation link could not be sent."@en), level: "error"));
 }]]></operation>
 			</button>
 		</buttons>

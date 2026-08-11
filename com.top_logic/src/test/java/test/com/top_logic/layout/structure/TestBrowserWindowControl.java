@@ -18,7 +18,9 @@ import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.structure.BrowserWindowControl;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.DefaultPopupDialogModel;
+import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.PopupDialogControl;
+import com.top_logic.layout.structure.PopupDialogModel;
 
 /**
  * Test case for the popup dialog book-keeping of {@link BrowserWindowControl}.
@@ -57,24 +59,93 @@ public class TestBrowserWindowControl extends TestControl {
 	}
 
 	/**
-	 * Tests that a popup dialog opened while the window is detached is dropped instead of staying
-	 * in the list of open popups without ever being attached.
+	 * Tests that opening a popup dialog while the window is detached is rejected instead of leaving
+	 * it in the list of open popups without ever being attached.
 	 */
-	public void testDropPopupDialogsOpenedInDetachedState() throws IOException {
+	public void testRejectPopupDialogOpenedInDetachedState() throws IOException {
 		BrowserWindowControl window = windowControl();
 		window.detach();
 
 		PopupDialogControl popup = newPopupDialog();
 		window.openPopupDialog(popup);
-		assertFalse(popup.isAttached());
+
+		assertEquals("Popup opened in detached state must be rejected.",
+			Collections.emptyList(), window.getPopupDialogs());
+		assertTrue("The opener must be informed about the rejection.",
+			popup.getPopupDialogModel().isClosed());
 
 		window.write(displayContext(), new TagWriter());
 
-		assertEquals("Popup opened in detached state must be dropped.",
-			Collections.emptyList(), window.getPopupDialogs());
+		assertEquals(Collections.emptyList(), window.getPopupDialogs());
+	}
 
-		/* Ticket #29460: Closing the popup must not access the ID of the never attached control. */
-		popup.getPopupDialogModel().setClosed();
+	/**
+	 * Tests that opening a popup dialog while a repaint of the window is pending is rejected.
+	 *
+	 * <p>
+	 * Note: The window is still {@link BrowserWindowControl#isAttached() attached} in this
+	 * situation, its client-side view is just about to be created from scratch. Therefore, checking
+	 * the attach state alone is not sufficient.
+	 * </p>
+	 */
+	public void testRejectPopupDialogOpenedWhileRepaintPending() throws IOException {
+		BrowserWindowControl window = windowControl();
+		window.requestRepaint();
+
+		PopupDialogControl popup = newPopupDialog();
+		window.openPopupDialog(popup);
+
+		assertTrue("Window is still attached while a repaint is pending.", window.isAttached());
+		assertEquals("Popup opened while a repaint is pending must be rejected.",
+			Collections.emptyList(), window.getPopupDialogs());
+		assertTrue("The opener must be informed about the rejection.",
+			popup.getPopupDialogModel().isClosed());
+
+		window.write(displayContext(), new TagWriter());
+
+		assertEquals(Collections.emptyList(), window.getPopupDialogs());
+	}
+
+	/**
+	 * Tests that dropping the popups while rendering a complete page does not notify their models.
+	 *
+	 * <p>
+	 * In the rendering phase, listeners must not request repaints any more, see
+	 * {@link com.top_logic.layout.LayoutContext#isInCommandPhase()}.
+	 * </p>
+	 */
+	public void testDropPopupDialogsWhileRendering() {
+		BrowserWindowControl window = windowControl();
+
+		PopupDialogControl popup = newPopupDialog();
+		window.openPopupDialog(popup);
+		revalidate(window, new StringWriterNonNull());
+
+		ClosedRecorder recorder = new ClosedRecorder();
+		popup.getPopupDialogModel().addListener(PopupDialogModel.POPUP_DIALOG_CLOSED_PROPERTY, recorder);
+
+		boolean before = setUpdatesEnabled(false);
+		try {
+			// This is what MainLayout.writeBody() does when rendering a complete page.
+			window.detach();
+		} finally {
+			setUpdatesEnabled(before);
+		}
+
+		assertEquals("Popup must be dropped when the window is re-rendered.",
+			Collections.emptyList(), window.getPopupDialogs());
+		assertFalse("Popup models must not be notified during rendering.", recorder._notified);
+	}
+
+	private static class ClosedRecorder implements DialogClosedListener {
+
+		boolean _notified;
+
+		@Override
+		public void handleDialogClosed(Object sender, Boolean oldValue, Boolean newValue) {
+			_notified = true;
+		}
+
 	}
 
 	private PopupDialogControl newPopupDialog() {

@@ -8,6 +8,15 @@
 		<forms>
 			<form type="tl.security.selfservice:Invitation">
 				<formDefinition>
+					<html-template>
+						<template><![CDATA[<p>{message}</p>]]></template>
+						<i18n name="message">
+							<text key="dynamic.a8065abf-68c5-4240-99d8-205115aa257a">
+								<en>Existing invitations can be edited using the "Open invitations" dialog box.</en>
+								<de>Existierende Einladungen können über den Dialog "Offene Einladungen" bearbeitet werden.</de>
+							</text>
+						</i18n>
+					</html-template>
 					<field
 						attribute="email"
 						fullQualifiedName="tl.security.selfservice:Invitation#email"

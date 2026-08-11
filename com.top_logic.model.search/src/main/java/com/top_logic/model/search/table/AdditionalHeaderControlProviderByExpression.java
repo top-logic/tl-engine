@@ -134,7 +134,12 @@ public class AdditionalHeaderControlProviderByExpression
 		/**
 		 * Whether the {@link #getLabel()} and {@link #getTooltip()} scripts should get the row
 		 * objects instead of the column values as input.
-		 * 
+		 *
+		 * <p>
+		 * The scripts receive the objects that are displayed in the rows. Technical wrappers such
+		 * as the nodes of a tree table or the form groups of a grid are unwrapped before.
+		 * </p>
+		 *
 		 * @see AdditionalHeaderControlByExpression#getUseRowObjects()
 		 */
 		@Name(USE_ROW_OBJECTS)

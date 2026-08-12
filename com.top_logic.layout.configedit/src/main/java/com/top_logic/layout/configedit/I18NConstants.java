@@ -6,6 +6,7 @@
 package com.top_logic.layout.configedit;
 
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -17,6 +18,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en {0} (empty)
 	 */
 	public static ResKey1 LIST_ELEMENT_EMPTY_TITLE__TYPE;
+
+	/**
+	 * @en Invalid value "{0}" for "{1}".
+	 */
+	public static ResKey2 ERROR_INVALID_VALUE__VALUE_PROPERTY;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.util.Objects;
+
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationChange;
 import com.top_logic.basic.config.ConfigurationChange.Kind;
@@ -38,7 +40,12 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 	 */
 	public ConfigFormatFieldModel(ConfigurationItem config, PropertyDescriptor property) {
 		super(config, property);
-		setDefaultValue(format(config.value(property)));
+		// Both the cached value and the default value live in the text domain from here on -
+		// ConfigFieldModel's constructor cached the raw typed value, which would otherwise never
+		// compare equal to the formatted text this class hands out (breaking isDirty()).
+		String text = format(config.value(property));
+		setValueInternal(text);
+		setDefaultValue(text);
 	}
 
 	@Override
@@ -50,8 +57,19 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 	public void setValue(Object value) {
 		String text = value == null ? null : value.toString();
 		if (StringServices.isEmpty(text)) {
+			text = null;
+		}
+
+		if (Objects.equals(text, getValue())) {
+			// The displayed text already matches the configuration's current value: nothing to
+			// parse or write. (ConfigFieldModel's own redundant-write guard cannot see this,
+			// since it compares in the typed domain against this class's formatted getValue().)
+			return;
+		}
+
+		if (text == null) {
 			setError(null);
-			super.setValue(null);
+			getConfig().update(getProperty(), null);
 			return;
 		}
 
@@ -67,14 +85,21 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 		}
 
 		setError(null);
-		super.setValue(parsed);
+		// Write through the configuration API directly (not ConfigFieldModel#setValue): its
+		// redundant-write guard operates in the typed domain and would never fire for this
+		// class, and the value change notification (and this model's cached value) still needs
+		// to go through onChange() below.
+		getConfig().update(getProperty(), parsed);
 	}
 
 	@Override
 	public void onChange(ConfigurationChange change) {
 		if (change.getKind() == Kind.SET) {
 			// The listener reports typed values, the control expects the formatted text.
-			fireValueChanged(format(change.getOldValue()), format(change.getNewValue()));
+			String oldText = format(change.getOldValue());
+			String newText = format(change.getNewValue());
+			setValueInternal(newText);
+			fireValueChanged(oldText, newText);
 		}
 	}
 

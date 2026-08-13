@@ -13,7 +13,11 @@ import junit.framework.TestCase;
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.AbstractConfigurationValueProvider;
+import com.top_logic.basic.config.ConfigurationChange;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -23,8 +27,6 @@ import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.configedit.ConfigFormatFieldModel;
-import com.top_logic.layout.form.model.FieldModel;
-import com.top_logic.layout.form.model.FieldModelListener;
 
 /**
  * Tests for {@link ConfigFormatFieldModel}.
@@ -39,6 +41,9 @@ public class TestConfigFormatFieldModel extends TestCase {
 
 		/** Property name for {@link #getDuration()}. */
 		String DURATION = "duration";
+
+		/** Property name for {@link #getCounted()}. */
+		String COUNTED = "counted";
 
 		/**
 		 * A point in time, written in the configuration's date format.
@@ -59,6 +64,61 @@ public class TestConfigFormatFieldModel extends TestCase {
 
 		/** @see #getDuration() */
 		void setDuration(long value);
+
+		/**
+		 * A property whose {@link CountingFormat value provider} counts every parse, so a test
+		 * can observe how often text was actually parsed, as opposed to how often the
+		 * configuration happened to notify a change.
+		 */
+		@Name(COUNTED)
+		@Format(CountingFormat.class)
+		String getCounted();
+
+		/** @see #getCounted() */
+		void setCounted(String value);
+	}
+
+	/**
+	 * {@link ConfigurationValueProvider} that counts every
+	 * {@link #getValueNonEmpty(String, CharSequence)} call.
+	 *
+	 * <p>
+	 * Used to tell apart a redundant write that {@link ConfigFormatFieldModel#setValue(Object)}'s
+	 * own guard short-circuits before parsing from one that reaches the value provider a second
+	 * time - a distinction the configuration's own change notification cannot make, since it
+	 * suppresses a redundant {@link ConfigurationChange} for an unchanged typed value regardless
+	 * of whether that value was freshly reparsed or not.
+	 * </p>
+	 */
+	public static final class CountingFormat extends AbstractConfigurationValueProvider<String> {
+
+		/** Singleton {@link CountingFormat} instance. */
+		public static final CountingFormat INSTANCE = new CountingFormat();
+
+		private int _parseCount;
+
+		private CountingFormat() {
+			super(String.class);
+		}
+
+		/**
+		 * How often {@link #getValueNonEmpty(String, CharSequence)} has been called so far.
+		 */
+		public int getParseCount() {
+			return _parseCount;
+		}
+
+		@Override
+		protected String getValueNonEmpty(String propertyName, CharSequence propertyValue)
+				throws ConfigurationException {
+			_parseCount++;
+			return propertyValue.toString();
+		}
+
+		@Override
+		protected String getSpecificationNonNull(String configValue) {
+			return configValue;
+		}
 	}
 
 	private TestConfig _config;
@@ -147,34 +207,26 @@ public class TestConfigFormatFieldModel extends TestCase {
 	}
 
 	/**
-	 * Writing the same text twice must reach the configuration only once: the second call is a
-	 * no-op that neither re-parses nor notifies listeners again.
+	 * Writing the same text twice must reach the value provider only once.
+	 *
+	 * <p>
+	 * Counting the value provider's parses (rather than the configuration's change
+	 * notifications) is what actually tells the model's own early-return guard apart from the
+	 * configuration's unrelated deduplication of an unchanged typed value: the latter would mute
+	 * a second {@link ConfigurationChange} even if {@link ConfigFormatFieldModel#setValue(Object)}
+	 * reparsed the text every time.
+	 * </p>
 	 */
 	public void testSettingSameTextTwiceWritesOnce() {
-		ConfigFormatFieldModel model = model(TestConfig.DURATION);
-		int[] changeCount = { 0 };
-		model.addListener(new FieldModelListener() {
-			@Override
-			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				changeCount[0]++;
-			}
+		ConfigFormatFieldModel model = model(TestConfig.COUNTED);
+		int before = CountingFormat.INSTANCE.getParseCount();
 
-			@Override
-			public void onEditabilityChanged(FieldModel source, boolean editable) {
-				// Not relevant for this test.
-			}
+		model.setValue("a");
+		model.setValue("a");
 
-			@Override
-			public void onValidationChanged(FieldModel source) {
-				// Not relevant for this test.
-			}
-		});
-
-		model.setValue("2min");
-		model.setValue("2min");
-
-		assertEquals("The unchanged second write must not notify listeners again.", 1, changeCount[0]);
-		assertEquals("The value must still reach the configuration once.", 120000L, _config.getDuration());
+		assertEquals("The unchanged second write must not reach the value provider again.", before + 1,
+			CountingFormat.INSTANCE.getParseCount());
+		assertEquals("The value must still reach the configuration once.", "a", _config.getCounted());
 	}
 
 	/**

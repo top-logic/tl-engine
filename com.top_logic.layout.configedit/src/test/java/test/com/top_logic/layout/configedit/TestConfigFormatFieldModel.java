@@ -23,6 +23,8 @@ import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.configedit.ConfigFormatFieldModel;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FieldModelListener;
 
 /**
  * Tests for {@link ConfigFormatFieldModel}.
@@ -130,6 +132,49 @@ public class TestConfigFormatFieldModel extends TestCase {
 
 		assertNull("Empty input must clear the value.", _config.getStart());
 		assertNull("Empty input is not a parse error.", model.getInputError());
+	}
+
+	/**
+	 * A freshly loaded field over a property that already holds a value must not report unsaved
+	 * changes: the cached value and the default value must both live in the same (text) domain.
+	 */
+	public void testFreshModelIsNotDirty() {
+		_config.setDuration(90000);
+
+		ConfigFormatFieldModel model = model(TestConfig.DURATION);
+
+		assertFalse("A freshly loaded field must not be dirty.", model.isDirty());
+	}
+
+	/**
+	 * Writing the same text twice must reach the configuration only once: the second call is a
+	 * no-op that neither re-parses nor notifies listeners again.
+	 */
+	public void testSettingSameTextTwiceWritesOnce() {
+		ConfigFormatFieldModel model = model(TestConfig.DURATION);
+		int[] changeCount = { 0 };
+		model.addListener(new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				changeCount[0]++;
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel source, boolean editable) {
+				// Not relevant for this test.
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel source) {
+				// Not relevant for this test.
+			}
+		});
+
+		model.setValue("2min");
+		model.setValue("2min");
+
+		assertEquals("The unchanged second write must not notify listeners again.", 1, changeCount[0]);
+		assertEquals("The value must still reach the configuration once.", 120000L, _config.getDuration());
 	}
 
 	/**

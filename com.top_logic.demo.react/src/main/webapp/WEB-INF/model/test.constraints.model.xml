@@ -46,6 +46,24 @@
 					</annotations>
 				</property>
 
+				<!-- String with a bare size constraint: no bounds at all, must accept any text -->
+				<property name="unboundedSizedString"
+					type="tl.core:String"
+				>
+					<annotations>
+						<size-constraint/>
+					</annotations>
+				</property>
+
+				<!-- String with a size constraint that only declares a lower bound -->
+				<property name="minSizedString"
+					type="tl.core:String"
+				>
+					<annotations>
+						<size-constraint lower-bound="3"/>
+					</annotations>
+				</property>
+
 				<!-- Integer with range constraint and composition total check -->
 				<property name="rangedInt"
 					type="tl.core:Integer"

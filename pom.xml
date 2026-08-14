@@ -38,7 +38,7 @@
 		<log4j.version>2.26.1</log4j.version>
 		<fasterxml.version>2.22.1</fasterxml.version>
 		<msgbuf.version>1.2.2</msgbuf.version>
-		<bouncycastle.version>1.84</bouncycastle.version>
+		<bouncycastle.version>1.85</bouncycastle.version>
 		<batik.version>1.19</batik.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		
@@ -1140,6 +1140,16 @@
 			    <artifactId>bcprov-jdk18on</artifactId>
 			    <version>${bouncycastle.version}</version>
 			</dependency>
+		    <dependency>
+		        <groupId>org.bouncycastle</groupId>
+		        <artifactId>bcutil-jdk18on</artifactId>
+		        <version>${bouncycastle.version}</version>
+		    </dependency>
+		    <dependency>
+		        <groupId>org.bouncycastle</groupId>
+		        <artifactId>bcpkix-jdk18on</artifactId>
+		        <version>${bouncycastle.version}</version>
+		    </dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>ext-org-chartjs</artifactId>

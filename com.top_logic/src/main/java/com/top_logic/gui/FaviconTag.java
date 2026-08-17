@@ -102,14 +102,7 @@ public class FaviconTag extends TagSupport {
 
 	private void write(JspWriter out) {
 		_contextPath = LinkTagUtil.getContextPath(this.pageContext, _contextPath);
-		writeIcon(out, LinkTagUtil.getLink(_contextPath, icon()));
-	}
-
-	/**
-	 * The explicitly set icon, or the default from the current theme.
-	 */
-	private String icon() {
-		return _icon == null ? Icons.DEFAULT_ICON.get() : _icon;
+		writeIcon(out, iconLink(_contextPath, _icon));
 	}
 
 	/**
@@ -186,7 +179,7 @@ public class FaviconTag extends TagSupport {
 	 * @see #writeIcon(TagWriter, String)
 	 */
 	public static void write(TagWriter out, String contextPath) {
-		writeIcon(out, LinkTagUtil.getLink(contextPath, Icons.DEFAULT_ICON.get()));
+		writeIcon(out, iconLink(contextPath, null));
 	}
 
 	/**
@@ -197,6 +190,31 @@ public class FaviconTag extends TagSupport {
 	 * @see #writeIcon(JspWriter, String)
 	 */
 	public static void write(JspWriter out, String contextPath) {
-		writeIcon(out, LinkTagUtil.getLink(contextPath, Icons.DEFAULT_ICON.get()));
+		writeIcon(out, iconLink(contextPath, null));
+	}
+
+	/**
+	 * Builds the link to announce for the given icon.
+	 *
+	 * @param icon
+	 *        The explicitly requested icon, or <code>null</code> to use the application's default
+	 *        icon.
+	 * @implNote The icon is also written on the health check page <code>SystemState.jsp</code>,
+	 *           whose purpose is to report which services of a partially started application are
+	 *           unavailable. An unavailable {@link ThemeFactory} must therefore not be the reason
+	 *           that page fails. This is why the default is taken from
+	 *           {@link ThemeVar#defaultValue()} instead of the theme, and why the theme-local
+	 *           variant of the image is only looked up when the service is there.
+	 */
+	private static String iconLink(String contextPath, String icon) {
+		String imgPath;
+		if (ThemeFactory.Module.INSTANCE.isActive()) {
+			imgPath = ThemeFactory.getTheme()
+				.getFileLink(icon != null ? icon : Icons.DEFAULT_ICON.get());
+		} else {
+			imgPath = icon != null ? icon : Icons.DEFAULT_ICON.defaultValue();
+		}
+
+		return LinkTagUtil.getLink(contextPath, imgPath);
 	}
 }

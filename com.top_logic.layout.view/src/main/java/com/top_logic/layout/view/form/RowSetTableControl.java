@@ -8,6 +8,7 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -55,6 +56,7 @@ import com.top_logic.table.GroupKey;
 import com.top_logic.table.Sort;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
+import com.top_logic.table.TableViewState;
 import com.top_logic.table.ViewStateStore;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -138,6 +140,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private TableId _tableId;
 
 	private SortSpec _defaultSort = SortSpec.NONE;
+
+	/** @see #setHiddenByDefault(Collection) */
+	private Set<String> _hiddenByDefault = Set.of();
+
+	/** @see #setFixedColumns(int) */
+	private int _fixedColumns;
 
 	private ViewChannel _selectionChannel;
 
@@ -269,6 +277,29 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * The columns offered but not displayed until the user selects them in the column selection.
+	 *
+	 * @param columns
+	 *        Attribute names among the table's {@link TableColumn columns}; unknown names are
+	 *        ignored.
+	 */
+	public void setHiddenByDefault(Collection<String> columns) {
+		_hiddenByDefault = new LinkedHashSet<>(columns);
+	}
+
+	/**
+	 * How many of the leading data columns stay in place while the table is scrolled horizontally.
+	 *
+	 * <p>
+	 * Counted among the data columns: a leading action column (the detail button) is carried along,
+	 * because it sits left of them all.
+	 * </p>
+	 */
+	public void setFixedColumns(int fixedColumns) {
+		_fixedColumns = fixedColumns;
+	}
+
+	/**
 	 * Binds the table's selection two-way to the given channel.
 	 */
 	public void setSelectionChannel(ViewChannel selectionChannel) {
@@ -369,6 +400,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDetailButton(ctx, row))))
 				.width(48)
 				.frozenEligible(false)
+				// Holds a per-row button, not data: nothing to offer in the column selection.
+				.selectable(false)
 				.build());
 		}
 
@@ -383,14 +416,31 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row))))
 				.width(48)
 				.frozenEligible(false)
+				// Holds a per-row button, not data: nothing to offer in the column selection.
+				.selectable(false)
 				.build());
 		}
 
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
 		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
-		DefaultTableView<TLObject> view =
-			DefaultTableView.create(columns, _rowSource, _store, _store != null ? _tableId : null, _defaultSort);
+		TableViewState initialState =
+			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
+		if (_fixedColumns > 0) {
+			// The configured number counts data columns; a leading action column has to be added on
+			// top of it, or freezing "the first two columns" would freeze the detail button and one
+			// data column.
+			int leadingActions = 0;
+			for (Column<TLObject, ?> column : columns) {
+				if (column.selectable()) {
+					break;
+				}
+				leadingActions++;
+			}
+			initialState.setFrozenCount(Math.min(_fixedColumns + leadingActions, columns.size()));
+		}
+		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
+			_store != null ? _tableId : null, _hiddenByDefault);
 
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();

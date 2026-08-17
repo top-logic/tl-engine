@@ -69,6 +69,20 @@ public class TestFilterEditors extends TestCase {
 		assertTrue(state.acceptNull());
 	}
 
+	public void testBooleanEditorWithoutNoValueOption() {
+		BooleanColumnFilter filter =
+			new BooleanColumnFilter(ResKey.text("Yes"), ResKey.text("No"), false);
+		FilterEditor editor = FilterEditors.create(filter, null, MatchCounts.NONE);
+		assertEquals("A column without empty cells offers just the two value options.", 2,
+			editor.fields().size());
+
+		field(editor, 0).setValue(Boolean.TRUE);    // accept true
+		BooleanFilterState state = (BooleanFilterState) editor.read();
+		assertTrue(state.acceptTrue());
+		assertFalse(state.acceptFalse());
+		assertFalse(state.acceptNull());
+	}
+
 	public void testOptionsEditorReadBack() {
 		OptionsColumnFilter<String> filter = new OptionsColumnFilter<>(List.of(
 			new Option("red", ResKey.text("Red")),

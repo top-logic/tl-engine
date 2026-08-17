@@ -52,6 +52,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final boolean _frozenEligible;
 
+	private final boolean _selectable;
+
 	private final Function<? super R, String> _css;
 
 	private final CellExistence<R> _existence;
@@ -67,6 +69,7 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		_aggregate = builder._aggregate;
 		_width = builder._width;
 		_frozenEligible = builder._frozenEligible;
+		_selectable = builder._selectable;
 		_css = builder._css;
 		_existence = builder._existence;
 	}
@@ -114,6 +117,11 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	@Override
 	public boolean frozenEligible() {
 		return _frozenEligible;
+	}
+
+	@Override
+	public boolean selectable() {
+		return _selectable;
 	}
 
 	@Override
@@ -165,6 +173,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		int _width = 150;
 
 		boolean _frozenEligible = true;
+
+		boolean _selectable = true;
 
 		Function<? super R, String> _css;
 
@@ -228,6 +238,16 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 */
 		public Builder<R, V> frozenEligible(boolean frozenEligible) {
 			_frozenEligible = frozenEligible;
+			return this;
+		}
+
+		/**
+		 * Sets whether the user may show, hide and move the column.
+		 *
+		 * @see Column#selectable()
+		 */
+		public Builder<R, V> selectable(boolean selectable) {
+			_selectable = selectable;
 			return this;
 		}
 

@@ -2473,16 +2473,56 @@ button.tlMenu__item--disabled:hover {
 .tlTableView {
 	display: flex;
 	flex-direction: column;
+	/* Anchor for the preview of the dragged frozen-column boundary, which spans header and rows. */
+	position: relative;
 	width: 100%;
 	height: 100%;
 	font-family: var(--font-family);
 	overflow: hidden;
 }
 
-.tlTableView__header {
+/* The header row with the column selection button over its right edge, above the body's vertical
+   scrollbar. The button must not take width from the header: a header narrower than the body keeps
+   its last 2rem permanently out of view, so the last column's heading stays cut off however far the
+   user scrolls. Overlaying instead keeps every heading complete; only while the table is scrolled
+   fully right does the button cover the tail of the last column - which is why it is opaque. */
+.tlTableView__headerArea {
+	position: relative;
+	display: flex;
 	flex-shrink: 0;
+	align-items: stretch;
+}
+
+.tlTableView__header {
+	flex: 1 1 auto;
+	min-width: 0;
 	overflow: hidden;
 	border-bottom: 2px solid var(--border-subtle, #e0e0e0);
+}
+
+.tlTableView__columnsButton {
+	position: absolute;
+	top: 0;
+	right: 0;
+	/* Leaves the header's bottom border uncovered, so the line runs through below the button. */
+	bottom: 2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	padding: 0;
+	border: none;
+	/* Opaque: while the table is scrolled, a column label may pass underneath. */
+	background: var(--layer-01, #fff);
+	color: var(--text-secondary, #525252);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	cursor: pointer;
+	box-sizing: border-box;
+}
+
+.tlTableView__columnsButton:hover {
+	background: var(--layer-hover, #e8e8e8);
+	color: var(--text-primary, #161616);
 }
 
 .tlTableView__headerRow {
@@ -2552,11 +2592,13 @@ button.tlMenu__item--disabled:hover {
 	overflow-x: auto;
 }
 
+/* Must not clip: an ancestor with a clipping overflow between a sticky cell and the scroll container
+   turns the row into the cell's scroll context, and a frozen cell would scroll away with the row
+   instead of sticking to the left edge. Each cell clips its own content anyway. */
 .tlTableView__row {
 	display: flex;
 	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
 	box-sizing: border-box;
-	overflow: hidden;
 	cursor: pointer;
 }
 
@@ -2732,6 +2774,48 @@ button.tlMenu__item--disabled:hover {
 	clip-path: inset(0 -4px 0 0);
 }
 
+/* Grip to drag the boundary of the frozen area to another column. Sits above the sticky header cells
+   (z-index 2) and stops at the header's bottom border, so the line below it stays unbroken. When no
+   column is frozen, the grip waits at the left edge of the table, where it can pull a frozen area
+   out. */
+.tlTableView__frozenSplitter {
+	position: absolute;
+	top: 0;
+	bottom: 2px;
+	z-index: 3;
+	width: 7px;
+	margin-left: -3px;
+	cursor: col-resize;
+}
+
+.tlTableView__frozenSplitter::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 3px;
+	width: 1px;
+	background: var(--interactive, #0f62fe);
+	opacity: 0;
+}
+
+.tlTableView__frozenSplitter:hover::after,
+.tlTableView__frozenSplitter--active::after {
+	opacity: 1;
+}
+
+/* Preview of the dragged boundary, spanning header and rows. */
+.tlTableView__frozenPreview {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	z-index: 4;
+	width: 2px;
+	margin-left: -1px;
+	background: var(--interactive, #0f62fe);
+	pointer-events: none;
+}
+
 /* -- Tree table -- */
 
 .tlTableView__treeCell {
@@ -2765,6 +2849,97 @@ button.tlMenu__item--disabled:hover {
 	display: inline-block;
 	width: 20px;
 	flex-shrink: 0;
+}
+
+/* --- TLColumnSelect ---------------------------------------------------- */
+
+.tlColumnSelect {
+	display: flex;
+	flex-direction: column;
+	padding: var(--spacing-03, 0.5rem) 0;
+}
+
+.tlColumnSelect__search {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03, 0.5rem);
+	margin: 0 var(--spacing-05, 1rem) var(--spacing-03, 0.5rem);
+	padding: 0 var(--spacing-03, 0.5rem);
+	border: 1px solid var(--border-strong, #8d8d8d);
+	background: var(--field-01, #f4f4f4);
+	color: var(--text-secondary, #525252);
+}
+
+.tlColumnSelect__searchInput {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 2rem;
+	border: none;
+	background: transparent;
+	color: var(--text-primary, #161616);
+	font-family: inherit;
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+}
+
+.tlColumnSelect__searchInput:focus {
+	outline: none;
+}
+
+.tlColumnSelect__list {
+	display: flex;
+	flex-direction: column;
+}
+
+/* Scrolls within a height of its own, so narrowing the list by a search leaves the dialog - and
+   with it the buttons under the pointer - exactly where it was. */
+.tlColumnSelect__list--fixed {
+	height: 50vh;
+	overflow-y: auto;
+}
+
+.tlColumnSelect__row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03, 0.5rem);
+	padding: var(--spacing-02, 0.25rem) var(--spacing-05, 1rem);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	/* The drop indicator is drawn as a border, so reserve its space on both edges to keep the
+	   rows from jumping while dragging across them. */
+	border-top: 2px solid transparent;
+	border-bottom: 2px solid transparent;
+}
+
+.tlColumnSelect__row:hover {
+	background: var(--layer-hover, #e8e8e8);
+}
+
+.tlColumnSelect__row--dragOver-top {
+	border-top-color: var(--color-primary, #1a73e8);
+}
+
+.tlColumnSelect__row--dragOver-bottom {
+	border-bottom-color: var(--color-primary, #1a73e8);
+}
+
+.tlColumnSelect__handle {
+	flex-shrink: 0;
+	color: var(--text-secondary, #525252);
+	cursor: grab;
+}
+
+.tlColumnSelect__label {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03, 0.5rem);
+	flex: 1 1 auto;
+	min-width: 0;
+	cursor: pointer;
+}
+
+.tlColumnSelect__label > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* --- TLFormLayout ------------------------------------------------------ */
@@ -3065,6 +3240,25 @@ button.tlMenu__item--disabled:hover {
 
 .tlFormField--fullLine {
 	grid-column: 1 / -1;
+}
+
+/* Label after the input — for a checkbox, whose label states what ticking it means, so the two
+   belong on one line. The markup has the label first, hence the explicit order. */
+.tlFormField--after {
+	grid-template-columns: auto 1fr;
+	align-items: center;
+	gap: var(--spacing-03, 0.5rem);
+}
+
+.tlFormField--after > .tlFormField__input {
+	grid-column: 1;
+	grid-row: 1;
+	flex: 0 0 auto;
+}
+
+.tlFormField--after > .tlFormField__label {
+	grid-column: 2;
+	grid-row: 1;
 }
 
 /* Side-by-side label layout */
@@ -3420,6 +3614,50 @@ button.tlMenu__item--disabled:hover {
 .tlReactCheckbox:focus-visible {
 	outline: 2px solid var(--focus);
 	outline-offset: 1px;
+}
+
+/* --- TLBooleanChoice -------------------------------------------------------- */
+
+/* A boolean offered as a choice: radio buttons in a row, or a select.
+   Both classes in the selector, so that this wins over the rule making a control in a table cell a
+   block: as a block the options would flow as text and wrap onto a second line the row is not high
+   enough to show. */
+.tlBooleanChoice.tlBooleanChoice--radio {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+}
+
+.tlBooleanChoice__option {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02, 0.25rem);
+	cursor: pointer;
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+}
+
+/* Enough distance to tell the options apart, little enough for two of them to fit a table cell. */
+.tlBooleanChoice__option + .tlBooleanChoice__option {
+	margin-left: 0.75rem;
+}
+
+.tlBooleanChoice__option input {
+	width: 1rem;
+	height: 1rem;
+	margin: 0;
+	accent-color: var(--interactive, #0f62fe);
+	cursor: pointer;
+}
+
+.tlBooleanChoice__option input:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+.tlBooleanChoice--error .tlBooleanChoice__label,
+.tlBooleanChoice--error.tlReactSelect {
+	color: var(--support-error, #da1e28);
 }
 
 /* --- TLToolbar ------------------------------------------------------------- */

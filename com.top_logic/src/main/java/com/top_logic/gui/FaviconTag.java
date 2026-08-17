@@ -54,13 +54,9 @@ public class FaviconTag extends TagSupport {
 		{ "svg", TYPE_SVG },
 	}).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
-	private static final String SHORTCUT_ICON_DEFAULT = "/images/shortcut.ico";
+	private String _shortcutIcon = Icons.DEFAULT_SHORTCUT_ICON.get();
 
-	private static final String ICON_DEFAULT = SHORTCUT_ICON_DEFAULT;
-
-	private String _shortcutIcon = SHORTCUT_ICON_DEFAULT;
-
-	private String _icon = ICON_DEFAULT;
+	private String _icon = Icons.DEFAULT_ICON.get();
 
 	// The context path of this application.
 	private String _contextPath;
@@ -189,8 +185,8 @@ public class FaviconTag extends TagSupport {
 	 * @see #write(TagWriter, String, String)
 	 */
 	public static void write(TagWriter out, String contextPath) {
-		String shortcutIcon = LinkTagUtil.getLink(contextPath, SHORTCUT_ICON_DEFAULT);
-		String icon = LinkTagUtil.getLink(contextPath, ICON_DEFAULT);
+		String shortcutIcon = LinkTagUtil.getLink(contextPath, Icons.DEFAULT_SHORTCUT_ICON.get());
+		String icon = LinkTagUtil.getLink(contextPath, Icons.DEFAULT_ICON.get());
 		write(out, shortcutIcon, icon);
 	}
 
@@ -202,8 +198,8 @@ public class FaviconTag extends TagSupport {
 	 * @see #write(JspWriter, String, String)
 	 */
 	public static void write(JspWriter out, String contextPath) {
-		String shortcutIcon = LinkTagUtil.getLink(contextPath, SHORTCUT_ICON_DEFAULT);
-		String icon = LinkTagUtil.getLink(contextPath, ICON_DEFAULT);
+		String shortcutIcon = LinkTagUtil.getLink(contextPath, Icons.DEFAULT_SHORTCUT_ICON.get());
+		String icon = LinkTagUtil.getLink(contextPath, Icons.DEFAULT_ICON.get());
 		write(out, shortcutIcon, icon);
 	}
 }

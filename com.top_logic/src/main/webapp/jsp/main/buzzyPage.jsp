@@ -40,13 +40,15 @@ String theContext = request.getContextPath();
 				width: 100%;
 			}
 			
-			.app-logo {
+			.app-logo-box {
 				width: 280px;
 				height: 80px;
-				background-image: url(<%=theContext%>/images/appLogo.svg);
-				background-repeat: no-repeat;
-				background-size: contain;
 				margin-bottom: 20px;
+			}
+			
+			.app-logo-box .app-logo {
+				max-width: 100%;
+				max-height: 100%;
 			}
 			
 			.login-box {
@@ -99,7 +101,11 @@ String theContext = request.getContextPath();
 
 	<body class="<%=UserAgent.getUserAgent(request).getCSSClasses("")%>">
 		<div class="container">
-			<div class="app-logo">
+			<div class="app-logo-box">
+				<basic:image
+					cssClass="app-logo"
+					icon="<%= com.top_logic.layout.Icons.APP_LOGO %>"
+				/>
 			</div>
 			<div class="login-box">
 				<div class="message">

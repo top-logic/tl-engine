@@ -14,8 +14,7 @@ import com.top_logic.layout.basic.IconsBase;
 public class Icons extends IconsBase {
 
 	/**
-	 * Application icon that is announced to the browser with the legacy link relation
-	 * <code>shortcut icon</code>.
+	 * Application icon that is announced to the browser with the link relation <code>icon</code>.
 	 *
 	 * <p>
 	 * This is the icon that the browser displays in the tab of the application and in its
@@ -23,21 +22,6 @@ public class Icons extends IconsBase {
 	 * different icon, either deliver an own file at this location, or set this variable to another
 	 * location.
 	 * </p>
-	 */
-	@DefaultValue("/images/favicon.png")
-	public static ThemeVar<String> DEFAULT_SHORTCUT_ICON;
-
-	/**
-	 * Application icon that is announced to the browser with the standard link relation
-	 * <code>icon</code>.
-	 *
-	 * <p>
-	 * Normally the same image as the one announced with the legacy link relation. The value is a
-	 * path relative to the context path of the web application. To use a different icon, either
-	 * deliver an own file at this location, or set this variable to another location.
-	 * </p>
-	 *
-	 * @see #DEFAULT_SHORTCUT_ICON
 	 */
 	@DefaultValue("/images/favicon.png")
 	public static ThemeVar<String> DEFAULT_ICON;

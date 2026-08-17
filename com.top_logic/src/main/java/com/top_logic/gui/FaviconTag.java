@@ -54,9 +54,9 @@ public class FaviconTag extends TagSupport {
 		{ "svg", TYPE_SVG },
 	}).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
-	private String _shortcutIcon = Icons.DEFAULT_SHORTCUT_ICON.get();
+	private String _shortcutIcon;
 
-	private String _icon = Icons.DEFAULT_ICON.get();
+	private String _icon;
 
 	// The context path of this application.
 	private String _contextPath;
@@ -88,11 +88,54 @@ public class FaviconTag extends TagSupport {
 		return SKIP_BODY;
 	}
 
+	@Override
+	public int doEndTag() throws JspException {
+		reset();
+
+		return super.doEndTag();
+	}
+
+	@Override
+	public void release() {
+		reset();
+
+		super.release();
+	}
+
+	/**
+	 * Drops the state of a single tag invocation.
+	 *
+	 * <p>
+	 * A tag handler instance is reused for other occurrences of the tag, which do not necessarily
+	 * specify the same attributes. Therefore, values that were explicitly set must not survive the
+	 * invocation they were set for.
+	 * </p>
+	 */
+	private void reset() {
+		_shortcutIcon = null;
+		_icon = null;
+		_contextPath = null;
+	}
+
 	private void write(JspWriter out) {
 		_contextPath = LinkTagUtil.getContextPath(this.pageContext, _contextPath);
-		String shortcutIcon = LinkTagUtil.getLink(_contextPath, _shortcutIcon);
-		String icon = LinkTagUtil.getLink(_contextPath, _icon);
+		String shortcutIcon = LinkTagUtil.getLink(_contextPath, shortcutIcon());
+		String icon = LinkTagUtil.getLink(_contextPath, icon());
 		write(out, shortcutIcon, icon);
+	}
+
+	/**
+	 * The explicitly set shortcut icon, or the default from the current theme.
+	 */
+	private String shortcutIcon() {
+		return _shortcutIcon == null ? Icons.DEFAULT_SHORTCUT_ICON.get() : _shortcutIcon;
+	}
+
+	/**
+	 * The explicitly set icon, or the default from the current theme.
+	 */
+	private String icon() {
+		return _icon == null ? Icons.DEFAULT_ICON.get() : _icon;
 	}
 
 	/**

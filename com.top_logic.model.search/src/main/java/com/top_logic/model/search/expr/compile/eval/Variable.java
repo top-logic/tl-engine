@@ -143,6 +143,9 @@ public class Variable extends CompiledValue {
 	@Override
 	public Expression buildExpression(EvalContext context) throws CompiledValue.IncompatibleTypes {
 		Object argument = value(context);
+		if (CompiledValue.isUnstored(argument)) {
+			throw new CompiledValue.IncompatibleTypes();
+		}
 		MetaObject argumentType = PolymorphicTypeComputation.getLiteralType(argument);
 		if (!KBUtils.typeSystem(context.getKnowledgeBase()).hasCommonInstances(compiledType(), argumentType)) {
 			throw new CompiledValue.IncompatibleTypes();

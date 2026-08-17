@@ -126,6 +126,9 @@ public abstract class Value {
 			// Null literal is not allowed in the KB.
 			return new NullLiteral(orig);
 		}
+		if (CompiledValue.isUnstored(literalValue)) {
+			return new InterpretedExpression(orig);
+		}
 		MetaObject literalType = PolymorphicTypeComputation.getLiteralType(literalValue);
 		if (literalType == MetaObject.INVALID_TYPE) {
 			return new InterpretedExpression(orig);

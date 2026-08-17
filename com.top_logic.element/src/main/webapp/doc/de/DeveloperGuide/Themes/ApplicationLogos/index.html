@@ -1,0 +1,80 @@
+<p>Eine Applikation zeigt an mehreren Stellen ein Logo an. Alle diese Logos werden über Ressourcen mit festen Namen ausgeliefert und können von der Applikation ersetzt werden, ohne dass Konfiguration angepasst werden muss.</p>
+
+<h2>Die Logo-Ressourcen</h2>
+
+<table cellpadding="1" cellspacing="1">
+ <thead>
+  <tr>
+   <th>Ressource</th>
+   <th>Anzeigeort</th>
+   <th>Theme-Variable</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td><code class="hljs inlineCode">/images/appLogo.svg</code></td>
+   <td>Kopfbereich der ausgeklappten Sidebar sowie Login- und Logout-Seite</td>
+   <td><code class="hljs inlineCode">IMAGES_APP_LOGO</code>, <code class="hljs inlineCode">com.top_logic.layout.Icons.APP_LOGO</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">/images/appLogoMinimized.svg</code></td>
+   <td>Kopfbereich der eingeklappten (minimierten) Sidebar</td>
+   <td><code class="hljs inlineCode">IMAGES_APP_LOGO_MINIMIZED</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">/images/favicon.png</code></td>
+   <td>Browser-Tab neben dem Namen der Anwendung</td>
+   <td><code class="hljs inlineCode">DEFAULT_ICON</code></td>
+  </tr>
+ </tbody>
+</table>
+
+<p>Die beiden Sidebar-Logos werden in sehr unterschiedlichen Größen dargestellt. Orientieren Sie sich an den mitgelieferten Vorlagen: <code class="hljs inlineCode">appLogo.svg</code> ist ein liegendes Logo mit Schriftzug (Standard-Vorlage 220 × 50), <code class="hljs inlineCode">appLogoMinimized.svg</code> eine quadratische Bildmarke ohne Schriftzug (Standard-Vorlage 64 × 64).</p>
+
+<h2>Eigene Logos hinterlegen</h2>
+
+<p>Legen Sie in Ihrer Applikation eine Datei mit demselben Namen an derselben Stelle ab:</p>
+
+<pre>
+<code>src/main/webapp/images/appLogo.svg
+src/main/webapp/images/appLogoMinimized.svg
+src/main/webapp/images/favicon.png</code></pre>
+
+<p>Die Ressourcen der Applikation haben Vorrang vor den gleichnamigen Ressourcen der Engine-Module. Es ist keine weitere Konfiguration nötig, insbesondere müssen die Theme-Variablen nicht angepasst werden.</p>
+
+<h2>Logos pro Theme austauschen</h2>
+
+<p>Soll ein Logo nur in einem bestimmten Theme anders aussehen (z.B. eine helle Variante für ein dunkles Theme), legen Sie die Datei zusätzlich unterhalb des Theme-Verzeichnisses ab:</p>
+
+<pre>
+<code>src/main/webapp/themes/&lt;theme-id&gt;/images/appLogo.svg</code></pre>
+
+<p>Bilder werden immer zuerst im aktiven Theme gesucht, danach in dessen Eltern-Themes und erst zuletzt unter dem angegebenen Pfad im Wurzelverzeichnis der Web-Applikation. Ein Theme, das keine eigene Variante mitbringt, verwendet also automatisch die Datei aus <code class="hljs inlineCode">/images/</code>.</p>
+
+<h2>Andere Dateinamen verwenden</h2>
+
+<p>Wenn Sie die Namenskonvention nicht übernehmen wollen, biegen Sie stattdessen die Theme-Variable um – entweder im Theme-Editor oder direkt in der Datei <code class="hljs inlineCode">src/main/webapp/WEB-INF/themes/&lt;theme-id&gt;/theme-settings.xml</code>:</p>
+
+<pre>
+<code>&lt;settings&gt;
+    &lt;icon name="IMAGES_APP_LOGO"
+        value="/images/mein-logo.svg"
+    /&gt;
+    &lt;icon name="IMAGES_APP_LOGO_MINIMIZED"
+        value="/images/mein-logo-klein.svg"
+    /&gt;
+&lt;/settings&gt;</code></pre>
+
+<p>Die Theme-Variablen liefern lediglich die Vorbelegung der Sidebar-Ansicht (<code class="hljs inlineCode">LogoViewConfiguration</code>). In einem Layout kann das Logo für eine einzelne Sidebar auch direkt angegeben werden:</p>
+
+<pre>
+<code>&lt;view class="com.top_logic.layout.structure.LogoViewConfiguration"
+    logo="/images/mein-logo.svg"
+    logoMinimized="/images/mein-logo-klein.svg"
+/&gt;</code></pre>
+
+<h2>Favicon</h2>
+
+<p>Das Favicon wird dem Browser über die Theme-Variable <code class="hljs inlineCode">DEFAULT_ICON</code> bekannt gemacht, die standardmäßig auf <code class="hljs inlineCode">/images/favicon.png</code> zeigt.</p>
+
+<p>Um das Favicon auszutauschen, legen Sie wie bei den Logos eine eigene Datei unter diesem Pfad in Ihrer Applikation ab. Anders als bei den SVG-Logos wird hier ein Rasterbild erwartet.</p>

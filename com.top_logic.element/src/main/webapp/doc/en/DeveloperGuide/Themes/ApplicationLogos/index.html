@@ -1,0 +1,80 @@
+<p>An application displays a logo in several places. All of these logos are shipped as resources with fixed names and can be replaced by the application without touching any configuration.</p>
+
+<h2>The logo resources</h2>
+
+<table cellpadding="1" cellspacing="1">
+ <thead>
+  <tr>
+   <th>Resource</th>
+   <th>Displayed in</th>
+   <th>Theme variable</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td><code class="hljs inlineCode">/images/appLogo.svg</code></td>
+   <td>Header of the expanded sidebar, as well as the login and logout page</td>
+   <td><code class="hljs inlineCode">IMAGES_APP_LOGO</code>, <code class="hljs inlineCode">com.top_logic.layout.Icons.APP_LOGO</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">/images/appLogoMinimized.svg</code></td>
+   <td>Header of the collapsed (minimized) sidebar</td>
+   <td><code class="hljs inlineCode">IMAGES_APP_LOGO_MINIMIZED</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">/images/favicon.png</code></td>
+   <td>Browser tab next to the application name</td>
+   <td><code class="hljs inlineCode">DEFAULT_ICON</code></td>
+  </tr>
+ </tbody>
+</table>
+
+<p>The two sidebar logos are displayed at very different sizes. Use the shipped templates as a guideline: <code class="hljs inlineCode">appLogo.svg</code> is a landscape logo including the lettering (default template 220 × 50), <code class="hljs inlineCode">appLogoMinimized.svg</code> is a square mark without lettering (default template 64 × 64).</p>
+
+<h2>Providing your own logos</h2>
+
+<p>Add a file with the same name at the same location in your application:</p>
+
+<pre>
+<code>src/main/webapp/images/appLogo.svg
+src/main/webapp/images/appLogoMinimized.svg
+src/main/webapp/images/favicon.png</code></pre>
+
+<p>The application's resources take precedence over the resources of the same name provided by the engine modules. No further configuration is required, in particular the theme variables need not be adjusted.</p>
+
+<h2>Replacing logos per theme</h2>
+
+<p>If a logo should look different in one specific theme only (e.g. a light variant for a dark theme), additionally place the file below the theme directory:</p>
+
+<pre>
+<code>src/main/webapp/themes/&lt;theme-id&gt;/images/appLogo.svg</code></pre>
+
+<p>Images are always looked up in the active theme first, then in its parent themes, and only finally at the given path in the root directory of the web application. A theme that does not bring its own variant therefore automatically uses the file from <code class="hljs inlineCode">/images/</code>.</p>
+
+<h2>Using different file names</h2>
+
+<p>If you do not want to adopt the naming convention, redirect the theme variable instead – either in the theme editor or directly in the file <code class="hljs inlineCode">src/main/webapp/WEB-INF/themes/&lt;theme-id&gt;/theme-settings.xml</code>:</p>
+
+<pre>
+<code>&lt;settings&gt;
+    &lt;icon name="IMAGES_APP_LOGO"
+        value="/images/my-logo.svg"
+    /&gt;
+    &lt;icon name="IMAGES_APP_LOGO_MINIMIZED"
+        value="/images/my-logo-small.svg"
+    /&gt;
+&lt;/settings&gt;</code></pre>
+
+<p>The theme variables only provide the default for the sidebar view (<code class="hljs inlineCode">LogoViewConfiguration</code>). In a layout, the logo can also be specified directly for an individual sidebar:</p>
+
+<pre>
+<code>&lt;view class="com.top_logic.layout.structure.LogoViewConfiguration"
+    logo="/images/my-logo.svg"
+    logoMinimized="/images/my-logo-small.svg"
+/&gt;</code></pre>
+
+<h2>Favicon</h2>
+
+<p>The favicon is announced to the browser through the theme variable <code class="hljs inlineCode">DEFAULT_ICON</code>, which points to <code class="hljs inlineCode">/images/favicon.png</code> by default.</p>
+
+<p>To replace the favicon, add your own file at that path in your application, just like for the logos. Unlike the SVG logos, a raster image is expected here.</p>

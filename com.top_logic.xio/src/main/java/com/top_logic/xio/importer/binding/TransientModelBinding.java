@@ -47,8 +47,13 @@ public class TransientModelBinding extends AbstractModelBinding {
 		QueryExecutor executor =
 			QueryExecutor.interpret(null, getModel(), SearchBuilder.toSearchExpression(getModel(), expr));
 		if (!usesSecurity()) {
+			// Definer's rights: the expression itself is evaluated without a check.
 			executor.disableSecurity();
 		}
+		// Independent of that decision, the result of an import step is an intermediate value of the
+		// import and must never be filtered for read access - only a value handed to a user is. With
+		// the security switched off, the executor would not filter anyway; the unconditional call
+		// keeps the invariant independent of the setting.
 		return executor.executeIntermediate(args);
 	}
 

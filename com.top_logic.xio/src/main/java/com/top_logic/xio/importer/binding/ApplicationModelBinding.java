@@ -48,6 +48,9 @@ public final class ApplicationModelBinding extends AbstractModelBinding {
 	 */
 	@Override
 	public Object eval(Expr expr, Object... args) {
+		// Whether the expression itself is checked is decided by the security setting of the import,
+		// see #compile(Expr). The result on the other hand is an intermediate value of the import and
+		// must never be filtered for read access, independent of that setting.
 		return compile(expr).executeIntermediate(args);
 	}
 
@@ -56,6 +59,7 @@ public final class ApplicationModelBinding extends AbstractModelBinding {
 		if (result == null) {
 			result = QueryExecutor.compile(_kb, _model, expr);
 			if (!usesSecurity()) {
+				// Definer's rights: the expression itself is evaluated without a check.
 				result.disableSecurity();
 			}
 			_compiledExprs.put(expr, result);

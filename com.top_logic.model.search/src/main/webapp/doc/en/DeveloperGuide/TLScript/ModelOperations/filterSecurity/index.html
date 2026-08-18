@@ -9,7 +9,7 @@ filterSecurity($base)
 
 <p>Applies the read permissions of the logged-in user to a value and removes all business objects that the user is not allowed to see.</p>
 
-<p>When accessing model elements, referenced objects are returned <strong>unfiltered</strong> in TL-Script &ndash; consistent with the user interface, which always shows a referenced object by its label and only secures the navigation into the object. Only access to the <em>attributes</em> of an object is denied if the user must not read the object. With <code class="hljs inlineCode">filterSecurity</code>, the final result of a script (or an intermediate result) can be explicitly secured so that it only contains objects the user may read.</p>
+<p>When accessing model elements, referenced objects are returned <strong>unfiltered</strong> in TL-Script &ndash; consistent with the user interface, which always shows a referenced object by its label and only secures the navigation into the object. Only access to the <em>attributes</em> of an object is denied if the user must not read the object. An intermediate result of an evaluation may therefore contain objects that the user must not read. With <code class="hljs inlineCode">filterSecurity</code>, such a value can be explicitly secured so that it only contains objects the user may read.</p>
 
 <p>The check is applied recursively:</p>
 
@@ -21,9 +21,9 @@ filterSecurity($base)
 
 <h2>Usage</h2>
 
-<p>Because accesses in TL-Script return their results unfiltered, the result of a script is not secured automatically. A script whose result is shown to a user or passed on to another context should therefore wrap its <strong>overall result</strong> at the <strong>outermost level</strong> with <code class="hljs inlineCode">filterSecurity</code>. This guarantees that the returned result only contains objects that the logged-in user is allowed to see.</p>
+<p>The <strong>overall result</strong> of a script does not have to be secured: it is filtered automatically when the application executes the script, unless security was explicitly switched off for that script. A trailing <code class="hljs inlineCode">filterSecurity</code> at the end of a script is therefore redundant.</p>
 
-<p>Only the <em>final result</em> should be secured, not every intermediate step: if used too early in an evaluation, subsequent steps may lose objects that are needed for the computation (e.g. for a filter), even though the final result itself would be readable.</p>
+<p>The function is needed to secure a value <em>within</em> an evaluation &ndash; e.g. a partial result that the script itself renders or passes on to another context. It should not be applied to every intermediate step: if used too early, subsequent steps may lose objects that are needed for the computation (e.g. for a filter), even though the final result itself would be readable.</p>
 
 <h2>Parameters</h2>
 

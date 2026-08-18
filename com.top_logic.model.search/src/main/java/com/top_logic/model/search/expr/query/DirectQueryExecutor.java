@@ -56,19 +56,12 @@ public final class DirectQueryExecutor extends QueryExecutor {
 	}
 
 	@Override
-	public void disableSecurity() {
+	protected void internalDisableSecurity() {
 		UpdateSecurityVisitor.disableSecurity(_search);
 	}
 
-	/**
-	 * Executes the expression with the given arguments.
-	 * 
-	 * @param args
-	 *        The arguments to pass to the expression evaluation.
-	 * @return The result of the expression.
-	 */
 	@Override
-	public Object executeWith(EvalContext definitions, Args args) {
+	protected Object internalExecuteWith(EvalContext definitions, Args args) {
 		return getSearch().evalWith(definitions, args);
 	}
 

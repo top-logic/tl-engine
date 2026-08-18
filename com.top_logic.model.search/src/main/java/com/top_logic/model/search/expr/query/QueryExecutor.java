@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.expr.query;
 
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -21,10 +22,19 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Execution of a configurable {@link Expr search expression}.
- * 
+ *
+ * <p>
+ * A {@link QueryExecutor} is the interface through which an application executes a
+ * <i>TL-Script</i>. It therefore secures the result of an execution: unless the security is
+ * {@link #disableSecurity() switched off}, objects that the current user is not allowed to read are
+ * removed from the result, see {@link #executeWith(EvalContext, Args)}.
+ * </p>
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public abstract class QueryExecutor {
+
+	private boolean _securityEnabled = true;
 
 	/**
 	 * Creates a {@link QueryExecutor} from the textual XML representation of a search expression.
@@ -277,13 +287,23 @@ public abstract class QueryExecutor {
 	 *
 	 * <p>
 	 * By default, every executed expression applies security, i.e. elements that the current user
-	 * is not allowed to see are removed from the (intermediate) results and modifying operations
-	 * require the corresponding write permission. Calling this method permanently switches security
-	 * off for this {@link QueryExecutor}'s expression. It must therefore only be used for internal
-	 * queries that must not be subject to the user's access rights.
+	 * is not allowed to see are removed from the (intermediate) results, modifying operations
+	 * require the corresponding write permission, and the {@link #executeWith(EvalContext, Args)
+	 * result} of an execution is filtered for the current user's read rights. Calling this method
+	 * permanently switches security off for this {@link QueryExecutor}. It must therefore only be
+	 * used for internal queries that must not be subject to the user's access rights.
 	 * </p>
 	 */
-	public abstract void disableSecurity();
+	public final void disableSecurity() {
+		_securityEnabled = false;
+		internalDisableSecurity();
+	}
+
+	/**
+	 * Implementation of {@link #disableSecurity()} switching the security check off in the
+	 * {@link #getSearch() executed expression}.
+	 */
+	protected abstract void internalDisableSecurity();
 
 	/**
 	 * The {@link SearchExpression} being executed.
@@ -302,7 +322,7 @@ public abstract class QueryExecutor {
 	 * 
 	 * @see #executeWith(DisplayContext, TagWriter, Args)
 	 */
-	public Object execute(Object arg) {
+	public final Object execute(Object arg) {
 		return executeWith(context(), Args.some(SearchExpression.normalizeValue(arg)));
 	}
 
@@ -316,7 +336,7 @@ public abstract class QueryExecutor {
 	 *        The arguments to pass to the expression evaluation.
 	 * @return The result of the expression.
 	 */
-	public Object execute(Object... args) {
+	public final Object execute(Object... args) {
 		return executeWith(context(), Args.some(args));
 	}
 
@@ -330,7 +350,7 @@ public abstract class QueryExecutor {
 	 *        The arguments to pass to the expression evaluation.
 	 * @return The result of the expression.
 	 */
-	public Object executeWith(Args args) {
+	public final Object executeWith(Args args) {
 		return executeWith(context(), args);
 	}
 
@@ -341,17 +361,92 @@ public abstract class QueryExecutor {
 	 *        The arguments to pass to the expression evaluation.
 	 * @return The result of the expression.
 	 */
-	public Object executeWith(DisplayContext displayContext, TagWriter out, Args args) {
+	public final Object executeWith(DisplayContext displayContext, TagWriter out, Args args) {
 		return executeWith(context(displayContext, out), args);
 	}
 
 	/**
 	 * Executes the expression with the given arguments.
-	 * 
+	 *
+	 * <p>
+	 * Unless the security is {@link #disableSecurity() disabled}, the result is filtered for the
+	 * current user's read rights, see {@link SearchExpression#filterSecurity(Object)}. A
+	 * {@link QueryExecutor} is the interface through which an application executes a
+	 * <i>TL-Script</i>, therefore its result must not contain objects that the current user is not
+	 * allowed to read - the caller does not have to remember to secure it.
+	 * </p>
+	 *
 	 * @param args
 	 *        The arguments to pass to the expression evaluation.
 	 * @return The result of the expression.
+	 *
+	 * @see #executeIntermediate(EvalContext, Args)
+	 *      Execution from within an ongoing evaluation, whose result is an intermediate one.
 	 */
-	public abstract Object executeWith(EvalContext definitions, Args args);
+	public final Object executeWith(EvalContext definitions, Args args) {
+		Object result = internalExecuteWith(definitions, args);
+		if (_securityEnabled) {
+			return SearchExpression.filterSecurity(result);
+		}
+		return result;
+	}
+
+	/**
+	 * Executes the expression with the given arguments <em>without</em> filtering the result for the
+	 * current user's read rights.
+	 *
+	 * <p>
+	 * This is the execution of an expression whose result is an <em>intermediate</em> value of a
+	 * larger operation and is not handed to the user: a configured function called from another
+	 * script, or a step of a technical pipeline such as the XML importer resolving the object to link
+	 * to. Such a result must not be filtered, since an object that the operation navigates through,
+	 * links to, or only counts must not be dropped just because the user may not read it. Securing
+	 * the value that the operation finally delivers is the job of that operation - for a script, of
+	 * the {@link #executeWith(EvalContext, Args) execution} that started it.
+	 * </p>
+	 *
+	 * <p>
+	 * The security of the executed expression itself (denying access to the attributes of an object
+	 * the user must not read, requiring write permissions for modifications) is unaffected: it is
+	 * part of the {@link #getSearch() expression} and applies here as well, unless it was
+	 * {@link #disableSecurity() switched off}.
+	 * </p>
+	 *
+	 * @param args
+	 *        The arguments to pass to the expression evaluation.
+	 * @return The unfiltered result of the expression.
+	 */
+	@FrameworkInternal
+	public final Object executeIntermediate(EvalContext definitions, Args args) {
+		return internalExecuteWith(definitions, args);
+	}
+
+	/**
+	 * Executes the expression with the given arguments <em>without</em> filtering the result for the
+	 * current user's read rights.
+	 * <p>
+	 * Uses the {@link QueryExecutor#context() evaluation context}.
+	 * </p>
+	 *
+	 * @param args
+	 *        The arguments to pass to the expression evaluation.
+	 * @return The unfiltered result of the expression.
+	 *
+	 * @see #executeIntermediate(EvalContext, Args)
+	 */
+	@FrameworkInternal
+	public final Object executeIntermediate(Object... args) {
+		return executeIntermediate(context(), Args.some(args));
+	}
+
+	/**
+	 * Implementation of {@link #executeWith(EvalContext, Args)} evaluating the
+	 * {@link #getSearch() expression}.
+	 *
+	 * @param args
+	 *        The arguments to pass to the expression evaluation.
+	 * @return The raw (unfiltered) result of the expression.
+	 */
+	protected abstract Object internalExecuteWith(EvalContext definitions, Args args);
 
 }

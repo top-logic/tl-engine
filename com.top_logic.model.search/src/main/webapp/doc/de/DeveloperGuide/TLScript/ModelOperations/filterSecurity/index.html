@@ -9,7 +9,7 @@ filterSecurity($base)
 
 <p>Wendet die Lese-Berechtigungen des angemeldeten Nutzers auf einen Wert an und entfernt alle Fachobjekte, die der Nutzer nicht sehen darf.</p>
 
-<p>Beim Zugriff auf Modellelemente werden referenzierte Objekte in TL-Script grunds&auml;tzlich <strong>ungefiltert</strong> zur&uuml;ckgegeben &ndash; konsistent zur Oberfl&auml;che, die ein referenziertes Objekt immer mit seiner Beschriftung anzeigt und nur die Navigation in das Objekt absichert. Lediglich der Zugriff auf die <em>Attribute</em> eines Objektes wird verweigert, wenn der Nutzer das Objekt nicht lesen darf. Mit <code class="hljs inlineCode">filterSecurity</code> kann das Endergebnis eines Skripts (oder ein Zwischenergebnis) explizit so abgesichert werden, dass es nur noch lesbare Objekte enth&auml;lt.</p>
+<p>Beim Zugriff auf Modellelemente werden referenzierte Objekte in TL-Script grunds&auml;tzlich <strong>ungefiltert</strong> zur&uuml;ckgegeben &ndash; konsistent zur Oberfl&auml;che, die ein referenziertes Objekt immer mit seiner Beschriftung anzeigt und nur die Navigation in das Objekt absichert. Lediglich der Zugriff auf die <em>Attribute</em> eines Objektes wird verweigert, wenn der Nutzer das Objekt nicht lesen darf. Ein Zwischenergebnis einer Auswertung kann daher Objekte enthalten, die der Nutzer nicht lesen darf. Mit <code class="hljs inlineCode">filterSecurity</code> kann ein solcher Wert explizit so abgesichert werden, dass er nur noch lesbare Objekte enth&auml;lt.</p>
 
 <p>Die Pr&uuml;fung erfolgt rekursiv:</p>
 
@@ -21,9 +21,9 @@ filterSecurity($base)
 
 <h2>Verwendung</h2>
 
-<p>Da Zugriffe in TL-Script ihre Ergebnisse ungefiltert liefern, wird das Ergebnis eines Skriptes nicht automatisch abgesichert. Ein Skript, dessen Resultat einem Nutzer angezeigt oder an einen anderen Kontext weitergegeben wird, sollte sein <strong>Gesamtergebnis</strong> daher an der <strong>&auml;u&szlig;ersten Stelle</strong> mit <code class="hljs inlineCode">filterSecurity</code> umschlie&szlig;en. Damit ist sichergestellt, dass das zur&uuml;ckgegebene Ergebnis ausschlie&szlig;lich Objekte enth&auml;lt, die der angemeldete Nutzer sehen darf.</p>
+<p>Das <strong>Gesamtergebnis</strong> eines Skriptes muss nicht abgesichert werden: Es wird von der Anwendung beim Ausf&uuml;hren des Skriptes automatisch gefiltert, sofern die Security f&uuml;r das Skript nicht ausdr&uuml;cklich abgeschaltet ist. Ein <code class="hljs inlineCode">filterSecurity</code> am Ende eines Skriptes ist damit &uuml;berfl&uuml;ssig.</p>
 
-<p>Die Funktion sollte nur das <em>Endergebnis</em> absichern, nicht jeden Zwischenschritt: Wird sie zu fr&uuml;h in einer Auswertung eingesetzt, k&ouml;nnen nachfolgende Schritte Objekte verlieren, die zur Berechnung ben&ouml;tigt werden (z.&nbsp;B. f&uuml;r einen Filter), obwohl das Endergebnis selbst lesbar w&auml;re.</p>
+<p>Die Funktion wird gebraucht, um einen Wert <em>innerhalb</em> einer Auswertung abzusichern &ndash; etwa ein Teilergebnis, das das Skript selbst ausgibt oder an einen anderen Kontext weitergibt. Sie sollte dabei nicht auf jeden Zwischenschritt angewendet werden: Wird sie zu fr&uuml;h eingesetzt, k&ouml;nnen nachfolgende Schritte Objekte verlieren, die zur Berechnung ben&ouml;tigt werden (z.&nbsp;B. f&uuml;r einen Filter), obwohl das Endergebnis selbst lesbar w&auml;re.</p>
 
 <h2>Parameter</h2>
 

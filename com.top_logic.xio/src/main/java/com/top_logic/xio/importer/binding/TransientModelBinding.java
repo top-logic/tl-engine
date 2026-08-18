@@ -37,14 +37,24 @@ public class TransientModelBinding extends AbstractModelBinding {
 		super(model, usesSecurity);
 	}
 
+	/**
+	 * @implNote Like {@link ApplicationModelBinding#eval(Expr, Object...)}, the result is an
+	 *           intermediate value of the import and is therefore not filtered for the importing
+	 *           user's read rights.
+	 */
 	@Override
 	public Object eval(Expr expr, Object... args) {
 		QueryExecutor executor =
 			QueryExecutor.interpret(null, getModel(), SearchBuilder.toSearchExpression(getModel(), expr));
 		if (!usesSecurity()) {
+			// Definer's rights: the expression itself is evaluated without a check.
 			executor.disableSecurity();
 		}
-		return executor.execute(args);
+		// Independent of that decision, the result of an import step is an intermediate value of the
+		// import and must never be filtered for read access - only a value handed to a user is. With
+		// the security switched off, the executor would not filter anyway; the unconditional call
+		// keeps the invariant independent of the setting.
+		return executor.executeIntermediate(args);
 	}
 
 	@Override

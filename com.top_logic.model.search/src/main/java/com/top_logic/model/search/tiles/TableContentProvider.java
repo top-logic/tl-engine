@@ -174,8 +174,9 @@ public class TableContentProvider extends AbstractPreviewContent<TableContentPro
 	}
 
 	private List<?> rows(Object model) {
-		// Secure the displayed rows: only objects the current user is allowed to read.
-		List<?> rows = toList(SearchExpression.filterSecurity(_rows.execute(model)));
+		// Note: The rows contain only objects the current user is allowed to read, the executor
+		// secures them, see QueryExecutor#executeWith(EvalContext, Args).
+		List<?> rows = toList(_rows.execute(model));
 		if (rows.size() <= MAX_ROWS_NUMBER) {
 			return rows;
 		}

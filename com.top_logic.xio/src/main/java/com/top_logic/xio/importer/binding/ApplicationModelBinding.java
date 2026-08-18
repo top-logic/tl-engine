@@ -39,9 +39,19 @@ public final class ApplicationModelBinding extends AbstractModelBinding {
 		_kb = kb;
 	}
 
+	/**
+	 * @implNote The evaluated expression is a step of the import (resolving an object to link to,
+	 *           computing a value to store), so its result is an intermediate value of the import and
+	 *           must not be filtered for the importing user's read rights, see
+	 *           {@link QueryExecutor#executeIntermediate(Object...)}. Otherwise an object that the
+	 *           user must not read would silently drop out of the import instead of being linked.
+	 */
 	@Override
 	public Object eval(Expr expr, Object... args) {
-		return compile(expr).execute(args);
+		// Whether the expression itself is checked is decided by the security setting of the import,
+		// see #compile(Expr). The result on the other hand is an intermediate value of the import and
+		// must never be filtered for read access, independent of that setting.
+		return compile(expr).executeIntermediate(args);
 	}
 
 	private QueryExecutor compile(Expr expr) {
@@ -49,6 +59,7 @@ public final class ApplicationModelBinding extends AbstractModelBinding {
 		if (result == null) {
 			result = QueryExecutor.compile(_kb, _model, expr);
 			if (!usesSecurity()) {
+				// Definer's rights: the expression itself is evaluated without a check.
 				result.disableSecurity();
 			}
 			_compiledExprs.put(expr, result);

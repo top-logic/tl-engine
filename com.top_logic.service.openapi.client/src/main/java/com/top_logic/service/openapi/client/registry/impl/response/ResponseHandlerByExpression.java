@@ -193,9 +193,9 @@ public class ResponseHandlerByExpression extends AbstractConfiguredInstance<Resp
 					for (int n = 0; n < cnt; n++) {
 						arguments[n + 1] = _arguments.get(n).extract(call, response);
 					}
-					result = _postProcessor.execute(arguments);
+					result = _postProcessor.executeIntermediate(arguments);
 				} else {
-					result = _postProcessor.execute(result);
+					result = _postProcessor.executeIntermediate(result);
 				}
 			}
 

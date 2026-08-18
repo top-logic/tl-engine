@@ -21,6 +21,28 @@
 					type="tl.core:String"
 				/>
 
+				<!-- Identity-aware constraint: the check excludes the edited object from the objects it compares against, so editing an object without changing this value must stay valid -->
+				<property name="uniqueName"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[value -> obj -> {
+	if ($value == null,
+		null,
+		if (all(`test.constraints:ConstraintTestType`)
+				.filter(other -> $other != $obj
+					and $other.get(`test.constraints:ConstraintTestType#uniqueName`) == $value)
+				.size() == 0,
+			null,
+			#("The name is already used by another object."@en, "Der Name wird bereits von einem anderen Objekt verwendet."@de)))
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+
 				<!-- String with size constraint: 3-50 characters -->
 				<property name="sizedString"
 					type="tl.core:String"

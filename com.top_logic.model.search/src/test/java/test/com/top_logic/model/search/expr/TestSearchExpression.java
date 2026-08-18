@@ -45,6 +45,7 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.element.meta.MetaAttributeFactory;
@@ -69,6 +70,7 @@ import com.top_logic.model.TLScope;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLTypePart;
+import com.top_logic.model.TransientObject;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.search.expr.CalendarField;
@@ -136,7 +138,42 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				newPersistentObject.tUpdateByName("name", "A1");
 
 				assertEquals(set(a1, a2), search.execute(newPersistentObject));
+
+				// An unstored object need not report a table: it can never be stored in one. A form's
+				// editing buffer for an object being created is such an object.
+				assertEquals(set(a1, a2), search.execute(new WithoutTable(tType, "A1")));
 			});
+	}
+
+	/**
+	 * Unstored {@link TLObject} that has neither a handle nor a table, as an editing buffer for an
+	 * object being created has.
+	 */
+	private static class WithoutTable extends TransientObject {
+
+		private final TLStructuredType _type;
+
+		private final String _name;
+
+		WithoutTable(TLStructuredType type, String name) {
+			_type = type;
+			_name = name;
+		}
+
+		@Override
+		public TLStructuredType tType() {
+			return _type;
+		}
+
+		@Override
+		public Object tValue(TLStructuredTypePart part) {
+			return "name".equals(part.getName()) ? _name : null;
+		}
+
+		@Override
+		public MOStructure tTable() {
+			throw new UnsupportedOperationException("Not stored in any table.");
+		}
 	}
 
 	public void testKBSearch() {

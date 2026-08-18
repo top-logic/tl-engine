@@ -16,6 +16,7 @@
 			mode-switch="false"
 		>
 			<field attribute="name"/>
+			<field attribute="uniqueName"/>
 			<field attribute="sizedString"/>
 			<field attribute="mandatorySizedString"/>
 			<field attribute="unboundedSizedString"/>

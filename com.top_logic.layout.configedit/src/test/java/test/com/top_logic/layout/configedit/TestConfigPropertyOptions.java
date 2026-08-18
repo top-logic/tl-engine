@@ -19,7 +19,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.configedit.ConfigPropertyOptions;
+import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 
 /**
@@ -32,6 +34,14 @@ public class TestConfigPropertyOptions extends TestCase {
 		@Override
 		public List<String> apply() {
 			return Arrays.asList("red", "green", "blue");
+		}
+	}
+
+	/** Uppercases the option value, to tell its result apart from the default label. */
+	public static class UpperCaseLabels implements LabelProvider {
+		@Override
+		public String getLabel(Object object) {
+			return object == null ? null : object.toString().toUpperCase();
 		}
 	}
 
@@ -49,6 +59,7 @@ public class TestConfigPropertyOptions extends TestCase {
 		 */
 		@Name(COLOR)
 		@Options(fun = Colors.class)
+		@OptionLabels(UpperCaseLabels.class)
 		String getColor();
 
 		/** @see #getColor() */
@@ -85,6 +96,29 @@ public class TestConfigPropertyOptions extends TestCase {
 
 		assertTrue("A property without options must offer none.",
 			ConfigPropertyOptions.optionsFor(config, property).isEmpty());
+	}
+
+	/**
+	 * A property annotated with {@link OptionLabels} offers that {@link LabelProvider}.
+	 */
+	public void testResolvesAnnotatedOptionLabels() {
+		PropertyDescriptor property =
+			TypedConfiguration.newConfigItem(TestConfig.class).descriptor().getProperty(TestConfig.COLOR);
+
+		LabelProvider labels = ConfigPropertyOptions.optionLabels(property);
+
+		assertNotNull(labels);
+		assertEquals("RED", labels.getLabel("red"));
+	}
+
+	/**
+	 * A property without {@link OptionLabels} offers no dedicated label provider.
+	 */
+	public void testPlainPropertyHasNoOptionLabels() {
+		PropertyDescriptor property =
+			TypedConfiguration.newConfigItem(TestConfig.class).descriptor().getProperty(TestConfig.TEXT);
+
+		assertNull(ConfigPropertyOptions.optionLabels(property));
 	}
 
 	/**

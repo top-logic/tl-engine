@@ -5,16 +5,11 @@
  */
 package com.top_logic.layout.configedit;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.basic.col.LazyTypedAnnotatable;
-import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.config.customization.AnnotationCustomizations;
-import com.top_logic.basic.config.customization.ProgrammaticCustomizations;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.DerivedProperty;
@@ -24,7 +19,7 @@ import com.top_logic.layout.provider.label.ClassLabelProvider;
 
 /**
  * Adapter that looks up the polymorphic options for a {@link PropertyDescriptor} through
- * {@link Fields#optionProvider(DeclarativeFormOptions)} without requiring an
+ * {@link ConfigPropertyOptions#optionProvider(PropertyDescriptor)} without requiring an
  * {@link com.top_logic.layout.form.values.edit.EditorFactory EditorFactory} / form context.
  *
  * <p>
@@ -36,10 +31,6 @@ import com.top_logic.layout.provider.label.ClassLabelProvider;
  * </p>
  */
 public class PolymorphicOptions {
-
-	private static final TypedAnnotatable EMPTY_ANNOTATIONS = new LazyTypedAnnotatable();
-
-	private static final AnnotationCustomizations CUSTOMIZATIONS = new ProgrammaticCustomizations();
 
 	private static final ClassLabelProvider CLASS_LABELS = new ClassLabelProvider();
 
@@ -75,18 +66,12 @@ public class PolymorphicOptions {
 	 *        The property whose options are requested.
 	 */
 	public static Choices compute(ConfigurationItem parentConfig, PropertyDescriptor property) {
-		DerivedProperty<? extends Iterable<?>> provider = Fields.optionProvider(declarativeOptions(property));
+		DerivedProperty<? extends Iterable<?>> provider = ConfigPropertyOptions.optionProvider(property);
 		if (provider == null) {
 			return Choices.NONE;
 		}
+		List<Object> options = ConfigPropertyOptions.toList(provider.get(parentConfig));
 		OptionMapping mapping = Fields.optionMapping(provider);
-		Iterable<?> raw = provider.get(parentConfig);
-		List<Object> options = new ArrayList<>();
-		if (raw != null) {
-			for (Object item : raw) {
-				options.add(item);
-			}
-		}
 		return new Choices(options, mapping);
 	}
 
@@ -177,39 +162,5 @@ public class PolymorphicOptions {
 		} catch (NumberFormatException ex) {
 			return -1;
 		}
-	}
-
-	private static DeclarativeFormOptions declarativeOptions(PropertyDescriptor property) {
-		return new DeclarativeFormOptions() {
-			@Override
-			public PropertyDescriptor getProperty() {
-				return property;
-			}
-
-			@Override
-			public AnnotationCustomizations getCustomizations() {
-				return CUSTOMIZATIONS;
-			}
-
-			@Override
-			public <T> T get(Property<T> p) {
-				return EMPTY_ANNOTATIONS.get(p);
-			}
-
-			@Override
-			public boolean isSet(Property<?> p) {
-				return EMPTY_ANNOTATIONS.isSet(p);
-			}
-
-			@Override
-			public <T> T set(Property<T> p, T value) {
-				return EMPTY_ANNOTATIONS.set(p, value);
-			}
-
-			@Override
-			public <T> T reset(Property<T> p) {
-				return EMPTY_ANNOTATIONS.reset(p);
-			}
-		};
 	}
 }

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<!--
+		Reproduces the start-up order of the security configuration (Ticket #29447): The module
+		singleton is allocated while the model service starts, and the default value of its "entry"
+		reference allocates an object. That allocation asks for the create right, but the security
+		configuration is not started yet, since it is built on top of the model that is being set up
+		here. The application must nevertheless start; the access is granted without a check and
+		reported once as a warning, see UncheckedAccessRights.
+	-->
+	<module name="test.startupSecurity">
+		<annotations>
+			<singletons>
+				<singleton type="Root"/>
+			</singletons>
+		</annotations>
+		<class name="Root">
+			<attributes>
+				<reference name="entry"
+					composite="true"
+					kind="forwards"
+					navigate="true"
+					type="Entry"
+				>
+					<annotations>
+						<default-value>
+							<default-by-expression in-transaction="true">
+								<value>new(`test.startupSecurity:Entry`)</value>
+							</default-by-expression>
+						</default-value>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Entry">
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

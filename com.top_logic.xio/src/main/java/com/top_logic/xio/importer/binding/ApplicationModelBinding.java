@@ -29,9 +29,13 @@ public final class ApplicationModelBinding extends AbstractModelBinding {
 
 	/**
 	 * Creates a {@link ApplicationModelBinding}.
+	 *
+	 * @param usesSecurity
+	 *        See {@link #usesSecurity()}. An import of external data normally passes
+	 *        <code>false</code>.
 	 */
-	public ApplicationModelBinding(KnowledgeBase kb, TLModel model) {
-		super(model);
+	public ApplicationModelBinding(KnowledgeBase kb, TLModel model, boolean usesSecurity) {
+		super(model, usesSecurity);
 		_kb = kb;
 	}
 
@@ -44,6 +48,9 @@ public final class ApplicationModelBinding extends AbstractModelBinding {
 		QueryExecutor result = _compiledExprs.get(expr);
 		if (result == null) {
 			result = QueryExecutor.compile(_kb, _model, expr);
+			if (!usesSecurity()) {
+				result.disableSecurity();
+			}
 			_compiledExprs.put(expr, result);
 		}
 		return result;

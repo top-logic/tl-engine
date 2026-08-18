@@ -28,6 +28,24 @@
 					</attributes>
 				</class>
 
+				<class name="TechnicalData">
+					<annotations>
+						<table name="TLSecTechnicalData"/>
+					</annotations>
+					<attributes>
+						<property name="data"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="TechnicalDataSub">
+					<generalizations>
+						<generalization type="TechnicalData"/>
+					</generalizations>
+				</class>
+
+
 				<class name="Project">
 					<annotations>
 						<table name="TLSecProject"/>

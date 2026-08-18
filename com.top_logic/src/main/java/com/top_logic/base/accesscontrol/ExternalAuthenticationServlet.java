@@ -201,7 +201,7 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 			return false;
 		}
 		Person user = context.getOriginalUser();
-		return user != null && !user.equals(PersonManager.getManager().getAnonymous());
+		return user != null && !PersonManager.getManager().isAnonymous(user);
 	}
 
 	protected boolean isExtAuthEnabled() {

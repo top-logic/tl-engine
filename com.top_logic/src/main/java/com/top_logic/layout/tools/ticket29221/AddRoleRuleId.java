@@ -23,7 +23,7 @@ import com.top_logic.layout.tools.XMLRewriter;
  * <p>
  * Since ticket #29221 the {@code id} of a role rule is a mandatory configuration property and the
  * key of the enclosing role-rules configuration (see
- * {@code com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig}). Existing
+ * {@code com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig}). Existing
  * configurations computed the id at runtime and therefore did not specify it. This tool walks all
  * XML files below the given directory and adds a freshly generated {@link UUID} as {@code id}
  * attribute to every role-rule element that lacks one.
@@ -32,10 +32,10 @@ import com.top_logic.layout.tools.XMLRewriter;
  * <p>
  * A role-rule element is a {@code <rule>}, {@code <inheritance-rule>} or {@code <singleton-rule>}
  * whose parent element is a {@code <rules>}, {@code <role-rules>} or {@code <security-parents>}
- * container. The {@code <security-parents>} container holds the same role-rule configurations (see
- * {@code com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig}, ticket #29088)
- * and therefore needs the same {@code id}. Elements that already have an {@code id} are left
- * untouched, and files without any change are not rewritten.
+ * container. The {@code <security-parents>} container holds navigation rules (see
+ * {@code com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig}, ticket #29088),
+ * which declare the same {@code id}. Elements that already have an {@code id} are left untouched,
+ * and files without any change are not rewritten.
  * </p>
  */
 public class AddRoleRuleId extends XMLRewriter {

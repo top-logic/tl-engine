@@ -9,17 +9,23 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamWriter;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.AbstractConfigurationValueBinding;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
@@ -28,11 +34,12 @@ import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.configedit.ConfigControl;
+import com.top_logic.layout.configedit.ConfigControlProvider;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigFormatFieldModel;
 import com.top_logic.layout.configedit.ConfigPropertyOptions;
-import com.top_logic.layout.configedit.ConfigSelectFieldModel;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -91,6 +98,37 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
+	 * A {@link ConfigControlProvider} that always renders a checkbox, regardless of the property's
+	 * actual type - deliberately mismatched, so getting this control back can only be explained by
+	 * an explicit {@link ConfigControl} annotation, never by any built-in, type-based resolution.
+	 */
+	public static class FixedCheckboxProvider implements ConfigControlProvider {
+		@Override
+		public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
+			return new ReactCheckboxControl(context, model);
+		}
+	}
+
+	/**
+	 * A minimal {@code ConfigurationValueBinding} with no accompanying {@code @Format} - stands in
+	 * for the framework's real "binding-only" bindings ({@code AbstractListBinding},
+	 * {@code MapAttributeBinding}, {@code XMLFragmentString}), none of which pair with a
+	 * {@code ConfigurationValueProvider}. Never actually exercised for XML I/O by these tests.
+	 */
+	public static class NoFormatBinding extends AbstractConfigurationValueBinding<List<String>> {
+		@Override
+		public void saveConfigItem(XMLStreamWriter out, List<String> item) throws XMLStreamException {
+			throw new UnsupportedOperationException("Not exercised by these tests.");
+		}
+
+		@Override
+		public List<String> loadConfigItem(XMLStreamReader in, List<String> baseValue)
+				throws XMLStreamException, ConfigurationException {
+			throw new UnsupportedOperationException("Not exercised by these tests.");
+		}
+	}
+
+	/**
 	 * Marker sub-item type, used only to give an ITEM-kind property that (atypically) also carries
 	 * an {@link Options} annotation.
 	 */
@@ -143,12 +181,43 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getNested()}. */
 		String NESTED = "nested";
 
+		/** Property name for {@link #getAnnotated()}. */
+		String ANNOTATED = "annotated";
+
+		/** Property name for {@link #getAnnotatedMode()}. */
+		String ANNOTATED_MODE = "annotatedMode";
+
+		/** Property name for {@link #getEncryptedAnnotated()}. */
+		String ENCRYPTED_ANNOTATED = "encryptedAnnotated";
+
+		/** Property name for {@link #getEncryptedMode()}. */
+		String ENCRYPTED_MODE = "encryptedMode";
+
+		/** Property name for {@link #getEncryptedColor()}. */
+		String ENCRYPTED_COLOR = "encryptedColor";
+
+		/** Property name for {@link #getBindingOnly()}. */
+		String BINDING_ONLY = "bindingOnly";
+
 		/** A mode to choose from. */
 		enum Mode {
 			/** The one mode. */
 			ON,
 			/** The other mode. */
 			OFF;
+		}
+
+		/**
+		 * A second enum, annotated at the type level with {@link ConfigControl} - proves the
+		 * annotation is honored from the value type too, not just from the property: without it, a
+		 * plain enum property would get the select, never a checkbox.
+		 */
+		@ConfigControl(FixedCheckboxProvider.class)
+		enum AnnotatedMode {
+			/** The one mode. */
+			A,
+			/** The other mode. */
+			B;
 		}
 
 		/** Free text. */
@@ -229,6 +298,59 @@ public class TestConfigControlService extends TestCase {
 		@Name(NESTED)
 		@Options(fun = Tags.class)
 		Nested getNested();
+
+		/**
+		 * A {@code String} property naming its own control via {@link ConfigControl} - a plain
+		 * {@code String} would otherwise get the text input, never a checkbox.
+		 */
+		@Name(ANNOTATED)
+		@ConfigControl(FixedCheckboxProvider.class)
+		String getAnnotated();
+
+		/**
+		 * An enum property whose control comes from its value type's own {@link ConfigControl}
+		 * annotation, not from an annotation on the property itself.
+		 */
+		@Name(ANNOTATED_MODE)
+		AnnotatedMode getAnnotatedMode();
+
+		/**
+		 * Both {@link Encrypted} and a {@link ConfigControl} annotation - {@code @Encrypted} must
+		 * win: a module's custom control must never be able to expose a secret in the clear.
+		 */
+		@Name(ENCRYPTED_ANNOTATED)
+		@Encrypted
+		@ConfigControl(FixedCheckboxProvider.class)
+		String getEncryptedAnnotated();
+
+		/**
+		 * An encrypted enum - without {@code isSelect} also checking {@code @Encrypted}, this
+		 * would still resolve to a select (an enum has an intrinsic option list even without
+		 * {@code @Options}), and the password control would then be handed that select-domain
+		 * model.
+		 */
+		@Name(ENCRYPTED_MODE)
+		@Encrypted
+		Mode getEncryptedMode();
+
+		/**
+		 * An encrypted property with an explicit {@code @Options} annotation - the same hole as
+		 * {@link #getEncryptedMode()}, but through the annotation-driven option list rather than
+		 * an enum's intrinsic one.
+		 */
+		@Name(ENCRYPTED_COLOR)
+		@Encrypted
+		@Options(fun = Colors.class)
+		String getEncryptedColor();
+
+		/**
+		 * A {@code COMPLEX} property with only a value binding and no value provider - this
+		 * service has no way to put its value into any widget (not directly, not by selecting,
+		 * not as text) and must reject it, the same as an {@code ITEM} property.
+		 */
+		@Name(BINDING_ONLY)
+		@Binding(NoFormatBinding.class)
+		List<String> getBindingOnly();
 	}
 
 	private TestConfig _config;
@@ -337,8 +459,13 @@ public class TestConfigControlService extends TestCase {
 			model(TestConfig.TEXT) instanceof ConfigFormatFieldModel);
 	}
 
-	/** An encrypted property is not shown in the clear. */
+	/**
+	 * An encrypted property is not shown in the clear, and is parsed through its format - the
+	 * password control is a text control, so its model must hold text, not the raw typed value.
+	 */
 	public void testEncrypted() {
+		assertTrue("An encrypted property must be parsed through its format.",
+			model(TestConfig.SECRET) instanceof ConfigFormatFieldModel);
 		assertTrue("An encrypted property must be edited in a password field.",
 			control(TestConfig.SECRET) instanceof ReactPasswordInputControl);
 	}
@@ -346,13 +473,85 @@ public class TestConfigControlService extends TestCase {
 	/**
 	 * An encrypted {@code boolean} property is edited in a password field too - the old resolution
 	 * order checked {@code @Encrypted} only after the {@code boolean} branch of the type chain had
-	 * already returned a checkbox, so this path never reached the check at all.
+	 * already returned a checkbox, so this path never reached the check at all. Critically, its
+	 * model must also be the format-aware {@link ConfigFormatFieldModel}: a plain
+	 * {@link ConfigFieldModel} would hand the text-based password control a raw {@code Boolean},
+	 * and a client edit would try to write a {@code String} into a {@code boolean} property - the
+	 * exact domain mismatch this fix closes. Checking only the control's class (as an earlier
+	 * version of this test did) cannot see that bug; the model must be checked too.
 	 */
 	public void testEncryptedBooleanIsPasswordNotCheckbox() {
+		assertTrue("An encrypted boolean must be parsed through its format, not bound to the raw "
+			+ "boolean value a text-based password control cannot handle.",
+			model(TestConfig.SECRET_FLAG) instanceof ConfigFormatFieldModel);
+
 		ReactControl control = control(TestConfig.SECRET_FLAG);
 		assertTrue("An encrypted boolean must be edited in a password field.",
 			control instanceof ReactPasswordInputControl);
 		assertFalse("An encrypted boolean must not fall through to the checkbox.",
+			control instanceof ReactCheckboxControl);
+	}
+
+	/**
+	 * An encrypted enum must still be edited in the password field, not the select an enum
+	 * otherwise gets - without {@code isSelect} also checking {@code @Encrypted}, this property
+	 * would resolve to {@code ConfigSelectFieldModel}, and the password control would then be
+	 * handed that select-domain model instead of text.
+	 */
+	public void testEncryptedEnumIsPasswordNotSelect() {
+		assertTrue("An encrypted enum must be parsed through its format, not resolved to a select.",
+			model(TestConfig.ENCRYPTED_MODE) instanceof ConfigFormatFieldModel);
+
+		ReactControl control = control(TestConfig.ENCRYPTED_MODE);
+		assertTrue("An encrypted enum must be edited in a password field.",
+			control instanceof ReactPasswordInputControl);
+		assertFalse("An encrypted enum must not fall through to the select.",
+			control instanceof ReactSelectFormFieldControl);
+	}
+
+	/**
+	 * The same hole as {@link #testEncryptedEnumIsPasswordNotSelect()}, but via an explicit
+	 * {@code @Options} annotation rather than an enum's intrinsic option list.
+	 */
+	public void testEncryptedWithOptionsIsPasswordNotSelect() {
+		assertTrue("An encrypted, optioned property must be parsed through its format.",
+			model(TestConfig.ENCRYPTED_COLOR) instanceof ConfigFormatFieldModel);
+
+		ReactControl control = control(TestConfig.ENCRYPTED_COLOR);
+		assertTrue("An encrypted, optioned property must be edited in a password field.",
+			control instanceof ReactPasswordInputControl);
+		assertFalse("An encrypted, optioned property must not fall through to the select.",
+			control instanceof ReactSelectFormFieldControl);
+	}
+
+	/**
+	 * A plain {@code String} property naming its own control via a {@link ConfigControl}
+	 * annotation on the property gets that control, not the built-in text input a plain
+	 * {@code String} would otherwise get.
+	 */
+	public void testConfigControlAnnotationOnProperty() {
+		assertTrue("The annotated control must be used instead of the built-in text input.",
+			control(TestConfig.ANNOTATED) instanceof ReactCheckboxControl);
+	}
+
+	/**
+	 * A {@link ConfigControl} annotation on the property's value type is honored too, not just on
+	 * the property itself: without it, a plain enum property would get the select.
+	 */
+	public void testConfigControlAnnotationOnValueType() {
+		assertTrue("The value type's annotated control must be used instead of the enum select.",
+			control(TestConfig.ANNOTATED_MODE) instanceof ReactCheckboxControl);
+	}
+
+	/**
+	 * {@code @Encrypted} wins over an explicit {@link ConfigControl} annotation: a module's own
+	 * choice of control must never be able to expose a secret in the clear.
+	 */
+	public void testEncryptedWinsOverConfigControlAnnotation() {
+		ReactControl control = control(TestConfig.ENCRYPTED_ANNOTATED);
+		assertTrue("Encrypted must win over an explicit control annotation.",
+			control instanceof ReactPasswordInputControl);
+		assertFalse("The annotated control must not be reachable for an encrypted property.",
 			control instanceof ReactCheckboxControl);
 	}
 
@@ -370,19 +569,79 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * An ITEM property is never edited by selecting, even when {@link ConfigPropertyOptions}
-	 * answers with an option provider for it - such a property is rendered by a nested editor or a
-	 * dedicated type selector, never a plain select.
+	 * {@link ConfigControlService#createModel(ConfigurationItem, PropertyDescriptor)} rejects an
+	 * ITEM property outright - it must not silently fall through to a text field bound to a raw,
+	 * complex {@link ConfigurationItem}. The property (atypically) also carries an
+	 * {@link Options} annotation, to rule out the rejection being an accident of "no options
+	 * resolved" rather than the kind check itself.
 	 */
-	public void testItemPropertyIsNeverSelect() {
+	public void testCreateModelRejectsItemKind() {
 		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.NESTED);
 		assertNotNull("Precondition: the property must actually have options for this test to be meaningful.",
 			ConfigPropertyOptions.optionProvider(property));
 
-		ConfigFieldModel model = ConfigControlService.getInstance().createModel(_config, property);
+		try {
+			ConfigControlService.getInstance().createModel(_config, property);
+			fail("An ITEM property must be rejected, not silently bound to a text field.");
+		} catch (IllegalArgumentException expected) {
+			// Expected: only PLAIN and REF properties are resolved.
+		}
+	}
 
-		assertFalse("An ITEM property must not be edited by selecting from options.",
-			model instanceof ConfigSelectFieldModel);
+	/**
+	 * {@link ConfigControlService#createControl(ReactContext, ConfigFieldModel)} independently
+	 * rejects an ITEM property too - the guarantee must not depend on every caller routing through
+	 * {@link ConfigControlService#createModel(ConfigurationItem, PropertyDescriptor)} first. The
+	 * model here is built directly (bypassing {@code createModel}'s own check), so this exercises
+	 * {@code createControl}'s check in isolation.
+	 */
+	public void testCreateControlRejectsItemKind() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.NESTED);
+		ConfigFieldModel model = new ConfigFieldModel(_config, property);
+
+		try {
+			ConfigControlService.getInstance().createControl(context(), model);
+			fail("An ITEM property must be rejected, not silently bound to a text field.");
+		} catch (IllegalArgumentException expected) {
+			// Expected: only PLAIN and REF properties are resolved.
+		}
+	}
+
+	/**
+	 * A {@code COMPLEX} property with only a value binding and no value provider must be rejected
+	 * by {@code createModel} too - it has no format to turn its value into text, so it must not
+	 * silently fall through to a plain {@link ConfigFieldModel} over the raw {@code List}.
+	 */
+	public void testCreateModelRejectsComplexWithoutValueProvider() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.BINDING_ONLY);
+		assertNull("Precondition: the property must actually have no value provider for this test "
+			+ "to be meaningful.", property.getValueProvider());
+
+		try {
+			ConfigControlService.getInstance().createModel(_config, property);
+			fail("A COMPLEX property without a value provider must be rejected, not silently bound "
+				+ "to a plain field over the raw value.");
+		} catch (IllegalArgumentException expected) {
+			// Expected: COMPLEX is only accepted together with a value provider.
+		}
+	}
+
+	/**
+	 * {@code createControl} independently rejects the same binding-only {@code COMPLEX} property,
+	 * exercised the same way as {@link #testCreateControlRejectsItemKind()}: by building the model
+	 * directly, bypassing {@code createModel}'s own check.
+	 */
+	public void testCreateControlRejectsComplexWithoutValueProvider() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.BINDING_ONLY);
+		ConfigFieldModel model = new ConfigFieldModel(_config, property);
+
+		try {
+			ConfigControlService.getInstance().createControl(context(), model);
+			fail("A COMPLEX property without a value provider must be rejected, not silently bound "
+				+ "to a text field over the raw value.");
+		} catch (IllegalArgumentException expected) {
+			// Expected: COMPLEX is only accepted together with a value provider.
+		}
 	}
 
 	/**

@@ -31,9 +31,9 @@ public interface ModelAccessRights {
 	 * operations (Approve, Cancel, etc.).
 	 *
 	 * <p>
-	 * An empty set means that no role may perform the command group. For a {@link #isTechnical(TLClass)
-	 * technical} type however, the result is meaningless, since access to such a type is granted
-	 * independent of roles.
+	 * An empty set means that no role may perform the command group. For a type
+	 * {@link #isWithoutSecurity(TLClass) without security} however, the result is meaningless, since
+	 * access to such a type is granted independent of roles.
 	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup);
@@ -42,21 +42,21 @@ public interface ModelAccessRights {
 	 * Whether objects of the given type are not access controlled at all.
 	 *
 	 * <p>
-	 * Every user may access the objects of a technical type, no matter which roles the user has on
-	 * them. That cannot be expressed as a set of roles, therefore
+	 * Every user may access the objects of a type without security, no matter which roles the user
+	 * has on them. That cannot be expressed as a set of roles, therefore
 	 * {@link #getAllowedRoles(TLClass, BoundCommandGroup)} must not be used to decide access for
 	 * such a type. The access checks ({@link #isAllowed(Person, TLObject, BoundCommandGroup)} and
-	 * its variants) already take the technical types into account.
+	 * its variants) already take the types without security into account.
 	 * </p>
 	 *
 	 * @param type
 	 *        The type of the objects to access, typically {@link TLObject#tType()} of the object in
 	 *        question.
 	 *
-	 * @implSpec An implementation without a notion of technical types answers <code>false</code> for
-	 *           every type.
+	 * @implSpec An implementation without a notion of types excluded from access control answers
+	 *           <code>false</code> for every type.
 	 */
-	default boolean isTechnical(TLClass type) {
+	default boolean isWithoutSecurity(TLClass type) {
 		return false;
 	}
 

@@ -113,34 +113,34 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	@Abstract
 	public interface TypeBasedAccessRights extends ModelAccessRights {
 
-		/** Configuration name for {@link #isTechnical()}. */
-		String TECHNICAL = "technical";
+		/** Configuration name for {@link #isWithoutSecurity()}. */
+		String WITHOUT_SECURITY = "without-security";
 
 		/**
-		 * Whether the configured types are technical.
+		 * Whether the configured types are excluded from access control.
 		 *
 		 * <p>
-		 * An object of a technical type is not access controlled: Every user may access the object
-		 * and its attribute values, no matter which roles the user has on it, and every user may
-		 * create such an object. Only a restricted user, who must not perform the operation at all,
-		 * stays excluded.
+		 * An object of a type without security is not access controlled: Every user may access the
+		 * object and its attribute values, no matter which roles the user has on it, and every user
+		 * may create such an object. Only a restricted user, who must not perform the operation at
+		 * all, stays excluded.
 		 * </p>
 		 *
 		 * <p>
-		 * A specialization of a technical type is technical, too. Declaring a {@link TLModule}
-		 * technical therefore makes every class of that module and all their specializations
-		 * technical.
+		 * A specialization of a type without security is without security, too. Declaring a
+		 * {@link TLModule} without security therefore excludes every class of that module and all
+		 * their specializations from access control.
 		 * </p>
 		 */
-		@Name(TECHNICAL)
-		boolean isTechnical();
+		@Name(WITHOUT_SECURITY)
+		boolean isWithoutSecurity();
 
 		/**
-		 * @see #isTechnical() The grants of a technical type are not displayed, since access to its
-		 *      objects is not controlled.
+		 * @see #isWithoutSecurity() The grants of a type without security are not displayed, since
+		 *      access to its objects is not controlled.
 		 */
 		@Override
-		@DynamicMode(fun = HideActiveIf.class, args = @Ref(TECHNICAL))
+		@DynamicMode(fun = HideActiveIf.class, args = @Ref(WITHOUT_SECURITY))
 		Map<CommandGroupReference, AccessGrant> getGrants();
 
 	}
@@ -212,7 +212,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _expandedClassRights = new HashMap<>();
 
-	private Set<TLClass> _technicalTypes = new HashSet<>();
+	private Set<TLClass> _typesWithoutSecurity = new HashSet<>();
 
 	private CommandGroupRegistry _commandGroups;
 
@@ -253,8 +253,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 		TLModule module = (TLModule) part;
 		Collection<TLClass> classes = module.getClasses();
-		if (config.isTechnical()) {
-			classes.forEach(this::markTechnical);
+		if (config.isWithoutSecurity()) {
+			classes.forEach(this::markWithoutSecurity);
 		}
 		processRights(context, config, (group, roles, inherit) -> {
 			for (TLClass clazz : classes) {
@@ -296,43 +296,44 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return;
 		}
 		TLClass clazz = (TLClass) part;
-		if (config.isTechnical()) {
-			markTechnical(clazz);
+		if (config.isWithoutSecurity()) {
+			markWithoutSecurity(clazz);
 		}
 		processRights(context, config, (group, roles, inherit) -> storeClassRights(clazz, group, roles, inherit));
 	}
 
 	/**
-	 * Marks the given type and all its specializations as technical.
+	 * Excludes the given type and all its specializations from access control.
 	 *
-	 * @see TypeBasedAccessRights#isTechnical()
+	 * @see TypeBasedAccessRights#isWithoutSecurity()
 	 */
-	private void markTechnical(TLClass type) {
-		if (_technicalTypes.add(type)) {
+	private void markWithoutSecurity(TLClass type) {
+		if (_typesWithoutSecurity.add(type)) {
 			for (TLClass specialization : type.getSpecializations()) {
-				markTechnical(specialization);
+				markWithoutSecurity(specialization);
 			}
 		}
 	}
 
 	/**
-	 * Whether the given object is an instance of a technical type.
+	 * Whether the given object is an instance of a type without security.
 	 *
 	 * @param instance
-	 *        The object to access. May be <code>null</code>, which is not technical.
+	 *        The object to access. May be <code>null</code>, which is access controlled.
 	 *
-	 * @see TypeBasedAccessRights#isTechnical()
+	 * @see TypeBasedAccessRights#isWithoutSecurity()
 	 */
-	private boolean isTechnical(TLObject instance) {
-		return instance != null && instance.tType() instanceof TLClass type && isTechnical(type);
+	private boolean isWithoutSecurity(TLObject instance) {
+		return instance != null && instance.tType() instanceof TLClass type && isWithoutSecurity(type);
 	}
 
 	/**
-	 * @see TypeBasedAccessRights#isTechnical() The configuration declaring a type as technical.
+	 * @see TypeBasedAccessRights#isWithoutSecurity() The configuration excluding a type from access
+	 *      control.
 	 */
 	@Override
-	public boolean isTechnical(TLClass type) {
-		return _technicalTypes.contains(type);
+	public boolean isWithoutSecurity(TLClass type) {
+		return _typesWithoutSecurity.contains(type);
 	}
 
 	private void processRights(InstantiationContext context, ModelAccessRights config,
@@ -417,8 +418,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * @implNote For a {@link #isTechnical(TLClass) technical} type, the result is the configured
-	 *           (typically empty) set of roles, which must not be mistaken for a denial.
+	 * @implNote For a type {@link #isWithoutSecurity(TLClass) without security}, the result is the
+	 *           configured (typically empty) set of roles, which must not be mistaken for a denial.
 	 */
 	@Override
 	public Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup) {
@@ -448,8 +449,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (allowedBypass != null) {
 			return allowedBypass;
 		}
-		if (isTechnical(instance)) {
-			// A technical object is not access controlled.
+		if (isWithoutSecurity(instance)) {
+			// An object of a type without security is not access controlled.
 			return true;
 		}
 		Set<? extends BoundRole> roles = getRoles(instance, commandGroup);
@@ -470,9 +471,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (allowedBypass != null) {
 			return allowedBypass;
 		}
-		if (isTechnical(instance)) {
-			// A technical object is not access controlled, neither on the object, nor on its
-			// attribute values.
+		if (isWithoutSecurity(instance)) {
+			// An object of a type without security is not access controlled, neither on the object,
+			// nor on its attribute values.
 			return true;
 		}
 		Set<? extends BoundRole> roles = getRoles(instance, commandGroup);
@@ -528,8 +529,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (allowedBypass != null) {
 			return allowedBypass.booleanValue();
 		}
-		if (isTechnical(type)) {
-			// Objects of a technical type are not access controlled, so everybody may create them.
+		if (isWithoutSecurity(type)) {
+			// Objects of a type without security are not access controlled, so everybody may create
+			// them.
 			return true;
 		}
 		if (context != null && !isCommitted(context)) {
@@ -594,9 +596,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				result.add(entry.getKey());
 			}
 		}
-		// A technical type is accessible without any role, no matter whether rights are configured
-		// for it.
-		result.addAll(_technicalTypes);
+		// A type without security is accessible without any role, no matter whether rights are
+		// configured for it.
+		result.addAll(_typesWithoutSecurity);
 		return result;
 	}
 

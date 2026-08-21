@@ -74,11 +74,15 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 			value = coerced;
 		}
 
+		// Clear a previously rejected value's error before the redundant-write guard below can
+		// return early: re-entering the value the property already holds is itself well-formed
+		// input and must not leave a stale error on display next to a now-valid value.
+		setError(null);
+
 		Object oldValue = getValue();
 		if (Objects.equals(oldValue, value)) {
 			return;
 		}
-		setError(null);
 		_config.update(_property, value);
 		// The ConfigurationListener callback (onChange) fires the FieldModelListener notification.
 	}

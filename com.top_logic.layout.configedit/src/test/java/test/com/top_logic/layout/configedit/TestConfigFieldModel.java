@@ -316,6 +316,27 @@ public class TestConfigFieldModel extends TestCase {
 	}
 
 	/**
+	 * A rejected value leaves the field in error; re-entering the value the property already
+	 * holds must clear that error, not leave it stale next to a now-valid value. The
+	 * redundant-write guard (same old and new value) must not return before the error is cleared.
+	 */
+	public void testClearsErrorAfterReenteringCurrentValue() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setCount(1);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.COUNT);
+		ConfigFieldModel model = new ConfigFieldModel(config, property);
+
+		model.setValue(Double.valueOf(555.7));
+		assertNotNull("Precondition: the fractional value must have been rejected.", model.getInputError());
+
+		model.setValue(Double.valueOf(1.0));
+
+		assertNull("Re-entering the value already held must clear the previous error.",
+			model.getInputError());
+		assertEquals("The config value must be unaffected by the redundant write.", 1, config.getCount());
+	}
+
+	/**
 	 * Tests that a {@code double} property still works unchanged: no coercion, no rejection.
 	 */
 	public void testSetValueDoublePropertyUnchanged() {

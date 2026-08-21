@@ -45,6 +45,7 @@ import com.top_logic.layout.configedit.ConfigFormatFieldModel;
 import com.top_logic.layout.configedit.ConfigPropertyOptions;
 import com.top_logic.layout.configedit.ConfigSelectFieldModel;
 import com.top_logic.layout.configedit.DatePickerFormatProvider;
+import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -214,6 +215,116 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
+	 * The stored value of a {@link #SHAPE_REF} property - a name resolved against
+	 * {@link Shapes}' fixed offering, formatted and parsed through {@link ShapeRefFormat}. Stands
+	 * in for {@link com.top_logic.model.util.TLModelPartRef}: like that type, its options
+	 * ({@link Shape}) are a <em>different</em> Java type than the value actually stored, so the
+	 * two can only be translated through a non-identity {@link OptionMapping}
+	 * ({@link ShapeMapping}) - without needing a whole {@code TLModel} to prove the same defect.
+	 */
+	public static final class ShapeRef {
+
+		private final String _name;
+
+		/** Creates a {@link ShapeRef}. */
+		public ShapeRef(String name) {
+			_name = name;
+		}
+
+		/** The referenced shape's name. */
+		public String getName() {
+			return _name;
+		}
+
+		@Override
+		public String toString() {
+			// Deliberately not the format's specification syntax: this is what a select control
+			// would send back to the server for an option it could not otherwise identify, and
+			// what the old, unfixed isSelect used to hand to ConfigSelectFieldModel#setValue.
+			return "ShapeRef(" + _name + ")";
+		}
+	}
+
+	/**
+	 * An option offered for a {@link #SHAPE_REF} property - a different Java type than
+	 * {@link ShapeRef}, the value the property actually stores. See {@link ShapeRef}'s own doc
+	 * comment.
+	 */
+	public static final class Shape {
+
+		private final String _name;
+
+		/** Creates a {@link Shape}. */
+		public Shape(String name) {
+			_name = name;
+		}
+
+		/** The shape's name. */
+		public String getName() {
+			return _name;
+		}
+	}
+
+	/** Options function offering two fixed shapes. */
+	public static class Shapes extends Function0<List<Shape>> {
+		@Override
+		public List<Shape> apply() {
+			return Arrays.asList(new Shape("circle"), new Shape("square"));
+		}
+	}
+
+	/**
+	 * Non-identity {@link OptionMapping} translating a {@link Shape} option into the
+	 * {@link ShapeRef} a {@link #SHAPE_REF} property actually stores, and back - the same shape
+	 * {@link com.top_logic.model.util.TLModelPartRef.PartMapping} has for the real case.
+	 */
+	public static class ShapeMapping implements OptionMapping {
+
+		/** Singleton {@link ShapeMapping} instance. */
+		public static final ShapeMapping INSTANCE = new ShapeMapping();
+
+		@Override
+		public Object toSelection(Object option) {
+			return new ShapeRef(((Shape) option).getName());
+		}
+
+		@Override
+		public Object asOption(Iterable<?> allOptions, Object selection) {
+			String name = ((ShapeRef) selection).getName();
+			for (Object option : allOptions) {
+				if (((Shape) option).getName().equals(name)) {
+					return option;
+				}
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * A format for {@link ShapeRef} - parses and formats a {@link ShapeRef} by its plain name, so
+	 * a property using it can round-trip correctly through the format text field once
+	 * {@code isSelect} correctly falls through to it.
+	 */
+	public static class ShapeRefFormat extends AbstractConfigurationValueProvider<ShapeRef> {
+
+		/** Creates a {@link ShapeRefFormat}. */
+		public ShapeRefFormat() {
+			super(ShapeRef.class);
+		}
+
+		@Override
+		protected ShapeRef getValueNonEmpty(String propertyName, CharSequence propertyValue)
+				throws ConfigurationException {
+			return new ShapeRef(propertyValue.toString());
+		}
+
+		@Override
+		protected String getSpecificationNonNull(ShapeRef configValue) {
+			return configValue.getName();
+		}
+	}
+
+	/**
 	 * Test-only subclass letting this test call the inherited, {@code protected}
 	 * {@code startUp()} lifecycle method directly - the constructor of
 	 * {@link ConfigControlService} itself never calls it (the module system does that, once the
@@ -348,6 +459,9 @@ public class TestConfigControlService extends TestCase {
 
 		/** Property name for {@link #getBindingOnly()}. */
 		String BINDING_ONLY = "bindingOnly";
+
+		/** Property name for {@link #getShapeRef()}. */
+		String SHAPE_REF = "shapeRef";
 
 		/** A mode to choose from. */
 		enum Mode {
@@ -556,6 +670,18 @@ public class TestConfigControlService extends TestCase {
 		@Name(BINDING_ONLY)
 		@Binding(NoFormatBinding.class)
 		List<String> getBindingOnly();
+
+		/**
+		 * A property whose {@code @Options} mapping ({@link ShapeMapping}) is not the identity -
+		 * its options ({@link Shape}) are a different Java type than the value it actually stores
+		 * ({@link ShapeRef}), mirroring {@link com.top_logic.model.util.TLModelPartRef}. Used only
+		 * by {@link #testOptionMappingNotIdentityFallsThroughToFormatField()} to prove that such a
+		 * property is edited as text through its own format, not by selecting.
+		 */
+		@Name(SHAPE_REF)
+		@Format(ShapeRefFormat.class)
+		@Options(fun = Shapes.class, mapping = ShapeMapping.class)
+		ShapeRef getShapeRef();
 	}
 
 	private TestConfig _config;
@@ -721,6 +847,40 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
+	 * The value-type-to-provider map ({@link ConfigControlService.Config#getProviders()}) is the
+	 * extension point that lets a module above this one contribute a control by Java type - see
+	 * this class's own JavaDoc. Registering a mapping for {@code String} must beat the built-in
+	 * text input a {@code String} property would otherwise get - step 4 of the resolution chain,
+	 * ahead of the built-in fallback (step 6).
+	 */
+	public void testProviderMappingByValueTypeBeatsBuiltInWidget() {
+		PolymorphicConfiguration<ConfigControlProvider> impl =
+			TypedConfiguration.newConfigItem(PolymorphicConfiguration.class);
+		impl.setImplementationClass(FixedCheckboxProvider.class);
+
+		ConfigControlService.ProviderMapping mapping =
+			TypedConfiguration.newConfigItem(ConfigControlService.ProviderMapping.class);
+		set(mapping, ConfigControlService.ProviderMapping.TYPE, String.class);
+		set(mapping, "impl", impl);
+
+		ConfigControlService.Config serviceConfig =
+			TypedConfiguration.newConfigItem(ConfigControlService.Config.class);
+		serviceConfig.getProviders().put(String.class, mapping);
+
+		ConfigControlService service = new TestableConfigControlService(
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, serviceConfig);
+
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.TEXT);
+		ConfigFieldModel model = service.createModel(_config, property);
+
+		ReactControl control = service.createControl(context(), model);
+		assertTrue("A mapping registered for the property's Java type must beat the built-in "
+			+ "widget that type would otherwise get.", control instanceof ReactCheckboxControl);
+		assertFalse("The built-in text input must not be reachable once a mapping claims the type.",
+			control instanceof ReactTextInputControl);
+	}
+
+	/**
 	 * A property that is both claimed by the format-provider map and carries its own
 	 * {@code @Options} still gets the select, in both the model and the control: the narrower,
 	 * per-property option list wins over the broader, per-value-provider-class claim. Before this
@@ -773,6 +933,42 @@ public class TestConfigControlService extends TestCase {
 		ReactControl control = service.createControl(context(), model);
 		assertTrue("The claimed control must be used, bound to the plain model.",
 			control instanceof ReactCheckboxControl);
+	}
+
+	/**
+	 * A property whose {@code @Options} mapping is not the identity ({@link ShapeMapping}, the
+	 * same shape {@link com.top_logic.model.util.TLModelPartRef.PartMapping} has) must not be
+	 * edited by selecting: the option ({@link Shape}) and the stored value ({@link ShapeRef}) are
+	 * different Java types, so a select control could only send back an option's
+	 * {@link Object#toString()}, which nothing here would translate back into a {@link ShapeRef}.
+	 * Before the fix, {@code isSelect} only checked whether the property had options at all, so
+	 * this property got {@link ConfigSelectFieldModel} regardless of the mapping - and a client
+	 * round-trip through {@link ConfigSelectFieldModel#setValue(Object)} would throw an uncaught
+	 * {@link IllegalArgumentException} instead of failing gracefully as a field error. The fix
+	 * falls through to the format text field instead, which already round-trips the value
+	 * correctly through {@link ShapeRefFormat}.
+	 */
+	public void testOptionMappingNotIdentityFallsThroughToFormatField() {
+		assertFalse("A property whose option mapping is not the identity must not be edited by "
+			+ "selecting - the option and the stored value are different types.",
+			model(TestConfig.SHAPE_REF) instanceof ConfigSelectFieldModel);
+		assertTrue("It must fall through to the format text field instead, which already knows "
+			+ "how to parse and format the stored value.",
+			model(TestConfig.SHAPE_REF) instanceof ConfigFormatFieldModel);
+
+		ReactControl control = control(TestConfig.SHAPE_REF);
+		assertTrue("Must be edited as text through its own format.",
+			control instanceof ReactTextInputControl);
+		assertFalse("Must not be edited by selecting: the option mapping would be silently ignored, "
+			+ "the same defect TLModelPartRef has.", control instanceof ReactSelectFormFieldControl);
+
+		// The format text field must actually round-trip the value correctly - the improvement
+		// over both the old raw-string write and today's exception.
+		ConfigFormatFieldModel model = (ConfigFormatFieldModel) model(TestConfig.SHAPE_REF);
+		model.setValue("circle");
+		assertEquals("circle", _config.getShapeRef().getName());
+		assertEquals("circle", model.getValue());
+		assertNull("A well-formed shape name must not be rejected.", model.getInputError());
 	}
 
 	/** Sets the named property of the given item, bypassing the need for a declared setter. */

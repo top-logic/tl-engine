@@ -109,6 +109,43 @@ attributes. On top of that:
   already does for items)
 - properties annotated `@Encrypted` → a password field
 
+> **How this turned out in implementation** (ticket #29462, commits `1b2067820b`..`b05181761a`).
+> Three of the four points above survived as written; the design of the chain changed, and one point
+> did not survive at all.
+>
+> **The ordering follows the classic form's veto, not the type.** `ValueEditor.addField` asks first
+> whether a property is *specialized* — it has options, an explicit `@Format`, or a value binding —
+> and only an unspecialized property reaches the convenient type branches. `ConfigControlService`
+> now mirrors that, with `@Encrypted` as a fourth specialization, because its password control is a
+> text control. The consequence is deliberate: a `Date` with its own format is edited as that
+> format's text, never in a picker that could not show the value. This also removes the need to
+> derive a date sub-kind from the format, which an earlier attempt did by inspecting the value
+> provider's class — a distinction the classic config layer never made either, since a formatted
+> value has always gone to `PlainEditor`'s text field there.
+>
+> **`ResKey` does not reach the I18N control, and cannot without changing the chain.**
+> `ReactI18NStringInputControl` is on this module's classpath, so the module boundary is not the
+> obstacle. The obstacle is the value domain: `createModel` wraps a `ResKey` property in
+> `ConfigFormatFieldModel`, which hands out the format's text, while that control expects the raw
+> `ResKey`. Wiring it would require `createModel` to consult the resolution chain *before* choosing
+> the domain, which is a change to the chain itself. `ResKey` therefore stays on the format text
+> path — correct, not pretty. It is moot for the view designer today in any case: `ConfigEditorControl`
+> skips `PropertyKind.COMPLEX`, which is what a `ResKey` property is, so it never reaches the service
+> (see section 2).
+>
+> **A known format can claim its own control** — the point that replaced the date sub-kind
+> derivation. The service's configured provider map gained a second key, the
+> `ConfigurationValueProvider` class, consulted before the generic format text field: two properties
+> of the same Java type can carry different providers, so only the provider's class distinguishes a
+> plain date from a time of day. `TimeOfDayAsDateValueProvider` is registered onto a time input, and
+> the same mechanism is how a module above this one contributes a control. A claimed property gets
+> the plain, typed model by construction, since the claimed control edits the typed value; options
+> and `@Encrypted` both outrank a claim.
+>
+> **Enum option labels changed.** The retired `ConfigFieldDispatch` resolved them from a resource key
+> with an `@<constantName>` suffix; the service uses `MetaLabelProvider`, keeping it free of a
+> `Resources` dependency. Accepted knowingly.
+
 ### 2. Missing property kinds
 
 - `ARRAY` — like `LIST`, the same list editor
@@ -169,6 +206,28 @@ Annotations                         [ + ]
 │ ▸ Default value                  [ x ] │
 └────────────────────────────────────────┘
 ```
+
+## Outcome of section 1
+
+Section 1 is implemented and verified in the running application (view designer of
+`com.top_logic.demo.react`). What the plan set out to fix is fixed: an ill-formed entry produces an
+error **at the field** instead of a raw `String` written into a typed property, values display in
+their formatted form, and a property with an option list is edited by selecting rather than by typing.
+
+Two things the verification turned up that the design did not foresee:
+
+- **A number reached the property as a `Double`.** `ReactNumberInputControl` always parses into a
+  `Double`, so an `int` property rejected every edit. Not a regression — the retired
+  `ConfigFieldDispatch` routed `int` to the same control — but it made the section's promise hollow
+  for integral properties. Fixed on the configuration side, in `ConfigFieldModel`, which knows the
+  property's exact type; a fractional value for an integral property is rejected with a field error
+  rather than truncated.
+- **Enum option labels changed**, see the note above.
+
+Still open for later sections, and now known rather than assumed: a `ResKey` property never reaches
+the service because `ConfigEditorControl` skips `PropertyKind.COMPLEX` (section 2), and the view
+designer rewrites the whole `view.xml` on apply, stripping XML comments — unrelated to this ticket
+but worth its own.
 
 ## Testing
 

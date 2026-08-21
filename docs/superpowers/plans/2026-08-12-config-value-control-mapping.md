@@ -65,6 +65,17 @@
 
 Today a text input writes the raw `String` it received into a typed property: `ConfigFieldModel.setValue` calls `_config.update(_property, value)` unchecked. For a property of type `Date`, `ThemeImage` or `TLModelPartRef` that either throws deep inside TypedConfiguration or stores a wrong-typed value. This task adds the field model that mediates through `PropertyDescriptor.getValueProvider()`.
 
+> **Corrected after the task review.** The first version of Step 4 below overrode `getValue()` to
+> return formatted text but left the inherited machinery in the typed domain. Two defects followed:
+> `setDefaultValue(format(…))` in the constructor left `_defaultValue` formatted while `_value` stayed
+> the raw value, so `isDirty()` was true for every freshly loaded non-null field; and delegating to
+> `super.setValue(…)` defeated `ConfigFieldModel`'s redundant-write guard, whose unqualified
+> `getValue()` dispatches to the formatted override and never compares equal. The code below carries
+> the text domain through consistently instead: the constructor seeds cached value **and** default
+> with the formatted text, the guard is formulated in that domain, the write goes through
+> `getConfig().update(…)`, and `onChange` keeps the cached value in step. Steps 1 and 5 gain the two
+> tests that pin this down.
+
 **Files:**
 - Create: `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigFormatFieldModel.java`
 - Modify: `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/I18NConstants.java`
@@ -261,6 +272,8 @@ Create `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/confi
  */
 package com.top_logic.layout.configedit;
 
+import java.util.Objects;
+
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationChange;
 import com.top_logic.basic.config.ConfigurationChange.Kind;
@@ -294,7 +307,12 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 	 */
 	public ConfigFormatFieldModel(ConfigurationItem config, PropertyDescriptor property) {
 		super(config, property);
-		setDefaultValue(format(config.value(property)));
+		// Both the cached value and the default value live in the text domain from here on -
+		// ConfigFieldModel's constructor cached the raw typed value, which would otherwise never
+		// compare equal to the formatted text this class hands out (breaking isDirty()).
+		String text = format(config.value(property));
+		setValueInternal(text);
+		setDefaultValue(text);
 	}
 
 	@Override
@@ -306,8 +324,19 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 	public void setValue(Object value) {
 		String text = value == null ? null : value.toString();
 		if (StringServices.isEmpty(text)) {
+			text = null;
+		}
+
+		if (Objects.equals(text, getValue())) {
+			// The displayed text already matches the configuration's current value: nothing to
+			// parse or write. (ConfigFieldModel's own redundant-write guard cannot see this,
+			// since it compares in the typed domain against this class's formatted getValue().)
+			return;
+		}
+
+		if (text == null) {
 			setError(null);
-			super.setValue(null);
+			getConfig().update(getProperty(), null);
 			return;
 		}
 
@@ -323,14 +352,21 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 		}
 
 		setError(null);
-		super.setValue(parsed);
+		// Write through the configuration API directly (not ConfigFieldModel#setValue): its
+		// redundant-write guard operates in the typed domain and would never fire for this
+		// class, and the value change notification (and this model's cached value) still needs
+		// to go through onChange() below.
+		getConfig().update(getProperty(), parsed);
 	}
 
 	@Override
 	public void onChange(ConfigurationChange change) {
 		if (change.getKind() == Kind.SET) {
 			// The listener reports typed values, the control expects the formatted text.
-			fireValueChanged(format(change.getOldValue()), format(change.getNewValue()));
+			String oldText = format(change.getOldValue());
+			String newText = format(change.getNewValue());
+			setValueInternal(newText);
+			fireValueChanged(oldText, newText);
 		}
 	}
 
@@ -744,6 +780,27 @@ git commit -m "Ticket #29462: Resolve the options of a configuration property th
 ---
 
 ### Task 4: `ConfigControlService` — the resolution chain
+
+> **Corrected after implementation and three review rounds.** Step 3's listing below is the shape
+> the task started from; the code deviates from it deliberately, on the human's ruling:
+>
+> - **The ordering follows the classic form's veto, not the Java type.** `ValueEditor.addField` asks
+>   first whether a property is *specialized* — options, an explicit `@Format`, or a value binding —
+>   and only an unspecialized property reaches the type branches. `isSpecialized` mirrors that, with
+>   `@Encrypted` as a fourth condition, because the password control is a text control. One extracted
+>   predicate governs both `createModel` (value domain) and `fallback` (widget); every defect found in
+>   this task's reviews was those two disagreeing.
+> - **`dateKind` is gone.** An earlier attempt derived `TIME`/`DATE_TIME` from the value provider's
+>   class. Under the veto a formatted `Date` never reaches the picker at all, so the distinction moved
+>   to Task 7's format-provider map instead.
+> - **The listing below silently dropped the enum branch.** `ConfigPropertyOptions` does not answer
+>   for a plain enum property, so `TestConfig.MODE` would have landed in a text field. `isSelect`
+>   treats `property.getType().isEnum()` as select-worthy on its own.
+> - **`checkSupportedKind`** rejects any kind the service cannot put into one widget — accepted are
+>   `PLAIN`, `REF`, and `COMPLEX` *with* a value provider — rather than trusting the caller's dispatch
+>   order.
+> - **The service registration** in `tl-layout-configedit.conf.config.xml`, which this plan put in
+>   Task 5, landed here: a `ConfiguredManagedClass` does not start without it.
 
 **Files:**
 - Create: `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigControlService.java`
@@ -1309,6 +1366,14 @@ git commit -m "Ticket #29462: Resolve the control of a configuration property in
 
 ### Task 5: Switch the editor over, register the service, retire the static dispatch
 
+> **Two things implementation surfaced.** Retiring `ConfigFieldDispatch` also retires its
+> `enumLabelProvider`, which resolved enum option labels from a resource key with an
+> `@<constantName>` suffix; the service uses `MetaLabelProvider` and stays free of a `Resources`
+> dependency. Enum labels in the editor therefore look different — accepted knowingly.
+> And `ConfigEditorControl.isSupportedKind` still excludes `PropertyKind.COMPLEX`, so a `ResKey`
+> property never reaches the service at all. Pre-existing, and the reason section 1 of the spec
+> cannot deliver the I18N control yet; it belongs to spec section 2.
+
 **Files:**
 - Modify: `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigEditorControl.java` (the `PLAIN`/`REF` branch, currently lines 135–150)
 - Modify: `com.top_logic.layout.configedit/src/main/webapp/WEB-INF/conf/tl-layout-configedit.conf.config.xml`
@@ -1464,6 +1529,121 @@ Write what the sub-agent reported into the ticket as a comment: which control ea
 - [ ] **Step 4: Commit nothing, report**
 
 No code changes in this task. If Step 2 found a defect, fix it as a new commit in this plan's style (failing test first) before declaring the plan done.
+
+---
+
+### Task 7: A second key for the provider map — the value provider's class
+
+**Runs after Task 4 and before Task 5.** Added after the plan was written, once the resolution
+had been restructured to the classic ordering (see the note in Task 1 and the `isSpecialized`
+predicate in `ConfigControlService`).
+
+The classic ordering routes every *specialized* property — one with options, an explicit
+`@Format`, or a value binding — to the format text field. That is correct and never wrong, but it
+throws away information the format carries: `TimeOfDayAsDateValueProvider` says "this value is a
+time of day", and the React layer has had `<input type="time">` since ticket #29448
+(`ReactDatePickerControl.Kind.TIME`). Neither the classic model layer nor the classic config layer
+could use that — the classic config layer has no time widget at all, and reaches its formatted
+text field through `PlainEditor` — so this is a gain, not a restoration.
+
+The service already has a configured provider map keyed by the property's **Java value type**
+(`Config.getProviders()`). A `Date` property that means a time of day and one that means a date
+share the same Java type, so that key cannot separate them. This task adds a second map keyed by
+the **`ConfigurationValueProvider` class**, consulted in the specialized branch before the format
+text field. The same mechanism is what lets a module above this one contribute a control from
+outside — `tl-model-search-react` for TL-Script expressions — which is what the spec's step 3 asks
+for.
+
+**The trap, and the reason this is not a two-line change:** a control claimed this way needs the
+**typed** value, not the format's text. `ReactDatePickerControl`'s constructor calls
+`formatIso(model.getValue())` and expects a `Date`; handing it a `ConfigFormatFieldModel` would
+give it the specification string. So the claim has to be visible to `createModel` as well, which
+picks the value domain. `isSpecialized(property)` must therefore become "specialized **and not
+claimed by a format mapping**", used by both callers exactly as it is today.
+
+**Files:**
+- Modify: `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigControlService.java`
+- Modify: `com.top_logic.layout.configedit/src/main/webapp/WEB-INF/conf/tl-layout-configedit.conf.config.xml`
+- Test: `com.top_logic.layout.configedit/src/test/java/test/com/top_logic/layout/configedit/TestConfigControlService.java`
+
+**Interfaces:**
+- Consumes: `Config.getProviders()` and `ProviderMapping` as they are today; `isSpecialized(PropertyDescriptor)`; `PropertyDescriptor.getValueProvider()`; `ReactDatePickerControl(ReactContext, FieldModel, Kind)`.
+- Produces: a second configured map on `Config` keyed by the value-provider class, and a lookup that walks the provider's superclass chain so a mapping registered for a base provider also covers its specializations.
+
+- [ ] **Step 1: Write the failing tests**
+
+Three cases, in the style of the existing ones in `TestConfigControlService`:
+
+1. A `Date` property annotated `@Format(TimeOfDayAsDateValueProvider.class)` gets a
+   `ReactDatePickerControl` whose `inputType` state is `"time"`, **and** its field model is a plain
+   `ConfigFieldModel`, not a `ConfigFormatFieldModel`. Assert both — the widget alone would pass
+   even with the domains mismatched, and that mismatch is the defect this task can most easily
+   introduce.
+2. A `Date` property with some other explicit format still gets the text input over a
+   `ConfigFormatFieldModel` — the unclaimed case keeps the classic behaviour.
+3. A property whose value provider is a *subclass* of a registered one is claimed too, proving the
+   superclass walk.
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Use the module's test command from the Global Constraints. Expect failures on all three, the first
+two on the assertion and the third on the missing mapping.
+
+- [ ] **Step 3: Add the configured map**
+
+Mirror the existing `ProviderMapping` shape: a `@Key`-ed map on `Config`, an entry type carrying
+the value-provider class and a `PolymorphicConfiguration<? extends ConfigControlProvider>`, and a
+resolved `Map<Class<?>, ConfigControlProvider>` built in `startUp()`. Look up the provider's
+concrete class first, then walk up its superclasses.
+
+- [ ] **Step 4: Thread the claim through both decisions**
+
+`isSpecialized` gains the "not claimed" clause, and `createControl` consults the map in the
+specialized branch before the format text field. Keep both callers reading the same predicate —
+if the claim is visible to one and not the other, the value domain and the widget drift apart.
+
+- [ ] **Step 5: Register the time-of-day format**
+
+In `tl-layout-configedit.conf.config.xml`, map `TimeOfDayAsDateValueProvider` to a provider that
+creates `ReactDatePickerControl` with `Kind.TIME`. This is the first real user of the new key and
+the reason it exists; without it the mechanism is untested in the running application.
+
+- [ ] **Step 6: Run the module's six test classes**
+
+All must stay green.
+
+- [ ] **Step 7: Commit**
+
+```
+Ticket #29462: Let a known configuration format claim its own input control.
+```
+
+---
+
+
+### Task 8: A number arriving from a control reaches the property's own numeric type
+
+**Came out of Task 6's verification, not from the original spec.** Entering `555` into an
+`int`-typed property and applying threw `Value '555.0' (Double) is not of expected type 'Integer'`
+and the write was rejected. `ReactNumberInputControl.parseClientValue` always returns
+`Double.parseDouble(...)`, whatever decimal-place count it was constructed with.
+
+Not a regression: the retired `ConfigFieldDispatch` routed `int`/`Integer`/`long`/`Long` to the same
+control with the same zero-decimals argument, so such a property was equally unwritable before this
+ticket — it never had a plain text field.
+
+The fix belongs on the configuration side rather than in the control. The control knows only how many
+decimals to display, not whether the target is an `Integer`, a `Long`, a `Short` or a `Byte`; and it
+serves the model-attribute side too, so widening its contract would reach beyond this ticket.
+`ConfigFieldModel` holds the `PropertyDescriptor` and therefore knows the exact type, so coercing an
+incoming `Number` there fixes it for every control that hands back a number.
+
+A fractional value for an integral property is **rejected** through the same field-error mechanism
+`ConfigFormatFieldModel` uses for unparsable text, not silently truncated. `ConfigSelectFieldModel`
+inherits the coercion harmlessly; `ConfigFormatFieldModel` bypasses it, writing through
+`getConfig().update` itself.
+
+Implemented in commit `ba0f745ba2`, with tests in `TestConfigFieldModel`.
 
 ---
 

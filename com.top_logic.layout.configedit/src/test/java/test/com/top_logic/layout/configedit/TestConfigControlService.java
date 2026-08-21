@@ -24,6 +24,7 @@ import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -42,6 +43,7 @@ import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigFormatFieldModel;
 import com.top_logic.layout.configedit.ConfigPropertyOptions;
+import com.top_logic.layout.configedit.ConfigSelectFieldModel;
 import com.top_logic.layout.configedit.DatePickerFormatProvider;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -159,13 +161,68 @@ public class TestConfigControlService extends TestCase {
 		// No additional members.
 	}
 
+	/** Options function offering two fixed times of day. */
+	public static class Times extends Function0<List<Date>> {
+		@Override
+		public List<Date> apply() {
+			return Arrays.asList(new Date(0), new Date(3_600_000));
+		}
+	}
+
 	/**
-	 * Test-only subclass exposing the inherited, otherwise package-private-to-its-own-package
-	 * {@code startUp()} lifecycle method, needed to build a {@link ConfigControlService} instance
-	 * around a hand-built {@link com.top_logic.layout.configedit.ConfigControlService.Config} in
-	 * {@link #testFormatProviderMappingCoversSubclasses()} - the real singleton only ever loads its
-	 * configuration from the application's own webapp config, which cannot reference a test-only
-	 * value-provider class such as {@link BaseFormat}.
+	 * A minimal value type that is not {@code String}, {@code boolean}, numeric, or {@code Date} -
+	 * none of the Java types {@link ConfigControlService}'s built-in widgets handle directly.
+	 * Used only to prove that a property claimed by the format-provider map gets the plain model
+	 * regardless of whether its Java type happens to be one of those built-in types.
+	 */
+	public static final class Coordinate {
+
+		private final int _x;
+
+		/** Creates a {@link Coordinate}. */
+		public Coordinate(int x) {
+			_x = x;
+		}
+
+		/** The coordinate value. */
+		public int getX() {
+			return _x;
+		}
+	}
+
+	/**
+	 * A format for {@link Coordinate} - stands in for a real value provider over a type outside
+	 * createModel's built-in "directly editable" set, e.g. the spec's own {@code ResKey} case.
+	 */
+	public static class CoordinateFormat extends AbstractConfigurationValueProvider<Coordinate> {
+
+		/** Creates a {@link CoordinateFormat}. */
+		public CoordinateFormat() {
+			super(Coordinate.class);
+		}
+
+		@Override
+		protected Coordinate getValueNonEmpty(String propertyName, CharSequence propertyValue)
+				throws ConfigurationException {
+			throw new UnsupportedOperationException("Not exercised by these tests.");
+		}
+
+		@Override
+		protected String getSpecificationNonNull(Coordinate configValue) {
+			throw new UnsupportedOperationException("Not exercised by these tests.");
+		}
+	}
+
+	/**
+	 * Test-only subclass letting this test call the inherited, {@code protected}
+	 * {@code startUp()} lifecycle method directly - the constructor of
+	 * {@link ConfigControlService} itself never calls it (the module system does that, once the
+	 * corresponding module is active), so a hand-built {@link ConfigControlService} instance
+	 * needs a subclass that calls it explicitly. Needed to build a {@link ConfigControlService}
+	 * instance around a hand-built {@link com.top_logic.layout.configedit.ConfigControlService.Config}
+	 * in tests such as {@link #testFormatProviderMappingCoversSubclasses()} - the real singleton
+	 * only ever loads its configuration from the application's own webapp config, which cannot
+	 * reference a test-only value-provider class such as {@link BaseFormat}.
 	 */
 	private static final class TestableConfigControlService extends ConfigControlService {
 
@@ -246,6 +303,12 @@ public class TestConfigControlService extends TestCase {
 
 		/** Property name for {@link #getSubFormatted()}. */
 		String SUB_FORMATTED = "subFormatted";
+
+		/** Property name for {@link #getClaimedWithOptions()}. */
+		String CLAIMED_WITH_OPTIONS = "claimedWithOptions";
+
+		/** Property name for {@link #getCoordinate()}. */
+		String COORDINATE = "coordinate";
 
 		/** Property name for {@link #getYesNo()}. */
 		String YES_NO = "yesNo";
@@ -372,6 +435,29 @@ public class TestConfigControlService extends TestCase {
 		@Name(SUB_FORMATTED)
 		@Format(SubFormat.class)
 		Date getSubFormatted();
+
+		/**
+		 * A {@code Date} property both claimed by the format-provider map (via
+		 * {@link TimeOfDayAsDateValueProvider}, the same registration {@link #getTimeOfDay()}
+		 * uses) and carrying its own {@code @Options} - proves that options win over the claim:
+		 * the narrower, per-property statement of exactly this value set must not be overridden
+		 * by the broader, per-value-provider-class registration.
+		 */
+		@Name(CLAIMED_WITH_OPTIONS)
+		@Format(TimeOfDayAsDateValueProvider.class)
+		@Options(fun = Times.class)
+		Date getClaimedWithOptions();
+
+		/**
+		 * A property whose type ({@link Coordinate}) is not one of createModel's built-in
+		 * "directly editable" types - used only by
+		 * {@link #testFormatProviderMappingOnNonDirectlyEditableTypeGetsPlainModel()} to prove
+		 * the domain-pairing invariant holds structurally, not just for the shipped {@code Date}
+		 * case.
+		 */
+		@Name(COORDINATE)
+		@Format(CoordinateFormat.class)
+		Coordinate getCoordinate();
 
 		/**
 		 * A flag with its own (unusual, but valid) {@code @Format} - used only to verify that the
@@ -632,6 +718,61 @@ public class TestConfigControlService extends TestCase {
 		assertTrue("A value provider that is a subclass of a mapped one must be claimed by the "
 			+ "same mapping.", control instanceof ReactDatePickerControl);
 		assertEquals("time", control.scriptingScalarState().get("inputType"));
+	}
+
+	/**
+	 * A property that is both claimed by the format-provider map and carries its own
+	 * {@code @Options} still gets the select, in both the model and the control: the narrower,
+	 * per-property option list wins over the broader, per-value-provider-class claim. Before this
+	 * mapping existed, options always won; this guards that priority now that a second mechanism
+	 * could compete for the same property.
+	 */
+	public void testOptionsWinOverFormatProviderMapping() {
+		assertTrue("A property with its own @Options must be edited by selecting, even when its "
+			+ "format is claimed by the configured map.",
+			model(TestConfig.CLAIMED_WITH_OPTIONS) instanceof ConfigSelectFieldModel);
+
+		ReactControl control = control(TestConfig.CLAIMED_WITH_OPTIONS);
+		assertTrue("An options property must get the select control.",
+			control instanceof ReactSelectFormFieldControl);
+		assertFalse("The format mapping's date picker must not be reachable when @Options wins.",
+			control instanceof ReactDatePickerControl);
+	}
+
+	/**
+	 * A property claimed by the format-provider map gets the plain model even when its Java type
+	 * ({@link Coordinate}) is not one of createModel's built-in "directly editable" types - the
+	 * claim itself states that the control edits the value in its typed form, so the model must
+	 * follow from the claim, not from a coincidental type match. Guards every future mapping, not
+	 * just the shipped {@code Date} case: a mapping registered for a value provider over a type
+	 * such as {@code ResKey} must not produce a domain mismatch between model and control.
+	 */
+	public void testFormatProviderMappingOnNonDirectlyEditableTypeGetsPlainModel() {
+		ConfigControlService.FormatMapping mapping =
+			TypedConfiguration.newConfigItem(ConfigControlService.FormatMapping.class);
+		set(mapping, ConfigControlService.FormatMapping.PROVIDER, CoordinateFormat.class);
+
+		PolymorphicConfiguration<ConfigControlProvider> impl =
+			TypedConfiguration.newConfigItem(PolymorphicConfiguration.class);
+		impl.setImplementationClass(FixedCheckboxProvider.class);
+		set(mapping, "impl", impl);
+
+		ConfigControlService.Config serviceConfig = TypedConfiguration.newConfigItem(ConfigControlService.Config.class);
+		serviceConfig.getFormats().put(CoordinateFormat.class, mapping);
+
+		ConfigControlService service = new TestableConfigControlService(
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, serviceConfig);
+
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.COORDINATE);
+		ConfigFieldModel model = service.createModel(_config, property);
+		assertFalse("A claimed property must get the plain model regardless of whether its Java "
+			+ "type is one of the built-in directly-editable types - the claim states that the "
+			+ "control edits the value in its typed form.",
+			model instanceof ConfigFormatFieldModel);
+
+		ReactControl control = service.createControl(context(), model);
+		assertTrue("The claimed control must be used, bound to the plain model.",
+			control instanceof ReactCheckboxControl);
 	}
 
 	/** Sets the named property of the given item, bypassing the need for a declared setter. */

@@ -64,6 +64,11 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 			// The displayed text already matches the configuration's current value: nothing to
 			// parse or write. (ConfigFieldModel's own redundant-write guard cannot see this,
 			// since it compares in the typed domain against this class's formatted getValue().)
+			//
+			// Still clear a previously rejected value's error first: re-entering the value the
+			// configuration already holds is itself well-formed input and must not leave a stale
+			// error on display next to a now-valid value.
+			setError(null);
 			return;
 		}
 

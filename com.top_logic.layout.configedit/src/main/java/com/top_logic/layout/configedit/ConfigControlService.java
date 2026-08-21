@@ -26,6 +26,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.values.DerivedProperty;
+import com.top_logic.layout.form.values.Fields;
+import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -40,77 +43,71 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
  * Service resolving the input control for a configuration property.
  *
  * <p>
- * Resolves a property whose value can go into a single widget: directly by its Java type, by
- * selecting from a fixed set of options, or as text through a
+ * A property whose value fits into a single widget is edited directly: by its Java type
+ * ({@code String}, {@code boolean}, a numeric type, or {@code Date}), by selecting from a fixed
+ * set of options (an option list, or an enum), or as text through a
  * {@link PropertyDescriptor#getValueProvider() value provider} that can turn the value into text
- * and back. {@code createModel} and {@code createControl} both reject any property that fits
- * none of those - see {@code checkSupportedKind}'s own {@code JavaDoc} for exactly which
- * {@link PropertyKind}s that excludes and why. Such a property (a structure, a collection, or a
+ * and back. A property that fits none of those is rejected outright, not silently rendered by a
+ * control that would mishandle its value. Such a property (a structure, a collection, or a
  * {@link PropertyKind#COMPLEX} property with only a value binding and no format) is rendered by a
  * dedicated nested editor or type selector before this service is ever asked.
  * </p>
  *
  * <p>
- * {@code createModel} decides the value
- * domain: a property that is not {@code specialized} and whose
- * Java type one of the built-in widgets handles directly - {@code String}, {@code boolean}, a
- * numeric type, or {@code Date} - gets the plain, typed {@link ConfigFieldModel}; otherwise a
- * property edited by selecting (an option list, or an enum) gets a
- * {@link ConfigSelectFieldModel}; everything else with a
- * {@link PropertyDescriptor#getValueProvider() value provider} gets the format-aware
- * {@link ConfigFormatFieldModel} (text).
- * </p>
- *
- * <p>
- * {@code createControl} then resolves the widget:
+ * The widget for a property is resolved in this order:
  * </p>
  * <ol>
- * <li>{@code @Encrypted} always wins, deliberately ahead of every other step - see below.</li>
+ * <li>An encrypted property always gets the password field, deliberately ahead of every other
+ * step.</li>
  * <li>{@link ConfigControl} annotation on the property or on its value type.</li>
- * <li>A {@link ConfigSelectFieldModel} gets a select.</li>
- * <li>The value-type-to-provider map configured in this service.</li>
- * <li>The value-provider-to-provider map configured in this service - claims a property whose
- * {@link PropertyDescriptor#getValueProvider() value provider} (or one of its superclasses) is
- * mapped, ahead of the generic format text field. This is what lets a {@code Date} formatted as a
- * time of day get a time picker instead of plain text: the Java-type map above cannot separate it
- * from a plain date, but the value provider's own class can.</li>
- * <li>The built-in fallback: the direct widget for a non-specialized property whose type
- * {@code createModel} also treated as directly editable, otherwise text parsed and formatted
- * through the property's own {@code ConfigurationValueProvider}.</li>
+ * <li>A property edited by selecting from a fixed set of options gets a select.</li>
+ * <li>The value-type-to-provider map configured in this service ({@link Config#getProviders()}).</li>
+ * <li>The value-provider-to-provider map configured in this service ({@link Config#getFormats()}) -
+ * claims a property whose {@link PropertyDescriptor#getValueProvider() value provider} (or one of
+ * its superclasses) is mapped, ahead of the generic format text field. This is what lets a
+ * {@code Date} formatted as a time of day get a time picker instead of plain text: the Java-type
+ * map above cannot separate it from a plain date, but the value provider's own class can.</li>
+ * <li>The built-in fallback: the direct widget for the property's Java type, or otherwise text
+ * parsed and formatted through the property's own {@code ConfigurationValueProvider}.</li>
  * </ol>
  *
  * <p>
- * {@code @Encrypted} runs before the {@link ConfigControl} annotation, not just before the
- * built-in steps: a module may override the control for a property, but it must never be able to
- * make a secret readable by choosing a control that displays it in the clear. This is a
- * deliberate security decision on its own terms, independent of the specialization veto below.
+ * The configured maps ({@link Config#getProviders()} and {@link Config#getFormats()}) are what
+ * let a module above this one contribute a control - the TL-Script editor, for instance, lives in
+ * {@code tl-model-search-react}.
  * </p>
  *
- * <p>
- * The specialization veto is why a property with its own format is never handed to the "direct"
- * widget for its Java type: a {@code Date} formatted as a time of day is edited through that
- * format as text, not in a date picker that could not show or accept a time - the same defect
- * {@code DatePickerControlProvider} was fixed against on the model-attribute side. A property
- * whose value provider is claimed by the value-provider-to-provider map is a deliberate
- * exception: such a property counts as not specialized after all (unless it also has options -
- * see below), so it gets the plain, typed {@link ConfigFieldModel} instead of the format-aware
- * one, and the claimed control (bound to that same typed value) is what actually edits it - see
- * {@link ReactDatePickerControl} for the time-of-day case.
- * </p>
- *
- * <p>
- * Options win over a claim: a property that both has {@code @Options} and is claimed stays
- * specialized and is edited by selecting, not by the claimed control - an explicit option list is
- * a statement about that one property, narrower than a mapping registered for a whole
- * value-provider class, so the narrower statement wins.
- * </p>
- *
- * <p>
- * The configured maps are what let a module above this one contribute a control - the TL-Script
- * editor, for instance, lives in {@code tl-model-search-react}.
- * </p>
- *
- * @implNote The exception above is implemented by {@link #isSpecialized(PropertyDescriptor)}
+ * @implNote {@code createModel} decides the value domain that pairs with the widget above: a
+ *           property that is not {@code specialized} and whose Java type one of the built-in
+ *           widgets handles directly gets the plain, typed {@link ConfigFieldModel}; otherwise a
+ *           property edited by selecting gets a {@link ConfigSelectFieldModel}; everything else
+ *           with a {@link PropertyDescriptor#getValueProvider() value provider} gets the
+ *           format-aware {@link ConfigFormatFieldModel} (text).
+ *           <p>
+ *           {@code @Encrypted} runs before the {@link ConfigControl} annotation, not just before
+ *           the built-in steps: a module may override the control for a property, but it must
+ *           never be able to make a secret readable by choosing a control that displays it in the
+ *           clear. This is a deliberate security decision on its own terms, independent of the
+ *           specialization veto below.
+ *           <p>
+ *           The specialization veto is why a property with its own format is never handed to the
+ *           "direct" widget for its Java type: a {@code Date} formatted as a time of day is
+ *           edited through that format as text, not in a date picker that could not show or
+ *           accept a time - the same defect {@code DatePickerControlProvider} was fixed against
+ *           on the model-attribute side. A property whose value provider is claimed by the
+ *           value-provider-to-provider map is a deliberate exception: such a property counts as
+ *           not specialized after all (unless it also has options - see below), so it gets the
+ *           plain, typed {@link ConfigFieldModel} instead of the format-aware one, and the
+ *           claimed control (bound to that same typed value) is what actually edits it - see
+ *           {@link ReactDatePickerControl} for the time-of-day case.
+ *           <p>
+ *           Options win over a claim: a property that both has {@code @Options} and is claimed
+ *           stays specialized and is edited by selecting, not by the claimed control - an
+ *           explicit option list is a statement about that one property, narrower than a mapping
+ *           registered for a whole value-provider class, so the narrower statement wins.
+ *           <p>
+ *           The exception above is implemented by
+ *           {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider)}
  *           itself: it answers {@code false} for a claimed property, which is what keeps the
  *           value domain chosen by {@link #createModel(ConfigurationItem, PropertyDescriptor)}
  *           and the widget chosen by {@link #createControl(ReactContext, ConfigFieldModel)} in
@@ -231,7 +228,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * Creates the {@link ConfigFieldModel} for the given property.
 	 *
 	 * <p>
-	 * A property that is not {@link #isSpecialized(PropertyDescriptor) specialized} and whose Java
+	 * A property that is not {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider) specialized} and whose Java
 	 * type one of the built-in widgets handles directly gets the plain {@link ConfigFieldModel}
 	 * (bound to the raw typed value). Otherwise, a property edited by selecting gets a
 	 * {@link ConfigSelectFieldModel}; a property {@link #formatProvider(PropertyDescriptor)
@@ -255,13 +252,20 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	public ConfigFieldModel createModel(ConfigurationItem config, PropertyDescriptor property) {
 		checkSupportedKind(property);
 
-		if (!isSpecialized(property) && isDirectlyEditable(property.getType())) {
+		// Resolved once and passed to every step below that would otherwise resolve it again
+		// (isSpecialized, isSelect, selectOptions) - this is also where the mapping check
+		// belongs, see isSelect's own JavaDoc.
+		DerivedProperty<? extends Iterable<?>> optionProvider = ConfigPropertyOptions.optionProvider(property);
+		ConfigControlProvider formatProvider = formatProvider(property);
+
+		if (!isSpecialized(property, optionProvider, formatProvider) && isDirectlyEditable(property.getType())) {
 			return new ConfigFieldModel(config, property);
 		}
-		if (isSelect(property)) {
-			return new ConfigSelectFieldModel(config, property, selectOptions(config, property), false);
+		if (isSelect(property, optionProvider)) {
+			return new ConfigSelectFieldModel(config, property, selectOptions(config, property, optionProvider),
+				false);
 		}
-		if (property.getAnnotation(Encrypted.class) == null && formatProvider(property) != null) {
+		if (property.getAnnotation(Encrypted.class) == null && formatProvider != null) {
 			// Claimed: the claim states that the control bound to this model edits the value in
 			// its typed form, regardless of whether isDirectlyEditable's built-in set happens to
 			// include this property's Java type. Structural, not coincidental: a future mapping
@@ -346,8 +350,9 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			return formatProvider.createControl(context, model);
 		}
 
-		// 6. Built-in fallback.
-		return fallback(context, model, property);
+		// 6. Built-in fallback. formatProvider is known null here (the check just above), passed
+		// on instead of resolving it a second time inside fallback's own isSpecialized check.
+		return fallback(context, model, property, formatProvider);
 	}
 
 	/**
@@ -404,17 +409,18 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * <p>
 	 * Only offers the type-specific widgets ({@link ReactCheckboxControl}, a number input, the
 	 * plain {@link com.top_logic.layout.react.control.form.ReactDatePickerControl.Kind#DATE date
-	 * picker}) for a property that is not {@link #isSpecialized(PropertyDescriptor) specialized} -
+	 * picker}) for a property that is not {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider) specialized} -
 	 * the same veto {@link #createModel(ConfigurationItem, PropertyDescriptor)} applies, so the
 	 * value domain (plain versus format text) and the widget never disagree. A specialized property
 	 * (e.g. one with its own {@code @Format}, such as a time of day) is edited as its format's text
 	 * instead, exactly like the classic declarative form's {@code PlainEditor}.
 	 * </p>
 	 */
-	private ReactControl fallback(ReactContext context, ConfigFieldModel model, PropertyDescriptor property) {
+	private ReactControl fallback(ReactContext context, ConfigFieldModel model, PropertyDescriptor property,
+			ConfigControlProvider formatProvider) {
 		Class<?> type = property.getType();
 
-		if (!isSpecialized(property)) {
+		if (!isSpecialized(property, ConfigPropertyOptions.optionProvider(property), formatProvider)) {
 			if (type == boolean.class || type == Boolean.class) {
 				return new ReactCheckboxControl(context, model);
 			}
@@ -450,14 +456,35 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * {@code @Encrypted} forces {@code false} unconditionally, exactly like an explicit control
 	 * annotation - a secret must never be offered as a dropdown of options, since that would
 	 * display its value (and every other option) in the clear. This is what makes
-	 * {@link #isSpecialized(PropertyDescriptor)}'s inclusion of {@code @Encrypted} hold for every
-	 * property, not only the ones whose Java type a "direct" widget would otherwise handle: without
-	 * it, an {@code @Encrypted} enum or an {@code @Encrypted} property with {@code @Options} would
-	 * still reach {@link ConfigSelectFieldModel} here, and {@code createControl} would then hand
-	 * that select-domain model to the text-only password control.
+	 * {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider)}'s
+	 * inclusion of {@code @Encrypted} hold for every property, not only the ones whose Java type a
+	 * "direct" widget would otherwise handle: without it, an {@code @Encrypted} enum or an
+	 * {@code @Encrypted} property with {@code @Options} would still reach
+	 * {@link ConfigSelectFieldModel} here, and {@code createControl} would then hand that
+	 * select-domain model to the text-only password control.
 	 * </p>
+	 *
+	 * <p>
+	 * A non-{@code null} option provider is not enough on its own:
+	 * {@link Fields#optionMapping(DerivedProperty)} must also answer
+	 * {@link IdentityOptionMapping#INSTANCE}, i.e. the option itself <em>is</em>
+	 * the value to store, not something that must first be translated into it. A property such as
+	 * {@link com.top_logic.model.util.TLModelPartRef} declares {@code @Options} with a non-identity
+	 * mapping (its options are model parts, the stored value is the ref that names one) - handing
+	 * such a property to the select model regardless would offer options the client can only send
+	 * back as {@code toString()} text, which {@link ConfigSelectFieldModel#setValue(Object)} cannot
+	 * parse back into anything meaningful and would reject with an uncaught
+	 * {@code IllegalArgumentException} instead of a field error. Such a property falls through
+	 * to the generic format text field instead, which already round-trips its value correctly
+	 * through the property's own value provider.
+	 * </p>
+	 *
+	 * @param optionProvider
+	 *        The property's option provider, as resolved once by the caller via
+	 *        {@link ConfigPropertyOptions#optionProvider(PropertyDescriptor)}, or {@code null} if
+	 *        it has none.
 	 */
-	private boolean isSelect(PropertyDescriptor property) {
+	private boolean isSelect(PropertyDescriptor property, DerivedProperty<? extends Iterable<?>> optionProvider) {
 		if (controlAnnotation(property) != null) {
 			// An explicitly named control decides on its own.
 			return false;
@@ -471,16 +498,27 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			// annotation.
 			return true;
 		}
-		return ConfigPropertyOptions.optionProvider(property) != null;
+		if (optionProvider == null) {
+			return false;
+		}
+		// The narrow fix: an option whose mapping is not the identity cannot be sent to the
+		// client and parsed back without translation this service does not perform - see this
+		// method's own doc comment.
+		return Fields.optionMapping(optionProvider) == IdentityOptionMapping.INSTANCE;
 	}
 
 	/**
-	 * The options to offer for a property {@link #isSelect(PropertyDescriptor) edited by
-	 * selecting}.
+	 * The options to offer for a property {@link #isSelect(PropertyDescriptor, DerivedProperty)
+	 * edited by selecting}.
+	 *
+	 * @param optionProvider
+	 *        The property's option provider, as resolved once by the caller, or {@code null} for a
+	 *        plain enum without an {@code @Options} function.
 	 */
-	private List<?> selectOptions(ConfigurationItem config, PropertyDescriptor property) {
-		if (ConfigPropertyOptions.optionProvider(property) != null) {
-			return ConfigPropertyOptions.optionsFor(config, property);
+	private List<?> selectOptions(ConfigurationItem config, PropertyDescriptor property,
+			DerivedProperty<? extends Iterable<?>> optionProvider) {
+		if (optionProvider != null) {
+			return ConfigPropertyOptions.toList(optionProvider.get(config));
 		}
 		// Plain enum without an @Options function: its constants are the options.
 		return Arrays.asList(property.getType().getEnumConstants());
@@ -488,7 +526,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 	/**
 	 * The {@link LabelProvider} for the options of a property
-	 * {@link #isSelect(PropertyDescriptor) edited by selecting}.
+	 * {@link #isSelect(PropertyDescriptor, DerivedProperty) edited by selecting}.
 	 */
 	private LabelProvider selectLabels(PropertyDescriptor property) {
 		LabelProvider labels = ConfigPropertyOptions.optionLabels(property);
@@ -541,15 +579,26 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * {@code createControl}'s select step (3, ahead of the claim step 5) then keep the model and
 	 * the widget in agreement, the same way they already do for every other optioned property.
 	 * </p>
+	 *
+	 * @param optionProvider
+	 *        The property's option provider, as resolved once by the caller via
+	 *        {@link ConfigPropertyOptions#optionProvider(PropertyDescriptor)}, or {@code null} if
+	 *        it has none. Deliberately not narrowed to {@code isSelect}'s identity-mapping check:
+	 *        an {@code @Options} annotation with any mapping still states that the value domain is
+	 *        options, not the type-specific widget's raw value.
+	 * @param formatProvider
+	 *        The property's {@link #formatProvider(PropertyDescriptor) claimed control provider},
+	 *        as resolved once by the caller, or {@code null} if none claims it.
 	 */
-	private boolean isSpecialized(PropertyDescriptor property) {
+	private boolean isSpecialized(PropertyDescriptor property, DerivedProperty<? extends Iterable<?>> optionProvider,
+			ConfigControlProvider formatProvider) {
 		if (property.getAnnotation(Encrypted.class) != null) {
 			return true;
 		}
-		if (ConfigPropertyOptions.optionProvider(property) != null) {
+		if (optionProvider != null) {
 			return true;
 		}
-		if (formatProvider(property) != null) {
+		if (formatProvider != null) {
 			return false;
 		}
 		return property.getAnnotation(Format.class) != null
@@ -583,7 +632,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 	/**
 	 * Whether one of the built-in widgets handles the given Java type directly (bound to the raw
-	 * typed value), when the property is not {@link #isSpecialized(PropertyDescriptor)}.
+	 * typed value), when the property is not {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider)}.
 	 */
 	private boolean isDirectlyEditable(Class<?> type) {
 		return type == String.class

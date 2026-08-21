@@ -182,6 +182,27 @@ public class TestConfigFormatFieldModel extends TestCase {
 	}
 
 	/**
+	 * A rejected input leaves the field in error; re-entering the text that already matches the
+	 * configuration's current value must clear that error, not leave it stale next to a now-valid
+	 * display. The redundant-write guard (displayed text already matches the current value) must
+	 * not return before the error is cleared.
+	 */
+	public void testClearsErrorAfterReenteringCurrentValue() {
+		_config.setDuration(90000);
+		ConfigFormatFieldModel model = model(TestConfig.DURATION);
+
+		model.setValue("not a duration");
+		assertNotNull("Precondition: the unparsable text must have been rejected.", model.getInputError());
+
+		model.setValue("1min 30s");
+
+		assertNull("Re-entering the text the configuration already holds must clear the previous "
+			+ "error.", model.getInputError());
+		assertEquals("The config value must be unaffected by the redundant write.", 90000L,
+			_config.getDuration());
+	}
+
+	/**
 	 * Empty input clears the value instead of failing to parse.
 	 */
 	public void testEmptyInputClearsValue() {

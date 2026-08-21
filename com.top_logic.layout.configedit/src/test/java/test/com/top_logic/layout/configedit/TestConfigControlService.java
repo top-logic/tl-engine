@@ -23,7 +23,9 @@ import com.top_logic.basic.config.AbstractConfigurationValueBinding;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Encrypted;
@@ -40,6 +42,7 @@ import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigFormatFieldModel;
 import com.top_logic.layout.configedit.ConfigPropertyOptions;
+import com.top_logic.layout.configedit.DatePickerFormatProvider;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -94,6 +97,81 @@ public class TestConfigControlService extends TestCase {
 		@Override
 		protected String getSpecificationNonNull(Boolean configValue) {
 			return configValue ? "yes" : "no";
+		}
+	}
+
+	/**
+	 * A second {@code Date} format ({@link TimeOfDayAsDateValueProvider} stands in for the format
+	 * that {@link ConfigControlService}'s configured format-provider map actually claims) - used
+	 * to prove that an <em>unclaimed</em> {@code Date} format keeps the classic text behaviour,
+	 * in contrast to {@link TimeOfDayAsDateValueProvider}.
+	 */
+	public static class OtherDateFormat extends AbstractConfigurationValueProvider<Date> {
+
+		/** Creates an {@link OtherDateFormat}. */
+		public OtherDateFormat() {
+			super(Date.class);
+		}
+
+		@Override
+		protected Date getValueNonEmpty(String propertyName, CharSequence propertyValue)
+				throws ConfigurationException {
+			throw new UnsupportedOperationException("Not exercised by these tests.");
+		}
+
+		@Override
+		protected String getSpecificationNonNull(Date configValue) {
+			throw new UnsupportedOperationException("Not exercised by these tests.");
+		}
+	}
+
+	/**
+	 * A {@code Date} format standing in for a real, registered value provider - used only to
+	 * prove the format-provider map's superclass walk. The real
+	 * {@link TimeOfDayAsDateValueProvider} cannot stand in for this itself: its constructor is
+	 * private, so it has no subclass to test with.
+	 */
+	public static class BaseFormat extends AbstractConfigurationValueProvider<Date> {
+
+		/** Creates a {@link BaseFormat}. */
+		public BaseFormat() {
+			super(Date.class);
+		}
+
+		@Override
+		protected Date getValueNonEmpty(String propertyName, CharSequence propertyValue)
+				throws ConfigurationException {
+			throw new UnsupportedOperationException("Not exercised by these tests.");
+		}
+
+		@Override
+		protected String getSpecificationNonNull(Date configValue) {
+			throw new UnsupportedOperationException("Not exercised by these tests.");
+		}
+	}
+
+	/**
+	 * A pure specialization of {@link BaseFormat} - carries no members of its own, so any
+	 * behaviour observed for a property using this format can only be explained by the mapping
+	 * registered for its superclass.
+	 */
+	public static class SubFormat extends BaseFormat {
+		// No additional members.
+	}
+
+	/**
+	 * Test-only subclass exposing the inherited, otherwise package-private-to-its-own-package
+	 * {@code startUp()} lifecycle method, needed to build a {@link ConfigControlService} instance
+	 * around a hand-built {@link com.top_logic.layout.configedit.ConfigControlService.Config} in
+	 * {@link #testFormatProviderMappingCoversSubclasses()} - the real singleton only ever loads its
+	 * configuration from the application's own webapp config, which cannot reference a test-only
+	 * value-provider class such as {@link BaseFormat}.
+	 */
+	private static final class TestableConfigControlService extends ConfigControlService {
+
+		TestableConfigControlService(InstantiationContext context, Config config) {
+			super(context, config);
+			startUp();
 		}
 	}
 
@@ -159,6 +237,15 @@ public class TestConfigControlService extends TestCase {
 
 		/** Property name for {@link #getTimeOfDay()}. */
 		String TIME_OF_DAY = "timeOfDay";
+
+		/** Property name for {@link #getOtherDateFormat()}. */
+		String OTHER_DATE_FORMAT = "otherDateFormat";
+
+		/** Property name for {@link #getEncryptedTimeOfDay()}. */
+		String ENCRYPTED_TIME_OF_DAY = "encryptedTimeOfDay";
+
+		/** Property name for {@link #getSubFormatted()}. */
+		String SUB_FORMATTED = "subFormatted";
 
 		/** Property name for {@link #getYesNo()}. */
 		String YES_NO = "yesNo";
@@ -246,13 +333,45 @@ public class TestConfigControlService extends TestCase {
 		Date getStart();
 
 		/**
-		 * A time of day - carries no date, only an hour and a minute. Its own {@code @Format}
-		 * must veto the date picker, exactly like the classic declarative form's
-		 * {@code ValueEditor} vetoes its {@code calendar} field for the same reason.
+		 * A time of day - carries no date, only an hour and a minute. Its {@code @Format} is
+		 * claimed by {@link ConfigControlService}'s configured format-provider map (see the
+		 * service's {@code tl-layout-configedit.conf.config.xml}), so - unlike a property whose
+		 * format is not claimed - it is edited in a time picker bound to the raw {@code Date}
+		 * value, not as that format's text.
 		 */
 		@Name(TIME_OF_DAY)
 		@Format(TimeOfDayAsDateValueProvider.class)
 		Date getTimeOfDay();
+
+		/**
+		 * A {@code Date} property with its own {@code @Format}, like {@link #getTimeOfDay()}, but
+		 * one the configured format-provider map does not claim - kept out of the date picker
+		 * exactly like the classic declarative form's {@code ValueEditor} vetoes its
+		 * {@code calendar} field, and edited as this format's text instead.
+		 */
+		@Name(OTHER_DATE_FORMAT)
+		@Format(OtherDateFormat.class)
+		Date getOtherDateFormat();
+
+		/**
+		 * Both {@code @Encrypted} and the same claimed format as {@link #getTimeOfDay()} - proves
+		 * that {@code @Encrypted} keeps winning even when the property's format is one the
+		 * configured map maps to a control of its own: a module must never be able to make a
+		 * secret readable by mapping a control to its value provider.
+		 */
+		@Name(ENCRYPTED_TIME_OF_DAY)
+		@Encrypted
+		@Format(TimeOfDayAsDateValueProvider.class)
+		Date getEncryptedTimeOfDay();
+
+		/**
+		 * A {@code Date} property formatted by {@link SubFormat}, a subclass of {@link BaseFormat}
+		 * - used only by {@link #testFormatProviderMappingCoversSubclasses()} to prove that a
+		 * mapping registered for {@link BaseFormat} also covers this subclass.
+		 */
+		@Name(SUB_FORMATTED)
+		@Format(SubFormat.class)
+		Date getSubFormatted();
 
 		/**
 		 * A flag with its own (unusual, but valid) {@code @Format} - used only to verify that the
@@ -420,17 +539,104 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * A {@code Date} property with its own {@code @Format} (here: a time of day) is specialized, so
-	 * it never reaches the date picker at all - it is edited as that format's text, exactly like the
-	 * classic declarative form's {@code ValueEditor}/{@code PlainEditor}. The date picker for a bare
-	 * date could not show or accept a time of day anyway; going through the format sidesteps that
-	 * question entirely rather than trying to guess the right picker kind.
+	 * A {@code Date} property whose {@code @Format} ({@link TimeOfDayAsDateValueProvider}) is
+	 * claimed by the configured format-provider map gets the time picker, bound to the raw
+	 * {@code Date} value - not the generic format text field a specialized property otherwise
+	 * gets. Both the model and the control are asserted: the model alone would pass even if the
+	 * control were wrongly handed a format-aware model (a {@code String} where
+	 * {@link ReactDatePickerControl}'s constructor expects a {@code Date}), and the control alone
+	 * would pass even if the model still held text.
 	 */
-	public void testDateWithFormatIsNotAPicker() {
-		assertTrue("A formatted Date property must be parsed through its format, not edited raw.",
+	public void testTimeOfDayFormatIsClaimedByDatePicker() {
+		assertFalse("A property claimed by the format-provider map must not be parsed through its "
+			+ "format - the claimed control binds to the raw typed value.",
 			model(TestConfig.TIME_OF_DAY) instanceof ConfigFormatFieldModel);
-		assertTrue("A formatted Date property must not reach the date picker.",
-			control(TestConfig.TIME_OF_DAY) instanceof ReactTextInputControl);
+
+		ReactControl control = control(TestConfig.TIME_OF_DAY);
+		assertTrue("A time-of-day property must be edited in the date picker registered for its "
+			+ "format.", control instanceof ReactDatePickerControl);
+		assertEquals("The claimed control must be configured for the time part, not a bare date.",
+			"time", control.scriptingScalarState().get("inputType"));
+	}
+
+	/**
+	 * A {@code Date} property with its own {@code @Format} that the configured format-provider map
+	 * does <em>not</em> claim is specialized just like {@link TestConfig#getTimeOfDay()} used to
+	 * be before that map existed - it never reaches the date picker, it is edited as that
+	 * format's text,
+	 * exactly like the classic declarative form's {@code ValueEditor}/{@code PlainEditor}. The
+	 * Java-type map alone could not distinguish this property from {@link TestConfig#TIME_OF_DAY}
+	 * - both are {@code Date} - only the value provider's own class can.
+	 */
+	public void testDateWithUnclaimedFormatIsNotAPicker() {
+		assertTrue("An unclaimed formatted Date property must be parsed through its format, not "
+			+ "edited raw.", model(TestConfig.OTHER_DATE_FORMAT) instanceof ConfigFormatFieldModel);
+		assertTrue("An unclaimed formatted Date property must not reach the date picker.",
+			control(TestConfig.OTHER_DATE_FORMAT) instanceof ReactTextInputControl);
+	}
+
+	/**
+	 * {@code @Encrypted} wins over a claim in the configured format-provider map, exactly like it
+	 * wins over an explicit {@link ConfigControl} annotation: a module must never be able to make
+	 * a secret readable by mapping a control to its value provider. Uses the very same
+	 * {@link TimeOfDayAsDateValueProvider} format {@link #testTimeOfDayFormatIsClaimedByDatePicker()}
+	 * proves is claimed - the only difference is {@code @Encrypted} - so the only possible
+	 * explanation for a different outcome here is the encryption veto.
+	 */
+	public void testEncryptedWinsOverFormatProviderMapping() {
+		assertTrue("An encrypted property must be parsed through its format even when that "
+			+ "format is claimed by the configured map.",
+			model(TestConfig.ENCRYPTED_TIME_OF_DAY) instanceof ConfigFormatFieldModel);
+
+		ReactControl control = control(TestConfig.ENCRYPTED_TIME_OF_DAY);
+		assertTrue("An encrypted property must be edited in a password field.",
+			control instanceof ReactPasswordInputControl);
+		assertFalse("The format mapping's date picker must not be reachable for an encrypted "
+			+ "property.", control instanceof ReactDatePickerControl);
+	}
+
+	/**
+	 * A property whose value provider ({@link SubFormat}) is a subclass of a mapping's registered
+	 * class ({@link BaseFormat}) is claimed too: the format-provider map is looked up by the
+	 * property's concrete value-provider class first, then by walking up its superclasses.
+	 *
+	 * <p>
+	 * Exercised against a locally built {@link ConfigControlService} instance rather than the
+	 * singleton: the singleton's only registered mapping ({@link TimeOfDayAsDateValueProvider})
+	 * has a private constructor and so has no subclass to prove the walk with.
+	 * </p>
+	 */
+	public void testFormatProviderMappingCoversSubclasses() {
+		DatePickerFormatProvider.Config providerConfig =
+			TypedConfiguration.newConfigItem(DatePickerFormatProvider.Config.class);
+		set(providerConfig, "kind", ReactDatePickerControl.Kind.TIME);
+
+		ConfigControlService.FormatMapping mapping =
+			TypedConfiguration.newConfigItem(ConfigControlService.FormatMapping.class);
+		set(mapping, ConfigControlService.FormatMapping.PROVIDER, BaseFormat.class);
+		set(mapping, "impl", providerConfig);
+
+		ConfigControlService.Config serviceConfig = TypedConfiguration.newConfigItem(ConfigControlService.Config.class);
+		serviceConfig.getFormats().put(BaseFormat.class, mapping);
+
+		ConfigControlService service = new TestableConfigControlService(
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, serviceConfig);
+
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.SUB_FORMATTED);
+		ConfigFieldModel model = service.createModel(_config, property);
+		assertFalse("A property claimed through a superclass mapping must not be parsed through "
+			+ "its format - the claimed control binds to the raw typed value.",
+			model instanceof ConfigFormatFieldModel);
+
+		ReactControl control = service.createControl(context(), model);
+		assertTrue("A value provider that is a subclass of a mapped one must be claimed by the "
+			+ "same mapping.", control instanceof ReactDatePickerControl);
+		assertEquals("time", control.scriptingScalarState().get("inputType"));
+	}
+
+	/** Sets the named property of the given item, bypassing the need for a declared setter. */
+	private static void set(ConfigurationItem item, String propertyName, Object value) {
+		item.update(item.descriptor().getProperty(propertyName), value);
 	}
 
 	/**

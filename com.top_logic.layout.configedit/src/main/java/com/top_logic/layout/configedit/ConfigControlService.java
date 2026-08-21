@@ -13,6 +13,7 @@ import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -68,6 +69,11 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
  * <li>{@link ConfigControl} annotation on the property or on its value type.</li>
  * <li>A {@link ConfigSelectFieldModel} gets a select.</li>
  * <li>The value-type-to-provider map configured in this service.</li>
+ * <li>The value-provider-to-provider map configured in this service - claims a property whose
+ * {@link PropertyDescriptor#getValueProvider() value provider} (or one of its superclasses) is
+ * mapped, ahead of the generic format text field. This is what lets a {@code Date} formatted as a
+ * time of day get a time picker instead of plain text: the Java-type map above cannot separate it
+ * from a plain date, but the value provider's own class can.</li>
  * <li>The built-in fallback: the direct widget for a non-specialized property whose type
  * {@code createModel} also treated as directly editable, otherwise text parsed and formatted
  * through the property's own {@code ConfigurationValueProvider}.</li>
@@ -84,13 +90,26 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
  * The specialization veto is why a property with its own format is never handed to the "direct"
  * widget for its Java type: a {@code Date} formatted as a time of day is edited through that
  * format as text, not in a date picker that could not show or accept a time - the same defect
- * {@code DatePickerControlProvider} was fixed against on the model-attribute side.
+ * {@code DatePickerControlProvider} was fixed against on the model-attribute side. A property
+ * whose value provider is claimed by the value-provider-to-provider map is the deliberate
+ * exception: such a property counts as not specialized after all, so it gets the plain, typed
+ * {@link ConfigFieldModel} instead of the format-aware one, and the claimed control (bound to
+ * that same typed value) is what actually edits it - see {@link ReactDatePickerControl} for the
+ * time-of-day case.
  * </p>
  *
  * <p>
- * The configured map is what lets a module above this one contribute a control - the TL-Script
+ * The configured maps are what let a module above this one contribute a control - the TL-Script
  * editor, for instance, lives in {@code tl-model-search-react}.
  * </p>
+ *
+ * @implNote The exception above is implemented by {@link #isSpecialized(PropertyDescriptor)}
+ *           itself: it answers {@code false} for a claimed property, which is what keeps the
+ *           value domain chosen by {@link #createModel(ConfigurationItem, PropertyDescriptor)}
+ *           and the widget chosen by {@link #createControl(ReactContext, ConfigFieldModel)} in
+ *           step with each other. The reference lives here rather than in the prose above
+ *           because a configured class's own documentation becomes in-app documentation, where a
+ *           reference to one of its methods has no meaning.
  */
 public class ConfigControlService extends ConfiguredManagedClass<ConfigControlService.Config> {
 
@@ -104,6 +123,22 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		 */
 		@Key(ProviderMapping.TYPE)
 		Map<Class<?>, ProviderMapping> getProviders();
+
+		/**
+		 * Value-provider-to-provider mappings, keyed by the {@link ConfigurationValueProvider}
+		 * class of the property's {@link PropertyDescriptor#getValueProvider() value provider}.
+		 *
+		 * <p>
+		 * Separate from {@link #getProviders()}: two properties of the same Java value type (e.g.
+		 * {@code Date}) can carry different value providers - a plain date and a time of day both
+		 * use {@code Date} - so only the value provider's own class, not the Java type, can tell
+		 * them apart. Looked up by a property's concrete value-provider class first, then by
+		 * walking up its superclasses, so a mapping registered for a base provider also covers
+		 * its specializations.
+		 * </p>
+		 */
+		@Key(FormatMapping.PROVIDER)
+		Map<Class<?>, FormatMapping> getFormats();
 
 	}
 
@@ -130,9 +165,36 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 	}
 
+	/**
+	 * A single value-provider-to-provider mapping entry.
+	 */
+	public interface FormatMapping extends ConfigurationItem {
+
+		/** Property name of {@link #getProvider()}. */
+		String PROVIDER = "provider";
+
+		/**
+		 * The {@link ConfigurationValueProvider} class (or a superclass of it) a property's
+		 * {@link PropertyDescriptor#getValueProvider() value provider} must be an instance of for
+		 * this mapping to apply.
+		 */
+		@Name(PROVIDER)
+		@Mandatory
+		Class<? extends ConfigurationValueProvider<?>> getProvider();
+
+		/**
+		 * The control provider to use for a property claimed by this mapping.
+		 */
+		@Mandatory
+		PolymorphicConfiguration<? extends ConfigControlProvider> getImpl();
+
+	}
+
 	private final InstantiationContext _context;
 
 	private Map<Class<?>, ConfigControlProvider> _providerByType;
+
+	private Map<Class<?>, ConfigControlProvider> _providerByFormat;
 
 	/**
 	 * Creates a {@link ConfigControlService} from configuration.
@@ -150,6 +212,11 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		_providerByType = new HashMap<>();
 		for (ProviderMapping mapping : getConfig().getProviders().values()) {
 			_providerByType.put(mapping.getType(), _context.getInstance(mapping.getImpl()));
+		}
+
+		_providerByFormat = new HashMap<>();
+		for (FormatMapping mapping : getConfig().getFormats().values()) {
+			_providerByFormat.put(mapping.getProvider(), _context.getInstance(mapping.getImpl()));
 		}
 	}
 
@@ -233,7 +300,17 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			return mapped.createControl(context, model);
 		}
 
-		// 5. Built-in fallback.
+		// 5. Configured provider by the property's value provider class (or one of its
+		// superclasses) - claims a specialized property away from the generic format text field
+		// the fallback would otherwise give it. Checked before the fallback, not gated behind
+		// isSpecialized: isSpecialized already reports such a property as not specialized (see its
+		// own JavaDoc), which only decides the *model*'s domain, not which control to use.
+		ConfigControlProvider formatProvider = formatProvider(property);
+		if (formatProvider != null) {
+			return formatProvider.createControl(context, model);
+		}
+
+		// 6. Built-in fallback.
 		return fallback(context, model, property);
 	}
 
@@ -285,8 +362,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	}
 
 	/**
-	 * The built-in widget for a property that reached neither the annotation, the select, nor the
-	 * configured-map step.
+	 * The built-in widget for a property that reached neither the annotation, the select, nor
+	 * either configured-map step.
 	 *
 	 * <p>
 	 * Only offers the type-specific widgets ({@link ReactCheckboxControl}, a number input, the
@@ -387,10 +464,11 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * never be handed to a type-specific widget bound to its raw, typed value.
 	 *
 	 * <p>
-	 * Three of the four conditions mirror the classic declarative form's {@code ValueEditor}
+	 * Three of the four base conditions mirror the classic declarative form's {@code ValueEditor}
 	 * (there: {@code isSpecializedPrimitive}) - options, an explicit {@code @Format}, or a value
 	 * binding. This is what keeps a {@code Date} formatted as a time of day out of the plain date
-	 * picker, which could neither show nor accept the time.
+	 * picker, which could neither show nor accept the time - <em>unless</em> that same format is
+	 * claimed by the {@link Config#getFormats() value-provider-to-provider map}, see below.
 	 * </p>
 	 *
 	 * <p>
@@ -400,14 +478,58 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * raw typed value a "direct" widget (e.g. a checkbox for a {@code boolean}) would bind to.
 	 * Without this, an encrypted non-{@code String} property would pair a text control with a
 	 * model holding the raw typed value, exactly the domain mismatch this method exists to
-	 * prevent for {@code @Format} and options.
+	 * prevent for {@code @Format} and options. {@code @Encrypted} is checked first and returns
+	 * {@code true} unconditionally, before the format-provider claim below is even considered: a
+	 * module must never be able to make a secret readable by mapping a control to its value
+	 * provider, exactly the same security decision {@code createControl} makes by checking
+	 * {@code @Encrypted} ahead of every other step, including this map.
+	 * </p>
+	 *
+	 * <p>
+	 * A property whose {@link PropertyDescriptor#getValueProvider() value provider} (or one of its
+	 * superclasses) is {@link #formatProvider(PropertyDescriptor) claimed} by the configured
+	 * value-provider-to-provider map is the deliberate exception to the three base conditions: it
+	 * is reported as <em>not</em> specialized, so {@code createModel} gives it the plain, typed
+	 * {@link ConfigFieldModel} a directly-editable type would otherwise get, and {@code createControl}
+	 * hands that same model to the claimed control instead of the format text field - see this
+	 * class's own JavaDoc.
 	 * </p>
 	 */
 	private boolean isSpecialized(PropertyDescriptor property) {
+		if (property.getAnnotation(Encrypted.class) != null) {
+			return true;
+		}
+		if (formatProvider(property) != null) {
+			return false;
+		}
 		return ConfigPropertyOptions.optionProvider(property) != null
 			|| property.getAnnotation(Format.class) != null
-			|| property.getValueBinding() != null
-			|| property.getAnnotation(Encrypted.class) != null;
+			|| property.getValueBinding() != null;
+	}
+
+	/**
+	 * The configured {@link ConfigControlProvider} for the given property's
+	 * {@link PropertyDescriptor#getValueProvider() value provider}, or {@code null} if the
+	 * property has none or none of its classes is mapped.
+	 *
+	 * <p>
+	 * Looked up by the value provider's concrete class first, then by walking up its superclasses,
+	 * so a mapping registered for a base provider also covers its specializations - mirroring
+	 * {@link Config#getFormats()}'s own contract.
+	 * </p>
+	 */
+	private ConfigControlProvider formatProvider(PropertyDescriptor property) {
+		ConfigurationValueProvider<?> valueProvider = property.getValueProvider();
+		if (valueProvider == null) {
+			return null;
+		}
+		for (Class<?> type = valueProvider.getClass(); type != null; type = type.getSuperclass()) {
+			ConfigControlProvider provider = _providerByFormat.get(type);
+			if (provider != null) {
+				return provider;
+			}
+		}
+		return null;
 	}
 
 	/**

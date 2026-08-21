@@ -148,194 +148,18 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.inheritance.child">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
-					<module name="test.pdfExport">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
-					<module name="test.fallback">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
-					<module name="test.webfolder">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.inheritance.child"
+						without-security="true"
+					/>
+					<module name="test.pdfExport"
+						without-security="true"
+					/>
+					<module name="test.fallback"
+						without-security="true"
+					/>
+					<module name="test.webfolder"
+						without-security="true"
+					/>
 					<module name="tl.units">
 						<grant
 							inherit="true"
@@ -524,100 +348,12 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.dynamictable">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
-					<module name="test.dnd">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.dynamictable"
+						without-security="true"
+					/>
+					<module name="test.dnd"
+						without-security="true"
+					/>
 					<module name="tl.folder">
 						<grant
 							inherit="true"
@@ -665,100 +401,12 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.flowchart">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
-					<module name="test.graph">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.flowchart"
+						without-security="true"
+					/>
+					<module name="test.graph"
+						without-security="true"
+					/>
 					<module name="tl.contact.ui">
 						<grant
 							inherit="true"
@@ -806,53 +454,9 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.transient">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.transient"
+						without-security="true"
+					/>
 					<module name="DemoTypes">
 						<grant
 							inherit="true"
@@ -994,100 +598,12 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.commandApproval">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
-					<module name="test.polymorphism">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.commandApproval"
+						without-security="true"
+					/>
+					<module name="test.polymorphism"
+						without-security="true"
+					/>
 					<module name="LoginMessages">
 						<grant
 							inherit="true"
@@ -1182,147 +698,15 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.optionprovider">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
-					<module name="test.containmentContext">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
-					<module name="test.history">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.optionprovider"
+						without-security="true"
+					/>
+					<module name="test.containmentContext"
+						without-security="true"
+					/>
+					<module name="test.history"
+						without-security="true"
+					/>
 					<module name="tl.imagegallery">
 						<grant
 							inherit="true"
@@ -1370,100 +754,12 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.dynamic_api_key">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
-					<module name="test.htmltemplate">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.dynamic_api_key"
+						without-security="true"
+					/>
+					<module name="test.htmltemplate"
+						without-security="true"
+					/>
 					<module name="tl.security.selfservice">
 						<grant
 							inherit="true"
@@ -1652,53 +948,9 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.dnd.dropon">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.dnd.dropon"
+						without-security="true"
+					/>
 					<module name="mandatorStructure">
 						<grant
 							inherit="true"
@@ -1793,53 +1045,9 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.defaultValue">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.defaultValue"
+						without-security="true"
+					/>
 					<module name="tl.element">
 						<grant
 							inherit="true"
@@ -2122,53 +1330,9 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.process">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.process"
+						without-security="true"
+					/>
 					<module name="tl.contact.external">
 						<grant
 							inherit="true"
@@ -2310,100 +1474,12 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.report">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
-					<module name="test.tiles">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.report"
+						without-security="true"
+					/>
+					<module name="test.tiles"
+						without-security="true"
+					/>
 					<module name="tl.util">
 						<grant
 							inherit="true"
@@ -2451,53 +1527,9 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.dynamicmode">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.dynamicmode"
+						without-security="true"
+					/>
 					<module name="tl.search">
 						<grant
 							inherit="true"
@@ -2545,53 +1577,9 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.inheritance.parent">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.inheritance.parent"
+						without-security="true"
+					/>
 					<module name="tl.bpe.bpml">
 						<grant
 							inherit="true"
@@ -2639,53 +1627,9 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
-					<module name="test.override">
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Finish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="restrictedWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Export"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="SecurityStructure.superuser, navigation"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="ownerWrite"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="publish"
-							roles="SecurityStructure.superuser"
-						/>
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="SecurityStructure.superuser"
-						/>
-					</module>
+					<module name="test.override"
+						without-security="true"
+					/>
 					<module name="tl.mail">
 						<grant
 							inherit="true"

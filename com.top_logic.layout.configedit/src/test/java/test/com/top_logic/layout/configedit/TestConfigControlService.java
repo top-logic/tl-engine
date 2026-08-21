@@ -215,7 +215,7 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * The stored value of a {@link #SHAPE_REF} property - a name resolved against
+	 * The stored value of a {@link TestConfig#SHAPE_REF} property - a name resolved against
 	 * {@link Shapes}' fixed offering, formatted and parsed through {@link ShapeRefFormat}. Stands
 	 * in for {@link com.top_logic.model.util.TLModelPartRef}: like that type, its options
 	 * ({@link Shape}) are a <em>different</em> Java type than the value actually stored, so the
@@ -246,7 +246,7 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * An option offered for a {@link #SHAPE_REF} property - a different Java type than
+	 * An option offered for a {@link TestConfig#SHAPE_REF} property - a different Java type than
 	 * {@link ShapeRef}, the value the property actually stores. See {@link ShapeRef}'s own doc
 	 * comment.
 	 */
@@ -275,7 +275,7 @@ public class TestConfigControlService extends TestCase {
 
 	/**
 	 * Non-identity {@link OptionMapping} translating a {@link Shape} option into the
-	 * {@link ShapeRef} a {@link #SHAPE_REF} property actually stores, and back - the same shape
+	 * {@link ShapeRef} a {@link TestConfig#SHAPE_REF} property actually stores, and back - the same shape
 	 * {@link com.top_logic.model.util.TLModelPartRef.PartMapping} has for the real case.
 	 */
 	public static class ShapeMapping implements OptionMapping {
@@ -847,7 +847,8 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * The value-type-to-provider map ({@link ConfigControlService.Config#getProviders()}) is the
+	 * The value-type-to-provider map
+	 * ({@link com.top_logic.layout.configedit.ConfigControlService.Config#getProviders()}) is the
 	 * extension point that lets a module above this one contribute a control by Java type - see
 	 * this class's own JavaDoc. Registering a mapping for {@code String} must beat the built-in
 	 * text input a {@code String} property would otherwise get - step 4 of the resolution chain,

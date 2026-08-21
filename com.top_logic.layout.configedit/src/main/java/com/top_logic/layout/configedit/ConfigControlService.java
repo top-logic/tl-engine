@@ -52,7 +52,7 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
  *
  * <p>
  * {@code createModel} decides the value
- * domain: a property that is not {@link #isSpecialized(PropertyDescriptor) specialized} and whose
+ * domain: a property that is not {@code specialized} and whose
  * Java type one of the built-in widgets handles directly - {@code String}, {@code boolean}, a
  * numeric type, or {@code Date} - gets the plain, typed {@link ConfigFieldModel}; otherwise a
  * property edited by selecting (an option list, or an enum) gets a
@@ -91,11 +91,18 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
  * widget for its Java type: a {@code Date} formatted as a time of day is edited through that
  * format as text, not in a date picker that could not show or accept a time - the same defect
  * {@code DatePickerControlProvider} was fixed against on the model-attribute side. A property
- * whose value provider is claimed by the value-provider-to-provider map is the deliberate
- * exception: such a property counts as not specialized after all, so it gets the plain, typed
- * {@link ConfigFieldModel} instead of the format-aware one, and the claimed control (bound to
- * that same typed value) is what actually edits it - see {@link ReactDatePickerControl} for the
- * time-of-day case.
+ * whose value provider is claimed by the value-provider-to-provider map is a deliberate
+ * exception: such a property counts as not specialized after all (unless it also has options -
+ * see below), so it gets the plain, typed {@link ConfigFieldModel} instead of the format-aware
+ * one, and the claimed control (bound to that same typed value) is what actually edits it - see
+ * {@link ReactDatePickerControl} for the time-of-day case.
+ * </p>
+ *
+ * <p>
+ * Options win over a claim: a property that both has {@code @Options} and is claimed stays
+ * specialized and is edited by selecting, not by the claimed control - an explicit option list is
+ * a statement about that one property, narrower than a mapping registered for a whole
+ * value-provider class, so the narrower statement wins.
  * </p>
  *
  * <p>
@@ -227,10 +234,13 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * A property that is not {@link #isSpecialized(PropertyDescriptor) specialized} and whose Java
 	 * type one of the built-in widgets handles directly gets the plain {@link ConfigFieldModel}
 	 * (bound to the raw typed value). Otherwise, a property edited by selecting gets a
-	 * {@link ConfigSelectFieldModel}; everything else with a
-	 * {@link PropertyDescriptor#getValueProvider() value provider} gets the format-aware
-	 * {@link ConfigFormatFieldModel} (text); anything left over falls back to the plain
-	 * {@link ConfigFieldModel} rather than failing.
+	 * {@link ConfigSelectFieldModel}; a property {@link #formatProvider(PropertyDescriptor)
+	 * claimed} by the configured format-provider map also gets the plain {@link ConfigFieldModel}
+	 * - independent of whether its Java type happens to be one of the built-in directly-editable
+	 * ones, since the claim itself states that the claimed control edits the value in its typed
+	 * form; everything else with a {@link PropertyDescriptor#getValueProvider() value provider}
+	 * gets the format-aware {@link ConfigFormatFieldModel} (text); anything left over falls back
+	 * to the plain {@link ConfigFieldModel} rather than failing.
 	 * </p>
 	 *
 	 * @param config
@@ -250,6 +260,32 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		}
 		if (isSelect(property)) {
 			return new ConfigSelectFieldModel(config, property, selectOptions(config, property), false);
+		}
+		if (property.getAnnotation(Encrypted.class) == null && formatProvider(property) != null) {
+			// Claimed: the claim states that the control bound to this model edits the value in
+			// its typed form, regardless of whether isDirectlyEditable's built-in set happens to
+			// include this property's Java type. Structural, not coincidental: a future mapping
+			// for a value provider over e.g. ResKey must not produce a model/control mismatch.
+			//
+			// The @Encrypted guard mirrors isSpecialized's and createControl's own - a secret must
+			// never be pulled away from the format/password domain by a claim, the same invariant
+			// stated (and enforced) there. It cannot currently be exercised from here: an
+			// @Encrypted property's PropertyDescriptorImpl wraps its value provider in an
+			// EncodingConfigurationValueProvider (com.top_logic.basic.config) before this method
+			// ever sees it, and that wrapper *delegates* to the original provider through a field
+			// rather than extending it, so formatProvider's superclass walk over the wrapper's own
+			// class never reaches whatever class was actually registered - formatProvider(property)
+			// already answers null for every @Encrypted property today, guard or no guard, as long
+			// as no mapping targets EncodingConfigurationValueProvider itself (a framework
+			// encryption-wrapper class, never a legitimate registration target). The guard stays
+			// anyway, so this method does not rely on that wrapping detail of a
+			// different class in a different module to keep its own invariant; if that wrapping
+			// ever changed, this line - not an accident three layers away - is what would still
+			// hold the line. The observable outcome (an encrypted, claimed property still getting
+			// the format model and the password control) is covered by
+			// testEncryptedWinsOverFormatProviderMapping, taken via isSpecialized's earlier,
+			// always-reachable @Encrypted check instead.
+			return new ConfigFieldModel(config, property);
 		}
 		if (property.getValueProvider() != null) {
 			return new ConfigFormatFieldModel(config, property);
@@ -479,31 +515,44 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * Without this, an encrypted non-{@code String} property would pair a text control with a
 	 * model holding the raw typed value, exactly the domain mismatch this method exists to
 	 * prevent for {@code @Format} and options. {@code @Encrypted} is checked first and returns
-	 * {@code true} unconditionally, before the format-provider claim below is even considered: a
-	 * module must never be able to make a secret readable by mapping a control to its value
-	 * provider, exactly the same security decision {@code createControl} makes by checking
-	 * {@code @Encrypted} ahead of every other step, including this map.
+	 * {@code true} unconditionally, before options and the format-provider claim below are even
+	 * considered: a module must never be able to make a secret readable by mapping a control to
+	 * its value provider, exactly the same security decision {@code createControl} makes by
+	 * checking {@code @Encrypted} ahead of every other step, including this map.
 	 * </p>
 	 *
 	 * <p>
 	 * A property whose {@link PropertyDescriptor#getValueProvider() value provider} (or one of its
 	 * superclasses) is {@link #formatProvider(PropertyDescriptor) claimed} by the configured
-	 * value-provider-to-provider map is the deliberate exception to the three base conditions: it
-	 * is reported as <em>not</em> specialized, so {@code createModel} gives it the plain, typed
-	 * {@link ConfigFieldModel} a directly-editable type would otherwise get, and {@code createControl}
-	 * hands that same model to the claimed control instead of the format text field - see this
-	 * class's own JavaDoc.
+	 * value-provider-to-provider map is a deliberate exception to the remaining two base
+	 * conditions ({@code @Format}, a value binding): such a property is reported as <em>not</em>
+	 * specialized, so {@code createModel} gives it the plain, typed {@link ConfigFieldModel}, and
+	 * {@code createControl} hands that same model to the claimed control instead of the format
+	 * text field - see this class's own JavaDoc.
+	 * </p>
+	 *
+	 * <p>
+	 * Options are checked <em>before</em> the claim, deliberately not folded into that exception:
+	 * an {@code @Options} annotation is a statement about one property - exactly this value set -
+	 * while a format-provider mapping is a global registration for a value-provider class, meant
+	 * to be noticed by every property that happens to use that class. The narrower, explicit
+	 * statement must not be overridden by the broader one, so a property that is both claimed and
+	 * optioned stays specialized and is edited by selecting - {@code isSelect} and
+	 * {@code createControl}'s select step (3, ahead of the claim step 5) then keep the model and
+	 * the widget in agreement, the same way they already do for every other optioned property.
 	 * </p>
 	 */
 	private boolean isSpecialized(PropertyDescriptor property) {
 		if (property.getAnnotation(Encrypted.class) != null) {
 			return true;
 		}
+		if (ConfigPropertyOptions.optionProvider(property) != null) {
+			return true;
+		}
 		if (formatProvider(property) != null) {
 			return false;
 		}
-		return ConfigPropertyOptions.optionProvider(property) != null
-			|| property.getAnnotation(Format.class) != null
+		return property.getAnnotation(Format.class) != null
 			|| property.getValueBinding() != null;
 	}
 

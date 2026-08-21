@@ -17,7 +17,7 @@
 		</metaobject>
 
 		<metaobject
-			object_name="TLSecTechnicalData"
+			object_name="TLSecUnsecuredData"
 			super_class="TLObject"
 		>
 			<attributes>

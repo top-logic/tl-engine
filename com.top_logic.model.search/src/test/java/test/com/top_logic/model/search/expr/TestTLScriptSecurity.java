@@ -56,9 +56,9 @@ import com.top_logic.util.error.TopLogicException;
  * </ul>
  * <p>
  * {@code Employee} has no grant and is therefore not readable for non-administrative users
- * (deny-by-default). {@code TechnicalData} has no grant either, but is declared technical, so its
- * objects &ndash; and those of its specialization {@code TechnicalDataSub} &ndash; are accessible
- * for everybody.
+ * (deny-by-default). {@code UnsecuredData} has no grant either, but is declared without security, so
+ * its objects &ndash; and those of its specialization {@code UnsecuredDataSub} &ndash; are
+ * accessible for everybody.
  * </p>
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -895,71 +895,72 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * An object of a technical type is accessible for everybody, including its attribute values and
-	 * the creation of such an object.
+	 * An object of a type without security is accessible for everybody, including its attribute
+	 * values and the creation of such an object.
 	 *
 	 * <p>
-	 * {@code TechnicalData} is declared technical and has no grant at all (see the test config).
-	 * Therefore a user without any role may read, write and delete the object as well as
-	 * {@code TechnicalData#data}, and may create objects of that type. The same user has no access
-	 * to a non-technical type without a matching grant.
+	 * {@code UnsecuredData} is declared without security and has no grant at all (see the test
+	 * config). Therefore a user without any role may read, write and delete the object as well as
+	 * {@code UnsecuredData#data}, and may create objects of that type. The same user has no access
+	 * to an access controlled type without a matching grant.
 	 * </p>
 	 */
-	public void testTechnicalTypeAccessibleForEverybody() throws Exception {
+	public void testTypeWithoutSecurityAccessibleForEverybody() throws Exception {
 		ModelAccessRights accessRights = ModelAccessRights.getInstance();
-		TLClass technicalType = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:TechnicalData");
-		TLStructuredTypePart data = part("TechnicalData", "data");
+		TLClass unsecuredType = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:UnsecuredData");
+		TLStructuredTypePart data = part("UnsecuredData", "data");
 		TLStructuredTypePart budget = part("Project", "budget");
 
-		TLObject technical;
+		TLObject unsecured;
 		try (Transaction tx = beginTx()) {
-			technical = newObject("TechnicalData");
-			technical.tUpdateByName("data", "some technical value");
+			unsecured = newObject("UnsecuredData");
+			unsecured.tUpdateByName("data", "some unsecured value");
 			tx.commit();
 		}
 
-		assertTrue(accessRights.isTechnical(technicalType));
+		assertTrue(accessRights.isWithoutSecurity(unsecuredType));
 
 		becomeUser(_other);
 		// The attribute values.
-		assertTrue(accessRights.isReadAllowed(_other, technical, data));
-		assertTrue(accessRights.isAllowed(_other, technical, data, SimpleBoundCommandGroup.WRITE));
+		assertTrue(accessRights.isReadAllowed(_other, unsecured, data));
+		assertTrue(accessRights.isAllowed(_other, unsecured, data, SimpleBoundCommandGroup.WRITE));
 		// The object itself.
-		assertTrue(accessRights.isReadAllowed(_other, technical));
-		assertTrue(accessRights.isAllowed(_other, technical, SimpleBoundCommandGroup.WRITE));
-		assertTrue(accessRights.isAllowed(_other, technical, SimpleBoundCommandGroup.DELETE));
+		assertTrue(accessRights.isReadAllowed(_other, unsecured));
+		assertTrue(accessRights.isAllowed(_other, unsecured, SimpleBoundCommandGroup.WRITE));
+		assertTrue(accessRights.isAllowed(_other, unsecured, SimpleBoundCommandGroup.DELETE));
 		// The creation of such an object. Note: The cast selects the type-based overload, since a
 		// TLClass is a TLObject, too.
-		assertTrue(accessRights.isAllowedCreate(_other, technicalType, (TLObject) null));
+		assertTrue(accessRights.isAllowedCreate(_other, unsecuredType, (TLObject) null));
 		// The type is reported as accessible, although no rights are configured for it.
 		assertTrue(accessRights.getAccessibleTypes(_other, SimpleBoundCommandGroup.READ)
-			.contains(technicalType));
+			.contains(unsecuredType));
 
-		// A non-technical type without a matching grant stays inaccessible.
+		// An access controlled type without a matching grant stays inaccessible.
 		assertFalse(accessRights.isReadAllowed(_other, _p1, budget));
 		assertFalse(accessRights.isAllowed(_other, _p1, SimpleBoundCommandGroup.WRITE));
 	}
 
 	/**
-	 * A specialization of a technical type is technical, too.
+	 * A specialization of a type without security is without security, too.
 	 *
 	 * <p>
-	 * {@code TechnicalDataSub} specializes the technical {@code TechnicalData} and has no own
-	 * configuration entry (see the test config), yet its objects are accessible for a user without
-	 * any role.
+	 * {@code UnsecuredDataSub} specializes {@code UnsecuredData}, which is declared without
+	 * security, and has no own configuration entry (see the test config), yet its objects are
+	 * accessible for a user without any role.
 	 * </p>
 	 */
-	public void testSpecializationOfTechnicalTypeIsTechnical() throws Exception {
+	public void testSpecializationOfTypeWithoutSecurityIsWithoutSecurity() throws Exception {
 		ModelAccessRights accessRights = ModelAccessRights.getInstance();
-		TLStructuredTypePart data = part("TechnicalData", "data");
+		TLStructuredTypePart data = part("UnsecuredData", "data");
 
 		TLObject sub;
 		try (Transaction tx = beginTx()) {
-			sub = newObject("TechnicalDataSub");
+			sub = newObject("UnsecuredDataSub");
 			tx.commit();
 		}
 
-		assertTrue(accessRights.isTechnical((TLClass) TLModelUtil.findType("TestTLScriptSecurity:TechnicalDataSub")));
+		assertTrue(accessRights
+			.isWithoutSecurity((TLClass) TLModelUtil.findType("TestTLScriptSecurity:UnsecuredDataSub")));
 
 		becomeUser(_other);
 		assertTrue(accessRights.isReadAllowed(_other, sub, data));

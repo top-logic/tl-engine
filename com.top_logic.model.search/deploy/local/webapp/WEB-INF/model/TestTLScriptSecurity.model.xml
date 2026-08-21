@@ -28,9 +28,9 @@
 					</attributes>
 				</class>
 
-				<class name="TechnicalData">
+				<class name="UnsecuredData">
 					<annotations>
-						<table name="TLSecTechnicalData"/>
+						<table name="TLSecUnsecuredData"/>
 					</annotations>
 					<attributes>
 						<property name="data"
@@ -39,9 +39,9 @@
 					</attributes>
 				</class>
 
-				<class name="TechnicalDataSub">
+				<class name="UnsecuredDataSub">
 					<generalizations>
-						<generalization type="TechnicalData"/>
+						<generalization type="UnsecuredData"/>
 					</generalizations>
 				</class>
 

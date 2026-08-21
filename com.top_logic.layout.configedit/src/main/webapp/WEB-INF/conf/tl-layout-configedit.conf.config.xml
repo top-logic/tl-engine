@@ -19,6 +19,19 @@
 						module above this one, such as the TL-Script editor in tl-model-search-react.
 					-->
 				</providers>
+				<formats>
+					<!--
+						Value-provider-to-provider mappings: a Date property formatted as a time of
+						day gets the time picker instead of the generic format text field. Looked up
+						by the property's value provider class, walking up its superclasses -
+						contribute further mappings here, from this module or from one above it.
+					-->
+					<format provider="com.top_logic.basic.time.TimeOfDayAsDateValueProvider">
+						<impl class="com.top_logic.layout.configedit.DatePickerFormatProvider"
+							kind="TIME"
+						/>
+					</format>
+				</formats>
 			</instance>
 		</config>
 	</services>

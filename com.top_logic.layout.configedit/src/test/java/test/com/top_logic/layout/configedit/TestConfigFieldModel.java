@@ -8,6 +8,7 @@ package test.com.top_logic.layout.configedit;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.ConfigurationItem;
@@ -15,8 +16,11 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -43,6 +47,12 @@ public class TestConfigFieldModel extends TestCase {
 		/** Property name for {@link #getTitle()}. */
 		String TITLE = "title";
 
+		/** Property name for {@link #getLongCount()}. */
+		String LONG_COUNT = "longCount";
+
+		/** Property name for {@link #getDoubleValue()}. */
+		String DOUBLE_VALUE = "doubleValue";
+
 		@Name(NAME)
 		String getName();
 
@@ -64,6 +74,18 @@ public class TestConfigFieldModel extends TestCase {
 		String getTitle();
 
 		void setTitle(String value);
+
+		@Name(LONG_COUNT)
+		@LongDefault(0)
+		long getLongCount();
+
+		void setLongCount(long value);
+
+		@Name(DOUBLE_VALUE)
+		@DoubleDefault(0.0)
+		double getDoubleValue();
+
+		void setDoubleValue(double value);
 	}
 
 	/**
@@ -248,9 +270,72 @@ public class TestConfigFieldModel extends TestCase {
 	}
 
 	/**
-	 * Suite requiring TypeIndex for TypedConfiguration.
+	 * Tests that a {@link Double} arriving for an {@code int} property (as a number input control
+	 * hands back, whatever the property's actual numeric type) is coerced and stored as an
+	 * {@link Integer}.
+	 */
+	public void testSetValueCoercesDoubleToInteger() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.COUNT);
+		ConfigFieldModel model = new ConfigFieldModel(config, property);
+
+		model.setValue(Double.valueOf(555.0));
+
+		assertEquals(555, config.getCount());
+		assertNull("Well-formed whole number must not be rejected.", model.getInputError());
+	}
+
+	/**
+	 * Same coercion as {@link #testSetValueCoercesDoubleToInteger()}, for a {@code long} property.
+	 */
+	public void testSetValueCoercesDoubleToLong() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.LONG_COUNT);
+		ConfigFieldModel model = new ConfigFieldModel(config, property);
+
+		model.setValue(Double.valueOf(555.0));
+
+		assertEquals(555L, config.getLongCount());
+		assertNull("Well-formed whole number must not be rejected.", model.getInputError());
+	}
+
+	/**
+	 * Tests that a fractional value for an {@code int} property is rejected as an input error
+	 * instead of being truncated, and that the configuration is left untouched.
+	 */
+	public void testSetValueRejectsFractionForIntegralProperty() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setCount(1);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.COUNT);
+		ConfigFieldModel model = new ConfigFieldModel(config, property);
+
+		model.setValue(Double.valueOf(555.7));
+
+		assertEquals("Fractional value must not be written.", 1, config.getCount());
+		assertNotNull("Fractional value must be reported as input error.", model.getInputError());
+	}
+
+	/**
+	 * Tests that a {@code double} property still works unchanged: no coercion, no rejection.
+	 */
+	public void testSetValueDoublePropertyUnchanged() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.DOUBLE_VALUE);
+		ConfigFieldModel model = new ConfigFieldModel(config, property);
+
+		model.setValue(Double.valueOf(3.14));
+
+		assertEquals(3.14, config.getDoubleValue(), 0d);
+		assertNull("Fractional value for a double property must not be rejected.", model.getInputError());
+	}
+
+	/**
+	 * Suite requiring {@link TypeIndex} for {@link TypedConfiguration} and
+	 * {@link ThreadContextManager} for the label resolution the rejected-value error message uses.
 	 */
 	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestConfigFieldModel.class, TypeIndex.Module.INSTANCE);
+		return ModuleLicenceTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestConfigFieldModel.class,
+				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE));
 	}
 }

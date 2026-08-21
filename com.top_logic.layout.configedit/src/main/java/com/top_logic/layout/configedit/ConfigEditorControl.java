@@ -133,10 +133,10 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				continue;
 			}
 
-			ConfigFieldModel model = new ConfigFieldModel(config, property);
+			ConfigFieldModel model = ConfigControlService.getInstance().createModel(config, property);
 			addCleanupAction(model::detach);
 
-			ReactControl input = ConfigFieldDispatch.createPlainControl(context, model);
+			ReactControl input = ConfigControlService.getInstance().createControl(context, model);
 
 			String label = resolveLabel(property);
 			String tooltip = resolveTooltip(property);

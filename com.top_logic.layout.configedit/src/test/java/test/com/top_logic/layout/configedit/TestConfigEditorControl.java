@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
@@ -405,6 +406,7 @@ public class TestConfigEditorControl extends TestCase {
 	public static Test suite() {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestConfigEditorControl.class,
-				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE));
+				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
+				ConfigControlService.Module.INSTANCE));
 	}
 }

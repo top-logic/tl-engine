@@ -58,46 +58,6 @@
 							<de>Nutzerdaten</de>
 						</label>
 					</group>
-					<foreign-objects
-						items="x -> $x.get(`Contacts:PersonContact#account`)"
-						label="`Contacts:PersonContact`"
-						type="tl.accounts:Person"
-					>
-						<layout>
-							<field
-								attribute="name"
-								fullQualifiedName="tl.accounts:Person#name"
-								type="tl.core:String"
-								visibility="read-only"
-							/>
-							<field
-								attribute="timezone"
-								fullQualifiedName="tl.accounts:Person#timeZone"
-								type="tl.util:TimeZone"
-							/>
-							<field
-								attribute="country"
-								fullQualifiedName="tl.accounts:Person#country"
-								type="tl.util:Country"
-							/>
-							<field
-								attribute="language"
-								fullQualifiedName="tl.accounts:Person#language"
-								type="tl.util:Language"
-							/>
-							<field
-								attribute="restrictedUser"
-								fullQualifiedName="tl.accounts:Person#restrictedUser"
-								type="tl.core:Boolean"
-							/>
-							<field
-								attribute="authDeviceID"
-								fullQualifiedName="tl.accounts:Person#authDeviceID"
-								type="tl.core:String"
-								visibility="read-only"
-							/>
-						</layout>
-					</foreign-objects>
 					<group>
 						<field
 							attribute="email"
@@ -163,9 +123,6 @@
 				<en>Create user</en>
 				<de>Benutzer anlegen</de>
 			</resourceKey>
-			<postCreateActions>
-				<setModel target="selection(dialogParent())"/>
-			</postCreateActions>
 			<operation><![CDATA[form -> {
     contact = $form.copy(null, true, x->new(`Contacts:PersonContact`));
     login = $form.get(`tl.contact.ui:CreateAccount#login`);
@@ -177,6 +134,11 @@
     });
     $contact;
 }]]></operation>
+			<postCreateActions>
+				<setModel target="selection(dialogParent())">
+					<input/>
+				</setModel>
+			</postCreateActions>
 		</transactionHandler>
 	</arguments>
 </config:template-call>

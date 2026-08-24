@@ -8,6 +8,7 @@ package test.com.top_logic.layout.configedit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
@@ -110,6 +111,9 @@ public class TestConfigEditorControl extends TestCase {
 		/** Property name for {@link #getItemArray()}. */
 		String ITEM_ARRAY = "itemArray";
 
+		/** Property name for {@link #getIndex()}. */
+		String INDEX = "index";
+
 		/**
 		 * A {@link ResKey} property is {@link PropertyKind#COMPLEX} - its type carries both a
 		 * {@code @Format} and a {@code ConfigurationValueBinding}, and a binding decides the kind
@@ -155,6 +159,16 @@ public class TestConfigEditorControl extends TestCase {
 		ListItem[] getItemArray();
 
 		void setItemArray(ListItem[] value);
+
+		/**
+		 * A {@link PropertyKind#MAP} property, edited by the same
+		 * {@link com.top_logic.layout.configedit.ConfigListEditorControl} as a keyed
+		 * {@link ListItem} LIST or ARRAY property - differing only in the value's shape (a
+		 * {@link Map}, keyed by each entry's {@link ListItem#getName()}) and in being unordered.
+		 */
+		@Name(INDEX)
+		@Key(ListItem.NAME)
+		Map<String, ListItem> getIndex();
 	}
 
 	/** Common instance type for the polymorphic handler implementations. */
@@ -491,7 +505,10 @@ public class TestConfigEditorControl extends TestCase {
 
 	/**
 	 * Finds the header action button carrying the given label (the move-up "\u25B2", move-down
-	 * "\u25BC", or remove "\u2715" icon) inside the given element group.
+	 * "\u25BC", or remove "\u2715" icon) inside the given element group, or {@code null} if no
+	 * such button is rendered - which is the expected outcome for the move buttons on an
+	 * unordered (MAP) collection, not just a possible bug, so this does not fail on a miss the way
+	 * {@link #findKeyFieldModel(ReactControl)} deliberately does not either.
 	 *
 	 * <p>
 	 * Reached through {@link ReactControl#scriptingChildren()} and
@@ -508,7 +525,6 @@ public class TestConfigEditorControl extends TestCase {
 				return button;
 			}
 		}
-		fail("Should have a \"" + label + "\" header button");
 		return null;
 	}
 
@@ -1052,6 +1068,55 @@ public class TestConfigEditorControl extends TestCase {
 		assertEquals("One element must remain.", 1, result.length);
 		assertEquals("The element's type must have changed to HandlerBConfig.",
 			HandlerBConfig.class, result[0].descriptor().getConfigurationInterface());
+	}
+
+	/** A map property is rendered by the collection editor. */
+	public void testMapPropertyIsRendered() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+
+		assertTrue("A MAP property must be rendered by the collection editor.",
+			rendersProperty(config, TestConfig.INDEX));
+	}
+
+	/** Its entries are shown, one group each. */
+	public void testMapEntriesAreRendered() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.getIndex().put("Apple", newListItem("Apple"));
+		config.getIndex().put("Banana", newListItem("Banana"));
+
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.INDEX);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		assertEquals("Both map entries must be rendered, one group each.", 2, elementGroups(editor).size());
+	}
+
+	/** Naming a pending entry puts it into the map under its key. */
+	public void testNamingThePendingEntryPutsItIntoTheMap() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.INDEX);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+		clickAddButton(editor);
+
+		findKeyFieldModel(elementGroups(editor).get(0)).setValue("alpha");
+
+		Map<?, ?> index = (Map<?, ?>) config.value(property);
+		assertEquals(1, index.size());
+		assertTrue("The map must be keyed by the entry's key value.", index.containsKey("alpha"));
+	}
+
+	/** An unordered collection offers no reorder buttons. */
+	public void testMapEntriesHaveNoReorderButtons() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.getIndex().put("Apple", newListItem("Apple"));
+
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.INDEX);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		assertNull("A map is unordered; moving an entry has no meaning.",
+			findHeaderButton(elementGroups(editor).get(0), "▲"));
 	}
 
 	/**

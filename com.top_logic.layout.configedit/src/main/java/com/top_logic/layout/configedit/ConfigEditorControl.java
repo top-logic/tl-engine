@@ -27,16 +27,17 @@ import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 
 /**
- * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, LIST, and ARRAY properties
- * of a {@link ConfigurationItem}, plus a COMPLEX property that also has a value provider (e.g. a
- * {@link com.top_logic.basic.util.ResKey} property).
+ * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, LIST, ARRAY, and MAP
+ * properties of a {@link ConfigurationItem}, plus a COMPLEX property that also has a value
+ * provider (e.g. a {@link com.top_logic.basic.util.ResKey} property).
  *
  * <p>
  * Each PLAIN/REF property, and a COMPLEX property with a value provider, is wrapped in a
  * {@link ReactFormFieldChromeControl} with label, mandatory indicator, and help text. ITEM
  * properties are rendered as collapsible {@link ReactFormGroupControl} sections containing a
- * nested {@link ConfigEditorControl}. LIST and ARRAY properties are rendered as collapsible
- * sections containing nested editors for each element. MAP, DERIVED, and a binding-only COMPLEX
+ * nested {@link ConfigEditorControl}. LIST, ARRAY, and MAP properties are rendered as collapsible
+ * sections containing nested editors for each element - the same editor for all three, MAP
+ * differing only in the value's shape and in being unordered. DERIVED and a binding-only COMPLEX
  * property are skipped.
  * </p>
  */
@@ -124,7 +125,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				continue;
 			}
 
-			if (property.kind() == PropertyKind.LIST || property.kind() == PropertyKind.ARRAY) {
+			if (property.kind() == PropertyKind.LIST || property.kind() == PropertyKind.ARRAY
+				|| property.kind() == PropertyKind.MAP) {
 				ConfigListEditorControl listEditor =
 					new ConfigListEditorControl(context, config, property);
 				ReactFormGroupControl listGroup = new ReactFormGroupControl(
@@ -235,12 +237,12 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *
 	 * <p>
 	 * {@link PropertyKind#PLAIN}, {@link PropertyKind#REF}, {@link PropertyKind#ITEM},
-	 * {@link PropertyKind#LIST}, and {@link PropertyKind#ARRAY} are always supported - LIST and
-	 * ARRAY are the same sequence-of-elements editor, differing only in the value's shape. A
-	 * {@link PropertyKind#COMPLEX} property - e.g. a {@link com.top_logic.basic.util.ResKey}
-	 * property, whose type carries both a {@code @Format} and a {@code ConfigurationValueBinding}
-	 * - is supported only when it also has a {@link PropertyDescriptor#getValueProvider() value
-	 * provider}: exactly the subset
+	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, and {@link PropertyKind#MAP} are
+	 * always supported - LIST, ARRAY, and MAP are the same sequence-of-elements editor, differing
+	 * only in the value's shape and, for MAP, in being unordered. A {@link PropertyKind#COMPLEX}
+	 * property - e.g. a {@link com.top_logic.basic.util.ResKey} property, whose type carries both
+	 * a {@code @Format} and a {@code ConfigurationValueBinding} - is supported only when it also
+	 * has a {@link PropertyDescriptor#getValueProvider() value provider}: exactly the subset
 	 * {@link ConfigControlService#createModel(ConfigurationItem, PropertyDescriptor)} and
 	 * {@link ConfigControlService#createControl(ReactContext, ConfigFieldModel)} accept.
 	 * Admitting more here would hand them a property they reject with an
@@ -250,7 +252,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	private static boolean isSupportedKind(PropertyDescriptor property) {
 		PropertyKind kind = property.kind();
 		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
-			|| kind == PropertyKind.LIST || kind == PropertyKind.ARRAY
+			|| kind == PropertyKind.LIST || kind == PropertyKind.ARRAY || kind == PropertyKind.MAP
 			|| (kind == PropertyKind.COMPLEX && property.getValueProvider() != null);
 	}
 

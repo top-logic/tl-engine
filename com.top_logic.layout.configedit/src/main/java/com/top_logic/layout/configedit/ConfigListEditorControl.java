@@ -6,8 +6,11 @@
 package com.top_logic.layout.configedit;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -37,14 +40,15 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
- * A {@link ReactControl} that renders a full editor for a LIST or an ARRAY property of a
- * {@link ConfigurationItem} - the same sequence-of-elements editor for both, differing only in the
- * value's shape.
+ * A {@link ReactControl} that renders a full editor for a LIST, an ARRAY, or a MAP property of a
+ * {@link ConfigurationItem} - the same sequence-of-elements editor for all three, differing only
+ * in the value's shape and, for a MAP, in being unordered (see {@link PropertyDescriptor#isOrdered()}).
  *
  * <p>
  * Each list element is rendered as a collapsible {@link ReactFormGroupControl} with action buttons
  * (Move Up, Move Down, Remove) in the header and a nested {@link ConfigEditorControl} for the
- * element's properties. An Add button at the bottom creates new elements.
+ * element's properties - Move Up/Move Down only for an ordered collection. An Add button at the
+ * bottom creates new elements.
  * </p>
  *
  * <p>
@@ -142,6 +146,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * duplicate key at the moment of the change. For a {@link PropertyKind#ARRAY} property it is a
 	 * detached copy that only reaches the configuration through {@link #storeElements(List)}.
 	 * </p>
+	 *
+	 * <p>
+	 * A {@link PropertyKind#MAP} property's own value is, under the hood, exactly as directly
+	 * mutable as a LIST's - {@link Map#put(Object, Object)}/{@link Map#remove(Object)} on it take
+	 * effect immediately, the same as {@link List#add(Object)}/{@link List#remove(Object)} do on a
+	 * LIST's live list. But there is no live list to hand out here: what this method returns is
+	 * rows to render and address by index, and a {@link Map} has no index of its own. So, like
+	 * ARRAY, this is a detached copy - the map's values, in the map's current iteration order -
+	 * that reaches the configuration only through {@link #storeElements(List)} rebuilding the map
+	 * from scratch.
+	 * </p>
 	 */
 	@SuppressWarnings("unchecked")
 	private List<ConfigurationItem> elements() {
@@ -150,16 +165,41 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			return value == null ? new ArrayList<>()
 				: new ArrayList<>((List<ConfigurationItem>) PropertyDescriptorImpl.arrayAsList(value));
 		}
+		if (_property.kind() == PropertyKind.MAP) {
+			Map<?, ?> map = (Map<?, ?>) value;
+			return map == null ? new ArrayList<>() : new ArrayList<>((Collection<ConfigurationItem>) map.values());
+		}
 		return (List<ConfigurationItem>) value;
 	}
 
 	/**
 	 * Writes back the elements obtained from {@link #elements()}, for a property shape that
 	 * cannot be mutated in place.
+	 *
+	 * <p>
+	 * A {@link PropertyKind#MAP} property is rebuilt wholesale into a fresh {@link LinkedHashMap},
+	 * as {@code MapFormGroupBuilder} (the classic form's equivalent) does, so the order the user
+	 * sees stays stable - keyed by each entry's own key property value, resolved by
+	 * {@link #resolveKeyProperty(ConfigurationItem)} rather than {@link #_property}'s declared one,
+	 * for the same polymorphism reason that method exists for. A duplicate key cannot reach this
+	 * method: {@link #commitPending()} already refused one before committing, which matters here
+	 * in a way it does not for a keyed LIST - {@link Map#put(Object, Object)} on an existing key
+	 * silently overwrites it, unlike inserting a duplicate key into a keyed LIST, which
+	 * TypedConfiguration rejects with an {@link IllegalArgumentException}.
+	 * </p>
 	 */
 	private void storeElements(List<ConfigurationItem> elements) {
 		if (_property.kind() == PropertyKind.ARRAY) {
 			_parentConfig.update(_property, PropertyDescriptorImpl.listAsArray(_property, elements));
+			return;
+		}
+		if (_property.kind() == PropertyKind.MAP) {
+			Map<Object, ConfigurationItem> newMap = new LinkedHashMap<>();
+			for (ConfigurationItem element : elements) {
+				newMap.put(element.value(resolveKeyProperty(element)), element);
+			}
+			_parentConfig.update(_property, newMap);
+			return;
 		}
 		// A LIST property was mutated in place and needs no write-back.
 	}
@@ -212,23 +252,38 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		putState("children", getChildren());
 	}
 
+	/**
+	 * The group for a committed element, with action buttons (Move Up, Move Down, Remove) in the
+	 * header and a nested {@link ConfigEditorControl} for the element's properties in the body.
+	 *
+	 * <p>
+	 * Move Up/Move Down are added only when {@link #_property} {@link PropertyDescriptor#isOrdered()
+	 * is ordered}: {@code setKindMap} sets a MAP property's {@code ordered} flag to {@code false},
+	 * since a {@link java.util.Map} has no position of its own for an entry to move to - unlike a
+	 * keyed LIST, which stays ordered and keeps both buttons.
+	 * </p>
+	 */
 	private ReactFormGroupControl createElementGroup(ConfigurationItem item, int index, int listSize, boolean expanded) {
 		Label label = resolveElementLabel(item);
 
-		// Action buttons: Move Up, Move Down, Remove.
-		ReactButtonControl moveUpButton = new ReactButtonControl(_context, "\u25B2", ctx -> {
-			moveUp(indexOf(item));
-			return HandlerResult.DEFAULT_RESULT;
-		});
-		moveUpButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-		moveUpButton.setDisabled(index == 0);
+		List<ReactControl> headerActions = new ArrayList<>();
+		if (_property.isOrdered()) {
+			ReactButtonControl moveUpButton = new ReactButtonControl(_context, "\u25B2", ctx -> {
+				moveUp(indexOf(item));
+				return HandlerResult.DEFAULT_RESULT;
+			});
+			moveUpButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+			moveUpButton.setDisabled(index == 0);
+			headerActions.add(moveUpButton);
 
-		ReactButtonControl moveDownButton = new ReactButtonControl(_context, "\u25BC", ctx -> {
-			moveDown(indexOf(item));
-			return HandlerResult.DEFAULT_RESULT;
-		});
-		moveDownButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-		moveDownButton.setDisabled(index == listSize - 1);
+			ReactButtonControl moveDownButton = new ReactButtonControl(_context, "\u25BC", ctx -> {
+				moveDown(indexOf(item));
+				return HandlerResult.DEFAULT_RESULT;
+			});
+			moveDownButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+			moveDownButton.setDisabled(index == listSize - 1);
+			headerActions.add(moveDownButton);
+		}
 
 		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
 			int currentIndex = indexOf(item);
@@ -238,8 +293,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-
-		List<ReactControl> headerActions = List.of(moveUpButton, moveDownButton, removeButton);
+		headerActions.add(removeButton);
 
 		PropertyDescriptor keyProperty = resolveKeyProperty(item);
 		List<ReactControl> bodyChildren = createBodyChildren(item, keyProperty, false);
@@ -562,7 +616,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private void commitPending() {
-		PropertyDescriptor keyProperty = _property.getKeyProperty();
+		PropertyDescriptor keyProperty = resolveKeyProperty(_pendingEntry);
 		Object key = _pendingEntry.value(keyProperty);
 		if (key == null || key.toString().isEmpty()) {
 			return;
@@ -584,6 +638,16 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	/**
 	 * Whether some entry already committed to the edited collection carries the given key.
 	 *
+	 * <p>
+	 * Resolves each existing entry's key via {@link #resolveKeyProperty(ConfigurationItem)}, not
+	 * {@link #_property}'s declared key property, for the same reason every other key lookup in
+	 * this class does - see that method's own JavaDoc. This is also what makes a duplicate key
+	 * impossible for a {@link PropertyKind#MAP} property: unlike a keyed LIST, where
+	 * TypedConfiguration itself rejects a colliding insert, {@link Map#put(Object, Object)} on an
+	 * already-used key would silently overwrite the existing entry - so this check, not the
+	 * underlying structure, is the only thing standing in the way.
+	 * </p>
+	 *
 	 * @param key
 	 *        The candidate key. Never {@code null} or empty - {@link #commitPending()} only calls
 	 *        this once {@link #_pendingEntry}'s own key has cleared that check.
@@ -593,9 +657,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		if (items == null) {
 			return false;
 		}
-		PropertyDescriptor keyProperty = _property.getKeyProperty();
 		for (ConfigurationItem existing : items) {
-			if (key.equals(existing.value(keyProperty))) {
+			if (key.equals(existing.value(resolveKeyProperty(existing)))) {
 				return true;
 			}
 		}

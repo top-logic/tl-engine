@@ -35,9 +35,9 @@ import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
  * Each PLAIN/REF property, and a COMPLEX property with a value provider, is wrapped in a
  * {@link ReactFormFieldChromeControl} with label, mandatory indicator, and help text. ITEM
  * properties are rendered as collapsible {@link ReactFormGroupControl} sections containing a
- * nested {@link ConfigEditorControl}. LIST properties are rendered as collapsible sections
- * containing nested editors for each list element. MAP, ARRAY, DERIVED, and a binding-only
- * COMPLEX property are skipped.
+ * nested {@link ConfigEditorControl}. LIST and ARRAY properties are rendered as collapsible
+ * sections containing nested editors for each element. MAP, DERIVED, and a binding-only COMPLEX
+ * property are skipped.
  * </p>
  */
 public class ConfigEditorControl extends ReactFormLayoutControl {
@@ -124,7 +124,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				continue;
 			}
 
-			if (property.kind() == PropertyKind.LIST) {
+			if (property.kind() == PropertyKind.LIST || property.kind() == PropertyKind.ARRAY) {
 				ConfigListEditorControl listEditor =
 					new ConfigListEditorControl(context, config, property);
 				ReactFormGroupControl listGroup = new ReactFormGroupControl(
@@ -234,11 +234,13 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * Whether the given property is rendered as a field in this form.
 	 *
 	 * <p>
-	 * {@link PropertyKind#PLAIN}, {@link PropertyKind#REF}, {@link PropertyKind#ITEM}, and
-	 * {@link PropertyKind#LIST} are always supported. A {@link PropertyKind#COMPLEX} property -
-	 * e.g. a {@link com.top_logic.basic.util.ResKey} property, whose type carries both a
-	 * {@code @Format} and a {@code ConfigurationValueBinding} - is supported only when it also
-	 * has a {@link PropertyDescriptor#getValueProvider() value provider}: exactly the subset
+	 * {@link PropertyKind#PLAIN}, {@link PropertyKind#REF}, {@link PropertyKind#ITEM},
+	 * {@link PropertyKind#LIST}, and {@link PropertyKind#ARRAY} are always supported - LIST and
+	 * ARRAY are the same sequence-of-elements editor, differing only in the value's shape. A
+	 * {@link PropertyKind#COMPLEX} property - e.g. a {@link com.top_logic.basic.util.ResKey}
+	 * property, whose type carries both a {@code @Format} and a {@code ConfigurationValueBinding}
+	 * - is supported only when it also has a {@link PropertyDescriptor#getValueProvider() value
+	 * provider}: exactly the subset
 	 * {@link ConfigControlService#createModel(ConfigurationItem, PropertyDescriptor)} and
 	 * {@link ConfigControlService#createControl(ReactContext, ConfigFieldModel)} accept.
 	 * Admitting more here would hand them a property they reject with an
@@ -248,7 +250,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	private static boolean isSupportedKind(PropertyDescriptor property) {
 		PropertyKind kind = property.kind();
 		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
-			|| kind == PropertyKind.LIST
+			|| kind == PropertyKind.LIST || kind == PropertyKind.ARRAY
 			|| (kind == PropertyKind.COMPLEX && property.getValueProvider() != null);
 	}
 

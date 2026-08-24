@@ -104,6 +104,9 @@ public class TestConfigEditorControl extends TestCase {
 		/** Property name for {@link #getBindingOnly()}. */
 		String BINDING_ONLY = "bindingOnly";
 
+		/** Property name for {@link #getItemArray()}. */
+		String ITEM_ARRAY = "itemArray";
+
 		/**
 		 * A {@link ResKey} property is {@link PropertyKind#COMPLEX} - its type carries both a
 		 * {@code @Format} and a {@code ConfigurationValueBinding}, and a binding decides the kind
@@ -139,6 +142,16 @@ public class TestConfigEditorControl extends TestCase {
 		InnerConfig getInner();
 
 		void setInner(InnerConfig value);
+
+		/**
+		 * An {@link PropertyKind#ARRAY} property of configuration items, edited by the same
+		 * {@link com.top_logic.layout.configedit.ConfigListEditorControl} as a {@link ListItem} LIST
+		 * property - only the value's shape (array vs. {@link List}) differs.
+		 */
+		@Name(ITEM_ARRAY)
+		ListItem[] getItemArray();
+
+		void setItemArray(ListItem[] value);
 	}
 
 	/** Common instance type for the polymorphic handler implementations. */
@@ -352,6 +365,13 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * Simulates clicking the given editor's "+" add button, as an end user would.
+	 */
+	private void clickAddButton(TestableConfigListEditorControl editor) {
+		click(findAddButton(editor));
+	}
+
+	/**
 	 * Adding to a keyed list works as long as every existing element already has a real key -
 	 * distinct real names never collide.
 	 */
@@ -528,6 +548,34 @@ public class TestConfigEditorControl extends TestCase {
 
 		assertFalse("A binding-only property has no text form and must stay skipped.",
 			rendersProperty(config, TestConfig.BINDING_ONLY));
+	}
+
+	/**
+	 * An array property is a sequence like a list and gets the same editor.
+	 */
+	public void testArrayPropertyIsRenderedByListEditor() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+
+		assertTrue("An array property must be rendered by the list editor.",
+			rendersProperty(config, TestConfig.ITEM_ARRAY));
+	}
+
+	/**
+	 * Adding to an array property stores a new array, not a list: the configuration rejects a
+	 * value of the wrong shape, so this is what makes the editor usable at all.
+	 */
+	public void testAddingToArrayPropertyStoresAnArray() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.ITEM_ARRAY);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		clickAddButton(editor);
+
+		Object value = config.value(property);
+		assertNotNull("The array must have been stored.", value);
+		assertTrue("An array property must hold an array, not a list.", value.getClass().isArray());
+		assertEquals("One element must have been added.", 1, java.lang.reflect.Array.getLength(value));
 	}
 
 	/**

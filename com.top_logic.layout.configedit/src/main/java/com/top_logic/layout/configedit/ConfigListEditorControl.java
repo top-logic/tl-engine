@@ -12,6 +12,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyDescriptorImpl;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.copy.ConfigCopier;
@@ -35,8 +36,9 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * A {@link ReactControl} that renders a full editor for a LIST property of a
- * {@link ConfigurationItem}.
+ * A {@link ReactControl} that renders a full editor for a LIST or an ARRAY property of a
+ * {@link ConfigurationItem} - the same sequence-of-elements editor for both, differing only in the
+ * value's shape.
  *
  * <p>
  * Each list element is rendered as a collapsible {@link ReactFormGroupControl} with action buttons
@@ -106,13 +108,43 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
+	 * The elements currently held by the edited property.
+	 *
+	 * <p>
+	 * For a {@link PropertyKind#LIST} property this is the configuration's own live list, so a
+	 * mutation of it takes effect directly - which is what lets TypedConfiguration reject a
+	 * duplicate key at the moment of the change. For a {@link PropertyKind#ARRAY} property it is a
+	 * detached copy that only reaches the configuration through {@link #storeElements(List)}.
+	 * </p>
+	 */
+	@SuppressWarnings("unchecked")
+	private List<ConfigurationItem> elements() {
+		Object value = _parentConfig.value(_property);
+		if (_property.kind() == PropertyKind.ARRAY) {
+			return value == null ? new ArrayList<>()
+				: new ArrayList<>((List<ConfigurationItem>) PropertyDescriptorImpl.arrayAsList(value));
+		}
+		return (List<ConfigurationItem>) value;
+	}
+
+	/**
+	 * Writes back the elements obtained from {@link #elements()}, for a property shape that
+	 * cannot be mutated in place.
+	 */
+	private void storeElements(List<ConfigurationItem> elements) {
+		if (_property.kind() == PropertyKind.ARRAY) {
+			_parentConfig.update(_property, PropertyDescriptorImpl.listAsArray(_property, elements));
+		}
+		// A LIST property was mutated in place and needs no write-back.
+	}
+
+	/**
 	 * Clears all children and rebuilds them from the current list state.
 	 *
 	 * @param expandItem
 	 *        Element whose group should be rendered expanded; all others stay collapsed. May be
 	 *        {@code null}.
 	 */
-	@SuppressWarnings("unchecked")
 	private void rebuild(ConfigurationItem expandItem) {
 		removeListeners();
 
@@ -121,7 +153,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 		getChildren().clear();
 
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
+		List<ConfigurationItem> items = elements();
 		if (items != null) {
 			for (int i = 0; i < items.size(); i++) {
 				ConfigurationItem item = items.get(i);
@@ -234,12 +266,11 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		return new ReactFormFieldChromeControl(_context, "Type", typeSelect);
 	}
 
-	@SuppressWarnings("unchecked")
 	private void onTypeChanged(ConfigurationItem oldItem, Object selected) {
 		if (selected == null) {
 			return;
 		}
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
+		List<ConfigurationItem> items = elements();
 		int index = items.indexOf(oldItem);
 		if (index < 0) {
 			return;
@@ -248,6 +279,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		ConfigCopier.copyContent(new DefaultInstantiationContext(ConfigListEditorControl.class),
 			oldItem, replacement, true);
 		items.set(index, replacement);
+		storeElements(items);
 		rebuild(replacement);
 	}
 
@@ -256,9 +288,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			&& _choices.mapping().asOption(_choices.options(), item) != null;
 	}
 
-	@SuppressWarnings("unchecked")
 	private int indexOf(ConfigurationItem item) {
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
+		List<ConfigurationItem> items = elements();
 		return items != null ? items.indexOf(item) : -1;
 	}
 
@@ -267,9 +298,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	/**
 	 * Adds a new element with default values to the end of the list.
 	 */
-	@SuppressWarnings("unchecked")
 	private void addElement() {
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
+		List<ConfigurationItem> items = elements();
 		ConfigurationItem newItem;
 		if (_choices.hasOptions()) {
 			newItem = (ConfigurationItem) _choices.mapping().toSelection(_choices.options().get(0));
@@ -278,6 +308,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 		checkKeyAvailable(items, newItem);
 		items.add(newItem);
+		storeElements(items);
 		rebuild(newItem);
 	}
 
@@ -342,11 +373,11 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	/**
 	 * Removes the element at the given index.
 	 */
-	@SuppressWarnings("unchecked")
 	private void removeElement(int index) {
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
+		List<ConfigurationItem> items = elements();
 		if (items != null && index >= 0 && index < items.size()) {
 			items.remove(index);
+			storeElements(items);
 			rebuild(null);
 		}
 	}
@@ -354,12 +385,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	/**
 	 * Moves the element at the given index one position up.
 	 */
-	@SuppressWarnings("unchecked")
 	private void moveUp(int index) {
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
+		List<ConfigurationItem> items = elements();
 		if (items != null && index > 0 && index < items.size()) {
 			ConfigurationItem item = items.remove(index);
 			items.add(index - 1, item);
+			storeElements(items);
 			rebuild(null);
 		}
 	}
@@ -367,12 +398,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	/**
 	 * Moves the element at the given index one position down.
 	 */
-	@SuppressWarnings("unchecked")
 	private void moveDown(int index) {
-		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
+		List<ConfigurationItem> items = elements();
 		if (items != null && index >= 0 && index < items.size() - 1) {
 			ConfigurationItem item = items.remove(index);
 			items.add(index + 1, item);
+			storeElements(items);
 			rebuild(null);
 		}
 	}

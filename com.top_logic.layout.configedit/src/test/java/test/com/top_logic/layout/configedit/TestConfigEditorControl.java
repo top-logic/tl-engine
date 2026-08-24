@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.configedit;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -213,16 +214,31 @@ public class TestConfigEditorControl extends TestCase {
 		}
 	}
 
-	/** Test config with a polymorphic ITEM property. */
+	/** Test config with a polymorphic ITEM property and a polymorphic ARRAY property. */
 	public interface PolymorphicTestConfig extends ConfigurationItem {
 
 		/** Property name for {@link #getHandler()}. */
 		String HANDLER = "handler";
 
+		/** Property name for {@link #getHandlerArray()}. */
+		String HANDLER_ARRAY = "handlerArray";
+
 		@Name(HANDLER)
 		HandlerConfig getHandler();
 
 		void setHandler(HandlerConfig value);
+
+		/**
+		 * A {@link PropertyKind#ARRAY} property whose element type ({@link HandlerConfig}) is
+		 * itself a {@link PolymorphicConfiguration} with more than one implementation
+		 * ({@link HandlerA}, {@link HandlerB}) - unlike {@link TestConfig#getItemArray()}, this
+		 * array property's per-element type selector actually has more than one option, so it is
+		 * rendered.
+		 */
+		@Name(HANDLER_ARRAY)
+		HandlerConfig[] getHandlerArray();
+
+		void setHandlerArray(HandlerConfig[] value);
 	}
 
 	/** Element type of {@link ListTestConfig#getKeyedItems()} and {@link ListTestConfig#getPlainItems()}. */
@@ -386,7 +402,7 @@ public class TestConfigEditorControl extends TestCase {
 	 * not one of them).
 	 */
 	private List<ReactControl> elementGroups(TestableConfigListEditorControl editor) {
-		List<ReactControl> groups = new java.util.ArrayList<>();
+		List<ReactControl> groups = new ArrayList<>();
 		for (ReactControl child : editor.getChildrenList()) {
 			if (child instanceof ReactFormGroupControl) {
 				groups.add(child);
@@ -415,6 +431,24 @@ public class TestConfigEditorControl extends TestCase {
 			}
 		}
 		fail("Should have a \"" + label + "\" header button");
+		return null;
+	}
+
+	/**
+	 * Finds the field model of the "Type" selector rendered inside the given element group -
+	 * reached the same way as {@link #findHeaderButton(ReactControl, String)}, via
+	 * {@link ReactControl#scriptingChildren()} and {@link ReactControl#scriptingScalarState()},
+	 * plus the public {@link ReactControl#getModel()} of the field control found that way.
+	 */
+	private FieldModel findTypeFieldModel(ReactControl elementGroup) {
+		for (ReactControl child : elementGroup.scriptingChildren()) {
+			if ("Type".equals(child.scriptingScalarState().get("label"))) {
+				for (ReactControl field : child.scriptingChildren()) {
+					return (FieldModel) field.getModel();
+				}
+			}
+		}
+		fail("Should have a \"Type\" selector field in the element group");
 		return null;
 	}
 
@@ -688,6 +722,45 @@ public class TestConfigEditorControl extends TestCase {
 		assertEquals("Apple", reordered[0].getName());
 		assertEquals("Cherry", reordered[1].getName());
 		assertEquals("Banana", reordered[2].getName());
+	}
+
+	/**
+	 * Changing an element's type in a polymorphic array property changes the element's type and
+	 * writes the result back as an array, not a list.
+	 *
+	 * <p>
+	 * Unlike {@link TestConfig#getItemArray()} (whose element type, {@link ListItem}, has no
+	 * second implementation), {@link PolymorphicTestConfig#getHandlerArray()}'s element type
+	 * ({@link HandlerConfig}) has two ({@link HandlerA}, {@link HandlerB}), so its per-element type
+	 * selector genuinely has more than one option and is rendered - the type selector only renders
+	 * when {@code options().size() > 1}
+	 * ({@code ConfigListEditorControl.createElementGroup}), which does not depend on the property
+	 * being LIST or ARRAY.
+	 * </p>
+	 */
+	public void testChangingTypeInPolymorphicArrayPropertyStoresAnArray() {
+		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
+		HandlerAConfig handlerA = TypedConfiguration.newConfigItem(HandlerAConfig.class);
+		handlerA.setNameA("first");
+		config.setHandlerArray(new HandlerConfig[] { handlerA });
+		PropertyDescriptor property = config.descriptor().getProperty(PolymorphicTestConfig.HANDLER_ARRAY);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		List<Object> options =
+			com.top_logic.layout.configedit.PolymorphicOptions.compute(config, property).options();
+		int handlerBIndex = options.indexOf(HandlerB.class);
+		assertTrue("HandlerB must be an available option for the array property too", handlerBIndex >= 0);
+
+		FieldModel typeModel = findTypeFieldModel(elementGroups(editor).get(0));
+		typeModel.setValue(com.top_logic.layout.configedit.PolymorphicOptions.keyFor(handlerBIndex));
+
+		Object value = config.value(property);
+		assertTrue("An array property must still hold an array after a type change.", value.getClass().isArray());
+		HandlerConfig[] result = (HandlerConfig[]) value;
+		assertEquals("One element must remain.", 1, result.length);
+		assertEquals("The element's type must have changed to HandlerBConfig.",
+			HandlerBConfig.class, result[0].descriptor().getConfigurationInterface());
 	}
 
 	/**

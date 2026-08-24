@@ -27,8 +27,8 @@ import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 
 /**
- * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, and LIST properties of a
- * {@link ConfigurationItem}, plus a COMPLEX property that also has a value provider (e.g. a
+ * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, LIST, and ARRAY properties
+ * of a {@link ConfigurationItem}, plus a COMPLEX property that also has a value provider (e.g. a
  * {@link com.top_logic.basic.util.ResKey} property).
  *
  * <p>
@@ -178,8 +178,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Creates a header {@link ReactTextControl} for a property group (ITEM/LIST), carrying the
-	 * property's label and, if available, its {@code JavaDoc} tooltip.
+	 * Creates a header {@link ReactTextControl} for a property group (ITEM/LIST/ARRAY), carrying
+	 * the property's label and, if available, its {@code JavaDoc} tooltip.
 	 */
 	protected ReactTextControl createGroupHeader(ReactContext context, PropertyDescriptor property) {
 		String label = resolveLabel(property);

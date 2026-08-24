@@ -5,23 +5,35 @@
  */
 package test.com.top_logic.layout.configedit;
 
+import java.util.List;
+import java.util.Set;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamWriter;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.AbstractConfigurationValueBinding;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldModel;
@@ -55,6 +67,25 @@ public class TestConfigEditorControl extends TestCase {
 		void setTitle(String value);
 	}
 
+	/**
+	 * A minimal {@code ConfigurationValueBinding} with no accompanying {@code @Format} - stands
+	 * in for the framework's real "binding-only" bindings ({@code AbstractListBinding},
+	 * {@code MapAttributeBinding}, {@code XMLFragmentString}), none of which pair with a
+	 * {@code ConfigurationValueProvider}. Never actually exercised for XML I/O by these tests.
+	 */
+	public static class NoFormatBinding extends AbstractConfigurationValueBinding<List<String>> {
+		@Override
+		public void saveConfigItem(XMLStreamWriter out, List<String> item) throws XMLStreamException {
+			throw new UnsupportedOperationException("Not exercised by these tests.");
+		}
+
+		@Override
+		public List<String> loadConfigItem(XMLStreamReader in, List<String> baseValue)
+				throws XMLStreamException, ConfigurationException {
+			throw new UnsupportedOperationException("Not exercised by these tests.");
+		}
+	}
+
 	/** Test configuration with a mix of property types. */
 	public interface TestConfig extends ConfigurationItem {
 
@@ -70,11 +101,28 @@ public class TestConfigEditorControl extends TestCase {
 		/** Property name for {@link #getInner()}. */
 		String INNER = "inner";
 
+		/** Property name for {@link #getBindingOnly()}. */
+		String BINDING_ONLY = "bindingOnly";
+
+		/**
+		 * A {@link ResKey} property is {@link PropertyKind#COMPLEX} - its type carries both a
+		 * {@code @Format} and a {@code ConfigurationValueBinding}, and a binding decides the kind
+		 * before the value provider is considered. It has a value provider, so it can be edited as
+		 * text and must appear in the form.
+		 */
 		@Name(LABEL)
 		@Mandatory
-		String getLabel();
+		ResKey getLabel();
 
-		void setLabel(String value);
+		void setLabel(ResKey value);
+
+		/**
+		 * A {@link PropertyKind#COMPLEX} property with only a value binding and no format has no
+		 * way to become text, so it must stay skipped.
+		 */
+		@Name(BINDING_ONLY)
+		@Binding(NoFormatBinding.class)
+		List<String> getBindingOnly();
 
 		@Name(COUNT)
 		@IntDefault(0)
@@ -202,6 +250,11 @@ public class TestConfigEditorControl extends TestCase {
 			super(context, config);
 		}
 
+		TestableConfigEditorControl(ReactContext context, ConfigurationItem config,
+				Set<PropertyDescriptor> hiddenProperties) {
+			super(context, config, hiddenProperties, false);
+		}
+
 		@Override
 		protected String resolveLabel(PropertyDescriptor property) {
 			return property.getPropertyName();
@@ -251,6 +304,29 @@ public class TestConfigEditorControl extends TestCase {
 
 	private ReactContext createTestContext() {
 		return new DefaultReactContext("", "test", new SSEUpdateQueue());
+	}
+
+	/**
+	 * Whether {@code propertyName} contributes a rendered child to a {@link ConfigEditorControl}
+	 * built over {@code config}.
+	 *
+	 * <p>
+	 * Determined by comparing the child count of a control built with nothing hidden against one
+	 * that hides exactly this property (the {@code hiddenProperties} constructor parameter
+	 * {@link ConfigEditorControl} already offers): a property that was actually rendered
+	 * contributes exactly one child, so hiding it removes exactly one. This is the same
+	 * before/after comparison {@link #testNullItemPropertySkipped()} already relies on to prove
+	 * that a skipped property adds nothing.
+	 * </p>
+	 */
+	private boolean rendersProperty(ConfigurationItem config, String propertyName) {
+		PropertyDescriptor property = config.descriptor().getProperty(propertyName);
+
+		int shown = new TestableConfigEditorControl(createTestContext(), config).getChildCount();
+		int hidden =
+			new TestableConfigEditorControl(createTestContext(), config, Set.of(property)).getChildCount();
+
+		return shown - hidden == 1;
 	}
 
 	/**
@@ -352,11 +428,13 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * Tests that the editor creates child controls for PLAIN/REF properties.
+	 * Tests that the editor creates child controls for PLAIN/REF/COMPLEX-with-format properties.
 	 *
 	 * <p>
-	 * TestConfig has 3 PLAIN properties (label, count, enabled) plus the inherited
-	 * "configuration-interface" property. With no ITEM set, the child count should be at least 3.
+	 * TestConfig has 2 PLAIN properties (count, enabled), a COMPLEX property with a format
+	 * (label), and a binding-only COMPLEX property (bindingOnly, which stays skipped), plus the
+	 * inherited "configuration-interface" PLAIN property. With no ITEM set, the child count
+	 * should be at least 3.
 	 * </p>
 	 */
 	public void testChildControlsCreated() {
@@ -364,7 +442,8 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
 
 		// ConfigurationItem declares "configuration-interface" as a PLAIN property too.
-		// 3 declared PLAIN + 1 inherited = at least 4 children (each wrapped in chrome).
+		// 3 rendered (count, enabled, label) + 1 inherited = at least 4 children (each wrapped in
+		// chrome); bindingOnly contributes none.
 		assertTrue("Should have at least 3 child controls", editor.getChildCount() >= 3);
 	}
 
@@ -407,13 +486,13 @@ public class TestConfigEditorControl extends TestCase {
 		});
 
 		// Before detach, changing config fires through the model.
-		config.setLabel("before");
+		config.setLabel(ResKey.text("before"));
 		assertEquals("Listener should fire before detach", 1, callCount[0]);
 
 		labelModel.detach();
 
 		// After detach, config changes are no longer propagated.
-		config.setLabel("after");
+		config.setLabel(ResKey.text("after"));
 		assertEquals("Listener should not fire after detach", 1, callCount[0]);
 
 		// Now verify that the editor's cleanup triggers detach via cleanup actions.
@@ -424,6 +503,31 @@ public class TestConfigEditorControl extends TestCase {
 
 		// After cleanupTree, the editor's children list is still there but SSE is detached.
 		// The cleanup actions (model::detach) have run.
+	}
+
+	/**
+	 * A {@link ResKey} property is {@link PropertyKind#COMPLEX} - its type carries a
+	 * {@code @Format} and a {@code ConfigurationValueBinding}, and a binding decides the kind
+	 * before the value provider is considered. It has a value provider, so it can be edited as
+	 * text and must appear in the form.
+	 */
+	public void testComplexPropertyWithFormatIsDisplayed() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+
+		assertTrue("A ResKey property must be rendered, not skipped.",
+			rendersProperty(config, TestConfig.LABEL));
+	}
+
+	/**
+	 * A {@link PropertyKind#COMPLEX} property with only a value binding and no format has no way
+	 * to become text, so it stays skipped - rendering it would hand the service a property it
+	 * rejects.
+	 */
+	public void testComplexPropertyWithoutFormatIsSkipped() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+
+		assertFalse("A binding-only property has no text form and must stay skipped.",
+			rendersProperty(config, TestConfig.BINDING_ONLY));
 	}
 
 	/**

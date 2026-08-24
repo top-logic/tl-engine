@@ -28,14 +28,16 @@ import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 
 /**
  * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, and LIST properties of a
- * {@link ConfigurationItem}.
+ * {@link ConfigurationItem}, plus a COMPLEX property that also has a value provider (e.g. a
+ * {@link com.top_logic.basic.util.ResKey} property).
  *
  * <p>
- * Each PLAIN/REF property is wrapped in a {@link ReactFormFieldChromeControl} with label, mandatory
- * indicator, and help text. ITEM properties are rendered as collapsible
- * {@link ReactFormGroupControl} sections containing a nested {@link ConfigEditorControl}. LIST
- * properties are rendered as collapsible sections containing nested editors for each list element.
- * MAP, ARRAY, DERIVED, and COMPLEX properties are skipped.
+ * Each PLAIN/REF property, and a COMPLEX property with a value provider, is wrapped in a
+ * {@link ReactFormFieldChromeControl} with label, mandatory indicator, and help text. ITEM
+ * properties are rendered as collapsible {@link ReactFormGroupControl} sections containing a
+ * nested {@link ConfigEditorControl}. LIST properties are rendered as collapsible sections
+ * containing nested editors for each list element. MAP, ARRAY, DERIVED, and a binding-only
+ * COMPLEX property are skipped.
  * </p>
  */
 public class ConfigEditorControl extends ReactFormLayoutControl {
@@ -90,7 +92,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			if (hiddenProperties.contains(property)) {
 				continue;
 			}
-			if (!isSupportedKind(property.kind())) {
+			if (!isSupportedKind(property)) {
 				continue;
 			}
 			if (isHidden(property)) {
@@ -228,9 +230,26 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor);
 	}
 
-	private static boolean isSupportedKind(PropertyKind kind) {
+	/**
+	 * Whether the given property is rendered as a field in this form.
+	 *
+	 * <p>
+	 * {@link PropertyKind#PLAIN}, {@link PropertyKind#REF}, {@link PropertyKind#ITEM}, and
+	 * {@link PropertyKind#LIST} are always supported. A {@link PropertyKind#COMPLEX} property -
+	 * e.g. a {@link com.top_logic.basic.util.ResKey} property, whose type carries both a
+	 * {@code @Format} and a {@code ConfigurationValueBinding} - is supported only when it also
+	 * has a {@link PropertyDescriptor#getValueProvider() value provider}: exactly the subset
+	 * {@link ConfigControlService#createModel(ConfigurationItem, PropertyDescriptor)} and
+	 * {@link ConfigControlService#createControl(ReactContext, ConfigFieldModel)} accept.
+	 * Admitting more here would hand them a property they reject with an
+	 * {@link IllegalArgumentException}.
+	 * </p>
+	 */
+	private static boolean isSupportedKind(PropertyDescriptor property) {
+		PropertyKind kind = property.kind();
 		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
-			|| kind == PropertyKind.LIST;
+			|| kind == PropertyKind.LIST
+			|| (kind == PropertyKind.COMPLEX && property.getValueProvider() != null);
 	}
 
 	private static boolean isHidden(PropertyDescriptor property) {

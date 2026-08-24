@@ -1003,11 +1003,17 @@ Control flow: expression-only: `cond ? a : b`, `switch { ... }`.
 5. Fix — If execution fails, read the error, fix the script, and execute again. Do NOT present unverified TLScript to the user.
 </workflow>
 
+<security>
+A script runs with YOUR USER'S rights, and the result is filtered for them - but only the model OBJECTS in it are. A value the script has already reduced to plain data is returned in full: a count (`all(\`m:T\`).size()`), and a LABEL produced by `toString($obj)` or `"" + $obj` (the label is resolved through the engine's MetaLabelProvider, which is deliberately not access-checked; object labels are non-secret by design).
+So: wrap fetched objects in `filterSecurity(...)` INSIDE the script - `filterSecurity(all(\`m:T\`))` - before you count them, coerce them to text, or present them. It applies the current user's read permissions to a value and drops what they may not read.
+NEVER rely on a label being filtered, and never present a label out of a script as proof the user may see that object.
+</security>
+
 <tools_ref>
 `script-doc.listTLScriptFunctions` — discover available functions.
 `script-doc.getTLScriptFunctionDocumentation` — verify a function's exact name, signature, and semantics before using it.
 `script-exec.validateTLScript` — validate a script without running it (read-only "check this" requests).
-`script-exec.executeTLScript` — run a script; it validates internally first, so for execution do NOT call `validateTLScript` separately. The `commit` argument controls whether changes persist.
+`script-exec.executeTLScript` — run a script; it validates internally first, so for execution do NOT call `validateTLScript` separately. The `withCommit` argument controls whether changes persist.
 `model-browser.listTypes` / `model-browser.listTypeParts` / `model-browser.listClassifiers` — verify a model literal (`` `module:type#part` ``) before using it.
 </tools_ref>
 

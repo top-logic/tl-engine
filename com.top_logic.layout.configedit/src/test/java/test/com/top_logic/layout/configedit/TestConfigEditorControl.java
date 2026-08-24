@@ -46,6 +46,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
@@ -372,6 +373,52 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * Creates a {@link ListItem} with the given name, for array/list element fixtures.
+	 */
+	private ListItem newListItem(String name) {
+		ListItem item = TypedConfiguration.newConfigItem(ListItem.class);
+		item.setName(name);
+		return item;
+	}
+
+	/**
+	 * The element groups rendered by the given editor, in list order (the "+" button at the end is
+	 * not one of them).
+	 */
+	private List<ReactControl> elementGroups(TestableConfigListEditorControl editor) {
+		List<ReactControl> groups = new java.util.ArrayList<>();
+		for (ReactControl child : editor.getChildrenList()) {
+			if (child instanceof ReactFormGroupControl) {
+				groups.add(child);
+			}
+		}
+		return groups;
+	}
+
+	/**
+	 * Finds the header action button carrying the given label (the move-up "\u25B2", move-down
+	 * "\u25BC", or remove "\u2715" icon) inside the given element group.
+	 *
+	 * <p>
+	 * Reached through {@link ReactControl#scriptingChildren()} and
+	 * {@link ReactControl#scriptingScalarState()} - the same headless projection the scripted-test
+	 * player uses to address a control's nested controls and their state - rather than through a
+	 * new accessor, because {@link com.top_logic.layout.react.control.layout.ReactFormGroupControl}
+	 * is outside this module and already exposes exactly this.
+	 * </p>
+	 */
+	private ReactButtonControl findHeaderButton(ReactControl elementGroup, String label) {
+		for (ReactControl child : elementGroup.scriptingChildren()) {
+			if (child instanceof ReactButtonControl button
+				&& label.equals(button.scriptingScalarState().get("label"))) {
+				return button;
+			}
+		}
+		fail("Should have a \"" + label + "\" header button");
+		return null;
+	}
+
+	/**
 	 * Adding to a keyed list works as long as every existing element already has a real key -
 	 * distinct real names never collide.
 	 */
@@ -576,6 +623,71 @@ public class TestConfigEditorControl extends TestCase {
 		assertNotNull("The array must have been stored.", value);
 		assertTrue("An array property must hold an array, not a list.", value.getClass().isArray());
 		assertEquals("One element must have been added.", 1, java.lang.reflect.Array.getLength(value));
+	}
+
+	/**
+	 * Removing an element from an array property leaves the remaining ones, in order, and writes
+	 * the result back as an array, not a list - the same shape check as adding, now for removal.
+	 */
+	public void testRemovingFromArrayPropertyStoresAnArray() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setItemArray(new ListItem[] { newListItem("Apple"), newListItem("Banana"), newListItem("Cherry") });
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.ITEM_ARRAY);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		click(findHeaderButton(elementGroups(editor).get(1), "\u2715"));
+
+		Object value = config.value(property);
+		assertTrue("An array property must still hold an array after removal.", value.getClass().isArray());
+		ListItem[] remaining = (ListItem[]) value;
+		assertEquals("One element must have been removed.", 2, remaining.length);
+		assertEquals("The remaining elements must keep their order.", "Apple", remaining[0].getName());
+		assertEquals("The remaining elements must keep their order.", "Cherry", remaining[1].getName());
+	}
+
+	/**
+	 * Moving an element up in an array property reorders it and writes the result back as an
+	 * array, not a list.
+	 */
+	public void testMovingUpInArrayPropertyStoresAnArray() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setItemArray(new ListItem[] { newListItem("Apple"), newListItem("Banana"), newListItem("Cherry") });
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.ITEM_ARRAY);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		click(findHeaderButton(elementGroups(editor).get(1), "\u25B2"));
+
+		Object value = config.value(property);
+		assertTrue("An array property must still hold an array after reordering.", value.getClass().isArray());
+		ListItem[] reordered = (ListItem[]) value;
+		assertEquals("Three elements must remain.", 3, reordered.length);
+		assertEquals("Banana", reordered[0].getName());
+		assertEquals("Apple", reordered[1].getName());
+		assertEquals("Cherry", reordered[2].getName());
+	}
+
+	/**
+	 * Moving an element down in an array property reorders it and writes the result back as an
+	 * array, not a list.
+	 */
+	public void testMovingDownInArrayPropertyStoresAnArray() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setItemArray(new ListItem[] { newListItem("Apple"), newListItem("Banana"), newListItem("Cherry") });
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.ITEM_ARRAY);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		click(findHeaderButton(elementGroups(editor).get(1), "\u25BC"));
+
+		Object value = config.value(property);
+		assertTrue("An array property must still hold an array after reordering.", value.getClass().isArray());
+		ListItem[] reordered = (ListItem[]) value;
+		assertEquals("Three elements must remain.", 3, reordered.length);
+		assertEquals("Apple", reordered[0].getName());
+		assertEquals("Cherry", reordered[1].getName());
+		assertEquals("Banana", reordered[2].getName());
 	}
 
 	/**

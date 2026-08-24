@@ -332,6 +332,15 @@ public class ResKeyEncoding {
 			return plain;
 		}
 
+		if (part.charAt(keyLength) != '/') {
+			// The key (or tagged translation) parsed above did not consume the whole input and did
+			// not stop right before an argument list either, e.g. an unterminated `#(...` tagged
+			// translation. The remainder cannot be an argument list, since every argument is
+			// prefixed with '/' by the encoder.
+			throw new IllegalArgumentException(
+				"Cannot parse resource key from '" + part + "': unexpected content at position " + keyLength + ".");
+		}
+
 		List<Object> arguments = decodeArguments(part, keyLength);
 
 		if (keyLength == 0) {
@@ -340,7 +349,14 @@ public class ResKeyEncoding {
 				return ResKey.text((String) arguments.get(0));
 			}
 		}
-	
+
+		if (plain == null) {
+			// Neither a resource key nor a (single) literal string could be parsed from the input,
+			// e.g. an unterminated `#(...` tagged translation, or arguments without a key that do
+			// not encode a plain literal string.
+			throw new IllegalArgumentException("Cannot parse resource key from '" + part + "'.");
+		}
+
 		return ResKey.message(plain, arguments.toArray());
 	}
 

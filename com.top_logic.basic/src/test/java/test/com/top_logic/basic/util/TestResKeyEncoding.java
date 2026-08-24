@@ -158,6 +158,41 @@ public class TestResKeyEncoding extends TestCase {
 		assertNull(ResKey.decode(null));
 	}
 
+	public void testDecodeMalformedTaggedString() {
+		try {
+			ResKey.decode("#(unterminated");
+			fail("Expected IllegalArgumentException for an unterminated tagged resource key.");
+		} catch (IllegalArgumentException ex) {
+			// Expected: malformed input must be classified as illegal argument, not crash with NPE.
+		}
+	}
+
+	public void testDecodeMalformedArgumentsWithoutKey() {
+		try {
+			ResKey.decode("/i5/i6");
+			fail(
+				"Expected IllegalArgumentException for arguments without any key that do not encode a single literal string.");
+		} catch (IllegalArgumentException ex) {
+			// Expected: malformed input must be classified as illegal argument, not crash with NPE.
+		}
+	}
+
+	public void testValueFormatRejectsMalformedInput() {
+		try {
+			ResKey.ValueFormat.INSTANCE.getValue("test", "#(unterminated");
+			fail("Expected ConfigurationException for malformed resource key input.");
+		} catch (ConfigurationException ex) {
+			// Expected: this is the exception the configuration editor turns into a field error.
+			assertTrue(ex.getMessage().contains("Invalid resource key"));
+		}
+	}
+
+	public void testDecodeWellFormedRoundTrip() {
+		assertEncodeDecode(ResKey.text("Hello world"));
+		assertEncodeDecode(message("Message 1", Long.valueOf(123)));
+		assertEncodeDecode(ResKey.forTest("some.key"));
+	}
+
 	public void testDecodeLiteralArg() {
 		ResKey result = ResKey.decode(
 			"class.com.top_logic.mig.html.layout.I18NConstants.CONFIGURED_COMPONENT__NAME/[#(\"TestButtonCreationForExisitingDialogTable\"@de, tooltip: {\"TestButtonCreationForExisitingDialogTable\"@de})]");

@@ -11,6 +11,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 
@@ -18,8 +19,9 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
  * Self-contained sample configuration edited by the config-editor demo.
  *
  * <p>
- * Exercises a spread of property kinds (text, number, boolean, enumeration, a nested item and a
- * list of items) so the React configuration editor renders each editor variant.
+ * Exercises a spread of property kinds (text, number, boolean, enumeration, a nested item, a list
+ * of items, an array of items and a {@link ResKey}) so the React configuration editor renders each
+ * editor variant.
  * </p>
  */
 public interface DemoEditorConfig extends ConfigurationItem {
@@ -41,6 +43,12 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getItems()}. */
 	String ITEMS = "items";
+
+	/** Configuration name for the value of {@link #getSummary()}. */
+	String SUMMARY = "summary";
+
+	/** Configuration name for the value of {@link #getShippingAddresses()}. */
+	String SHIPPING_ADDRESSES = "shippingAddresses";
 
 	/**
 	 * Priority classifier for {@link DemoEditorConfig#getPriority()}.
@@ -94,6 +102,18 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	@Name(ITEMS)
 	@Key(Item.NAME)
 	List<Item> getItems();
+
+	/**
+	 * A localized one-line summary, edited as text through the {@link ResKey} format.
+	 */
+	@Name(SUMMARY)
+	ResKey getSummary();
+
+	/**
+	 * The addresses to ship to, an array of {@link Address} rather than a {@link List}.
+	 */
+	@Name(SHIPPING_ADDRESSES)
+	Address[] getShippingAddresses();
 
 	/**
 	 * A postal address.

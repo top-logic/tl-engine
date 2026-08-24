@@ -39,7 +39,6 @@ import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
-import com.top_logic.layout.configedit.I18NConstants;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -50,7 +49,6 @@ import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests for {@link ConfigEditorControl}.
@@ -680,8 +678,9 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * Adding to a keyed list works as long as every existing element already has a real key -
-	 * distinct real names never collide.
+	 * Adding a second element to a keyed list always succeeds, even while every existing element
+	 * already has a real key: the "+" never inserts directly any more, so there is nothing left
+	 * to collide with the existing "Apple" key. Naming the new (pending) entry then adds it.
 	 */
 	public void testAddElementToKeyedListWithAllKeysSetWorks() {
 		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
@@ -694,44 +693,86 @@ public class TestConfigEditorControl extends TestCase {
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 
 		HandlerResult result = click(findAddButton(editor));
+		assertTrue("Adding a second element must never be refused", result.isSuccess());
 
-		assertTrue("Adding a second element must succeed while every existing key is set",
-			result.isSuccess());
-		assertEquals("A second element should have been added", 2, config.getKeyedItems().size());
+		findKeyFieldModel(elementGroups(editor).get(1)).setValue("Banana");
+
+		assertEquals("The named second element should have been added", 2, config.getKeyedItems().size());
 	}
 
 	/**
-	 * Adding a second element to a keyed list is refused - with the new user-facing message, not
-	 * the technical {@link IllegalArgumentException} - while the first element still has no name.
-	 *
-	 * <p>
-	 * The command dispatch ({@link com.top_logic.layout.react.control.ReactCommandInvoker}) never
-	 * lets a {@link TopLogicException} escape a {@code @ReactCommandHandler} method: it is caught
-	 * and wrapped into an {@link com.top_logic.basic.exception.I18NRuntimeException} carried by the
-	 * returned {@link HandlerResult} (see {@code ReactCommandInvoker#invoke}), rather than
-	 * propagating as a thrown exception - so the refusal is observed through
-	 * {@link HandlerResult#getException()}, not a {@code catch} block.
-	 * </p>
+	 * Pressing "+" on a keyed collection creates an entry that is not yet in the collection: it
+	 * has no key, and a keyed collection cannot hold it.
 	 */
-	public void testAddElementToKeyedListWithUnsetKeyIsRefused() {
+	public void testAddingToKeyedCollectionCreatesAPendingEntry() {
 		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
-		ListItem first = TypedConfiguration.newConfigItem(ListItem.class);
-		// Name deliberately left unset.
-		config.getKeyedItems().add(first);
-
 		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 
-		HandlerResult result = click(findAddButton(editor));
+		clickAddButton(editor);
 
-		assertFalse("Adding a second element while the first has no name must be refused",
-			result.isSuccess());
-		assertNotNull("The refusal must be reported as an exception", result.getException());
-		assertEquals("The refusal must carry the new user-facing message",
-			I18NConstants.ERROR_LIST_ELEMENT_KEY_MISSING__PROPERTY,
-			result.getException().getErrorKey().plain());
-		assertEquals("No element should have been added", 1, config.getKeyedItems().size());
+		assertEquals("The pending entry must not be in the collection yet.", 0,
+			config.getKeyedItems().size());
+		assertEquals("The pending entry must be rendered.", 1, elementGroups(editor).size());
+	}
+
+	/**
+	 * Naming the pending entry moves it into the collection.
+	 */
+	public void testNamingThePendingEntryCommitsIt() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+		clickAddButton(editor);
+
+		findKeyFieldModel(elementGroups(editor).get(0)).setValue("first");
+
+		List<ListItem> items = config.getKeyedItems();
+		assertEquals("The named entry must be in the collection.", 1, items.size());
+		assertEquals("first", items.get(0).getName());
+	}
+
+	/**
+	 * A key that is already taken leaves the entry pending and reports the clash at the field,
+	 * rather than letting TypedConfiguration reject it with a technical exception.
+	 */
+	public void testDuplicateKeyLeavesTheEntryPendingWithAnError() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ListItem existing = TypedConfiguration.newConfigItem(ListItem.class);
+		existing.setName("first");
+		config.getKeyedItems().add(existing);
+
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+		clickAddButton(editor);
+
+		FieldModel keyModel = findKeyFieldModel(elementGroups(editor).get(1));
+		keyModel.setValue("first");
+
+		assertEquals("The clashing entry must stay out of the collection.", 1,
+			config.getKeyedItems().size());
+		assertNotNull("The clash must be reported at the key field.", keyModel.getError());
+	}
+
+	/**
+	 * A second entry can be started while the first is still unnamed - the limitation the old
+	 * add-guard imposed is gone.
+	 */
+	public void testASecondEntryCanBeStartedBeforeTheFirstIsNamed() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+		clickAddButton(editor);
+		findKeyFieldModel(elementGroups(editor).get(0)).setValue("first");
+
+		clickAddButton(editor);
+
+		assertEquals("The named entry is in the collection.", 1, config.getKeyedItems().size());
+		assertEquals("A new pending entry is rendered beside it.", 2, elementGroups(editor).size());
 	}
 
 	/**

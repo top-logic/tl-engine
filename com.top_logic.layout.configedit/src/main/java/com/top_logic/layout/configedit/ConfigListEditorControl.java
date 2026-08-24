@@ -35,7 +35,6 @@ import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * A {@link ReactControl} that renders a full editor for a LIST or an ARRAY property of a
@@ -74,6 +73,31 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	private record ListenerRegistration(ConfigurationItem item, PropertyDescriptor property,
 			ConfigurationListener listener) {
 	}
+
+	/**
+	 * An entry created by the add button that is not yet in the edited collection.
+	 *
+	 * <p>
+	 * A keyed collection is indexed by a property of its entries, so it cannot hold an entry
+	 * whose key is empty or already taken. Such an entry therefore lives here until its key makes
+	 * it acceptable - see {@link #commitPending()}.
+	 * </p>
+	 */
+	private ConfigurationItem _pendingEntry;
+
+	/**
+	 * The field model this class built for {@link #_pendingEntry}'s key field, most recently by
+	 * {@link #createKeyField(ConfigurationItem, PropertyDescriptor, boolean)}.
+	 *
+	 * <p>
+	 * {@link #commitPending()} reports a duplicate key here directly, rather than searching the
+	 * rebuilt tree for it. Held in a field rather than a local variable because
+	 * {@link #rebuild(ConfigurationItem)} discards and recreates all child controls - including
+	 * this one - on every cycle, so this reference is refreshed together with it every time the
+	 * pending entry's group is (re)built, and would otherwise go stale.
+	 * </p>
+	 */
+	private ConfigFieldModel _pendingKeyFieldModel;
 
 	/**
 	 * Creates a {@link ConfigListEditorControl}.
@@ -143,6 +167,16 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	/**
 	 * Clears all children and rebuilds them from the current list state.
 	 *
+	 * <p>
+	 * If {@link #_pendingEntry} is set, its group is rendered too - after the committed entries
+	 * and before the add button, always expanded, with its key field editable. Every rebuild
+	 * recreates it afresh (see {@link #createPendingElementGroup(ConfigurationItem)}), which is
+	 * also why that method re-registers {@link #_pendingKeyFieldModel} and the key-change listener
+	 * every time, rather than relying on a registration made once when the entry was created: a
+	 * rebuild triggered by something unrelated (moving a different entry, say) discards and
+	 * recreates this pending group exactly like every other child.
+	 * </p>
+	 *
 	 * @param expandItem
 	 *        Element whose group should be rendered expanded; all others stay collapsed. May be
 	 *        {@code null}.
@@ -161,6 +195,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 				ConfigurationItem item = items.get(i);
 				addChild(createElementGroup(item, i, items.size(), item == expandItem));
 			}
+		}
+
+		if (_pendingEntry != null) {
+			addChild(createPendingElementGroup(_pendingEntry));
 		}
 
 		// Add button at the bottom.
@@ -203,25 +241,96 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		List<ReactControl> headerActions = List.of(moveUpButton, moveDownButton, removeButton);
 
-		List<ReactControl> bodyChildren = new ArrayList<>();
-		boolean polymorphic = _choices.hasOptions();
-		if (polymorphic && _choices.options().size() > 1) {
-			bodyChildren.add(createTypeSelector(item));
-		}
 		PropertyDescriptor keyProperty = resolveKeyProperty(item);
-		if (keyProperty != null) {
-			bodyChildren.add(createKeyField(item, keyProperty, false));
-		}
-		if (!polymorphic || isTypeSelected(item)) {
-			bodyChildren.add(new ConfigEditorControl(_context, item,
-				keyProperty == null ? Collections.emptySet() : Collections.singleton(keyProperty)));
-		}
+		List<ReactControl> bodyChildren = createBodyChildren(item, keyProperty, false);
+
 		ReactFormGroupControl group = new ReactFormGroupControl(
 			_context, null, true, !expanded, "subtle", true,
 			headerActions, bodyChildren);
 		group.setHeader(createHeaderControl(label));
 
-		// Register dynamic label update on the title property.
+		registerTitleListener(item, group);
+
+		return group;
+	}
+
+	/**
+	 * The group for {@link #_pendingEntry}, rendered separately from
+	 * {@link #createElementGroup(ConfigurationItem, int, int, boolean)} because a pending entry
+	 * differs from a committed one in more than one dimension at once: it has no position in the
+	 * edited collection to move it among (so no Move Up/Move Down button - there is nothing to
+	 * move it among), its Remove button discards it (see {@link #discardPending()}) instead of
+	 * removing an entry from the collection, and its key field is editable rather than fixed.
+	 * Folding all of that into {@link #createElementGroup(ConfigurationItem, int, int, boolean)}
+	 * via extra parameters would have left that method's index/listSize-based Move Up/Move Down
+	 * logic surrounded by conditionals that never apply to it; a sibling method keeps both
+	 * readable, sharing the body/title-listener construction that does not differ (
+	 * {@link #createBodyChildren(ConfigurationItem, PropertyDescriptor, boolean)},
+	 * {@link #registerTitleListener(ConfigurationItem, ReactFormGroupControl)}).
+	 *
+	 * <p>
+	 * Always rendered expanded, and re-registers {@link #_pendingKeyFieldModel} and the
+	 * key-change listener every time it runs - see {@link #rebuild(ConfigurationItem)}.
+	 * </p>
+	 */
+	private ReactFormGroupControl createPendingElementGroup(ConfigurationItem entry) {
+		Label label = resolveElementLabel(entry);
+
+		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
+			discardPending();
+			return HandlerResult.DEFAULT_RESULT;
+		});
+		removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+
+		List<ReactControl> headerActions = List.of(removeButton);
+
+		PropertyDescriptor keyProperty = resolveKeyProperty(entry);
+		List<ReactControl> bodyChildren = createBodyChildren(entry, keyProperty, true);
+
+		ReactFormGroupControl group = new ReactFormGroupControl(
+			_context, null, true, false, "subtle", true,
+			headerActions, bodyChildren);
+		group.setHeader(createHeaderControl(label));
+
+		registerTitleListener(entry, group);
+		listenForKey(entry);
+
+		return group;
+	}
+
+	/**
+	 * The body children shared by {@link #createElementGroup(ConfigurationItem, int, int, boolean)}
+	 * and {@link #createPendingElementGroup(ConfigurationItem)}: the type selector (for a
+	 * polymorphic collection with more than one choice), the key field (for a keyed collection),
+	 * and the nested {@link ConfigEditorControl} over the entry's own properties (with the key
+	 * property hidden from it, since this class already renders it). {@code keyEditable} is
+	 * passed straight through to
+	 * {@link #createKeyField(ConfigurationItem, PropertyDescriptor, boolean)} - {@code true} only
+	 * for the pending entry.
+	 */
+	private List<ReactControl> createBodyChildren(ConfigurationItem item, PropertyDescriptor keyProperty,
+			boolean keyEditable) {
+		List<ReactControl> bodyChildren = new ArrayList<>();
+		boolean polymorphic = _choices.hasOptions();
+		if (polymorphic && _choices.options().size() > 1) {
+			bodyChildren.add(createTypeSelector(item));
+		}
+		if (keyProperty != null) {
+			bodyChildren.add(createKeyField(item, keyProperty, keyEditable));
+		}
+		if (!polymorphic || isTypeSelected(item)) {
+			bodyChildren.add(new ConfigEditorControl(_context, item,
+				keyProperty == null ? Collections.emptySet() : Collections.singleton(keyProperty)));
+		}
+		return bodyChildren;
+	}
+
+	/**
+	 * Registers the dynamic label update on {@code item}'s title property, shared by
+	 * {@link #createElementGroup(ConfigurationItem, int, int, boolean)} and
+	 * {@link #createPendingElementGroup(ConfigurationItem)}.
+	 */
+	private void registerTitleListener(ConfigurationItem item, ReactFormGroupControl group) {
 		PropertyDescriptor titleProp = resolveTitleProperty(item);
 		if (titleProp != null) {
 			ConfigurationListener listener = change -> {
@@ -230,8 +339,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			item.addConfigurationListener(titleProp, listener);
 			_listeners.add(new ListenerRegistration(item, titleProp, listener));
 		}
-
-		return group;
 	}
 
 	/**
@@ -284,11 +391,16 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 *        instance it also hides from the nested editor, since only identity (not mere
 	 *        equality) is checked there.
 	 * @param editable
-	 *        Whether the key may still be changed, i.e. whether the entry is pending.
+	 *        Whether the key may still be changed, i.e. whether the entry is pending. When
+	 *        {@code true}, the built model is also kept as {@link #_pendingKeyFieldModel} - the
+	 *        only entry whose key field is ever editable is {@link #_pendingEntry}.
 	 */
 	private ReactControl createKeyField(ConfigurationItem entry, PropertyDescriptor keyProperty, boolean editable) {
 		ConfigFieldModel model = ConfigControlService.getInstance().createModel(entry, keyProperty);
 		model.setEditable(editable);
+		if (editable) {
+			_pendingKeyFieldModel = model;
+		}
 		ReactControl input = ConfigControlService.getInstance().createControl(_context, model);
 
 		String label = Labels.propertyLabel(keyProperty, false);
@@ -376,78 +488,128 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	// --- Operations ---
 
 	/**
-	 * Adds a new element with default values to the end of the list.
+	 * Adds a new element with default values.
+	 *
+	 * <p>
+	 * For a keyed collection, the new element cannot be added directly: a keyed collection is
+	 * indexed by a property of its entries, so {@link TypedConfiguration} would reject an entry
+	 * whose key is empty (as every freshly constructed entry's is) with a technical
+	 * {@link IllegalArgumentException} the moment a second one collided with it. The new entry
+	 * therefore becomes {@link #_pendingEntry} instead, rendered by
+	 * {@link #createPendingElementGroup(ConfigurationItem)} until {@link #commitPending()} moves
+	 * it into the collection.
+	 * </p>
 	 */
 	private void addElement() {
-		List<ConfigurationItem> items = elements();
-		ConfigurationItem newItem;
-		if (_choices.hasOptions()) {
-			newItem = (ConfigurationItem) _choices.mapping().toSelection(_choices.options().get(0));
-		} else {
-			newItem = TypedConfiguration.newConfigItem(resolveNewElementType());
+		if (_property.getKeyProperty() != null) {
+			if (_pendingEntry != null) {
+				// One unfinished entry at a time: a second one could not be told apart from the
+				// first, both having no key yet.
+				return;
+			}
+			_pendingEntry = newEntry();
+			rebuild(_pendingEntry);
+			return;
 		}
-		checkKeyAvailable(items, newItem);
+
+		List<ConfigurationItem> items = elements();
+		ConfigurationItem newItem = newEntry();
 		items.add(newItem);
 		storeElements(items);
 		rebuild(newItem);
 	}
 
 	/**
-	 * Ensures that adding the given element will not collide with an existing element's key.
-	 *
-	 * <p>
-	 * A keyed LIST property ({@link PropertyDescriptor#getKeyProperty()}) is indexed by the key
-	 * property's value; {@link TypedConfiguration} refuses two elements with an equal key with a
-	 * technical {@link IllegalArgumentException}. Both a freshly constructed element (the
-	 * {@code else} branch above) and a {@code Class}-valued polymorphic option (see
-	 * {@link com.top_logic.layout.form.values.ItemOptionMapping} /
-	 * {@link com.top_logic.layout.form.values.ImplOptionMapping}) have their key property unset,
-	 * i.e. they evaluate to the same "empty" key as any other unset element - so adding a second
-	 * such element while an existing one is still unset would trigger exactly that collision. An
-	 * option-provided element that already carries a real key (e.g. a domain-specific
-	 * {@code @Options} function returning pre-filled templates via an identity mapping) is not
-	 * affected: this check only ever fires for a {@code newItem} whose own key is still unset.
-	 * </p>
-	 *
-	 * @param items
-	 *        The list's current elements.
-	 * @param newItem
-	 *        The element about to be added.
-	 *
-	 * @throws TopLogicException
-	 *         If {@code newItem}'s key is unset and some existing element's key is unset, too.
+	 * Creates a new element of this property's element type, honouring a polymorphic collection's
+	 * first option just as the pre-pending-entry {@link #addElement()} always did.
 	 */
-	private void checkKeyAvailable(List<ConfigurationItem> items, ConfigurationItem newItem) {
-		PropertyDescriptor keyProperty = _property.getKeyProperty();
-		if (keyProperty == null || !isKeyUnset(newItem, keyProperty)) {
-			return;
+	private ConfigurationItem newEntry() {
+		if (_choices.hasOptions()) {
+			return (ConfigurationItem) _choices.mapping().toSelection(_choices.options().get(0));
 		}
-		for (ConfigurationItem existing : items) {
-			if (isKeyUnset(existing, keyProperty)) {
-				throw new TopLogicException(I18NConstants.ERROR_LIST_ELEMENT_KEY_MISSING__PROPERTY
-					.fill(Labels.propertyLabel(keyProperty, false)));
-			}
-		}
+		return TypedConfiguration.newConfigItem(resolveNewElementType());
 	}
 
 	/**
-	 * Whether the given element's key property currently evaluates to the same "no value entered
-	 * yet" value that {@link #resolveElementLabel(ConfigurationItem)} already treats as "no title
-	 * entered yet": {@code null} or an empty {@link String}.
+	 * Registers the {@link ConfigurationListener} on {@code pendingEntry}'s key property that
+	 * calls {@link #commitPending()} whenever the key changes.
 	 *
 	 * <p>
-	 * Deliberately not {@link ConfigurationItem#valueSet(PropertyDescriptor)}: that flag only
-	 * records whether a setter was ever called, not whether the value it left behind is actually
-	 * meaningful. A name typed and then deleted again leaves {@code valueSet} {@code true} while
-	 * the value is back to the empty string - the same value an element whose name was never
-	 * touched carries - so both would still collide in the same way when
-	 * {@link com.top_logic.basic.config.PropertyDescriptorImpl#checkCorrectListValues} compares the
-	 * actual key values.
+	 * Tracked in {@link #_listeners} like every other listener this class holds, so
+	 * {@link #removeListeners()} unregisters it too - which is exactly why
+	 * {@link #createPendingElementGroup(ConfigurationItem)} calls this again on every
+	 * {@link #rebuild(ConfigurationItem)} cycle rather than {@link #addElement()} calling it once:
+	 * a rebuild triggered by something else entirely (moving a different entry, changing another
+	 * entry's type, ...) would otherwise silently drop this registration, leaving the pending
+	 * entry stuck - editable, but no longer able to commit itself.
 	 * </p>
 	 */
-	private boolean isKeyUnset(ConfigurationItem item, PropertyDescriptor keyProperty) {
-		Object value = item.value(keyProperty);
-		return value == null || (value instanceof String s && s.isEmpty());
+	private void listenForKey(ConfigurationItem pendingEntry) {
+		PropertyDescriptor keyProperty = resolveKeyProperty(pendingEntry);
+		ConfigurationListener listener = change -> commitPending();
+		pendingEntry.addConfigurationListener(keyProperty, listener);
+		_listeners.add(new ListenerRegistration(pendingEntry, keyProperty, listener));
+	}
+
+	/**
+	 * Moves {@link #_pendingEntry} into the edited collection once its key is usable.
+	 *
+	 * <p>
+	 * An empty key means the user has not finished typing, so the entry simply stays pending. A
+	 * key that another entry already uses is reported at the key field: inserting would be
+	 * rejected by {@link TypedConfiguration} with a message about the collection's index, which
+	 * says nothing to whoever is editing the form.
+	 * </p>
+	 */
+	private void commitPending() {
+		PropertyDescriptor keyProperty = _property.getKeyProperty();
+		Object key = _pendingEntry.value(keyProperty);
+		if (key == null || key.toString().isEmpty()) {
+			return;
+		}
+		if (hasEntryWithKey(key)) {
+			_pendingKeyFieldModel.setError(I18NConstants.ERROR_DUPLICATE_KEY__VALUE_PROPERTY
+				.fill(key, Labels.propertyLabel(keyProperty, false)));
+			return;
+		}
+		ConfigurationItem entry = _pendingEntry;
+		_pendingEntry = null;
+		_pendingKeyFieldModel = null;
+		List<ConfigurationItem> items = elements();
+		items.add(entry);
+		storeElements(items);
+		rebuild(entry);
+	}
+
+	/**
+	 * Whether some entry already committed to the edited collection carries the given key.
+	 *
+	 * @param key
+	 *        The candidate key. Never {@code null} or empty - {@link #commitPending()} only calls
+	 *        this once {@link #_pendingEntry}'s own key has cleared that check.
+	 */
+	private boolean hasEntryWithKey(Object key) {
+		List<ConfigurationItem> items = elements();
+		if (items == null) {
+			return false;
+		}
+		PropertyDescriptor keyProperty = _property.getKeyProperty();
+		for (ConfigurationItem existing : items) {
+			if (key.equals(existing.value(keyProperty))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Discards {@link #_pendingEntry} - the pending entry's own Remove action, which cannot
+	 * remove it from the edited collection since it was never added there.
+	 */
+	private void discardPending() {
+		_pendingEntry = null;
+		_pendingKeyFieldModel = null;
+		rebuild(null);
 	}
 
 	/**

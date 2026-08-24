@@ -30,9 +30,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_VALUE_REQUIRED__PROPERTY;
 
 	/**
-	 * @en The existing entry has no value for "{0}" yet. Give it one before adding another entry.
+	 * @en An entry with {0} "{1}" already exists.
 	 */
-	public static ResKey1 ERROR_LIST_ELEMENT_KEY_MISSING__PROPERTY;
+	public static ResKey2 ERROR_DUPLICATE_KEY__VALUE_PROPERTY;
 
 	static {
 		initConstants(I18NConstants.class);

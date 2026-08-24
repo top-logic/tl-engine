@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -207,9 +208,9 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		if (polymorphic && _choices.options().size() > 1) {
 			bodyChildren.add(createTypeSelector(item));
 		}
-		PropertyDescriptor keyProperty = _property.getKeyProperty();
+		PropertyDescriptor keyProperty = resolveKeyProperty(item);
 		if (keyProperty != null) {
-			bodyChildren.add(createKeyField(item, false));
+			bodyChildren.add(createKeyField(item, keyProperty, false));
 		}
 		if (!polymorphic || isTypeSelected(item)) {
 			bodyChildren.add(new ConfigEditorControl(_context, item,
@@ -234,6 +235,37 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
+	 * The key property of the given entry, resolved against the entry's own
+	 * {@link ConfigurationItem#descriptor() descriptor} rather than
+	 * {@link #_property}'s declared element type.
+	 *
+	 * <p>
+	 * For a polymorphic keyed collection - which this class supports via
+	 * {@link #createTypeSelector(ConfigurationItem)} - an entry's actual type is typically a
+	 * genuine subtype of the collection's declared element type, and its own
+	 * {@link ConfigurationDescriptor} creates a fresh {@link PropertyDescriptor} instance for
+	 * every property, including one inherited unchanged from a super interface.
+	 * {@link PropertyDescriptor} has no {@link Object#equals(Object) equals}/
+	 * {@link Object#hashCode() hashCode} override, so
+	 * {@link #createElementGroup(ConfigurationItem, int, int, boolean)} hiding the key from the
+	 * nested editor via {@link java.util.Set#contains(Object) Set.contains} only works if both
+	 * call sites use the very same instance - the one the entry's own descriptor hands out, not
+	 * {@link PropertyDescriptor#getKeyProperty()}'s declared-type instance.
+	 * </p>
+	 *
+	 * @param entry
+	 *        The entry whose key property is resolved.
+	 * @return {@code null} if {@link #_property} is not keyed.
+	 */
+	private PropertyDescriptor resolveKeyProperty(ConfigurationItem entry) {
+		PropertyDescriptor declaredKeyProperty = _property.getKeyProperty();
+		if (declaredKeyProperty == null) {
+			return null;
+		}
+		return entry.descriptor().getProperty(declaredKeyProperty.getPropertyName());
+	}
+
+	/**
 	 * The field for an entry's key property, rendered by this control rather than by the nested
 	 * editor over the entry.
 	 *
@@ -246,16 +278,33 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 *
 	 * @param entry
 	 *        The entry whose key is edited.
+	 * @param keyProperty
+	 *        The entry's own key property, as resolved by
+	 *        {@link #resolveKeyProperty(ConfigurationItem)} - the caller must pass the same
+	 *        instance it also hides from the nested editor, since only identity (not mere
+	 *        equality) is checked there.
 	 * @param editable
 	 *        Whether the key may still be changed, i.e. whether the entry is pending.
 	 */
-	private ReactControl createKeyField(ConfigurationItem entry, boolean editable) {
-		PropertyDescriptor keyProperty = _property.getKeyProperty();
+	private ReactControl createKeyField(ConfigurationItem entry, PropertyDescriptor keyProperty, boolean editable) {
 		ConfigFieldModel model = ConfigControlService.getInstance().createModel(entry, keyProperty);
 		model.setEditable(editable);
 		ReactControl input = ConfigControlService.getInstance().createControl(_context, model);
-		return new ReactFormFieldChromeControl(_context, Labels.propertyLabel(keyProperty, false),
+
+		String label = Labels.propertyLabel(keyProperty, false);
+		ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(_context, label,
 			model.isMandatory(), false, null, null, null, false, true, input);
+		// Detach when this specific field is disposed (on the next rebuild(), or when this whole
+		// control is cleaned up) - the same lifecycle ConfigEditorControl#addCleanupAction(Runnable)
+		// ties its own field models to, just anchored on the field's own chrome control instead of
+		// on "this", since a fresh key field (and model) is built on every rebuild() cycle.
+		chrome.addCleanupAction(model::detach);
+
+		String tooltip = Resources.getInstance().getString(keyProperty.labelKey(null).tooltip(), null);
+		if (tooltip != null && !tooltip.isEmpty()) {
+			chrome.setTooltip(tooltip, label, true);
+		}
+		return chrome;
 	}
 
 	private ReactTextControl createHeaderControl(Label label) {

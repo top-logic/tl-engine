@@ -214,6 +214,83 @@ public class TestConfigEditorControl extends TestCase {
 		}
 	}
 
+	/**
+	 * Common polymorphic, keyed configuration for
+	 * {@link TestConfigEditorControl#testPolymorphicKeyedEntryRendersKeyOnce()} - unlike
+	 * {@link HandlerConfig}, this one declares a {@link Key}-annotated property once, inherited
+	 * unchanged by both {@link KeyedHandlerAConfig} and {@link KeyedHandlerBConfig}: the ordinary
+	 * shape of a polymorphic keyed collection, where an entry's actual type is a genuine subtype
+	 * of the collection's declared element type.
+	 */
+	public interface KeyedHandlerConfig extends PolymorphicConfiguration<Handler> {
+
+		/** Property name for {@link #getEntryKey()}. */
+		String ENTRY_KEY = "entryKey";
+
+		@Name(ENTRY_KEY)
+		String getEntryKey();
+
+		void setEntryKey(String value);
+	}
+
+	/** Concrete keyed handler config A - inherits {@link KeyedHandlerConfig#getEntryKey()} unchanged. */
+	public interface KeyedHandlerAConfig extends KeyedHandlerConfig {
+
+		/** Property name for {@link #getNameA()}. */
+		String NAME_A = "nameA";
+
+		@Name(NAME_A)
+		String getNameA();
+
+		void setNameA(String value);
+	}
+
+	/** Concrete keyed handler config B - inherits {@link KeyedHandlerConfig#getEntryKey()} unchanged. */
+	public interface KeyedHandlerBConfig extends KeyedHandlerConfig {
+
+		/** Property name for {@link #getValueB()}. */
+		String VALUE_B = "valueB";
+
+		@Name(VALUE_B)
+		int getValueB();
+
+		void setValueB(int value);
+	}
+
+	/** Concrete {@link Handler} implementation selected through {@link KeyedHandlerAConfig}. */
+	public static class KeyedHandlerA implements Handler {
+		/** Creates a {@link KeyedHandlerA} from configuration. */
+		public KeyedHandlerA(InstantiationContext context, KeyedHandlerAConfig config) {
+			// No state required for the test.
+		}
+	}
+
+	/** Concrete {@link Handler} implementation selected through {@link KeyedHandlerBConfig}. */
+	public static class KeyedHandlerB implements Handler {
+		/** Creates a {@link KeyedHandlerB} from configuration. */
+		public KeyedHandlerB(InstantiationContext context, KeyedHandlerBConfig config) {
+			// No state required for the test.
+		}
+	}
+
+	/**
+	 * Test config with a LIST property that is both polymorphic (more than one
+	 * {@link KeyedHandlerConfig} implementation) and keyed - the combination
+	 * {@link ConfigListEditorControl#createElementGroup(ConfigurationItem, int, int, boolean)}
+	 * must get right by hiding an entry's key using the entry's own
+	 * {@link com.top_logic.basic.config.PropertyDescriptor}, not the collection's declared element
+	 * type's.
+	 */
+	public interface KeyedPolymorphicTestConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getItems()}. */
+		String ITEMS = "items";
+
+		@Name(ITEMS)
+		@Key(KeyedHandlerConfig.ENTRY_KEY)
+		java.util.List<KeyedHandlerConfig> getItems();
+	}
+
 	/** Test config with a polymorphic ITEM property and a polymorphic ARRAY property. */
 	public interface PolymorphicTestConfig extends ConfigurationItem {
 
@@ -460,18 +537,16 @@ public class TestConfigEditorControl extends TestCase {
 	 * <p>
 	 * Unlike the "Type" selector, the key field carries no fixed label (its label is the key
 	 * property's own, which varies by fixture), so it is identified by elimination among the
-	 * group's direct children: not a header action button, and not the "Type" selector, but
-	 * still a field wrapped in a
-	 * {@link com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl} - the nested
-	 * {@link com.top_logic.layout.configedit.ConfigEditorControl} over the entry is a direct
-	 * child too, but carries no {@code "label"} scripting state of its own.
+	 * group's direct children: not the "Type" selector, and not the nested
+	 * {@link com.top_logic.layout.configedit.ConfigEditorControl} over the entry, which carries
+	 * no {@code "label"} scripting state of its own. A header action button (move up/down,
+	 * remove) also carries a non-{@code null} {@code "label"} and reaches this far, but is
+	 * eliminated one step later: it has no nested {@link ReactControl} of its own, so its
+	 * {@link ReactControl#scriptingChildren()} is empty and the inner loop below simply moves on.
 	 * </p>
 	 */
 	private FieldModel findKeyFieldModel(ReactControl elementGroup) {
 		for (ReactControl child : elementGroup.scriptingChildren()) {
-			if (child instanceof ReactButtonControl) {
-				continue;
-			}
 			Object label = child.scriptingScalarState().get("label");
 			if (label == null || "Type".equals(label)) {
 				continue;
@@ -493,10 +568,20 @@ public class TestConfigEditorControl extends TestCase {
 	 * children {@link #findKeyFieldModel(ReactControl)} looks at, because a duplicate rendering
 	 * would come from the nested editor, several levels down.
 	 * </p>
+	 *
+	 * <p>
+	 * Compares by {@link PropertyDescriptor#identifier()}, not by reference: a polymorphic
+	 * entry's own {@link com.top_logic.basic.config.ConfigurationDescriptor} hands out a distinct
+	 * {@link PropertyDescriptor} instance for a property inherited unchanged from the collection's
+	 * declared element type, so the two given here (one resolved against the entry, one against
+	 * the declared type) never share identity - only the identifier, which is exactly what the
+	 * framework's own consistency checks (e.g.
+	 * {@code PropertyDescriptorImpl.ensureConsistentKeyProperty}) compare by for the same reason.
+	 * </p>
 	 */
 	private int countKeyFields(ReactControl control, PropertyDescriptor keyProperty) {
 		int count = control.getModel() instanceof ConfigFieldModel fieldModel
-			&& fieldModel.getProperty() == keyProperty ? 1 : 0;
+			&& fieldModel.getProperty().identifier() == keyProperty.identifier() ? 1 : 0;
 		for (ReactControl child : control.scriptingChildren()) {
 			count += countKeyFields(child, keyProperty);
 		}
@@ -562,6 +647,36 @@ public class TestConfigEditorControl extends TestCase {
 		PropertyDescriptor nameProperty = first.descriptor().getProperty(ListItem.NAME);
 		assertEquals("The nested editor must still render the entry's \"name\" property.", 1,
 			countKeyFields(elementGroups(editor).get(0), nameProperty));
+	}
+
+	/**
+	 * A collection that is both polymorphic and keyed - the combination this class's type
+	 * selector and key handling both need to support at once - must still render its key field
+	 * exactly once.
+	 *
+	 * <p>
+	 * {@code entry}'s actual type ({@link KeyedHandlerAConfig}) is a genuine subtype of the
+	 * collection's declared element type ({@link KeyedHandlerConfig}), so its own
+	 * {@link com.top_logic.basic.config.PropertyDescriptor} for the inherited key property is a
+	 * different instance from {@code property.getKeyProperty()}'s declared-type one - exactly
+	 * the mismatch that let the key property escape being hidden from the nested editor when the
+	 * hiding was checked by reference instead of by
+	 * {@link com.top_logic.basic.config.PropertyDescriptor#identifier()}.
+	 * </p>
+	 */
+	public void testPolymorphicKeyedEntryRendersKeyOnce() {
+		KeyedPolymorphicTestConfig config = TypedConfiguration.newConfigItem(KeyedPolymorphicTestConfig.class);
+		KeyedHandlerAConfig entry = TypedConfiguration.newConfigItem(KeyedHandlerAConfig.class);
+		entry.setEntryKey("first");
+		entry.setNameA("value");
+		config.getItems().add(entry);
+
+		PropertyDescriptor property = config.descriptor().getProperty(KeyedPolymorphicTestConfig.ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		assertEquals("The key must appear exactly once in a polymorphic, keyed entry's group.", 1,
+			countKeyFields(elementGroups(editor).get(0), property.getKeyProperty()));
 	}
 
 	/**

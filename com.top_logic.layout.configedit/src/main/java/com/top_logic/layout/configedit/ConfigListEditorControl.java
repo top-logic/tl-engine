@@ -568,8 +568,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			return;
 		}
 		if (hasEntryWithKey(key)) {
-			_pendingKeyFieldModel.setError(I18NConstants.ERROR_DUPLICATE_KEY__VALUE_PROPERTY
-				.fill(key, Labels.propertyLabel(keyProperty, false)));
+			_pendingKeyFieldModel.setError(I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE
+				.fill(Labels.propertyLabel(keyProperty, false), key));
 			return;
 		}
 		ConfigurationItem entry = _pendingEntry;

@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.configedit;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -39,9 +40,11 @@ import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
+import com.top_logic.layout.configedit.I18NConstants;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -737,6 +740,18 @@ public class TestConfigEditorControl extends TestCase {
 	/**
 	 * A key that is already taken leaves the entry pending and reports the clash at the field,
 	 * rather than letting TypedConfiguration reject it with a technical exception.
+	 *
+	 * <p>
+	 * Asserts the reported {@link ResKey}'s identity and its arguments' order, not just that some
+	 * error is present: a mere {@code assertNotNull} cannot see the property label and the
+	 * clashing value landing in the wrong slots, which is exactly the mistake the message template
+	 * ({@code "An entry with {0} \"{1}\" already exists."}) and the
+	 * {@link I18NConstants#ERROR_DUPLICATE_KEY__PROPERTY_VALUE} constant's own name agree on: the
+	 * property label first, the clashing value second. Resolved text is not compared - nothing in
+	 * this module's tests resolves a {@link ResKey} through {@link com.top_logic.util.Resources}
+	 * to a rendered string, and setting that up for this one assertion would be inventing
+	 * machinery the module does not otherwise need.
+	 * </p>
 	 */
 	public void testDuplicateKeyLeavesTheEntryPendingWithAnError() {
 		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
@@ -754,7 +769,15 @@ public class TestConfigEditorControl extends TestCase {
 
 		assertEquals("The clashing entry must stay out of the collection.", 1,
 			config.getKeyedItems().size());
-		assertNotNull("The clash must be reported at the key field.", keyModel.getError());
+		ResKey error = keyModel.getError();
+		assertNotNull("The clash must be reported at the key field.", error);
+		assertEquals("The clash must carry the duplicate-key message.",
+			I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE, error.plain());
+		assertEquals(
+			"The property label must be the first argument and the clashing value the second - "
+				+ "the order the message template and the constant's own name agree on.",
+			Arrays.asList(Labels.propertyLabel(property.getKeyProperty(), false), "first"),
+			Arrays.asList(error.arguments()));
 	}
 
 	/**

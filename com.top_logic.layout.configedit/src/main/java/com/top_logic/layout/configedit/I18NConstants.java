@@ -32,7 +32,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en An entry with {0} "{1}" already exists.
 	 */
-	public static ResKey2 ERROR_DUPLICATE_KEY__VALUE_PROPERTY;
+	public static ResKey2 ERROR_DUPLICATE_KEY__PROPERTY_VALUE;
 
 	static {
 		initConstants(I18NConstants.class);

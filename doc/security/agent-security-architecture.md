@@ -53,6 +53,14 @@ The two central design commitments:
   Neither substitutes for the other: `executeTLScript` is one tool but can touch any type, and
   `listInstances` is READ-classified but can enumerate a payroll table.
 
+**And one commitment this design does *not* make**, stated here rather than discovered in section 3:
+read scoping covers **objects and attribute values**, not everything a script can compute from them. A
+value TL-Script has already reduced to plain data before any output filter runs is outside it, and there
+are two - a **count** (**#291**) and a **label** reached through string coercion (**#296**). Both are
+accepted by design, not open work: object labels are non-secret in TopLogic, which puts the obligation
+on the modeller to keep confidential information out of object names. Section 3.3.2 has the mechanism,
+the engine's own statement of the rule, and the control (`filterSecurity`).
+
 ---
 
 ## 1. Where we are today (verified against the code)
@@ -136,7 +144,7 @@ All gates in this design are deterministic Java checks on the call path, never p
 | # | Threat | Realised today? | Addressed by |
 |---|---|---|---|
 | **T1** | **Agent over-privilege.** The agent can invoke any tool in its catalog regardless of who is chatting; a read-only clerk can drive `ModelEditorTool`. | **Addressed** where an application configures `<tool-access>`; otherwise yes | L1 (3.2), built |
-| **T2** | **Data over-read.** `listInstances`/`getInstance`/`searchModel` return objects the user may not see; the answer, the transcript and the SSE stream all carry them. | **Addressed for instances** (#289): identity, labels and attribute values are filtered per object and per attribute. Cardinality computed inside a script is not, and is accepted (**#291**) | L2 (3.3), L3 (3.4) |
+| **T2** | **Data over-read.** `listInstances`/`getInstance`/`searchModel` return objects the user may not see; the answer, the transcript and the SSE stream all carry them. | **Addressed for instances** (#289): objects and attribute values are filtered per object and per attribute. Two values a script reduces to plain data before any filter runs are outside it and accepted by design: cardinality (**#291**) and labels reached through string coercion (**#296**, see 3.3.2) | L2 (3.3), L3 (3.4) |
 | **T3** | **Prompt-injection-driven tool abuse.** A malicious value stored in a business object, an MCP tool description, or a fetched web page instructs the agent to call a write tool or exfiltrate data. | Yes | L1+L2+L4; approval for write modes; *not* mitigated by prompting |
 | **T4** | **Exfiltration via an outbound tool.** The agent is induced to put secret data into a `webFetch` URL, a Gitea issue body, or an MCP call to an external server. | Yes | L2 on the read side (it never gets the data), plus egress classification (3.2.4) |
 | **T5** | **Unattended/background over-privilege.** `agentChatAsync` runs with `ApprovalCallback.AUTO_APPROVE`: every approval-gated tool self-approves. | **Bounded** by the background allowlist | 3.1 (identity), 3.2.5 (background tool floor) |
@@ -770,6 +778,68 @@ arrives, and no read filter can tell which objects it counted. Cardinality is ac
 (issue **#291**); the honest control is denying the `script` capability. `TestReadFilter` states that
 boundary as a test so it is not mistaken for an oversight.
 
+##### What labels are, by design
+
+The paragraph above has a second half, and it is the more surprising one. A **label** is not read-scoped
+either - and unlike the aggregate case, that is not a gap in this design. It is the engine's own position
+on what a label *is*.
+
+The path, in `8.0.0-alpha7`:
+
+```
+TL-Script  toString($obj)   ->  ToString
+           "" + $obj        ->  the same coercion
+                            ->  SearchExpression.asString(value)
+                            ->  (not a number, boolean or CharSequence)
+                            ->  MetaLabelProvider.INSTANCE.getLabel(value)
+                            ->  generic Java model access (tValue), NOT access-checked
+                            ->  a String
+```
+
+Only TL-Script's **attribute** access (`AccessLike.lookupValue`) consults `ModelAccessRights`. Label
+rendering does not, deliberately. The engine states the rule in `FilterSecurity`'s own javadoc:
+
+> Access operations in TL-Script return referenced objects *unfiltered* (consistent with the user
+> interface, which always shows a referenced object by its label and only secures navigation into it);
+> only the access to the *attributes* of an object is denied if the user must not read the object.
+
+So by the time the value reaches `ReadFilter` it is a `String`, not a `TLObject`, and there is nothing
+left for a filter to recognise. **This will not change** (`Refs #296`). Two consequences follow, and
+both belong in the design rather than in an issue backlog:
+
+- **Object labels are non-secret by design.** The whole product treats them that way: a reference is
+  rendered by its label in every table, every tooltip and every selector, and what is secured is
+  navigating into the object, not naming it.
+- **The modeller carries the obligation.** An application must not encode confidential information in
+  the name of an object. If a contract's *name* has to be secret, the secret belongs in an attribute
+  with its own `<part>` grant - which *is* read-scoped - and the object's label must not repeat it.
+
+Note what a label actually discloses, because it is less than "the object". A label is whatever the
+model's label provider renders. In the fixture `pm:Project` has a `name`, so its label *is* the project
+name; `pm:Ticket` has no name attribute, so its label is the generic *"Unnamed object of type Ticket"*
+(in the user's language). Coercing tickets therefore discloses **how many** exist and nothing else -
+which is exactly the cardinality boundary of **#291**, reached by a second route. The two accepted disclosures are one family: a script can reduce an
+object to a plain value (a number, a string) before any output filter runs, and an output filter cannot
+recover what the value was.
+
+**The control exists and is the caller's**, which is why this is guidance rather than enforcement.
+`filterSecurity(...)` - the engine's registered TL-Script function backing
+`SearchExpression.filterSecurity` - applies the current user's read permissions to a value, dropping the
+objects the user may not read, recursively through collections and maps. Applied *before* the coercion,
+there is no object left to label:
+
+```
+filterSecurity(all(`pm:Project`)).map(p -> toString($p))   // scoped to what the user may read
+all(`pm:Project`).map(p -> toString($p))                   // every label, by design
+```
+
+Three places say so, so that an agent meets it wherever it enters: the `TL_tlScriptWriting` skill, the
+`executeTLScript` tool description, and rows **D7** / **D8** of
+[testbed.md](testbed.md#43-read-filtering---what-a-permitted-tool-then-discloses-issue-289), which
+assert both halves against the running fixture. The blunt control, for an account that must learn
+neither a label nor a count, is to withhold the `script` capability - it is not in the default baseline
+for this reason among others.
+
 The tools that needed the retrofit, and what each got:
 
 | Tool | Change |
@@ -1398,7 +1468,7 @@ compiles against the real API - nothing here is reference code any more. All new
 | `ModelSecurity` - the typed façade | Implemented. `UNCHECKED` survives only as a test seam; every production context carries `ModelAccessRightsSecurity` |
 | `ModelAccessRightsSecurity` - the `ModelAccessRights`-backed implementation | **Real and unit-tested** (8 cases against a stub rights service). Replaces what was appendix A |
 | `ToolSecurityException` - the denial a tool raises | Implemented; raised by `ModelSecurity.requireRead`/`requireWrite`. The read path prefers absence to a denial, so a hidden object produces the "not found" of `TidResolver` rather than this exception - saying "exists but hidden" is the disclosure #289 removed |
-| `ReadFilter` - the disclosure chokepoint | **Implemented and unit-tested** (`TestReadFilter`, 18 cases) and end-to-end against the fixture (`SecDemoReadFilterTest`). Cannot be constructed without a `ModelSecurity`; `TidResolver.resolve` has no form that skips the read check, and `ExecutionResult.toJson` none that skips the filter (#289) |
+| `ReadFilter` - the disclosure chokepoint | **Implemented and unit-tested** (`TestReadFilter`, 18 cases) and end-to-end against the fixture (`SecDemoReadFilterTest`). Cannot be constructed without a `ModelSecurity`; `TidResolver.resolve` has no form that skips the read check, and `ExecutionResult.toJson` none that skips the filter (#289). **It is a chokepoint for `TLObject`s, not for everything a script can return**: a value TL-Script has already reduced to plain data carries no object to recognise, so a count (#291) and a label reached through string coercion (#296) pass through by design. Both are asserted in `SecDemoReadFilterTest` rather than left implicit - see 3.3.2 |
 | `SecurityContext.modelSecurity()`, `ToolContext.modelSecurity()` | The seam every tool reaches. `securityMode()` is gone (#288) |
 | `SecurityContext.hasToolPermission` + `toolDenialReason` | **Enforcing.** `TopLogicSecurityContext` answers both from the policy; `ToolPermissionFilter` and `AgentLoop` prefer the specific reason over a generic "denied" |
 | `TopLogicSecurityContext.forRun(principal, background)` | The single production entry point. Refuses a run with no principal, and binds the model rights and the tool authorization once. **Called by the chat and TL-Script entry points** |
@@ -1418,8 +1488,10 @@ module is active by default and evaluates an empty policy, which grants
 `TestTopLogicSecurityContext` pins that a role the policy does not mention reaches nothing. The module
 is on by default deliberately: a policy present while the module was off would be silently ignored,
 which is the one failure mode this layer must not have. Since **#289** the default's `data.read` *is*
-the per-object guarantee section 3.1 describes, for identity, labels and attribute values; a count
-computed inside a script is outside it and stays so (**#291**). The pre-commit guard is wired and
+the per-object guarantee section 3.1 describes, for **objects and attribute values**; the two values a
+script reduces to plain data first are outside it and stay so - a count (**#291**) and a label reached
+through string coercion (**#296**, section 3.3.2). Note that `script` is *not* in the default baseline,
+so neither is reachable by an application that authored no policy. The pre-commit guard is wired and
 enforcing, subject to the limits section 3.5 states.
 
 Two behaviour changes arrive for TL-Script callers. `aiAgentChat` and `aiAgentChatAsync` act as the

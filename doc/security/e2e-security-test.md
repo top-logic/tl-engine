@@ -776,11 +776,18 @@ Administrator-facing documentation for writing such a policy in your own applica
 
 **It does not test (staged, not wired on this branch):**
 
-- **Filtered aggregates.** ``all(`pm:Ticket`).size()`` counts unfiltered, because a count is a
-  number by the time any filter sees it. This is accepted rather than fixed (issue **#291**): per-object
-  read filtering covers identity, labels and attribute values, and cardinality is outside it. An
-  observation that a persona learned *how many* notes exist is therefore expected behaviour; an
-  observation that it learned *which* ones is a finding. The control is withholding `script`.
+- **Filtered aggregates and labels.** Per-object read filtering covers **objects and attribute
+  values**; a value that TL-Script has already reduced to plain data is outside it, and there are two
+  such values. ``all(`pm:Ticket`).size()`` counts unfiltered, because a count is a number by the time
+  any filter sees it (issue **#291**). ``all(`pm:Project`).map(p -> toString($p))`` returns the project
+  **labels** to a persona who may read neither project, because the coercion resolves the label through
+  `MetaLabelProvider`, which is deliberately not access-checked (issue **#296**) - intended engine
+  behaviour that will not change, since object labels are non-secret by design and the modeller must
+  keep confidential information out of object names. Both are accepted rather than fixed, and both are
+  asserted in `SecDemoReadFilterTest` so they are not rediscovered as findings. An observation that a
+  persona learned *how many* tickets exist, or what a project is *called*, is therefore expected
+  behaviour; an observation that it learned a ticket's `body` is a finding. Two controls, both the
+  caller's: ``filterSecurity(all(...))`` inside the script, or withholding `script`.
 - **The MCP resource surface.** `tl-ai-mcp-server`'s `InstanceResource` and `TypeInstancesResource`
   serialize instances the way the two tools used to. They are closed today only because `/mcp/*`
   authenticates nobody (issue **#261**) and are not a valid surface for per-user enforcement either

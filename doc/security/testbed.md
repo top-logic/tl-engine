@@ -293,6 +293,26 @@ Everything a human might want to see, in one place. The **Where** column says wh
 - **probe** - paste [`harness/probe.tlscript`](harness/probe.tlscript) into the console and press
   **execute**. It prints one line per capability for whoever is logged in; no key needed.
 
+### 4.0 What "read-scoped" covers, and what it does not
+
+Read scoping is per **object** and per **attribute**. It covers the objects a tool discloses and the
+attribute values it reads: an object the persona may not read is absent from the answer, an attribute the
+persona may not read is absent from the object, and both are *absent* rather than refused.
+
+It deliberately does not cover values a script has already turned into plain data before any filter sees
+them:
+
+| Not covered | Why | Row |
+|---|---|---|
+| **Labels** - ``toString($obj)``, ``"" + $obj``, and anything else that coerces an object to a string | the coercion resolves the label through the engine's `MetaLabelProvider`, which is deliberately not access-checked. By the time the value reaches the filter it is a `String`, not an object. **Object labels are non-secret by design and this will not change** (**issue #296**); the obligation it creates belongs to the modeller, who must not encode confidential information in object names | **D7** |
+| **Counts and cardinality** - ``all(...).size()``, and the *length* of a mapped list of nulls | a number carries no object a filter could recognise (**issue #291**) | **D6**, **R3** |
+
+That is why several rows below print **two spellings of the same question**. A row showing only the
+spelling that returns nothing would read as a guarantee the other spelling disproves. The control for
+either is to filter *inside* the script - ``filterSecurity(all(...))``, the engine's own function for
+applying the current user's read permissions to a value - or to withhold the `script` capability
+altogether. Row **D8** runs that control.
+
 ### 4.1 The role model - is the substrate there at all
 
 Start here. If a rule produced nothing, every other row of this table is wrong in a way that looks like
@@ -301,8 +321,8 @@ a policy problem.
 | # | Behaviour | Persona | Where | Do this | You should see |
 |---|---|---|---|---|---|
 | **R1** | the tier arrived | - | boot log | read the line of [2.2](#22-check-the-boot-log) | `checked the roles of 4 personas` and **no warning** above it. A warning names the persona and the role a rule failed to produce |
-| **R2** | the scope arrived, per object | `anna` | console | ``all(`pm:Project`).get(`pm:Project#name`)`` | exactly **`Alpha`**. Not both projects, not an error. This one line is what the previous fixture could not produce at all |
-| **R3** | the tier did not become a scope | `dora` | console | the same expression | **nothing**. Dora holds the same root role as Anna and partners on no project. If Alpha and Beta appear here, `use-default-security-parent` got set to `true` somewhere and the fixture is measuring nothing |
+| **R2** | the scope arrived, per object | `anna` | console | ``all(`pm:Project`).get(`pm:Project#name`)``, then ``all(`pm:Project`).map(p -> toString($p))`` | the first: exactly **`Alpha`** - not both projects, not an error. That one line is what the previous fixture could not produce at all. The second: **`Alpha` and `Beta`**, because a label is not access-checked. The *attribute* is scoped, the *label* is not - see [4.0](#40-what-read-scoped-covers-and-what-it-does-not) |
+| **R3** | the tier did not become a scope | `dora` | console | the same two expressions, and additionally ``all(`pm:Project`).map(p -> $p.get(`pm:Project#name`))`` | three spellings, three different true answers. ``.get(...)``: **an empty list** - Dora holds the same root role as Anna and partners on no project. ``map(p -> $p.get(...))``: **`[null, null]`** - the engine denies each attribute read silently, and collection access flattens those empty values away while an explicit `map` keeps one per object, so the *number* of projects is disclosed and no name is (#291). ``map(p -> toString($p))``: **`Alpha` and `Beta`** (#296). **The row that measures the fixture is the first one**: if names appear *there*, `use-default-security-parent` got set to `true` somewhere and the fixture is measuring nothing |
 | **R4** | the security parent carries the scope | `anna` | console | ``all(`pm:Ticket`).get(`pm:Ticket#title`)`` | the **two Alpha tickets** and not Beta's. No role rule mentions tickets for a partner - the `<security-parents>` rule is what reaches them |
 | **R5** | a type-scope rule is a different thing | `ben` | console | the same expression | **all three** ticket titles. Ben holds `ticketReader` on every ticket, from its own rule; his root assignment reaches no data at all |
 
@@ -317,30 +337,41 @@ reasoning is. `SecDemoModelSecurityTest` is the deterministic form of every one 
 | **M2** | **the row the architecture exists for** | `anna` | probe + console | run `probe.tlscript` (every write capability `ALLOWED`), then ``all(`pm:Project`).get(`pm:Project#name`)`` | Beta is not there at all. Anna holds `data.write` deployment-wide; what stops her is that she holds `projectPartner` on Alpha and not on Beta. **L1 was never going to be what stopped her** |
 | **M3** | nobody deletes a ticket | any persona | console | ``all(`pm:Ticket`).firstElement().delete()`` | refused. `pm:Ticket` has no `Delete` grant for any role, and no `<deny>` was written to achieve it. A `Write` grant is not a licence to delete |
 | **M4** | a reader reads a ticket and not its body | `ben`, then `anna` | console | ``all(`pm:Ticket`).get(`pm:Ticket#title`)`` then ``all(`pm:Ticket`).get(`pm:Ticket#body`)`` | for Ben: three titles, and **an empty list** for the bodies - per-attribute Read, from the `<part name="pm:Ticket#body">` grant. For Anna the second expression returns Alpha's bodies, and that pair is what makes the omission attributable to the grant |
-| **M5** | a reader reads no project | `ben` | console | ``all(`pm:Project`).get(`pm:Project#name`)`` | an empty list. `pm:Project` grants `Read` to `projectPartner` only. Note the shape: **empty, not an error** |
+| **M5** | a reader reads no project | `ben` | console | ``all(`pm:Project`).get(`pm:Project#name`)`` | an empty list. `pm:Project` grants `Read` to `projectPartner` only. Note the shape: **empty, not an error**. The label spelling of **R2** discloses both project names to him as well, and that is intended - [4.0](#40-what-read-scoped-covers-and-what-it-does-not) |
 | **M6** | two roles add up, and reading is not writing | `cara` | console | ``all(`pm:Ticket`).get(`pm:Ticket#title`)``, then try to edit an Alpha ticket | all three titles (as a reader), and the edit refused (she partners on Beta, not Alpha) |
-| **M7** | the failure mode | `dora` | probe + console | run `probe.tlscript`, then ``all(`pm:Project`).get(`pm:Project#name`)`` | every capability `ALLOWED`, and an **empty** result. She holds the tier and scopes nothing. Nothing in this answer tells her that projects exist |
+| **M7** | the failure mode | `dora` | probe + console | run `probe.tlscript`, then ``all(`pm:Project`).get(`pm:Project#name`)`` | every capability `ALLOWED`, and an **empty** result: she holds the tier and scopes nothing. *That answer* does not tell her that projects exist - but the row is only honest with the other spellings beside it, because ``all(`pm:Project`).size()`` tells her there are **2** and ``all(`pm:Project`).map(p -> toString($p))`` tells her they are **`Alpha` and `Beta`**. What she cannot reach either way is an attribute value. See [4.0](#40-what-read-scoped-covers-and-what-it-does-not) and rows **D6** - **D8** |
 | **B1** | the administrator bypass | `root` | console | any of M2 - M7 | allowed throughout. The documented bypass, mirroring the engine's own |
 
 ### 4.3 Read filtering - what a permitted tool then discloses (issue #289)
 
-Every conversion of a model object into something the agent sees goes through one filter, which takes
+Every conversion of a model **object** into something the agent sees goes through one filter, which takes
 the run's rights. `SecDemoReadFilterTest` asserts each of these as a **pair**, because an empty result on
 its own is also what a broken tool returns.
+
+The last three rows are the **boundary** of that sentence, and they are here rather than in a footnote:
+a script that has already turned an object into a number (**D6**) or a string (**D7**) hands the filter
+nothing it can recognise, and **D8** is the control that works. See
+[4.0](#40-what-read-scoped-covers-and-what-it-does-not).
 
 | # | Behaviour | Persona | Where | Do this | You should see |
 |---|---|---|---|---|---|
 | **D1** | a listing is filtered per object, and so is its count | `anna`, then `ben` | console | `aiCallTool("model-instances.listInstances", {"moduleName": "pm", "typeName": "Project"})` | for Anna: one instance and `totalCount 1`. For Ben: `totalCount 0` and an empty page. The count follows the filter - an unfiltered total would tell Anna that a project she may not see exists |
 | **D2** | an unreadable object is reported as **missing** | `anna`, then `cara` | console | `aiCallTool("model-instances.getInstance", {"tid": "<a Beta ticket's TID>"})` | for Anna: `Object with TID '...' not found` - the same answer a TID that names nothing gets, because "exists but hidden" would disclose that it exists. For Cara the same call succeeds |
 | **D3** | an unreadable **attribute** is omitted, the object remains | `ben`, then `anna` | console | `aiCallTool("model-instances.getInstance", {"tid": "<an Alpha ticket's TID>"})` | for Ben: the ticket with its `title`, and **no `body` key at all**. For Anna, `body` is there |
-| **D4** | a script result carries no hidden identity or label | `dora`, then `anna` | console | ``aiCallTool("script-exec.executeTLScript", {"script": "all(`pm:Project`)"})`` | for Dora: `"result": []` and no `_tid`, `_type` or `_display` anywhere. For Anna: all three, for one project |
-| **D5** | ...and a single hidden object is `null`, not `object` | `dora` | console | the same with ``all(`pm:Project`).firstElement()`` | `"resultType": "null"`. Reporting `object` would say that there was one |
+| **D4** | a script result carries no hidden identity or label - **as long as the result still holds objects** | `dora`, then `anna` | console | ``aiCallTool("script-exec.executeTLScript", {"script": "all(`pm:Project`)"})`` | for Dora: `"result": []` and no `_tid`, `_type` or `_display` anywhere. For Anna: all three, for one project. The filter acts on the **objects** in the result; a script that coerces them first (``all(`pm:Project`).map(p -> toString($p))``) leaves no object for it to act on and returns both labels to either persona - **D7** |
+| **D5** | ...and a single hidden object is `null`, not `object` | `dora` | console | the same with ``all(`pm:Project`).firstElement()`` | `"resultType": "null"`. Reporting `object` would say that there was one. Wrapping the same expression in `toString(...)` reports the label instead, for the reason **D7** gives |
 | **D6** | **an aggregate is not filtered, and the fixture says so** | `dora` | console | `aiCallTool("secdemo-reporting.countTickets", null)`, then `aiCallTool("secdemo-reporting.countVisibleTickets", null)` | **3**, then **0**. A count computed inside a script is a number by the time any filter sees it, so per-object filtering cannot narrow it - accepted rather than fixed (**issue #291**). The second tool filters *inside* the script, which is the only honest way to report a count. Neither tool's description claims to be the other |
 
-> ⚠️ **D6 is the boundary of the guarantee, stated so an observation is not mistaken for a finding.**
-> Per-object read filtering covers identity, labels and attribute values. A persona learning *how many*
-> tickets exist is expected behaviour; a persona learning *which* ones would be a finding. The control
-> for an account that must not learn a total is withholding the `script` capability.
+| **D7** | **a string coercion returns a label, and a label is not secret** | `dora` | console | ``aiCallTool("script-exec.executeTLScript", {"script": "all(`pm:Project`).map(p -> toString($p))"})``, then the same expression with ``"" + $p`` in place of ``toString($p)`` | **`Alpha`** and **`Beta`**, from both spellings. ``toString`` and `+` resolve to `SearchExpression.asString`, which falls through to `MetaLabelProvider` for anything that is not a number, boolean or string - generic Java model access, deliberately not access-checked. The value is a `String` before the filter sees it, so no filter can recognise it. **Intended engine behaviour that will not change** (**issue #296**): object labels are non-secret by design. Note what a label actually contains: `pm:Project` has a `name`, so its label *is* the project name, while `pm:Ticket` has none, so its label is the generic *"Unnamed object of type Ticket"* (in the user's language) - the same coercion over tickets discloses how many exist and nothing about them |
+| **D8** | **and this is the control** | `dora`, then `anna` | console | ``aiCallTool("script-exec.executeTLScript", {"script": "filterSecurity(all(`pm:Project`)).map(p -> toString($p))"})`` | for Dora: `"result": []` - the objects are gone before anything can label them. For Anna: **`Alpha`** only. `filterSecurity` is the engine's own function for applying the current user's read permissions to a value; it is what `secdemo-reporting.countVisibleTickets` uses, what the `TL_tlScriptWriting` skill tells the agent to use, and the only thing that makes **D6** and **D7** answerable inside a script |
+
+> ⚠️ **D6, D7 and D8 are the boundary of the guarantee, stated so an observation is not mistaken for a
+> finding.** Per-object read filtering covers **objects and attribute values**. It does not cover a
+> **count** (#291) or a **label** (#296), because both are plain values before any filter runs, and both
+> are accepted by design rather than open work. A persona learning *how many* tickets exist, or what a
+> project is *called*, is expected behaviour; a persona learning a ticket's `body` would be a finding.
+> Two controls exist and both are the caller's: filter inside the script with `filterSecurity` (**D8**),
+> or withhold the `script` capability from an account that must learn neither.
 
 ### 4.4 Tool access - the invocation gate
 
@@ -500,7 +531,7 @@ mvn -o -pl tl-ai-demo -am test -DskipTests=false \
     -Dsurefire.failIfNoSpecifiedTests=false -Dtest='SecDemo*'
 ```
 
-That is **116 tests in 13 classes**, and they are green on this branch. Or run one class at a time - the
+That is **118 tests in 13 classes**, and they are green on this branch. Or run one class at a time - the
 class name says which behaviour broke:
 
 | Class | Tests | Covers | Scenarios |
@@ -508,7 +539,7 @@ class name says which behaviour broke:
 | `SecDemoModelSecurityTest` | 19 | the persona walkthrough, one test per row: the tier that does not bound a partner, the security parent, deny-by-default on `Delete`, per-attribute Read, and the persona who scopes nothing | M1 - M7 |
 | `SecDemoToolAccessTest` | 14 | the invocation gate per persona; that the tier is blind to the scope; the baseline; deny-by-default; the administrator bypass; the `data.write` requirement on the commit path | T1 - T6, B1 |
 | `SecDemoBackgroundAccessTest` | 11 | the background ceiling in both directions; that it binds administrators; that an allowlisted `script` does not admit a commit; that a detached subagent loses what the allowlist withholds; that an enforcing policy has an allowlist; the MCP refusal rule | A1 - A5, P1 |
-| `SecDemoReadFilterTest` | 10 | that the data tools disclose only what the persona may read: a listing filtered **per object** and a filtered `totalCount`, an unreadable object reported as missing, an unreadable attribute omitted, a script result carrying no hidden identity or label - each as a pair - and the aggregate boundary | D1 - D6 |
+| `SecDemoReadFilterTest` | 12 | that the data tools disclose only what the persona may read: a listing filtered **per object** and a filtered `totalCount`, an unreadable object reported as missing, an unreadable attribute omitted, a script result carrying no hidden identity or label - each as a pair - **and the two boundaries asserted rather than assumed**: an aggregate is not filtered (#291) and a string coercion returns a label (#296), with `filterSecurity` as the control | D1 - D8 |
 | `SecDemoCapabilityNoticeTest` | 10 | skills dropped and kept by capability; what `loadSkill` announces; the capability notice | C1, C2 |
 | `SecDemoSkillAbsenceTest` | 9 | what `loadSkill` says when it refuses: withheld for this user, not carried by this agent, no such skill; and that the `addTicket` question is answered honestly whichever route the model takes | C4, C5, C6 |
 | `SecDemoSchemaFilterTest` | 9 | a denied tool's schema is absent from the provider request; the execution-mode half told apart from authorization; the kinds of absence told apart, each with the permitted-only available list | C3, C4, C5 |

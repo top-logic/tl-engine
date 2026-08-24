@@ -240,15 +240,29 @@ list all three.
 > layer decides per object what is actually visible - the account's model access rights - and since
 > **issue #289** the data tools honour it. `listInstances` lists only the instances the account may read
 > and counts only those; `getInstance` omits an attribute the account may not read and answers for an
-> object it may not read at all exactly as it answers for one that does not exist; a TL-Script result
-> carries no identifier and no label of an object the account may not read. An application that has
-> written no `<security-config>` has denied everything, so its agent reads nothing.
+> object it may not read at all exactly as it answers for one that does not exist; and a TL-Script
+> result carries no identifier and no label of an object the account may not read **that is still an
+> object when the result is rendered** - see the note below for the two values that are not. An
+> application that has written no `<security-config>` has denied everything, so its agent reads nothing.
 >
-> ⚠️ **A count is not covered.** ``all(`myapp:Contract`).size()`` is a number by the time any filter
-> sees it, so per-object filtering cannot narrow it, and this is accepted rather than fixed
-> (**issue #291**). Per-object read filtering covers identity, labels and attribute values; aggregates
-> it does not. The control for an account that must not learn how many contracts exist is to withhold
-> the `script` capability - which is not in the default baseline, for this reason among others.
+> ⚠️ **Neither a count nor a label is covered.** Per-object read filtering covers **objects and
+> attribute values**. It cannot cover a value that is no longer an object by the time the filter runs,
+> and TL-Script produces two such values:
+>
+> - ``all(`myapp:Contract`).size()`` is a **number**, so per-object filtering cannot narrow it. Accepted
+>   rather than fixed (**issue #291**).
+> - ``toString($contract)`` and ``"" + $contract`` are **strings**: the coercion resolves the object's
+>   label through the engine's `MetaLabelProvider`, which is deliberately not access-checked. **This is
+>   intended engine behaviour and will not change** (**issue #296**) - object labels are considered
+>   non-secret by design, exactly as the user interface shows a referenced object by its label and
+>   secures only navigation into it. It puts an obligation on you as the modeller: **do not encode
+>   confidential information in the names of objects.** If a contract's name has to be secret, the
+>   secret belongs in an attribute with its own `<part>` grant, not in the label.
+>
+> Two controls, both the caller's: filter *inside* the script with ``filterSecurity(all(...))``, the
+> engine's own function for applying the current user's read permissions to a value; or withhold the
+> `script` capability from an account that must learn neither - it is not in the default baseline, for
+> this reason among others.
 
 ### Classify tools that cannot declare their own group
 

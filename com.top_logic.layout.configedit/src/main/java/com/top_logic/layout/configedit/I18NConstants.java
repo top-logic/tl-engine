@@ -24,6 +24,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_INVALID_VALUE__VALUE_PROPERTY;
 
+	/**
+	 * @en A value is required for "{0}".
+	 */
+	public static ResKey1 ERROR_VALUE_REQUIRED__PROPERTY;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

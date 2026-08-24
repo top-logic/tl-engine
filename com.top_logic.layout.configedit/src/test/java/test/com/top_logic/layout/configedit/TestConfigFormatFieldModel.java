@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigFormatFieldModel;
 
 /**
@@ -213,6 +214,36 @@ public class TestConfigFormatFieldModel extends TestCase {
 
 		assertNull("Empty input must clear the value.", _config.getStart());
 		assertNull("Empty input is not a parse error.", model.getInputError());
+	}
+
+	/**
+	 * Clearing a primitive {@code long} property (via the empty text a control hands back) must
+	 * be refused as a field error, leaving the configuration untouched - the same rule
+	 * {@link ConfigFieldModel#setValue(Object)} applies via
+	 * {@link ConfigFormatFieldModel#setValue(Object)}'s own {@code text == null} route.
+	 */
+	public void testEmptyInputRefusedForPrimitiveProperty() {
+		_config.setDuration(90000);
+		ConfigFormatFieldModel model = model(TestConfig.DURATION);
+
+		model.setValue("");
+
+		assertEquals("Clearing a primitive property must not change its value.", 90000L, _config.getDuration());
+		assertNotNull("Clearing a primitive property must be reported as a field error.", model.getInputError());
+	}
+
+	/**
+	 * Clearing a {@link String} property still clears it without an error: the empty string is a
+	 * legitimate empty input, the classic exception {@code AbstractEditor} also makes.
+	 */
+	public void testEmptyInputStillClearsStringProperty() {
+		_config.setCounted("x");
+		ConfigFormatFieldModel model = model(TestConfig.COUNTED);
+
+		model.setValue("");
+
+		assertNull("Clearing a String property must still clear it.", _config.getCounted());
+		assertNull("Clearing a String property is not a field error.", model.getInputError());
 	}
 
 	/**

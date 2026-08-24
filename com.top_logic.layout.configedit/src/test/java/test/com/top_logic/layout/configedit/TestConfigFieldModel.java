@@ -53,6 +53,9 @@ public class TestConfigFieldModel extends TestCase {
 		/** Property name for {@link #getDoubleValue()}. */
 		String DOUBLE_VALUE = "doubleValue";
 
+		/** Property name for {@link #getNullableCount()}. */
+		String NULLABLE_COUNT = "nullableCount";
+
 		@Name(NAME)
 		String getName();
 
@@ -86,6 +89,15 @@ public class TestConfigFieldModel extends TestCase {
 		double getDoubleValue();
 
 		void setDoubleValue(double value);
+
+		/**
+		 * A property with no explicit default and no {@link Mandatory} annotation: nullable, so
+		 * clearing it must still work, unlike the primitive {@link #getCount()}.
+		 */
+		@Name(NULLABLE_COUNT)
+		Integer getNullableCount();
+
+		void setNullableCount(Integer value);
 	}
 
 	/**
@@ -348,6 +360,71 @@ public class TestConfigFieldModel extends TestCase {
 
 		assertEquals(3.14, config.getDoubleValue(), 0d);
 		assertNull("Fractional value for a double property must not be rejected.", model.getInputError());
+	}
+
+	/**
+	 * Clearing a primitive {@code int} property (as a number input control hands back for an
+	 * empty entry, see {@link com.top_logic.layout.react.control.form.ReactNumberInputControl})
+	 * must be refused as a field error, not forwarded to
+	 * {@link ConfigurationItem#update(PropertyDescriptor, Object)}, which cannot store {@code null}
+	 * for a primitive property.
+	 */
+	public void testSetValueRejectsNullForPrimitiveProperty() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setCount(42);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.COUNT);
+		ConfigFieldModel model = new ConfigFieldModel(config, property);
+
+		model.setValue(null);
+
+		assertEquals("Clearing a primitive property must not change its value.", 42, config.getCount());
+		assertNotNull("Clearing a primitive property must be reported as a field error.", model.getInputError());
+	}
+
+	/**
+	 * A primitive property with no explicit {@link Mandatory} annotation must still be marked
+	 * mandatory, mirroring {@code AbstractEditor#isTechnicallyMandatory(PropertyDescriptor)}: it
+	 * cannot actually hold {@code null}, so a value must be entered.
+	 */
+	public void testPrimitivePropertyIsTechnicallyMandatory() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.COUNT);
+		ConfigFieldModel model = new ConfigFieldModel(config, property);
+
+		assertTrue("A primitive property must be mandatory even without an explicit @Mandatory.",
+			model.isMandatory());
+	}
+
+	/**
+	 * Clearing a {@link String} property still stores the empty value: the empty string is a
+	 * legitimate empty input, the classic exception {@code AbstractEditor} also makes.
+	 */
+	public void testSetValueStoresEmptyStringForStringProperty() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setName("hello");
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.NAME);
+		ConfigFieldModel model = new ConfigFieldModel(config, property);
+
+		model.setValue("");
+
+		assertEquals("The empty string must be stored, not rejected.", "", config.getName());
+		assertNull("The empty string is not a field error.", model.getInputError());
+	}
+
+	/**
+	 * Clearing a nullable {@link Integer} property (no primitive, no {@link Mandatory}) must
+	 * still clear it: it is nullable, so it is not technically mandatory.
+	 */
+	public void testSetValueClearsNullableIntegerProperty() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setNullableCount(7);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.NULLABLE_COUNT);
+		ConfigFieldModel model = new ConfigFieldModel(config, property);
+
+		model.setValue(null);
+
+		assertNull("Clearing a nullable property must clear it.", config.getNullableCount());
+		assertNull("Clearing a nullable property is not a field error.", model.getInputError());
 	}
 
 	/**

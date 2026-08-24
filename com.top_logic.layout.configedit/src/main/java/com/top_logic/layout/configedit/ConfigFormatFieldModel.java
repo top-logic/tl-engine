@@ -73,6 +73,14 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 		}
 
 		if (text == null) {
+			if (isTechnicallyMandatory(getProperty())) {
+				// Same refusal as ConfigFieldModel#setValue(Object): a property that cannot
+				// actually hold null must keep its last accepted value, reported as a field error
+				// instead of reaching ConfigurationItem#update(PropertyDescriptor, Object), which
+				// rejects null for e.g. a primitive property with a technical exception.
+				setError(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(getProperty(), false)));
+				return;
+			}
 			setError(null);
 			getConfig().update(getProperty(), null);
 			return;

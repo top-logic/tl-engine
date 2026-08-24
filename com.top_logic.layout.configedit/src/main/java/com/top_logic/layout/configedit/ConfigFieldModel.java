@@ -12,8 +12,10 @@ import com.top_logic.basic.config.ConfigurationChange.Kind;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.values.edit.Labels;
+import com.top_logic.layout.form.values.edit.editor.AbstractEditor;
 
 /**
  * A {@link AbstractFieldModel} that binds to a single {@link PropertyDescriptor} on a
@@ -52,9 +54,36 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 		super(config.value(property));
 		_config = config;
 		_property = property;
-		setMandatory(property.isMandatory());
+		setMandatory(property.isMandatory() || isTechnicallyMandatory(property));
 		setNullable(property.isNullable());
 		config.addConfigurationListener(property, this);
+	}
+
+	/**
+	 * Whether the given property must have a value entered even though it carries no explicit
+	 * {@link PropertyDescriptor#isMandatory() @Mandatory} annotation, because it cannot actually
+	 * hold {@code null}.
+	 *
+	 * <p>
+	 * Mirrors {@link AbstractEditor#isTechnicallyMandatory(PropertyDescriptor)}, the same rule the
+	 * classic declarative form already applies: a {@link PropertyDescriptor#isNullable() non-nullable}
+	 * property must have a value, with the same three exceptions - {@link String} (the empty string
+	 * is itself a legitimate empty input), {@code boolean} (cannot be entered empty), and the
+	 * collection kinds ({@link PropertyKind#ARRAY}, {@link PropertyKind#LIST},
+	 * {@link PropertyKind#MAP} - not nullable, but may be empty).
+	 * </p>
+	 */
+	static boolean isTechnicallyMandatory(PropertyDescriptor property) {
+		switch (property.kind()) {
+			case ARRAY:
+			case LIST:
+			case MAP:
+				return false;
+
+			default:
+				Class<?> type = property.getType();
+				return !property.isNullable() && type != String.class && type != boolean.class;
+		}
 	}
 
 	@Override
@@ -64,6 +93,16 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 
 	@Override
 	public void setValue(Object value) {
+		if (value == null && isTechnicallyMandatory(_property)) {
+			// A control such as the number input hands back null for an empty entry, whatever
+			// the property's own type is - the same empty input a String property is allowed to
+			// keep. Report it as a field error instead of forwarding it to
+			// ConfigurationItem#update(PropertyDescriptor, Object), which rejects null for a
+			// primitive property with a technical exception the user cannot make sense of.
+			setError(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(_property, false)));
+			return;
+		}
+
 		if (value instanceof Number number) {
 			Object coerced = coerceNumber(number, _property.getType());
 			if (coerced == REJECTED_NUMBER) {

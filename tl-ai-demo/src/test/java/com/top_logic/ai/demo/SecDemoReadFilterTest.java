@@ -40,6 +40,16 @@ import com.top_logic.tl.ai.core.tools.ToolExecutions;
  * {@link SecDemoModelSecurityTest} is the counterpart for the layer below: that the engine's rights say
  * what this test relies on them saying.
  * </p>
+ *
+ * <p>
+ * The filter covers <b>objects and attribute values</b>. It does not cover what a script turns into a
+ * plain value before the filter runs: an aggregate is a number (#291) and a string coercion is a label
+ * (#296), and neither carries a {@code TLObject} the filter could recognise. Both are accepted by
+ * design and both are asserted here rather than left to be rediscovered - see
+ * {@link #testAnAggregateIsNotFilteredAndTheFixtureSaysSo} and
+ * {@link #testStringCoercionReturnsALabelAndTheFixtureSaysSo}, with
+ * {@link #testFilteringInsideTheScriptIsTheControl} for the control.
+ * </p>
  */
 public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 
@@ -133,7 +143,9 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	 *
 	 * <p>
 	 * {@code All.all()} does not filter - its own javadoc says the caller must - and this is where
-	 * tl-ai holds up that half of the contract.
+	 * tl-ai holds up that half of the contract. It holds it up for the <em>objects</em> in the result;
+	 * a script that coerces them to strings first leaves nothing to filter, which is
+	 * {@link #testStringCoercionReturnsALabelAndTheFixtureSaysSo}.
 	 * </p>
 	 */
 	public void testScriptResultDisclosesOnlyReadableObjects() {
@@ -183,20 +195,93 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * A configured script tool never labels an object the persona may not read.
+	 * A denied attribute read yields the empty value, and the spelling decides whether that is visible.
 	 *
 	 * <p>
-	 * {@code SearchExpression.asString} labels a model object, so a tool whose body returns one used to
-	 * name it in a one-line result whatever the caller's rights were.
+	 * The engine denies the <em>attribute</em> read, not the enumeration, and it denies it silently: the
+	 * expression evaluates to the empty value rather than raising. Collection access
+	 * (``all(...).get(...)``) flattens the empty values away, so Dora gets an empty list; an explicit
+	 * {@code map} keeps one entry per object, so the same question gets a list of nulls whose
+	 * <em>length</em> is the number of projects. That is the cardinality boundary of issue <b>#291</b>, reached by a second
+	 * route: no output filter can tell "null because the read was denied" from "null because the
+	 * attribute is unset", so stripping nulls would silently drop legitimate empty values.
+	 * </p>
+	 *
+	 * <p>
+	 * What matters for #289 is the half that does hold in both spellings: no attribute <em>value</em> of
+	 * an object Dora may not read is disclosed either way.
 	 * </p>
 	 */
-	public void testConfiguredScriptToolResultIsFiltered() {
-		// The seeded projects are named, and a label is derived from the name, so the label of a project
-		// Dora may not read must not appear in what a script tool renders for her.
-		String forDora = executeScriptAs(DORA, "all(`pm:Project`).get(`pm:Project#name`)", false);
+	public void testADeniedAttributeReadYieldsNothingInEitherSpelling() {
+		String collectionAccess = executeScriptAs(DORA, "all(`pm:Project`).get(`pm:Project#name`)", false);
+		assertHas("Collection access flattens the empty values away.", "\"result\": []", collectionAccess);
 
-		assertHasNot(ALPHA, forDora);
-		assertHasNot(BETA, forDora);
+		String mapped = executeScriptAs(DORA, "all(`pm:Project`).map(p -> $p.get(`pm:Project#name`))", false);
+		assertEquals("An explicit map keeps one null per project, so the length is disclosed (#291).",
+			projects().size(), countOf("null", compact(mapped), "\"result\":["));
+
+		for (String result : new String[] { collectionAccess, mapped }) {
+			assertHasNot("No attribute value of an unreadable object is disclosed.", ALPHA, result);
+			assertHasNot(BETA, result);
+		}
+	}
+
+	/**
+	 * The boundary, asserted rather than assumed: string coercion returns a label, and labels are not
+	 * secret.
+	 *
+	 * <p>
+	 * ``toString($obj)`` and ``"" + $obj`` resolve to {@code SearchExpression.asString}, which falls
+	 * through to {@code MetaLabelProvider} for anything that is not a number, boolean or
+	 * {@code CharSequence}. That path is generic Java model access and is deliberately not
+	 * access-checked, so the label is computed and the result is a {@code String} by the time
+	 * {@link ReadFilter} sees it - there is no {@code TLObject} left to recognise. <b>This is intended
+	 * engine behaviour and will not change</b> (issue <b>#296</b>): object labels are non-secret by
+	 * design, which is also why the user interface renders a referenced object by its label and secures
+	 * only navigation into it. The obligation it creates belongs to the modeller: confidential
+	 * information must not be encoded in object names.
+	 * </p>
+	 *
+	 * <p>
+	 * Asserted the same way {@link #testAnAggregateIsNotFilteredAndTheFixtureSaysSo} asserts #291, and
+	 * for the same reason: a boundary nobody tests is a boundary somebody later reports as a bug.
+	 * </p>
+	 */
+	public void testStringCoercionReturnsALabelAndTheFixtureSaysSo() {
+		String coerced = executeScriptAs(DORA, "all(`pm:Project`).map(p -> toString($p))", false);
+		assertHas("A label is not access-checked, so Dora gets both project labels (#296).",
+			ALPHA, coerced);
+		assertHas(BETA, coerced);
+
+		assertHas("Concatenation takes the same route, so naming only toString() would understate it.",
+			BETA, executeScriptAs(DORA, "all(`pm:Project`).map(p -> \"\" + $p)", false));
+	}
+
+	/**
+	 * The control for {@link #testStringCoercionReturnsALabelAndTheFixtureSaysSo}, in the fixture rather
+	 * than in prose: filter inside the script, before anything coerces.
+	 *
+	 * <p>
+	 * ``filterSecurity(...)`` is the engine's own function for exactly this - it applies the current
+	 * user's read permissions to a value, dropping the objects the user may not read. Once the objects
+	 * are gone there is nothing left to label. This is what the TL-Script skill and the
+	 * {@code executeTLScript} description tell an agent to do, and this row is why they can.
+	 * </p>
+	 */
+	public void testFilteringInsideTheScriptIsTheControl() {
+		String filtered =
+			executeScriptAs(DORA, "filterSecurity(all(`pm:Project`)).map(p -> toString($p))", false);
+
+		assertHas("Nothing survives the filter, so nothing is labelled.", "\"result\": []", filtered);
+		assertHasNot(ALPHA, filtered);
+		assertHasNot(BETA, filtered);
+
+		String forAnna =
+			executeScriptAs(ANNA, "filterSecurity(all(`pm:Project`)).map(p -> toString($p))", false);
+		assertHas("...and it is a filter, not a blanket refusal: Anna keeps the project she partners on.",
+			ALPHA, forAnna);
+		assertHasNot("...and loses the one she does not, which is what D7 hands back unfiltered.",
+			BETA, forAnna);
 	}
 
 	/**
@@ -251,6 +336,23 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 		}
 		int end = listingJson.indexOf(']', start);
 		return end < 0 ? listingJson.substring(start) : listingJson.substring(start + 1, end);
+	}
+
+	/** The given text with every whitespace character removed, so an assertion cannot depend on layout. */
+	private static String compact(String text) {
+		return text.replaceAll("\\s+", "");
+	}
+
+	/** How often {@code needle} occurs in {@code text} after the first occurrence of {@code from}. */
+	private static int countOf(String needle, String text, String from) {
+		int at = text.indexOf(from);
+		assertTrue("Expected '" + from + "' in: " + text, at >= 0);
+
+		int count = 0;
+		for (int pos = text.indexOf(needle, at); pos >= 0; pos = text.indexOf(needle, pos + needle.length())) {
+			count++;
+		}
+		return count;
 	}
 
 	private static void assertHas(String expected, String actual) {

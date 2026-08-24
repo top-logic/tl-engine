@@ -6,6 +6,7 @@
 package com.top_logic.layout.configedit;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
@@ -206,8 +207,13 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		if (polymorphic && _choices.options().size() > 1) {
 			bodyChildren.add(createTypeSelector(item));
 		}
+		PropertyDescriptor keyProperty = _property.getKeyProperty();
+		if (keyProperty != null) {
+			bodyChildren.add(createKeyField(item, false));
+		}
 		if (!polymorphic || isTypeSelected(item)) {
-			bodyChildren.add(new ConfigEditorControl(_context, item));
+			bodyChildren.add(new ConfigEditorControl(_context, item,
+				keyProperty == null ? Collections.emptySet() : Collections.singleton(keyProperty)));
 		}
 		ReactFormGroupControl group = new ReactFormGroupControl(
 			_context, null, true, !expanded, "subtle", true,
@@ -225,6 +231,31 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 
 		return group;
+	}
+
+	/**
+	 * The field for an entry's key property, rendered by this control rather than by the nested
+	 * editor over the entry.
+	 *
+	 * <p>
+	 * The key decides where the entry sits in the collection, so it is editable only while the
+	 * entry is still pending - once it is in the collection, changing it would re-index the
+	 * collection under a new key. The classic declarative form renders it immutable for the same
+	 * reason.
+	 * </p>
+	 *
+	 * @param entry
+	 *        The entry whose key is edited.
+	 * @param editable
+	 *        Whether the key may still be changed, i.e. whether the entry is pending.
+	 */
+	private ReactControl createKeyField(ConfigurationItem entry, boolean editable) {
+		PropertyDescriptor keyProperty = _property.getKeyProperty();
+		ConfigFieldModel model = ConfigControlService.getInstance().createModel(entry, keyProperty);
+		model.setEditable(editable);
+		ReactControl input = ConfigControlService.getInstance().createControl(_context, model);
+		return new ReactFormFieldChromeControl(_context, Labels.propertyLabel(keyProperty, false),
+			model.isMandatory(), false, null, null, null, false, true, input);
 	}
 
 	private ReactTextControl createHeaderControl(Label label) {

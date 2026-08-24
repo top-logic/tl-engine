@@ -453,6 +453,118 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * Finds the field model of the key field rendered directly by the given element group -
+	 * reached the same way as {@link #findTypeFieldModel(ReactControl)}, via
+	 * {@link ReactControl#scriptingChildren()} and {@link ReactControl#scriptingScalarState()}.
+	 *
+	 * <p>
+	 * Unlike the "Type" selector, the key field carries no fixed label (its label is the key
+	 * property's own, which varies by fixture), so it is identified by elimination among the
+	 * group's direct children: not a header action button, and not the "Type" selector, but
+	 * still a field wrapped in a
+	 * {@link com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl} - the nested
+	 * {@link com.top_logic.layout.configedit.ConfigEditorControl} over the entry is a direct
+	 * child too, but carries no {@code "label"} scripting state of its own.
+	 * </p>
+	 */
+	private FieldModel findKeyFieldModel(ReactControl elementGroup) {
+		for (ReactControl child : elementGroup.scriptingChildren()) {
+			if (child instanceof ReactButtonControl) {
+				continue;
+			}
+			Object label = child.scriptingScalarState().get("label");
+			if (label == null || "Type".equals(label)) {
+				continue;
+			}
+			for (ReactControl field : child.scriptingChildren()) {
+				return (FieldModel) field.getModel();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Counts the fields bound to {@code keyProperty} anywhere under the given control - whether
+	 * rendered directly by the element group (the key field added by
+	 * {@link ConfigListEditorControl}) or by the nested editor over the same entry.
+	 *
+	 * <p>
+	 * Walks the full {@link ReactControl#scriptingChildren()} tree rather than just the direct
+	 * children {@link #findKeyFieldModel(ReactControl)} looks at, because a duplicate rendering
+	 * would come from the nested editor, several levels down.
+	 * </p>
+	 */
+	private int countKeyFields(ReactControl control, PropertyDescriptor keyProperty) {
+		int count = control.getModel() instanceof ConfigFieldModel fieldModel
+			&& fieldModel.getProperty() == keyProperty ? 1 : 0;
+		for (ReactControl child : control.scriptingChildren()) {
+			count += countKeyFields(child, keyProperty);
+		}
+		return count;
+	}
+
+	/**
+	 * The key of an entry that is already in the collection cannot be edited: changing it would
+	 * silently re-index the collection under the new key. The classic editor renders the key
+	 * field immutable for the same reason.
+	 */
+	public void testKeyFieldOfExistingEntryIsReadOnly() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ListItem first = TypedConfiguration.newConfigItem(ListItem.class);
+		first.setName("Apple");
+		config.getKeyedItems().add(first);
+
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		FieldModel keyModel = findKeyFieldModel(elementGroups(editor).get(0));
+		assertNotNull("The entry group must render the key field itself.", keyModel);
+		assertFalse("The key of a committed entry must not be editable.", keyModel.isEditable());
+	}
+
+	/**
+	 * The key field is rendered once, by the group - not a second time by the nested editor over
+	 * the same entry.
+	 */
+	public void testKeyPropertyIsNotRenderedTwice() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ListItem first = TypedConfiguration.newConfigItem(ListItem.class);
+		first.setName("Apple");
+		config.getKeyedItems().add(first);
+
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		assertEquals("The key must appear exactly once in the entry group.", 1,
+			countKeyFields(elementGroups(editor).get(0), property.getKeyProperty()));
+	}
+
+	/**
+	 * A LIST property without a key property must be entirely unaffected by the group's own key
+	 * field: no key field is rendered, and the nested editor still shows the "name" property it
+	 * always did (unlike {@link #testKeyPropertyIsNotRenderedTwice()}, nothing is hidden from it).
+	 */
+	public void testUnkeyedListRendersNoKeyField() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ListItem first = TypedConfiguration.newConfigItem(ListItem.class);
+		first.setName("Apple");
+		config.getPlainItems().add(first);
+
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.PLAIN_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		assertNull("An unkeyed list's entry group must render no key field.",
+			findKeyFieldModel(elementGroups(editor).get(0)));
+
+		PropertyDescriptor nameProperty = first.descriptor().getProperty(ListItem.NAME);
+		assertEquals("The nested editor must still render the entry's \"name\" property.", 1,
+			countKeyFields(elementGroups(editor).get(0), nameProperty));
+	}
+
+	/**
 	 * Adding to a keyed list works as long as every existing element already has a real key -
 	 * distinct real names never collide.
 	 */

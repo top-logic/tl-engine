@@ -26,6 +26,17 @@ import com.top_logic.layout.form.values.edit.Labels;
  * {@link #getInputError() input error} and leaves the configuration untouched, so the editor behaves
  * like a form field over a model attribute.
  * </p>
+ *
+ * <p>
+ * An empty/cleared entry is parsed like any other text - through the value provider's own
+ * {@code getValueEmpty(String)} handling - rather than substituted by {@code null}: most
+ * providers answer {@code null} there anyway, but a collection-typed provider (e.g.
+ * {@code CommaSeparatedStrings} for a {@code List<String>} property) answers its own empty
+ * value (an empty collection), which is the value such a property actually holds for "no
+ * entries" - {@code null} would misrepresent that as "no value at all", which a property that
+ * cannot actually be {@code null} (see {@link #isTechnicallyMandatory(PropertyDescriptor)}) does
+ * not have in the first place.
+ * </p>
  */
 public class ConfigFormatFieldModel extends ConfigFieldModel {
 
@@ -72,28 +83,35 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 			return;
 		}
 
-		if (text == null) {
-			if (isTechnicallyMandatory(getProperty())) {
-				// Same refusal as ConfigFieldModel#setValue(Object): a property that cannot
-				// actually hold null must keep its last accepted value, reported as a field error
-				// instead of reaching ConfigurationItem#update(PropertyDescriptor, Object), which
-				// rejects null for e.g. a primitive property with a technical exception.
-				setError(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(getProperty(), false)));
-				return;
-			}
-			setError(null);
-			getConfig().update(getProperty(), null);
-			return;
-		}
-
 		Object parsed;
 		try {
-			parsed = valueProvider().getValue(getProperty().getPropertyName(), text);
+			// An empty/cleared entry is routed through the property's own value provider too
+			// (as "" - the provider's own empty-value handling, ConfigurationValueProvider#getValue
+			// dispatching to its getValueEmpty(String)), not hard-coded to null: for most
+			// providers that already answers null (e.g. a plain @Format text, or a Date), the
+			// same value null previously stood in for directly. But for a collection-typed
+			// provider (e.g. CommaSeparatedStrings for a List<String> property, as used by
+			// StringEndingFilter.Config#getAllowedEndings()) it answers the empty collection
+			// instead - the value's own, correct representation of "no entries" (see
+			// ListConfigValueProvider#getValueEmpty) - which null would misrepresent as "no
+			// value at all", a different thing for a property that cannot actually be null (see
+			// isTechnicallyMandatory(PropertyDescriptor)).
+			parsed = valueProvider().getValue(getProperty().getPropertyName(),
+				text == null ? StringServices.EMPTY_STRING : text);
 		} catch (ConfigurationException ex) {
 			// Keep the value: the input control still shows the rejected text, the configuration
 			// keeps the last accepted value - the same split a model attribute's field makes.
 			setError(I18NConstants.ERROR_INVALID_VALUE__VALUE_PROPERTY.fill(text,
 				Labels.propertyLabel(getProperty(), false)));
+			return;
+		}
+
+		if (parsed == null && isTechnicallyMandatory(getProperty())) {
+			// Same refusal as ConfigFieldModel#setValue(Object): a property that cannot actually
+			// hold null must keep its last accepted value, reported as a field error instead of
+			// reaching ConfigurationItem#update(PropertyDescriptor, Object), which rejects null
+			// for e.g. a primitive property with a technical exception.
+			setError(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(getProperty(), false)));
 			return;
 		}
 

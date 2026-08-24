@@ -5,7 +5,10 @@
  */
 package test.com.top_logic.layout.configedit;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -14,6 +17,7 @@ import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationChange;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -21,6 +25,7 @@ import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.format.MillisFormat;
@@ -45,6 +50,12 @@ public class TestConfigFormatFieldModel extends TestCase {
 
 		/** Property name for {@link #getCounted()}. */
 		String COUNTED = "counted";
+
+		/** Property name for {@link #getTags()}. */
+		String TAGS = "tags";
+
+		/** Property name for {@link #getMandatoryTags()}. */
+		String MANDATORY_TAGS = "mandatoryTags";
 
 		/**
 		 * A point in time, written in the configuration's date format.
@@ -77,6 +88,35 @@ public class TestConfigFormatFieldModel extends TestCase {
 
 		/** @see #getCounted() */
 		void setCounted(String value);
+
+		/**
+		 * A {@link List} property with its own {@link CommaSeparatedStrings value provider}: not
+		 * nullable (see {@link com.top_logic.basic.config.ListConfigValueProvider#isLegalValue}),
+		 * but may legitimately be empty - the exception
+		 * {@link ConfigFieldModel#isTechnicallyMandatory(PropertyDescriptor)} makes for a
+		 * {@link List}/{@link java.util.Map}/{@link java.util.Set} type, even though this
+		 * property's {@link PropertyDescriptor#kind()} is {@code PLAIN} (not {@code LIST}) because
+		 * of the explicit {@link Format @Format}.
+		 */
+		@Name(TAGS)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getTags();
+
+		/** @see #getTags() */
+		void setTags(List<String> value);
+
+		/**
+		 * Same shape as {@link #getTags()}, but explicitly {@link Mandatory}: still not
+		 * technically mandatory by the {@link List} type exception, so clearing it must behave
+		 * the same as clearing {@link #getTags()}.
+		 */
+		@Name(MANDATORY_TAGS)
+		@Mandatory
+		@Format(CommaSeparatedStrings.class)
+		List<String> getMandatoryTags();
+
+		/** @see #getMandatoryTags() */
+		void setMandatoryTags(List<String> value);
 	}
 
 	/**
@@ -219,8 +259,11 @@ public class TestConfigFormatFieldModel extends TestCase {
 	/**
 	 * Clearing a primitive {@code long} property (via the empty text a control hands back) must
 	 * be refused as a field error, leaving the configuration untouched - the same rule
-	 * {@link ConfigFieldModel#setValue(Object)} applies via
-	 * {@link ConfigFormatFieldModel#setValue(Object)}'s own {@code text == null} route.
+	 * {@link ConfigFieldModel#setValue(Object)} applies, reached here because the property's
+	 * value provider ({@link MillisFormat}) answers {@code null} for empty text, just like it
+	 * did before {@link ConfigFormatFieldModel#setValue(Object)} started asking the provider at
+	 * all (see {@link #testEmptyInputNotRefusedForListProperty()} for the provider that answers
+	 * something else).
 	 */
 	public void testEmptyInputRefusedForPrimitiveProperty() {
 		_config.setDuration(90000);
@@ -244,6 +287,59 @@ public class TestConfigFormatFieldModel extends TestCase {
 
 		assertNull("Clearing a String property must still clear it.", _config.getCounted());
 		assertNull("Clearing a String property is not a field error.", model.getInputError());
+	}
+
+	/**
+	 * Clearing a {@link List}-typed property whose {@link CommaSeparatedStrings value provider}
+	 * has no {@code @Format} exemption of its own must not be refused: the {@link List} type
+	 * exception {@link ConfigFieldModel#isTechnicallyMandatory(PropertyDescriptor)} makes applies
+	 * here even though the property's {@link PropertyDescriptor#kind()} is {@code PLAIN}, not
+	 * {@code LIST} (see that method's JavaDoc).
+	 */
+	public void testEmptyInputNotRefusedForListProperty() {
+		_config.setTags(Arrays.asList("a", "b"));
+		ConfigFormatFieldModel model = model(TestConfig.TAGS);
+
+		model.setValue("");
+
+		assertNull("Clearing a List property must not be reported as a field error.", model.getInputError());
+	}
+
+	/**
+	 * What clearing a {@link List}-typed property actually stores: the value provider's own empty
+	 * value ({@link com.top_logic.basic.config.ListConfigValueProvider#getValueEmpty} answers
+	 * {@link com.top_logic.basic.config.ListConfigValueProvider#defaultValue()}, an empty list),
+	 * not {@code null} - {@code null} would misrepresent "no entries" as "no value at all", which
+	 * a property that cannot actually be {@code null} does not have. Routing the empty text
+	 * through the value provider (instead of hard-coding {@code null}, as this class used to)
+	 * is what makes this the value actually stored - see
+	 * {@link ConfigFormatFieldModel#setValue(Object)}.
+	 */
+	public void testEmptyInputStoresEmptyListForListProperty() {
+		_config.setTags(Arrays.asList("a", "b"));
+		ConfigFormatFieldModel model = model(TestConfig.TAGS);
+
+		model.setValue("");
+
+		assertEquals("Clearing a List property must store the empty list, not null.",
+			Collections.emptyList(), _config.getTags());
+	}
+
+	/**
+	 * An explicit {@link Mandatory} annotation on a {@link List}-typed property does not change
+	 * the answer: the {@link List} type exception is unconditional, independent of
+	 * {@link PropertyDescriptor#isMandatory()}.
+	 */
+	public void testEmptyInputNotRefusedForMandatoryListProperty() {
+		_config.setMandatoryTags(Arrays.asList("a", "b"));
+		ConfigFormatFieldModel model = model(TestConfig.MANDATORY_TAGS);
+
+		model.setValue("");
+
+		assertNull("Clearing a @Mandatory List property must not be reported as a field error.",
+			model.getInputError());
+		assertEquals("Clearing a @Mandatory List property must store the empty list, not null.",
+			Collections.emptyList(), _config.getMandatoryTags());
 	}
 
 	/**

@@ -5,7 +5,10 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationChange;
 import com.top_logic.basic.config.ConfigurationChange.Kind;
@@ -67,10 +70,16 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 	 * <p>
 	 * Mirrors {@link AbstractEditor#isTechnicallyMandatory(PropertyDescriptor)}, the same rule the
 	 * classic declarative form already applies: a {@link PropertyDescriptor#isNullable() non-nullable}
-	 * property must have a value, with the same three exceptions - {@link String} (the empty string
-	 * is itself a legitimate empty input), {@code boolean} (cannot be entered empty), and the
-	 * collection kinds ({@link PropertyKind#ARRAY}, {@link PropertyKind#LIST},
-	 * {@link PropertyKind#MAP} - not nullable, but may be empty).
+	 * property must have a value, with the same exceptions - {@link String} (the empty string is
+	 * itself a legitimate empty input), {@code boolean} (cannot be entered empty), and a collection
+	 * ({@link List}, {@link Map}, {@link Set} - not nullable, but may be empty). The collection
+	 * exception is checked twice, once by {@link PropertyKind} ({@link PropertyKind#ARRAY},
+	 * {@link PropertyKind#LIST}, {@link PropertyKind#MAP}) and once by Java type, because a
+	 * property with its own {@link PropertyDescriptor#getValueProvider() value provider} (e.g.
+	 * {@code List<String>} with {@code @Format(CommaSeparatedStrings.class)}, as used by
+	 * {@code StringEndingFilter.Config#getAllowedEndings()}) is classified {@link PropertyKind#PLAIN},
+	 * not {@code LIST}, so only the type check catches it. Keep this method in step with
+	 * {@code AbstractEditor#isTechnicallyMandatory(PropertyDescriptor)} if that rule ever changes.
 	 * </p>
 	 */
 	static boolean isTechnicallyMandatory(PropertyDescriptor property) {
@@ -82,7 +91,8 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 
 			default:
 				Class<?> type = property.getType();
-				return !property.isNullable() && type != String.class && type != boolean.class;
+				return !property.isNullable() && type != String.class && type != boolean.class
+					&& type != List.class && type != Map.class && type != Set.class;
 		}
 	}
 

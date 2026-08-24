@@ -16,6 +16,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -24,13 +25,18 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldModel;
+import com.top_logic.layout.configedit.ConfigListEditorControl;
+import com.top_logic.layout.configedit.I18NConstants;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests for {@link ConfigEditorControl}.
@@ -157,6 +163,35 @@ public class TestConfigEditorControl extends TestCase {
 		void setHandler(HandlerConfig value);
 	}
 
+	/** Element type of {@link ListTestConfig#getKeyedItems()} and {@link ListTestConfig#getPlainItems()}. */
+	public interface ListItem extends ConfigurationItem {
+
+		/** Property name for {@link #getName()}. */
+		String NAME = "name";
+
+		@Name(NAME)
+		String getName();
+
+		void setName(String value);
+	}
+
+	/** Test config with a keyed and an unkeyed LIST property, for {@link ConfigListEditorControl} tests. */
+	public interface ListTestConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getKeyedItems()}. */
+		String KEYED_ITEMS = "keyedItems";
+
+		/** Property name for {@link #getPlainItems()}. */
+		String PLAIN_ITEMS = "plainItems";
+
+		@Name(KEYED_ITEMS)
+		@Key(ListItem.NAME)
+		java.util.List<ListItem> getKeyedItems();
+
+		@Name(PLAIN_ITEMS)
+		java.util.List<ListItem> getPlainItems();
+	}
+
 	/**
 	 * Test subclass that bypasses {@link com.top_logic.layout.form.values.edit.Labels} to avoid
 	 * requiring Resources/ThreadContextManager in unit tests.
@@ -198,8 +233,122 @@ public class TestConfigEditorControl extends TestCase {
 		}
 	}
 
+	/**
+	 * Test subclass exposing the protected {@code getChildren()} list, so a test can reach the "+"
+	 * {@link ReactButtonControl} and drive it as a click would.
+	 */
+	static class TestableConfigListEditorControl extends ConfigListEditorControl {
+
+		TestableConfigListEditorControl(ReactContext context, ConfigurationItem parentConfig,
+				PropertyDescriptor property) {
+			super(context, parentConfig, property);
+		}
+
+		java.util.List<ReactControl> getChildrenList() {
+			return getChildren();
+		}
+	}
+
 	private ReactContext createTestContext() {
 		return new DefaultReactContext("", "test", new SSEUpdateQueue());
+	}
+
+	/**
+	 * Finds the "+" add button among the given {@link ConfigListEditorControl}'s children (the only
+	 * top-level {@link ReactButtonControl} - the move/remove buttons live inside each element's
+	 * group header, not as direct children).
+	 */
+	private ReactButtonControl findAddButton(TestableConfigListEditorControl editor) {
+		for (ReactControl child : editor.getChildrenList()) {
+			if (child instanceof ReactButtonControl button) {
+				return button;
+			}
+		}
+		fail("Should have an add button");
+		return null;
+	}
+
+	/**
+	 * Simulates clicking the given button and returns the command's {@link HandlerResult}.
+	 */
+	private HandlerResult click(ReactButtonControl button) {
+		return button.executeCommand("click", java.util.Map.of());
+	}
+
+	/**
+	 * Adding to a keyed list works as long as every existing element already has a real key -
+	 * distinct real names never collide.
+	 */
+	public void testAddElementToKeyedListWithAllKeysSetWorks() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ListItem first = TypedConfiguration.newConfigItem(ListItem.class);
+		first.setName("Apple");
+		config.getKeyedItems().add(first);
+
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		HandlerResult result = click(findAddButton(editor));
+
+		assertTrue("Adding a second element must succeed while every existing key is set",
+			result.isSuccess());
+		assertEquals("A second element should have been added", 2, config.getKeyedItems().size());
+	}
+
+	/**
+	 * Adding a second element to a keyed list is refused - with the new user-facing message, not
+	 * the technical {@link IllegalArgumentException} - while the first element still has no name.
+	 *
+	 * <p>
+	 * The command dispatch ({@link com.top_logic.layout.react.control.ReactCommandInvoker}) never
+	 * lets a {@link TopLogicException} escape a {@code @ReactCommandHandler} method: it is caught
+	 * and wrapped into an {@link com.top_logic.basic.exception.I18NRuntimeException} carried by the
+	 * returned {@link HandlerResult} (see {@code ReactCommandInvoker#invoke}), rather than
+	 * propagating as a thrown exception - so the refusal is observed through
+	 * {@link HandlerResult#getException()}, not a {@code catch} block.
+	 * </p>
+	 */
+	public void testAddElementToKeyedListWithUnsetKeyIsRefused() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ListItem first = TypedConfiguration.newConfigItem(ListItem.class);
+		// Name deliberately left unset.
+		config.getKeyedItems().add(first);
+
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		HandlerResult result = click(findAddButton(editor));
+
+		assertFalse("Adding a second element while the first has no name must be refused",
+			result.isSuccess());
+		assertNotNull("The refusal must be reported as an exception", result.getException());
+		assertEquals("The refusal must carry the new user-facing message",
+			I18NConstants.ERROR_LIST_ELEMENT_KEY_MISSING__PROPERTY,
+			result.getException().getErrorKey().plain());
+		assertEquals("No element should have been added", 1, config.getKeyedItems().size());
+	}
+
+	/**
+	 * A LIST property without a key property (no {@link Key} annotation) is unaffected by the new
+	 * guard, even though its elements never carry a name at all.
+	 */
+	public void testAddElementToUnkeyedListIsUnaffected() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ListItem first = TypedConfiguration.newConfigItem(ListItem.class);
+		// Name deliberately left unset - there is no key property to collide on.
+		config.getPlainItems().add(first);
+
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.PLAIN_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		HandlerResult result = click(findAddButton(editor));
+
+		assertTrue("Adding a second element to an unkeyed list must never be blocked",
+			result.isSuccess());
+		assertEquals("A second element should have been added", 2, config.getPlainItems().size());
 	}
 
 	/**

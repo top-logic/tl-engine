@@ -32,6 +32,7 @@ import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A {@link ReactControl} that renders a full editor for a LIST property of a
@@ -275,8 +276,67 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		} else {
 			newItem = TypedConfiguration.newConfigItem(resolveNewElementType());
 		}
+		checkKeyAvailable(items, newItem);
 		items.add(newItem);
 		rebuild(newItem);
+	}
+
+	/**
+	 * Ensures that adding the given element will not collide with an existing element's key.
+	 *
+	 * <p>
+	 * A keyed LIST property ({@link PropertyDescriptor#getKeyProperty()}) is indexed by the key
+	 * property's value; {@link TypedConfiguration} refuses two elements with an equal key with a
+	 * technical {@link IllegalArgumentException}. Both a freshly constructed element (the
+	 * {@code else} branch above) and a {@code Class}-valued polymorphic option (see
+	 * {@link com.top_logic.layout.form.values.ItemOptionMapping} /
+	 * {@link com.top_logic.layout.form.values.ImplOptionMapping}) have their key property unset,
+	 * i.e. they evaluate to the same "empty" key as any other unset element - so adding a second
+	 * such element while an existing one is still unset would trigger exactly that collision. An
+	 * option-provided element that already carries a real key (e.g. a domain-specific
+	 * {@code @Options} function returning pre-filled templates via an identity mapping) is not
+	 * affected: this check only ever fires for a {@code newItem} whose own key is still unset.
+	 * </p>
+	 *
+	 * @param items
+	 *        The list's current elements.
+	 * @param newItem
+	 *        The element about to be added.
+	 *
+	 * @throws TopLogicException
+	 *         If {@code newItem}'s key is unset and some existing element's key is unset, too.
+	 */
+	private void checkKeyAvailable(List<ConfigurationItem> items, ConfigurationItem newItem) {
+		PropertyDescriptor keyProperty = _property.getKeyProperty();
+		if (keyProperty == null || !isKeyUnset(newItem, keyProperty)) {
+			return;
+		}
+		for (ConfigurationItem existing : items) {
+			if (isKeyUnset(existing, keyProperty)) {
+				throw new TopLogicException(I18NConstants.ERROR_LIST_ELEMENT_KEY_MISSING__PROPERTY
+					.fill(Labels.propertyLabel(keyProperty, false)));
+			}
+		}
+	}
+
+	/**
+	 * Whether the given element's key property currently evaluates to the same "no value entered
+	 * yet" value that {@link #resolveElementLabel(ConfigurationItem)} already treats as "no title
+	 * entered yet": {@code null} or an empty {@link String}.
+	 *
+	 * <p>
+	 * Deliberately not {@link ConfigurationItem#valueSet(PropertyDescriptor)}: that flag only
+	 * records whether a setter was ever called, not whether the value it left behind is actually
+	 * meaningful. A name typed and then deleted again leaves {@code valueSet} {@code true} while
+	 * the value is back to the empty string - the same value an element whose name was never
+	 * touched carries - so both would still collide in the same way when
+	 * {@link com.top_logic.basic.config.PropertyDescriptorImpl#checkCorrectListValues} compares the
+	 * actual key values.
+	 * </p>
+	 */
+	private boolean isKeyUnset(ConfigurationItem item, PropertyDescriptor keyProperty) {
+		Object value = item.value(keyProperty);
+		return value == null || (value instanceof String s && s.isEmpty());
 	}
 
 	/**

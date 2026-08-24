@@ -148,11 +148,40 @@ attributes. On top of that:
 
 ### 2. Missing property kinds
 
-- `ARRAY` — like `LIST`, the same list editor
-- `MAP` — entries as groups, the key taken from the property annotated `@Key`; adding through a key
-  dialog (the classic model is `MapEntryBuilderDialog`)
+`ConfigEditorControl.isSupportedKind` admits `PLAIN`, `REF`, `ITEM` and `LIST`; everything else is
+skipped and never appears in the form.
+
+- `ARRAY` — the same list editor as `LIST`. The one real difference is the value: an array, not a
+  `List`, so the editor has to read and write both shapes.
 - `COMPLEX` — the value through its `ConfigurationValueProvider`, i.e. the same format field as in
-  (1)
+  (1). `ConfigControlService` already accepts a `COMPLEX` property that has a value provider and
+  rejects one that has only a binding; only the editor's own filter keeps such a property out. This
+  is what a `ResKey` property needs (see the note in section 1).
+- `MAP` — entries as groups, **created inline** rather than in a dialog.
+
+**Why the classic side uses a dialog, and what inline has to solve instead.** A map in
+TypedConfiguration is keyed the same way a keyed list is: by a property of the entry itself, as in
+this ticket's own `@Key(ProviderMapping.TYPE) Map<Class<?>, ProviderMapping> getProviders()`. An
+entry without a valid, unique key therefore cannot exist in the collection at all — which is why
+`ListEditor` opens an `AddDialog` and `MapFormGroupBuilder` a `MapEntryBuilderDialog`: the dialog is
+where the key is obtained *before* insertion. The classic editor then renders the key field
+immutable (`EditorFactory.initEditorGroup`, and again in `MapFormGroupBuilder.createKeyField`), so a
+key is assigned exactly once.
+
+Inline creation keeps that guarantee but moves the moment: the "+" produces a **pending entry** that
+lives in the control, not yet in the configuration. Its key field is editable and its other fields
+are shown like any entry's. As soon as the key is non-empty and unique, the entry is inserted into
+the configuration and its key field turns immutable, exactly as a classic entry's. An empty or
+duplicate key leaves the entry pending and shows a field error on the key field, through the
+mechanism section 1 established.
+
+This is deliberately **one** mechanism for two cases: a keyed `LIST` has the identical problem, and
+ticket #29462 currently only guards against it — the "+" refuses a second entry while an existing
+one has no key (`ConfigListEditorControl.checkKeyAvailable`). The pending entry replaces that guard
+rather than sitting beside it.
+
+It is also a small anticipation of section 3: holding a half-finished value outside the configuration
+until it is valid is the same question a working copy answers, only scoped to one entry.
 
 ### 3. Edit mode, working copy, validation
 

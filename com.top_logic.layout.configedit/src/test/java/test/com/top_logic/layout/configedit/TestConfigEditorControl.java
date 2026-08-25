@@ -798,20 +798,90 @@ public class TestConfigEditorControl extends TestCase {
 
 	/**
 	 * A second entry can be started while the first is still unnamed - the limitation the old
-	 * add-guard imposed is gone.
+	 * add-guard imposed is gone. Walks the fuller lifecycle: both are pending at once and the
+	 * collection holds neither; naming the first commits only it, leaving the second still
+	 * pending beside it; naming the second afterwards commits it too, and both land in the
+	 * collection in commit order.
 	 */
 	public void testASecondEntryCanBeStartedBeforeTheFirstIsNamed() {
 		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
 		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
+
 		clickAddButton(editor);
+		clickAddButton(editor);
+
+		assertEquals("Two pending entries must be able to coexist.", 2, elementGroups(editor).size());
+		assertEquals("Neither pending entry is in the collection yet.", 0,
+			config.getKeyedItems().size());
+
 		findKeyFieldModel(elementGroups(editor).get(0)).setValue("first");
 
+		assertEquals("Naming the first entry must commit only it.", 1, config.getKeyedItems().size());
+		assertEquals("The second entry is still pending beside the newly committed first.", 2,
+			elementGroups(editor).size());
+
+		findKeyFieldModel(elementGroups(editor).get(1)).setValue("second");
+
+		List<ListItem> items = config.getKeyedItems();
+		assertEquals("The named second entry must also have been committed.", 2, items.size());
+		assertEquals("The first-committed entry must come first.", "first", items.get(0).getName());
+		assertEquals("The second-committed entry must come second.", "second", items.get(1).getName());
+	}
+
+	/**
+	 * Discarding one pending entry through its own Remove action leaves any other pending entry
+	 * untouched - it must remove exactly the entry whose Remove button was pressed, not every
+	 * pending entry, and it must not touch the collection, which it was never part of.
+	 */
+	public void testDiscardingOnePendingEntryLeavesTheOtherPending() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		clickAddButton(editor);
 		clickAddButton(editor);
 
-		assertEquals("The named entry is in the collection.", 1, config.getKeyedItems().size());
-		assertEquals("A new pending entry is rendered beside it.", 2, elementGroups(editor).size());
+		click(findHeaderButton(elementGroups(editor).get(0), "\u2715"));
+
+		assertEquals("Discarding one pending entry must leave exactly the other one pending.", 1,
+			elementGroups(editor).size());
+		assertEquals("The collection must stay empty - discarding a pending entry never touches it, "
+			+ "and neither entry was ever named.", 0, config.getKeyedItems().size());
+	}
+
+	/**
+	 * Two pending entries given the same key, one after the other, resolve deterministically: the
+	 * one whose key is set first finds the collection free of it and commits immediately: a
+	 * pending entry's key change is handled synchronously, on the very call that changed it, so
+	 * there is no window in which both could be checked "at once". The second, given the same key
+	 * afterwards, then clashes with what is by then a committed entry and reports the error at its
+	 * own key field - the same duplicate-key path as colliding with any other pre-existing entry,
+	 * not a special case for two pending entries racing each other.
+	 */
+	public void testSecondPendingEntryGivenTheSameKeyClashesWithTheNowCommittedFirst() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		clickAddButton(editor);
+		clickAddButton(editor);
+
+		findKeyFieldModel(elementGroups(editor).get(0)).setValue("dup");
+
+		assertEquals("The entry given the key first must have committed.", 1,
+			config.getKeyedItems().size());
+
+		FieldModel secondKeyModel = findKeyFieldModel(elementGroups(editor).get(1));
+		secondKeyModel.setValue("dup");
+
+		assertEquals("The second entry must not also have been committed under the same key.", 1,
+			config.getKeyedItems().size());
+		assertNotNull("The clash must be reported at the second entry's own key field.",
+			secondKeyModel.getError());
 	}
 
 	/**

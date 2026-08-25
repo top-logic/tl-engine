@@ -7,6 +7,7 @@ package com.top_logic.graphic.flow.operations;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -90,7 +91,13 @@ public interface MapLike extends Map<String, Object> {
 
 	@Override
 	default Set<Entry<String, Object>> entrySet() {
-		return self().properties().stream().collect(Collectors.toMap(k -> k, k -> self().get(k))).entrySet();
+		// Note: Not built with Collectors.toMap(), because that implementation rejects null values,
+		// while an unset property legally has none.
+		Map<String, Object> entries = new LinkedHashMap<>();
+		for (String property : self().properties()) {
+			entries.put(property, self().get(property));
+		}
+		return entries.entrySet();
 	}
 
 }

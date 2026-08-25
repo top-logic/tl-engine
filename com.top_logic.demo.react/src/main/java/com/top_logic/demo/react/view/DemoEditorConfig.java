@@ -8,7 +8,9 @@ package com.top_logic.demo.react.view;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
@@ -21,8 +23,9 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
  *
  * <p>
  * Exercises a spread of property kinds (text, number, boolean, enumeration, a nested item, a list
- * of items, an array of items, a map of items and a {@link ResKey}) so the React configuration
- * editor renders each editor variant.
+ * of items, an array of items, a map of items, a list of plain strings written as one comma
+ * separated text, and a {@link ResKey}) so the React configuration editor renders each editor
+ * variant.
  * </p>
  */
 public interface DemoEditorConfig extends ConfigurationItem {
@@ -53,6 +56,9 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getCatalog()}. */
 	String CATALOG = "catalog";
+
+	/** Configuration name for the value of {@link #getTags()}. */
+	String TAGS = "tags";
 
 	/**
 	 * Priority classifier for {@link DemoEditorConfig#getPriority()}.
@@ -126,6 +132,21 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	@Name(CATALOG)
 	@Key(Item.NAME)
 	Map<String, Item> getCatalog();
+
+	/**
+	 * Keywords describing this configuration, written as a single comma separated text.
+	 *
+	 * <p>
+	 * A {@link List} of plain values with a {@link Format} of its own is not a collection of
+	 * entries to be edited one by one - the format turns the whole list into one text and back, so
+	 * it is a single input, not the collection editor {@link #getItems()} gets. That is what
+	 * {@link CommaSeparatedStrings} does here: the property is edited as {@code "red, green,
+	 * blue"}.
+	 * </p>
+	 */
+	@Name(TAGS)
+	@Format(CommaSeparatedStrings.class)
+	List<String> getTags();
 
 	/**
 	 * A postal address.

@@ -6,6 +6,7 @@
 package com.top_logic.demo.react.view;
 
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Key;
@@ -20,8 +21,8 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
  *
  * <p>
  * Exercises a spread of property kinds (text, number, boolean, enumeration, a nested item, a list
- * of items, an array of items and a {@link ResKey}) so the React configuration editor renders each
- * editor variant.
+ * of items, an array of items, a map of items and a {@link ResKey}) so the React configuration
+ * editor renders each editor variant.
  * </p>
  */
 public interface DemoEditorConfig extends ConfigurationItem {
@@ -49,6 +50,9 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getShippingAddresses()}. */
 	String SHIPPING_ADDRESSES = "shippingAddresses";
+
+	/** Configuration name for the value of {@link #getCatalog()}. */
+	String CATALOG = "catalog";
 
 	/**
 	 * Priority classifier for {@link DemoEditorConfig#getPriority()}.
@@ -114,6 +118,14 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	 */
 	@Name(SHIPPING_ADDRESSES)
 	Address[] getShippingAddresses();
+
+	/**
+	 * The items on offer, indexed by name, a {@link Map} rather than the {@link List} of
+	 * {@link #getItems()}.
+	 */
+	@Name(CATALOG)
+	@Key(Item.NAME)
+	Map<String, Item> getCatalog();
 
 	/**
 	 * A postal address.

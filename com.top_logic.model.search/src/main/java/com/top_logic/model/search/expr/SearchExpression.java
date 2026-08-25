@@ -58,6 +58,8 @@ import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
+import de.haumacher.msgbuf.data.ReflectiveDataObject;
+
 /**
  * Part of an executable search model.
  * 
@@ -282,6 +284,16 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * by the access check of the attribute access itself.
 	 * </p>
 	 *
+	 * <p>
+	 * A {@link ReflectiveDataObject} (e.g. a diagram assembled by a script) is kept for the same
+	 * reason. It is a <em>structured value</em>, not a container of business objects: its properties
+	 * form an object graph that may be cyclic, and a filtered copy would be a plain {@link Map} that
+	 * cannot take the place of the original - filtering it would destroy the value instead of
+	 * protecting data. A business object that a script stores in such a value is therefore
+	 * <em>not</em> filtered: whoever passes that object on to the user is responsible for checking
+	 * the read rights, see {@link ModelAccessRights#isReadAllowed(Person, TLObject)}.
+	 * </p>
+	 *
 	 * @param value
 	 *        The value to filter for security. May be null;
 	 *
@@ -298,6 +310,10 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		}
 		if (value instanceof TLObject object) {
 			return filterSecurityTLObject(user, object);
+		}
+		if (value instanceof ReflectiveDataObject) {
+			// A structured value, not a container of business objects, see above.
+			return value;
 		}
 		if (value instanceof Collection collectionValue) {
 			return filterSecurityCollection(user, collectionValue);

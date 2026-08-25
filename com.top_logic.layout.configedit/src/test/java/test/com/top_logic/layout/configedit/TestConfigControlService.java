@@ -45,6 +45,7 @@ import com.top_logic.layout.configedit.ConfigFormatFieldModel;
 import com.top_logic.layout.configedit.ConfigPropertyOptions;
 import com.top_logic.layout.configedit.ConfigSelectFieldModel;
 import com.top_logic.layout.configedit.DatePickerFormatProvider;
+import com.top_logic.layout.configedit.I18NStringFormatProvider;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -994,7 +995,23 @@ public class TestConfigControlService extends TestCase {
 	/** A typed property that is edited as text gets the format-aware model. */
 	public void testTypedPropertyUsesFormatModel() {
 		assertTrue("A typed property must be parsed through its format.",
-			model(TestConfig.LABEL) instanceof ConfigFormatFieldModel);
+			model(TestConfig.IMPL_TYPE) instanceof ConfigFormatFieldModel);
+	}
+
+	/**
+	 * A {@link ResKey} property is edited in its typed form, not as its encoded text - the shipped
+	 * {@link I18NStringFormatProvider} mapping claims it.
+	 *
+	 * <p>
+	 * Asserts the model rather than the control: the claim's whole point is the value domain
+	 * ({@link ResKey} itself, not the single string its encoding folds every language into), and
+	 * building the control would need the running application's locales.
+	 * </p>
+	 */
+	public void testResKeyIsEditedTyped() {
+		ConfigFieldModel model = model(TestConfig.LABEL);
+		assertFalse("A resource key must not be edited as its encoded text.",
+			model instanceof ConfigFormatFieldModel);
 	}
 
 	/** A string property needs no format model. */

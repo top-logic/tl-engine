@@ -31,6 +31,9 @@
 							kind="TIME"
 						/>
 					</format>
+					<format provider="com.top_logic.basic.util.ResKey$ValueFormat">
+						<impl class="com.top_logic.layout.configedit.I18NStringFormatProvider"/>
+					</format>
 				</formats>
 			</instance>
 		</config>

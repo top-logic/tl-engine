@@ -164,7 +164,7 @@ public class TestConfigEditorControl extends TestCase {
 		 * A {@link PropertyKind#MAP} property, edited by the same
 		 * {@link com.top_logic.layout.configedit.ConfigListEditorControl} as a keyed
 		 * {@link ListItem} LIST or ARRAY property - differing only in the value's shape (a
-		 * {@link Map}, keyed by each entry's {@link ListItem#getName()}) and in being unordered.
+		 * {@link Map}, keyed by each entry's {@link ListItem#getName()}).
 		 */
 		@Name(INDEX)
 		@Key(ListItem.NAME)
@@ -506,9 +506,9 @@ public class TestConfigEditorControl extends TestCase {
 	/**
 	 * Finds the header action button carrying the given label (the move-up "\u25B2", move-down
 	 * "\u25BC", or remove "\u2715" icon) inside the given element group, or {@code null} if no
-	 * such button is rendered - which is the expected outcome for the move buttons on an
-	 * unordered (MAP) collection, not just a possible bug, so this does not fail on a miss the way
-	 * {@link #findKeyFieldModel(ReactControl)} deliberately does not either.
+	 * such button is rendered - a miss is a legitimate outcome for a collection that offers no
+	 * such action, so this does not fail on it, the way {@link #findKeyFieldModel(ReactControl)}
+	 * deliberately does not either.
 	 *
 	 * <p>
 	 * Reached through {@link ReactControl#scriptingChildren()} and
@@ -697,9 +697,26 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * Confirms the pending entry rendered as the given element group, by pressing its Confirm
+	 * button - the only thing that moves a pending entry into the collection.
+	 */
+	private void confirmPending(TestableConfigListEditorControl editor, int groupIndex) {
+		ReactButtonControl confirm = findHeaderButton(elementGroups(editor).get(groupIndex), "\u2713");
+		assertNotNull("A pending entry must offer a Confirm button.", confirm);
+		click(confirm);
+	}
+
+	/** Types a key into the pending entry rendered as the given element group, then confirms it. */
+	private void nameAndConfirm(TestableConfigListEditorControl editor, int groupIndex, String key) {
+		findKeyFieldModel(elementGroups(editor).get(groupIndex)).setValue(key);
+		confirmPending(editor, groupIndex);
+	}
+
+	/**
 	 * Adding a second element to a keyed list always succeeds, even while every existing element
 	 * already has a real key: the "+" never inserts directly any more, so there is nothing left
-	 * to collide with the existing "Apple" key. Naming the new (pending) entry then adds it.
+	 * to collide with the existing "Apple" key. Naming and confirming the new (pending) entry then
+	 * adds it.
 	 */
 	public void testAddElementToKeyedListWithAllKeysSetWorks() {
 		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
@@ -714,7 +731,7 @@ public class TestConfigEditorControl extends TestCase {
 		HandlerResult result = click(findAddButton(editor));
 		assertTrue("Adding a second element must never be refused", result.isSuccess());
 
-		findKeyFieldModel(elementGroups(editor).get(1)).setValue("Banana");
+		nameAndConfirm(editor, 1, "Banana");
 
 		assertEquals("The named second element should have been added", 2, config.getKeyedItems().size());
 	}
@@ -737,20 +754,68 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * Naming the pending entry moves it into the collection.
+	 * A key that merely looks usable does not commit the entry - only confirming does.
+	 *
+	 * <p>
+	 * The key field reports what has been typed so far: {@code TLTextInput} pushes its value 300 ms
+	 * after the last keystroke, and again when the field loses focus, so every pause in typing and
+	 * every trip away from the field to fetch the value from elsewhere arrives here as a value
+	 * change. Committing on such a change would take "fir" for the finished key and fix the field
+	 * on it.
+	 * </p>
 	 */
-	public void testNamingThePendingEntryCommitsIt() {
+	public void testTypingAKeyDoesNotCommitTheEntry() {
 		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
 		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 		clickAddButton(editor);
 
-		findKeyFieldModel(elementGroups(editor).get(0)).setValue("first");
+		FieldModel keyModel = findKeyFieldModel(elementGroups(editor).get(0));
+		keyModel.setValue("fir");
+		keyModel.setValue("first");
+
+		assertEquals("An entry must not be committed under a half-typed key.", 0,
+			config.getKeyedItems().size());
+		assertTrue("The key field must stay editable while the entry is pending.",
+			findKeyFieldModel(elementGroups(editor).get(0)).isEditable());
+	}
+
+	/** Confirming the named pending entry moves it into the collection. */
+	public void testConfirmingTheNamedPendingEntryCommitsIt() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+		clickAddButton(editor);
+
+		nameAndConfirm(editor, 0, "first");
 
 		List<ListItem> items = config.getKeyedItems();
-		assertEquals("The named entry must be in the collection.", 1, items.size());
+		assertEquals("The confirmed entry must be in the collection.", 1, items.size());
 		assertEquals("first", items.get(0).getName());
+	}
+
+	/**
+	 * Confirming an entry that has no key at all reports that at the key field, rather than
+	 * quietly doing nothing - the user asked for the entry to be taken and has to be told why it
+	 * was not.
+	 */
+	public void testConfirmingWithoutAKeyReportsItAtTheField() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+		clickAddButton(editor);
+
+		confirmPending(editor, 0);
+
+		assertEquals("An entry without a key must stay out of the collection.", 0,
+			config.getKeyedItems().size());
+		assertEquals("The entry must stay pending.", 1, elementGroups(editor).size());
+		ResKey error = findKeyFieldModel(elementGroups(editor).get(0)).getError();
+		assertNotNull("The missing key must be reported at the key field.", error);
+		assertEquals(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY, error.plain());
 	}
 
 	/**
@@ -780,12 +845,11 @@ public class TestConfigEditorControl extends TestCase {
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 		clickAddButton(editor);
 
-		FieldModel keyModel = findKeyFieldModel(elementGroups(editor).get(1));
-		keyModel.setValue("first");
+		nameAndConfirm(editor, 1, "first");
 
 		assertEquals("The clashing entry must stay out of the collection.", 1,
 			config.getKeyedItems().size());
-		ResKey error = keyModel.getError();
+		ResKey error = findKeyFieldModel(elementGroups(editor).get(1)).getError();
 		assertNotNull("The clash must be reported at the key field.", error);
 		assertEquals("The clash must carry the duplicate-key message.",
 			I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE, error.plain());
@@ -799,8 +863,8 @@ public class TestConfigEditorControl extends TestCase {
 	/**
 	 * A second entry can be started while the first is still unnamed - the limitation the old
 	 * add-guard imposed is gone. Walks the fuller lifecycle: both are pending at once and the
-	 * collection holds neither; naming the first commits only it, leaving the second still
-	 * pending beside it; naming the second afterwards commits it too, and both land in the
+	 * collection holds neither; confirming the first commits only it, leaving the second still
+	 * pending beside it; confirming the second afterwards commits it too, and both land in the
 	 * collection in commit order.
 	 */
 	public void testASecondEntryCanBeStartedBeforeTheFirstIsNamed() {
@@ -816,18 +880,40 @@ public class TestConfigEditorControl extends TestCase {
 		assertEquals("Neither pending entry is in the collection yet.", 0,
 			config.getKeyedItems().size());
 
-		findKeyFieldModel(elementGroups(editor).get(0)).setValue("first");
+		nameAndConfirm(editor, 0, "first");
 
-		assertEquals("Naming the first entry must commit only it.", 1, config.getKeyedItems().size());
+		assertEquals("Confirming the first entry must commit only it.", 1, config.getKeyedItems().size());
 		assertEquals("The second entry is still pending beside the newly committed first.", 2,
 			elementGroups(editor).size());
 
-		findKeyFieldModel(elementGroups(editor).get(1)).setValue("second");
+		nameAndConfirm(editor, 1, "second");
 
 		List<ListItem> items = config.getKeyedItems();
-		assertEquals("The named second entry must also have been committed.", 2, items.size());
+		assertEquals("The confirmed second entry must also have been committed.", 2, items.size());
 		assertEquals("The first-committed entry must come first.", "first", items.get(0).getName());
 		assertEquals("The second-committed entry must come second.", "second", items.get(1).getName());
+	}
+
+	/**
+	 * The second pending entry can be named and confirmed before the first one is - the entries
+	 * are addressed by object, not by their position among the pending ones.
+	 */
+	public void testTheSecondPendingEntryCanBeConfirmedFirst() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		clickAddButton(editor);
+		clickAddButton(editor);
+
+		nameAndConfirm(editor, 1, "second");
+
+		List<ListItem> items = config.getKeyedItems();
+		assertEquals("Exactly the confirmed entry must have been committed.", 1, items.size());
+		assertEquals("second", items.get(0).getName());
+		assertEquals("The other entry must still be pending beside the committed one.", 2,
+			elementGroups(editor).size());
 	}
 
 	/**
@@ -853,15 +939,13 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * Two pending entries given the same key, one after the other, resolve deterministically: the
-	 * one whose key is set first finds the collection free of it and commits immediately: a
-	 * pending entry's key change is handled synchronously, on the very call that changed it, so
-	 * there is no window in which both could be checked "at once". The second, given the same key
-	 * afterwards, then clashes with what is by then a committed entry and reports the error at its
-	 * own key field - the same duplicate-key path as colliding with any other pre-existing entry,
-	 * not a special case for two pending entries racing each other.
+	 * Two pending entries may carry the same key while both are still being filled in - neither
+	 * has claimed it yet. Confirming decides: the first confirmed takes the key, and confirming
+	 * the second then clashes with what is by then a committed entry, reported at its own key
+	 * field - the same duplicate-key path as colliding with any other pre-existing entry, not a
+	 * special case for two pending entries racing each other.
 	 */
-	public void testSecondPendingEntryGivenTheSameKeyClashesWithTheNowCommittedFirst() {
+	public void testSecondPendingEntryConfirmedWithTheSameKeyClashesWithTheCommittedFirst() {
 		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
 		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
 		TestableConfigListEditorControl editor =
@@ -871,17 +955,22 @@ public class TestConfigEditorControl extends TestCase {
 		clickAddButton(editor);
 
 		findKeyFieldModel(elementGroups(editor).get(0)).setValue("dup");
+		findKeyFieldModel(elementGroups(editor).get(1)).setValue("dup");
 
-		assertEquals("The entry given the key first must have committed.", 1,
+		assertEquals("Two pending entries may hold the same key while neither is confirmed.", 0,
 			config.getKeyedItems().size());
 
-		FieldModel secondKeyModel = findKeyFieldModel(elementGroups(editor).get(1));
-		secondKeyModel.setValue("dup");
+		confirmPending(editor, 0);
+
+		assertEquals("The entry confirmed first must have committed.", 1,
+			config.getKeyedItems().size());
+
+		confirmPending(editor, 1);
 
 		assertEquals("The second entry must not also have been committed under the same key.", 1,
 			config.getKeyedItems().size());
 		assertNotNull("The clash must be reported at the second entry's own key field.",
-			secondKeyModel.getError());
+			findKeyFieldModel(elementGroups(editor).get(1)).getError());
 	}
 
 	/**
@@ -1161,32 +1250,64 @@ public class TestConfigEditorControl extends TestCase {
 		assertEquals("Both map entries must be rendered, one group each.", 2, elementGroups(editor).size());
 	}
 
-	/** Naming a pending entry puts it into the map under its key. */
-	public void testNamingThePendingEntryPutsItIntoTheMap() {
+	/** Confirming a named pending entry puts it into the map under its key. */
+	public void testConfirmingThePendingEntryPutsItIntoTheMap() {
 		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
 		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.INDEX);
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 		clickAddButton(editor);
 
-		findKeyFieldModel(elementGroups(editor).get(0)).setValue("alpha");
+		nameAndConfirm(editor, 0, "alpha");
 
 		Map<?, ?> index = (Map<?, ?>) config.value(property);
 		assertEquals(1, index.size());
 		assertTrue("The map must be keyed by the entry's key value.", index.containsKey("alpha"));
 	}
 
-	/** An unordered collection offers no reorder buttons. */
-	public void testMapEntriesHaveNoReorderButtons() {
+	/**
+	 * A map's entries can be reordered, even though a MAP property is not
+	 * {@link PropertyDescriptor#isOrdered() ordered}.
+	 *
+	 * <p>
+	 * The flag only says a {@link Map} has no positional index of its own; the value a MAP
+	 * property holds is backed by a {@link java.util.LinkedHashMap}, so it does have an iteration
+	 * order - the one the editor renders and a configuration is written out in.
+	 * </p>
+	 */
+	public void testMapEntriesCanBeReordered() {
 		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
 		config.getIndex().put("Apple", newListItem("Apple"));
+		config.getIndex().put("Banana", newListItem("Banana"));
 
 		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.INDEX);
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 
-		assertNull("A map is unordered; moving an entry has no meaning.",
-			findHeaderButton(elementGroups(editor).get(0), "▲"));
+		ReactButtonControl moveUp = findHeaderButton(elementGroups(editor).get(1), "▲");
+		assertNotNull("A map's iteration order is stable, so its entries can be reordered.", moveUp);
+		click(moveUp);
+
+		Map<?, ?> index = (Map<?, ?>) config.value(property);
+		assertEquals("Reordering must not lose or add entries.", 2, index.size());
+		assertEquals("The moved entry must come first now.",
+			Arrays.asList("Banana", "Apple"), new ArrayList<>(index.keySet()));
+	}
+
+	/** The first entry of a map cannot be moved further up. */
+	public void testFirstMapEntryCannotMoveUp() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.getIndex().put("Apple", newListItem("Apple"));
+		config.getIndex().put("Banana", newListItem("Banana"));
+
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.INDEX);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		ReactButtonControl moveUp = findHeaderButton(elementGroups(editor).get(0), "▲");
+		assertNotNull("A map entry must offer the button at all.", moveUp);
+		assertEquals("The first entry has nowhere to move up to.",
+			Boolean.TRUE, moveUp.scriptingScalarState().get("disabled"));
 	}
 
 	/**

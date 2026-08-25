@@ -42,13 +42,13 @@ import com.top_logic.util.Resources;
 /**
  * A {@link ReactControl} that renders a full editor for a LIST, an ARRAY, or a MAP property of a
  * {@link ConfigurationItem} - the same sequence-of-elements editor for all three, differing only
- * in the value's shape and, for a MAP, in being unordered (see {@link PropertyDescriptor#isOrdered()}).
+ * in the value's shape.
  *
  * <p>
  * Each list element is rendered as a collapsible {@link ReactFormGroupControl} with action buttons
  * (Move Up, Move Down, Remove) in the header and a nested {@link ConfigEditorControl} for the
- * element's properties - Move Up/Move Down only for an ordered collection. An Add button at the
- * bottom creates new elements.
+ * element's properties - Move Up/Move Down only for a {@link #isReorderable() reorderable}
+ * collection. An Add button at the bottom creates new elements.
  * </p>
  *
  * <p>
@@ -84,8 +84,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 *
 	 * <p>
 	 * A keyed collection is indexed by a property of its entries, so it cannot hold an entry whose
-	 * key is empty or already taken. Such an entry therefore lives here until its key makes it
-	 * acceptable - see {@link #commitPending(PendingEntry)}. More than one may be pending at once:
+	 * key is empty or already taken. Such an entry therefore lives here until the user confirms it
+	 * with a key the collection accepts - see {@link #commitPending(PendingEntry)}. More than one may be pending at once:
 	 * each is a distinct object with its own key field, so nothing about holding several
 	 * simultaneously is ambiguous - unlike the single {@code _pendingEntry} field this replaced,
 	 * which came with a guard refusing a second one, on the mistaken belief that two pending
@@ -208,9 +208,9 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * cannot be mutated in place.
 	 *
 	 * <p>
-	 * A {@link PropertyKind#MAP} property is rebuilt wholesale into a fresh {@link LinkedHashMap},
-	 * as {@code MapFormGroupBuilder} (the classic form's equivalent) does, so the order the user
-	 * sees stays stable - keyed by each entry's own key property value, resolved by
+	 * A {@link PropertyKind#MAP} property is rebuilt wholesale in the order it is handed, as
+	 * {@code MapFormGroupBuilder} (the classic form's equivalent) does, so the order the user sees
+	 * stays stable - keyed by each entry's own key property value, resolved by
 	 * {@link #resolveKeyProperty(ConfigurationItem)} rather than {@link #_property}'s declared one,
 	 * for the same polymorphism reason that method exists for. A duplicate key cannot reach this
 	 * method: {@link #commitPending(PendingEntry)} already refused one before committing, which matters here
@@ -218,7 +218,18 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * silently overwrites it, unlike inserting a duplicate key into a keyed LIST, which
 	 * TypedConfiguration rejects with an {@link IllegalArgumentException}.
 	 * </p>
+	 *
+	 * <p>
+	 * That rebuild happens on the property's own live map, not by handing
+	 * {@link ConfigurationItem#update(PropertyDescriptor, Object)} a replacement. {@code update}
+	 * compares the incoming map against the current one with plain {@link Map#equals(Object)},
+	 * which ignores iteration order, and skips the write when they match - so a pure reordering,
+	 * where exactly the same keys map to exactly the same entries, would be discarded as "no
+	 * change". Clearing the live map and refilling it in the wanted order is what actually moves
+	 * an entry.
+	 * </p>
 	 */
+	@SuppressWarnings("unchecked")
 	private void storeElements(List<ConfigurationItem> elements) {
 		if (_property.kind() == PropertyKind.ARRAY) {
 			_parentConfig.update(_property, PropertyDescriptorImpl.listAsArray(_property, elements));
@@ -229,7 +240,13 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			for (ConfigurationItem element : elements) {
 				newMap.put(element.value(resolveKeyProperty(element)), element);
 			}
-			_parentConfig.update(_property, newMap);
+			Map<Object, ConfigurationItem> liveMap = (Map<Object, ConfigurationItem>) _parentConfig.value(_property);
+			if (liveMap == null) {
+				_parentConfig.update(_property, newMap);
+			} else {
+				liveMap.clear();
+				liveMap.putAll(newMap);
+			}
 			return;
 		}
 		// A LIST property was mutated in place and needs no write-back.
@@ -285,21 +302,39 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
+	 * Whether the edited collection has an order the user can rearrange, and therefore gets Move
+	 * Up/Move Down buttons.
+	 *
+	 * <p>
+	 * A {@link PropertyKind#MAP} property counts, even though {@code setKindMap} sets its
+	 * {@link PropertyDescriptor#isOrdered() ordered} flag to {@code false}: a {@link Map} has no
+	 * <em>positional</em> index for {@link PropertyDescriptor#isOrdered()} to promise, but the
+	 * value a MAP property actually holds is a {@code PropertyMap}, backed by a
+	 * {@link LinkedHashMap} - so it does have a stable iteration order, that order is what
+	 * {@link #elements()} renders and what a configuration is written out in, and
+	 * {@link #storeElements(List)} rebuilds the map in exactly the order it is handed. Rearranging
+	 * that order is therefore both meaningful and persistent, and {@link #moveUp(int)}/
+	 * {@link #moveDown(int)} already work on the index of {@link #elements()} rather than on
+	 * anything list-specific.
+	 * </p>
+	 */
+	private boolean isReorderable() {
+		return _property.isOrdered() || _property.kind() == PropertyKind.MAP;
+	}
+
+	/**
 	 * The group for a committed element, with action buttons (Move Up, Move Down, Remove) in the
 	 * header and a nested {@link ConfigEditorControl} for the element's properties in the body.
 	 *
 	 * <p>
-	 * Move Up/Move Down are added only when {@link #_property} {@link PropertyDescriptor#isOrdered()
-	 * is ordered}: {@code setKindMap} sets a MAP property's {@code ordered} flag to {@code false},
-	 * since a {@link java.util.Map} has no position of its own for an entry to move to - unlike a
-	 * keyed LIST, which stays ordered and keeps both buttons.
+	 * Move Up/Move Down are added only for a {@link #isReorderable() reorderable} collection.
 	 * </p>
 	 */
 	private ReactFormGroupControl createElementGroup(ConfigurationItem item, int index, int listSize, boolean expanded) {
 		Label label = resolveElementLabel(item);
 
 		List<ReactControl> headerActions = new ArrayList<>();
-		if (_property.isOrdered()) {
+		if (isReorderable()) {
 			ReactButtonControl moveUpButton = new ReactButtonControl(_context, "\u25B2", ctx -> {
 				moveUp(indexOf(item));
 				return HandlerResult.DEFAULT_RESULT;
@@ -345,9 +380,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * {@link #createElementGroup(ConfigurationItem, int, int, boolean)} because a pending entry
 	 * differs from a committed one in more than one dimension at once: it has no position in the
 	 * edited collection to move it among (so no Move Up/Move Down button - there is nothing to
-	 * move it among), its Remove button discards it (see {@link #discardPending(PendingEntry)})
-	 * instead of removing an entry from the collection, and its key field is editable rather than
-	 * fixed. Folding all of that into
+	 * move it among), it carries a Confirm button that a committed entry has no use for (see
+	 * {@link #commitPending(PendingEntry)}), its Remove button discards it (see
+	 * {@link #discardPending(PendingEntry)}) instead of removing an entry from the collection, and
+	 * its key field is editable rather than fixed. Folding all of that into
 	 * {@link #createElementGroup(ConfigurationItem, int, int, boolean)} via extra parameters would
 	 * have left that method's index/listSize-based Move Up/Move Down logic surrounded by
 	 * conditionals that never apply to it; a sibling method keeps both readable, sharing the
@@ -356,8 +392,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * {@link #registerTitleListener(ConfigurationItem, ReactFormGroupControl)}).
 	 *
 	 * <p>
-	 * Always rendered expanded, and re-registers {@code pending}'s
-	 * {@link PendingEntry#_keyFieldModel} and key-change listener every time it runs - see
+	 * Always rendered expanded, and refreshes {@code pending}'s
+	 * {@link PendingEntry#_keyFieldModel} every time it runs - see
 	 * {@link #rebuild(ConfigurationItem)}.
 	 * </p>
 	 */
@@ -365,13 +401,19 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		ConfigurationItem entry = pending._entry;
 		Label label = resolveElementLabel(entry);
 
+		ReactButtonControl confirmButton = new ReactButtonControl(_context, "\u2713", ctx -> {
+			commitPending(pending);
+			return HandlerResult.DEFAULT_RESULT;
+		});
+		confirmButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+
 		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
 			discardPending(pending);
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 
-		List<ReactControl> headerActions = List.of(removeButton);
+		List<ReactControl> headerActions = List.of(confirmButton, removeButton);
 
 		PropertyDescriptor keyProperty = resolveKeyProperty(entry);
 		List<ReactControl> bodyChildren = createBodyChildren(entry, keyProperty, pending);
@@ -382,7 +424,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		group.setHeader(createHeaderControl(label));
 
 		registerTitleListener(entry, group);
-		listenForKey(pending);
 
 		return group;
 	}
@@ -621,54 +662,35 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Registers the {@link ConfigurationListener} on {@code pending}'s entry's key property that
-	 * calls {@link #commitPending(PendingEntry)} for that same {@link PendingEntry} whenever its
-	 * key changes.
+	 * Moves {@code pending}'s entry into the edited collection, on the user's explicit
+	 * confirmation.
 	 *
 	 * <p>
-	 * Tracked in {@link #_listeners} like every other listener this class holds, so
-	 * {@link #removeListeners()} unregisters it too - which is exactly why
-	 * {@link #createPendingElementGroup(PendingEntry)} calls this again on every
-	 * {@link #rebuild(ConfigurationItem)} cycle rather than {@link #addElement()} calling it once:
-	 * a rebuild triggered by something else entirely (moving a different entry, changing another
-	 * entry's type, ...) would otherwise silently drop this registration, leaving the pending
-	 * entry stuck - editable, but no longer able to commit itself.
+	 * Confirming is a deliberate action of its own (the Confirm button of
+	 * {@link #createPendingElementGroup(PendingEntry)}) rather than something inferred from the
+	 * key field's value. Committing as soon as the key merely <em>looks</em> usable would take a
+	 * half-typed key for the finished one - a key field reports what has been typed so far, so
+	 * anyone not typing the whole key in one go would find the entry committed under a prefix of
+	 * it, its key field by then already fixed. Committing when the field loses focus would be no
+	 * better: leaving the field to fetch the value from somewhere else is exactly what one does
+	 * while filling it in.
 	 * </p>
-	 */
-	private void listenForKey(PendingEntry pending) {
-		ConfigurationItem entry = pending._entry;
-		PropertyDescriptor keyProperty = resolveKeyProperty(entry);
-		ConfigurationListener listener = change -> commitPending(pending);
-		entry.addConfigurationListener(keyProperty, listener);
-		_listeners.add(new ListenerRegistration(entry, keyProperty, listener));
-	}
-
-	/**
-	 * Moves {@code pending}'s entry into the edited collection once its key is usable.
 	 *
 	 * <p>
-	 * An empty key means the user has not finished typing, so the entry simply stays pending. A
-	 * key that another entry already uses is reported at the key field: inserting would be
+	 * So both an empty key and one that another entry already uses are reported at the key field,
+	 * and the entry stays pending. Neither is silently tolerated: the user asked for this entry to
+	 * be taken, and has to be told why it was not. Inserting a duplicate key would otherwise be
 	 * rejected by {@link TypedConfiguration} with a message about the collection's index, which
 	 * says nothing to whoever is editing the form.
 	 * </p>
 	 *
 	 * <p>
-	 * "Another entry" here means a <em>committed</em> one ({@link #hasEntryWithKey(Object)} does
-	 * not also consult {@link #_pendingEntries}) - deliberately, not by omission. Every key change
-	 * runs this method synchronously and immediately, on the same call that produced it, before
-	 * anything else can run: the moment a pending entry's key becomes non-empty and free of
-	 * collision, it commits right there, in that same call. So two pending entries can never both
-	 * be sitting on an identical, otherwise-unclaimed key at once - whichever one is given that key
-	 * first finds the collection free of it and commits immediately, and only then can the second
-	 * be given the same key, at which point it is no longer "another pending entry" holding it but
-	 * a committed one, which {@link #hasEntryWithKey(Object)} already finds. Consulting
-	 * {@link #_pendingEntries} as well would therefore never catch a collision this does not
-	 * already catch under this class's own single-threaded, synchronous-per-edit model - it would
-	 * only pointlessly re-detect a collision against an entry that is already flagged against a
-	 * committed one for the same key (e.g. two pending entries independently given a key some
-	 * third, already-committed entry also uses - both already error against that committed entry
-	 * without needing to know about each other at all).
+	 * "Another entry" means a <em>committed</em> one - {@link #hasEntryWithKey(Object)} does not
+	 * also consult {@link #_pendingEntries}, deliberately. A pending entry has claimed nothing
+	 * yet: its key is still being written, and two entries being filled in side by side may well
+	 * pass through the same intermediate text. Whichever is confirmed first takes the key; the
+	 * other is then told the key is taken, at the moment it is confirmed - which is the moment its
+	 * key is actually being claimed.
 	 * </p>
 	 */
 	private void commitPending(PendingEntry pending) {
@@ -676,6 +698,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		PropertyDescriptor keyProperty = resolveKeyProperty(entry);
 		Object key = entry.value(keyProperty);
 		if (key == null || key.toString().isEmpty()) {
+			pending._keyFieldModel.setError(
+				I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(keyProperty, false)));
 			return;
 		}
 		if (hasEntryWithKey(key)) {

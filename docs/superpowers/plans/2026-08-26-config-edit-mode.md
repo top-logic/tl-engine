@@ -4,9 +4,9 @@
 
 **Goal:** Give the configuration editor an edit mode that works on a copy, checks the configuration before letting the copy through, and reports every violation at the field that caused it.
 
-**Architecture:** A new `ConfigFormControl` wraps a `ConfigEditorControl` and owns the mode. Entering edit mode copies the item with `TypedConfiguration.copy` and rebuilds the editor over the copy; Apply validates and, only if the copy is clean, writes its content back into the original; Cancel drops the copy. `ConfigEditorControl` itself is unchanged in its write-through behaviour - it never learns about the mode, which is what lets the view designer and every nested editor keep using it exactly as today. To put a violation at its field, the editor reports every field model it builds to an optional `ConfigFieldIndex`, keyed by the item and property it edits.
+**Architecture:** A new `ConfigFormControl` wraps a `ConfigEditorControl` and owns the mode. Entering edit mode copies the **root** of the edited item's configuration tree and rebuilds the editor over the corresponding part inside that copy; Apply validates and, only if the copy is clean, writes that part's content back into the original part; Cancel drops the copy. Copying the root rather than the item itself is what keeps an option function or a derived property that navigates *out of* the edited item working - the copy of a part on its own has no container, so everything above it would be gone. It is also what the legacy service editor does, by copying the whole service configuration into its form model. `ConfigEditorControl` itself is unchanged in its write-through behaviour - it never learns about the mode, which is what lets the view designer and every nested editor keep using it exactly as today. To put a violation at its field, the editor reports every field model it builds to an optional `ConfigFieldIndex`, keyed by the item and property it edits.
 
-**Tech Stack:** Java, TopLogic TypedConfiguration (`TypedConfiguration.copy`, `ConfigCopier`, `ConstraintChecker`), the React view layer (`ReactControl`, `ReactButtonControl`, `ReactFormLayoutControl`), JUnit 3-style tests under `test.com.top_logic.layout.configedit`.
+**Tech Stack:** Java, TopLogic TypedConfiguration (`TypedConfiguration.copy`, `ConfigCopier`, `ConfigPart#container()`, `ConstraintChecker`), the React view layer (`ReactControl`, `ReactButtonControl`, `ReactFormLayoutControl`), JUnit 3-style tests under `test.com.top_logic.layout.configedit`.
 
 **Spec:** `docs/superpowers/specs/2026-08-12-config-form-element-design.md`, section 3 ("Edit mode, working copy, validation")
 
@@ -28,10 +28,11 @@
 
 **Created:**
 - `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigFieldIndex.java` - remembers which field model edits which (item, property) pair, so a violation can be put where it belongs.
-- `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigFormModel.java` - the original, the working copy, the mode, and the listeners; no rendering.
+- `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigItemPath.java` - the way from the root of a configuration tree down to one of its parts, replayable on a copy of that root.
+- `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigFormModel.java` - the original, the working copy of the root, the mode, and the listeners; no rendering.
 - `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigValidation.java` - the checks Apply runs, reported as failures against (item, property).
 - `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigFormControl.java` - the control: Edit/Apply/Cancel plus the hosted editor.
-- Tests: `TestConfigFieldIndex.java`, `TestConfigFormModel.java`, `TestConfigValidation.java`, `TestConfigFormControl.java` under `src/test/java/test/com/top_logic/layout/configedit/`.
+- Tests: `TestConfigFieldIndex.java`, `TestConfigItemPath.java`, `TestConfigFormModel.java`, `TestConfigValidation.java`, `TestConfigFormControl.java` under `src/test/java/test/com/top_logic/layout/configedit/`.
 
 **Modified:**
 - `ConfigEditorControl.java` - takes an optional `ConfigFieldIndex` and reports every field model it builds; hands it down to nested editors and to `ConfigListEditorControl`.
@@ -324,23 +325,282 @@ git commit -m "Ticket #29462: Let the editor report its fields to a field index.
 
 ---
 
-## Task 3: The form model
+## Task 3: The way to the edited part
+
+**Files:**
+- Create: `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigItemPath.java`
+- Test: `com.top_logic.layout.configedit/src/test/java/test/com/top_logic/layout/configedit/TestConfigItemPath.java`
+
+**Interfaces:**
+- Consumes: nothing from earlier tasks.
+- Produces: `ConfigItemPath` with
+  `static ConfigItemPath to(ConfigurationItem item)`,
+  `ConfigurationItem root()`,
+  `ConfigurationItem resolveIn(ConfigurationItem rootCopy)`.
+
+Why this exists: the working copy has to be a copy of the whole tree, not of the edited item. A
+part copied on its own has no container - the container is set when a part is *assigned* into a
+property (`AbstractConfigItem#updateDirectly` calls `ConfigPartUtilInternal.initContainer`), and a
+standalone copy was never assigned anywhere. Every option function, derived property or constraint
+that navigates upwards or sideways out of the edited item would find nothing. Copying the root
+keeps all of that intact, and the legacy service editor does exactly this - it copies the entire
+service configuration into its form model, which is why nothing there can navigate off the end.
+
+Having copied the root, the editor still has to be built over the *part* the caller asked for, so
+the way down has to be replayable on the copy. That way is a list of steps, each a property plus
+where in it the child sits.
+
+`to(item)` walks up: while the current item is a {@link ConfigPart} whose `container()` is not
+`null`, find which of the container's ITEM, LIST, ARRAY or MAP properties holds it - by identity,
+never by equality - and prepend that step. An item that is not a `ConfigPart`, or one whose
+container is `null`, is the root; then the path is empty and `root()` is the item itself. That is
+the ordinary case, and the demo's.
+
+- [ ] **Step 1: Write the failing test**
+
+```java
+/** An item nothing contains is its own root, reached by an empty way. */
+public void testAnUnattachedItemIsItsOwnRoot() {
+    Outer outer = TypedConfiguration.newConfigItem(Outer.class);
+
+    ConfigItemPath path = ConfigItemPath.to(outer);
+
+    assertSame(outer, path.root());
+    assertSame("An empty way leads back to the copy's own root.",
+        outer, path.resolveIn(outer));
+}
+
+/** A part reached through an ITEM property is found again in a copy of the root. */
+public void testAnItemPropertyStepIsReplayed() {
+    Outer outer = TypedConfiguration.newConfigItem(Outer.class);
+    Part part = TypedConfiguration.newConfigItem(Part.class);
+    part.setValue("v");
+    outer.setPart(part);
+
+    ConfigItemPath path = ConfigItemPath.to(part);
+    assertSame(outer, path.root());
+
+    Outer copy = TypedConfiguration.copy(outer);
+    ConfigurationItem resolved = path.resolveIn(copy);
+
+    assertNotSame("The way must lead into the copy, not back to the original.", part, resolved);
+    assertSame(copy.getPart(), resolved);
+    assertEquals("v", ((Part) resolved).getValue());
+}
+
+/** An entry of a list is found again at its own position. */
+public void testAListStepIsReplayed() {
+    Outer outer = TypedConfiguration.newConfigItem(Outer.class);
+    Part first = TypedConfiguration.newConfigItem(Part.class);
+    first.setValue("first");
+    Part second = TypedConfiguration.newConfigItem(Part.class);
+    second.setValue("second");
+    outer.getParts().add(first);
+    outer.getParts().add(second);
+
+    ConfigurationItem resolved = ConfigItemPath.to(second).resolveIn(TypedConfiguration.copy(outer));
+
+    assertEquals("second", ((Part) resolved).getValue());
+}
+
+/** Two levels down works the same way - the steps are replayed in order. */
+public void testANestedPartIsReplayed() {
+    Outer outer = TypedConfiguration.newConfigItem(Outer.class);
+    Part part = TypedConfiguration.newConfigItem(Part.class);
+    Part inner = TypedConfiguration.newConfigItem(Part.class);
+    inner.setValue("inner");
+    part.setNested(inner);
+    outer.setPart(part);
+
+    ConfigItemPath path = ConfigItemPath.to(inner);
+    assertSame(outer, path.root());
+
+    ConfigurationItem resolved = path.resolveIn(TypedConfiguration.copy(outer));
+
+    assertEquals("inner", ((Part) resolved).getValue());
+}
+
+/**
+ * The copy of the root really does keep what the edited part can navigate to - the point of
+ * copying the root rather than the part.
+ */
+public void testTheCopiedPartCanStillNavigateUpwards() {
+    Outer outer = TypedConfiguration.newConfigItem(Outer.class);
+    outer.setChoices("a,b,c");
+    Part part = TypedConfiguration.newConfigItem(Part.class);
+    outer.setPart(part);
+
+    ConfigItemPath path = ConfigItemPath.to(part);
+    Outer copy = TypedConfiguration.copy(outer);
+    Part copiedPart = (Part) path.resolveIn(copy);
+
+    assertSame("The copied part must be contained by the copied root.", copy, copiedPart.container());
+    assertEquals("Navigating upwards out of the edited part must still reach a value.",
+        "a,b,c", ((Outer) copiedPart.container()).getChoices());
+}
+```
+
+The test's configurations - `Part` must be a `ConfigPart`, which is what gives it `container()`:
+
+```java
+public interface Outer extends ConfigurationItem {
+
+    /** Property name for {@link #getPart()}. */
+    String PART = "part";
+
+    /** Property name for {@link #getParts()}. */
+    String PARTS = "parts";
+
+    /** Property name for {@link #getChoices()}. */
+    String CHOICES = "choices";
+
+    @Name(PART)
+    Part getPart();
+
+    /** @see #getPart() */
+    void setPart(Part value);
+
+    @Name(PARTS)
+    List<Part> getParts();
+
+    @Name(CHOICES)
+    String getChoices();
+
+    /** @see #getChoices() */
+    void setChoices(String value);
+}
+
+public interface Part extends ConfigPart {
+
+    /** Property name for {@link #getValue()}. */
+    String VALUE = "value";
+
+    /** Property name for {@link #getNested()}. */
+    String NESTED = "nested";
+
+    @Name(VALUE)
+    String getValue();
+
+    /** @see #getValue() */
+    void setValue(String value);
+
+    @Name(NESTED)
+    Part getNested();
+
+    /** @see #getNested() */
+    void setNested(Part value);
+}
+```
+
+`ConfigPart` is `com.top_logic.basic.config.container.ConfigPart`.
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `mvn -B install -pl com.top_logic.layout.configedit -DskipTests=false -Dtest=test.com.top_logic.layout.configedit.TestConfigItemPath`
+Expected: compilation failure, `ConfigItemPath` does not exist.
+
+- [ ] **Step 3: Write minimal implementation**
+
+```java
+public final class ConfigItemPath {
+
+    /** One step of the way down: the property, and where in it the child sits. */
+    private record Step(String propertyName, int index) {
+        // index is -1 for an ITEM property.
+    }
+
+    private final ConfigurationItem _root;
+
+    private final List<Step> _steps;
+
+    private ConfigItemPath(ConfigurationItem root, List<Step> steps) {
+        _root = root;
+        _steps = steps;
+    }
+
+    public static ConfigItemPath to(ConfigurationItem item) {
+        List<Step> steps = new ArrayList<>();
+        ConfigurationItem current = item;
+        while (current instanceof ConfigPart part && part.container() != null) {
+            ConfigurationItem container = part.container();
+            steps.add(0, stepTo(container, current));
+            current = container;
+        }
+        return new ConfigItemPath(current, steps);
+    }
+
+    public ConfigurationItem root() {
+        return _root;
+    }
+
+    public ConfigurationItem resolveIn(ConfigurationItem rootCopy) {
+        ConfigurationItem current = rootCopy;
+        for (Step step : _steps) {
+            current = descend(current, step);
+        }
+        return current;
+    }
+}
+```
+
+`stepTo(container, child)` looks through the container's properties of kind ITEM, LIST, ARRAY and
+MAP for the one holding `child` **by identity**: `==` for an ITEM property, and a scan with `==`
+over the elements otherwise, recording the position. `descend(item, step)` reads that property in
+the copy and takes the same position - for a MAP, the position is the index into the map's values
+in iteration order, which is stable because a MAP property is backed by a `LinkedHashMap`.
+
+A step is stored by property *name*, not by `PropertyDescriptor`: the copy's descriptor hands out
+its own instances, so a descriptor from the original would never be found in the copy. Names
+survive the copy; instances do not.
+
+If `stepTo` finds no property holding the child, the tree is not what it claimed to be. Throw an
+`IllegalStateException` naming both items rather than returning something that silently edits the
+wrong part.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `mvn -B install -pl com.top_logic.layout.configedit -DskipTests=false -Dtest=test.com.top_logic.layout.configedit.TestConfigItemPath`
+Expected: PASS, 5 tests.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add com.top_logic.layout.configedit
+git commit -m "Ticket #29462: Find an edited part again in a copy of its root."
+```
+
+---
+
+## Task 4: The form model
 
 **Files:**
 - Create: `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigFormModel.java`
 - Test: `com.top_logic.layout.configedit/src/test/java/test/com/top_logic/layout/configedit/TestConfigFormModel.java`
 
 **Interfaces:**
-- Consumes: nothing from earlier tasks.
+- Consumes: `ConfigItemPath` from Task 3.
 - Produces: `ConfigFormModel` with
   `ConfigFormModel(ConfigurationItem original)`,
   `ConfigurationItem original()`, `ConfigurationItem edited()`, `boolean isEditMode()`,
-  `void startEditing()`, `void applyTo(ConfigurationItem target)`, `void cancelEditing()`,
+  `void startEditing()`, `void apply()`, `void cancelEditing()`,
   `void addListener(Runnable listener)` / `void removeListener(Runnable listener)`.
 
-`edited()` is what the editor is built over: the original in view mode, the copy in edit mode. That one method is the whole trick - the editor keeps writing straight through to whatever it was handed, and the mode decides what that was.
+`edited()` is what the editor is built over: the original in view mode, and in edit mode the part
+inside the copied root that corresponds to it. That one method is the whole trick - the editor keeps
+writing straight through to whatever it was handed, and the mode decides what that was.
 
-`applyTo` copies the working copy's content into the given target rather than handing the copy out. The spec keeps write-through for the view designer, which saves the item it already holds; giving it a different object would break that. The target is a parameter rather than always `original()` so that a caller with its own recipient can name it.
+What is copied is the **root** of the original's configuration tree, found by
+`ConfigItemPath#to(ConfigurationItem)`, and what is edited is
+`ConfigItemPath#resolveIn(ConfigurationItem)` on that copy. For an item nothing contains - the
+demo's case, and the common one - the two are the same object and this costs nothing. For a part of
+a larger configuration it is what keeps every option function, derived property and constraint that
+navigates out of the edited part working, since a part copied on its own has no container at all.
+
+`apply()` copies the *edited part's* content back into the original item, not the whole copied root.
+Only that part was edited; the rest of the copy exists to be navigated to, not to be written back,
+and writing it back would replace items nobody touched. It takes no target: the recipient is the
+item the model was constructed with, which is the one the view designer already holds and saves -
+handing it a different object would break its write-through.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -379,7 +639,7 @@ public void testChangesStayInTheCopyUntilApplied() {
 
     assertEquals("The original must be untouched while editing.", "before", config.getName());
 
-    model.applyTo(config);
+    model.apply();
 
     assertEquals("Applying carries the copy's content over.", "after", config.getName());
     assertFalse("Applying leaves edit mode.", model.isEditMode());
@@ -415,6 +675,42 @@ public void testASecondEditStartsFresh() {
     assertEquals("before", ((TestConfig) model.edited()).getName());
 }
 
+/**
+ * What is copied is the root, so the edited part can still navigate out of itself - the reason
+ * this is not simply a copy of the item the caller named.
+ */
+public void testEditingAPartKeepsWhatIsAroundIt() {
+    Outer outer = TypedConfiguration.newConfigItem(Outer.class);
+    outer.setChoices("a,b,c");
+    Part part = TypedConfiguration.newConfigItem(Part.class);
+    outer.setPart(part);
+    ConfigFormModel model = new ConfigFormModel(part);
+
+    model.startEditing();
+
+    Part edited = (Part) model.edited();
+    assertNotSame("A copy is edited, not the part itself.", part, edited);
+    assertNotNull("The copied part must still be contained.", edited.container());
+    assertEquals("Navigating out of the edited part must still find the surrounding values.",
+        "a,b,c", ((Outer) edited.container()).getChoices());
+}
+
+/** Applying writes back into the part that was named, leaving the rest of the tree alone. */
+public void testApplyingAPartWritesBackIntoThatPart() {
+    Outer outer = TypedConfiguration.newConfigItem(Outer.class);
+    Part part = TypedConfiguration.newConfigItem(Part.class);
+    part.setValue("before");
+    outer.setPart(part);
+    ConfigFormModel model = new ConfigFormModel(part);
+    model.startEditing();
+    ((Part) model.edited()).setValue("after");
+
+    model.apply();
+
+    assertEquals("after", part.getValue());
+    assertSame("The tree must still hold the very same part object.", part, outer.getPart());
+}
+
 /** Every mode change notifies, so the control knows to rebuild. */
 public void testEveryModeChangeNotifies() {
     TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
@@ -429,7 +725,7 @@ public void testEveryModeChangeNotifies() {
     assertEquals(2, calls[0]);
 
     model.startEditing();
-    model.applyTo(config);
+    model.apply();
     assertEquals(4, calls[0]);
 }
 ```
@@ -446,6 +742,7 @@ public final class ConfigFormModel {
 
     private final ConfigurationItem _original;
 
+    /** The part inside the copied root that corresponds to {@link #_original}, while editing. */
     private ConfigurationItem _copy;
 
     private final List<Runnable> _listeners = new ArrayList<>();
@@ -467,12 +764,14 @@ public final class ConfigFormModel {
     }
 
     public void startEditing() {
-        _copy = TypedConfiguration.copy(_original);
+        ConfigItemPath path = ConfigItemPath.to(_original);
+        _copy = path.resolveIn(TypedConfiguration.copy(path.root()));
         notifyListeners();
     }
 
-    public void applyTo(ConfigurationItem target) {
-        ConfigCopier.copyContent(new DefaultInstantiationContext(ConfigFormModel.class), _copy, target, true);
+    public void apply() {
+        ConfigCopier.copyContent(new DefaultInstantiationContext(ConfigFormModel.class),
+            _copy, _original, true);
         _copy = null;
         notifyListeners();
     }
@@ -503,18 +802,18 @@ public final class ConfigFormModel {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `mvn -B install -pl com.top_logic.layout.configedit -DskipTests=false -Dtest=test.com.top_logic.layout.configedit.TestConfigFormModel`
-Expected: PASS, 6 tests.
+Expected: PASS, 8 tests.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add com.top_logic.layout.configedit
-git commit -m "Ticket #29462: Edit a configuration on a working copy."
+git commit -m "Ticket #29462: Edit a configuration on a copy of its root."
 ```
 
 ---
 
-## Task 4: The checks Apply runs
+## Task 5: The checks Apply runs
 
 **Files:**
 - Create: `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigValidation.java`
@@ -533,6 +832,12 @@ Two kinds of violation, from two different places:
 
 - A **mandatory property with no value**. `PropertyDescriptor#isMandatory()` says it is required; `ConfigurationItem#valueSet(PropertyDescriptor)` says whether it has been given one. This is not something `ConstraintChecker` reports - the configuration framework catches a missing mandatory value when it reads XML, and nothing reads XML here.
 - A **constraint violation**, from `ConstraintChecker`. It is recursive, so one call covers nested items and collection entries, and every `ConstraintFailure` already names the item and the context property - exactly the pair the index is keyed by. Warnings (`ConstraintFailure#isWarning()`) are not violations and must not block Apply.
+
+The check runs on the **edited part**, not on the copied root. Only that part was edited, and a
+violation elsewhere in the tree was there before the user opened the form - refusing Apply for it
+would block them on something they neither caused nor can see, since no field of theirs shows it.
+Constraints that navigate upward out of the edited part still work, because the copy has the root
+above it; `ConstraintChecker` itself descends, so everything below is covered too.
 
 `report` returns whether every violation found a field. One that did not is a real possibility - a violation on a property the editor does not render, say - and swallowing it would leave Apply refusing with nothing on screen to explain why. The caller uses the answer to decide whether it also needs to say something at the form level.
 
@@ -707,7 +1012,7 @@ git commit -m "Ticket #29462: Check a configuration before it is applied."
 
 ---
 
-## Task 5: The form control
+## Task 6: The form control
 
 **Files:**
 - Create: `com.top_logic.layout.configedit/src/main/java/com/top_logic/layout/configedit/ConfigFormControl.java`
@@ -874,7 +1179,7 @@ private void apply() {
         ConfigValidation.report(violations, _index);
         return;
     }
-    _model.applyTo(_model.original());
+    _model.apply();
 }
 ```
 
@@ -915,7 +1220,7 @@ git commit -m "Ticket #29462: Edit a configuration in a mode, and check it befor
 
 ---
 
-## Task 6: Reach it in the demo
+## Task 7: Reach it in the demo
 
 **Files:**
 - Modify: `com.top_logic.demo.react/src/main/java/com/top_logic/demo/react/view/DemoConfigEditorElement.java`
@@ -980,12 +1285,26 @@ git commit -m "Ticket #29462: Show the configuration editor's edit mode in the d
 
 ---
 
+## Out of scope, and why it is worth its own work
+
+Options and derived properties are resolved **once**, when the control is built:
+`ConfigPropertyOptions#optionsFor` calls `DerivedProperty#get(ConfigurationItem)`, and
+`PolymorphicOptions#compute` keeps its result in a final field. So an option list computed by
+navigating from another property does not refresh when that property changes. The legacy
+declarative form does refresh - its `ItemEditor` takes `DerivedProperty#getValue(ConfigurationItem)`,
+a reactive `Value` carrying a dependency updater.
+
+This is a defect in what section 1 built, not something the working copy introduces, and it is just
+as wrong today without an edit mode. It is left out of this plan deliberately: fixing it means
+following the reactive `Value` into the React controls, which is its own piece of work with its own
+tests.
+
 ## Self-Review
 
-**Spec coverage.** Section 3 has three bullets. "Entering edit mode creates a copy that all fields work on" - Task 3 (the copy) and Task 5 (the editor built over `edited()`). "Apply checks mandatory properties and the configuration's constraints; violations appear at the offending fields and edit mode stays open; only then does the copy reach its recipient" - Task 4 (both checks), Task 1 and 2 (getting from a violation to a field), Task 5 (refusing without leaving the mode). "Cancel discards the copy" - Task 3, exercised in Task 5. The section's framing sentence, that the working copy is a mode and not a requirement, is the `withEditMode` flag in Task 5 and the reason `ConfigEditorControl` keeps every constructor it has in Task 2.
+**Spec coverage.** Section 3 has three bullets. "Entering edit mode creates a copy that all fields work on" - Task 3 (finding the root and the way back down), Task 4 (the copy) and Task 6 (the editor built over `edited()`). "Apply checks mandatory properties and the configuration's constraints; violations appear at the offending fields and edit mode stays open; only then does the copy reach its recipient" - Task 5 (both checks), Task 1 and 2 (getting from a violation to a field), Task 6 (refusing without leaving the mode). "Cancel discards the copy" - Task 4, exercised in Task 6. The section's framing sentence, that the working copy is a mode and not a requirement, is the `withEditMode` flag in Task 6 and the reason `ConfigEditorControl` keeps every constructor it has in Task 2.
 
 **Placeholders.** None: every step names its files, and every code step carries the code.
 
-**Type consistency.** `ConfigFieldIndex#register/lookup/clear` are used with those names in Tasks 2, 4 and 5. `ConfigFormModel#edited/original/isEditMode/startEditing/applyTo/cancelEditing/addListener` are used as declared in Task 5. `ConfigValidation.check` returns `List<Violation>` and `report` takes that list plus the index, as Task 5 calls them. `Violation`'s components are `item`, `property`, `message`, read as `violation.item()` and `violation.property()` in Task 4's own code.
+**Type consistency.** `ConfigFieldIndex#register/lookup/clear` are used with those names in Tasks 2, 5 and 6. `ConfigFormModel#edited/original/isEditMode/startEditing/apply/cancelEditing/addListener` are used as declared in Task 6, and `ConfigItemPath#to/root/resolveIn` as declared in Task 3. `ConfigValidation.check` returns `List<Violation>` and `report` takes that list plus the index, as Task 6 calls them. `Violation`'s components are `item`, `property`, `message`, read as `violation.item()` and `violation.property()` in Task 5's own code.
 
-**One thing the executor should watch.** Task 4 must call `ConstraintChecker#check(ConfigurationItem)`, the overload that throws, and read `getFailures()` afterwards. The two logging overloads clear that list in a `finally` block, so reading it after one of those gives an empty list and the constraint half of the validation would silently pass everything.
+**One thing the executor should watch.** Task 5 must call `ConstraintChecker#check(ConfigurationItem)`, the overload that throws, and read `getFailures()` afterwards. The two logging overloads clear that list in a `finally` block, so reading it after one of those gives an empty list and the constraint half of the validation would silently pass everything.

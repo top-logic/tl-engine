@@ -101,6 +101,16 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * very field models the violations were just put on, leaving the user no way to see what was
 	 * wrong.
 	 * </p>
+	 *
+	 * <p>
+	 * Disposes the old children directly with {@link ReactControl#cleanupTree()} rather than going
+	 * through {@link com.top_logic.layout.react.control.ReactCompositeControl#replaceChildren(List)}:
+	 * that method deliberately leaves disposal to the caller, for a container that must defer it -
+	 * e.g. past an in-progress observer notification. Nothing here is deferred - the old editor and
+	 * buttons are discarded on the spot, not cached for later reuse - so immediate
+	 * {@code cleanupTree()} is the right call, the same way {@link ConfigListEditorControl}'s own
+	 * rebuild already does it in this package.
+	 * </p>
 	 */
 	private void rebuild() {
 		for (ReactControl child : getChildren()) {
@@ -119,8 +129,6 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 				addChild(editButton());
 			}
 		}
-
-		putState("children", getChildren());
 	}
 
 	/**

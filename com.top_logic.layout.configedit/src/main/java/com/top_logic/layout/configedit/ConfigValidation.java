@@ -17,6 +17,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyDescriptorImpl;
+import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.config.constraint.check.ConstraintFailure;
 import com.top_logic.basic.util.ResKey;
@@ -144,6 +145,20 @@ public final class ConfigValidation {
 	 * {@code ""}) just as much as a field the user filled in calls it with the entered value;
 	 * {@code valueSet} reads "set" either way. So this also rejects a {@code null} value outright,
 	 * and an empty {@link String} - the only type whose "empty" value is not itself {@code null}.
+	 * </p>
+	 *
+	 * <p>
+	 * Deliberately narrow: only a {@code null} value or an empty {@link String} count as missing.
+	 * A {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, or {@link PropertyKind#MAP}
+	 * property is never flagged here even when empty, mirroring
+	 * {@link ConfigFieldModel#isTechnicallyMandatory(PropertyDescriptor)}, which excludes exactly
+	 * those kinds because they are "not nullable, but may be empty" - the same rule the classic
+	 * declarative form applies. Two reasons this method keeps step with that rule rather than
+	 * refusing an empty mandatory collection: it would enforce a requirement the field layer itself
+	 * does not, and a collection property has no {@link ConfigFieldModel} of its own - it is
+	 * rendered by {@link ConfigListEditorControl}, not as a field - so {@link #report(List,
+	 * ConfigFieldIndex)} would find nothing in the {@link ConfigFieldIndex} for it, leaving the
+	 * user stuck in an edit mode that refuses to close with nothing on screen to correct.
 	 * </p>
 	 */
 	private static boolean isMissing(ConfigurationItem item, PropertyDescriptor property) {

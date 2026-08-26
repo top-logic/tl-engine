@@ -17,17 +17,21 @@ import com.top_logic.basic.config.PropertyDescriptor;
  *
  * <p>
  * A validation failure names an item and a property (that is what
- * {@code ConstraintFailure} carries), but the field that shows it is a {@link ConfigFieldModel}
- * buried in the control tree. This index is filled while the editor builds and consulted when
- * Apply refuses.
+ * {@link com.top_logic.basic.config.constraint.check.ConstraintFailure ConstraintFailure}
+ * carries), but the field that shows it is a {@link ConfigFieldModel} buried in the control tree.
+ * This index is filled while the editor builds and consulted when Apply refuses.
  * </p>
  *
  * <p>
- * Both maps are {@link IdentityHashMap}: a {@link ConfigurationItem} is identity-equal anyway, but
+ * Both maps are {@link IdentityHashMap}. The outer map must be, because a
+ * {@link ConfigurationItem} may declare value equality
+ * ({@link com.top_logic.basic.config.equal.EqualityByValue}): two separate items with the same
+ * property values are still two separate fields, and a plain {@link java.util.HashMap} keyed by
+ * such an item would merge their registrations into one. The inner map must be too, because
  * {@link PropertyDescriptor} overrides neither {@link Object#equals(Object)} nor
  * {@link Object#hashCode()} - and a subtype's descriptor hands out its own instance even for an
- * inherited property. A plain {@link java.util.HashMap} would already behave this way by
- * accident; using {@link IdentityHashMap} explicitly says so and keeps a later change from
+ * inherited property - so a {@link java.util.HashMap} there would already fall back to identity by
+ * accident. Using {@link IdentityHashMap} for both says so explicitly and keeps a later change from
  * silently drifting to equality-based lookup.
  * </p>
  */

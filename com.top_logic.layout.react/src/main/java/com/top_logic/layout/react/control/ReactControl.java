@@ -772,6 +772,20 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
+	 * Whether this control is currently {@link #setHidden(boolean) hidden} on the client.
+	 *
+	 * <p>
+	 * A hidden control keeps its React component tree - it is only styled away - so it stays
+	 * mounted, stays registered with the update queue, and its commands stay addressable. A
+	 * command handler that must not run on a control the user was never offered therefore has to
+	 * ask this rather than rely on the client not sending anything.
+	 * </p>
+	 */
+	public boolean isHidden() {
+		return Boolean.TRUE.equals(getState(HIDDEN));
+	}
+
+	/**
 	 * Sets a single value in the React state.
 	 *
 	 * <p>

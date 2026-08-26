@@ -143,9 +143,19 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 	private static final Object REJECTED_NUMBER = new Object();
 
 	/**
+	 * {@code 2^63}, the exclusive upper bound for a {@code double} that fits into a {@code long}.
+	 *
+	 * <p>
+	 * {@link Long#MAX_VALUE} itself is not representable as a {@code double}: casting it rounds up
+	 * to this value, so comparing against the cast bound would accept one value too many.
+	 * </p>
+	 */
+	private static final double TWO_POW_63 = 0x1p63;
+
+	/**
 	 * Converts the given number to the given numeric property type, or answers
-	 * {@link #REJECTED_NUMBER} if that conversion would lose information (e.g. a fractional value
-	 * for an integral type).
+	 * {@link #REJECTED_NUMBER} if that conversion would lose information - a fractional value for
+	 * an integral type, or a value outside the target type's range.
 	 *
 	 * <p>
 	 * A control such as a number input hands back a plain {@link Double} regardless of the
@@ -183,14 +193,31 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 				// digits the user typed.
 				return REJECTED_NUMBER;
 			}
-			if (wrapper == Integer.class) {
-				return Integer.valueOf(value.intValue());
-			}
 			if (wrapper == Long.class) {
+				// Long's bounds are not exactly representable as a double: (double) Long.MAX_VALUE
+				// rounds up to 2^63, so the upper bound is exclusive.
+				if (asDouble < -TWO_POW_63 || asDouble >= TWO_POW_63) {
+					return REJECTED_NUMBER;
+				}
 				return Long.valueOf(value.longValue());
 			}
+			// Narrowing past the target's range loses just as much as truncating a fraction does,
+			// and does it less visibly: Number#intValue() saturates at the boundary while
+			// Number#shortValue()/#byteValue() wrap around, so 70000 would be stored as 4464.
+			if (wrapper == Integer.class) {
+				if (asDouble < Integer.MIN_VALUE || asDouble > Integer.MAX_VALUE) {
+					return REJECTED_NUMBER;
+				}
+				return Integer.valueOf(value.intValue());
+			}
 			if (wrapper == Short.class) {
+				if (asDouble < Short.MIN_VALUE || asDouble > Short.MAX_VALUE) {
+					return REJECTED_NUMBER;
+				}
 				return Short.valueOf(value.shortValue());
+			}
+			if (asDouble < Byte.MIN_VALUE || asDouble > Byte.MAX_VALUE) {
+				return REJECTED_NUMBER;
 			}
 			return Byte.valueOf(value.byteValue());
 		}

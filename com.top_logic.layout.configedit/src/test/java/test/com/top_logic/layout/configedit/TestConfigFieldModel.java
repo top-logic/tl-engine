@@ -328,6 +328,43 @@ public class TestConfigFieldModel extends TestCase {
 	}
 
 	/**
+	 * A whole number that does not fit the property's numeric type is rejected too, not narrowed.
+	 *
+	 * <p>
+	 * Narrowing past the target's range loses as much as truncating a fraction does, and does it
+	 * less visibly: {@link Number#intValue()} saturates at the boundary, so an out-of-range entry
+	 * would be stored as {@link Integer#MAX_VALUE} - a number the user never typed, and one the
+	 * field would then show back as if it had been accepted.
+	 * </p>
+	 */
+	public void testSetValueRejectsOutOfRangeValueForIntegralProperty() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setCount(1);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.COUNT);
+		ConfigFieldModel model = new ConfigFieldModel(config, property);
+
+		model.setValue(Double.valueOf(99999999999.0));
+
+		assertEquals("An out-of-range value must not be written.", 1, config.getCount());
+		assertNotNull("An out-of-range value must be reported as input error.", model.getInputError());
+	}
+
+	/** The bounds of the property's own type are still accepted. */
+	public void testSetValueAcceptsTheExtremesOfTheIntegralRange() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.COUNT);
+		ConfigFieldModel model = new ConfigFieldModel(config, property);
+
+		model.setValue(Double.valueOf(Integer.MAX_VALUE));
+		assertNull("The largest representable value must not be rejected.", model.getInputError());
+		assertEquals(Integer.MAX_VALUE, config.getCount());
+
+		model.setValue(Double.valueOf(Integer.MIN_VALUE));
+		assertNull("The smallest representable value must not be rejected.", model.getInputError());
+		assertEquals(Integer.MIN_VALUE, config.getCount());
+	}
+
+	/**
 	 * A rejected value leaves the field in error; re-entering the value the property already
 	 * holds must clear that error, not leave it stale next to a now-valid value. The
 	 * redundant-write guard (same old and new value) must not return before the error is cleared.

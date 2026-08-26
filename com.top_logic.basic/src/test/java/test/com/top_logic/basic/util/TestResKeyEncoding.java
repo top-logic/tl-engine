@@ -167,6 +167,38 @@ public class TestResKeyEncoding extends TestCase {
 		}
 	}
 
+	/**
+	 * A tagged translation that carries no translation at all is malformed too - and, unlike
+	 * {@link #testDecodeMalformedTaggedString()}, it consumes its whole input, so it reaches the
+	 * "input fully consumed" return rather than the trailing-content check.
+	 */
+	public void testDecodeTaggedStringWithoutAnyTranslation() {
+		for (String malformed : new String[] { "#(", "#()" }) {
+			try {
+				ResKey decoded = ResKey.decode(malformed);
+				fail("Expected IllegalArgumentException for '" + malformed + "', got: " + decoded);
+			} catch (IllegalArgumentException ex) {
+				// Expected: malformed input must be classified as illegal argument, rather than
+				// handed back as a null key that fails wherever it is later stored or resolved.
+			}
+		}
+	}
+
+	/**
+	 * The literal-string and fallback encodings must keep decoding - both reach the same null
+	 * {@code plain} the malformed tagged input does, so a guard placed too early would reject them.
+	 */
+	public void testDecodeLiteralAndFallbackStillWork() {
+		assertRoundtrip(ResKey.text("a literal"));
+		assertRoundtrip(ResKey.fallback(ResKey.internalCreate("a.b"), ResKey.text("fb")));
+	}
+
+	private void assertRoundtrip(ResKey key) {
+		String encoded = ResKey.encode(key);
+		assertEquals("Decoding '" + encoded + "' must yield the same encoding again.",
+			encoded, ResKey.encode(ResKey.decode(encoded)));
+	}
+
 	public void testDecodeMalformedArgumentsWithoutKey() {
 		try {
 			ResKey.decode("/i5/i6");

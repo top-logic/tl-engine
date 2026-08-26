@@ -16,11 +16,17 @@ const VALUE_DEBOUNCE_MS = 300;
  *
  * Typing updates the local value immediately but the server `valueChanged` is debounced (and
  * always flushed on blur), so a field is not round-tripped on every keystroke. When
- * state.commitOnBlur is set, losing focus after an actual edit also sends a 'commit' command so the
- * server can run deferred per-field work (e.g. i18n auto-translation) once.
+ * state.sendValueOnBlur is set, nothing is sent while the user is still in the field at all - for a
+ * field whose model rewrites the text it is given, where any mid-edit round-trip would re-render
+ * the field from the normalized value and throw away what was being typed. When state.commitOnBlur
+ * is set, losing focus after an actual edit also sends a 'commit' command so the server can run
+ * deferred per-field work (e.g. i18n auto-translation) once.
  */
 const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
-  const [value, setValue, flushValue] = useTLFieldValue({ debounceMs: VALUE_DEBOUNCE_MS });
+  const [value, setValue, flushValue] = useTLFieldValue({
+    debounceMs: VALUE_DEBOUNCE_MS,
+    sendOnBlur: state.sendValueOnBlur === true,
+  });
   const sendCommand = useTLCommand();
   const dirtyRef = useRef(false);
 

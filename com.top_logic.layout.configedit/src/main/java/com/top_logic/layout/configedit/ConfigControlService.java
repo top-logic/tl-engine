@@ -435,7 +435,18 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			}
 		}
 		// String, and every specialized/typed value the format model turned into text.
-		return new ReactTextInputControl(context, model);
+		ReactTextInputControl input = new ReactTextInputControl(context, model);
+		if (model instanceof ConfigFormatFieldModel) {
+			// A format model does not store what it is handed: it parses the text and hands back
+			// what the value formats to. Sending a value mid-edit therefore re-renders the field
+			// from the normalized text and throws away what was being typed - typing "red, " into a
+			// comma separated list would leave "red" behind, comma and space gone from under the
+			// cursor. The value is held back until the field is left instead; the plain
+			// ConfigFieldModel, which stores its value verbatim, keeps the default debounce and its
+			// feedback-while-typing.
+			input.setSendValueOnBlur(true);
+		}
+		return input;
 	}
 
 	/**

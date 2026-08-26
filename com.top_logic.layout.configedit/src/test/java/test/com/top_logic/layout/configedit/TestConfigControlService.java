@@ -449,6 +449,9 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getAnnotatedMode()}. */
 		String ANNOTATED_MODE = "annotatedMode";
 
+		/** Property name for {@link #getAnnotatedCoordinate()}. */
+		String ANNOTATED_COORDINATE = "annotatedCoordinate";
+
 		/** Property name for {@link #getEncryptedAnnotated()}. */
 		String ENCRYPTED_ANNOTATED = "encryptedAnnotated";
 
@@ -633,6 +636,15 @@ public class TestConfigControlService extends TestCase {
 		 */
 		@Name(ANNOTATED_MODE)
 		AnnotatedMode getAnnotatedMode();
+
+		/**
+		 * A property carrying both its own {@code @Format} and a {@link ConfigControl} annotation -
+		 * the combination that decides whether the model follows the named control or the format.
+		 */
+		@Name(ANNOTATED_COORDINATE)
+		@Format(CoordinateFormat.class)
+		@ConfigControl(FixedCheckboxProvider.class)
+		Coordinate getAnnotatedCoordinate();
 
 		/**
 		 * Both {@link Encrypted} and a {@link ConfigControl} annotation - {@code @Encrypted} must
@@ -899,6 +911,60 @@ public class TestConfigControlService extends TestCase {
 			control instanceof ReactSelectFormFieldControl);
 		assertFalse("The format mapping's date picker must not be reachable when @Options wins.",
 			control instanceof ReactDatePickerControl);
+	}
+
+	/**
+	 * A property whose control is named by {@link ConfigControl} gets the plain model, even though
+	 * it also carries a {@code @Format}.
+	 *
+	 * <p>
+	 * The named control edits the value in its typed form, exactly as a claim from the
+	 * format-provider map does - so the same domain pairing has to follow. Left to the
+	 * {@code @Format} alone, {@code createModel} would hand out the format model over <em>text</em>
+	 * while {@code createControl} handed that text to the named control, which expects the typed
+	 * value: the existing value would never render, and what the control sent back would be
+	 * re-parsed by the format and rejected.
+	 * </p>
+	 */
+	public void testAnnotatedControlOnAFormattedPropertyGetsPlainModel() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.ANNOTATED_COORDINATE);
+
+		ConfigFieldModel model = model(TestConfig.ANNOTATED_COORDINATE);
+		assertFalse("A property whose control is named by @ConfigControl must get the plain model, "
+			+ "regardless of its own @Format - the named control edits the typed value.",
+			model instanceof ConfigFormatFieldModel);
+		assertTrue("The named control must be the one used.",
+			control(TestConfig.ANNOTATED_COORDINATE) instanceof ReactCheckboxControl);
+		assertNotNull("Precondition: the property really does carry a format.", property.getValueProvider());
+	}
+
+	/**
+	 * The value-type provider map pairs its control with the plain model too, for the same reason
+	 * the format map and {@link ConfigControl} do.
+	 */
+	public void testProviderMappingOnAFormattedPropertyGetsPlainModel() {
+		ConfigControlService.ProviderMapping mapping =
+			TypedConfiguration.newConfigItem(ConfigControlService.ProviderMapping.class);
+		set(mapping, ConfigControlService.ProviderMapping.TYPE, Coordinate.class);
+
+		PolymorphicConfiguration<ConfigControlProvider> impl =
+			TypedConfiguration.newConfigItem(PolymorphicConfiguration.class);
+		impl.setImplementationClass(FixedCheckboxProvider.class);
+		set(mapping, "impl", impl);
+
+		ConfigControlService.Config serviceConfig = TypedConfiguration.newConfigItem(ConfigControlService.Config.class);
+		serviceConfig.getProviders().put(Coordinate.class, mapping);
+
+		ConfigControlService service = new TestableConfigControlService(
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, serviceConfig);
+
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.COORDINATE);
+		ConfigFieldModel model = service.createModel(_config, property);
+		assertFalse("A property whose control comes from the value-type map must get the plain "
+			+ "model - that control edits the typed value, like every other claim.",
+			model instanceof ConfigFormatFieldModel);
+		assertTrue("The mapped control must be the one used.",
+			service.createControl(context(), model) instanceof ReactCheckboxControl);
 	}
 
 	/**

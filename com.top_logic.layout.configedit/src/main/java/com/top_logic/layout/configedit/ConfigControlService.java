@@ -265,7 +265,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			return new ConfigSelectFieldModel(config, property, selectOptions(config, property, optionProvider),
 				false);
 		}
-		if (property.getAnnotation(Encrypted.class) == null && formatProvider != null) {
+		if (property.getAnnotation(Encrypted.class) == null && isClaimed(property, formatProvider)) {
 			// Claimed: the claim states that the control bound to this model edits the value in
 			// its typed form, regardless of whether isDirectlyEditable's built-in set happens to
 			// include this property's Java type. Structural, not coincidental: a future mapping
@@ -606,14 +606,50 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		if (property.getAnnotation(Encrypted.class) != null) {
 			return true;
 		}
+		if (controlAnnotation(property) != null) {
+			// An explicitly named control decides on its own, and edits the value in its typed form
+			// - the same reason a format claim below is not a specialization either. Checked in the
+			// order createControl resolves in: after @Encrypted, which outranks it there too.
+			return false;
+		}
 		if (optionProvider != null) {
 			return true;
 		}
 		if (formatProvider != null) {
 			return false;
 		}
+		if (_providerByType.containsKey(property.getType())) {
+			// A control mapped by value type edits the typed value, like the two above. Checked
+			// after the options, matching createControl, where the select comes first.
+			return false;
+		}
 		return property.getAnnotation(Format.class) != null
 			|| property.getValueBinding() != null;
+	}
+
+	/**
+	 * Whether some configured or annotated control claims this property, and therefore edits its
+	 * value in its typed form rather than as the text a format would make of it.
+	 *
+	 * <p>
+	 * The three ways to claim a property - the {@link ConfigControl} annotation,
+	 * {@link Config#getProviders()} by value type, and {@link Config#getFormats()} by value provider
+	 * - all bind a control to the raw typed value. Whether the property's Java type happens to be
+	 * one of {@link #isDirectlyEditable(Class)}'s built-in set has nothing to do with it, so
+	 * {@code createModel} has to hand out the typed {@link ConfigFieldModel} for a claimed property
+	 * either way; leaving it to the built-in set would give a claimed {@code ResKey} or a claimed
+	 * {@code Date} with its own {@code @Format} the format model over <em>text</em>, and
+	 * {@code createControl} would then hand that text to a control expecting the typed value.
+	 * </p>
+	 *
+	 * @param formatProvider
+	 *        The {@link #formatProvider(PropertyDescriptor) format claim}, as resolved once by the
+	 *        caller, or {@code null} if none claims it.
+	 */
+	private boolean isClaimed(PropertyDescriptor property, ConfigControlProvider formatProvider) {
+		return formatProvider != null
+			|| controlAnnotation(property) != null
+			|| _providerByType.containsKey(property.getType());
 	}
 
 	/**

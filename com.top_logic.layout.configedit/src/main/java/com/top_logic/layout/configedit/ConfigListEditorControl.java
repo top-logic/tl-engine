@@ -17,6 +17,7 @@ import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.configedit.ConfigPendingEntries.PendingEntry;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
@@ -74,73 +75,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 	private final PolymorphicOptions.Choices _choices;
 
+	/**
+	 * The entries created here that the edited collection cannot hold yet - see
+	 * {@link ConfigPendingEntries}. This class renders them and wires their buttons; when an entry
+	 * may join the collection, and what happens if it may not, is decided there.
+	 */
+	private final ConfigPendingEntries _pending;
+
 	private final List<ListenerRegistration> _listeners = new ArrayList<>();
 
 	private record ListenerRegistration(ConfigurationItem item, PropertyDescriptor property,
 			ConfigurationListener listener) {
-	}
-
-	/**
-	 * The entries created by the add button that are not yet in the edited collection, in the
-	 * order they were created.
-	 *
-	 * <p>
-	 * A keyed collection is indexed by a property of its entries, so it cannot hold an entry whose
-	 * key is empty or already taken. Such an entry therefore lives here until the user confirms it
-	 * with a key the collection accepts - see {@link #commitPending(PendingEntry)}. More than one may be pending at once:
-	 * each is a distinct object with its own key field, so nothing about holding several
-	 * simultaneously is ambiguous - unlike the single {@code _pendingEntry} field this replaced,
-	 * which came with a guard refusing a second one, on the mistaken belief that two pending
-	 * entries could not be told apart.
-	 * </p>
-	 *
-	 * <p>
-	 * Rendered in {@link #rebuild(ConfigurationItem)} after every committed entry, in this list's
-	 * order - a stable, predictable place: newly created entries always appear at the end, in the
-	 * order the user pressed "+".
-	 * </p>
-	 */
-	private final List<PendingEntry> _pendingEntries = new ArrayList<>();
-
-	/**
-	 * One entry from {@link #_pendingEntries}, paired with the {@link ConfigFieldModel} built for
-	 * its key field.
-	 *
-	 * <p>
-	 * The pairing itself is why this class exists: {@link #_entry} and {@link #_keyFieldModel}
-	 * used to be two separate fields on {@link ConfigListEditorControl} that had to be set and
-	 * cleared in lockstep by hand, for a single pending entry. Now that several can be pending
-	 * simultaneously, that lockstep would have had to be repeated per list index across two
-	 * parallel lists - keeping the pairing in one object removes the chance of the two ever
-	 * drifting apart.
-	 * </p>
-	 *
-	 * <p>
-	 * Neither field is {@code final}. {@link #_entry} is replaced wholesale when the user picks a
-	 * different type for a still-pending entry of a polymorphic collection - the holder is what
-	 * every closure of the current render captured, so swapping the entry inside it keeps those
-	 * closures pointing at the right thing.
-	 * </p>
-	 *
-	 * <p>
-	 * {@link #_keyFieldModel} is mutable because
-	 * {@link #rebuild(ConfigurationItem)} discards and recreates all child controls - including
-	 * the key field - on every cycle. {@link #createPendingElementGroup(PendingEntry)} refreshes
-	 * it on this very object every time it (re)builds this entry's group (via
-	 * {@link #createKeyField(ConfigurationItem, PropertyDescriptor, PendingEntry)}), so
-	 * {@link #commitPending(PendingEntry)} never reports an error on a control that is no longer
-	 * displayed.
-	 * </p>
-	 */
-	private static final class PendingEntry {
-
-		private ConfigurationItem _entry;
-
-		private ConfigFieldModel _keyFieldModel;
-
-		PendingEntry(ConfigurationItem entry) {
-			_entry = entry;
-		}
 	}
 
 	/**
@@ -161,6 +106,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		_property = property;
 		_value = new ConfigCollectionValue(parentConfig, property);
 		_choices = PolymorphicOptions.compute(parentConfig, property);
+		_pending = new ConfigPendingEntries(_value, this::rebuild);
 
 		rebuild(null);
 	}
@@ -182,11 +128,11 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * Clears all children and rebuilds them from the current list state.
 	 *
 	 * <p>
-	 * Every entry in {@link #_pendingEntries} is rendered too, in that list's order - after all
+	 * Every entry in {@link ConfigPendingEntries} is rendered too, in that list's order - after all
 	 * the committed entries and before the add button, always expanded, with its key field
 	 * editable. Every rebuild recreates all of them afresh (see
 	 * {@link #createPendingElementGroup(PendingEntry)}), which is also why that method
-	 * re-registers each entry's {@link PendingEntry#_keyFieldModel} and key-change listener every
+	 * re-registers each entry's {@link PendingEntry#setKeyFieldModel(ConfigFieldModel)} and key-change listener every
 	 * time, rather than relying on a registration made once when the entry was created: a rebuild
 	 * triggered by something unrelated (moving a different entry, say) discards and recreates
 	 * every pending group exactly like every other child.
@@ -212,7 +158,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			}
 		}
 
-		for (PendingEntry pending : _pendingEntries) {
+		for (PendingEntry pending : _pending.entries()) {
 			addChild(createPendingElementGroup(pending));
 		}
 
@@ -281,13 +227,13 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * The group for one entry of {@link #_pendingEntries}, rendered separately from
+	 * The group for one entry of {@link ConfigPendingEntries}, rendered separately from
 	 * {@link #createElementGroup(ConfigurationItem, int, int, boolean)} because a pending entry
 	 * differs from a committed one in more than one dimension at once: it has no position in the
 	 * edited collection to move it among (so no Move Up/Move Down button - there is nothing to
 	 * move it among), it carries a Confirm button that a committed entry has no use for (see
-	 * {@link #commitPending(PendingEntry)}), its Remove button discards it (see
-	 * {@link #discardPending(PendingEntry)}) instead of removing an entry from the collection, and
+	 * {@link ConfigPendingEntries#confirm(PendingEntry)}), its Remove button discards it (see
+	 * {@link ConfigPendingEntries#discard(PendingEntry)}) instead of removing an entry from the collection, and
 	 * its key field is editable rather than fixed. Folding all of that into
 	 * {@link #createElementGroup(ConfigurationItem, int, int, boolean)} via extra parameters would
 	 * have left that method's index/listSize-based Move Up/Move Down logic surrounded by
@@ -298,22 +244,22 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 *
 	 * <p>
 	 * Always rendered expanded, and refreshes {@code pending}'s
-	 * {@link PendingEntry#_keyFieldModel} every time it runs - see
+	 * {@link PendingEntry#setKeyFieldModel(ConfigFieldModel)} every time it runs - see
 	 * {@link #rebuild(ConfigurationItem)}.
 	 * </p>
 	 */
 	private ReactFormGroupControl createPendingElementGroup(PendingEntry pending) {
-		ConfigurationItem entry = pending._entry;
+		ConfigurationItem entry = pending.entry();
 		Label label = resolveElementLabel(entry);
 
 		ReactButtonControl confirmButton = new ReactButtonControl(_context, "\u2713", ctx -> {
-			commitPending(pending);
+			_pending.confirm(pending);
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		confirmButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 
 		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
-			discardPending(pending);
+			_pending.discard(pending);
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
@@ -398,7 +344,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 *        The {@link PendingEntry} {@code entry} is one of, or {@code null} if it is already
 	 *        committed. The key may still be changed only while pending - once the entry is in
 	 *        the collection, changing it would re-index the collection under a new key. When
-	 *        non-{@code null}, the built model is also kept as {@link PendingEntry#_keyFieldModel}.
+	 *        non-{@code null}, the built model is also kept as {@link PendingEntry#setKeyFieldModel(ConfigFieldModel)}.
 	 */
 	private ReactControl createKeyField(ConfigurationItem entry, PropertyDescriptor keyProperty,
 			PendingEntry pending) {
@@ -406,7 +352,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		ConfigFieldModel model = ConfigControlService.getInstance().createModel(entry, keyProperty);
 		model.setEditable(editable);
 		if (pending != null) {
-			pending._keyFieldModel = model;
+			pending.setKeyFieldModel(model);
 		}
 		ReactControl input = ConfigControlService.getInstance().createControl(_context, model);
 
@@ -485,8 +431,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			oldItem, replacement, true);
 
 		if (pending != null) {
-			pending._entry = replacement;
-			rebuild(replacement);
+			_pending.replaceEntry(pending, replacement);
 			return;
 		}
 
@@ -513,8 +458,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * indexed by a property of its entries, so {@link TypedConfiguration} would reject an entry
 	 * whose key is empty (as every freshly constructed entry's is) with a technical
 	 * {@link IllegalArgumentException} the moment a second one collided with it. The new entry
-	 * therefore joins {@link #_pendingEntries} instead, rendered by
-	 * {@link #createPendingElementGroup(PendingEntry)} until {@link #commitPending(PendingEntry)}
+	 * therefore joins {@link ConfigPendingEntries} instead, rendered by
+	 * {@link #createPendingElementGroup(PendingEntry)} until {@link ConfigPendingEntries#confirm(PendingEntry)}
 	 * moves it into the collection. Any number of entries may be pending at once, independently -
 	 * a keyed collection's constraint is on the entries actually in it, and a pending entry, by
 	 * definition, is not.
@@ -522,9 +467,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	private void addElement() {
 		if (_value.isKeyed()) {
-			PendingEntry pending = new PendingEntry(newEntry());
-			_pendingEntries.add(pending);
-			rebuild(pending._entry);
+			_pending.start(newEntry());
 			return;
 		}
 
@@ -542,67 +485,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			return (ConfigurationItem) _choices.mapping().toSelection(_choices.options().get(0));
 		}
 		return _value.newElement();
-	}
-
-	/**
-	 * Moves {@code pending}'s entry into the edited collection, on the user's explicit
-	 * confirmation.
-	 *
-	 * <p>
-	 * Confirming is a deliberate action of its own (the Confirm button of
-	 * {@link #createPendingElementGroup(PendingEntry)}) rather than something inferred from the
-	 * key field's value. Committing as soon as the key merely <em>looks</em> usable would take a
-	 * half-typed key for the finished one - a key field reports what has been typed so far, so
-	 * anyone not typing the whole key in one go would find the entry committed under a prefix of
-	 * it, its key field by then already fixed. Committing when the field loses focus would be no
-	 * better: leaving the field to fetch the value from somewhere else is exactly what one does
-	 * while filling it in.
-	 * </p>
-	 *
-	 * <p>
-	 * So both an empty key and one that another entry already uses are reported at the key field,
-	 * and the entry stays pending. Neither is silently tolerated: the user asked for this entry to
-	 * be taken, and has to be told why it was not. Inserting a duplicate key would otherwise be
-	 * rejected by {@link TypedConfiguration} with a message about the collection's index, which
-	 * says nothing to whoever is editing the form.
-	 * </p>
-	 *
-	 * <p>
-	 * "Another entry" means a <em>committed</em> one - {@link ConfigCollectionValue#hasEntryWithKey(Object)} does not
-	 * also consult {@link #_pendingEntries}, deliberately. A pending entry has claimed nothing
-	 * yet: its key is still being written, and two entries being filled in side by side may well
-	 * pass through the same intermediate text. Whichever is confirmed first takes the key; the
-	 * other is then told the key is taken, at the moment it is confirmed - which is the moment its
-	 * key is actually being claimed.
-	 * </p>
-	 */
-	private void commitPending(PendingEntry pending) {
-		ConfigurationItem entry = pending._entry;
-		PropertyDescriptor keyProperty = _value.keyProperty(entry);
-		Object key = entry.value(keyProperty);
-		if (key == null || key.toString().isEmpty()) {
-			pending._keyFieldModel.setError(
-				I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(keyProperty, false)));
-			return;
-		}
-		if (_value.hasEntryWithKey(key)) {
-			pending._keyFieldModel.setError(I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE
-				.fill(Labels.propertyLabel(keyProperty, false), key));
-			return;
-		}
-		_pendingEntries.remove(pending);
-		_value.add(entry);
-		rebuild(entry);
-	}
-
-	/**
-	 * Discards {@code pending} - that entry's own Remove action, which cannot remove it from the
-	 * edited collection since it was never added there. The other entries of
-	 * {@link #_pendingEntries}, if any, are left untouched.
-	 */
-	private void discardPending(PendingEntry pending) {
-		_pendingEntries.remove(pending);
-		rebuild(null);
 	}
 
 	/**

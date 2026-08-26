@@ -212,6 +212,22 @@ view as a whole and keeps needing write-through.
 - Add `<field attribute="annotations"/>` to the model editor's detail forms, for the module and for
   the selected part.
 - Writing back happens inside the transaction the form already opens on save.
+- **What stands around an annotation while it is edited** has to be built, not preserved. The owner
+  of an annotation is a `TLModelPart` - a model element, not a `ConfigurationItem` - so there is no
+  configuration tree above the annotation to copy along with it, and an annotation copied on its own
+  has no container at all. Anything inside it that navigates outwards (an option function, a derived
+  property, a constraint) would find nothing.
+
+  The legacy form builders answer this by giving the form a configuration that *looks like* the
+  missing surroundings. `TLModuleFormBuilder.EditModel extends ModuleConfig`, so a module annotation
+  hung into its `annotations` list finds a container of the shape it expects;
+  `TLStructuredTypePartFormBuilder`'s does the same for an attribute. Each annotation is copied
+  individually into that form model (`TypedConfiguration.copy(annotation)`), edited there, and
+  written back with `TLModelUtil.updateAnnotations(part, editModel.getAnnotations())`.
+
+  Take that as it stands rather than inventing a second answer. Note the consequence: an annotation's
+  upward navigation reaches the form model, not the real module - which is exactly what legacy does
+  today, so nothing that works there breaks here.
 
 ### Presentation
 

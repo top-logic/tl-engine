@@ -53,7 +53,11 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * {@link ConfigFieldModel#setEditable(boolean)} is applied to every PLAIN/REF/COMPLEX field as
 	 * it is built, and this value is passed straight into {@link ConfigListEditorControl} - which,
 	 * for a LIST/ARRAY/MAP property, renders no add/remove/reorder button at all rather than a
-	 * disabled one. Propagated unchanged into every nested {@link ConfigEditorControl} (via
+	 * disabled one - and into {@link PolymorphicItemControl} (via
+	 * {@link #createPolymorphicGroup(ReactContext, String, ConfigurationItem, PropertyDescriptor, boolean)})
+	 * for a polymorphic ITEM property, whose own type selector is disabled the same way a plain
+	 * field is rather than left out - the currently chosen type must stay legible even while it may
+	 * not be changed. Propagated unchanged into every nested {@link ConfigEditorControl} (via
 	 * {@link #createNestedEditor(ReactContext, ConfigurationItem)}) and into every nested editor a
 	 * {@link ConfigListEditorControl} builds over its own entries, so a form built with
 	 * {@code editable = false} stays non-editable at every nesting depth. Every constructor that
@@ -182,8 +186,9 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			if (property.kind() == PropertyKind.ITEM) {
 				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
 					String label = resolveLabel(property);
-					PolymorphicItemControl polyGroup =
-						createPolymorphicGroup(context, label, config, property);
+					PolymorphicItemControl polyGroup = _editable
+						? createPolymorphicGroup(context, label, config, property)
+						: createPolymorphicGroup(context, label, config, property, _editable);
 					polyGroup.setHeader(createGroupHeader(context, property));
 					addChild(polyGroup);
 				} else {
@@ -357,10 +362,16 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Creates a {@link PolymorphicItemControl} for a polymorphic ITEM property.
+	 * Creates an editable {@link PolymorphicItemControl} for a polymorphic ITEM property.
 	 *
 	 * <p>
-	 * Subclasses may override this to customize the polymorphic editor (e.g. for testing).
+	 * Subclasses may override this to customize the polymorphic editor (e.g. for testing). Kept at
+	 * this four-argument signature - unaware of {@link #_editable} - for exactly the reason
+	 * {@link #newEditor(ReactContext, ConfigurationItem, Set, boolean, ConfigFieldIndex)} was: the
+	 * existing test double overrides this overload, and every call this class makes while
+	 * {@link #_editable} is {@code true} - which is every call the test double's own suite ever
+	 * makes - must keep reaching that override unchanged. See the five-argument overload for the
+	 * seam a form built with {@link #_editable} {@code false} reaches instead.
 	 * </p>
 	 *
 	 * @param context
@@ -371,11 +382,32 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *        The parent configuration item.
 	 * @param property
 	 *        The polymorphic ITEM property.
-	 * @return A new polymorphic item control.
+	 * @return A new, editable polymorphic item control.
 	 */
 	protected PolymorphicItemControl createPolymorphicGroup(ReactContext context, String label,
 			ConfigurationItem parentConfig, PropertyDescriptor property) {
 		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor);
+	}
+
+	/**
+	 * Like {@link #createPolymorphicGroup(ReactContext, String, ConfigurationItem,
+	 * PropertyDescriptor)}, but also deciding whether the built control's type selector accepts a
+	 * change.
+	 *
+	 * <p>
+	 * Only reached while {@link #_editable} is {@code false} - a codepath no existing test
+	 * exercises, so, like {@link #newEditor(ReactContext, ConfigurationItem, Set, boolean,
+	 * ConfigFieldIndex, boolean)}, this overload is deliberately not the one a test double
+	 * replaces.
+	 * </p>
+	 *
+	 * @param editable
+	 *        Whether the built control's type selector accepts a change.
+	 * @return A new polymorphic item control.
+	 */
+	protected PolymorphicItemControl createPolymorphicGroup(ReactContext context, String label,
+			ConfigurationItem parentConfig, PropertyDescriptor property, boolean editable) {
+		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor, editable);
 	}
 
 	/**

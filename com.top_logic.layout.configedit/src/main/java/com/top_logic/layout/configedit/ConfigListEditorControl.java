@@ -468,6 +468,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		return new ReactTextControl(_context, label.text(), label.placeholder() ? PLACEHOLDER_CSS : null);
 	}
 
+	/**
+	 * The entry's own type selector - a {@link SimpleSelectFieldModel}, disabled via
+	 * {@link SimpleSelectFieldModel#setEditable(boolean)} rather than left out while {@link #_editable}
+	 * is {@code false}, the same way {@link PolymorphicItemControl}'s top-level counterpart is: the
+	 * currently chosen type must stay legible to the reader even where it may not be changed.
+	 */
 	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item, PendingEntry pending) {
 		List<Object> rawOptions = _choices.options();
 		List<String> keys = new ArrayList<>(rawOptions.size());
@@ -478,6 +484,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentKey, keys, false);
 		typeModel.setMandatory(true);
 		typeModel.setNullable(false);
+		typeModel.setEditable(_editable);
 
 		LabelProvider labelProvider = PolymorphicOptions.indexLabelProvider(rawOptions);
 
@@ -541,6 +548,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	// --- Operations ---
+	//
+	// None of addElement/removeElement/moveUp/moveDown below carry their own !_editable guard, the
+	// way a field's ReactFormFieldControl#acceptsClientValue() does. That is deliberate, not an
+	// oversight: every one of them is private, reachable only from a button #rebuild and
+	// #createElementGroup stop creating in the first place while !_editable (see their own
+	// `if (_editable)` guards) - there is no rendered control, hence no command surface, for a
+	// stale or forged client message to reach them through. If a future change ever offers one of
+	// these operations through a control that stays rendered while !_editable (unlike every button
+	// here today), that control needs its own guard - the same lookup for the type selector is
+	// exactly why #createTypeSelector calls SimpleSelectFieldModel#setEditable(boolean) rather than
+	// omitting itself.
 
 	/**
 	 * Adds a new element with default values.

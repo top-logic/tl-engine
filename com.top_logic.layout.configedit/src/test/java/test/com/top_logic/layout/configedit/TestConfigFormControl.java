@@ -14,6 +14,8 @@ import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -23,7 +25,10 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigFormControl;
+import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.I18NConstants;
+import com.top_logic.layout.configedit.PolymorphicItemControl;
+import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -101,6 +106,77 @@ public class TestConfigFormControl extends TestCase {
 		java.util.List<ListEntry> getItems();
 	}
 
+	/** Marker interface for the polymorphic handler implementations, for the type-selector tests. */
+	public interface Handler {
+		// Marker interface.
+	}
+
+	/** Base polymorphic configuration for {@link Handler}. */
+	public interface HandlerConfig extends PolymorphicConfiguration<Handler> {
+		// Nothing beyond the base - only the concrete type matters for these tests.
+	}
+
+	/** Concrete handler config A. */
+	public interface HandlerAConfig extends HandlerConfig {
+		// Nothing beyond the base.
+	}
+
+	/**
+	 * Concrete handler config B - a second implementation, so
+	 * {@link PolymorphicOptions.Choices#options()} has more than one entry and the type selector
+	 * is actually rendered (a single-option collection needs no selector to begin with).
+	 */
+	public interface HandlerBConfig extends HandlerConfig {
+		// Nothing beyond the base.
+	}
+
+	/** Concrete {@link Handler} implementation selected through {@link HandlerAConfig}. */
+	public static class HandlerA implements Handler {
+		/** Creates a {@link HandlerA} from configuration. */
+		public HandlerA(InstantiationContext context, HandlerAConfig config) {
+			// Nothing to do.
+		}
+	}
+
+	/** Concrete {@link Handler} implementation selected through {@link HandlerBConfig}. */
+	public static class HandlerB implements Handler {
+		/** Creates a {@link HandlerB} from configuration. */
+		public HandlerB(InstantiationContext context, HandlerBConfig config) {
+			// Nothing to do.
+		}
+	}
+
+	/**
+	 * A configuration with a single polymorphic ITEM property, for
+	 * {@link PolymorphicItemControl}'s own type-selector tests.
+	 */
+	public interface PolyConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getHandler()}. */
+		String HANDLER = "handler";
+
+		@Name(HANDLER)
+		HandlerConfig getHandler();
+
+		/** @see #getHandler() */
+		void setHandler(HandlerConfig value);
+	}
+
+	/**
+	 * A configuration with a LIST of polymorphic entries, for
+	 * {@link ConfigListEditorControl}'s own type-selector tests - a different
+	 * code path from {@link PolyConfig}'s, even though both end up disabling a
+	 * {@link com.top_logic.layout.form.model.SimpleSelectFieldModel} the same way.
+	 */
+	public interface PolyListConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getItems()}. */
+		String ITEMS = "items";
+
+		@Name(ITEMS)
+		java.util.List<HandlerConfig> getItems();
+	}
+
 	/**
 	 * The very {@link ConfigFormControl} under test - a plain subclass, kept for symmetry with the
 	 * {@code Testable*} classes the sibling test suites in this package declare, even though
@@ -163,7 +239,7 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
-	 * Finds the {@link com.top_logic.layout.configedit.ConfigListEditorControl}'s "+" add button
+	 * Finds the {@link ConfigListEditorControl}'s "+" add button
 	 * anywhere under the given control, or {@code null} if none is currently rendered - the marker
 	 * of "currently rendered" a view-mode form must not offer.
 	 *
@@ -204,6 +280,38 @@ public class TestConfigFormControl extends TestCase {
 		}
 		for (ReactControl child : control.scriptingChildren()) {
 			FieldModel found = fieldOf(child, propertyName);
+			if (found != null) {
+				return found;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Finds the {@link FieldModel} of a polymorphic type selector's field control anywhere under
+	 * the given control, or {@code null} if none is currently rendered.
+	 *
+	 * <p>
+	 * Both {@link PolymorphicItemControl} and {@link ConfigListEditorControl}'s own type selector
+	 * wrap their {@link com.top_logic.layout.form.model.SimpleSelectFieldModel} in a
+	 * {@link com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl} carrying the
+	 * literal, hardcoded label {@code "Type"} - never resolved through {@link Resources}, so
+	 * matching it is locale-independent by construction, the same reason
+	 * {@code TestConfigEditorControl#findTypeFieldModel} matches it too. Walked fully recursively
+	 * (unlike that one-level sibling helper), since the selector sits at a different depth in each
+	 * of the two tests this is used for - directly under a {@link PolymorphicItemControl} for a
+	 * single polymorphic property, one level deeper inside a {@link ConfigListEditorControl}
+	 * element group for a polymorphic collection entry.
+	 * </p>
+	 */
+	private FieldModel findTypeFieldModel(ReactControl control) {
+		if ("Type".equals(control.scriptingScalarState().get("label"))) {
+			for (ReactControl field : control.scriptingChildren()) {
+				return (FieldModel) field.getModel();
+			}
+		}
+		for (ReactControl child : control.scriptingChildren()) {
+			FieldModel found = findTypeFieldModel(child);
 			if (found != null) {
 				return found;
 			}
@@ -340,6 +448,48 @@ public class TestConfigFormControl extends TestCase {
 
 		assertTrue("The field must stay editable.", fieldOf(form, CollectionConfig.NAME).isEditable());
 		assertNotNull("The add button must stay offered.", findAddButton(form));
+	}
+
+	/**
+	 * View mode must close a single polymorphic ITEM property's type selector too, not just a
+	 * plain field: {@link PolymorphicItemControl} backs it with a
+	 * {@link com.top_logic.layout.form.model.SimpleSelectFieldModel}, not a
+	 * {@link ConfigFieldModel}, but it is the very same hole - a viewer could otherwise still
+	 * swap the configured implementation - and the model editor this branch is being built for is
+	 * exactly this shape of property.
+	 */
+	public void testViewModePolymorphicItemTypeSelectorIsNotEditable() {
+		PolyConfig config = TypedConfiguration.newConfigItem(PolyConfig.class);
+		config.setHandler(TypedConfiguration.newConfigItem(HandlerAConfig.class));
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+
+		assertFalse("The type selector must not accept a change before Bearbeiten.",
+			findTypeFieldModel(form).isEditable());
+
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		assertTrue("Edit mode makes the type selector editable again.",
+			findTypeFieldModel(form).isEditable());
+	}
+
+	/**
+	 * View mode must close a polymorphic collection entry's own type selector too - a different
+	 * code path from {@link #testViewModePolymorphicItemTypeSelectorIsNotEditable()}:
+	 * {@link ConfigListEditorControl} builds it for each of its own entries, not
+	 * {@link PolymorphicItemControl}.
+	 */
+	public void testViewModePolymorphicListEntryTypeSelectorIsNotEditable() {
+		PolyListConfig config = TypedConfiguration.newConfigItem(PolyListConfig.class);
+		config.getItems().add(TypedConfiguration.newConfigItem(HandlerAConfig.class));
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+
+		assertFalse("The entry's type selector must not accept a change before Bearbeiten.",
+			findTypeFieldModel(form).isEditable());
+
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		assertTrue("Edit mode makes the entry's type selector editable again.",
+			findTypeFieldModel(form).isEditable());
 	}
 
 	/**

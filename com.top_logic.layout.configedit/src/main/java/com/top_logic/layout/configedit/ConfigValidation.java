@@ -263,6 +263,16 @@ public final class ConfigValidation {
 	 * {@link ConstraintChecker#getFailures()} would read empty afterwards. The check is itself
 	 * recursive, so nested items and collection entries are covered without any recursion here.
 	 * </p>
+	 *
+	 * <p>
+	 * Takes {@link ConstraintFailure#getConstraintName()} as the message, not
+	 * {@link ConstraintFailure#getMessage()}: the latter is the wording written to the server log -
+	 * it names the configuration interface, the property, the raw value and the source location -
+	 * which is not something to put next to a form field. {@link ConstraintFailure#getConstraintName()}
+	 * is what the constraint itself said went wrong, and is what the classic declarative form shows
+	 * too (through {@link com.top_logic.basic.config.constraint.algorithm.DefaultPropertyModel#getProblemDescription()},
+	 * which is where that key comes from in the first place).
+	 * </p>
 	 */
 	private static void collectConstraintFailures(ConfigurationItem item, List<Violation> violations) {
 		ConstraintChecker checker = new ConstraintChecker();
@@ -276,7 +286,8 @@ public final class ConfigValidation {
 		}
 		for (ConstraintFailure failure : checker.getFailures()) {
 			if (!failure.isWarning()) {
-				violations.add(new Violation(failure.getItem(), failure.getContextProperty(), failure.getMessage()));
+				violations.add(
+					new Violation(failure.getItem(), failure.getContextProperty(), failure.getConstraintName()));
 			}
 		}
 	}

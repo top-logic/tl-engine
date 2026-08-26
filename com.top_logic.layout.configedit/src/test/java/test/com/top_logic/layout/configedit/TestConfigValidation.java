@@ -21,6 +21,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.constraint.annotation.Comparision;
+import com.top_logic.basic.config.constraint.annotation.ComparisonDependency;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.reflect.TypeIndex;
@@ -159,6 +162,46 @@ public class TestConfigValidation extends TestCase {
 		void setPositiveWarning(int value);
 	}
 
+	/** The item a {@link CrossRefConfig}'s constraint reaches into. */
+	public interface LimitConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getMax()}. */
+		String MAX = "max";
+
+		@Name(MAX)
+		int getMax();
+
+		/** @see #getMax() */
+		void setMax(int value);
+	}
+
+	/**
+	 * Test configuration whose constraint reaches through a multi-step
+	 * {@link com.top_logic.basic.config.annotation.Ref} into another item - so a violation of it is
+	 * reported on a property that belongs to that other item, not to this one.
+	 */
+	public interface CrossRefConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getLimit()}. */
+		String LIMIT = "limit";
+
+		/** Property name for {@link #getAmount()}. */
+		String AMOUNT = "amount";
+
+		@Name(LIMIT)
+		LimitConfig getLimit();
+
+		/** @see #getLimit() */
+		void setLimit(LimitConfig value);
+
+		@Name(AMOUNT)
+		@ComparisonDependency(comparison = Comparision.SMALLER_OR_EQUAL, other = @Ref({ LIMIT, LimitConfig.MAX }))
+		int getAmount();
+
+		/** @see #getAmount() */
+		void setAmount(int value);
+	}
+
 	/** A mandatory property that was never given a value is a violation. */
 	public void testAnEmptyMandatoryPropertyIsAViolation() {
 		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
@@ -289,6 +332,87 @@ public class TestConfigValidation extends TestCase {
 		assertEquals(1, violations.size());
 		assertSame(config, violations.get(0).item());
 		assertEquals(ConstrainedConfig.POSITIVE, violations.get(0).property().getPropertyName());
+	}
+
+	/**
+	 * The message put on the field is what the constraint said, not the wording written to the
+	 * server log - which names the configuration interface, the property, the raw value and the
+	 * source location, none of which belongs next to a form field.
+	 */
+	public void testAConstraintViolationCarriesTheConstraintsOwnMessage() {
+		ConstrainedConfig config = TypedConfiguration.newConfigItem(ConstrainedConfig.class);
+		config.setPositive(-1);
+		config.setPositiveWarning(1);
+
+		List<Violation> violations = ConfigValidation.check(config);
+
+		assertEquals(1, violations.size());
+		assertEquals("The constraint's own message, not the log wording around it.",
+			com.top_logic.basic.config.constraint.impl.I18NConstants.POSITIVE_VALUE_EXPECTED,
+			violations.get(0).message());
+	}
+
+	/**
+	 * A constraint reaching through a multi-step {@link com.top_logic.basic.config.annotation.Ref}
+	 * reports on a property of the item it reached into, and the violation must name <em>that</em>
+	 * item - naming the item whose constraint fired instead would pair it with a property that item
+	 * does not have.
+	 */
+	public void testACrossItemConstraintNamesTheItemOwningTheProperty() {
+		CrossRefConfig config = TypedConfiguration.newConfigItem(CrossRefConfig.class);
+		LimitConfig limit = TypedConfiguration.newConfigItem(LimitConfig.class);
+		limit.setMax(5);
+		config.setLimit(limit);
+		config.setAmount(10);
+
+		List<Violation> violations = ConfigValidation.check(config);
+
+		assertEquals("The dependency is symmetric: both ends are reported.", 2, violations.size());
+		Violation onAmount = violationOf(violations, CrossRefConfig.AMOUNT);
+		Violation onMax = violationOf(violations, LimitConfig.MAX);
+		assertSame(config, onAmount.item());
+		assertSame("The referenced end belongs to the referenced item.", limit, onMax.item());
+	}
+
+	/**
+	 * And so both ends reach their own field: the one inside the referenced item too, which a
+	 * violation naming the wrong item could never find.
+	 */
+	public void testBothEndsOfACrossItemConstraintReachTheirField() {
+		CrossRefConfig config = TypedConfiguration.newConfigItem(CrossRefConfig.class);
+		LimitConfig limit = TypedConfiguration.newConfigItem(LimitConfig.class);
+		limit.setMax(5);
+		config.setLimit(limit);
+		config.setAmount(10);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		ConfigFieldModel amountField = register(index, config, CrossRefConfig.AMOUNT);
+		ConfigFieldModel maxField = register(index, limit, LimitConfig.MAX);
+
+		boolean complete = ConfigValidation.report(ConfigValidation.check(config), index);
+
+		assertTrue("Both violations had a field to go to.", complete);
+		assertNotNull(amountField.getError());
+		assertNotNull("The referenced item's own field must carry its end of the violation.",
+			maxField.getError());
+	}
+
+	/** The violation naming the given property, failing the test if there is none. */
+	private Violation violationOf(List<Violation> violations, String propertyName) {
+		for (Violation violation : violations) {
+			if (propertyName.equals(violation.property().getPropertyName())) {
+				return violation;
+			}
+		}
+		fail("No violation for property '" + propertyName + "' in " + violations + ".");
+		return null;
+	}
+
+	/** Builds and registers a {@link ConfigFieldModel} for the given property. */
+	private ConfigFieldModel register(ConfigFieldIndex index, ConfigurationItem item, String propertyName) {
+		PropertyDescriptor property = item.descriptor().getProperty(propertyName);
+		ConfigFieldModel model = new ConfigFieldModel(item, property);
+		index.register(item, property, model);
+		return model;
 	}
 
 	/** A constraint failure marked as a warning must not block Apply. */

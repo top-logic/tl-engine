@@ -396,8 +396,9 @@ public class TestConfigEditorControl extends TestCase {
 		}
 
 		@Override
-		protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
-			return new TestableConfigEditorControl(context, nested, Collections.emptySet(), false, fieldIndex());
+		protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
+				Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index) {
+			return new TestableConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index);
 		}
 
 		@Override
@@ -1560,6 +1561,25 @@ public class TestConfigEditorControl extends TestCase {
 		new TestableConfigListEditorControl(createTestContext(), config, property, index);
 
 		assertNotNull("The entry's own field must be indexed under the entry.",
+			index.lookup(entry, entry.descriptor().getProperty(ListItem.NAME)));
+	}
+
+	/**
+	 * A violation on a keyed collection entry's key must land on that entry's own key field - the
+	 * field {@link ConfigListEditorControl#createKeyField} builds and renders itself, separately
+	 * from the nested editor over the entry's other properties.
+	 */
+	public void testTheIndexReachesIntoAnEntrysKeyField() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ListItem entry = TypedConfiguration.newConfigItem(ListItem.class);
+		entry.setName("a");
+		config.getKeyedItems().add(entry);
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+
+		new TestableConfigListEditorControl(createTestContext(), config, property, index);
+
+		assertNotNull("The entry's key field must be indexed under the entry.",
 			index.lookup(entry, entry.descriptor().getProperty(ListItem.NAME)));
 	}
 

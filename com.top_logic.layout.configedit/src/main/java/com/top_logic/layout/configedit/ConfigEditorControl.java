@@ -234,23 +234,37 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * @return A new editor control for the nested item.
 	 */
 	protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
-		return new ConfigEditorControl(context, nested, Collections.emptySet(), false, _index);
+		return newEditor(context, nested, Collections.emptySet(), false, _index);
 	}
 
 	/**
-	 * The {@link ConfigFieldIndex} this editor reports its fields to, or {@code null} if it was
-	 * built without one.
+	 * The seam a test double replaces to build a differently configured nested editor (e.g. one
+	 * that bypasses {@link Labels}/{@link Resources} for testing) - constructs an editor, deciding
+	 * nothing.
 	 *
 	 * <p>
-	 * Exposed so a subclass overriding {@link #createNestedEditor(ReactContext, ConfigurationItem)}
-	 * or {@link #createPolymorphicGroup(ReactContext, String, ConfigurationItem, PropertyDescriptor)}
-	 * (e.g. to build a differently configured nested editor for testing) can still hand this
-	 * editor's index down to what it builds - the field itself stays private, since nothing outside
-	 * this class needs to read it directly.
+	 * Kept separate from {@link #createNestedEditor(ReactContext, ConfigurationItem)} so that
+	 * method's decision - which properties to hide, whether to skip tree properties, and which
+	 * {@link ConfigFieldIndex} to hand down - is real production logic a test exercises too,
+	 * rather than something a test double silently replaces along with the construction itself.
 	 * </p>
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param config
+	 *        The configuration item to edit.
+	 * @param hiddenProperties
+	 *        Properties to exclude from the form.
+	 * @param skipTreeProperties
+	 *        If {@code true}, properties annotated with {@link TreeProperty} are skipped.
+	 * @param index
+	 *        The {@link ConfigFieldIndex} to report every built field to, or {@code null} if
+	 *        nobody is collecting.
+	 * @return A new editor control.
 	 */
-	protected final ConfigFieldIndex fieldIndex() {
-		return _index;
+	protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index) {
+		return new ConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index);
 	}
 
 	/**

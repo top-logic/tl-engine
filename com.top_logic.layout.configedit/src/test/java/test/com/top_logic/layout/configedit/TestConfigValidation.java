@@ -62,6 +62,32 @@ public class TestConfigValidation extends TestCase {
 		void setInner(MandatoryConfig value);
 	}
 
+	/**
+	 * Test configuration interface with two ITEM properties, so the very same
+	 * {@link MandatoryConfig} instance can be reached through both - the shape that pins the
+	 * revisit guard against reporting one violation twice.
+	 */
+	public interface TwoRefsConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getFirst()}. */
+		String FIRST = "first";
+
+		/** Property name for {@link #getSecond()}. */
+		String SECOND = "second";
+
+		@Name(FIRST)
+		MandatoryConfig getFirst();
+
+		/** @see #getFirst() */
+		void setFirst(MandatoryConfig value);
+
+		@Name(SECOND)
+		MandatoryConfig getSecond();
+
+		/** @see #getSecond() */
+		void setSecond(MandatoryConfig value);
+	}
+
 	/** Test configuration interface with {@link Constraint} annotated properties. */
 	public interface ConstrainedConfig extends ConfigurationItem {
 
@@ -116,6 +142,22 @@ public class TestConfigValidation extends TestCase {
 		assertEquals(1, violations.size());
 		assertSame("The violation belongs to the inner item, not the outer one.",
 			inner, violations.get(0).item());
+	}
+
+	/**
+	 * The very same item, reached through two different properties, is still only checked once -
+	 * without the revisit guard this would report the missing value twice.
+	 */
+	public void testTheSameItemReachedTwiceIsReportedOnce() {
+		TwoRefsConfig config = TypedConfiguration.newConfigItem(TwoRefsConfig.class);
+		MandatoryConfig inner = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setFirst(inner);
+		config.setSecond(inner);
+
+		List<Violation> violations = ConfigValidation.check(config);
+
+		assertEquals("The item reached twice must be checked once.", 1, violations.size());
+		assertSame(inner, violations.get(0).item());
 	}
 
 	/** A violation is put on the field that edits the offending property. */

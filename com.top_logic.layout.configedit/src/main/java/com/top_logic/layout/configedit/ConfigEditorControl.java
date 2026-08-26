@@ -186,9 +186,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			if (property.kind() == PropertyKind.ITEM) {
 				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
 					String label = resolveLabel(property);
-					PolymorphicItemControl polyGroup = _editable
-						? createPolymorphicGroup(context, label, config, property)
-						: createPolymorphicGroup(context, label, config, property, _editable);
+					PolymorphicItemControl polyGroup =
+						createPolymorphicGroup(context, label, config, property, _editable);
 					polyGroup.setHeader(createGroupHeader(context, property));
 					addChild(polyGroup);
 				} else {
@@ -284,10 +283,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * </p>
 	 *
 	 * <p>
-	 * Propagates {@link #_editable} unchanged, through the six-argument {@link #newEditor} overload
-	 * - the five-argument one stays the seam a test double replaces (see its own {@code JavaDoc}), reached
-	 * here only for the {@code true} default every pre-Task-6 caller still gets, so a test double
-	 * that overrides only the five-argument overload keeps working unmodified.
+	 * Propagates {@link #_editable} unchanged, so a form built read-only stays read-only at every
+	 * nesting depth.
 	 * </p>
 	 *
 	 * @param context
@@ -297,9 +294,6 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * @return A new editor control for the nested item.
 	 */
 	protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
-		if (_editable) {
-			return newEditor(context, nested, Collections.emptySet(), false, _index);
-		}
 		return newEditor(context, nested, Collections.emptySet(), false, _index, _editable);
 	}
 
@@ -310,16 +304,10 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *
 	 * <p>
 	 * Kept separate from {@link #createNestedEditor(ReactContext, ConfigurationItem)} so that
-	 * method's decision - which properties to hide, whether to skip tree properties, and which
-	 * {@link ConfigFieldIndex} to hand down - is real production logic a test exercises too,
-	 * rather than something a test double silently replaces along with the construction itself.
-	 * </p>
-	 *
-	 * <p>
-	 * Always builds an editable editor - {@link #createNestedEditor(ReactContext, ConfigurationItem)}
-	 * only reaches this overload while {@link #_editable} is {@code true}, so this overload never
-	 * needs to decide otherwise. Not overridden by the existing test double, which is exactly what
-	 * keeps it a pre-Task-6 seam unaffected by the read-only-view-mode addition.
+	 * method's decision - which properties to hide, whether to skip tree properties, which
+	 * {@link ConfigFieldIndex} to hand down, and whether the nested editor accepts input - is real
+	 * production logic a test exercises too, rather than something a test double silently replaces
+	 * along with the construction itself.
 	 * </p>
 	 *
 	 * @param context
@@ -333,24 +321,6 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * @param index
 	 *        The {@link ConfigFieldIndex} to report every built field to, or {@code null} if
 	 *        nobody is collecting.
-	 * @return A new editor control.
-	 */
-	protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
-			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index) {
-		return new ConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index);
-	}
-
-	/**
-	 * Like {@link #newEditor(ReactContext, ConfigurationItem, Set, boolean, ConfigFieldIndex)}, but
-	 * also deciding whether the built editor is {@link #_editable}.
-	 *
-	 * <p>
-	 * Only reached from {@link #createNestedEditor(ReactContext, ConfigurationItem)} while
-	 * {@link #_editable} is {@code false} - a codepath no existing test exercises, so this overload
-	 * is deliberately not the one a test double replaces; see {@link #newEditor(ReactContext,
-	 * ConfigurationItem, Set, boolean, ConfigFieldIndex)}'s own {@code JavaDoc}.
-	 * </p>
-	 *
 	 * @param editable
 	 *        Whether the built editor's fields and collection actions accept input.
 	 * @return A new editor control.
@@ -362,16 +332,10 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Creates an editable {@link PolymorphicItemControl} for a polymorphic ITEM property.
+	 * Creates the {@link PolymorphicItemControl} for a polymorphic ITEM property.
 	 *
 	 * <p>
-	 * Subclasses may override this to customize the polymorphic editor (e.g. for testing). Kept at
-	 * this four-argument signature - unaware of {@link #_editable} - for exactly the reason
-	 * {@link #newEditor(ReactContext, ConfigurationItem, Set, boolean, ConfigFieldIndex)} was: the
-	 * existing test double overrides this overload, and every call this class makes while
-	 * {@link #_editable} is {@code true} - which is every call the test double's own suite ever
-	 * makes - must keep reaching that override unchanged. See the five-argument overload for the
-	 * seam a form built with {@link #_editable} {@code false} reaches instead.
+	 * Subclasses may override this to customize the polymorphic editor (e.g. for testing).
 	 * </p>
 	 *
 	 * @param context
@@ -382,25 +346,6 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *        The parent configuration item.
 	 * @param property
 	 *        The polymorphic ITEM property.
-	 * @return A new, editable polymorphic item control.
-	 */
-	protected PolymorphicItemControl createPolymorphicGroup(ReactContext context, String label,
-			ConfigurationItem parentConfig, PropertyDescriptor property) {
-		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor);
-	}
-
-	/**
-	 * Like {@link #createPolymorphicGroup(ReactContext, String, ConfigurationItem,
-	 * PropertyDescriptor)}, but also deciding whether the built control's type selector accepts a
-	 * change.
-	 *
-	 * <p>
-	 * Only reached while {@link #_editable} is {@code false} - a codepath no existing test
-	 * exercises, so, like {@link #newEditor(ReactContext, ConfigurationItem, Set, boolean,
-	 * ConfigFieldIndex, boolean)}, this overload is deliberately not the one a test double
-	 * replaces.
-	 * </p>
-	 *
 	 * @param editable
 	 *        Whether the built control's type selector accepts a change.
 	 * @return A new polymorphic item control.

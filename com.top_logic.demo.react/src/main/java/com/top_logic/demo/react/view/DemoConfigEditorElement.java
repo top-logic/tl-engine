@@ -23,6 +23,15 @@ import com.top_logic.layout.view.ViewContext;
  * Demonstrates the config editor control over a self-contained sample configuration covering a
  * spread of property kinds.
  * </p>
+ *
+ * <p>
+ * Built with {@link ConfigFormControl}'s edit mode on, so the demo shows the whole cycle rather
+ * than a form that writes straight through: the configuration is read-only until "Edit" starts a
+ * working copy, "Apply" checks that copy and either carries it over or leaves edit mode open with
+ * the reasons shown, and "Cancel" drops it. {@link DemoEditorConfig} carries what that cycle needs
+ * something to say about - a mandatory property for a refused Apply, and a property whose format
+ * can reject what is typed into it.
+ * </p>
  */
 public class DemoConfigEditorElement implements UIElement {
 

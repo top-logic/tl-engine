@@ -384,6 +384,12 @@ public class TestConfigEditorControl extends TestCase {
 			super(context, config, hiddenProperties, skipTreeProperties, index);
 		}
 
+		TestableConfigEditorControl(ReactContext context, ConfigurationItem config,
+				Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
+				boolean editable) {
+			super(context, config, hiddenProperties, skipTreeProperties, index, editable);
+		}
+
 		@Override
 		protected String resolveLabel(PropertyDescriptor property) {
 			return property.getPropertyName();
@@ -397,14 +403,10 @@ public class TestConfigEditorControl extends TestCase {
 
 		@Override
 		protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
-				Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index) {
-			return new TestableConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index);
-		}
-
-		@Override
-		protected PolymorphicItemControl createPolymorphicGroup(ReactContext context, String label,
-				ConfigurationItem parentConfig, PropertyDescriptor property) {
-			return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor);
+				Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
+				boolean editable) {
+			return new TestableConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index,
+				editable);
 		}
 
 		int getChildCount() {

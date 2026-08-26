@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.reflect.TypeIndex;
@@ -163,6 +164,20 @@ public class TestConfigFormControl extends TestCase {
 
 		@Name(ITEMS)
 		java.util.List<ListEntry> getItems();
+	}
+
+	/**
+	 * A configuration with a monomorphic ITEM property that always has a value, so the editor
+	 * builds a nested editor for it - the propagation path {@code createNestedEditor} takes.
+	 */
+	public interface NestedConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getInner()}. */
+		String INNER = "inner";
+
+		@Name(INNER)
+		@ItemDefault
+		ListEntry getInner();
 	}
 
 	/** Marker interface for the polymorphic handler implementations, for the type-selector tests. */
@@ -592,6 +607,23 @@ public class TestConfigFormControl extends TestCase {
 
 		assertTrue("Edit mode makes the field editable again.",
 			fieldOf(form, TestConfig.NAME).isEditable());
+	}
+
+	/**
+	 * View mode reaches a nested item's own fields too: a form is read-only at every nesting
+	 * depth, not only at the top level.
+	 */
+	public void testViewModeNestedItemFieldsAreNotEditable() {
+		NestedConfig config = TypedConfiguration.newConfigItem(NestedConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+
+		assertFalse("A nested item's field must not accept input before Bearbeiten.",
+			fieldOf(form, ListEntry.TITLE).isEditable());
+
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		assertTrue("Edit mode makes the nested field editable again.",
+			fieldOf(form, ListEntry.TITLE).isEditable());
 	}
 
 	/**

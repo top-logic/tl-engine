@@ -19,7 +19,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
@@ -97,6 +100,33 @@ public class TestConfigFormControl extends TestCase {
 
 		/** @see #getSecret() */
 		void setSecret(String value);
+	}
+
+	/**
+	 * A configuration with a property whose format can reject what is typed into it, next to a
+	 * plain one - the shape that tells "Apply carried the edit over" apart from "Apply refused".
+	 */
+	public interface FormatConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Property name for {@link #getTimeout()}. */
+		String TIMEOUT = "timeout";
+
+		@Name(NAME)
+		String getName();
+
+		/** @see #getName() */
+		void setName(String value);
+
+		@Name(TIMEOUT)
+		@Format(MillisFormat.class)
+		@LongDefault(0L)
+		long getTimeout();
+
+		/** @see #getTimeout() */
+		void setTimeout(long value);
 	}
 
 	/** A single unkeyed entry of {@link CollectionConfig#getItems()}. */
@@ -503,6 +533,47 @@ public class TestConfigFormControl extends TestCase {
 
 		assertEquals("A fresh edit starts without the previous attempt's message.",
 			"", formErrorText(form));
+	}
+
+	/**
+	 * Apply must refuse while any field still rejects what was typed into it. The configuration
+	 * itself is clean in that state - a rejected input never reached it - so nothing but the
+	 * fields can tell, and applying would leave edit mode and drop the typed text unremarked.
+	 */
+	public void testApplyIsRefusedWhileAFieldRejectsItsInput() {
+		FormatConfig config = TypedConfiguration.newConfigItem(FormatConfig.class);
+		config.setName("before");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, FormatConfig.NAME).setValue("after");
+		fieldOf(form, FormatConfig.TIMEOUT).setValue("5 potatoes");
+		assertNotNull("Precondition: the format must actually have rejected the input.",
+			fieldOf(form, FormatConfig.TIMEOUT).getError());
+
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		assertNotNull("Edit mode must stay open.", findButton(form, label(I18NConstants.APPLY)));
+		assertEquals("Nothing may be carried over while an input is rejected.",
+			"before", config.getName());
+		assertNotNull("The rejected input must stay on screen to be corrected.",
+			fieldOf(form, FormatConfig.TIMEOUT).getError());
+	}
+
+	/** Once the rejected input is corrected, the very same Apply goes through. */
+	public void testApplyProceedsOnceTheRejectedInputIsCorrected() {
+		FormatConfig config = TypedConfiguration.newConfigItem(FormatConfig.class);
+		config.setName("before");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, FormatConfig.NAME).setValue("after");
+		fieldOf(form, FormatConfig.TIMEOUT).setValue("5 potatoes");
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		fieldOf(form, FormatConfig.TIMEOUT).setValue("5min");
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		assertEquals("after", config.getName());
+		assertNotNull("Applying returns to view mode.", findButton(form, label(I18NConstants.EDIT)));
 	}
 
 	/**

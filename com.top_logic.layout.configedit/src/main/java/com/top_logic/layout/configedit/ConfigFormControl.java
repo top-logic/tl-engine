@@ -185,6 +185,17 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * untouched and this control unrebuilt.
 	 *
 	 * <p>
+	 * Refuses before checking anything at all while a field still rejects what was typed into it:
+	 * {@link ConfigValidation#check(ConfigurationItem)} inspects the configuration, and a field
+	 * that rejected its raw input never wrote to the configuration in the first place - it keeps
+	 * the rejected text on screen while the item still holds the last accepted value. Applying
+	 * would therefore look clean, leave edit mode, and throw the typed text away without ever
+	 * saying so. The classic declarative form refuses the same way, through
+	 * {@code FormContext#checkAll()}. Nothing is added at form level for this case: every rejected
+	 * input is already displayed at the very field that rejected it.
+	 * </p>
+	 *
+	 * <p>
 	 * A violation that {@link ConfigValidation#report(List, ConfigFieldIndex)} could not place -
 	 * a property the editor renders as no field of its own, e.g. a
 	 * {@link com.top_logic.basic.config.annotation.Hidden @Hidden} one or one named by a
@@ -194,6 +205,9 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private void apply() {
+		if (_index.hasInputError()) {
+			return;
+		}
 		List<Violation> violations = ConfigValidation.check(_model.edited());
 		if (!violations.isEmpty()) {
 			boolean complete = ConfigValidation.report(violations, _index);

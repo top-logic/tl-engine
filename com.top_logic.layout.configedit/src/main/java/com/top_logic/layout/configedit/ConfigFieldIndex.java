@@ -70,6 +70,31 @@ public final class ConfigFieldIndex {
 	}
 
 	/**
+	 * Whether any registered field currently rejects the raw input it was given.
+	 *
+	 * <p>
+	 * A field that rejected its input - an unparsable duration, a fractional value for an integral
+	 * property - keeps the rejected text on screen while the configuration still holds the last
+	 * accepted value. {@link ConfigValidation#check(ConfigurationItem)} inspects the configuration
+	 * and would therefore see nothing wrong at all, so the rejected input has to be asked about
+	 * here, at the fields. This is the counterpart of {@code FormContext#checkAll()} in the classic
+	 * declarative form.
+	 * </p>
+	 *
+	 * @see com.top_logic.layout.form.model.AbstractFieldModel#getInputError()
+	 */
+	public boolean hasInputError() {
+		for (Map<PropertyDescriptor, ConfigFieldModel> byProperty : _fields.values()) {
+			for (ConfigFieldModel field : byProperty.values()) {
+				if (field.getInputError() != null) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Forgets all registrations.
 	 *
 	 * <p>

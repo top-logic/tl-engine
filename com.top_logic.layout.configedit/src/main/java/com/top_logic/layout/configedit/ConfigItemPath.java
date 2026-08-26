@@ -24,12 +24,13 @@ import com.top_logic.basic.config.container.ConfigPart;
  * A working copy for editing has to be a copy of the whole tree, not of the edited part alone: a
  * part copied on its own has no {@link ConfigPart#container() container} - the container is set
  * only when a part is assigned into a property ({@code AbstractConfigItem#updateDirectly} calls
- * {@code ConfigPartUtilInternal.initContainer}) - so a standalone copy was never assigned anywhere,
- * and anything inside it that navigates upwards or sideways (an option function, a derived
- * property, a constraint) would find nothing. Copying the root keeps all of that intact. This class
- * is what lets the editor still be built over the *part* the caller actually named: {@link #to(ConfigurationItem)}
- * records the way down to that part as a list of steps, and {@link #resolveIn(ConfigurationItem)}
- * replays those steps on a copy of the root to find the corresponding part there.
+ * {@link com.top_logic.basic.config.container.ConfigPartUtilInternal#initContainer(Object,
+ * ConfigurationItem)}) - so a standalone copy was never assigned anywhere, and anything inside it
+ * that navigates upwards or sideways (an option function, a derived property, a constraint) would
+ * find nothing. Copying the root keeps all of that intact. This class is what lets the editor still
+ * be built over the *part* the caller actually named: {@link #to(ConfigurationItem)} records the
+ * way down to that part as a list of steps, and {@link #resolveIn(ConfigurationItem)} replays those
+ * steps on a copy of the root to find the corresponding part there.
  * </p>
  *
  * <p>

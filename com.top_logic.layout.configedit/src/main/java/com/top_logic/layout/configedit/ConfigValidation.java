@@ -30,10 +30,13 @@ import com.top_logic.layout.form.values.edit.Labels;
  * Two kinds of violation are collected, from two different places. A mandatory property with no
  * value is not something {@link ConstraintChecker} reports - the configuration framework only
  * catches that when it reads XML, and nothing here reads XML - so it is checked directly via
- * {@link PropertyDescriptor#isMandatory()} and {@link ConfigurationItem#valueSet(PropertyDescriptor)}.
- * A constraint violation comes from {@link ConstraintChecker}, which is itself recursive and
- * already names, for every failure, the exact item and property {@link ConfigFieldIndex} is keyed
- * by.
+ * {@link PropertyDescriptor#isMandatory()}, {@link ConfigurationItem#valueSet(PropertyDescriptor)},
+ * and the property's current value: {@link ConfigurationItem#update(PropertyDescriptor, Object)}
+ * marks a property as set the moment it is called, whatever value it was called with - so a field
+ * the user cleared back to {@code null} or {@code ""} reads as "set" too, and {@code valueSet}
+ * alone cannot tell that apart from a value the user actually entered. A constraint violation comes
+ * from {@link ConstraintChecker}, which is itself recursive and already names, for every failure,
+ * the exact item and property {@link ConfigFieldIndex} is keyed by.
  * </p>
  *
  * <p>
@@ -120,12 +123,38 @@ public final class ConfigValidation {
 			return;
 		}
 		for (PropertyDescriptor property : item.descriptor().getProperties()) {
-			if (property.isMandatory() && !item.valueSet(property)) {
+			if (property.isMandatory() && isMissing(item, property)) {
 				violations.add(new Violation(item, property,
 					I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(property, false))));
 			}
 			descendMissingMandatory(item, property, violations, visited);
 		}
+	}
+
+	/**
+	 * Whether the given property of the given item has no value worth keeping, for the purpose of
+	 * a {@link PropertyDescriptor#isMandatory() @Mandatory} check.
+	 *
+	 * <p>
+	 * {@link ConfigurationItem#valueSet(PropertyDescriptor)} alone is not enough: it answers
+	 * whether {@link ConfigurationItem#update(PropertyDescriptor, Object)} was ever called for the
+	 * property, not whether the value it left behind is actually usable. A field the user cleared -
+	 * typed over what was there and left it blank - calls {@code update} with {@code null} (or, for
+	 * a {@link String} property, whatever the framework normalizes that {@code null} to, typically
+	 * {@code ""}) just as much as a field the user filled in calls it with the entered value;
+	 * {@code valueSet} reads "set" either way. So this also rejects a {@code null} value outright,
+	 * and an empty {@link String} - the only type whose "empty" value is not itself {@code null}.
+	 * </p>
+	 */
+	private static boolean isMissing(ConfigurationItem item, PropertyDescriptor property) {
+		if (!item.valueSet(property)) {
+			return true;
+		}
+		Object value = item.value(property);
+		if (value == null) {
+			return true;
+		}
+		return value instanceof String string && string.isEmpty();
 	}
 
 	/**

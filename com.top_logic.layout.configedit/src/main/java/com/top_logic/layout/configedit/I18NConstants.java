@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.configedit;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
@@ -13,6 +14,21 @@ import com.top_logic.layout.I18NConstantsBase;
  * I18N constants for the configuration editor module.
  */
 public class I18NConstants extends I18NConstantsBase {
+
+	/**
+	 * @en Edit
+	 */
+	public static ResKey EDIT;
+
+	/**
+	 * @en Apply
+	 */
+	public static ResKey APPLY;
+
+	/**
+	 * @en Cancel
+	 */
+	public static ResKey CANCEL;
 
 	/**
 	 * @en {0} (empty)

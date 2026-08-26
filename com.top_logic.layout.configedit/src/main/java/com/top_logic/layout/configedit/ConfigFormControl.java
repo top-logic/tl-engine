@@ -111,6 +111,15 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * {@code cleanupTree()} is the right call, the same way {@link ConfigListEditorControl}'s own
 	 * rebuild already does it in this package.
 	 * </p>
+	 *
+	 * <p>
+	 * The rebuilt {@link ConfigEditorControl} is editable exactly while either
+	 * {@link #_withEditMode} is off (the thin-wrapper, write-through case - it was always editable
+	 * and stays so) or the model {@link ConfigFormModel#isEditMode() is in edit mode}. In every
+	 * other case - {@link #_withEditMode} on, model in view mode - it is built read-only: every
+	 * field non-editable and no collection action rendered, so a form with a mode never accepts a
+	 * change outside of one.
+	 * </p>
 	 */
 	private void rebuild() {
 		for (ReactControl child : getChildren()) {
@@ -119,7 +128,8 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		getChildren().clear();
 		_index.clear();
 
-		addChild(new ConfigEditorControl(_context, _model.edited(), Collections.emptySet(), false, _index));
+		boolean editable = !_withEditMode || _model.isEditMode();
+		addChild(new ConfigEditorControl(_context, _model.edited(), Collections.emptySet(), false, _index, editable));
 
 		if (_withEditMode) {
 			if (_model.isEditMode()) {

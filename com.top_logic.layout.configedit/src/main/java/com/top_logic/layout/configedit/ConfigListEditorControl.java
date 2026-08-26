@@ -44,7 +44,10 @@ import com.top_logic.util.Resources;
  * Each list element is rendered as a collapsible {@link ReactFormGroupControl} with action buttons
  * (Move Up, Move Down, Remove) in the header and a nested {@link ConfigEditorControl} for the
  * element's properties - Move Up/Move Down only for a {@link ConfigCollectionValue#isReorderable() reorderable}
- * collection. An Add button at the bottom creates new elements.
+ * collection. An Add button at the bottom creates new elements. None of these actions - Add, Move
+ * Up, Move Down, Remove - are rendered at all while this control was built {@code editable = false}
+ * (see the five-argument constructor); the elements themselves are still shown, just without
+ * anything that could change the collection.
  * </p>
  *
  * <p>
@@ -84,6 +87,22 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 	private final ConfigFieldIndex _index;
 
+	/**
+	 * Whether an add/remove/reorder button is rendered at all, and whether every entry's own
+	 * fields and nested collections accept input.
+	 *
+	 * <p>
+	 * {@code false} while the enclosing {@link ConfigFormControl}'s own edit mode is off - see
+	 * {@link ConfigEditorControl#_editable}, which this mirrors and which threads it here. Unlike a
+	 * field, a collection action has no {@link ConfigFieldModel} to call
+	 * {@link ConfigFieldModel#setEditable(boolean)} on, so the only way to keep it from being
+	 * offered is to not create it: {@link #rebuild(ConfigurationItem)} skips the add button and
+	 * every pending entry, and {@link #createElementGroup(ConfigurationItem, int, int, boolean)}
+	 * skips every header action (move up, move down, remove), whenever this is {@code false}.
+	 * </p>
+	 */
+	private final boolean _editable;
+
 	private final List<ListenerRegistration> _listeners = new ArrayList<>();
 
 	private record ListenerRegistration(ConfigurationItem item, PropertyDescriptor property,
@@ -109,6 +128,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * Creates a {@link ConfigListEditorControl}, reporting every field it builds - including each
 	 * entry's own fields and its key field - to the given {@link ConfigFieldIndex}.
 	 *
+	 * <p>
+	 * Editable - see the five-argument constructor for one that is not.
+	 * </p>
+	 *
 	 * @param context
 	 *        The React context.
 	 * @param parentConfig
@@ -121,11 +144,34 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	public ConfigListEditorControl(ReactContext context, ConfigurationItem parentConfig,
 			PropertyDescriptor property, ConfigFieldIndex index) {
+		this(context, parentConfig, property, index, true);
+	}
+
+	/**
+	 * Creates a {@link ConfigListEditorControl}, reporting every field it builds to the given
+	 * {@link ConfigFieldIndex}, and deciding whether any action on the collection is offered.
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param parentConfig
+	 *        The parent configuration item owning the LIST property.
+	 * @param property
+	 *        The LIST property descriptor.
+	 * @param index
+	 *        The {@link ConfigFieldIndex} to report every built field to, or {@code null} if
+	 *        nobody is collecting.
+	 * @param editable
+	 *        Whether add/remove/reorder are offered, and every entry's own fields accept input -
+	 *        see {@link #_editable}.
+	 */
+	public ConfigListEditorControl(ReactContext context, ConfigurationItem parentConfig,
+			PropertyDescriptor property, ConfigFieldIndex index, boolean editable) {
 		super(context);
 		_context = context;
 		_parentConfig = parentConfig;
 		_property = property;
 		_index = index;
+		_editable = editable;
 		_value = new ConfigCollectionValue(parentConfig, property);
 		_choices = PolymorphicOptions.compute(parentConfig, property);
 		_pending = new ConfigPendingEntries(_value, this::rebuild);
@@ -180,17 +226,21 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			}
 		}
 
-		for (PendingEntry pending : _pending.entries()) {
-			addChild(createPendingElementGroup(pending));
-		}
+		if (_editable) {
+			for (PendingEntry pending : _pending.entries()) {
+				addChild(createPendingElementGroup(pending));
+			}
 
-		// Add button at the bottom.
-		ReactButtonControl addButton = new ReactButtonControl(_context, "+ " + Labels.propertyLabel(_property, false),
-			ctx -> {
-				addElement();
-				return HandlerResult.DEFAULT_RESULT;
-			});
-		addChild(addButton);
+			// Add button at the bottom. Not rendered at all while !_editable - the requirement is
+			// that no collection action is offered in view mode, not merely a disabled one.
+			ReactButtonControl addButton =
+				new ReactButtonControl(_context, "+ " + Labels.propertyLabel(_property, false),
+					ctx -> {
+						addElement();
+						return HandlerResult.DEFAULT_RESULT;
+					});
+			addChild(addButton);
+		}
 
 		putState("children", getChildren());
 	}
@@ -207,33 +257,35 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		Label label = resolveElementLabel(item);
 
 		List<ReactControl> headerActions = new ArrayList<>();
-		if (_value.isReorderable()) {
-			ReactButtonControl moveUpButton = new ReactButtonControl(_context, "\u25B2", ctx -> {
-				moveUp(_value.indexOf(item));
-				return HandlerResult.DEFAULT_RESULT;
-			});
-			moveUpButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-			moveUpButton.setDisabled(index == 0);
-			headerActions.add(moveUpButton);
+		if (_editable) {
+			if (_value.isReorderable()) {
+				ReactButtonControl moveUpButton = new ReactButtonControl(_context, "\u25B2", ctx -> {
+					moveUp(_value.indexOf(item));
+					return HandlerResult.DEFAULT_RESULT;
+				});
+				moveUpButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+				moveUpButton.setDisabled(index == 0);
+				headerActions.add(moveUpButton);
 
-			ReactButtonControl moveDownButton = new ReactButtonControl(_context, "\u25BC", ctx -> {
-				moveDown(_value.indexOf(item));
-				return HandlerResult.DEFAULT_RESULT;
-			});
-			moveDownButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-			moveDownButton.setDisabled(index == listSize - 1);
-			headerActions.add(moveDownButton);
-		}
-
-		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
-			int currentIndex = _value.indexOf(item);
-			if (currentIndex >= 0) {
-				removeElement(currentIndex);
+				ReactButtonControl moveDownButton = new ReactButtonControl(_context, "\u25BC", ctx -> {
+					moveDown(_value.indexOf(item));
+					return HandlerResult.DEFAULT_RESULT;
+				});
+				moveDownButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+				moveDownButton.setDisabled(index == listSize - 1);
+				headerActions.add(moveDownButton);
 			}
-			return HandlerResult.DEFAULT_RESULT;
-		});
-		removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-		headerActions.add(removeButton);
+
+			ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
+				int currentIndex = _value.indexOf(item);
+				if (currentIndex >= 0) {
+					removeElement(currentIndex);
+				}
+				return HandlerResult.DEFAULT_RESULT;
+			});
+			removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+			headerActions.add(removeButton);
+		}
 
 		PropertyDescriptor keyProperty = _value.keyProperty(item);
 		List<ReactControl> bodyChildren = createBodyChildren(item, keyProperty, null);
@@ -323,7 +375,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 		if (!polymorphic || isTypeSelected(item)) {
 			bodyChildren.add(new ConfigEditorControl(_context, item,
-				keyProperty == null ? Collections.emptySet() : Collections.singleton(keyProperty), false, _index));
+				keyProperty == null ? Collections.emptySet() : Collections.singleton(keyProperty), false, _index,
+				_editable));
 		}
 		return bodyChildren;
 	}
@@ -370,7 +423,11 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	private ReactControl createKeyField(ConfigurationItem entry, PropertyDescriptor keyProperty,
 			PendingEntry pending) {
-		boolean editable = pending != null;
+		// Pending already implies _editable in practice - a pending entry cannot exist while
+		// !_editable, since that is exactly the state in which the add button that creates one is
+		// never rendered (see #rebuild). Still combined explicitly rather than relied upon, so this
+		// stays correct even if that invariant ever changes.
+		boolean editable = _editable && pending != null;
 		ConfigFieldModel model = ConfigControlService.getInstance().createModel(entry, keyProperty);
 		model.setEditable(editable);
 		index(entry, keyProperty, model);

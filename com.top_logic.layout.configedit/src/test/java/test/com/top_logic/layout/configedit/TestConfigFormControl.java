@@ -65,6 +65,42 @@ public class TestConfigFormControl extends TestCase {
 		void setName(String value);
 	}
 
+	/** A single unkeyed entry of {@link CollectionConfig#getItems()}. */
+	public interface ListEntry extends ConfigurationItem {
+
+		/** Property name for {@link #getTitle()}. */
+		String TITLE = "title";
+
+		@Name(TITLE)
+		String getTitle();
+
+		/** @see #getTitle() */
+		void setTitle(String value);
+	}
+
+	/**
+	 * A configuration with a value property and an unkeyed LIST property, for the read-only-view-
+	 * mode tests: view mode must not offer the LIST's own add/remove/reorder actions any more than
+	 * it lets a plain field accept input.
+	 */
+	public interface CollectionConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Property name for {@link #getItems()}. */
+		String ITEMS = "items";
+
+		@Name(NAME)
+		String getName();
+
+		/** @see #getName() */
+		void setName(String value);
+
+		@Name(ITEMS)
+		java.util.List<ListEntry> getItems();
+	}
+
 	/**
 	 * The very {@link ConfigFormControl} under test - a plain subclass, kept for symmetry with the
 	 * {@code Testable*} classes the sibling test suites in this package declare, even though
@@ -119,6 +155,35 @@ public class TestConfigFormControl extends TestCase {
 		}
 		for (ReactControl child : control.scriptingChildren()) {
 			ReactButtonControl found = findButton(child, label);
+			if (found != null) {
+				return found;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Finds the {@link com.top_logic.layout.configedit.ConfigListEditorControl}'s "+" add button
+	 * anywhere under the given control, or {@code null} if none is currently rendered - the marker
+	 * of "currently rendered" a view-mode form must not offer.
+	 *
+	 * <p>
+	 * Identified by the literal {@code "+ "} prefix {@code ConfigListEditorControl#rebuild}
+	 * hardcodes ahead of the property's own (locale-dependent) label, rather than by the full label
+	 * text - the same reason {@link #label(ResKey)} exists for the mode buttons: matching the
+	 * translated property label here would tie this test to whatever the JVM's default locale
+	 * happens to resolve it to.
+	 * </p>
+	 */
+	private ReactButtonControl findAddButton(ReactControl control) {
+		if (control instanceof ReactButtonControl button) {
+			Object label = button.scriptingScalarState().get("label");
+			if (label instanceof String text && text.startsWith("+ ")) {
+				return button;
+			}
+		}
+		for (ReactControl child : control.scriptingChildren()) {
+			ReactButtonControl found = findAddButton(child);
 			if (found != null) {
 				return found;
 			}
@@ -228,6 +293,53 @@ public class TestConfigFormControl extends TestCase {
 		click(findButton(form, label(I18NConstants.APPLY)));
 
 		assertEquals("given", config.getName());
+	}
+
+	/**
+	 * View mode - {@code withEditMode = true}, model not editing - must not let a field accept
+	 * input: the whole point of a mode is that nothing reaches the item outside of one, and a
+	 * field that still writes through defeats that regardless of what the buttons show.
+	 */
+	public void testViewModeFieldsAreNotEditable() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+
+		assertFalse("A field must not accept input before Bearbeiten.",
+			fieldOf(form, TestConfig.NAME).isEditable());
+
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		assertTrue("Edit mode makes the field editable again.",
+			fieldOf(form, TestConfig.NAME).isEditable());
+	}
+
+	/**
+	 * View mode must not offer a LIST/ARRAY/MAP property's own add/remove/reorder actions either -
+	 * those are not fields, so nothing about {@link ConfigFieldModel#setEditable(boolean)} reaches
+	 * them; the add button must not be rendered at all, not merely be present and disabled.
+	 */
+	public void testViewModeOffersNoCollectionAction() {
+		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+
+		assertNull("No add button before Bearbeiten.", findAddButton(form));
+
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		assertNotNull("Edit mode offers the add button again.", findAddButton(form));
+	}
+
+	/**
+	 * {@code withEditMode = false} must behave exactly as it always has: every field and every
+	 * collection action stays offered, since this is the view designer's write-through case, not a
+	 * mode with a view side to lock down.
+	 */
+	public void testWithoutEditModeEverythingStaysEditable() {
+		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		assertTrue("The field must stay editable.", fieldOf(form, CollectionConfig.NAME).isEditable());
+		assertNotNull("The add button must stay offered.", findAddButton(form));
 	}
 
 	/**

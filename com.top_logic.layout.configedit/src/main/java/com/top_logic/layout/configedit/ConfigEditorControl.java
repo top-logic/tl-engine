@@ -46,6 +46,24 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	private final ConfigFieldIndex _index;
 
 	/**
+	 * Whether every field and collection action this editor builds accepts input.
+	 *
+	 * <p>
+	 * {@code false} while a {@link ConfigFormControl}'s own edit mode is off:
+	 * {@link ConfigFieldModel#setEditable(boolean)} is applied to every PLAIN/REF/COMPLEX field as
+	 * it is built, and this value is passed straight into {@link ConfigListEditorControl} - which,
+	 * for a LIST/ARRAY/MAP property, renders no add/remove/reorder button at all rather than a
+	 * disabled one. Propagated unchanged into every nested {@link ConfigEditorControl} (via
+	 * {@link #createNestedEditor(ReactContext, ConfigurationItem)}) and into every nested editor a
+	 * {@link ConfigListEditorControl} builds over its own entries, so a form built with
+	 * {@code editable = false} stays non-editable at every nesting depth. Every constructor that
+	 * predates this field defaults it to {@code true}, keeping the view designer's write-through
+	 * behaviour unchanged.
+	 * </p>
+	 */
+	private final boolean _editable;
+
+	/**
 	 * Creates a {@link ConfigEditorControl} for all visible properties.
 	 *
 	 * @param context
@@ -96,6 +114,10 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * Creates a {@link ConfigEditorControl}, hiding the given properties, optionally skipping tree
 	 * properties, and reporting every field it builds to the given {@link ConfigFieldIndex}.
 	 *
+	 * <p>
+	 * Editable - see the six-argument constructor for a form that is not.
+	 * </p>
+	 *
 	 * @param context
 	 *        The React context.
 	 * @param config
@@ -112,8 +134,36 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 */
 	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
 			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index) {
+		this(context, config, hiddenProperties, skipTreeProperties, index, true);
+	}
+
+	/**
+	 * Creates a {@link ConfigEditorControl}, hiding the given properties, optionally skipping tree
+	 * properties, reporting every field it builds to the given {@link ConfigFieldIndex}, and
+	 * deciding whether any of it may be changed.
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param config
+	 *        The configuration item to edit.
+	 * @param hiddenProperties
+	 *        Properties to exclude from the form.
+	 * @param skipTreeProperties
+	 *        If {@code true}, properties annotated with {@link TreeProperty} are skipped. Use
+	 *        {@code true} for top-level tree node configurations, {@code false} for nested/inline
+	 *        sub-configurations.
+	 * @param index
+	 *        The {@link ConfigFieldIndex} to report every built field to, or {@code null} if
+	 *        nobody is collecting.
+	 * @param editable
+	 *        Whether the built fields and collection actions accept input - see {@link #_editable}.
+	 */
+	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
+			boolean editable) {
 		super(context);
 		_index = index;
+		_editable = editable;
 
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
 			if (hiddenProperties.contains(property)) {
@@ -154,7 +204,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			if (property.kind() == PropertyKind.LIST || property.kind() == PropertyKind.ARRAY
 				|| property.kind() == PropertyKind.MAP) {
 				ConfigListEditorControl listEditor =
-					new ConfigListEditorControl(context, config, property, _index);
+					new ConfigListEditorControl(context, config, property, _index, _editable);
 				ReactFormGroupControl listGroup = new ReactFormGroupControl(
 					context, null, true, false, "default", false,
 					List.of(), List.of(listEditor));
@@ -164,6 +214,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			}
 
 			ConfigFieldModel model = ConfigControlService.getInstance().createModel(config, property);
+			model.setEditable(_editable);
 			index(config, property, model);
 			addCleanupAction(model::detach);
 
@@ -227,6 +278,13 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * Subclasses may override this to customize the nested editor (e.g. for testing).
 	 * </p>
 	 *
+	 * <p>
+	 * Propagates {@link #_editable} unchanged, through the six-argument {@link #newEditor} overload
+	 * - the five-argument one stays the seam a test double replaces (see its own {@code JavaDoc}), reached
+	 * here only for the {@code true} default every pre-Task-6 caller still gets, so a test double
+	 * that overrides only the five-argument overload keeps working unmodified.
+	 * </p>
+	 *
 	 * @param context
 	 *        The React context.
 	 * @param nested
@@ -234,7 +292,10 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * @return A new editor control for the nested item.
 	 */
 	protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
-		return newEditor(context, nested, Collections.emptySet(), false, _index);
+		if (_editable) {
+			return newEditor(context, nested, Collections.emptySet(), false, _index);
+		}
+		return newEditor(context, nested, Collections.emptySet(), false, _index, _editable);
 	}
 
 	/**
@@ -247,6 +308,13 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * method's decision - which properties to hide, whether to skip tree properties, and which
 	 * {@link ConfigFieldIndex} to hand down - is real production logic a test exercises too,
 	 * rather than something a test double silently replaces along with the construction itself.
+	 * </p>
+	 *
+	 * <p>
+	 * Always builds an editable editor - {@link #createNestedEditor(ReactContext, ConfigurationItem)}
+	 * only reaches this overload while {@link #_editable} is {@code true}, so this overload never
+	 * needs to decide otherwise. Not overridden by the existing test double, which is exactly what
+	 * keeps it a pre-Task-6 seam unaffected by the read-only-view-mode addition.
 	 * </p>
 	 *
 	 * @param context
@@ -265,6 +333,27 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
 			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index) {
 		return new ConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index);
+	}
+
+	/**
+	 * Like {@link #newEditor(ReactContext, ConfigurationItem, Set, boolean, ConfigFieldIndex)}, but
+	 * also deciding whether the built editor is {@link #_editable}.
+	 *
+	 * <p>
+	 * Only reached from {@link #createNestedEditor(ReactContext, ConfigurationItem)} while
+	 * {@link #_editable} is {@code false} - a codepath no existing test exercises, so this overload
+	 * is deliberately not the one a test double replaces; see {@link #newEditor(ReactContext,
+	 * ConfigurationItem, Set, boolean, ConfigFieldIndex)}'s own {@code JavaDoc}.
+	 * </p>
+	 *
+	 * @param editable
+	 *        Whether the built editor's fields and collection actions accept input.
+	 * @return A new editor control.
+	 */
+	protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
+			boolean editable) {
+		return new ConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index, editable);
 	}
 
 	/**

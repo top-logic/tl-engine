@@ -82,6 +82,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	private final ConfigPendingEntries _pending;
 
+	private final ConfigFieldIndex _index;
+
 	private final List<ListenerRegistration> _listeners = new ArrayList<>();
 
 	private record ListenerRegistration(ConfigurationItem item, PropertyDescriptor property,
@@ -100,10 +102,30 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	public ConfigListEditorControl(ReactContext context, ConfigurationItem parentConfig,
 			PropertyDescriptor property) {
+		this(context, parentConfig, property, null);
+	}
+
+	/**
+	 * Creates a {@link ConfigListEditorControl}, reporting every field it builds - including each
+	 * entry's own fields and its key field - to the given {@link ConfigFieldIndex}.
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param parentConfig
+	 *        The parent configuration item owning the LIST property.
+	 * @param property
+	 *        The LIST property descriptor.
+	 * @param index
+	 *        The {@link ConfigFieldIndex} to report every built field to, or {@code null} if
+	 *        nobody is collecting.
+	 */
+	public ConfigListEditorControl(ReactContext context, ConfigurationItem parentConfig,
+			PropertyDescriptor property, ConfigFieldIndex index) {
 		super(context);
 		_context = context;
 		_parentConfig = parentConfig;
 		_property = property;
+		_index = index;
 		_value = new ConfigCollectionValue(parentConfig, property);
 		_choices = PolymorphicOptions.compute(parentConfig, property);
 		_pending = new ConfigPendingEntries(_value, this::rebuild);
@@ -301,7 +323,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 		if (!polymorphic || isTypeSelected(item)) {
 			bodyChildren.add(new ConfigEditorControl(_context, item,
-				keyProperty == null ? Collections.emptySet() : Collections.singleton(keyProperty)));
+				keyProperty == null ? Collections.emptySet() : Collections.singleton(keyProperty), false, _index));
 		}
 		return bodyChildren;
 	}
@@ -351,6 +373,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		boolean editable = pending != null;
 		ConfigFieldModel model = ConfigControlService.getInstance().createModel(entry, keyProperty);
 		model.setEditable(editable);
+		index(entry, keyProperty, model);
 		if (pending != null) {
 			pending.setKeyFieldModel(model);
 		}
@@ -370,6 +393,18 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			chrome.setTooltip(tooltip, label, true);
 		}
 		return chrome;
+	}
+
+	/**
+	 * Reports a field to the {@link ConfigFieldIndex} this editor was given, if it was given one -
+	 * the counterpart of {@link ConfigEditorControl}'s own registration point, used here for the
+	 * key field, which {@link ConfigEditorControl} never sees since it is rendered by this class
+	 * and hidden from the nested editor over the entry's own properties.
+	 */
+	private void index(ConfigurationItem item, PropertyDescriptor property, ConfigFieldModel model) {
+		if (_index != null) {
+			_index.register(item, property, model);
+		}
 	}
 
 	private ReactTextControl createHeaderControl(Label label) {

@@ -7,6 +7,7 @@ package test.com.top_logic.layout.configedit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +40,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
+import com.top_logic.layout.configedit.ConfigFieldIndex;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.I18NConstants;
@@ -377,6 +379,11 @@ public class TestConfigEditorControl extends TestCase {
 			super(context, config, hiddenProperties, false);
 		}
 
+		TestableConfigEditorControl(ReactContext context, ConfigurationItem config,
+				Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index) {
+			super(context, config, hiddenProperties, skipTreeProperties, index);
+		}
+
 		@Override
 		protected String resolveLabel(PropertyDescriptor property) {
 			return property.getPropertyName();
@@ -390,7 +397,7 @@ public class TestConfigEditorControl extends TestCase {
 
 		@Override
 		protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
-			return new TestableConfigEditorControl(context, nested);
+			return new TestableConfigEditorControl(context, nested, Collections.emptySet(), false, fieldIndex());
 		}
 
 		@Override
@@ -417,6 +424,11 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigListEditorControl(ReactContext context, ConfigurationItem parentConfig,
 				PropertyDescriptor property) {
 			super(context, parentConfig, property);
+		}
+
+		TestableConfigListEditorControl(ReactContext context, ConfigurationItem parentConfig,
+				PropertyDescriptor property, ConfigFieldIndex index) {
+			super(context, parentConfig, property, index);
 		}
 
 		java.util.List<ReactControl> getChildrenList() {
@@ -1515,6 +1527,49 @@ public class TestConfigEditorControl extends TestCase {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The editor reports every field it builds to the index it was given, including the fields of a
+	 * nested item - which is where a violation would otherwise have nowhere to go.
+	 */
+	public void testTheEditorFillsTheFieldIndex() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		InnerConfig inner = TypedConfiguration.newConfigItem(InnerConfig.class);
+		inner.setTitle("t");
+		config.setInner(inner);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+
+		new TestableConfigEditorControl(createTestContext(), config, Collections.emptySet(), false, index);
+
+		assertNotNull("The top-level field must be indexed.",
+			index.lookup(config, config.descriptor().getProperty(TestConfig.COUNT)));
+		assertNotNull("A nested item's field must be indexed under that item.",
+			index.lookup(inner, inner.descriptor().getProperty(InnerConfig.TITLE)));
+	}
+
+	/** A field of a collection entry is indexed under that entry. */
+	public void testTheIndexReachesIntoCollectionEntries() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ListItem entry = TypedConfiguration.newConfigItem(ListItem.class);
+		entry.setName("a");
+		config.getPlainItems().add(entry);
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.PLAIN_ITEMS);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+
+		new TestableConfigListEditorControl(createTestContext(), config, property, index);
+
+		assertNotNull("The entry's own field must be indexed under the entry.",
+			index.lookup(entry, entry.descriptor().getProperty(ListItem.NAME)));
+	}
+
+	/** Without an index nothing is collected and nothing breaks - every existing caller's case. */
+	public void testTheEditorWorksWithoutAnIndex() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		assertFalse("The editor must still render its fields.", editor.getChildrenList().isEmpty());
 	}
 
 	/**

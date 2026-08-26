@@ -43,6 +43,8 @@ import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
  */
 public class ConfigEditorControl extends ReactFormLayoutControl {
 
+	private final ConfigFieldIndex _index;
+
 	/**
 	 * Creates a {@link ConfigEditorControl} for all visible properties.
 	 *
@@ -87,7 +89,31 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 */
 	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
 			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties) {
+		this(context, config, hiddenProperties, skipTreeProperties, null);
+	}
+
+	/**
+	 * Creates a {@link ConfigEditorControl}, hiding the given properties, optionally skipping tree
+	 * properties, and reporting every field it builds to the given {@link ConfigFieldIndex}.
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param config
+	 *        The configuration item to edit.
+	 * @param hiddenProperties
+	 *        Properties to exclude from the form.
+	 * @param skipTreeProperties
+	 *        If {@code true}, properties annotated with {@link TreeProperty} are skipped. Use
+	 *        {@code true} for top-level tree node configurations, {@code false} for nested/inline
+	 *        sub-configurations.
+	 * @param index
+	 *        The {@link ConfigFieldIndex} to report every built field to, or {@code null} if
+	 *        nobody is collecting.
+	 */
+	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index) {
 		super(context);
+		_index = index;
 
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
 			if (hiddenProperties.contains(property)) {
@@ -128,7 +154,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			if (property.kind() == PropertyKind.LIST || property.kind() == PropertyKind.ARRAY
 				|| property.kind() == PropertyKind.MAP) {
 				ConfigListEditorControl listEditor =
-					new ConfigListEditorControl(context, config, property);
+					new ConfigListEditorControl(context, config, property, _index);
 				ReactFormGroupControl listGroup = new ReactFormGroupControl(
 					context, null, true, false, "default", false,
 					List.of(), List.of(listEditor));
@@ -138,6 +164,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			}
 
 			ConfigFieldModel model = ConfigControlService.getInstance().createModel(config, property);
+			index(config, property, model);
 			addCleanupAction(model::detach);
 
 			ReactControl input = ConfigControlService.getInstance().createControl(context, model);
@@ -207,7 +234,23 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * @return A new editor control for the nested item.
 	 */
 	protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
-		return new ConfigEditorControl(context, nested);
+		return new ConfigEditorControl(context, nested, Collections.emptySet(), false, _index);
+	}
+
+	/**
+	 * The {@link ConfigFieldIndex} this editor reports its fields to, or {@code null} if it was
+	 * built without one.
+	 *
+	 * <p>
+	 * Exposed so a subclass overriding {@link #createNestedEditor(ReactContext, ConfigurationItem)}
+	 * or {@link #createPolymorphicGroup(ReactContext, String, ConfigurationItem, PropertyDescriptor)}
+	 * (e.g. to build a differently configured nested editor for testing) can still hand this
+	 * editor's index down to what it builds - the field itself stays private, since nothing outside
+	 * this class needs to read it directly.
+	 * </p>
+	 */
+	protected final ConfigFieldIndex fieldIndex() {
+		return _index;
 	}
 
 	/**
@@ -254,6 +297,21 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
 			|| kind == PropertyKind.LIST || kind == PropertyKind.ARRAY || kind == PropertyKind.MAP
 			|| (kind == PropertyKind.COMPLEX && property.getValueProvider() != null);
+	}
+
+	/**
+	 * Reports a field to the {@link ConfigFieldIndex} this editor was given, if it was given one.
+	 *
+	 * <p>
+	 * Nobody collects fields unless something is validating - the view designer and every nested
+	 * editor built without one pass {@code null}. The check lives here, once, rather than at every
+	 * place a field is built.
+	 * </p>
+	 */
+	private void index(ConfigurationItem item, PropertyDescriptor property, ConfigFieldModel model) {
+		if (_index != null) {
+			_index.register(item, property, model);
+		}
 	}
 
 	private static boolean isHidden(PropertyDescriptor property) {

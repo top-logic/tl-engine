@@ -114,7 +114,14 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * </p>
 	 *
 	 * <p>
-	 * {@link #_keyFieldModel} is mutable, not {@code final}, because
+	 * Neither field is {@code final}. {@link #_entry} is replaced wholesale when the user picks a
+	 * different type for a still-pending entry of a polymorphic collection - the holder is what
+	 * every closure of the current render captured, so swapping the entry inside it keeps those
+	 * closures pointing at the right thing.
+	 * </p>
+	 *
+	 * <p>
+	 * {@link #_keyFieldModel} is mutable because
 	 * {@link #rebuild(ConfigurationItem)} discards and recreates all child controls - including
 	 * the key field - on every cycle. {@link #createPendingElementGroup(PendingEntry)} refreshes
 	 * it on this very object every time it (re)builds this entry's group (via
@@ -125,7 +132,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	private static final class PendingEntry {
 
-		private final ConfigurationItem _entry;
+		private ConfigurationItem _entry;
 
 		private ConfigFieldModel _keyFieldModel;
 
@@ -443,7 +450,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		List<ReactControl> bodyChildren = new ArrayList<>();
 		boolean polymorphic = _choices.hasOptions();
 		if (polymorphic && _choices.options().size() > 1) {
-			bodyChildren.add(createTypeSelector(item));
+			bodyChildren.add(createTypeSelector(item, pending));
 		}
 		if (keyProperty != null) {
 			bodyChildren.add(createKeyField(item, keyProperty, pending));
@@ -556,7 +563,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		return new ReactTextControl(_context, label.text(), label.placeholder() ? PLACEHOLDER_CSS : null);
 	}
 
-	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item) {
+	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item, PendingEntry pending) {
 		List<Object> rawOptions = _choices.options();
 		List<String> keys = new ArrayList<>(rawOptions.size());
 		for (int i = 0; i < rawOptions.size(); i++) {
@@ -572,7 +579,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		typeModel.addListener(new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				onTypeChanged(item, PolymorphicOptions.optionForKey(rawOptions, (String) newValue));
+				onTypeChanged(item, PolymorphicOptions.optionForKey(rawOptions, (String) newValue), pending);
 			}
 
 			@Override
@@ -591,18 +598,36 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		return new ReactFormFieldChromeControl(_context, "Type", typeSelect);
 	}
 
-	private void onTypeChanged(ConfigurationItem oldItem, Object selected) {
+	/**
+	 * Replaces an entry with one of the newly picked type, carrying over what was already filled in.
+	 *
+	 * @param pending
+	 *        The {@link PendingEntry} {@code oldItem} belongs to, or {@code null} if it is already
+	 *        committed. A pending entry is not in the edited collection, so it cannot be found -
+	 *        let alone replaced - by index there; its holder is where it has to be swapped instead.
+	 *        Without that, picking a type for a pending entry would leave the select showing the new
+	 *        type while the entry kept the old one, and Confirm would take an entry of a type nobody
+	 *        chose.
+	 */
+	private void onTypeChanged(ConfigurationItem oldItem, Object selected, PendingEntry pending) {
 		if (selected == null) {
-			return;
-		}
-		List<ConfigurationItem> items = elements();
-		int index = items.indexOf(oldItem);
-		if (index < 0) {
 			return;
 		}
 		ConfigurationItem replacement = (ConfigurationItem) _choices.mapping().toSelection(selected);
 		ConfigCopier.copyContent(new DefaultInstantiationContext(ConfigListEditorControl.class),
 			oldItem, replacement, true);
+
+		if (pending != null) {
+			pending._entry = replacement;
+			rebuild(replacement);
+			return;
+		}
+
+		List<ConfigurationItem> items = elements();
+		int index = items.indexOf(oldItem);
+		if (index < 0) {
+			return;
+		}
 		items.set(index, replacement);
 		storeElements(items);
 		rebuild(replacement);

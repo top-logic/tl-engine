@@ -697,6 +697,91 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * Picking a type for a still-pending entry actually changes that entry's type.
+	 *
+	 * <p>
+	 * A pending entry is not in the edited collection, so it cannot be found there by index. Left
+	 * unhandled, the type change was silently dropped: the select showed the new type while the
+	 * entry kept the old one, and confirming took an entry of a type nobody had chosen.
+	 * </p>
+	 *
+	 * <p>
+	 * Switches to whichever option is <em>not</em> the one a new entry starts out as, rather than
+	 * to a named type: the option order comes from the type index and is not guaranteed, so naming
+	 * the target type would make this test pass for the wrong reason whenever a new entry happened
+	 * to start out as that very type.
+	 * </p>
+	 */
+	public void testChangingTheTypeOfAPendingEntryTakesEffect() {
+		KeyedPolymorphicTestConfig config = TypedConfiguration.newConfigItem(KeyedPolymorphicTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(KeyedPolymorphicTestConfig.ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		clickAddButton(editor);
+		FieldModel typeModel = findTypeFieldModel(elementGroups(editor).get(0));
+		String startType = (String) typeModel.getValue();
+		String otherType = otherTypeOption(config, property, startType);
+
+		typeModel.setValue(otherType);
+		nameAndConfirm(editor, 0, "first");
+
+		List<KeyedHandlerConfig> items = config.getItems();
+		assertEquals("The confirmed entry must be in the collection.", 1, items.size());
+		assertEquals("The entry must carry the type that was picked while it was pending.",
+			expectedInterface(config, property, otherType),
+			items.get(0).descriptor().getConfigurationInterface());
+		assertEquals("The key typed after the type change must survive it.",
+			"first", items.get(0).getEntryKey());
+	}
+
+	/**
+	 * What was already filled in survives a type change of a pending entry - the same carry-over a
+	 * committed entry gets - and the type change on its own never commits the entry.
+	 */
+	public void testChangingAPendingEntrysTypeKeepsTheKeyAndStaysPending() {
+		KeyedPolymorphicTestConfig config = TypedConfiguration.newConfigItem(KeyedPolymorphicTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(KeyedPolymorphicTestConfig.ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		clickAddButton(editor);
+		findKeyFieldModel(elementGroups(editor).get(0)).setValue("typed before");
+		FieldModel typeModel = findTypeFieldModel(elementGroups(editor).get(0));
+		typeModel.setValue(otherTypeOption(config, property, (String) typeModel.getValue()));
+
+		assertEquals("The key entered before the type change must be carried over.",
+			"typed before", findKeyFieldModel(elementGroups(editor).get(0)).getValue());
+		assertEquals("The entry must still be pending - a type change never commits it.", 0,
+			config.getItems().size());
+	}
+
+	/** The option key of some type option other than the given one. */
+	private String otherTypeOption(ConfigurationItem config, PropertyDescriptor property, String currentKey) {
+		List<Object> options =
+			com.top_logic.layout.configedit.PolymorphicOptions.compute(config, property).options();
+		assertTrue("Needs more than one type option to switch between.", options.size() > 1);
+		for (int n = 0; n < options.size(); n++) {
+			String key = com.top_logic.layout.configedit.PolymorphicOptions.keyFor(n);
+			if (!key.equals(currentKey)) {
+				return key;
+			}
+		}
+		fail("No option other than the current one.");
+		return null;
+	}
+
+	/** The configuration interface an entry of the given type option has. */
+	private Class<?> expectedInterface(ConfigurationItem config, PropertyDescriptor property, String optionKey) {
+		com.top_logic.layout.configedit.PolymorphicOptions.Choices choices =
+			com.top_logic.layout.configedit.PolymorphicOptions.compute(config, property);
+		List<Object> options = choices.options();
+		Object option = com.top_logic.layout.configedit.PolymorphicOptions.optionForKey(options, optionKey);
+		ConfigurationItem sample = (ConfigurationItem) choices.mapping().toSelection(option);
+		return sample.descriptor().getConfigurationInterface();
+	}
+
+	/**
 	 * Confirms the pending entry rendered as the given element group, by pressing its Confirm
 	 * button - the only thing that moves a pending entry into the collection.
 	 */

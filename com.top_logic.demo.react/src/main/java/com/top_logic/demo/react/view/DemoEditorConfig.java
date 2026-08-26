@@ -12,6 +12,7 @@ import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
@@ -64,6 +65,9 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getTimeout()}. */
 	String TIMEOUT = "timeout";
+
+	/** Configuration name for the value of {@link #getOwner()}. */
+	String OWNER = "owner";
 
 	/**
 	 * Priority classifier for {@link DemoEditorConfig#getPriority()}.
@@ -168,6 +172,14 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	@Format(MillisFormat.class)
 	@LongDefault(0L)
 	long getTimeout();
+
+	/**
+	 * Who is responsible - mandatory, so applying an empty one is refused and the demo has a
+	 * violation to show.
+	 */
+	@Name(OWNER)
+	@Mandatory
+	String getOwner();
 
 	/**
 	 * A postal address.

@@ -9,10 +9,12 @@ import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigValidation.Violation;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -35,6 +37,13 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * A violation naming a property the editor renders as no field of its own has nowhere to go -
+ * {@link ConfigValidation#report(List, ConfigFieldIndex)} answers {@code false} for it - and is
+ * shown on a line of its own between the editor and the buttons instead, so a refused Apply is
+ * never a button that appears to do nothing.
+ * </p>
+ *
+ * <p>
  * Passing {@code withEditMode = false} turns all of that off: the control is then a thin wrapper
  * around the editor over the item itself, with no buttons at all - today's write-through
  * behaviour, kept available for a caller (e.g. the view designer) that must not gain an edit mode
@@ -42,6 +51,12 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public class ConfigFormControl extends ReactFormLayoutControl {
+
+	/**
+	 * The CSS class of {@link #_formError}: the very class the React form field's own error area
+	 * carries, so a form-level refusal is styled like the field-level errors it accompanies.
+	 */
+	private static final String FORM_ERROR_CSS_CLASS = "tlFormField__error";
 
 	private final ReactContext _context;
 
@@ -58,6 +73,25 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * actually finds the very instance {@link ConfigFormModel#addListener(Runnable)} was given.
 	 */
 	private final Runnable _onModeChange = this::rebuild;
+
+	/**
+	 * The line carrying a refusal that no field could carry, or {@code null} outside edit mode.
+	 *
+	 * <p>
+	 * A {@link ReactTextControl} rather than a dialog: a refused Apply leaves the user in the form
+	 * they were already editing, and a modal interruption to say so would have to be dismissed
+	 * before the very fields it talks about could be reached. It is created empty with every
+	 * rebuild into edit mode and filled only by {@link #apply()}, so entering, leaving, and
+	 * re-entering edit mode never carries an earlier attempt's message over.
+	 * </p>
+	 *
+	 * <p>
+	 * Styled with the {@code tlFormField__error} class the React form field's own error area
+	 * already uses, so a form-level refusal reads as the same kind of message as the field-level
+	 * ones it accompanies rather than as unmarked text.
+	 * </p>
+	 */
+	private ReactTextControl _formError;
 
 	/**
 	 * Creates a {@link ConfigFormControl} with a full edit mode.
@@ -133,9 +167,12 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 
 		if (_withEditMode) {
 			if (_model.isEditMode()) {
+				_formError = new ReactTextControl(_context, "", FORM_ERROR_CSS_CLASS);
+				addChild(_formError);
 				addChild(applyButton());
 				addChild(cancelButton());
 			} else {
+				_formError = null;
 				addChild(editButton());
 			}
 		}
@@ -146,14 +183,35 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * {@link ConfigFormModel#apply() carries it over} - which leaves edit mode via the model's
 	 * listener - or puts every violation found on the field that caused it, leaving edit mode
 	 * untouched and this control unrebuilt.
+	 *
+	 * <p>
+	 * A violation that {@link ConfigValidation#report(List, ConfigFieldIndex)} could not place -
+	 * a property the editor renders as no field of its own, e.g. a
+	 * {@link com.top_logic.basic.config.annotation.Hidden @Hidden} one or one named by a
+	 * constraint that reached into another item - is shown at form level instead. Without that,
+	 * Apply would refuse with nothing whatsoever on screen to explain it, and the only way out of
+	 * the form would be Cancel, discarding the user's work.
+	 * </p>
 	 */
 	private void apply() {
 		List<Violation> violations = ConfigValidation.check(_model.edited());
 		if (!violations.isEmpty()) {
-			ConfigValidation.report(violations, _index);
+			boolean complete = ConfigValidation.report(violations, _index);
+			setFormError(complete ? null : I18NConstants.ERROR_CANNOT_APPLY);
 			return;
 		}
+		setFormError(null);
 		_model.apply();
+	}
+
+	/**
+	 * Shows the given message at form level, or clears the line if {@code null} is given.
+	 */
+	private void setFormError(ResKey message) {
+		if (_formError == null) {
+			return;
+		}
+		_formError.setText(message == null ? "" : Resources.getInstance().getString(message));
 	}
 
 	/**

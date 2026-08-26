@@ -17,6 +17,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.reflect.TypeIndex;
@@ -34,6 +35,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -68,6 +70,33 @@ public class TestConfigFormControl extends TestCase {
 
 		/** @see #getName() */
 		void setName(String value);
+	}
+
+	/**
+	 * A configuration whose only mandatory property is {@link Hidden @Hidden}, so the editor builds
+	 * no field for it and the violation it produces has nowhere to be shown.
+	 */
+	public interface HiddenMandatoryConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Property name for {@link #getSecret()}. */
+		String SECRET = "secret";
+
+		@Name(NAME)
+		String getName();
+
+		/** @see #getName() */
+		void setName(String value);
+
+		@Name(SECRET)
+		@Mandatory
+		@Hidden
+		String getSecret();
+
+		/** @see #getSecret() */
+		void setSecret(String value);
 	}
 
 	/** A single unkeyed entry of {@link CollectionConfig#getItems()}. */
@@ -178,14 +207,23 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
-	 * The very {@link ConfigFormControl} under test - a plain subclass, kept for symmetry with the
-	 * {@code Testable*} classes the sibling test suites in this package declare, even though
-	 * nothing here needs a protected member {@link ConfigFormControl} does not already expose.
+	 * The very {@link ConfigFormControl} under test - a plain subclass, in the manner of the
+	 * {@code Testable*} classes the sibling test suites in this package declare, reaching the one
+	 * protected member {@link ConfigFormControl} does not expose itself: its child list.
 	 */
 	static class TestableConfigFormControl extends ConfigFormControl {
 
 		TestableConfigFormControl(ReactContext context, ConfigurationItem config, boolean withEditMode) {
 			super(context, config, withEditMode);
+		}
+
+		/**
+		 * The control's own direct children, so a test can reach the form-level message line
+		 * without having to tell it apart from the group headers nested deeper in the editor -
+		 * those are {@link com.top_logic.layout.react.control.common.ReactTextControl}s too.
+		 */
+		java.util.List<ReactControl> children() {
+			return getChildren();
 		}
 	}
 
@@ -319,6 +357,19 @@ public class TestConfigFormControl extends TestCase {
 		return null;
 	}
 
+	/**
+	 * The text currently shown on the form-level message line, or {@code null} if the form has no
+	 * such line (view mode, or no edit mode at all).
+	 */
+	private String formErrorText(TestableConfigFormControl form) {
+		for (ReactControl child : form.children()) {
+			if (child instanceof ReactTextControl text) {
+				return (String) text.scriptingScalarState().get("text");
+			}
+		}
+		return null;
+	}
+
 	/** Without edit mode the form is the editor, writing straight through. */
 	public void testWithoutEditModeThereAreNoButtons() {
 		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
@@ -401,6 +452,57 @@ public class TestConfigFormControl extends TestCase {
 		click(findButton(form, label(I18NConstants.APPLY)));
 
 		assertEquals("given", config.getName());
+	}
+
+	/**
+	 * A violation the editor has no field for must be said out loud at form level: without it,
+	 * Apply refuses with nothing whatsoever on screen, and Cancel - discarding the work - is the
+	 * only way out of the form.
+	 */
+	public void testAnUnplaceableViolationIsShownAtFormLevel() {
+		HiddenMandatoryConfig config = TypedConfiguration.newConfigItem(HiddenMandatoryConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		assertNotNull("Edit mode must stay open.", findButton(form, label(I18NConstants.APPLY)));
+		assertEquals("The refusal must be readable at form level.",
+			label(I18NConstants.ERROR_CANNOT_APPLY), formErrorText(form));
+	}
+
+	/**
+	 * A violation that did reach its own field says nothing at form level - the field carries it.
+	 * This is what pins {@link com.top_logic.layout.configedit.ConfigValidation#report(java.util.List,
+	 * com.top_logic.layout.configedit.ConfigFieldIndex)}'s answer as actually being read, rather
+	 * than a message shown on every refusal alike.
+	 */
+	public void testAPlacedViolationIsNotRepeatedAtFormLevel() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, MandatoryConfig.NAME).setValue(null);
+
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		assertNotNull("Precondition: the violation must have reached its field.",
+			fieldOf(form, MandatoryConfig.NAME).getError());
+		assertEquals("Nothing to add at form level.", "", formErrorText(form));
+	}
+
+	/** Leaving and re-entering edit mode drops an earlier refusal's message. */
+	public void testTheFormLevelMessageIsDroppedOnCancel() {
+		HiddenMandatoryConfig config = TypedConfiguration.newConfigItem(HiddenMandatoryConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		click(findButton(form, label(I18NConstants.CANCEL)));
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		assertEquals("A fresh edit starts without the previous attempt's message.",
+			"", formErrorText(form));
 	}
 
 	/**

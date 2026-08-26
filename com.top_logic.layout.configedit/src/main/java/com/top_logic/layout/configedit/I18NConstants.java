@@ -50,6 +50,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_DUPLICATE_KEY__PROPERTY_VALUE;
 
+	/**
+	 * @en The configuration cannot be applied because it still contains errors.
+	 */
+	public static ResKey ERROR_CANNOT_APPLY;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

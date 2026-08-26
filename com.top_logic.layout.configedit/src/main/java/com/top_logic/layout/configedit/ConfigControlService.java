@@ -262,8 +262,15 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			return new ConfigFieldModel(config, property);
 		}
 		if (isSelect(property, optionProvider)) {
-			return new ConfigSelectFieldModel(config, property, selectOptions(config, property, optionProvider),
-				false);
+			ConfigSelectFieldModel selectModel =
+				new ConfigSelectFieldModel(config, property, selectOptions(config, property, optionProvider), false);
+			if (optionProvider != null) {
+				// An option function may be computed from other properties, and then its result
+				// changes while the user edits those - see ConfigSelectFieldModel#trackOptions.
+				// Without a provider the options are a plain enum's constants, which cannot change.
+				selectModel.trackOptions(optionProvider);
+			}
+			return selectModel;
 		}
 		if (property.getAnnotation(Encrypted.class) == null && isClaimed(property, formatProvider)) {
 			// Claimed: the claim states that the control bound to this model edits the value in

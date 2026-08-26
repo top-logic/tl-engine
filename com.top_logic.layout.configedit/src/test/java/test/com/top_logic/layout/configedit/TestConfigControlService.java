@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.configedit;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -32,8 +33,10 @@ import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.func.Function0;
+import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
 import com.top_logic.basic.util.ResKey;
@@ -69,6 +72,17 @@ public class TestConfigControlService extends TestCase {
 		@Override
 		public List<String> apply() {
 			return Arrays.asList("red", "green", "blue");
+		}
+	}
+
+	/**
+	 * Options function computed from another property's value - the case an option list has to
+	 * follow, since what it offers changes as the user edits.
+	 */
+	public static class FromSource extends Function1<List<String>, String> {
+		@Override
+		public List<String> apply(String source) {
+			return source == null ? Collections.emptyList() : Arrays.asList(source.split(","));
 		}
 	}
 
@@ -449,6 +463,12 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getAnnotatedMode()}. */
 		String ANNOTATED_MODE = "annotatedMode";
 
+		/** Property name for {@link #getSource()}. */
+		String SOURCE = "source";
+
+		/** Property name for {@link #getDerivedChoice()}. */
+		String DERIVED_CHOICE = "derivedChoice";
+
 		/** Property name for {@link #getAnnotatedCoordinate()}. */
 		String ANNOTATED_COORDINATE = "annotatedCoordinate";
 
@@ -636,6 +656,18 @@ public class TestConfigControlService extends TestCase {
 		 */
 		@Name(ANNOTATED_MODE)
 		AnnotatedMode getAnnotatedMode();
+
+		/** What {@link #getDerivedChoice()}'s options are computed from. */
+		@Name(SOURCE)
+		String getSource();
+
+		/** @see #getSource() */
+		void setSource(String value);
+
+		/** A property whose options depend on another property's current value. */
+		@Name(DERIVED_CHOICE)
+		@Options(fun = FromSource.class, args = @Ref(SOURCE))
+		String getDerivedChoice();
 
 		/**
 		 * A property carrying both its own {@code @Format} and a {@link ConfigControl} annotation -
@@ -1078,6 +1110,55 @@ public class TestConfigControlService extends TestCase {
 		ConfigFieldModel model = model(TestConfig.LABEL);
 		assertFalse("A resource key must not be edited as its encoded text.",
 			model instanceof ConfigFormatFieldModel);
+	}
+
+	/**
+	 * An option list computed from another property follows that property while it is edited.
+	 *
+	 * <p>
+	 * Resolving the options once, when the field is built, leaves the user choosing from a list that
+	 * describes a state the configuration has since left - and the value they pick may no longer be
+	 * one the property admits. The declarative form takes the reactive
+	 * {@link com.top_logic.layout.form.values.DerivedProperty#getValue(ConfigurationItem)} for this
+	 * reason; so must this.
+	 * </p>
+	 */
+	public void testOptionsFollowThePropertyTheyAreComputedFrom() {
+		_config.setSource("red,green");
+		ConfigSelectFieldModel model = (ConfigSelectFieldModel) model(TestConfig.DERIVED_CHOICE);
+
+		assertEquals("Precondition: the options start out as what the source says.",
+			Arrays.asList("red", "green"), model.getOptions());
+
+		_config.setSource("blue");
+
+		assertEquals("The options must follow the source.",
+			Arrays.asList("blue"), model.getOptions());
+	}
+
+	/** The control is told about it, so what the user sees changes too. */
+	public void testTheSelectControlIsToldAboutNewOptions() {
+		_config.setSource("red,green");
+		ConfigSelectFieldModel model = (ConfigSelectFieldModel) model(TestConfig.DERIVED_CHOICE);
+		List<?>[] seen = new List<?>[1];
+		model.addOptionsListener((source, newOptions) -> seen[0] = newOptions);
+
+		_config.setSource("blue");
+
+		assertEquals("The options listener - which the select control registers - must fire.",
+			Arrays.asList("blue"), seen[0]);
+	}
+
+	/** Detaching the field stops it following, so a discarded field holds nothing alive. */
+	public void testADetachedFieldStopsFollowing() {
+		_config.setSource("red");
+		ConfigSelectFieldModel model = (ConfigSelectFieldModel) model(TestConfig.DERIVED_CHOICE);
+
+		model.detach();
+		_config.setSource("blue");
+
+		assertEquals("A detached field must not keep recomputing.",
+			Arrays.asList("red"), model.getOptions());
 	}
 
 	/** A string property needs no format model. */

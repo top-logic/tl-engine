@@ -6,18 +6,13 @@
 package com.top_logic.layout.configedit;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.config.PropertyDescriptorImpl;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.copy.ConfigCopier;
@@ -47,7 +42,7 @@ import com.top_logic.util.Resources;
  * <p>
  * Each list element is rendered as a collapsible {@link ReactFormGroupControl} with action buttons
  * (Move Up, Move Down, Remove) in the header and a nested {@link ConfigEditorControl} for the
- * element's properties - Move Up/Move Down only for a {@link #isReorderable() reorderable}
+ * element's properties - Move Up/Move Down only for a {@link ConfigCollectionValue#isReorderable() reorderable}
  * collection. An Add button at the bottom creates new elements.
  * </p>
  *
@@ -69,6 +64,13 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	private final ConfigurationItem _parentConfig;
 
 	private final PropertyDescriptor _property;
+
+	/**
+	 * The edited collection, which is where every difference between a LIST, an ARRAY and a MAP
+	 * property lives - see {@link ConfigCollectionValue}. This class works in element indices and
+	 * never asks what shape holds them.
+	 */
+	private final ConfigCollectionValue _value;
 
 	private final PolymorphicOptions.Choices _choices;
 
@@ -157,6 +159,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		_context = context;
 		_parentConfig = parentConfig;
 		_property = property;
+		_value = new ConfigCollectionValue(parentConfig, property);
 		_choices = PolymorphicOptions.compute(parentConfig, property);
 
 		rebuild(null);
@@ -173,90 +176,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			reg.item().removeConfigurationListener(reg.property(), reg.listener());
 		}
 		_listeners.clear();
-	}
-
-	/**
-	 * The elements currently held by the edited property.
-	 *
-	 * <p>
-	 * For a {@link PropertyKind#LIST} property this is the configuration's own live list, so a
-	 * mutation of it takes effect directly - which is what lets TypedConfiguration reject a
-	 * duplicate key at the moment of the change. For a {@link PropertyKind#ARRAY} property it is a
-	 * detached copy that only reaches the configuration through {@link #storeElements(List)}.
-	 * </p>
-	 *
-	 * <p>
-	 * A {@link PropertyKind#MAP} property's own value is, under the hood, exactly as directly
-	 * mutable as a LIST's - {@link Map#put(Object, Object)}/{@link Map#remove(Object)} on it take
-	 * effect immediately, the same as {@link List#add(Object)}/{@link List#remove(Object)} do on a
-	 * LIST's live list. But there is no live list to hand out here: what this method returns is
-	 * rows to render and address by index, and a {@link Map} has no index of its own. So, like
-	 * ARRAY, this is a detached copy - the map's values, in the map's current iteration order -
-	 * that reaches the configuration only through {@link #storeElements(List)} rebuilding the map
-	 * from scratch.
-	 * </p>
-	 */
-	@SuppressWarnings("unchecked")
-	private List<ConfigurationItem> elements() {
-		Object value = _parentConfig.value(_property);
-		if (_property.kind() == PropertyKind.ARRAY) {
-			return value == null ? new ArrayList<>()
-				: new ArrayList<>((List<ConfigurationItem>) PropertyDescriptorImpl.arrayAsList(value));
-		}
-		if (_property.kind() == PropertyKind.MAP) {
-			Map<?, ?> map = (Map<?, ?>) value;
-			return map == null ? new ArrayList<>() : new ArrayList<>((Collection<ConfigurationItem>) map.values());
-		}
-		return (List<ConfigurationItem>) value;
-	}
-
-	/**
-	 * Writes back the elements obtained from {@link #elements()}, for a property shape that
-	 * cannot be mutated in place.
-	 *
-	 * <p>
-	 * A {@link PropertyKind#MAP} property is rebuilt wholesale in the order it is handed, as
-	 * {@code MapFormGroupBuilder} (the classic form's equivalent) does, so the order the user sees
-	 * stays stable - keyed by each entry's own key property value, resolved by
-	 * {@link #resolveKeyProperty(ConfigurationItem)} rather than {@link #_property}'s declared one,
-	 * for the same polymorphism reason that method exists for. A duplicate key cannot reach this
-	 * method: {@link #commitPending(PendingEntry)} already refused one before committing, which matters here
-	 * in a way it does not for a keyed LIST - {@link Map#put(Object, Object)} on an existing key
-	 * silently overwrites it, unlike inserting a duplicate key into a keyed LIST, which
-	 * TypedConfiguration rejects with an {@link IllegalArgumentException}.
-	 * </p>
-	 *
-	 * <p>
-	 * That rebuild happens on the property's own live map, not by handing
-	 * {@link ConfigurationItem#update(PropertyDescriptor, Object)} a replacement. {@code update}
-	 * compares the incoming map against the current one with plain {@link Map#equals(Object)},
-	 * which ignores iteration order, and skips the write when they match - so a pure reordering,
-	 * where exactly the same keys map to exactly the same entries, would be discarded as "no
-	 * change". Clearing the live map and refilling it in the wanted order is what actually moves
-	 * an entry.
-	 * </p>
-	 */
-	@SuppressWarnings("unchecked")
-	private void storeElements(List<ConfigurationItem> elements) {
-		if (_property.kind() == PropertyKind.ARRAY) {
-			_parentConfig.update(_property, PropertyDescriptorImpl.listAsArray(_property, elements));
-			return;
-		}
-		if (_property.kind() == PropertyKind.MAP) {
-			Map<Object, ConfigurationItem> newMap = new LinkedHashMap<>();
-			for (ConfigurationItem element : elements) {
-				newMap.put(element.value(resolveKeyProperty(element)), element);
-			}
-			Map<Object, ConfigurationItem> liveMap = (Map<Object, ConfigurationItem>) _parentConfig.value(_property);
-			if (liveMap == null) {
-				_parentConfig.update(_property, newMap);
-			} else {
-				liveMap.clear();
-				liveMap.putAll(newMap);
-			}
-			return;
-		}
-		// A LIST property was mutated in place and needs no write-back.
 	}
 
 	/**
@@ -285,7 +204,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 		getChildren().clear();
 
-		List<ConfigurationItem> items = elements();
+		List<ConfigurationItem> items = _value.elements();
 		if (items != null) {
 			for (int i = 0; i < items.size(); i++) {
 				ConfigurationItem item = items.get(i);
@@ -309,41 +228,20 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Whether the edited collection has an order the user can rearrange, and therefore gets Move
-	 * Up/Move Down buttons.
-	 *
-	 * <p>
-	 * A {@link PropertyKind#MAP} property counts, even though {@code setKindMap} sets its
-	 * {@link PropertyDescriptor#isOrdered() ordered} flag to {@code false}: a {@link Map} has no
-	 * <em>positional</em> index for {@link PropertyDescriptor#isOrdered()} to promise, but the
-	 * value a MAP property actually holds is a {@code PropertyMap}, backed by a
-	 * {@link LinkedHashMap} - so it does have a stable iteration order, that order is what
-	 * {@link #elements()} renders and what a configuration is written out in, and
-	 * {@link #storeElements(List)} rebuilds the map in exactly the order it is handed. Rearranging
-	 * that order is therefore both meaningful and persistent, and {@link #moveUp(int)}/
-	 * {@link #moveDown(int)} already work on the index of {@link #elements()} rather than on
-	 * anything list-specific.
-	 * </p>
-	 */
-	private boolean isReorderable() {
-		return _property.isOrdered() || _property.kind() == PropertyKind.MAP;
-	}
-
-	/**
 	 * The group for a committed element, with action buttons (Move Up, Move Down, Remove) in the
 	 * header and a nested {@link ConfigEditorControl} for the element's properties in the body.
 	 *
 	 * <p>
-	 * Move Up/Move Down are added only for a {@link #isReorderable() reorderable} collection.
+	 * Move Up/Move Down are added only for a {@link ConfigCollectionValue#isReorderable() reorderable} collection.
 	 * </p>
 	 */
 	private ReactFormGroupControl createElementGroup(ConfigurationItem item, int index, int listSize, boolean expanded) {
 		Label label = resolveElementLabel(item);
 
 		List<ReactControl> headerActions = new ArrayList<>();
-		if (isReorderable()) {
+		if (_value.isReorderable()) {
 			ReactButtonControl moveUpButton = new ReactButtonControl(_context, "\u25B2", ctx -> {
-				moveUp(indexOf(item));
+				moveUp(_value.indexOf(item));
 				return HandlerResult.DEFAULT_RESULT;
 			});
 			moveUpButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
@@ -351,7 +249,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			headerActions.add(moveUpButton);
 
 			ReactButtonControl moveDownButton = new ReactButtonControl(_context, "\u25BC", ctx -> {
-				moveDown(indexOf(item));
+				moveDown(_value.indexOf(item));
 				return HandlerResult.DEFAULT_RESULT;
 			});
 			moveDownButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
@@ -360,7 +258,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 
 		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
-			int currentIndex = indexOf(item);
+			int currentIndex = _value.indexOf(item);
 			if (currentIndex >= 0) {
 				removeElement(currentIndex);
 			}
@@ -369,7 +267,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		headerActions.add(removeButton);
 
-		PropertyDescriptor keyProperty = resolveKeyProperty(item);
+		PropertyDescriptor keyProperty = _value.keyProperty(item);
 		List<ReactControl> bodyChildren = createBodyChildren(item, keyProperty, null);
 
 		ReactFormGroupControl group = new ReactFormGroupControl(
@@ -422,7 +320,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		List<ReactControl> headerActions = List.of(confirmButton, removeButton);
 
-		PropertyDescriptor keyProperty = resolveKeyProperty(entry);
+		PropertyDescriptor keyProperty = _value.keyProperty(entry);
 		List<ReactControl> bodyChildren = createBodyChildren(entry, keyProperty, pending);
 
 		ReactFormGroupControl group = new ReactFormGroupControl(
@@ -479,37 +377,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * The key property of the given entry, resolved against the entry's own
-	 * {@link ConfigurationItem#descriptor() descriptor} rather than
-	 * {@link #_property}'s declared element type.
-	 *
-	 * <p>
-	 * For a polymorphic keyed collection - which this class supports via
-	 * {@link #createTypeSelector(ConfigurationItem)} - an entry's actual type is typically a
-	 * genuine subtype of the collection's declared element type, and its own
-	 * {@link ConfigurationDescriptor} creates a fresh {@link PropertyDescriptor} instance for
-	 * every property, including one inherited unchanged from a super interface.
-	 * {@link PropertyDescriptor} has no {@link Object#equals(Object) equals}/
-	 * {@link Object#hashCode() hashCode} override, so
-	 * {@link #createElementGroup(ConfigurationItem, int, int, boolean)} hiding the key from the
-	 * nested editor via {@link java.util.Set#contains(Object) Set.contains} only works if both
-	 * call sites use the very same instance - the one the entry's own descriptor hands out, not
-	 * {@link PropertyDescriptor#getKeyProperty()}'s declared-type instance.
-	 * </p>
-	 *
-	 * @param entry
-	 *        The entry whose key property is resolved.
-	 * @return {@code null} if {@link #_property} is not keyed.
-	 */
-	private PropertyDescriptor resolveKeyProperty(ConfigurationItem entry) {
-		PropertyDescriptor declaredKeyProperty = _property.getKeyProperty();
-		if (declaredKeyProperty == null) {
-			return null;
-		}
-		return entry.descriptor().getProperty(declaredKeyProperty.getPropertyName());
-	}
-
-	/**
 	 * The field for an entry's key property, rendered by this control rather than by the nested
 	 * editor over the entry.
 	 *
@@ -524,7 +391,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 *        The entry whose key is edited.
 	 * @param keyProperty
 	 *        The entry's own key property, as resolved by
-	 *        {@link #resolveKeyProperty(ConfigurationItem)} - the caller must pass the same
+	 *        {@link ConfigCollectionValue#keyProperty(ConfigurationItem)} - the caller must pass the same
 	 *        instance it also hides from the nested editor, since only identity (not mere
 	 *        equality) is checked there.
 	 * @param pending
@@ -623,24 +490,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			return;
 		}
 
-		List<ConfigurationItem> items = elements();
-		int index = items.indexOf(oldItem);
+		int index = _value.indexOf(oldItem);
 		if (index < 0) {
 			return;
 		}
-		items.set(index, replacement);
-		storeElements(items);
+		_value.replace(index, replacement);
 		rebuild(replacement);
 	}
 
 	private boolean isTypeSelected(ConfigurationItem item) {
 		return _choices.mapping() != null
 			&& _choices.mapping().asOption(_choices.options(), item) != null;
-	}
-
-	private int indexOf(ConfigurationItem item) {
-		List<ConfigurationItem> items = elements();
-		return items != null ? items.indexOf(item) : -1;
 	}
 
 	// --- Operations ---
@@ -661,17 +521,15 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private void addElement() {
-		if (_property.getKeyProperty() != null) {
+		if (_value.isKeyed()) {
 			PendingEntry pending = new PendingEntry(newEntry());
 			_pendingEntries.add(pending);
 			rebuild(pending._entry);
 			return;
 		}
 
-		List<ConfigurationItem> items = elements();
 		ConfigurationItem newItem = newEntry();
-		items.add(newItem);
-		storeElements(items);
+		_value.add(newItem);
 		rebuild(newItem);
 	}
 
@@ -683,7 +541,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		if (_choices.hasOptions()) {
 			return (ConfigurationItem) _choices.mapping().toSelection(_choices.options().get(0));
 		}
-		return TypedConfiguration.newConfigItem(resolveNewElementType());
+		return _value.newElement();
 	}
 
 	/**
@@ -710,7 +568,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * </p>
 	 *
 	 * <p>
-	 * "Another entry" means a <em>committed</em> one - {@link #hasEntryWithKey(Object)} does not
+	 * "Another entry" means a <em>committed</em> one - {@link ConfigCollectionValue#hasEntryWithKey(Object)} does not
 	 * also consult {@link #_pendingEntries}, deliberately. A pending entry has claimed nothing
 	 * yet: its key is still being written, and two entries being filled in side by side may well
 	 * pass through the same intermediate text. Whichever is confirmed first takes the key; the
@@ -720,55 +578,21 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	private void commitPending(PendingEntry pending) {
 		ConfigurationItem entry = pending._entry;
-		PropertyDescriptor keyProperty = resolveKeyProperty(entry);
+		PropertyDescriptor keyProperty = _value.keyProperty(entry);
 		Object key = entry.value(keyProperty);
 		if (key == null || key.toString().isEmpty()) {
 			pending._keyFieldModel.setError(
 				I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(keyProperty, false)));
 			return;
 		}
-		if (hasEntryWithKey(key)) {
+		if (_value.hasEntryWithKey(key)) {
 			pending._keyFieldModel.setError(I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE
 				.fill(Labels.propertyLabel(keyProperty, false), key));
 			return;
 		}
 		_pendingEntries.remove(pending);
-		List<ConfigurationItem> items = elements();
-		items.add(entry);
-		storeElements(items);
+		_value.add(entry);
 		rebuild(entry);
-	}
-
-	/**
-	 * Whether some entry already committed to the edited collection carries the given key - see
-	 * {@link #commitPending(PendingEntry)} for why a still-pending entry's key is deliberately not
-	 * also consulted here.
-	 *
-	 * <p>
-	 * Resolves each existing entry's key via {@link #resolveKeyProperty(ConfigurationItem)}, not
-	 * {@link #_property}'s declared key property, for the same reason every other key lookup in
-	 * this class does - see that method's own JavaDoc. This is also what makes a duplicate key
-	 * impossible for a {@link PropertyKind#MAP} property: unlike a keyed LIST, where
-	 * TypedConfiguration itself rejects a colliding insert, {@link Map#put(Object, Object)} on an
-	 * already-used key would silently overwrite the existing entry - so this check, not the
-	 * underlying structure, is the only thing standing in the way.
-	 * </p>
-	 *
-	 * @param key
-	 *        The candidate key. Never {@code null} or empty - {@link #commitPending(PendingEntry)}
-	 *        only calls this once the pending entry's own key has cleared that check.
-	 */
-	private boolean hasEntryWithKey(Object key) {
-		List<ConfigurationItem> items = elements();
-		if (items == null) {
-			return false;
-		}
-		for (ConfigurationItem existing : items) {
-			if (key.equals(existing.value(resolveKeyProperty(existing)))) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/**
@@ -785,38 +609,24 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * Removes the element at the given index.
 	 */
 	private void removeElement(int index) {
-		List<ConfigurationItem> items = elements();
-		if (items != null && index >= 0 && index < items.size()) {
-			items.remove(index);
-			storeElements(items);
-			rebuild(null);
-		}
+		_value.remove(index);
+		rebuild(null);
 	}
 
 	/**
 	 * Moves the element at the given index one position up.
 	 */
 	private void moveUp(int index) {
-		List<ConfigurationItem> items = elements();
-		if (items != null && index > 0 && index < items.size()) {
-			ConfigurationItem item = items.remove(index);
-			items.add(index - 1, item);
-			storeElements(items);
-			rebuild(null);
-		}
+		_value.move(index, -1);
+		rebuild(null);
 	}
 
 	/**
 	 * Moves the element at the given index one position down.
 	 */
 	private void moveDown(int index) {
-		List<ConfigurationItem> items = elements();
-		if (items != null && index >= 0 && index < items.size() - 1) {
-			ConfigurationItem item = items.remove(index);
-			items.add(index + 1, item);
-			storeElements(items);
-			rebuild(null);
-		}
+		_value.move(index, 1);
+		rebuild(null);
 	}
 
 	// --- Label resolution ---
@@ -888,11 +698,4 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		return null;
 	}
 
-	/**
-	 * Resolves the configuration interface to instantiate for new list elements.
-	 */
-	@SuppressWarnings("unchecked")
-	private Class<? extends ConfigurationItem> resolveNewElementType() {
-		return (Class<? extends ConfigurationItem>) _property.getDefaultDescriptor().getConfigurationInterface();
-	}
 }

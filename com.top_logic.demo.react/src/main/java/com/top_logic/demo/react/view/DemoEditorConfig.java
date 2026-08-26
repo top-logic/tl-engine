@@ -14,6 +14,8 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
@@ -24,8 +26,8 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
  * <p>
  * Exercises a spread of property kinds (text, number, boolean, enumeration, a nested item, a list
  * of items, an array of items, a map of items, a list of plain strings written as one comma
- * separated text, and a {@link ResKey}) so the React configuration editor renders each editor
- * variant.
+ * separated text, a duration, and a {@link ResKey}) so the React configuration editor renders each
+ * editor variant.
  * </p>
  */
 public interface DemoEditorConfig extends ConfigurationItem {
@@ -59,6 +61,9 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getTags()}. */
 	String TAGS = "tags";
+
+	/** Configuration name for the value of {@link #getTimeout()}. */
+	String TIMEOUT = "timeout";
 
 	/**
 	 * Priority classifier for {@link DemoEditorConfig#getPriority()}.
@@ -147,6 +152,22 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	@Name(TAGS)
 	@Format(CommaSeparatedStrings.class)
 	List<String> getTags();
+
+	/**
+	 * How long to wait before giving up, written as a duration such as {@code "5h 10min"} or
+	 * {@code "22ms"}.
+	 *
+	 * <p>
+	 * The value is a plain millisecond count; {@link MillisFormat} is what turns it into something
+	 * readable and back. Unlike every other format in this configuration, this one can <em>reject</em>
+	 * what is typed - an unknown unit or a text that is no duration at all - which is what makes it
+	 * the demo's example of a format error being reported at the field.
+	 * </p>
+	 */
+	@Name(TIMEOUT)
+	@Format(MillisFormat.class)
+	@LongDefault(0L)
+	long getTimeout();
 
 	/**
 	 * A postal address.

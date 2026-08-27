@@ -700,6 +700,132 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	}
 
 	/**
+	 * What the given account may reach under the policy in effect, and why.
+	 *
+	 * <p>
+	 * The read-only query behind the effective-permissions view. Same rules and same order as
+	 * {@link #authorizationFor(Person, boolean)}, but without the audit log and without a run: it may
+	 * be asked about any account at any time.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account to ask about, may be <code>null</code> - which then holds no role and gets
+	 *        the baseline only, the same as a run with no principal.
+	 * @param background
+	 *        Whether to answer for a run that has nobody to answer an approval prompt.
+	 * @return The evaluation, never <code>null</code>.
+	 */
+	public static EffectiveToolAccess effectiveAccessFor(Person account, boolean background) {
+		return new EffectiveToolAccess(getInstance().getAccess(), heldRoleNames(account),
+			account != null && account.isAdmin(), background, identities());
+	}
+
+	/**
+	 * What a holder of exactly the given roles would reach under the policy in effect, and why.
+	 *
+	 * <p>
+	 * The hypothetical case: an administrator asking "what would this role get" before there is an
+	 * account holding it. No account is involved, so nobody is an administrator here - the bypass is a
+	 * property of the account, not of a role.
+	 * </p>
+	 *
+	 * @param roleNames
+	 *        The roles to assume are held on the security root.
+	 * @param background
+	 *        Whether to answer for a run that has nobody to answer an approval prompt.
+	 * @return The evaluation, never <code>null</code>.
+	 */
+	public static EffectiveToolAccess effectiveAccessForRoles(Collection<String> roleNames,
+			boolean background) {
+		return new EffectiveToolAccess(getInstance().getAccess(), roleNames, false, background,
+			identities());
+	}
+
+	/**
+	 * Which of the policy's roles reach the given tool, whatever run mode.
+	 *
+	 * <p>
+	 * The "reachable for" column of the tool catalog. Reads the roles the policy <em>mentions</em>,
+	 * not the roles the application has: a role nothing is configured for reaches exactly the
+	 * baseline, and listing every such role on every baseline-covered tool would say nothing.
+	 * Administrators reach everything and are deliberately not listed per row - one footnote says so
+	 * once.
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool to ask about.
+	 * @return The role names that reach it, in a stable order; empty when only the baseline or nothing
+	 *         at all reaches it - which {@link #baselineReaches(ToolIdentity)} tells apart.
+	 */
+	public Set<String> rolesReaching(ToolIdentity tool) {
+		Set<String> result = new TreeSet<>();
+		for (String roleName : new TreeSet<>(getConfig().getToolAccess().keySet())) {
+			if (_access.explain(Set.of(roleName), tool).allowed()) {
+				result.add(roleName);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Whether the given tool is reachable without holding any role at all.
+	 *
+	 * <p>
+	 * True for the implicit baseline and for whatever the policy's {@code <baseline>} - or, if it
+	 * declares none, {@link RoleToolAccess#DEFAULT_BASELINE} - grants. The catalog needs it to tell
+	 * "everyone" from "the two roles that happen to be configured".
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool to ask about.
+	 */
+	public boolean baselineReaches(ToolIdentity tool) {
+		return _access.explain(Set.of(), tool).allowed();
+	}
+
+	/**
+	 * The cross-layer warning of {@link #warnAboutDataRolesWithoutModelRights(ToolAccessPolicy)}, for a
+	 * view that can show it where an administrator is looking.
+	 *
+	 * <p>
+	 * The same computation the boot log writes once and nobody reads again. Recomputed on request
+	 * rather than cached at boot, because the {@code <security-config>} it compares against can be
+	 * edited in the running application.
+	 * </p>
+	 *
+	 * @return The offending roles with the data capabilities they hold, in a stable order; empty if the
+	 *         two configurations agree or if there is nothing to compare against.
+	 */
+	public Map<String, Set<String>> dataRolesWithoutModelRights() {
+		if (!SecurityConfigurationService.Module.INSTANCE.isActive()) {
+			return Map.of();
+		}
+		Set<String> withModelRights = rolesWithModelRights(
+			SecurityConfigurationService.Module.INSTANCE.getImplementationInstance().getConfig());
+		return dataRolesWithoutModelRights(getConfig(), _access::groupOf, withModelRights);
+	}
+
+	/**
+	 * The warning of {@link #warnAboutRolesNobodyHoldsOnTheRoot(ToolAccessPolicy)}, for a view that can
+	 * show it where an administrator is looking.
+	 *
+	 * @return The roles the policy grants tools to that no role rule can produce on the security root,
+	 *         in a stable order; empty when the application has no typed security root to ask about.
+	 */
+	public Set<String> rolesUnreachableOnSecurityRoot() {
+		TLClass rootType = securityRootType();
+		if (rootType == null) {
+			return Set.of();
+		}
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		AccessManager access = AccessManager.getInstance();
+		return rolesUnreachableOnSecurityRoot(getConfig(), roleName -> {
+			BoundedRole role = BoundedRole.getRoleByName(kb, roleName);
+			return role == null || access.canHaveRole(rootType, role);
+		});
+	}
+
+	/**
 	 * The configured policy, or <code>null</code> if this service is not running.
 	 *
 	 * <p>

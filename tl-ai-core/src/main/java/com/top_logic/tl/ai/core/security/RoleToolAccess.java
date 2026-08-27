@@ -294,33 +294,236 @@ public class RoleToolAccess {
 	public Decision check(Collection<String> heldRoleNames, ToolIdentity tool) {
 		String group = groupOf(tool);
 		String label = tool.displayName();
+		ToolAccessRule rule = explain(heldRoleNames, tool).decidedBy();
 
-		for (String roleName : heldRoleNames) {
-			RoleAccess role = _policy.getToolAccess().get(roleName);
-			if (role != null && matchesAny(role.getDenies(), tool, group)) {
+		switch (rule.kind()) {
+			case ROLE_DENY:
 				return new Decision.Denied("Permission denied: tool '" + label
-					+ "' is explicitly denied to your role '" + roleName + "'.");
-			}
+					+ "' is explicitly denied to your role '" + rule.roleName() + "'.");
+			case IMPLICIT_BASELINE:
+			case DEFAULT_BASELINE:
+			case BASELINE:
+				return new Decision.Granted(BASELINE_ROLE, group);
+			case ROLE_GRANT:
+				return new Decision.Granted(rule.roleName(), group);
+			case UNCLASSIFIED:
+				return new Decision.Denied("Permission denied: tool '" + label
+					+ "' belongs to no tool group and has no explicit grant, so it is denied to everyone."
+					+ " An administrator must assign it a group or grant it by name.");
+			default:
+				return new Decision.Denied("Permission denied: tool '" + label
+					+ "' requires the '" + group + "' capability, which none of your roles grants.");
 		}
+	}
 
-		if (isImplicitBaseline(group) || baselineGrants(tool, group)) {
-			return new Decision.Granted(BASELINE_ROLE, group);
-		}
+	/**
+	 * The same decision as {@link #check(Collection, ToolIdentity)}, with the rule that made it.
+	 *
+	 * <p>
+	 * The query behind the effective-permissions view: no side effect, no message, and the rule the
+	 * administrator has to change if the answer is wrong. This is the implementation the enforcing
+	 * {@link #check(Collection, ToolIdentity)} delegates to, so the two cannot drift apart - which is
+	 * the whole reason the explanation is not a second evaluation written alongside the first.
+	 * </p>
+	 *
+	 * <p>
+	 * Answers about the policy alone. The administrator bypass and the ceiling an unattended run is
+	 * under are properties of the <em>run</em>, not of the policy, and are composed on top by
+	 * {@link EffectiveToolAccess}.
+	 * </p>
+	 *
+	 * @param heldRoleNames
+	 *        The names of the roles the user holds on the security root. Never <code>null</code>; may
+	 *        be empty, in which case only the baseline applies.
+	 * @param tool
+	 *        The tool being checked.
+	 * @return The decision and its provenance, never <code>null</code>.
+	 */
+	public ToolAccessExplanation explain(Collection<String> heldRoleNames, ToolIdentity tool) {
+		String group = groupOf(tool);
+		List<String> roleNames = stableOrder(heldRoleNames);
 
-		for (String roleName : heldRoleNames) {
+		for (String roleName : roleNames) {
 			RoleAccess role = _policy.getToolAccess().get(roleName);
-			if (role != null && matchesAny(role.getGrants(), tool, group)) {
-				return new Decision.Granted(roleName, group);
+			if (role == null) {
+				continue;
+			}
+			Match deny = firstMatch(role.getDenies(), tool, group);
+			if (deny != null) {
+				// A deny is decided before anything else, so what it took away has to be searched for
+				// afterwards: without it the sentence reads "denied" where an administrator needs
+				// "denied although this grant is there".
+				return ToolAccessExplanation.deniedBy(
+					ToolAccessRule.roleDeny(roleName, deny.group(), deny.namedTool()),
+					grantingRule(roleNames, tool, group));
 			}
 		}
 
-		if (group == null) {
-			return new Decision.Denied("Permission denied: tool '" + label
-				+ "' belongs to no tool group and has no explicit grant, so it is denied to everyone."
-				+ " An administrator must assign it a group or grant it by name.");
+		ToolAccessRule granting = grantingRule(roleNames, tool, group);
+		if (granting != null) {
+			return ToolAccessExplanation.allowedBy(granting);
 		}
-		return new Decision.Denied("Permission denied: tool '" + label
-			+ "' requires the '" + group + "' capability, which none of your roles grants.");
+		if (group == null) {
+			return ToolAccessExplanation.deniedBy(ToolAccessRule.unclassified());
+		}
+		return ToolAccessExplanation.deniedBy(ToolAccessRule.notGranted(group));
+	}
+
+	/**
+	 * The rule that grants the given tool, ignoring every {@code <deny>}.
+	 *
+	 * <p>
+	 * One of the two places the {@code <baseline>} element's three states are read, together with
+	 * {@link #grantingCapabilityRule(List, String)}: a declared list is evaluated as written, and an
+	 * absent one means {@link #DEFAULT_BASELINE}. An explicitly empty list is a declared list, so it
+	 * grants nothing - which is what makes "no extra grants" sayable at all. The default names groups
+	 * only, so an ungrouped tool is not reached by it - deliberately: a tool nobody classified must
+	 * not become callable because nobody configured a baseline either.
+	 * </p>
+	 *
+	 * @return The granting rule in the order the decision applies them - implicit baseline, baseline,
+	 *         role grants - or <code>null</code> if nothing grants the tool.
+	 */
+	private ToolAccessRule grantingRule(List<String> roleNames, ToolIdentity tool, String group) {
+		if (isImplicitBaseline(group)) {
+			return ToolAccessRule.implicitBaseline(group);
+		}
+		Baseline declared = _policy.getBaseline();
+		if (declared != null) {
+			Match baseline = firstMatch(declared.getGrants(), tool, group);
+			if (baseline != null) {
+				return ToolAccessRule.baseline(baseline.group(), baseline.namedTool());
+			}
+		} else if (group != null && DEFAULT_BASELINE.contains(group)) {
+			return ToolAccessRule.defaultBaseline(group);
+		}
+		for (String roleName : roleNames) {
+			RoleAccess role = _policy.getToolAccess().get(roleName);
+			if (role == null) {
+				continue;
+			}
+			Match grant = firstMatch(role.getGrants(), tool, group);
+			if (grant != null) {
+				return ToolAccessRule.roleGrant(roleName, grant.group(), grant.namedTool());
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The same decision as {@link #checkCapability(Collection, String, String)}, with the rule that
+	 * made it.
+	 *
+	 * <p>
+	 * The capability-level counterpart of {@link #explain(Collection, ToolIdentity)}, and the
+	 * implementation {@link #checkCapability(Collection, String, String)} delegates to. Like that
+	 * method it reads {@code <grant group="...">} entries only, and like
+	 * {@link #explain(Collection, ToolIdentity)} it says nothing about the run - including nothing
+	 * about {@link #IMPLICIT_BASELINE}, which a policy grants per tool group and not as an operation's
+	 * price. {@link EffectiveToolAccess#explainCapability(String)} is the one that answers for a whole
+	 * group of tools.
+	 * </p>
+	 *
+	 * @param heldRoleNames
+	 *        The names of the roles the user holds on the security root.
+	 * @param capability
+	 *        The name of the required capability (tool group).
+	 * @return The decision and its provenance, never <code>null</code>.
+	 */
+	public ToolAccessExplanation explainCapability(Collection<String> heldRoleNames, String capability) {
+		List<String> roleNames = stableOrder(heldRoleNames);
+
+		for (String roleName : roleNames) {
+			RoleAccess role = _policy.getToolAccess().get(roleName);
+			if (role != null && grantsGroup(role.getDenies(), capability)) {
+				return ToolAccessExplanation.deniedBy(
+					ToolAccessRule.roleDeny(roleName, capability, null),
+					grantingCapabilityRule(roleNames, capability));
+			}
+		}
+
+		ToolAccessRule granting = grantingCapabilityRule(roleNames, capability);
+		if (granting != null) {
+			return ToolAccessExplanation.allowedBy(granting);
+		}
+		return ToolAccessExplanation.deniedBy(ToolAccessRule.notGranted(capability));
+	}
+
+	/**
+	 * The rule that grants the given capability as such, ignoring every {@code <deny>}.
+	 */
+	private ToolAccessRule grantingCapabilityRule(List<String> roleNames, String capability) {
+		Baseline declared = _policy.getBaseline();
+		if (declared != null) {
+			if (grantsGroup(declared.getGrants(), capability)) {
+				return ToolAccessRule.baseline(capability, null);
+			}
+		} else if (DEFAULT_BASELINE.contains(capability)) {
+			return ToolAccessRule.defaultBaseline(capability);
+		}
+		for (String roleName : roleNames) {
+			RoleAccess role = _policy.getToolAccess().get(roleName);
+			if (role != null && grantsGroup(role.getGrants(), capability)) {
+				return ToolAccessRule.roleGrant(roleName, capability, null);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Where the group of a tool comes from.
+	 *
+	 * <p>
+	 * Cheap to compute and worth showing: without it a catalog cannot explain why removing one
+	 * {@code <tool-groups>} entry de-classifies one tool and not the one next to it.
+	 * </p>
+	 *
+	 * @see #groupOf(ToolIdentity)
+	 */
+	public enum GroupSource {
+
+		/** The tool declares its group itself, on {@code @ToolMethod(group = ...)}. */
+		DECLARED,
+
+		/**
+		 * A {@code <tool-groups>} entry of the policy assigns it - either because the tool declares
+		 * none (a TL-Script or MCP tool), or because an administrator reclassified it.
+		 */
+		CONFIGURED,
+
+		/** Neither: the tool belongs to no group and is therefore denied to everyone. */
+		NONE;
+	}
+
+	/**
+	 * Where the {@link #groupOf(ToolIdentity) group} of the given tool comes from.
+	 *
+	 * @param tool
+	 *        The tool to classify.
+	 * @return The source, never <code>null</code>.
+	 */
+	public GroupSource groupSourceOf(ToolIdentity tool) {
+		for (String name : tool.names()) {
+			if (_configuredGroups.containsKey(name)) {
+				return GroupSource.CONFIGURED;
+			}
+		}
+		return tool.declaredGroup() != null ? GroupSource.DECLARED : GroupSource.NONE;
+	}
+
+	/**
+	 * The held roles in a defined order, so that two roles disagreeing produce the same sentence
+	 * twice.
+	 *
+	 * <p>
+	 * The roles arrive as a {@link java.util.Set} whose iteration order is a hash order, and a
+	 * decision reports the <em>first</em> rule it finds. Sorting does not change which decisions are
+	 * made - a deny wins whichever role wrote it - it only stops the explanation from naming a
+	 * different role on the next request.
+	 * </p>
+	 */
+	private static List<String> stableOrder(Collection<String> heldRoleNames) {
+		return new ArrayList<>(new TreeSet<>(heldRoleNames));
 	}
 
 	/**
@@ -352,28 +555,22 @@ public class RoleToolAccess {
 	 * @return The decision, carrying the granting role or the denial reason.
 	 */
 	public Decision checkCapability(Collection<String> heldRoleNames, String capability, String operation) {
-		for (String roleName : heldRoleNames) {
-			RoleAccess role = _policy.getToolAccess().get(roleName);
-			if (role != null && grantsGroup(role.getDenies(), capability)) {
+		ToolAccessRule rule = explainCapability(heldRoleNames, capability).decidedBy();
+
+		switch (rule.kind()) {
+			case ROLE_DENY:
 				return new Decision.Denied("Permission denied: " + operation + " requires the '"
 					+ capability + "' capability, which is explicitly denied to your role '"
-					+ roleName + "'.");
-			}
+					+ rule.roleName() + "'.");
+			case DEFAULT_BASELINE:
+			case BASELINE:
+				return new Decision.Granted(BASELINE_ROLE, capability);
+			case ROLE_GRANT:
+				return new Decision.Granted(rule.roleName(), capability);
+			default:
+				return new Decision.Denied("Permission denied: " + operation + " requires the '"
+					+ capability + "' capability, which none of your roles grants.");
 		}
-
-		if (baselineGrantsGroup(capability)) {
-			return new Decision.Granted(BASELINE_ROLE, capability);
-		}
-
-		for (String roleName : heldRoleNames) {
-			RoleAccess role = _policy.getToolAccess().get(roleName);
-			if (role != null && grantsGroup(role.getGrants(), capability)) {
-				return new Decision.Granted(roleName, capability);
-			}
-		}
-
-		return new Decision.Denied("Permission denied: " + operation + " requires the '" + capability
-			+ "' capability, which none of your roles grants.");
 	}
 
 	/**
@@ -506,46 +703,6 @@ public class RoleToolAccess {
 	}
 
 	/**
-	 * Whether the policy's baseline reaches the given tool.
-	 *
-	 * <p>
-	 * The one place the {@code <baseline>} element's three states are read, together with
-	 * {@link #baselineGrantsGroup(String)}: a declared list is evaluated as written, and an absent one
-	 * means {@link #DEFAULT_BASELINE}. An explicitly empty list is a declared list, so it grants
-	 * nothing - which is what makes "no extra grants" sayable at all.
-	 * </p>
-	 *
-	 * @param tool
-	 *        The tool being checked.
-	 * @param group
-	 *        Its resolved group, may be <code>null</code>.
-	 */
-	private boolean baselineGrants(ToolIdentity tool, String group) {
-		Baseline declared = _policy.getBaseline();
-		if (declared != null) {
-			return matchesAny(declared.getGrants(), tool, group);
-		}
-		// The default names groups only, so an ungrouped tool is not reached by it - deliberately: a
-		// tool nobody classified must not become callable because nobody configured a baseline either.
-		return group != null && DEFAULT_BASELINE.contains(group);
-	}
-
-	/**
-	 * Whether the policy's baseline grants the given capability as such.
-	 *
-	 * @param capability
-	 *        The name of the capability (tool group).
-	 * @see #baselineGrants(ToolIdentity, String)
-	 */
-	private boolean baselineGrantsGroup(String capability) {
-		Baseline declared = _policy.getBaseline();
-		if (declared != null) {
-			return grantsGroup(declared.getGrants(), capability);
-		}
-		return DEFAULT_BASELINE.contains(capability);
-	}
-
-	/**
 	 * The capabilities the baseline grants every user under this policy, for a boot log or a
 	 * diagnostic.
 	 *
@@ -583,26 +740,50 @@ public class RoleToolAccess {
 	/**
 	 * Whether any entry of {@code entries} covers the given tool.
 	 *
+	 * @see #firstMatch(Collection, ToolIdentity, String)
+	 */
+	private static boolean matchesAny(Collection<Grant> entries, ToolIdentity tool, String group) {
+		return firstMatch(entries, tool, group) != null;
+	}
+
+	/**
+	 * How the first entry of {@code entries} that covers the given tool covers it.
+	 *
 	 * <p>
 	 * A per-tool entry has to name the tool, by any one of {@link ToolIdentity#names() its names}.
 	 * There is no pattern syntax: a tool of any origin - a new Java tool, a TL-Script tool authored in
 	 * the running application, a tool a connected MCP server grew - is denied until an administrator
 	 * says otherwise.
 	 * </p>
+	 *
+	 * @return The match, or <code>null</code> if no entry covers the tool.
 	 */
-	private static boolean matchesAny(Collection<Grant> entries, ToolIdentity tool, String group) {
+	private static Match firstMatch(Collection<Grant> entries, ToolIdentity tool, String group) {
 		List<String> names = tool.names();
 		for (Grant entry : entries) {
 			if (!isBlank(entry.getGroup()) && entry.getGroup().equals(group)) {
-				return true;
+				return new Match(group, null);
 			}
 			for (String granted : entry.getTools()) {
 				if (names.contains(granted)) {
-					return true;
+					return new Match(null, granted);
 				}
 			}
 		}
-		return false;
+		return null;
+	}
+
+	/**
+	 * What an entry of the policy named to cover a tool: exactly one of the two, which is the rule
+	 * {@code AiToolAccessService.underspecifiedEntries} enforces.
+	 *
+	 * @param group
+	 *        The capability group the entry named, or <code>null</code> if it named the tool.
+	 * @param namedTool
+	 *        The tool name the entry spelled out, or <code>null</code> if it named the group.
+	 */
+	private record Match(String group, String namedTool) {
+		// Intentionally empty.
 	}
 
 	private static boolean isBlank(String value) {

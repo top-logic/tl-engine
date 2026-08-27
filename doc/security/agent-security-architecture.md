@@ -418,6 +418,7 @@ group**; groups are the unit of granting.
 | `agent.authoring` | `createAgent`, `updateAgent`, `deleteAgent`, `createSkill`, `updateSkill`, `deleteSkill`, `createScriptTool`, `updateScriptTool`, `deleteScriptTool`, `addToolToAgent`, `removeToolFromAgent`, `addSkillToAgent`, `removeSkillFromAgent`, `addDelegationToAgent`, `removeDelegationFromAgent`, `addToolToSkill`, `removeToolFromSkill` | **privileged** |
 | `agent.meta` | `listAgents`, `getAgent`, `listSkills`, `getSkill`, `listScriptTools`, `getScriptTool`, `listAvailableTools`, `listFrameworkAgents`, `getFrameworkAgent`, `listFrameworkSkills`, `getFrameworkSkill`, `listScriptToolFactories` | grantable |
 | `interaction` | `askUser`, `loadSkill`, delegation and subagent tools | granted to every agent user by the built-in baseline |
+| `introspection` | `listTools` - what *this* agent carries, filtered for the acting user | granted to every agent user by the built-in baseline |
 | `workspace` | `createTask`, `updateTask`, `listTasks`, `publishPage` | grantable |
 | `egress` | `webFetch`, `webSearch`, `createGiteaIssue`, all `mcp__*` tools | grantable, **never** in the baseline |
 
@@ -530,7 +531,7 @@ Filtering the schemas leaves the model unable to tell "you are not permitted" fr
 not loaded yet" from "that does not exist": all three look like absence, so the agent answers the
 user with a vague "I can't do that" or goes hunting for a skill it may also not use.
 
-Five code fixes and one piece of prompt text address that:
+Six code fixes and one piece of prompt text address that:
 
 - **Skills whose every tool is denied are not offered** (`AgentFactory.injectSkills`,
   `buildDynamicSkillTool`, `buildSkillTool`, all through `AgentCapabilities.unusableReason`). A skill
@@ -634,6 +635,29 @@ Five code fixes and one piece of prompt text address that:
   denied it - that is the ordinary denial reason, not a guess. A name that resolves nowhere never goes
   through the permission check at all, so a typo still cannot make the answer disclose which
   capabilities the user lacks.
+- **The agent can ask what it carries** (`ListToolsTool`, injected by `AgentFactory.listToolsTool`).
+  Every message above answers a question the model *stumbled into* - a refused call, a skill it could
+  not load. None of them answers the question a user asks directly: *"can you use `X`?"* Asked that, the
+  agent had no source at all, and its prompt sent it to the registry-wide inspection in
+  `TL_agenticAuthoring` instead - a privileged skill that is withheld from an ordinary user, whose
+  refusal the model then relayed as though the capabilities behind *that skill* were the reason the
+  *named tool* was unreachable. Nothing untrue had been emitted; the model was answering from nothing.
+  `listTools` is the source: this agent's own tools, every skill it declares with what a load would hand
+  over, and the capability behind each withheld entry (`AgentCapabilities.unusableReason(Tool)`, quiet,
+  so enumerating a catalog writes no audit line for calls nobody made).
+
+  **Self-inspection only, and never withholdable.** It answers "what do *I* carry", never "what does
+  this application have" - that second question is registry-wide inspection and stays behind
+  `agent.meta`. Its group `introspection` is in `RoleToolAccess.IMPLICIT_BASELINE`, so it reaches every
+  role and every run without a `<baseline>` entry, unattended runs included; an explicit `<deny>` still
+  wins, as for `interaction`. A capability that could be *forgotten* would put the guessing back one
+  level down, in exactly the deployments whose policy was written carelessly. It is injected into every
+  agent's catalog rather than declared in `<tools>`, for the same reason `loadSkill` is: it is a property
+  of being an agent, not a capability an application decides to hand out.
+
+  It discloses nothing new. Every entry is filtered for the acting user, and a withheld entry names the
+  capability the notice below already names in the system prompt - the same information, asked for rather
+  than stumbled into.
 - **The generated skill catalog names the capabilities the principal lacks**
   (`AgentCapabilities.notice`), computed from the tools *this agent* can reach - its own `<tools>`
   plus its skills' - rather than from every group in the deployment. A denied capability then costs
@@ -641,7 +665,10 @@ Five code fixes and one piece of prompt text address that:
   carries the group's own one-sentence description (`ToolGroups.labelKey`), because a group named
   without one invites the model to read the name and guess: `agent.authoring` was explained to a user
   as being about the data model. The section also states all three absences and tells the agent not to
-  blame a capability unless the message it got names one.
+  blame a capability unless the message it got names one - and every message that *does* name one closes
+  by saying which subject those names belong to (`AgentCapabilities.NO_GUESSING`), because the
+  withheld-skill message names capabilities correctly for the skill it refused and was still relayed as
+  the reason a different tool was unreachable.
 
   **Independent of whether the agent declares skills.** The notice is appended to the generated skill
   catalog, and that catalog used to be empty for an agent with no skills - so the one agent shape with
@@ -1204,9 +1231,9 @@ interface is `ToolAccessPolicy` (scaffolded on this branch), which the service's
             </role>
         </tool-access>
 
-        <!-- Granted to every authenticated user, on top of their role grants. "interaction" is
-             granted implicitly and needs no entry here - it is spelled out in this example only
-             to show the element, and writing it changes nothing. -->
+        <!-- Granted to every authenticated user, on top of their role grants. "interaction" and
+             "introspection" are granted implicitly and need no entry here - the first is spelled
+             out in this example only to show the element, and writing it changes nothing. -->
         <baseline>
             <grant group="interaction"/>
         </baseline>
@@ -1232,7 +1259,7 @@ Semantics, stated precisely:
 | Rule | Behaviour |
 |---|---|
 | No `<role>` entry for any role the user holds | All tools denied (baseline only) |
-| `interaction` | Granted to every role and every run implicitly, whatever `<baseline>` says; a `<deny>` still wins |
+| `interaction`, `introspection` | Granted to every role and every run implicitly, whatever `<baseline>` says; a `<deny>` still wins. `RoleToolAccess.IMPLICIT_BASELINE` |
 | Multiple held roles | Grants **union**; then denies subtract |
 | `<deny>` anywhere among the held roles | Wins over any `<grant>`, from any role |
 | A tool with no group and no `<grant tools>` naming it | Denied |

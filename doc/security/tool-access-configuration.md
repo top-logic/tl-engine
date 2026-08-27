@@ -30,8 +30,8 @@ Put that in any application configuration file (an aspect, or your
 **Without this block your agent can read, and change nothing.** This check is always applied - there
 is no setting that turns it off - and it denies by default. What an application that configures nothing
 gets is the **default baseline**: `model.read` and `data.read` for everyone, plus the implicit
-`interaction` grant. Enough for a usable, read-only assistant; not enough to change, script or send
-anything anywhere. See [The default baseline](#the-default-baseline) below for what is in it and how to
+`interaction` and `introspection` grants. Enough for a usable, read-only assistant; not enough to
+change, script or send anything anywhere. See [The default baseline](#the-default-baseline) below for what is in it and how to
 replace it.
 
 **The same holds one layer down, and it is the mistake to expect.** The engine's
@@ -44,16 +44,18 @@ four personas through them.
 **Administrators bypass all of it**, so testing with an admin account proves nothing. Log in as a
 role-based account.
 
-You do not have to grant `interaction`: asking the user a question, loading a skill and delegating to a
-sub-agent are granted to every role implicitly, because an agent that cannot ask a question is broken.
-Use `<baseline>` only if you want *further* groups granted to everyone - see below.
+You do not have to grant `interaction` or `introspection`. Asking the user a question, loading a skill
+and delegating to a sub-agent are granted to every role implicitly, because an agent that cannot ask a
+question is broken; so is `listTools`, an agent saying which tools and skills it carries, because an
+agent that cannot answer that answers it by guessing. Use `<baseline>` only if you want *further* groups
+granted to everyone - see below.
 
 ---
 
 ## What you are granting
 
-A **tool group** is the unit you grant. Every tool declares which group it is in, so you administer ten
-groups rather than eighty tools.
+A **tool group** is the unit you grant. Every tool declares which group it is in, so you administer
+eleven groups rather than eighty tools.
 
 | Group | What it lets the agent do |
 |---|---|
@@ -62,6 +64,7 @@ groups rather than eighty tools.
 | `data.write` | Change business data. Always needs the user's approval as well. In the framework itself this is what **committing** through `executeTLScript` costs - see the note under `script`. |
 | `agent.meta` | Inspect which agents, skills and tools exist. Read-only. |
 | `interaction` | Ask the user a question, load a skill, delegate to a sub-agent. |
+| `introspection` | `listTools`: which tools and skills *this agent* carries, and which of them the acting account may use. Not what the application has elsewhere - that is `agent.meta`. |
 | `workspace` | The user's own tasks and published pages. |
 | `egress` | Send data out of the application: web fetch/search, issue trackers, remote MCP servers. |
 | `script` | **Privileged.** Execute TL-Script. Read-only by itself: **persisting** what a script changes (`executeTLScript` with `withCommit=true`) requires `data.write` on top. |
@@ -115,8 +118,9 @@ and the labels exist only in the editor.
 
 ## The rules, in one place
 
-- **Nothing is granted unless you grant it**, with two exceptions: `interaction` is always granted, and
-  a policy that writes no `<baseline>` at all gets the read-only default one - see below.
+- **Nothing is granted unless you grant it**, with two exceptions: `interaction` and `introspection` are
+  always granted, and a policy that writes no `<baseline>` at all gets the read-only default one - see
+  below.
 - **Several roles add up.** A user holding two roles gets the union of their grants.
 - **A `<deny>` always wins**, over any grant, including one from the user's other roles and including
   the baseline. That is how you carve one capability out of an otherwise broad grant without
@@ -211,9 +215,10 @@ it would otherwise look like it grants something and not.
 </baseline>
 ```
 
-`<baseline>` is added to every account's grants, whatever roles it holds. `interaction` is in it
-implicitly and needs no entry; writing it anyway is legal and changes nothing. A `<deny>` on a role
-still wins over the baseline, the implicit `interaction` included.
+`<baseline>` is added to every account's grants, whatever roles it holds. `interaction` and
+`introspection` are in it implicitly and need no entry; writing either anyway is legal and changes
+nothing. A `<deny>` on a role still wins over the baseline, the two implicit grants included - if you
+deny them, you have said so out loud, which is a different thing from never having mentioned them.
 
 ### The default baseline
 
@@ -229,7 +234,7 @@ The element has **three** states, and they are all different:
 | What you write | What every account gets |
 |---|---|
 | nothing at all | `model.read` + `data.read`, the read-only default |
-| `<baseline/>` | nothing beyond `interaction`. The explicit "no capability for everyone" |
+| `<baseline/>` | nothing beyond `interaction` and `introspection`. The explicit "no capability for everyone" |
 | `<baseline>` with entries | exactly what you list. The default is **replaced**, not added to |
 
 The last row is the one to be sure of: writing `<baseline><grant group="workspace"/></baseline>` gives
@@ -351,7 +356,8 @@ accept unattended runs bounded only by the acting user's grants.
 ```
 
 A policy with no `<tool-access>` entries at all boots without one: there is nothing you could have
-forgotten, because every run of such an application already reaches only `interaction`.
+forgotten, because every run of such an application already reaches only `interaction` and
+`introspection`.
 
 The allowlist is the *only* thing standing in for the approval prompt an unattended run cannot show,
 so its absent state must not be the permissive one - otherwise writing a careful `<tool-access>` matrix
@@ -362,7 +368,7 @@ can say are:
 | Declaration | Meaning |
 |---|---|
 | `<background-allowlist>` with `<grant>` entries | Unattended runs reach the intersection of the user's grants and these capabilities. The normal choice. |
-| `<background-allowlist/>` | Unattended runs reach **nothing** beyond the always-granted `interaction`. The strictest choice, and correct if you run no schedulers and use no `aiAgentChatAsync`. |
+| `<background-allowlist/>` | Unattended runs reach **nothing** beyond the always-granted `interaction` and `introspection`. The strictest choice, and correct if you run no schedulers and use no `aiAgentChatAsync`. |
 | `<background-allowlist all="true"/>` | Unattended runs are bounded only by the acting user's grants. The explicit opt-out - it gives up the compensating control, so it has to be said out loud. |
 
 ---
@@ -412,11 +418,11 @@ never what stops a tool from running. The gate is the Java check on the call pat
 At boot the service states what it read:
 
 ```
-INFO ... AiToolAccessService - Agent tool access: roles=2 baseline=0(+interaction) backgroundAllowlist=3
+INFO ... AiToolAccessService - Agent tool access: roles=2 baseline=0(+interaction+introspection) backgroundAllowlist=3
 ```
 
-`baseline=0(+interaction)` means "a `<baseline>` element is there and it lists no entry, plus the
-implicit `interaction` grant every policy carries". An application that wrote no element at all reads
+`baseline=0(+interaction+introspection)` means "a `<baseline>` element is there and it lists no entry,
+plus the implicit grants every policy carries". An application that wrote no element at all reads
 `baseline=default[model.read, data.read]` instead - the two are different states and the log says
 which one you have.
 

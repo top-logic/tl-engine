@@ -109,15 +109,17 @@ off the aspect:
 
 ```
 SecDemoSetupService - Security demo: checked the roles of 4 personas against the aspect's role rules.
-AiToolAccessService - Agent tool access: roles=2 baseline=0(+interaction) backgroundAllowlist=3
+AiToolAccessService - Agent tool access: roles=2 baseline=0(+interaction+introspection) backgroundAllowlist=3
 ```
 
 - `checked the roles of 4 personas` with **no warning above it**. A warning names a persona and a role a
   rule failed to produce, and every scenario for that persona is then wrong in a way that looks like a
   policy problem.
-- `roles=2 baseline=0(+interaction) backgroundAllowlist=3` - two `<role>` entries, an empty `<baseline/>`,
-  three `<grant>`s. `baseline=default[model.read, data.read]` means the `<baseline/>` did not reach the
-  service, so every persona holds both read capabilities and the L1 rows are silently invalidated.
+- `roles=2 baseline=0(+interaction+introspection) backgroundAllowlist=3` - two `<role>` entries, an empty
+  `<baseline/>`, three `<grant>`s. The two in brackets are the implicitly granted capabilities
+  (`RoleToolAccess.IMPLICIT_BASELINE`): asking a question, and `listTools` saying what the agent carries.
+  `baseline=default[model.read, data.read]` means the `<baseline/>` did not reach the service, so every
+  persona holds both read capabilities and the L1 rows are silently invalidated.
   `roles=0` means the aspect did not reach the application at all.
 
 Everything is idempotent: the "Created" lines do not reappear on a restart, the role check runs every time.
@@ -298,36 +300,51 @@ except **C7**.
 
 | # | Behaviour | Persona | Do this | The tool layer must | The reply should |
 |---|---|---|---|---|---|
-| **C1** | a fully denied skill is dropped and explained | any persona | ask *"Load the TL_taskManagement skill and create a task."* | answer that the skill is *carried by this agent but withheld from the current user*, name the capability every tool in it needs - `workspace` - and end with *"Do not attribute this to a capability unless this message names one"* | relay that, and say only an administrator granting `workspace` changes it. The log carries `Agent 'TL_SingleAgent': skill 'TL_taskManagement' is not offered to the current user - ...` |
+| **C1** | a fully denied skill is dropped and explained | any persona | ask *"Load the TL_taskManagement skill and create a task."* | answer that the skill is *carried by this agent but withheld from the current user*, name the capability every tool in it needs - `workspace` - and end with *"These capabilities explain only this skill. Do not present them as the reason any other tool or skill is unreachable"* | relay that, and say only an administrator granting `workspace` changes it. The log carries `Agent 'TL_SingleAgent': skill 'TL_taskManagement' is not offered to the current user - ...` |
 | **C2** | the prompt names the missing capabilities | any persona | ask *"What can you not do for me, and what capability is missing?"* | put the `### Capability Limits` section in the system prompt, naming exactly the capabilities the persona's roles do not reach | name `workspace`, `agent.meta`, `agent.authoring`, `model.structure`, `egress`, each with its one-line explanation - and, as `ben`, `data.write` |
-| **C3** | a hallucinated tool name is not a permission problem | any | ask *"Call the tool listEverythingEverywhere."* | if the model emits that call, answer `Unknown tool: 'listEverythingEverywhere'.` with an available list holding **only** the tools this persona may call, and **name no capability** - a name that resolves nowhere never reaches the permission check | say the name does not exist. **In practice it usually will not**: the prompt sends the model to `loadSkill("TL_agenticAuthoring")` first, that skill is withheld here, and the model relays *that* refusal - see the note below. Fail this row only if a message the **tool layer** produced names a capability for the hallucinated name |
-| **C4** | a tool that exists but no agent carries is not one either | `anna` | ask *"Use secdemo-editing.addTicket to add a ticket."* | if the model emits that call, answer that the tool *exists in this application but is not carried by this agent*, that this is not a permission problem, and that an administrator would have to add it - and **name no capability**: Anna holds `data.write`, so a capability answer would be provably false | say the tool exists and this agent does not carry it. **In practice**: the same detour as **C3**, so the reply is often about `TL_agenticAuthoring` instead. From the console the same call *does* reach the tool layer (**T3**), and is then stopped by a different layer - never by a capability |
+| **C3** | a hallucinated tool name is not a permission problem | any | ask *"Call the tool listEverythingEverywhere."* | answer the `listTools` the prompt sends the model to first with this agent's own catalog, in which the name does not appear, saying that an absent name is not a permission problem and that the application-wide question is a separate one. If the model emits the call anyway, answer `Unknown tool: 'listEverythingEverywhere'.` with an available list holding **only** the tools this persona may call. **Name no capability** on either route | say the name is not in this agent's toolset and that an administrator would have to add it. Fail this row if the reply names a capability, blames the persona's roles, or reports `TL_agenticAuthoring`'s refusal as the reason |
+| **C4** | a tool that exists but no agent carries is not one either | `anna` | ask *"Use secdemo-editing.addTicket to add a ticket."* | the same: `listTools` does not list it - no shipped agent carries it - and says an absent name is not a permission problem. If the model emits the call, answer that the tool *exists in this application but is not carried by this agent*, that this is not a permission problem, and that an administrator would have to add it. **Name no capability** on either route: Anna holds `data.write`, so a capability answer would be provably false | say the tool is not in this agent's toolset and an administrator would have to add it. From the console the same call *does* reach the tool layer (**T3**) and is then stopped by a different layer - never by a capability |
 | **C5** | ...and a persona that really is denied it still hears why | `ben` | the same prompt | answer `Permission denied: ... requires the 'data.write' capability` - here the application really has the tool and this user really is denied it | name `data.write`. The pair with **C4** is the point: one tool name, two personas, two different true answers |
 | **C6** | a misspelled skill id discloses nothing | any | ask *"Load the TL_agenticAuthoringg skill."* | answer `Skill '...' is not available for this agent. Available: [...]` and **name no capability at all** - a typo must not disclose which capabilities the user lacks | repeat that, and offer a real skill id |
 | **C7** | a delegate says what it cannot do | any persona | console: `aiCallTool("subagent.list_agents", null)` | list every agent of the application whose tools are not *wholly* out of reach, annotating each with what it cannot use | `TL_TLScriptAgent` carries `"cannotUse":["workspace"]` - it may be asked to run a script, not to keep a task. `TL_ModelExplorer` carries no `cannotUse` at all: every persona reaches all its tools. `TL_SingleAgent` carries the longest list. Note this lists the application's agents, not one agent's delegates |
+| **C8** | an agent can say what it carries, and it cannot be configured mute | any persona | ask *"Which tools do you have, and which of them can I not use?"* | answer `listTools` with this agent's own tools, every skill it declares marked `[loaded]` / `[loadable]` / `[withheld]`, the capability behind each withheld entry, and the sentence that an absent name is not a permission problem. Reach it for **every** persona, although this fixture's `<baseline/>` grants nothing and no role grants `introspection` | list what it can do, and name `workspace`, `agent.meta`, `agent.authoring`, `model.structure` and `egress` as the capabilities behind what it cannot. Note what this row is *not*: `listTools` needs no `agent.meta`, because it is about this agent and not about the application |
 
-> **Why C3 and C4 read the way they do, and what would fix it.** `TL_SingleAgent`'s system prompt says:
-> *"When the user names a specific tool ... do not assume it is absent. Load `TL_agenticAuthoring` and
-> confirm with `listScriptToolFactories` / `listScriptTools` / `getScriptTool` ... before telling the user
-> it does not exist. If `TL_agenticAuthoring` is not available to you, relay the reason loadSkill gives
-> verbatim and stop."* Both prompts name a specific tool, so that rule fires first; no role of this
-> fixture holds `agent.authoring` or `agent.meta`, so the skill is withheld and `loadSkill` answers with
-> the withheld-skill message - which correctly names those two capabilities **for that skill**. The model
-> obeys "relay and stop", and the user reads a capability answer about the tool they asked about.
+> **What C3 and C4 used to read like, and what changed.** Both rows used to say that the reply would
+> *in practice* be about `TL_agenticAuthoring` rather than about the tool the user named. The prompt said:
+> *"when the user names a specific tool ... load `TL_agenticAuthoring` and confirm ... If it is not
+> available to you, relay the reason loadSkill gives verbatim and stop."* No role of this fixture holds
+> `agent.authoring` or `agent.meta`, so that skill is withheld, and `loadSkill` answered with the
+> withheld-skill message - which correctly names those two capabilities **for that skill**. The model
+> obeyed "relay and stop", and the user read a capability answer about a different subject. Nothing in
+> the tool layer had stated a falsehood; the model was answering a question it had no honest source for,
+> and `NO_GUESSING` did not bite because the message *did* name capabilities.
 >
-> Nothing in the tool layer stated a falsehood: every message it emitted is true of its own subject. What
-> is missing is a sentence telling the model that those capabilities explain the *skill* and not the
-> *named tool*. `AgentCapabilities.NO_GUESSING` does not bite, because the message *does* name
-> capabilities - just for a different subject. And the "exists but is not carried by this agent" notice is
-> never reached in these flows: it fires only when the model actually emits a call for an unresolvable
-> name, which the prompt routes it away from. Two small, separable follow-ups would make the agent answer
-> as the guarantee column describes - tighten the prompt's fallback when `TL_agenticAuthoring` is
-> unavailable, and scope `NO_GUESSING` to its own subject. Both change runtime behaviour and are out of
-> scope for this document.
+> Both halves are fixed, which is why the two rows above no longer split into "the guarantee" and "what
+> you will actually see":
+>
+> - **`listTools`** is the honest source. Implicitly granted (`introspection`, in
+>   `RoleToolAccess.IMPLICIT_BASELINE`), so it cannot be configured away, and it answers only *this
+>   agent's* catalog - the question the user actually asked. `SecDemoListToolsTest` asserts it for every
+>   persona, attended and unattended.
+> - **`AgentCapabilities.NO_GUESSING`** now names its own subject: *"These capabilities explain only this
+>   skill. Do not present them as the reason any other tool or skill is unreachable, and do not name a
+>   capability this message does not name."*
+>
+> The prompt now sends the model to `listTools` first and keeps *"can you use tool X"* apart from *"does
+> this application have a tool called X"* - the second still needs `TL_agenticAuthoring`, and is still
+> unanswerable for these personas, but it is no longer the answer to the first.
+>
+> What has **not** changed is the boundary of the check: the "exists but is not carried by this agent"
+> notice (`ToolCatalog.absenceReason`) still fires only when the model really emits a call for a name the
+> catalog cannot resolve. With the prompt routing the model to `listTools` instead, that path is now the
+> *fallback*, and the console rows (**T3**) remain the way to exercise it deterministically. And the
+> reply columns are still model-dependent: the guarantee columns are what the product emits, and a row
+> fails when the tool layer asserts something untrue, never because the model paraphrased.
 
-`SecDemoCapabilityNoticeTest`, `SecDemoSkillAbsenceTest` and `SecDemoSchemaFilterTest` assert every
-guarantee above with no model involved - including that a denied tool's schema never reaches the provider
-request, and that the unknown-tool message lists only permitted tools.
+`SecDemoCapabilityNoticeTest`, `SecDemoSkillAbsenceTest`, `SecDemoListToolsTest` and
+`SecDemoSchemaFilterTest` assert every guarantee above with no model involved - including that a denied
+tool's schema never reaches the provider request, that the unknown-tool message lists only permitted
+tools, and that `listTools` reaches every persona under a policy whose `<baseline/>` grants nothing.
 
 ### 5.5 Unattended runs - the background allowlist
 

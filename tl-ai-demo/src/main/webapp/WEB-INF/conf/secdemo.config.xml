@@ -439,8 +439,10 @@
 					because he holds no data.write.
 
 					So the element is written and left empty, which says out loud that nothing is
-					granted to everyone here. "interaction" - asking a question, loading a skill,
-					delegating - is granted implicitly to every role and every run anyway.
+					granted to everyone here. Two capabilities are granted implicitly to every role and
+					every run anyway: "interaction" - asking a question, loading a skill, delegating -
+					and "introspection" - listTools, the agent saying which tools and skills it carries.
+					Both are things an agent is broken without, so neither is withholdable by omission.
 				-->
 				<baseline/>
 

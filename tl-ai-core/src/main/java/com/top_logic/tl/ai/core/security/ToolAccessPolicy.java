@@ -144,16 +144,19 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 * Capabilities every logged-in user gets in addition to the ones their roles grant.
 	 *
 	 * <p>
-	 * Asking the user a question, loading a skill and delegating to a sub-agent are granted anyway and
-	 * need no entry here. If you write nothing at all, every user may additionally read the model and
-	 * read business data, so that an application which has configured nothing still has a working,
-	 * read-only agent. Write this element to say something else - or write it empty to grant nothing
-	 * beyond asking a question.
+	 * Conversing with the user and reporting the agent's own toolset need no entry - both are granted
+	 * anyway. Write nothing and everyone may also read the model and the business data. Write this
+	 * element empty to grant nothing further.
 	 * </p>
 	 *
 	 * @see RoleToolAccess#DEFAULT_BASELINE
 	 */
 	/*
+	 * The two capabilities that need no entry are RoleToolAccess.IMPLICIT_BASELINE: "interaction" -
+	 * asking a question, loading a skill, delegating - and "introspection" - listTools, the agent
+	 * saying which tools and skills it carries. Both reach every role and every run, unattended ones
+	 * included; an explicit <deny> still wins over either.
+	 *
 	 * An item rather than a plain list, and nullable, for the same reason getBackgroundAllowlist() is:
 	 * three states have to stay distinguishable.
 	 *
@@ -246,7 +249,7 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 * <p>
 	 * Either a list of capabilities, or {@link #isAll()} to accept such runs with no limit of their
 	 * own. An entry without any capability is the strictest choice: those runs then reach nothing
-	 * except asking a question.
+	 * beyond conversing with the user and reporting the agent's own toolset.
 	 * </p>
 	 */
 	interface BackgroundAllowlist extends ConfigurationItem {

@@ -291,9 +291,9 @@ Everything a human might want to see, in one place. The **Where** column says wh
   agent behind it is `TL_SingleAgent`, the configured `chat-entry-point`.
 - **console** - *Administration → Development → Script console*. Needs no key.
 - **probe** - paste [`harness/probe.tlscript`](harness/probe.tlscript) into the console and press
-  **execute**. It prints one line per probed capability for whoever is logged in; no key needed. The
-  implicit `interaction` capability is not probed: the only way to probe it would be to ask the tester a
-  question.
+  **execute**. It prints one line per probed capability for whoever is logged in, as a single multi-line
+  string; no key needed. The implicit `interaction` capability is not probed: the only way to probe it
+  would be to ask the tester a question.
 
 ### 4.0 What "read-scoped" covers, and what it does not
 
@@ -379,7 +379,7 @@ nothing it can recognise, and **D8** is the control that works. See
 
 | # | Behaviour | Persona | Where | Do this | You should see |
 |---|---|---|---|---|---|
-| **T1** | the whole matrix at once | any | probe | run `probe.tlscript` | one `ALLOWED` / `DENIED` line per probed capability. Log in as a second persona, run it again, diff the two. **Read the `ALLOWED` lines too**: both roles hold every read capability, so what differs between Anna and Dora is not this column but what the allowed calls *return* |
+| **T1** | the whole matrix at once | any | probe | run `probe.tlscript` | one `ALLOWED` / `DENIED` line per probed capability, as one copyable string. Log in as a second persona, run it again, diff the two. **Read the `ALLOWED` lines too**: both roles hold every read capability, so what differs between Anna and Dora is not this column but what the allowed calls *return* |
 | **T2** | **the one row L1 decides** | `ben`, then `anna` | console | `aiCallTool("secdemo-editing.addTicket", {"project": "<Alpha's TID>", "title": "Reader was here"})` | ❌ for Ben: `requires the 'data.write' capability, which none of your roles grants.` ✅ for Anna: a new ticket. One tool, one capability, two answers - and the loud case, because an L1 refusal names what is missing |
 | **T3** | roles add up | `cara` | console | the same call | ✅ allowed. She holds both roles, so she has the union of their grants |
 | **T4** | a group granted to nobody | any persona | console | `aiCallTool("model-modification.createClass", null)` | ❌ `requires the 'model.structure' capability`. Deny-by-default; no `<deny>` was written. The same holds for `task.createTask` (`workspace`), `web-fetch.webFetch` (`egress`) and `agent-authoring.createAgent` |
@@ -625,8 +625,10 @@ MCP refusal message.
 - **Fire and collect must be two script executions.** A request pins its knowledge-base revision, so a
   background run started in one execution is invisible for the rest of it. See
   [e2e-security-test.md](e2e-security-test.md#44-running-it).
-- **The console's Result column is narrow.** Drag the right border of the column header, or maximize the
-  result panel with the ⛶ button, to read `probe.tlscript` output in full.
+- **A harness script returns one multi-line string, and the console's Result column is narrow.** The
+  single string is deliberate: it copies out in one piece, which is how two personas get diffed. Drag the
+  right border of the column header, or maximize the result panel with the ⛶ button, to read
+  `probe.tlscript` output in full.
 - **Approval is a mechanism of its own and it will interrupt you - but only in the chat.** A tool that
   changes anything - `executeTLScript`, `secdemo-editing.addTicket` - asks the user to confirm before it
   runs, whatever the policy grants. In the chat that is a prompt with **Allow** / **Allow for Session** /

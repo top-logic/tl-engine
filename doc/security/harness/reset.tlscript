@@ -75,6 +75,7 @@
 	// request pinned its knowledge-base revision before the deletes, so a
 	// re-read here would not see them. Run the script twice to verify - the
 	// second run must report "none" on both lines.
+	// One string, not a list of lines - see probe.tlscript.
 	[
 		"-- agent security test bed: reset --",
 		"deleted tickets  : " + ($removedTitles.size() == 0
@@ -89,5 +90,5 @@
 		"The fixture now holds exactly the 3 seeded tickets in their 2 projects.",
 		"Run this script a second time to verify: it must then report 'none' on",
 		"both lines. If it does not, something is still creating data."
-	];
+	].join(separator: "\n");
 }

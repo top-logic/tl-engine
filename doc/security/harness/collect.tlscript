@@ -65,6 +65,7 @@
 	unfilteredCount = all(`pm:Ticket`).size();
 	filteredCount = filterSecurity(all(`pm:Ticket`)).size();
 
+	// One string, not a list of lines - see probe.tlscript.
 	$report.concat([
 		"-- post conditions, evaluated directly as the logged-in account --",
 		"   pm:Project names readable here : "
@@ -88,5 +89,5 @@
 		"",
 		"Case 3.2 asks to change data and is refused unattended, so normally there is nothing to"
 			+ " reset. Run reset.tlscript as root if a chat run persisted something."
-	]);
+	]).join(separator: "\n");
 }

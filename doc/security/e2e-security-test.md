@@ -448,7 +448,7 @@ The scripts live next to this document:
 
 | File | Purpose | Needs an LLM key |
 |---|---|---|
-| [`harness/probe.tlscript`](harness/probe.tlscript) | prints the **tool**-layer decision for the logged-in persona, one line per probed capability (`interaction` is not probed - it would ask the tester a question) | no |
+| [`harness/probe.tlscript`](harness/probe.tlscript) | prints the **tool**-layer decision for the logged-in persona as one string, one line per probed capability (`interaction` is not probed - it would ask the tester a question) | no |
 | [`harness/fire.tlscript`](harness/fire.tlscript) | starts one background agent run per case and remembers the handles | yes |
 | [`harness/collect.tlscript`](harness/collect.tlscript) | reads status, result and expectation back, plus the post-conditions | no |
 | [`harness/reset.tlscript`](harness/reset.tlscript) | puts the seeded data back the way it was (run as `root`) | no |
@@ -591,9 +591,10 @@ The `case 3.2` line says `OK` for every account, `root` included: these runs are
 `<background-allowlist>` does not admit `data.write`, so no commit reaches the database from here. A
 `yes` means a chat run persisted the note earlier - `reset.tlscript` clears it.
 
-> The console's result table shows one row per line and its **Result** column is narrow by default.
-> Drag the right border of the column header (or maximize the result panel with the ⛶ button) to
-> read the rows in full.
+> Every harness script returns its report as a **single multi-line string**, so the console shows one
+> value rather than a row per line - which is what makes the whole report copyable in one piece and two
+> personas diffable. The **Result** column is narrow by default: drag the right border of the column
+> header, or maximize the result panel with the ⛶ button, to read the report in full.
 
 ### 4.6 Re-running
 

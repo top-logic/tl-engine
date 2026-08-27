@@ -2,7 +2,9 @@
 // Agent security test bed - TOOL LAYER PROBE
 //
 // Prints the tool-layer decision for the account you are logged in as, one
-// line per capability, in about a second. NO LLM API KEY IS NEEDED: aiCallTool
+// line per capability, in about a second. The result is a single multi-line
+// string, so the console hands it over in one piece and two personas can be
+// diffed by copying one value each. NO LLM API KEY IS NEEDED: aiCallTool
 // dispatches a tool directly and the permission check happens before any model
 // call.
 //
@@ -74,8 +76,8 @@
 	report = $probes.map(p -> {
 		result = aiCallTool($p[1], $p[2]);
 		denied = $result.stringStartsWith("Error invoking tool");
-		// One line per probe, so the console's row-per-line table stays readable;
-		// long tool results are cut rather than wrapped.
+		// One line per probe, so the joined report below stays readable; long
+		// tool results are cut rather than wrapped.
 		summary = $result.split("\n").firstElement();
 
 		"  " + ($denied ? "DENIED " : "ALLOWED") + "  " + $p[0]
@@ -84,6 +86,8 @@
 				: $summary);
 	});
 
+	// One string, not a list of lines: the console then hands the whole report
+	// over in a single copy, which is what makes diffing two personas practical.
 	[
 		"-- agent security test bed: tool layer, as '" + $me + "' --",
 		$me == "root"
@@ -97,5 +101,5 @@
 		"",
 		"Log in as another persona and run this again; the diff between the two",
 		"outputs is what the fixture exists to show."
-	]);
+	]).join(separator: "\n");
 }

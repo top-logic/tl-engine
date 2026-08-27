@@ -170,6 +170,7 @@
 	fired = $selected.map(c -> [$c[0], $c[1], $c[2], $c[3], aiAgentChatAsync($agentName, $c[2])]);
 	$fired.storeInSession(key: $handleKey);
 
+	// One string, not a list of lines - see probe.tlscript.
 	[
 		"Started " + $fired.size() + " agent run(s) as '" + $me + "' on agent '" + $agentName + "'.",
 		$me == "root"
@@ -184,5 +185,5 @@
 		"",
 		"Now wait until the runs have finished, then execute collect.tlscript",
 		"in this same browser session."
-	]);
+	]).join(separator: "\n");
 }

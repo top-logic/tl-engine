@@ -835,7 +835,7 @@ all(`pm:Project`).map(p -> toString($p))                   // every label, by de
 
 Three places say so, so that an agent meets it wherever it enters: the `TL_tlScriptWriting` skill, the
 `executeTLScript` tool description, and rows **D7** / **D8** of
-[testbed.md](testbed.md#43-read-filtering---what-a-permitted-tool-then-discloses-issue-289), which
+[testbed.md](testbed.md#53-read-filtering---what-a-permitted-tool-then-discloses-issue-289), which
 assert both halves against the running fixture. The blunt control, for an account that must learn
 neither a label nor a count, is to withhold the `script` capability - it is not in the default baseline
 for this reason among others.
@@ -1088,7 +1088,7 @@ addition to whatever the tools already paid; the guard is deliberately not the p
 
 **Tested by** `TestPreCommitGuard` and the transaction cases of `TestAgentLoop` in `tl-ai-core`, and
 `SecDemoPreCommitGuardTest` against a real fixture boot - see
-[testbed.md](testbed.md#48-the-pre-commit-guard---what-catches-an-uncooperative-tool).
+[testbed.md](testbed.md#56-the-pre-commit-guard-l4).
 
 ### 3.6 L5 - Output / reference guard
 

@@ -23,13 +23,12 @@
 // <background-allowlist> caps them - and committing through TL-Script costs
 // "data.write", which the demo policy deliberately keeps off that list. Every
 // case below that asks for a commit is therefore refused here whatever the
-// persona holds, root included (testbed.md, scenario A5). To watch a commit
-// succeed, use a foreground surface: the chat, or
-//
-//   aiCallTool("script-exec.executeTLScript",
-//       {"script": "new(`pm:Ticket`)", "withCommit": true})
-//
-// in this console as anna (testbed.md, scenario T9).
+// persona holds, root included (testbed.md, scenarios A1 - A3). To watch a
+// commit succeed, use the chat - or this console as "root" with the "execute
+// and save changes" button (testbed.md, scenario T4). NOT as a persona: the
+// plain "execute" button evaluates inside KnowledgeBase.withoutModifications,
+// and the personas hold only Read on the console, so no persona commits
+// anything from here whatever the policy grants.
 // ===========================================================================
 {
 	// -- configuration ----------------------------------------------------
@@ -135,7 +134,7 @@
 			"DENIED at the TOOL layer - Ben holds no 'data.write', so the agent never reaches the"
 				+ " model rights. It must say which capability is missing. Note that no framework"
 				+ " agent carries this tool either, so the answer may instead be that the tool is not"
-				+ " carried by this agent - which is testbed.md scenario C7 working, and equally true."
+				+ " carried by this agent - which is testbed.md scenario C4 working, and equally true."
 		],
 		[
 			"T2", "anna",

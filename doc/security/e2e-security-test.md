@@ -41,7 +41,7 @@ A dedicated example model plus a minimal role system, all behind one opt-in swit
 | Types | `pm:Project {name, partners, tickets}`, `pm:Ticket {title, body}` |
 | Roles | `projectPartner`, `ticketReader` - **two**, both named in both grant tables |
 | Groups | `projectPartners`, `ticketReaders` |
-| Accounts | `anna`, `ben`, `cara`, `dora` - see [testbed.md](testbed.md#3-the-persona-matrix) |
+| Accounts | `anna`, `ben`, `cara`, `dora` - see [testbed.md](testbed.md#3-the-personas) |
 | Password | `Sec-Demo-1` (all accounts; configurable, see below) |
 | Seed data | 2 `Project`s (Alpha with 2 tickets, Beta with 1) |
 | Visible UI | the **Albert** tab (the agent chat) and the **Script console**, for both roles |
@@ -63,7 +63,7 @@ Three properties of that table carry most of this document:
   has passed, so a ticket reader gets the ticket, gets its `title`, and `body` is simply absent.
 - **The table alone decides nothing per object.** "Whether this account holds `projectPartner`" is
   answered on the object being touched, which is what the aspect's **role rules** produce - see
-  [testbed.md](testbed.md#13-the-five-rules-in-one-table). A role held on the security root satisfies
+  [testbed.md](testbed.md#12-the-hinge). A role held on the security root satisfies
   the *tool* layer and grants no data access at all.
 
 Administrators bypass all of it, which is the intended baseline.
@@ -259,7 +259,7 @@ message naming it - an empty application is never the result of a typo.
 ### 2.4 Logins
 
 The two this walkthrough uses; the full matrix is in
-[testbed.md](testbed.md#3-the-persona-matrix).
+[testbed.md](testbed.md#3-the-personas).
 
 | Login | Password | Roles, and where | Sees |
 |---|---|---|---|
@@ -305,15 +305,15 @@ To run these cases from TL-Script instead of typing them into the chat, see
 > run's rights. What differs is what each shows. TL-Script shows the engine's answer directly - an empty
 > list, a refused create. The data tools show what an agent is *told* - a `totalCount` that follows the
 > filter, an absent attribute, a "not found" for an object that exists. The cases below use TL-Script,
-> and [testbed.md](testbed.md#43-read-filtering---what-a-permitted-tool-then-discloses-issue-289) section
-> 4.3 is the same layer through the tools. If the agent answers from a tool you did not ask for, say
+> and [testbed.md](testbed.md#53-read-filtering---what-a-permitted-tool-then-discloses-issue-289) section
+> 5.3 is the same layer through the tools. If the agent answers from a tool you did not ask for, say
 > *"do that with the TL-Script tool"* and repeat.
 
 > **The cases that write need the chat, not the background harness.** Committing through TL-Script
 > requires the `data.write` capability on top of `script`, and `data.write` is deliberately off the
 > demo's `<background-allowlist>`. The runs of [section 4](#4-running-the-cases-as-background-agent-runs-from-tl-script)
 > are unattended, so every commit is refused there before the model rights are consulted - as intended,
-> see [testbed.md](testbed.md#47-unattended-runs---the-background-allowlist) scenario **A3**. Read cases
+> see [testbed.md](testbed.md#55-unattended-runs---the-background-allowlist) scenario **A2**. Read cases
 > behave identically on both surfaces.
 
 ### 3.1 `anna` - the scope, per object
@@ -408,7 +408,7 @@ To run these cases from TL-Script instead of typing them into the chat, see
 | **Prompts** | run `probe.tlscript`, then 3.1 |
 | **Expect** | the same probe decisions as `anna` - the read capabilities `ALLOWED`, the ones no persona role holds `DENIED` - differing only in what the allowed calls return, `totalCount 0` where hers says 1. Then an **empty** result. |
 | **Why** | She holds `projectPartner` on the security root and partners on no project. So she has every read and write tool, and there is no object any of them may touch. **Nothing in the answer tells her that projects exist.** |
-| **The point** | This is the drift the tier/scope split makes possible - two assignments that can disagree - and it argues for the boot-time warning of issue #289, not for a different architecture. See [testbed.md](testbed.md#3-the-persona-matrix). |
+| **The point** | This is the drift the tier/scope split makes possible - two assignments that can disagree - and it argues for the boot-time warning of issue #289, not for a different architecture. See [testbed.md](testbed.md#3-the-personas). |
 
 ### 3.11 Nobody deletes anything
 
@@ -456,7 +456,7 @@ The scripts live next to this document:
 `fire.tlscript` also carries four tool-layer cases (`T1` to `T4`) that ask a persona for something it
 lacks the capability for, and are judged on whether the agent **names** the missing capability. The
 deterministic version of those assertions is the `SecDemo*` JUnit suite; see
-[testbed.md](testbed.md#6-the-deterministic-backbone).
+[testbed.md](testbed.md#7-the-deterministic-backbone).
 
 ### 4.1 Why the agent runs as the calling user
 
@@ -504,8 +504,12 @@ no role holds a command group on any view, and the console is invisible.
 
 Only `Read` is granted. That covers opening the console and its **execute** button; the
 **execute and save changes** button is bound to the `Write` command group and stays disabled for the
-demo accounts (its tooltip says *"(Keine Berechtigung)"*). The agent runs the harness starts are not
-affected - they write in their own transaction on the background thread.
+demo accounts (its tooltip says *"(Keine Berechtigung)"*). **So no expression a persona runs in the
+console can persist anything**, and neither can a tool it reaches through `aiCallTool`: the plain
+**execute** button evaluates inside `KnowledgeBase.withoutModifications(...)`, so a write that the
+policy and the model rights both allowed still ends in the engine's `Illegal modification access` - see
+[6.1](#61-driving-it-from-the-script-console). The agent runs the harness starts are not affected -
+they write in their own transaction on the background thread.
 
 > **This deliberately gives a non-administrator role the ability to execute arbitrary TL-Script.**
 > That is the point: the test asserts that model access rights hold even for a user who can write
@@ -584,7 +588,7 @@ proves nothing.
 The last line is the boundary of the read-filtering guarantee (**issue #291**): a count computed inside
 a script is a number by the time any filter sees it, so `unfiltered count 3` is what `anna` gets even
 though she may read two of the three tickets. That is accepted and documented, not a finding - see
-[testbed.md](testbed.md#43-read-filtering---what-a-permitted-tool-then-discloses-issue-289) scenario
+[testbed.md](testbed.md#53-read-filtering---what-a-permitted-tool-then-discloses-issue-289) scenario
 **D6**.
 
 The `case 3.2` line says `OK` for every account, `root` included: these runs are unattended and the
@@ -649,7 +653,7 @@ at all. A role can hold the TL-Script tool and be denied every object it asks fo
 data rights and no tool to reach them with.
 
 The aspect configures a `<tool-access>` for the **two** roles of the fixture, described in full in
-[testbed.md](testbed.md#3-the-persona-matrix):
+[testbed.md](testbed.md#3-the-personas):
 
 | | `ticketReader` | `projectPartner` |
 |---|---|---|
@@ -674,20 +678,30 @@ you want to see what this layer *can* decide, that is the row to run in both dir
 ### 6.1 Driving it from the Script console
 
 No LLM key is needed: `aiCallTool` dispatches a tool directly and the permission check happens before
-any model call. Log in, open *Administration → Development → Script Konsole*, and run one line.
+any model call. Log in, open *Administration → Development → Script Konsole*, and run one line with the
+plain **execute** button.
+
+> ⚠️ **The plain execute button is read-only, so no persona commits anything here.** It evaluates inside
+> `KnowledgeBase.withoutModifications(...)`, and the personas hold only `Read` on the console, so
+> **execute and save changes** is disabled for them. The rows below therefore end in a *tool-layer*
+> refusal, or in the console's own `Illegal modification access` once the tool layer and the model rights
+> have both allowed the call - which is the ALLOWED signal here. See
+> [testbed.md](testbed.md#4-the-four-harness-scripts) for the three messages and which layer produces
+> each, and its scenarios **T2** - **T6** for the same rows with the reasoning.
 
 | Login | Expression | Expect |
 |---|---|---|
-| `ben` | `aiCallTool("secdemo-editing.addTicket", {"project": "<Alpha's TID>", "title": "x"})` | ❌ **DENIED** - `Permission denied: tool 'secdemo-editing.addTicket' requires the 'data.write' capability, which none of your roles grants.` |
-| `anna` | the same expression | ✅ **ALLOWED** - a new ticket. Clean up with `reset.tlscript` |
+| `ben` | `aiCallTool("secdemo-editing.addTicket", {"project": "<Alpha's TID>", "title": "x"})` | ❌ **DENIED at L1** - `Permission denied: tool 'secdemo-editing.addTicket' requires the 'data.write' capability, which none of your roles grants.` |
+| `anna` | the same expression | **ALLOWED by both L1 and L2**, then `Error executing tool: Illegal modification access. Currently no changes are allowed.` - the console, not the policy. With **Beta's** TID she gets `Object with TID '...' not found` instead, because L2 does not let her see that project |
 | either | `aiCallTool("model-modification.createClass", null)` | ❌ **DENIED** - `requires the 'model.structure' capability`. Deny-by-default: no role is granted that privileged group, and no `<deny>` was needed |
-| either | `aiCallTool("mcp__anything__doThing", null)` | ❌ **DENIED** - `belongs to no tool group and has no explicit grant`. A tool nobody classified is denied to everyone |
-| `ben` | ``aiCallTool("script-exec.executeTLScript", {"script": "new(`pm:Ticket`)..set(`pm:Ticket#title`, \"x\")", "withCommit": true})`` | ❌ **DENIED** - `executing TL-Script with withCommit=true requires the 'data.write' capability, which none of your roles grants.` The same call with `"withCommit": false` succeeds |
-| `anna` | the same expression | ✅ **ALLOWED** - a ticket is created. She holds `data.write`; clean up with `reset.tlscript` |
-| `root` | any of the above | ✅ **ALLOWED** - administrators bypass the tool layer exactly as they bypass the model rights |
+| either | `aiCallTool("secdemo-unclassified.countTicketsUnclassified", null)` | ❌ **DENIED** - `belongs to no tool group and has no explicit grant`. A tool nobody classified is denied to everyone. A name nothing *registers* is a different answer: `Error: Tool '...' not found` |
+| `ben` | ``aiCallTool("script-exec.executeTLScript", {"script": "new(`pm:Ticket`)..set(`pm:Ticket#title`, \"x\")", "withCommit": true})`` | ❌ **DENIED at L1** - `executing TL-Script with withCommit=true requires the 'data.write' capability, which none of your roles grants.` The same call with `"withCommit": false` succeeds |
+| `anna` | the same expression | **ALLOWED at L1** - and then `This context '...ImmutableDBContext@...' can not be committed`, the console again |
+| `root` | the two read-only rows | ✅ **ALLOWED** - administrators bypass the tool layer exactly as they bypass the model rights. The two write rows reach `Illegal modification access` for him too, until he presses **execute and save changes** - which is the only way a write lands from this surface. Clean up with `reset.tlscript` |
 
 The reader/editor pair on the *same* expression in the *same* application is the point: the only thing
-that differs is which role the account holds.
+that differs is which role the account holds, and Ben's refusal names a capability where Anna's names
+none.
 
 ### 6.2 Reading the boot log and the audit log
 
@@ -765,7 +779,7 @@ Administrator-facing documentation for writing such a policy in your own applica
   wrote, which is what covers a tool that ran *no* check of its own. Not exercised by the walkthrough
   here - a TL-Script tool always checks, so there is nothing for the guard to catch on this surface -
   but covered deterministically by `SecDemoPreCommitGuardTest` and described in
-  [testbed.md](testbed.md#48-the-pre-commit-guard---what-catches-an-uncooperative-tool).
+  [testbed.md](testbed.md#56-the-pre-commit-guard-l4).
 
 - **Result read-filtering in the data tools** (issue **#289**): `listInstances` and `getInstance` now
   consult the same model rights TL-Script does, through the one `ReadFilter` every

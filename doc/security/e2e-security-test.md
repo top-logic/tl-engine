@@ -448,7 +448,7 @@ The scripts live next to this document:
 
 | File | Purpose | Needs an LLM key |
 |---|---|---|
-| [`harness/probe.tlscript`](harness/probe.tlscript) | prints the **tool**-layer decision for the logged-in persona, one line per capability | no |
+| [`harness/probe.tlscript`](harness/probe.tlscript) | prints the **tool**-layer decision for the logged-in persona, one line per probed capability (`interaction` is not probed - it would ask the tester a question) | no |
 | [`harness/fire.tlscript`](harness/fire.tlscript) | starts one background agent run per case and remembers the handles | yes |
 | [`harness/collect.tlscript`](harness/collect.tlscript) | reads status, result and expectation back, plus the post-conditions | no |
 | [`harness/reset.tlscript`](harness/reset.tlscript) | puts the seeded data back the way it was (run as `root`) | no |

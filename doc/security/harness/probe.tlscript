@@ -35,14 +35,11 @@
 	// ones nobody is granted, plus the classified/unclassified script tool pair,
 	// plus the pair of counts that shows where read filtering stops. Every one of
 	// them is harmless: no entry here writes.
-	// One caveat, for the two lines that do something when they are ALLOWED:
-	// askUser has no interaction surface in the console and returns an empty
-	// string rather than waiting for anybody; webFetch really does fetch, so
-	// running this as "root" (which bypasses the policy) makes one outbound
-	// request to example.com. Every other probe is a local read.
+	// One caveat, for the single line that does something when it is ALLOWED:
+	// webFetch really does fetch, so running this as "root" (which bypasses the
+	// policy) makes one outbound request to example.com. Every other probe is a
+	// local read.
 	probes = [
-		["interaction     (implicit, granted to everyone)", "user-interaction.askUser",
-			{"question": "probe", "header": "Probe", "type": "text"}],
 		["model.read", "model-browser.listModules", null],
 		["data.read       (tickets: filtered per object, see the count)",
 			"model-instances.listInstances",

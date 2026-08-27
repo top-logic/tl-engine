@@ -73,9 +73,21 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 	/** A framework skill {@code TL_SingleAgent} does not declare - {@code TL_Orchestrator} does. */
 	private static final String FOREIGN_SKILL = "TL_promptModelEditor";
 
-	/** The sentence that closes every message naming a capability, or deliberately naming none. */
+	/**
+	 * The sentence that closes every message naming a capability, or deliberately naming none.
+	 *
+	 * <p>
+	 * Spelled out here rather than read from {@code AgentCapabilities.NO_GUESSING}, so that changing
+	 * the constant fails this test: the wording is the fix, not an implementation detail. It has to
+	 * name the message's own <em>subject</em> - the first version said only "do not attribute this to a
+	 * capability unless this message names one", and the withheld-skill message does name capabilities,
+	 * correctly, for the skill it refused. That was enough for the model to relay them as the reason a
+	 * different tool was unreachable. See {@code doc/security/testbed.md} rows C3/C4.
+	 * </p>
+	 */
 	private static final String NO_GUESSING =
-		"Do not attribute this to a capability unless this message names one.";
+		"These capabilities explain only this skill. Do not present them as the reason any other tool"
+			+ " or skill is unreachable, and do not name a capability this message does not name.";
 
 	/** Every capability the fixture's policy knows, for the "names nothing else" assertions. */
 	private static final List<String> FIXTURE_CAPABILITIES = List.of(ToolGroups.MODEL_READ,
@@ -116,6 +128,27 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 		assertFalse("Anna holds data.write, so naming it would be provably false: " + message,
 			message.contains("`" + ToolGroups.DATA_WRITE + "`"));
 		assertTrue(message, message.contains(NO_GUESSING));
+	}
+
+	/**
+	 * ...and says which subject those capabilities belong to.
+	 *
+	 * <p>
+	 * The sentence C3/C4 were missing. The model was told "do not attribute this to a capability unless
+	 * this message names one", relayed a message that <em>did</em> name two, and the user read them as
+	 * the reason the tool they had asked about was unreachable. Naming the subject is what makes the
+	 * relay honest.
+	 * </p>
+	 */
+	public void testTheRefusalScopesItsCapabilitiesToTheSkill() {
+		String message = loadSkillAs(ANNA, AUTHORING_SKILL);
+
+		assertTrue("The names must be scoped to the skill they explain: " + message,
+			message.contains("explain only this skill"));
+		assertTrue("...and must be forbidden as the reason for anything else: " + message,
+			message.contains("any other tool or skill"));
+		assertTrue("The wording is the fix and must not drift: " + message,
+			message.contains(NO_GUESSING));
 	}
 
 	/** An attended chat run must not be explained as an unattended one. */

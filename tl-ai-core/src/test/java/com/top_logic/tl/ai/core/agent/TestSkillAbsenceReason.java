@@ -99,6 +99,26 @@ public class TestSkillAbsenceReason extends TestCase {
 			AgentCapabilities.NO_GUESSING));
 	}
 
+	/**
+	 * ...and scopes those capabilities to the skill, which is the whole of the fix.
+	 *
+	 * <p>
+	 * The wording is pinned literally, not read from the constant: the first version said only "do not
+	 * attribute this to a capability unless this message names one", and the message it closes
+	 * <em>does</em> name capabilities - correctly, for the skill it refused. That was enough for the
+	 * model, routed to {@code loadSkill("TL_agenticAuthoring")} by its prompt, to relay them as the
+	 * reason a tool the user had named was unreachable. See {@code doc/security/testbed.md} rows
+	 * C3/C4.
+	 * </p>
+	 */
+	public void testTheGuessIsForbiddenForTheOtherSubjectsToo() {
+		assertEquals("The scoping wording must not drift.",
+			"These capabilities explain only this skill. Do not present them as the reason any other"
+				+ " tool or skill is unreachable, and do not name a capability this message does not"
+				+ " name.",
+			AgentCapabilities.NO_GUESSING);
+	}
+
 	/** An attended run must not be explained as an unattended one. */
 	public void testWithheldSkillDoesNotBlameTheRun() {
 		assertFalse(loadSkill(readOnlyPrincipal(), WITHHELD_SKILL).contains("unattended"));

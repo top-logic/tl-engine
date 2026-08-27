@@ -130,9 +130,21 @@ public class AgentCapabilities {
 	 * itself and then leaves the model free to add a cause of its own has not fixed the guessing. This
 	 * is prompt text, not a control - the gate is unaffected by whether the model obeys it.
 	 * </p>
+	 *
+	 * <p>
+	 * <b>Scoped to the message's own subject</b>, which the first version was not. It said only "do not
+	 * attribute this to a capability unless this message names one", and the withheld-skill message
+	 * <em>does</em> name capabilities - correctly, for the skill it refused. Asked about a tool no agent
+	 * carries, the model was routed to {@code loadSkill("TL_agenticAuthoring")} first, got that
+	 * message, obeyed "relay it", and the user read {@code agent.meta} / {@code agent.authoring} as the
+	 * reason the tool they asked about was unreachable. Nothing untrue had been emitted; what was
+	 * missing was the sentence saying which subject the names belong to. See
+	 * {@code doc/security/testbed.md} rows C3/C4.
+	 * </p>
 	 */
 	static final String NO_GUESSING =
-		"Do not attribute this to a capability unless this message names one.";
+		"These capabilities explain only this skill. Do not present them as the reason any other tool"
+			+ " or skill is unreachable, and do not name a capability this message does not name.";
 
 	private final Function<String, Tool> _toolResolver;
 

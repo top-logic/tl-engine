@@ -2,7 +2,7 @@
 
 <!--
 	Werkzeug-Katalog: every registered tool joined with the policy in effect.
-
+	
 	Every cell is a string on purpose - the table's own filters then work on what the reader sees,
 	which is where the search, the group filter and the "only unclassified" filter of the concept
 	come from: the filter of the "Gruppe" column offers every group plus the "KEINE GRUPPE" entry.
@@ -13,7 +13,7 @@
 >
 	<tabInfo label="admin.ai.agentSecurity.catalog.tabber"/>
 	<components>
-		<component class="com.top_logic.layout.table.component.TableComponent"
+		<component class="com.top_logic.tl.ai.core.security.layout.ToolCatalogComponent"
 			modelBuilder="com.top_logic.tl.ai.core.security.layout.ToolCatalogModelBuilder"
 			name="aiToolCatalogTable"
 			resPrefix="admin.ai.agentSecurity.catalog."

@@ -45,6 +45,7 @@ import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.EffectiveToolAccess;
 import com.top_logic.tl.ai.core.security.EffectiveToolAccess.CapabilityAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.util.Resources;
@@ -72,9 +73,11 @@ import com.top_logic.util.Resources;
  * Shows what one account or role may call, and which rule of the policy decided.
  *
  * <p>
- * Read-only. The policy itself is configured in the tool access service.
+ * Read-only, and the one view that answers for the <em>running</em> service: what is saved but not yet
+ * in effect is not shown here. The policy itself is written on the Richtlinie tab.
  * </p>
  *
+ * @see ToolAccessPolicyComponent
  * @see ToolCatalogModelBuilder
  */
 public class EffectiveToolAccessComponent extends FormComponent implements ControlRepresentable {
@@ -107,6 +110,9 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 	private boolean _background;
 
 	private Control _renderingControl;
+
+	/** The policy the rows were computed from, to notice a service restart. */
+	private ToolAccessPolicy _shownPolicy;
 
 	/** The line naming the roles the chosen subject holds; repainted when the subject changes. */
 	private DynamicFragment _subjectInfo;
@@ -159,6 +165,30 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 		}
 		if (_footer != null) {
 			_footer.requestRepaint();
+		}
+	}
+
+	/**
+	 * Recomputes the answer when the policy the running service applies has changed.
+	 *
+	 * <p>
+	 * The rows are a snapshot, and the policy that service applies changes while this view exists - the
+	 * Richtlinie tab restarts the service. Without this, an administrator who applies a change, restarts
+	 * the service and comes back here reads the answer from before the restart, which is the one thing
+	 * this view must never show. Conditional rather than unconditional so that switching tabs does not
+	 * collapse the rows a reader had expanded.
+	 * </p>
+	 */
+	@Override
+	protected void becomingVisible() {
+		super.becomingVisible();
+		ToolAccessPolicy running = AiToolAccessService.Module.INSTANCE.isActive()
+			? AiToolAccessService.policy() : null;
+		if (_shownPolicy != running) {
+			// Identity, not equality: restarting the service is what replaces the item, and a policy
+			// that was rewritten to the same content answers the same way anyway.
+			_shownPolicy = running;
+			rebuild();
 		}
 	}
 

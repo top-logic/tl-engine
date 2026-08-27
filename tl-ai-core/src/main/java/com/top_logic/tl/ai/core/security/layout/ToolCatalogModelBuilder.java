@@ -9,11 +9,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAuthorization;
 import com.top_logic.tl.ai.core.security.ToolIdentity;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -29,8 +31,11 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * </p>
  *
  * <p>
- * Reads the running service, and yields no row while it is down: a catalog that showed tools without
- * their policy would answer the one question it exists for with a blank column.
+ * Reads the <em>saved</em> policy - what the configuration files say, which is what the next start
+ * applies. The policy tab is where that policy is written and this is where it is read, so the two
+ * agree; the effective-permissions view is the one that answers for the running service, and while the
+ * two differ the policy tab says so. Yields no row while the service is down: a catalog that showed
+ * tools without their policy would answer the one question it exists for with a blank column.
  * </p>
  *
  * @see ToolCatalogAccessor
@@ -50,8 +55,11 @@ public class ToolCatalogModelBuilder implements ListModelBuilder {
 			|| !ToolRegistryService.Module.INSTANCE.isActive()) {
 			return List.of();
 		}
-		AiToolAccessService service = AiToolAccessService.getInstance();
-		RoleToolAccess access = service.getAccess();
+		ToolAccessPolicy policy = AiToolAccessService.savedPolicy();
+		if (policy == null) {
+			return List.of();
+		}
+		RoleToolAccess access = AiToolAccessService.evaluate(policy);
 		ToolAuthorization.Identities identities = AiToolAccessService.identities();
 
 		List<ToolCatalogEntry> rows = new ArrayList<>();
@@ -62,8 +70,8 @@ public class ToolCatalogModelBuilder implements ListModelBuilder {
 				tool.description() == null ? "" : tool.description(),
 				access.groupOf(identity),
 				access.groupSourceOf(identity),
-				service.rolesReaching(identity),
-				service.baselineReaches(identity)));
+				AiToolAccessService.rolesReaching(policy, access, identity),
+				access.explain(Set.of(), identity).allowed()));
 		}
 		// Ungrouped tools first: they are the state an administrator has to act on, and a warning that
 		// needs scrolling to is a warning nobody sees. The rest by group, then by name, so that "which

@@ -53,10 +53,18 @@ import com.top_logic.util.Resources;
 public class ConfigFormControl extends ReactFormLayoutControl {
 
 	/**
-	 * The CSS class of {@link #_formError}: the very class the React form field's own error area
-	 * carries, so a form-level refusal is styled like the field-level errors it accompanies.
+	 * The CSS classes of {@link #_formError}.
+	 *
+	 * <p>
+	 * {@code tlFormField__error} is the very class the React form field's own error area carries,
+	 * so a form-level refusal is styled like the field-level errors it accompanies.
+	 * {@code tlFormLayout__formError} is what puts it on a row of its own: a form lays its children
+	 * out in columns sized for fields, so without it the message is auto-placed beside whatever
+	 * stands in that row - and beside an editor taller than the viewport, it is stretched to that
+	 * height and its text pinned to the top of it, out of sight of the button that produced it.
+	 * </p>
 	 */
-	private static final String FORM_ERROR_CSS_CLASS = "tlFormField__error";
+	private static final String FORM_ERROR_CSS_CLASS = "tlFormField__error tlFormLayout__formError";
 
 	/**
 	 * The ARIA role of {@link #_formError}: the same {@code alert} the React form field and panel

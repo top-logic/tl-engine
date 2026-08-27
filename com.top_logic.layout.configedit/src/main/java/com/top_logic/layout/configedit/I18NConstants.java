@@ -55,6 +55,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_CANNOT_APPLY;
 
+	/**
+	 * @en The configuration cannot be applied because an entry could not be read.
+	 */
+	public static ResKey ERROR_INPUT_NOT_READABLE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

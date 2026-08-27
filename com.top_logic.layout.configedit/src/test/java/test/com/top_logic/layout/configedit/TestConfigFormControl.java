@@ -17,12 +17,15 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.constraint.annotation.Comparision;
+import com.top_logic.basic.config.constraint.annotation.ComparisonDependency;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -178,6 +181,84 @@ public class TestConfigFormControl extends TestCase {
 		@Name(INNER)
 		@ItemDefault
 		ListEntry getInner();
+	}
+
+	/** The item {@link CrossRefConfig}'s constraint reaches into. */
+	public interface LimitConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getMax()}. */
+		String MAX = "max";
+
+		@Name(MAX)
+		int getMax();
+
+		/** @see #getMax() */
+		void setMax(int value);
+	}
+
+	/**
+	 * A configuration whose constraint flags two fields at once, in two different items - the shape
+	 * in which fixing one end has to be enough, since the other end's error was never the user's to
+	 * clear.
+	 */
+	public interface CrossRefConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getLimit()}. */
+		String LIMIT = "limit";
+
+		/** Property name for {@link #getAmount()}. */
+		String AMOUNT = "amount";
+
+		@Name(LIMIT)
+		@ItemDefault
+		LimitConfig getLimit();
+
+		@Name(AMOUNT)
+		@ComparisonDependency(comparison = Comparision.SMALLER_OR_EQUAL, other = @Ref({ LIMIT, LimitConfig.MAX }))
+		int getAmount();
+
+		/** @see #getAmount() */
+		void setAmount(int value);
+	}
+
+	/**
+	 * A {@link CrossRefConfig} that also refuses Apply for a reason no field can show, so the form
+	 * stays open across several attempts and what the fields carry between them can be observed.
+	 */
+	public interface CrossRefWithHiddenConfig extends CrossRefConfig {
+
+		/** Property name for {@link #getSecret()}. */
+		String SECRET = "secret";
+
+		@Name(SECRET)
+		@Mandatory
+		@Hidden
+		String getSecret();
+	}
+
+	/** An entry whose own property can reject what is typed into it. */
+	public interface FormatEntry extends ConfigurationItem {
+
+		/** Property name for {@link #getTimeout()}. */
+		String TIMEOUT = "timeout";
+
+		@Name(TIMEOUT)
+		@Format(MillisFormat.class)
+		@LongDefault(0L)
+		long getTimeout();
+
+		/** @see #getTimeout() */
+		void setTimeout(long value);
+	}
+
+	/** A configuration holding {@link FormatEntry}s, for the removed-entry tests. */
+	public interface FormatEntriesConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getEntries()}. */
+		String ENTRIES = "entries";
+
+		@Name(ENTRIES)
+		java.util.List<FormatEntry> getEntries();
 	}
 
 	/** Marker interface for the polymorphic handler implementations, for the type-selector tests. */
@@ -407,13 +488,27 @@ public class TestConfigFormControl extends TestCase {
 	 * such line (view mode, or no edit mode at all).
 	 */
 	private String formErrorText(TestableConfigFormControl form) {
+		ReactTextControl line = formErrorControl(form);
+		return line == null ? null : (String) line.scriptingScalarState().get("text");
+	}
+
+	/** The form-level message line itself, or {@code null} if the form has none. */
+	private ReactTextControl formErrorControl(TestableConfigFormControl form) {
 		for (ReactControl child : form.children()) {
 			if (child instanceof ReactTextControl text) {
-				return (String) text.scriptingScalarState().get("text");
+				return text;
 			}
 		}
 		return null;
 	}
+
+	/**
+	 * The literal label {@code ConfigListEditorControl#createElementGroup} hardcodes for an entry's
+	 * Remove button - a bare glyph, never resolved through {@link Resources}, so matching it is
+	 * locale-independent by construction, the same reason {@link #findAddButton(ReactControl)}
+	 * matches the {@code "+ "} prefix.
+	 */
+	private static final String REMOVE_BUTTON_LABEL = "\u2715";
 
 	/** Without edit mode the form is the editor, writing straight through. */
 	public void testWithoutEditModeThereAreNoButtons() {
@@ -589,6 +684,105 @@ public class TestConfigFormControl extends TestCase {
 
 		assertEquals("after", config.getName());
 		assertNotNull("Applying returns to view mode.", findButton(form, label(I18NConstants.EDIT)));
+	}
+
+	/**
+	 * A refusal over unreadable input must say so at form level. Silence there is what makes Apply
+	 * look like a button that does nothing.
+	 */
+	public void testTheRefusalOverUnreadableInputIsNotMute() {
+		FormatConfig config = TypedConfiguration.newConfigItem(FormatConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, FormatConfig.TIMEOUT).setValue("5 potatoes");
+
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		assertEquals("The refusal must be readable at form level.",
+			label(I18NConstants.ERROR_INPUT_NOT_READABLE), formErrorText(form));
+	}
+
+	/** And it is announced, not merely displayed. */
+	public void testTheFormLevelMessageIsAnAlert() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		assertEquals("alert", formErrorControl(form).scriptingScalarState().get("role"));
+	}
+
+	/**
+	 * A constraint reaching into another item flags both ends; fixing either one makes the
+	 * configuration valid, and Apply must then go through. The other end's error was placed by this
+	 * control, not by the field, so only this control can take it back - left behind, it turns every
+	 * further Apply into a silent no-op with nothing on screen the user could act on.
+	 */
+	public void testApplyProceedsOnceOneEndOfACrossItemConstraintIsFixed() {
+		CrossRefConfig config = TypedConfiguration.newConfigItem(CrossRefConfig.class);
+		config.setAmount(10);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		click(findButton(form, label(I18NConstants.APPLY)));
+		assertNotNull("Precondition: the constraint flags the checked end.",
+			fieldOf(form, CrossRefConfig.AMOUNT).getError());
+		assertNotNull("Precondition: and the referenced end, inside the other item.",
+			fieldOf(form, LimitConfig.MAX).getError());
+
+		fieldOf(form, LimitConfig.MAX).setValue(Integer.valueOf(20));
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		assertNotNull("Raising the limit makes the configuration valid, so Apply must go through.",
+			findButton(form, label(I18NConstants.EDIT)));
+		assertEquals(20, config.getLimit().getMax());
+	}
+
+	/**
+	 * A violation is shown for exactly as long as it holds. The one at the referenced end of a
+	 * cross-item constraint is not cleared by anything the user does to the field carrying it - it
+	 * stops holding because a <em>different</em> field changed - so only the re-check can take it
+	 * back, and a verdict left standing after its cause is gone is a verdict pointing at nothing.
+	 */
+	public void testAViolationIsNoLongerShownOnceItStopsHolding() {
+		CrossRefWithHiddenConfig config = TypedConfiguration.newConfigItem(CrossRefWithHiddenConfig.class);
+		config.setAmount(10);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		click(findButton(form, label(I18NConstants.APPLY)));
+		assertNotNull("Precondition: the referenced end carries the violation.",
+			fieldOf(form, LimitConfig.MAX).getError());
+
+		fieldOf(form, CrossRefConfig.AMOUNT).setValue(Integer.valueOf(0));
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		assertNotNull("Precondition: the hidden mandatory property still refuses Apply.",
+			findButton(form, label(I18NConstants.APPLY)));
+		assertNull("The constraint holds again, so its violation must be gone from the field.",
+			fieldOf(form, LimitConfig.MAX).getError());
+	}
+
+	/**
+	 * An entry that is removed takes its fields' errors with it. Nothing clears the index between
+	 * an entry being discarded and the next Apply - a refused Apply deliberately does not rebuild -
+	 * so a field left registered for a row that is gone would refuse every further Apply over input
+	 * nobody can reach any more.
+	 */
+	public void testARemovedEntrysRejectedInputNoLongerBlocksApply() {
+		FormatEntriesConfig config = TypedConfiguration.newConfigItem(FormatEntriesConfig.class);
+		config.getEntries().add(TypedConfiguration.newConfigItem(FormatEntry.class));
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, FormatEntry.TIMEOUT).setValue("5 potatoes");
+		click(findButton(form, label(I18NConstants.APPLY)));
+		assertNotNull("Precondition: the unreadable entry refuses Apply.",
+			findButton(form, label(I18NConstants.APPLY)));
+
+		click(findButton(form, REMOVE_BUTTON_LABEL));
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		assertNotNull("With the entry gone, nothing is left to correct and Apply must go through.",
+			findButton(form, label(I18NConstants.EDIT)));
+		assertTrue("The entry was removed.", config.getEntries().isEmpty());
 	}
 
 	/**

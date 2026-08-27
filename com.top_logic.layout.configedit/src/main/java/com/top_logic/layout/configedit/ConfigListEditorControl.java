@@ -444,6 +444,11 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		// ties its own field models to, just anchored on the field's own chrome control instead of
 		// on "this", since a fresh key field (and model) is built on every rebuild() cycle.
 		chrome.addCleanupAction(model::detach);
+		// ... and take the index registration back with it, so a discarded key field (an entry
+		// removed, a pending entry given up on) stops answering for a row that is gone.
+		if (_index != null) {
+			chrome.addCleanupAction(() -> _index.unregister(entry, keyProperty));
+		}
 
 		String tooltip = Resources.getInstance().getString(keyProperty.labelKey(null).tooltip(), null);
 		if (tooltip != null && !tooltip.isEmpty()) {

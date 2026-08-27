@@ -92,6 +92,20 @@ public final class ConfigValidation {
 	 *        The violations to report, typically {@link #check(ConfigurationItem)}'s result.
 	 * @param index
 	 *        The index the editor filled while building its fields.
+	 * <p>
+	 * Reported through {@link ConfigFieldModel#setModelValidationError(ResKey)}, not
+	 * {@link ConfigFieldModel#setError(ResKey)}: a violation is a verdict on the configuration, and
+	 * {@link com.top_logic.layout.form.model.AbstractFieldModel#getInputError() the input error} is
+	 * documented to be the other thing entirely - "not produced by a constraint but by the input
+	 * control", the record that the field could not read what was typed into it. Sharing one slot
+	 * would make the two indistinguishable afterwards, and they must be told apart: a violation is
+	 * taken back before every re-check (see {@link ConfigFieldIndex#clearModelErrors()}), while a
+	 * rejected input is the very thing that must survive to keep Apply from discarding it.
+	 * {@link com.top_logic.layout.form.model.AbstractFieldModel#setRevealed(boolean) Revealing} the
+	 * field goes with it, since pressing Apply is exactly the "attempt to submit" that makes a
+	 * model-level verdict visible.
+	 * </p>
+	 *
 	 * @return Whether every violation found a field to carry it. {@code false} if at least one
 	 *         violation named a property the editor does not render, and was therefore not placed
 	 *         anywhere the user can see.
@@ -103,7 +117,8 @@ public final class ConfigValidation {
 			if (field == null) {
 				complete = false;
 			} else {
-				field.setError(violation.message());
+				field.setModelValidationError(violation.message());
+				field.setRevealed(true);
 			}
 		}
 		return complete;
@@ -179,11 +194,14 @@ public final class ConfigValidation {
 	 *
 	 * <p>
 	 * The kind exclusion comes first, before {@link ConfigurationItem#valueSet(PropertyDescriptor)}
-	 * is consulted at all, and must stay there: {@code valueSet} answers "was {@code update} ever
-	 * called", and for a collection it stays {@code false} however many entries the user adds -
-	 * {@link ConfigCollectionValue} mutates the live collection in place rather than writing it
-	 * back. Checking {@code valueSet} first would therefore report a mandatory collection as
-	 * missing forever.
+	 * is consulted at all, and must stay there. {@code valueSet} answers "was this property ever
+	 * written to", and a collection nobody has touched yet has not been - it reads as unset while
+	 * it is still empty. A {@code valueSet} check ahead of the kind exclusion would therefore
+	 * report every empty mandatory collection as missing, refusing Apply over a property that has
+	 * no field to carry the refusal. Adding an entry does flip it, so it is the empty case the
+	 * ordering is about, not the filled one: a live collection reports its own {@code add} (and
+	 * {@code remove}) back to the owning item, which marks the property set - see
+	 * {@link com.top_logic.basic.config.ConfigurationChange.Kind#ADD}.
 	 * </p>
 	 */
 	private static boolean isMissing(ConfigurationItem item, PropertyDescriptor property) {

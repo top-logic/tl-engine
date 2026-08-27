@@ -132,6 +132,9 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 		if (Objects.equals(oldValue, value)) {
 			return;
 		}
+		// A validation verdict describes the value it was passed. This is a different value, so the
+		// verdict no longer describes anything on display; the next check speaks for the new one.
+		setModelValidationError(null);
 		_config.update(_property, value);
 		// The ConfigurationListener callback (onChange) fires the FieldModelListener notification.
 	}

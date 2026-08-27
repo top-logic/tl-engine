@@ -387,10 +387,20 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * editor built without one pass {@code null}. The check lives here, once, rather than at every
 	 * place a field is built.
 	 * </p>
+	 *
+	 * <p>
+	 * The registration lasts exactly as long as the field does: it is taken back when this editor
+	 * is disposed, on the same {@link #addCleanupAction(Runnable) cleanup} the field model's own
+	 * {@link ConfigFieldModel#detach() detach} rides on. An editor is discarded and rebuilt for
+	 * reasons the {@link ConfigFieldIndex}'s owner never hears about - a
+	 * {@link ConfigListEditorControl} rebuilds on every add, remove and move - so a registration
+	 * that outlived its field would leave the index answering for something no longer on screen.
+	 * </p>
 	 */
 	private void index(ConfigurationItem item, PropertyDescriptor property, ConfigFieldModel model) {
 		if (_index != null) {
 			_index.register(item, property, model);
+			addCleanupAction(() -> _index.unregister(item, property));
 		}
 	}
 

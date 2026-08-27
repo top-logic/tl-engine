@@ -2030,12 +2030,13 @@ const Ae = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(ye, { encoded: l
   const a = t.header, s = t.content, c = t.footer, i = t.snackbar, u = t.dialogManager, r = t.menuOverlay;
   return /* @__PURE__ */ e.createElement("div", { id: l, className: "tlAppShell" }, a && /* @__PURE__ */ e.createElement("div", { className: "tlAppShell__header" }, /* @__PURE__ */ e.createElement(K, { control: a })), /* @__PURE__ */ e.createElement("div", { className: "tlAppShell__content" }, /* @__PURE__ */ e.createElement(K, { control: s })), c && /* @__PURE__ */ e.createElement("div", { className: "tlAppShell__footer" }, /* @__PURE__ */ e.createElement(K, { control: c })), /* @__PURE__ */ e.createElement(K, { control: i }), u && /* @__PURE__ */ e.createElement(K, { control: u }), r && /* @__PURE__ */ e.createElement(K, { control: r }));
 }, la = ({ controlId: l }) => {
-  const t = G(), n = t.text ?? "", a = t.cssClass ?? "", s = t.hasTooltip === !0, c = a ? `tlText ${a}` : "tlText";
+  const t = G(), n = t.text ?? "", a = t.cssClass ?? "", s = t.hasTooltip === !0, c = t.role || void 0, i = a ? `tlText ${a}` : "tlText";
   return /* @__PURE__ */ e.createElement(
     "span",
     {
       id: l,
-      className: c,
+      className: i,
+      role: c,
       "data-tooltip": s ? "key:tooltip" : void 0
     },
     n

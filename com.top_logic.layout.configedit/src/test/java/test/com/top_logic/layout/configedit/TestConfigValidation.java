@@ -263,11 +263,14 @@ public class TestConfigValidation extends TestCase {
 	}
 
 	/**
-	 * And a filled one is not either - the case a {@code valueSet} check ahead of the kind
-	 * exclusion gets wrong, since
-	 * {@link com.top_logic.layout.configedit.ConfigCollectionValue} mutates the live collection in
-	 * place and never calls {@link ConfigurationItem#update(PropertyDescriptor, Object)}.
-	 */
+	 * And a filled one is not either.
+	 *
+	 * <p>
+	 * This holds whichever way round the kind exclusion and the
+	 * {@link ConfigurationItem#valueSet(PropertyDescriptor)} check are asked, since adding an entry
+	 * to a live collection marks the property set. It is here for the rule - a collection is never
+	 * flagged - not for the ordering; the empty case above is what pins that.
+	 * </p>
 	public void testAFilledMandatoryCollectionIsNoViolation() {
 		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
 		config.setPart(TypedConfiguration.newConfigItem(Entry.class));

@@ -116,6 +116,8 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 		}
 
 		setError(null);
+		// A validation verdict describes the value it was passed - see ConfigFieldModel#setValue.
+		setModelValidationError(null);
 		// Write through the configuration API directly (not ConfigFieldModel#setValue): its
 		// redundant-write guard operates in the typed domain and would never fire for this
 		// class, and the value change notification (and this model's cached value) still needs

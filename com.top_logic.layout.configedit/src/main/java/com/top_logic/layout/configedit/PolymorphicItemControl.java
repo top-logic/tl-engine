@@ -66,30 +66,6 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	private final boolean _editable;
 
 	/**
-	 * Creates an editable {@link PolymorphicItemControl}.
-	 *
-	 * <p>
-	 * Editable - see the six-argument constructor for one that is not.
-	 * </p>
-	 *
-	 * @param context
-	 *        The React context.
-	 * @param label
-	 *        The group header label.
-	 * @param parentConfig
-	 *        The parent configuration item owning the property.
-	 * @param property
-	 *        The polymorphic ITEM property descriptor.
-	 * @param editorFactory
-	 *        Factory for creating nested editors (allows test subclass propagation).
-	 */
-	public PolymorphicItemControl(ReactContext context, String label, ConfigurationItem parentConfig,
-			PropertyDescriptor property,
-			BiFunction<ReactContext, ConfigurationItem, ConfigEditorControl> editorFactory) {
-		this(context, label, parentConfig, property, editorFactory, true);
-	}
-
-	/**
 	 * Creates a {@link PolymorphicItemControl}, deciding whether the type selector accepts a
 	 * change.
 	 *

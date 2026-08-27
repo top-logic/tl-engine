@@ -58,6 +58,13 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 */
 	private static final String FORM_ERROR_CSS_CLASS = "tlFormField__error";
 
+	/**
+	 * The ARIA role of {@link #_formError}: the same {@code alert} the React form field and panel
+	 * put on their own error areas, so a refusal that appears without the reader having moved
+	 * anywhere is announced rather than sitting silently on screen.
+	 */
+	private static final String ALERT_ROLE = "alert";
+
 	private final ReactContext _context;
 
 	private final ConfigFormModel _model;
@@ -168,6 +175,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		if (_withEditMode) {
 			if (_model.isEditMode()) {
 				_formError = new ReactTextControl(_context, "", FORM_ERROR_CSS_CLASS);
+				_formError.setRole(ALERT_ROLE);
 				addChild(_formError);
 				addChild(applyButton());
 				addChild(cancelButton());
@@ -185,14 +193,22 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * untouched and this control unrebuilt.
 	 *
 	 * <p>
-	 * Refuses before checking anything at all while a field still rejects what was typed into it:
+	 * Takes back every violation the previous refusal placed before checking anything, via
+	 * {@link ConfigFieldIndex#clearModelErrors()}: a violation still holding is placed again a few
+	 * lines below, one the user has meanwhile fixed is gone. Without that, a violation could
+	 * outlive its own cause - a cross-item constraint is fixed by editing <em>one</em> of the two
+	 * fields it flagged, leaving the other one showing an error nothing will ever clear.
+	 * </p>
+	 *
+	 * <p>
+	 * Refuses before checking while a field still rejects what was typed into it:
 	 * {@link ConfigValidation#check(ConfigurationItem)} inspects the configuration, and a field
 	 * that rejected its raw input never wrote to the configuration in the first place - it keeps
 	 * the rejected text on screen while the item still holds the last accepted value. Applying
 	 * would therefore look clean, leave edit mode, and throw the typed text away without ever
 	 * saying so. The classic declarative form refuses the same way, through
-	 * {@code FormContext#checkAll()}. Nothing is added at form level for this case: every rejected
-	 * input is already displayed at the very field that rejected it.
+	 * {@code FormContext#checkAll()}. That refusal says so at form level too - a refused Apply must
+	 * never look like a button that does nothing, whatever the reason for the refusal.
 	 * </p>
 	 *
 	 * <p>
@@ -205,7 +221,11 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private void apply() {
+		_index.clearModelErrors();
+		setFormError(null);
+
 		if (_index.hasInputError()) {
+			setFormError(I18NConstants.ERROR_INPUT_NOT_READABLE);
 			return;
 		}
 		List<Violation> violations = ConfigValidation.check(_model.edited());
@@ -214,7 +234,6 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 			setFormError(complete ? null : I18NConstants.ERROR_CANNOT_APPLY);
 			return;
 		}
-		setFormError(null);
 		_model.apply();
 	}
 

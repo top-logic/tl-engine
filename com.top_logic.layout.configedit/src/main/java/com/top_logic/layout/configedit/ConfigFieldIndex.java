@@ -70,6 +70,34 @@ public final class ConfigFieldIndex {
 	}
 
 	/**
+	 * Forgets the registration made for the given item and property, if there is one.
+	 *
+	 * <p>
+	 * Called when the control that built the field is disposed. Without it the index outlives what
+	 * it indexes: {@link ConfigListEditorControl} rebuilds its own children whenever an entry is
+	 * added, removed or moved, and nothing clears the index in between - only
+	 * {@link ConfigFormControl}'s own rebuild does, which a refused Apply deliberately skips. An
+	 * entry's field model would then stay in the index after the entry itself is gone, carrying
+	 * whatever error it last had into every later question the index is asked.
+	 * </p>
+	 *
+	 * @param item
+	 *        The configuration item the property belongs to.
+	 * @param property
+	 *        The property to forget.
+	 */
+	public void unregister(ConfigurationItem item, PropertyDescriptor property) {
+		Map<PropertyDescriptor, ConfigFieldModel> byProperty = _fields.get(item);
+		if (byProperty == null) {
+			return;
+		}
+		byProperty.remove(property);
+		if (byProperty.isEmpty()) {
+			_fields.remove(item);
+		}
+	}
+
+	/**
 	 * Whether any registered field currently rejects the raw input it was given.
 	 *
 	 * <p>
@@ -79,6 +107,14 @@ public final class ConfigFieldIndex {
 	 * and would therefore see nothing wrong at all, so the rejected input has to be asked about
 	 * here, at the fields. This is the counterpart of {@code FormContext#checkAll()} in the classic
 	 * declarative form.
+	 * </p>
+	 *
+	 * <p>
+	 * Answers only about input the field itself rejected, never about a violation
+	 * {@link ConfigValidation#report(java.util.List, ConfigFieldIndex)} placed: those go to the
+	 * separate model-validation channel, see {@link #clearModelErrors()}. Were the two to share one
+	 * slot, a violation the user has since fixed elsewhere would keep reading as "an entry cannot
+	 * be read" and refuse every further Apply with nothing on screen to correct.
 	 * </p>
 	 *
 	 * @see com.top_logic.layout.form.model.AbstractFieldModel#getInputError()
@@ -92,6 +128,33 @@ public final class ConfigFieldIndex {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Takes back every violation {@link ConfigValidation#report(java.util.List, ConfigFieldIndex)}
+	 * put on a field.
+	 *
+	 * <p>
+	 * Run before each re-check, so a violation is shown for exactly as long as it holds: one that
+	 * still holds is placed again by the very next {@code report}, one the user has fixed - possibly
+	 * by editing a different field, which is how a cross-item constraint is fixed - is gone. A
+	 * reported error left behind would otherwise outlive its own cause and make every further Apply
+	 * refuse.
+	 * </p>
+	 *
+	 * <p>
+	 * Touches only the model-validation channel, never
+	 * {@link com.top_logic.layout.form.model.AbstractFieldModel#getInputError() the input error}:
+	 * that one belongs to the input control, is the last thing standing between Apply and silently
+	 * discarding what the user typed, and is nobody's to take back here.
+	 * </p>
+	 */
+	public void clearModelErrors() {
+		for (Map<PropertyDescriptor, ConfigFieldModel> byProperty : _fields.values()) {
+			for (ConfigFieldModel field : byProperty.values()) {
+				field.setModelValidationError(null);
+			}
+		}
 	}
 
 	/**

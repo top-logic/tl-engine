@@ -114,6 +114,56 @@ dropping the entry.
 the role name and the tool names; a policy written by hand parses exactly as one written in the editor,
 and the labels exist only in the editor.
 
+### Reading the policy instead of writing it: Agent-Sicherheit
+
+The editor shows the policy as *names*. Two questions it cannot answer - "what am I granting with
+`data.read`?" and "what can this account's agent actually call?" - have their own place:
+**Administration → Berechtigungen → Agent-Sicherheit**. Both tabs are read-only; the policy is still
+written in the service editor above.
+
+**Werkzeug-Katalog** is one row per registered tool:
+
+| Column | Answers |
+|---|---|
+| Werkzeug | the qualified name, i.e. exactly what a `<grant tools="...">` writes and what a denial prints |
+| Beschreibung | the first sentence of the description the *model* is given for that tool - in English, because there is no separate administrator-facing text yet |
+| Gruppe | the capability group, with its display name and its technical name; `KEINE GRUPPE` for a tool no grant can reach |
+| Hinweis zur Gruppe | privileged / sends data outward / granted implicitly |
+| Herkunft der Gruppe | whether the tool declared the group itself or a `<tool-groups>` entry assigned it - which is what explains why removing one entry de-classifies one tool and not the one next to it |
+| Erreichbar für | the roles the policy configures that reach the tool, `alle (Grundberechtigung)`, or `niemand` |
+
+Unclassified tools are sorted to the top, because that is the state an administrator has to act on. The
+"Erreichbar für" column deliberately never lists administrators - they reach every tool, and saying so
+in every row would be noise. Search, the group filter and "only unclassified" are the table's own column
+filters: the filter of the *Gruppe* column offers every group plus `KEINE GRUPPE`.
+
+**Effektive Rechte** answers the "why". Pick an account - or, hypothetically, a role the policy
+configures - and a run mode, and you get one row per capability group with the verdict, the number of
+tools behind it, and **the rule that decided together with the rule it overrode**:
+
+```
+Gewährt    Daten ändern (data.write)      1    Grant der Rolle projectPartner
+Verweigert Daten ändern (data.write)      1    Durch die Hintergrund-Zulassungsliste begrenzt
+                                               - die Rolle projectPartner gewährt es, aber ein
+                                                 unbeaufsichtigter Lauf darf es nicht
+```
+
+That second sentence is the point of the view: the same row is denied in an unattended run, and the
+element to change is the `<background-allowlist>` and not the role. The same distinction is made for a
+`<deny>` (it names the grant it beat) and for an administrator account (it names what the bypass covered
+up, so that "everything allowed" is not misread as "my policy works"). Expanding a row lists the tools of
+the group with their own verdicts, so a per-tool grant or deny is visible where it applies. Tools in no
+group sit at the end, on their own, because no capability grant can reach them.
+
+Under the table: the sentence that this view is the *tool* layer only, what an unattended run is, and -
+for the roles being shown - the two cross-layer warnings that otherwise only ever appear in the boot log
+(a role with data capabilities and no model access rights; a role granted tools that no role rule can
+produce on the security root).
+
+Everything shown is computed by the same code the enforcement path runs, so the view cannot claim an
+access a real run would be refused. What it does not show is which *data* an allowed call then sees -
+see [What this does not decide](#what-this-does-not-decide).
+
 ---
 
 ## The rules, in one place
@@ -428,6 +478,10 @@ which one you have.
 
 `roles=0` means the service read no grant table. If you wrote one and see this, the `<tool-access>` did
 not reach the service - and until it does, every account reaches only the baseline.
+
+**Or ask before it happens:** *Administration → Berechtigungen → Agent-Sicherheit → Effektive Rechte*
+answers the same question for any account, in either run mode, without waiting for a denial - see
+[Agent-Sicherheit](#reading-the-policy-instead-of-writing-it-agent-sicherheit).
 
 Two things to know when reading the roles in a denial:
 

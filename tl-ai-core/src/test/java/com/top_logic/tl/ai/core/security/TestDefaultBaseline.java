@@ -115,7 +115,7 @@ public class TestDefaultBaseline extends TestCase {
 
 		assertDenied(access, "model-browser.listModules", ToolGroups.MODEL_READ);
 		assertDenied(access, "instance-browser.listInstances", ToolGroups.DATA_READ);
-		assertGranted(access, "user-interaction.askUser", RoleToolAccess.IMPLICIT_BASELINE);
+		assertGranted(access, "user-interaction.askUser", ToolGroups.INTERACTION);
 	}
 
 	/**
@@ -166,7 +166,7 @@ public class TestDefaultBaseline extends TestCase {
 		assertFalse(access.allowedInBackground("instance-browser.listInstances"));
 		assertTrue("Asking a question survives, as it always does.",
 			access.allowedInBackground(new ToolIdentity("askUser", "user-interaction.askUser",
-				RoleToolAccess.IMPLICIT_BASELINE)));
+				ToolGroups.INTERACTION)));
 	}
 
 	/**

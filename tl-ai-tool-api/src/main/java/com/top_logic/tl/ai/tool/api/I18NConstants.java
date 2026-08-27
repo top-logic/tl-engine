@@ -107,6 +107,17 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey GROUP_INTERACTION;
 
 	/**
+	 * Label of the {@link ToolGroups#INTROSPECTION} tool group.
+	 *
+	 * @en Inspect itself
+	 * @de Sich selbst einsehen
+	 * @tooltip List the tools and skills this agent itself carries, and why one of them is unusable
+	 *          for the acting user - not what the application has elsewhere, which is "agent.meta".
+	 *          Granted implicitly, so an agent can always say what it carries.
+	 */
+	public static ResKey GROUP_INTROSPECTION;
+
+	/**
 	 * Label of the {@link ToolGroups#WORKSPACE} tool group.
 	 *
 	 * @en Use the workspace

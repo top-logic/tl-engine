@@ -53,6 +53,7 @@ public class TestRoleToolAccess extends TestCase {
 		case "model-editor.createClass", "model-editor.deleteModelElement" -> ToolGroups.MODEL_STRUCTURE;
 		case "script-tool.executeTLScript" -> ToolGroups.SCRIPT;
 		case "ask-user.askUser" -> ToolGroups.INTERACTION;
+		case "self.listTools" -> ToolGroups.INTROSPECTION;
 		case "web.webFetch" -> ToolGroups.EGRESS;
 		default -> null;
 	};
@@ -280,6 +281,39 @@ public class TestRoleToolAccess extends TestCase {
 			instanceof Decision.Denied);
 		assertTrue(access(policy).check(Set.of("Clerk"), "ask-user.askUser")
 			instanceof Decision.Granted);
+	}
+
+	/**
+	 * ...and it beats the second implicit grant the same way.
+	 *
+	 * <p>
+	 * {@code introspection} - {@code listTools}, an agent saying what it carries - is implicit for the
+	 * same reason {@code interaction} is: withholding it is what made the agent guess at a named tool
+	 * and blame a capability that had nothing to do with it. The asymmetry the design keeps is that
+	 * silence cannot cause that and an explicit {@code <deny>} can, because the second is a decision
+	 * somebody made. Every capability in {@link RoleToolAccess#IMPLICIT_BASELINE} is covered here, so a
+	 * third one cannot be added without deciding this question for it too.
+	 * </p>
+	 */
+	public void testDenyBeatsEveryImplicitGrant() {
+		Map<String, String> toolsByCapability = Map.of(
+			ToolGroups.INTERACTION, "ask-user.askUser",
+			ToolGroups.INTROSPECTION, "self.listTools");
+
+		for (String capability : RoleToolAccess.IMPLICIT_BASELINE) {
+			String toolName = toolsByCapability.get(capability);
+			assertNotNull("A newly implicit capability needs a tool here, and a decision about the"
+				+ " deny: " + capability, toolName);
+
+			ToolAccessPolicy policy = policy(role("Probation", grants(), grants(group(capability))));
+
+			assertTrue(capability + " must be granted without being configured.",
+				access(policy).check(Set.of("Clerk"), toolName) instanceof Decision.Granted);
+			assertTrue("An explicit deny of " + capability + " must still win.",
+				access(policy).check(Set.of("Probation"), toolName) instanceof Decision.Denied);
+			assertTrue(capability + " must survive an undeclared background allowlist.",
+				access(policy).allowedInBackground(toolName));
+		}
 	}
 
 	/**

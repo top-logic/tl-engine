@@ -131,7 +131,7 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 
 		Logger.info("Agent tool access:"
 			+ " roles=" + policy.getToolAccess().size()
-			+ " baseline=" + describeBaseline() + "(+" + RoleToolAccess.IMPLICIT_BASELINE + ")"
+			+ " baseline=" + describeBaseline() + "(+" + describeImplicitBaseline() + ")"
 			+ " backgroundAllowlist=" + describeBackgroundAllowlist(policy), AiToolAccessService.class);
 	}
 
@@ -195,6 +195,18 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 			return "default" + RoleToolAccess.DEFAULT_BASELINE;
 		}
 		return String.valueOf(_access.baselineGroups().size());
+	}
+
+	/**
+	 * The implicitly granted capabilities, as the boot log names them.
+	 *
+	 * <p>
+	 * Joined with {@code "+"} rather than printed as a collection, so the log line reads
+	 * {@code baseline=0(+interaction+introspection)} - "the declared baseline, plus these".
+	 * </p>
+	 */
+	private static String describeImplicitBaseline() {
+		return String.join("+", new TreeSet<>(RoleToolAccess.IMPLICIT_BASELINE));
 	}
 
 	/** The configured background ceiling, for the boot log line. */

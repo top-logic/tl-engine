@@ -36,6 +36,7 @@ import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
+import com.top_logic.tl.ai.core.tools.introspection.ListToolsTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -592,8 +593,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 
 		// Inject skill tool if the agent has skills (but not for read-only subagents to avoid runtime capability escalation)
+		SkillTool skillTool = null;
 		if (!readOnly) {
-			SkillTool skillTool = buildSkillTool(agent, capabilities);
+			skillTool = buildSkillTool(agent, capabilities);
 			if (skillTool != null) {
 				for (Tool tool : AnnotatedTools.from(skillTool)) {
 					registry.register(tool);
@@ -605,6 +607,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		if (includeDelegation) {
 			registerDelegationTools(registry, agent, capabilities);
 		}
+
+		// Last, so that it sees every tool the agent ended up with - delegation tools included.
+		registry.register(listToolsTool(agent, registry.tools(), skillTool));
 
 		return registry.freeze();
 	}
@@ -662,6 +667,10 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		DynamicToolCatalog dynamicCatalog = new DynamicToolCatalog(baseCatalog.freeze());
 
+		// What is callable without loading anything, for the self-inspection tool below. The base plus
+		// loadSkill itself, which is a tool of this agent like any other.
+		List<Tool> ownTools = new ArrayList<>(baseCatalog.tools());
+
 		// Build SkillTool with dynamic catalog and tool resolver
 		Set<String> preloadedSkills = LoadedSkillsBinding.getSkills();
 		SkillTool skillTool = buildDynamicSkillTool(agent, dynamicCatalog, preloadedSkills, capabilities);
@@ -669,6 +678,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			ToolCatalog skillToolOverlay = new ToolCatalog();
 			for (Tool tool : AnnotatedTools.from(skillTool)) {
 				skillToolOverlay.register(tool);
+				ownTools.add(tool);
 			}
 			dynamicCatalog.addOverlay(skillToolOverlay.freeze());
 
@@ -677,7 +687,41 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			dynamicCatalog.setReachableBySkill(skillTool.declaredToolNames());
 		}
 
+		// Its own overlay rather than the base, because it has to be built after the SkillTool whose
+		// state it reports, and the base is frozen by then.
+		ToolCatalog selfInspection = new ToolCatalog();
+		selfInspection.register(listToolsTool(agent, ownTools, skillTool));
+		dynamicCatalog.addOverlay(selfInspection.freeze());
+
 		return dynamicCatalog;
+	}
+
+	/**
+	 * The agent's {@code listTools} tool: what this agent carries, filtered for whoever calls it.
+	 *
+	 * <p>
+	 * Injected into every agent's catalog rather than declared in {@code <tools>}, for the same reason
+	 * {@code loadSkill} is: it is a property of being an agent, not a capability an application decides
+	 * to hand out. An agent that could be configured without it would answer a question about a named
+	 * tool by guessing - see {@link ListToolsTool} and {@code doc/security/testbed.md} rows C3/C4.
+	 * </p>
+	 *
+	 * @param ownTools
+	 *        The tools already in the agent's catalog, which are exactly the ones callable without a
+	 *        {@code loadSkill}.
+	 * @param skillTool
+	 *        The agent's {@code loadSkill} tool, or <code>null</code> if it has none.
+	 */
+	private static Tool listToolsTool(AgentDefinition agent, List<Tool> ownTools, SkillTool skillTool) {
+		List<SkillDefinition> skills = new ArrayList<>();
+		Function<String, SkillDefinition> lookup = skillLookup();
+		for (String skillName : agent.skills()) {
+			SkillDefinition skill = lookup.apply(skillName);
+			if (skill != null) {
+				skills.add(skill);
+			}
+		}
+		return new ListToolsTool(agent.name(), ownTools, skills, skillTool);
 	}
 
 	private SkillTool buildDynamicSkillTool(AgentDefinition agent, DynamicToolCatalog dynamicCatalog,

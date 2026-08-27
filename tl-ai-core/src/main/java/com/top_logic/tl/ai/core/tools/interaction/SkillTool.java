@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -59,7 +60,16 @@ public class SkillTool {
 
 	private final Function<String, String> _absenceReason;
 
-	private final Set<String> _loadedSkills = new HashSet<>();
+	/**
+	 * Which skills this run has loaded.
+	 *
+	 * <p>
+	 * Concurrent because concurrency-safe tools of one turn run on parallel threads and both
+	 * {@code loadSkill} and {@code listTools} are such tools: one adding to this set while the other
+	 * reads it is an ordinary turn, not an edge case.
+	 * </p>
+	 */
+	private final Set<String> _loadedSkills = ConcurrentHashMap.newKeySet();
 
 	/**
 	 * Creates a skill tool with dynamic tool loading, refusing an absent skill without explaining it.
@@ -151,6 +161,33 @@ public class SkillTool {
 			}
 		}
 		return names;
+	}
+
+	/**
+	 * The ids of the skills this agent can actually hand over.
+	 *
+	 * <p>
+	 * Already filtered for the run's principal, so it is a subset of what the agent declares: a skill
+	 * every tool of which the principal is denied is not in it. For {@code listTools}, which lists the
+	 * declared skills and has to mark each one - a declared skill missing from this set is one the model
+	 * must not be told to load.
+	 * </p>
+	 */
+	public Set<String> offeredSkills() {
+		return Set.copyOf(_skills.keySet());
+	}
+
+	/**
+	 * The ids of the skills this run has already loaded.
+	 *
+	 * <p>
+	 * Read per call, so a {@code listTools} in a later turn reflects everything loaded since, for
+	 * {@code listTools}: "already in your tool list" and "call loadSkill first" are different answers,
+	 * and getting them the wrong way round costs a wasted turn.
+	 * </p>
+	 */
+	public Set<String> loadedSkills() {
+		return Set.copyOf(_loadedSkills);
 	}
 
 	/**

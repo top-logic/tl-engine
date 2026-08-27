@@ -34,7 +34,8 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * </p>
  * <ol>
  * <li>An explicit deny from <em>any</em> held role rejects the tool outright.</li>
- * <li>{@link #IMPLICIT_BASELINE} is granted to every user without being configured.</li>
+ * <li>Every capability in {@link #IMPLICIT_BASELINE} is granted to every user without being
+ * configured.</li>
  * <li>The baseline grants apply to every user - the configured ones, or {@link #DEFAULT_BASELINE}
  * when the policy declares no {@code <baseline>} at all.</li>
  * <li>The grants of all held roles are unioned.</li>
@@ -110,23 +111,32 @@ public class RoleToolAccess {
 	private static final String BASELINE_ROLE = "(baseline)";
 
 	/**
-	 * The capability every policy grants, whether or not it says so.
+	 * The capabilities every policy grants, whether or not it says so.
 	 *
 	 * <p>
-	 * {@link ToolGroups#INTERACTION} is the one group no administrator has to configure: an agent that
-	 * cannot ask a question is broken, and a forgotten {@code <baseline>} must not be able to produce
-	 * that state. It therefore reaches every role - including a role that appears with an empty grant
-	 * list, and a user with no role at all - and it reaches unattended runs too, so that the same
+	 * Two groups no administrator has to configure, for the same kind of reason: an agent that cannot
+	 * do these is not restricted but broken, and a forgotten {@code <baseline>} must not be able to
+	 * produce that state. They therefore reach every role - including a role that appears with an empty
+	 * grant list, and a user with no role at all - and they reach unattended runs too, so that the same
 	 * omission cannot silence a background run either.
 	 * </p>
 	 *
+	 * <ul>
+	 * <li>{@link ToolGroups#INTERACTION} - an agent that cannot ask a question is broken.</li>
+	 * <li>{@link ToolGroups#INTROSPECTION} - an agent that cannot say what it carries answers a
+	 * question about a named tool by guessing, and was observed blaming a capability that had nothing
+	 * to do with it. Withholding that answer is what produced the wrong answer, so the answer must not
+	 * be withholdable.</li>
+	 * </ul>
+	 *
 	 * <p>
-	 * An explicit deny still wins, because denies are evaluated first: an administrator who takes the
+	 * An explicit deny still wins, because denies are evaluated first: an administrator who takes a
 	 * capability away from a role has said so out loud, which is a different thing from never having
-	 * mentioned it. Declaring it in {@code <baseline>} stays legal and is a no-op.
+	 * mentioned it. Declaring either in {@code <baseline>} stays legal and is a no-op.
 	 * </p>
 	 */
-	public static final String IMPLICIT_BASELINE = ToolGroups.INTERACTION;
+	public static final Set<String> IMPLICIT_BASELINE =
+		Set.of(ToolGroups.INTERACTION, ToolGroups.INTROSPECTION);
 
 	/**
 	 * The capabilities every user gets when the policy declares no {@code <baseline>} at all.
@@ -134,8 +144,8 @@ public class RoleToolAccess {
 	 * <p>
 	 * The point of this default is that an application which has configured nothing should look
 	 * <em>unconfigured</em> rather than broken. Without it, the only capability left after #288 removed
-	 * the permissive security mode is {@link #IMPLICIT_BASELINE} - the agent boots, answers questions
-	 * and can do nothing useful, which reads as a defect.
+	 * the permissive security mode is {@link #IMPLICIT_BASELINE} - the agent boots, answers questions,
+	 * can say what it carries and can do nothing useful, which reads as a defect.
 	 * </p>
 	 *
 	 * <p>
@@ -492,7 +502,7 @@ public class RoleToolAccess {
 	 * @return Whether {@link #IMPLICIT_BASELINE} covers it.
 	 */
 	private static boolean isImplicitBaseline(String group) {
-		return IMPLICIT_BASELINE.equals(group);
+		return group != null && IMPLICIT_BASELINE.contains(group);
 	}
 
 	/**

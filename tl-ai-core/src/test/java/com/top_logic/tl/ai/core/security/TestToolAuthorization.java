@@ -418,18 +418,20 @@ public class TestToolAuthorization extends TestCase {
 	}
 
 	/**
-	 * {@code interaction} is never reported as withheld, because it is never withheld: an unattended
-	 * run reaches it whatever the allowlist says.
+	 * No capability of {@link RoleToolAccess#IMPLICIT_BASELINE} is ever reported as withheld, because
+	 * none of them ever is: an unattended run reaches them whatever the allowlist says.
 	 */
 	public void testTheImplicitBaselineIsNeverWithheld() {
-		ToolAccessPolicy policy = clerkPolicy();
-		baseline(policy, group(RoleToolAccess.IMPLICIT_BASELINE));
-		ToolAuthorization background = auth(policy, Set.of("Clerk"), true);
+		for (String capability : RoleToolAccess.IMPLICIT_BASELINE) {
+			ToolAccessPolicy policy = clerkPolicy();
+			baseline(policy, group(capability));
+			ToolAuthorization background = auth(policy, Set.of("Clerk"), true);
 
-		assertTrue("Precondition: the implicit baseline reaches an unattended run.",
-			background.allows(tool("askUser", RoleToolAccess.IMPLICIT_BASELINE)));
-		assertFalse(background.capabilitiesWithheldInBackground().toString(),
-			background.capabilitiesWithheldInBackground().contains(RoleToolAccess.IMPLICIT_BASELINE));
+			assertTrue("Precondition: " + capability + " reaches an unattended run.",
+				background.allows(tool("aTool", capability)));
+			assertFalse(capability + " in " + background.capabilitiesWithheldInBackground(),
+				background.capabilitiesWithheldInBackground().contains(capability));
+		}
 	}
 
 	/** The explicit opt-out withholds nothing, so there is nothing to report. */

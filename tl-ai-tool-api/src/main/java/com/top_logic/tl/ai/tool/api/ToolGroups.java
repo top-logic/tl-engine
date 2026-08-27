@@ -66,6 +66,26 @@ public final class ToolGroups {
 	/** Conversation primitives: asking the user, loading skills, delegating to sub-agents. */
 	public static final String INTERACTION = "interaction";
 
+	/**
+	 * Self-inspection: what this agent itself carries, and why one of its entries is unusable for the
+	 * acting user.
+	 *
+	 * <p>
+	 * Distinct from {@link #AGENT_META}, which inspects the <em>application</em> - every agent, skill
+	 * and registered tool there is. This group covers one agent asking about itself, which is not a
+	 * disclosure: the acting user is already talking to that agent, and its answer is filtered for
+	 * them.
+	 * </p>
+	 *
+	 * <p>
+	 * Granted implicitly, like {@link #INTERACTION} and for the same kind of reason: an agent that
+	 * cannot say what it carries answers a question about a named tool by guessing, and a forgotten
+	 * {@code <baseline>} must not be able to produce that state. See
+	 * {@code RoleToolAccess.IMPLICIT_BASELINE}.
+	 * </p>
+	 */
+	public static final String INTROSPECTION = "introspection";
+
 	/** User-scoped workspace tools: tasks, published pages. */
 	public static final String WORKSPACE = "workspace";
 
@@ -90,7 +110,7 @@ public final class ToolGroups {
 	 * </p>
 	 */
 	public static final Set<String> ALL = Set.of(MODEL_READ, DATA_READ, DATA_WRITE, SCRIPT,
-		MODEL_STRUCTURE, AGENT_AUTHORING, AGENT_META, INTERACTION, WORKSPACE, EGRESS);
+		MODEL_STRUCTURE, AGENT_AUTHORING, AGENT_META, INTERACTION, INTROSPECTION, WORKSPACE, EGRESS);
 
 	/**
 	 * The resource carrying the display name and the explanation of every {@link #ALL framework
@@ -98,17 +118,18 @@ public final class ToolGroups {
 	 *
 	 * @see #labelKey(String)
 	 */
-	private static final Map<String, ResKey> LABELS = Map.of(
-		MODEL_READ, I18NConstants.GROUP_MODEL_READ,
-		DATA_READ, I18NConstants.GROUP_DATA_READ,
-		DATA_WRITE, I18NConstants.GROUP_DATA_WRITE,
-		SCRIPT, I18NConstants.GROUP_SCRIPT,
-		MODEL_STRUCTURE, I18NConstants.GROUP_MODEL_STRUCTURE,
-		AGENT_AUTHORING, I18NConstants.GROUP_AGENT_AUTHORING,
-		AGENT_META, I18NConstants.GROUP_AGENT_META,
-		INTERACTION, I18NConstants.GROUP_INTERACTION,
-		WORKSPACE, I18NConstants.GROUP_WORKSPACE,
-		EGRESS, I18NConstants.GROUP_EGRESS);
+	private static final Map<String, ResKey> LABELS = Map.ofEntries(
+		Map.entry(MODEL_READ, I18NConstants.GROUP_MODEL_READ),
+		Map.entry(DATA_READ, I18NConstants.GROUP_DATA_READ),
+		Map.entry(DATA_WRITE, I18NConstants.GROUP_DATA_WRITE),
+		Map.entry(SCRIPT, I18NConstants.GROUP_SCRIPT),
+		Map.entry(MODEL_STRUCTURE, I18NConstants.GROUP_MODEL_STRUCTURE),
+		Map.entry(AGENT_AUTHORING, I18NConstants.GROUP_AGENT_AUTHORING),
+		Map.entry(AGENT_META, I18NConstants.GROUP_AGENT_META),
+		Map.entry(INTERACTION, I18NConstants.GROUP_INTERACTION),
+		Map.entry(INTROSPECTION, I18NConstants.GROUP_INTROSPECTION),
+		Map.entry(WORKSPACE, I18NConstants.GROUP_WORKSPACE),
+		Map.entry(EGRESS, I18NConstants.GROUP_EGRESS));
 
 	private ToolGroups() {
 		// Constant holder.

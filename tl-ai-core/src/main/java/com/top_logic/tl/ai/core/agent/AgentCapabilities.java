@@ -204,6 +204,59 @@ public class AgentCapabilities {
 	}
 
 	/**
+	 * Why the run's principal cannot use the given tool, or <code>null</code> if they can.
+	 *
+	 * <p>
+	 * The per-tool counterpart of {@link #unusableReason(SkillDefinition)}: a sentence fragment that
+	 * reads after the tool's name, naming the capability the tool costs and telling the two remedies
+	 * apart - a role grant, or a {@code <background-allowlist>} entry. Written here rather than taken
+	 * from {@link SecurityContext#toolDenialReason(Tool)} because that one <em>audits</em>: it is the
+	 * gate's message for a call that was really refused, and enumerating a catalog would write an audit
+	 * line per withheld tool for calls nobody made.
+	 * </p>
+	 *
+	 * <p>
+	 * For {@code listTools}, which lists a whole catalog and has to say per entry why an entry is
+	 * unusable.
+	 * </p>
+	 *
+	 * <p>
+	 * The capability is <em>named</em> and not described, unlike {@link #describeCapability(String)}
+	 * elsewhere. A listing repeats the same capability across a dozen entries, and the sentence saying
+	 * what each one covers is already in the run's {@link #notice(Collection, Collection) capability
+	 * notice} - once per capability, where it belongs. Repeating it per tool would cost more context
+	 * than the listing itself.
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool to judge.
+	 * @return The reason, without a leading capital and without a closing full stop, or
+	 *         <code>null</code> if the tool is usable.
+	 */
+	public String unusableReason(Tool tool) {
+		if (permits(tool)) {
+			return null;
+		}
+		String capability = _security.toolCapability(tool);
+		if (_security.withheldByBackgroundCeiling(tool)) {
+			// The user's roles do reach it; the run being unattended is what removed it. Blaming the
+			// roles here would send them to an administrator who has already granted everything.
+			return capability == null
+				? "out of reach because this run is unattended: it has nobody who could approve a tool"
+					+ " call, and this tool is not on the background allowlist"
+				: "out of reach because this run is unattended: it needs the `" + capability
+					+ "` capability, which is not on the background allowlist. This is not about the"
+					+ " current user's roles";
+		}
+		if (capability == null) {
+			return "denied to everyone: it belongs to no capability, so no grant reaches it. An"
+				+ " administrator would have to classify it";
+		}
+		return "withheld from the current user: it needs the `" + capability
+			+ "` capability, which none of this user's roles grants";
+	}
+
+	/**
 	 * Why the given skill can do nothing for the run's principal, or <code>null</code> if it can.
 	 *
 	 * <p>
@@ -422,6 +475,21 @@ public class AgentCapabilities {
 			return null;
 		}
 		return "none of its " + denied + " " + noun + " is permitted; they require " + requiredCapabilities;
+	}
+
+	/**
+	 * The registered tool of the given name, or <code>null</code> if no tool of that name exists.
+	 *
+	 * <p>
+	 * The resolver this view was built with, exposed for a caller that walks a declared tool list and
+	 * has to tell a denied tool from a name nobody registered - {@code listTools} does both, per entry.
+	 * </p>
+	 *
+	 * @param toolName
+	 *        The qualified or bare tool name.
+	 */
+	public Tool resolveTool(String toolName) {
+		return _toolResolver.apply(toolName);
 	}
 
 	/** The tools of the given names that the registry resolves, in order. */

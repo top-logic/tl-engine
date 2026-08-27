@@ -191,7 +191,7 @@ public class ToolAuthorization {
 		}
 		Set<String> withheld = new TreeSet<>();
 		for (String capability : _access.knownCapabilities()) {
-			if (RoleToolAccess.IMPLICIT_BASELINE.equals(capability)) {
+			if (RoleToolAccess.IMPLICIT_BASELINE.contains(capability)) {
 				// Reachable unattended whatever the allowlist says - see
 				// RoleToolAccess#allowedInBackground - so it is never withheld.
 				continue;

@@ -7,6 +7,7 @@ package com.top_logic.element.layout.instances;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -22,6 +23,7 @@ import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
+import com.top_logic.layout.table.provider.generic.TableConfigModelInfo;
 import com.top_logic.layout.table.provider.generic.TableConfigModelService;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
@@ -74,9 +76,13 @@ public class DirectInstancesTable<C extends DirectInstancesTable.Config<?>> exte
 		TLClass type = (TLClass) model;
 		GenericTableConfigurationProvider.getTableConfigurationProvider(type).adaptConfigurationTo(table);
 
-		List<String> defaultColumns = adaptColumnVisibility(table, type);
-		defaultColumns.addAll(mainColumns(type));
-		table.setDefaultColumns(defaultColumns);
+		TableConfigModelInfo modelInfo = modelInfo(type);
+
+		// Note: The order of the default columns is the order in which the columns are displayed,
+		// see GridComponent#getAvailableColumns(TableConfiguration).
+		Set<String> defaultColumns = new LinkedHashSet<>(modelInfo.getMainColumns());
+		defaultColumns.addAll(adaptColumnVisibility(table, type, modelInfo.getColumnInfos().keySet()));
+		table.setDefaultColumns(new ArrayList<>(defaultColumns));
 
 		addDefaultViewColumn(table);
 	}
@@ -89,30 +95,41 @@ public class DirectInstancesTable<C extends DirectInstancesTable.Config<?>> exte
 	 *        The table being configured.
 	 * @param type
 	 *        The type whose instances are displayed.
+	 * @param attributeColumns
+	 *        Names of the columns representing an attribute of the given type, of one of its
+	 *        generalizations, or of one of its specializations.
 	 * @return The technical columns declared so far, which must stay visible. Never
 	 *         <code>null</code>, may be modified by the caller.
 	 */
-	private List<String> adaptColumnVisibility(TableConfiguration table, TLClass type) {
+	private List<String> adaptColumnVisibility(TableConfiguration table, TLClass type,
+			Set<String> attributeColumns) {
 		List<String> technicalColumns = new ArrayList<>();
 		for (ColumnConfiguration column : table.getElementaryColumns()) {
 			String columnName = column.getName();
 			if (TableControl.SELECT_COLUMN_NAME.equals(columnName)) {
 				continue;
 			}
-			TLStructuredTypePart attribute = type.getPart(columnName);
-			if (attribute == null) {
+			if (!attributeColumns.contains(columnName)) {
 				// A technical column declared by another provider, e.g. a button column. Such a
 				// column has no representation in the model and must therefore be kept visible
 				// explicitly.
 				technicalColumns.add(columnName);
-			} else if (isMandatoryInCreate(attribute)) {
+				continue;
+			}
+
+			// Note: The column may represent an attribute of a specialization of the displayed
+			// type, which is not found here. Such an attribute cannot be filled during a creation
+			// anyway, since instances of the displayed type are created.
+			TLStructuredTypePart attribute = type.getPart(columnName);
+			if (attribute != null && isMandatoryInCreate(attribute)) {
 				// The column must be displayed, since the grid creates input fields for the
 				// displayed columns only. Without a field, an instance could be created without
 				// its mandatory values being set.
 				column.setVisibility(DisplayMode.mandatory);
 			} else if (column.getVisibility() == DisplayMode.excluded) {
-				// The instance browser is an administrative view: Even an attribute that is hidden
-				// in the model can be inspected and edited here on demand.
+				// The instance browser is an administrative view: Every attribute must stay
+				// selectable, see InstanceBrowserGrid#isHidden(TLStructuredTypePart). An excluded
+				// column could not be displayed at all, not even on demand.
 				column.setVisibility(DisplayMode.hidden);
 			}
 		}
@@ -128,15 +145,15 @@ public class DirectInstancesTable<C extends DirectInstancesTable.Config<?>> exte
 	}
 
 	/**
-	 * The columns to display by default for the given type.
+	 * The model information describing the columns available for the given type.
 	 * 
-	 * @implNote Uses the same {@link com.top_logic.model.config.annotation.MainProperties} lookup
-	 *           as all other generic tables, including its fall-back to the main properties of the
-	 *           specializations and finally to all visible attributes.
+	 * @implNote Provides the same {@link com.top_logic.model.config.annotation.MainProperties}
+	 *           lookup as for all other generic tables, including its fall-back to the main
+	 *           properties of the specializations and finally to all visible attributes.
 	 */
-	private static Set<String> mainColumns(TLClass type) {
+	private static TableConfigModelInfo modelInfo(TLClass type) {
 		return TableConfigModelService.getInstance().getModelInfoProvider()
-			.getModelInfo(Collections.singleton(type)).getMainColumns();
+			.getModelInfo(Collections.singleton(type));
 	}
 
 	private void addDefaultViewColumn(TableConfiguration table) {

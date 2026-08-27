@@ -50,6 +50,14 @@ public record ToolCatalogEntry(String qualifiedName, String description, String 
 		return !baselineReaches() && reachingRoles().isEmpty();
 	}
 
+	/** Who reaches the tool, as the one of three states the catalog reports. */
+	public ToolReachability reachability() {
+		if (baselineReaches()) {
+			return ToolReachability.EVERYONE;
+		}
+		return reachingRoles().isEmpty() ? ToolReachability.NOBODY : ToolReachability.NAMED_ROLES;
+	}
+
 	/**
 	 * The first sentence of {@link #description()}, for a table cell.
 	 *

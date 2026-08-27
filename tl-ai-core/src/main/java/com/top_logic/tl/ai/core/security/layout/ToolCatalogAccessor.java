@@ -25,7 +25,7 @@ public class ToolCatalogAccessor extends ReadOnlyAccessor<ToolCatalogEntry> {
 	/** The tool's qualified name - what the policy stores and what a denial message prints. */
 	public static final String TOOL = "tool";
 
-	/** The tool's own description, first sentence. */
+	/** What the tool does, in one sentence written for an administrator. */
 	public static final String DESCRIPTION = "description";
 
 	/** The capability group, as display name and technical name. */
@@ -46,7 +46,7 @@ public class ToolCatalogAccessor extends ReadOnlyAccessor<ToolCatalogEntry> {
 			case TOOL:
 				return row.qualifiedName();
 			case DESCRIPTION:
-				return row.descriptionSentence();
+				return description(row);
 			case GROUP:
 				return row.isUnclassified()
 					? Resources.getInstance().getString(I18NConstants.GROUP_NONE)
@@ -72,13 +72,30 @@ public class ToolCatalogAccessor extends ReadOnlyAccessor<ToolCatalogEntry> {
 	 * </p>
 	 */
 	private static String reachableFor(ToolCatalogEntry row) {
-		if (row.baselineReaches()) {
-			return Resources.getInstance().getString(I18NConstants.REACHABLE_EVERYONE);
+		return ToolAccessLabels.reachability(row.reachability(), row.reachingRoles());
+	}
+
+	/**
+	 * What the tool does, for an administrator deciding about it.
+	 *
+	 * <p>
+	 * The tool's own description is the fallback and is marked as one: it is written in English for
+	 * the language model, several sentences of call mechanics, and a reader has to know that this row
+	 * is not a sentence somebody wrote for them. Marked per row rather than in the column header,
+	 * because it is the exception - every tool the framework ships has its own text.
+	 * </p>
+	 */
+	private static String description(ToolCatalogEntry row) {
+		String written = AdminToolDescriptions.description(row.qualifiedName());
+		if (written != null) {
+			return written;
 		}
-		if (row.reachingRoles().isEmpty()) {
-			return Resources.getInstance().getString(I18NConstants.REACHABLE_NOBODY);
+		String modelText = row.descriptionSentence();
+		if (modelText.isEmpty()) {
+			return "";
 		}
-		return String.join(", ", row.reachingRoles());
+		return Resources.getInstance()
+			.getString(I18NConstants.DESCRIPTION_FROM_MODEL__TEXT.fill(modelText));
 	}
 
 }

@@ -1,0 +1,277 @@
+/*
+ * Layout of the "Agent-Sicherheit" administration view.
+ *
+ * The two read-only tabs are tables and need nothing; the Richtlinie tab renders its own control tree,
+ * so the row structure that makes a capability row readable - label, marker, state, one sentence - has
+ * to be a grid here rather than a sequence of inline elements. Without this file the whole editor reads
+ * as one paragraph.
+ *
+ * Colours are deliberately conservative and stated literally: this file is contributed by a library
+ * module and has to look right in the shipped theme without depending on a variable that theme happens
+ * to define.
+ */
+
+.aiSecurityView {
+	padding: 10px 14px 28px;
+	max-width: 1500px;
+}
+
+.aiSecurityView h4 {
+	margin: 24px 0 6px;
+	font-size: 1.05em;
+	font-weight: 600;
+}
+
+.aiSecurityView p.aiSecurityNote,
+.aiSecurityView .aiSecurityNote {
+	margin: 4px 0 10px;
+	color: #4a4a4a;
+	max-width: 1100px;
+}
+
+/* --- messages ------------------------------------------------------------ */
+
+.aiSecurityView div.aiSecurityWarning {
+	margin: 10px 0 14px;
+	padding: 8px 12px;
+	border-left: 4px solid #cc7a00;
+	background: #fff8ec;
+}
+
+.aiSecurityView div.aiSecurityWarning p {
+	margin: 0 0 4px;
+	font-weight: 600;
+}
+
+.aiSecurityView div.aiSecurityWarning ul {
+	margin: 2px 0 0 18px;
+	padding: 0;
+}
+
+.aiSecurityView div.aiSecurityWarning li {
+	margin: 2px 0;
+}
+
+.aiSecurityView span.aiSecurityWarning {
+	color: #a83200;
+}
+
+/* Why an apply was refused: an error, not a hint, and told apart from one at a glance. */
+.aiSecurityView div.aiSecurityRefusals {
+	margin: 10px 0 14px;
+	padding: 8px 12px;
+	border-left: 4px solid #b32d00;
+	background: #fdf0ec;
+}
+
+.aiSecurityView div.aiSecurityRefusals p {
+	margin: 0 0 4px;
+	font-weight: 600;
+}
+
+.aiSecurityView div.aiSecurityRefusals ul {
+	margin: 2px 0 0 18px;
+	padding: 0;
+}
+
+.aiSecurityView div.aiSecurityRefusals li {
+	margin: 2px 0;
+}
+
+/* The banner saying that what is saved is not what the application applies. */
+.aiSecurityBanner {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin: 0 0 12px;
+	padding: 10px 12px;
+	border: 1px solid #cc7a00;
+	border-left-width: 5px;
+	border-radius: 3px;
+	background: #fff4e0;
+	font-weight: 600;
+}
+
+/* --- one card per configured role ---------------------------------------- */
+
+.aiSecurityRoleCard {
+	margin: 0 0 16px;
+	padding: 10px 14px 12px;
+	border: 1px solid #d8d8d8;
+	border-radius: 4px;
+	background: #fcfcfc;
+}
+
+.aiSecurityRoleHead {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0 0 6px;
+	padding: 0 0 6px;
+	border-bottom: 1px solid #e8e8e8;
+}
+
+.aiSecurityRoleName {
+	font-family: monospace;
+	font-size: 1.1em;
+	font-weight: 700;
+}
+
+.aiSecurityRoleKind {
+	color: #6b6b6b;
+	font-size: 0.9em;
+}
+
+/* One capability: what it is, what makes it special, the state, and one sentence. */
+.aiSecurityTriRow {
+	display: grid;
+	grid-template-columns: 290px 160px 210px minmax(260px, 1fr);
+	align-items: start;
+	gap: 12px;
+	padding: 5px 0;
+	border-top: 1px solid #f0f0f0;
+}
+
+.aiSecurityGroupLabel {
+	font-weight: 500;
+}
+
+.aiSecurityRisk {
+	color: #a05000;
+	font-size: 0.9em;
+}
+
+.aiSecurityRowState {
+	white-space: nowrap;
+}
+
+.aiSecurityBaselineState {
+	display: block;
+	margin: 0 0 2px;
+	color: #1f6b3a;
+	font-size: 0.88em;
+}
+
+.aiSecurityGroupNote {
+	color: #555555;
+	font-size: 0.92em;
+	line-height: 1.35;
+}
+
+/* --- the entries that name single tools ---------------------------------- */
+
+.aiSecurityAdvanced {
+	margin: 10px 0 0;
+	padding: 8px 0 0;
+	border-top: 1px solid #e8e8e8;
+}
+
+.aiSecurityAdvancedHead {
+	margin: 0 0 6px;
+	font-weight: 600;
+	color: #444444;
+}
+
+.aiSecurityEntry {
+	margin: 0 0 8px;
+	padding: 8px 10px;
+	border: 1px solid #e0e0e0;
+	border-radius: 3px;
+	background: #ffffff;
+}
+
+.aiSecurityEntryHead,
+.aiSecurityEntryInput,
+.aiSecurityEntryActions,
+.aiSecurityAddRole,
+.aiSecurityChoices,
+.aiSecurityGroupPick {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.aiSecurityEntryInput {
+	margin: 6px 0 4px;
+}
+
+.aiSecurityEntryKind {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.aiSecurityEntrySummary {
+	margin: 4px 0 0;
+	color: #444444;
+	font-size: 0.92em;
+}
+
+/* The chosen one of a set of named states, next to the actions that reach the others. */
+.aiSecurityChosen {
+	padding: 2px 9px;
+	border: 1px solid #8ba4bd;
+	border-radius: 3px;
+	background: #eaf1f8;
+	font-weight: 600;
+}
+
+.aiSecurityChoices {
+	margin: 4px 0 8px;
+}
+
+.aiSecurityGroupPick {
+	margin: 2px 0 8px;
+}
+
+/* --- group assignments, read-only here ---------------------------------- */
+
+.aiSecurityAssignment {
+	display: grid;
+	grid-template-columns: 290px minmax(260px, 1fr);
+	align-items: start;
+	gap: 12px;
+	padding: 4px 0;
+	border-top: 1px solid #f0f0f0;
+}
+
+.aiSecurityAssignedTools {
+	font-family: monospace;
+	font-size: 0.9em;
+	color: #444444;
+	overflow-wrap: anywhere;
+}
+
+/* --- the apply bar ------------------------------------------------------ */
+
+.aiSecurityApplyBar {
+	position: sticky;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin: 20px 0 0;
+	padding: 10px 0;
+	border-top: 1px solid #d0d0d0;
+	background: #ffffff;
+}
+
+.aiSecurityDirty {
+	color: #555555;
+}
+
+/* --- the effective-permissions tab, whose notes were unstyled ----------- */
+
+.aiSecurityInputs {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px;
+	padding: 8px 0;
+}
+
+.aiSecurityFooter > div,
+.aiSecurityRows {
+	margin: 8px 0 0;
+}

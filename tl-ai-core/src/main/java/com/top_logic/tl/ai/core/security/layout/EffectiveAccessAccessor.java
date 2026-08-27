@@ -46,7 +46,8 @@ public class EffectiveAccessAccessor extends ReadOnlyAccessor<Object> {
 			case SUBJECT:
 				return subject(accessRow);
 			case VERDICT:
-				return ToolAccessLabels.verdict(accessRow.explanation().allowed());
+				return ToolAccessLabels
+					.verdict(ToolAccessVerdict.of(accessRow.explanation().allowed()));
 			case RISK:
 				return accessRow instanceof EffectiveAccessRow.Capability capability
 					? ToolAccessLabels.risk(capability.group()) : null;

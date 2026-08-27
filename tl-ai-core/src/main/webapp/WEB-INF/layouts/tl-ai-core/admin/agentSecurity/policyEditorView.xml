@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Richtlinie: where the policy is actually written.
+	
+	The component renders itself (ControlRepresentableCP) because none of its controls resembles a
+	field of the stored format: one tri-state per capability group, three named states for the
+	baseline and for the background limit, and one either-or per entry that names single tools. What
+	it writes is the same configuration file the service editor writes, which stays the raw view of
+	the same policy.
+-->
+<securityLayout name="aiToolAccessPolicyView"
+	titleKey="admin.ai.agentSecurity.policy.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentSecurity.policy.tabber"/>
+	<components>
+		<component class="com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent"
+			name="aiToolAccessPolicyComponent"
+			resPrefix="admin.ai.agentSecurity.policy."
+			securityObject="securityRoot"
+		>
+			<componentControlProvider class="com.top_logic.layout.structure.ControlRepresentableCP"/>
+			<layoutInfo scrolleable="true"/>
+		</component>
+	</components>
+</securityLayout>

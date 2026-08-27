@@ -5,7 +5,7 @@
  */
 package com.top_logic.tl.ai.core.security.layout;
 
-import java.util.Set;
+import java.util.Collection;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
@@ -139,10 +139,13 @@ public class ToolAccessLabels {
 
 	/**
 	 * The verdict word of a decision, for a cell that has no room for an icon.
+	 *
+	 * @param verdict
+	 *        The decision to name. Never <code>null</code>.
 	 */
-	public static String verdict(boolean allowed) {
-		return resources().getString(allowed ? I18NConstants.VERDICT_ALLOWED
-			: I18NConstants.VERDICT_DENIED);
+	public static String verdict(ToolAccessVerdict verdict) {
+		return resources().getString(verdict == ToolAccessVerdict.ALLOWED
+			? I18NConstants.VERDICT_ALLOWED : I18NConstants.VERDICT_DENIED);
 	}
 
 	/**
@@ -176,41 +179,139 @@ public class ToolAccessLabels {
 	/**
 	 * The risk marker of a capability group, or the empty string for a group that carries none.
 	 *
-	 * <p>
-	 * Three markers, because three different things about a group make an administrator want to look
-	 * twice: it can express every other capability, it can send data out of the application, or it is
-	 * held by everyone whether the policy says so or not.
-	 * </p>
-	 *
 	 * @param group
 	 *        The technical group name, may be <code>null</code>.
 	 */
 	public static String risk(String group) {
-		if (group == null) {
-			return "";
-		}
-		if (RoleToolAccess.IMPLICIT_BASELINE.contains(group)) {
-			return resources().getString(I18NConstants.RISK_IMPLICIT);
-		}
-		if (ToolGroups.EGRESS.equals(group)) {
-			return resources().getString(I18NConstants.RISK_EGRESS);
-		}
-		if (PRIVILEGED_GROUPS.contains(group)) {
-			return resources().getString(I18NConstants.RISK_PRIVILEGED);
-		}
-		return "";
+		return risk(CapabilityRisk.of(group));
 	}
 
 	/**
-	 * The groups whose JavaDoc in {@link ToolGroups} says "grant with care", plus the one that can
-	 * grant every other.
+	 * The risk marker in words, or the empty string for {@link CapabilityRisk#NONE}.
 	 *
-	 * @see ToolGroups#SCRIPT
-	 * @see ToolGroups#MODEL_STRUCTURE
-	 * @see ToolGroups#AGENT_AUTHORING
+	 * @param risk
+	 *        The marker to name. Never <code>null</code>.
 	 */
-	private static final Set<String> PRIVILEGED_GROUPS = Set.of(
-		ToolGroups.SCRIPT, ToolGroups.MODEL_STRUCTURE, ToolGroups.AGENT_AUTHORING);
+	public static String risk(CapabilityRisk risk) {
+		switch (risk) {
+			case PRIVILEGED:
+				return resources().getString(I18NConstants.RISK_PRIVILEGED);
+			case EGRESS:
+				return resources().getString(I18NConstants.RISK_EGRESS);
+			case IMPLICIT:
+				return resources().getString(I18NConstants.RISK_IMPLICIT);
+			default:
+				// A group with nothing special about it says nothing rather than "nothing special":
+				// a column of "none" reads as information and is not.
+				return "";
+		}
+	}
+
+	/**
+	 * Who reaches a tool, in words.
+	 *
+	 * @param reachability
+	 *        The state to name. Never <code>null</code>.
+	 * @param roleNames
+	 *        The roles to list for {@link ToolReachability#NAMED_ROLES}, in the order to show them.
+	 */
+	public static String reachability(ToolReachability reachability, Collection<String> roleNames) {
+		switch (reachability) {
+			case EVERYONE:
+				return resources().getString(I18NConstants.REACHABLE_EVERYONE);
+			case NOBODY:
+				return resources().getString(I18NConstants.REACHABLE_NOBODY);
+			default:
+				return String.join(", ", roleNames);
+		}
+	}
+
+	/**
+	 * What a role may do with a capability group, in words.
+	 *
+	 * @param state
+	 *        The state to name. Never <code>null</code>.
+	 */
+	public static String triState(PolicyDraft.TriState state) {
+		switch (state) {
+			case DENIED:
+				return resources().getString(I18NConstants.TRI_STATE_DENIED);
+			case GRANTED:
+				return resources().getString(I18NConstants.TRI_STATE_GRANTED);
+			default:
+				return resources().getString(I18NConstants.TRI_STATE_UNSET);
+		}
+	}
+
+	/**
+	 * The name of one of the three baseline states.
+	 *
+	 * @param choice
+	 *        The state to name. Never <code>null</code>.
+	 */
+	public static ResKey baselineChoice(PolicyDraft.BaselineChoice choice) {
+		switch (choice) {
+			case DEFAULT:
+				return I18NConstants.BASELINE_DEFAULT;
+			case NOTHING:
+				return I18NConstants.BASELINE_NOTHING;
+			default:
+				return I18NConstants.BASELINE_CUSTOM;
+		}
+	}
+
+	/**
+	 * The name of one of the three states of the background limit.
+	 *
+	 * @param choice
+	 *        The state to name. Never <code>null</code>.
+	 */
+	public static ResKey backgroundChoice(PolicyDraft.BackgroundChoice choice) {
+		switch (choice) {
+			case UNDECLARED:
+				return I18NConstants.BACKGROUND_UNDECLARED;
+			case ALL:
+				return I18NConstants.BACKGROUND_ALL;
+			default:
+				return I18NConstants.BACKGROUND_CUSTOM;
+		}
+	}
+
+	/**
+	 * What kind of role a name refers to, as the picker groups them.
+	 *
+	 * @param kind
+	 *        The kind to name. Never <code>null</code>.
+	 */
+	public static ResKey roleKind(SecurityRoleKind kind) {
+		switch (kind) {
+			case FRAMEWORK:
+				return I18NConstants.ROLE_KIND_FRAMEWORK;
+			case INTERNAL:
+				return I18NConstants.ROLE_KIND_INTERNAL;
+			default:
+				return I18NConstants.ROLE_KIND_APPLICATION;
+		}
+	}
+
+	/**
+	 * The name of one of the templates a role entry can start from.
+	 *
+	 * @param template
+	 *        The template to name. Never <code>null</code>.
+	 */
+	public static ResKey roleTemplate(PolicyDraft.RoleTemplate template) {
+		switch (template) {
+			case READ_ONLY:
+				return I18NConstants.TEMPLATE_READ_ONLY;
+			case CLERK:
+				return I18NConstants.TEMPLATE_CLERK;
+			case DEVELOPER:
+				return I18NConstants.TEMPLATE_DEVELOPER;
+			default:
+				return I18NConstants.TEMPLATE_NONE;
+		}
+	}
 
 	/**
 	 * Where the group of a tool comes from, in words.

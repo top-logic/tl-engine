@@ -3,12 +3,16 @@
 <!--
 	The "Agent-Sicherheit" tab of Administration -> Berechtigungen, with one tab per question an
 	administrator arrives with:
-
-	  Werkzeug-Katalog  "which tools exist, what does each do, and which group is it in"
-	  Effektive Rechte  "what can this account's agent actually call, and why"
-
-	Both are read-only. The policy itself is written in the service editor
-	("Zugangsdienst fuer KI-Tools"), which is the raw view of the same configuration.
+	
+	Werkzeug-Katalog  "which tools exist, what does each do, and which group is it in"
+	Richtlinie        "who may use what" - the one tab that writes
+	Effektive Rechte  "what can this account's agent actually call, and why"
+	
+	In that order, because it is the order the questions arrive in: first see what there is, then
+	decide, then check what the decision did. The catalog and the policy tab report the saved policy;
+	the effective-permissions tab reports the running service, and the policy tab says so while the
+	two differ. The service editor ("Zugangsdienst fuer KI-Tools") remains the raw view of the same
+	configuration.
 -->
 <securityLayout name="aiAgentSecurityView"
 	titleKey="admin.ai.agentSecurity.tabber"
@@ -19,6 +23,7 @@
 		<tabbar name="aiAgentSecurityView_tabBar">
 			<components>
 				<include name="tl-ai-core/admin/agentSecurity/toolCatalogView.xml"/>
+				<include name="tl-ai-core/admin/agentSecurity/policyEditorView.xml"/>
 				<include name="tl-ai-core/admin/agentSecurity/effectiveAccessView.xml"/>
 			</components>
 		</tabbar>

@@ -9,8 +9,8 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /*
  * Deliberately free of resources: the sentence an administrator reads is assembled in the view
- * (com.top_logic.tl.ai.core.security.layout.ToolAccessRuleFormat), so that a test can assert the
- * decision and its provenance as data rather than by matching translated prose.
+ * (com.top_logic.tl.ai.core.security.layout.ToolAccessLabels), so that a test can assert the decision
+ * and its provenance as data rather than by matching translated prose.
  */
 
 /**
@@ -37,42 +37,49 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  */
 public record ToolAccessRule(ToolAccessRule.Kind kind, String roleName, String group, String namedTool) {
 
-	/**
-	 * The mechanisms of a {@link ToolAccessPolicy} a decision can come from.
+	/*
+	 * The JavaDoc of this enum and of its constants is exported to META-INF/messages_*.properties by
+	 * the build's doclet, so it is written for an administrator: short, and free of XML element names,
+	 * which the editor's safe-HTML renderer rejects as unknown tags. TestSecurityConfigPresentation
+	 * enforces both.
 	 *
-	 * <p>
 	 * One constant per sentence an administrator has to be able to read, which is why the three
 	 * baseline states and the two "nothing reached it" cases are told apart rather than collapsed:
-	 * "the shipped default applies", "your baseline lists it" and "nobody classified this tool" send
-	 * an administrator to three different places.
-	 * </p>
+	 * "the shipped default applies", "your baseline lists it" and "nobody classified this tool" send an
+	 * administrator to three different places.
+	 */
+
+	/**
+	 * The mechanisms of a tool access policy a decision can come from.
 	 */
 	public enum Kind {
 
 		/**
-		 * {@link RoleToolAccess#IMPLICIT_BASELINE} - granted to everyone, in every run mode, without
-		 * being configured.
+		 * Granted to everyone, in every run mode, without being configured.
+		 *
+		 * @see RoleToolAccess#IMPLICIT_BASELINE
 		 */
 		IMPLICIT_BASELINE,
 
 		/**
-		 * {@link RoleToolAccess#DEFAULT_BASELINE} - the read-only default that applies because the
-		 * policy declares no {@code <baseline>} at all.
+		 * The read-only default that applies because the policy states no baseline of its own.
+		 *
+		 * @see RoleToolAccess#DEFAULT_BASELINE
 		 */
 		DEFAULT_BASELINE,
 
-		/** An entry of the policy's declared {@code <baseline>}, which reaches every account. */
+		/** An entry of the policy's own baseline, which reaches every account. */
 		BASELINE,
 
-		/** A {@code <grant>} of a role the account holds. */
+		/** A permission the account holds through one of its roles. */
 		ROLE_GRANT,
 
-		/** A {@code <deny>} of a role the account holds. Wins over every grant. */
+		/** A prohibition of one of the account's roles. Wins over every permission. */
 		ROLE_DENY,
 
 		/**
-		 * The {@code <background-allowlist>} ceiling of a run that has nobody to answer an approval
-		 * prompt. Binds administrators too.
+		 * The ceiling for runs that have nobody to answer a confirmation prompt. Binds administrators
+		 * too.
 		 */
 		BACKGROUND_CEILING,
 
@@ -89,7 +96,7 @@ public record ToolAccessRule(ToolAccessRule.Kind kind, String roleName, String g
 		NOT_GRANTED;
 	}
 
-	/** The implicit grant of {@link ToolGroups#INTERACTION} / {@link ToolGroups#INTROSPECTION}. */
+	/** The implicit grant of {@link ToolGroups#INTERACTION} and {@link ToolGroups#INTROSPECTION}. */
 	static ToolAccessRule implicitBaseline(String group) {
 		return new ToolAccessRule(Kind.IMPLICIT_BASELINE, null, group, null);
 	}

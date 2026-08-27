@@ -470,24 +470,28 @@ public class RoleToolAccess {
 		return null;
 	}
 
-	/**
-	 * Where the group of a tool comes from.
+	/*
+	 * The JavaDoc of this enum and of its constants is exported to META-INF/messages_*.properties by
+	 * the build's doclet and shown to an administrator, so it stays short and free of XML element
+	 * names, which the editor's safe-HTML renderer rejects as unknown tags.
 	 *
-	 * <p>
 	 * Cheap to compute and worth showing: without it a catalog cannot explain why removing one
-	 * {@code <tool-groups>} entry de-classifies one tool and not the one next to it.
-	 * </p>
+	 * <tool-groups> entry de-classifies one tool and not the one next to it.
+	 */
+
+	/**
+	 * Where the capability group of a tool comes from.
 	 *
 	 * @see #groupOf(ToolIdentity)
 	 */
 	public enum GroupSource {
 
-		/** The tool declares its group itself, on {@code @ToolMethod(group = ...)}. */
+		/** The tool states its own group, in its code. */
 		DECLARED,
 
 		/**
-		 * A {@code <tool-groups>} entry of the policy assigns it - either because the tool declares
-		 * none (a TL-Script or MCP tool), or because an administrator reclassified it.
+		 * A group assignment of the policy puts the tool into its group - either because the tool
+		 * states none, or because an administrator reclassified it.
 		 */
 		CONFIGURED,
 

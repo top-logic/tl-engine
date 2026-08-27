@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Contributes the "Agent-Sicherheit" view to Administration -> Berechtigungen.
+
+	Placed here rather than under Development next to the service editor because this is security:
+	an administrator looking for "who may do what" looks where roles, groups and profiles are, and
+	the concept walkthrough found that nothing under Berechtigungen even hinted that agent security
+	exists. The raw editor of the same policy stays where it is - the two are two projections of one
+	configuration, and only this one explains it.
+
+	Appended rather than positioned before an existing entry: the reference would have to name a
+	layout another web fragment contributes to the same tabbar, and the order in which fragments are
+	applied is not ours to rely on.
+-->
+<arguments>
+	<components>
+		<layout-reference resource="tl-ai-core/admin/agentSecurity/agentSecurityView.layout.xml"/>
+	</components>
+</arguments>

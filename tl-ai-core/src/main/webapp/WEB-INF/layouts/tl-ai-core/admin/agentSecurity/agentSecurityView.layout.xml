@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The "Agent-Sicherheit" tab of Administration -> Berechtigungen, with one tab per question an
+	administrator arrives with:
+
+	  Werkzeug-Katalog  "which tools exist, what does each do, and which group is it in"
+	  Effektive Rechte  "what can this account's agent actually call, and why"
+
+	Both are read-only. The policy itself is written in the service editor
+	("Zugangsdienst fuer KI-Tools"), which is the raw view of the same configuration.
+-->
+<securityLayout name="aiAgentSecurityView"
+	titleKey="admin.ai.agentSecurity.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentSecurity.tabber"/>
+	<components>
+		<tabbar name="aiAgentSecurityView_tabBar">
+			<components>
+				<include name="tl-ai-core/admin/agentSecurity/toolCatalogView.xml"/>
+				<include name="tl-ai-core/admin/agentSecurity/effectiveAccessView.xml"/>
+			</components>
+		</tabbar>
+	</components>
+</securityLayout>

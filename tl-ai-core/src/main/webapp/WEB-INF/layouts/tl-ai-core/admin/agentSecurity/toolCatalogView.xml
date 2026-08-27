@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Werkzeug-Katalog: every registered tool joined with the policy in effect.
+
+	Every cell is a string on purpose - the table's own filters then work on what the reader sees,
+	which is where the search, the group filter and the "only unclassified" filter of the concept
+	come from: the filter of the "Gruppe" column offers every group plus the "KEINE GRUPPE" entry.
+-->
+<securityLayout name="aiToolCatalogView"
+	titleKey="admin.ai.agentSecurity.catalog.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentSecurity.catalog.tabber"/>
+	<components>
+		<component class="com.top_logic.layout.table.component.TableComponent"
+			modelBuilder="com.top_logic.tl.ai.core.security.layout.ToolCatalogModelBuilder"
+			name="aiToolCatalogTable"
+			resPrefix="admin.ai.agentSecurity.catalog."
+			securityObject="securityRoot"
+			selectable="false"
+		>
+			<layoutInfo scrolleable="true"/>
+			<!--
+				No defaultSortOrder: the rows arrive from the model builder with the unclassified tools
+				first, because that is the state an administrator has to act on and a warning that needs
+				scrolling to is a warning nobody sees. Sorting by any column is one click away.
+			-->
+			<table
+				defaultColumns="tool,description,group,risk,groupSource,reachableFor"
+				fixedColumns="1"
+				showTitle="true"
+			>
+				<column-default
+					accessor="com.top_logic.tl.ai.core.security.layout.ToolCatalogAccessor"
+					filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
+				/>
+				<columns>
+					<column name="tool"
+						columnWidth="270px"
+					/>
+					<column name="description"
+						columnWidth="230px"
+					/>
+					<column name="group"
+						columnWidth="250px"
+					/>
+					<column name="risk"
+						columnWidth="140px"
+					/>
+					<column name="groupSource"
+						columnWidth="230px"
+					/>
+					<column name="reachableFor"
+						columnWidth="210px"
+					/>
+				</columns>
+			</table>
+			<buttons>
+				<button id="exportExcel"
+					class="com.top_logic.layout.table.export.ExcelExportHandler"
+				/>
+			</buttons>
+		</component>
+	</components>
+</securityLayout>

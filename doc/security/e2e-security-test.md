@@ -332,7 +332,7 @@ To run these cases from TL-Script instead of typing them into the chat, see
 |---|---|
 | **Login** | `anna` |
 | **Prompt** | Run [`harness/probe.tlscript`](harness/probe.tlscript) first, then case 3.1 again. |
-| **Expect** | every write capability `ALLOWED` in the probe, and still only `Alpha` from the script. |
+| **Expect** | `model.read`, `data.read` and `script` `ALLOWED` in the probe - it has no write entry, every probe is read-only - and still only `Alpha` from the script. |
 | **Why** | Anna holds `data.write` **on the security root**, so the tool layer lets every write tool through for her. What stops her at Beta is that she holds `projectPartner` on Alpha and not on Beta. A design in which the tool layer were the control could not express this: at the moment it runs there is no object yet. |
 
 ### 3.3 `anna` - the security parent carries the scope downward
@@ -406,7 +406,7 @@ To run these cases from TL-Script instead of typing them into the chat, see
 |---|---|
 | **Login** | `dora` |
 | **Prompts** | run `probe.tlscript`, then 3.1 |
-| **Expect** | every capability `ALLOWED`, and an **empty** result. |
+| **Expect** | the same probe decisions as `anna` - the read capabilities `ALLOWED`, the ones no persona role holds `DENIED` - differing only in what the allowed calls return, `totalCount 0` where hers says 1. Then an **empty** result. |
 | **Why** | She holds `projectPartner` on the security root and partners on no project. So she has every read and write tool, and there is no object any of them may touch. **Nothing in the answer tells her that projects exist.** |
 | **The point** | This is the drift the tier/scope split makes possible - two assignments that can disagree - and it argues for the boot-time warning of issue #289, not for a different architecture. See [testbed.md](testbed.md#3-the-persona-matrix). |
 

@@ -1027,6 +1027,23 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey SECTION_TOOL_ENTRIES;
 
 	/**
+	 * Heading of the section holding every configured role.
+	 *
+	 * @en Roles
+	 * @de Rollen
+	 * @tooltip What each configured role may do, and how another role is taken into the policy.
+	 */
+	public static ResKey SECTION_ROLES;
+
+	/**
+	 * What the collapsed roles section says when the names no longer fit into its title.
+	 *
+	 * @en {0} roles
+	 * @de {0} Rollen
+	 */
+	public static ResKey1 SECTION_ROLES_SUMMARY__COUNT;
+
+	/**
 	 * Heading of the section that takes another role into the policy.
 	 *
 	 * @en Add a role

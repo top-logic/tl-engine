@@ -159,8 +159,14 @@ The **Richtlinie** tab is the recommended place to write this policy. It stores 
 page describes: a policy written by hand parses unchanged, and opening the tab and applying it
 changes nothing. It is an ordinary TopLogic form, so it looks like the rest of the administration:
 one collapsible section per subject, a label column, and per-field help in the tooltip of the label.
-Everything but the first section starts collapsed, and each section title carries a summary, so the
-whole policy fits on one screen no matter how many roles it configures.
+Each section title carries a summary, so the whole policy fits on one screen no matter how many roles
+it configures.
+
+The top level has four sections whatever the policy contains: **Rollen**, **Grundberechtigung für
+jedes Konto**, **Obergrenze für unbeaufsichtigte Läufe** and **Gruppen-Zuordnungen**. *Rollen* holds
+one section per configured role plus *Rolle aufnehmen*, and its title names the roles it holds (a
+count, once there are more names than fit). It opens with the first role open and everything below it
+closed; every section remembers per user whether you left it open.
 
 | You decide | The tab shows | It stores |
 |---|---|---|

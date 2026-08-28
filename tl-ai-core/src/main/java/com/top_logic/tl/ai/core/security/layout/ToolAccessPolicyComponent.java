@@ -120,6 +120,9 @@ import com.top_logic.util.Resources;
  */
 public class ToolAccessPolicyComponent extends FormComponent {
 
+	/** Name of the group holding every configured role and the way to take another one in. */
+	public static final String GROUP_ROLES = "roles";
+
 	/** Name of the group holding the role that is being added and its template. */
 	public static final String GROUP_NEW_ROLE = "newRole";
 
@@ -174,6 +177,16 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	 * </p>
 	 */
 	private static final String CAPABILITY_LABEL_WIDTH = "330px";
+
+	/**
+	 * How long the list of role names in the collapsed roles section may get.
+	 *
+	 * <p>
+	 * Beyond it the summary says how many roles there are instead: a title that wraps says less than a
+	 * count, and a list cut off in the middle says something false.
+	 * </p>
+	 */
+	private static final int ROLE_NAMES_SUMMARY_LENGTH = 60;
 
 	/**
 	 * What one entry of a permission list names.
@@ -260,7 +273,6 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		List<HTMLTemplateFragment> sections = new ArrayList<>();
 		sections.add(htmlTemplate(messages(context)));
 		addRoleGroups(context, sections);
-		addNewRoleGroup(context, sections);
 		addBaselineGroup(context, sections);
 		addBackgroundGroup(context, sections);
 		addAssignmentGroup(context, sections);
@@ -318,19 +330,34 @@ public class ToolAccessPolicyComponent extends FormComponent {
 
 	// ---------------------------------------------------------------- the roles
 
-	/** One collapsible section per configured role. */
+	/**
+	 * The roles, in one collapsible section of their own.
+	 *
+	 * <p>
+	 * A section per role and the way to take another one in are the same subject, and a policy with
+	 * several roles pushed everything else off the screen while they sat at the top level. Grouped, the
+	 * top level is four entries whatever the policy configures.
+	 * </p>
+	 */
 	private void addRoleGroups(FormContext context, List<HTMLTemplateFragment> sections) {
+		FormGroup roles = new FormGroup(GROUP_ROLES, getResPrefix());
+		roles.setLabel(resources().getString(I18NConstants.SECTION_ROLES));
+		roles.setTooltip(resources().getString(I18NConstants.SECTION_ROLES.tooltip()));
+		context.addMember(roles);
+
+		List<HTMLTemplateFragment> inner = new ArrayList<>();
 		List<String> roleNames = _draft.roleNames();
 		if (roleNames.isEmpty()) {
-			sections.add(htmlTemplate(note(I18NConstants.POLICY_NO_ROLES)));
+			inner.add(contentBox(htmlTemplate(note(I18NConstants.POLICY_NO_ROLES))));
 		}
 		for (int r = 0; r < roleNames.size(); r++) {
 			String roleName = roleNames.get(r);
-			String prefix = GROUP_ROLE_PREFIX + r;
-			FormGroup role = new FormGroup(prefix, getResPrefix());
+			String name = GROUP_ROLE_PREFIX + r;
+			String prefix = path(GROUP_ROLES, name);
+			FormGroup role = new FormGroup(name, getResPrefix());
 			role.setLabel(roleName);
 			role.setTooltip(roleTooltip(roleName));
-			context.addMember(role);
+			roles.addMember(role);
 
 			List<HTMLTemplateFragment> capabilities = new ArrayList<>();
 			addCapabilityFields(role, prefix, roleName, capabilities);
@@ -343,9 +370,30 @@ public class ToolAccessPolicyComponent extends FormComponent {
 				_draft.removeRole(roleName);
 				return rebuild();
 			});
-			sections.add(section(role, content, "role." + roleName, r > 0,
-				() -> roleSummary(roleName)).setMenu(Menu.create(remove)));
+			inner.add(contentBox(section(role, content, "role." + roleName, r > 0,
+				() -> roleSummary(roleName)).setMenu(Menu.create(remove))));
 		}
+		addNewRoleGroup(roles, inner);
+
+		sections.add(section(roles, inner, "roles", false, this::rolesSummary));
+	}
+
+	/**
+	 * What the collapsed section of the roles says: which roles the policy configures.
+	 *
+	 * <p>
+	 * The names rather than a count, because the names are the content and a count only says how much
+	 * of it there is. Where they no longer fit into a title, an honest count beats a truncated list.
+	 * </p>
+	 */
+	private String rolesSummary() {
+		List<String> roleNames = _draft.roleNames();
+		String names = String.join(", ", roleNames);
+		if (names.length() <= ROLE_NAMES_SUMMARY_LENGTH) {
+			return names;
+		}
+		return resources().getString(
+			I18NConstants.SECTION_ROLES_SUMMARY__COUNT.fill(Integer.valueOf(roleNames.size())));
 	}
 
 	/** What a collapsed role section says: how much it grants, forbids and lists. */
@@ -596,11 +644,13 @@ public class ToolAccessPolicyComponent extends FormComponent {
 
 	// -------------------------------------------------------------- add a role
 
-	private void addNewRoleGroup(FormContext context, List<HTMLTemplateFragment> sections) {
+	private void addNewRoleGroup(FormGroup roles, List<HTMLTemplateFragment> sections) {
 		FormGroup group = new FormGroup(GROUP_NEW_ROLE, getResPrefix());
 		group.setLabel(resources().getString(I18NConstants.SECTION_ADD_ROLE));
 		group.setTooltip(resources().getString(I18NConstants.SECTION_ADD_ROLE.tooltip()));
-		context.addMember(group);
+		roles.addMember(group);
+
+		String prefix = path(GROUP_ROLES, GROUP_NEW_ROLE);
 
 		SelectField role =
 			FormFactory.newSelectField(FIELD_ROLE, offeredRoles(), false, false, false, null);
@@ -631,12 +681,12 @@ public class ToolAccessPolicyComponent extends FormComponent {
 			return rebuild();
 		});
 
-		sections.add(section(group, List.of(
-			fieldBox(path(GROUP_NEW_ROLE, FIELD_ROLE)),
+		sections.add(contentBox(section(group, List.of(
+			fieldBox(path(prefix, FIELD_ROLE)),
 			contentBox(htmlTemplate(dynamic("roleNote", () -> roleNote(role)))),
-			fieldBox(path(GROUP_NEW_ROLE, FIELD_TEMPLATE)),
-			contentBox(member(path(GROUP_NEW_ROLE, FIELD_ADD)))),
-			"addRole", false, () -> ""));
+			fieldBox(path(prefix, FIELD_TEMPLATE)),
+			contentBox(member(path(prefix, FIELD_ADD)))),
+			"addRole", true, () -> "")));
 	}
 
 	/** What is known about the role the picker currently shows. */

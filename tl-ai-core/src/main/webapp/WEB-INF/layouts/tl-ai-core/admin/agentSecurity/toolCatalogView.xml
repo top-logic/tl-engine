@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Werkzeug-Katalog: every registered tool joined with the policy in effect.
+	Tool-Katalog: every registered tool joined with the policy in effect.
 	
 	Every cell is a string on purpose - the table's own filters then work on what the reader sees,
 	which is where the search, the group filter and the "only unclassified" filter of the concept

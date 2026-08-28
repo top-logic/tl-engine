@@ -13,7 +13,7 @@
  * {@code WEB-INF/layouts/admin/security/index.layout.overlay.xml}:
  * </p>
  * <ul>
- * <li><b>Werkzeug-Katalog</b> - every registered tool with its capability group, where that group
+ * <li><b>Tool-Katalog</b> - every registered tool with its capability group, where that group
  * comes from, and which roles reach it. Answers "what am I granting with {@code data.read}", which the
  * raw policy editor cannot: it shows names, never the catalog behind them.</li>
  * <li><b>Richtlinie</b> - the editor: per role and capability a tri-state, three named states for the

@@ -47,13 +47,13 @@ public class SecDemoToolDescriptionTest extends SecDemoPersonaTest {
 	 * What a German description must not contain.
 	 *
 	 * <p>
-	 * The first two are what the build's machine translation produces where every other German text of
-	 * this layer says Werkzeug and Zulassungsliste; the last two are the dashes this repository does not
-	 * use.
+	 * "Werkzeug" and "Whitelist" are what the build's machine translation produces; the German user
+	 * interface says "Tool" and "Zulassungsliste". The last two are the dashes this repository does
+	 * not use.
 	 * </p>
 	 */
 	private static final List<String> FORBIDDEN_IN_GERMAN =
-		List.of("Tool", "Whitelist", "\u2014", "\u2013");
+		List.of("Werkzeug", "Whitelist", "\u2014", "\u2013");
 
 	/** The languages the application ships resources for. */
 	private static final List<Locale> LANGUAGES = List.of(Locale.GERMAN, Locale.ENGLISH);
@@ -97,12 +97,12 @@ public class SecDemoToolDescriptionTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * No German description uses the words the documentation of this layer does not use.
+	 * No German description uses the words the German user interface does not use.
 	 *
 	 * <p>
 	 * The build machine-translates a key that is missing from the German bundle, and its output says
-	 * "Tool" and "Whitelist" where every other German text of this layer says "Werkzeug" and
-	 * "Zulassungsliste". A description that slipped through untranslated is what this catches.
+	 * "Werkzeug" and "Whitelist" where the German user interface says "Tool" and "Zulassungsliste". A
+	 * description that slipped through untranslated is what this catches.
 	 * </p>
 	 */
 	public void testTheGermanDescriptionsUseTheDocumentedWords() {
@@ -119,7 +119,7 @@ public class SecDemoToolDescriptionTest extends SecDemoPersonaTest {
 			}
 		}
 
-		assertEquals("German descriptions have to say Werkzeug rather than Tool, Zulassungsliste"
+		assertEquals("German descriptions have to say Tool rather than Werkzeug, Zulassungsliste"
 			+ " rather than Whitelist, and never an em or en dash:\n  " + offending, Map.of(), offending);
 	}
 

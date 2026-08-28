@@ -10,7 +10,7 @@ import java.util.Set;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
 
 /**
- * One row of the Werkzeug-Katalog: a registered tool joined with what the policy says about it.
+ * One row of the Tool-Katalog: a registered tool joined with what the policy says about it.
  *
  * <p>
  * A snapshot, built when the table is filled and never updated: the registry can grow while the

@@ -9,7 +9,7 @@ import com.top_logic.layout.ReadOnlyAccessor;
 import com.top_logic.util.Resources;
 
 /**
- * The columns of the Werkzeug-Katalog.
+ * The columns of the Tool-Katalog.
  *
  * <p>
  * Every cell is a string, deliberately: the table's own filters then work on what the reader sees, an

@@ -129,7 +129,7 @@ their own place: **Administration → Berechtigungen → Agent-Sicherheit**, wit
 
 | Tab | Answers | Reads |
 |---|---|---|
-| Werkzeug-Katalog | which tools exist, what each does, which group it is in | the **saved** policy |
+| Tool-Katalog | which tools exist, what each does, which group it is in | the **saved** policy |
 | Richtlinie | who may use what - and this is the tab that **writes** | the **saved** policy |
 | Effektive Rechte | what this account's agent may call, and which rule decided | the **running** service |
 
@@ -137,11 +137,11 @@ That split is deliberate and visible: after an apply, the saved policy and the r
 until the service is restarted, and the Richtlinie tab says so in a banner with the restart action
 next to it.
 
-**Werkzeug-Katalog** is one row per registered tool:
+**Tool-Katalog** is one row per registered tool:
 
 | Column | Answers |
 |---|---|
-| Werkzeug | the qualified name, i.e. exactly what a `<grant tools="...">` writes and what a denial prints |
+| Tool | the qualified name, i.e. exactly what a `<grant tools="...">` writes and what a denial prints |
 | Beschreibung | what the tool does, in one sentence written for an administrator, in your language. A tool nobody could describe - one of a connected MCP server, one authored in the running application - shows the text the *model* is given instead, marked `(Beschreibung für das Modell, EN)` in that row |
 | Gruppe | the capability group, with its display name and its technical name; `KEINE GRUPPE` for a tool no grant can reach |
 | Hinweis zur Gruppe | privileged / sends data outward / granted implicitly |
@@ -163,9 +163,9 @@ not the decision you are making:
 | You decide | The tab shows | It stores |
 |---|---|---|
 | may this role use this capability | one row per capability with **verweigert / nicht genannt / gewährt** | a `<grant group>`, a `<deny group>`, or neither |
-| a single tool rather than a group | one entry with the choice **ganze Gruppe / einzelne Werkzeuge** - exactly one input is present | `<grant group="...">` or `<grant tools="...">`, never both |
+| a single tool rather than a group | one entry with the choice **ganze Gruppe / einzelne Tools** - exactly one input is present | `<grant group="...">` or `<grant tools="...">`, never both |
 | what everybody gets | **Standard / Nichts / Eigene Liste** | no `<baseline>`, `<baseline/>`, or `<baseline>` with entries |
-| what an unattended run may reach | **Nicht festgelegt / Alle Werkzeuge erlauben / Eigene Liste** | no element, `all="true"`, or entries |
+| what an unattended run may reach | **Nicht festgelegt / Alle Tools erlauben / Eigene Liste** | no element, `all="true"`, or entries |
 
 `interaction` and `introspection` appear as locked rows ("immer gewährt") - they cannot be withheld
 by omission, so there is nothing to decide. A capability the basic permissions already grant everyone

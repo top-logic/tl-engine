@@ -51,7 +51,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Provenance: a grant of the named role that names this single tool instead of a group.
 	 *
 	 * @en Grant of role {0} for this single tool
-	 * @de Grant der Rolle {0} für dieses einzelne Werkzeug
+	 * @de Grant der Rolle {0} für dieses einzelne Tool
 	 */
 	public static ResKey1 RULE_ROLE_GRANT_TOOL__ROLE;
 
@@ -75,7 +75,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Provenance: the account is an administrator and bypasses the tool layer.
 	 *
 	 * @en Administrator - bypasses the tool layer
-	 * @de Administrator - umgeht die Werkzeug-Ebene
+	 * @de Administrator - umgeht die Tool-Ebene
 	 */
 	public static ResKey RULE_ADMIN_BYPASS;
 
@@ -197,7 +197,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Group source: the tool declares its capability group itself, in its own code.
 	 *
 	 * @en declared by the tool
-	 * @de vom Werkzeug deklariert
+	 * @de vom Tool deklariert
 	 */
 	public static ResKey GROUP_SOURCE_DECLARED;
 
@@ -315,7 +315,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en {0} is an administrator and therefore reaches every tool. This account proves nothing about
 	 *     the policy - check it with a non-administrator account.
-	 * @de {0} ist Administrator und erreicht damit jedes Werkzeug. Dieses Konto beweist nichts über
+	 * @de {0} ist Administrator und erreicht damit jedes Tool. Dieses Konto beweist nichts über
 	 *     die Richtlinie - prüfen Sie sie mit einem Konto ohne Administratorrechte.
 	 */
 	public static ResKey1 ADMIN_BANNER__ACCOUNT;
@@ -325,7 +325,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en This view shows the tool layer only. Which data an allowed call then sees is decided by the
 	 *     model access rights, per object and per attribute.
-	 * @de Diese Ansicht zeigt nur die Werkzeug-Ebene. Welche Daten ein erlaubter Aufruf dann sieht,
+	 * @de Diese Ansicht zeigt nur die Tool-Ebene. Welche Daten ein erlaubter Aufruf dann sieht,
 	 *     entscheiden die Modellrechte - pro Objekt und pro Attribut.
 	 */
 	public static ResKey LAYER_ONE_ONLY_NOTE;
@@ -348,7 +348,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     rights: its data tools will see nothing and change nothing, and a refused read comes back
 	 *     empty rather than as an error.
 	 * @de Die Rolle {0} hält {1}, kommt aber in keinem Read-, Write- oder Create-Grant der
-	 *     Modellrechte vor: Ihre Daten-Werkzeuge sehen nichts und ändern nichts, und eine
+	 *     Modellrechte vor: Ihre Daten-Tools sehen nichts und ändern nichts, und eine
 	 *     verweigerte Leseoperation liefert ein leeres Ergebnis statt eines Fehlers.
 	 */
 	public static ResKey2 WARN_DATA_ROLE_WITHOUT_MODEL_RIGHTS__ROLE_GROUPS;
@@ -358,8 +358,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Role {0} is granted tools, but no role rule of this application can produce it on the
 	 *     security root, which is where tool access reads roles. Its grants reach nobody.
-	 * @de Der Rolle {0} sind Werkzeuge gewährt, aber keine Rollenregel dieser Anwendung kann sie auf
-	 *     der Sicherheits-Wurzel erzeugen - dort liest der Werkzeugzugriff die Rollen. Ihre Grants
+	 * @de Der Rolle {0} sind Tools gewährt, aber keine Rollenregel dieser Anwendung kann sie auf
+	 *     der Sicherheits-Wurzel erzeugen - dort liest der Tool-Zugriff die Rollen. Ihre Grants
 	 *     erreichen niemanden.
 	 */
 	public static ResKey1 WARN_ROLE_UNREACHABLE_ON_ROOT__ROLE;
@@ -440,7 +440,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Background limit state: no limit of its own.
 	 *
 	 * @en Allow every tool
-	 * @de Alle Werkzeuge erlauben
+	 * @de Alle Tools erlauben
 	 * @tooltip Gives up the only control that stands in for the approval nobody is there to give.
 	 *          Such runs then reach whatever the acting account's roles grant.
 	 */
@@ -492,7 +492,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Explains the role administrators hold.
 	 *
 	 * @en Administrators, who bypass the tool layer anyway.
-	 * @de Administratoren - sie umgehen die Werkzeug-Ebene ohnehin.
+	 * @de Administratoren - sie umgehen die Tool-Ebene ohnehin.
 	 */
 	public static ResKey ROLE_NOTE_ADMINISTRATOR;
 
@@ -500,7 +500,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Explains a role the framework uses for its own user interface.
 	 *
 	 * @en A role of the framework's user interface. A tool grant to it reaches nobody.
-	 * @de Eine Rolle der Framework-Oberfläche. Ein Werkzeug-Grant an sie erreicht niemanden.
+	 * @de Eine Rolle der Framework-Oberfläche. Ein Tool-Grant an sie erreicht niemanden.
 	 */
 	public static ResKey ROLE_NOTE_INTERNAL;
 
@@ -559,8 +559,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en {0}, entry {1} names nothing. An entry says either a whole capability group or single
 	 *     tools.
-	 * @de {0}, Eintrag {1} benennt nichts. Ein Eintrag nennt entweder eine ganze Werkzeuggruppe oder
-	 *     einzelne Werkzeuge.
+	 * @de {0}, Eintrag {1} benennt nichts. Ein Eintrag nennt entweder eine ganze Tool-Gruppe oder
+	 *     einzelne Tools.
 	 */
 	public static ResKey2 REFUSE_ENTRY_NAMES_NOTHING__WHERE_POSITION;
 
@@ -569,7 +569,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en {0}, entry {1} names a capability group and single tools at once. An entry says exactly one
 	 *     of the two.
-	 * @de {0}, Eintrag {1} benennt eine Werkzeuggruppe und einzelne Werkzeuge zugleich. Ein Eintrag
+	 * @de {0}, Eintrag {1} benennt eine Tool-Gruppe und einzelne Tools zugleich. Ein Eintrag
 	 *     nennt genau eines von beiden.
 	 */
 	public static ResKey2 REFUSE_ENTRY_NAMES_BOTH__WHERE_POSITION;
@@ -650,7 +650,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Role {0} may create and rewire agents, so an agent acting for it can give itself any tool.
 	 * @de Die Rolle {0} darf Agenten anlegen und verknüpfen - ein Agent in ihrem Auftrag kann sich
-	 *     jedes Werkzeug selbst gewähren.
+	 *     jedes Tool selbst gewähren.
 	 */
 	public static ResKey1 WARN_AGENT_AUTHORING__ROLE;
 
@@ -677,7 +677,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Runs nobody watches are allowed every tool: each call approves itself, write and outward
 	 *     tools included.
-	 * @de Unbeaufsichtigte Läufe dürfen jedes Werkzeug: Jeder Aufruf genehmigt sich selbst - auch
+	 * @de Unbeaufsichtigte Läufe dürfen jedes Tool: Jeder Aufruf genehmigt sich selbst - auch
 	 *     schreibende und nach außen sendende.
 	 */
 	public static ResKey WARN_BACKGROUND_ALL;
@@ -723,7 +723,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Who may use which capability. Every change is checked when applied: nothing that can be
 	 *     saved here may stop the next application start.
-	 * @de Wer welche Werkzeuggruppe benutzen darf. Jede Änderung wird beim Übernehmen geprüft: Was
+	 * @de Wer welche Tool-Gruppe benutzen darf. Jede Änderung wird beim Übernehmen geprüft: Was
 	 *     hier gespeichert werden kann, darf den nächsten Anwendungsstart nicht verhindern.
 	 */
 	public static ResKey POLICY_INTRO;
@@ -732,7 +732,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Heading of the block holding one card per configured role.
 	 *
 	 * @en Access to tools
-	 * @de Zugriff auf Werkzeuge
+	 * @de Zugriff auf Tools
 	 */
 	public static ResKey POLICY_ROLES_HEADING;
 
@@ -776,7 +776,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Tools of a connected server and tools authored in the running application declare no group
 	 *     of their own. The policy assigns them one here; assigning is not yet granting. Edited in
 	 *     the tool access service.
-	 * @de Werkzeuge eines verbundenen Servers und in der laufenden Anwendung angelegte Werkzeuge
+	 * @de Tools eines verbundenen Servers und in der laufenden Anwendung angelegte Tools
 	 *     deklarieren selbst keine Gruppe. Die Richtlinie ordnet sie hier zu; eine Zuordnung ist noch
 	 *     kein Grant. Bearbeitet wird sie im Zugangsdienst.
 	 */
@@ -786,7 +786,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Shown where the group assignments would be, when there are none.
 	 *
 	 * @en No assignment. Every tool is in the group it declares itself.
-	 * @de Keine Zuordnung. Jedes Werkzeug steht in der Gruppe, die es selbst deklariert.
+	 * @de Keine Zuordnung. Jedes Tool steht in der Gruppe, die es selbst deklariert.
 	 */
 	public static ResKey POLICY_TOOL_GROUPS_NONE;
 
@@ -803,7 +803,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Talking to the user and reporting the agent's own toolset are granted implicitly and cannot
 	 *     be taken away here: an agent that can do neither is not restricted but broken.
-	 * @de Mit dem Nutzer sprechen und die eigene Werkzeugliste nennen sind implizit gewährt und hier
+	 * @de Mit dem Nutzer sprechen und die eigene Tool-Liste nennen sind implizit gewährt und hier
 	 *     nicht entziehbar: Ein Agent, der beides nicht kann, ist nicht eingeschränkt, sondern
 	 *     funktionsunfähig.
 	 */
@@ -849,7 +849,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * The expander holding the entries that name single tools.
 	 *
 	 * @en Advanced: grant or refuse single tools ({0})
-	 * @de Erweitert: einzelne Werkzeuge gewähren oder verweigern ({0})
+	 * @de Erweitert: einzelne Tools gewähren oder verweigern ({0})
 	 */
 	public static ResKey1 POLICY_ADVANCED__COUNT;
 
@@ -881,7 +881,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * The either-or choice of an entry: single tools.
 	 *
 	 * @en single tools
-	 * @de einzelne Werkzeuge
+	 * @de einzelne Tools
 	 */
 	public static ResKey ENTRY_KIND_TOOLS;
 
@@ -897,7 +897,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * What an entry naming single tools says, in one line.
 	 *
 	 * @en Tools: {0}
-	 * @de Werkzeuge: {0}
+	 * @de Tools: {0}
 	 */
 	public static ResKey1 ENTRY_SUMMARY_TOOLS__TOOLS;
 
@@ -905,7 +905,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Shown on an entry that names single tools and has none chosen yet.
 	 *
 	 * @en No tool chosen yet, so this entry names nothing and would be refused when applied.
-	 * @de Noch kein Werkzeug gewählt - dieser Eintrag benennt nichts und wird beim Übernehmen
+	 * @de Noch kein Tool gewählt - dieser Eintrag benennt nichts und wird beim Übernehmen
 	 *     abgewiesen.
 	 */
 	public static ResKey ENTRY_NO_TOOL_CHOSEN;
@@ -954,7 +954,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * The button that adds an entry naming single tools to permit.
 	 *
 	 * @en Add tool permission
-	 * @de Werkzeug-Berechtigung hinzufügen
+	 * @de Tool-Berechtigung hinzufügen
 	 */
 	public static ResKey COMMAND_ADD_GRANT_ENTRY;
 
@@ -962,7 +962,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * The button that adds an entry naming single tools to refuse.
 	 *
 	 * @en Add tool refusal
-	 * @de Werkzeug-Verbot hinzufügen
+	 * @de Tool-Verbot hinzufügen
 	 */
 	public static ResKey COMMAND_ADD_DENY_ENTRY;
 
@@ -1002,7 +1002,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Label of the tools of an entry.
 	 *
 	 * @en Tools
-	 * @de Werkzeuge
+	 * @de Tools
 	 */
 	public static ResKey FIELD_ENTRY_TOOLS;
 
@@ -1071,7 +1071,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en The tool access service did not start again. Until it does, no agent run is possible - see
 	 *     the application log for the reason.
-	 * @de Der Zugangsdienst für KI-Werkzeuge ist nicht wieder gestartet. Bis dahin ist kein
+	 * @de Der Zugangsdienst für KI-Tools ist nicht wieder gestartet. Bis dahin ist kein
 	 *     Agentenlauf möglich - der Grund steht im Anwendungsprotokoll.
 	 */
 	public static ResKey POLICY_RESTART_FAILED;
@@ -1080,7 +1080,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Shown instead of the editor while the saved configuration cannot be read.
 	 *
 	 * @en The saved tool access configuration cannot be read, so there is nothing to edit here.
-	 * @de Die gespeicherte Konfiguration des Werkzeugzugriffs kann nicht gelesen werden - hier gibt
+	 * @de Die gespeicherte Konfiguration des Tool-Zugriffs kann nicht gelesen werden - hier gibt
 	 *     es daher nichts zu bearbeiten.
 	 */
 	public static ResKey POLICY_UNREADABLE;

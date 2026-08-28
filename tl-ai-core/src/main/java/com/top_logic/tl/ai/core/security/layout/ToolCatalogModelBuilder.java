@@ -22,7 +22,7 @@ import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
- * The rows of the Werkzeug-Katalog: every registered tool, joined with the policy in effect.
+ * The rows of the Tool-Katalog: every registered tool, joined with the policy in effect.
  *
  * <p>
  * The overview the raw policy editor cannot give. That editor shows the <em>names</em> a policy

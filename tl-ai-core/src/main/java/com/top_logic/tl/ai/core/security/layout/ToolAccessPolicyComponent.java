@@ -440,20 +440,20 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	 * What is true about one capability of one role beyond the state the control shows.
 	 *
 	 * <p>
-	 * Every case is about a <em>second</em> setting, which is why none of them can be a tooltip: what
+	 * Every note is about a <em>second</em> setting, which is why none of them can be a tooltip: what
 	 * the basic permissions grant, and what the other configured roles grant, are written elsewhere and
-	 * change while this section is open.
+	 * change while this section is open. What the state itself means is said once, by the legend above
+	 * the rows, so a prohibition carries no note of its own.
 	 * </p>
 	 */
 	private HTMLFragment capabilityNote(String roleName, String group) {
 		switch (_draft.capabilityState(roleName, group)) {
-			case DENIED:
-				return Fragments.span("aiSecurityWarning",
-					Fragments.message(I18NConstants.ROW_DENIED));
 			case GRANTED:
 				return grantedNote(group);
-			default:
+			case ABSENT:
 				return absentNote(roleName, group);
+			default:
+				return Fragments.empty();
 		}
 	}
 
@@ -474,12 +474,16 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	/**
 	 * Who else grants a capability this role says nothing about, which is the question the empty state
 	 * raises and the reason it is not the same as a prohibition.
+	 *
+	 * <p>
+	 * Nobody else granting it is the ordinary case and gets no note: an empty row that says nothing is
+	 * a capability nobody grants.
+	 * </p>
 	 */
 	private HTMLFragment absentNote(String roleName, String group) {
 		ToolAccessRule rule = _draft.grantedElsewhere(roleName, group);
 		if (rule == null) {
-			return Fragments.span("aiSecurityAbsentState",
-				Fragments.message(I18NConstants.ROW_NOWHERE_GRANTED));
+			return Fragments.empty();
 		}
 		if (rule.kind() == ToolAccessRule.Kind.ROLE_GRANT) {
 			return Fragments.span("aiSecurityBaselineState",

@@ -1027,9 +1027,9 @@ public class I18NConstants extends I18NConstantsBase {
 	 * What the three states of a capability mean, once at the top of a role's section.
 	 *
 	 * @en Empty means this role says nothing about it. Ticked grants it, the third state forbids it and
-	 *     beats every other role.
+	 *     beats every other role and the basic permissions.
 	 * @de Leer heißt, dass diese Rolle nichts dazu sagt. Angehakt gewährt, der dritte Zustand verbietet
-	 *     und schlägt jede andere Rolle.
+	 *     und schlägt jede andere Rolle und die Grundberechtigung.
 	 */
 	public static ResKey CAPABILITY_STATES_NOTE;
 
@@ -1053,28 +1053,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey SECTION_ADD_ROLE;
 
 	/**
-	 * Row state of a capability this role forbids.
-	 *
-	 * @en Forbidden. Beats every other role and the basic permissions.
-	 * @de Verboten. Schlägt jede andere Rolle und die Grundberechtigung.
-	 */
-	public static ResKey ROW_DENIED;
-
-	/**
 	 * Row state of a capability this role says nothing about, granted by another configured role.
 	 *
 	 * @en granted by {0}
 	 * @de wird von {0} gewährt
 	 */
 	public static ResKey1 ROW_GRANTED_BY_ROLE__ROLE;
-
-	/**
-	 * Row state of a capability this role says nothing about and nothing else grants either.
-	 *
-	 * @en granted nowhere
-	 * @de nirgends gewährt
-	 */
-	public static ResKey ROW_NOWHERE_GRANTED;
 
 	/**
 	 * Label of the choice deciding what one entry names.

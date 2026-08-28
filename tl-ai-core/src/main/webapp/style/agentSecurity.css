@@ -115,13 +115,6 @@
 	font-size: 0.9em;
 }
 
-/* The same place, when nobody grants it: a fact, not a warning. */
-.aiSecurityAbsentState {
-	margin-left: 10px;
-	color: #6b6b6b;
-	font-size: 0.9em;
-}
-
 /* --- the prohibition state of a capability ------------------------------- */
 
 /*

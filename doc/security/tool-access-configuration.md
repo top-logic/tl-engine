@@ -182,12 +182,12 @@ unset; only its third state is restyled, to a crossed box in the tab's warning c
 loudest answer does not look like "nothing chosen". Each role's section says the three meanings once,
 above the rows.
 
-The row says what its state means for the rest of the policy. Forbidden reads "Verboten. Schlägt jede
-andere Rolle und die Grundberechtigung." Empty reads "wird von *rolle* gewährt", "für alle gewährt
-(Grundberechtigung)", or "nirgends gewährt", computed from the draft you are editing, so it follows
-what you change in another section before you save. Granted says "für alle gewährt
+A row carries a note only where the state itself cannot say it. Empty reads "wird von *rolle*
+gewährt" or "für alle gewährt (Grundberechtigung)" when somebody else grants the capability, computed
+from the draft you are editing, so it follows what you change in another section before you save; an
+empty row without a note is a capability nobody grants. Granted says "für alle gewährt
 (Grundberechtigung)" where the basic permissions already cover it, which is how you see that a
-permission is redundant.
+permission is redundant. Forbidden carries no note at all.
 
 A policy written by hand that names the same capability in both lists reads as forbidden, because that
 is what it enforces, and it is left exactly as it is until you click that row.

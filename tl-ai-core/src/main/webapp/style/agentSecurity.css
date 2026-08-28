@@ -1,0 +1,180 @@
+/*
+ * Layout of the "Agent-Sicherheit" administration view.
+ *
+ * Small on purpose. The Richtlinie tab is an ordinary reactive form since the review, so its sections,
+ * labels and fields are laid out by the theme; what is left here are the few pieces the framework has
+ * no control for: the messages at the top, the risk marker next to a capability, and the summary a
+ * collapsed section shows.
+ *
+ * Colours are deliberately conservative and stated literally: this file is contributed by a library
+ * module and has to look right in the shipped theme without depending on a variable that theme happens
+ * to define. Notes and warnings are told apart by their background and text colour only.
+ */
+
+.aiSecurityView {
+	padding: 10px 14px 28px;
+	max-width: 1500px;
+}
+
+.aiSecurityView h4 {
+	margin: 24px 0 6px;
+	font-size: 1.05em;
+	font-weight: 600;
+}
+
+.aiSecurityView p.aiSecurityNote,
+.aiSecurityView .aiSecurityNote {
+	margin: 4px 0 10px;
+	color: #4a4a4a;
+	max-width: 1100px;
+}
+
+/* --- messages ------------------------------------------------------------ */
+
+.aiSecurityMessages {
+	display: block;
+	margin: 0 0 12px;
+}
+
+.aiSecurityView div.aiSecurityWarning {
+	margin: 10px 0 14px;
+	padding: 8px 12px;
+	border-radius: 3px;
+	background: #fff8ec;
+	color: #6b3d00;
+}
+
+.aiSecurityView div.aiSecurityWarning p {
+	margin: 0 0 4px;
+	font-weight: 600;
+}
+
+.aiSecurityView div.aiSecurityWarning ul {
+	margin: 2px 0 0 18px;
+	padding: 0;
+}
+
+.aiSecurityView div.aiSecurityWarning li {
+	margin: 2px 0;
+}
+
+.aiSecurityView span.aiSecurityWarning {
+	color: #a83200;
+}
+
+/* Why an apply was refused: an error, not a hint, told apart by its background and text colour. */
+.aiSecurityView div.aiSecurityRefusals {
+	margin: 10px 0 14px;
+	padding: 8px 12px;
+	border-radius: 3px;
+	background: #fdf0ec;
+	color: #8a2600;
+}
+
+.aiSecurityView div.aiSecurityRefusals p {
+	margin: 0 0 4px;
+	font-weight: 600;
+}
+
+.aiSecurityView div.aiSecurityRefusals ul {
+	margin: 2px 0 0 18px;
+	padding: 0;
+}
+
+.aiSecurityView div.aiSecurityRefusals li {
+	margin: 2px 0;
+}
+
+/* The banner saying that what is saved is not what the application applies. */
+.aiSecurityBanner {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin: 0 0 12px;
+	padding: 10px 12px;
+	border-radius: 3px;
+	background: #fff4e0;
+	color: #6b3d00;
+	font-weight: 600;
+}
+
+/* --- the pieces inside a form row ---------------------------------------- */
+
+/* What makes a capability special, next to its label. */
+.aiSecurityRisk {
+	margin-left: 6px;
+	color: #a05000;
+	font-size: 0.9em;
+	white-space: nowrap;
+}
+
+/* Who else grants a capability, next to its tri-state. */
+.aiSecurityBaselineState {
+	margin-left: 10px;
+	color: #1f6b3a;
+	font-size: 0.9em;
+}
+
+/* --- the prohibition state of a capability ------------------------------- */
+
+/*
+ * A capability is the framework's own tri-state control: an empty square for "this role says nothing",
+ * a ticked one for granted, and - through the rule below - a crossed square in the tab's warning
+ * colour for forbidden. The control's own third state is a square with a minus, which is visually
+ * neutral and invites "partly selected" as a misreading; a prohibition is the loudest answer this tab
+ * has, the only one that overrides every other role and the basic permissions, so it is told apart at
+ * a glance rather than by prose next to the box.
+ *
+ * The rule only redirects the glyph the theme already renders - the form builds one control either
+ * way, so this is not a second code path. "\f410" is fa-rectangle-xmark, which the shipped Font
+ * Awesome *regular* face has; fa-square-xmark ("\f2d3") is not in that face and renders a
+ * missing-glyph box. The colour is the one span.aiSecurityWarning above already uses, so the tab gains
+ * no new colour. A theme that gives Icons.TRISTATE_FALSE a different icon leaves this rule matching
+ * nothing, and the third state silently falls back to that theme's own glyph; that is accepted on
+ * purpose, because the alternative is a control of our own.
+ */
+.aiSecurityView .cIconSelect .input-image i.fa-square-minus {
+	--fa: "\f410";
+	color: #a83200;
+}
+
+/* Whether an entry permits or forbids, in front of the entry's fields. */
+.aiSecurityEntryKind {
+	display: inline-block;
+	min-width: 110px;
+	font-weight: 600;
+}
+
+/* What a collapsed section says about its content, next to its title. */
+.aiSecuritySummary {
+	margin-left: 10px;
+	color: #6b6b6b;
+	font-weight: normal;
+}
+
+/* A block that is recomputed when a value changes; it must not add a box of its own. */
+.aiSecurityDynamic {
+	display: inline;
+}
+
+/* --- the effective-permissions tab --------------------------------------- */
+
+.aiSecurityInputs {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px;
+	padding: 8px 0;
+}
+
+.aiSecurityFooter > div,
+.aiSecurityRows {
+	margin: 8px 0 0;
+}
+
+/* One repeated block of a list, told apart from the next by a hairline. */
+.aiSecurityRow + .aiSecurityRow {
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px solid #ececec;
+}

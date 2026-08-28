@@ -501,6 +501,137 @@ public class TestRoleToolAccess extends TestCase {
 		assertFalse(access.allowedInBackground("model-editor.createClass"));
 	}
 
+	/** A group grant is explained as the grant of the role that wrote it. */
+	public void testExplainNamesTheGrantingRole() {
+		RoleToolAccess access = access(policy(
+			role("Clerk", grants(group(ToolGroups.DATA_READ)), grants())));
+
+		ToolAccessExplanation explanation =
+			access.explain(Set.of("Clerk"), identity("instance-browser.listInstances"));
+
+		assertTrue(explanation.allowed());
+		assertEquals(ToolAccessRule.Kind.ROLE_GRANT, explanation.kind());
+		assertEquals("Clerk", explanation.decidedBy().roleName());
+		assertEquals(ToolGroups.DATA_READ, explanation.decidedBy().group());
+		assertFalse("The entry named a group, not this tool.", explanation.decidedBy().isPerTool());
+		assertNull("Nothing was overridden.", explanation.overridden());
+	}
+
+	/** A per-tool grant is told apart from a group grant, because the sentences differ. */
+	public void testExplainTellsAPerToolGrantApart() {
+		RoleToolAccess access = access(policy(
+			role("Clerk", grants(tools("model-editor.createClass")), grants())));
+
+		ToolAccessRule rule =
+			access.explain(Set.of("Clerk"), identity("model-editor.createClass")).decidedBy();
+
+		assertEquals(ToolAccessRule.Kind.ROLE_GRANT, rule.kind());
+		assertTrue(rule.isPerTool());
+		assertEquals("model-editor.createClass", rule.namedTool());
+		assertNull("A per-tool entry names no group.", rule.group());
+	}
+
+	/** A deny names the role that wrote it <em>and</em> the grant it took away. */
+	public void testExplainNamesTheOverriddenGrant() {
+		RoleToolAccess access = access(policy(
+			role("Developer", grants(group(ToolGroups.MODEL_STRUCTURE)), grants()),
+			role("Probation", grants(), grants(group(ToolGroups.MODEL_STRUCTURE)))));
+
+		ToolAccessExplanation explanation = access.explain(Set.of("Developer", "Probation"),
+			identity("model-editor.createClass"));
+
+		assertFalse(explanation.allowed());
+		assertEquals(ToolAccessRule.Kind.ROLE_DENY, explanation.kind());
+		assertEquals("Probation", explanation.decidedBy().roleName());
+		assertEquals("Without this, the sentence cannot say what the deny took away.",
+			ToolAccessRule.Kind.ROLE_GRANT, explanation.overridden().kind());
+		assertEquals("Developer", explanation.overridden().roleName());
+	}
+
+	/** A deny that took nothing away says so by overriding nothing. */
+	public void testExplainOverridesNothingWhenNothingGranted() {
+		RoleToolAccess access = access(policy(
+			role("Probation", grants(), grants(group(ToolGroups.MODEL_STRUCTURE)))));
+
+		ToolAccessExplanation explanation =
+			access.explain(Set.of("Probation"), identity("model-editor.createClass"));
+
+		assertEquals(ToolAccessRule.Kind.ROLE_DENY, explanation.kind());
+		assertNull(explanation.overridden());
+	}
+
+	/** The three baseline states are three different rules, not one. */
+	public void testExplainTellsTheBaselineStatesApart() {
+		ToolAccessPolicy declared = policy();
+		baseline(declared, group(ToolGroups.DATA_READ));
+		assertEquals(ToolAccessRule.Kind.BASELINE,
+			access(declared).explain(Set.of(), identity("instance-browser.listInstances")).kind());
+
+		// policy() declares an empty <baseline>, which grants nothing.
+		assertEquals(ToolAccessRule.Kind.NOT_GRANTED,
+			access(policy()).explain(Set.of(), identity("instance-browser.listInstances")).kind());
+
+		ToolAccessPolicy absent = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		assertEquals(ToolAccessRule.Kind.DEFAULT_BASELINE,
+			access(absent).explain(Set.of(), identity("instance-browser.listInstances")).kind());
+	}
+
+	/** The implicit baseline is its own rule: nobody configured it and nobody can take it away. */
+	public void testExplainNamesTheImplicitBaseline() {
+		RoleToolAccess access = access(policy());
+
+		assertEquals(ToolAccessRule.Kind.IMPLICIT_BASELINE,
+			access.explain(Set.of(), identity("ask-user.askUser")).kind());
+		assertEquals(ToolAccessRule.Kind.IMPLICIT_BASELINE,
+			access.explain(Set.of(), identity("self.listTools")).kind());
+	}
+
+	/** An ungrouped tool is denied by a rule of its own, because the fix is a different one. */
+	public void testExplainTellsUnclassifiedFromUngranted() {
+		RoleToolAccess access = access(policy(
+			role("Clerk", grants(group(ToolGroups.DATA_READ)), grants())));
+
+		assertEquals(ToolAccessRule.Kind.UNCLASSIFIED,
+			access.explain(Set.of("Clerk"), identity("nowhere.nothing")).kind());
+		assertEquals(ToolAccessRule.Kind.NOT_GRANTED,
+			access.explain(Set.of("Clerk"), identity("model-editor.createClass")).kind());
+	}
+
+	/** Where a tool's group comes from, which is what explains a de-classification. */
+	public void testGroupSource() {
+		ToolAccessPolicy policy = policy();
+		classify(policy, ToolGroups.EGRESS, "script-tool.executeTLScript");
+
+		RoleToolAccess access = access(policy);
+
+		assertEquals("A <tool-groups> entry wins over the declaration and says so.",
+			RoleToolAccess.GroupSource.CONFIGURED,
+			access.groupSourceOf(identity("script-tool.executeTLScript")));
+		assertEquals(ToolGroups.EGRESS, access.groupOf(identity("script-tool.executeTLScript")));
+		assertEquals(RoleToolAccess.GroupSource.DECLARED,
+			access.groupSourceOf(identity("instance-browser.listInstances")));
+		assertEquals(RoleToolAccess.GroupSource.NONE,
+			access.groupSourceOf(identity("nowhere.nothing")));
+	}
+
+	/** The explanation of a capability reads the group entries, and knows the baseline states. */
+	public void testExplainCapability() {
+		RoleToolAccess access = access(policy(
+			role("Clerk", grants(group(ToolGroups.DATA_READ), tools("model-editor.createClass")),
+				grants())));
+
+		assertEquals("Clerk",
+			access.explainCapability(Set.of("Clerk"), ToolGroups.DATA_READ).decidedBy().roleName());
+		assertEquals("A per-tool grant says nothing about the capability as such.",
+			ToolAccessRule.Kind.NOT_GRANTED,
+			access.explainCapability(Set.of("Clerk"), ToolGroups.MODEL_STRUCTURE).kind());
+	}
+
+	/** The identity of a tool as these tests know it: name and declared group, no registry. */
+	private static ToolIdentity identity(String toolName) {
+		return new ToolIdentity(toolName, null, GROUPS.groupOf(toolName));
+	}
+
 	private static RoleToolAccess access(ToolAccessPolicy policy) {
 		return new RoleToolAccess(policy, GROUPS);
 	}

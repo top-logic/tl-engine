@@ -34,8 +34,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Read the model
 	 * @de Modell lesen
-	 * @tooltip Inspect the application model, its layouts and the configuration schema, read-only -
-	 *          the model, not the data in it.
+	 * @tooltip Inspect the application model, its layouts and the configuration schema, read-only. The
+	 *          model, not the data in it.
 	 */
 	public static ResKey GROUP_MODEL_READ;
 
@@ -53,7 +53,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Change data
 	 * @de Daten ändern
-	 * @tooltip Change business data, which still asks the acting user to approve the call.
+	 * @tooltip Change business data. Every call still asks the acting user to approve it.
 	 */
 	public static ResKey GROUP_DATA_WRITE;
 
@@ -72,8 +72,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Change the model
 	 * @de Modell ändern
-	 * @tooltip Privileged: create and change modules, types, attributes, enumerations, annotations
-	 *          and layouts - the shape the access policy itself is written against.
+	 * @tooltip Privileged: create and change modules, types, attributes, enumerations, annotations and
+	 *          layouts. That is the shape the access policy itself is written against.
 	 */
 	public static ResKey GROUP_MODEL_STRUCTURE;
 
@@ -82,8 +82,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Author agents
 	 * @de Agenten erstellen
-	 * @tooltip Privileged: create and rewire agents, skills and TL-Script tools - not the data
-	 *          model, which is "model.structure".
+	 * @tooltip Privileged: create and rewire agents, skills and TL-Script tools. The data model is a
+	 *          different group, model.structure.
 	 */
 	public static ResKey GROUP_AGENT_AUTHORING;
 
@@ -101,8 +101,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Converse
 	 * @de Interagieren
-	 * @tooltip Ask the user a question, load a skill, delegate to a sub-agent - without it an agent
-	 *          cannot even ask what it should do.
+	 * @tooltip Ask the user a question, load a skill, delegate to a sub-agent. An agent without it cannot
+	 *          even ask what it should do.
 	 */
 	public static ResKey GROUP_INTERACTION;
 
@@ -111,9 +111,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Inspect itself
 	 * @de Sich selbst einsehen
-	 * @tooltip List the tools and skills this agent itself carries, and why one of them is unusable
-	 *          for the acting user - not what the application has elsewhere, which is "agent.meta".
-	 *          Granted implicitly, so an agent can always say what it carries.
+	 * @tooltip List the tools and skills this agent itself carries, and why one of them is unusable for
+	 *          the acting account. Granted implicitly, so an agent can always say what it carries.
 	 */
 	public static ResKey GROUP_INTROSPECTION;
 
@@ -131,8 +130,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Send data out
 	 * @de Daten nach außen senden
-	 * @tooltip Reach outside the application - web fetch and search, issue trackers, remote MCP
-	 *          servers - which is how data leaves it.
+	 * @tooltip Reach outside the application: web fetch and search, issue trackers, remote MCP servers.
+	 *          This is how data leaves the application.
 	 */
 	public static ResKey GROUP_EGRESS;
 

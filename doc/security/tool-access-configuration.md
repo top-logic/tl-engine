@@ -27,6 +27,11 @@ Put that in any application configuration file (an aspect, or your
 `WEB-INF/conf/<app>.config.xml`). `YourRole` must be a role that exists - a name that does not is a
 **boot error**, deliberately, so that a typo cannot silently hand out nothing.
 
+**Or write it in the application:** *Administration -> Berechtigungen -> Agent-Sicherheit ->
+Richtlinie* is the editor for exactly this policy - see [Writing the policy: the Richtlinie
+tab](#writing-the-policy-the-richtlinie-tab). It stores the same XML, and it refuses to save anything
+that would stop the next start.
+
 **Without this block your agent can read, and change nothing.** This check is always applied - there
 is no setting that turns it off - and it denies by default. What an application that configures nothing
 gets is the **default baseline**: `model.read` and `data.read` for everyone, plus the implicit
@@ -87,11 +92,13 @@ to get data *out* of the application.
 > agent can relay. Granting `script` alone is therefore a read-only grant, and a role that needs to
 > *change* data with TL-Script needs both groups.
 
-### The same table, in the editor
+### The same table, in the raw editor
 
-You do not have to keep this page open while writing a policy. In **Administration → Development →
-Service Editor → AiToolAccessService**, the names a policy refers to are **selection lists**, not text
-fields, and hovering a group shows the sentence from the table above:
+You do not have to keep this page open while writing a policy. The recommended surface is the
+**Richtlinie** tab below; this section describes the raw one, **Administration → Development →
+Service Editor → AiToolAccessService**, which renders the stored format directly. There the names a
+policy refers to are **selection lists**, not text fields, and hovering a group shows the sentence
+from the table above:
 
 | Field | In the editor |
 |---|---|
@@ -113,6 +120,150 @@ dropping the entry.
 **The stored format is the technical name throughout.** What is written to the file is the group name,
 the role name and the tool names; a policy written by hand parses exactly as one written in the editor,
 and the labels exist only in the editor.
+
+### Agent-Sicherheit: the view that explains this policy, and the one that writes it
+
+The raw editor shows the policy as *names*. Three questions it cannot answer - "what am I granting
+with `data.read`?", "who may use what?" and "what can this account's agent actually call?" - have
+their own place: **Administration → Berechtigungen → Agent-Sicherheit**, with one tab each:
+
+| Tab | Answers | Reads |
+|---|---|---|
+| Tool-Katalog | which tools exist, what each does, which group it is in | the **saved** policy |
+| Richtlinie | who may use what - and this is the tab that **writes** | the **saved** policy |
+| Effektive Rechte | what this account's agent may call, and which rule decided | the **running** service |
+
+That split is deliberate and visible: after an apply, the saved policy and the running one differ
+until the service is restarted, and the Richtlinie tab says so in a banner with the restart action
+next to it.
+
+**Tool-Katalog** is one row per registered tool:
+
+| Column | Answers |
+|---|---|
+| Tool | the qualified name, i.e. exactly what a `<grant tools="...">` writes and what a denial prints |
+| Beschreibung | what the tool does, in one sentence written for an administrator, in your language. A tool nobody could describe - one of a connected MCP server, one authored in the running application - shows the text the *model* is given instead, marked `(Beschreibung für das Modell, EN)` in that row |
+| Gruppe | the capability group, with its display name and its technical name; `KEINE GRUPPE` for a tool no grant can reach |
+| Hinweis zur Gruppe | privileged / sends data outward / granted implicitly |
+| Herkunft der Gruppe | whether the tool declared the group itself or a `<tool-groups>` entry assigned it - which is what explains why removing one entry de-classifies one tool and not the one next to it |
+| Erreichbar für | the roles the policy configures that reach the tool, `alle (Grundberechtigung)`, or `niemand` |
+
+Unclassified tools are sorted to the top, because that is the state an administrator has to act on. The
+"Erreichbar für" column deliberately never lists administrators - they reach every tool, and saying so
+in every row would be noise. Search, the group filter and "only unclassified" are the table's own column
+filters: the filter of the *Gruppe* column offers every group plus `KEINE GRUPPE`.
+
+### Writing the policy: the Richtlinie tab
+
+The **Richtlinie** tab is the recommended place to write this policy. It stores exactly the XML this
+page describes: a policy written by hand parses unchanged, and opening the tab and applying it
+changes nothing. It is an ordinary TopLogic form, so it looks like the rest of the administration:
+one collapsible section per subject, a label column, and per-field help in the tooltip of the label.
+Each section title carries a summary, so the whole policy fits on one screen no matter how many roles
+it configures.
+
+The top level has four sections whatever the policy contains: **Rollen**, **Grundberechtigung für
+jedes Konto**, **Obergrenze für unbeaufsichtigte Läufe** and **Gruppen-Zuordnungen**. *Rollen* holds
+one section per configured role plus *Rolle aufnehmen*, and its title names the roles it holds (a
+count, once there are more names than fit). It opens with the first role open and everything below it
+closed; every section remembers per user whether you left it open.
+
+| You decide | The tab shows | It stores |
+|---|---|---|
+| what this role says about a capability | one tri-state row per capability, in the role's own section | no entry, a `<grant group="...">`, or a `<deny group="...">` |
+| a single tool rather than a group | an entry in **Einzelne Tools** with the choice **ganze Gruppe / einzelne Tools** | `<grant group="...">` or `<grant tools="...">`, never both |
+| what everybody gets | **Standard: Modell und Daten lesen / Nichts / Eigene Liste** | no `<baseline>`, `<baseline/>`, or `<baseline>` with entries |
+| what an unattended run may reach | **Nicht festgelegt / Alles, was die Rollen erlauben / Eigene Liste** | no element, `all="true"`, or entries |
+| which tools are in which group | **Gruppen-Zuordnungen**, one row per group | `<tool-groups>` |
+
+**A capability is one row with three states**, which are exactly the three things the stored policy
+can say about it. Empty is *this role says nothing*: it writes no entry, and another role of the same
+account or the basic permissions may still grant the capability. Ticked is *granted*, a
+`<grant group="...">`. The third state is *forbidden*, a `<deny group="...">`, and a prohibition beats
+every permission of every other role, the basic permissions, and even the two implicitly granted
+capabilities. Clicking a row cycles through all three, and the row can only ever be in one of them, so
+a permission can never end up next to a prohibition of the same capability. The control is the
+framework's own tri-state, the same one the rest of the administration uses for a value that may be
+unset; only its third state is restyled, to a crossed box in the tab's warning colour, so that the
+loudest answer does not look like "nothing chosen". Each role's section says the three meanings once,
+above the rows.
+
+A row carries a note only where the state itself cannot say it *and* the note is not on every row
+anyway. Exactly one is left: an empty row reads "wird von *rolle* gewährt" when another configured
+role grants the capability. It is computed from the draft you are editing, so it follows what you
+change in another section before you save, and it is what keeps an empty row from being read as a
+refusal. An empty row without it is a capability no other role grants. Granted and forbidden carry no
+note at all: what a state means is said once by the legend above the rows, and what a capability lets
+an agent do - including that changing business data always asks the acting user to confirm - is the
+row's own tooltip.
+
+A policy written by hand that names the same capability in both lists reads as forbidden, because that
+is what it enforces, and it is left exactly as it is until you click that row.
+
+`interaction` and `introspection` appear as ticked, unchangeable rows: they cannot be withheld by
+omission, so there is nothing to decide. Adding a role offers the templates *Nur-Lese-Assistent*,
+*Sachbearbeiter* and *Entwickler*, which only prefill the granted rows.
+
+Above the sections, the tab lists what this policy does that its author probably did not mean - one
+sentence per combination, computed from the whole policy: `script` without `data.write` (and with
+it), `data.read` together with `egress`, `agent.authoring` at all, a role with data capabilities and
+no model access rights, a limit for unattended runs that carries `script`, and an entry for a role
+the framework only uses internally. These never block anything.
+
+**Übernehmen checks before it saves.** The toolbar's *Übernehmen* refuses everything that would stop
+the next application start, with the reason: a role that does not exist, an entry that names neither
+a group nor a tool, and a missing limit for unattended runs. The rule is that nothing you can save
+here may take down the next start. *Verwerfen*, next to it, throws the unsaved changes away.
+
+**Applying is not yet enforcing.** A successful apply writes
+`WEB-INF/autoconf/com.top_logic.tl.ai.core.security.AiToolAccessService.config.xml` and reloads the
+application configuration - the same file, with the same `config:override="true"`, that the raw
+service editor writes. The running service keeps applying the policy of its last start until it is
+restarted, so the tab shows a banner saying so and a **"Dienst jetzt neu starten"** button next to
+it. After the restart the banner is gone and the Effektive-Rechte tab agrees with the other two.
+
+> ⚠️ **What you save overwrites the whole policy of the configuration files.** The written file
+> replaces - not extends - the `<tool-access>`, `<baseline>`, `<background-allowlist>` and
+> `<tool-groups>` of every other configuration file, an aspect's included. From then on, editing
+> those files has no effect until you delete the written one. The confirmation of the apply says
+> this; it is the price of in-application editing and it is how the engine's service editor has
+> always behaved.
+
+**Gruppen-Zuordnungen** is the one place `<tool-groups>` is edited. One row per capability group,
+with the tools in it and a *Entfernen* action; *Zuordnung hinzufügen* starts another one. A group
+that already has a row is not offered to a second one, because one group has one entry. Removing the
+last tool of a row removes the row: an entry naming no tool assigns nothing and would be refused.
+After an apply, the catalog's *Herkunft der Gruppe* reports the change.
+
+The basic permissions and the limit for unattended runs both accept **single tools** next to whole
+capability groups, because the stored format uses the same `<grant>` entry there as in a role.
+
+**Effektive Rechte** answers the "why". Pick an account - or, hypothetically, a role the policy
+configures - and a run mode, and you get one row per capability group with the verdict, the number of
+tools behind it, and **the rule that decided together with the rule it overrode**:
+
+```
+Gewährt    Daten ändern (data.write)      1    Berechtigung der Rolle projectPartner
+Verweigert Daten ändern (data.write)      1    Durch die Hintergrund-Zulassungsliste begrenzt.
+                                               Die Rolle projectPartner gewährt es, aber ein
+                                               unbeaufsichtigter Lauf darf es nicht.
+```
+
+That second sentence is the point of the view: the same row is denied in an unattended run, and the
+element to change is the `<background-allowlist>` and not the role. The same distinction is made for a
+`<deny>` (it names the grant it beat) and for an administrator account (it names what the bypass covered
+up, so that "everything allowed" is not misread as "my policy works"). Expanding a row lists the tools of
+the group with their own verdicts, so a per-tool grant or deny is visible where it applies. Tools in no
+group sit at the end, on their own, because no capability grant can reach them.
+
+Under the table: the sentence that this view is the *tool* layer only, what an unattended run is, and -
+for the roles being shown - the two cross-layer warnings that otherwise only ever appear in the boot log
+(a role with data capabilities and no model access rights; a role granted tools that no role rule can
+produce on the security root).
+
+Everything shown is computed by the same code the enforcement path runs, so the view cannot claim an
+access a real run would be refused. What it does not show is which *data* an allowed call then sees -
+see [What this does not decide](#what-this-does-not-decide).
 
 ---
 
@@ -345,7 +496,8 @@ it persist, administrators included. Allowlisting `script` used to be the whole 
 allowlist that carried it silently carry every write TL-Script can express.
 
 **You have to declare it.** As soon as your `<tool-access>` names a role, a policy with no
-`<background-allowlist>` element is a **configuration error** and the application refuses to start:
+`<background-allowlist>` element is a **configuration error** and the application refuses to start -
+and the Richtlinie tab refuses to save it in the first place:
 
 ```
 The agent tool access policy names roles but declares no <background-allowlist>. Unattended
@@ -428,6 +580,10 @@ which one you have.
 
 `roles=0` means the service read no grant table. If you wrote one and see this, the `<tool-access>` did
 not reach the service - and until it does, every account reaches only the baseline.
+
+**Or ask before it happens:** *Administration → Berechtigungen → Agent-Sicherheit → Effektive Rechte*
+answers the same question for any account, in either run mode, without waiting for a denial - see
+[Agent-Sicherheit](#reading-the-policy-instead-of-writing-it-agent-sicherheit).
 
 Two things to know when reading the roles in a denial:
 

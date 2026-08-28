@@ -16,11 +16,15 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -122,9 +126,11 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 		Config<?> policy = getConfig();
 		_access = new RoleToolAccess(policy, AiToolAccessService::declaredGroupOf);
 
-		checkRolesExist(policy);
-		checkEntriesSayOneThing(policy);
-		checkBackgroundAllowlistDeclared(policy);
+		List<String> refusals = refusals(policy, name -> BoundedRole
+			.getRoleByName(PersistencyLayer.getKnowledgeBase(), name) != null);
+		for (String refusal : refusals) {
+			_context.error(refusal);
+		}
 		warnAboutUnknownGroups(policy);
 		warnAboutRolesNobodyHoldsOnTheRoot(policy);
 		warnAboutDataRolesWithoutModelRights(policy);
@@ -133,10 +139,54 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 			+ " roles=" + policy.getToolAccess().size()
 			+ " baseline=" + describeBaseline() + "(+" + describeImplicitBaseline() + ")"
 			+ " backgroundAllowlist=" + describeBackgroundAllowlist(policy), AiToolAccessService.class);
+
+		if (!refusals.isEmpty()) {
+			// Reported to the instantiation context above so that a full application boot still lists
+			// every problem at once, and thrown so that this start fails whoever asked for it. The
+			// context alone is not enough: TypedRuntimeModule tests it for errors *before* running this
+			// method, so at boot the refusal only surfaces as the next service's failure, and an in-app
+			// restart of this service alone - which has no next service - would report nothing at all
+			// and leave the invalid policy running. See doc/security/tool-access-configuration.md.
+			throw new ConfigurationError(ResKey.text("The agent tool access policy is invalid and was"
+				+ " refused, so this service is not running: " + String.join(" ", refusals)));
+		}
 	}
 
 	/**
-	 * Refuses a policy that names roles and says nothing about unattended runs.
+	 * Everything about the given policy that must stop the service from starting.
+	 *
+	 * <p>
+	 * The three hard checks, in the order an administrator would fix them, each already phrased as the
+	 * sentence the log and the editor show. Separated from the reporting so that the policy editor can
+	 * refuse an apply for exactly the reasons that would refuse the next start - a policy that can be
+	 * saved and then fails to boot is the failure mode this layer refuses to have.
+	 * </p>
+	 *
+	 * @param policy
+	 *        The policy to inspect.
+	 * @param roleExists
+	 *        Whether a role of the given name exists.
+	 * @return One sentence per problem, in a stable order; empty for a sound policy.
+	 */
+	public static List<String> refusals(ToolAccessPolicy policy, Predicate<String> roleExists) {
+		List<String> result = new ArrayList<>();
+		for (String roleName : unknownRoles(policy, roleExists)) {
+			result.add("The role " + roleName
+				+ " in the agent tool access configuration does not exist.");
+		}
+		for (String problem : underspecifiedEntries(policy)) {
+			result.add("The agent tool access configuration has an entry that does not name exactly"
+				+ " one thing: " + problem + ". An entry says either a capability group or one or more"
+				+ " tools.");
+		}
+		if (needsBackgroundAllowlist(policy)) {
+			result.add(MISSING_BACKGROUND_ALLOWLIST);
+		}
+		return result;
+	}
+
+	/**
+	 * The refusal of a policy that names roles and says nothing about unattended runs.
 	 *
 	 * <p>
 	 * Unattended runs ({@code aiAgentChatAsync}, schedulers, MCP clients) auto-approve every tool
@@ -147,17 +197,12 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 * is rejected rather than interpreted - in either direction.
 	 * </p>
 	 */
-	private void checkBackgroundAllowlistDeclared(ToolAccessPolicy policy) {
-		if (!needsBackgroundAllowlist(policy)) {
-			return;
-		}
-		_context.error("The agent tool access policy names roles but declares no"
-			+ " <background-allowlist>. Unattended agent runs approve every tool call themselves, so"
-			+ " the allowlist is what bounds them and it has to be stated. Write"
-			+ " <background-allowlist> with the groups such runs may use, or <background-allowlist/>"
-			+ " to forbid them every tool, or <background-allowlist all=\"true\"/> to accept"
-			+ " unattended runs bounded only by the acting user's grants.");
-	}
+	static final String MISSING_BACKGROUND_ALLOWLIST = "The agent tool access policy names roles but"
+		+ " declares no <background-allowlist>. Unattended agent runs approve every tool call"
+		+ " themselves, so the allowlist is what bounds them and it has to be stated. Write"
+		+ " <background-allowlist> with the groups such runs may use, or <background-allowlist/>"
+		+ " to forbid them every tool, or <background-allowlist all=\"true\"/> to accept"
+		+ " unattended runs bounded only by the acting user's grants.";
 
 	/**
 	 * Whether the given policy grants anything to a role without declaring what unattended runs may
@@ -177,7 +222,7 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 *        The policy to inspect.
 	 * @return Whether the policy is under-specified and must be rejected.
 	 */
-	static boolean needsBackgroundAllowlist(ToolAccessPolicy policy) {
+	public static boolean needsBackgroundAllowlist(ToolAccessPolicy policy) {
 		return !policy.getToolAccess().isEmpty() && policy.getBackgroundAllowlist() == null;
 	}
 
@@ -219,23 +264,6 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	}
 
 	/**
-	 * Reports every role name the policy references that does not exist, as a configuration error.
-	 *
-	 * <p>
-	 * The same treatment {@code SecurityConfigurationService.processRights} gives an unknown role, and
-	 * for the same reason: a typo in a role name would otherwise silently widen or narrow access -
-	 * a grant to a misspelled role reaches nobody, and nothing says so.
-	 * </p>
-	 */
-	private void checkRolesExist(ToolAccessPolicy policy) {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		for (String roleName : unknownRoles(policy, name -> BoundedRole.getRoleByName(kb, name) != null)) {
-			_context.error("The role " + roleName
-				+ " in the agent tool access configuration does not exist.");
-		}
-	}
-
-	/**
 	 * The role names the policy references that {@code exists} does not know.
 	 *
 	 * @param policy
@@ -244,7 +272,7 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 *        Whether a role of the given name exists.
 	 * @return The unknown names, in a stable order.
 	 */
-	static Set<String> unknownRoles(ToolAccessPolicy policy, Predicate<String> exists) {
+	public static Set<String> unknownRoles(ToolAccessPolicy policy, Predicate<String> exists) {
 		Set<String> unknown = new TreeSet<>();
 		for (String roleName : policy.getToolAccess().keySet()) {
 			if (!exists.test(roleName)) {
@@ -255,31 +283,13 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	}
 
 	/**
-	 * Reports every permission entry that does not say exactly one thing, as a configuration error.
-	 *
-	 * <p>
-	 * An entry names a capability group or it names tools. One that names both is two decisions written
-	 * as one and the reader cannot tell which was meant; one that names neither reaches nothing and says
-	 * so nowhere. Both are the failure mode this layer refuses to have - a policy that looks like it
-	 * grants something and does not.
-	 * </p>
-	 */
-	private void checkEntriesSayOneThing(ToolAccessPolicy policy) {
-		for (String problem : underspecifiedEntries(policy)) {
-			_context.error("The agent tool access configuration has an entry that does not name exactly"
-				+ " one thing: " + problem + ". An entry says either a capability group or one or more"
-				+ " tools.");
-		}
-	}
-
-	/**
 	 * The permission entries of the policy that name a group and tools at once, or neither.
 	 *
 	 * @param policy
 	 *        The policy to inspect.
 	 * @return A description of each offending entry, in a stable order; empty if the policy is sound.
 	 */
-	static List<String> underspecifiedEntries(ToolAccessPolicy policy) {
+	public static List<String> underspecifiedEntries(ToolAccessPolicy policy) {
 		List<String> problems = new ArrayList<>();
 		ToolAccessPolicy.Baseline baseline = policy.getBaseline();
 		if (baseline != null) {
@@ -376,7 +386,7 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 * Warns about roles this policy grants tools to that nobody can hold where this policy looks.
 	 *
 	 * <p>
-	 * {@link #checkRolesExist(ToolAccessPolicy)} answers "does the role exist"; this answers the
+	 * {@link #unknownRoles(ToolAccessPolicy, Predicate)} answers "does the role exist"; this answers the
 	 * question that actually decides whether the grant does anything: "can anybody hold it <b>on the
 	 * security root</b>". A grant naming a role that the application's role rules only ever produce on
 	 * business objects reaches nobody while reading as a deployment-wide statement - the tier half of the
@@ -498,7 +508,7 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 * Every role name that some Read, Write or Create grant of the given model security configuration
 	 * names.
 	 */
-	static Set<String> rolesWithModelRights(SecurityConfigurationService.Config config) {
+	public static Set<String> rolesWithModelRights(SecurityConfigurationService.Config config) {
 		Set<String> result = new TreeSet<>();
 		for (SecurityConfigurationService.ModelAccessRights rights : config.getSecurityConfig().values()) {
 			for (Map.Entry<CommandGroupReference, AccessGrant> grant : rights.getGrants().entrySet()) {
@@ -645,7 +655,6 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 			return new ToolIdentity(tool.name(), index().get(tool), tool.group());
 		}
 
-
 		private Map<Tool, String> index() {
 			if (_qualifiedNames == null) {
 				_qualifiedNames = buildIndex();
@@ -700,6 +709,172 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	}
 
 	/**
+	 * What the given account may reach under the policy in effect, and why.
+	 *
+	 * <p>
+	 * The read-only query behind the effective-permissions view. Same rules and same order as
+	 * {@link #authorizationFor(Person, boolean)}, but without the audit log and without a run: it may
+	 * be asked about any account at any time.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account to ask about, may be <code>null</code> - which then holds no role and gets
+	 *        the baseline only, the same as a run with no principal.
+	 * @param background
+	 *        Whether to answer for a run that has nobody to answer an approval prompt.
+	 * @return The evaluation, never <code>null</code>.
+	 */
+	public static EffectiveToolAccess effectiveAccessFor(Person account, boolean background) {
+		return new EffectiveToolAccess(getInstance().getAccess(), heldRoleNames(account),
+			account != null && account.isAdmin(), background, identities());
+	}
+
+	/**
+	 * What a holder of exactly the given roles would reach under the policy in effect, and why.
+	 *
+	 * <p>
+	 * The hypothetical case: an administrator asking "what would this role get" before there is an
+	 * account holding it. No account is involved, so nobody is an administrator here - the bypass is a
+	 * property of the account, not of a role.
+	 * </p>
+	 *
+	 * @param roleNames
+	 *        The roles to assume are held on the security root.
+	 * @param background
+	 *        Whether to answer for a run that has nobody to answer an approval prompt.
+	 * @return The evaluation, never <code>null</code>.
+	 */
+	public static EffectiveToolAccess effectiveAccessForRoles(Collection<String> roleNames,
+			boolean background) {
+		return new EffectiveToolAccess(getInstance().getAccess(), roleNames, false, background,
+			identities());
+	}
+
+	/**
+	 * Which of the policy's roles reach the given tool, whatever run mode.
+	 *
+	 * <p>
+	 * The "reachable for" column of the tool catalog. Reads the roles the policy <em>mentions</em>,
+	 * not the roles the application has: a role nothing is configured for reaches exactly the
+	 * baseline, and listing every such role on every baseline-covered tool would say nothing.
+	 * Administrators reach everything and are deliberately not listed per row - one footnote says so
+	 * once.
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool to ask about.
+	 * @return The role names that reach it, in a stable order; empty when only the baseline or nothing
+	 *         at all reaches it - which {@link #baselineReaches(ToolIdentity)} tells apart.
+	 */
+	public Set<String> rolesReaching(ToolIdentity tool) {
+		return rolesReaching(getConfig(), _access, tool);
+	}
+
+	/**
+	 * Which of the given policy's roles reach the given tool, whatever run mode.
+	 *
+	 * <p>
+	 * Asked about a policy rather than about the running service, because the catalog reports the
+	 * <em>saved</em> policy: an administrator who has just applied a change has to see what they
+	 * saved, and the effective-permissions view is the one that answers for the running service.
+	 * </p>
+	 *
+	 * @param policy
+	 *        The policy whose roles to ask about.
+	 * @param access
+	 *        The evaluation of that same policy.
+	 * @param tool
+	 *        The tool to ask about.
+	 * @return The role names that reach it, in a stable order.
+	 */
+	public static Set<String> rolesReaching(ToolAccessPolicy policy, RoleToolAccess access,
+			ToolIdentity tool) {
+		Set<String> result = new TreeSet<>();
+		for (String roleName : new TreeSet<>(policy.getToolAccess().keySet())) {
+			if (access.explain(Set.of(roleName), tool).allowed()) {
+				result.add(roleName);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Whether the given tool is reachable without holding any role at all.
+	 *
+	 * <p>
+	 * True for the implicit baseline and for whatever the policy's {@code <baseline>} - or, if it
+	 * declares none, {@link RoleToolAccess#DEFAULT_BASELINE} - grants. The catalog needs it to tell
+	 * "everyone" from "the two roles that happen to be configured".
+	 * </p>
+	 *
+	 * @param tool
+	 *        The tool to ask about.
+	 */
+	public boolean baselineReaches(ToolIdentity tool) {
+		return _access.explain(Set.of(), tool).allowed();
+	}
+
+	/**
+	 * How the given policy evaluates in this application.
+	 *
+	 * <p>
+	 * The evaluation of a policy that is not (or not yet) the running one: the saved policy the
+	 * catalog reports, or a draft the policy editor is about to check. Resolves the group a tool
+	 * declares for itself through the tool registry, exactly as the running service does, so the two
+	 * differ only in the policy they read.
+	 * </p>
+	 *
+	 * @param policy
+	 *        The policy to evaluate. Never <code>null</code>.
+	 * @return The evaluation, never <code>null</code>.
+	 */
+	public static RoleToolAccess evaluate(ToolAccessPolicy policy) {
+		return new RoleToolAccess(policy, AiToolAccessService::declaredGroupOf);
+	}
+
+	/**
+	 * The cross-layer warning of {@link #warnAboutDataRolesWithoutModelRights(ToolAccessPolicy)}, for a
+	 * view that can show it where an administrator is looking.
+	 *
+	 * <p>
+	 * The same computation the boot log writes once and nobody reads again. Recomputed on request
+	 * rather than cached at boot, because the {@code <security-config>} it compares against can be
+	 * edited in the running application.
+	 * </p>
+	 *
+	 * @return The offending roles with the data capabilities they hold, in a stable order; empty if the
+	 *         two configurations agree or if there is nothing to compare against.
+	 */
+	public Map<String, Set<String>> dataRolesWithoutModelRights() {
+		if (!SecurityConfigurationService.Module.INSTANCE.isActive()) {
+			return Map.of();
+		}
+		Set<String> withModelRights = rolesWithModelRights(
+			SecurityConfigurationService.Module.INSTANCE.getImplementationInstance().getConfig());
+		return dataRolesWithoutModelRights(getConfig(), _access::groupOf, withModelRights);
+	}
+
+	/**
+	 * The warning of {@link #warnAboutRolesNobodyHoldsOnTheRoot(ToolAccessPolicy)}, for a view that can
+	 * show it where an administrator is looking.
+	 *
+	 * @return The roles the policy grants tools to that no role rule can produce on the security root,
+	 *         in a stable order; empty when the application has no typed security root to ask about.
+	 */
+	public Set<String> rolesUnreachableOnSecurityRoot() {
+		TLClass rootType = securityRootType();
+		if (rootType == null) {
+			return Set.of();
+		}
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		AccessManager access = AccessManager.getInstance();
+		return rolesUnreachableOnSecurityRoot(getConfig(), roleName -> {
+			BoundedRole role = BoundedRole.getRoleByName(kb, roleName);
+			return role == null || access.canHaveRole(rootType, role);
+		});
+	}
+
+	/**
 	 * The configured policy, or <code>null</code> if this service is not running.
 	 *
 	 * <p>
@@ -710,6 +885,32 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 */
 	public static ToolAccessPolicy policy() {
 		return Module.INSTANCE.isActive() ? getInstance().getConfig() : null;
+	}
+
+	/**
+	 * The policy as the configuration files currently say it, which is what the next start will read.
+	 *
+	 * <p>
+	 * The same item as {@link #policy()} until something writes the configuration in the running
+	 * application. After that the two differ, and the difference is exactly the "saved but not yet in
+	 * effect" state an administrator has to be told about: this one is what was saved,
+	 * {@link #policy()} is what the running service still applies.
+	 * </p>
+	 *
+	 * @return The saved policy, or <code>null</code> if the application configuration cannot be read -
+	 *         which is the state a caller has to render as "unknown" rather than as "empty policy".
+	 */
+	public static Config<?> savedPolicy() {
+		try {
+			// The service configuration of this class is the policy plus the service plumbing - the
+			// editor needs both halves, because what it writes back is a service configuration.
+			return (Config<?>) ApplicationConfig.getInstance()
+				.getServiceConfiguration(AiToolAccessService.class);
+		} catch (ConfigurationException ex) {
+			Logger.error("The saved agent tool access configuration cannot be read.", ex,
+				AiToolAccessService.class);
+			return null;
+		}
 	}
 
 	/**

@@ -440,35 +440,18 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	 * What is true about one capability of one role beyond the state the control shows.
 	 *
 	 * <p>
-	 * Every note is about a <em>second</em> setting, which is why none of them can be a tooltip: what
-	 * the basic permissions grant, and what the other configured roles grant, are written elsewhere and
-	 * change while this section is open. What the state itself means is said once, by the legend above
-	 * the rows, so a prohibition carries no note of its own.
+	 * The one remaining note is about a <em>second</em> setting, which is why it cannot be a tooltip:
+	 * what the other configured roles grant is written elsewhere and changes while this section is
+	 * open. Everything that is true of a state as such is said once, by the legend above the rows, and
+	 * everything that is true of a capability as such is in the row's own tooltip. Neither is repeated
+	 * per row: a note that is always there is read as decoration and stops being read at all.
 	 * </p>
 	 */
 	private HTMLFragment capabilityNote(String roleName, String group) {
-		switch (_draft.capabilityState(roleName, group)) {
-			case GRANTED:
-				return grantedNote(group);
-			case ABSENT:
-				return absentNote(roleName, group);
-			default:
-				return Fragments.empty();
+		if (_draft.capabilityState(roleName, group) != CapabilityState.ABSENT) {
+			return Fragments.empty();
 		}
-	}
-
-	/** What a granted capability adds to "this role grants it". */
-	private HTMLFragment grantedNote(String group) {
-		List<HTMLFragment> notes = new ArrayList<>();
-		if (_draft.baselineCovers(group)) {
-			notes.add(Fragments.span("aiSecurityBaselineState",
-				Fragments.message(I18NConstants.ROW_BASELINE_GRANTED)));
-		}
-		if (ToolGroups.DATA_WRITE.equals(group)) {
-			notes.add(Fragments.span("aiSecurityBaselineState",
-				Fragments.message(I18NConstants.NOTE_DATA_WRITE_APPROVAL)));
-		}
-		return notes.isEmpty() ? Fragments.empty() : Fragments.concat(fragments(notes));
+		return absentNote(roleName, group);
 	}
 
 	/**
@@ -476,21 +459,19 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	 * raises and the reason it is not the same as a prohibition.
 	 *
 	 * <p>
-	 * Nobody else granting it is the ordinary case and gets no note: an empty row that says nothing is
-	 * a capability nobody grants.
+	 * Only <em>another role</em> is worth saying. Nobody else granting it is the ordinary case, and the
+	 * basic permissions grant the same thing to every row of every role, so both would be a note that is
+	 * always there. What is left appears rarely and only where the row would otherwise be misread as a
+	 * refusal.
 	 * </p>
 	 */
 	private HTMLFragment absentNote(String roleName, String group) {
 		ToolAccessRule rule = _draft.grantedElsewhere(roleName, group);
-		if (rule == null) {
+		if (rule == null || rule.kind() != ToolAccessRule.Kind.ROLE_GRANT) {
 			return Fragments.empty();
 		}
-		if (rule.kind() == ToolAccessRule.Kind.ROLE_GRANT) {
-			return Fragments.span("aiSecurityBaselineState",
-				Fragments.message(I18NConstants.ROW_GRANTED_BY_ROLE__ROLE.fill(rule.roleName())));
-		}
 		return Fragments.span("aiSecurityBaselineState",
-			Fragments.message(I18NConstants.ROW_BASELINE_GRANTED));
+			Fragments.message(I18NConstants.ROW_GRANTED_BY_ROLE__ROLE.fill(rule.roleName())));
 	}
 
 	/** The entries of one role that name single tools rather than a whole capability. */

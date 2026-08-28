@@ -763,22 +763,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ROW_ALWAYS_GRANTED;
 
 	/**
-	 * Row state of a capability the basic permissions already grant to everyone.
-	 *
-	 * @en granted to everyone (basic permissions)
-	 * @de für alle gewährt (Grundberechtigung)
-	 */
-	public static ResKey ROW_BASELINE_GRANTED;
-
-	/**
-	 * The note a granted data-changing row carries.
-	 *
-	 * @en Every call still asks the user to confirm.
-	 * @de Jeder Aufruf bleibt für den Nutzer bestätigungspflichtig.
-	 */
-	public static ResKey NOTE_DATA_WRITE_APPROVAL;
-
-	/**
 	 * Label of an entry that permits something.
 	 *
 	 * @en Permission

@@ -671,15 +671,6 @@ public class PolicyDraft {
 		return new ArrayList<>(new TreeSet<>(RoleToolAccess.IMPLICIT_BASELINE));
 	}
 
-	/** Whether the baseline of the draft grants the given group to every account. */
-	public boolean baselineCovers(String group) {
-		Baseline declared = _config.getBaseline();
-		if (declared == null) {
-			return RoleToolAccess.DEFAULT_BASELINE.contains(group);
-		}
-		return namesGroup(declared.getGrants(), group);
-	}
-
 	// ----------------------------------------------------------------- helpers
 
 	private BaselineChoice readBaselineChoice() {

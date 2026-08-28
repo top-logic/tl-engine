@@ -34,8 +34,9 @@
 .aiSecurityView div.aiSecurityWarning {
 	margin: 10px 0 14px;
 	padding: 8px 12px;
-	border-left: 4px solid #cc7a00;
+	border-radius: 3px;
 	background: #fff8ec;
+	color: #6b3d00;
 }
 
 .aiSecurityView div.aiSecurityWarning p {
@@ -56,12 +57,13 @@
 	color: #a83200;
 }
 
-/* Why an apply was refused: an error, not a hint, and told apart from one at a glance. */
+/* Why an apply was refused: an error, not a hint, told apart by its background and text colour. */
 .aiSecurityView div.aiSecurityRefusals {
 	margin: 10px 0 14px;
 	padding: 8px 12px;
-	border-left: 4px solid #b32d00;
+	border-radius: 3px;
 	background: #fdf0ec;
+	color: #8a2600;
 }
 
 .aiSecurityView div.aiSecurityRefusals p {
@@ -85,10 +87,9 @@
 	gap: 14px;
 	margin: 0 0 12px;
 	padding: 10px 12px;
-	border: 1px solid #cc7a00;
-	border-left-width: 5px;
 	border-radius: 3px;
 	background: #fff4e0;
+	color: #6b3d00;
 	font-weight: 600;
 }
 

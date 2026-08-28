@@ -18,48 +18,48 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Provenance: the capability is granted to everyone without being configured.
 	 *
-	 * @en Granted implicitly - cannot be withheld, not even in an unattended run
-	 * @de Implizit gewährt - nicht entziehbar, auch unbeaufsichtigt
+	 * @en Granted implicitly, not withholdable
+	 * @de Implizit gewährt, nicht entziehbar
 	 */
 	public static ResKey RULE_IMPLICIT_BASELINE;
 
 	/**
 	 * Provenance: the shipped read-only baseline applies because the policy declares none.
 	 *
-	 * @en Default baseline - the policy declares no baseline of its own
-	 * @de Standard-Grundberechtigung - die Richtlinie legt keine eigene fest
+	 * @en Default basic permissions, because the policy declares none
+	 * @de Standard-Grundberechtigung, weil die Richtlinie keine eigene festlegt
 	 */
 	public static ResKey RULE_DEFAULT_BASELINE;
 
 	/**
 	 * Provenance: an entry of the policy's declared baseline, which reaches every account.
 	 *
-	 * @en Baseline - granted to every account
-	 * @de Grundberechtigung - für jedes Konto gewährt
+	 * @en Basic permissions, granted to every account
+	 * @de Grundberechtigung, für jedes Konto gewährt
 	 */
 	public static ResKey RULE_BASELINE;
 
 	/**
 	 * Provenance: a grant of the named role.
 	 *
-	 * @en Grant of role {0}
-	 * @de Grant der Rolle {0}
+	 * @en Granted by role {0}
+	 * @de Berechtigung der Rolle {0}
 	 */
 	public static ResKey1 RULE_ROLE_GRANT__ROLE;
 
 	/**
 	 * Provenance: a grant of the named role that names this single tool instead of a group.
 	 *
-	 * @en Grant of role {0} for this single tool
-	 * @de Grant der Rolle {0} für dieses einzelne Tool
+	 * @en Granted by role {0} for this single tool
+	 * @de Berechtigung der Rolle {0} für dieses einzelne Tool
 	 */
 	public static ResKey1 RULE_ROLE_GRANT_TOOL__ROLE;
 
 	/**
 	 * Provenance: an explicit deny of the named role, which wins over every grant.
 	 *
-	 * @en Deny of role {0} - a deny always wins
-	 * @de Deny der Rolle {0} - ein Deny gewinnt immer
+	 * @en Forbidden by role {0}. A prohibition always wins.
+	 * @de Verbot der Rolle {0}. Ein Verbot gewinnt immer.
 	 */
 	public static ResKey1 RULE_ROLE_DENY__ROLE;
 
@@ -74,16 +74,16 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Provenance: the account is an administrator and bypasses the tool layer.
 	 *
-	 * @en Administrator - bypasses the tool layer
-	 * @de Administrator - umgeht die Tool-Ebene
+	 * @en Administrator, bypasses the tool layer
+	 * @de Administrator, umgeht die Tool-Ebene
 	 */
 	public static ResKey RULE_ADMIN_BYPASS;
 
 	/**
 	 * Provenance: the tool belongs to no capability group and is therefore denied to everyone.
 	 *
-	 * @en Assigned to no group and granted by name nowhere - denied to everyone
-	 * @de Keiner Gruppe zugeordnet und nirgends namentlich gewährt - für alle gesperrt
+	 * @en In no group and granted by name nowhere, so denied to everyone
+	 * @de In keiner Gruppe und nirgends namentlich gewährt, daher für alle gesperrt
 	 */
 	public static ResKey RULE_UNCLASSIFIED;
 
@@ -170,10 +170,8 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * The extra price of committing through the TL-Script tool, where the account cannot pay it.
 	 *
-	 * @en A commit (withCommit=true) additionally costs data.write, which is denied here - so this is
-	 *     a read-only grant
-	 * @de Ein Commit (withCommit=true) kostet zusätzlich data.write, und das ist hier verweigert -
-	 *     also eine reine Lese-Berechtigung
+	 * @en A commit (withCommit=true) additionally costs data.write, which is denied here
+	 * @de Ein Commit (withCommit=true) kostet zusätzlich data.write, und das ist hier verweigert
 	 */
 	public static ResKey SCRIPT_COMMIT_DENIED;
 
@@ -212,8 +210,8 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Group source: nothing classified the tool, which is why nobody but an administrator reaches it.
 	 *
-	 * @en assigned nowhere - denied to everyone
-	 * @de nirgends zugeordnet - für alle gesperrt
+	 * @en assigned nowhere, denied to everyone
+	 * @de nirgends zugeordnet, für alle gesperrt
 	 */
 	public static ResKey GROUP_SOURCE_NONE;
 
@@ -305,18 +303,18 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Shown for an account that holds no role at all beyond what every account holds.
 	 *
-	 * @en No role on the security root - only the baseline applies.
-	 * @de Keine Rolle auf der Sicherheits-Wurzel - es gilt nur die Grundberechtigung.
+	 * @en No role on the security root. Only the basic permissions apply.
+	 * @de Keine Rolle auf der Sicherheits-Wurzel. Es gilt nur die Grundberechtigung.
 	 */
 	public static ResKey HELD_ROLES_NONE;
 
 	/**
 	 * The banner an administrator account needs, because its rows prove nothing about the policy.
 	 *
-	 * @en {0} is an administrator and therefore reaches every tool. This account proves nothing about
-	 *     the policy - check it with a non-administrator account.
-	 * @de {0} ist Administrator und erreicht damit jedes Tool. Dieses Konto beweist nichts über
-	 *     die Richtlinie - prüfen Sie sie mit einem Konto ohne Administratorrechte.
+	 * @en Administrators bypass the tool layer, so {0} reaches every tool. Check the policy with a
+	 *     non-administrator account.
+	 * @de Administratoren umgehen die Tool-Ebene, daher erreicht {0} jedes Tool. Prüfen Sie die Richtlinie
+	 *     mit einem Konto ohne Administratorrechte.
 	 */
 	public static ResKey1 ADMIN_BANNER__ACCOUNT;
 
@@ -324,20 +322,20 @@ public class I18NConstants extends I18NConstantsBase {
 	 * The sentence that keeps the view from being read as an answer about data.
 	 *
 	 * @en This view shows the tool layer only. Which data an allowed call then sees is decided by the
-	 *     model access rights, per object and per attribute.
+	 *     model access rights.
 	 * @de Diese Ansicht zeigt nur die Tool-Ebene. Welche Daten ein erlaubter Aufruf dann sieht,
-	 *     entscheiden die Modellrechte - pro Objekt und pro Attribut.
+	 *     entscheiden die Modellrechte.
 	 */
 	public static ResKey LAYER_ONE_ONLY_NOTE;
 
 	/**
 	 * What an unattended run is, where the mode toggle is.
 	 *
-	 * @en An unattended run has nobody who could answer an approval prompt, so every call counts as
-	 *     approved - which is why the background allowlist caps it, administrators included.
-	 * @de Ein unbeaufsichtigter Lauf hat niemanden, der eine Bestätigung beantworten könnte, daher
-	 *     gilt jeder Aufruf als genehmigt - deshalb begrenzt ihn die Hintergrund-Zulassungsliste
-	 *     zusätzlich, auch für Administratoren.
+	 * @en An unattended run has nobody to answer an approval prompt, so every call counts as approved. The
+	 *     background allowlist is what caps it, administrators included.
+	 * @de Ein unbeaufsichtigter Lauf hat niemanden, der eine Bestätigung beantworten kann, daher gilt
+	 *     jeder Aufruf als genehmigt. Begrenzt wird er durch die Hintergrund-Zulassungsliste, auch für
+	 *     Administratoren.
 	 */
 	public static ResKey BACKGROUND_MODE_NOTE;
 
@@ -467,16 +465,16 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Role group of the picker: roles of the framework whose meaning has to be known.
 	 *
-	 * @en Framework - mind the meaning
-	 * @de Framework - Bedeutung beachten
+	 * @en Framework role
+	 * @de Framework-Rolle
 	 */
 	public static ResKey ROLE_KIND_FRAMEWORK;
 
 	/**
 	 * Role group of the picker: roles a tool grant does nothing for.
 	 *
-	 * @en Internal - meaningless here
-	 * @de Intern - hier bedeutungslos
+	 * @en Internal role, reaches no account
+	 * @de Interne Rolle, erreicht kein Konto
 	 */
 	public static ResKey ROLE_KIND_INTERNAL;
 

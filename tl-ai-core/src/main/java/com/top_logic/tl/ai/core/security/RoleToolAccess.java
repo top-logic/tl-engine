@@ -490,8 +490,8 @@ public class RoleToolAccess {
 		DECLARED,
 
 		/**
-		 * A group assignment of the policy puts the tool into its group - either because the tool
-		 * states none, or because an administrator reclassified it.
+		 * A group assignment of the policy puts the tool into its group. Either the tool states none,
+		 * or an administrator reclassified it.
 		 */
 		CONFIGURED,
 

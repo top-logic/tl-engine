@@ -156,33 +156,44 @@ filters: the filter of the *Gruppe* column offers every group plus `KEINE GRUPPE
 ### Writing the policy: the Richtlinie tab
 
 The **Richtlinie** tab is the recommended place to write this policy. It stores exactly the XML this
-page describes - a policy written by hand parses unchanged, and opening the tab and applying it
-changes nothing - but none of its controls looks like the stored format, because the stored format is
-not the decision you are making:
+page describes: a policy written by hand parses unchanged, and opening the tab and applying it
+changes nothing. It is an ordinary TopLogic form, so it looks like the rest of the administration:
+one collapsible section per subject, a label column, and per-field help in the tooltip of the label.
+Everything but the first section starts collapsed, and each section title carries a summary, so the
+whole policy fits on one screen no matter how many roles it configures.
 
 | You decide | The tab shows | It stores |
 |---|---|---|
-| may this role use this capability | one row per capability with **verweigert / nicht genannt / gewährt** | a `<grant group>`, a `<deny group>`, or neither |
-| a single tool rather than a group | one entry with the choice **ganze Gruppe / einzelne Tools** - exactly one input is present | `<grant group="...">` or `<grant tools="...">`, never both |
-| what everybody gets | **Standard / Nichts / Eigene Liste** | no `<baseline>`, `<baseline/>`, or `<baseline>` with entries |
-| what an unattended run may reach | **Nicht festgelegt / Alle Tools erlauben / Eigene Liste** | no element, `all="true"`, or entries |
+| may this role use this capability | one checkbox per capability, in the role's own section | a `<grant group="...">`, or no entry |
+| must this role never use it | a checkbox in the role's collapsed **Verbote** section | a `<deny group="...">` |
+| a single tool rather than a group | an entry in **Einzelne Tools** with the choice **ganze Gruppe / einzelne Tools** | `<grant group="...">` or `<grant tools="...">`, never both |
+| what everybody gets | **Standard: Modell und Daten lesen / Nichts / Eigene Liste** | no `<baseline>`, `<baseline/>`, or `<baseline>` with entries |
+| what an unattended run may reach | **Nicht festgelegt / Alles, was die Rollen erlauben / Eigene Liste** | no element, `all="true"`, or entries |
+| which tools are in which group | **Gruppen-Zuordnungen**, one row per group | `<tool-groups>` |
 
-`interaction` and `introspection` appear as locked rows ("immer gewährt") - they cannot be withheld
+**Granted and forbidden are two lists, and the tab shows two.** A capability a role does not mention
+is not the same as one it forbids: another role of the same account, or the basic permissions, can
+still grant an unmentioned capability, while a prohibition beats both. The permission is therefore an
+ordinary checkbox in the role's section, and the prohibition is a checkbox in a separate section that
+starts collapsed and says when it is the right answer. Switching one on switches the other off,
+because a permission next to a prohibition of the same capability says nothing.
+
+`interaction` and `introspection` appear as ticked, unchangeable checkboxes: they cannot be withheld
 by omission, so there is nothing to decide. A capability the basic permissions already grant everyone
-says "für alle gewährt - Grundberechtigung" on the row, with the tri-state still available beneath it,
-because a `<deny>` against the baseline has to stay expressible. Adding a role offers the templates
-*Nur-Lese-Assistent*, *Sachbearbeiter* and *Entwickler*, which only prefill the rows.
+says "für alle gewährt (Grundberechtigung)" next to its checkbox, and the checkbox stays available,
+because a `<deny>` against the baseline has to remain expressible. Adding a role offers the templates
+*Nur-Lese-Assistent*, *Sachbearbeiter* and *Entwickler*, which only prefill the checkboxes.
 
-Above the rows, the tab lists what this policy does that its author probably did not mean - one
+Above the sections, the tab lists what this policy does that its author probably did not mean - one
 sentence per combination, computed from the whole policy: `script` without `data.write` (and with
 it), `data.read` together with `egress`, `agent.authoring` at all, a role with data capabilities and
 no model access rights, a limit for unattended runs that carries `script`, and an entry for a role
 the framework only uses internally. These never block anything.
 
-**Übernehmen checks before it saves.** Everything that would stop the next application start refuses
-the apply, with the reason: a role that does not exist, an entry that names neither a group nor a
-tool, and a missing limit for unattended runs. The rule is that nothing you can save here may take
-down the next start.
+**Übernehmen checks before it saves.** The toolbar's *Übernehmen* refuses everything that would stop
+the next application start, with the reason: a role that does not exist, an entry that names neither
+a group nor a tool, and a missing limit for unattended runs. The rule is that nothing you can save
+here may take down the next start. *Verwerfen*, next to it, throws the unsaved changes away.
 
 **Applying is not yet enforcing.** A successful apply writes
 `WEB-INF/autoconf/com.top_logic.tl.ai.core.security.AiToolAccessService.config.xml` and reloads the
@@ -198,19 +209,24 @@ it. After the restart the banner is gone and the Effektive-Rechte tab agrees wit
 > this; it is the price of in-application editing and it is how the engine's service editor has
 > always behaved.
 
-`<tool-groups>` is shown on the tab and **not** editable there: assigning a group says what a *tool*
-is rather than what a role may do, and the raw editor is where that is written. Whatever it says is
-preserved unchanged by an apply.
+**Gruppen-Zuordnungen** is the one place `<tool-groups>` is edited. One row per capability group,
+with the tools in it and a *Entfernen* action; *Zuordnung hinzufügen* starts another one. A group
+that already has a row is not offered to a second one, because one group has one entry. Removing the
+last tool of a row removes the row: an entry naming no tool assigns nothing and would be refused.
+After an apply, the catalog's *Herkunft der Gruppe* reports the change.
+
+The basic permissions and the limit for unattended runs both accept **single tools** next to whole
+capability groups, because the stored format uses the same `<grant>` entry there as in a role.
 
 **Effektive Rechte** answers the "why". Pick an account - or, hypothetically, a role the policy
 configures - and a run mode, and you get one row per capability group with the verdict, the number of
 tools behind it, and **the rule that decided together with the rule it overrode**:
 
 ```
-Gewährt    Daten ändern (data.write)      1    Grant der Rolle projectPartner
-Verweigert Daten ändern (data.write)      1    Durch die Hintergrund-Zulassungsliste begrenzt
-                                               - die Rolle projectPartner gewährt es, aber ein
-                                                 unbeaufsichtigter Lauf darf es nicht
+Gewährt    Daten ändern (data.write)      1    Berechtigung der Rolle projectPartner
+Verweigert Daten ändern (data.write)      1    Durch die Hintergrund-Zulassungsliste begrenzt.
+                                               Die Rolle projectPartner gewährt es, aber ein
+                                               unbeaufsichtigter Lauf darf es nicht.
 ```
 
 That second sentence is the point of the view: the same row is denied in an unattended run, and the

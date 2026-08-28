@@ -26,14 +26,14 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * A provenance sentence names both sides whenever two rules disagreed. "Denied" alone sends nobody
- * anywhere; "capped by the background allowlist - role projectPartner grants it, but a run nobody
- * watches may not" names the control to change and the grant that is already there.
+ * anywhere. "Capped by the background allowlist. Role projectPartner grants it, but a run nobody
+ * watches may not use it." names the control to change and the grant that is already there.
  * </p>
  */
 public class ToolAccessLabels {
 
-	/** Separates a rule from what it overrode. */
-	private static final String CLAUSE_SEPARATOR = " - ";
+	/** Separates a rule from the sentence about what it overrode. */
+	private static final String CLAUSE_SEPARATOR = ". ";
 
 	private ToolAccessLabels() {
 		// Static utility.
@@ -223,23 +223,6 @@ public class ToolAccessLabels {
 				return resources().getString(I18NConstants.REACHABLE_NOBODY);
 			default:
 				return String.join(", ", roleNames);
-		}
-	}
-
-	/**
-	 * What a role may do with a capability group, in words.
-	 *
-	 * @param state
-	 *        The state to name. Never <code>null</code>.
-	 */
-	public static String triState(PolicyDraft.TriState state) {
-		switch (state) {
-			case DENIED:
-				return resources().getString(I18NConstants.TRI_STATE_DENIED);
-			case GRANTED:
-				return resources().getString(I18NConstants.TRI_STATE_GRANTED);
-			default:
-				return resources().getString(I18NConstants.TRI_STATE_UNSET);
 		}
 	}
 

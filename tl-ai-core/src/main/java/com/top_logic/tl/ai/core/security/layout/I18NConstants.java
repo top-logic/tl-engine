@@ -9,6 +9,7 @@ import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 
 /**
  * I18N constants of the "Agent-Sicherheit" administration view.
@@ -98,64 +99,64 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Names the implicit baseline inside a sentence about another rule.
 	 *
-	 * @en the implicit baseline
-	 * @de die implizite Grundberechtigung
+	 * @en The implicit basic permissions
+	 * @de Die implizite Grundberechtigung
 	 */
 	public static ResKey SUBJECT_IMPLICIT_BASELINE;
 
 	/**
 	 * Names the shipped default baseline inside a sentence about another rule.
 	 *
-	 * @en the default baseline
-	 * @de die Standard-Grundberechtigung
+	 * @en The default basic permissions
+	 * @de Die Standard-Grundberechtigung
 	 */
 	public static ResKey SUBJECT_DEFAULT_BASELINE;
 
 	/**
 	 * Names the declared baseline inside a sentence about another rule.
 	 *
-	 * @en the baseline
-	 * @de die Grundberechtigung
+	 * @en The basic permissions
+	 * @de Die Grundberechtigung
 	 */
 	public static ResKey SUBJECT_BASELINE;
 
 	/**
 	 * Names a role inside a sentence about another rule.
 	 *
-	 * @en role {0}
-	 * @de die Rolle {0}
+	 * @en Role {0}
+	 * @de Die Rolle {0}
 	 */
 	public static ResKey1 SUBJECT_ROLE__ROLE;
 
 	/**
 	 * Names the administrator status inside a sentence about another rule.
 	 *
-	 * @en the administrator status
-	 * @de der Administratorstatus
+	 * @en Administrator status
+	 * @de Der Administratorstatus
 	 */
 	public static ResKey SUBJECT_ADMIN;
 
 	/**
 	 * What the background allowlist took away, appended to the ceiling's own sentence.
 	 *
-	 * @en {0} grants it, but a run nobody watches may not use it
-	 * @de {0} gewährt es, aber ein unbeaufsichtigter Lauf darf es nicht
+	 * @en {0} grants it, but a run nobody watches may not use it.
+	 * @de {0} gewährt es, aber ein unbeaufsichtigter Lauf darf es nicht.
 	 */
 	public static ResKey1 CAPPED_ALTHOUGH_GRANTED__SUBJECT;
 
 	/**
 	 * What a deny took away, appended to the deny's own sentence.
 	 *
-	 * @en {0} grants it
-	 * @de {0} gewährt es
+	 * @en {0} grants it.
+	 * @de {0} gewährt es.
 	 */
 	public static ResKey1 DENIED_ALTHOUGH_GRANTED__SUBJECT;
 
 	/**
 	 * What the administrator bypass covered up, appended to its own sentence.
 	 *
-	 * @en the policy itself says: {0}
-	 * @de die Richtlinie selbst sagt: {0}
+	 * @en The policy itself says: {0}.
+	 * @de Die Richtlinie selbst sagt: {0}.
 	 */
 	public static ResKey1 ALLOWED_ALTHOUGH_POLICY__RULE;
 
@@ -163,7 +164,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * The extra price of committing through the TL-Script tool, where the account can pay it.
 	 *
 	 * @en A commit (withCommit=true) additionally costs data.write, which this account holds
-	 * @de Ein Commit (withCommit=true) kostet zusätzlich data.write - das hält dieses Konto
+	 * @de Ein Commit (withCommit=true) kostet zusätzlich data.write, und das hält dieses Konto
 	 */
 	public static ResKey SCRIPT_COMMIT_ALLOWED;
 
@@ -263,9 +264,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey REACHABLE_NOBODY;
 
-
-
-
 	/**
 	 * The run mode with a user who can answer an approval prompt.
 	 *
@@ -281,8 +279,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @de Hintergrund (unbeaufsichtigt)
 	 */
 	public static ResKey MODE_BACKGROUND;
-
-
 
 	/**
 	 * How a hypothetical role is offered in the account picker.
@@ -354,11 +350,10 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * The cross-layer warning about a role nobody can hold where tool access reads roles.
 	 *
-	 * @en Role {0} is granted tools, but no role rule of this application can produce it on the
-	 *     security root, which is where tool access reads roles. Its grants reach nobody.
-	 * @de Der Rolle {0} sind Tools gewährt, aber keine Rollenregel dieser Anwendung kann sie auf
-	 *     der Sicherheits-Wurzel erzeugen - dort liest der Tool-Zugriff die Rollen. Ihre Grants
-	 *     erreichen niemanden.
+	 * @en Role {0} is granted tools, but no role rule of this application can produce it on the security
+	 *     root. Its permissions reach nobody.
+	 * @de Der Rolle {0} sind Tools gewährt, aber keine Rollenregel dieser Anwendung kann sie auf der
+	 *     Sicherheits-Wurzel erzeugen. Ihre Berechtigungen erreichen niemanden.
 	 */
 	public static ResKey1 WARN_ROLE_UNREACHABLE_ON_ROOT__ROLE;
 
@@ -370,38 +365,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey SERVICE_NOT_RUNNING;
 
-
-	/**
-	 * Row state of a capability a role is refused.
-	 *
-	 * @en refused
-	 * @de verweigert
-	 */
-	public static ResKey TRI_STATE_DENIED;
-
-	/**
-	 * Row state of a capability a role's entry does not mention.
-	 *
-	 * @en not mentioned
-	 * @de nicht genannt
-	 */
-	public static ResKey TRI_STATE_UNSET;
-
-	/**
-	 * Row state of a capability a role is granted.
-	 *
-	 * @en granted
-	 * @de gewährt
-	 */
-	public static ResKey TRI_STATE_GRANTED;
-
 	/**
 	 * Baseline state: the shipped read-only default applies.
 	 *
-	 * @en Standard
-	 * @de Standard
-	 * @tooltip No element is written, so every account may read the model and the business data - the
-	 *          shipped read-only default.
+	 * @en Standard: read the model and the data
+	 * @de Standard: Modell und Daten lesen
+	 * @tooltip No element is written, so every account may read the model and the business data.
 	 */
 	public static ResKey BASELINE_DEFAULT;
 
@@ -410,8 +379,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Nothing
 	 * @de Nichts
-	 * @tooltip Nobody gets anything without a role, beyond the two capabilities no policy can
-	 *          withhold.
+	 * @tooltip Without a role nobody gets anything, apart from the two capabilities no policy can
+	 *     withhold.
 	 */
 	public static ResKey BASELINE_NOTHING;
 
@@ -420,7 +389,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Own list
 	 * @de Eigene Liste
-	 * @tooltip Replaces the default entirely: what is not chosen here is not granted to everyone.
+	 * @tooltip Exactly what is chosen below, replacing the standard. An empty list is the same as Nothing.
 	 */
 	public static ResKey BASELINE_CUSTOM;
 
@@ -429,18 +398,17 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Not stated
 	 * @de Nicht festgelegt
-	 * @tooltip Refused as soon as the policy names a role: what runs nobody watches may reach has to
-	 *          be said, and "nothing" is one of the answers.
+	 * @tooltip Refused as soon as the policy names a role. What an unattended run may reach has to be
+	 *     said.
 	 */
 	public static ResKey BACKGROUND_UNDECLARED;
 
 	/**
 	 * Background limit state: no limit of its own.
 	 *
-	 * @en Allow every tool
-	 * @de Alle Tools erlauben
-	 * @tooltip Gives up the only control that stands in for the approval nobody is there to give.
-	 *          Such runs then reach whatever the acting account's roles grant.
+	 * @en Everything the roles allow
+	 * @de Alles, was die Rollen erlauben
+	 * @tooltip Gives up the only control that stands in for the missing confirmation.
 	 */
 	public static ResKey BACKGROUND_ALL;
 
@@ -449,8 +417,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Own list
 	 * @de Eigene Liste
-	 * @tooltip Only these capabilities are reachable without a human to confirm - administrators
-	 *          included.
+	 * @tooltip Only what is chosen below is reachable unattended, administrators included.
 	 */
 	public static ResKey BACKGROUND_CUSTOM;
 
@@ -481,42 +448,42 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Explains the role every logged-in account holds.
 	 *
-	 * @en Every logged-in account holds this role, so a grant to it reaches all users.
-	 * @de Diese Rolle hält jedes angemeldete Konto - ein Grant hier gilt für alle Benutzer.
+	 * @en Every logged-in account holds this role. A permission here applies to all users.
+	 * @de Diese Rolle hält jedes angemeldete Konto. Eine Berechtigung hier gilt für alle Benutzer.
 	 */
 	public static ResKey ROLE_NOTE_EVERY_ACCOUNT;
 
 	/**
 	 * Explains the role administrators hold.
 	 *
-	 * @en Administrators, who bypass the tool layer anyway.
-	 * @de Administratoren - sie umgehen die Tool-Ebene ohnehin.
+	 * @en Administrators bypass the tool layer anyway.
+	 * @de Administratoren umgehen die Tool-Ebene ohnehin.
 	 */
 	public static ResKey ROLE_NOTE_ADMINISTRATOR;
 
 	/**
 	 * Explains a role the framework uses for its own user interface.
 	 *
-	 * @en A role of the framework's user interface. A tool grant to it reaches nobody.
-	 * @de Eine Rolle der Framework-Oberfläche. Ein Tool-Grant an sie erreicht niemanden.
+	 * @en A role of the framework user interface. A tool permission for it reaches nobody.
+	 * @de Eine Rolle der Framework-Oberfläche. Eine Tool-Berechtigung für sie erreicht niemanden.
 	 */
 	public static ResKey ROLE_NOTE_INTERNAL;
 
 	/**
 	 * Warns in the picker about a role no rule can produce where tool access reads roles.
 	 *
-	 * @en No role rule of this application can produce this role on the security root, so its grants
-	 *     would reach nobody.
-	 * @de Keine Rollenregel dieser Anwendung kann diese Rolle auf der Sicherheits-Wurzel erzeugen -
-	 *     ihre Grants würden niemanden erreichen.
+	 * @en No role rule of this application can produce this role on the security root. Its permissions
+	 *     reach nobody.
+	 * @de Keine Rollenregel dieser Anwendung kann diese Rolle auf der Sicherheits-Wurzel erzeugen. Ihre
+	 *     Berechtigungen erreichen niemanden.
 	 */
 	public static ResKey ROLE_NOTE_UNREACHABLE;
 
 	/**
 	 * Template that grants nothing.
 	 *
-	 * @en None - start empty
-	 * @de Keine - leer beginnen
+	 * @en Empty
+	 * @de Leer beginnen
 	 */
 	public static ResKey TEMPLATE_NONE;
 
@@ -547,38 +514,37 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Refusal: the policy names a role the application does not have.
 	 *
-	 * @en The role {0} does not exist, so the next application start would be refused.
-	 * @de Die Rolle {0} existiert nicht - der nächste Anwendungsstart würde abgewiesen.
+	 * @en The role {0} does not exist. The next application start would be refused.
+	 * @de Die Rolle {0} existiert nicht. Der nächste Anwendungsstart würde abgewiesen.
 	 */
 	public static ResKey1 REFUSE_UNKNOWN_ROLE__ROLE;
 
 	/**
 	 * Refusal: an entry names neither a capability group nor tools.
 	 *
-	 * @en {0}, entry {1} names nothing. An entry says either a whole capability group or single
-	 *     tools.
-	 * @de {0}, Eintrag {1} benennt nichts. Ein Eintrag nennt entweder eine ganze Tool-Gruppe oder
-	 *     einzelne Tools.
+	 * @en {0}, entry {1} names nothing. An entry names either a whole capability or single tools.
+	 * @de {0}, Eintrag {1} benennt nichts. Ein Eintrag nennt entweder eine ganze Tool-Gruppe oder einzelne
+	 *     Tools.
 	 */
 	public static ResKey2 REFUSE_ENTRY_NAMES_NOTHING__WHERE_POSITION;
 
 	/**
 	 * Refusal: an entry names a capability group and tools at once.
 	 *
-	 * @en {0}, entry {1} names a capability group and single tools at once. An entry says exactly one
-	 *     of the two.
-	 * @de {0}, Eintrag {1} benennt eine Tool-Gruppe und einzelne Tools zugleich. Ein Eintrag
-	 *     nennt genau eines von beiden.
+	 * @en {0}, entry {1} names a capability and single tools at once. An entry names exactly one of the
+	 *     two.
+	 * @de {0}, Eintrag {1} benennt eine Tool-Gruppe und einzelne Tools zugleich. Ein Eintrag nennt genau
+	 *     eines von beiden.
 	 */
 	public static ResKey2 REFUSE_ENTRY_NAMES_BOTH__WHERE_POSITION;
 
 	/**
 	 * Refusal: the policy names roles and says nothing about unattended runs.
 	 *
-	 * @en No limit is stated for runs that have nobody to confirm a tool call. A policy naming roles
-	 *     has to state one - "nothing" is one of the answers.
-	 * @de Für Läufe, in denen niemand einen Aufruf bestätigen kann, ist keine Obergrenze festgelegt.
-	 *     Eine Richtlinie, die Rollen nennt, muss eine festlegen - "nichts" ist eine davon.
+	 * @en No limit is stated for runs where nobody can confirm a call. A policy that names roles has to
+	 *     state one.
+	 * @de Für Läufe, in denen niemand einen Aufruf bestätigen kann, ist keine Obergrenze festgelegt. Eine
+	 *     Richtlinie, die Rollen nennt, muss eine festlegen.
 	 */
 	public static ResKey REFUSE_BACKGROUND_ALLOWLIST_UNDECLARED;
 
@@ -627,10 +593,10 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Warning: a role may run TL-Script but not change data, so scripts cannot persist anything.
 	 *
-	 * @en Role {0} may run TL-Script without being allowed to change data, which is a read-only
-	 *     permission: persisting a script's changes is refused.
-	 * @de Die Rolle {0} darf TL-Script ausführen, aber keine Daten ändern - eine reine
-	 *     Lese-Berechtigung: Das Persistieren von Skript-Änderungen wird verweigert.
+	 * @en Role {0} may execute TL-Script but not change data. Persisting a change made by a script is
+	 *     refused.
+	 * @de Die Rolle {0} darf TL-Script ausführen, aber keine Daten ändern. Das Persistieren von
+	 *     Skript-Änderungen wird verweigert.
 	 */
 	public static ResKey1 WARN_SCRIPT_WITHOUT_DATA_WRITE__ROLE;
 
@@ -646,9 +612,9 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Warning: a role may author agents, and can therefore grant itself anything.
 	 *
-	 * @en Role {0} may create and rewire agents, so an agent acting for it can give itself any tool.
-	 * @de Die Rolle {0} darf Agenten anlegen und verknüpfen - ein Agent in ihrem Auftrag kann sich
-	 *     jedes Tool selbst gewähren.
+	 * @en Role {0} may create and wire agents. An agent acting for it can grant itself every tool.
+	 * @de Die Rolle {0} darf Agenten anlegen und verknüpfen. Ein Agent in ihrem Auftrag kann sich jedes
+	 *     Tool selbst gewähren.
 	 */
 	public static ResKey1 WARN_AGENT_AUTHORING__ROLE;
 
@@ -665,18 +631,18 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Warning: the policy grants something to the role every account holds.
 	 *
-	 * @en Role {0} is held by every logged-in account, so these grants apply to all users.
-	 * @de Die Rolle {0} hält jedes angemeldete Konto - diese Grants gelten für alle Benutzer.
+	 * @en Every logged-in account holds role {0}. These permissions apply to all users.
+	 * @de Die Rolle {0} hält jedes angemeldete Konto. Diese Berechtigungen gelten für alle Benutzer.
 	 */
 	public static ResKey1 WARN_EVERY_ACCOUNT_ROLE__ROLE;
 
 	/**
 	 * Warning: unattended runs have no limit of their own.
 	 *
-	 * @en Runs nobody watches are allowed every tool: each call approves itself, write and outward
-	 *     tools included.
-	 * @de Unbeaufsichtigte Läufe dürfen jedes Tool: Jeder Aufruf genehmigt sich selbst - auch
-	 *     schreibende und nach außen sendende.
+	 * @en Unattended runs may use every tool. Every call approves itself, writing and outward-sending ones
+	 *     included.
+	 * @de Unbeaufsichtigte Läufe dürfen jedes Tool. Jeder Aufruf genehmigt sich selbst, auch schreibende
+	 *     und nach außen sendende.
 	 */
 	public static ResKey WARN_BACKGROUND_ALL;
 
@@ -693,10 +659,10 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Warning: unattended runs may run TL-Script and persist what it changes.
 	 *
-	 * @en Runs nobody watches may run TL-Script and change data, so they can persist any change a
-	 *     script expresses - with nobody confirming it.
-	 * @de Unbeaufsichtigte Läufe dürfen TL-Script ausführen und Daten ändern - sie können damit jede
-	 *     per Skript ausdrückbare Änderung persistieren, ohne Bestätigung.
+	 * @en Unattended runs may execute TL-Script and change data. They can persist every change a script
+	 *     expresses, with nobody confirming.
+	 * @de Unbeaufsichtigte Läufe dürfen TL-Script ausführen und Daten ändern. Sie können jede per Skript
+	 *     ausdrückbare Änderung persistieren, ohne Bestätigung.
 	 */
 	public static ResKey WARN_BACKGROUND_SCRIPT_AND_DATA_WRITE;
 
@@ -711,34 +677,25 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Heading of the block listing why an apply was refused.
 	 *
-	 * @en Not applied - this policy would stop the next application start:
-	 * @de Nicht übernommen - diese Richtlinie würde den nächsten Anwendungsstart verhindern:
+	 * @en Not applied. This policy would stop the next application start:
+	 * @de Nicht übernommen. Diese Richtlinie würde den nächsten Anwendungsstart verhindern:
 	 */
 	public static ResKey REFUSALS_HEADING;
 
 	/**
 	 * What the policy tab is for, above everything else.
 	 *
-	 * @en Who may use which capability. Every change is checked when applied: nothing that can be
-	 *     saved here may stop the next application start.
-	 * @de Wer welche Tool-Gruppe benutzen darf. Jede Änderung wird beim Übernehmen geprüft: Was
-	 *     hier gespeichert werden kann, darf den nächsten Anwendungsstart nicht verhindern.
+	 * @en Who may use which capability. Every change is checked when you apply it.
+	 * @de Wer welche Tool-Gruppe benutzen darf. Jede Änderung wird beim Übernehmen geprüft.
 	 */
 	public static ResKey POLICY_INTRO;
-
-	/**
-	 * Heading of the block holding one card per configured role.
-	 *
-	 * @en Access to tools
-	 * @de Zugriff auf Tools
-	 */
-	public static ResKey POLICY_ROLES_HEADING;
 
 	/**
 	 * Heading of the block choosing what every account gets.
 	 *
 	 * @en Basic permissions for every account
-	 * @de Grundberechtigungen für jedes Konto
+	 * @de Grundberechtigung für jedes Konto
+	 * @tooltip What every account may do without holding any role.
 	 */
 	public static ResKey POLICY_BASELINE_HEADING;
 
@@ -747,16 +704,17 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Limit for unattended runs
 	 * @de Obergrenze für unbeaufsichtigte Läufe
+	 * @tooltip What a scheduled or asynchronous run may reach.
 	 */
 	public static ResKey POLICY_BACKGROUND_HEADING;
 
 	/**
 	 * What the limit for unattended runs is, where it is chosen.
 	 *
-	 * @en A run with nobody to answer a confirmation approves every call itself. This is what such a
-	 *     run can reach at all - administrators included.
-	 * @de Ein Lauf, in dem niemand eine Bestätigung beantworten kann, genehmigt jeden Aufruf selbst.
-	 *     Dies ist die Obergrenze dessen, was er überhaupt erreicht - auch für Administratoren.
+	 * @en A run with nobody to answer a confirmation approves every call itself. This limit applies to
+	 *     everyone, administrators included.
+	 * @de Ein Lauf, in dem niemand eine Bestätigung beantworten kann, genehmigt jeden Aufruf selbst. Diese
+	 *     Obergrenze gilt für alle, auch für Administratoren.
 	 */
 	public static ResKey POLICY_BACKGROUND_NOTE;
 
@@ -765,18 +723,18 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Group assignments
 	 * @de Gruppen-Zuordnungen
+	 * @tooltip Which tools belong to which capability group. This says what a tool is, not what a role may
+	 *     do.
 	 */
 	public static ResKey POLICY_TOOL_GROUPS_HEADING;
 
 	/**
 	 * What the group assignments are, where they are shown.
 	 *
-	 * @en Tools of a connected server and tools authored in the running application declare no group
-	 *     of their own. The policy assigns them one here; assigning is not yet granting. Edited in
-	 *     the tool access service.
-	 * @de Tools eines verbundenen Servers und in der laufenden Anwendung angelegte Tools
-	 *     deklarieren selbst keine Gruppe. Die Richtlinie ordnet sie hier zu; eine Zuordnung ist noch
-	 *     kein Grant. Bearbeitet wird sie im Zugangsdienst.
+	 * @en Tools of a connected server and tools authored in the running application declare no group of
+	 *     their own. An assignment here is what makes them reachable at all.
+	 * @de Tools eines verbundenen Servers und in der Anwendung angelegte Tools deklarieren selbst keine
+	 *     Gruppe. Erst eine Zuordnung hier macht sie überhaupt erreichbar.
 	 */
 	public static ResKey POLICY_TOOL_GROUPS_NOTE;
 
@@ -791,65 +749,34 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Shown instead of the role cards while the policy configures no role.
 	 *
-	 * @en No role is configured, so no account reaches more than the basic permissions.
-	 * @de Keine Rolle konfiguriert - kein Konto erreicht mehr als die Grundberechtigungen.
+	 * @en No role is configured. No account reaches more than the basic permissions.
+	 * @de Keine Rolle konfiguriert. Kein Konto erreicht mehr als die Grundberechtigung.
 	 */
 	public static ResKey POLICY_NO_ROLES;
 
 	/**
-	 * Says which capabilities are granted without being configured, under the role rows.
-	 *
-	 * @en Talking to the user and reporting the agent's own toolset are granted implicitly and cannot
-	 *     be taken away here: an agent that can do neither is not restricted but broken.
-	 * @de Mit dem Nutzer sprechen und die eigene Tool-Liste nennen sind implizit gewährt und hier
-	 *     nicht entziehbar: Ein Agent, der beides nicht kann, ist nicht eingeschränkt, sondern
-	 *     funktionsunfähig.
-	 */
-	public static ResKey POLICY_IMPLICIT_NOTE;
-
-	/**
 	 * Row state of a capability no policy can withhold.
 	 *
-	 * @en always granted
-	 * @de immer gewährt
+	 * @en Always granted.
+	 * @de Immer gewährt.
 	 */
 	public static ResKey ROW_ALWAYS_GRANTED;
 
 	/**
 	 * Row state of a capability the basic permissions already grant to everyone.
 	 *
-	 * @en granted to everyone by the basic permissions
-	 * @de für alle gewährt - Grundberechtigung
+	 * @en granted to everyone (basic permissions)
+	 * @de für alle gewährt (Grundberechtigung)
 	 */
 	public static ResKey ROW_BASELINE_GRANTED;
 
 	/**
-	 * The note a refused row carries.
-	 *
-	 * @en A refusal wins over every grant - over the other roles of the same account, and over the
-	 *     basic permissions.
-	 * @de Ein Verbot gewinnt gegen jeden Grant - gegen die anderen Rollen desselben Kontos und gegen
-	 *     die Grundberechtigung.
-	 */
-	public static ResKey NOTE_DENY_WINS;
-
-	/**
 	 * The note a granted data-changing row carries.
 	 *
-	 * @en Every call still asks the user to confirm; unattended runs are additionally bounded by the
-	 *     limit below.
-	 * @de Jeder Aufruf bleibt für den Nutzer bestätigungspflichtig; unbeaufsichtigte Läufe begrenzt
-	 *     zusätzlich die Obergrenze unten.
+	 * @en Every call still asks the user to confirm.
+	 * @de Jeder Aufruf bleibt für den Nutzer bestätigungspflichtig.
 	 */
 	public static ResKey NOTE_DATA_WRITE_APPROVAL;
-
-	/**
-	 * The expander holding the entries that name single tools.
-	 *
-	 * @en Advanced: grant or refuse single tools ({0})
-	 * @de Erweitert: einzelne Tools gewähren oder verweigern ({0})
-	 */
-	public static ResKey1 POLICY_ADVANCED__COUNT;
 
 	/**
 	 * Label of an entry that permits something.
@@ -884,45 +811,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ENTRY_KIND_TOOLS;
 
 	/**
-	 * What an entry naming a capability group says, in one line.
-	 *
-	 * @en Group: {0}
-	 * @de Gruppe: {0}
-	 */
-	public static ResKey1 ENTRY_SUMMARY_GROUP__GROUP;
-
-	/**
-	 * What an entry naming single tools says, in one line.
-	 *
-	 * @en Tools: {0}
-	 * @de Tools: {0}
-	 */
-	public static ResKey1 ENTRY_SUMMARY_TOOLS__TOOLS;
-
-	/**
 	 * Shown on an entry that names single tools and has none chosen yet.
 	 *
-	 * @en No tool chosen yet, so this entry names nothing and would be refused when applied.
-	 * @de Noch kein Tool gewählt - dieser Eintrag benennt nichts und wird beim Übernehmen
-	 *     abgewiesen.
+	 * @en No tool chosen yet. This entry names nothing and would be refused.
+	 * @de Noch kein Tool gewählt. Dieser Eintrag benennt nichts und wird beim Übernehmen abgewiesen.
 	 */
 	public static ResKey ENTRY_NO_TOOL_CHOSEN;
-
-	/**
-	 * The button that checks the policy and saves it.
-	 *
-	 * @en Apply
-	 * @de Übernehmen
-	 */
-	public static ResKey COMMAND_APPLY;
-
-	/**
-	 * The button that throws the unsaved changes away.
-	 *
-	 * @en Discard
-	 * @de Verwerfen
-	 */
-	public static ResKey COMMAND_DISCARD;
 
 	/**
 	 * The button that makes the saved policy take effect.
@@ -977,6 +871,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Role
 	 * @de Rolle
+	 * @tooltip The security role to take into the policy.
 	 */
 	public static ResKey FIELD_NEW_ROLE;
 
@@ -985,14 +880,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Template
 	 * @de Vorlage
+	 * @tooltip Prefills the capabilities of the new role. Every one of them can be changed afterwards.
 	 */
 	public static ResKey FIELD_TEMPLATE;
 
 	/**
 	 * Label of the capability group of an entry.
 	 *
-	 * @en Group
-	 * @de Gruppe
+	 * @en Capability
+	 * @de Tool-Gruppe
+	 * @tooltip The capability group this entry is about.
 	 */
 	public static ResKey FIELD_ENTRY_GROUP;
 
@@ -1001,6 +898,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 *
 	 * @en Tools
 	 * @de Tools
+	 * @tooltip The tools this entry is about, by their qualified name.
 	 */
 	public static ResKey FIELD_ENTRY_TOOLS;
 
@@ -1015,7 +913,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Shown next to the apply button while there are unsaved changes.
 	 *
-	 * @en Unsaved changes. Applying checks them and saves them.
+	 * @en Unsaved changes. Apply checks and saves them.
 	 * @de Ungespeicherte Änderungen. Übernehmen prüft und speichert.
 	 */
 	public static ResKey DIRTY_UNSAVED;
@@ -1041,8 +939,8 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * The confirmation that the saved policy is now the one being applied.
 	 *
-	 * @en The service was restarted; the saved policy is now in effect.
-	 * @de Der Dienst wurde neu gestartet - die gespeicherte Richtlinie ist jetzt wirksam.
+	 * @en The service was restarted. The saved policy is now in effect.
+	 * @de Der Dienst wurde neu gestartet. Die gespeicherte Richtlinie ist jetzt wirksam.
 	 */
 	public static ResKey RESTART_DONE;
 
@@ -1067,19 +965,19 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Reported when the service does not come up again.
 	 *
-	 * @en The tool access service did not start again. Until it does, no agent run is possible - see
-	 *     the application log for the reason.
-	 * @de Der Zugangsdienst für KI-Tools ist nicht wieder gestartet. Bis dahin ist kein
-	 *     Agentenlauf möglich - der Grund steht im Anwendungsprotokoll.
+	 * @en The tool access service did not start again, so no agent run is possible. The reason is in the
+	 *     application log.
+	 * @de Der Zugangsdienst für KI-Tools ist nicht wieder gestartet, daher ist kein Agentenlauf möglich.
+	 *     Der Grund steht im Anwendungsprotokoll.
 	 */
 	public static ResKey POLICY_RESTART_FAILED;
 
 	/**
 	 * Shown instead of the editor while the saved configuration cannot be read.
 	 *
-	 * @en The saved tool access configuration cannot be read, so there is nothing to edit here.
-	 * @de Die gespeicherte Konfiguration des Tool-Zugriffs kann nicht gelesen werden - hier gibt
-	 *     es daher nichts zu bearbeiten.
+	 * @en The saved tool access configuration cannot be read. There is nothing to edit here.
+	 * @de Die gespeicherte Konfiguration des Tool-Zugriffs kann nicht gelesen werden. Hier gibt es nichts
+	 *     zu bearbeiten.
 	 */
 	public static ResKey POLICY_UNREADABLE;
 
@@ -1096,7 +994,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 DESCRIPTION_FROM_MODEL__TEXT;
 
-
 	/**
 	 * Shown instead of the buttons for an account that may look at the policy but not change it.
 	 *
@@ -1107,8 +1004,176 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey POLICY_READ_ONLY;
 
-
 	static {
 		initConstants(I18NConstants.class);
 	}
+	/**
+	 * What a collapsed role section says about its content.
+	 *
+	 * @en {0} granted, {1} forbidden, {2} tool entries
+	 * @de {0} gewährt, {1} verboten, {2} Tool-Einträge
+	 */
+	public static ResKey3 ROLE_SUMMARY__GRANTED_DENIED_ENTRIES;
+
+	/**
+	 * How many entries a collapsed section holds.
+	 *
+	 * @en ({0})
+	 * @de ({0})
+	 */
+	public static ResKey1 SECTION_COUNT__COUNT;
+
+	/**
+	 * Heading of the section holding the prohibitions of one role.
+	 *
+	 * @en Prohibitions
+	 * @de Verbote
+	 * @tooltip A prohibition always applies. It beats every other role of the account and the basic
+	 *     permissions.
+	 */
+	public static ResKey SECTION_DENIES;
+
+	/**
+	 * Says when a prohibition is the right answer, inside that section.
+	 *
+	 * @en Rarely needed. Leave this empty unless you have to take a capability away that another role of
+	 *     the same account grants.
+	 * @de Wird selten gebraucht. Lassen Sie das leer, solange Sie nichts entziehen müssen, was eine andere
+	 *     Rolle desselben Kontos gewährt.
+	 */
+	public static ResKey SECTION_DENIES_NOTE;
+
+	/**
+	 * Heading of the section holding the entries of one role that name single tools.
+	 *
+	 * @en Single tools
+	 * @de Einzelne Tools
+	 * @tooltip Permissions and prohibitions for named tools instead of a whole capability.
+	 */
+	public static ResKey SECTION_TOOL_ENTRIES;
+
+	/**
+	 * Heading of the section that takes another role into the policy.
+	 *
+	 * @en Add a role
+	 * @de Rolle aufnehmen
+	 * @tooltip Takes another security role into the policy. What it may do is then decided in its own
+	 *     section.
+	 */
+	public static ResKey SECTION_ADD_ROLE;
+
+	/**
+	 * Row state of a capability this role forbids.
+	 *
+	 * @en Forbidden by this role
+	 * @de Durch diese Rolle verboten
+	 */
+	public static ResKey ROW_DENIED;
+
+	/**
+	 * Label of the choice deciding what one entry names.
+	 *
+	 * @en Names
+	 * @de Benennt
+	 * @tooltip Whether this entry is about a whole capability or about named tools.
+	 */
+	public static ResKey FIELD_ENTRY_KIND;
+
+	/**
+	 * Label of the choice deciding what every account gets.
+	 *
+	 * @en Every account gets
+	 * @de Jedes Konto bekommt
+	 * @tooltip What every account may do before any role is taken into account.
+	 */
+	public static ResKey FIELD_BASELINE_CHOICE;
+
+	/**
+	 * Label of the capabilities every account gets.
+	 *
+	 * @en Capabilities
+	 * @de Tool-Gruppen
+	 * @tooltip The capabilities every account gets. Nothing chosen means nobody gets anything without a
+	 *     role.
+	 */
+	public static ResKey FIELD_BASELINE_GROUPS;
+
+	/**
+	 * Label of the single tools every account gets.
+	 *
+	 * @en Single tools
+	 * @de Einzelne Tools
+	 * @tooltip Named tools every account may call, in addition to the capabilities above.
+	 */
+	public static ResKey FIELD_BASELINE_TOOLS;
+
+	/**
+	 * Label of the choice deciding what an unattended run may reach.
+	 *
+	 * @en Unattended runs may use
+	 * @de Unbeaufsichtigte Läufe dürfen
+	 * @tooltip The upper limit for a run that has nobody to confirm a call.
+	 */
+	public static ResKey FIELD_BACKGROUND_CHOICE;
+
+	/**
+	 * Label of the capabilities an unattended run may reach.
+	 *
+	 * @en Capabilities
+	 * @de Tool-Gruppen
+	 * @tooltip The capabilities an unattended run may reach.
+	 */
+	public static ResKey FIELD_BACKGROUND_GROUPS;
+
+	/**
+	 * Label of the single tools an unattended run may call.
+	 *
+	 * @en Single tools
+	 * @de Einzelne Tools
+	 * @tooltip Named tools an unattended run may call, in addition to the capabilities above.
+	 */
+	public static ResKey FIELD_BACKGROUND_TOOLS;
+
+	/**
+	 * Label of the capability group an assignment puts tools into.
+	 *
+	 * @en Capability
+	 * @de Tool-Gruppe
+	 * @tooltip The capability group the tools next to it belong to.
+	 */
+	public static ResKey FIELD_ASSIGNMENT_GROUP;
+
+	/**
+	 * Label of the tools an assignment puts into a capability group.
+	 *
+	 * @en Tools
+	 * @de Tools
+	 * @tooltip The tools in this group. Removing the last one removes the assignment.
+	 */
+	public static ResKey FIELD_ASSIGNMENT_TOOLS;
+
+	/**
+	 * The button that starts another group assignment.
+	 *
+	 * @en Add an assignment
+	 * @de Zuordnung hinzufügen
+	 */
+	public static ResKey COMMAND_ADD_ASSIGNMENT;
+
+	/**
+	 * The button that removes one group assignment.
+	 *
+	 * @en Remove
+	 * @de Entfernen
+	 */
+	public static ResKey COMMAND_REMOVE_ASSIGNMENT;
+
+	/**
+	 * Shown when every known capability group already has an assignment.
+	 *
+	 * @en Every known capability group already has an assignment.
+	 * @de Jede bekannte Tool-Gruppe hat bereits eine Zuordnung.
+	 */
+	public static ResKey ASSIGNMENT_NOTHING_TO_ADD;
+
 }

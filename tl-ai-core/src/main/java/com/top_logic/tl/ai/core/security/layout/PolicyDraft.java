@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.security.layout;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -18,6 +19,7 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
@@ -32,45 +34,35 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  */
 /*
  * The draft is a copy of the service configuration itself rather than a parallel object graph, and that
- * is the load-bearing decision of this editor. Proposals D1 and F describe an editor whose controls do
- * not resemble the stored format at all - a tri-state per capability group, three named baseline states
- * - and the honest way to build that without a second format is to make every control a *question about*
- * and an *edit of* the real configuration item. A parallel model would need a converter in each
- * direction, and the round-trip test would then be testing the converter rather than the policy.
+ * is the load-bearing decision of this editor. The controls do not resemble the stored format at all -
+ * a checkbox per capability, three named baseline states - and the honest way to build that without a
+ * second format is to make every control a *question about* and an *edit of* the real configuration
+ * item. A parallel model would need a converter in each direction, and the round-trip test would then
+ * be testing the converter rather than the policy.
  *
- * The tri-state and the "Erweitert" entries are two views of one list, not two layers: a capability set
- * to "granted" IS a <grant group="..."/> entry, and a tool-level entry is one that names tools instead.
- * That is why setTriState rewrites only the entries naming that group and leaves every tool entry alone.
+ * Grants and denies are two lists, and the editor shows two lists. An earlier version offered one
+ * three-way choice per capability (refused / unmentioned / granted), which reads as a scale and is not
+ * one: "unmentioned" is the absence of an opinion, and another role of the same account or the basic
+ * permissions can still grant the capability, while a deny beats both. A checkbox that says "granted"
+ * and a separate, rarely used section that says "forbidden" is the shape the storage has, and the shape
+ * a first-time reader gets right.
+ *
+ * Setting a state that is already there is a no-op everywhere, deliberately: the editor is opened on a
+ * hand-written policy, and re-saving it must not reorder its lists.
  */
 public class PolicyDraft {
-
-	/**
-	 * What a role is allowed to do with one capability group.
-	 */
-	/*
-	 * Three states because the policy has three, and the middle one is the whole point: "not granted" and
-	 * "explicitly refused" are different, and the second survives another role of the same account
-	 * granting it. Pattern 2 of the concept's research (the fine-grained token picker): an ordered set of
-	 * named levels, so that no illegal combination can be expressed at all.
-	 */
-	public enum TriState {
-
-		/** Refused. A refusal wins over every grant, including the ones of other roles. */
-		DENIED,
-
-		/** Not mentioned. The role gets it only if something else grants it. */
-		UNSET,
-
-		/** Granted. */
-		GRANTED;
-	}
 
 	/**
 	 * What every account gets in addition to what its roles grant.
 	 */
 	/*
-	 * P10: the three states of the <baseline> element, which the raw editor renders as "an empty box" and
-	 * "a box with entries" and cannot distinguish "absent" from "empty" at all.
+	 * The three states of the <baseline> element, which the raw editor renders as "an empty box" and "a
+	 * box with entries" and cannot distinguish "absent" from "empty" at all.
+	 *
+	 * The choice is held here rather than derived from the element on every read, because CUSTOM with
+	 * nothing chosen yet and NOTHING are the same element. Deriving it made the "own list" button
+	 * unclickable: it wrote an empty element, the next read called that NOTHING, and the form came back
+	 * in the state the user had just left.
 	 */
 	public enum BaselineChoice {
 
@@ -100,7 +92,7 @@ public class PolicyDraft {
 		/** No limit of their own: such runs reach whatever the acting account's roles grant. */
 		ALL,
 
-		/** Only the chosen capabilities. */
+		/** Only the chosen capabilities and tools. */
 		CUSTOM;
 	}
 
@@ -138,6 +130,10 @@ public class PolicyDraft {
 
 	private final AiToolAccessService.Config<?> _saved;
 
+	private BaselineChoice _baselineChoice;
+
+	private BackgroundChoice _backgroundChoice;
+
 	/**
 	 * Creates a draft of the given policy.
 	 *
@@ -148,6 +144,8 @@ public class PolicyDraft {
 	public PolicyDraft(AiToolAccessService.Config<?> saved) {
 		_saved = saved;
 		_config = TypedConfiguration.copy(saved);
+		_baselineChoice = readBaselineChoice();
+		_backgroundChoice = readBackgroundChoice();
 	}
 
 	/** The policy being edited, ready to be written as a service configuration. */
@@ -158,11 +156,6 @@ public class PolicyDraft {
 	/** Whether the draft differs from the policy it was created from. */
 	public boolean isModified() {
 		return !ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(_saved, _config);
-	}
-
-	/** The evaluation of the draft, for the notes that depend on what it grants. */
-	public RoleToolAccess access() {
-		return AiToolAccessService.evaluate(_config);
 	}
 
 	/** The roles the policy configures, in the order they are shown. */
@@ -201,59 +194,97 @@ public class PolicyDraft {
 	}
 
 	/**
-	 * What the named role may do with the given capability group.
+	 * Whether the named role grants the given capability group.
 	 *
 	 * @param roleName
 	 *        The role to ask about.
 	 * @param group
 	 *        The technical group name.
-	 * @return The state, never <code>null</code>.
 	 */
-	public TriState triState(String roleName, String group) {
+	public boolean isGranted(String roleName, String group) {
 		RoleAccess role = role(roleName);
-		if (role == null) {
-			return TriState.UNSET;
-		}
-		if (namesGroup(role.getDenies(), group)) {
-			return TriState.DENIED;
-		}
-		return namesGroup(role.getGrants(), group) ? TriState.GRANTED : TriState.UNSET;
+		return role != null && namesGroup(role.getGrants(), group);
 	}
 
 	/**
-	 * Rewrites the entries of the named role so that the group ends up in the given state.
+	 * Whether the named role forbids the given capability group.
 	 *
 	 * <p>
-	 * Entries naming single tools are left untouched: they are the same list, but a different decision.
+	 * A prohibition wins over every permission, including the ones of the other roles the account
+	 * holds and the basic permissions.
+	 * </p>
+	 *
+	 * @param roleName
+	 *        The role to ask about.
+	 * @param group
+	 *        The technical group name.
+	 */
+	public boolean isDenied(String roleName, String group) {
+		RoleAccess role = role(roleName);
+		return role != null && namesGroup(role.getDenies(), group);
+	}
+
+	/**
+	 * Grants or stops granting the given capability group to the named role.
+	 *
+	 * <p>
+	 * Granting a capability the role forbids removes the prohibition: the two together mean the
+	 * prohibition, so keeping both would leave a permission that says nothing. Entries naming single
+	 * tools are left untouched, and setting the state that is already there changes nothing.
 	 * </p>
 	 *
 	 * @param roleName
 	 *        The role to change.
 	 * @param group
 	 *        The technical group name.
-	 * @param state
-	 *        The state to reach. Never <code>null</code>.
+	 * @param granted
+	 *        Whether the role should grant the group.
 	 */
-	public void setTriState(String roleName, String group, TriState state) {
+	public void setGranted(String roleName, String group, boolean granted) {
 		RoleAccess role = role(roleName);
-		if (role == null || triState(roleName, group) == state) {
-			// Writing back the state that is already there has to leave the entry where it is: the
-			// editor is opened on a hand-written policy, and re-saving it must not reorder its lists.
+		if (role == null || isGranted(roleName, group) == granted) {
 			return;
 		}
-		removeGroup(role.getGrants(), group);
-		removeGroup(role.getDenies(), group);
-		switch (state) {
-			case GRANTED:
-				role.getGrants().add(groupEntry(group));
-				break;
-			case DENIED:
-				role.getDenies().add(groupEntry(group));
-				break;
-			default:
-				// UNSET is the absence of both entries, which is what was just established.
-				break;
+		if (granted) {
+			removeGroup(role.getDenies(), group);
+			role.getGrants().add(groupEntry(group));
+		} else {
+			removeGroup(role.getGrants(), group);
 		}
+	}
+
+	/**
+	 * Forbids or stops forbidding the given capability group for the named role.
+	 *
+	 * <p>
+	 * Forbidding a capability the role grants removes the permission, for the reason given at
+	 * {@link #setGranted(String, String, boolean)}.
+	 * </p>
+	 *
+	 * @param roleName
+	 *        The role to change.
+	 * @param group
+	 *        The technical group name.
+	 * @param denied
+	 *        Whether the role should forbid the group.
+	 */
+	public void setDenied(String roleName, String group, boolean denied) {
+		RoleAccess role = role(roleName);
+		if (role == null || isDenied(roleName, group) == denied) {
+			return;
+		}
+		if (denied) {
+			removeGroup(role.getGrants(), group);
+			role.getDenies().add(groupEntry(group));
+		} else {
+			removeGroup(role.getDenies(), group);
+		}
+	}
+
+	/** The capability groups the named role forbids, in a stable order. */
+	public Set<String> deniedGroups(String roleName) {
+		RoleAccess role = role(roleName);
+		return role == null ? Set.of() : groupsOf(role.getDenies());
 	}
 
 	/**
@@ -311,8 +342,7 @@ public class PolicyDraft {
 	 * Turns the given entry into one that names a capability group, or one that names tools.
 	 *
 	 * <p>
-	 * The either-or of proposal D1, as a change of the entry rather than as two inputs shown at once:
-	 * exactly one of the two is set afterwards, so the entry always names exactly one thing - which is
+	 * Exactly one of the two is set afterwards, so the entry always names exactly one thing, which is
 	 * the rule the boot check enforces and the raw editor cannot express.
 	 * </p>
 	 *
@@ -340,13 +370,11 @@ public class PolicyDraft {
 		return !isBlank(entry.getGroup());
 	}
 
+	// ------------------------------------------------------- basic permissions
+
 	/** Which of the three baseline states the draft is in. */
 	public BaselineChoice baselineChoice() {
-		Baseline baseline = _config.getBaseline();
-		if (baseline == null) {
-			return BaselineChoice.DEFAULT;
-		}
-		return baseline.getGrants().isEmpty() ? BaselineChoice.NOTHING : BaselineChoice.CUSTOM;
+		return _baselineChoice;
 	}
 
 	/**
@@ -354,19 +382,23 @@ public class PolicyDraft {
 	 *
 	 * <p>
 	 * {@link BaselineChoice#DEFAULT} removes the element, which is what makes the shipped default apply;
-	 * {@link BaselineChoice#NOTHING} writes it empty, which is the explicit "nothing for everyone".
+	 * {@link BaselineChoice#NOTHING} writes it empty, which is the explicit "nothing for everyone". An
+	 * own list with nothing chosen writes the same empty element and therefore grants nothing either.
 	 * </p>
 	 *
 	 * @param choice
 	 *        The state to reach. Never <code>null</code>.
 	 */
 	public void setBaselineChoice(BaselineChoice choice) {
+		_baselineChoice = choice;
 		switch (choice) {
 			case DEFAULT:
 				_config.setBaseline(null);
 				break;
 			case NOTHING:
-				_config.setBaseline(TypedConfiguration.newConfigItem(Baseline.class));
+				if (_config.getBaseline() == null || !_config.getBaseline().getGrants().isEmpty()) {
+					_config.setBaseline(TypedConfiguration.newConfigItem(Baseline.class));
+				}
 				break;
 			default:
 				if (_config.getBaseline() == null) {
@@ -382,19 +414,29 @@ public class PolicyDraft {
 		return baseline == null ? Set.of() : groupsOf(baseline.getGrants());
 	}
 
-	/** Adds the given group to the declared baseline, or removes it if it is already there. */
-	public void toggleBaselineGroup(String group) {
-		setBaselineChoice(BaselineChoice.CUSTOM);
-		toggle(_config.getBaseline().getGrants(), group);
+	/** The single tools the declared baseline grants, empty when it names none. */
+	public Set<String> baselineTools() {
+		Baseline baseline = _config.getBaseline();
+		return baseline == null ? Set.of() : toolsOf(baseline.getGrants());
 	}
+
+	/** Makes the declared baseline grant exactly the given capability groups. */
+	public void setBaselineGroups(List<String> groups) {
+		setBaselineChoice(BaselineChoice.CUSTOM);
+		setGroups(_config.getBaseline().getGrants(), groups);
+	}
+
+	/** Makes the declared baseline grant exactly the given single tools. */
+	public void setBaselineTools(List<String> tools) {
+		setBaselineChoice(BaselineChoice.CUSTOM);
+		setTools(_config.getBaseline().getGrants(), tools);
+	}
+
+	// --------------------------------------------------------- unattended runs
 
 	/** Which of the three states the background limit is in. */
 	public BackgroundChoice backgroundChoice() {
-		BackgroundAllowlist allowlist = _config.getBackgroundAllowlist();
-		if (allowlist == null) {
-			return BackgroundChoice.UNDECLARED;
-		}
-		return allowlist.isAll() ? BackgroundChoice.ALL : BackgroundChoice.CUSTOM;
+		return _backgroundChoice;
 	}
 
 	/**
@@ -404,6 +446,7 @@ public class PolicyDraft {
 	 *        The state to reach. Never <code>null</code>.
 	 */
 	public void setBackgroundChoice(BackgroundChoice choice) {
+		_backgroundChoice = choice;
 		if (choice == BackgroundChoice.UNDECLARED) {
 			_config.setBackgroundAllowlist(null);
 			return;
@@ -413,7 +456,9 @@ public class PolicyDraft {
 			allowlist = TypedConfiguration.newConfigItem(BackgroundAllowlist.class);
 			_config.setBackgroundAllowlist(allowlist);
 		}
-		allowlist.setAll(choice == BackgroundChoice.ALL);
+		if (allowlist.isAll() != (choice == BackgroundChoice.ALL)) {
+			allowlist.setAll(choice == BackgroundChoice.ALL);
+		}
 	}
 
 	/** The capability groups an unattended run may reach, empty while nothing is declared. */
@@ -422,11 +467,137 @@ public class PolicyDraft {
 		return allowlist == null ? Set.of() : groupsOf(allowlist.getGrants());
 	}
 
-	/** Adds the given group to the background limit, or removes it if it is already there. */
-	public void toggleBackgroundGroup(String group) {
-		setBackgroundChoice(BackgroundChoice.CUSTOM);
-		toggle(_config.getBackgroundAllowlist().getGrants(), group);
+	/** The single tools an unattended run may reach, empty while none is named. */
+	public Set<String> backgroundTools() {
+		BackgroundAllowlist allowlist = _config.getBackgroundAllowlist();
+		return allowlist == null ? Set.of() : toolsOf(allowlist.getGrants());
 	}
+
+	/** Makes the background limit admit exactly the given capability groups. */
+	public void setBackgroundGroups(List<String> groups) {
+		setBackgroundChoice(BackgroundChoice.CUSTOM);
+		setGroups(_config.getBackgroundAllowlist().getGrants(), groups);
+	}
+
+	/** Makes the background limit admit exactly the given single tools. */
+	public void setBackgroundTools(List<String> tools) {
+		setBackgroundChoice(BackgroundChoice.CUSTOM);
+		setTools(_config.getBackgroundAllowlist().getGrants(), tools);
+	}
+
+	// ------------------------------------------------------- group assignments
+
+	/**
+	 * The capability groups the policy assigns tools to, in the order they are shown.
+	 *
+	 * <p>
+	 * A group assignment says what a tool <em>is</em>. Tools of a connected server and tools authored in
+	 * the running application declare no group of their own and are reachable by nobody until one is
+	 * assigned here.
+	 * </p>
+	 */
+	public List<String> assignedGroups() {
+		return new ArrayList<>(new TreeSet<>(_config.getToolGroups().keySet()));
+	}
+
+	/** The tools the policy assigns to the named capability group, empty when there is no entry. */
+	public List<String> assignedTools(String group) {
+		GroupMembership membership = _config.getToolGroups().get(group);
+		return membership == null ? List.of() : new ArrayList<>(membership.getTools());
+	}
+
+	/**
+	 * Assigns exactly the given tools to the named capability group.
+	 *
+	 * @param group
+	 *        The technical group name. An empty name is ignored.
+	 * @param tools
+	 *        The tools to assign. An empty list removes the assignment, because an entry naming no tool
+	 *        assigns nothing and is refused as a policy that says nothing.
+	 */
+	public void setAssignedTools(String group, List<String> tools) {
+		if (isBlank(group)) {
+			return;
+		}
+		if (tools.isEmpty()) {
+			_config.getToolGroups().remove(group);
+			return;
+		}
+		GroupMembership membership = _config.getToolGroups().get(group);
+		if (membership == null) {
+			membership = TypedConfiguration.newConfigItem(GroupMembership.class);
+			membership.setName(group);
+			_config.getToolGroups().put(group, membership);
+		}
+		if (!membership.getTools().equals(tools)) {
+			membership.setTools(new ArrayList<>(tools));
+		}
+	}
+
+	/**
+	 * Moves an assignment to another capability group, keeping its tools.
+	 *
+	 * @param group
+	 *        The group the assignment has now.
+	 * @param newGroup
+	 *        The group it should have. When that group already has an assignment, the two are merged,
+	 *        because one group has one entry and losing the other one silently would be worse.
+	 */
+	public void renameAssignment(String group, String newGroup) {
+		if (isBlank(newGroup) || newGroup.equals(group)) {
+			return;
+		}
+		List<String> tools = new ArrayList<>(assignedTools(newGroup));
+		for (String tool : assignedTools(group)) {
+			if (!tools.contains(tool)) {
+				tools.add(tool);
+			}
+		}
+		_config.getToolGroups().remove(group);
+		setAssignedTools(newGroup, tools);
+	}
+
+	/**
+	 * The capability groups an assignment may be moved to: the free ones, plus its own.
+	 *
+	 * <p>
+	 * One group has one entry, so offering a group that already has one would mean offering to merge
+	 * two assignments by picking a value in a drop-down.
+	 * </p>
+	 *
+	 * @param group
+	 *        The group the assignment has now, always part of the result.
+	 */
+	public List<String> assignableGroups(String group) {
+		List<String> result = new ArrayList<>();
+		for (String candidate : grantableGroups()) {
+			if (candidate.equals(group) || !_config.getToolGroups().containsKey(candidate)) {
+				result.add(candidate);
+			}
+		}
+		return result;
+	}
+
+	/** Removes the assignment of the named capability group, declassifying the tools in it. */
+	public void removeAssignment(String group) {
+		_config.getToolGroups().remove(group);
+	}
+
+	/**
+	 * The capability group an added assignment starts with: one no assignment names yet.
+	 *
+	 * @return The group name, or <code>null</code> if every known group is already assigned to.
+	 */
+	public String unassignedGroup() {
+		for (String group : grantableGroups()) {
+			if (!_config.getToolGroups().containsKey(group)) {
+				return group;
+			}
+		}
+		return null;
+	}
+
+	// ------------------------------------------------------------------ groups
 
 	/**
 	 * The capability groups the editor offers a decision about.
@@ -467,17 +638,65 @@ public class PolicyDraft {
 		return namesGroup(declared.getGrants(), group);
 	}
 
+	// ----------------------------------------------------------------- helpers
+
+	private BaselineChoice readBaselineChoice() {
+		Baseline baseline = _config.getBaseline();
+		if (baseline == null) {
+			return BaselineChoice.DEFAULT;
+		}
+		return baseline.getGrants().isEmpty() ? BaselineChoice.NOTHING : BaselineChoice.CUSTOM;
+	}
+
+	private BackgroundChoice readBackgroundChoice() {
+		BackgroundAllowlist allowlist = _config.getBackgroundAllowlist();
+		if (allowlist == null) {
+			return BackgroundChoice.UNDECLARED;
+		}
+		return allowlist.isAll() ? BackgroundChoice.ALL : BackgroundChoice.CUSTOM;
+	}
+
 	private static Grant groupEntry(String group) {
 		Grant entry = TypedConfiguration.newConfigItem(Grant.class);
 		entry.setGroup(group);
 		return entry;
 	}
 
-	private static void toggle(List<Grant> entries, String group) {
-		if (namesGroup(entries, group)) {
-			removeGroup(entries, group);
-		} else {
+	/**
+	 * Rewrites the group entries of a list so that it names exactly the given groups.
+	 *
+	 * <p>
+	 * A no-op when it already does, so that reading a list and writing it back leaves the order of a
+	 * hand-written policy alone. Entries naming single tools are not touched.
+	 * </p>
+	 */
+	private static void setGroups(List<Grant> entries, List<String> groups) {
+		if (groupsOf(entries).equals(new TreeSet<>(groups))) {
+			return;
+		}
+		entries.removeIf(entry -> !isBlank(entry.getGroup()));
+		for (String group : new TreeSet<>(groups)) {
 			entries.add(groupEntry(group));
+		}
+	}
+
+	/**
+	 * Rewrites the tool entries of a list so that they name exactly the given tools.
+	 *
+	 * <p>
+	 * A no-op when they already do. Several entries naming tools are collapsed into one when the set
+	 * changes, which is the same statement in fewer entries.
+	 * </p>
+	 */
+	private static void setTools(List<Grant> entries, List<String> tools) {
+		if (toolsOf(entries).equals(new LinkedHashSet<>(tools))) {
+			return;
+		}
+		entries.removeIf(entry -> isBlank(entry.getGroup()));
+		if (!tools.isEmpty()) {
+			Grant entry = TypedConfiguration.newConfigItem(Grant.class);
+			entry.setTools(new ArrayList<>(tools));
+			entries.add(entry);
 		}
 	}
 
@@ -486,6 +705,16 @@ public class PolicyDraft {
 		for (Grant entry : entries) {
 			if (!isBlank(entry.getGroup())) {
 				result.add(entry.getGroup());
+			}
+		}
+		return result;
+	}
+
+	private static Set<String> toolsOf(List<Grant> entries) {
+		Set<String> result = new LinkedHashSet<>();
+		for (Grant entry : entries) {
+			if (isBlank(entry.getGroup())) {
+				result.addAll(entry.getTools());
 			}
 		}
 		return result;
@@ -523,7 +752,7 @@ public class PolicyDraft {
 	 *
 	 * <p>
 	 * Computed rather than remembered, so that the "saved but not yet in effect" banner is right after a
-	 * page reload, in a second session, and after somebody restarted the service elsewhere - a flag set
+	 * page reload, in a second session, and after somebody restarted the service elsewhere. A flag set
 	 * when this editor saved would be wrong in all three cases.
 	 * </p>
 	 *

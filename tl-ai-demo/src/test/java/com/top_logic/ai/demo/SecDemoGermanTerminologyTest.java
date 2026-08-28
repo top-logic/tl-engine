@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 import junit.framework.Test;
 
 import com.top_logic.basic.FileManager;
-import com.top_logic.basic.io.binary.BinaryContent;
+import com.top_logic.basic.io.BinaryContent;
 
 /**
  * The German user interface of this application says "Tool", never "Werkzeug".

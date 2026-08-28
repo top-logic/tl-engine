@@ -26,7 +26,6 @@ import com.top_logic.tl.ai.core.security.layout.PolicyDraft;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BackgroundChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BaselineChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.RoleTemplate;
-import com.top_logic.tl.ai.core.security.layout.PolicyDraft.TriState;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
@@ -179,18 +178,47 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		assertEquals("...with no entry in it.", List.of(), empty.getGrants());
 		assertEquals(BaselineChoice.NOTHING, draft.baselineChoice());
 
-		draft.toggleBaselineGroup(ToolGroups.MODEL_READ);
+		draft.setBaselineGroups(List.of(ToolGroups.MODEL_READ));
 		assertEquals(BaselineChoice.CUSTOM, draft.baselineChoice());
 		assertEquals(Set.of(ToolGroups.MODEL_READ), draft.baselineGroups());
 		assertEquals("One entry, naming the group and nothing else.", List.of(ToolGroups.MODEL_READ),
 			groupsOf(draft.config().getBaseline().getGrants()));
 
-		draft.toggleBaselineGroup(ToolGroups.MODEL_READ);
-		assertEquals("Taking the last capability away is 'nothing', not 'the default'.",
-			BaselineChoice.NOTHING, draft.baselineChoice());
-
 		draft.setBaselineChoice(BaselineChoice.DEFAULT);
 		assertNull(draft.config().getBaseline());
+	}
+
+	/**
+	 * "Own list" is a state the editor can actually reach.
+	 *
+	 * <p>
+	 * It writes the same empty element as "nothing", so a choice derived from the stored element alone
+	 * read it back as "nothing" and the button did nothing at all. Both sections had the defect; the
+	 * background one hid it because the fixture starts in that state.
+	 * </p>
+	 */
+	public void testOwnListCanBeChosen() {
+		PolicyDraft draft = draft();
+
+		draft.setBaselineChoice(BaselineChoice.NOTHING);
+		draft.setBaselineChoice(BaselineChoice.CUSTOM);
+		assertEquals("Choosing an own list has to leave the editor in that state.",
+			BaselineChoice.CUSTOM, draft.baselineChoice());
+		assertEquals("An own list with nothing chosen yet grants nothing.", Set.of(),
+			draft.baselineGroups());
+
+		draft.setBaselineGroups(List.of(ToolGroups.DATA_READ));
+		assertEquals(Set.of(ToolGroups.DATA_READ), draft.baselineGroups());
+
+		draft.setBackgroundChoice(BackgroundChoice.UNDECLARED);
+		draft.setBackgroundChoice(BackgroundChoice.CUSTOM);
+		assertEquals(BackgroundChoice.CUSTOM, draft.backgroundChoice());
+		assertEquals(Set.of(), draft.backgroundGroups());
+
+		draft.setBackgroundChoice(BackgroundChoice.ALL);
+		draft.setBackgroundChoice(BackgroundChoice.CUSTOM);
+		assertEquals("Coming from 'everything' also has to reach the own list.",
+			BackgroundChoice.CUSTOM, draft.backgroundChoice());
 	}
 
 	/** The three states of the background limit, and what each of them stores. */
@@ -198,7 +226,7 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		PolicyDraft draft = draft();
 
 		draft.setBackgroundChoice(BackgroundChoice.UNDECLARED);
-		assertNull("Nothing stated is no element at all - and refused when applied.",
+		assertNull("Nothing stated is no element at all, and refused when applied.",
 			draft.config().getBackgroundAllowlist());
 
 		draft.setBackgroundChoice(BackgroundChoice.ALL);
@@ -209,9 +237,94 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 
 		draft.setBackgroundChoice(BackgroundChoice.CUSTOM);
 		assertFalse(draft.config().getBackgroundAllowlist().isAll());
-		draft.toggleBackgroundGroup(ToolGroups.DATA_READ);
+		draft.setBackgroundGroups(List.of(ToolGroups.DATA_READ));
 		assertEquals(Set.of(ToolGroups.DATA_READ), draft.backgroundGroups());
 		assertEquals(BackgroundChoice.CUSTOM, draft.backgroundChoice());
+	}
+
+	/**
+	 * Single tools can be named where only whole capabilities used to be offered.
+	 *
+	 * <p>
+	 * The stored format uses the same entry type for the basic permissions and for the limit of
+	 * unattended runs as for a role, so both accept a tool by name, and the enforcement honours it.
+	 * </p>
+	 */
+	public void testSingleToolsInTheBaselineAndTheBackgroundLimit() {
+		PolicyDraft draft = draft();
+
+		draft.setBaselineTools(List.of(MODEL_READ_TOOL));
+		assertEquals(Set.of(MODEL_READ_TOOL), draft.baselineTools());
+		assertTrue("A named tool must not turn into a capability.", draft.baselineGroups().isEmpty());
+
+		draft.setBackgroundTools(List.of(MODEL_READ_TOOL));
+		assertEquals(Set.of(MODEL_READ_TOOL), draft.backgroundTools());
+		assertEquals("The capabilities of the fixture's limit stay where they are.",
+			draft().backgroundGroups(), draft.backgroundGroups());
+
+		assertEquals("Naming a tool must not make the policy unbootable.", List.of(),
+			keys(PolicyChecks.refusals(draft.config(), ROLE_EXISTS)));
+	}
+
+	/**
+	 * A group assignment can be added, moved to another capability and removed.
+	 *
+	 * <p>
+	 * The catalog reads the same map, so the "source of the group" it reports follows an apply.
+	 * </p>
+	 */
+	public void testGroupAssignmentsRoundTrip() {
+		PolicyDraft draft = draft();
+		String free = draft.unassignedGroup();
+		assertNotNull("The fixture has to leave at least one capability unassigned.", free);
+
+		draft.setAssignedTools(free, List.of(MODEL_READ_TOOL));
+		assertEquals(List.of(MODEL_READ_TOOL), draft.assignedTools(free));
+		assertTrue(draft.assignedGroups().contains(free));
+
+		String moved = draft.unassignedGroup();
+		assertNotNull("With one capability taken there still has to be another one free.", moved);
+		draft.renameAssignment(free, moved);
+		assertFalse("Moving an assignment leaves nothing behind.",
+			draft.assignedGroups().contains(free));
+		assertEquals("Moving an assignment keeps its tools.", List.of(MODEL_READ_TOOL),
+			draft.assignedTools(moved));
+
+		draft.removeAssignment(moved);
+		assertFalse(draft.assignedGroups().contains(moved));
+		assertEquals("Adding and removing an assignment leaves the policy as it was.",
+			draft().assignedGroups(), draft.assignedGroups());
+
+		draft.setAssignedTools(moved, List.of(MODEL_READ_TOOL));
+		draft.setAssignedTools(moved, List.of());
+		assertFalse("An assignment naming no tool is no assignment, because it would be refused.",
+			draft.assignedGroups().contains(moved));
+	}
+
+	/**
+	 * One capability group has one assignment, so the editor never offers a taken one.
+	 *
+	 * <p>
+	 * And where two do end up on the same group, the tools are merged rather than one list quietly
+	 * replacing the other.
+	 * </p>
+	 */
+	public void testAnAssignmentIsOfferedOnlyFreeGroups() {
+		PolicyDraft draft = draft();
+		String taken = draft.assignedGroups().get(0);
+		String other = draft.assignedGroups().get(1);
+
+		assertFalse("A group another assignment holds is not offered.",
+			draft.assignableGroups(other).contains(taken));
+		assertTrue("Its own group always is, or the row could not stay as it is.",
+			draft.assignableGroups(other).contains(other));
+
+		List<String> before = new ArrayList<>(draft.assignedTools(taken));
+		before.addAll(draft.assignedTools(other));
+		draft.renameAssignment(other, taken);
+		assertEquals("Merging two assignments keeps every tool of both.", before,
+			draft.assignedTools(taken));
+		assertFalse(draft.assignedGroups().contains(other));
 	}
 
 	/**
@@ -227,69 +340,84 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		PolicyDraft draft = draft();
 		for (String roleName : draft.roleNames()) {
 			for (String group : draft.grantableGroups()) {
-				draft.setTriState(roleName, group, draft.triState(roleName, group));
+				draft.setGranted(roleName, group, draft.isGranted(roleName, group));
+				draft.setDenied(roleName, group, draft.isDenied(roleName, group));
 			}
 		}
 		draft.setBaselineChoice(draft.baselineChoice());
+		draft.setBaselineGroups(new ArrayList<>(draft.baselineGroups()));
+		draft.setBaselineTools(new ArrayList<>(draft.baselineTools()));
 		draft.setBackgroundChoice(draft.backgroundChoice());
+		draft.setBackgroundGroups(new ArrayList<>(draft.backgroundGroups()));
+		draft.setBackgroundTools(new ArrayList<>(draft.backgroundTools()));
+		for (String group : draft.assignedGroups()) {
+			draft.setAssignedTools(group, draft.assignedTools(group));
+		}
 
 		assertFalse("Opening the editor and applying it must not rewrite the policy.",
 			draft.isModified());
 	}
 
 	/**
-	 * A tri-state that is changed and changed back leaves the policy as it was.
+	 * A capability that is switched and switched back leaves the policy as it was.
 	 */
-	public void testTheTriStateRoundTrips() {
+	public void testTheCapabilityCheckboxesRoundTrip() {
 		for (String group : List.of(ToolGroups.DATA_WRITE, ToolGroups.EGRESS, ToolGroups.SCRIPT)) {
-			for (TriState state : TriState.values()) {
+			for (boolean granted : List.of(Boolean.TRUE, Boolean.FALSE)) {
 				PolicyDraft draft = draft();
-				TriState before = draft.triState(PARTNER, group);
+				boolean before = draft.isGranted(PARTNER, group);
 
-				draft.setTriState(PARTNER, group, state);
-				assertEquals(group + " -> " + state, state, draft.triState(PARTNER, group));
+				draft.setGranted(PARTNER, group, granted);
+				assertEquals(group + " -> " + granted, granted, draft.isGranted(PARTNER, group));
 
-				draft.setTriState(PARTNER, group, before);
+				draft.setGranted(PARTNER, group, before);
 				assertEquals(group + ": back to " + before + " has to be the state we started from.",
-					before, draft.triState(PARTNER, group));
+					before, draft.isGranted(PARTNER, group));
 				assertEquals(group + ": and no other capability may have moved.",
-					draft().role(PARTNER) == null ? Set.of() : grantedGroups(draft().role(PARTNER)),
-					grantedGroups(draft.role(PARTNER)));
+					grantedGroups(draft().role(PARTNER)), grantedGroups(draft.role(PARTNER)));
 			}
 		}
 	}
 
-	/** Each state writes the entry it means, and nothing else. */
-	public void testWhatEachTriStateWrites() {
+	/**
+	 * A permission and a prohibition are two lists, and each checkbox writes its own.
+	 *
+	 * <p>
+	 * The two cannot both be set from the editor: a prohibition beats every permission, so a
+	 * permission next to it says nothing. Switching one on therefore switches the other off.
+	 * </p>
+	 */
+	public void testWhatTheTwoCheckboxesWrite() {
 		PolicyDraft draft = draft();
 
-		draft.setTriState(PARTNER, ToolGroups.EGRESS, TriState.GRANTED);
+		draft.setGranted(PARTNER, ToolGroups.EGRESS, true);
 		RoleAccess role = draft.role(PARTNER);
 		assertTrue("Granted is a permission naming the group.",
 			groupsOf(role.getGrants()).contains(ToolGroups.EGRESS));
 		assertFalse(groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
 
-		draft.setTriState(PARTNER, ToolGroups.EGRESS, TriState.DENIED);
-		assertFalse("A refusal replaces the permission rather than sitting next to it.",
+		draft.setDenied(PARTNER, ToolGroups.EGRESS, true);
+		assertFalse("A prohibition replaces the permission rather than sitting next to it.",
 			groupsOf(role.getGrants()).contains(ToolGroups.EGRESS));
 		assertTrue(groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
+		assertFalse("The permission checkbox has to follow.", draft.isGranted(PARTNER, ToolGroups.EGRESS));
 
-		draft.setTriState(PARTNER, ToolGroups.EGRESS, TriState.UNSET);
-		assertFalse("Unmentioned is the absence of both entries.",
+		draft.setDenied(PARTNER, ToolGroups.EGRESS, false);
+		assertFalse("Clearing the prohibition is the absence of both entries.",
 			groupsOf(role.getGrants()).contains(ToolGroups.EGRESS));
 		assertFalse(groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
 	}
 
 	/**
-	 * The tri-states and the entries naming single tools are two views of one list, not two layers.
+	 * The checkboxes and the entries naming single tools are two views of one list, not two layers.
 	 */
-	public void testTheTriStateLeavesToolEntriesAlone() {
+	public void testTheCapabilityCheckboxLeavesToolEntriesAlone() {
 		PolicyDraft draft = draft();
 		Grant entry = draft.addToolEntry(PARTNER, false);
 		entry.setTools(new ArrayList<>(List.of(CLASSIFIED_READ_SCRIPT_TOOL)));
 
-		draft.setTriState(PARTNER, ToolGroups.DATA_READ, TriState.DENIED);
-		draft.setTriState(PARTNER, ToolGroups.DATA_READ, TriState.GRANTED);
+		draft.setDenied(PARTNER, ToolGroups.DATA_READ, true);
+		draft.setGranted(PARTNER, ToolGroups.DATA_READ, true);
 
 		assertEquals("Changing a capability must not touch an entry that names tools.", 1,
 			draft.toolEntries(PARTNER, false).size());
@@ -316,7 +444,7 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * A template prefills the tri-states and nothing else.
+	 * A template prefills the capabilities and nothing else.
 	 */
 	public void testATemplatePrefillsTheCapabilities() {
 		PolicyDraft draft = draft();
@@ -324,11 +452,10 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		draft.addRole(PARTNER, RoleTemplate.DEVELOPER);
 
 		for (String group : RoleTemplate.DEVELOPER.groups()) {
-			assertEquals(group + " belongs to the developer template.", TriState.GRANTED,
-				draft.triState(PARTNER, group));
+			assertTrue(group + " belongs to the developer template.", draft.isGranted(PARTNER, group));
 		}
-		assertEquals("Nothing beyond the template's capabilities.", TriState.UNSET,
-			draft.triState(PARTNER, ToolGroups.EGRESS));
+		assertFalse("Nothing beyond the template's capabilities.",
+			draft.isGranted(PARTNER, ToolGroups.EGRESS));
 		assertEquals("A template writes permissions, never refusals.", List.of(),
 			draft.role(PARTNER).getDenies());
 	}
@@ -352,7 +479,7 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	/** Adding the capability to send data outward next to a read capability is worth a warning. */
 	public void testTheEgressWarningAppearsWhenItIsEarned() {
 		PolicyDraft draft = draft();
-		draft.setTriState(PARTNER, ToolGroups.EGRESS, TriState.GRANTED);
+		draft.setGranted(PARTNER, ToolGroups.EGRESS, true);
 
 		assertTrue("Reading data and sending it outward is the combination worth one sentence.",
 			keys(PolicyChecks.warnings(draft.config(), Set.of(PARTNER)))
@@ -374,7 +501,9 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 				.contains(key("WARN_BACKGROUND_SCRIPT")));
 
 		PolicyDraft alsoWriting = draft();
-		alsoWriting.toggleBackgroundGroup(ToolGroups.DATA_WRITE);
+		List<String> withWrite = new ArrayList<>(alsoWriting.backgroundGroups());
+		withWrite.add(ToolGroups.DATA_WRITE);
+		alsoWriting.setBackgroundGroups(withWrite);
 		assertTrue("With both on the list, an unattended run can persist anything a script expresses.",
 			keys(PolicyChecks.warnings(alsoWriting.config(), Set.of()))
 				.contains(key("WARN_BACKGROUND_SCRIPT_AND_DATA_WRITE")));

@@ -5,18 +5,15 @@
  */
 package com.top_logic.tl.ai.core.security.layout;
 
-import static com.top_logic.layout.basic.fragments.Fragments.*;
+import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.function.Supplier;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -27,34 +24,41 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.basic.AbstractConstantControl;
 import com.top_logic.layout.basic.Command;
-import com.top_logic.layout.basic.FragmentControl;
+import com.top_logic.layout.basic.contextmenu.menu.Menu;
+import com.top_logic.layout.basic.fragments.Fragments;
+import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.DefaultButtonRenderer;
+import com.top_logic.layout.form.control.LabelControl;
+import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
+import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.ControlProvider;
-import com.top_logic.layout.structure.ControlRepresentable;
+import com.top_logic.layout.form.template.model.AbstractMember;
+import com.top_logic.layout.form.template.model.FieldSetBoxTemplate;
+import com.top_logic.layout.form.template.model.Templates;
+import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.form.ReactiveFormCSS;
+import com.top_logic.model.form.definition.Columns;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.AllToolNames;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BackgroundChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BaselineChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.RoleTemplate;
-import com.top_logic.tl.ai.core.security.layout.PolicyDraft.TriState;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -63,7 +67,7 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
 
 /*
- * Issue #297, proposals D1, E and F of doc-internal concept sec-config-ux.
+ * Proposals D1, E and F of doc-internal concept sec-config-ux, and the review of what they produced.
  *
  * The class comment below is exported to META-INF/messages_*.properties by the build's doclet and shown
  * as this component's tooltip in the layout editor, so it is written for an administrator and stays
@@ -74,19 +78,25 @@ import com.top_logic.util.Resources;
  * that editor renders the stored format, and the stored format is not the decision an administrator
  * makes. They decide "may this role change data" and get a list of permission boxes each holding two
  * mutually exclusive inputs; they decide "does everybody get read access by default" and get an optional
- * element whose absent, empty and filled states look the same. This component asks the three questions
- * that actually exist - per role and capability: refused, unmentioned, granted; for the baseline and the
- * background limit: which of three named states - and writes exactly the same XML.
+ * element whose absent, empty and filled states look the same.
  *
- * Every control edits PolicyDraft, which is a copy of the service configuration; nothing is written
- * until the apply command has run the checks that would otherwise refuse the next application start.
+ * How it is built, after the review: as an ordinary reactive form. The form context carries a template
+ * of collapsible fieldsets - Templates.fieldsetBox with a ConfigKey, which is the framework's own
+ * collapsible group and remembers per user whether it is open - every field is a plain BooleanField or
+ * SelectField in a descriptionBox, every explanation is the tooltip of the member it belongs to, and
+ * apply and discard are command handlers in the component toolbar. The first version rendered a control
+ * tree of its own, which worked but looked like nothing else in the administration.
  *
- * On rebuilding: a change of *structure* - a role added, an entry switched between naming a group and
- * naming tools - drops the form context, drops the rendering control and invalidates the component.
- * Dropping the rendering control is the part that is easy to miss: ContentControl asks
- * getRenderingControl() again on every repaint, so a cached control would render the members of the form
- * context that was just thrown away. A change of *value* - a tri-state, a picked group - repaints only
- * the blocks that depend on it, so the field the user is in is not rebuilt underneath them.
+ * Two things are still rendered by hand, and both are content rather than input: the messages at the top
+ * (banner, refusals, warnings), and the small notes next to a capability - "granted to everyone",
+ * "forbidden here" - which depend on other fields and therefore have to repaint when those change. Both
+ * are DynamicFragment controls embedded with Templates.htmlTemplate.
+ *
+ * On rebuilding: a change of *structure* - a role added, an entry added - drops the form context and
+ * invalidates the component, which is the engine's own pattern and works here because nothing caches a
+ * rendering control any more. A change of *value* never rebuilds: a choice that decides which fields
+ * apply toggles their visibility (FormMember.setVisible), which is what the framework does everywhere
+ * else and what keeps the field the user is standing in from being replaced underneath them.
  */
 
 /**
@@ -94,25 +104,86 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * Writes the policy of the tool access service. What is saved takes effect when that service is
- * restarted, which this view offers.
+ * restarted, and this view offers the restart.
  * </p>
  *
  * @see ToolCatalogModelBuilder
  * @see EffectiveToolAccessComponent
  */
-public class ToolAccessPolicyComponent extends FormComponent implements ControlRepresentable {
+public class ToolAccessPolicyComponent extends FormComponent {
+
+	/** Name of the group holding the role that is being added and its template. */
+	public static final String GROUP_NEW_ROLE = "newRole";
+
+	/** Name of the group holding what every account gets. */
+	public static final String GROUP_BASELINE = "baseline";
+
+	/** Name of the group holding what an unattended run may reach. */
+	public static final String GROUP_BACKGROUND = "background";
+
+	/** Name of the group holding which tools belong to which capability group. */
+	public static final String GROUP_ASSIGNMENTS = "assignments";
+
+	/** Name of the group holding the prohibitions of one role. */
+	public static final String GROUP_DENIES = "denies";
+
+	/** Name of the group holding the entries of one role that name single tools. */
+	public static final String GROUP_TOOL_ENTRIES = "toolEntries";
+
+	/** Name prefix of the group holding one configured role. */
+	public static final String GROUP_ROLE_PREFIX = "role_";
 
 	/** Name of the field choosing which role to add to the policy. */
-	public static final String FIELD_NEW_ROLE = "newRole";
+	public static final String FIELD_ROLE = "role";
 
 	/** Name of the field choosing what a newly added role starts with. */
 	public static final String FIELD_TEMPLATE = "template";
 
-	/** Name of the field choosing what every account gets. */
-	public static final String FIELD_BASELINE_GROUPS = "baselineGroups";
+	/** Name of the field choosing one of several named states. */
+	public static final String FIELD_CHOICE = "choice";
 
-	/** Name of the field choosing what an unattended run may reach. */
-	public static final String FIELD_BACKGROUND_GROUPS = "backgroundGroups";
+	/** Name of the field choosing capability groups. */
+	public static final String FIELD_GROUPS = "groups";
+
+	/** Name of the field choosing single tools. */
+	public static final String FIELD_TOOLS = "tools";
+
+	/** Name prefix of the checkbox granting one capability group. */
+	public static final String FIELD_GRANT_PREFIX = "grant_";
+
+	/** Name prefix of the checkbox forbidding one capability group. */
+	public static final String FIELD_DENY_PREFIX = "deny_";
+
+	/** Name of the command adding something to the list it sits in. */
+	public static final String FIELD_ADD = "add";
+
+	/** Name of the command removing the thing it sits in. */
+	public static final String FIELD_REMOVE = "remove";
+
+	/** Name of the command restarting the service, next to the banner that asks for it. */
+	public static final String FIELD_RESTART = "restart";
+
+	/**
+	 * How much room the label of a capability gets, so that the checkboxes line up.
+	 *
+	 * <p>
+	 * Wider than the framework's default, because a capability is named twice: what it is called and
+	 * the technical name a policy file writes.
+	 * </p>
+	 */
+	private static final String CAPABILITY_LABEL_WIDTH = "330px";
+
+	/**
+	 * What one entry of a permission list names.
+	 */
+	public enum EntryKind {
+
+		/** A whole capability group. */
+		GROUP,
+
+		/** Single tools, by their qualified name. */
+		TOOLS;
+	}
 
 	/**
 	 * Configuration options for {@link ToolAccessPolicyComponent}.
@@ -130,32 +201,29 @@ public class ToolAccessPolicyComponent extends FormComponent implements ControlR
 	/** Why the last apply was refused, empty when the last one succeeded or none has run. */
 	private List<ResKey> _refusals = List.of();
 
-	private Control _renderingControl;
-
-	/** The block listing what the draft does that may surprise; repainted on every value change. */
-	private DynamicFragment _warnings;
-
-	/** The line saying whether there is anything unsaved; repainted on every value change. */
-	private DynamicFragment _dirty;
-
-	/** The notes of the capability rows, by the name of the field they belong to. */
-	private final Map<String, DynamicFragment> _rowNotes = new TreeMap<>();
-
-	/** The one-line summaries of the entries naming single tools, by field name. */
-	private final Map<String, DynamicFragment> _entrySummaries = new TreeMap<>();
+	/** Every block of the view that is recomputed when a value changes. */
+	private final Map<String, DynamicFragment> _dynamic = new LinkedHashMap<>();
 
 	/**
-	 * The entries the "Erweitert" block of a role shows, by identity.
+	 * Whether a value listener is currently bringing dependent fields in line.
 	 *
 	 * <p>
-	 * An entry belongs there because somebody added it there - not because of what it currently names.
-	 * Without this, switching an entry from single tools to a whole capability group would make it
-	 * disappear from the block it is in: it would then be a group entry, and group entries are the
-	 * tri-state rows above. Vanishing on a click is the one thing a control offering a choice must not
-	 * do.
+	 * Setting the value of a field fires its own listener, and that listener would write the value
+	 * back into the draft. Choosing "nothing is stated" for the limit of unattended runs removes the
+	 * element, then clears the two pickers below it, and the clearing wrote an empty element back.
 	 * </p>
 	 */
-	private final Set<Grant> _addedEntries = Collections.newSetFromMap(new IdentityHashMap<>());
+	private boolean _syncing;
+
+	/**
+	 * The capability pickers of the group assignments, so that they can be kept apart.
+	 *
+	 * <p>
+	 * One capability group has one assignment, so a group another row already holds is not offered.
+	 * Moving one row therefore changes what the others may offer.
+	 * </p>
+	 */
+	private final List<SelectField> _assignmentGroups = new ArrayList<>();
 
 	/**
 	 * Creates a {@link ToolAccessPolicyComponent} from configuration.
@@ -174,26 +242,38 @@ public class ToolAccessPolicyComponent extends FormComponent implements ControlR
 
 	@Override
 	public FormContext createFormContext() {
-		_rowNotes.clear();
-		_entrySummaries.clear();
+		_dynamic.clear();
+		_assignmentGroups.clear();
 		FormContext context = new FormContext(this);
+		if (!AiToolAccessService.Module.INSTANCE.isActive()) {
+			return unreadable(context, I18NConstants.SERVICE_NOT_RUNNING);
+		}
 		if (_draft == null) {
 			_draft = PolicyDraft.ofSavedPolicy();
 		}
 		if (_draft == null) {
-			return context;
+			return unreadable(context, I18NConstants.POLICY_UNREADABLE);
 		}
-		addRoleFields(context);
-		addBaselineFields(context);
-		addBackgroundFields(context);
-		addApplyFields(context);
+
+		List<HTMLTemplateFragment> sections = new ArrayList<>();
+		sections.add(htmlTemplate(messages(context)));
+		addRoleGroups(context, sections);
+		addNewRoleGroup(context, sections);
+		addBaselineGroup(context, sections);
+		addBackgroundGroup(context, sections);
+		addAssignmentGroup(context, sections);
+		template(context, div(css("aiSecurityView"), fragment(sections)));
+
 		if (!mayWrite()) {
 			// Reading the policy is what the two other tabs are for; writing it is an administrator's
-			// job, and the buttons of a form are not command handlers, so nothing would have checked.
-			for (Iterator<? extends FormMember> members = context.getMembers(); members.hasNext();) {
-				members.next().setImmutable(true);
-			}
+			// job, and the fields of a form are not command handlers, so nothing would have checked.
+			context.setImmutable(true);
 		}
+		return context;
+	}
+
+	private static FormContext unreadable(FormContext context, ResKey message) {
+		template(context, div(css("aiSecurityView"), htmlTemplate(note(message))));
 		return context;
 	}
 
@@ -202,379 +282,638 @@ public class ToolAccessPolicyComponent extends FormComponent implements ControlR
 		return BoundChecker.allowCommand(this, SimpleBoundCommandGroup.WRITE, getModel());
 	}
 
-	@Override
-	protected void installFormContext(FormContext newFormContext) {
-		super.installFormContext(newFormContext);
-		// The rendering control wraps the fields of the form context that is being replaced.
-		_renderingControl = null;
-	}
-
-	@Override
-	public Control getRenderingControl() {
-		if (_renderingControl == null) {
-			_renderingControl = new FragmentControl(view());
-		}
-		return _renderingControl;
-	}
-
 	/**
 	 * Rebuilds the form and repaints the whole view.
 	 *
 	 * <p>
-	 * For every change that adds, removes or replaces a field. Dropping the rendering control is what
-	 * makes the repaint show the new fields rather than the old ones.
+	 * For every change that adds, removes or replaces a field. A change of a value never goes through
+	 * here: it would replace the field the user is standing in.
 	 * </p>
 	 */
 	private HandlerResult rebuild() {
 		removeFormContext();
-		_renderingControl = null;
 		invalidate();
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	/**
-	 * Repaints the blocks that depend on what the policy grants, without rebuilding a field.
-	 *
-	 * <p>
-	 * Called from the value listeners, which run while the user is inside the field that changed:
-	 * rebuilding the form there would replace that field underneath them.
-	 * </p>
-	 */
+	/** Brings dependent fields in line with the draft, without letting them write it again. */
+	private void syncing(Runnable update) {
+		boolean outer = _syncing;
+		_syncing = true;
+		try {
+			update.run();
+		} finally {
+			_syncing = outer;
+		}
+	}
+
+	/** Repaints the blocks that depend on what the policy says, without rebuilding a field. */
 	private void refreshNotes() {
-		if (_warnings != null) {
-			_warnings.requestRepaint();
-		}
-		if (_dirty != null) {
-			_dirty.requestRepaint();
-		}
-		for (DynamicFragment note : _rowNotes.values()) {
+		for (DynamicFragment note : _dynamic.values()) {
 			note.requestRepaint();
 		}
-		for (DynamicFragment summary : _entrySummaries.values()) {
-			summary.requestRepaint();
-		}
 	}
 
-	// ---------------------------------------------------------------- the fields
+	// ---------------------------------------------------------------- the roles
 
-	/** One tri-state per configured role and grantable capability, plus the structural commands. */
-	private void addRoleFields(FormContext context) {
+	/** One collapsible section per configured role. */
+	private void addRoleGroups(FormContext context, List<HTMLTemplateFragment> sections) {
 		List<String> roleNames = _draft.roleNames();
-		List<String> groups = _draft.grantableGroups();
+		if (roleNames.isEmpty()) {
+			sections.add(htmlTemplate(note(I18NConstants.POLICY_NO_ROLES)));
+		}
 		for (int r = 0; r < roleNames.size(); r++) {
 			String roleName = roleNames.get(r);
-			for (int g = 0; g < groups.size(); g++) {
-				context.addMember(triStateField(roleName, groups.get(g), triStateName(r, g)));
-			}
-			addEntryFields(context, roleName, r, false);
-			addEntryFields(context, roleName, r, true);
+			String prefix = GROUP_ROLE_PREFIX + r;
+			FormGroup role = new FormGroup(prefix, getResPrefix());
+			role.setLabel(roleName);
+			role.setTooltip(roleTooltip(roleName));
+			context.addMember(role);
 
-			String role = roleName;
-			context.addMember(button("addGrant_" + r, I18NConstants.COMMAND_ADD_GRANT_ENTRY, () -> {
-				_addedEntries.add(_draft.addToolEntry(role, false));
+			List<HTMLTemplateFragment> capabilities = new ArrayList<>();
+			addCapabilityFields(role, prefix, roleName, capabilities);
+			List<HTMLTemplateFragment> content = new ArrayList<>();
+			content.add(columns(capabilities));
+			addDenyGroup(role, prefix, roleName, content);
+			addToolEntryGroup(role, prefix, roleName, content);
+
+			CommandField remove = button(role, FIELD_REMOVE, I18NConstants.COMMAND_REMOVE_ROLE, () -> {
+				_draft.removeRole(roleName);
 				return rebuild();
-			}));
-			context.addMember(button("addDeny_" + r, I18NConstants.COMMAND_ADD_DENY_ENTRY, () -> {
-				_addedEntries.add(_draft.addToolEntry(role, true));
-				return rebuild();
-			}));
-			context.addMember(button("removeRole_" + r, I18NConstants.COMMAND_REMOVE_ROLE, () -> {
-				_draft.removeRole(role);
-				return rebuild();
-			}));
+			});
+			sections.add(section(role, content, "role." + roleName, r > 0,
+				() -> roleSummary(roleName)).setMenu(Menu.create(remove)));
 		}
-		context.addMember(newRoleField());
-		context.addMember(templateField());
-		context.addMember(button("addRole", I18NConstants.COMMAND_ADD_ROLE, this::addChosenRole));
 	}
 
-	private SelectField triStateField(String roleName, String group, String fieldName) {
-		SelectField field = FormFactory.newSelectField(fieldName,
-			List.of(TriState.DENIED, TriState.UNSET, TriState.GRANTED), false, true, false, null);
-		field.setAsSingleSelection(_draft.triState(roleName, group));
-		field.setOptionLabelProvider(TRI_STATE_LABELS);
-		field.setLabel(ToolAccessLabels.groupLabel(group));
-		field.addValueListener((changed, oldValue, newValue) -> {
-			_draft.setTriState(roleName, group, single(newValue, TriState.UNSET));
-			refreshNotes();
-		});
-		return field;
+	/** What a collapsed role section says: how much it grants, forbids and lists. */
+	private String roleSummary(String roleName) {
+		int granted = 0;
+		for (String group : _draft.grantableGroups()) {
+			if (_draft.isGranted(roleName, group)) {
+				granted++;
+			}
+		}
+		int entries = _draft.toolEntries(roleName, false).size()
+			+ _draft.toolEntries(roleName, true).size();
+		return resources().getString(I18NConstants.ROLE_SUMMARY__GRANTED_DENIED_ENTRIES.fill(
+			Integer.valueOf(granted), Integer.valueOf(_draft.deniedGroups(roleName).size()),
+			Integer.valueOf(entries)));
+	}
+
+	/** One checkbox per capability group, plus the two that are granted whatever the policy says. */
+	private void addCapabilityFields(FormGroup role, String prefix, String roleName,
+			List<HTMLTemplateFragment> content) {
+		for (String group : PolicyDraft.implicitGroups()) {
+			BooleanField field = FormFactory.newBooleanField("implicit_" + technical(group));
+			field.initializeField(Boolean.TRUE);
+			field.setLabel(ToolAccessLabels.groupLabel(group));
+			field.setTooltip(implicitTooltip(group));
+			field.setImmutable(true);
+			field.set(AbstractMember.FIRST_COLUMN_WIDTH, CAPABILITY_LABEL_WIDTH);
+			role.addMember(field);
+			content.add(capabilityRow(path(prefix, field.getName()), group, null, null));
+		}
+
+		for (String group : _draft.grantableGroups()) {
+			BooleanField field = FormFactory.newBooleanField(FIELD_GRANT_PREFIX + technical(group));
+			field.initializeField(Boolean.valueOf(_draft.isGranted(roleName, group)));
+			field.setLabel(ToolAccessLabels.groupLabel(group));
+			field.setTooltip(capabilityTooltip(group));
+			field.addValueListener((changed, oldValue, newValue) -> {
+				if (_syncing) {
+					return;
+				}
+				_draft.setGranted(roleName, group, Boolean.TRUE.equals(newValue));
+				syncing(() -> setCheckbox(role, path(GROUP_DENIES, FIELD_DENY_PREFIX + technical(group)),
+					_draft.isDenied(roleName, group)));
+				refreshNotes();
+			});
+			field.set(AbstractMember.FIRST_COLUMN_WIDTH, CAPABILITY_LABEL_WIDTH);
+			role.addMember(field);
+			content.add(capabilityRow(path(prefix, field.getName()), group, roleName, prefix));
+		}
 	}
 
 	/**
-	 * The entries of one role shown in its "Erweitert" block: the either-or of proposal D1.
+	 * One capability: the label with its risk marker, the checkbox, and what else is true about it.
+	 *
+	 * @param roleName
+	 *        The role the row belongs to, or <code>null</code> for a capability nobody decides about.
 	 */
-	private void addEntryFields(FormContext context, String roleName, int roleIndex, boolean denies) {
-		List<Grant> entries = entriesOf(roleName, denies);
-		for (int n = 0; n < entries.size(); n++) {
-			Grant entry = entries.get(n);
-			String prefix = entryName(roleIndex, denies, n);
+	private HTMLTemplateFragment capabilityRow(String fieldPath, String group, String roleName,
+			String prefix) {
+		String risk = ToolAccessLabels.risk(group);
+		HTMLTemplateFragment marker = risk.isEmpty() ? empty()
+			: htmlTemplate(Fragments.span("aiSecurityRisk", Fragments.text(risk)));
+		HTMLTemplateFragment note = roleName == null ? empty()
+			: htmlTemplate(dynamic(prefix + "." + group, () -> capabilityNote(roleName, group)));
+		return member(fieldPath,
+			descriptionBox(fragment(Templates.label(), marker), fragment(Templates.self(), note)));
+	}
 
-			context.addMember(button(prefix + "_kindGroup", I18NConstants.ENTRY_KIND_GROUP, () -> {
-				PolicyDraft.setNamesGroup(entry, true);
-				return rebuild();
-			}));
-			context.addMember(button(prefix + "_kindTools", I18NConstants.ENTRY_KIND_TOOLS, () -> {
-				PolicyDraft.setNamesGroup(entry, false);
-				return rebuild();
-			}));
-			context.addMember(button(prefix + "_remove", I18NConstants.COMMAND_REMOVE_ENTRY, () -> {
-				_draft.removeEntry(roleName, denies, entry);
-				_addedEntries.remove(entry);
-				return rebuild();
-			}));
+	/**
+	 * What is true about one capability of one role beyond the checkbox itself.
+	 *
+	 * <p>
+	 * Both cases are about a second setting, which is why neither can be a tooltip: the basic
+	 * permissions may grant the capability to everyone, and this role may forbid it.
+	 * </p>
+	 */
+	private HTMLFragment capabilityNote(String roleName, String group) {
+		List<HTMLFragment> notes = new ArrayList<>();
+		if (_draft.isDenied(roleName, group)) {
+			notes.add(Fragments.span("aiSecurityWarning", Fragments.message(I18NConstants.ROW_DENIED)));
+		}
+		if (_draft.baselineCovers(group)) {
+			notes.add(Fragments.span("aiSecurityBaselineState",
+				Fragments.message(I18NConstants.ROW_BASELINE_GRANTED)));
+		}
+		if (_draft.isGranted(roleName, group) && ToolGroups.DATA_WRITE.equals(group)) {
+			notes.add(Fragments.span("aiSecurityBaselineState",
+				Fragments.message(I18NConstants.NOTE_DATA_WRITE_APPROVAL)));
+		}
+		return notes.isEmpty() ? Fragments.empty() : Fragments.concat(fragments(notes));
+	}
 
-			if (PolicyDraft.namesWholeGroup(entry)) {
-				context.addMember(entryGroupField(prefix + "_group", entry));
-			} else {
-				context.addMember(entryToolsField(prefix + "_tools", entry));
-			}
+	/** The prohibitions of one role: a section of its own, because they are rarely needed. */
+	private void addDenyGroup(FormGroup role, String prefix, String roleName,
+			List<HTMLTemplateFragment> content) {
+		FormGroup denies = new FormGroup(GROUP_DENIES, getResPrefix());
+		denies.setLabel(resources().getString(I18NConstants.SECTION_DENIES));
+		denies.setTooltip(resources().getString(I18NConstants.SECTION_DENIES.tooltip()));
+		role.addMember(denies);
+
+		String path = path(prefix, GROUP_DENIES);
+		List<HTMLTemplateFragment> checkboxes = new ArrayList<>();
+		for (String group : _draft.grantableGroups()) {
+			BooleanField field = FormFactory.newBooleanField(FIELD_DENY_PREFIX + technical(group));
+			field.initializeField(Boolean.valueOf(_draft.isDenied(roleName, group)));
+			field.setLabel(ToolAccessLabels.groupLabel(group));
+			field.setTooltip(capabilityTooltip(group));
+			field.addValueListener((changed, oldValue, newValue) -> {
+				if (_syncing) {
+					return;
+				}
+				_draft.setDenied(roleName, group, Boolean.TRUE.equals(newValue));
+				syncing(() -> setCheckbox(role, FIELD_GRANT_PREFIX + technical(group),
+					_draft.isGranted(roleName, group)));
+				refreshNotes();
+			});
+			field.set(AbstractMember.FIRST_COLUMN_WIDTH, CAPABILITY_LABEL_WIDTH);
+			denies.addMember(field);
+			// The same row as a permission, so that the two lists read as the same question twice.
+			checkboxes.add(capabilityRow(path(path, field.getName()), group, null, null));
+		}
+		List<HTMLTemplateFragment> rows =
+			List.of(contentBox(htmlTemplate(note(I18NConstants.SECTION_DENIES_NOTE))),
+				columns(checkboxes));
+		content.add(contentBox(section(denies, rows, "denies." + roleName, true,
+			() -> countSummary(_draft.deniedGroups(roleName).size()))));
+	}
+
+	/**
+	 * Brings the opposite checkbox in line with what the draft now says.
+	 *
+	 * <p>
+	 * Granting a capability removes a prohibition of it and the other way round, because the two
+	 * together mean the prohibition. The listener of the corrected field then asks the draft for the
+	 * same change once more, which is a no-op.
+	 * </p>
+	 */
+	private static void setCheckbox(FormGroup role, String name, boolean value) {
+		FormMember member = FormGroup.getMemberByRelativeName(role, name);
+		if (member instanceof BooleanField field && !Boolean.valueOf(value).equals(field.getValue())) {
+			field.setValue(Boolean.valueOf(value));
 		}
 	}
 
-	private SelectField entryGroupField(String fieldName, Grant entry) {
-		SelectField field = groupField(fieldName, false, I18NConstants.FIELD_ENTRY_GROUP);
-		field.setAsSingleSelection(entry.getGroup());
-		field.addValueListener((changed, oldValue, newValue) -> {
+	/** The entries of one role that name single tools rather than a whole capability. */
+	private void addToolEntryGroup(FormGroup role, String prefix, String roleName,
+			List<HTMLTemplateFragment> content) {
+		FormGroup entries = new FormGroup(GROUP_TOOL_ENTRIES, getResPrefix());
+		entries.setLabel(resources().getString(I18NConstants.SECTION_TOOL_ENTRIES));
+		entries.setTooltip(resources().getString(I18NConstants.SECTION_TOOL_ENTRIES.tooltip()));
+		role.addMember(entries);
+
+		String path = path(prefix, GROUP_TOOL_ENTRIES);
+		List<HTMLTemplateFragment> rows = new ArrayList<>();
+		int index = 0;
+		int count = 0;
+		for (boolean denies : List.of(Boolean.FALSE, Boolean.TRUE)) {
+			for (Grant entry : _draft.toolEntries(roleName, denies)) {
+				rows.add(entryRow(entries, path, roleName, denies, entry, index++));
+				count++;
+			}
+		}
+		button(entries, "addGrant", I18NConstants.COMMAND_ADD_GRANT_ENTRY, () -> {
+			_draft.addToolEntry(roleName, false);
+			return rebuild();
+		});
+		button(entries, "addDeny", I18NConstants.COMMAND_ADD_DENY_ENTRY, () -> {
+			_draft.addToolEntry(roleName, true);
+			return rebuild();
+		});
+		rows.add(contentBox(fragment(
+			member(path(path, "addGrant")),
+			member(path(path, "addDeny")))));
+
+		int total = count;
+		content.add(contentBox(section(entries, rows, "toolEntries." + roleName, true,
+			() -> countSummary(total))));
+	}
+
+	/**
+	 * One entry, rendered as the choice it is.
+	 *
+	 * <p>
+	 * An entry names a whole capability or single tools, never both, so the picker that does not apply
+	 * is hidden rather than shown empty.
+	 * </p>
+	 */
+	private HTMLTemplateFragment entryRow(FormGroup entries, String entriesPath, String roleName,
+			boolean denies, Grant entry, int index) {
+		FormGroup block = new FormGroup("entry_" + index, getResPrefix());
+		block.setLabel(resources().getString(
+			denies ? I18NConstants.ENTRY_DENY : I18NConstants.ENTRY_GRANT));
+		entries.addMember(block);
+
+		SelectField kind = FormFactory.newSelectField(FIELD_CHOICE,
+			List.of(EntryKind.values()), false, false, false, null);
+		kind.setAsSingleSelection(
+			PolicyDraft.namesWholeGroup(entry) ? EntryKind.GROUP : EntryKind.TOOLS);
+		kind.setOptionLabelProvider(ENTRY_KIND_LABELS);
+		kind.setLabel(resources().getString(I18NConstants.FIELD_ENTRY_KIND));
+		kind.setTooltip(resources().getString(I18NConstants.FIELD_ENTRY_KIND.tooltip()));
+		block.addMember(kind);
+
+		SelectField group = groupField(FIELD_GROUPS, false, I18NConstants.FIELD_ENTRY_GROUP);
+		group.setAsSingleSelection(entry.getGroup());
+		group.addValueListener((changed, oldValue, newValue) -> {
+			if (_syncing) {
+				return;
+			}
 			entry.setGroup(single(newValue, ToolGroups.MODEL_READ));
 			refreshNotes();
 		});
-		return field;
-	}
+		block.addMember(group);
 
-	private SelectField entryToolsField(String fieldName, Grant entry) {
-		SelectField field = FormFactory.newSelectField(fieldName, allToolNames(), true, false, false, null);
-		field.setAsSelection(entry.getTools());
-		field.setLabel(resources().getString(I18NConstants.FIELD_ENTRY_TOOLS));
-		field.addValueListener((changed, oldValue, newValue) -> {
+		SelectField tools = toolField(FIELD_TOOLS, I18NConstants.FIELD_ENTRY_TOOLS);
+		tools.setAsSelection(entry.getTools());
+		tools.addValueListener((changed, oldValue, newValue) -> {
+			if (_syncing) {
+				return;
+			}
 			entry.setTools(new ArrayList<>(strings(newValue)));
 			refreshNotes();
 		});
-		return field;
-	}
+		block.addMember(tools);
 
-	/** The three baseline states, and the capabilities of the one that has a list. */
-	private void addBaselineFields(FormContext context) {
-		for (BaselineChoice choice : BaselineChoice.values()) {
-			context.addMember(button("baseline_" + choice.name(),
-				ToolAccessLabels.baselineChoice(choice), () -> {
-					_draft.setBaselineChoice(choice);
-					return rebuild();
-				}));
-		}
-		if (_draft.baselineChoice() == BaselineChoice.CUSTOM) {
-			SelectField field =
-				groupField(FIELD_BASELINE_GROUPS, true, I18NConstants.POLICY_BASELINE_HEADING);
-			field.setAsSelection(new ArrayList<>(_draft.baselineGroups()));
-			field.addValueListener((changed, oldValue, newValue) -> {
-				setGroups(strings(newValue), _draft.baselineGroups(), _draft::toggleBaselineGroup);
-				refreshNotes();
+		kind.addValueListener((changed, oldValue, newValue) -> {
+			boolean wholeGroup = single(newValue, EntryKind.TOOLS) == EntryKind.GROUP;
+			PolicyDraft.setNamesGroup(entry, wholeGroup);
+			syncing(() -> {
+				group.setAsSingleSelection(entry.getGroup());
+				tools.setAsSelection(entry.getTools());
 			});
-			context.addMember(field);
-		}
+			group.setVisible(wholeGroup);
+			tools.setVisible(!wholeGroup);
+			refreshNotes();
+		});
+		boolean wholeGroup = PolicyDraft.namesWholeGroup(entry);
+		group.setVisible(wholeGroup);
+		tools.setVisible(!wholeGroup);
+
+		button(block, FIELD_REMOVE, I18NConstants.COMMAND_REMOVE_ENTRY, () -> {
+			_draft.removeEntry(roleName, denies, entry);
+			return rebuild();
+		});
+
+		String prefix = path(entriesPath, block.getName());
+		return div(css("aiSecurityRow"), contentBox(fragment(
+			htmlTemplate(Fragments.span("aiSecurityEntryKind", Fragments.text(block.getLabel()))),
+			htmlTemplate(dynamic("entry." + prefix, () -> entryNote(entry))),
+			fieldBox(path(prefix, FIELD_CHOICE)),
+			fieldBox(path(prefix, FIELD_GROUPS)),
+			fieldBox(path(prefix, FIELD_TOOLS)),
+			member(path(prefix, FIELD_REMOVE)))));
 	}
 
-	/** The three states of the background limit, and the capabilities of the one that has a list. */
-	private void addBackgroundFields(FormContext context) {
-		for (BackgroundChoice choice : BackgroundChoice.values()) {
-			context.addMember(button("background_" + choice.name(),
-				ToolAccessLabels.backgroundChoice(choice), () -> {
-					_draft.setBackgroundChoice(choice);
-					return rebuild();
-				}));
+	/** An entry that names nothing yet would be refused, and says so where it is authored. */
+	private static HTMLFragment entryNote(Grant entry) {
+		if (PolicyDraft.namesWholeGroup(entry) || !entry.getTools().isEmpty()) {
+			return Fragments.empty();
 		}
-		if (_draft.backgroundChoice() == BackgroundChoice.CUSTOM) {
-			SelectField field =
-				groupField(FIELD_BACKGROUND_GROUPS, true, I18NConstants.POLICY_BACKGROUND_HEADING);
-			field.setAsSelection(new ArrayList<>(_draft.backgroundGroups()));
-			field.addValueListener((changed, oldValue, newValue) -> {
-				setGroups(strings(newValue), _draft.backgroundGroups(), _draft::toggleBackgroundGroup);
-				refreshNotes();
-			});
-			context.addMember(field);
-		}
+		return Fragments.span("aiSecurityWarning",
+			Fragments.message(I18NConstants.ENTRY_NO_TOOL_CHOSEN));
 	}
 
-	private void addApplyFields(FormContext context) {
-		context.addMember(button("apply", I18NConstants.COMMAND_APPLY, this::apply));
-		context.addMember(button("discard", I18NConstants.COMMAND_DISCARD, this::discard));
-		context.addMember(button("restart", I18NConstants.COMMAND_RESTART, this::restart));
-	}
+	// -------------------------------------------------------------- add a role
 
-	private SelectField newRoleField() {
-		List<String> options = offeredRoles();
-		SelectField field = FormFactory.newSelectField(FIELD_NEW_ROLE, options, false, false, false, null);
-		field.setOptionLabelProvider(ROLE_LABELS);
-		// The list is ordered by kind, and a selection field sorts by label unless told otherwise -
+	private void addNewRoleGroup(FormContext context, List<HTMLTemplateFragment> sections) {
+		FormGroup group = new FormGroup(GROUP_NEW_ROLE, getResPrefix());
+		group.setLabel(resources().getString(I18NConstants.SECTION_ADD_ROLE));
+		group.setTooltip(resources().getString(I18NConstants.SECTION_ADD_ROLE.tooltip()));
+		context.addMember(group);
+
+		SelectField role =
+			FormFactory.newSelectField(FIELD_ROLE, offeredRoles(), false, false, false, null);
+		role.setOptionLabelProvider(ROLE_LABELS);
+		// The list is ordered by kind, and a selection field sorts by label unless told otherwise,
 		// which would put the framework's own roles between the application's.
-		field.setOptionComparator(BY_ROLE_KIND);
-		field.setLabel(resources().getString(I18NConstants.FIELD_NEW_ROLE));
+		role.setOptionComparator(BY_ROLE_KIND);
+		role.setLabel(resources().getString(I18NConstants.FIELD_NEW_ROLE));
+		role.setTooltip(resources().getString(I18NConstants.FIELD_NEW_ROLE.tooltip()));
 		// Deliberately nothing preselected: with the application's own roles already configured, the
 		// first option is a role of the framework, and a preselected one of those is a suggestion.
-		field.addValueListener((changed, oldValue, newValue) -> refreshNotes());
-		return field;
-	}
+		role.addValueListener((changed, oldValue, newValue) -> refreshNotes());
+		group.addMember(role);
 
-	private SelectField templateField() {
-		SelectField field = FormFactory.newSelectField(FIELD_TEMPLATE,
+		SelectField template = FormFactory.newSelectField(FIELD_TEMPLATE,
 			List.of(RoleTemplate.values()), false, false, false, null);
-		field.setAsSingleSelection(RoleTemplate.READ_ONLY);
-		field.setOptionLabelProvider(TEMPLATE_LABELS);
-		field.setLabel(resources().getString(I18NConstants.FIELD_TEMPLATE));
-		return field;
-	}
+		template.setAsSingleSelection(RoleTemplate.READ_ONLY);
+		template.setOptionLabelProvider(TEMPLATE_LABELS);
+		template.setLabel(resources().getString(I18NConstants.FIELD_TEMPLATE));
+		template.setTooltip(resources().getString(I18NConstants.FIELD_TEMPLATE.tooltip()));
+		group.addMember(template);
 
-	private SelectField groupField(String fieldName, boolean multiple, ResKey label) {
-		SelectField field = FormFactory.newSelectField(fieldName, _draft.grantableGroups(), multiple,
-			false, false, null);
-		field.setOptionLabelProvider(GROUP_LABELS);
-		field.setLabel(resources().getString(label));
-		return field;
-	}
-
-	/**
-	 * The roles the picker offers: the ones the application has and the ones the policy already names,
-	 * minus the ones that are already configured.
-	 */
-	private List<String> offeredRoles() {
-		List<String> configured = _draft.roleNames();
-		List<String> result = new ArrayList<>();
-		for (String roleName : existingRoleNames()) {
-			if (!configured.contains(roleName)) {
-				result.add(roleName);
+		button(group, FIELD_ADD, I18NConstants.COMMAND_ADD_ROLE, () -> {
+			String roleName = single(role.getValue(), null);
+			if (roleName != null) {
+				_draft.addRole(roleName, single(template.getValue(), RoleTemplate.NONE));
 			}
-		}
-		// Application roles first, then the framework's own, then the ones a grant does nothing for -
-		// P8: the picker used to offer all three in one alphabetical list with nothing telling them apart.
-		result.sort((left, right) -> {
-			int byKind = SecurityRoleKind.of(left).ordinal() - SecurityRoleKind.of(right).ordinal();
-			return byKind != 0 ? byKind : left.compareToIgnoreCase(right);
-		});
-		return result;
-	}
-
-	private static List<String> existingRoleNames() {
-		List<String> result = new ArrayList<>();
-		if (PersistencyLayer.Module.INSTANCE.isActive()) {
-			for (BoundedRole role : BoundedRole.getAll()) {
-				if (role.getName() != null && !role.getName().isBlank()) {
-					result.add(role.getName());
-				}
-			}
-		}
-		return result;
-	}
-
-	private HandlerResult addChosenRole() {
-		FormContext context = getFormContext();
-		String roleName = single(((SelectField) context.getMember(FIELD_NEW_ROLE)).getValue(), null);
-		RoleTemplate template =
-			single(((SelectField) context.getMember(FIELD_TEMPLATE)).getValue(), RoleTemplate.NONE);
-		if (roleName != null) {
-			_draft.addRole(roleName, template);
-		}
-		return rebuild();
-	}
-
-	// ---------------------------------------------------------------- apply, discard, restart
-
-	/**
-	 * The entries of one role that the "Erweitert" block shows.
-	 *
-	 * <p>
-	 * Every entry that names single tools, plus the ones added here that currently name a capability
-	 * group. A group entry of a hand-written policy is <em>not</em> in it: it is the tri-state row above,
-	 * and showing it twice would let one decision be edited in two places.
-	 * </p>
-	 *
-	 * @param roleName
-	 *        The role to read.
-	 * @param denies
-	 *        Whether to read the refusals rather than the permissions.
-	 */
-	private List<Grant> entriesOf(String roleName, boolean denies) {
-		RoleAccess role = _draft.role(roleName);
-		if (role == null) {
-			return List.of();
-		}
-		List<Grant> result = new ArrayList<>();
-		for (Grant entry : denies ? role.getDenies() : role.getGrants()) {
-			if (!PolicyDraft.namesWholeGroup(entry) || _addedEntries.contains(entry)) {
-				result.add(entry);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Checks the draft and, if nothing would stop the next start, writes it.
-	 *
-	 * <p>
-	 * Proposal E. The refusal is the whole point: the raw editor accepts a policy that makes the next
-	 * application start fail, hours later and for somebody else.
-	 * </p>
-	 */
-	private HandlerResult apply() {
-		_refusals = PolicyChecks.refusals(_draft.config(), ToolAccessPolicyComponent::roleExists);
-		if (!_refusals.isEmpty()) {
 			return rebuild();
+		});
+
+		sections.add(section(group, List.of(
+			fieldBox(path(GROUP_NEW_ROLE, FIELD_ROLE)),
+			contentBox(htmlTemplate(dynamic("roleNote", () -> roleNote(role)))),
+			fieldBox(path(GROUP_NEW_ROLE, FIELD_TEMPLATE)),
+			contentBox(member(path(GROUP_NEW_ROLE, FIELD_ADD)))),
+			"addRole", false, () -> ""));
+	}
+
+	/** What is known about the role the picker currently shows. */
+	private HTMLFragment roleNote(SelectField picker) {
+		String roleName = single(picker.getValue(), null);
+		if (roleName == null) {
+			return Fragments.empty();
 		}
-		PolicyStore.save(_draft.config());
-		_draft = PolicyDraft.ofSavedPolicy();
-		_addedEntries.clear();
-		InfoService.showInfo(I18NConstants.APPLY_SAVED);
+		List<HTMLFragment> notes = new ArrayList<>();
+		if (SecurityRoleKind.EVERY_ACCOUNT.equals(roleName)) {
+			notes.add(Fragments.message(I18NConstants.ROLE_NOTE_EVERY_ACCOUNT));
+		} else if (SecurityRoleKind.ADMINISTRATOR.equals(roleName)) {
+			notes.add(Fragments.message(I18NConstants.ROLE_NOTE_ADMINISTRATOR));
+		} else if (SecurityRoleKind.of(roleName) == SecurityRoleKind.INTERNAL) {
+			notes.add(Fragments.message(I18NConstants.ROLE_NOTE_INTERNAL));
+		}
+		String description = roleDescription(roleName);
+		if (description != null) {
+			notes.add(Fragments.text(description));
+		}
+		if (notes.isEmpty()) {
+			return Fragments.empty();
+		}
+		return Fragments.span("aiSecurityNote", Fragments.concat(fragments(notes)));
+	}
+
+	// ------------------------------------------------------- basic permissions
+
+	private void addBaselineGroup(FormContext context, List<HTMLTemplateFragment> sections) {
+		FormGroup group = new FormGroup(GROUP_BASELINE, getResPrefix());
+		group.setLabel(resources().getString(I18NConstants.POLICY_BASELINE_HEADING));
+		group.setTooltip(resources().getString(I18NConstants.POLICY_BASELINE_HEADING.tooltip()));
+		context.addMember(group);
+
+		SelectField groups = groupField(FIELD_GROUPS, true, I18NConstants.FIELD_BASELINE_GROUPS);
+		groups.setAsSelection(new ArrayList<>(_draft.baselineGroups()));
+		groups.addValueListener((changed, oldValue, newValue) -> {
+			if (_syncing) {
+				return;
+			}
+			_draft.setBaselineGroups(strings(newValue));
+			refreshNotes();
+		});
+
+		SelectField tools = toolField(FIELD_TOOLS, I18NConstants.FIELD_BASELINE_TOOLS);
+		tools.setAsSelection(new ArrayList<>(_draft.baselineTools()));
+		tools.addValueListener((changed, oldValue, newValue) -> {
+			if (_syncing) {
+				return;
+			}
+			_draft.setBaselineTools(strings(newValue));
+			refreshNotes();
+		});
+
+		SelectField choice = FormFactory.newSelectField(FIELD_CHOICE,
+			List.of(BaselineChoice.values()), false, false, false, null);
+		choice.setAsSingleSelection(_draft.baselineChoice());
+		choice.setOptionLabelProvider(BASELINE_LABELS);
+		choice.setLabel(resources().getString(I18NConstants.FIELD_BASELINE_CHOICE));
+		choice.setTooltip(resources().getString(I18NConstants.FIELD_BASELINE_CHOICE.tooltip()));
+		choice.addValueListener((changed, oldValue, newValue) -> {
+			BaselineChoice state = single(newValue, BaselineChoice.DEFAULT);
+			_draft.setBaselineChoice(state);
+			syncing(() -> {
+				groups.setAsSelection(new ArrayList<>(_draft.baselineGroups()));
+				tools.setAsSelection(new ArrayList<>(_draft.baselineTools()));
+			});
+			showCustomList(groups, tools, state == BaselineChoice.CUSTOM);
+			refreshNotes();
+		});
+		showCustomList(groups, tools, _draft.baselineChoice() == BaselineChoice.CUSTOM);
+
+		group.addMember(choice);
+		group.addMember(groups);
+		group.addMember(tools);
+
+		sections.add(section(group, List.of(
+			fieldBox(path(GROUP_BASELINE, FIELD_CHOICE)),
+			fieldBox(path(GROUP_BASELINE, FIELD_GROUPS)),
+			fieldBox(path(GROUP_BASELINE, FIELD_TOOLS))),
+			"baseline", false,
+			() -> resources().getString(ToolAccessLabels.baselineChoice(_draft.baselineChoice()))));
+	}
+
+	// -------------------------------------------------------- unattended runs
+
+	private void addBackgroundGroup(FormContext context, List<HTMLTemplateFragment> sections) {
+		FormGroup group = new FormGroup(GROUP_BACKGROUND, getResPrefix());
+		group.setLabel(resources().getString(I18NConstants.POLICY_BACKGROUND_HEADING));
+		group.setTooltip(resources().getString(I18NConstants.POLICY_BACKGROUND_HEADING.tooltip()));
+		context.addMember(group);
+
+		SelectField groups = groupField(FIELD_GROUPS, true, I18NConstants.FIELD_BACKGROUND_GROUPS);
+		groups.setAsSelection(new ArrayList<>(_draft.backgroundGroups()));
+		groups.addValueListener((changed, oldValue, newValue) -> {
+			if (_syncing) {
+				return;
+			}
+			_draft.setBackgroundGroups(strings(newValue));
+			refreshNotes();
+		});
+
+		SelectField tools = toolField(FIELD_TOOLS, I18NConstants.FIELD_BACKGROUND_TOOLS);
+		tools.setAsSelection(new ArrayList<>(_draft.backgroundTools()));
+		tools.addValueListener((changed, oldValue, newValue) -> {
+			if (_syncing) {
+				return;
+			}
+			_draft.setBackgroundTools(strings(newValue));
+			refreshNotes();
+		});
+
+		SelectField choice = FormFactory.newSelectField(FIELD_CHOICE,
+			List.of(BackgroundChoice.values()), false, false, false, null);
+		choice.setAsSingleSelection(_draft.backgroundChoice());
+		choice.setOptionLabelProvider(BACKGROUND_LABELS);
+		choice.setLabel(resources().getString(I18NConstants.FIELD_BACKGROUND_CHOICE));
+		choice.setTooltip(resources().getString(I18NConstants.FIELD_BACKGROUND_CHOICE.tooltip()));
+		choice.addValueListener((changed, oldValue, newValue) -> {
+			BackgroundChoice state = single(newValue, BackgroundChoice.UNDECLARED);
+			_draft.setBackgroundChoice(state);
+			syncing(() -> {
+				groups.setAsSelection(new ArrayList<>(_draft.backgroundGroups()));
+				tools.setAsSelection(new ArrayList<>(_draft.backgroundTools()));
+			});
+			showCustomList(groups, tools, state == BackgroundChoice.CUSTOM);
+			refreshNotes();
+		});
+		showCustomList(groups, tools, _draft.backgroundChoice() == BackgroundChoice.CUSTOM);
+
+		group.addMember(choice);
+		group.addMember(groups);
+		group.addMember(tools);
+
+		sections.add(section(group, List.of(
+			contentBox(htmlTemplate(note(I18NConstants.POLICY_BACKGROUND_NOTE))),
+			fieldBox(path(GROUP_BACKGROUND, FIELD_CHOICE)),
+			fieldBox(path(GROUP_BACKGROUND, FIELD_GROUPS)),
+			fieldBox(path(GROUP_BACKGROUND, FIELD_TOOLS))),
+			"background", false,
+			() -> resources()
+				.getString(ToolAccessLabels.backgroundChoice(_draft.backgroundChoice()))));
+	}
+
+	/** The two pickers of an own list are there exactly when an own list is what was chosen. */
+	private static void showCustomList(SelectField groups, SelectField tools, boolean custom) {
+		groups.setVisible(custom);
+		tools.setVisible(custom);
+	}
+
+	// ------------------------------------------------------- group assignments
+
+	/**
+	 * Which tools the policy puts into which capability group.
+	 *
+	 * <p>
+	 * A section of its own, because a group assignment says what a tool <em>is</em> rather than what a
+	 * role may do. This is the only place the policy states it, so it is edited here and nowhere else.
+	 * </p>
+	 */
+	private void addAssignmentGroup(FormContext context, List<HTMLTemplateFragment> sections) {
+		FormGroup group = new FormGroup(GROUP_ASSIGNMENTS, getResPrefix());
+		group.setLabel(resources().getString(I18NConstants.POLICY_TOOL_GROUPS_HEADING));
+		group.setTooltip(resources().getString(I18NConstants.POLICY_TOOL_GROUPS_HEADING.tooltip()));
+		context.addMember(group);
+
+		List<HTMLTemplateFragment> rows = new ArrayList<>();
+		rows.add(contentBox(htmlTemplate(note(I18NConstants.POLICY_TOOL_GROUPS_NOTE))));
+		List<String> assigned = _draft.assignedGroups();
+		if (assigned.isEmpty()) {
+			rows.add(contentBox(htmlTemplate(note(I18NConstants.POLICY_TOOL_GROUPS_NONE))));
+		}
+		for (int a = 0; a < assigned.size(); a++) {
+			rows.add(assignmentRow(group, assigned.get(a), a));
+		}
+		button(group, FIELD_ADD, I18NConstants.COMMAND_ADD_ASSIGNMENT, this::addAssignment);
+		rows.add(contentBox(member(path(GROUP_ASSIGNMENTS, FIELD_ADD))));
+
+		int count = assigned.size();
+		sections.add(section(group, rows, "assignments", false, () -> countSummary(count)));
+	}
+
+	/**
+	 * Starts an assignment for a capability group that has none yet.
+	 *
+	 * <p>
+	 * With the first tool of the application already in it: an entry naming no tool assigns nothing and
+	 * is refused as a policy that says nothing, so an empty row could not be applied.
+	 * </p>
+	 */
+	private HandlerResult addAssignment() {
+		String group = _draft.unassignedGroup();
+		String tool = firstToolName();
+		if (group == null || tool == null) {
+			InfoService.showInfo(I18NConstants.ASSIGNMENT_NOTHING_TO_ADD);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		_draft.setAssignedTools(group, List.of(tool));
 		return rebuild();
 	}
 
-	private HandlerResult discard() {
-		_refusals = List.of();
-		_draft = PolicyDraft.ofSavedPolicy();
-		_addedEntries.clear();
-		InfoService.showInfo(I18NConstants.DISCARDED);
-		return rebuild();
+	private HTMLTemplateFragment assignmentRow(FormGroup group, String assignedGroup, int index) {
+		FormGroup block = new FormGroup("assignment_" + index, getResPrefix());
+		group.addMember(block);
+
+		SelectField target = FormFactory.newSelectField(FIELD_GROUPS,
+			_draft.assignableGroups(assignedGroup), false, false, false, null);
+		target.setOptionLabelProvider(GROUP_LABELS);
+		labelAndHelp(target, I18NConstants.FIELD_ASSIGNMENT_GROUP);
+		target.setAsSingleSelection(assignedGroup);
+		block.addMember(target);
+		_assignmentGroups.add(target);
+
+		SelectField tools = toolField(FIELD_TOOLS, I18NConstants.FIELD_ASSIGNMENT_TOOLS);
+		tools.setAsSelection(_draft.assignedTools(assignedGroup));
+		block.addMember(tools);
+
+		// The capability group of an assignment is its key, so changing it moves the entry rather than
+		// editing a value in place. The tools come from the field rather than from the draft, so that
+		// an edit that has not been applied yet moves with it.
+		target.addValueListener((changed, oldValue, newValue) -> {
+			if (_syncing) {
+				return;
+			}
+			String to = single(newValue, null);
+			_draft.renameAssignment(single(oldValue, assignedGroup), to);
+			_draft.setAssignedTools(to, strings(tools.getValue()));
+			refreshAssignmentOptions();
+			refreshNotes();
+		});
+		tools.addValueListener((changed, oldValue, newValue) -> {
+			if (_syncing) {
+				return;
+			}
+			_draft.setAssignedTools(single(target.getValue(), assignedGroup), strings(newValue));
+			refreshNotes();
+		});
+
+		button(block, FIELD_REMOVE, I18NConstants.COMMAND_REMOVE_ASSIGNMENT, () -> {
+			_draft.removeAssignment(single(target.getValue(), assignedGroup));
+			return rebuild();
+		});
+
+		String prefix = path(GROUP_ASSIGNMENTS, block.getName());
+		return div(css("aiSecurityRow"), contentBox(fragment(
+			fieldBox(path(prefix, FIELD_GROUPS)),
+			fieldBox(path(prefix, FIELD_TOOLS)),
+			member(path(prefix, FIELD_REMOVE)))));
 	}
 
-	private HandlerResult restart() {
-		PolicyStore.restartService();
-		_draft = PolicyDraft.ofSavedPolicy();
-		_addedEntries.clear();
-		InfoService.showInfo(I18NConstants.RESTART_DONE);
-		return rebuild();
-	}
+	// ------------------------------------------------- the messages at the top
 
-	private static boolean roleExists(String roleName) {
-		return BoundedRole.getRoleByName(PersistencyLayer.getKnowledgeBase(), roleName) != null;
-	}
-
-	// ---------------------------------------------------------------- the view
-
-	/** The whole editor, from the banner down to the apply bar. */
-	private HTMLFragment view() {
-		if (!AiToolAccessService.Module.INSTANCE.isActive()) {
-			return div("aiSecurityView", p(message(I18NConstants.SERVICE_NOT_RUNNING)));
-		}
-		FormContext context = getFormContext();
-		if (_draft == null) {
-			return div("aiSecurityView", p(message(I18NConstants.POLICY_UNREADABLE)));
-		}
-		_warnings = new DynamicFragment("aiSecurityWarnings", this::warnings);
-		_dirty = new DynamicFragment("aiSecurityDirty",
-			() -> message(_draft.isModified() ? I18NConstants.DIRTY_UNSAVED : I18NConstants.DIRTY_NONE));
-
-		return div("aiSecurityView",
-			banner(context),
-			p("aiSecurityNote", message(I18NConstants.POLICY_INTRO)),
-			mayWrite() ? empty() : p("aiSecurityNote", message(I18NConstants.POLICY_READ_ONLY)),
-			refusals(),
-			_warnings,
-			roleSection(context),
-			baselineSection(context),
-			backgroundSection(context),
-			toolGroupSection(),
-			div("aiSecurityApplyBar",
-				action(context, "apply"),
-				action(context, "discard"),
-				_dirty));
+	/** The banner, the refusals and the warnings, in the order they have to be read. */
+	private HTMLFragment messages(FormContext context) {
+		CommandField restart =
+			button(context, FIELD_RESTART, I18NConstants.COMMAND_RESTART, this::restart);
+		return Fragments.div("aiSecurityMessages",
+			dynamic("banner", () -> banner(restart)),
+			note(I18NConstants.POLICY_INTRO),
+			mayWrite() ? Fragments.empty() : note(I18NConstants.POLICY_READ_ONLY),
+			dynamic("refusals", this::refusals),
+			dynamic("warnings", this::warnings),
+			dynamic("dirty", this::dirty));
 	}
 
 	/**
@@ -586,22 +925,22 @@ public class ToolAccessPolicyComponent extends FormComponent implements ControlR
 	 * the running one, and until the service is restarted the two disagree.
 	 * </p>
 	 */
-	private HTMLFragment banner(FormContext context) {
+	private HTMLFragment banner(CommandField restart) {
 		if (!PolicyDraft.differsFromRunningService(AiToolAccessService.savedPolicy())) {
-			return empty();
+			return Fragments.empty();
 		}
-		return div("aiSecurityBanner",
-			span(message(I18NConstants.BANNER_SAVED_NOT_EFFECTIVE)),
-			action(context, "restart"));
+		return Fragments.div("aiSecurityBanner",
+			Fragments.span(Fragments.message(I18NConstants.BANNER_SAVED_NOT_EFFECTIVE)),
+			new ButtonControl(restart, DefaultButtonRenderer.INSTANCE));
 	}
 
 	/** Why the last apply was refused, or nothing while none was. */
 	private HTMLFragment refusals() {
 		if (_refusals.isEmpty()) {
-			return empty();
+			return Fragments.empty();
 		}
-		return div("aiSecurityRefusals",
-			p(message(I18NConstants.REFUSALS_HEADING)),
+		return Fragments.div("aiSecurityRefusals",
+			Fragments.p(Fragments.message(I18NConstants.REFUSALS_HEADING)),
 			messageList(_refusals));
 	}
 
@@ -616,11 +955,23 @@ public class ToolAccessPolicyComponent extends FormComponent implements ControlR
 	private HTMLFragment warnings() {
 		List<ResKey> messages = PolicyChecks.warnings(_draft.config(), rolesWithModelRights());
 		if (messages.isEmpty()) {
-			return empty();
+			return Fragments.empty();
 		}
-		return div("aiSecurityWarning",
-			p(message(I18NConstants.WARNINGS_HEADING)),
+		return Fragments.div("aiSecurityWarning",
+			Fragments.p(Fragments.message(I18NConstants.WARNINGS_HEADING)),
 			messageList(messages));
+	}
+
+	private HTMLFragment dirty() {
+		return note(_draft.isModified() ? I18NConstants.DIRTY_UNSAVED : I18NConstants.DIRTY_NONE);
+	}
+
+	private static HTMLFragment messageList(List<ResKey> messages) {
+		List<HTMLFragment> items = new ArrayList<>();
+		for (ResKey message : messages) {
+			items.add(Fragments.li(Fragments.message(message)));
+		}
+		return Fragments.ul(fragments(items));
 	}
 
 	/** The roles named in a Read, Write or Create grant of the model access rights. */
@@ -632,48 +983,177 @@ public class ToolAccessPolicyComponent extends FormComponent implements ControlR
 			SecurityConfigurationService.Module.INSTANCE.getImplementationInstance().getConfig());
 	}
 
-	private HTMLFragment roleSection(FormContext context) {
-		List<HTMLFragment> content = new ArrayList<>();
-		content.add(h4(message(I18NConstants.POLICY_ROLES_HEADING)));
-		List<String> roleNames = _draft.roleNames();
-		if (roleNames.isEmpty()) {
-			content.add(p("aiSecurityNote", message(I18NConstants.POLICY_NO_ROLES)));
+	// ------------------------------------------------------ apply and discard
+
+	/**
+	 * Checks the draft and, if nothing would stop the next start, writes it.
+	 *
+	 * <p>
+	 * The refusal is the whole point: the raw editor accepts a policy that makes the next application
+	 * start fail, hours later and for somebody else.
+	 * </p>
+	 *
+	 * @return Always successful; a refused policy leaves the reasons in the view.
+	 */
+	public HandlerResult applyPolicy() {
+		_refusals = PolicyChecks.refusals(_draft.config(), ToolAccessPolicyComponent::roleExists);
+		if (!_refusals.isEmpty()) {
+			return rebuild();
 		}
-		for (int r = 0; r < roleNames.size(); r++) {
-			content.add(roleCard(context, roleNames.get(r), r));
-		}
-		content.add(div("aiSecurityAddRole",
-			labelWithColon(context.getMember(FIELD_NEW_ROLE)),
-			value(context.getMember(FIELD_NEW_ROLE)),
-			new DynamicFragment("aiSecurityNote", () -> roleNote(context)),
-			labelWithColon(context.getMember(FIELD_TEMPLATE)),
-			value(context.getMember(FIELD_TEMPLATE)),
-			action(context, "addRole")));
-		return div("aiSecurityRoles", fragments(content));
+		PolicyStore.save(_draft.config());
+		_draft = PolicyDraft.ofSavedPolicy();
+		InfoService.showInfo(I18NConstants.APPLY_SAVED);
+		return rebuild();
 	}
 
-	/** What is known about the role the picker currently shows - P8's "who holds this". */
-	private HTMLFragment roleNote(FormContext context) {
-		String roleName = single(((SelectField) context.getMember(FIELD_NEW_ROLE)).getValue(), null);
-		if (roleName == null) {
-			return empty();
+	/**
+	 * Throws the unsaved changes away and shows the saved policy again.
+	 */
+	public HandlerResult discardChanges() {
+		_refusals = List.of();
+		_draft = PolicyDraft.ofSavedPolicy();
+		InfoService.showInfo(I18NConstants.DISCARDED);
+		return rebuild();
+	}
+
+	private HandlerResult restart() {
+		PolicyStore.restartService();
+		_draft = PolicyDraft.ofSavedPolicy();
+		InfoService.showInfo(I18NConstants.RESTART_DONE);
+		return rebuild();
+	}
+
+	private static boolean roleExists(String roleName) {
+		return BoundedRole.getRoleByName(PersistencyLayer.getKnowledgeBase(), roleName) != null;
+	}
+
+	// --------------------------------------------------------- small helpers
+
+	/**
+	 * One collapsible section, the framework's own group cell.
+	 *
+	 * @param group
+	 *        The form group whose label and tooltip name and explain the section.
+	 * @param content
+	 *        What the section contains.
+	 * @param key
+	 *        Distinguishes the section in the personal configuration that remembers whether it is open.
+	 * @param collapsed
+	 *        Whether the section starts collapsed for a reader who has not touched it.
+	 * @param summary
+	 *        What the title says about the content, so that a collapsed section still answers something.
+	 */
+	private FieldSetBoxTemplate section(FormMember group, List<HTMLTemplateFragment> content,
+			String key, boolean collapsed, Supplier<String> summary) {
+		return fieldsetBoxDirect(
+			htmlTemplate(Fragments.concat(
+				new LabelControl(group),
+				dynamic("summary." + key, () -> summaryFragment(summary)))),
+			fragment(content),
+			ConfigKey.part(this, key))
+				.setInitiallyCollapsed(collapsed);
+	}
+
+	/** Offers every assignment the capability groups no other assignment holds, plus its own. */
+	private void refreshAssignmentOptions() {
+		for (SelectField picker : _assignmentGroups) {
+			String own = single(picker.getValue(), null);
+			picker.setOptions(_draft.assignableGroups(own));
 		}
-		List<HTMLFragment> notes = new ArrayList<>();
-		if (SecurityRoleKind.EVERY_ACCOUNT.equals(roleName)) {
-			notes.add(message(I18NConstants.ROLE_NOTE_EVERY_ACCOUNT));
-		} else if (SecurityRoleKind.ADMINISTRATOR.equals(roleName)) {
-			notes.add(message(I18NConstants.ROLE_NOTE_ADMINISTRATOR));
-		} else if (SecurityRoleKind.of(roleName) == SecurityRoleKind.INTERNAL) {
-			notes.add(message(I18NConstants.ROLE_NOTE_INTERNAL));
+	}
+
+	/** The engine's own two-column layout, so that eleven capabilities are six rows rather than eleven. */
+	private static HTMLTemplateFragment columns(List<HTMLTemplateFragment> content) {
+		return div(css(Columns.TWO.appendColsCSSto(ReactiveFormCSS.RF_COLUMNS_LAYOUT)),
+			fragment(content));
+	}
+
+	private static HTMLFragment summaryFragment(Supplier<String> summary) {
+		String text = summary.get();
+		return text.isEmpty() ? Fragments.empty()
+			: Fragments.span("aiSecuritySummary", Fragments.text(text));
+	}
+
+	/** How many things a collapsed section holds. */
+	private static String countSummary(int count) {
+		return resources().getString(I18NConstants.SECTION_COUNT__COUNT.fill(Integer.valueOf(count)));
+	}
+
+	/** A block of the view that is recomputed and repainted when a value below it changes. */
+	private DynamicFragment dynamic(String key, Supplier<HTMLFragment> content) {
+		DynamicFragment fragment = new DynamicFragment(content);
+		_dynamic.put(key, fragment);
+		return fragment;
+	}
+
+	private static HTMLFragment note(ResKey message) {
+		return Fragments.p("aiSecurityNote", Fragments.message(message));
+	}
+
+	private CommandField button(FormContainer parent, String name, ResKey label,
+			Supplier<HandlerResult> action) {
+		CommandField field = FormFactory.newCommandField(name, (Command) context -> action.get());
+		field.setControlProvider(BUTTONS);
+		field.setLabel(resources().getString(label));
+		String tooltip = resources().getString(label.tooltipOptional());
+		if (tooltip != null) {
+			field.setTooltip(tooltip);
 		}
-		String description = roleDescription(roleName);
-		if (description != null) {
-			notes.add(text(description));
+		parent.addMember(field);
+		return field;
+	}
+
+	private SelectField groupField(String fieldName, boolean multiple, ResKey label) {
+		SelectField field =
+			FormFactory.newSelectField(fieldName, _draft.grantableGroups(), multiple, false, false,
+				null);
+		field.setOptionLabelProvider(GROUP_LABELS);
+		labelAndHelp(field, label);
+		return field;
+	}
+
+	private static SelectField toolField(String fieldName, ResKey label) {
+		SelectField field =
+			FormFactory.newSelectField(fieldName, allToolNames(), true, false, false, null);
+		labelAndHelp(field, label);
+		return field;
+	}
+
+	private static void labelAndHelp(FormMember field, ResKey label) {
+		field.setLabel(resources().getString(label));
+		String tooltip = resources().getString(label.tooltipOptional());
+		if (tooltip != null) {
+			field.setTooltip(tooltip);
 		}
-		if (notes.isEmpty()) {
-			return empty();
+	}
+
+	/**
+	 * The roles the picker offers: the ones the application has and the ones the policy already names,
+	 * minus the ones that are already configured.
+	 */
+	private List<String> offeredRoles() {
+		List<String> configured = _draft.roleNames();
+		List<String> result = new ArrayList<>();
+		for (String roleName : existingRoleNames()) {
+			if (!configured.contains(roleName)) {
+				result.add(roleName);
+			}
 		}
-		return span(fragments(notes));
+		// Application roles first, then the framework's own, then the ones a grant does nothing for.
+		result.sort(BY_ROLE_KIND_NAME);
+		return result;
+	}
+
+	private static List<String> existingRoleNames() {
+		List<String> result = new ArrayList<>();
+		if (PersistencyLayer.Module.INSTANCE.isActive()) {
+			for (BoundedRole role : BoundedRole.getAll()) {
+				if (role.getName() != null && !role.getName().isBlank()) {
+					result.add(role.getName());
+				}
+			}
+		}
+		return result;
 	}
 
 	/** The description an administrator gave the role, or <code>null</code> if there is none. */
@@ -692,246 +1172,44 @@ public class ToolAccessPolicyComponent extends FormComponent implements ControlR
 		return text;
 	}
 
-	/**
-	 * One card per configured role: a row per capability group, then the entries naming single tools.
-	 */
-	private HTMLFragment roleCard(FormContext context, String roleName, int roleIndex) {
-		List<HTMLFragment> rows = new ArrayList<>();
-		rows.add(div("aiSecurityRoleHead",
-			span("aiSecurityRoleName", text(roleName)),
-			span("aiSecurityRoleKind", message(ToolAccessLabels.roleKind(SecurityRoleKind.of(roleName)))),
-			action(context, "removeRole_" + roleIndex)));
-
-		for (String group : PolicyDraft.implicitGroups()) {
-			// The marker column stays empty here although these groups carry one: it would say "granted
-			// implicitly" next to a state that already says "always granted".
-			rows.add(div("aiSecurityTriRow",
-				span("aiSecurityGroupLabel", text(ToolAccessLabels.groupLabel(group))),
-				span("aiSecurityRisk", empty()),
-				span("aiSecurityRowState", message(I18NConstants.ROW_ALWAYS_GRANTED)),
-				span("aiSecurityGroupNote", text(groupSentence(group)))));
+	/** What kind of role this is, and what its administrator wrote about it. */
+	private static String roleTooltip(String roleName) {
+		StringBuilder result = new StringBuilder();
+		result.append(resources().getString(ToolAccessLabels.roleKind(SecurityRoleKind.of(roleName))));
+		String description = roleDescription(roleName);
+		if (description != null) {
+			result.append(". ").append(description);
 		}
-
-		List<String> groups = _draft.grantableGroups();
-		for (int g = 0; g < groups.size(); g++) {
-			String group = groups.get(g);
-			String fieldName = triStateName(roleIndex, g);
-			DynamicFragment note =
-				new DynamicFragment("aiSecurityGroupNote", () -> rowNote(roleName, group));
-			_rowNotes.put(fieldName, note);
-			rows.add(div("aiSecurityTriRow",
-				span("aiSecurityGroupLabel", text(ToolAccessLabels.groupLabel(group))),
-				span("aiSecurityRisk", text(ToolAccessLabels.risk(group))),
-				span("aiSecurityRowState", baselineState(group), value(context.getMember(fieldName))),
-				note));
-		}
-
-		rows.add(entrySection(context, roleName, roleIndex));
-		rows.add(p("aiSecurityNote", message(I18NConstants.POLICY_IMPLICIT_NOTE)));
-		return div("aiSecurityRoleCard", fragments(rows));
+		return result.toString();
 	}
 
-	/**
-	 * The row state of a capability the baseline already grants everyone.
-	 *
-	 * <p>
-	 * The single clearest explanation of what the baseline does, per the prototype's own feedback: the
-	 * three radio buttons alone stay abstract, and this says it where the reader is deciding. The
-	 * tri-state stays available underneath, because a refusal has to remain expressible against the
-	 * baseline.
-	 * </p>
-	 */
-	private HTMLFragment baselineState(String group) {
-		return _draft.baselineCovers(group)
-			? span("aiSecurityBaselineState", message(I18NConstants.ROW_BASELINE_GRANTED), br())
-			: empty();
-	}
-
-	/** What the currently chosen state of one capability row means. */
-	private HTMLFragment rowNote(String roleName, String group) {
-		TriState state = _draft.triState(roleName, group);
-		if (state == TriState.DENIED) {
-			return span("aiSecurityWarning", message(I18NConstants.NOTE_DENY_WINS));
-		}
-		if (state == TriState.GRANTED && ToolGroups.DATA_WRITE.equals(group)) {
-			return span(message(I18NConstants.NOTE_DATA_WRITE_APPROVAL));
-		}
-		return span(text(groupSentence(group)));
-	}
-
-	/** The one sentence saying what granting a capability lets an agent do. */
-	private static String groupSentence(String group) {
+	/** What granting a capability lets an agent do. */
+	private static String capabilityTooltip(String group) {
 		String sentence = ToolAccessLabels.groupTooltip(group);
-		return sentence == null ? "" : sentence;
+		return sentence == null ? ToolAccessLabels.groupLabel(group) : sentence;
 	}
 
-	/** The entries of one role that name single tools, each of them an either-or of proposal D1. */
-	private HTMLFragment entrySection(FormContext context, String roleName, int roleIndex) {
-		List<Grant> grants = entriesOf(roleName, false);
-		List<Grant> denies = entriesOf(roleName, true);
-		List<HTMLFragment> content = new ArrayList<>();
-		content.add(div("aiSecurityAdvancedHead", message(I18NConstants.POLICY_ADVANCED__COUNT
-			.fill(Integer.valueOf(grants.size() + denies.size())))));
-		for (int n = 0; n < grants.size(); n++) {
-			content.add(entryBlock(context, roleName, roleIndex, false, n, grants.get(n)));
-		}
-		for (int n = 0; n < denies.size(); n++) {
-			content.add(entryBlock(context, roleName, roleIndex, true, n, denies.get(n)));
-		}
-		content.add(div("aiSecurityEntryActions",
-			action(context, "addGrant_" + roleIndex),
-			action(context, "addDeny_" + roleIndex)));
-		return div("aiSecurityAdvanced", fragments(content));
+	/** The same, plus why the checkbox cannot be cleared. */
+	private static String implicitTooltip(String group) {
+		return capabilityTooltip(group) + " " + resources().getString(I18NConstants.ROW_ALWAYS_GRANTED);
 	}
 
-	/**
-	 * One entry, rendered as the choice it is.
-	 *
-	 * <p>
-	 * Exactly one input is present - the group picker or the tool picker - and the summary line under it
-	 * prints exactly that half. Never the empty other one, which in the raw editor reads as "this group
-	 * contains no tools".
-	 * </p>
-	 */
-	private HTMLFragment entryBlock(FormContext context, String roleName, int roleIndex, boolean denies,
-			int position, Grant entry) {
-		String prefix = entryName(roleIndex, denies, position);
-		boolean wholeGroup = PolicyDraft.namesWholeGroup(entry);
-		FormMember input = context.getMember(prefix + (wholeGroup ? "_group" : "_tools"));
-		DynamicFragment summary =
-			new DynamicFragment("aiSecurityEntrySummary", () -> entrySummary(entry));
-		_entrySummaries.put(prefix, summary);
-		return div("aiSecurityEntry",
-			div("aiSecurityEntryHead",
-				span(message(denies ? I18NConstants.ENTRY_DENY : I18NConstants.ENTRY_GRANT)),
-				kindChoice(context, prefix, wholeGroup),
-				action(context, prefix + "_remove")),
-			div("aiSecurityEntryInput", labelWithColon(input), value(input)),
-			summary);
+	/** The technical group name as a field name: a dot would read as a path into a sub-group. */
+	private static String technical(String group) {
+		return group.replace('.', '_');
 	}
 
-	/**
-	 * The either-or itself: the chosen half named, the other half offered as the action that swaps it.
-	 */
-	private HTMLFragment kindChoice(FormContext context, String prefix, boolean wholeGroup) {
-		return span("aiSecurityEntryKind",
-			wholeGroup
-				? span("aiSecurityChosen", message(I18NConstants.ENTRY_KIND_GROUP))
-				: action(context, prefix + "_kindGroup"),
-			wholeGroup
-				? action(context, prefix + "_kindTools")
-				: span("aiSecurityChosen", message(I18NConstants.ENTRY_KIND_TOOLS)));
+	private static String firstToolName() {
+		List<String> tools = allToolNames();
+		return tools.isEmpty() ? null : tools.get(0);
 	}
 
-	/** What one entry says, in one line - exactly one half of it. */
-	private HTMLFragment entrySummary(Grant entry) {
-		if (PolicyDraft.namesWholeGroup(entry)) {
-			return span(message(I18NConstants.ENTRY_SUMMARY_GROUP__GROUP
-				.fill(ToolAccessLabels.groupLabel(entry.getGroup()))));
-		}
-		if (entry.getTools().isEmpty()) {
-			return span("aiSecurityWarning", message(I18NConstants.ENTRY_NO_TOOL_CHOSEN));
-		}
-		return span(message(I18NConstants.ENTRY_SUMMARY_TOOLS__TOOLS
-			.fill(String.join(", ", entry.getTools()))));
+	private static List<String> allToolNames() {
+		return new AllToolNames().apply();
 	}
 
-	private HTMLFragment baselineSection(FormContext context) {
-		List<HTMLFragment> content = new ArrayList<>();
-		content.add(h4(message(I18NConstants.POLICY_BASELINE_HEADING)));
-		content.add(choiceRow(context, "baseline_", BaselineChoice.values(),
-			_draft.baselineChoice().name()));
-		if (context.hasMember(FIELD_BASELINE_GROUPS)) {
-			content.add(div("aiSecurityGroupPick",
-				value(context.getMember(FIELD_BASELINE_GROUPS))));
-		}
-		return div("aiSecurityBaseline", fragments(content));
-	}
-
-	private HTMLFragment backgroundSection(FormContext context) {
-		List<HTMLFragment> content = new ArrayList<>();
-		content.add(h4(message(I18NConstants.POLICY_BACKGROUND_HEADING)));
-		content.add(p("aiSecurityNote", message(I18NConstants.POLICY_BACKGROUND_NOTE)));
-		content.add(choiceRow(context, "background_", BackgroundChoice.values(),
-			_draft.backgroundChoice().name()));
-		if (context.hasMember(FIELD_BACKGROUND_GROUPS)) {
-			content.add(div("aiSecurityGroupPick",
-				value(context.getMember(FIELD_BACKGROUND_GROUPS))));
-		}
-		return div("aiSecurityBackground", fragments(content));
-	}
-
-	/**
-	 * A row of named states, the current one shown as text and the others as the action that reaches
-	 * them.
-	 */
-	private HTMLFragment choiceRow(FormContext context, String prefix, Enum<?>[] choices,
-			String current) {
-		List<HTMLFragment> content = new ArrayList<>();
-		for (Enum<?> choice : choices) {
-			FormMember member = context.getMember(prefix + choice.name());
-			content.add(choice.name().equals(current)
-				? span("aiSecurityChosen", text(member.getLabel()))
-				: value(BUTTONS, member));
-		}
-		return div("aiSecurityChoices", fragments(content));
-	}
-
-	/**
-	 * Which tools the policy classifies into which capability group.
-	 *
-	 * <p>
-	 * Read-only here: a group assignment says what a tool <em>is</em>, which is a statement about the
-	 * tool and not about a role, and the catalog is where a reader meets it. It is shown because a
-	 * policy that grants a capability no tool is in reaches nothing, and this is what explains that.
-	 * </p>
-	 */
-	private HTMLFragment toolGroupSection() {
-		List<HTMLFragment> content = new ArrayList<>();
-		content.add(h4(message(I18NConstants.POLICY_TOOL_GROUPS_HEADING)));
-		content.add(p("aiSecurityNote", message(I18NConstants.POLICY_TOOL_GROUPS_NOTE)));
-		Map<String, GroupMembership> assignments = new TreeMap<>(_draft.config().getToolGroups());
-		if (assignments.isEmpty()) {
-			content.add(p("aiSecurityNote", message(I18NConstants.POLICY_TOOL_GROUPS_NONE)));
-		}
-		for (Map.Entry<String, GroupMembership> assignment : assignments.entrySet()) {
-			content.add(div("aiSecurityAssignment",
-				span("aiSecurityGroupLabel", text(ToolAccessLabels.groupLabel(assignment.getKey()))),
-				span("aiSecurityAssignedTools",
-					text(String.join(", ", assignment.getValue().getTools())))));
-		}
-		return div("aiSecurityToolGroups", fragments(content));
-	}
-
-	// ---------------------------------------------------------------- small helpers
-
-	private CommandField button(String name, ResKey label, Supplier<HandlerResult> action) {
-		CommandField field = FormFactory.newCommandField(name, (Command) context -> action.get());
-		field.setLabel(resources().getString(label));
-		return field;
-	}
-
-	private CommandField button(String name, ResKey label, Command command) {
-		CommandField field = FormFactory.newCommandField(name, command);
-		field.setLabel(resources().getString(label));
-		return field;
-	}
-
-	/** One action, rendered as a labelled button rather than as an unlabelled icon. */
-	private static Control action(FormContext context, String name) {
-		return value(BUTTONS, context.getMember(name));
-	}
-
-	private static HTMLFragment fragments(List<HTMLFragment> content) {
-		return concat(content.toArray(new HTMLFragment[content.size()]));
-	}
-
-	private static String triStateName(int roleIndex, int groupIndex) {
-		return "tri_" + roleIndex + "_" + groupIndex;
-	}
-
-	private static String entryName(int roleIndex, boolean denies, int position) {
-		return "entry_" + roleIndex + (denies ? "_d_" : "_g_") + position;
+	private static HTMLFragment[] fragments(List<HTMLFragment> content) {
+		return content.toArray(new HTMLFragment[content.size()]);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -947,32 +1225,27 @@ public class ToolAccessPolicyComponent extends FormComponent implements ControlR
 		return value instanceof List<?> list ? (List<String>) list : List.of();
 	}
 
-	/** Brings the chosen set of groups about by toggling exactly what differs. */
-	private static void setGroups(List<String> chosen, Set<String> current,
-			java.util.function.Consumer<String> toggle) {
-		for (String group : new ArrayList<>(current)) {
-			if (!chosen.contains(group)) {
-				toggle.accept(group);
-			}
-		}
-		for (String group : chosen) {
-			if (!current.contains(group)) {
-				toggle.accept(group);
-			}
-		}
-	}
-
-	private static List<String> allToolNames() {
-		return new AllToolNames().apply();
-	}
-
 	private static Resources resources() {
 		return Resources.getInstance();
 	}
 
-	/** How the three states of a capability row are named. */
-	private static final LabelProvider TRI_STATE_LABELS = model -> model instanceof TriState state
-		? ToolAccessLabels.triState(state) : String.valueOf(model);
+	/** Renders a command as a button carrying its label, not as a link nobody sees. */
+	private static final ControlProvider BUTTONS =
+		(model, style) -> new ButtonControl((CommandField) model, DefaultButtonRenderer.INSTANCE);
+
+	/** How the two halves of an either-or entry are named. */
+	private static final LabelProvider ENTRY_KIND_LABELS = model -> model == EntryKind.GROUP
+		? resources().getString(I18NConstants.ENTRY_KIND_GROUP)
+		: resources().getString(I18NConstants.ENTRY_KIND_TOOLS);
+
+	/** How the three states of the basic permissions are named. */
+	private static final LabelProvider BASELINE_LABELS = model -> model instanceof BaselineChoice choice
+		? resources().getString(ToolAccessLabels.baselineChoice(choice)) : String.valueOf(model);
+
+	/** How the three states of the limit for unattended runs are named. */
+	private static final LabelProvider BACKGROUND_LABELS =
+		model -> model instanceof BackgroundChoice choice
+			? resources().getString(ToolAccessLabels.backgroundChoice(choice)) : String.valueOf(model);
 
 	/** How the templates of a new role entry are named. */
 	private static final LabelProvider TEMPLATE_LABELS = model -> model instanceof RoleTemplate template
@@ -982,16 +1255,15 @@ public class ToolAccessPolicyComponent extends FormComponent implements ControlR
 	private static final LabelProvider GROUP_LABELS = model -> model instanceof String group
 		? ToolAccessLabels.groupLabel(group) : String.valueOf(model);
 
-	/**
-	 * The order the role picker offers its options in: the application's own roles, then the framework's,
-	 * then the ones a tool grant does nothing for.
-	 */
-	private static final Comparator<Object> BY_ROLE_KIND = (left, right) -> {
-		String leftName = String.valueOf(left);
-		String rightName = String.valueOf(right);
-		int byKind = SecurityRoleKind.of(leftName).ordinal() - SecurityRoleKind.of(rightName).ordinal();
-		return byKind != 0 ? byKind : leftName.compareToIgnoreCase(rightName);
+	/** The order the role picker offers its options in. */
+	private static final Comparator<String> BY_ROLE_KIND_NAME = (left, right) -> {
+		int byKind = SecurityRoleKind.of(left).ordinal() - SecurityRoleKind.of(right).ordinal();
+		return byKind != 0 ? byKind : left.compareToIgnoreCase(right);
 	};
+
+	/** The same order, for the selection field, which sorts by label unless told otherwise. */
+	private static final Comparator<Object> BY_ROLE_KIND =
+		(left, right) -> BY_ROLE_KIND_NAME.compare(String.valueOf(left), String.valueOf(right));
 
 	/**
 	 * How a role is offered: its name, plus what kind of role it is where that is not obvious.
@@ -1007,46 +1279,34 @@ public class ToolAccessPolicyComponent extends FormComponent implements ControlR
 		return roleName + " (" + resources().getString(ToolAccessLabels.roleKind(kind)) + ")";
 	};
 
-	/** Renders a command as a button carrying its label, not as an icon nobody can read. */
-	private static final ControlProvider BUTTONS = (model, name) -> {
-		FormMember member = (FormMember) model;
-		if (member instanceof CommandField command) {
-			return new ButtonControl(command, DefaultButtonRenderer.INSTANCE);
-		}
-		return value(member);
-	};
-
 	/**
 	 * A block of the view that is recomputed and repainted when a value below it changes.
 	 *
 	 * <p>
-	 * Needed because the surrounding view is written once: a plain fragment has no identity in the page
-	 * and therefore cannot be replaced. Only the blocks that actually depend on a value carry one.
+	 * Needed because the surrounding template is written once: a plain fragment has no identity in the
+	 * page and therefore cannot be replaced. Only the blocks that actually depend on a value carry one.
 	 * </p>
 	 */
 	private static final class DynamicFragment extends AbstractConstantControl {
 
-		private final String _cssClass;
-
 		private final Supplier<HTMLFragment> _content;
 
-		DynamicFragment(String cssClass, Supplier<HTMLFragment> content) {
-			_cssClass = cssClass;
+		DynamicFragment(Supplier<HTMLFragment> content) {
 			_content = content;
 		}
 
 		@Override
 		protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-			out.beginBeginTag(DIV);
+			out.beginBeginTag(SPAN);
 			writeControlAttributes(context, out);
 			out.endBeginTag();
 			_content.get().write(context, out);
-			out.endTag(DIV);
+			out.endTag(SPAN);
 		}
 
 		@Override
 		protected String getTypeCssClass() {
-			return _cssClass;
+			return "aiSecurityDynamic";
 		}
 	}
 

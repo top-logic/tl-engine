@@ -1024,24 +1024,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 SECTION_COUNT__COUNT;
 
 	/**
-	 * Heading of the section holding the prohibitions of one role.
+	 * What the three states of a capability mean, once at the top of a role's section.
 	 *
-	 * @en Prohibitions
-	 * @de Verbote
-	 * @tooltip A prohibition always applies. It beats every other role of the account and the basic
-	 *     permissions.
+	 * @en Empty means this role says nothing about it. Ticked grants it, the third state forbids it and
+	 *     beats every other role.
+	 * @de Leer heißt, dass diese Rolle nichts dazu sagt. Angehakt gewährt, der dritte Zustand verbietet
+	 *     und schlägt jede andere Rolle.
 	 */
-	public static ResKey SECTION_DENIES;
-
-	/**
-	 * Says when a prohibition is the right answer, inside that section.
-	 *
-	 * @en Rarely needed. Leave this empty unless you have to take a capability away that another role of
-	 *     the same account grants.
-	 * @de Wird selten gebraucht. Lassen Sie das leer, solange Sie nichts entziehen müssen, was eine andere
-	 *     Rolle desselben Kontos gewährt.
-	 */
-	public static ResKey SECTION_DENIES_NOTE;
+	public static ResKey CAPABILITY_STATES_NOTE;
 
 	/**
 	 * Heading of the section holding the entries of one role that name single tools.
@@ -1065,10 +1055,26 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Row state of a capability this role forbids.
 	 *
-	 * @en Forbidden by this role
-	 * @de Durch diese Rolle verboten
+	 * @en Forbidden. Beats every other role and the basic permissions.
+	 * @de Verboten. Schlägt jede andere Rolle und die Grundberechtigung.
 	 */
 	public static ResKey ROW_DENIED;
+
+	/**
+	 * Row state of a capability this role says nothing about, granted by another configured role.
+	 *
+	 * @en granted by {0}
+	 * @de wird von {0} gewährt
+	 */
+	public static ResKey1 ROW_GRANTED_BY_ROLE__ROLE;
+
+	/**
+	 * Row state of a capability this role says nothing about and nothing else grants either.
+	 *
+	 * @en granted nowhere
+	 * @de nirgends gewährt
+	 */
+	public static ResKey ROW_NOWHERE_GRANTED;
 
 	/**
 	 * Label of the choice deciding what one entry names.

@@ -45,6 +45,7 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.ControlProvider;
+import com.top_logic.layout.form.template.TristateControlProvider;
 import com.top_logic.layout.form.template.model.AbstractMember;
 import com.top_logic.layout.form.template.model.FieldSetBoxTemplate;
 import com.top_logic.layout.form.template.model.Templates;
@@ -56,8 +57,10 @@ import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.AllToolNames;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
+import com.top_logic.tl.ai.core.security.ToolAccessRule;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BackgroundChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BaselineChoice;
+import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CapabilityState;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.RoleTemplate;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tool.boundsec.BoundChecker;
@@ -88,9 +91,14 @@ import com.top_logic.util.Resources;
  * tree of its own, which worked but looked like nothing else in the administration.
  *
  * Two things are still rendered by hand, and both are content rather than input: the messages at the top
- * (banner, refusals, warnings), and the small notes next to a capability - "granted to everyone",
- * "forbidden here" - which depend on other fields and therefore have to repaint when those change. Both
- * are DynamicFragment controls embedded with Templates.htmlTemplate.
+ * (banner, refusals, warnings), and the small note next to a capability, which says who else grants it
+ * and therefore depends on other fields and has to repaint when those change. Both are DynamicFragment
+ * controls embedded with Templates.htmlTemplate.
+ *
+ * A capability is one tri-state row, not a checkbox plus a second list: empty means the role says
+ * nothing, ticked means granted, the third state means forbidden. That is the whole of what the storage
+ * can say about one capability, the mutual exclusion is structural rather than a listener correcting a
+ * second checkbox, and the empty state keeps the reading a first-time administrator gives it.
  *
  * On rebuilding: a change of *structure* - a role added, an entry added - drops the form context and
  * invalidates the component, which is the engine's own pattern and works here because nothing caches a
@@ -124,9 +132,6 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	/** Name of the group holding which tools belong to which capability group. */
 	public static final String GROUP_ASSIGNMENTS = "assignments";
 
-	/** Name of the group holding the prohibitions of one role. */
-	public static final String GROUP_DENIES = "denies";
-
 	/** Name of the group holding the entries of one role that name single tools. */
 	public static final String GROUP_TOOL_ENTRIES = "toolEntries";
 
@@ -148,11 +153,8 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	/** Name of the field choosing single tools. */
 	public static final String FIELD_TOOLS = "tools";
 
-	/** Name prefix of the checkbox granting one capability group. */
-	public static final String FIELD_GRANT_PREFIX = "grant_";
-
-	/** Name prefix of the checkbox forbidding one capability group. */
-	public static final String FIELD_DENY_PREFIX = "deny_";
+	/** Name prefix of the tri-state saying what one role does about one capability group. */
+	public static final String FIELD_CAPABILITY_PREFIX = "capability_";
 
 	/** Name of the command adding something to the list it sits in. */
 	public static final String FIELD_ADD = "add";
@@ -164,7 +166,7 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	public static final String FIELD_RESTART = "restart";
 
 	/**
-	 * How much room the label of a capability gets, so that the checkboxes line up.
+	 * How much room the label of a capability gets, so that the tri-states line up.
 	 *
 	 * <p>
 	 * Wider than the framework's default, because a capability is named twice: what it is called and
@@ -333,8 +335,8 @@ public class ToolAccessPolicyComponent extends FormComponent {
 			List<HTMLTemplateFragment> capabilities = new ArrayList<>();
 			addCapabilityFields(role, prefix, roleName, capabilities);
 			List<HTMLTemplateFragment> content = new ArrayList<>();
+			content.add(contentBox(htmlTemplate(note(I18NConstants.CAPABILITY_STATES_NOTE))));
 			content.add(columns(capabilities));
-			addDenyGroup(role, prefix, roleName, content);
 			addToolEntryGroup(role, prefix, roleName, content);
 
 			CommandField remove = button(role, FIELD_REMOVE, I18NConstants.COMMAND_REMOVE_ROLE, () -> {
@@ -361,7 +363,7 @@ public class ToolAccessPolicyComponent extends FormComponent {
 			Integer.valueOf(entries)));
 	}
 
-	/** One checkbox per capability group, plus the two that are granted whatever the policy says. */
+	/** One tri-state per capability group, plus the two that are granted whatever the policy says. */
 	private void addCapabilityFields(FormGroup role, String prefix, String roleName,
 			List<HTMLTemplateFragment> content) {
 		for (String group : PolicyDraft.implicitGroups()) {
@@ -369,6 +371,9 @@ public class ToolAccessPolicyComponent extends FormComponent {
 			field.initializeField(Boolean.TRUE);
 			field.setLabel(ToolAccessLabels.groupLabel(group));
 			field.setTooltip(implicitTooltip(group));
+			// The same control as the rows below it, so that a row nobody decides about does not look
+			// like a different kind of question.
+			field.setControlProvider(TRISTATE);
 			field.setImmutable(true);
 			field.set(AbstractMember.FIRST_COLUMN_WIDTH, CAPABILITY_LABEL_WIDTH);
 			role.addMember(field);
@@ -376,17 +381,16 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		}
 
 		for (String group : _draft.grantableGroups()) {
-			BooleanField field = FormFactory.newBooleanField(FIELD_GRANT_PREFIX + technical(group));
-			field.initializeField(Boolean.valueOf(_draft.isGranted(roleName, group)));
+			BooleanField field = FormFactory.newBooleanField(FIELD_CAPABILITY_PREFIX + technical(group));
+			field.initializeField(fieldValue(_draft.capabilityState(roleName, group)));
 			field.setLabel(ToolAccessLabels.groupLabel(group));
 			field.setTooltip(capabilityTooltip(group));
+			field.setControlProvider(TRISTATE);
 			field.addValueListener((changed, oldValue, newValue) -> {
 				if (_syncing) {
 					return;
 				}
-				_draft.setGranted(roleName, group, Boolean.TRUE.equals(newValue));
-				syncing(() -> setCheckbox(role, path(GROUP_DENIES, FIELD_DENY_PREFIX + technical(group)),
-					_draft.isDenied(roleName, group)));
+				_draft.setCapabilityState(roleName, group, capabilityState(newValue));
 				refreshNotes();
 			});
 			field.set(AbstractMember.FIRST_COLUMN_WIDTH, CAPABILITY_LABEL_WIDTH);
@@ -395,8 +399,28 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		}
 	}
 
+	/** How the three states of a capability are stored in the field the tri-state control renders. */
+	private static Boolean fieldValue(CapabilityState state) {
+		switch (state) {
+			case GRANTED:
+				return Boolean.TRUE;
+			case DENIED:
+				return Boolean.FALSE;
+			default:
+				return null;
+		}
+	}
+
+	/** The same the other way round; anything but the two booleans is "this role says nothing". */
+	private static CapabilityState capabilityState(Object value) {
+		if (Boolean.TRUE.equals(value)) {
+			return CapabilityState.GRANTED;
+		}
+		return Boolean.FALSE.equals(value) ? CapabilityState.DENIED : CapabilityState.ABSENT;
+	}
+
 	/**
-	 * One capability: the label with its risk marker, the checkbox, and what else is true about it.
+	 * One capability: the label with its risk marker, the tri-state, and what else is true about it.
 	 *
 	 * @param roleName
 	 *        The role the row belongs to, or <code>null</code> for a capability nobody decides about.
@@ -413,79 +437,56 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	}
 
 	/**
-	 * What is true about one capability of one role beyond the checkbox itself.
+	 * What is true about one capability of one role beyond the state the control shows.
 	 *
 	 * <p>
-	 * Both cases are about a second setting, which is why neither can be a tooltip: the basic
-	 * permissions may grant the capability to everyone, and this role may forbid it.
+	 * Every case is about a <em>second</em> setting, which is why none of them can be a tooltip: what
+	 * the basic permissions grant, and what the other configured roles grant, are written elsewhere and
+	 * change while this section is open.
 	 * </p>
 	 */
 	private HTMLFragment capabilityNote(String roleName, String group) {
-		List<HTMLFragment> notes = new ArrayList<>();
-		if (_draft.isDenied(roleName, group)) {
-			notes.add(Fragments.span("aiSecurityWarning", Fragments.message(I18NConstants.ROW_DENIED)));
+		switch (_draft.capabilityState(roleName, group)) {
+			case DENIED:
+				return Fragments.span("aiSecurityWarning",
+					Fragments.message(I18NConstants.ROW_DENIED));
+			case GRANTED:
+				return grantedNote(group);
+			default:
+				return absentNote(roleName, group);
 		}
+	}
+
+	/** What a granted capability adds to "this role grants it". */
+	private HTMLFragment grantedNote(String group) {
+		List<HTMLFragment> notes = new ArrayList<>();
 		if (_draft.baselineCovers(group)) {
 			notes.add(Fragments.span("aiSecurityBaselineState",
 				Fragments.message(I18NConstants.ROW_BASELINE_GRANTED)));
 		}
-		if (_draft.isGranted(roleName, group) && ToolGroups.DATA_WRITE.equals(group)) {
+		if (ToolGroups.DATA_WRITE.equals(group)) {
 			notes.add(Fragments.span("aiSecurityBaselineState",
 				Fragments.message(I18NConstants.NOTE_DATA_WRITE_APPROVAL)));
 		}
 		return notes.isEmpty() ? Fragments.empty() : Fragments.concat(fragments(notes));
 	}
 
-	/** The prohibitions of one role: a section of its own, because they are rarely needed. */
-	private void addDenyGroup(FormGroup role, String prefix, String roleName,
-			List<HTMLTemplateFragment> content) {
-		FormGroup denies = new FormGroup(GROUP_DENIES, getResPrefix());
-		denies.setLabel(resources().getString(I18NConstants.SECTION_DENIES));
-		denies.setTooltip(resources().getString(I18NConstants.SECTION_DENIES.tooltip()));
-		role.addMember(denies);
-
-		String path = path(prefix, GROUP_DENIES);
-		List<HTMLTemplateFragment> checkboxes = new ArrayList<>();
-		for (String group : _draft.grantableGroups()) {
-			BooleanField field = FormFactory.newBooleanField(FIELD_DENY_PREFIX + technical(group));
-			field.initializeField(Boolean.valueOf(_draft.isDenied(roleName, group)));
-			field.setLabel(ToolAccessLabels.groupLabel(group));
-			field.setTooltip(capabilityTooltip(group));
-			field.addValueListener((changed, oldValue, newValue) -> {
-				if (_syncing) {
-					return;
-				}
-				_draft.setDenied(roleName, group, Boolean.TRUE.equals(newValue));
-				syncing(() -> setCheckbox(role, FIELD_GRANT_PREFIX + technical(group),
-					_draft.isGranted(roleName, group)));
-				refreshNotes();
-			});
-			field.set(AbstractMember.FIRST_COLUMN_WIDTH, CAPABILITY_LABEL_WIDTH);
-			denies.addMember(field);
-			// The same row as a permission, so that the two lists read as the same question twice.
-			checkboxes.add(capabilityRow(path(path, field.getName()), group, null, null));
-		}
-		List<HTMLTemplateFragment> rows =
-			List.of(contentBox(htmlTemplate(note(I18NConstants.SECTION_DENIES_NOTE))),
-				columns(checkboxes));
-		content.add(contentBox(section(denies, rows, "denies." + roleName, true,
-			() -> countSummary(_draft.deniedGroups(roleName).size()))));
-	}
-
 	/**
-	 * Brings the opposite checkbox in line with what the draft now says.
-	 *
-	 * <p>
-	 * Granting a capability removes a prohibition of it and the other way round, because the two
-	 * together mean the prohibition. The listener of the corrected field then asks the draft for the
-	 * same change once more, which is a no-op.
-	 * </p>
+	 * Who else grants a capability this role says nothing about, which is the question the empty state
+	 * raises and the reason it is not the same as a prohibition.
 	 */
-	private static void setCheckbox(FormGroup role, String name, boolean value) {
-		FormMember member = FormGroup.getMemberByRelativeName(role, name);
-		if (member instanceof BooleanField field && !Boolean.valueOf(value).equals(field.getValue())) {
-			field.setValue(Boolean.valueOf(value));
+	private HTMLFragment absentNote(String roleName, String group) {
+		ToolAccessRule rule = _draft.grantedElsewhere(roleName, group);
+		if (rule == null) {
+			return Fragments.span("aiSecurityAbsentState",
+				Fragments.message(I18NConstants.ROW_NOWHERE_GRANTED));
 		}
+		if (rule.kind() == ToolAccessRule.Kind.ROLE_GRANT) {
+			return Fragments.span("aiSecurityBaselineState",
+				Fragments.message(I18NConstants.ROW_GRANTED_BY_ROLE__ROLE.fill(rule.roleName())));
+		}
+		return Fragments.span("aiSecurityBaselineState",
+			Fragments.message(I18NConstants.ROW_BASELINE_GRANTED));
 	}
 
 	/** The entries of one role that name single tools rather than a whole capability. */
@@ -1189,7 +1190,7 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		return sentence == null ? ToolAccessLabels.groupLabel(group) : sentence;
 	}
 
-	/** The same, plus why the checkbox cannot be cleared. */
+	/** The same, plus why the row has no state to choose. */
 	private static String implicitTooltip(String group) {
 		return capabilityTooltip(group) + " " + resources().getString(I18NConstants.ROW_ALWAYS_GRANTED);
 	}
@@ -1228,6 +1229,17 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	private static Resources resources() {
 		return Resources.getInstance();
 	}
+
+	/**
+	 * The framework's own tri-state for a boolean that may be unset, taken as it is.
+	 *
+	 * <p>
+	 * A plain {@link BooleanField} renders as an HTML checkbox, which has two states and shows an unset
+	 * value as unticked. This is the control the engine ships for the three-valued case, resettable so
+	 * that a click reaches all three.
+	 * </p>
+	 */
+	private static final ControlProvider TRISTATE = TristateControlProvider.INSTANCE_RESETTABLE;
 
 	/** Renders a command as a button carrying its label, not as a link nobody sees. */
 	private static final ControlProvider BUTTONS =

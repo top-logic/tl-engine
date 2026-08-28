@@ -15,12 +15,14 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
+import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
+import com.top_logic.tl.ai.core.security.ToolAccessRule;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
@@ -35,17 +37,17 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 /*
  * The draft is a copy of the service configuration itself rather than a parallel object graph, and that
  * is the load-bearing decision of this editor. The controls do not resemble the stored format at all -
- * a checkbox per capability, three named baseline states - and the honest way to build that without a
+ * a tri-state per capability, three named baseline states - and the honest way to build that without a
  * second format is to make every control a *question about* and an *edit of* the real configuration
  * item. A parallel model would need a converter in each direction, and the round-trip test would then
  * be testing the converter rather than the policy.
  *
- * Grants and denies are two lists, and the editor shows two lists. An earlier version offered one
- * three-way choice per capability (refused / unmentioned / granted), which reads as a scale and is not
- * one: "unmentioned" is the absence of an opinion, and another role of the same account or the basic
- * permissions can still grant the capability, while a deny beats both. A checkbox that says "granted"
- * and a separate, rarely used section that says "forbidden" is the shape the storage has, and the shape
- * a first-time reader gets right.
+ * Grants and denies are two stored lists and one control: a capability is a tri-state, empty for "this
+ * role says nothing", ticked for granted, and the third state for forbidden. The mutual exclusion the
+ * two lists need is therefore structural rather than a listener correcting a second checkbox, and the
+ * empty state keeps its natural reading, "this role does not grant it", instead of being a middle value
+ * on a scale. The three states are exactly what the storage can say about one capability, so nothing is
+ * projected away.
  *
  * Setting a state that is already there is a no-op everywhere, deliberately: the editor is opened on a
  * hand-written policy, and re-saving it must not reorder its lists.
@@ -194,6 +196,103 @@ public class PolicyDraft {
 	}
 
 	/**
+	 * What one role says about one capability.
+	 */
+	/*
+	 * Three states rather than two booleans, because the storage has exactly three answers and the two
+	 * booleans could express a fourth that means nothing: a grant next to a deny of the same group is a
+	 * permission the deny already beats. A hand-written policy may still contain both, which is why
+	 * reading answers DENIED and writing the same state is a no-op - the round-trip guarantee.
+	 */
+	public enum CapabilityState {
+
+		/** The role says nothing. Another role of the account, or the baseline, may still grant it. */
+		ABSENT,
+
+		/** The role grants it. */
+		GRANTED,
+
+		/** The role forbids it. Beats every grant of every other role and the baseline. */
+		DENIED;
+	}
+
+	/**
+	 * What the named role says about the given capability group.
+	 *
+	 * @param roleName
+	 *        The role to ask about.
+	 * @param group
+	 *        The technical group name.
+	 * @return The state the editor shows, never <code>null</code>. A policy naming the group in both
+	 *         lists reads as {@link CapabilityState#DENIED}, because that is what it enforces.
+	 */
+	public CapabilityState capabilityState(String roleName, String group) {
+		if (isDenied(roleName, group)) {
+			return CapabilityState.DENIED;
+		}
+		return isGranted(roleName, group) ? CapabilityState.GRANTED : CapabilityState.ABSENT;
+	}
+
+	/**
+	 * Puts what the named role says about the given capability group into the given state.
+	 *
+	 * <p>
+	 * Exactly one of the two lists names the group afterwards, or neither. Setting the state that is
+	 * already there changes nothing, so opening the editor on a hand-written policy that names a group
+	 * in both lists leaves it alone until somebody clicks that row. Entries naming single tools are
+	 * never touched.
+	 * </p>
+	 *
+	 * @param roleName
+	 *        The role to change.
+	 * @param group
+	 *        The technical group name.
+	 * @param state
+	 *        The state to reach. Never <code>null</code>.
+	 */
+	public void setCapabilityState(String roleName, String group, CapabilityState state) {
+		RoleAccess role = role(roleName);
+		if (role == null || capabilityState(roleName, group) == state) {
+			return;
+		}
+		removeGroup(role.getGrants(), group);
+		removeGroup(role.getDenies(), group);
+		switch (state) {
+			case GRANTED:
+				role.getGrants().add(groupEntry(group));
+				break;
+			case DENIED:
+				role.getDenies().add(groupEntry(group));
+				break;
+			default:
+				break;
+		}
+	}
+
+	/**
+	 * Who grants the given capability besides the named role, which is what the empty state asks.
+	 *
+	 * <p>
+	 * Answered by the enforcement's own provenance rather than by a second reading of the entries: the
+	 * decision an account would get is what makes "this role says nothing" harmless or not.
+	 * </p>
+	 *
+	 * @param roleName
+	 *        The role whose row is asking, left out of the question.
+	 * @param group
+	 *        The technical group name.
+	 * @return The rule that grants it, or <code>null</code> if nothing in the policy does. The rule's
+	 *         kind tells the baseline from another role, and its role name says which one.
+	 */
+	public ToolAccessRule grantedElsewhere(String roleName, String group) {
+		List<String> others = roleNames();
+		others.remove(roleName);
+		ToolAccessExplanation explanation =
+			AiToolAccessService.evaluate(_config).explainCapability(others, group);
+		return explanation.allowed() ? explanation.decidedBy() : null;
+	}
+
+	/**
 	 * Whether the named role grants the given capability group.
 	 *
 	 * @param roleName
@@ -222,63 +321,6 @@ public class PolicyDraft {
 	public boolean isDenied(String roleName, String group) {
 		RoleAccess role = role(roleName);
 		return role != null && namesGroup(role.getDenies(), group);
-	}
-
-	/**
-	 * Grants or stops granting the given capability group to the named role.
-	 *
-	 * <p>
-	 * Granting a capability the role forbids removes the prohibition: the two together mean the
-	 * prohibition, so keeping both would leave a permission that says nothing. Entries naming single
-	 * tools are left untouched, and setting the state that is already there changes nothing.
-	 * </p>
-	 *
-	 * @param roleName
-	 *        The role to change.
-	 * @param group
-	 *        The technical group name.
-	 * @param granted
-	 *        Whether the role should grant the group.
-	 */
-	public void setGranted(String roleName, String group, boolean granted) {
-		RoleAccess role = role(roleName);
-		if (role == null || isGranted(roleName, group) == granted) {
-			return;
-		}
-		if (granted) {
-			removeGroup(role.getDenies(), group);
-			role.getGrants().add(groupEntry(group));
-		} else {
-			removeGroup(role.getGrants(), group);
-		}
-	}
-
-	/**
-	 * Forbids or stops forbidding the given capability group for the named role.
-	 *
-	 * <p>
-	 * Forbidding a capability the role grants removes the permission, for the reason given at
-	 * {@link #setGranted(String, String, boolean)}.
-	 * </p>
-	 *
-	 * @param roleName
-	 *        The role to change.
-	 * @param group
-	 *        The technical group name.
-	 * @param denied
-	 *        Whether the role should forbid the group.
-	 */
-	public void setDenied(String roleName, String group, boolean denied) {
-		RoleAccess role = role(roleName);
-		if (role == null || isDenied(roleName, group) == denied) {
-			return;
-		}
-		if (denied) {
-			removeGroup(role.getGrants(), group);
-			role.getDenies().add(groupEntry(group));
-		} else {
-			removeGroup(role.getDenies(), group);
-		}
 	}
 
 	/** The capability groups the named role forbids, in a stable order. */

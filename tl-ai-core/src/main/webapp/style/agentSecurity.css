@@ -108,12 +108,40 @@
 	white-space: nowrap;
 }
 
-/* What else is true about a capability, next to its checkbox. */
+/* Who else grants a capability, next to its tri-state. */
 .aiSecurityBaselineState {
 	margin-left: 10px;
 	color: #1f6b3a;
 	font-size: 0.9em;
 }
+
+/* The same place, when nobody grants it: a fact, not a warning. */
+.aiSecurityAbsentState {
+	margin-left: 10px;
+	color: #6b6b6b;
+	font-size: 0.9em;
+}
+
+/* --- the prohibition state of a capability, variant A and variant B ------- */
+
+/*
+ * A capability is the framework's own tri-state control: an empty square for "this role says nothing",
+ * a ticked one for granted, and a square with a minus for forbidden. Variant A is that control
+ * unchanged, which is what ships. Its third state is visually neutral, and "partly selected" is the
+ * misreading it invites; the row's own note ("Verboten. Schlägt jede andere Rolle ...") is what rules
+ * that reading out today.
+ *
+ * Variant B is the block below: the same state, made recognisable as a prohibition. Nothing but this
+ * rule changes - the form builds one control either way - so switching is uncommenting the block, and
+ * switching back is commenting it out again.
+ */
+
+/*
+.aiSecurityView .cIconSelect .input-image i.fa-square-minus {
+	--fa: "\f410";
+	color: #a83200;
+}
+*/
 
 /* Whether an entry permits or forbids, in front of the entry's fields. */
 .aiSecurityEntryKind {

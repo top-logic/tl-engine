@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 
 import junit.framework.Test;
 
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -21,10 +22,12 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
+import com.top_logic.tl.ai.core.security.ToolAccessRule;
 import com.top_logic.tl.ai.core.security.layout.PolicyChecks;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BackgroundChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BaselineChoice;
+import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CapabilityState;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.RoleTemplate;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -340,8 +343,7 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		PolicyDraft draft = draft();
 		for (String roleName : draft.roleNames()) {
 			for (String group : draft.grantableGroups()) {
-				draft.setGranted(roleName, group, draft.isGranted(roleName, group));
-				draft.setDenied(roleName, group, draft.isDenied(roleName, group));
+				draft.setCapabilityState(roleName, group, draft.capabilityState(roleName, group));
 			}
 		}
 		draft.setBaselineChoice(draft.baselineChoice());
@@ -359,70 +361,142 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * A capability that is switched and switched back leaves the policy as it was.
+	 * A capability that is switched to any of the three states and back leaves the policy as it was.
 	 */
-	public void testTheCapabilityCheckboxesRoundTrip() {
+	public void testTheCapabilityStatesRoundTrip() {
 		for (String group : List.of(ToolGroups.DATA_WRITE, ToolGroups.EGRESS, ToolGroups.SCRIPT)) {
-			for (boolean granted : List.of(Boolean.TRUE, Boolean.FALSE)) {
+			for (CapabilityState state : CapabilityState.values()) {
 				PolicyDraft draft = draft();
-				boolean before = draft.isGranted(PARTNER, group);
+				CapabilityState before = draft.capabilityState(PARTNER, group);
 
-				draft.setGranted(PARTNER, group, granted);
-				assertEquals(group + " -> " + granted, granted, draft.isGranted(PARTNER, group));
+				draft.setCapabilityState(PARTNER, group, state);
+				assertEquals(group + " -> " + state, state, draft.capabilityState(PARTNER, group));
 
-				draft.setGranted(PARTNER, group, before);
+				draft.setCapabilityState(PARTNER, group, before);
 				assertEquals(group + ": back to " + before + " has to be the state we started from.",
-					before, draft.isGranted(PARTNER, group));
+					before, draft.capabilityState(PARTNER, group));
 				assertEquals(group + ": and no other capability may have moved.",
 					grantedGroups(draft().role(PARTNER)), grantedGroups(draft.role(PARTNER)));
+				assertEquals(group + ": nor may a prohibition have been left behind.",
+					deniedGroups(draft().role(PARTNER)), deniedGroups(draft.role(PARTNER)));
 			}
 		}
 	}
 
 	/**
-	 * A permission and a prohibition are two lists, and each checkbox writes its own.
+	 * What each of the three states writes, and that the walk through all of them leaves one entry.
 	 *
 	 * <p>
-	 * The two cannot both be set from the editor: a prohibition beats every permission, so a
-	 * permission next to it says nothing. Switching one on therefore switches the other off.
+	 * The mutual exclusion is structural here: one row writes one list, so a permission can never end
+	 * up next to a prohibition of the same capability, and the empty state is the absence of both.
 	 * </p>
 	 */
-	public void testWhatTheTwoCheckboxesWrite() {
+	public void testWhatTheThreeStatesWrite() {
 		PolicyDraft draft = draft();
-
-		draft.setGranted(PARTNER, ToolGroups.EGRESS, true);
 		RoleAccess role = draft.role(PARTNER);
+
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.GRANTED);
 		assertTrue("Granted is a permission naming the group.",
 			groupsOf(role.getGrants()).contains(ToolGroups.EGRESS));
 		assertFalse(groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
 
-		draft.setDenied(PARTNER, ToolGroups.EGRESS, true);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.DENIED);
 		assertFalse("A prohibition replaces the permission rather than sitting next to it.",
 			groupsOf(role.getGrants()).contains(ToolGroups.EGRESS));
 		assertTrue(groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
-		assertFalse("The permission checkbox has to follow.", draft.isGranted(PARTNER, ToolGroups.EGRESS));
 
-		draft.setDenied(PARTNER, ToolGroups.EGRESS, false);
-		assertFalse("Clearing the prohibition is the absence of both entries.",
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.ABSENT);
+		assertFalse("The empty state is the absence of both entries.",
 			groupsOf(role.getGrants()).contains(ToolGroups.EGRESS));
 		assertFalse(groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
+
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.DENIED);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.GRANTED);
+		assertEquals("Walking the cycle must leave one entry, not one per step.", 1,
+			role.getGrants().stream().filter(e -> ToolGroups.EGRESS.equals(e.getGroup())).count());
 	}
 
 	/**
-	 * The checkboxes and the entries naming single tools are two views of one list, not two layers.
+	 * A policy naming one capability in both lists is what it enforces, and survives until it is clicked.
 	 */
-	public void testTheCapabilityCheckboxLeavesToolEntriesAlone() {
+	public void testAPolicyThatGrantsAndForbidsTheSameThing() {
+		PolicyDraft draft = draft();
+		RoleAccess role = draft.role(PARTNER);
+		Grant permission = TypedConfiguration.newConfigItem(Grant.class);
+		permission.setGroup(ToolGroups.EGRESS);
+		role.getGrants().add(permission);
+		Grant prohibition = TypedConfiguration.newConfigItem(Grant.class);
+		prohibition.setGroup(ToolGroups.EGRESS);
+		role.getDenies().add(prohibition);
+
+		assertEquals("A prohibition is what such a policy enforces, so it is what the row shows.",
+			CapabilityState.DENIED, draft.capabilityState(PARTNER, ToolGroups.EGRESS));
+
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.DENIED);
+		assertTrue("Writing back the state that was read must not touch either list.",
+			groupsOf(role.getGrants()).contains(ToolGroups.EGRESS)
+				&& groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
+
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.GRANTED);
+		assertFalse("A deliberate click resolves it.",
+			groupsOf(role.getDenies()).contains(ToolGroups.EGRESS));
+		assertEquals("And leaves exactly one permission.", 1,
+			role.getGrants().stream().filter(e -> ToolGroups.EGRESS.equals(e.getGroup())).count());
+	}
+
+	/**
+	 * The tri-state rows and the entries naming single tools are two views of one list, not two layers.
+	 */
+	public void testTheCapabilityStateLeavesToolEntriesAlone() {
 		PolicyDraft draft = draft();
 		Grant entry = draft.addToolEntry(PARTNER, false);
 		entry.setTools(new ArrayList<>(List.of(CLASSIFIED_READ_SCRIPT_TOOL)));
 
-		draft.setDenied(PARTNER, ToolGroups.DATA_READ, true);
-		draft.setGranted(PARTNER, ToolGroups.DATA_READ, true);
+		for (CapabilityState state : List.of(CapabilityState.DENIED, CapabilityState.ABSENT,
+			CapabilityState.GRANTED)) {
+			draft.setCapabilityState(PARTNER, ToolGroups.DATA_READ, state);
 
-		assertEquals("Changing a capability must not touch an entry that names tools.", 1,
-			draft.toolEntries(PARTNER, false).size());
-		assertEquals(List.of(CLASSIFIED_READ_SCRIPT_TOOL),
-			draft.toolEntries(PARTNER, false).get(0).getTools());
+			assertEquals("Changing a capability must not touch an entry that names tools.", 1,
+				draft.toolEntries(PARTNER, false).size());
+			assertEquals(List.of(CLASSIFIED_READ_SCRIPT_TOOL),
+				draft.toolEntries(PARTNER, false).get(0).getTools());
+		}
+	}
+
+	/**
+	 * What the empty state of a row says about the rest of the policy.
+	 *
+	 * <p>
+	 * The question the empty state raises, and the reason it is not a prohibition: somebody else may
+	 * grant the capability anyway.
+	 * </p>
+	 */
+	public void testWhoElseGrantsWhatARoleSaysNothingAbout() {
+		PolicyDraft draft = draft();
+		String other = draft.roleNames().stream().filter(name -> !name.equals(PARTNER)).findFirst()
+			.orElseThrow();
+
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.ABSENT);
+		draft.setCapabilityState(other, ToolGroups.EGRESS, CapabilityState.ABSENT);
+		assertNull("Nobody grants it, so the row has nobody to point at.",
+			draft.grantedElsewhere(PARTNER, ToolGroups.EGRESS));
+
+		draft.setCapabilityState(other, ToolGroups.EGRESS, CapabilityState.GRANTED);
+		ToolAccessRule elsewhere = draft.grantedElsewhere(PARTNER, ToolGroups.EGRESS);
+		assertEquals("The other role grants it, and the row names it.", ToolAccessRule.Kind.ROLE_GRANT,
+			elsewhere.kind());
+		assertEquals(other, elsewhere.roleName());
+
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.GRANTED);
+		assertNotNull("The role's own state never answers this question.",
+			draft.grantedElsewhere(PARTNER, ToolGroups.EGRESS));
+		draft.setCapabilityState(other, ToolGroups.EGRESS, CapabilityState.ABSENT);
+		assertNull("Only the others do.", draft.grantedElsewhere(PARTNER, ToolGroups.EGRESS));
+
+		draft.setBaselineGroups(List.of(ToolGroups.EGRESS));
+		assertEquals("The basic permissions answer it too, and are told apart from a role.",
+			ToolAccessRule.Kind.BASELINE,
+			draft.grantedElsewhere(PARTNER, ToolGroups.EGRESS).kind());
 	}
 
 	/** An entry names a group or tools, and switching between the two leaves exactly one of them. */
@@ -479,7 +553,7 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	/** Adding the capability to send data outward next to a read capability is worth a warning. */
 	public void testTheEgressWarningAppearsWhenItIsEarned() {
 		PolicyDraft draft = draft();
-		draft.setGranted(PARTNER, ToolGroups.EGRESS, true);
+		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CapabilityState.GRANTED);
 
 		assertTrue("Reading data and sending it outward is the combination worth one sentence.",
 			keys(PolicyChecks.warnings(draft.config(), Set.of(PARTNER)))
@@ -553,6 +627,11 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	/** The capability groups the given role entry grants. */
 	private static Set<String> grantedGroups(RoleAccess role) {
 		return new java.util.TreeSet<>(groupsOf(role.getGrants()));
+	}
+
+	/** The capability groups the given role entry forbids. */
+	private static Set<String> deniedGroups(RoleAccess role) {
+		return new java.util.TreeSet<>(groupsOf(role.getDenies()));
 	}
 
 	/** The capability groups the given entries name, in the order they are stored. */

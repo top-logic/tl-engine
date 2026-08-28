@@ -164,25 +164,35 @@ whole policy fits on one screen no matter how many roles it configures.
 
 | You decide | The tab shows | It stores |
 |---|---|---|
-| may this role use this capability | one checkbox per capability, in the role's own section | a `<grant group="...">`, or no entry |
-| must this role never use it | a checkbox in the role's collapsed **Verbote** section | a `<deny group="...">` |
+| what this role says about a capability | one tri-state row per capability, in the role's own section | no entry, a `<grant group="...">`, or a `<deny group="...">` |
 | a single tool rather than a group | an entry in **Einzelne Tools** with the choice **ganze Gruppe / einzelne Tools** | `<grant group="...">` or `<grant tools="...">`, never both |
 | what everybody gets | **Standard: Modell und Daten lesen / Nichts / Eigene Liste** | no `<baseline>`, `<baseline/>`, or `<baseline>` with entries |
 | what an unattended run may reach | **Nicht festgelegt / Alles, was die Rollen erlauben / Eigene Liste** | no element, `all="true"`, or entries |
 | which tools are in which group | **Gruppen-Zuordnungen**, one row per group | `<tool-groups>` |
 
-**Granted and forbidden are two lists, and the tab shows two.** A capability a role does not mention
-is not the same as one it forbids: another role of the same account, or the basic permissions, can
-still grant an unmentioned capability, while a prohibition beats both. The permission is therefore an
-ordinary checkbox in the role's section, and the prohibition is a checkbox in a separate section that
-starts collapsed and says when it is the right answer. Switching one on switches the other off,
-because a permission next to a prohibition of the same capability says nothing.
+**A capability is one row with three states**, which are exactly the three things the stored policy
+can say about it. Empty is *this role says nothing*: it writes no entry, and another role of the same
+account or the basic permissions may still grant the capability. Ticked is *granted*, a
+`<grant group="...">`. The third state is *forbidden*, a `<deny group="...">`, and a prohibition beats
+every permission of every other role, the basic permissions, and even the two implicitly granted
+capabilities. Clicking a row cycles through all three, and the row can only ever be in one of them, so
+a permission can never end up next to a prohibition of the same capability. The control is the
+framework's own tri-state, the same one the rest of the administration uses for a value that may be
+unset.
 
-`interaction` and `introspection` appear as ticked, unchangeable checkboxes: they cannot be withheld
-by omission, so there is nothing to decide. A capability the basic permissions already grant everyone
-says "für alle gewährt (Grundberechtigung)" next to its checkbox, and the checkbox stays available,
-because a `<deny>` against the baseline has to remain expressible. Adding a role offers the templates
-*Nur-Lese-Assistent*, *Sachbearbeiter* and *Entwickler*, which only prefill the checkboxes.
+The row says what its state means for the rest of the policy. Forbidden reads "Verboten. Schlägt jede
+andere Rolle und die Grundberechtigung." Empty reads "wird von *rolle* gewährt", "für alle gewährt
+(Grundberechtigung)", or "nirgends gewährt", computed from the draft you are editing, so it follows
+what you change in another section before you save. Granted says "für alle gewährt
+(Grundberechtigung)" where the basic permissions already cover it, which is how you see that a
+permission is redundant.
+
+A policy written by hand that names the same capability in both lists reads as forbidden, because that
+is what it enforces, and it is left exactly as it is until you click that row.
+
+`interaction` and `introspection` appear as ticked, unchangeable rows: they cannot be withheld by
+omission, so there is nothing to decide. Adding a role offers the templates *Nur-Lese-Assistent*,
+*Sachbearbeiter* and *Entwickler*, which only prefill the granted rows.
 
 Above the sections, the tab lists what this policy does that its author probably did not mean - one
 sentence per combination, computed from the whole policy: `script` without `data.write` (and with

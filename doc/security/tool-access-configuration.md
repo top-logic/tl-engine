@@ -178,7 +178,9 @@ every permission of every other role, the basic permissions, and even the two im
 capabilities. Clicking a row cycles through all three, and the row can only ever be in one of them, so
 a permission can never end up next to a prohibition of the same capability. The control is the
 framework's own tri-state, the same one the rest of the administration uses for a value that may be
-unset.
+unset; only its third state is restyled, to a crossed box in the tab's warning colour, so that the
+loudest answer does not look like "nothing chosen". Each role's section says the three meanings once,
+above the rows.
 
 The row says what its state means for the rest of the policy. Forbidden reads "Verboten. Schlägt jede
 andere Rolle und die Grundberechtigung." Empty reads "wird von *rolle* gewährt", "für alle gewährt

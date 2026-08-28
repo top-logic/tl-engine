@@ -122,26 +122,28 @@
 	font-size: 0.9em;
 }
 
-/* --- the prohibition state of a capability, variant A and variant B ------- */
+/* --- the prohibition state of a capability ------------------------------- */
 
 /*
  * A capability is the framework's own tri-state control: an empty square for "this role says nothing",
- * a ticked one for granted, and a square with a minus for forbidden. Variant A is that control
- * unchanged, which is what ships. Its third state is visually neutral, and "partly selected" is the
- * misreading it invites; the row's own note ("Verboten. Schlägt jede andere Rolle ...") is what rules
- * that reading out today.
+ * a ticked one for granted, and - through the rule below - a crossed square in the tab's warning
+ * colour for forbidden. The control's own third state is a square with a minus, which is visually
+ * neutral and invites "partly selected" as a misreading; a prohibition is the loudest answer this tab
+ * has, the only one that overrides every other role and the basic permissions, so it is told apart at
+ * a glance rather than by prose next to the box.
  *
- * Variant B is the block below: the same state, made recognisable as a prohibition. Nothing but this
- * rule changes - the form builds one control either way - so switching is uncommenting the block, and
- * switching back is commenting it out again.
+ * The rule only redirects the glyph the theme already renders - the form builds one control either
+ * way, so this is not a second code path. "\f410" is fa-rectangle-xmark, which the shipped Font
+ * Awesome *regular* face has; fa-square-xmark ("\f2d3") is not in that face and renders a
+ * missing-glyph box. The colour is the one span.aiSecurityWarning above already uses, so the tab gains
+ * no new colour. A theme that gives Icons.TRISTATE_FALSE a different icon leaves this rule matching
+ * nothing, and the third state silently falls back to that theme's own glyph; that is accepted on
+ * purpose, because the alternative is a control of our own.
  */
-
-/*
 .aiSecurityView .cIconSelect .input-image i.fa-square-minus {
 	--fa: "\f410";
 	color: #a83200;
 }
-*/
 
 /* Whether an entry permits or forbids, in front of the entry's fields. */
 .aiSecurityEntryKind {

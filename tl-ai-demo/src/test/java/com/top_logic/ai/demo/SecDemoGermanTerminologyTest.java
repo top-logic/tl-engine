@@ -23,6 +23,9 @@ import java.util.regex.Pattern;
 
 import junit.framework.Test;
 
+import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.ModuleTestSetup;
+
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.io.BinaryContent;
 
@@ -42,7 +45,7 @@ import com.top_logic.basic.io.BinaryContent;
  * would look for it: every German resource of tl-ai, not only the ones a particular view happens to
  * render.
  */
-public class SecDemoGermanTerminologyTest extends SecDemoPersonaTest {
+public class SecDemoGermanTerminologyTest extends BasicTestCase {
 
 	/** The word the German user interface uses instead. */
 	private static final String REPLACEMENT = "Tool";
@@ -175,10 +178,15 @@ public class SecDemoGermanTerminologyTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * Creates the test suite.
+	 * All this test needs is the {@link FileManager} over the web application.
+	 *
+	 * <p>
+	 * No knowledge base, no accounts, no tool access policy: the check reads resource files. Booting
+	 * the security test bed for it would cost a full application start-up and prove nothing more.
+	 * </p>
 	 */
 	public static Test suite() {
-		return suite(SecDemoGermanTerminologyTest.class);
+		return ModuleTestSetup.setupModule(SecDemoGermanTerminologyTest.class);
 	}
 
 }

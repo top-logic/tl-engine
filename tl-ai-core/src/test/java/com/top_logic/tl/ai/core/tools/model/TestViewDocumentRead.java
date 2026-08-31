@@ -70,9 +70,15 @@ public class TestViewDocumentRead extends TestCase {
 		}
 	}
 
-	/** The production bound is the largest payload any perception path could deliver. */
+	/**
+	 * The production bound is the largest payload any perception path could deliver: a PDF, whose own
+	 * cap is stated on the base64-encoded size and must therefore be the encoding of this bound - any
+	 * other relation would either refuse a document that could have been shown, or read one that the
+	 * PDF path then refuses.
+	 */
 	public void testTheBoundMatchesWhatCanBeDelivered() {
-		assertEquals(BinaryPerception.MAX_PDF_BYTES, BinaryPerception.MAX_SOURCE_BYTES);
+		assertEquals(BinaryPerception.MAX_PDF_BYTES,
+			BinaryPerception.base64Length(BinaryPerception.MAX_SOURCE_BYTES));
 	}
 
 	private static byte[] readOf(int sourceBytes, int maxBytes) throws IOException {

@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.top_logic.layout.configedit.ConfigPendingEntries.PendingEntry;
 
@@ -42,6 +43,8 @@ import com.top_logic.basic.config.PropertyDescriptor;
  */
 public final class ConfigFieldIndex {
 
+	private final List<Consumer<ConfigFieldModel>> _observers = new ArrayList<>();
+
 	private final Map<ConfigurationItem, Map<PropertyDescriptor, ConfigFieldModel>> _fields =
 		new IdentityHashMap<>();
 
@@ -69,6 +72,9 @@ public final class ConfigFieldIndex {
 	 */
 	public void register(ConfigurationItem item, PropertyDescriptor property, ConfigFieldModel model) {
 		_fields.computeIfAbsent(item, any -> new IdentityHashMap<>()).put(property, model);
+		for (Consumer<ConfigFieldModel> observer : _observers) {
+			observer.accept(model);
+		}
 	}
 
 	/**
@@ -80,6 +86,28 @@ public final class ConfigFieldIndex {
 	 * @param property
 	 *        The property to look up.
 	 */
+	/**
+	 * Watches every field the editor builds, now and on every later rebuild.
+	 *
+	 * <p>
+	 * The way to learn that something in the edited configuration changed. A
+	 * {@link ConfigurationItem} offers listeners per property only, so there is no asking a whole
+	 * tree; but every change the user can make goes through a field the editor built and reported
+	 * here, and every structural change - an element added, removed or reordered - rebuilds the
+	 * affected editor and reports its fields afresh. Watching registration therefore catches both,
+	 * without a listener tree of its own to keep in step.
+	 * </p>
+	 *
+	 * <p>
+	 * The observer is called for each field as it is registered, not for those already in the
+	 * index: it is meant to attach something to each field, and a caller that installs it before
+	 * the editor is built sees every one.
+	 * </p>
+	 */
+	public void observeFields(Consumer<ConfigFieldModel> observer) {
+		_observers.add(observer);
+	}
+
 	public ConfigFieldModel lookup(ConfigurationItem item, PropertyDescriptor property) {
 		Map<PropertyDescriptor, ConfigFieldModel> byProperty = _fields.get(item);
 		return byProperty == null ? null : byProperty.get(property);

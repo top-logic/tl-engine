@@ -55,10 +55,11 @@ public class NameBasedInstanceResolver implements InstanceResolver {
 		TLClass type = MetaElementUtil.getGlobalType(parts[0], parts[1]);
 
 		// Collect ALL matches first and delete them afterwards. Deleting every same-name instance
-		// (not just the first) keeps repeated imports from letting duplicates accumulate - there is
-		// no database-level uniqueness on the name, the UniqueNameConstraint is a UI-only form check.
-		// Deleting while iterating the live instance collection could raise a
-		// ConcurrentModificationException, hence the two-step approach.
+		// (not just the first) keeps repeated imports from letting duplicates accumulate. The
+		// resolver is applied to whatever type it is configured for, and most types have no
+		// persistence-level uniqueness on the name (Agent and Skill do since issue #172, but that
+		// index is not part of this resolver's contract). Deleting while iterating the live instance
+		// collection could raise a ConcurrentModificationException, hence the two-step approach.
 		List<TLObject> matches = new ArrayList<>();
 		for (TLObject instance : MetaElementUtil.getAllInstancesOf(type, TLObject.class)) {
 			// An earlier resolve() call in the same import transaction may already have deleted an

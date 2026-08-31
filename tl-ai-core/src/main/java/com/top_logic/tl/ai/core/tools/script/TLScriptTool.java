@@ -11,7 +11,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor.ExecutionResult;

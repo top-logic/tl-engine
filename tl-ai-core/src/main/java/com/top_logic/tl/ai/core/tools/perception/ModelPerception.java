@@ -56,22 +56,24 @@ public record ModelPerception(String model, ModelInfo modelInfo) {
 	 * Whether the model can perceive the given modality.
 	 *
 	 * <p>
-	 * Prefers the catalogue's declared {@link ModelInfo.ModelModalities#input() input modalities}.
-	 * When a catalogue entry exists but declares no modalities, falls back to the coarser
-	 * {@link ModelInfo.ModelCapabilities#attachment() attachment} flag, which says that the model
-	 * takes files at all but not which kinds.
+	 * Prefers the catalogue's declared
+	 * {@link com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelModalities#input() input
+	 * modalities}. When a catalogue entry exists but declares no modalities, falls back to the
+	 * coarser
+	 * {@link com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelCapabilities#attachment()
+	 * attachment} flag, which says that the model takes files at all but not which kinds.
 	 * </p>
 	 *
 	 * <p>
-	 * <b>An input list without {@code pdf} is not evidence against PDF.</b> The catalogue's lists are
-	 * demonstrably incomplete for that one modality - in the shipped snapshot {@code gpt-4o} lists
-	 * {@code pdf} while {@code gpt-4o-2024-08-06}, the dated pin of the same model, does not, and most
-	 * of the GPT-5 family lists only {@code text} and {@code image} although the API takes file inputs.
-	 * Concluding {@code UNSUPPORTED} from such a list disables the PDF path and tells the model its
-	 * model cannot read PDFs, which is worse than either alternative: it is wrong, and it is
-	 * unactionable. So PDF falls back to the {@code attachment} flag, exactly as a missing modality
-	 * list does. An input list that omits {@code image} is taken at face value - that one the catalogue
-	 * gets right, since a text-only model is exactly what it is describing.
+	 * <b>An input list without {@code pdf} is not evidence against PDF.</b> The catalogue's lists
+	 * are demonstrably incomplete for that one modality - in the shipped snapshot {@code gpt-4o}
+	 * lists {@code pdf} while {@code gpt-4o-2024-08-06}, the dated pin of the same model, does not,
+	 * and most of the GPT-5 family lists only {@code text} and {@code image} although the API takes
+	 * file inputs. Concluding {@code UNSUPPORTED} from such a list disables the PDF path and tells
+	 * the model its model cannot read PDFs, which is worse than either alternative: it is wrong,
+	 * and it is unactionable. So PDF falls back to the {@code attachment} flag, exactly as a
+	 * missing modality list does. An input list that omits {@code image} is taken at face value -
+	 * that one the catalogue gets right, since a text-only model is exactly what it is describing.
 	 * </p>
 	 */
 	public PerceptionSupport support(Modality modality) {

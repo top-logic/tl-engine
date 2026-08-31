@@ -66,7 +66,6 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * </p>
  *
  * @see ListToolsTool
- * @see tl-ai-demo/doc/secdemo/testbed.md
  */
 public class SecDemoListToolsTest extends SecDemoPersonaTest {
 

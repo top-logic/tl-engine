@@ -601,16 +601,18 @@ public class AgentLoop {
 	 * Rolls the whole turn back and corrects the picture the model was left with.
 	 *
 	 * <p>
-	 * The one rollback route for "everything this turn wrote is gone": both a failed tool call and a
-	 * {@link com.top_logic.tl.ai.core.security.PreCommitGuard} violation go through here, so
+	 * The one rollback route for "everything this turn wrote is gone": both a failed tool call and
+	 * a {@link com.top_logic.tl.ai.core.security.PreCommitGuard} violation go through here, so
 	 * all-or-nothing means the same thing in both cases and the model is told in the same shape.
 	 * </p>
 	 *
 	 * @param reason
-	 *        The reason for the {@link AgentEvent.TransactionRolledBack} event.
+	 *        The reason for the
+	 *        {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.TransactionRolledBack} event.
 	 * @param notice
-	 *        What to tell the model, without the {@code [Framework notice]} prefix. Only added when a
-	 *        transaction was actually active - with nothing rolled back there is nothing to correct.
+	 *        What to tell the model, without the {@code [Framework notice]} prefix. Only added when
+	 *        a transaction was actually active - with nothing rolled back there is nothing to
+	 *        correct.
 	 */
 	private void rollbackTurn(ToolContext context, Conversation conversation, AgentEventListener listener,
 			String runId, int turn, String reason, String notice) {

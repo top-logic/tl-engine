@@ -221,10 +221,11 @@ public class TestChatCompletionsStreamContract extends AbstractProviderStreamTes
 	}
 
 	/**
-	 * Some OpenAI-compatible servers (and some local servers) end the stream after the final
-	 * chunk without the trailing {@code data: [DONE]} sentinel. As long as the model signalled a
+	 * Some OpenAI-compatible servers (and some local servers) end the stream after the final chunk
+	 * without the trailing {@code data: [DONE]} sentinel. As long as the model signalled a
 	 * {@code finish_reason}, the response is whole and must still yield a
-	 * {@link StreamEvent.MessageComplete} rather than failing the run.
+	 * {@link com.top_logic.tl.ai.core.provider.StreamEvent.MessageComplete} rather than failing the
+	 * run.
 	 */
 	public void testMissingDoneSentinelStillCompletes() throws Exception {
 		String sse = ""
@@ -249,9 +250,10 @@ public class TestChatCompletionsStreamContract extends AbstractProviderStreamTes
 
 	/**
 	 * When the stream is cut mid-response — no {@code finish_reason} and no {@code [DONE]} — the
-	 * accumulated content may be truncated, so the parser must surface a {@link StreamEvent.Error}
-	 * (which the loop turns into a clear provider error) instead of an opaque
-	 * "No MessageComplete event received" or a partial message delivered as complete.
+	 * accumulated content may be truncated, so the parser must surface a
+	 * {@link com.top_logic.tl.ai.core.provider.StreamEvent.Error} (which the loop turns into a
+	 * clear provider error) instead of an opaque "No MessageComplete event received" or a partial
+	 * message delivered as complete.
 	 */
 	public void testPrematureStreamEndReportsError() throws Exception {
 		String sse = ""

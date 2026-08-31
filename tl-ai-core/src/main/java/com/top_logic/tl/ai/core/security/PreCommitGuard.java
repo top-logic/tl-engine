@@ -51,9 +51,9 @@ public interface PreCommitGuard {
 	 * Accepts every change.
 	 *
 	 * <p>
-	 * <b>A test seam.</b> {@link #forRun(SecurityContext)} never answers with it: the guard runs for
-	 * every agent turn that opened a transaction, whatever the run is. A test that needs a turn to
-	 * commit without a booted {@code SecurityConfigurationService} uses this.
+	 * <b>A test seam.</b> {@link #forRun()} never answers with it: the guard runs for every agent
+	 * turn that opened a transaction, whatever the run is. A test that needs a turn to commit
+	 * without a booted {@code SecurityConfigurationService} uses this.
 	 * </p>
 	 */
 	PreCommitGuard PERMISSIVE = new PreCommitGuard() {

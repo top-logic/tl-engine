@@ -31,10 +31,9 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * </p>
  *
  * <p>
- * The counterpart of {@link SecDemoModelSecurityTest}, which covers the model layer (L2). The two are
- * independent: a role can be granted a tool and still be denied every object that tool touches, and
- * the other way round - {@link #testAuthorHoldsToolsAndNoDataRights()} is that contrast made
- * explicit.
+ * The counterpart of {@link SecDemoModelSecurityTest}, which covers the model layer (L2). The two
+ * are independent: a role can be granted a tool and still be denied every object that tool touches,
+ * and the other way round.
  * </p>
  *
  * @see SecDemoPersonaTest

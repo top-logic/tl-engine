@@ -24,7 +24,10 @@ public class TestBinaryPerception extends TestCase {
 
 	private static final byte[] PDF_BYTES = "%PDF-1.7\nfake pdf body".getBytes(StandardCharsets.UTF_8);
 
-	/** An image is downscaled and attached as base64 {@link ToolContent.Image}. */
+	/**
+	 * An image is downscaled and attached as base64
+	 * {@link com.top_logic.tl.ai.tool.api.ToolContent.Image}.
+	 */
 	public void testImageBecomesImageContent() throws IOException {
 		byte[] png = TestImageDownscaler.png(2000, 1000);
 
@@ -40,7 +43,7 @@ public class TestBinaryPerception extends TestCase {
 		assertTrue("The result must report the sent resolution.", plan.message().contains("1568x784"));
 	}
 
-	/** A PDF is attached as base64 {@link ToolContent.Document}. */
+	/** A PDF is attached as base64 {@link com.top_logic.tl.ai.tool.api.ToolContent.Document}. */
 	public void testPdfBecomesPdfContent() {
 		BinaryPerception.Plan plan =
 			BinaryPerception.plan("invoice.pdf", PDF_BYTES, "application/pdf", vision());

@@ -224,20 +224,21 @@ final class BrowserSession {
 	 * late-injected content (cookie-consent banners, lazy widgets) time to appear in the DOM before
 	 * the snapshot. It resolves when the DOM has been <em>quiet</em> - no {@code childList}/subtree
 	 * mutation for {@link #DOM_QUIET_DEBOUNCE_MILLIS} - or when the hard cap (passed in as
-	 * milliseconds) elapses, whichever comes first. A {@link MutationObserver} on {@code document}
-	 * drives the quiet detection; a single {@code setTimeout} enforces the cap so a page that never
-	 * stops mutating (constant animation/polling) still resolves promptly. A still page resolves
-	 * after just the debounce window, so fast pages are barely slowed. The cap is passed as a string
-	 * because Playwright's Java argument serializer rejects {@code Long} (mirrors {@link #CAPTURE_SCRIPT}).
+	 * milliseconds) elapses, whichever comes first. A Mutation Observer on {@code document} drives
+	 * the quiet detection; a single {@code setTimeout} enforces the cap so a page that never stops
+	 * mutating (constant animation/polling) still resolves promptly. A still page resolves after
+	 * just the debounce window, so fast pages are barely slowed. The cap is passed as a string
+	 * because Playwright's Java argument serializer rejects {@code Long} (mirrors
+	 * {@link #CAPTURE_SCRIPT}).
 	 *
 	 * <p>
 	 * Once the DOM is quiet it additionally waits out any <em>in-flight, finite</em> CSS
-	 * animation/transition, still inside the same cap. A dismissed consent banner is a typical case:
-	 * accepting it starts a fade/flip-out that mutates no DOM at all, so the quiet wait alone resolves
-	 * while the banner is still fully laid out at a fractional opacity - and it would then be captured
-	 * as visible content the user has already dismissed. Only animations whose iteration count is
-	 * finite are awaited, so an endlessly repeating spinner or carousel (which would never finish)
-	 * does not push every page load out to the cap.
+	 * animation/transition, still inside the same cap. A dismissed consent banner is a typical
+	 * case: accepting it starts a fade/flip-out that mutates no DOM at all, so the quiet wait alone
+	 * resolves while the banner is still fully laid out at a fractional opacity - and it would then
+	 * be captured as visible content the user has already dismissed. Only animations whose
+	 * iteration count is finite are awaited, so an endlessly repeating spinner or carousel (which
+	 * would never finish) does not push every page load out to the cap.
 	 * </p>
 	 */
 	private static final String DOM_SETTLE_SCRIPT =
@@ -736,57 +737,60 @@ final class BrowserSession {
 	}
 
 	/**
-	 * Builds the Chromium {@link BrowserType.LaunchOptions} from a session's launch flags. Extracted
-	 * as a package-visible, side-effect-free static seam so the launch decision (which build,
-	 * headless-or-not, which args) can be asserted in a unit test without actually launching a
-	 * browser.
+	 * Builds the Chromium {@link com.microsoft.playwright.BrowserType.LaunchOptions} from a
+	 * session's launch flags. Extracted as a package-visible, side-effect-free static seam so the
+	 * launch decision (which build, headless-or-not, which args) can be asserted in a unit test
+	 * without actually launching a browser.
 	 *
 	 * <p>
 	 * <b>Build selection.</b> Every launch selects the <b>full</b> Chromium distribution via
-	 * {@link BrowserType.LaunchOptions#setChannel(String) channel "chromium"} - see
-	 * {@link #FULL_CHROMIUM_CHANNEL} for why that is not optional (the WebRTC switch below does not
-	 * exist in {@code chrome-headless-shell}) and for the deployment prerequisite it carries. The
-	 * launch stays windowless: for the non-headed case {@code headless} remains {@code true} (channel
-	 * "chromium" + headless = new headless, no visible window); the channel setting is orthogonal to
-	 * {@code headless} and composes cleanly with the headed launch toggle ({@code headed=true}
-	 * launches the same full build with a visible window). Picking the full build also happens to be
-	 * what bot-detection evasion needs anyway, since the headless shell is itself a detectable
-	 * fingerprint that some bot walls / consent managers suppress content for even when the
-	 * user-agent and {@code navigator.webdriver} are already masked; evasion adds the UA, locale,
-	 * stealth init-script and {@code --disable-blink-features=AutomationControlled} on top.
+	 * {@link com.microsoft.playwright.BrowserType.LaunchOptions#setChannel(String) channel
+	 * "chromium"} - see {@link #FULL_CHROMIUM_CHANNEL} for why that is not optional (the WebRTC
+	 * switch below does not exist in {@code chrome-headless-shell}) and for the deployment
+	 * prerequisite it carries. The launch stays windowless: for the non-headed case
+	 * {@code headless} remains {@code true} (channel "chromium" + headless = new headless, no
+	 * visible window); the channel setting is orthogonal to {@code headless} and composes cleanly
+	 * with the headed launch toggle ({@code headed=true} launches the same full build with a
+	 * visible window). Picking the full build also happens to be what bot-detection evasion needs
+	 * anyway, since the headless shell is itself a detectable fingerprint that some bot walls /
+	 * consent managers suppress content for even when the user-agent and
+	 * {@code navigator.webdriver} are already masked; evasion adds the UA, locale, stealth
+	 * init-script and {@code --disable-blink-features=AutomationControlled} on top.
 	 * </p>
 	 *
 	 * <p>
-	 * <b>Sandbox.</b> {@code --no-sandbox} is added <em>only</em> when the caller says the sandbox has
-	 * to be given up. Chromium's OS-level sandbox is the boundary between a renderer running
+	 * <b>Sandbox.</b> {@code --no-sandbox} is added <em>only</em> when the caller says the sandbox
+	 * has to be given up. Chromium's OS-level sandbox is the boundary between a renderer running
 	 * attacker-controlled page JavaScript and the application host, so passing the switch
 	 * unconditionally - which this method used to do, for the sake of one container image - removed
 	 * that boundary on every host the application runs on. The decision belongs to
 	 * {@code BrowserToolsService.isSandboxDisabled(SandboxMode)}, which keeps the sandbox on unless
-	 * this JVM is in a container (or an operator has forced the matter); it is passed in rather than
-	 * taken here so this seam stays side-effect-free and both branches can be asserted in a test.
+	 * this JVM is in a container (or an operator has forced the matter); it is passed in rather
+	 * than taken here so this seam stays side-effect-free and both branches can be asserted in a
+	 * test.
 	 * </p>
 	 *
 	 * <p>
-	 * <b>WebRTC egress.</b> Every launch also carries
-	 * {@link #DISABLE_NON_PROXIED_UDP_SWITCH}, which stops WebRTC from sending UDP. This is a
-	 * security control, not a tuning knob: WebRTC ignores {@code --proxy-server}, so it is the one
-	 * egress path the {@link FilteringProxy} below cannot see, and leaving it on would let a page
-	 * reach private addresses over UDP regardless of the SSRF policy.
+	 * <b>WebRTC egress.</b> Every launch also carries {@link #DISABLE_NON_PROXIED_UDP_SWITCH},
+	 * which stops WebRTC from sending UDP. This is a security control, not a tuning knob: WebRTC
+	 * ignores {@code --proxy-server}, so it is the one egress path the {@link FilteringProxy} below
+	 * cannot see, and leaving it on would let a page reach private addresses over UDP regardless of
+	 * the SSRF policy.
 	 * </p>
 	 *
 	 * <p>
 	 * <b>Proxy pinning.</b> When a {@code proxyServer} is given it is set as the launch-level
-	 * {@link BrowserType.LaunchOptions#setProxy(com.microsoft.playwright.options.Proxy) proxy}, which
-	 * Playwright turns into Chromium's {@code --proxy-server} switch, so <em>every</em> connection the
-	 * browser process makes goes through the {@link FilteringProxy}. Launch level rather than
-	 * per-context because the SSRF and domain policy is service-wide configuration, and because
-	 * Chromium's per-context proxy support requires the browser to be launched with a placeholder
-	 * proxy anyway - each session has its own browser process, so launch level is per-session in
-	 * practice. Playwright additionally passes {@code --proxy-bypass-list=<-loopback>}, which
-	 * <em>disables</em> Chromium's built-in "never proxy localhost" rule; without that a loopback
-	 * target would evade the proxy entirely, so it is load-bearing here rather than incidental. The
-	 * proxy setting is orthogonal to both the headless toggle and the channel/evasion selection.
+	 * {@link com.microsoft.playwright.BrowserType.LaunchOptions#setProxy(com.microsoft.playwright.options.Proxy)
+	 * proxy}, which Playwright turns into Chromium's {@code --proxy-server} switch, so
+	 * <em>every</em> connection the browser process makes goes through the {@link FilteringProxy}.
+	 * Launch level rather than per-context because the SSRF and domain policy is service-wide
+	 * configuration, and because Chromium's per-context proxy support requires the browser to be
+	 * launched with a placeholder proxy anyway - each session has its own browser process, so
+	 * launch level is per-session in practice. Playwright additionally passes
+	 * {@code --proxy-bypass-list=<-loopback>}, which <em>disables</em> Chromium's built-in "never
+	 * proxy localhost" rule; without that a loopback target would evade the proxy entirely, so it
+	 * is load-bearing here rather than incidental. The proxy setting is orthogonal to both the
+	 * headless toggle and the channel/evasion selection.
 	 * </p>
 	 *
 	 * @param headed
@@ -795,8 +799,8 @@ final class BrowserSession {
 	 *        Whether bot-detection evasion is enabled (adds its blink-feature switch; the full
 	 *        Chromium build it also relies on is selected either way).
 	 * @param proxyServer
-	 *        The filtering forward proxy to pin the browser to (e.g. {@code http://127.0.0.1:41234}),
-	 *        or {@code null} to leave the browser unproxied.
+	 *        The filtering forward proxy to pin the browser to (e.g.
+	 *        {@code http://127.0.0.1:41234}), or {@code null} to leave the browser unproxied.
 	 * @param sandboxDisabled
 	 *        Whether to add {@code --no-sandbox}; see the paragraph above. Resolved by
 	 *        {@code BrowserToolsService.isSandboxDisabled(SandboxMode)}, never decided here.

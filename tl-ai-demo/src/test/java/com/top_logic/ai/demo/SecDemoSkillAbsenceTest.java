@@ -54,7 +54,6 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * answered by the same object the chat answers them with.
  * </p>
  *
- * @see tl-ai-demo/doc/secdemo/testbed.md
  */
 public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 

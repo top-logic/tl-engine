@@ -14,21 +14,21 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.SandboxMode;
 
 /**
- * Pure unit tests for {@link BrowserSession#buildLaunchOptions(boolean, boolean, String, boolean)} -
- * the launch-option seam that decides which Chromium build is launched, whether it keeps its
+ * Pure unit tests for {@link BrowserSession#buildLaunchOptions(boolean, boolean, String, boolean)}
+ * - the launch-option seam that decides which Chromium build is launched, whether it keeps its
  * OS-level sandbox, and whether it is pinned to the filtering forward proxy. No browser is started:
- * the tests only inspect the constructed {@link BrowserType.LaunchOptions} POJO, so they run in the
- * ordinary (ungated) test suite.
+ * the tests only inspect the constructed {@link com.microsoft.playwright.BrowserType.LaunchOptions}
+ * POJO, so they run in the ordinary (ungated) test suite.
  *
  * <p>
  * The contract: <b>every</b> launch disables WebRTC's UDP egress
  * ({@code --webrtc-ip-handling-policy=disable_non_proxied_udp}) and selects the full Chromium build
- * via {@link BrowserType.LaunchOptions#setChannel(String) channel "chromium"} - the two go together,
- * because the switch does not exist in {@code chrome-headless-shell}, which is what a headless launch
- * would otherwise default to. {@code --no-sandbox} is added <b>only</b> when the caller asks for it.
- * Bot-detection evasion adds only its own switch on top. A given proxy server is set as the
- * launch-level proxy (Chromium's {@code --proxy-server}). The evasion, headed, sandbox and proxy
- * settings remain orthogonal.
+ * via {@link com.microsoft.playwright.BrowserType.LaunchOptions#setChannel(String) channel
+ * "chromium"} - the two go together, because the switch does not exist in
+ * {@code chrome-headless-shell}, which is what a headless launch would otherwise default to.
+ * {@code --no-sandbox} is added <b>only</b> when the caller asks for it. Bot-detection evasion adds
+ * only its own switch on top. A given proxy server is set as the launch-level proxy (Chromium's
+ * {@code --proxy-server}). The evasion, headed, sandbox and proxy settings remain orthogonal.
  * </p>
  */
 public class TestBrowserLaunchOptions extends TestCase {

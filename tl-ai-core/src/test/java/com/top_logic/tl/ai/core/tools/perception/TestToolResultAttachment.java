@@ -41,8 +41,9 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * End-to-end test of the {@code viewDocument} delivery path: stored bytes become a downscaled image
- * inside the tool's own {@link ToolResult}, that result becomes a {@link ToolState.Completed}, and
- * every provider request builder puts it on the wire the way its API accepts it.
+ * inside the tool's own {@link ToolResult}, that result becomes a
+ * {@link com.top_logic.tl.ai.core.message.ToolState.Completed}, and every provider request builder
+ * puts it on the wire the way its API accepts it.
  *
  * <p>
  * Covers everything except knowledge-base access, which the tool performs before this path starts.

@@ -35,7 +35,6 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * passed vacuously then.
  * </p>
  *
- * @see doc/security/role-model-worked-example.md
  */
 public class SecDemoRoleRuleTest extends SecDemoPersonaTest {
 

@@ -17,8 +17,8 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
-import com.top_logic.tl.ai.core.provider.ErrorClassifier;
 import com.top_logic.tl.ai.core.provider.ContentBlockAccumulator;
+import com.top_logic.tl.ai.core.provider.ErrorClassifier;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.SSEReader;
@@ -282,7 +282,10 @@ public class OpenAIResponsesProvider extends AbstractStreamingProvider {
 		};
 	}
 
-	/** Maps OpenAI {@code error.code} strings to a {@link ProviderException.Kind}. */
+	/**
+	 * Maps OpenAI {@code error.code} strings to a
+	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind}.
+	 */
 	private static final Map<String, ProviderException.Kind> ERROR_CODE_MAP = Map.of(
 		"context_length_exceeded", ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED,
 		"rate_limit_exceeded", ProviderException.Kind.RATE_LIMITED,

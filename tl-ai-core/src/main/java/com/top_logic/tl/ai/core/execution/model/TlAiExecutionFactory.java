@@ -136,6 +136,13 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Lookup {@link AgentSession#DISPLAY_NAME_ATTR} of {@link AgentSession}.
+	 */
+	public static com.top_logic.model.TLProperty getDisplayNameAgentSessionAttr() {
+		return (com.top_logic.model.TLProperty) getAgentSessionType().getPart(AgentSession.DISPLAY_NAME_ATTR);
+	}
+
+	/**
 	 * Lookup {@link AgentSession#KIND_ATTR} of {@link AgentSession}.
 	 */
 	public static com.top_logic.model.TLReference getKindAgentSessionAttr() {
@@ -220,10 +227,24 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Lookup {@link AgentExecution#DISPLAY_NAME_ATTR} of {@link AgentExecution}.
+	 */
+	public static com.top_logic.model.TLProperty getDisplayNameAgentExecutionAttr() {
+		return (com.top_logic.model.TLProperty) getAgentExecutionType().getPart(AgentExecution.DISPLAY_NAME_ATTR);
+	}
+
+	/**
 	 * Lookup {@link AgentExecution#ENDED_AT_ATTR} of {@link AgentExecution}.
 	 */
 	public static com.top_logic.model.TLProperty getEndedAtAgentExecutionAttr() {
 		return (com.top_logic.model.TLProperty) getAgentExecutionType().getPart(AgentExecution.ENDED_AT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link AgentExecution#ERROR_MESSAGE_ATTR} of {@link AgentExecution}.
+	 */
+	public static com.top_logic.model.TLProperty getErrorMessageAgentExecutionAttr() {
+		return (com.top_logic.model.TLProperty) getAgentExecutionType().getPart(AgentExecution.ERROR_MESSAGE_ATTR);
 	}
 
 	/**
@@ -304,6 +325,13 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Lookup {@link AgentExecution#THINKING_TOKENS_ATTR} of {@link AgentExecution}.
+	 */
+	public static com.top_logic.model.TLProperty getThinkingTokensAgentExecutionAttr() {
+		return (com.top_logic.model.TLProperty) getAgentExecutionType().getPart(AgentExecution.THINKING_TOKENS_ATTR);
+	}
+
+	/**
 	 * Lookup {@link AgentExecution#TRANSCRIPT_ATTR} of {@link AgentExecution}.
 	 */
 	public static com.top_logic.model.TLProperty getTranscriptAgentExecutionAttr() {
@@ -322,6 +350,13 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	 */
 	public static com.top_logic.model.TLProperty getCreatedAtInteractionRequestAttr() {
 		return (com.top_logic.model.TLProperty) getInteractionRequestType().getPart(InteractionRequest.CREATED_AT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link InteractionRequest#DISPLAY_NAME_ATTR} of {@link InteractionRequest}.
+	 */
+	public static com.top_logic.model.TLProperty getDisplayNameInteractionRequestAttr() {
+		return (com.top_logic.model.TLProperty) getInteractionRequestType().getPart(InteractionRequest.DISPLAY_NAME_ATTR);
 	}
 
 	/**
@@ -406,6 +441,13 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	 */
 	public static com.top_logic.model.TLProperty getContentAgentTaskAttr() {
 		return (com.top_logic.model.TLProperty) getAgentTaskType().getPart(AgentTask.CONTENT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link AgentTask#DISPLAY_NAME_ATTR} of {@link AgentTask}.
+	 */
+	public static com.top_logic.model.TLProperty getDisplayNameAgentTaskAttr() {
+		return (com.top_logic.model.TLProperty) getAgentTaskType().getPart(AgentTask.DISPLAY_NAME_ATTR);
 	}
 
 	/**

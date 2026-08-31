@@ -27,6 +27,15 @@ public interface AgentSessionBase extends com.top_logic.model.TLObject {
 	String CREATED_AT_ATTR = "createdAt";
 
 	/**
+	 * Part <code>displayName</code> of <code>AgentSession</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String DISPLAY_NAME_ATTR = "displayName";
+
+	/**
 	 * Part <code>kind</code> of <code>AgentSession</code>
 	 * 
 	 * <p>
@@ -101,6 +110,13 @@ public interface AgentSessionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setCreatedAt(java.util.Date newValue) {
 		tUpdateByName(CREATED_AT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #DISPLAY_NAME_ATTR}.
+	 */
+	default String getDisplayName() {
+		return (String) tValueByName(DISPLAY_NAME_ATTR);
 	}
 
 	/**

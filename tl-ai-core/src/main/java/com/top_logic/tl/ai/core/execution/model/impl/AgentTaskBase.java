@@ -27,6 +27,15 @@ public interface AgentTaskBase extends com.top_logic.model.TLObject {
 	String CONTENT_ATTR = "content";
 
 	/**
+	 * Part <code>displayName</code> of <code>AgentTask</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String DISPLAY_NAME_ATTR = "displayName";
+
+	/**
 	 * Part <code>lastTouchedByExecution</code> of <code>AgentTask</code>
 	 * 
 	 * <p>
@@ -92,6 +101,13 @@ public interface AgentTaskBase extends com.top_logic.model.TLObject {
 	 */
 	default void setContent(String newValue) {
 		tUpdateByName(CONTENT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #DISPLAY_NAME_ATTR}.
+	 */
+	default String getDisplayName() {
+		return (String) tValueByName(DISPLAY_NAME_ATTR);
 	}
 
 	/**

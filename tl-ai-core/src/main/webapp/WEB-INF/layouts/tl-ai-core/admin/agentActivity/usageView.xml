@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Verbrauch: what the agents consumed, over time and by the two dimensions a bill is read along.
+	
+	Charts rather than a table of aggregates. The rows of such a table would be groups, not model
+	objects, and a TopLogic table builds its columns from a type - the scouting report marked that
+	combination unverified and recommended against it. A chart takes arbitrary values, so the
+	aggregation lives here and the tables stay lists of real runs.
+	
+	No euro figures anywhere: the data model has no price, and a rate guessed here would be quoted
+	as if it were one.
+-->
+<securityLayout name="aiAgentUsageView"
+	titleKey="admin.ai.agentActivity.usage.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentActivity.usage.tabber"/>
+	<components>
+		<layout name="aiAgentUsageLayout"
+			horizontal="false"
+			resizable="true"
+		>
+			<components>
+				<include name="tl-ai-core/admin/agentActivity/charts/tokensPerDayChart.xml"/>
+				<layout name="aiAgentUsageBreakdownRow"
+					horizontal="true"
+					resizable="true"
+				>
+					<components>
+						<include name="tl-ai-core/admin/agentActivity/charts/tokensByModelChart.xml"/>
+						<include name="tl-ai-core/admin/agentActivity/charts/tokensByAgentChart.xml"/>
+					</components>
+				</layout>
+			</components>
+		</layout>
+	</components>
+</securityLayout>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	"Token nach Agent", billable tokens per agent over 30 days. Together with "Aktivste Agenten" on
+	the Überblick it separates the two questions that a single ranking confuses: which agent runs
+	most often, and which agent costs most. They are frequently not the same one.
+-->
+<chartjs name="aiTokensByAgentChart"
+	toolbar="true"
+	securityObject="securityRoot"
+	titleKey="admin.ai.agentActivity.charts.tokensByAgent"
+>
+	<data><![CDATA[
+		model -> {
+			since = now().toSystemCalendar().withDayAdded(-30).toDate().roundDay();
+			billable = e -> ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#inputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#inputTokens`))
+				+ ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#outputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#outputTokens`));
+			byAgent = all(`tl.ai.execution:AgentExecution`)
+				.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`) >= $since)
+				.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#agentName`));
+			ranked = $byAgent.keySet().toList().sort(desc(comparator(a -> $byAgent[$a].map(e -> $billable($e)).sum())));
+			names = ifElse($ranked.size() > 10, $ranked.subList(0, 10), $ranked);
+			{
+				'type': 'bar',
+				'data': {
+					'labels': $names,
+					'datasets': list({
+						'label': #('Billable tokens'@en, 'Abrechenbare Token'@de).localize(),
+						'data': $names.map(a -> $byAgent[$a].map(e -> $billable($e)).sum()),
+						'backgroundColor': '#2968c8',
+						'maxBarThickness': 26
+					})
+				},
+				'options': {
+					'indexAxis': 'y',
+					'maintainAspectRatio': false,
+					'plugins': { 'legend': { 'display': false } },
+					'scales': { 'x': { 'beginAtZero': true } }
+				}
+			};
+		}
+	]]></data>
+</chartjs>

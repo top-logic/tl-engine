@@ -43,6 +43,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -358,6 +359,10 @@ public class TestConfigFormControl extends TestCase {
 
 		TestableConfigFormControl(ReactContext context, ConfigurationItem config, boolean withEditMode) {
 			super(context, config, withEditMode);
+		}
+
+		TestableConfigFormControl(ReactContext context, ConfigurationItem config, Commands commands) {
+			super(context, config, commands);
 		}
 
 		/**
@@ -1035,6 +1040,82 @@ public class TestConfigFormControl extends TestCase {
 
 		assertTrue("Edit mode makes the entry's type selector editable again.",
 			findTypeFieldModel(form).isEditable());
+	}
+
+	/**
+	 * Asked for toolbar commands, the form draws no buttons of its own - the enclosing toolbar
+	 * renders them, and a form that also drew them would show each command twice.
+	 */
+	public void testToolbarCommandsAreNotDrawnAsButtons() {
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(),
+			TypedConfiguration.newConfigItem(MandatoryConfig.class), ConfigFormControl.Commands.TOOLBAR);
+
+		assertNull("Edit must not appear as a button of the form.",
+			findButton(form, label(I18NConstants.EDIT)));
+		assertEquals("The form renders the editor and nothing else.", 1, form.children().size());
+	}
+
+	/**
+	 * The three commands are offered, and each one applies to exactly the mode it belongs to.
+	 */
+	public void testTheCommandsFollowTheMode() {
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(),
+			TypedConfiguration.newConfigItem(MandatoryConfig.class), ConfigFormControl.Commands.TOOLBAR);
+
+		CommandModel edit = command(form, "configFormEdit");
+		CommandModel apply = command(form, "configFormApply");
+		CommandModel cancel = command(form, "configFormCancel");
+
+		assertTrue("Only Edit applies in view mode.", edit.isVisible());
+		assertFalse(apply.isVisible());
+		assertFalse(cancel.isVisible());
+
+		edit.executeCommand(createTestContext());
+
+		assertFalse("Edit means nothing once editing has started.", edit.isVisible());
+		assertTrue(apply.isVisible());
+		assertTrue(cancel.isVisible());
+
+		cancel.executeCommand(createTestContext());
+
+		assertTrue("Cancel returns to view mode.", edit.isVisible());
+		assertFalse(apply.isVisible());
+	}
+
+	/**
+	 * A mode change tells the commands to re-read their state: the toolbar holds the command
+	 * instances rather than the form's children, so nothing else would make it look again.
+	 */
+	public void testAModeChangeNotifiesTheCommands() {
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(),
+			TypedConfiguration.newConfigItem(MandatoryConfig.class), ConfigFormControl.Commands.TOOLBAR);
+		CommandModel edit = command(form, "configFormEdit");
+		int[] notifications = new int[1];
+		edit.addStateChangeListener(() -> notifications[0]++);
+
+		edit.executeCommand(createTestContext());
+
+		assertTrue("Entering edit mode must have told the command to look again.", notifications[0] > 0);
+	}
+
+	/** Without toolbar commands asked for, none are offered - the buttons are drawn instead. */
+	public void testInlineFormOffersNoCommands() {
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(),
+			TypedConfiguration.newConfigItem(MandatoryConfig.class), true);
+
+		assertTrue("An inline form has nothing to contribute to a toolbar.", form.commands().isEmpty());
+		assertNotNull("...because it draws the button itself.", findButton(form, label(I18NConstants.EDIT)));
+	}
+
+	/** The form's command with the given technical name. */
+	private CommandModel command(ConfigFormControl form, String name) {
+		for (CommandModel command : form.commands()) {
+			if (name.equals(command.getName())) {
+				return command;
+			}
+		}
+		fail("No command named '" + name + "' among " + form.commands().size() + " offered.");
+		return null;
 	}
 
 	/**

@@ -114,9 +114,9 @@
 
 			On the <path> wrapper: NavigationRuleConfig.getPathElements() is @Name("path") and
 			@DefaultContainer, so a step may be written inside <path>...</path> or directly as a child of
-			the rule. Both parse. Ticket #29221's description shows the unwrapped form; this file uses
-			the wrapper because it makes the two-element case unambiguous, and
-			TestRoleRulePathNesting in tl-ai-demo asserts that the two spellings produce the same rule.
+			the rule. Both spellings parse to the same rule, and neither is a migration. Ticket
+			#29221's description shows the unwrapped form; this file uses the wrapper because it makes
+			the two-element case unambiguous.
 		-->
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>

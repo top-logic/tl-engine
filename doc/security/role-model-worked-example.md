@@ -401,7 +401,6 @@ fixture cannot drift apart:
 | every row of the persona walkthrough | `SecDemoModelSecurityTest` |
 | the L1 half of each row, and that L1 is blind to the scope | `SecDemoToolAccessTest` |
 | that the data tools disclose only what a persona may read | `SecDemoReadFilterTest` |
-| that both `<path>` spellings parse to the same rule | `TestRoleRulePathNesting` |
 
 Two things building it corrected, both worth reading if you last read an earlier version:
 
@@ -410,9 +409,10 @@ Two things building it corrected, both worth reading if you last read an earlier
   `L2` column for that row was wrong.
 - **The `<path>` wrapper question is settled: both spellings are valid.**
   `NavigationRuleConfig.getPathElements()` is `@Name("path")` *and* `@DefaultContainer`, so a step may
-  be written inside `<path>...</path>` or directly as a child of the rule. Ticket #29221's description
-  shows the unwrapped form; this document uses the wrapper because a two-element path is unambiguous
-  that way. Neither is a migration.
+  be written inside `<path>...</path>` or directly as a child of the rule. The configuration interface
+  decides this, so no test is needed to pin it: both spellings parse to the same rule. Ticket #29221's
+  description shows the unwrapped form; this document uses the wrapper because a two-element path is
+  unambiguous that way. Neither is a migration.
 
 Everything else was verified against the `8.0.0-alpha7` engine sources and has since been verified
 against a booted application: the configuration interfaces and tag names used above

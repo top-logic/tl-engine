@@ -27,7 +27,8 @@ import com.top_logic.tl.ai.core.message.UserMessage;
  *
  * <p>This heuristic (~0.25 tokens per byte for prose, ~0.5 for JSON) matches the
  * approach used by Claude Code, {@code OpenCode}, and Codex. It is fast and good enough
- * for compaction decisions. Images are estimated at a fixed 2000 tokens.</p>
+ * for compaction decisions. Binary attachments do not go through it at all - they are
+ * charged a flat figure each, see {@link #IMAGE_TOKENS} and {@link #PDF_TOKENS}.</p>
  *
  * <p>Adds per-message overhead (4 tokens for role + envelope) and per-request
  * priming (3 tokens), matching the structural overhead that LLM APIs charge.</p>
@@ -36,6 +37,28 @@ public class ByteBasedTokenEstimator implements TokenEstimator {
 
 	/** Fixed token estimate for image content. */
 	static final int IMAGE_TOKENS = 2000;
+
+	/**
+	 * Fixed token estimate for a PDF document, in the same spirit as {@link #IMAGE_TOKENS}.
+	 *
+	 * <p>
+	 * A PDF is carried as base64 and must never be estimated as if that were prose: base64 inflates
+	 * by 4/3 and the byte heuristic would then charge a 20 MB document some 6.9 million tokens, which
+	 * trips compaction or a false context overflow before the model has been asked anything. What the
+	 * provider actually charges is per page - a page is rendered to an image <em>and</em> its text
+	 * extracted, on the order of 2000 tokens either way - so the file size says nothing useful: a
+	 * one-page scan can be megabytes and a 300-page text document can be smaller.
+	 * </p>
+	 *
+	 * <p>
+	 * The page count is not available here, nor anywhere on the path that builds the part - it costs a
+	 * parse of the document, and a PDF-parsing dependency is not worth taking on for an estimate. So
+	 * this is a flat per-document figure of roughly two to three pages, the size of the documents that
+	 * actually get looked at. It understates a long manual; that error is bounded and in the same
+	 * order as the estimator's other heuristics, unlike the one it replaces.
+	 * </p>
+	 */
+	static final int PDF_TOKENS = 5000;
 
 	/** Per-message overhead: role token + message envelope. */
 	static final int MESSAGE_OVERHEAD = 4;
@@ -80,7 +103,7 @@ public class ByteBasedTokenEstimator implements TokenEstimator {
 			else if (part instanceof ThinkingContent t) partTokens = estimateText(t.text());
 			else if (part instanceof ImageContent) partTokens = IMAGE_TOKENS;
 			else if (part instanceof ToolCall tc) partTokens = estimateText(tc.name()) + estimateJson(tc.arguments());
-			else if (part instanceof PdfContent p) partTokens = estimateText(p.data());
+			else if (part instanceof PdfContent) partTokens = PDF_TOKENS;
 			else throw new IllegalArgumentException("Unknown content part type: " + part.getClass());
 			total += partTokens;
 		}

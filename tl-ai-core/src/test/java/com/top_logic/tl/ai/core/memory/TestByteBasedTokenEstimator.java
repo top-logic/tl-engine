@@ -13,6 +13,7 @@ import junit.framework.TestCase;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ImageContent;
+import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
@@ -54,6 +55,36 @@ public class TestByteBasedTokenEstimator extends TestCase {
 		UserMessage msg = new UserMessage("u1", T0,
 			List.of(new ImageContent("data:image/png;base64,abc", "image/png")));
 		assertEquals(2000 + 4, _estimator.estimateTokens(msg));
+	}
+
+	/**
+	 * A PDF is a fixed 5000 tokens + overhead - <b>not</b> the length of its base64 payload, which
+	 * would charge a real document millions of tokens and trip compaction on the spot.
+	 */
+	public void testPdfContent() {
+		String base64 = "A".repeat(1_000_000);
+		UserMessage msg = new UserMessage("u1", T0, List.of(new PdfContent(base64, "application/pdf")));
+
+		assertEquals(ByteBasedTokenEstimator.PDF_TOKENS + 4, _estimator.estimateTokens(msg));
+	}
+
+	/** The estimate does not grow with the document: two PDFs of different size cost the same. */
+	public void testPdfEstimateIsIndependentOfSize() {
+		UserMessage small = new UserMessage("u1", T0,
+			List.of(new PdfContent("JVBERi0xLjc=", "application/pdf")));
+		UserMessage large = new UserMessage("u2", T0,
+			List.of(new PdfContent("A".repeat(27_962_028), "application/pdf")));
+
+		assertEquals(_estimator.estimateTokens(small), _estimator.estimateTokens(large));
+	}
+
+	/** A PDF arriving as a tool result is charged the same fixed figure. */
+	public void testPdfInToolResult() {
+		ToolResultMessage msg = new ToolResultMessage("tr1", T0, "tc1", "viewDocument",
+			new ToolState.Completed("PDF content of invoice.pdf", T0, T0, false, null, -1,
+				List.of(new PdfContent("A".repeat(100_000), "application/pdf"))));
+
+		assertEquals(ByteBasedTokenEstimator.PDF_TOKENS + 4, _estimator.estimateTokens(msg));
 	}
 
 	/** Mixed content: text + image + overhead. */

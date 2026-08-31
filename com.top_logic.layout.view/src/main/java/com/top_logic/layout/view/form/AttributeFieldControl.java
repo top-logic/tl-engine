@@ -7,9 +7,7 @@ package com.top_logic.layout.view.form;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.util.ResKey;
@@ -481,19 +479,9 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				if (_chrome == null) {
 					return;
 				}
-				if (source.hasError()) {
-					_chrome.setError(Resources.getInstance().getString(source.getError()));
-				} else {
-					_chrome.setError(null);
-				}
-				if (source.hasWarnings()) {
-					List<String> msgs = source.getWarnings().stream()
-						.map(key -> Resources.getInstance().getString(key))
-						.collect(Collectors.toList());
-					_chrome.setWarnings(msgs);
-				} else {
-					_chrome.setWarnings(null);
-				}
+				// The error and the warnings are drawn by the chrome itself, which follows its own
+				// field - see ReactFormFieldChromeControl#followField(). Only what the chrome
+				// cannot know is set here.
 				_chrome.setRequired(source.isMandatory());
 
 				// What the user sees changed, so commands gated on visible errors must re-evaluate.

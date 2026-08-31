@@ -5,10 +5,16 @@
  */
 package com.top_logic.layout.react.control.layout;
 
+import java.util.stream.Collectors;
+
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.util.Resources;
 
 /**
  * A {@link ReactControl} that renders field anatomy chrome (label, required indicator, error,
@@ -66,6 +72,9 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	private static final String TOOLTIP_KEY = "tooltip";
 
 	private ReactControl _field;
+
+	/** Detaches {@link #followField()}'s listener, or {@code null} while no field carries one. */
+	private Runnable _fieldBinding;
 
 	private String _agentName;
 
@@ -147,6 +156,80 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		putState(FULL_LINE, fullLine);
 		setVisible(visible);
 		putState(FIELD, field);
+		followField();
+	}
+
+	/**
+	 * Follows the field's own validation state, so that what it rejects is drawn here - under the
+	 * field, with the error icon - rather than only marked on the input itself.
+	 *
+	 * <p>
+	 * The chrome is the only place a message can appear: the input control shows a border and sets
+	 * {@code aria-invalid}, but has nowhere to put words. Left to each caller to wire, this is
+	 * simply forgotten - it was, for every field of a configuration, and for the polymorphic type
+	 * selector - and the field then carries an error that only its border betrays. Doing it here
+	 * means a chrome cannot be built without it.
+	 * </p>
+	 *
+	 * <p>
+	 * Only the error and the warnings are followed, not {@link #setRequired(boolean)}: several
+	 * callers pass a required state of their own that need not be the field's, and taking that over
+	 * would change what they display. A field without a {@link FieldModel} - a bare control wrapped
+	 * for its label alone - is left as its caller set it.
+	 * </p>
+	 */
+	private void followField() {
+		if (_fieldBinding != null) {
+			_fieldBinding.run();
+			_fieldBinding = null;
+		}
+		if (!(_field instanceof ReactFormFieldControl fieldControl)) {
+			return;
+		}
+		FieldModel model = fieldControl.getFieldModel();
+		if (model == null) {
+			return;
+		}
+		FieldModelListener listener = new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				// The value belongs to the input control; the chrome only frames it.
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel source, boolean editable) {
+				// Likewise handled by the input control itself.
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel source) {
+				showValidation(source);
+			}
+		};
+		model.addListener(listener);
+		_fieldBinding = () -> model.removeListener(listener);
+
+		// A field can already carry an error when its chrome is built - a form rebuilt after a
+		// refused apply re-creates every control while the errors that refusal placed still stand.
+		showValidation(model);
+	}
+
+	/** Draws the given field's error and warnings, or clears them. */
+	private void showValidation(FieldModel model) {
+		Resources resources = Resources.getInstance();
+		setError(model.hasError() ? resources.getString(model.getError()) : null);
+		setWarnings(model.hasWarnings()
+			? model.getWarnings().stream().map(resources::getString).collect(Collectors.toList())
+			: null);
+	}
+
+	@Override
+	protected void onCleanup() {
+		if (_fieldBinding != null) {
+			_fieldBinding.run();
+			_fieldBinding = null;
+		}
+		super.onCleanup();
 	}
 
 	/**
@@ -248,6 +331,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		}
 		_field = field;
 		putState(FIELD, field);
+		followField();
 	}
 
 	/**

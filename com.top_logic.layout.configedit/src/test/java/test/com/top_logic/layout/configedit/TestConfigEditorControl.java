@@ -41,10 +41,14 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
+import com.top_logic.layout.configedit.ConfigCollection;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
+import com.top_logic.layout.configedit.FieldCollectionValue;
 import com.top_logic.layout.configedit.I18NConstants;
+import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.edit.Labels;
@@ -432,6 +436,10 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigListEditorControl(ReactContext context, ConfigurationItem parentConfig,
 				PropertyDescriptor property, ConfigFieldIndex index) {
 			super(context, parentConfig, property, index);
+		}
+
+		TestableConfigListEditorControl(ReactContext context, ConfigCollection value) {
+			super(context, value, PolymorphicOptions.Choices.NONE, null, true);
 		}
 
 		java.util.List<ReactControl> getChildrenList() {
@@ -1194,6 +1202,41 @@ public class TestConfigEditorControl extends TestCase {
 			}
 		}
 		assertTrue("Expected the nested item group and the collection groups.", groups >= 2);
+	}
+
+	/**
+	 * The same editor renders a collection that is a form field's value, with no configuration
+	 * property behind it at all - which is the whole point of {@link ConfigCollection}.
+	 */
+	public void testEditingACollectionHeldByAField() {
+		FieldModel field = new AbstractFieldModel(new ArrayList<>());
+		ConfigCollection value = new FieldCollectionValue(field, ListItem.class, "Items");
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), value);
+
+		clickAddButton(editor);
+
+		assertEquals("An unkeyed collection takes a new entry straight away.",
+			1, ((java.util.List<?>) field.getValue()).size());
+		assertEquals("...so nothing is left pending, and the entry is rendered as a group.",
+			1, elementGroups(editor).size());
+	}
+
+	/** Its entries can be removed and reordered like any other collection's. */
+	public void testReorderingACollectionHeldByAField() {
+		FieldModel field = new AbstractFieldModel(new ArrayList<>());
+		ConfigCollection value = new FieldCollectionValue(field, ListItem.class, "Items");
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), value);
+		clickAddButton(editor);
+		clickAddButton(editor);
+		((ListItem) value.elements().get(0)).setName("first");
+		((ListItem) value.elements().get(1)).setName("second");
+
+		value.move(0, 1);
+
+		assertEquals("second", ((ListItem) value.elements().get(0)).getName());
+		assertEquals("first", ((ListItem) value.elements().get(1)).getName());
 	}
 
 	/**

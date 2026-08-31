@@ -162,12 +162,40 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	public ConfigListEditorControl(ReactContext context, ConfigurationItem parentConfig,
 			PropertyDescriptor property, ConfigFieldIndex index, boolean editable) {
+		this(context, new ConfigCollectionValue(parentConfig, property),
+			PolymorphicOptions.compute(parentConfig, property), index, editable);
+	}
+
+	/**
+	 * Creates a {@link ConfigListEditorControl} over any {@link ConfigCollection}.
+	 *
+	 * <p>
+	 * The general constructor the others end in. Nothing below this point knows whether the rows
+	 * come from a property of a surrounding configuration or from a form field - which is the point
+	 * of {@link ConfigCollection}. A caller that has no property must also say which types an entry
+	 * may have, since {@link PolymorphicOptions} reads that off a property's options annotation.
+	 * </p>
+	 *
+	 * @param value
+	 *        The collection to edit.
+	 * @param choices
+	 *        The types an entry may be given, or {@link PolymorphicOptions.Choices#NONE} if the
+	 *        collection is not polymorphic.
+	 * @param index
+	 *        The {@link ConfigFieldIndex} to report every built field to, or {@code null} if
+	 *        nobody is collecting.
+	 * @param editable
+	 *        Whether add/remove/reorder are offered, and every entry's own fields accept input -
+	 *        see {@link #_editable}.
+	 */
+	public ConfigListEditorControl(ReactContext context, ConfigCollection value,
+			PolymorphicOptions.Choices choices, ConfigFieldIndex index, boolean editable) {
 		super(context);
 		_context = context;
 		_index = index;
 		_editable = editable;
-		_value = new ConfigCollectionValue(parentConfig, property);
-		_choices = PolymorphicOptions.compute(parentConfig, property);
+		_value = value;
+		_choices = choices;
 		_pending = new ConfigPendingEntries(_value, this::rebuild);
 
 		rebuild(null);

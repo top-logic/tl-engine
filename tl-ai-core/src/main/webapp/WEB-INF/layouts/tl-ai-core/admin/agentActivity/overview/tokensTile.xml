@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	"Token (30 Tage)". Billable tokens - input plus output - kept apart from the cache traffic,
+	because the cached share is what makes a run cheap and mixing the two hides exactly that.
+	
+	Deliberately not a euro figure: see the note in overviewView.xml.
+-->
+<securityLayout name="aiOverviewTokensTile"
+	titleKey="admin.ai.agentActivity.overview.tokens.label"
+>
+	<tile-info name="aiOverviewTokens"
+		label="admin.ai.agentActivity.overview.tokens.label"
+	>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
+			icon="css:fa-solid fa-coins"
+		>
+			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[
+					model -> {
+						recent = all(`tl.ai.execution:AgentExecution`)
+							.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
+								>= now().toSystemCalendar().withDayAdded(-30).toDate());
+						value = a -> e -> ifElse(isEmpty($e.get($a)), 0, $e.get($a));
+						billable = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#inputTokens`)($e)
+							+ $value(`tl.ai.execution:AgentExecution#outputTokens`)($e)).sum();
+						cached = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#cacheReadTokens`)($e)).sum();
+						#('{0} billable tokens, {1} served from the cache'@en, '{0} abrechenbare Token, {1} aus dem Cache'@de)
+							.fill($billable, $cached);
+					}
+				]]></text>
+			</description>
+		</preview>
+	</tile-info>
+	<components>
+		<tableView name="aiOverviewTokensTable"
+			objectType="tl.ai.execution:AgentExecution"
+			securityObject="securityRoot"
+			titleKey="admin.ai.agentActivity.overview.tokens.title"
+		>
+			<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+				<elements><![CDATA[
+					model -> all(`tl.ai.execution:AgentExecution`)
+						.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
+							>= now().toSystemCalendar().withDayAdded(-30).toDate())
+				]]></elements>
+				<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
+			</modelBuilder>
+			<table
+				defaultColumns="displayName,agentName,model,startedAt,inputTokens,outputTokens,thinkingTokens,cacheReadTokens,cacheWriteTokens"
+				defaultSortOrder="startedAt:descending"
+				fixedColumns="1"
+			>
+				<columns>
+					<column name="displayName"
+						columnWidth="300px"
+						visibility="mandatory"
+					/>
+					<column name="agentName"
+						columnWidth="180px"
+					/>
+					<column name="model"
+						columnWidth="210px"
+					/>
+					<column name="startedAt"
+						columnWidth="160px"
+					/>
+					<column name="inputTokens"
+						columnWidth="120px"
+					/>
+					<column name="outputTokens"
+						columnWidth="120px"
+					/>
+					<column name="thinkingTokens"
+						columnWidth="120px"
+					/>
+					<column name="cacheReadTokens"
+						columnWidth="130px"
+					/>
+					<column name="cacheWriteTokens"
+						columnWidth="130px"
+					/>
+					<column name="transcript"
+						visibility="excluded"
+					/>
+					<column name="transcriptHtml"
+						visibility="excluded"
+					/>
+					<column name="response"
+						visibility="excluded"
+					/>
+				</columns>
+			</table>
+			<buttons>
+				<button id="refreshTokens"
+					class="com.top_logic.layout.form.component.InvalidateCommand"
+				/>
+				<button id="exportExcel"
+					class="com.top_logic.layout.table.export.ExcelExportHandler"
+				/>
+			</buttons>
+		</tableView>
+	</components>
+</securityLayout>

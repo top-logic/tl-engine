@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Läufe: master-detail over AgentExecution. Every run, main agent and sub-agent alike, in one flat
+	list rather than a tree - the parent is a column, so the table's own filter on it gives the same
+	grouping without a second navigation model to learn.
+-->
+<securityLayout name="aiAgentExecutionsView"
+	titleKey="admin.ai.agentActivity.executions.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentActivity.executions.tabber"/>
+	<components>
+		<layout name="aiAgentExecutionsLayout"
+			horizontal="true"
+			resizable="true"
+		>
+			<components>
+				<include name="tl-ai-core/admin/agentActivity/executionsTable.xml"/>
+				<layout-reference resource="tl-ai-core/admin/agentActivity/executionDetail.layout.xml"/>
+			</components>
+		</layout>
+	</components>
+</securityLayout>

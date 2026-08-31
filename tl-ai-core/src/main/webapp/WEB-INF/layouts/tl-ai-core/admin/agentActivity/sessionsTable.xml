@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The session list. Four of its columns are computed rather than stored - how many runs a session
+	had, how many of them failed, how many tokens they billed, and how many questions of that
+	session still wait for a human. Each one walks the AgentExecution#session reference backwards
+	with referers(), which costs one indexed association query per row and column.
+	
+	That cost is why the model builder pre-filters to the last 30 days: the table's own column
+	filters run *after* the rows have been built, so they would not save a single query. The title
+	says the limit out loud rather than letting a reader wonder where an old session went. Should
+	the list have to reach further back, the answer is denormalised counters maintained by
+	AgentExecutionStore, not a wider query here.
+-->
+<tableView name="aiSessionsTable"
+	objectType="tl.ai.execution:AgentSession"
+	securityObject="securityRoot"
+	titleKey="admin.ai.agentActivity.sessions.title"
+>
+	<layoutInfo size="62%"/>
+	<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+		<elements><![CDATA[
+			model -> all(`tl.ai.execution:AgentSession`)
+				.filter(s -> {
+					touched = ifElse(isEmpty($s.get(`tl.ai.execution:AgentSession#lastUpdated`)),
+						$s.get(`tl.ai.execution:AgentSession#createdAt`),
+						$s.get(`tl.ai.execution:AgentSession#lastUpdated`));
+					isEmpty($touched) or $touched >= now().toSystemCalendar().withDayAdded(-30).toDate();
+				})
+		]]></elements>
+		<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentSession`)</supportsElement>
+	</modelBuilder>
+	<table
+		defaultColumns="displayName,kind,owner,runCount,errorCount,pendingCount,tokenCount,lastUpdated"
+		defaultSortOrder="lastUpdated:descending"
+		fixedColumns="1"
+	>
+		<columns>
+			<column name="displayName"
+				columnWidth="230px"
+				visibility="mandatory"
+			/>
+			<column name="kind"
+				columnWidth="95px"
+			/>
+			<column name="owner"
+				columnWidth="130px"
+			/>
+			<column name="title"
+				columnWidth="200px"
+			/>
+			<column name="status"
+				columnWidth="100px"
+			/>
+			<column name="createdAt"
+				columnWidth="135px"
+			/>
+			<column name="lastUpdated"
+				columnWidth="135px"
+			/>
+			<column name="memory"
+				visibility="excluded"
+			/>
+			<column name="metadata"
+				visibility="excluded"
+			/>
+			<!--
+				The computed columns are declared here for their width only; their label, type and
+				accessor come from the configuration providers below.
+			-->
+			<column name="runCount"
+				columnWidth="80px"
+			/>
+			<column name="errorCount"
+				columnWidth="80px"
+			/>
+			<column name="pendingCount"
+				columnWidth="85px"
+			/>
+			<column name="tokenCount"
+				columnWidth="100px"
+			/>
+		</columns>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="runCount"
+				columnLabel="admin.ai.agentActivity.sessions.runCount"
+				columnType="tl.core:Integer"
+			>
+				<accessor><![CDATA[
+					s -> $s.referers(`tl.ai.execution:AgentExecution#session`).size()
+				]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="errorCount"
+				columnLabel="admin.ai.agentActivity.sessions.errorCount"
+				columnType="tl.core:Integer"
+			>
+				<accessor><![CDATA[
+					s -> $s.referers(`tl.ai.execution:AgentExecution#session`)
+						.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == `tl.ai.execution:ExecutionStatus#ERROR`)
+						.size()
+				]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="pendingCount"
+				columnLabel="admin.ai.agentActivity.sessions.pendingCount"
+				columnType="tl.core:Integer"
+			>
+				<accessor><![CDATA[
+					s -> $s.referers(`tl.ai.execution:AgentExecution#session`)
+						.flatMap(e -> $e.referers(`tl.ai.execution:InteractionRequest#execution`))
+						.filter(r -> $r.get(`tl.ai.execution:InteractionRequest#state`) == `tl.ai.execution:InteractionState#PENDING`)
+						.size()
+				]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="tokenCount"
+				columnLabel="admin.ai.agentActivity.sessions.tokenCount"
+				columnType="tl.core:Long"
+			>
+				<accessor><![CDATA[
+					s -> $s.referers(`tl.ai.execution:AgentExecution#session`)
+						.map(e -> ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#inputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#inputTokens`))
+							+ ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#outputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#outputTokens`)))
+						.sum()
+				]]></accessor>
+			</configurationProvider>
+		</configurationProviders>
+	</table>
+	<buttons>
+		<button id="refreshSessions"
+			class="com.top_logic.layout.form.component.InvalidateCommand"
+		/>
+		<button id="exportExcel"
+			class="com.top_logic.layout.table.export.ExcelExportHandler"
+		/>
+	</buttons>
+</tableView>

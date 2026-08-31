@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Every interaction request of the last 30 days, open ones first by default.
+	
+	"Zugewiesen" being empty is not a formatting gap but the finding: a question raised by a
+	BACKGROUND or SCHEDULED run has no responder, so nobody is told it exists and the run stays
+	blocked until it times out. The column is in the default set for exactly that reason.
+-->
+<tableView name="aiInteractionsTable"
+	objectType="tl.ai.execution:InteractionRequest"
+	securityObject="securityRoot"
+	titleKey="admin.ai.agentActivity.interactions.title"
+>
+	<layoutInfo size="62%"/>
+	<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+		<elements><![CDATA[
+			model -> all(`tl.ai.execution:InteractionRequest`)
+				.filter(r -> $r.get(`tl.ai.execution:InteractionRequest#createdAt`)
+					>= now().toSystemCalendar().withDayAdded(-30).toDate())
+		]]></elements>
+		<supportsElement>element -> $element.instanceOf(`tl.ai.execution:InteractionRequest`)</supportsElement>
+	</modelBuilder>
+	<table
+		defaultColumns="displayName,state,execution,responder,waitingMinutes"
+		defaultSortOrder="createdAt:ascending"
+		fixedColumns="1"
+	>
+		<columns>
+			<column name="displayName"
+				columnWidth="250px"
+				visibility="mandatory"
+			/>
+			<column name="state"
+				columnWidth="110px"
+			/>
+			<column name="type"
+				columnWidth="105px"
+			/>
+			<column name="header"
+				columnWidth="200px"
+			/>
+			<column name="execution"
+				columnWidth="220px"
+			/>
+			<column name="responder"
+				columnWidth="140px"
+			/>
+			<column name="createdAt"
+				columnWidth="135px"
+			/>
+			<column name="resolvedAt"
+				columnWidth="135px"
+			/>
+			<column name="requestId"
+				columnWidth="240px"
+			/>
+			<column name="prompt"
+				visibility="excluded"
+			/>
+			<column name="payload"
+				visibility="excluded"
+			/>
+			<column name="resolution"
+				visibility="excluded"
+			/>
+			<!--
+				The computed columns are declared here for their width only; their label, type and
+				accessor come from the configuration providers below.
+			-->
+			<column name="waitingMinutes"
+				columnWidth="125px"
+			/>
+			<column name="sessionOfRequest"
+				columnWidth="220px"
+			/>
+		</columns>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="waitingMinutes"
+				columnLabel="admin.ai.agentActivity.interactions.waitingMinutes"
+				columnType="tl.core:Long"
+			>
+				<accessor><![CDATA[
+					r -> {
+						created = $r.get(`tl.ai.execution:InteractionRequest#createdAt`);
+						resolved = $r.get(`tl.ai.execution:InteractionRequest#resolvedAt`);
+						isEmpty($created) ? null
+							: (ifElse(isEmpty($resolved), now(), $resolved).toMillis() - $created.toMillis()) / 60000;
+					}
+				]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="sessionOfRequest"
+				columnLabel="admin.ai.agentActivity.interactions.session"
+				columnType="tl.ai.execution:AgentSession"
+			>
+				<accessor><![CDATA[
+					r -> $r.get(`tl.ai.execution:InteractionRequest#execution`).get(`tl.ai.execution:AgentExecution#session`)
+				]]></accessor>
+			</configurationProvider>
+		</configurationProviders>
+	</table>
+	<buttons>
+		<button id="refreshInteractions"
+			class="com.top_logic.layout.form.component.InvalidateCommand"
+		/>
+		<button id="exportExcel"
+			class="com.top_logic.layout.table.export.ExcelExportHandler"
+		/>
+	</buttons>
+</tableView>

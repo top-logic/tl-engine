@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Überblick: five numbers, each one a way into the rows behind it.
+	
+	Tiles rather than a free grid of widgets, because that is what the framework has: a tile group
+	replaces the content area and builds a breadcrumb when a tile is opened; there is no component
+	that arranges independent widgets next to each other. Making the numbers navigable is what turns
+	that constraint into the design - "2 Läufe laufen" is only useful if the next click shows which
+	two.
+	
+	The number in a tile is a TL-Script expression over the whole type, evaluated when the tile is
+	rendered. There is no auto-refresh anywhere in this view; each table behind a tile carries an
+	Aktualisieren command, and re-entering the overview re-evaluates the tiles.
+	
+	No cost tile: the data model has no price. A euro figure derived from a guessed rate would be
+	quoted by somebody, and a wrong number in a monitor is worse than a missing one.
+-->
+<securityLayout name="aiAgentOverviewView"
+	titleKey="admin.ai.agentActivity.overview.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentActivity.overview.tabber"/>
+	<components>
+		<component class="com.top_logic.mig.html.layout.tiles.RootTileComponent"
+			name="aiAgentOverviewRootTile"
+			titleKey="admin.ai.agentActivity.overview.title"
+		>
+			<!--
+				The toolbar carries the drill-down breadcrumb rather than a fixed title: opening a
+				tile replaces the whole content area, so without it a reader has no way of telling
+				which number they are looking at the rows of.
+			-->
+			<title class="com.top_logic.mig.html.layout.tiles.breadcrumb.RootTileBreadcrumbControlProvider">
+				<renderer class="com.top_logic.layout.tree.breadcrumb.DefaultBreadcrumbRenderer">
+					<contentRenderer class="com.top_logic.layout.tree.breadcrumb.BreadcrumbContentRenderer"
+						resource-provider="com.top_logic.mig.html.layout.tiles.breadcrumb.RootTileBreadcrumbControlProvider$BreadcrumbNodeResourceProvider"
+						root-icon="theme:ICON_HOME"
+						separator-icon="theme:com.top_logic.knowledge.gui.layout.tree.Icons.PL"
+						separator-label="%BREADCRUMB_SEPARATOR_LABEL%"
+					/>
+				</renderer>
+			</title>
+			<component class="com.top_logic.mig.html.layout.tiles.GroupTileComponent"
+				name="aiAgentOverviewTiles"
+				securityObject="securityRoot"
+				titleKey="admin.ai.agentActivity.overview.title"
+			>
+				<components>
+					<include name="tl-ai-core/admin/agentActivity/overview/runningTile.xml"/>
+					<include name="tl-ai-core/admin/agentActivity/overview/waitingTile.xml"/>
+					<include name="tl-ai-core/admin/agentActivity/overview/errorsTile.xml"/>
+					<include name="tl-ai-core/admin/agentActivity/overview/runsTile.xml"/>
+					<include name="tl-ai-core/admin/agentActivity/overview/tokensTile.xml"/>
+				</components>
+			</component>
+		</component>
+	</components>
+</securityLayout>

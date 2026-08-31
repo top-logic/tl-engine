@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The run list, pre-filtered to the last 7 days for the same reason the session list is filtered
+	to 30: the computed columns walk references per row, and the table's own filters run after the
+	rows exist. Runs are far more numerous than sessions, hence the shorter window.
+	
+	"Dauer", "Token", "Teilagenten" and "Offene Rückfragen" are computed. A running run has no
+	endedAt, so its duration is measured against now - that is what an operator wants to read there,
+	and the value is a snapshot, not a ticking clock; pressing Aktualisieren re-reads it. The last
+	two are the ones that cost a backward query per row, which is why they are reachable through the
+	column chooser rather than shown by default.
+-->
+<tableView name="aiExecutionsTable"
+	objectType="tl.ai.execution:AgentExecution"
+	securityObject="securityRoot"
+	titleKey="admin.ai.agentActivity.executions.title"
+>
+	<layoutInfo size="62%"/>
+	<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+		<elements><![CDATA[
+			model -> all(`tl.ai.execution:AgentExecution`)
+				.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
+					>= now().toSystemCalendar().withDayAdded(-7).toDate())
+		]]></elements>
+		<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
+	</modelBuilder>
+	<table
+		defaultColumns="displayName,status,session,model,startedAt,durationSeconds,tokenCount"
+		defaultSortOrder="startedAt:descending"
+		fixedColumns="1"
+	>
+		<columns>
+			<column name="displayName"
+				columnWidth="235px"
+				visibility="mandatory"
+			/>
+			<column name="session"
+				columnWidth="155px"
+			/>
+			<column name="agentName"
+				columnWidth="140px"
+			/>
+			<column name="status"
+				columnWidth="100px"
+			/>
+			<column name="model"
+				columnWidth="155px"
+			/>
+			<column name="provider"
+				columnWidth="100px"
+			/>
+			<column name="parentExecution"
+				columnWidth="250px"
+			/>
+			<column name="startedAt"
+				columnWidth="135px"
+			/>
+			<column name="endedAt"
+				columnWidth="135px"
+			/>
+			<column name="stopReason"
+				columnWidth="130px"
+			/>
+			<column name="cancelRequested"
+				columnWidth="120px"
+			/>
+			<column name="inputTokens"
+				columnWidth="105px"
+			/>
+			<column name="outputTokens"
+				columnWidth="105px"
+			/>
+			<column name="thinkingTokens"
+				columnWidth="105px"
+			/>
+			<column name="cacheReadTokens"
+				columnWidth="115px"
+			/>
+			<column name="cacheWriteTokens"
+				columnWidth="115px"
+			/>
+			<column name="runId"
+				columnWidth="250px"
+			/>
+			<column name="errorMessage"
+				columnWidth="320px"
+			/>
+			<column name="transcript"
+				visibility="excluded"
+			/>
+			<column name="transcriptHtml"
+				visibility="excluded"
+			/>
+			<column name="response"
+				visibility="excluded"
+			/>
+			<!--
+				The computed columns are declared here for their width only; their label, type and
+				accessor come from the configuration providers below. Without the declaration they
+				fall back to the generic width for their type, which is far wider than a count needs
+				and pushes the columns that carry the finding off the pane.
+			-->
+			<column name="durationSeconds"
+				columnWidth="100px"
+			/>
+			<column name="tokenCount"
+				columnWidth="100px"
+			/>
+			<column name="childCount"
+				columnWidth="110px"
+			/>
+			<column name="pendingCount"
+				columnWidth="130px"
+			/>
+		</columns>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="durationSeconds"
+				columnLabel="admin.ai.agentActivity.executions.durationSeconds"
+				columnType="tl.core:Long"
+			>
+				<accessor><![CDATA[
+					e -> {
+						started = $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+						ended = $e.get(`tl.ai.execution:AgentExecution#endedAt`);
+						isEmpty($started) ? null
+							: (ifElse(isEmpty($ended), now(), $ended).toMillis() - $started.toMillis()) / 1000;
+					}
+				]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="tokenCount"
+				columnLabel="admin.ai.agentActivity.executions.tokenCount"
+				columnType="tl.core:Long"
+			>
+				<accessor><![CDATA[
+					e -> ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#inputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#inputTokens`))
+						+ ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#outputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#outputTokens`))
+				]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="childCount"
+				columnLabel="admin.ai.agentActivity.executions.childCount"
+				columnType="tl.core:Integer"
+			>
+				<accessor><![CDATA[
+					e -> $e.referers(`tl.ai.execution:AgentExecution#parentExecution`).size()
+				]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="pendingCount"
+				columnLabel="admin.ai.agentActivity.executions.pendingCount"
+				columnType="tl.core:Integer"
+			>
+				<accessor><![CDATA[
+					e -> $e.referers(`tl.ai.execution:InteractionRequest#execution`)
+						.filter(r -> $r.get(`tl.ai.execution:InteractionRequest#state`) == `tl.ai.execution:InteractionState#PENDING`)
+						.size()
+				]]></accessor>
+			</configurationProvider>
+		</configurationProviders>
+	</table>
+	<buttons>
+		<button id="requestCancel"
+			class="com.top_logic.tl.ai.core.execution.layout.RequestCancelCommand"
+			clique="additional"
+			target="selection(self())"
+		>
+			<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+				<confirmMessage key="admin.ai.agentActivity.executions.requestCancel.confirm"/>
+			</confirmation>
+		</button>
+		<button id="refreshExecutions"
+			class="com.top_logic.layout.form.component.InvalidateCommand"
+		/>
+		<button id="exportExcel"
+			class="com.top_logic.layout.table.export.ExcelExportHandler"
+		/>
+	</buttons>
+</tableView>

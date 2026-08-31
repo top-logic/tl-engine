@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	"Fehler (24 h)". Both the count and the share, because five failures out of six runs and five
+	out of five hundred are different situations and the count alone cannot tell them apart.
+-->
+<securityLayout name="aiOverviewErrorsTile"
+	titleKey="admin.ai.agentActivity.overview.errors.label"
+>
+	<tile-info name="aiOverviewErrors"
+		label="admin.ai.agentActivity.overview.errors.label"
+	>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
+			icon="css:fa-solid fa-circle-exclamation"
+		>
+			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[
+					model -> {
+						since = now().toSystemCalendar().withDayAdded(-1).toDate();
+						recent = all(`tl.ai.execution:AgentExecution`)
+							.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`) >= $since);
+						failed = $recent.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == `tl.ai.execution:ExecutionStatus#ERROR`).size();
+						#('{0} of {1} runs failed'@en, '{0} von {1} Läufen fehlgeschlagen'@de)
+							.fill($failed, $recent.size());
+					}
+				]]></text>
+			</description>
+		</preview>
+	</tile-info>
+	<components>
+		<tableView name="aiOverviewErrorsTable"
+			objectType="tl.ai.execution:AgentExecution"
+			securityObject="securityRoot"
+			titleKey="admin.ai.agentActivity.overview.errors.title"
+		>
+			<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+				<elements><![CDATA[
+					model -> all(`tl.ai.execution:AgentExecution`)
+						.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`) >= now().toSystemCalendar().withDayAdded(-1).toDate())
+						.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == `tl.ai.execution:ExecutionStatus#ERROR`)
+				]]></elements>
+				<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
+			</modelBuilder>
+			<table
+				defaultColumns="displayName,session,model,startedAt,stopReason,errorMessage"
+				defaultSortOrder="startedAt:descending"
+				fixedColumns="1"
+			>
+				<columns>
+					<column name="displayName"
+						columnWidth="300px"
+						visibility="mandatory"
+					/>
+					<column name="session"
+						columnWidth="280px"
+					/>
+					<column name="model"
+						columnWidth="210px"
+					/>
+					<column name="startedAt"
+						columnWidth="160px"
+					/>
+					<column name="stopReason"
+						columnWidth="150px"
+					/>
+					<column name="errorMessage"
+						columnWidth="480px"
+					/>
+					<column name="transcript"
+						visibility="excluded"
+					/>
+					<column name="transcriptHtml"
+						visibility="excluded"
+					/>
+					<column name="response"
+						visibility="excluded"
+					/>
+				</columns>
+			</table>
+			<buttons>
+				<button id="refreshErrors"
+					class="com.top_logic.layout.form.component.InvalidateCommand"
+				/>
+			</buttons>
+		</tableView>
+	</components>
+</securityLayout>

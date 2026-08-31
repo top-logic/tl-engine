@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	"Läufe (24 h)". The volume number, with the sub-agent share named separately: a day of 18 runs
+	made of 12 top-level runs and 6 delegations is a different day from 18 independent ones.
+-->
+<securityLayout name="aiOverviewRunsTile"
+	titleKey="admin.ai.agentActivity.overview.runs.label"
+>
+	<tile-info name="aiOverviewRuns"
+		label="admin.ai.agentActivity.overview.runs.label"
+	>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
+			icon="css:fa-solid fa-list-check"
+		>
+			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[
+					model -> {
+						recent = all(`tl.ai.execution:AgentExecution`)
+							.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
+								>= now().toSystemCalendar().withDayAdded(-1).toDate());
+						children = $recent.filter(e -> !isEmpty($e.get(`tl.ai.execution:AgentExecution#parentExecution`))).size();
+						#('{0} runs, {1} of them sub-agents'@en, '{0} Läufe, davon {1} Teilagenten'@de)
+							.fill($recent.size(), $children);
+					}
+				]]></text>
+			</description>
+		</preview>
+	</tile-info>
+	<components>
+		<tableView name="aiOverviewRunsTable"
+			objectType="tl.ai.execution:AgentExecution"
+			securityObject="securityRoot"
+			titleKey="admin.ai.agentActivity.overview.runs.title"
+		>
+			<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+				<elements><![CDATA[
+					model -> all(`tl.ai.execution:AgentExecution`)
+						.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
+							>= now().toSystemCalendar().withDayAdded(-1).toDate())
+				]]></elements>
+				<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
+			</modelBuilder>
+			<table
+				defaultColumns="displayName,session,status,model,startedAt,parentExecution"
+				defaultSortOrder="startedAt:descending"
+				fixedColumns="1"
+			>
+				<columns>
+					<column name="displayName"
+						columnWidth="300px"
+						visibility="mandatory"
+					/>
+					<column name="session"
+						columnWidth="280px"
+					/>
+					<column name="status"
+						columnWidth="120px"
+					/>
+					<column name="model"
+						columnWidth="210px"
+					/>
+					<column name="startedAt"
+						columnWidth="160px"
+					/>
+					<column name="parentExecution"
+						columnWidth="300px"
+					/>
+					<column name="transcript"
+						visibility="excluded"
+					/>
+					<column name="transcriptHtml"
+						visibility="excluded"
+					/>
+					<column name="response"
+						visibility="excluded"
+					/>
+				</columns>
+			</table>
+			<buttons>
+				<button id="refreshRuns"
+					class="com.top_logic.layout.form.component.InvalidateCommand"
+				/>
+			</buttons>
+		</tableView>
+	</components>
+</securityLayout>

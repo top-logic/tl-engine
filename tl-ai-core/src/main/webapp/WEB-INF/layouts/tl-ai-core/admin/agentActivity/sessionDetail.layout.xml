@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The selected session. A monitor reports; it does not edit, so the switch into edit mode is
+	hidden rather than merely guarded by a command group - the attributes here are written by
+	AgentExecutionStore and a hand-edited lastUpdated would be a lie about what the agent did.
+	
+	memory and metadata hold JSON and are collapsed for that reason: in the daily case they are
+	noise, and whoever needs them opens the group.
+-->
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		model="selection(tl-ai-core/admin/agentActivity/agentActivityView.layout.xml#aiSessionsTable)"
+		name="admin.ai.agentActivity.sessions.detail"
+		showNoModel="false"
+		type="tl.ai.execution:AgentSession"
+	>
+		<editExecutability>
+			<rule class="com.top_logic.tool.execution.AlwaysHidden"/>
+		</editExecutability>
+		<forms>
+			<form type="tl.ai.execution:AgentSession">
+				<formDefinition>
+					<group columns="THREE">
+						<label key="admin.ai.agentActivity.sessions.group.session"/>
+						<field
+							attribute="displayName"
+							fullQualifiedName="tl.ai.execution:AgentSession#displayName"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="kind"
+							fullQualifiedName="tl.ai.execution:AgentSession#kind"
+							type="tl.ai.execution:SessionKind"
+						/>
+						<field
+							attribute="owner"
+							fullQualifiedName="tl.ai.execution:AgentSession#owner"
+							type="tl.accounts:Person"
+						/>
+						<field
+							attribute="title"
+							fullQualifiedName="tl.ai.execution:AgentSession#title"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="status"
+							fullQualifiedName="tl.ai.execution:AgentSession#status"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="createdAt"
+							fullQualifiedName="tl.ai.execution:AgentSession#createdAt"
+							type="tl.core:DateTime"
+						/>
+						<field
+							attribute="lastUpdated"
+							fullQualifiedName="tl.ai.execution:AgentSession#lastUpdated"
+							type="tl.core:DateTime"
+						/>
+					</group>
+					<group
+						columns="ONE"
+						initiallyOpened="false"
+						wholeLine="true"
+					>
+						<label key="admin.ai.agentActivity.sessions.group.state"/>
+						<field
+							attribute="memory"
+							fullQualifiedName="tl.ai.execution:AgentSession#memory"
+							type="tl.core:Text"
+						/>
+						<field
+							attribute="metadata"
+							fullQualifiedName="tl.ai.execution:AgentSession#metadata"
+							type="tl.core:Text"
+						/>
+					</group>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

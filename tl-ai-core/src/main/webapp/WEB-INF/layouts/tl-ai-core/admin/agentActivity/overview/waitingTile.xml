@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	"Wartet auf einen Menschen". The most valuable number of the five: every other tile says what
+	happened, this one says what is somebody's fault right now.
+	
+	The middle number counts the requests nobody was told about: a question raised by a BACKGROUND or
+	SCHEDULED run has no responder, so it blocks its run until it times out and no inbox shows it.
+-->
+<securityLayout name="aiOverviewWaitingTile"
+	titleKey="admin.ai.agentActivity.overview.waiting.label"
+>
+	<tile-info name="aiOverviewWaiting"
+		label="admin.ai.agentActivity.overview.waiting.label"
+	>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
+			icon="css:fa-solid fa-hourglass-half"
+		>
+			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[
+					model -> {
+						open = all(`tl.ai.execution:InteractionRequest`)
+							.filter(r -> $r.get(`tl.ai.execution:InteractionRequest#state`) == `tl.ai.execution:InteractionState#PENDING`);
+						unassigned = $open.filter(r -> isEmpty($r.get(`tl.ai.execution:InteractionRequest#responder`))).size();
+						first = $open.sort(comparator(r -> $r.get(`tl.ai.execution:InteractionRequest#createdAt`))).firstElement();
+						oldest = ifElse(isEmpty($first), null, $first.get(`tl.ai.execution:InteractionRequest#createdAt`));
+						#('{0} open, {1} assigned to nobody, oldest since {2}'@en, '{0} offen, {1} niemandem zugewiesen, ältester seit {2}'@de)
+							.fill($open.size(), $unassigned, ifElse(isEmpty($oldest), '-', dateFormat('dd.MM. HH:mm').format($oldest)));
+					}
+				]]></text>
+			</description>
+		</preview>
+	</tile-info>
+	<components>
+		<tableView name="aiOverviewWaitingTable"
+			objectType="tl.ai.execution:InteractionRequest"
+			securityObject="securityRoot"
+			titleKey="admin.ai.agentActivity.overview.waiting.title"
+		>
+			<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+				<elements><![CDATA[
+					model -> all(`tl.ai.execution:InteractionRequest`)
+						.filter(r -> $r.get(`tl.ai.execution:InteractionRequest#state`) == `tl.ai.execution:InteractionState#PENDING`)
+				]]></elements>
+				<supportsElement>element -> $element.instanceOf(`tl.ai.execution:InteractionRequest`)</supportsElement>
+			</modelBuilder>
+			<table
+				defaultColumns="displayName,type,execution,responder,createdAt,waitingMinutes"
+				defaultSortOrder="createdAt:ascending"
+				fixedColumns="1"
+			>
+				<columns>
+					<column name="displayName"
+						columnWidth="360px"
+						visibility="mandatory"
+					/>
+					<column name="type"
+						columnWidth="120px"
+					/>
+					<column name="execution"
+						columnWidth="300px"
+					/>
+					<column name="responder"
+						columnWidth="180px"
+					/>
+					<column name="createdAt"
+						columnWidth="160px"
+					/>
+					<column name="prompt"
+						visibility="excluded"
+					/>
+					<column name="payload"
+						visibility="excluded"
+					/>
+					<column name="waitingMinutes"
+						columnWidth="125px"
+					/>
+				</columns>
+				<configurationProviders>
+					<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+						columnId="waitingMinutes"
+						columnLabel="admin.ai.agentActivity.interactions.waitingMinutes"
+						columnType="tl.core:Long"
+					>
+						<accessor><![CDATA[
+							r -> {
+								created = $r.get(`tl.ai.execution:InteractionRequest#createdAt`);
+								isEmpty($created) ? null : (now().toMillis() - $created.toMillis()) / 60000;
+							}
+						]]></accessor>
+					</configurationProvider>
+				</configurationProviders>
+			</table>
+			<buttons>
+				<button id="refreshWaiting"
+					class="com.top_logic.layout.form.component.InvalidateCommand"
+				/>
+			</buttons>
+		</tableView>
+	</components>
+</securityLayout>

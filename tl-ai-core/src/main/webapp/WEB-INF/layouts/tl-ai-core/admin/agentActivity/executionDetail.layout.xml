@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The selected run. Five groups in the order the questions arrive: what was it, what did it cost,
+	what came out, what did it actually do, and finally the raw values for the case where the
+	rendered transcript is not enough.
+	
+	Transkript renders the derived transcriptHtml, not the stored JSON: see the attribute's comment
+	in tl.ai.execution.model.xml for why that is a model attribute rather than a form element, and
+	for what the panel says about a run that has no transcript at all.
+	
+	Read-only like every panel of this view. Cancelling a run is the single write, and it is a
+	command on the table rather than a field here, because it goes through AgentExecutionStore.
+-->
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		model="selection(tl-ai-core/admin/agentActivity/agentActivityView.layout.xml#aiExecutionsTable)"
+		name="admin.ai.agentActivity.executions.detail"
+		showNoModel="false"
+		type="tl.ai.execution:AgentExecution"
+	>
+		<editExecutability>
+			<rule class="com.top_logic.tool.execution.AlwaysHidden"/>
+		</editExecutability>
+		<forms>
+			<form type="tl.ai.execution:AgentExecution">
+				<formDefinition>
+					<group columns="THREE">
+						<label key="admin.ai.agentActivity.executions.group.run"/>
+						<field
+							attribute="displayName"
+							fullQualifiedName="tl.ai.execution:AgentExecution#displayName"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="agentName"
+							fullQualifiedName="tl.ai.execution:AgentExecution#agentName"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="status"
+							fullQualifiedName="tl.ai.execution:AgentExecution#status"
+							type="tl.ai.execution:ExecutionStatus"
+						/>
+						<field
+							attribute="stopReason"
+							fullQualifiedName="tl.ai.execution:AgentExecution#stopReason"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="cancelRequested"
+							fullQualifiedName="tl.ai.execution:AgentExecution#cancelRequested"
+							type="tl.core:Boolean"
+						/>
+						<field
+							attribute="model"
+							fullQualifiedName="tl.ai.execution:AgentExecution#model"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="provider"
+							fullQualifiedName="tl.ai.execution:AgentExecution#provider"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="session"
+							fullQualifiedName="tl.ai.execution:AgentExecution#session"
+							type="tl.ai.execution:AgentSession"
+						/>
+						<field
+							attribute="parentExecution"
+							fullQualifiedName="tl.ai.execution:AgentExecution#parentExecution"
+							type="tl.ai.execution:AgentExecution"
+						/>
+						<field
+							attribute="startedAt"
+							fullQualifiedName="tl.ai.execution:AgentExecution#startedAt"
+							type="tl.core:DateTime"
+						/>
+						<field
+							attribute="endedAt"
+							fullQualifiedName="tl.ai.execution:AgentExecution#endedAt"
+							type="tl.core:DateTime"
+						/>
+						<field
+							attribute="runId"
+							fullQualifiedName="tl.ai.execution:AgentExecution#runId"
+							type="tl.core:String"
+						/>
+					</group>
+					<group columns="THREE">
+						<label key="admin.ai.agentActivity.executions.group.tokens"/>
+						<field
+							attribute="inputTokens"
+							fullQualifiedName="tl.ai.execution:AgentExecution#inputTokens"
+							type="tl.core:Long"
+						/>
+						<field
+							attribute="outputTokens"
+							fullQualifiedName="tl.ai.execution:AgentExecution#outputTokens"
+							type="tl.core:Long"
+						/>
+						<field
+							attribute="thinkingTokens"
+							fullQualifiedName="tl.ai.execution:AgentExecution#thinkingTokens"
+							type="tl.core:Long"
+						/>
+						<field
+							attribute="cacheReadTokens"
+							fullQualifiedName="tl.ai.execution:AgentExecution#cacheReadTokens"
+							type="tl.core:Long"
+						/>
+						<field
+							attribute="cacheWriteTokens"
+							fullQualifiedName="tl.ai.execution:AgentExecution#cacheWriteTokens"
+							type="tl.core:Long"
+						/>
+					</group>
+					<group
+						columns="ONE"
+						wholeLine="true"
+					>
+						<label key="admin.ai.agentActivity.executions.group.result"/>
+						<field
+							attribute="response"
+							fullQualifiedName="tl.ai.execution:AgentExecution#response"
+							type="tl.core:Text"
+						/>
+						<field
+							attribute="errorMessage"
+							fullQualifiedName="tl.ai.execution:AgentExecution#errorMessage"
+							type="tl.core:Text"
+						/>
+					</group>
+					<!--
+						The group heading already says Transkript; repeating it as a field label in
+						front of the rendering would only cost the panel a column of its width.
+					-->
+					<group
+						columns="ONE"
+						labelPlacement="hide-label"
+						wholeLine="true"
+					>
+						<label key="admin.ai.agentActivity.executions.group.transcript"/>
+						<field
+							attribute="transcriptHtml"
+							fullQualifiedName="tl.ai.execution:AgentExecution#transcriptHtml"
+							type="tl.model.search:Macro"
+						/>
+					</group>
+					<group
+						columns="ONE"
+						initiallyOpened="false"
+						wholeLine="true"
+					>
+						<label key="admin.ai.agentActivity.executions.group.raw"/>
+						<field
+							attribute="transcript"
+							fullQualifiedName="tl.ai.execution:AgentExecution#transcript"
+							type="tl.core:Text"
+						/>
+					</group>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

@@ -209,8 +209,12 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				|| property.kind() == PropertyKind.MAP) {
 				ConfigListEditorControl listEditor =
 					new ConfigListEditorControl(context, config, property, _index, _editable);
+				// Over the full row, like the nested-item group above: a collection holds whole
+				// forms - one per entry, each with its own header and actions - and a third of the
+				// row is not a place to put a form. It also keeps a collection recognizable as one
+				// section rather than as a column of the surrounding grid.
 				ReactFormGroupControl listGroup = new ReactFormGroupControl(
-					context, null, true, false, "default", false,
+					context, null, true, false, "default", true,
 					List.of(), List.of(listEditor));
 				listGroup.setHeader(createGroupHeader(context, property));
 				addChild(listGroup);

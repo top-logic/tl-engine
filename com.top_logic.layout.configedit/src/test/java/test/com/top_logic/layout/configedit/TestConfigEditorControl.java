@@ -1173,6 +1173,30 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * A group takes the whole row, whether it holds a nested item or a collection.
+	 *
+	 * <p>
+	 * Both hold whole forms, and a third of the row is not a place to put a form. A collection left
+	 * in one grid column reads as a column of the surrounding form rather than as a section of its
+	 * own - which is exactly what a form generated from a model does not look like.
+	 * </p>
+	 */
+	public void testEveryGroupTakesTheWholeRow() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		int groups = 0;
+		for (ReactControl child : editor.scriptingChildren()) {
+			if (child instanceof ReactFormGroupControl) {
+				groups++;
+				assertEquals("Group '" + child.scriptingScalarState().get("header") + "' must take the whole row.",
+					Boolean.TRUE, child.scriptingScalarState().get("fullLine"));
+			}
+		}
+		assertTrue("Expected the nested item group and the collection groups.", groups >= 2);
+	}
+
+	/**
 	 * A LIST property without a key property (no {@link Key} annotation) is unaffected by the new
 	 * guard, even though its elements never carry a name at all.
 	 */

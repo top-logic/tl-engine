@@ -16,7 +16,7 @@
 	exist. Start from a fresh database, or delete those instances first. The same applies to the
 	"secdemo" module of the previous version of this fixture: a database that ran it holds Note and
 	Secret instances of a module this file no longer declares, so it will not boot. See
-	doc/security/testbed.md, section "Enabling and resetting the fixture".
+	tl-ai-demo/doc/secdemo/testbed.md, section "Enabling and resetting the fixture".
 
 	What it wires - the application of doc/security/role-model-worked-example.md, built so that the
 	document and the fixture cannot disagree:
@@ -40,8 +40,8 @@
 	swallow the scope assignment, and per-object scoping could not be demonstrated at all. The previous
 	version of this fixture set it to true, which is why it could only ever show tier-based access.
 
-	doc/security/testbed.md is the entry point: it maps every behaviour to a persona, a thing to
-	type and an expected result.
+	tl-ai-demo/doc/secdemo/testbed.md is the entry point: it maps every behaviour to a persona, a
+	thing to type and an expected result.
 -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>

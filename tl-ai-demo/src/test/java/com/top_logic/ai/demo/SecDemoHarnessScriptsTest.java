@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
- * Every TL-Script file of {@code doc/security/harness} still compiles.
+ * Every TL-Script file of {@code tl-ai-demo/doc/secdemo/harness} still compiles.
  *
  * <p>
  * The harness scripts are documentation a human pastes into the Script console, so nothing else in
@@ -36,7 +36,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * it produces the right answer: {@code fire.tlscript} starts real agent runs and
  * {@code reset.tlscript} deletes objects, so executing them here would be a different test with much
  * larger side effects. Their behaviour is covered by the other {@code SecDemo*} tests and by the
- * scenarios in {@code doc/security/testbed.md}.
+ * scenarios in {@code tl-ai-demo/doc/secdemo/testbed.md}.
  * </p>
  *
  * <p>
@@ -48,7 +48,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 public class SecDemoHarnessScriptsTest extends SecDemoPersonaTest {
 
 	/** Relative to the repository root. */
-	private static final String HARNESS_DIRECTORY = "doc/security/harness";
+	private static final String HARNESS_DIRECTORY = "tl-ai-demo/doc/secdemo/harness";
 
 	/** Every script a human is told to paste into the console. */
 	public void testEveryHarnessScriptCompiles() throws IOException {
@@ -81,7 +81,7 @@ public class SecDemoHarnessScriptsTest extends SecDemoPersonaTest {
 
 		for (String expected : List.of("probe.tlscript", "fire.tlscript", "collect.tlscript",
 			"reset.tlscript")) {
-			assertTrue("doc/security/testbed.md names '" + expected + "', which is missing. Update"
+			assertTrue("tl-ai-demo/doc/secdemo/testbed.md names '" + expected + "', which is missing. Update"
 				+ " both, or neither: a scenario table pointing at a file that is gone is worse than"
 				+ " no scenario table. Found: " + names, names.contains(expected));
 		}
@@ -98,12 +98,12 @@ public class SecDemoHarnessScriptsTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * Locates {@code doc/security/harness} by walking up from the working directory.
+	 * Locates {@code tl-ai-demo/doc/secdemo/harness} by walking up from the working directory.
 	 *
 	 * <p>
-	 * The working directory of a surefire run is the module, and the scripts live at the repository
-	 * root, so the relative path depends on how the build was invoked. Searching upwards is what makes
-	 * the test work from the module and from the reactor root alike.
+	 * The working directory of a surefire run is the module, and {@link #HARNESS_DIRECTORY} is relative
+	 * to the repository root, so the relative path depends on how the build was invoked. Searching
+	 * upwards is what makes the test work from the module and from the reactor root alike.
 	 * </p>
 	 */
 	private static Path harnessDirectory() {

@@ -391,7 +391,7 @@ argues for boot-time warnings, not for a different architecture.
 
 **This is now built.** It is the agent security test bed of `tl-ai-demo`, behind one line of
 `metaConf.txt`: the model is `WEB-INF/model/pm.model.xml`, everything else is
-`WEB-INF/conf/secdemo.config.xml`, and [testbed.md](testbed.md) is how to drive it. Every row of the
+`WEB-INF/conf/secdemo.config.xml`, and [testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md) is how to drive it. Every row of the
 walkthrough above is a JUnit test that runs against a real application boot, so this document and the
 fixture cannot drift apart:
 

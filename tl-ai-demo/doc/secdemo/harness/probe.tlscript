@@ -14,7 +14,7 @@
 //
 // What to expect: log in as two personas in turn and diff the two outputs.
 // That comparison is the whole point of the fixture. The expectation column of
-// doc/security/testbed.md says which lines must differ for which pair.
+// tl-ai-demo/doc/secdemo/testbed.md says which lines must differ for which pair.
 //
 //   ALLOWED  the tool ran. For a read-only probe tool the result follows.
 //   DENIED   the tool layer refused, and the reason names either the missing
@@ -95,7 +95,7 @@
 				+ " say ALLOWED and the deny lines prove nothing. That is the"
 				+ " documented administrator baseline, not a finding - log in as a"
 				+ " persona to see the policy."
-			: "Role-based account: the expectations in doc/security/testbed.md apply.",
+			: "Role-based account: the expectations in tl-ai-demo/doc/secdemo/testbed.md apply.",
 		""
 	].concat($report).concat([
 		"",

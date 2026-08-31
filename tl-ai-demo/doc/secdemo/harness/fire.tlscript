@@ -2,8 +2,8 @@
 // Agent security test bed - AGENT RUNS, STEP 1 of 2: FIRE
 //
 // Starts one background agent run per scenario of the model-rights walkthrough
-// (doc/security/e2e-security-test.md, section 3) and hands the run handles to
-// collect.tlscript through the user session.
+// (doc/security/role-model-worked-example.md, section 4) and hands the run
+// handles to collect.tlscript through the user session.
 //
 // This needs an LLM API key, because a real agent has to decide to call the
 // TL-Script tool. To see the TOOL layer without any model call, run
@@ -11,7 +11,7 @@
 //
 // Where to run it: Administration > Development > Script console, logged in as
 // the persona whose scenarios you want to execute. The runs act as that
-// account - see section 4 of the test procedure.
+// account - see section 4.1 of the test bed guide.
 //
 // After this script returns, WAIT until the runs have finished, then execute
 // collect.tlscript in the SAME browser session. Fire and collect must be two
@@ -61,14 +61,14 @@
 	// -- the cases --------------------------------------------------------
 	// [ case id, account, prompt, expected outcome ]
 	//
-	// 3.x are the MODEL-rights cases of doc/security/e2e-security-test.md
-	// section 3. Their prompts deliberately steer the agent to the TL-Script
-	// tool, because only that tool runs with the engine's security checks. Do
-	// not reword them.
+	// 3.x are the MODEL-rights cases of
+	// doc/security/role-model-worked-example.md section 4. Their prompts
+	// deliberately steer the agent to the TL-Script tool, because only that
+	// tool runs with the engine's security checks. Do not reword them.
 	//
 	// T-x are tool-layer cases of this script's own - the ids are local here
-	// and are NOT the T-rows of doc/security/testbed.md, which are console
-	// scenarios with no model in them. The agent is asked for something the
+	// and are NOT the T-rows of tl-ai-demo/doc/secdemo/testbed.md, which are
+	// console scenarios with no model in them. The agent is asked for something the
 	// persona lacks the capability for, and what is judged is whether it NAMES
 	// the missing capability rather than failing opaquely. Read their results
 	// as prose, not as a status code - the deterministic version of the same

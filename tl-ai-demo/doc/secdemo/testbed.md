@@ -11,10 +11,9 @@ its walkthrough lives next door:
 
 | Page | Read it when |
 |---|---|
-| [role-model-worked-example.md](role-model-worked-example.md) | you want the **role model** from scratch: what a role is, why one role name serves both grant tables, and the flag that decides whether per-object scoping works at all. **This fixture is that document, built** |
-| [e2e-security-test.md](e2e-security-test.md) | you want the **model-rights walkthrough** case by case - what `ModelAccessRights` does per object and per attribute (its section 3) |
-| [tool-access-configuration.md](tool-access-configuration.md) | you are writing a `<tool-access>` policy for **your own** application |
-| [agent-security-architecture.md](agent-security-architecture.md) | you want the design: threat model, layers, built versus staged |
+| [role-model-worked-example.md](../../../doc/security/role-model-worked-example.md) | you want the **role model** from scratch: what a role is, why one role name serves both grant tables, the flag that decides whether per-object scoping works at all, and the **model-rights walkthrough** persona by persona - what `ModelAccessRights` does per object and per attribute (its section 4). **This fixture is that document, built** |
+| [tool-access-configuration.md](../../../doc/security/tool-access-configuration.md) | you are writing a `<tool-access>` policy for **your own** application |
+| [agent-security-architecture.md](../../../doc/security/agent-security-architecture.md) | you want the design: threat model, layers, built versus staged |
 
 All of this is **test scaffolding**, off in the shipped application, switched on by one line of
 `metaConf.txt`.
@@ -43,7 +42,8 @@ tl-ai-demo/src/main/webapp/WEB-INF/conf/metaConf.txt              the on/off swi
 tl-ai-demo/src/main/webapp/WEB-INF/conf/secdemo.config.xml        the fixture: model, roles, rules, policies, personas
 tl-ai-demo/src/main/webapp/WEB-INF/model/pm.model.xml             the business model
 tl-ai-demo/src/main/java/.../secdemo/SecDemoSetupService.java     seeds accounts, projects, views; VERIFIES the roles
-doc/security/harness/*.tlscript                                   the four console scripts - section 4
+tl-ai-demo/doc/secdemo/testbed.md                                 this page
+tl-ai-demo/doc/secdemo/harness/*.tlscript                         the four console scripts - section 4
 tl-ai-demo/src/test/java/.../SecDemo*Test.java                    the deterministic backbone - section 7
 ```
 
@@ -54,7 +54,7 @@ happens; the fourth is asked again at the end of the turn.
 
 | Layer | Configured by | Decides | Symptom when it denies |
 |---|---|---|---|
-| **Component access** | `<component-access>` | whether a tab opens | *"No tabs to choose from."* |
+| **Component access** | `<component-access>` | whether a tab opens | *"No tabs to choose from."* - [1.3](#13-component-access-why-the-accounts-see-a-tab-at-all) |
 | **Tool access** (tl-ai, L1) | `<tool-access>` | whether this account may invoke this tool | `Permission denied: tool '...' requires the '...' capability` |
 | **Model access** (engine, L2) | `<security-config>` **plus the role rules** | whether this account may read or write **this object** | an empty result, `totalCount` 0, `Object with TID '...' not found` for an object that exists, an absent attribute, `CREATE_PERMISSION_DENIED` |
 | **Pre-commit guard** (tl-ai, L4) | the same `<security-config>`, read again at end of turn | whether the turn's accumulated changes may be persisted | the changes are gone; `The data changes of this turn were rolled back` |
@@ -62,7 +62,7 @@ happens; the fourth is asked again at the end of the turn.
 L1 can only answer "may this account use this *kind* of tool at all", because when it runs there is no
 object yet. Anna and Dora are **indistinguishable at L1** and opposite at L2 - one partners on a project,
 the other on nothing. That is why several rows are *ALLOWED at L1 and empty in the result*;
-[role-model-worked-example.md](role-model-worked-example.md) section 4 reasons that interplay out.
+[role-model-worked-example.md](../../../doc/security/role-model-worked-example.md) section 4 reasons that interplay out.
 
 ### 1.2 The hinge
 
@@ -77,9 +77,74 @@ security *ancestors*, never its children. Hence:
   the fixture still looks fine: the tools are all there, they all run, they all return nothing.
 
 The five rules are in `secdemo.config.xml`, explained in
-[role-model-worked-example.md](role-model-worked-example.md) section 3.4. Nothing in `SecDemoSetupService`
+[role-model-worked-example.md](../../../doc/security/role-model-worked-example.md) section 3.4. Nothing in `SecDemoSetupService`
 *assigns* a role: it states which roles the matrix expects and checks after boot that the rules delivered
 them.
+
+### 1.3 Component access: why the accounts see a tab at all
+
+`<security-config>` and the role rules govern **model access**: which role may `Read` / `Create` /
+`Write` a model *type*, on which object. They say nothing about the UI. Whether an account may see and
+open a view is a second, completely independent mechanism:
+
+| | Model access (L2) | Component access |
+|---|---|---|
+| Configured by | `<security-config>` on `SecurityConfigurationService` | command groups per role on a `securityLayout` component |
+| Enforced by | `ModelAccessRights` | `BoundChecker.allow(...)` via `PersBoundComp` |
+| Decides | what the account may do with an instance | whether the tab appears and opens |
+
+Deny-by-default applies to component access too: a role with no command group on a view cannot open it.
+The shipped demo grants nothing to anybody - there is no `WEB-INF/conf/security.xml` - so without this
+the personas would log in to *"No tabs to choose from."* and no scenario below could be run.
+Administrators are unaffected, because they bypass both layers.
+
+The aspect therefore grants the `Read` command group on the views that make up the agent chat and the
+TL-Script console, to **every** persona role:
+
+| View | What it is |
+|---|---|
+| `tl-chat/chat/tabLayout.layout.xml#TabLayout` | the **Albert** tab |
+| `tl-chat/chat/agent.layout.xml#agent` | the chat inside it, a security component of its own |
+| `admin/index.layout.xml#adminView` | the **Administration** tab |
+| `admin/studio/index.layout.xml#studioView` | the **Development** sub-tab inside it |
+| `com.top_logic.model.search/admin/scriptConsole.layout.xml#view` | the **Script console** inside that |
+
+Only a `securityLayout` (`CompoundSecurityLayout`) can hold access rights, and a nested one does *not*
+inherit from its parent - which is why every level on the way to a view needs its own entry. The sibling
+views the personas do *not* get (model editor, service editor, layout editor, accounts, ...) are security
+components of their own with no grant, so they stay closed. What the console grant means, and why it is
+deliberate, is [4.2](#42-the-script-console-grant).
+
+The configuration lives on `SecDemoSetupService`, in exactly the format the engine uses for
+`WEB-INF/conf/security.xml`:
+
+```xml
+<component-access>
+    <profile name="*">
+        <view name="tl-chat/chat/tabLayout.layout.xml#TabLayout">
+            <commandGroup name="Read"/>
+        </view>
+        ...
+    </profile>
+</component-access>
+```
+
+The profile name `*` is expanded by `SecDemoSetupService` to every role a configured `<persona>` is
+expected to hold; a profile named after a single role also works, for a persona that deliberately needs
+different views. Every persona role gets the *same* view access, which is what `*` says out loud - what
+distinguishes two personas is their model rights and their tool grants, and keeping the UI identical is
+what makes the allow/deny pairs of [section 5](#5-the-scenarios) comparable.
+
+**Why not `WEB-INF/conf/security.xml` directly?** That path is fixed, read on every boot, and the
+engine's importer *resets* the access of every view in the application before applying the file. An
+opt-in aspect must not do either. `SecDemoSetupService` applies the same configuration **additively**
+instead: nothing outside the list above is touched, so switching the aspect off leaves the demo exactly
+as shipped. Unknown roles, views or command groups fail the boot rather than silently producing an empty
+application.
+
+> If a persona logs in and the content area says *"No tabs to choose from."*, the `<component-access>`
+> block is missing or its view names no longer match the layouts. That is component access, not the
+> model policy.
 
 ---
 
@@ -174,6 +239,23 @@ Inventing a third role to produce those shapes would make the fixture stop being
 **To add a persona:** a `<persona>` row naming its groups and expected roles, its login in a
 `<project partners="...">` if it should scope something, a row here, and one in `SecDemoToolAccessTest`.
 
+**To change the seeded password**, name it on the aspect:
+
+```xml
+<config service-class="com.top_logic.ai.demo.secdemo.SecDemoSetupService">
+    <instance class="com.top_logic.ai.demo.secdemo.SecDemoSetupService"
+        initial-password="My-Own-Pwd-1"
+    >
+        <!-- ... keep the <component-access> block from the shipped aspect ... -->
+    </instance>
+</config>
+```
+
+It must satisfy the configured password policy (by default: at least 8 characters from at least two
+character classes). The password is applied only when the account is created; to change it afterwards,
+use *Administration → Accounts*. `root` keeps your usual dev password and, being an administrator, sees
+every tab.
+
 ---
 
 ## 4. The four harness scripts
@@ -206,6 +288,50 @@ knowledge-base revision, so a run started in one execution is invisible for the 
 >
 > To watch a write land, use `root` with **execute and save changes** (**T4**), or the chat.
 
+### 4.1 Why the agent runs as the calling user
+
+`fire.tlscript` calls `aiAgentChatAsync(agentName, prompt)`, a TL-Script binding of
+`com.top_logic.tl.ai.core.scripting.AIScriptFunctions#agentChatAsync`. It is the *only* one of the two
+agent entry points that is a valid surface here:
+
+| | `aiAgentChatAsync` | `aiAgentChat` |
+|---|---|---|
+| Security context | captures the caller's `TLSubSessionContext` and re-enters it on the background thread (`ThreadContextManager.inContext(...)`), with a `TopLogicSecurityContext` | `ToolContext.forCurrentUser()`, i.e. a `TopLogicSecurityContext` for the account bound to the calling thread |
+| Runs as | **the account that executed the script**, marked as a background run | the same account, as an attended run |
+| Blocks the console | no, returns a handle immediately | yes, until the agent is finished |
+
+Because the async variant re-enters the caller's sub-session, `TLContext.currentUser()` inside the
+agent's tools is the account that pressed the button, and `ModelAccessRights` evaluates *that* account's
+roles. `agentChatAsync` also refuses to start from a system or background context - it needs a sub-session
+with a person, which is exactly the property these scenarios rely on. Two consequences:
+
+- A background run has no human to answer approval prompts, so **every tool call is auto-approved**
+  (`ApprovalCallback.AUTO_APPROVE`). That is intended - the point is what the *engine* denies, not what a
+  human refuses. What an unattended run may reach is capped by the `<background-allowlist>` instead
+  ([5.5](#55-unattended-runs---the-background-allowlist)).
+- The run commits in its own transaction on the background thread, independent of the console request -
+  which is why the read-only console does not stop it, and why fire and collect must be two executions.
+
+### 4.2 The Script console grant
+
+Every persona can reach the console because the aspect grants the `Read` command group on the three
+nested views listed in [1.3](#13-component-access-why-the-accounts-see-a-tab-at-all). Without it they
+cannot run TL-Script at all, and the console is invisible.
+
+Only `Read` is granted. That covers opening the console and its plain **execute** button; **execute and
+save changes** is bound to the `Write` command group and stays disabled for the personas (its tooltip
+says *"(Keine Berechtigung)"*). That is one of the two reasons no persona can commit from the console -
+the ⚠️ note above is the other, and telling the resulting three errors apart is most of the skill.
+
+> **This deliberately gives a non-administrator role the ability to execute arbitrary TL-Script.** That
+> is the point: the fixture asserts that the tool policy and the model rights hold even for a user who
+> can write any expression they like. It is confined to an opt-in aspect that is off in the shipped
+> configuration. Do not copy the grant into a real application without thinking about it - note in
+> particular that a console user can call `aiCallTool(...)`, which executes a registered agent tool
+> directly. That call *is* gated by the `<tool-access>` policy ([5.2](#52-tool-access---the-invocation-gate)),
+> so a console user reaches only the tools their role is granted - but a role holding `script` can still
+> express any *data* operation TL-Script allows, bounded only by the model rights.
+
 ---
 
 ## 5. The scenarios
@@ -222,8 +348,10 @@ JUnit test.
 
 The per-object and per-attribute half of the substrate - a partner reading one project of two, a reader
 reading every ticket and no project, an attribute grant omitting `pm:Ticket#body` - is the engine's model
-security. Its walkthrough is [e2e-security-test.md](e2e-security-test.md#3-the-test-cases) section 3, one
-case per row, with `SecDemoModelSecurityTest` and `SecDemoRoleRuleTest` as the deterministic form.
+security. Its walkthrough is
+[role-model-worked-example.md](../../../doc/security/role-model-worked-example.md#4-the-personas-and-what-each-one-can-do)
+section 4, one case per persona, with `SecDemoModelSecurityTest` and `SecDemoRoleRuleTest` as the
+deterministic form.
 
 ### 5.2 Tool access - the invocation gate
 
@@ -364,7 +492,7 @@ each result; the rows say which case to read. **Model-dependent**, with
 | **A2** | an allowlisted `script` does not admit writes | `anna` | case **3.2** beside cases **3.1** and **3.6** | the commit refused while the read-only scripts of the same run succeed. The unattended-write bypass, pinned closed: `script` on the allowlist is not a write grant |
 | **A3** | it binds administrators too | `root` | case **3.2** (as `root`, `fire` fires every case) | still refused, for the same capability. The missing approval prompt is the justification, not the principal's authority |
 | **A4** | what the allowlist admits still works | `ben` | cases **3.3**, **3.4**, **3.5** | the listings, with the model rights applied inside them. The ceiling narrows, it is not a blanket refusal - the harness of this page depends on that |
-| **A5** | an enforcing policy must declare an allowlist | - | *(edit config instead)* | delete the whole `<background-allowlist>` element from `secdemo.config.xml` and restart: the application refuses to start, with the message quoted in [tool-access-configuration.md](tool-access-configuration.md#cap-what-an-unattended-run-can-do). Silence is not read as a decision in either direction |
+| **A5** | an enforcing policy must declare an allowlist | - | *(edit config instead)* | delete the whole `<background-allowlist>` element from `secdemo.config.xml` and restart: the application refuses to start, with the message quoted in [tool-access-configuration.md](../../../doc/security/tool-access-configuration.md#cap-what-an-unattended-run-can-do). Silence is not read as a decision in either direction |
 
 ### 5.6 The pre-commit guard (L4)
 
@@ -384,7 +512,7 @@ loses **both**. As `dora`, the same unchecked write is refused too.
 > **What L4 does not cover**, stated so an observation is not mistaken for a finding: attribute writes to
 > an object created in the *same* turn (the engine allows every instance-level check on an uncommitted
 > object, so the creation is what gets checked - see
-> [agent-security-architecture.md](agent-security-architecture.md) section 3.5), and side effects outside
+> [agent-security-architecture.md](../../../doc/security/agent-security-architecture.md) section 3.5), and side effects outside
 > the KnowledgeBase, which a KB rollback cannot undo. There is no run in which the guard is a no-op: it
 > runs for every turn that opened a transaction.
 
@@ -434,7 +562,7 @@ mvn -o -pl tl-ai-demo -am test -DskipTests=false \
     -Dsurefire.failIfNoSpecifiedTests=false -Dtest='SecDemo*'
 ```
 
-That is 118 tests in 13 classes, green on this branch. The class name says which behaviour broke:
+That is 171 tests in 18 classes, green on this branch. The class name says which behaviour broke:
 
 | Class | Scenarios | Class | Scenarios |
 |---|---|---|---|
@@ -443,11 +571,30 @@ That is 118 tests in 13 classes, green on this branch. The class name says which
 | `SecDemoReadFilterTest` | D1 - D8 | `SecDemoBackgroundAccessTest` | A1 - A5, P1, P2 |
 | `SecDemoCapabilityNoticeTest` | C1, C2 | `SecDemoPreCommitGuardTest` | [5.6](#56-the-pre-commit-guard-l4) |
 | `SecDemoSkillAbsenceTest` | C1, C4 - C6 | `SecDemoRoleRuleTest` | R1 |
+| `SecDemoListToolsTest` | C3, C4 | | |
 
-Three more carry no scenario of their own: `SecDemoModelSecurityTest` is one test per case of
-[e2e-security-test.md](e2e-security-test.md#3-the-test-cases) section 3, `SecDemoSpawnFilterTest` pins
-that a spawn decision is taken per child context, and `SecDemoHarnessScriptsTest` checks that every
-`harness/*.tlscript` still compiles against the model and the registered script functions.
+Seven more carry no scenario row of their own, because what they assert is not something you observe
+by logging in as a persona:
+
+- `SecDemoModelSecurityTest` - one test per case of
+  [role-model-worked-example.md](../../../doc/security/role-model-worked-example.md#4-the-personas-and-what-each-one-can-do)
+  section 4, i.e. the substrate rather than the agent layers.
+- `SecDemoSpawnFilterTest` - that a spawn decision is taken per child context.
+- `SecDemoHarnessScriptsTest` - that every `harness/*.tlscript` still compiles against the model and the
+  registered script functions.
+- `SecDemoEffectiveAccessTest` - that the read-only query behind the **Agent-Sicherheit** view says the
+  same thing the enforcement gate does, including which rule decided and which it overrode. The gate
+  itself is `SecDemoToolAccessTest`; these two disagreeing would be worse than no explanation at all.
+- `SecDemoPolicyEditorTest` - that the **Richtlinie** tab refuses exactly what the next application
+  start would refuse, and that every control is a projection of the stored policy, so opening the editor
+  and applying it cannot silently rewrite a hand-written one.
+- `SecDemoToolDescriptionTest` - that every framework tool carries an administrator-facing description
+  in both languages, rather than falling back to the text written for the model.
+- `SecDemoGermanTerminologyTest` - that the German texts of tl-ai say "Tool" and never "Werkzeug".
+
+The last four belong to the administration views, whose own documentation is
+[tool-access-configuration.md](../../../doc/security/tool-access-configuration.md#agent-sicherheit-the-view-that-explains-this-policy-and-the-one-that-writes-it);
+they run in this suite because they need the same booted fixture.
 
 Every part of that command line earns its place. `-Dtest=...`: a bare `mvn test` here runs only
 `test/TestAll.java`, which `tl-ai-demo` does not have.
@@ -477,6 +624,14 @@ principal and the deny-by-default of an empty policy, `TestPreCommitGuard` and t
 - **No persona commits anything from the console** - see the ⚠️ note in
   [section 4](#4-the-four-harness-scripts). Three errors, three layers, and telling them apart is most of
   the skill.
+- **`use-default-security-parent` stays `false`.** Plain model objects inherit roles from the security
+  root only when `BoundHelper` is configured with `use-default-security-parent="true"`. The engine
+  default is `false`, **and this fixture leaves it there** - which is the whole reason it can demonstrate
+  per-object scoping. The consequence to internalise is the one that reads as a defect and is not: a role
+  granted on the security root reaches **no** business object, so it satisfies the *tool* layer and
+  grants no data access whatever. Every per-object and per-type statement therefore needs a role rule
+  that produces the role on the objects themselves. See [1.2](#12-the-hinge) and
+  [role-model-worked-example.md](../../../doc/security/role-model-worked-example.md) section 3.4.1.
 - **An empty result is the model layer, not a broken tool**, which is why almost every row is a **pair**:
   one persona who sees the data next to one who does not. And an application whose agent's tools all work
   and all return nothing has forgotten a scope rule ([1.2](#12-the-hinge)).

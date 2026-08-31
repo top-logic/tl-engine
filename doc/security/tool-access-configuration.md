@@ -627,5 +627,5 @@ The demo carries a working example behind one switch: uncomment `secdemo.config.
 `<tool-access>` granting each of them a different set of capabilities, and three TL-Script tool
 factories - the tool of two of them named in `<tool-groups>`, the third deliberately not.
 
-**[testbed.md](testbed.md) is where to start.** It maps every behaviour of this layer to a persona, a
+**[testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md) is where to start.** It maps every behaviour of this layer to a persona, a
 thing to type and an expected result.

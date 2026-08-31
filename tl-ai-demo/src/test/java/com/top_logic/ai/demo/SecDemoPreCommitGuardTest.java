@@ -73,7 +73,7 @@ import com.top_logic.util.model.ModelService;
  * the all-or-nothing rollback. No LLM key is needed.
  * </p>
  *
- * @see doc/security/testbed.md section 4.8
+ * @see tl-ai-demo/doc/secdemo/testbed.md section 5.6
  */
 public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 

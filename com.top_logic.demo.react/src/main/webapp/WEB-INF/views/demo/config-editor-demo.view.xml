@@ -6,6 +6,6 @@
 			<en>Config Editor Demo</en>
 			<de>Konfigurationseditor-Demo</de>
 		</title>
-		<config-editor-demo/>
+		<config-form type="com.top_logic.demo.react.view.DemoEditorConfig"/>
 	</panel>
 </view>

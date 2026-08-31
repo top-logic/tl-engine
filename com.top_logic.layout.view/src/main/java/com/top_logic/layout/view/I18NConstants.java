@@ -40,6 +40,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey FORM_NO_MODEL;
 
 	/**
+	 * @en No configuration to edit.
+	 */
+	public static ResKey CONFIG_FORM_NO_MODEL;
+
+	/**
 	 * @en Detail
 	 */
 	public static ResKey COMPOSITION_TABLE_DETAIL;

@@ -12,9 +12,7 @@
 	<tile-info name="aiOverviewRunning"
 		label="admin.ai.agentActivity.overview.running.label"
 	>
-		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
-			icon="css:fa-solid fa-play"
-		>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
 			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
 				<text><![CDATA[
 					model -> {
@@ -22,8 +20,16 @@
 							.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == `tl.ai.execution:ExecutionStatus#RUNNING`);
 						first = $running.sort(comparator(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`))).firstElement();
 						oldest = ifElse(isEmpty($first), null, $first.get(`tl.ai.execution:AgentExecution#startedAt`));
-						#('{0} running, oldest started {1}'@en, '{0} laufend, ältester gestartet {1}'@de)
-							.fill($running.size(), ifElse(isEmpty($oldest), '-', dateFormat('dd.MM. HH:mm').format($oldest)));
+						{{{
+							<div class="aiKpi">
+								<div class="aiKpiValue">{$running.size()}</div>
+								<div class="aiKpiNote">
+									{ isEmpty($oldest)
+										? #('nothing running'@en, 'nichts in Arbeit'@de)
+										: #('oldest started {0}'@en, 'ältester gestartet {0}'@de).fill(dateFormat('dd.MM. HH:mm').format($oldest)) }
+								</div>
+							</div>
+						}}};
 					}
 				]]></text>
 			</description>
@@ -49,17 +55,17 @@
 			>
 				<columns>
 					<column name="displayName"
-						columnWidth="300px"
+						columnWidth="250px"
 						visibility="mandatory"
 					/>
 					<column name="session"
-						columnWidth="300px"
+						columnWidth="200px"
 					/>
 					<column name="model"
-						columnWidth="210px"
+						columnWidth="170px"
 					/>
 					<column name="startedAt"
-						columnWidth="160px"
+						columnWidth="150px"
 					/>
 					<column name="cancelRequested"
 						columnWidth="180px"
@@ -74,7 +80,7 @@
 						visibility="excluded"
 					/>
 					<column name="runningSeconds"
-						columnWidth="115px"
+						columnWidth="120px"
 					/>
 				</columns>
 				<configurationProviders>

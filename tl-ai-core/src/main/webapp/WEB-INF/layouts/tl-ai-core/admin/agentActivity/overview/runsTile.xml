@@ -10,9 +10,7 @@
 	<tile-info name="aiOverviewRuns"
 		label="admin.ai.agentActivity.overview.runs.label"
 	>
-		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
-			icon="css:fa-solid fa-list-check"
-		>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
 			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
 				<text><![CDATA[
 					model -> {
@@ -20,8 +18,14 @@
 							.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
 								>= now().toSystemCalendar().withDayAdded(-1).toDate());
 						children = $recent.filter(e -> !isEmpty($e.get(`tl.ai.execution:AgentExecution#parentExecution`))).size();
-						#('{0} runs, {1} of them sub-agents'@en, '{0} Läufe, davon {1} Teilagenten'@de)
-							.fill($recent.size(), $children);
+						{{{
+							<div class="aiKpi">
+								<div class="aiKpiValue">{$recent.size()}</div>
+								<div class="aiKpiNote">
+									{#('{0} of them sub-agents'@en, 'davon {0} Teilagenten'@de).fill($children)}
+								</div>
+							</div>
+						}}};
 					}
 				]]></text>
 			</description>
@@ -48,23 +52,23 @@
 			>
 				<columns>
 					<column name="displayName"
-						columnWidth="300px"
+						columnWidth="280px"
 						visibility="mandatory"
 					/>
 					<column name="session"
-						columnWidth="280px"
+						columnWidth="220px"
 					/>
 					<column name="status"
-						columnWidth="120px"
+						columnWidth="150px"
 					/>
 					<column name="model"
-						columnWidth="210px"
+						columnWidth="170px"
 					/>
 					<column name="startedAt"
-						columnWidth="160px"
+						columnWidth="150px"
 					/>
 					<column name="parentExecution"
-						columnWidth="300px"
+						columnWidth="260px"
 					/>
 					<column name="transcript"
 						visibility="excluded"

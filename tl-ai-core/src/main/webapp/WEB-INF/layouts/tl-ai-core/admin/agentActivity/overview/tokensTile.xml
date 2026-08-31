@@ -12,9 +12,7 @@
 	<tile-info name="aiOverviewTokens"
 		label="admin.ai.agentActivity.overview.tokens.label"
 	>
-		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
-			icon="css:fa-solid fa-coins"
-		>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
 			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
 				<text><![CDATA[
 					model -> {
@@ -25,8 +23,19 @@
 						billable = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#inputTokens`)($e)
 							+ $value(`tl.ai.execution:AgentExecution#outputTokens`)($e)).sum();
 						cached = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#cacheReadTokens`)($e)).sum();
-						#('{0} billable tokens, {1} served from the cache'@en, '{0} abrechenbare Token, {1} aus dem Cache'@de)
-							.fill($billable, $cached);
+						// A seven-digit number is not a number a reader takes in at a glance; the exact value is one
+						// click away in the table behind this tile.
+						short = v -> $v >= 1000000
+							? numberFormat('#,##0.0').format($v / 1000000) + ' Mio.'
+							: numberFormat('#,##0').format($v);
+						{{{
+							<div class="aiKpi">
+								<div class="aiKpiValue">{$short($billable)}</div>
+								<div class="aiKpiNote">
+									{#('billable, {0} from the cache'@en, 'abrechenbar, {0} aus dem Cache'@de).fill($short($cached))}
+								</div>
+							</div>
+						}}};
 					}
 				]]></text>
 			</description>
@@ -53,32 +62,32 @@
 			>
 				<columns>
 					<column name="displayName"
-						columnWidth="300px"
+						columnWidth="280px"
 						visibility="mandatory"
 					/>
 					<column name="agentName"
-						columnWidth="180px"
+						columnWidth="160px"
 					/>
 					<column name="model"
-						columnWidth="210px"
+						columnWidth="170px"
 					/>
 					<column name="startedAt"
-						columnWidth="160px"
+						columnWidth="150px"
 					/>
 					<column name="inputTokens"
 						columnWidth="120px"
 					/>
 					<column name="outputTokens"
-						columnWidth="120px"
+						columnWidth="125px"
 					/>
 					<column name="thinkingTokens"
-						columnWidth="120px"
+						columnWidth="115px"
 					/>
 					<column name="cacheReadTokens"
-						columnWidth="130px"
+						columnWidth="140px"
 					/>
 					<column name="cacheWriteTokens"
-						columnWidth="130px"
+						columnWidth="145px"
 					/>
 					<column name="transcript"
 						visibility="excluded"

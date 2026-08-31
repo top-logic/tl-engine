@@ -10,9 +10,7 @@
 	<tile-info name="aiOverviewErrors"
 		label="admin.ai.agentActivity.overview.errors.label"
 	>
-		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
-			icon="css:fa-solid fa-circle-exclamation"
-		>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
 			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
 				<text><![CDATA[
 					model -> {
@@ -20,8 +18,14 @@
 						recent = all(`tl.ai.execution:AgentExecution`)
 							.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`) >= $since);
 						failed = $recent.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == `tl.ai.execution:ExecutionStatus#ERROR`).size();
-						#('{0} of {1} runs failed'@en, '{0} von {1} Läufen fehlgeschlagen'@de)
-							.fill($failed, $recent.size());
+						{{{
+							<div class="aiKpi">
+								<div class="aiKpiValue">{$failed}</div>
+								<div class="aiKpiNote">
+									{#('of {0} runs'@en, 'von {0} Läufen'@de).fill($recent.size())}
+								</div>
+							</div>
+						}}};
 					}
 				]]></text>
 			</description>
@@ -48,23 +52,23 @@
 			>
 				<columns>
 					<column name="displayName"
-						columnWidth="300px"
+						columnWidth="280px"
 						visibility="mandatory"
 					/>
 					<column name="session"
-						columnWidth="280px"
+						columnWidth="220px"
 					/>
 					<column name="model"
-						columnWidth="210px"
+						columnWidth="170px"
 					/>
 					<column name="startedAt"
-						columnWidth="160px"
-					/>
-					<column name="stopReason"
 						columnWidth="150px"
 					/>
+					<column name="stopReason"
+						columnWidth="140px"
+					/>
 					<column name="errorMessage"
-						columnWidth="480px"
+						columnWidth="420px"
 					/>
 					<column name="transcript"
 						visibility="excluded"

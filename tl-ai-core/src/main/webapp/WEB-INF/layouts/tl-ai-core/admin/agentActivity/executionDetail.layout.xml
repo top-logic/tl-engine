@@ -91,8 +91,18 @@
 							type="tl.core:String"
 						/>
 					</group>
+					<!--
+						Token counts and the result are written when the run finishes
+						(AgentExecutionStore.finishExecution), so for a run that is still going both
+						groups would be a column of empty labels - which reads as a defect rather
+						than as "not finished yet". They appear once the run has an end date; until
+						then the Transkript group says in one sentence why there is nothing to show.
+					-->
 					<group columns="THREE">
 						<label key="admin.ai.agentActivity.executions.group.tokens"/>
+						<dynamicVisibility class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+							function="e -> ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#endedAt`)), 'hidden', 'read-only')"
+						/>
 						<field
 							attribute="inputTokens"
 							fullQualifiedName="tl.ai.execution:AgentExecution#inputTokens"
@@ -124,6 +134,9 @@
 						wholeLine="true"
 					>
 						<label key="admin.ai.agentActivity.executions.group.result"/>
+						<dynamicVisibility class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+							function="e -> ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#endedAt`)), 'hidden', 'read-only')"
+						/>
 						<field
 							attribute="response"
 							fullQualifiedName="tl.ai.execution:AgentExecution#response"

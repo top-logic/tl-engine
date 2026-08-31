@@ -7,6 +7,11 @@
 	
 	memory and metadata hold JSON and are collapsed for that reason: in the daily case they are
 	noise, and whoever needs them opens the group.
+	
+	Neither "title" nor "status" is a field here. The title is what displayName already shows when
+	there is one, so the two would read as the same value twice; status is a free string that
+	nothing in the framework writes today, so its field was an empty label with no way to fill it.
+	Both remain available as table columns for an application that does write them.
 -->
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
@@ -40,16 +45,6 @@
 							attribute="owner"
 							fullQualifiedName="tl.ai.execution:AgentSession#owner"
 							type="tl.accounts:Person"
-						/>
-						<field
-							attribute="title"
-							fullQualifiedName="tl.ai.execution:AgentSession#title"
-							type="tl.core:String"
-						/>
-						<field
-							attribute="status"
-							fullQualifiedName="tl.ai.execution:AgentSession#status"
-							type="tl.core:String"
 						/>
 						<field
 							attribute="createdAt"

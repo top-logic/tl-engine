@@ -13,9 +13,7 @@
 	<tile-info name="aiOverviewWaiting"
 		label="admin.ai.agentActivity.overview.waiting.label"
 	>
-		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
-			icon="css:fa-solid fa-hourglass-half"
-		>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
 			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
 				<text><![CDATA[
 					model -> {
@@ -24,8 +22,21 @@
 						unassigned = $open.filter(r -> isEmpty($r.get(`tl.ai.execution:InteractionRequest#responder`))).size();
 						first = $open.sort(comparator(r -> $r.get(`tl.ai.execution:InteractionRequest#createdAt`))).firstElement();
 						oldest = ifElse(isEmpty($first), null, $first.get(`tl.ai.execution:InteractionRequest#createdAt`));
-						#('{0} open, {1} assigned to nobody, oldest since {2}'@en, '{0} offen, {1} niemandem zugewiesen, ältester seit {2}'@de)
-							.fill($open.size(), $unassigned, ifElse(isEmpty($oldest), '-', dateFormat('dd.MM. HH:mm').format($oldest)));
+						{{{
+							<div class="aiKpi">
+								<div class="aiKpiValue">{$open.size()}</div>
+								<div class="aiKpiNote">
+									{ isEmpty($oldest)
+										? #('nobody is being kept waiting'@en, 'niemand wartet'@de)
+										: #('oldest since {0}'@en, 'ältester seit {0}'@de).fill(dateFormat('dd.MM. HH:mm').format($oldest)) }
+								</div>
+								{ $unassigned == 0 ? "" : {{{
+									<div class="aiKpiNote aiKpiAlert">
+										{#('{0} assigned to nobody'@en, '{0} niemandem zugewiesen'@de).fill($unassigned)}
+									</div>
+								}}} }
+							</div>
+						}}};
 					}
 				]]></text>
 			</description>
@@ -51,20 +62,20 @@
 			>
 				<columns>
 					<column name="displayName"
-						columnWidth="360px"
+						columnWidth="300px"
 						visibility="mandatory"
 					/>
 					<column name="type"
-						columnWidth="120px"
+						columnWidth="135px"
 					/>
 					<column name="execution"
-						columnWidth="300px"
+						columnWidth="260px"
 					/>
 					<column name="responder"
-						columnWidth="180px"
+						columnWidth="150px"
 					/>
 					<column name="createdAt"
-						columnWidth="160px"
+						columnWidth="150px"
 					/>
 					<column name="prompt"
 						visibility="excluded"
@@ -73,7 +84,7 @@
 						visibility="excluded"
 					/>
 					<column name="waitingMinutes"
-						columnWidth="125px"
+						columnWidth="140px"
 					/>
 				</columns>
 				<configurationProviders>

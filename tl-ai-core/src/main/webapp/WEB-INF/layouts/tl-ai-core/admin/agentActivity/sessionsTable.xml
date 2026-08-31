@@ -17,7 +17,7 @@
 	securityObject="securityRoot"
 	titleKey="admin.ai.agentActivity.sessions.title"
 >
-	<layoutInfo size="62%"/>
+	<layoutInfo size="68%"/>
 	<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
 		<elements><![CDATA[
 			model -> all(`tl.ai.execution:AgentSession`)
@@ -37,26 +37,26 @@
 	>
 		<columns>
 			<column name="displayName"
-				columnWidth="230px"
+				columnWidth="190px"
 				visibility="mandatory"
 			/>
 			<column name="kind"
-				columnWidth="95px"
+				columnWidth="125px"
 			/>
 			<column name="owner"
-				columnWidth="130px"
+				columnWidth="110px"
 			/>
 			<column name="title"
 				columnWidth="200px"
 			/>
 			<column name="status"
-				columnWidth="100px"
+				columnWidth="120px"
 			/>
 			<column name="createdAt"
-				columnWidth="135px"
+				columnWidth="175px"
 			/>
 			<column name="lastUpdated"
-				columnWidth="135px"
+				columnWidth="175px"
 			/>
 			<column name="memory"
 				visibility="excluded"
@@ -69,16 +69,16 @@
 				accessor come from the configuration providers below.
 			-->
 			<column name="runCount"
-				columnWidth="80px"
+				columnWidth="75px"
 			/>
 			<column name="errorCount"
 				columnWidth="80px"
 			/>
 			<column name="pendingCount"
-				columnWidth="85px"
+				columnWidth="80px"
 			/>
 			<column name="tokenCount"
-				columnWidth="100px"
+				columnWidth="90px"
 			/>
 		</columns>
 		<configurationProviders>

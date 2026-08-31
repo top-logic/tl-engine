@@ -1,9 +1,10 @@
 /*
- * Layout of the transcript panel in the agent activity monitor.
+ * Layout of the two parts of the agent activity monitor the theme cannot shape: the numbers on the
+ * Überblick tiles and the transcript panel.
  *
- * Only the transcript needs a stylesheet. Everything else in that view is an ordinary table or an
- * ordinary reactive form, so the theme lays it out; the transcript is HTML produced by a TL-Script
- * macro (AgentExecution#transcriptHtml) and the framework has no control that would shape it.
+ * Everything else in that view is an ordinary table or an ordinary reactive form, so the theme lays
+ * it out. These two are HTML produced by a TL-Script macro - the tile descriptions and
+ * AgentExecution#transcriptHtml - and the framework has no control that would shape them.
  *
  * Colours are stated literally rather than taken from theme variables: this file is contributed by
  * a library module and has to look right in the shipped theme without depending on a variable that
@@ -31,6 +32,59 @@
 	border-left: 3px solid #d3a118;
 	padding: 6px 10px;
 	color: #6b5200;
+}
+
+/* --- Überblick tiles ----------------------------------------------------- */
+
+/*
+ * A monitoring overview whose numbers cannot be read at a glance has lost its job, so the count is
+ * the largest thing on the card and the sentence explaining it is secondary. The count is written
+ * into the tile *description*, because that is the only slot of ModelBasedTilePreview that takes a
+ * TL-Script expression - the content slot below it takes a TilePreviewPartProvider.Content, of
+ * which the framework ships no by-expression implementation.
+ *
+ * The two rules below are scoped with :has() to cards that actually carry a KPI, so a tile of some
+ * other application keeps the standard chrome. Without them the framework's own layout works
+ * against the design: the content slot reserves a fixed 240px box for the icon this view does not
+ * use, and the tile grid centres its single row vertically, which leaves a third of the tab empty
+ * above the cards.
+ */
+
+.card:has(.aiKpi) .previewBoxOuter {
+	display: none;
+}
+
+.tileContainer:has(.aiKpi) {
+	align-items: start;
+}
+
+/*
+ * A row of KPIs is read across, so the numbers have to sit on one line. Two of the five titles are
+ * long enough to wrap, which would otherwise push their number half a line below the others.
+ */
+.card:has(.aiKpi) .card-title {
+	min-height: 2.7em;
+}
+
+.aiKpi {
+	padding: 2px 0 4px;
+	text-align: center;
+}
+
+.aiKpiValue {
+	font-size: 2.6rem;
+	font-weight: 600;
+	line-height: 1.15;
+	color: #1a1a1a;
+}
+
+.aiKpiNote {
+	font-size: 0.95em;
+	color: #6a6a6a;
+}
+
+.aiKpiNote.aiKpiAlert {
+	color: #8b1113;
 }
 
 /* --- turn ---------------------------------------------------------------- */

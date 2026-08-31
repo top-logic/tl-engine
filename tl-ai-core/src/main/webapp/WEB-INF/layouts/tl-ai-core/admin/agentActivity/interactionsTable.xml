@@ -12,7 +12,7 @@
 	securityObject="securityRoot"
 	titleKey="admin.ai.agentActivity.interactions.title"
 >
-	<layoutInfo size="62%"/>
+	<layoutInfo size="68%"/>
 	<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
 		<elements><![CDATA[
 			model -> all(`tl.ai.execution:InteractionRequest`)
@@ -28,29 +28,29 @@
 	>
 		<columns>
 			<column name="displayName"
-				columnWidth="250px"
+				columnWidth="260px"
 				visibility="mandatory"
 			/>
 			<column name="state"
-				columnWidth="110px"
+				columnWidth="180px"
 			/>
 			<column name="type"
-				columnWidth="105px"
+				columnWidth="135px"
 			/>
 			<column name="header"
 				columnWidth="200px"
 			/>
 			<column name="execution"
-				columnWidth="220px"
+				columnWidth="200px"
 			/>
 			<column name="responder"
-				columnWidth="140px"
+				columnWidth="130px"
 			/>
 			<column name="createdAt"
-				columnWidth="135px"
+				columnWidth="150px"
 			/>
 			<column name="resolvedAt"
-				columnWidth="135px"
+				columnWidth="150px"
 			/>
 			<column name="requestId"
 				columnWidth="240px"
@@ -69,10 +69,10 @@
 				accessor come from the configuration providers below.
 			-->
 			<column name="waitingMinutes"
-				columnWidth="125px"
+				columnWidth="140px"
 			/>
 			<column name="sessionOfRequest"
-				columnWidth="220px"
+				columnWidth="200px"
 			/>
 		</columns>
 		<configurationProviders>
@@ -92,6 +92,7 @@
 			</configurationProvider>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
 				columnId="sessionOfRequest"
+				columnVisibility="hidden"
 				columnLabel="admin.ai.agentActivity.interactions.session"
 				columnType="tl.ai.execution:AgentSession"
 			>

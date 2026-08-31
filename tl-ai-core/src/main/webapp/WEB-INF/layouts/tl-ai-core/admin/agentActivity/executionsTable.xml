@@ -16,7 +16,7 @@
 	securityObject="securityRoot"
 	titleKey="admin.ai.agentActivity.executions.title"
 >
-	<layoutInfo size="62%"/>
+	<layoutInfo size="68%"/>
 	<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
 		<elements><![CDATA[
 			model -> all(`tl.ai.execution:AgentExecution`)
@@ -32,38 +32,38 @@
 	>
 		<columns>
 			<column name="displayName"
-				columnWidth="235px"
+				columnWidth="190px"
 				visibility="mandatory"
 			/>
 			<column name="session"
-				columnWidth="155px"
+				columnWidth="105px"
 			/>
 			<column name="agentName"
 				columnWidth="140px"
 			/>
 			<column name="status"
-				columnWidth="100px"
+				columnWidth="150px"
 			/>
 			<column name="model"
 				columnWidth="155px"
 			/>
 			<column name="provider"
-				columnWidth="100px"
+				columnWidth="105px"
 			/>
 			<column name="parentExecution"
-				columnWidth="250px"
+				columnWidth="220px"
 			/>
 			<column name="startedAt"
-				columnWidth="135px"
+				columnWidth="145px"
 			/>
 			<column name="endedAt"
-				columnWidth="135px"
+				columnWidth="150px"
 			/>
 			<column name="stopReason"
-				columnWidth="130px"
+				columnWidth="135px"
 			/>
 			<column name="cancelRequested"
-				columnWidth="120px"
+				columnWidth="170px"
 			/>
 			<column name="inputTokens"
 				columnWidth="105px"
@@ -102,16 +102,16 @@
 				and pushes the columns that carry the finding off the pane.
 			-->
 			<column name="durationSeconds"
-				columnWidth="100px"
+				columnWidth="95px"
 			/>
 			<column name="tokenCount"
-				columnWidth="100px"
+				columnWidth="90px"
 			/>
 			<column name="childCount"
 				columnWidth="110px"
 			/>
 			<column name="pendingCount"
-				columnWidth="130px"
+				columnWidth="150px"
 			/>
 		</columns>
 		<configurationProviders>
@@ -141,6 +141,7 @@
 			</configurationProvider>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
 				columnId="childCount"
+				columnVisibility="hidden"
 				columnLabel="admin.ai.agentActivity.executions.childCount"
 				columnType="tl.core:Integer"
 			>
@@ -150,6 +151,7 @@
 			</configurationProvider>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
 				columnId="pendingCount"
+				columnVisibility="hidden"
 				columnLabel="admin.ai.agentActivity.executions.pendingCount"
 				columnType="tl.core:Integer"
 			>

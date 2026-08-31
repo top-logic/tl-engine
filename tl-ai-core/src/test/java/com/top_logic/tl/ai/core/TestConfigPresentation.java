@@ -40,10 +40,10 @@ import com.top_logic.basic.html.SafeHTML;
  * </p>
  *
  * <p>
- * {@link com.top_logic.tl.ai.core.security.TestSecurityConfigPresentation} makes further demands on
- * the security configuration alone (a length cap, no preformatted XML examples). This test asks the
- * one question that has to hold for every text in the module, in both languages: does the whitelist
- * accept it?
+ * The first question this test asks is the one that has to hold for every text in the module, in
+ * both languages: does the whitelist accept it? The security configuration is then held to two
+ * further demands of its own - a length cap, and no preformatted XML examples - because its editors
+ * put these texts in front of an administrator who is deciding what an agent may do.
  * </p>
  *
  * <p>
@@ -59,8 +59,22 @@ public class TestConfigPresentation extends BasicTestCase {
 	/** The resource keys this module owns. */
 	private static final String MODULE_PREFIX = "com.top_logic.tl.ai.core.";
 
+	/** The resource keys of the security configuration - the policy, its service and its mode. */
+	private static final String SECURITY_PREFIX = MODULE_PREFIX + "security.";
+
 	/** The languages the module ships. */
 	private static final List<String> LANGUAGES = List.of("en", "de");
+
+	/**
+	 * The length at which a tooltip stops being a sentence and starts being an essay.
+	 *
+	 * <p>
+	 * The English texts sit around 300 characters; their German translations run noticeably longer, so
+	 * the limit leaves room for that without admitting a page of prose. For scale: the texts this test
+	 * was written to keep out were between 700 and 1900 characters.
+	 * </p>
+	 */
+	private static final int MAX_TOOLTIP_LENGTH = 450;
 
 	/**
 	 * The safe-HTML check needs the service that owns the tag whitelist.
@@ -118,6 +132,46 @@ public class TestConfigPresentation extends BasicTestCase {
 		}
 	}
 
+	/** A tooltip of the security configuration is a sentence or three, not the design document. */
+	public void testTooltipsStayShort() throws IOException {
+		List<String> tooLong = new ArrayList<>();
+		for (String language : LANGUAGES) {
+			for (Map.Entry<String, String> resource : securityResources(language).entrySet()) {
+				if (resource.getValue().length() > MAX_TOOLTIP_LENGTH) {
+					tooLong.add(language + ": " + resource.getKey()
+						+ " (" + resource.getValue().length() + " characters)");
+				}
+			}
+		}
+
+		assertEquals("Longer than " + MAX_TOOLTIP_LENGTH + " characters, which means the JavaDoc is"
+			+ " explaining the implementation to an administrator. Move that part into a comment the"
+			+ " doclet does not export:\n  " + String.join("\n  ", tooLong), List.of(), tooLong);
+	}
+
+	/**
+	 * No tooltip of the security configuration carries a preformatted block.
+	 *
+	 * <p>
+	 * {@code <pre>} is on the whitelist, so the safe-HTML check cannot object to it - but in one of
+	 * these tooltips it only ever means an XML example, which is a thing an administrator reads in the
+	 * documentation and not in a hover text.
+	 * </p>
+	 */
+	public void testNoTooltipCarriesAnXmlExample() throws IOException {
+		List<String> withExample = new ArrayList<>();
+		for (String language : LANGUAGES) {
+			for (Map.Entry<String, String> resource : securityResources(language).entrySet()) {
+				if (resource.getValue().contains("<pre>")) {
+					withExample.add(language + ": " + resource.getKey());
+				}
+			}
+		}
+
+		assertEquals("An XML example belongs in doc/security/tool-access-configuration.md, not in a"
+			+ " tooltip:\n  " + String.join("\n  ", withExample), List.of(), withExample);
+	}
+
 	/**
 	 * The labels and tooltips this module generates, as the application reads them.
 	 *
@@ -139,6 +193,23 @@ public class TestConfigPresentation extends BasicTestCase {
 				if (key.startsWith(MODULE_PREFIX)) {
 					result.put(key, properties.getProperty(key));
 				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The labels and tooltips of the security configuration, as the application reads them.
+	 *
+	 * @param language
+	 *        The language suffix of the resource bundle.
+	 * @return The resources whose key names the security package.
+	 */
+	private static Map<String, String> securityResources(String language) throws IOException {
+		Map<String, String> result = new TreeMap<>();
+		for (Map.Entry<String, String> resource : moduleResources(language).entrySet()) {
+			if (resource.getKey().startsWith(SECURITY_PREFIX)) {
+				result.put(resource.getKey(), resource.getValue());
 			}
 		}
 		return result;

@@ -40,8 +40,8 @@ public record ToolAccessRule(ToolAccessRule.Kind kind, String roleName, String g
 	/*
 	 * The JavaDoc of this enum and of its constants is exported to META-INF/messages_*.properties by
 	 * the build's doclet, so it is written for an administrator: short, and free of XML element names,
-	 * which the editor's safe-HTML renderer rejects as unknown tags. TestSecurityConfigPresentation
-	 * enforces both.
+	 * which the editor's safe-HTML renderer rejects as unknown tags. TestConfigPresentation enforces
+	 * both.
 	 *
 	 * One constant per sentence an administrator has to be able to read, which is why the three
 	 * baseline states and the two "nothing reached it" cases are told apart rather than collapsed:

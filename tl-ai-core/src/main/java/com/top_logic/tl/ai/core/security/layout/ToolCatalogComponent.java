@@ -16,8 +16,8 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 
 /*
  * The class comment below is exported to META-INF/messages_*.properties by the build's doclet and kept
- * short for that reason - TestSecurityConfigPresentation enforces a length limit on everything under
- * this package prefix.
+ * short for that reason - TestConfigPresentation enforces a length limit on everything under this
+ * package prefix.
  *
  * The whole reason this class exists rather than a plain TableComponent: the rows join the tool registry
  * with the *saved* policy, and the policy tab next door writes that policy. A table that kept the rows

@@ -21,6 +21,11 @@
 			<form:error name="<%=EnterMaintenanceWindowDialog.MIN_FIELD%>"/>
 			<form:resource key="minutes"/>
 			.
+			<p>
+				<form:checkbox name="<%=EnterMaintenanceWindowDialog.ALLOW_LOGIN_FIELD%>"/>
+				&#xA0;
+				<form:label name="<%=EnterMaintenanceWindowDialog.ALLOW_LOGIN_FIELD%>"/>
+			</p>
 		</form:form>
 	</layout:body>
 </layout:html>

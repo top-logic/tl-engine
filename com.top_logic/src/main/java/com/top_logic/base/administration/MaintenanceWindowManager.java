@@ -74,6 +74,14 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
     public static final String PROPERTY_USER = "mwm_user";
     public static final String PROPERTY_STATE_CHANGE = "mwm_state_change";
 
+	/**
+	 * Cluster property transporting whether the login stays enabled while the maintenance mode is
+	 * {@link #ABOUT_TO_ENTER_MAINTENANCE_MODE announced}.
+	 * 
+	 * @see #enterMaintenanceWindow(long, boolean)
+	 */
+	public static final String PROPERTY_ALLOW_LOGIN = "mwm_allow_login";
+
     public static final Long CM_STATE_DEFAULT_MODE = Long.valueOf(-1);
     public static final Long CM_STATE_MAINTENANCE_MODE = Long.valueOf(0);
 
@@ -163,9 +171,8 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 
         ClusterManager cm = ClusterManager.getInstance();
         cm.addClusterMessageListener(this);
-		cm.declareValue(PROPERTY_MESSAGE, PropertyType.STRING);
-		cm.declareWrapperValue(PROPERTY_USER, Person.OBJECT_NAME);
-		cm.declareValue(PROPERTY_STATE_CHANGE, PropertyType.LONG);
+		delcareProperties(cm);
+
         message = cm.getLatestUnconfirmedValue(PROPERTY_MESSAGE);
         changingUser = cm.getLatestUnconfirmedValue(PROPERTY_USER);
         Long value = cm.getLatestUnconfirmedValue(PROPERTY_STATE_CHANGE);
@@ -176,6 +183,20 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
         	clusterPropertyChanged(PROPERTY_STATE_CHANGE, null, value, false);
         }
     }
+
+	private void delcareProperties(ClusterManager cm) {
+		cm.declareValue(PROPERTY_MESSAGE, PropertyType.STRING);
+		cm.declareWrapperValue(PROPERTY_USER, Person.OBJECT_NAME);
+		cm.declareValue(PROPERTY_STATE_CHANGE, PropertyType.LONG);
+		cm.declareValue(PROPERTY_ALLOW_LOGIN, PropertyType.BOOLEAN);
+	}
+
+	private void undeclareProperties(ClusterManager cm) {
+		cm.undeclareValue(PROPERTY_MESSAGE);
+		cm.undeclareValue(PROPERTY_USER);
+		cm.undeclareValue(PROPERTY_STATE_CHANGE);
+		cm.undeclareValue(PROPERTY_ALLOW_LOGIN);
+	}
 
 	@Override
 	public void clusterPropertyChangeConfirmed(String propertyName, Object currentValue) {
@@ -196,8 +217,9 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
             }
             else {
 				// fetching cluster mode is not synchronised
-                boolean clusterMode = ClusterManager.getInstance().isClusterMode();
-				internalEnterMaintenanceWindow(Utils.getlongValue(newValue), clusterMode);
+				ClusterManager cm = ClusterManager.getInstance();
+				boolean clusterMode = cm.isClusterMode();
+				internalEnterMaintenanceWindow(Utils.getlongValue(newValue), clusterMode, allowLogin(cm));
             }
         }
         else if (PROPERTY_MESSAGE.equals(propertyName)) {
@@ -317,6 +339,23 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
      *        the delay (in milliseconds) to wait until entering the maintenance window mode
      */
 	public void enterMaintenanceWindow(long milliseconds) {
+		enterMaintenanceWindow(milliseconds, false);
+	}
+
+	/**
+	 * Sets the system into a maintenance window after the given delay, in which only users within
+	 * specified groups are allowed to log in. The currently logged in users get informed about the
+	 * pending maintenance window mode.
+	 *
+	 * @param milliseconds
+	 *        the delay (in milliseconds) to wait until entering the maintenance window mode
+	 * @param allowLogin
+	 *        Whether users may still log in during the delay. Since the maintenance mode may be
+	 *        announced hours before it actually starts and the system operates normally during
+	 *        that time, denying the login is not always desired. Independently of this setting,
+	 *        such users are logged out as soon as the maintenance mode starts.
+	 */
+	public void enterMaintenanceWindow(long milliseconds, boolean allowLogin) {
 		/* First we lock the ClusterManager. That is needed, because ClusterManager could be
 		 * modified concurrently. In that case the ClusterManager would try to inform this
 		 * MaintenanceWindowManager: Deadlock, see TTS 11648, Trac 13768 */
@@ -331,6 +370,9 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 					Long finishTime = Long.valueOf(getDBTime(cm.isClusterMode()) + milliseconds);
 					cm.refetch();
 					if (getMaintenanceModeState() != IN_MAINTENANCE_MODE) {
+						/* Must be announced before the state change, because all nodes evaluate
+						 * this value when they are informed about the state change. */
+						cm.setValue(PROPERTY_ALLOW_LOGIN, Boolean.valueOf(allowLogin));
 						cm.setValue(PROPERTY_STATE_CHANGE, finishTime);
 						setChangingInformations(cm);
 					}
@@ -338,6 +380,15 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 			}
 		}
     }
+
+	/**
+	 * Whether the login stays enabled while the maintenance mode is announced.
+	 * 
+	 * @see #PROPERTY_ALLOW_LOGIN
+	 */
+	private static boolean allowLogin(ClusterManager cm) {
+		return Utils.isTrue(cm.<Boolean> getLatestUnconfirmedValue(PROPERTY_ALLOW_LOGIN));
+	}
 
     /**
      * Leaves the maintenance window and sets the system back into normal mode, in which every user
@@ -393,7 +444,8 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
         logoutUsers();
     }
 
-    private synchronized void internalEnterMaintenanceWindow(long finishTime, boolean clusterMode) {
+	private synchronized void internalEnterMaintenanceWindow(long finishTime, boolean clusterMode,
+			boolean allowLogin) {
         if (finishTime <= 0) {
             throw new IllegalArgumentException("Finishtime must not be <= 0.");
         }
@@ -407,7 +459,11 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
             timer.interrupt();
             timer = null;
         }
-        disableLogin();
+		if (!allowLogin) {
+			// Otherwise, the login is disabled when the maintenance mode actually starts, see
+			// internalEnterMaintenanceWindow().
+			disableLogin();
+		}
         timer = new MaintenanceWindowTimer(milliseconds);
         timer.start();
         state = ABOUT_TO_ENTER_MAINTENANCE_MODE;
@@ -598,9 +654,7 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 
 		ClusterManager cm = ClusterManager.getInstance();
         cm.removeClusterMessageListener(this);
-        cm.undeclareValue(PROPERTY_MESSAGE);
-        cm.undeclareValue(PROPERTY_USER);
-        cm.undeclareValue(PROPERTY_STATE_CHANGE);
+		undeclareProperties(cm);
 
 		if (timer != null) {
 			Logger.warn("MaintenanceWindowTimer did not properly stop", MaintenanceWindowManager.class);

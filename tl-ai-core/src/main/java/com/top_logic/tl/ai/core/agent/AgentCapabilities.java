@@ -139,7 +139,7 @@ public class AgentCapabilities {
 	 * message, obeyed "relay it", and the user read {@code agent.meta} / {@code agent.authoring} as the
 	 * reason the tool they asked about was unreachable. Nothing untrue had been emitted; what was
 	 * missing was the sentence saying which subject the names belong to. See
-	 * {@code doc/security/testbed.md} rows C3/C4.
+	 * {@code tl-ai-demo/doc/secdemo/testbed.md} rows C3/C4.
 	 * </p>
 	 */
 	static final String NO_GUESSING =

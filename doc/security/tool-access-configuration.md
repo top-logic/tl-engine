@@ -583,7 +583,7 @@ not reach the service - and until it does, every account reaches only the baseli
 
 **Or ask before it happens:** *Administration → Berechtigungen → Agent-Sicherheit → Effektive Rechte*
 answers the same question for any account, in either run mode, without waiting for a denial - see
-[Agent-Sicherheit](#reading-the-policy-instead-of-writing-it-agent-sicherheit).
+[Agent-Sicherheit](#agent-sicherheit-the-view-that-explains-this-policy-and-the-one-that-writes-it).
 
 Two things to know when reading the roles in a denial:
 
@@ -627,5 +627,5 @@ The demo carries a working example behind one switch: uncomment `secdemo.config.
 `<tool-access>` granting each of them a different set of capabilities, and three TL-Script tool
 factories - the tool of two of them named in `<tool-groups>`, the third deliberately not.
 
-**[testbed.md](testbed.md) is where to start.** It maps every behaviour of this layer to a persona, a
+**[testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md) is where to start.** It maps every behaviour of this layer to a persona, a
 thing to type and an expected result.

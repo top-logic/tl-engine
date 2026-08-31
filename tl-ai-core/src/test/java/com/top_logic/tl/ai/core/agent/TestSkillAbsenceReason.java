@@ -107,7 +107,7 @@ public class TestSkillAbsenceReason extends TestCase {
 	 * attribute this to a capability unless this message names one", and the message it closes
 	 * <em>does</em> name capabilities - correctly, for the skill it refused. That was enough for the
 	 * model, routed to {@code loadSkill("TL_agenticAuthoring")} by its prompt, to relay them as the
-	 * reason a tool the user had named was unreachable. See {@code doc/security/testbed.md} rows
+	 * reason a tool the user had named was unreachable. See {@code tl-ai-demo/doc/secdemo/testbed.md} rows
 	 * C3/C4.
 	 * </p>
 	 */

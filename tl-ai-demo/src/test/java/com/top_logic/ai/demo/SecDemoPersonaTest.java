@@ -61,7 +61,7 @@ import com.top_logic.util.model.ModelService;
  * a test that hard-coded the list would silently stop covering a persona added to the aspect.
  * </p>
  *
- * @see doc/security/testbed.md
+ * @see tl-ai-demo/doc/secdemo/testbed.md
  */
 public abstract class SecDemoPersonaTest extends BasicTestCase {
 

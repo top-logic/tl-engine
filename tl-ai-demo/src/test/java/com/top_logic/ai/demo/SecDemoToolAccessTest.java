@@ -263,8 +263,9 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 *
 	 * <p>
 	 * The other half of the rule, and the one that keeps it proportionate - the new requirement is on
-	 * the commit path only, so the model-rights walkthrough of {@code doc/security/e2e-security-test.md}
-	 * still runs as {@code secreader1}.
+	 * the commit path only, so the model-rights walkthrough of
+	 * {@code doc/security/role-model-worked-example.md} section 4 still runs as {@code ben}, who holds
+	 * {@code script} and not {@code data.write}.
 	 * </p>
 	 */
 	public void testReadOnlyTLScriptStillNeedsOnlyScript() {

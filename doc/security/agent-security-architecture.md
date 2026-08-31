@@ -8,7 +8,7 @@ tool layer, and whatever its `<security-config>` grants at the data layer, which
 writes one. Section 6 is the per-artifact map; [role-model-worked-example.md](role-model-worked-example.md) explains the role model
 this design sits on and is the page to read *before* this one;
 [tool-access-configuration.md](tool-access-configuration.md) is the administrator's guide to the part
-that works; [testbed.md](testbed.md) is the runnable fixture that shows it, one persona and one expected
+that works; [testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md) is the runnable fixture that shows it, one persona and one expected
 result per behaviour.
 **Depends on:** engine ticket **#29088** (`ModelAccessRights` / `SecurityConfigurationService`),
 **released** in engine `8.0.0-alpha7`, which tl-ai now builds against. All API references below are
@@ -862,7 +862,7 @@ all(`pm:Project`).map(p -> toString($p))                   // every label, by de
 
 Three places say so, so that an agent meets it wherever it enters: the `TL_tlScriptWriting` skill, the
 `executeTLScript` tool description, and rows **D7** / **D8** of
-[testbed.md](testbed.md#53-read-filtering---what-a-permitted-tool-then-discloses-issue-289), which
+[testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md#53-read-filtering---what-a-permitted-tool-then-discloses-issue-289), which
 assert both halves against the running fixture. The blunt control, for an account that must learn
 neither a label nor a count, is to withhold the `script` capability - it is not in the default baseline
 for this reason among others.
@@ -1115,7 +1115,7 @@ addition to whatever the tools already paid; the guard is deliberately not the p
 
 **Tested by** `TestPreCommitGuard` and the transaction cases of `TestAgentLoop` in `tl-ai-core`, and
 `SecDemoPreCommitGuardTest` against a real fixture boot - see
-[testbed.md](testbed.md#56-the-pre-commit-guard-l4).
+[testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md#56-the-pre-commit-guard-l4).
 
 ### 3.6 L5 - Output / reference guard
 

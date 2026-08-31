@@ -92,7 +92,7 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	public void testAllowlistedCapabilitiesSurviveABackgroundRun() {
 		for (String toolName : List.of(MODEL_READ_TOOL, LIST_TOOL, SCRIPT_TOOL)) {
 			assertNull("Ben must reach '" + toolName + "' in a background run: the harness of"
-				+ " doc/security/testbed.md depends on it.",
+				+ " tl-ai-demo/doc/secdemo/testbed.md depends on it.",
 				securityFor(BEN, true).toolDenialReason(tool(toolName)));
 		}
 	}
@@ -154,7 +154,8 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * A read-only script is unaffected: the harness of {@code doc/security/testbed.md} runs unattended.
+	 * A read-only script is unaffected: the harness of {@code tl-ai-demo/doc/secdemo/testbed.md} runs
+	 * unattended.
 	 */
 	public void testBackgroundRunStillReadsThroughTLScript() {
 		String result = executeScript(securityFor(BEN, true), "all(`pm:Ticket`).size()", false);

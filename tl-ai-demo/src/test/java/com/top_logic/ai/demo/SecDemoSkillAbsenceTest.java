@@ -54,7 +54,7 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * answered by the same object the chat answers them with.
  * </p>
  *
- * @see doc/security/testbed.md
+ * @see tl-ai-demo/doc/secdemo/testbed.md
  */
 public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 
@@ -82,7 +82,7 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 	 * name the message's own <em>subject</em> - the first version said only "do not attribute this to a
 	 * capability unless this message names one", and the withheld-skill message does name capabilities,
 	 * correctly, for the skill it refused. That was enough for the model to relay them as the reason a
-	 * different tool was unreachable. See {@code doc/security/testbed.md} rows C3/C4.
+	 * different tool was unreachable. See {@code tl-ai-demo/doc/secdemo/testbed.md} rows C3/C4.
 	 * </p>
 	 */
 	private static final String NO_GUESSING =

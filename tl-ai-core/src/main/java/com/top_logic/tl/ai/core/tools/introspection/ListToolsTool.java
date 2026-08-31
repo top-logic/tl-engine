@@ -40,7 +40,7 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * withheld, and the model relayed the withheld-skill refusal as though the capabilities behind
  * <em>that skill</em> were the reason the <em>asked-about tool</em> was unreachable. Nothing in the
  * tool layer had lied: the model was answering a question it had no honest source for. This is the
- * source. See {@code doc/security/testbed.md} rows C3/C4.
+ * source. See {@code tl-ai-demo/doc/secdemo/testbed.md} rows C3/C4.
  * </p>
  *
  * <p>

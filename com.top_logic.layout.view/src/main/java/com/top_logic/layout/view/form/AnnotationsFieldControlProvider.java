@@ -8,6 +8,7 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -73,7 +74,10 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 
 	@Override
 	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
-		return createControl(context, model, containerFor(ownerOf(model)));
+		// The identity is the edited element: two elements that both carry no annotations produce no
+		// value change at all, yet the editor must be rebuilt - what may be added depends on the kind
+		// of element, not on what is there already.
+		return createControl(context, model, () -> containerFor(ownerOf(model)), () -> ownerOf(model));
 	}
 
 	/**
@@ -91,7 +95,19 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 	 *        {@code annotations} property is what is edited.
 	 */
 	public static ReactControl createControl(ReactContext context, FieldModel model,
-			AnnotatedConfig<? extends TLAnnotation> container) {
+			Supplier<AnnotatedConfig<? extends TLAnnotation>> containers) {
+		return createControl(context, model, containers, null);
+	}
+
+	private static ReactControl createControl(ReactContext context, FieldModel model,
+			Supplier<AnnotatedConfig<? extends TLAnnotation>> containers, Supplier<Object> identity) {
+		ConfigFieldBinding binding = new ConfigFieldBinding(context, model, identity);
+		binding.start(() -> buildEditor(context, model, containers.get(), binding));
+		return binding.holder();
+	}
+
+	private static ReactControl buildEditor(ReactContext context, FieldModel model,
+			AnnotatedConfig<? extends TLAnnotation> container, ConfigFieldBinding binding) {
 		PropertyDescriptor annotations =
 			container.descriptor().getProperty(AnnotatedConfig.ANNOTATIONS);
 
@@ -106,7 +122,7 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 
 		ConfigFieldIndex index = new ConfigFieldIndex();
 		ConfigFieldPush push =
-			new ConfigFieldPush(() -> model.setValue(new ArrayList<>(container.getAnnotations())));
+			new ConfigFieldPush(() -> binding.push(new ArrayList<>(container.getAnnotations())));
 		index.observeFields(push::watch);
 
 		ReactControl editor =

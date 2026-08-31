@@ -62,6 +62,21 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 		return TypedConfiguration.newConfigItem(ModuleConfig.class);
 	}
 
+	/** The first button anywhere below the given control carrying the given label. */
+	private ReactButtonControl buttonLabelled(ReactControl control, String label) {
+		if (control instanceof ReactButtonControl button
+			&& label.equals(button.scriptingScalarState().get("label"))) {
+			return button;
+		}
+		for (ReactControl child : control.scriptingChildren()) {
+			ReactButtonControl found = buttonLabelled(child, label);
+			if (found != null) {
+				return found;
+			}
+		}
+		return null;
+	}
+
 	/** The button that adds an annotation. */
 	private ReactButtonControl addButton(ReactControl editor) {
 		for (ReactControl child : editor.scriptingChildren()) {
@@ -85,7 +100,7 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 		ModuleConfig container = container();
 		FieldModel model = new AbstractFieldModel(new ArrayList<>());
 
-		ReactControl editor = AnnotationsFieldControlProvider.createControl(_context, model, container);
+		ReactControl editor = AnnotationsFieldControlProvider.createControl(_context, model, () -> container);
 		ReactButtonControl add = addButton(editor);
 		assertNotNull("An annotation list must offer a way to add one.", add);
 
@@ -101,7 +116,7 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 		List<TLAnnotation> values = new ArrayList<>();
 		FieldModel model = new AbstractFieldModel(values);
 
-		AnnotationsFieldControlProvider.createControl(_context, model, container());
+		AnnotationsFieldControlProvider.createControl(_context, model, this::container);
 
 		assertSame("An untouched form must not look edited.", values, model.getValue());
 	}
@@ -113,7 +128,7 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 		FieldModel model = new AbstractFieldModel(values);
 		ModuleConfig container = container();
 
-		AnnotationsFieldControlProvider.createControl(_context, model, container);
+		AnnotationsFieldControlProvider.createControl(_context, model, () -> container);
 
 		assertEquals("The container must have taken the annotation over.", 1, container.getAnnotations().size());
 		assertNotSame("...as a copy, not as the element's own object.",
@@ -124,9 +139,68 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 	public void testAnUnannotatedElement() {
 		ModuleConfig container = container();
 
-		AnnotationsFieldControlProvider.createControl(_context, new AbstractFieldModel(null), container);
+		AnnotationsFieldControlProvider.createControl(_context, new AbstractFieldModel(null), () -> container);
 
 		assertEquals(0, container.getAnnotations().size());
+	}
+
+	/**
+	 * A value the field is given from elsewhere rebuilds the editor.
+	 *
+	 * <p>
+	 * A field control is not rebuilt when the form is shown a different object - the field model is
+	 * rebound instead. An editor that read the annotations once would go on showing the previous
+	 * element's.
+	 * </p>
+	 */
+	public void testAValueFromOutsideRebuildsTheEditor() {
+		List<ModuleConfig> built = new ArrayList<>();
+		FieldModel model = new AbstractFieldModel(new ArrayList<>());
+
+		AnnotationsFieldControlProvider.createControl(_context, model, () -> {
+			ModuleConfig fresh = container();
+			built.add(fresh);
+			return fresh;
+		});
+		assertEquals("Built once to begin with.", 1, built.size());
+
+		model.setValue(new ArrayList<>(List.of(someAnnotation())));
+
+		assertEquals("The editor must have been built afresh.", 2, built.size());
+		assertEquals("...over what the field holds now.", 1, built.get(1).getAnnotations().size());
+	}
+
+	/**
+	 * What the editor itself writes back must not count as a change from outside.
+	 *
+	 * <p>
+	 * Without that distinction, adding an annotation would hand the field a new value, the field
+	 * would report a change, and the editor would rebuild itself out from under the user - losing
+	 * the entry just added.
+	 * </p>
+	 */
+	public void testTheEditorsOwnResultDoesNotRebuild() {
+		List<ModuleConfig> built = new ArrayList<>();
+		FieldModel model = new AbstractFieldModel(new ArrayList<>());
+
+		ReactControl holder = AnnotationsFieldControlProvider.createControl(_context, model, () -> {
+			ModuleConfig fresh = container();
+			built.add(fresh);
+			return fresh;
+		});
+		ReactButtonControl add = addButton(holder);
+		assertNotNull(add);
+		add.executeCommand("click", Collections.emptyMap());
+
+		// A new entry is pending until confirmed, and the container is still empty while it is - so
+		// only confirming changes the field's value, which is what could restart the editor.
+		ReactButtonControl confirm = buttonLabelled(holder, "\u2713");
+		assertNotNull("A pending entry must offer a Confirm button.", confirm);
+		confirm.executeCommand("click", Collections.emptyMap());
+
+		assertEquals("The annotation must have reached the field.",
+			1, ((List<?>) model.getValue()).size());
+		assertEquals("Its own write-back must not restart it.", 1, built.size());
 	}
 
 	/**

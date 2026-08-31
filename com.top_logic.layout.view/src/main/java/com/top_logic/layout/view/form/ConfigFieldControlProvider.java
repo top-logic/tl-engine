@@ -101,13 +101,20 @@ public class ConfigFieldControlProvider implements ReactFieldControlProvider {
 	 */
 	public static ReactControl createItemControl(ReactContext context, FieldModel model,
 			Class<? extends ConfigurationItem> type) {
+		ConfigFieldBinding binding = new ConfigFieldBinding(context, model, null);
+		binding.start(() -> buildItemEditor(context, model, type, binding));
+		return binding.holder();
+	}
+
+	private static ReactControl buildItemEditor(ReactContext context, FieldModel model,
+			Class<? extends ConfigurationItem> type, ConfigFieldBinding binding) {
 		Object current = model.getValue();
 		ConfigurationItem edited = current instanceof ConfigurationItem item
 			? TypedConfiguration.copy(item)
 			: TypedConfiguration.newConfigItem(type);
 
 		ConfigFieldIndex index = new ConfigFieldIndex();
-		ConfigFieldPush push = new ConfigFieldPush(() -> model.setValue(edited));
+		ConfigFieldPush push = new ConfigFieldPush(() -> binding.push(edited));
 		index.observeFields(push::watch);
 
 		ReactControl editor =
@@ -123,6 +130,13 @@ public class ConfigFieldControlProvider implements ReactFieldControlProvider {
 	 */
 	public static ReactControl createListControl(ReactContext context, FieldModel model,
 			Class<? extends ConfigurationItem> type, String label) {
+		ConfigFieldBinding binding = new ConfigFieldBinding(context, model, null);
+		binding.start(() -> buildListEditor(context, model, type, label, binding));
+		return binding.holder();
+	}
+
+	private static ReactControl buildListEditor(ReactContext context, FieldModel model,
+			Class<? extends ConfigurationItem> type, String label, ConfigFieldBinding binding) {
 		List<ConfigurationItem> edited = copies(model.getValue());
 
 		// The collection works over a holder of this provider's own, not over the attribute's
@@ -133,7 +147,7 @@ public class ConfigFieldControlProvider implements ReactFieldControlProvider {
 		FieldCollectionValue value = new FieldCollectionValue(holder, type, label);
 
 		ConfigFieldIndex index = new ConfigFieldIndex();
-		ConfigFieldPush push = new ConfigFieldPush(() -> model.setValue(new ArrayList<>(currentOf(holder))));
+		ConfigFieldPush push = new ConfigFieldPush(() -> binding.push(new ArrayList<>(currentOf(holder))));
 		index.observeFields(push::watch);
 		// Adding, removing and reordering never touch a field, so the holder itself is watched too.
 		holder.addListener(push.listener());

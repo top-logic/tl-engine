@@ -17,18 +17,29 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 
 /**
- * Visual streaming test — prints tokens to stdout as they arrive.
+ * Visual streaming harness - prints tokens to stdout as they arrive, for a human to read.
  *
- * <p>Excluded from the default test suite. Run manually:</p>
+ * <p>
+ * This is <b>not test coverage</b>: it asserts nothing, and it spends a real Anthropic API call. So
+ * it is gated behind {@code -Dtl.ai.visual=true} like the browser end-to-end tests are gated behind
+ * {@code -Dtl.ai.browser.e2e=true}, and without the flag it returns immediately - a package-wide run
+ * such as {@code -Dtest='com.top_logic.tl.ai.core.**'} must not bill an API call nor report a
+ * passing test that checked nothing.
+ * </p>
+ *
+ * <p>Run manually:</p>
  * <pre>
  * source env.sh
- * mvn test -pl tl-ai-core -Pintegration-test -DskipTests=false -Dtest=VisualStreamTest
+ * mvn test -pl tl-ai-core -DskipTests=false -Dtl.ai.visual=true -Dtest=VisualStreamTest
  * </pre>
  */
 public class VisualStreamTest extends TestCase {
 
 	/** */
 	public void testStreamToConsole() throws Exception {
+		if (!visualEnabled()) {
+			return;
+		}
 		String apiKey = System.getenv("ANTHROPIC_API_KEY");
 		if (apiKey == null || apiKey.isEmpty()) {
 			System.out.println("SKIP: No ANTHROPIC_API_KEY set (source env.sh)");
@@ -65,5 +76,12 @@ public class VisualStreamTest extends TestCase {
 					+ done.usage().outputTokens() + " out");
 			}
 		});
+	}
+
+	/**
+	 * Whether the visual harnesses are enabled, via {@code -Dtl.ai.visual=true}.
+	 */
+	private static boolean visualEnabled() {
+		return Boolean.getBoolean("tl.ai.visual");
 	}
 }

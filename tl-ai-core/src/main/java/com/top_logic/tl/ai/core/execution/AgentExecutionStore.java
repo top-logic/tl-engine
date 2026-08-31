@@ -30,6 +30,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
@@ -245,6 +246,14 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * keeps run recording independent of any business transaction the caller may have open:
 	 * a rolled-back caller transaction cannot take the recording down with it.
 	 * </p>
+	 *
+	 * <p>
+	 * Cancelling an agent run interrupts its thread, which ends this wait. That is expected and
+	 * reported as a {@link CancelledWriteException} so that callers can trace it instead of
+	 * logging it as a failure; an interrupt with any other cause stays a plain
+	 * {@link RuntimeException}. Either way the mutation is already queued and still commits on the
+	 * writer thread - only the wait for its result is given up.
+	 * </p>
 	 */
 	private <T> T write(Supplier<T> mutation) {
 		if (Thread.currentThread() == _writerThread) {
@@ -267,7 +276,16 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				() -> ThreadContextManager.inSystemInteraction(AgentExecutionStore.class, mutation::get))
 				.get(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		} catch (InterruptedException ex) {
+			// Restore the flag before leaving: the interrupt belongs to whoever set it, and code
+			// further up the stack (the agent loop's abort checks, later blocking calls) still has
+			// to see it.
 			Thread.currentThread().interrupt();
+			if (RunCancellationBinding.isRunCancelled()) {
+				// Expected: the user cancelled this run, which interrupts its thread. The mutation
+				// is queued and still commits on the writer thread; only this wait ends early.
+				throw new CancelledWriteException(
+					"Stopped waiting for the agent-data write: the run was cancelled.", ex);
+			}
 			throw new RuntimeException("Interrupted while writing agent execution data.", ex);
 		} catch (TimeoutException ex) {
 			throw new RuntimeException("Timed out after " + WRITE_TIMEOUT_SECONDS

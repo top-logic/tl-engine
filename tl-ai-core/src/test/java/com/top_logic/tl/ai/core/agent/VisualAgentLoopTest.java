@@ -10,7 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -55,6 +60,18 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * </pre>
  */
 public class VisualAgentLoopTest extends TestCase {
+
+	/**
+	 * The agent loop resolves the acting sub-session, so the harness only produces its transcript
+	 * with the module system running - but booting it costs a second, and there is nothing to see
+	 * while the harness is switched off, so the setup is put in place only when it is switched on.
+	 */
+	public static Test suite() {
+		TestSuite tests = new TestSuite(VisualAgentLoopTest.class);
+		return visualEnabled()
+			? ModuleTestSetup.setupModule(ServiceTestSetup.withThreadContext(tests))
+			: tests;
+	}
 
 	private static final String ANSI_RESET = "\u001B[0m";
 	private static final String ANSI_CYAN = "\u001B[36m";

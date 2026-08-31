@@ -583,7 +583,7 @@ not reach the service - and until it does, every account reaches only the baseli
 
 **Or ask before it happens:** *Administration → Berechtigungen → Agent-Sicherheit → Effektive Rechte*
 answers the same question for any account, in either run mode, without waiting for a denial - see
-[Agent-Sicherheit](#reading-the-policy-instead-of-writing-it-agent-sicherheit).
+[Agent-Sicherheit](#agent-sicherheit-the-view-that-explains-this-policy-and-the-one-that-writes-it).
 
 Two things to know when reading the roles in a denial:
 

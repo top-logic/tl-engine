@@ -74,8 +74,8 @@ import com.top_logic.util.Resources;
  *
  * The class comment below is exported to META-INF/messages_*.properties by the build's doclet and shown
  * as this component's tooltip in the layout editor, so it is written for an administrator and stays
- * short - TestSecurityConfigPresentation enforces a length limit on everything under this package
- * prefix. The design notes live here, where the doclet does not export them.
+ * short - TestConfigPresentation enforces a length limit on everything under this package prefix.
+ * The design notes live here, where the doclet does not export them.
  *
  * Why an editor of its own rather than the generic service editor, which can already write this policy:
  * that editor renders the stored format, and the stored format is not the decision an administrator

@@ -1,0 +1,208 @@
+/*
+ * Layout of the transcript panel in the agent activity monitor.
+ *
+ * Only the transcript needs a stylesheet. Everything else in that view is an ordinary table or an
+ * ordinary reactive form, so the theme lays it out; the transcript is HTML produced by a TL-Script
+ * macro (AgentExecution#transcriptHtml) and the framework has no control that would shape it.
+ *
+ * Colours are stated literally rather than taken from theme variables: this file is contributed by
+ * a library module and has to look right in the shipped theme without depending on a variable that
+ * theme happens to define - the same argument as in agentSecurity.css.
+ *
+ * The kinds of a turn are told apart by a coloured left edge, not by a tinted row. A transcript in
+ * which four fifths of the rows are green teaches a reader nothing, and a tinted block is harder to
+ * read than a plain one.
+ */
+
+.aiTr {
+	font-size: 0.95em;
+	line-height: 1.45;
+	max-width: 1400px;
+}
+
+.aiTr .aiTrNote,
+.aiTrNote {
+	margin: 4px 0 10px;
+	color: #4a4a4a;
+}
+
+.aiTrNote.aiTrWarn {
+	background-color: #fdf6e3;
+	border-left: 3px solid #d3a118;
+	padding: 6px 10px;
+	color: #6b5200;
+}
+
+/* --- turn ---------------------------------------------------------------- */
+
+.aiTrTurn {
+	margin: 0 0 10px;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	background-color: #ffffff;
+}
+
+.aiTrTurn > summary {
+	padding: 6px 10px;
+	cursor: pointer;
+	background-color: #f4f4f4;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.aiTrTurn > summary .aiTrTurnNo {
+	font-weight: 600;
+}
+
+/*
+ * What the human said, as opposed to what the agent did with it. The prompt is the one part of a
+ * turn a reader looks for first, so it gets its own edge instead of a badge.
+ */
+.aiTrUser .aiTrPart {
+	border-left-color: #2968c8;
+	background-color: #f7faff;
+}
+
+/* --- one part ------------------------------------------------------------ */
+
+.aiTrPart {
+	padding: 6px 10px 8px 12px;
+	border-left: 3px solid #e0e0e0;
+	margin: 6px 8px;
+}
+
+.aiTrPart.aiTrNested {
+	margin-left: 22px;
+	border-left-color: #c8c8c8;
+	background-color: #fafafa;
+}
+
+.aiTrHead {
+	margin-bottom: 2px;
+}
+
+.aiTrKind {
+	font-size: 0.8em;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #6a6a6a;
+}
+
+.aiTrTime {
+	font-size: 0.8em;
+	color: #8a8a8a;
+	margin-left: 8px;
+}
+
+.aiTrName {
+	font-family: monospace;
+	background-color: #f0f0f0;
+	padding: 0 4px;
+	border-radius: 3px;
+}
+
+.aiTrState {
+	font-size: 0.8em;
+	margin-left: 8px;
+	padding: 0 6px;
+	border-radius: 8px;
+	background-color: #ececec;
+	color: #4a4a4a;
+}
+
+/*
+ * The outcome of a call, in the theme's reserved status colours. Every other value keeps the neutral
+ * chip: a status this panel does not know about must not be painted as if it were understood.
+ */
+.aiTrState-COMPLETED,
+.aiTrState-APPROVED,
+.aiTrState-COMMIT {
+	background-color: #e3f4f1;
+	color: #05665a;
+}
+
+.aiTrState-FAILED,
+.aiTrState-ERROR,
+.aiTrState-DENIED,
+.aiTrState-REJECTED {
+	background-color: #fdeeee;
+	color: #8b1113;
+}
+
+.aiTrOption {
+	margin-right: 8px;
+	padding: 0 6px;
+	border: 1px solid #d0d0d0;
+	border-radius: 8px;
+}
+
+.aiTrLine {
+	margin: 2px 0;
+}
+
+.aiTrText {
+	margin: 2px 0;
+	white-space: pre-wrap;
+}
+
+/*
+ * Thinking is recessive on purpose. It is the bulkiest part of a transcript and the least often the
+ * answer to the question that brought somebody here, but hiding it would remove the one place where
+ * a wrong decision is visible before it is acted on.
+ */
+.aiTrThinking {
+	margin: 2px 0;
+	white-space: pre-wrap;
+	font-style: italic;
+	color: #6a6a6a;
+}
+
+.aiTrAnswer {
+	margin: 4px 0;
+	padding: 4px 8px;
+	white-space: pre-wrap;
+	background-color: #eef4fd;
+	border-left: 2px solid #2968c8;
+}
+
+.aiTrCode {
+	margin: 4px 0;
+	padding: 6px 8px;
+	max-height: 320px;
+	overflow: auto;
+	background-color: #f6f6f6;
+	border: 1px solid #e4e4e4;
+	border-radius: 3px;
+	font-family: monospace;
+	font-size: 0.9em;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.aiTrAlert {
+	margin: 4px 0;
+	padding: 4px 8px;
+	background-color: #fdeeee;
+	border-left: 2px solid #d3181b;
+	color: #8b1113;
+	white-space: pre-wrap;
+}
+
+.aiTrWarn {
+	margin: 4px 0;
+	padding: 4px 8px;
+	background-color: #fdf6e3;
+	border-left: 2px solid #d3a118;
+	color: #6b5200;
+	white-space: pre-wrap;
+}
+
+.aiTrChildren {
+	margin: 4px 0 0;
+}
+
+.aiTrChildren > summary {
+	cursor: pointer;
+	font-size: 0.85em;
+	color: #2968c8;
+}

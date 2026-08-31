@@ -193,6 +193,224 @@
 					<property name="transcript"
 						type="tl.core:Text"
 					/>
+					<!--
+						The transcript rendered as HTML, for the "Transkript" group of the agent
+						activity monitor.
+
+						Derived attribute rather than a form element: a macro attribute needs nothing
+						but tl-model-search, which is already on the classpath, whereas a <macro> form
+						element would pull tl-layout-formeditor into every application that uses
+						tl-ai-core. As a side effect the rendering is reusable outside that one view.
+
+						Two facts the panel states rather than hides: the transcript is written when a
+						run finishes (AgentExecutionStore.finishExecution), so a running or a crashed
+						run has none; and the column allows 10 MB, so a blob beyond maxChars is
+						reported by its size instead of being parsed in the rendering thread.
+					-->
+					<property name="transcriptHtml"
+						type="tl.model.search:Macro"
+					>
+						<annotations>
+							<storage-algorithm>
+								<macro>
+									<expr><![CDATA[
+										e -> {
+											raw = $e.get(`tl.ai.execution:AgentExecution#transcript`);
+											maxChars = 500000;
+											time = dateFormat("HH:mm:ss");
+											stamp = ms -> ifElse(isEmpty($ms), "", $time.format($ms.toDate()));
+
+											// The discriminator of a part is a JSON token; the panel names the kind.
+											kindLabels = {
+												'text': #('Text'@en, 'Text'@de),
+												'thinking': #('Thinking'@en, 'Denken'@de),
+												'tool_call': #('Tool call'@en, 'Tool-Aufruf'@de),
+												'approval': #('Approval'@en, 'Freigabe'@de),
+												'interaction': #('Question'@en, 'Rückfrage'@de),
+												'compaction': #('Compaction'@en, 'Verdichtung'@de),
+												'error': #('Error'@en, 'Fehler'@de),
+												'transaction': #('Transaction'@en, 'Transaktion'@de),
+												'delegation': #('Delegation'@en, 'Delegation'@de),
+												'system': #('System'@en, 'System'@de)
+											};
+											kind = t -> ifElse(isEmpty($kindLabels[$t]), $t, $kindLabels[$t]);
+
+											// One expression per class attribute rather than literal text plus an embedding: the macro
+											// writer separates the parts of an attribute value with a space, which would break the
+											// modifier class in two.
+											stateClass = v -> 'aiTrState aiTrState-' + ifElse(isEmpty($v), 'UNKNOWN', $v);
+
+											// Everything a part can carry except the nested parts of a delegation.
+											// Shared by the top-level renderer and the renderer for a sub-agent's
+											// parts, so a tool call looks the same wherever it appears.
+											body = p -> {
+												text = $p['textData'];
+												thinking = $p['thinkingData'];
+												call = $p['toolCallData'];
+												approval = $p['approvalData'];
+												ask = $p['interactionData'];
+												compaction = $p['compactionData'];
+												error = $p['errorData'];
+												transaction = $p['transactionData'];
+												delegation = $p['delegationData'];
+												system = $p['systemData'];
+												{{{
+													<div class="aiTrHead">
+														<span class="aiTrKind">{$kind($p['type'])}</span>
+														<span class="aiTrTime">{$stamp($p['timestamp'])}</span>
+													</div>
+													{ isEmpty($text) ? "" : {{{
+														<div class="aiTrText">{$text['text']}</div>
+													}}} }
+													{ isEmpty($thinking) ? "" : {{{
+														<div class="aiTrThinking">{$thinking['text']}</div>
+													}}} }
+													{ isEmpty($system) ? "" : {{{
+														<div class="aiTrLine"><b>{$system['eventType']}</b> {$system['details']}</div>
+													}}} }
+													{ isEmpty($call) ? "" : {{{
+														<div class="aiTrLine">
+															<code class="aiTrName">{$call['toolName']}</code>
+															<span class="{$stateClass($call['status'])}">{$call['status']}</span>
+															<span class="aiTrTime">{$call['durationMs']} ms</span>
+														</div>
+														{ isEmpty($call['argsJson']) ? "" : {{{
+															<pre class="aiTrCode">{$call['argsJson']}</pre>
+														}}} }
+														{ isEmpty($call['result']) ? "" : {{{
+															<pre class="aiTrCode">{$call['result']}</pre>
+														}}} }
+														{ isEmpty($call['resultRef']) ? "" : {{{
+															<div class="aiTrLine">{$call['resultRef']}</div>
+														}}} }
+														{ isEmpty($call['errorMessage']) ? "" : {{{
+															<div class="aiTrAlert">{$call['errorMessage']}</div>
+														}}} }
+														{ isEmpty($call['denyReason']) ? "" : {{{
+															<div class="aiTrWarn">{$call['denyReason']}</div>
+														}}} }
+													}}} }
+													{ isEmpty($approval) ? "" : {{{
+														<div class="aiTrLine">
+															<code class="aiTrName">{$approval['toolName']}</code>
+															<span class="{$stateClass($approval['decision'])}">{$approval['decision']}</span>
+														</div>
+														{ isEmpty($approval['displayReason']) ? "" : {{{
+															<div class="aiTrText">{$approval['displayReason']}</div>
+														}}} }
+														{ isEmpty($approval['argsJson']) ? "" : {{{
+															<pre class="aiTrCode">{$approval['argsJson']}</pre>
+														}}} }
+														{ isEmpty($approval['userComment']) ? "" : {{{
+															<div class="aiTrAnswer">{$approval['userComment']}</div>
+														}}} }
+													}}} }
+													{ isEmpty($ask) ? "" : {{{
+														<div class="aiTrLine">
+															<b>{$ask['header']}</b>
+															<span class="aiTrState">{$ask['interactionType']}</span>
+														</div>
+														<div class="aiTrText">{$ask['question']}</div>
+														{ isEmpty($ask['options']) ? "" : {{{
+															<div class="aiTrLine">{foreach($ask['options'], o -> {{{ <span class="aiTrOption">{$o}</span> }}})}</div>
+														}}} }
+														{ isEmpty($ask['userResponse']) ? "" : {{{
+															<div class="aiTrAnswer">{$ask['userResponse']}</div>
+														}}} }
+													}}} }
+													{ isEmpty($transaction) ? "" : {{{
+														<div class="aiTrLine">
+															<span class="{$stateClass($transaction['type'])}">{$transaction['type']}</span>
+															<span class="aiTrTime">r{$transaction['revisionNumber']}</span>
+															{$transaction['reason']}
+														</div>
+													}}} }
+													{ isEmpty($compaction) ? "" : {{{
+														<div class="aiTrLine">
+															{$compaction['tokensBefore']} → {$compaction['tokensAfter']} Token
+															<span class="aiTrState">{$compaction['trigger']}</span>
+														</div>
+													}}} }
+													{ isEmpty($error) ? "" : {{{
+														<div class="aiTrAlert"><b>{$error['kind']}</b> {$error['errorMessage']}</div>
+													}}} }
+													{ isEmpty($delegation) ? "" : {{{
+														<div class="aiTrLine">
+															<code class="aiTrName">{$delegation['fromAgent']}</code>
+															→
+															<code class="aiTrName">{$delegation['toAgent']}</code>
+															<span class="{$stateClass($delegation['stopReason'])}">{$delegation['stopReason']}</span>
+														</div>
+														{ isEmpty($delegation['inputSummary']) ? "" : {{{
+															<div class="aiTrText">{$delegation['inputSummary']}</div>
+														}}} }
+														{ isEmpty($delegation['resultSummary']) ? "" : {{{
+															<div class="aiTrAnswer">{$delegation['resultSummary']}</div>
+														}}} }
+													}}} }
+												}}};
+											};
+
+											// A sub-agent's own parts. A delegation nested inside one of them is
+											// only announced by its header line: rendering it in full would need a
+											// self-referencing function, and a TL-Script closure captures its
+											// context before the name it would refer to is bound.
+											nested = p -> {{{
+												<div class="aiTrPart aiTrNested">{$body($p)}</div>
+											}}};
+
+											part = p -> {
+												children = ifElse(isEmpty($p['delegationData']), list(), $p['delegationData']['childParts']);
+												{{{
+													<div class="aiTrPart">
+														{$body($p)}
+														{ isEmpty($children) ? "" : {{{
+															<details class="aiTrChildren">
+																<summary>{#('{0} nested parts of the sub-agent'@en, '{0} verschachtelte Teile des Teilagenten'@de).fill($children.size())}</summary>
+																{foreach($children, c -> $nested($c))}
+															</details>
+														}}} }
+													</div>
+												}}};
+											};
+
+											turn = t -> {
+												usage = $t['usage'];
+												{{{
+													<details class="aiTrTurn" open="open">
+														<summary>
+															<span class="aiTrTurnNo">{#('Turn {0}'@en, 'Turn {0}'@de).fill($t['turnNumber'])}</span>
+															<span class="aiTrTime">{$stamp($t['timestamp'])}</span>
+															<span class="aiTrTime">{$t['model']}</span>
+															{ isEmpty($usage) ? "" : {{{
+																<span class="aiTrTime">{$usage['inputTokens'] + $usage['outputTokens']} Token</span>
+															}}} }
+														</summary>
+														{foreach($t['userParts'], p -> {{{ <div class="aiTrUser">{$part($p)}</div> }}})}
+														{foreach($t['assistantParts'], p -> $part($p))}
+													</details>
+												}}};
+											};
+
+											isEmpty($raw) ? {{{
+												<div class="aiTrNote">{#('No transcript. It is written when the run finishes, so a running or a crashed run has none.'@en, 'Kein Transkript. Es wird beim Abschluss des Laufs geschrieben - ein laufender oder abgestürzter Lauf hat keines.'@de)}</div>
+											}}} : (length($raw) > $maxChars ? {{{
+												<div class="aiTrNote aiTrWarn">{#('The transcript is {0} characters long and is not rendered here. The raw value is in the group below.'@en, 'Das Transkript ist {0} Zeichen lang und wird hier nicht dargestellt. Der Rohwert steht in der Gruppe darunter.'@de).fill(length($raw))}</div>
+											}}} : {
+												turns = parseJson($raw)['turns'];
+												{{{
+													<div class="aiTr">
+														<div class="aiTrNote">{#('Recorded turns: {0}'@en, 'Aufgezeichnete Turns: {0}'@de).fill($turns.size())}</div>
+														{foreach($turns, t -> $turn($t))}
+													</div>
+												}}};
+											});
+										}
+									]]></expr>
+								</macro>
+							</storage-algorithm>
+						</annotations>
+					</property>
 					<property name="response"
 						type="tl.core:Text"
 					/>

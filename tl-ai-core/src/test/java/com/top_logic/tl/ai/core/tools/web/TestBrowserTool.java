@@ -22,13 +22,17 @@ import java.util.regex.Pattern;
 
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.BlockSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.CaptchaSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 
 import junit.framework.TestCase;
@@ -157,7 +161,7 @@ public class TestBrowserTool extends TestCase {
 		service.startUp();
 		try {
 			BrowserTool tool = new BrowserTool();
-			ToolContext context = ToolContext.createUnrestricted();
+			ToolContext context = unrestrictedContext();
 
 			String refused = tool.browserNavigate("http://evil.com./", context);
 
@@ -568,7 +572,7 @@ public class TestBrowserTool extends TestCase {
 	 * run's execution-handle instance - and the wrapper must stay untouched.
 	 */
 	public void testSessionKeyNeverDereferencesExecutionWrapper() {
-		ToolContext context = ToolContext.createUnrestricted();
+		ToolContext context = unrestrictedContext();
 		context.executionHandle().set(revisionTrappedExecution());
 
 		Object key = BrowserTool.sessionKey(context);
@@ -582,7 +586,7 @@ public class TestBrowserTool extends TestCase {
 	 * read, revision-safe) and never from the wrapper, which would throw on a stale-revision thread.
 	 */
 	public void testSessionKeyUsesRunIdWithoutTouchingWrapper() {
-		ToolContext context = ToolContext.createUnrestricted();
+		ToolContext context = unrestrictedContext();
 		context.executionHandle().setRunId("run-77");
 		context.executionHandle().set(revisionTrappedExecution());
 
@@ -597,7 +601,7 @@ public class TestBrowserTool extends TestCase {
 	 * runs/messages of a conversation) and never from the revision-sensitive persistent wrapper.
 	 */
 	public void testSessionKeyPrefersConversationIdOverRunId() {
-		ToolContext context = ToolContext.createUnrestricted();
+		ToolContext context = unrestrictedContext();
 		context.executionHandle().setConversationId("conv-9002");
 		context.executionHandle().setRunId("run-77");
 		context.executionHandle().set(revisionTrappedExecution());
@@ -614,10 +618,10 @@ public class TestBrowserTool extends TestCase {
 	 * messages of the conversation.
 	 */
 	public void testSessionKeySharedAcrossRunsOfSameConversation() {
-		ToolContext messageOne = ToolContext.createUnrestricted();
+		ToolContext messageOne = unrestrictedContext();
 		messageOne.executionHandle().setConversationId("conv-1");
 		messageOne.executionHandle().setRunId("run-A");
-		ToolContext messageTwo = ToolContext.createUnrestricted();
+		ToolContext messageTwo = unrestrictedContext();
 		messageTwo.executionHandle().setConversationId("conv-1");
 		messageTwo.executionHandle().setRunId("run-B");
 
@@ -627,9 +631,9 @@ public class TestBrowserTool extends TestCase {
 
 	/** Different conversations get different keys, so their browsers (and logins) stay isolated. */
 	public void testSessionKeyIsolatedAcrossConversations() {
-		ToolContext convA = ToolContext.createUnrestricted();
+		ToolContext convA = unrestrictedContext();
 		convA.executionHandle().setConversationId("conv-A");
-		ToolContext convB = ToolContext.createUnrestricted();
+		ToolContext convB = unrestrictedContext();
 		convB.executionHandle().setConversationId("conv-B");
 
 		assertFalse("distinct conversations get distinct session keys",
@@ -641,7 +645,7 @@ public class TestBrowserTool extends TestCase {
 	 * previous per-run behaviour), still without touching the persistent wrapper.
 	 */
 	public void testSessionKeyFallsBackToRunIdWithoutConversationId() {
-		ToolContext context = ToolContext.createUnrestricted();
+		ToolContext context = unrestrictedContext();
 		context.executionHandle().setRunId("run-77");
 		context.executionHandle().set(revisionTrappedExecution());
 
@@ -651,7 +655,7 @@ public class TestBrowserTool extends TestCase {
 
 	/** A blank conversation id is ignored (treated as absent), falling back to the run id. */
 	public void testSessionKeyIgnoresBlankConversationId() {
-		ToolContext context = ToolContext.createUnrestricted();
+		ToolContext context = unrestrictedContext();
 		context.executionHandle().setConversationId("   ");
 		context.executionHandle().setRunId("run-77");
 
@@ -665,9 +669,9 @@ public class TestBrowserTool extends TestCase {
 	 * holds). {@code withToolCallId} models successive tool calls sharing the run's handle.
 	 */
 	public void testSessionKeyStickyWithinRunAndIsolatedAcrossRuns() {
-		ToolContext runA = ToolContext.createUnrestricted();
+		ToolContext runA = unrestrictedContext();
 		runA.executionHandle().setRunId("run-A");
-		ToolContext runB = ToolContext.createUnrestricted();
+		ToolContext runB = unrestrictedContext();
 		runB.executionHandle().setRunId("run-B");
 
 		Object a1 = BrowserTool.sessionKey(runA.withToolCallId("call-1"));
@@ -683,8 +687,8 @@ public class TestBrowserTool extends TestCase {
 	 * own execution-handle instance, and the two handles are distinct.
 	 */
 	public void testSessionKeyIsolatesUnrecordedConcurrentRuns() {
-		ToolContext runA = ToolContext.createUnrestricted();
-		ToolContext runB = ToolContext.createUnrestricted();
+		ToolContext runA = unrestrictedContext();
+		ToolContext runB = unrestrictedContext();
 
 		Object a = BrowserTool.sessionKey(runA);
 		Object aAgain = BrowserTool.sessionKey(runA.withToolCallId("call-2"));
@@ -1041,7 +1045,7 @@ public class TestBrowserTool extends TestCase {
 		service.startUp();
 		try {
 			BrowserTool tool = new BrowserTool();
-			ToolContext context = ToolContext.createUnrestricted();
+			ToolContext context = unrestrictedContext();
 
 			// 1) Renders a JS-heavy allowlisted page: envelope + JS-injected content present.
 			String result = tool.browserNavigate(JS_PAGE, context);
@@ -1097,7 +1101,7 @@ public class TestBrowserTool extends TestCase {
 		service.startUp();
 		try {
 			BrowserTool tool = new BrowserTool();
-			ToolContext context = ToolContext.createUnrestricted();
+			ToolContext context = unrestrictedContext();
 
 			String navigated = tool.browserNavigate(JS_DELAYED_PAGE, context);
 			assertTrue("the page itself was rendered", navigated.contains("<untrusted_page_content"));
@@ -1203,7 +1207,7 @@ public class TestBrowserTool extends TestCase {
 		blocking.startUp();
 		try {
 			BrowserTool tool = new BrowserTool();
-			String blocked = tool.browserNavigate(JS_PAGE, ToolContext.createUnrestricted());
+			String blocked = tool.browserNavigate(JS_PAGE, unrestrictedContext());
 			assertTrue("blocklisted domain refused even when allowlisted",
 				blocked.startsWith("Error:") && blocked.contains("blocklist"));
 		} finally {
@@ -1215,7 +1219,7 @@ public class TestBrowserTool extends TestCase {
 		allowAny.startUp();
 		try {
 			BrowserTool tool = new BrowserTool();
-			ToolContext context = ToolContext.createUnrestricted();
+			ToolContext context = unrestrictedContext();
 
 			// 1) Allow-any lets an OFF-allowlist public URL through (nothing is on the allowlist).
 			String offAllowlist = tool.browserNavigate(JS_PAGE, context);
@@ -1250,7 +1254,7 @@ public class TestBrowserTool extends TestCase {
 		service.startUp();
 		try {
 			BrowserTool tool = new BrowserTool();
-			ToolContext context = ToolContext.createUnrestricted();
+			ToolContext context = unrestrictedContext();
 
 			// Snapshot generation N: navigate the home page and grab one of its refs (form s1e...).
 			String home = tool.browserNavigate(HOME_PAGE, context);
@@ -1380,4 +1384,19 @@ public class TestBrowserTool extends TestCase {
 			Integer.valueOf(maxConcurrentSessions));
 		return new BrowserToolsService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
 	}
+
+	/**
+	 * A fresh {@link ToolContext} with no security restrictions and a live transaction scope.
+	 *
+	 * <p>
+	 * A local test seam. {@link ToolContext#EMPTY} is a shared singleton, and these tests need their
+	 * own {@code ExecutionHandle} per call.
+	 * </p>
+	 */
+	private static ToolContext unrestrictedContext() {
+		CancellationToken cancellationToken = new CancellationToken();
+		return new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
+			new TransactionScope(cancellationToken), cancellationToken);
+	}
+
 }

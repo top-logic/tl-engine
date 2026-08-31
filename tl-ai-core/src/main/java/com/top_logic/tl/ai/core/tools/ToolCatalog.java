@@ -15,6 +15,7 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Predicate;
 
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
@@ -25,6 +26,7 @@ import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.json.JsonTree;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Central catalog of {@link Tool}s.
@@ -154,11 +156,99 @@ public class ToolCatalog implements ToolRegistry {
 
 		Tool tool = _tools.get(toolCall.name());
 		if (tool == null) {
-			return failedResult(toolCall, start,
-				"Unknown tool: '" + toolCall.name() + "'. Available: " + _tools.keySet());
+			return failedResult(toolCall, start, unknownToolMessage(toolCall, this, context));
 		}
 
 		return executeTool(tool, toolCall, context);
+	}
+
+	/**
+	 * The message for a tool call the registry cannot resolve.
+	 *
+	 * <p>
+	 * "No such tool" and "you may not use that tool" are different answers and the model acts on
+	 * them differently: the first is corrected by picking a name from the list, the second is final.
+	 * The list therefore holds exactly the tools this run's principal may call - the same set the
+	 * model was sent schemas for - so that following the hint cannot walk into a denial, and so that
+	 * a typo does not disclose the names of capabilities the user does not have.
+	 * </p>
+	 *
+	 * <p>
+	 * Package-private: shared between {@link ToolCatalog} and {@link DynamicToolCatalog}.
+	 * </p>
+	 */
+	static String unknownToolMessage(ToolCall toolCall, ToolRegistry registry, ToolContext context) {
+		Predicate<Tool> visible = context == null
+			? tool -> true
+			: new ToolPermissionFilter(context.security());
+		List<String> available = registry.toolSchemas(visible).stream().map(ToolSchema::name).toList();
+		return absenceReason(toolCall.name(), registry, context) + " Available: " + available;
+	}
+
+	/**
+	 * Which of the ways a tool can be absent this is, in one sentence.
+	 *
+	 * <p>
+	 * They all look alike from here - {@link ToolRegistry#getTool(String)} returned nothing - and the
+	 * model has been observed explaining the wrong one to the user: asked for a script tool that no
+	 * framework agent lists, it reported that the agent "lacks the {@code agent.authoring} capability",
+	 * which was neither true nor actionable. They are told apart because the answer to each is
+	 * different: pick another name, load a skill, ask an administrator, or accept a refusal.
+	 * </p>
+	 *
+	 * <p>
+	 * A capability is named only where the application really has the tool and the acting user really
+	 * is denied it. A name that resolves nowhere never goes through the permission check, so a typo
+	 * still cannot make the answer disclose which capabilities the user lacks.
+	 * </p>
+	 *
+	 * <p>
+	 * See {@code doc/security/agent-security-architecture.md} section 3.2.7.
+	 * </p>
+	 */
+	private static String absenceReason(String requested, ToolRegistry registry, ToolContext context) {
+		Tool elsewhere = registeredElsewhere(requested);
+		if (elsewhere != null && context != null) {
+			String denial = context.security().toolDenialReason(elsewhere);
+			if (denial != null) {
+				return denial;
+			}
+		}
+		if (registry.isReachableBySkill(requested)) {
+			return "Tool '" + requested + "' belongs to a skill of yours that is not loaded yet: load"
+				+ " that skill, then call it again.";
+		}
+		if (elsewhere != null) {
+			return "Tool '" + requested + "' exists in this application but is not carried by this"
+				+ " agent - it is in neither this agent's own tool list nor any skill this agent can"
+				+ " load. This is not a permission problem and nothing you do here can reach it: an"
+				+ " administrator would have to add it to the agent or to one of its skills.";
+		}
+		return "Unknown tool: '" + requested + "'.";
+	}
+
+	/**
+	 * The tool of that name the application has, whether or not this agent carries it.
+	 *
+	 * <p>
+	 * Asked of the service-level registry by the qualified name and by the bare name a model would
+	 * use. Absent registry - a unit test, a catalog built by hand - reads as "no such tool", which
+	 * leaves the plain unknown-tool answer.
+	 * </p>
+	 */
+	private static Tool registeredElsewhere(String requested) {
+		if (!ToolRegistryService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		ToolRegistryService registry = ToolRegistryService.getInstance();
+		Tool tool = registry.getTool(requested);
+		if (tool != null) {
+			return tool;
+		}
+		return registry.getTools().stream()
+			.filter(candidate -> requested.equals(candidate.name()))
+			.findFirst()
+			.orElse(null);
 	}
 
 	/**

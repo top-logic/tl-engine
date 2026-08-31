@@ -50,4 +50,24 @@ public @interface ToolMethod {
 	 */
 	int truncationHint() default -1;
 
+	/**
+	 * The tool group this tool belongs to - the unit an administrator grants to a security role.
+	 *
+	 * <p>
+	 * Empty means ungrouped, which denies the tool to every role: with deny-by-default, a tool
+	 * added without a group must not slip into an existing grant by accident. An administrator can
+	 * assign a group in the access policy, which also overrides the value declared here.
+	 * </p>
+	 *
+	 * <p>
+	 * Enforced only where a deployment has configured a &lt;tool-access&gt; policy; without one,
+	 * tool authorization stays unenforced and this value is inert. See
+	 * {@code doc/security/agent-security-architecture.md}, section 3.2, and
+	 * {@code doc/security/tool-access-configuration.md} for the administrator's view.
+	 * </p>
+	 *
+	 * @see Tool#group()
+	 */
+	String group() default "";
+
 }

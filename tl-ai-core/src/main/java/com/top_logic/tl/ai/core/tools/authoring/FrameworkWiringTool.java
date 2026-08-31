@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.tools.authoring.messages.SkillListResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.SkillSummary;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -76,7 +77,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Lists all framework agents.
 	 */
-	@ToolMethod(description = "List all framework (TopLogic-provided) agents", mode = ToolMode.READ)
+	@ToolMethod(description = "List all framework (TopLogic-provided) agents", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String listFrameworkAgents() {
 		AgentListResult result = AgentListResult.create();
 		for (AgentDefinition ad : service().getAllConfigAgents().values()) {
@@ -92,7 +93,7 @@ public class FrameworkWiringTool {
 	 * Gets a framework agent's tools, skills, and delegations.
 	 */
 	@ToolMethod(description = "Get a framework agent's tools, skills, and delegations",
-		mode = ToolMode.READ)
+		mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String getFrameworkAgent(@P("Framework agent name") String agentName) {
 		AgentDetail detail = AgentDetail.create();
 		detail.setName(agentName);
@@ -114,7 +115,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Lists all framework skills.
 	 */
-	@ToolMethod(description = "List all framework (TopLogic-provided) skills", mode = ToolMode.READ)
+	@ToolMethod(description = "List all framework (TopLogic-provided) skills", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String listFrameworkSkills() {
 		SkillListResult result = SkillListResult.create();
 		for (SkillDefinition sd : service().getAllConfigSkills().values()) {
@@ -130,7 +131,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Gets a framework skill's tools.
 	 */
-	@ToolMethod(description = "Get a framework skill's tools", mode = ToolMode.READ)
+	@ToolMethod(description = "Get a framework skill's tools", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String getFrameworkSkill(@P("Framework skill name") String skillName) {
 		SkillDetail detail = SkillDetail.create();
 		detail.setName(skillName);
@@ -151,7 +152,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Adds a tool to a framework agent.
 	 */
-	@ToolMethod(description = "Add a tool to a framework agent. Takes effect immediately.")
+	@ToolMethod(description = "Add a tool to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
 	public String addToolToAgent(
 			@P("Framework agent name") String agentName,
 			@P("Qualified tool name to add") String toolName) {
@@ -163,7 +164,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Removes a tool from a framework agent.
 	 */
-	@ToolMethod(description = "Remove a tool from a framework agent. Takes effect immediately.")
+	@ToolMethod(description = "Remove a tool from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
 	public String removeToolFromAgent(
 			@P("Framework agent name") String agentName,
 			@P("Qualified tool name to remove") String toolName) {
@@ -175,7 +176,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Adds a skill to a framework agent.
 	 */
-	@ToolMethod(description = "Add a skill to a framework agent. Takes effect immediately.")
+	@ToolMethod(description = "Add a skill to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
 	public String addSkillToAgent(
 			@P("Framework agent name") String agentName,
 			@P("Skill name to add") String skillName) {
@@ -187,7 +188,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Removes a skill from a framework agent.
 	 */
-	@ToolMethod(description = "Remove a skill from a framework agent. Takes effect immediately.")
+	@ToolMethod(description = "Remove a skill from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
 	public String removeSkillFromAgent(
 			@P("Framework agent name") String agentName,
 			@P("Skill name to remove") String skillName) {
@@ -199,7 +200,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Adds a delegation target to a framework agent.
 	 */
-	@ToolMethod(description = "Add a delegation target to a framework agent. Takes effect immediately.")
+	@ToolMethod(description = "Add a delegation target to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
 	public String addDelegationToAgent(
 			@P("Framework agent name") String agentName,
 			@P("Delegation target agent name to add") String delegationName) {
@@ -211,7 +212,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Removes a delegation target from a framework agent.
 	 */
-	@ToolMethod(description = "Remove a delegation target from a framework agent. Takes effect immediately.")
+	@ToolMethod(description = "Remove a delegation target from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
 	public String removeDelegationFromAgent(
 			@P("Framework agent name") String agentName,
 			@P("Delegation target agent name to remove") String delegationName) {
@@ -225,7 +226,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Adds a tool to a framework skill.
 	 */
-	@ToolMethod(description = "Add a tool to a framework skill. Takes effect immediately.")
+	@ToolMethod(description = "Add a tool to a framework skill. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
 	public String addToolToSkill(
 			@P("Framework skill name") String skillName,
 			@P("Qualified tool name to add") String toolName) {
@@ -237,7 +238,7 @@ public class FrameworkWiringTool {
 	/**
 	 * Removes a tool from a framework skill.
 	 */
-	@ToolMethod(description = "Remove a tool from a framework skill. Takes effect immediately.")
+	@ToolMethod(description = "Remove a tool from a framework skill. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
 	public String removeToolFromSkill(
 			@P("Framework skill name") String skillName,
 			@P("Qualified tool name to remove") String toolName) {

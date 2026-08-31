@@ -23,17 +23,17 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelNamingConvention;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.visit.LabelVisitor;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.ToolResults;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceMetadata;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceTypeInfo;
-import com.top_logic.tl.ai.core.tools.model.messages.TLObjectReference;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
@@ -50,8 +50,17 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * consumption by AI agents.
  * </p>
  *
- * @see #listInstances(String, String, Integer, String)
- * @see #getInstance(String)
+ * <p>
+ * Both methods reach the knowledge base with the run's identity, so both are filtered by the run's
+ * {@link ReadFilter}: an instance the principal may not read is absent from the listing and absent
+ * from the total count, and an unreadable attribute of a readable instance is absent from its
+ * description. This class holds no serialiser of its own - it used to hold three, which is how the
+ * filtering came to be missing here in the first place.
+ * </p>
+ *
+ * @see #listInstances(String, String, Integer, String, ToolExecutionContext)
+ * @see #getInstance(String, ToolExecutionContext)
+ * @see ReadFilter
  */
 public class InstanceBrowserTool {
 
@@ -101,15 +110,18 @@ public class InstanceBrowserTool {
 	 *        Maximum number of instances to return (default: 100, max: 1000).
 	 * @param cursor
 	 *        Pagination cursor from previous response (null/empty for first page).
+	 * @param context
+	 *        Injected execution context, supplying the read filter of the run.
 	 * @return JSON object with paginated instance TIDs and pagination metadata, or error JSON if
 	 *         type not found.
 	 */
-	@ToolMethod(description = "Get a paginated list of instances for a specific type. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.", mode = ToolMode.READ)
+	@ToolMethod(description = "Get a paginated list of instances for a specific type. Only instances you may read are listed, and the total count is the number of those. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
 	public String listInstances(
 			@P("The module containing the type") String moduleName,
 			@P("The name of the type") String typeName,
 			@P("Maximum number of instances to return (default: 100, max: 1000)") Integer limit,
-			@P("Cursor for pagination (null/empty for first page, use nextCursor from previous response)") String cursor) {
+			@P("Cursor for pagination (null/empty for first page, use nextCursor from previous response)") String cursor,
+			ToolExecutionContext context) {
 
 		Map<String, Object> args = new HashMap<>();
 		args.put("moduleName", moduleName);
@@ -117,10 +129,12 @@ public class InstanceBrowserTool {
 		args.put("limit", limit);
 		args.put("cursor", cursor);
 		return ToolResults.invoke(InstanceBrowserTool.class, "listInstances()", args,
-			"Error accessing instances: ", () -> doListInstances(moduleName, typeName, limit, cursor));
+			"Error accessing instances: ",
+			() -> doListInstances(moduleName, typeName, limit, cursor, ReadFilter.of(context)));
 	}
 
-	private InstanceListResponse doListInstances(String moduleName, String typeName, Integer limit, String cursor) {
+	private InstanceListResponse doListInstances(String moduleName, String typeName, Integer limit, String cursor,
+			ReadFilter readFilter) {
 		// Validate parameters
 		if (moduleName == null || moduleName.isEmpty()) {
 			throw new IllegalArgumentException("Module name is required");
@@ -148,8 +162,12 @@ public class InstanceBrowserTool {
 				"Type '" + typeName + "' not found in module '" + moduleName + "'");
 		}
 
-		// Get all instances of this type
-		List<TLObject> allInstances = MetaElementUtil.getAllInstancesOf(type, TLObject.class);
+		// Every instance the principal may read, and no other. Filtered before the count is taken and
+		// before the page is cut: a total taken over the unfiltered list would disclose how many
+		// instances exist, and a page cut before the filter would return short pages whose length says
+		// the same thing.
+		List<TLObject> allInstances =
+			readFilter.readable(MetaElementUtil.getAllInstancesOf(type, TLObject.class));
 		int totalCount = allInstances.size();
 
 		// Apply pagination
@@ -236,26 +254,33 @@ public class InstanceBrowserTool {
 	 * Gets detailed information about a single instance by its TID.
 	 *
 	 * <p>
-	 * Returns a JSON object containing the instance's TID, type information, all attribute
-	 * values, and metadata (container, transient status). References to other objects are
-	 * represented as structured objects with TIDs.
+	 * Returns a JSON object containing the instance's TID, type information, the attribute values the
+	 * principal may read, and metadata (container, transient status). References to other objects are
+	 * represented as structured objects with TIDs, and a referenced object the principal may not read
+	 * is left out of them.
 	 * </p>
 	 *
 	 * @param tid
 	 *        The TopLogic identifier in format "TypeName:id".
-	 * @return JSON object with instance details, or error JSON if instance not found.
+	 * @param context
+	 *        Injected execution context, supplying the read filter of the run.
+	 * @return JSON object with instance details, or error JSON if the instance does not exist or the
+	 *         principal may not read it - deliberately the same answer, see
+	 *         {@link TidResolver#resolve(String, com.top_logic.tl.ai.core.security.ModelSecurity)}.
 	 */
-	@ToolMethod(description = "Get detailed information about a single instance by its TID including all attributes and values", mode = ToolMode.READ)
-	public String getInstance(@P("The TopLogic identifier (TID) in format 'TypeName:id'") String tid) {
+	@ToolMethod(description = "Get detailed information about a single instance by its TID including the attribute values you may read", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
+	public String getInstance(@P("The TopLogic identifier (TID) in format 'TypeName:id'") String tid,
+			ToolExecutionContext context) {
 
 		Map<String, Object> args = new HashMap<>();
 		args.put("tid", tid);
 		return ToolResults.invoke(InstanceBrowserTool.class, "getInstance()", args,
-			"Error retrieving instance: ", () -> doGetInstance(tid));
+			"Error retrieving instance: ", () -> doGetInstance(tid, ReadFilter.of(context)));
 	}
 
-	private InstanceResponse doGetInstance(String tid) throws IOException {
-		TLObject tlObject = TidResolver.resolve(tid);
+	private InstanceResponse doGetInstance(String tid, ReadFilter readFilter) throws IOException {
+		// Refuses an object this run may not read, with the message of one that does not exist.
+		TLObject tlObject = TidResolver.resolve(tid, readFilter.security());
 
 		// Build response using data class
 		InstanceResponse result = InstanceResponse.create();
@@ -265,23 +290,22 @@ public class InstanceBrowserTool {
 		TLStructuredType type = tlObject.tType();
 		if (type != null) {
 			result.setType(buildTypeInfo(type));
-
-			// Get all parts (attributes) of this type
-			for (TLStructuredTypePart part : type.getAllParts()) {
-				String partName = part.getName();
-				Object value = tlObject.tValue(part);
-
-				// Add attribute value as JSON string
-				result.putAttribute(partName, serializeAttributeValue(value));
-			}
 		}
 
-		// Additional metadata
+		// The attribute values, each of them a per-attribute Read decision, each of them serialised by
+		// the one serialiser that makes those decisions.
+		for (Map.Entry<String, Object> attribute : readFilter.attributesOf(tlObject).entrySet()) {
+			result.putAttribute(attribute.getKey(), serialize(attribute.getValue()));
+		}
+
+		// Additional metadata. The container is another object's identity, so it is disclosed only when
+		// that object is readable too - a readable child of a hidden parent must not name the parent.
 		InstanceMetadata metadata = InstanceMetadata.create();
-		metadata.setContainer(
-			tlObject.tContainer() != null ? tlObject.tContainer().tId().toString() : null);
-		metadata.setContainerReference(
-			tlObject.tContainerReference() != null ? tlObject.tContainerReference().getName() : null);
+		TLObject container = tlObject.tContainer();
+		boolean containerVisible = container != null && readFilter.canRead(container);
+		metadata.setContainer(containerVisible ? container.tId().toString() : null);
+		metadata.setContainerReference(containerVisible && tlObject.tContainerReference() != null
+			? tlObject.tContainerReference().getName() : null);
 		metadata.setTransient(tlObject.tTransient());
 		result.setMetadata(metadata);
 
@@ -327,76 +351,47 @@ public class InstanceBrowserTool {
 	}
 
 	/**
-	 * Serializes an attribute value to a JSON string.
+	 * Writes an already-filtered value as a JSON string.
 	 *
-	 * @param value
-	 *        The value to serialize.
-	 * @return JSON string representation of the value.
+	 * <p>
+	 * Takes the JSON-compatible data {@link ReadFilter#attributesOf(TLObject)} produced - primitives,
+	 * {@link List}s, {@link Map}s - and never a live {@link TLObject}, which is why it makes no security
+	 * decision. The serialisers that did take live objects, and decided nothing, are gone: there is one
+	 * of those and it takes the run's rights as an argument.
+	 * </p>
 	 */
-	private static String serializeAttributeValue(Object value) throws IOException {
+	private static String serialize(Object value) throws IOException {
 		StringW buffer = new StringW();
 		try (JsonWriter json = new JsonWriter(buffer)) {
-			writeValue(json, value);
+			writeJsonData(json, value);
 		}
 		return buffer.toString();
 	}
 
-	/**
-	 * Writes a value to JSON with proper type handling.
-	 */
-	private static void writeValue(JsonWriter json, Object value) throws IOException {
+	private static void writeJsonData(JsonWriter json, Object value) throws IOException {
 		if (value == null) {
 			json.nullValue();
-		} else if (value instanceof TLObject) {
-			// For reference to another TLObject, write as TLObjectReference
-			TLObjectReference ref = buildTLObjectReference((TLObject) value);
-			ref.writeTo(json);
-		} else if (value instanceof Iterable) {
-			// For collections, write as JSON array
+		} else if (value instanceof String string) {
+			json.value(string);
+		} else if (value instanceof Number number) {
+			json.value(number);
+		} else if (value instanceof Boolean bool) {
+			json.value(bool);
+		} else if (value instanceof Map<?, ?> map) {
+			json.beginObject();
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
+				json.name(String.valueOf(entry.getKey()));
+				writeJsonData(json, entry.getValue());
+			}
+			json.endObject();
+		} else if (value instanceof Iterable<?> items) {
 			json.beginArray();
-			for (Object item : (Iterable<?>) value) {
-				writeValue(json, item);
+			for (Object item : items) {
+				writeJsonData(json, item);
 			}
 			json.endArray();
-		} else if (value instanceof String) {
-			json.value((String) value);
-		} else if (value instanceof Number) {
-			json.value((Number) value);
-		} else if (value instanceof Boolean) {
-			json.value((Boolean) value);
 		} else {
-			// For other types, write as string
-			json.value(value.toString());
+			json.value(String.valueOf(value));
 		}
-	}
-
-	/**
-	 * Builds a TLObjectReference data object.
-	 */
-	private static TLObjectReference buildTLObjectReference(TLObject tlObject) {
-		TLObjectReference ref = TLObjectReference.create();
-		ref.setTid(tlObject.tId().asString());
-
-		TLStructuredType type = tlObject.tType();
-		if (type != null) {
-			ref.setType(TLModelUtil.qualifiedName(type));
-		}
-
-		// Try to get a label for the object using TLModelNamingConvention
-		String label = null;
-		try {
-			ResKey labelKey = TLModelNamingConvention.getTypeLabelKey(type);
-			if (labelKey != null) {
-				Resources resources = Resources.getInstance();
-				label = resources.getString(labelKey, null);
-			}
-		} catch (Exception ex) {
-			// Ignore - label is optional
-		}
-		if (label != null && !label.isEmpty()) {
-			ref.setLabel(label);
-		}
-
-		return ref;
 	}
 }

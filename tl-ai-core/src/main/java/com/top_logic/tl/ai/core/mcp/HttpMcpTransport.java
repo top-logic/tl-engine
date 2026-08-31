@@ -54,7 +54,8 @@ public class HttpMcpTransport implements McpTransportConfig {
 		 * Static HTTP headers sent with every request.
 		 *
 		 * <p>
-		 * In XML: {@code <entry name="X-Api-Key" value="secret"/>}
+		 * Each entry is a header name and the value to send under it, e.g. an API key header
+		 * the server expects in addition to the bearer token.
 		 * </p>
 		 */
 		@Name(HEADERS)
@@ -66,8 +67,9 @@ public class HttpMcpTransport implements McpTransportConfig {
 		 * Name of an environment variable holding a bearer token.
 		 *
 		 * <p>
-		 * Resolved via {@code System.getenv()} at connect time. The token is sent as
-		 * {@code Authorization: Bearer <token>} header. This avoids putting secrets in config files.
+		 * The variable is read from the server's environment at connect time and its value is
+		 * sent in the {@code Authorization} header using the {@code Bearer} scheme. This keeps
+		 * the secret itself out of the configuration.
 		 * </p>
 		 */
 		@Name(BEARER_TOKEN_ENV_VAR)

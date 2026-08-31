@@ -7,10 +7,10 @@ package com.top_logic.tl.ai.core.agent;
 
 import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.ConstraintCheck;
+import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.util.Pointer;
 
 /**

@@ -13,11 +13,11 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.tools.integration.messages.CreateIssueRequest;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.basic.Logger;
-
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -76,7 +76,7 @@ public class GiteaIssueTool {
 		description = "Create a Gitea issue to report a quality problem found during AI conversation review. "
 			+ "Use this to file issues for incorrect answers, bad delegation, tool misuse, "
 			+ "unhelpful responses, or inefficiencies.",
-		mode = ToolMode.USER_SCOPED)
+		mode = ToolMode.USER_SCOPED, group = ToolGroups.EGRESS)
 	public String createGiteaIssue(
 			@P("The issue title") String title,
 			@P("Category of the issue: incorrect-answer, bad-delegation, tool-misuse, "

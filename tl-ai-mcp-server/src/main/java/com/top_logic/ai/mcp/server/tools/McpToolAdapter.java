@@ -7,12 +7,9 @@ package com.top_logic.ai.mcp.server.tools;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
@@ -106,31 +103,24 @@ public class McpToolAdapter {
 
 	/**
 	 * Handles an MCP tool call by delegating to the tool.
+	 *
+	 * <p>
+	 * Always refused - see {@link McpToolContexts} for why: {@code /mcp/*} authenticates nobody, and a
+	 * tool call that cannot name the account it acts as cannot be authorized. Executing it anyway, as
+	 * this method used to when it passed no context at all, meant every adapted tool ran with no
+	 * security context, no tool authorization and no approval.
+	 * </p>
 	 */
 	private static McpSchema.CallToolResult handleToolCall(
 			CallToolRequest request,
 			Tool tool) {
 
-		try {
-			Map<String, Object> arguments = request.arguments();
-			if (arguments == null) {
-				arguments = Map.of();
-			}
-
-			String result = ToolExecutions.execute(tool, arguments, null).text();
-
-			return McpSchema.CallToolResult.builder()
-				.content(List.of(new McpSchema.TextContent(result)))
-				.build();
-
-		} catch (Exception ex) {
-			Logger.error("Error executing tool '" + request.name() + "': " + ex.getMessage(),
-				ex, McpToolAdapter.class);
-			String errorJson = "{\"error\":\"" + JsonEscape.escape(ex.getMessage()) + "\"}";
-			return McpSchema.CallToolResult.builder()
-				.content(List.of(new McpSchema.TextContent(errorJson)))
-				.isError(true)
-				.build();
-		}
+		String refusal = McpToolContexts.refusalReason();
+		Logger.warn("Refused MCP tool call '" + request.name() + "': " + refusal,
+			McpToolAdapter.class);
+		return McpSchema.CallToolResult.builder()
+			.content(List.of(new McpSchema.TextContent(refusal)))
+			.isError(true)
+			.build();
 	}
 }

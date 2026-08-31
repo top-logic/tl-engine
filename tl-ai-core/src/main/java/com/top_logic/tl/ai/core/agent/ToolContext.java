@@ -10,6 +10,8 @@ import java.util.Set;
 
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -27,23 +29,49 @@ import com.top_logic.tl.ai.core.tools.ToolExecutor;
  */
 public class ToolContext implements ToolExecutionContext {
 
-	/** Context with no security restrictions, auto-approval, and no-op scope. For tests only. */
+	/**
+	 * Context with no security restrictions, auto-approval, and no-op scope.
+	 *
+	 * <p>
+	 * <b>A test seam.</b> It carries {@link SecurityContext#UNRESTRICTED}, which has no principal and
+	 * therefore permits everything. No production path builds a context this way - see
+	 * {@link #forCurrentUser()} and {@code ChatProcessor}, both of which resolve the acting account
+	 * and refuse without one.
+	 * </p>
+	 */
 	public static final ToolContext EMPTY =
 		new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
 			TransactionScope.NOOP, CancellationToken.UNCANCELLABLE);
 
 	/**
-	 * Creates a new unrestricted context with a live transaction scope.
+	 * Creates a context acting as the user bound to the calling thread, with a live transaction scope.
 	 *
-	 * <p>Use this for programmatic agent invocations (TL-Script, background jobs) where
-	 * tools need locking and transaction support. Each call creates a fresh scope that
-	 * shares the context's cancellation token, so lock waits end promptly when the run
-	 * is cancelled.</p>
+	 * <p>
+	 * For the TL-Script entry points, which run on the thread of whoever executed the script: their
+	 * tool calls are authorized against that account's roles and their model access against that
+	 * account's rights.
+	 * </p>
+	 *
+	 * <p>
+	 * Each call creates a fresh transaction scope that shares the context's cancellation token, so lock
+	 * waits end promptly when the run is cancelled.
+	 * </p>
+	 *
+	 * <p>
+	 * Auto-approves: a script has no approval surface. The run is not treated as a background run,
+	 * because the account that executed the script is present and watching it - unlike
+	 * {@code aiAgentChatAsync}, which detaches.
+	 * </p>
+	 *
+	 * @throws IllegalStateException
+	 *         If no user is bound to the calling thread. A run that cannot name its principal cannot
+	 *         be authorized, and there is no unchecked mode to fall back to.
 	 */
-	public static ToolContext createUnrestricted() {
+	public static ToolContext forCurrentUser() {
 		CancellationToken cancellationToken = new CancellationToken();
-		return new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
-			new TransactionScope(cancellationToken), cancellationToken);
+		return new ToolContext(
+			TopLogicSecurityContext.forRun(TLContext.currentUser(), false),
+			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 
 	private final SecurityContext _security;
@@ -179,6 +207,24 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
+	 * Per-object model access checks for the run's principal.
+	 *
+	 * <p>
+	 * The seam tools use to filter what they return ({@link ModelSecurity#filterReadable}) and to
+	 * refuse changes the principal may not make ({@link ModelSecurity#requireWrite}). Reached through
+	 * the context tools already receive, so no extra plumbing is needed at the call sites.
+	 * </p>
+	 *
+	 * <p>
+	 * Always the real thing for a production run: the engine's model access rights, evaluated for the
+	 * run's principal.
+	 * </p>
+	 */
+	public ModelSecurity modelSecurity() {
+		return _security.modelSecurity();
+	}
+
+	/**
 	 * The approval callback for requesting user confirmation.
 	 *
 	 * <p>Used by the agent loop to pause for approval on state-changing tools.</p>
@@ -305,12 +351,21 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
-	 * Creates a copy of this context for a delegated sub-agent run.
+	 * Creates a copy of this context for a synchronous delegated sub-agent run.
 	 *
 	 * <p>The returned context has the delegation depth incremented by one and uses the given
 	 * {@code childTransaction}, which must be a fresh {@link TransactionScope}. The parent's
 	 * transaction is intentionally not visible to the child: the child's begin/commit/rollback
 	 * lifecycle is independent so it cannot interfere with the parent's turn.</p>
+	 *
+	 * <p>
+	 * The run's classification is carried over unchanged, including whether it is a
+	 * {@link SecurityContext#isBackgroundRun() background run}. A synchronous delegation completes
+	 * <em>inside</em> the parent turn, so whoever was there to answer an approval prompt before it
+	 * started is still there - the child has exactly the parent's reach, and the
+	 * {@code <background-allowlist>} applies to it if and only if it applied to the parent. The
+	 * detached counterpart is {@link #forDetachedSubagent(TransactionScope, CancellationToken)}.
+	 * </p>
 	 *
 	 * @param childTransaction the transaction scope for the sub-agent run
 	 */
@@ -321,19 +376,39 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
-	 * Creates a copy of this context for a detached asynchronous subagent run.
+	 * Creates a copy of this context for a detached (fire-and-forget) asynchronous subagent run.
 	 *
 	 * <p>Like {@link #forDelegation(TransactionScope)}, the delegation depth is incremented
 	 * and a fresh {@code childTransaction} is used. Unlike {@code forDelegation}, the child
 	 * gets its <b>own</b> {@code childToken} instead of sharing the parent's, so cancelling
 	 * one background job (or the parent turn ending) does not cancel unrelated subagents.</p>
 	 *
+	 * <p>
+	 * <b>The child is a background run.</b> {@code spawn_subagent} returns a handle immediately and
+	 * the parent turn ends while the child keeps working on a pool thread; from then on there is no
+	 * human on the other end to answer an approval prompt, which is the design's own definition of an
+	 * unattended run. Its tool ceiling is therefore the intersection of the acting user's grants and
+	 * the policy's {@code <background-allowlist>} - the same bound a scheduler job or an
+	 * {@code aiAgentChatAsync} run gets. Without it a detached child ran with the acting user's full
+	 * interactive grant set, and under
+	 * {@link com.top_logic.tl.ai.core.agent.approval.ApprovalMode#AUTO_APPROVE} it self-approved every
+	 * write tool after the parent turn had ended.
+	 * </p>
+	 *
+	 * <p>
+	 * The child keeps the parent's {@link #approval() approval callback} deliberately. It is not what
+	 * bounds the run - {@code AgentLoop} authorizes before it asks for approval, so a tool off the
+	 * allowlist is refused whatever the callback would have answered - and in an
+	 * {@code ALWAYS_ASK} session an open browser window can still answer the child's prompts, which is
+	 * worth keeping.
+	 * </p>
+	 *
 	 * @param childTransaction the transaction scope for the subagent run
 	 * @param childToken       the subagent's own cancellation token
 	 */
-	public ToolContext forSubagent(TransactionScope childTransaction, CancellationToken childToken) {
-		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
-			_delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
+	public ToolContext forDetachedSubagent(TransactionScope childTransaction, CancellationToken childToken) {
+		return new ToolContext(_security.withBackgroundCeiling(), _approval, childTransaction,
+			_sessionApprovedTools, _delegationDepth + 1, null, childToken, ProgressReporter.NOOP,
 			new ExecutionHandle(), _model);
 	}
 }

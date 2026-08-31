@@ -72,4 +72,48 @@ public class AnnotatedToolsTest extends TestCase {
         ToolResult result = tool.execute(Map.of("order", orderArg), null);
         assertEquals("ok:Carol:3", result.text());
     }
+
+    /** Tools whose group and mode the annotation declares, and one that declares neither. */
+    public static class GroupedTools {
+
+        @ToolMethod(description = "Read data", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
+        public String listThings() {
+            return "";
+        }
+
+        @ToolMethod(description = "Forgot to say")
+        public String unclassified() {
+            return "";
+        }
+    }
+
+    /**
+     * The group declared on {@code @ToolMethod} reaches {@link Tool#group()}.
+     *
+     * <p>
+     * The whole role-to-tool policy is decided on this value, so a broken hand-off here would silently
+     * make every annotated tool ungrouped - which denies it. Worth pinning.
+     * </p>
+     */
+    public void testDeclaredGroupReachesTheTool() {
+        Tool listThings = byName(AnnotatedTools.from(new GroupedTools()), "listThings");
+
+        assertEquals(ToolGroups.DATA_READ, listThings.group());
+    }
+
+    /** A tool that declares no group is ungrouped, which is what denies it by default. */
+    public void testUndeclaredGroupIsEmpty() {
+        Tool unclassified = byName(AnnotatedTools.from(new GroupedTools()), "unclassified");
+
+        assertEquals("", unclassified.group());
+    }
+
+    private static Tool byName(List<Tool> tools, String name) {
+        for (Tool tool : tools) {
+            if (name.equals(tool.name())) {
+                return tool;
+            }
+        }
+        throw new AssertionError("No tool '" + name + "' among " + tools.size() + " scanned.");
+    }
 }

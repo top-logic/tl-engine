@@ -11,16 +11,15 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.http.HttpResponse;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.sun.net.httpserver.HttpServer;
-
 import junit.framework.TestCase;
+
+import com.sun.net.httpserver.HttpServer;
 
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 

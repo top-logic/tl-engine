@@ -14,6 +14,7 @@ import java.util.UUID;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
@@ -32,6 +33,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -112,6 +114,23 @@ public class DelegationTool implements Tool {
 		return ToolMode.READ;
 	}
 
+	/**
+	 * {@link ToolGroups#INTERACTION}.
+	 *
+	 * <p>
+	 * Delegation is a conversation primitive: the sub-agent it starts is bounded by the child agent's
+	 * own tool list and inherits this run's security context, so it can never widen the caller's
+	 * authority. A synchronous delegation completes inside the parent turn and therefore keeps the
+	 * parent's classification exactly; where a chat session makes it asynchronous, the child is a
+	 * detached run and the {@code <background-allowlist>} caps it - see
+	 * {@link ToolContext#forDetachedSubagent}.
+	 * </p>
+	 */
+	@Override
+	public String group() {
+		return ToolGroups.INTERACTION;
+	}
+
 	@Override
 	public boolean isConcurrencySafe() {
 		return true;
@@ -163,7 +182,7 @@ public class DelegationTool implements Tool {
 		}
 
 		try {
-			AgentLoop targetLoop = _loopFactory.buildAgentLoop(_targetAgentName);
+			AgentLoop targetLoop = _loopFactory.buildAgentLoop(_targetAgentName, toolContext.security());
 
 			Conversation conversation = new Conversation();
 			UserMessage userMessage = new UserMessage(
@@ -272,15 +291,24 @@ public class DelegationTool implements Tool {
 	@FunctionalInterface
 	public interface AgentLoopFactory {
 
-		/** Builds an agent loop for the named agent. */
-		AgentLoop buildAgentLoop(String agentName);
+		/**
+		 * Builds an agent loop for the named agent.
+		 *
+		 * @param agentName
+		 *        The agent to build.
+		 * @param security
+		 *        The calling run's security context, passed on unchanged. The child's skill catalog
+		 *        and its prompt's capability list are per user, so whatever computes them has to know
+		 *        the user; the child is bounded by the same authority as its parent.
+		 */
+		AgentLoop buildAgentLoop(String agentName, SecurityContext security);
 
 		/**
 		 * Builds a read-only, non-spawning agent loop for an asynchronous subagent run.
 		 * Defaults to {@link #buildAgentLoop} for callers that do not distinguish.
 		 */
-		default AgentLoop buildSubagentLoop(String agentName) {
-			return buildAgentLoop(agentName);
+		default AgentLoop buildSubagentLoop(String agentName, SecurityContext security) {
+			return buildAgentLoop(agentName, security);
 		}
 	}
 }

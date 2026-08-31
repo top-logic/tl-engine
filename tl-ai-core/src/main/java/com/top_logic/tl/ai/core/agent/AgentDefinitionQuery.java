@@ -148,7 +148,10 @@ public class AgentDefinitionQuery {
 	 * </p>
 	 */
 	Collection<Agent> getAllKBAgents() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		KnowledgeBase kb = knowledgeBase();
+		if (kb == null) {
+			return List.of();
+		}
 		Collection<KnowledgeObject> kos = kb.getAllKnowledgeObjects(AGENT_TABLE);
 		return WrapperFactory.getWrappersForKOs(Agent.class, kos);
 	}
@@ -161,23 +164,47 @@ public class AgentDefinitionQuery {
 	 * </p>
 	 */
 	Collection<Skill> getAllKBSkills() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		KnowledgeBase kb = knowledgeBase();
+		if (kb == null) {
+			return List.of();
+		}
 		Collection<KnowledgeObject> kos = kb.getAllKnowledgeObjects(SKILL_TABLE);
 		return WrapperFactory.getWrappersForKOs(Skill.class, kos);
 	}
 
 	private Agent findKBAgentByName(String name) {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		KnowledgeBase kb = knowledgeBase();
+		if (kb == null) {
+			return null;
+		}
 		List<Agent> agents =
 			WrapperFactory.getWrappersByAttribute(AGENT_TABLE, kb, AgentBase.NAME_ATTR, name);
 		return agents.isEmpty() ? null : agents.get(0);
 	}
 
 	private Skill findKBSkillByName(String name) {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		KnowledgeBase kb = knowledgeBase();
+		if (kb == null) {
+			return null;
+		}
 		List<Skill> skills =
 			WrapperFactory.getWrappersByAttribute(SKILL_TABLE, kb, "name", name);
 		return skills.isEmpty() ? null : skills.get(0);
+	}
+
+	/**
+	 * The application's {@link KnowledgeBase}, or <code>null</code> if the persistency layer is not
+	 * running.
+	 *
+	 * <p>
+	 * A deployment always has one; a unit test that only exercises the configured half of the layered
+	 * lookup does not. Answering <code>null</code> rather than throwing makes the KB half behave like
+	 * the configuration half, which is already guarded by {@code isConfigServiceActive()}: a source
+	 * that is not there contributes no definitions.
+	 * </p>
+	 */
+	private static KnowledgeBase knowledgeBase() {
+		return PersistencyLayer.Module.INSTANCE.isActive() ? PersistencyLayer.getKnowledgeBase() : null;
 	}
 
 	private AgentDefinition toAgentDefinition(Agent agent, AgentSource source) {

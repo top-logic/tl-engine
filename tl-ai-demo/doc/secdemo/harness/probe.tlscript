@@ -1,0 +1,105 @@
+// ===========================================================================
+// Agent security test bed - TOOL LAYER PROBE
+//
+// Prints the tool-layer decision for the account you are logged in as, one
+// line per capability, in about a second. The result is a single multi-line
+// string, so the console hands it over in one piece and two personas can be
+// diffed by copying one value each. NO LLM API KEY IS NEEDED: aiCallTool
+// dispatches a tool directly and the permission check happens before any model
+// call.
+//
+// Where to run it: Administration > Development > Script console, logged in as
+// whichever persona you want to see. The "execute" button (the plain one) is
+// enough - nothing here commits.
+//
+// What to expect: log in as two personas in turn and diff the two outputs.
+// That comparison is the whole point of the fixture. The expectation column of
+// tl-ai-demo/doc/secdemo/testbed.md says which lines must differ for which pair.
+//
+//   ALLOWED  the tool ran. For a read-only probe tool the result follows.
+//   DENIED   the tool layer refused, and the reason names either the missing
+//            capability or the missing classification.
+//
+// Read the ALLOWED lines as carefully as the DENIED ones. Both roles of this
+// fixture hold every read capability, so almost nothing differs in this column -
+// what differs is WHAT THE ALLOWED CALLS RETURN, because that is decided by the
+// model access rights and not here. Anna's project listing has one entry and
+// Dora's has none, and both lines say ALLOWED.
+//
+// A DENIED line that names "no tool group" is a different problem from one
+// that names a capability: the first is fixed by a <tool-groups> entry, the
+// second by granting a role. Do not confuse them.
+// ===========================================================================
+{
+	// [ label, qualified tool name, parameters ]
+	//
+	// One read-only tool per capability the fixture grants somebody, plus the
+	// ones nobody is granted, plus the classified/unclassified script tool pair,
+	// plus the pair of counts that shows where read filtering stops. Every one of
+	// them is harmless: no entry here writes.
+	// One caveat, for the single line that does something when it is ALLOWED:
+	// webFetch really does fetch, so running this as "root" (which bypasses the
+	// policy) makes one outbound request to example.com. Every other probe is a
+	// local read.
+	probes = [
+		["model.read", "model-browser.listModules", null],
+		["data.read       (tickets: filtered per object, see the count)",
+			"model-instances.listInstances",
+			{"moduleName": "pm", "typeName": "Ticket", "limit": 3}],
+		["data.read       (projects: a partner sees only the ones it partners on)",
+			"model-instances.listInstances",
+			{"moduleName": "pm", "typeName": "Project", "limit": 3}],
+		["data.read       (script tool, named in tool-groups; count NOT filtered)",
+			"secdemo-reporting.countTickets", null],
+		["data.read       (the honest count: filtered inside the script)",
+			"secdemo-reporting.countVisibleTickets", null],
+		["(the same script tool body, deliberately NOT classified)",
+			"secdemo-unclassified.countTicketsUnclassified", null],
+		["agent.meta", "framework-wiring.listFrameworkAgents", null],
+		["script          (privileged)", "script-exec.validateTLScript",
+			{"script": "1 + 1"}],
+		["workspace", "task.listTasks", null],
+		["agent.authoring (privileged)", "agent-authoring.listAgents", null],
+		["model.structure (privileged, granted to nobody)",
+			"model-modification.createClass", null],
+		["egress          (granted to nobody)", "web-fetch.webFetch",
+			{"url": "https://example.com"}],
+		["(hallucinated name - must say 'not found', never 'Permission denied')",
+			"model-instances.listEverything", null]
+	];
+
+	me = currentUser().get(`tl.accounts:Person#name`);
+
+	// A denial from aiCallTool always starts with "Error invoking tool", and
+	// carries the reason the policy produced. Anything else is the tool's own
+	// result, i.e. the call was allowed.
+	report = $probes.map(p -> {
+		result = aiCallTool($p[1], $p[2]);
+		denied = $result.stringStartsWith("Error invoking tool");
+		// One line per probe, so the joined report below stays readable; long
+		// tool results are cut rather than wrapped.
+		summary = $result.split("\n").firstElement();
+
+		"  " + ($denied ? "DENIED " : "ALLOWED") + "  " + $p[0]
+			+ "  ->  " + $p[1] + "  ::  " + ($summary.length() > 200
+				? $summary.subString(0, 200) + " ..."
+				: $summary);
+	});
+
+	// One string, not a list of lines: the console then hands the whole report
+	// over in a single copy, which is what makes diffing two personas practical.
+	[
+		"-- agent security test bed: tool layer, as '" + $me + "' --",
+		$me == "root"
+			? "WARNING: administrators bypass the tool layer. Every line below will"
+				+ " say ALLOWED and the deny lines prove nothing. That is the"
+				+ " documented administrator baseline, not a finding - log in as a"
+				+ " persona to see the policy."
+			: "Role-based account: the expectations in tl-ai-demo/doc/secdemo/testbed.md apply.",
+		""
+	].concat($report).concat([
+		"",
+		"Log in as another persona and run this again; the diff between the two",
+		"outputs is what the fixture exists to show."
+	]).join(separator: "\n");
+}

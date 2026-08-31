@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Richtlinie: where the policy is actually written.
+	
+	An ordinary form component without a page, so that the engine's DirectFormControlProvider renders
+	the form context and its template: collapsible group cells, standard label-and-field rows, and the
+	framework's own tooltips as the per-field help. Übernehmen and Verwerfen are command handlers in
+	the component toolbar, which is where every other administration surface puts them.
+-->
+<securityLayout name="aiToolAccessPolicyView"
+	titleKey="admin.ai.agentSecurity.policy.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentSecurity.policy.tabber"/>
+	<components>
+		<form class="com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent"
+			name="aiToolAccessPolicyComponent"
+			resPrefix="admin.ai.agentSecurity.policy."
+			securityObject="securityRoot"
+		>
+			<buttons>
+				<button id="applyAgentToolAccessPolicy"
+					class="com.top_logic.tl.ai.core.security.layout.ApplyToolAccessPolicyCommand"
+					clique="apply"
+				/>
+				<button id="discardAgentToolAccessPolicy"
+					class="com.top_logic.tl.ai.core.security.layout.DiscardToolAccessPolicyCommand"
+					clique="cancel"
+				/>
+			</buttons>
+
+			<layoutInfo scrolleable="true"/>
+		</form>
+	</components>
+</securityLayout>

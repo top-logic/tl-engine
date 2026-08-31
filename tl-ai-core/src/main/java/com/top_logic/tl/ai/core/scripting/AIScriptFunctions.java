@@ -22,6 +22,8 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
@@ -47,8 +49,6 @@ import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.knowledge.service.KBUtils;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.session.ConversationLog;
@@ -57,12 +57,12 @@ import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
-import com.top_logic.util.TLContext;
-import com.top_logic.util.TLContextManager;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 /**
  * TL-Script functions for interacting with large language models.
@@ -182,8 +182,17 @@ public class AIScriptFunctions extends TLScriptFunctions {
 				+ String.join(", ", ToolRegistryService.getInstance().getToolNames());
 		}
 
-		ToolContext context = ToolContext.createUnrestricted();
+		ToolContext context = ToolContext.forCurrentUser();
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
+			// This function dispatches a tool directly, bypassing the agent loop and therefore the
+			// loop's invocation gate. Apply the same tool authorization here, or a Script Console user
+			// would have a path to every registered tool regardless of what their roles grant.
+			if (!context.security().hasToolPermission(tool)) {
+				String reason = context.security().toolDenialReason(tool);
+				return "Error invoking tool '" + toolName + "': " + (reason != null
+					? reason
+					: "Permission denied: you do not have access to tool '" + toolName + "'.");
+			}
 			Map<String, Object> args = parameters != null ? parameters : Map.of();
 			return ToolExecutions.execute(tool, args, context).text();
 		} catch (Exception ex) {
@@ -288,7 +297,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			modelOptions.isEmpty() ? Map.of() : Map.copyOf(modelOptions));
 
 		AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
-		ToolContext context = ToolContext.createUnrestricted();
+		ToolContext context = ToolContext.forCurrentUser();
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			int messageCountBefore = conversation.size();
 
@@ -343,7 +352,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		Conversation conversation = new Conversation();
 		conversation.add(request);
 
-		ToolContext context = ToolContext.createUnrestricted();
+		// Acts as the account that executed the script, and refuses if the thread has none: a run that
+		// cannot name its principal cannot be authorized.
+		ToolContext context = ToolContext.forCurrentUser();
 
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			recordUserTurn(env.logListener().log(), request);
@@ -369,15 +380,6 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * A {@link String} handle (rather than the live {@link AgentSession} wrapper) is returned
-	 * deliberately: the session is committed out-of-band on the {@link AgentExecutionStore} writer
-	 * thread at a revision newer than the caller's pinned request revision, so returning the wrapper
-	 * would fail with {@code DeletedObjectAccess} wherever the caller's context accesses it in its
-	 * older revision (e.g. the Script Console typing the result row). A {@code String} is
-	 * revision-independent; the poll functions resolve it back to the session.
-	 * </p>
-	 *
-	 * <p>
 	 * The background run re-enters the calling user's sub-session (captured synchronously here on the
 	 * calling thread, as it cannot be read off-thread), so the agent and its tools act as that user
 	 * with that user's permissions. A {@code BACKGROUND}-kind {@link AgentSession} is created up front
@@ -390,7 +392,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * <b>Warning - unattended auto-approval:</b> a background run has no human to answer tool-approval
 	 * prompts, so every tool call is auto-approved. An async run can therefore perform any
 	 * write/destructive tool action (delete data, call external systems, ...) unattended. Only start
-	 * async runs for agents you trust to act without supervision.
+	 * async runs for agents you trust to act without supervision. An application that has configured
+	 * a tool access policy can bound this: the run is additionally restricted to that policy's
+	 * background allowlist, precisely because approval is the control it has lost.
 	 * </p>
 	 *
 	 * <p>
@@ -423,6 +427,14 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @see AgentRunner
 	 */
 	public static String agentChatAsync(String agentName, Object userMessage) {
+		/*
+		 * A String handle (rather than the live AgentSession wrapper) is returned deliberately: the
+		 * session is committed out-of-band on the AgentExecutionStore writer thread at a revision
+		 * newer than the caller's pinned request revision, so returning the wrapper would fail with
+		 * DeletedObjectAccess wherever the caller's context accesses it in its older revision (e.g.
+		 * the Script Console typing the result row). A String is revision-independent; the poll
+		 * functions resolve it back to the session.
+		 */
 		// Capture the caller's sub-session synchronously: it lives on the calling thread and
 		// cannot be read off-thread. The background run re-enters it to act as this user.
 		TLSubSessionContext callerSession = TLContextManager.getSubSession();
@@ -472,7 +484,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		// Own transaction lifecycle on the background thread, detached from any caller transaction.
 		// Auto-approve every tool call: a background run has no human to answer approval prompts.
 		CancellationToken cancellationToken = new CancellationToken();
-		ToolContext context = new ToolContext(new TopLogicSecurityContext(),
+		// Runs as the account that started it - agentChatAsync re-entered that sub-session on this
+		// thread - and is marked as a background run, so the policy's background allowlist applies as
+		// an additional ceiling. Auto-approval is exactly the compensating control that allowlist
+		// replaces: a run with nobody to ask must not reach write tools by default.
+		ToolContext context = new ToolContext(
+			TopLogicSecurityContext.forRun(TLContext.currentUser(), true),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 
 		// Cluster-safe cancellation: this node runs the job and holds the token, so a listener on
@@ -501,9 +518,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Records an {@link AgentExecutionStore.ExecutionStatus#ERROR} execution for a background run
-	 * that failed before the agent loop started (and thus before {@link AgentRunner} could record
-	 * it), so the failure is retrievable via the handle.
+	 * Records an
+	 * {@link com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus#ERROR}
+	 * execution for a background run that failed before the agent loop started (and thus before
+	 * {@link AgentRunner} could record it), so the failure is retrievable via the handle.
 	 */
 	private static void recordEarlyFailure(AgentSession session, String agentName, Throwable ex) {
 		try {
@@ -520,10 +538,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Returns the status of an async agent run started with {@link #agentChatAsync(String, Object)}.
+	 * Returns the status of an async agent run started with
+	 * {@link #agentChatAsync(String, Object)}.
 	 *
 	 * <p>
-	 * The status is one of the {@link AgentExecutionStore.ExecutionStatus} names
+	 * The status is one of the
+	 * {@link com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus} names
 	 * ({@code RUNNING}, {@code COMPLETE}, {@code ERROR}, {@code CANCELLED}, {@code REJECTED}).
 	 * While the run is still queued or its recording has not yet become visible on the calling
 	 * thread, {@code RUNNING} is returned.
@@ -566,7 +586,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 	/**
 	 * Returns the final answer of an async agent run once it is
-	 * {@link AgentExecutionStore.ExecutionStatus#COMPLETE}.
+	 * {@link com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus#COMPLETE}.
 	 *
 	 * <p>
 	 * This is symmetric with the synchronous {@link #agentChat(String, Object)}: it returns the

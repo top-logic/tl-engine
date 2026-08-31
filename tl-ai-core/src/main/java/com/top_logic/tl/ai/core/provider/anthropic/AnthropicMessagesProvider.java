@@ -278,8 +278,9 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 	}
 
 	/**
-	 * Maps Anthropic {@code error.type} strings to a {@link ProviderException.Kind}. The type field
-	 * is authoritative; unmapped types fall through to the HTTP status code.
+	 * Maps Anthropic {@code error.type} strings to a
+	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind}. The type field is
+	 * authoritative; unmapped types fall through to the HTTP status code.
 	 */
 	private static final Map<String, ProviderException.Kind> ERROR_TYPE_MAP = Map.ofEntries(
 		Map.entry("authentication_error", ProviderException.Kind.AUTHENTICATION),

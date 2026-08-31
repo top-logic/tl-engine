@@ -33,6 +33,7 @@ import com.top_logic.tl.ai.core.tools.model.messages.SearchResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.SearchResult;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
@@ -105,7 +106,7 @@ public class ModelSearchTool {
 	 *        reference). Null or empty = search all kinds.
 	 * @return JSON object with search results and relevance scores.
 	 */
-	@ToolMethod(description = "Search for model elements by name, label, or description. Returns top 10 matches with relevance scores.", mode = ToolMode.READ)
+	@ToolMethod(description = "Search for model elements by name, label, or description. Returns top 10 matches with relevance scores.", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
 	public String searchModel(
 			@P("Search query string (case-insensitive)") String query,
 			@P("Optional: Limit to specific modules") List<String> moduleFilter,

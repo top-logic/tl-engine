@@ -20,8 +20,7 @@ import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
  * {@link ListGeneratorAdaptor} providing all available agent names as options.
  *
  * <p>
- * Used as {@code <options>} generator on the {@code delegations} attribute of
- * {@code tl.ai.core:Agent}.
+ * Provides the options for the {@code delegations} attribute of {@code tl.ai.core:Agent}.
  * </p>
  *
  * @see AgentDefinitionQuery#getAllAgents()

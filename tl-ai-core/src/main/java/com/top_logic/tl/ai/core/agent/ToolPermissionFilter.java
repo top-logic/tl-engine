@@ -54,7 +54,12 @@ public class ToolPermissionFilter implements Predicate<Tool> {
 	 */
 	public String denialReason(Tool tool) {
 		if (!_security.hasToolPermission(tool)) {
-			return "Permission denied: you do not have access to tool '" + tool.name() + "'.";
+			// Prefer the specific reason: the model can act on "you lack the model.structure
+			// capability" and an operator can trace it, where a bare "denied" leaves both guessing.
+			String specific = _security.toolDenialReason(tool);
+			return specific != null
+				? specific
+				: "Permission denied: you do not have access to tool '" + tool.name() + "'.";
 		}
 		if (tool.mode() == ToolMode.STRUCTURAL
 				&& _security.executionMode() == ExecutionMode.PRODUCTION) {

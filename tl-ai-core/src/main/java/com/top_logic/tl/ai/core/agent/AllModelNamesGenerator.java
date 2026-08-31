@@ -23,8 +23,8 @@ import com.top_logic.tl.ai.core.provider.LLMService;
  *
  * <p>
  * Returns only models that an admin has added to a provider's {@code models} allowlist,
- * excluding models that were merely discovered via provider API. Used as {@code <options>}
- * generator on the {@code model} attribute of {@code tl.ai.core:Agent}.
+ * excluding models that were merely discovered via provider API. Provides the options for
+ * the {@code model} attribute of {@code tl.ai.core:Agent}.
  * </p>
  *
  * @see LLMService#getConfiguredModelNames()

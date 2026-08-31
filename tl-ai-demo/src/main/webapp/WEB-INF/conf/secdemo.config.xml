@@ -1,0 +1,605 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Opt-in aspect for the agent security test bed.
+
+	Enable it by adding the line
+
+		secdemo.config.xml
+
+	to "WEB-INF/conf/metaConf.txt" (a commented-out line is already there); disable it by
+	commenting the line out again. Nothing in this file is active while the line is commented
+	out, so the demo boots unchanged.
+
+	Note when enabling or disabling: withdrawing the "pm" model declaration makes the engine's model
+	upgrade delete the module on the next boot, which fails while Project / Ticket instances still
+	exist. Start from a fresh database, or delete those instances first. The same applies to the
+	"secdemo" module of the previous version of this fixture: a database that ran it holds Note and
+	Secret instances of a module this file no longer declares, so it will not boot. See
+	tl-ai-demo/doc/secdemo/testbed.md, section "Enabling and resetting the fixture".
+
+	What it wires - the application of doc/security/role-model-worked-example.md, built so that the
+	document and the fixture cannot disagree:
+	  * the "pm" business model (Project / Ticket),
+	  * two roles and two groups - one role vocabulary serving both grant tables,
+	  * four declarative role rules on the access manager: two tiers on the security root, one scope
+	    derived from Project#partners, and a security parent making a ticket's project its parent,
+	  * the <security-config> that the engine's ModelAccessRights evaluates, per object and per
+	    attribute,
+	  * the <tool-access> policy that tl-ai's tool layer evaluates,
+	  * three TL-Script tool factories, the tools of two of them classified in <tool-groups> and the
+	    tool of the third deliberately left unclassified,
+	  * the component (layout) access every persona needs to reach the agent chat and the
+	    TL-Script console,
+	  * SecDemoSetupService, which seeds the persona accounts, the example projects and tickets, and
+	    verifies at boot that the declarative rules actually produced the roles the matrix claims.
+
+	What it deliberately does NOT wire: "use-default-security-parent". The engine default is false and
+	this fixture needs it, because role resolution is downward only - making the security root the
+	security parent of everything would put a root-held role on every object, the tier assignment would
+	swallow the scope assignment, and per-object scoping could not be demonstrated at all. The previous
+	version of this fixture set it to true, which is why it could only ever show tier-based access.
+
+	tl-ai-demo/doc/secdemo/testbed.md is the entry point: it maps every behaviour to a persona, a
+	thing to type and an expected result.
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/pm.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<!--
+			Two roles, and both of them appear in BOTH grant tables below. That is the point of the
+			whole fixture: one role vocabulary answers two different questions, because the two tables
+			ask about the role at different objects.
+
+			  projectPartner  on the security root  = "project partners may use the write tools"  (tier)
+			  projectPartner  on project Alpha      = "you are a partner of Alpha"                (scope)
+
+			No separate "agent role" is invented alongside a "model role". Roles must exist before
+			SecurityConfigurationService and AiToolAccessService start, which is guaranteed because both
+			declare a dependency on InitialRolesManager.
+		-->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="projectPartner"/>
+					<role name="ticketReader"/>
+				</roles>
+			</instance>
+		</config>
+
+		<!--
+			The groups whose membership the tier rules read. Membership is what an administrator
+			maintains; everything else is derived.
+
+			No "default-group" is declared: the worked example sets one because it builds an
+			application from scratch, and this is an aspect over an application that already has its
+			own account defaults. Nothing in the fixture depends on a group every account joins.
+		-->
+		<config service-class="com.top_logic.base.services.InitialGroupManager">
+			<instance>
+				<groups>
+					<group name="projectPartners"/>
+					<group name="ticketReaders"/>
+				</groups>
+			</instance>
+		</config>
+
+		<!--
+			The heart of the fixture: four declarative rules, contributed additively to whatever access
+			manager the application already runs. No "class" is named on purpose - tl-element configures
+			StorageAccessManager, which maintains the security storage, and replacing it here would
+			change far more than this aspect is allowed to.
+
+			Three mechanisms, three jobs, worth naming individually because people conflate them:
+
+			  <singleton-rule>    puts a role on one well-known object. Used here for the security root,
+			                      which is the only place a tier can live, and the only place
+			                      <tool-access> can see. Replaces the TL 7 <role-assignment>.
+			  <rule type=         derives a role on every matching object by navigating a <path> of
+			  "reference">        business attributes to the accounts that should hold it. A path may end
+			                      at a Group or at a Person; a Person is resolved to their
+			                      representative group automatically.
+			  <security-parents>  decides what "ancestor" means for role resolution, and therefore what
+			                      a scoped role reaches downward.
+
+			Every rule needs a unique "id" in TL 8 - that is what the ticket #29221 migration adds to
+			older configurations.
+
+			On the <path> wrapper: NavigationRuleConfig.getPathElements() is @Name("path") and
+			@DefaultContainer, so a step may be written inside <path>...</path> or directly as a child of
+			the rule. Both spellings parse to the same rule, and neither is a migration. Ticket
+			#29221's description shows the unwrapped form; this file uses the wrapper because it makes
+			the two-element case unambiguous.
+		-->
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+
+						<!--
+							TIER 1. Members of "projectPartners" hold projectPartner on the security
+							root. This, and only this, is what <tool-access> can see.
+						-->
+						<singleton-rule id="secdemo.tier-projectPartner"
+							target="SecurityStructure#ROOT"
+							role="projectPartner"
+						>
+							<path>
+								<group-with-name name="projectPartners"/>
+							</path>
+						</singleton-rule>
+
+						<!-- TIER 2. Same shape for ticket readers. -->
+						<singleton-rule id="secdemo.tier-ticketReader"
+							target="SecurityStructure#ROOT"
+							role="ticketReader"
+						>
+							<path>
+								<group-with-name name="ticketReaders"/>
+							</path>
+						</singleton-rule>
+
+						<!--
+							SCOPE. Whoever is listed in a project's "partners" attribute holds
+							projectPartner ON THAT PROJECT. Derived from business data, per object.
+							This is the assignment the previous fixture could not express.
+						-->
+						<rule id="secdemo.scope-projectPartner"
+							meta-element="pm:Project"
+							role="projectPartner"
+							type="reference"
+						>
+							<path>
+								<step attribute="pm:Project#partners"/>
+							</path>
+						</rule>
+
+						<!--
+							TYPE SCOPE. Members of "ticketReaders" hold ticketReader on EVERY ticket.
+
+							This rule is easy to think unnecessary and is not, and getting it wrong is
+							the single most instructive mistake this fixture can teach. The two tier
+							rules above put ticketReader on the security root, and <tool-access> is
+							satisfied by that - but <security-config> is not. Model access resolves a
+							role by walking the object and the object's security ANCESTORS, and with
+							use-default-security-parent left at false the security root is not an
+							ancestor of anything. So "pm:Ticket grants Read to ticketReader" plus
+							"ticketReader on the root" grants nothing at all: Ben would hold the read
+							tools and be refused every ticket, and the refusal would look like an empty
+							database.
+
+							A role on the root is therefore a statement about a PERSON, not about data.
+							Every per-object and per-type guarantee needs the role on the object, which
+							for "may read all tickets" means a rule producing it on every instance of
+							the type. A <path> that is only a <group-with-name>, with no <step>, is how
+							that is written - the same shape a <singleton-rule> uses, applied to a type
+							instead of to one well-known object.
+						-->
+						<rule id="secdemo.type-ticketReader"
+							meta-element="pm:Ticket"
+							role="ticketReader"
+							type="reference"
+						>
+							<path>
+								<group-with-name name="ticketReaders"/>
+							</path>
+						</rule>
+
+					</rules>
+				</role-rules>
+
+				<!--
+					A ticket's security parent is the project that contains it, so a partner's scope on
+					a project reaches that project's tickets without a second role rule. Navigating the
+					composition backwards is what "the project that contains me" means.
+				-->
+				<security-parents>
+					<rules>
+						<rule id="secdemo.ticket-in-project"
+							meta-element="pm:Ticket"
+						>
+							<path>
+								<step attribute="pm:Project#tickets"
+									inverse="true"
+								/>
+							</path>
+						</rule>
+					</rules>
+				</security-parents>
+			</instance>
+		</config>
+
+		<!--
+			L2, the policy the engine enforces per object and per attribute. Deny-by-default, and it is
+			real: a type with no grant for an operation resolves to an empty role set, and a check
+			against an empty role set is false. You never write a denial.
+
+			Three properties of this table matter more than its contents:
+
+			  * pm:Ticket has NO Delete grant, for anybody. So nobody deletes a ticket, and no <deny>
+			    was needed to achieve it.
+			  * The <part> grant on pm:Ticket#body NARROWS the class-level Read: an attribute-level
+			    grant is only consulted after the class-level check has passed, and its absence means
+			    the attribute inherits that decision. So a ticketReader reads a ticket and its title,
+			    and pm:Ticket#body is absent from what any tool reports to it.
+			  * Both roles appear here AND in <tool-access>. Neither table knows about the other; what
+			    connects them is the role name and nothing else.
+
+			Administrators and engine super-users bypass all of it, and so does any code running in a
+			system context. An admin account proves nothing.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="pm:Project">
+						<grant operation="Read"
+							roles="projectPartner"
+						/>
+						<grant operation="Write"
+							roles="projectPartner"
+						/>
+						<grant operation="Create"
+							roles="projectPartner"
+						/>
+					</class>
+					<class name="pm:Ticket">
+						<grant operation="Read"
+							roles="projectPartner, ticketReader"
+						/>
+						<grant operation="Write"
+							roles="projectPartner"
+						/>
+						<grant operation="Create"
+							roles="projectPartner"
+						/>
+					</class>
+					<part name="pm:Ticket#body">
+						<grant operation="Read"
+							roles="projectPartner"
+						/>
+					</part>
+				</security-config>
+			</instance>
+		</config>
+
+		<!--
+			Three TL-Script tool factories, which exist to make two mechanisms testable end to end rather
+			than only in a unit test: the <tool-groups> classification, and the boundary of the read
+			filtering of issue #289.
+
+			A TL-Script tool has no @ToolMethod annotation to carry a group, so it arrives ungrouped and
+			is therefore denied to everyone. The only way to give it one is to name it in a <tool-groups>
+			entry - see the block below. That is the migration path every application with script tools
+			has to walk.
+
+			"secdemo-reporting.countTickets" and "secdemo-unclassified.countTicketsUnclassified" have
+			the same body, the same mode and the same parameters. The single difference between them is
+			that the first is named in <tool-groups> and the second is not, so the pair isolates the
+			classification mechanism exactly.
+
+			"secdemo-reporting.countVisibleTickets" is the honest counterpart of countTickets and the
+			reason both exist: per-object read filtering cannot narrow an aggregate, because a count is
+			a number by the time any filter sees it (issue #291). A tool that wants a filtered count has
+			to filter inside the script, which is what filterSecurity does. Neither tool lies about
+			which one it is.
+		-->
+		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+			<instance>
+				<tool-factories>
+					<factory name="secdemo-reporting">
+						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+							<tools>
+								<tool name="countTickets"
+									mode="READ"
+								>
+									<description>
+										<en>Counts every ticket, including ones the acting account may not read - an aggregate computed inside a script is not read-filtered. Named in tool-groups, which puts it in data.read.</en>
+										<de>Zählt alle Tickets, auch die für das ausführende Konto nicht lesbaren - eine im Skript berechnete Kennzahl wird nicht gefiltert. Ist in tool-groups eingetragen und gehört damit zur Gruppe data.read.</de>
+									</description>
+									<implementation>all(`pm:Ticket`).size()</implementation>
+								</tool>
+								<tool name="countVisibleTickets"
+									mode="READ"
+								>
+									<description>
+										<en>Counts the tickets the acting account may read, by filtering inside the script before counting. The honest way to report a count.</en>
+										<de>Zählt die für das ausführende Konto lesbaren Tickets, indem im Skript vor dem Zählen gefiltert wird. Der ehrliche Weg, eine Anzahl zu melden.</de>
+									</description>
+									<implementation>filterSecurity(all(`pm:Ticket`)).size()</implementation>
+								</tool>
+							</tools>
+						</implementation>
+					</factory>
+					<factory name="secdemo-editing">
+						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+							<tools>
+								<tool name="addTicket"
+									mode="DATA_WRITE"
+								>
+									<description>
+										<en>Creates a ticket with the given title in the given project. Named in tool-groups, which puts it in data.write.</en>
+										<de>Erzeugt ein Ticket mit dem angegebenen Titel im angegebenen Projekt. Ist in tool-groups eingetragen und gehört damit zur Gruppe data.write.</de>
+									</description>
+									<parameters>
+										<parameter name="project"
+											type="pm:Project"
+											mandatory="true"
+										/>
+										<parameter name="title"
+											type="tl.core:String"
+											mandatory="true"
+										/>
+									</parameters>
+									<implementation>$project.set(`pm:Project#tickets`, $project.get(`pm:Project#tickets`).concat(new(`pm:Ticket`)..set(`pm:Ticket#title`, $title)))</implementation>
+								</tool>
+							</tools>
+						</implementation>
+					</factory>
+					<factory name="secdemo-unclassified">
+						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+							<tools>
+								<tool name="countTicketsUnclassified"
+									mode="READ"
+								>
+									<description>
+										<en>Counts every ticket, unfiltered. Deliberately left out of tool-groups, so it belongs to no group and is denied to every role.</en>
+										<de>Zählt alle Tickets, ungefiltert. Absichtlich nicht in tool-groups eingetragen, gehört daher zu keiner Gruppe und ist für jede Rolle gesperrt.</de>
+									</description>
+									<implementation>all(`pm:Ticket`).size()</implementation>
+								</tool>
+							</tools>
+						</implementation>
+					</factory>
+				</tool-factories>
+			</instance>
+		</config>
+
+		<!--
+			L1, the tl-ai tool layer: which roles may execute which agent tools. Independent of the
+			<security-config> above, which governs the data.
+
+			"data.write" is a tier and cannot be anything else. At the moment this gate runs, the model
+			has proposed a tool call and there is no object yet to check, so this table answers exactly
+			one question: may the agent wield this kind of power on your behalf at all. Every question
+			of the form "on which object" belongs to <security-config> and is answered later, per
+			object. That is not a limitation to work around; it is the reason this table reads roles on
+			the security root, because the root is where a deployment-wide statement about a person
+			lives.
+
+			The consequence the personas are built to show: Anna holds data.write globally and still
+			cannot write project Beta. L1 was never going to be what stopped her, and it did not have to
+			be.
+
+			"script" is granted to both roles because the scenarios that exercise the MODEL rights ask
+			the agent to use the TL-Script tool, and denying it at the tool layer would stop them before
+			the layer they are about. Committing with it costs data.write on top, which ticketReader
+			does not hold - so "a partner creates a ticket / a reader cannot" is a policy difference
+			rather than a model-rights accident.
+
+			Nothing is reached implicitly: every group is named. "model.structure", "egress",
+			"workspace", "agent.authoring" and "agent.meta" are granted to nobody, so the model editor,
+			the web fetch, the task tools and the authoring tools are denied to every persona -
+			deny-by-default, no <deny> needed.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+				<!--
+					A TL-Script tool declares no group, so this is the only place it can get one. Every
+					tool is named, one at a time: there is no pattern syntax, and a tool that appears
+					later - one a createScriptTool call adds to a factory, one a connected MCP server
+					grows - is denied until an administrator names it here. That is deliberate, and it
+					is what keeps the capability a tool costs a decision the administrator made rather
+					than one whoever created the tool made.
+
+					"secdemo-unclassified.countTicketsUnclassified" is deliberately absent: an
+					unclassified tool must stay denied to everyone, and the pair of otherwise identical
+					tools is what proves this one line is what makes the difference.
+				-->
+				<tool-groups>
+					<group name="data.read"
+						tools="secdemo-reporting.countTickets, secdemo-reporting.countVisibleTickets"
+					/>
+					<group name="data.write"
+						tools="secdemo-editing.addTicket"
+					/>
+				</tool-groups>
+
+				<tool-access>
+					<role name="projectPartner">
+						<grants>
+							<grant group="model.read"/>
+							<grant group="data.read"/>
+							<grant group="data.write"/>
+							<grant group="script"/>
+						</grants>
+					</role>
+					<role name="ticketReader">
+						<grants>
+							<grant group="model.read"/>
+							<grant group="data.read"/>
+							<grant group="script"/>
+						</grants>
+					</role>
+				</tool-access>
+
+				<!--
+					An explicitly *empty* baseline, which is not the same as leaving the element out.
+
+					Omitting it means "give every user the read-only default" - model.read and data.read
+					(#293). This fixture needs the opposite: the matrix says what each role reaches, and
+					handing both read capabilities to every account would make the "refused at L1" rows
+					unobservable - starting with Ben, whose ticket creation must be refused at L1
+					because he holds no data.write.
+
+					So the element is written and left empty, which says out loud that nothing is
+					granted to everyone here. Two capabilities are granted implicitly to every role and
+					every run anyway: "interaction" - asking a question, loading a skill, delegating -
+					and "introspection" - listTools, the agent saying which tools and skills it carries.
+					Both are things an agent is broken without, so neither is withholdable by omission.
+				-->
+				<baseline/>
+
+				<!--
+					The ceiling for a run with nobody to answer an approval prompt - aiAgentChatAsync,
+					which the TL-Script harness uses, and the MCP endpoint.
+
+					"script" is on the list only because that harness needs it. "data.write" is
+					deliberately off it, so projectPartner reaches "secdemo-editing.addTicket" in the
+					chat and is refused it in a background run. That contrast is the whole point of the
+					mechanism.
+
+					Note what "script" on this list does *not* buy: executing TL-Script with
+					withCommit=true additionally costs "data.write", which is off the list, so an
+					unattended run cannot persist through the script tool either - not even as an
+					administrator, since the allowlist binds them too.
+				-->
+				<background-allowlist>
+					<grant group="model.read"/>
+					<grant group="data.read"/>
+					<grant group="script"/>
+				</background-allowlist>
+			</instance>
+		</config>
+
+		<!--
+			The third, independent security layer: component (layout) access. The policies above decide
+			what a role may do with the data and which tools it may call, this decides which views a
+			role may open at all. All three are needed - a role with model rights and tool grants but no
+			view rights logs in to an application without a single tab.
+
+			The format is the engine's own "WEB-INF/conf/security.xml" format
+			(com.top_logic.tool.boundsec.config.AccessConfiguration). It is applied here instead of in
+			that file because the engine's import resets the access of every view in the application
+			before applying it, which an opt-in aspect must not do. The entries below are added, nothing
+			else is touched.
+
+			View names are the names of the enclosing "securityLayout" components; only those can hold
+			access rights. "Read" is the command group that decides visibility. Nesting does not
+			inherit, so every securityLayout on the way to a view needs its own grant. The script
+			console sits three levels deep (the tabs labelled "Administration", "Development" and
+			"Script console"), hence three entries; the sibling views on those levels stay closed
+			because they are security components of their own with no grant.
+
+			The profile is named "*", which SecDemoSetupService expands to every role a configured
+			persona is expected to hold. Every persona therefore sees exactly the same UI, which is what
+			makes the allow/deny pairs comparable: the only thing that differs between two personas is
+			the policy, never what they can reach.
+
+			Granting the script console to a non-administrator role lets that role execute arbitrary
+			TL-Script. That is deliberate here and confined to this opt-in aspect: the walkthrough
+			asserts that the model access rights hold even for a user who can run any expression. Only
+			"Read" is granted, which covers opening the view and its "execute" button; the "execute and
+			save changes" button is bound to "Write" and stays disabled - the agent runs started from
+			the console do their own writes in their own transaction on the background thread.
+		-->
+		<config service-class="com.top_logic.ai.demo.secdemo.SecDemoSetupService">
+			<instance class="com.top_logic.ai.demo.secdemo.SecDemoSetupService">
+				<!--
+					The persona matrix. One row per account: which groups it joins, which role the tier
+					rule is therefore expected to give it on the security root, which projects it
+					partners on, and what the persona is here to demonstrate.
+
+					The roles are NOT assigned here - the declarative rules above do that, and that is
+					the whole difference from the previous version of this fixture. They are stated so
+					that the boot log is a readable index of the fixture, and so that the service can
+					*verify* the rules produced them. A mismatch is a warning naming the persona and the
+					role, which is exactly the failure a hand-assigned role used to hide.
+				-->
+				<personas>
+					<persona login="anna"
+						groups="projectPartners"
+						roles="projectPartner"
+						partner-of="Alpha"
+						purpose="tier and scope: write tools globally, and only project Alpha to write them on"
+					/>
+					<persona login="ben"
+						groups="ticketReaders"
+						roles="ticketReader"
+						purpose="reads every ticket, writes none, and is refused a ticket creation at L1 - the loud case"
+					/>
+					<persona login="cara"
+						groups="projectPartners, ticketReaders"
+						roles="projectPartner, ticketReader"
+						partner-of="Beta"
+						purpose="both roles: partner of Beta, reader of every ticket - reads a ticket of Alpha and cannot edit it"
+					/>
+					<persona login="dora"
+						groups="projectPartners"
+						roles="projectPartner"
+						purpose="the failure mode: holds the tier, scopes nothing. Write tools and nothing to write, and reads come back empty rather than denied"
+					/>
+				</personas>
+
+				<!--
+					The example projects. Each one names the partners it grants the scope role to, by
+					login, and the tickets it contains. Anna partners on Alpha, Cara on Beta, and Dora
+					on nothing - which is what makes her the failure mode rather than a fourth partner.
+				-->
+				<projects>
+					<project name="Alpha"
+						partners="anna"
+					>
+						<tickets>
+							<ticket title="Alpha: cut the release branch"
+								body="Tag the build, then update the changelog."
+							/>
+							<ticket title="Alpha: fix the login timeout"
+								body="Sessions expire after 30s instead of 30min."
+							/>
+						</tickets>
+					</project>
+					<project name="Beta"
+						partners="cara"
+					>
+						<tickets>
+							<ticket title="Beta: import the customer list"
+								body="The CSV export of the old system has a BOM."
+							/>
+						</tickets>
+					</project>
+				</projects>
+
+				<component-access>
+					<profile name="*">
+						<!-- The "Albert" tab. -->
+						<view name="tl-chat/chat/tabLayout.layout.xml#TabLayout">
+							<commandGroup name="Read"/>
+						</view>
+						<!-- The chat itself, a security component of its own. -->
+						<view name="tl-chat/chat/agent.layout.xml#agent">
+							<commandGroup name="Read"/>
+						</view>
+						<!-- The three nested tabs leading to the script console. -->
+						<view name="admin/index.layout.xml#adminView">
+							<commandGroup name="Read"/>
+						</view>
+						<view name="admin/studio/index.layout.xml#studioView">
+							<commandGroup name="Read"/>
+						</view>
+						<view name="com.top_logic.model.search/admin/scriptConsole.layout.xml#view">
+							<commandGroup name="Read"/>
+						</view>
+					</profile>
+				</component-access>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+					<!-- Seeds the persona accounts, their group memberships and the example data. -->
+					<module key="com.top_logic.ai.demo.secdemo.SecDemoSetupService$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+	</services>
+</application>

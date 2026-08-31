@@ -7,9 +7,11 @@ package com.top_logic.tl.ai.core.agent;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -21,6 +23,9 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
@@ -38,6 +43,7 @@ import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
+import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
@@ -45,6 +51,8 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.ToolChangeSet;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.tool.api.P;
@@ -55,6 +63,7 @@ import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 
 /**
  * Tests for {@link AgentLoop}.
@@ -1050,6 +1059,27 @@ public class TestAgentLoop extends TestCase {
 
 		private boolean _locked;
 
+		private ToolChangeSet _changes = ToolChangeSet.EMPTY;
+
+		private int _changeReads;
+
+		/** Makes the scope report the given pending changes to the pre-commit guard. */
+		void withChanges(ToolChangeSet changes) {
+			_changes = changes;
+		}
+
+		/** How often the loop asked for the pending changes. */
+		int changeReads() {
+			return _changeReads;
+		}
+
+		/** */
+		@Override
+		public ToolChangeSet changes() {
+			_changeReads++;
+			return _changes;
+		}
+
 		/** */
 		@Override
 		public void acquireLock(String operation, com.top_logic.model.TLObject... targets) {
@@ -1178,9 +1208,16 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * hasToolPermission(String) is checked for tools not found in the registry.
+	 * A tool name the registry cannot resolve is "no such tool", never a permission problem.
+	 *
+	 * <p>
+	 * The name has no tool group by construction, so asking the permission check about it would
+	 * answer every hallucinated or misspelled name with "belongs to no tool group ... denied to
+	 * everyone" and take away the hint the model uses to correct itself. Nothing is lost by not
+	 * asking: a name the registry does not resolve cannot execute either way.
+	 * </p>
 	 */
-	public void testPermissionCheckForUnknownTool() {
+	public void testUnknownToolIsNotReportedAsDenied() {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
 
@@ -1190,25 +1227,38 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("OK")));
 
-		SecurityContext denyAll = new SecurityContext() {
+		SecurityContext denyByName = new SecurityContext() {
 			@Override public boolean hasToolPermission(Tool tool) { return true; }
 			@Override public boolean hasToolPermission(String toolName) { return false; }
 			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
 		};
 
-		List<String> events = new ArrayList<>();
+		List<String> denials = new ArrayList<>();
+		List<String> results = new ArrayList<>();
 		AgentEventListener listener = e -> {
 			if (e instanceof AgentEvent.ToolCallDenied d) {
-				events.add("denied:" + d.toolName());
+				denials.add("denied:" + d.toolName());
 			}
 		};
 
-		ToolContext ctx = new ToolContext(denyAll, ApprovalCallback.AUTO_APPROVE);
+		ToolContext ctx = new ToolContext(denyByName, ApprovalCallback.AUTO_APPROVE);
 		AgentLoop loop = new AgentLoop(config(10), provider, emptyRegistry());
 		AgentResult result = loop.run(conv, ctx, listener);
 
+		for (Message message : conv.messages()) {
+			if (message instanceof ToolResultMessage toolResult
+					&& toolResult.state() instanceof ToolState.Failed failed) {
+				results.add(failed.error());
+			}
+		}
+
 		assertEquals(StopReason.COMPLETE, result.stopReason());
-		assertEquals(List.of("denied:external_tool"), events);
+		assertEquals("An unresolvable name is not a denial.", List.of(), denials);
+		assertEquals(1, results.size());
+		assertTrue("Should say the tool does not exist, got: " + results.get(0),
+			results.get(0).contains("Unknown tool"));
+		assertFalse("Should not be phrased as a permission problem, got: " + results.get(0),
+			results.get(0).contains("Permission denied"));
 	}
 
 	/**
@@ -1316,6 +1366,216 @@ public class TestAgentLoop extends TestCase {
 			@Override public boolean hasToolPermission(Tool tool) { return true; }
 			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
 		};
+	}
+
+	/**
+	 * A context carrying the given model access checks, which the pre-commit guard consults.
+	 */
+	private static SecurityContext enforcedSecurity(ModelSecurity model) {
+		return new SecurityContext() {
+			@Override public boolean hasToolPermission(Tool tool) { return true; }
+			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
+			@Override public ModelSecurity modelSecurity() { return model; }
+		};
+	}
+
+	/**
+	 * A {@link ModelSecurity} that refuses every write, create and delete, and permits every read.
+	 */
+	private static ModelSecurity refusesEveryWrite() {
+		return new ModelSecurity() {
+			@Override public boolean canRead(TLObject obj) { return true; }
+			@Override public boolean canRead(TLObject obj, TLStructuredTypePart attribute) { return true; }
+			@Override public boolean canWrite(TLObject obj) { return false; }
+			@Override public boolean canWrite(TLObject obj, TLStructuredTypePart attribute) { return false; }
+			@Override public boolean canDelete(TLObject obj) { return false; }
+			@Override public boolean canCreate(TLClass type, TLObject context) { return false; }
+			@Override public boolean canCreate(TLObject parent, TLStructuredTypePart attr) { return false; }
+			@Override public boolean canPerform(TLObject obj, BoundCommandGroup operation) { return false; }
+			@Override public <T extends TLObject> List<T> filterReadable(Collection<T> objects) {
+				return List.copyOf(objects);
+			}
+			@Override public Set<TLClass> accessibleTypes(BoundCommandGroup operation) { return Set.of(); }
+		};
+	}
+
+	/** A stand-in for a model object the loop only ever passes on. */
+	private static TLObject someObject(String name) {
+		return (TLObject) java.lang.reflect.Proxy.newProxyInstance(TLObject.class.getClassLoader(),
+			new Class<?>[] { TLObject.class },
+			(proxy, method, args) -> switch (method.getName()) {
+				case "toString" -> name;
+				case "hashCode" -> name.hashCode();
+				case "equals" -> proxy == args[0];
+				default -> null;
+			});
+	}
+
+	/**
+	 * A write the run's principal may not make is caught before the commit, and the whole turn is
+	 * rolled back - not only the forbidden part.
+	 */
+	public void testPreCommitGuardRollsBackTheWholeTurn() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "edit_model", "{}")),
+			List.of(new TextContent("Done")));
+
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(globalTool("edit_model", toolSpec));
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentEventListener listener = e -> {
+			if (e instanceof AgentEvent.TransactionCommitted) {
+				events.add("tx_commit");
+			} else if (e instanceof AgentEvent.TransactionRolledBack r) {
+				events.add("tx_rollback:" + r.reason());
+			}
+		};
+
+		TestableTransactionScope scope = new TestableTransactionScope();
+		scope.withChanges(new ToolChangeSet(List.of(), Map.of(someObject("secret1"), Set.of()), List.of()));
+		ToolContext ctx =
+			new ToolContext(enforcedSecurity(refusesEveryWrite()), ApprovalCallback.AUTO_APPROVE, scope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		loop.run(conv, ctx, listener);
+
+		assertFalse("The turn must not commit.", events.contains("tx_commit"));
+		assertEquals(List.of("tx_rollback:Pre-commit security check failed"), events);
+		assertFalse("The scope must not be active any more.", scope.isActive());
+
+		String notice = frameworkNotice(conv);
+		assertNotNull("The model must be told that its writes are gone.", notice);
+		assertTrue("The notice must name the operation, but was: " + notice, notice.contains("Write"));
+		assertTrue("The notice must say the rollback is all-or-nothing, but was: " + notice,
+			notice.contains("all-or-nothing"));
+		assertFalse("The notice must not quote the object, but was: " + notice, notice.contains("secret1"));
+	}
+
+	/** A turn whose writes the principal may make commits as before. */
+	public void testPreCommitGuardLetsPermittedWritesThrough() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "edit_model", "{}")),
+			List.of(new TextContent("Done")));
+
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(globalTool("edit_model", toolSpec));
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentEventListener listener = e -> {
+			if (e instanceof AgentEvent.TransactionCommitted) {
+				events.add("tx_commit");
+			} else if (e instanceof AgentEvent.TransactionRolledBack) {
+				events.add("tx_rollback");
+			}
+		};
+
+		TestableTransactionScope scope = new TestableTransactionScope();
+		scope.withChanges(new ToolChangeSet(List.of(), Map.of(someObject("note1"), Set.of()), List.of()));
+		ToolContext ctx =
+			new ToolContext(enforcedSecurity(ModelSecurity.UNCHECKED), ApprovalCallback.AUTO_APPROVE, scope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		loop.run(conv, ctx, listener);
+
+		assertEquals(List.of("tx_commit"), events);
+		assertNull("Nothing was rolled back, so nothing has to be corrected.", frameworkNotice(conv));
+	}
+
+	/**
+	 * A read-only turn opens no transaction, so the guard is never consulted and the change set is
+	 * never read.
+	 */
+	public void testReadOnlyTurnNeverAsksTheGuard() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Search"))));
+
+		ToolSchema toolSpec = new ToolSchema("search", "Searches", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "search", "{}")),
+			List.of(new TextContent("Found.")));
+
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(readTool("search", toolSpec));
+		registry.freeze();
+
+		TestableTransactionScope scope = new TestableTransactionScope();
+		scope.withChanges(new ToolChangeSet(List.of(), Map.of(someObject("secret1"), Set.of()), List.of()));
+		ToolContext ctx =
+			new ToolContext(enforcedSecurity(refusesEveryWrite()), ApprovalCallback.AUTO_APPROVE, scope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		loop.run(conv, ctx, listener -> { });
+
+		assertEquals("A read-only turn must not pay for the change set.", 0, scope.changeReads());
+		assertNull(frameworkNotice(conv));
+	}
+
+	/**
+	 * A writing turn whose principal may make every change it made is committed.
+	 *
+	 * <p>
+	 * The guard runs for every run now, so the change set is read - and read once. What decides is the
+	 * run's model access rights, and here they grant everything.
+	 * </p>
+	 */
+	public void testWritingTurnThePrincipalMayMakeIsCommitted() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "edit_model", "{}")),
+			List.of(new TextContent("Done")));
+
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(globalTool("edit_model", toolSpec));
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentEventListener listener = e -> {
+			if (e instanceof AgentEvent.TransactionCommitted) {
+				events.add("tx_commit");
+			}
+		};
+
+		TestableTransactionScope scope = new TestableTransactionScope();
+		scope.withChanges(new ToolChangeSet(List.of(), Map.of(someObject("secret1"), Set.of()), List.of()));
+		// developmentSecurity() carries ModelSecurity.UNCHECKED, which permits every change.
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		loop.run(conv, ctx, listener);
+
+		assertEquals(List.of("tx_commit"), events);
+		assertEquals("The guard reads the change set once per writing turn.", 1, scope.changeReads());
+	}
+
+	/**
+	 * The text of the {@code [Framework notice]} the loop added, or <code>null</code> if it added
+	 * none.
+	 */
+	private static String frameworkNotice(Conversation conv) {
+		for (Message message : conv.messages()) {
+			if (message instanceof UserMessage user) {
+				for (ContentPart part : user.content()) {
+					if (part instanceof TextContent text && text.text().startsWith("[Framework notice]")) {
+						return text.text();
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1477,8 +1737,10 @@ public class TestAgentLoop extends TestCase {
 		TransactionScope failingCommitScope = new TestableTransactionScope() {
 			@Override
 			public void commit() {
-				// Simulate a KB commit failure — leave state intact so rollback() can clean up
-				throw new TransactionException("KB commit failed: constraint violation");
+				// Simulate a KB commit failure — leave state intact so rollback() can clean up.
+				// The message is shaped exactly as the real TransactionScope shapes it, because
+				// the loop is expected to pass it on unchanged rather than prefix it again.
+				throw new TransactionException("Commit failed: constraint violation");
 			}
 		};
 		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE,
@@ -1491,8 +1753,11 @@ public class TestAgentLoop extends TestCase {
 		assertTrue("Transaction should begin", events.contains("tx_begin"));
 		assertFalse("Transaction should NOT report commit on failure",
 			events.contains("tx_commit"));
-		assertTrue("Transaction should rollback with commit-failure reason",
-			events.stream().anyMatch(e -> e.startsWith("tx_rollback:Commit failed:")));
+		String rollback = events.stream().filter(e -> e.startsWith("tx_rollback:")).findFirst()
+			.orElse(null);
+		assertNotNull("Transaction should rollback with the commit-failure reason", rollback);
+		assertEquals("The event carries the bare reason: it already says a rollback happened, and"
+			+ " the chat prefixes it once more.", "tx_rollback:constraint violation", rollback);
 	}
 
 	/**

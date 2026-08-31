@@ -3,3 +3,4 @@ db-h2.xml
 devel-h2.xml
 tl-ai-demo.test.config.xml
 testVectorIndexIntegrationConf.config.xml
+secdemo.config.xml

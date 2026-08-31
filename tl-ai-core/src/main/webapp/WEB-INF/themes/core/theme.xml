@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Contributes the stylesheet of the "Agent-Sicherheit" administration view.
+
+	The Richtlinie tab renders its own control tree rather than a table, so the row structure that makes
+	a capability row readable has to come from a stylesheet - and a library module contributes one the
+	same way tl-chat contributes its own.
+-->
+<theme>
+	<styles>
+		<style name="/style/agentSecurity.css"/>
+	</styles>
+</theme>

@@ -20,11 +20,14 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -35,6 +38,7 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.util.model.ModelService;
 
@@ -131,7 +135,7 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 		LLMProvider childProvider = mockProvider(List.of(new TextContent(childReplyText)));
 		AgentLoop childLoop = new AgentLoop(testParams(), childProvider, emptyRegistry());
 		return new DelegationTool(toolName, "test delegate", targetAgentName, "parent",
-			name -> childLoop);
+			(name, security) -> childLoop);
 	}
 
 	// -----------------------------------------------------------------------
@@ -287,7 +291,7 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 		SubagentJobRegistry registry = new SubagentJobRegistry(3);
 		try (SubagentRegistryBinding.Binding b = SubagentRegistryBinding.bind(registry)) {
 			DelegationTool tool = delegationTool("delegate_to_rec", "rec", "recorded child answer");
-			ToolContext context = ToolContext.createUnrestricted();
+			ToolContext context = unrestrictedContext();
 			context.executionHandle().set(parent);
 
 			tool.execute(Map.of("task", "record me"), context);
@@ -363,4 +367,19 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 				ModelService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE));
 	}
+
+	/**
+	 * A fresh {@link ToolContext} with no security restrictions and a live transaction scope.
+	 *
+	 * <p>
+	 * A local test seam. {@link ToolContext#EMPTY} is a shared singleton, and these tests need their
+	 * own {@code ExecutionHandle} per call.
+	 * </p>
+	 */
+	private static ToolContext unrestrictedContext() {
+		CancellationToken cancellationToken = new CancellationToken();
+		return new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
+			new TransactionScope(cancellationToken), cancellationToken);
+	}
+
 }

@@ -22,8 +22,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * {@link ListGeneratorAdaptor} providing all available tool names as options.
  *
  * <p>
- * Used as {@code <options>} generator on the {@code tools} attribute of
- * {@code tl.ai.core:Agent}.
+ * Provides the options for the {@code tools} attribute of {@code tl.ai.core:Agent}.
  * </p>
  *
  * @see ToolRegistryService#getToolNames()

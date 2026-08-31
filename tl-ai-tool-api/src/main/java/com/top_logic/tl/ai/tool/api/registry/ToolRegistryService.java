@@ -84,6 +84,8 @@ public class ToolRegistryService extends ConfiguredManagedClass<ToolRegistryServ
 
 	private Map<String, Tool> _tools;
 
+	private Map<String, String> _configNames;
+
 	/**
 	 * Creates a new {@link ToolRegistryService} from the given configuration.
 	 */
@@ -97,6 +99,7 @@ public class ToolRegistryService extends ConfiguredManagedClass<ToolRegistryServ
 		super.startUp();
 
 		_tools = new HashMap<>();
+		_configNames = new HashMap<>();
 		for (Map.Entry<String, ToolFactoryConfig> entry : getConfig().getToolFactories().entrySet()) {
 			String factoryName = entry.getKey();
 			try {
@@ -108,14 +111,37 @@ public class ToolRegistryService extends ConfiguredManagedClass<ToolRegistryServ
 				}
 
 				for (Tool tool : factory.createTools()) {
-					String qualifiedName = toProviderName(factoryName + "." + tool.name());
+					String configName = factoryName + "." + tool.name();
+					String qualifiedName = toProviderName(configName);
 					_tools.put(qualifiedName, tool);
+					_configNames.put(qualifiedName, configName);
 				}
 			} catch (Exception ex) {
 				Logger.error("Failed to initialize tool factory '" + factoryName + "': " + ex.getMessage(), ex,
 					ToolRegistryService.class);
 			}
 		}
+	}
+
+	/**
+	 * The dot-notation name a tool was configured under, for a provider-safe registry name.
+	 *
+	 * <p>
+	 * {@link #toProviderName(String)} is not invertible - it replaces every character outside
+	 * {@code [a-zA-Z0-9_-]}, so {@code factory.tool} and {@code factory_tool} can collapse onto the
+	 * same key. The mapping is therefore recorded when the registry is built rather than reconstructed
+	 * afterwards. It matters because {@code factory.tool} is the name an administrator writes in
+	 * configuration and a user types in TL-Script, so it is the name to match against and the name to
+	 * show in a message.
+	 * </p>
+	 *
+	 * @param providerName
+	 *        A name as returned by {@link #getToolNames()}.
+	 * @return The configured {@code {factory}.{tool}} name, or <code>null</code> if the registry has
+	 *         no such tool.
+	 */
+	public String getConfigName(String providerName) {
+		return _configNames.get(providerName);
 	}
 
 	/**

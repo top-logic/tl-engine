@@ -1,0 +1,337 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.ai.demo;
+
+import java.util.List;
+
+import junit.framework.Test;
+
+import com.top_logic.base.administration.MaintenanceWindowManager;
+import com.top_logic.tl.ai.core.agent.ExecutionMode;
+import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
+import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
+import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.message.ToolCall;
+import com.top_logic.tl.ai.core.message.ToolResultMessage;
+import com.top_logic.tl.ai.core.message.ToolState;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
+import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
+
+/**
+ * What the model is <em>told</em> about: the per-turn schema filter, and the message a name the
+ * catalog cannot resolve produces.
+ *
+ * <p>
+ * The filter is user experience rather than enforcement - the gate that stops a call is
+ * {@link SecDemoToolAccessTest} - but it is the reason a well-behaved model does not propose a tool
+ * it cannot use and does not narrate a denial. {@code AgentLoop.callProviderOnce} builds the provider
+ * request as {@code registry.toolSchemas(new ToolPermissionFilter(security))}, which is exactly the
+ * call below, so an absent schema here is an absent schema in the request.
+ * </p>
+ *
+ * <p>
+ * The two questions are deliberately in one class, because they are two halves of the same promise:
+ * the model is shown exactly the tools it may call, and a name outside that set is answered with what
+ * is actually the matter rather than with a permission message. Following the hint can therefore never
+ * walk into a denial, and a typo cannot disclose the name of a capability the user does not hold.
+ * </p>
+ *
+ * <p>
+ * A name the catalog cannot resolve takes one of four answers, and which one it gets is the whole
+ * point: no such tool (pick another name), a tool of an unloaded skill (load it), a tool the
+ * application has but this agent does not carry (ask an administrator), and a tool the application has
+ * that this user may not use (a refusal, naming the capability). Only the last is a permission problem,
+ * and answering one of the others as if it were is what
+ * {@link #testExistingToolNoAgentCarriesIsNotAPermissionProblem()} exists for.
+ * </p>
+ */
+public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
+
+	/**
+	 * A denied tool's schema is absent from the request, and a granted one's is present.
+	 *
+	 * <p>
+	 * Both halves matter: a filter that removed everything would pass the first assertion alone.
+	 * </p>
+	 */
+	public void testDeniedToolSchemaIsAbsentFromTheRequest() {
+		List<String> benSees = schemaNamesFor(BEN);
+
+		assertTrue("A tool the persona may use must be offered: " + benSees,
+			benSees.contains(tool(LIST_TOOL).name()));
+		assertFalse("A denied tool must not be offered to the model: " + benSees,
+			benSees.contains(tool(CLASSIFIED_WRITE_SCRIPT_TOOL).name()));
+	}
+
+	/**
+	 * The filter follows the policy per persona, on the same catalog.
+	 *
+	 * <p>
+	 * The comparison is what makes it a statement about the policy rather than about the catalog: one
+	 * catalog, two personas, and {@code data.write} is the only capability between them.
+	 * </p>
+	 */
+	public void testTheSameCatalogIsFilteredDifferentlyPerPersona() {
+		String writeTool = tool(CLASSIFIED_WRITE_SCRIPT_TOOL).name();
+
+		assertFalse("Ben holds no data.write.", schemaNamesFor(BEN).contains(writeTool));
+		assertTrue("Anna does.", schemaNamesFor(ANNA).contains(writeTool));
+	}
+
+	/**
+	 * The filter's other half, told apart from authorization: a {@code STRUCTURAL} tool this persona
+	 * <em>is</em> authorized for is still withheld, by the execution mode.
+	 *
+	 * <p>
+	 * {@link ToolPermissionFilter} answers two independent questions - may this user use the tool, and
+	 * may <em>anyone</em> use it in the current {@link ExecutionMode}. The second withholds
+	 * {@code STRUCTURAL} tools in {@code PRODUCTION}, which is what the test application reports, so a
+	 * schema missing for a {@code STRUCTURAL} tool proves nothing about the policy on its own.
+	 * </p>
+	 *
+	 * <p>
+	 * This is worth pinning rather than working around, because it is also what a tester sees: the
+	 * model editor and the agent-authoring tools stay out of the request in a deployed application
+	 * whatever the policy says, and the denial reason names the mode rather than a capability - so
+	 * nobody goes looking for a {@code <tool-access>} entry that is already correct.
+	 * </p>
+	 */
+	public void testTheExecutionModeHalfWithholdsStructuralToolsIndependently() {
+		Tool structural = tool(AGENT_AUTHORING_TOOL);
+		Person administrator = anyAdministrator();
+		assertNotNull("The test application must have an administrator.", administrator);
+		SecurityContext security = TopLogicSecurityContext.forRun(administrator, false);
+
+		assertEquals("Precondition: an agent-authoring tool is STRUCTURAL.",
+			ToolMode.STRUCTURAL, structural.mode());
+		assertEquals("Precondition: the test application reports PRODUCTION.",
+			ExecutionMode.PRODUCTION, security.executionMode());
+
+		assertTrue("An administrator is authorized for it - the bypass covers every capability, which is"
+			+ " what makes this a statement about the mode and not about the policy.",
+			security.hasToolPermission(structural));
+		assertFalse("...and the execution-mode half withholds it anyway: "
+			+ schemaNamesFor(security), schemaNamesFor(security).contains(structural.name()));
+
+		String reason = new ToolPermissionFilter(security).denialReason(structural);
+		assertTrue("The reason must name the mode rather than a capability: " + reason,
+			reason.contains("production mode"));
+		assertFalse("Blaming the policy would send an operator to a configuration that is correct: "
+			+ reason, reason.contains("capability"));
+	}
+
+	/**
+	 * Nothing the policy grants nobody reaches any persona's request.
+	 *
+	 * <p>
+	 * All three tools named here are {@code READ}-classified, so the execution-mode half of the filter
+	 * has no say and their absence is attributable to authorization alone - see
+	 * {@link #testTheExecutionModeHalfWithholdsStructuralToolsIndependently()} for why that matters.
+	 * </p>
+	 */
+	public void testUngrantedCapabilitiesReachNoRequest() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			List<String> offered = schemaNamesFor(login);
+
+			assertFalse(login + " must not be offered a workspace tool: " + offered,
+				offered.contains(tool(WORKSPACE_TOOL).name()));
+			assertFalse(login + " must not be offered an egress tool: " + offered,
+				offered.contains(tool(EGRESS_TOOL).name()));
+			assertFalse(login + " must not be offered an unclassified script tool: " + offered,
+				offered.contains(tool(UNCLASSIFIED_SCRIPT_TOOL).name()));
+
+			// A filter that withheld everything would pass the three assertions above vacuously.
+			assertTrue(login + " must be offered the read tools it does hold: " + offered,
+				offered.contains(tool(LIST_TOOL).name()));
+		}
+	}
+
+	/**
+	 * What the implicitly granted {@code interaction} capability buys is offered without any
+	 * configuration saying so.
+	 *
+	 * <p>
+	 * The deployed policy declares an <em>empty</em> {@code <baseline/>}, so nothing in the XML grants
+	 * this. The narrower form of the row - a persona offered <em>nothing but</em> the interaction tool -
+	 * needs a role that holds no capability at all, which this fixture deliberately does not have:
+	 * every persona is a partner or a reader. {@code TestRoleToolAccess} in {@code tl-ai-core} covers
+	 * the empty-role case against a hand-built policy.
+	 * </p>
+	 */
+	public void testTheImplicitBaselineReachesEveryPersona() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			assertTrue("askUser must survive the filter for " + login + ": " + schemaNamesFor(login),
+				schemaNamesFor(login).contains("askUser"));
+		}
+	}
+
+	/**
+	 * A name the catalog cannot resolve is answered with "Unknown tool" and the available list, never
+	 * with a permission message.
+	 *
+	 * <p>
+	 * "No such tool" and "you may not use that" are different answers and a model acts on them
+	 * differently: the first is corrected by picking a name from the list, the second is final. Naming
+	 * a group for a hallucinated name would take away the hint the model corrects itself with, which
+	 * is why {@code AgentLoop} deliberately does not put an unresolvable name through the permission
+	 * check at all.
+	 * </p>
+	 */
+	public void testUnknownToolNameIsNotAPermissionProblem() {
+		String text = resultTextOf("call-1", "listEverythingEverywhere", BEN);
+
+		assertTrue("Expected an unknown-tool message, got: " + text,
+			text.contains("Unknown tool: 'listEverythingEverywhere'"));
+		assertTrue("The message must list what is available instead: " + text,
+			text.contains("Available:"));
+		assertFalse("An unresolvable name must not be reported as a permission problem: " + text,
+			text.contains("Permission denied"));
+		assertFalse("...nor name a capability the user does not hold: " + text,
+			text.contains("capability"));
+	}
+
+	/**
+	 * A tool that exists but that this agent does not carry is not a permission problem either.
+	 *
+	 * <p>
+	 * The observation this pins, from a real session, as a persona that <b>holds</b>
+	 * {@code data.write}: <em>"This agent lacks the {@code agent.authoring} capability, which is
+	 * required to load and use agentic authoring tools."</em> The real cause was that
+	 * {@code secdemo-editing.addTicket} is in no framework agent's {@code <tools>} list and in no
+	 * skill, so it never reached the catalog - a third kind of absence the model had no wording for
+	 * and filled in with the nearest capability it could find.
+	 * </p>
+	 *
+	 * <p>
+	 * {@code Anna} is the sharpest persona for it: it is granted {@code data.write}, so a
+	 * capability sentence here would be provably false.
+	 * </p>
+	 */
+	public void testExistingToolNoAgentCarriesIsNotAPermissionProblem() {
+		assertNotNull("Precondition: the tool exists in this application.",
+			tool(CLASSIFIED_WRITE_SCRIPT_TOOL));
+		assertAllowed(ANNA, CLASSIFIED_WRITE_SCRIPT_TOOL);
+
+		String text = resultTextOf("call-3", CLASSIFIED_WRITE_SCRIPT_TOOL, ANNA);
+
+		assertTrue("The message must say the tool exists: " + text,
+			text.contains("exists in this application"));
+		assertTrue("...and that this agent is what does not carry it: " + text,
+			text.contains("not carried by this agent"));
+		assertTrue("...and who can change that: " + text, text.contains("administrator"));
+		assertFalse("A tool this persona is granted must not be reported as unknown: " + text,
+			text.contains("Unknown tool"));
+		assertFalse("...nor as a permission problem: " + text, text.contains("Permission denied"));
+		assertFalse("...nor blamed on a capability: " + text, text.contains("capability"));
+	}
+
+	/**
+	 * The same tool, asked for by a persona that really is denied it, does name the capability.
+	 *
+	 * <p>
+	 * The counterpart of the case above, and the reason it is safe to say "not a permission problem"
+	 * there: the answer distinguishes the two rather than picking one for everybody. A capability is
+	 * named only where the application has the tool and this user may not use it - never for a name
+	 * that resolves nowhere, so a typo still discloses nothing.
+	 * </p>
+	 */
+	public void testExistingToolThisPersonaMayNotUseIsRefusedByName() {
+		String text = resultTextOf("call-4", CLASSIFIED_WRITE_SCRIPT_TOOL, BEN);
+
+		assertTrue("Ben holds no data.write, so this is a refusal: " + text,
+			text.contains("Permission denied"));
+		assertTrue("...and it must name the capability an operator has to grant: " + text,
+			text.contains(ToolGroups.DATA_WRITE));
+		assertFalse("A tool that exists must not be reported as unknown: " + text,
+			text.contains("Unknown tool"));
+	}
+
+	/**
+	 * The {@code Available:} list of an unknown-tool message holds exactly what the persona may call.
+	 *
+	 * <p>
+	 * Following the hint must not walk into a denial, and the list must not disclose the names of
+	 * capabilities the persona does not have.
+	 * </p>
+	 */
+	public void testUnknownToolMessageListsOnlyPermittedTools() {
+		String text = resultTextOf("call-2", "nope", BEN);
+
+		assertTrue("A tool Ben may call belongs in the list: " + text,
+			text.contains(tool(MODEL_READ_TOOL).name()));
+		assertFalse("A tool he may not call does not - he holds no data.write: " + text,
+			text.contains(tool(CLASSIFIED_WRITE_SCRIPT_TOOL).name()));
+		assertFalse(text, text.contains(tool(STRUCTURE_TOOL).name()));
+		assertFalse("...nor one no <tool-groups> entry classified: " + text,
+			text.contains(tool(UNCLASSIFIED_SCRIPT_TOOL).name()));
+	}
+
+	/**
+	 * The catalog every case in this class filters: one tool per capability the fixture cares about.
+	 *
+	 * <p>
+	 * Built here rather than taken from an agent definition on purpose - what is under test is the
+	 * filter, and a fixed catalog makes "absent" mean "the filter removed it" rather than "the agent
+	 * never carried it".
+	 * </p>
+	 */
+	private ToolCatalog catalog() {
+		ToolCatalog catalog = new ToolCatalog();
+		for (String name : List.of("user-interaction.askUser", MODEL_READ_TOOL, LIST_TOOL,
+			AGENT_META_TOOL, AGENT_AUTHORING_TOOL, STRUCTURE_TOOL, WORKSPACE_TOOL, EGRESS_TOOL,
+			CLASSIFIED_READ_SCRIPT_TOOL, CLASSIFIED_WRITE_SCRIPT_TOOL, UNCLASSIFIED_SCRIPT_TOOL)) {
+			catalog.register(tool(name));
+		}
+		return catalog.freeze();
+	}
+
+	private List<String> schemaNamesFor(String login) {
+		return schemaNamesFor(securityFor(login));
+	}
+
+	private List<String> schemaNamesFor(SecurityContext security) {
+		return catalog().toolSchemas(new ToolPermissionFilter(security)).stream()
+			.map(ToolSchema::name)
+			.toList();
+	}
+
+	/**
+	 * The text a tool call against the fixture catalog produces for the given persona.
+	 *
+	 * <p>
+	 * Runs with no transaction scope, because every case here is a call the catalog refuses before it
+	 * reaches a tool.
+	 * </p>
+	 */
+	private String resultTextOf(String callId, String toolName, String login) {
+		ToolContext context =
+			new ToolContext(securityFor(login), ApprovalCallback.AUTO_APPROVE, TransactionScope.NOOP);
+		ToolResultMessage result =
+			catalog().execute(new ToolCall(callId, toolName, "{}"), context);
+
+		assertTrue("Expected a refused call, got: " + result.state(),
+			result.state() instanceof ToolState.Failed);
+		return ((ToolState.Failed) result.state()).error();
+	}
+
+	/**
+	 * Creates the test suite.
+	 */
+	public static Test suite() {
+		// The filter consults the ExecutionMode for STRUCTURAL tools, which reads the maintenance
+		// window - see testTheExecutionModeHalfWithholdsStructuralToolsIndependently.
+		return suite(SecDemoSchemaFilterTest.class, MaintenanceWindowManager.Module.INSTANCE);
+	}
+
+}

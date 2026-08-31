@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.tools.ToolResults;
 import com.top_logic.tl.ai.core.tools.model.messages.AnnotationDefinitionResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.PropertyDefinition;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -92,7 +93,7 @@ public class AnnotationDefinitionExplorerTool {
 	 *        "com.top_logic.model.annotate.Visibility")
 	 * @return JSON schema description, or error JSON if class not found or invalid
 	 */
-	@ToolMethod(description = "Describe the schema definition of an annotation configuration interface", mode = ToolMode.READ)
+	@ToolMethod(description = "Describe the schema definition of an annotation configuration interface", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
 	public String describeAnnotation(
 			@P("Fully-qualified configuration interface class name") String configInterfaceName) {
 

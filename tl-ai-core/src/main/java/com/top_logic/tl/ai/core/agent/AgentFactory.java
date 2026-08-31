@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +36,7 @@ import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
+import com.top_logic.tl.ai.core.tools.introspection.ListToolsTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -167,12 +169,14 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
 
-		AgentParams coreConfig = buildConfig(agentDef, assignment);
+		AgentCapabilities capabilities = AgentCapabilities.forRun(context.security());
+
+		AgentParams coreConfig = buildConfig(agentDef, assignment, capabilities);
 		LLMProvider provider = buildProvider(coreConfig.model());
 		boolean hasDynamicLoading = !agentDef.skills().isEmpty();
 		ToolRegistry registry = sessionRegistry != null && hasDynamicLoading
 			? sessionRegistry
-			: buildToolCatalog(agentDef);
+			: buildToolCatalog(agentDef, capabilities);
 
 		validateToolCapability(name, coreConfig.model(), registry);
 
@@ -271,12 +275,16 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *
 	 * @param name
 	 *        The agent name as stored in the KB.
+	 * @param security
+	 *        The security context of the run the loop will serve. Its principal decides which skills
+	 *        the agent is offered and which capabilities its prompt reports as missing; the child run
+	 *        carries the parent's context unchanged, so it can never widen the caller's authority.
 	 * @return A ready-to-run agent loop.
 	 * @throws IllegalArgumentException
 	 *         if no agent with the given name exists
 	 */
 	@Override
-	public AgentLoop buildAgentLoop(String name) {
+	public AgentLoop buildAgentLoop(String name, SecurityContext security) {
 		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
 		if (agentDef == null) {
 			throw new IllegalArgumentException("No agent found with name: " + name);
@@ -285,9 +293,10 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
 
-		AgentParams config = buildConfig(agentDef, assignment);
+		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
+		AgentParams config = buildConfig(agentDef, assignment, capabilities);
 		LLMProvider provider = buildProvider(config.model());
-		ToolRegistry registry = buildToolCatalog(agentDef);
+		ToolRegistry registry = buildToolCatalog(agentDef, capabilities);
 
 		int maxToolResultChars = resolveMaxToolResultChars(assignment);
 
@@ -310,19 +319,20 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * </p>
 	 */
 	@Override
-	public AgentLoop buildSubagentLoop(String name) {
+	public AgentLoop buildSubagentLoop(String name, SecurityContext security) {
 		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
 		if (agentDef == null) {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
-		AgentParams config = buildConfig(agentDef, assignment);
+		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
+		AgentParams config = buildConfig(agentDef, assignment, capabilities);
 		LLMProvider provider = buildProvider(config.model());
 		// Full parity with the parent agent's toolset, minus the ability to spawn subagents.
 		ToolRegistry registry = agentDef.skills().isEmpty()
-			? buildStaticToolCatalog(agentDef, false, false)
-			: buildDynamicToolCatalog(agentDef, false, false);
+			? buildStaticToolCatalog(agentDef, false, false, capabilities)
+			: buildDynamicToolCatalog(agentDef, false, false, capabilities);
 		int maxToolResultChars = resolveMaxToolResultChars(assignment);
 		return new AgentLoop(config, provider, registry, maxToolResultChars);
 	}
@@ -340,7 +350,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * Builds the {@link AgentParams} record from an {@link AgentDefinition} and its
 	 * {@link AgentModelAssignment}.
 	 */
-	AgentParams buildConfig(AgentDefinition agent, AgentModelAssignment assignment) {
+	AgentParams buildConfig(AgentDefinition agent, AgentModelAssignment assignment,
+			AgentCapabilities capabilities) {
 		LLMService llmRegistry = LLMService.getInstance();
 		String model = assignment.model();
 
@@ -355,8 +366,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		String providerId = llmRegistry.getProviderId(model);
 
 		String systemPrompt = agent.systemPrompt();
-		systemPrompt = injectSkills(agent, systemPrompt);
-		systemPrompt = injectDelegateDescriptions(agent, systemPrompt);
+		systemPrompt = injectSkills(agent, systemPrompt, capabilities);
+		systemPrompt = injectDelegateDescriptions(agent, systemPrompt, capabilities);
 
 		// maxOutputTokens: assignment override > catalog
 		Integer assignedMaxTokens = assignment.maxTokens();
@@ -519,15 +530,23 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * tools; skill tools are loaded on demand via {@code loadSkill}. Otherwise returns a
 	 * frozen {@link ToolCatalog} with all tools pre-registered.
 	 * </p>
+	 *
+	 * <p>
+	 * Public because it is the one place an agent's reachable tool set exists as an object: what a
+	 * given user's run can call, what {@code loadSkill} will hand over and what each of the messages
+	 * for an absent name says are all answerable from it, and a test that rebuilt an approximation of
+	 * it by hand would be asserting about the approximation.
+	 * </p>
 	 */
-	ToolRegistry buildToolCatalog(AgentDefinition agent) {
+	public ToolRegistry buildToolCatalog(AgentDefinition agent, AgentCapabilities capabilities) {
 		if (!agent.skills().isEmpty()) {
-			return buildDynamicToolCatalog(agent, true, false);
+			return buildDynamicToolCatalog(agent, true, false, capabilities);
 		}
-		return buildStaticToolCatalog(agent, true, false);
+		return buildStaticToolCatalog(agent, true, false, capabilities);
 	}
 
-	private ToolCatalog buildStaticToolCatalog(AgentDefinition agent, boolean includeDelegation, boolean readOnly) {
+	private ToolCatalog buildStaticToolCatalog(AgentDefinition agent, boolean includeDelegation, boolean readOnly,
+			AgentCapabilities capabilities) {
 		ToolCatalog registry =
 			new ToolCatalog();
 
@@ -574,8 +593,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 
 		// Inject skill tool if the agent has skills (but not for read-only subagents to avoid runtime capability escalation)
+		SkillTool skillTool = null;
 		if (!readOnly) {
-			SkillTool skillTool = buildSkillTool(agent);
+			skillTool = buildSkillTool(agent, capabilities);
 			if (skillTool != null) {
 				for (Tool tool : AnnotatedTools.from(skillTool)) {
 					registry.register(tool);
@@ -585,28 +605,17 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		// Inject delegation tools from the agent's delegations list
 		if (includeDelegation) {
-			List<String> delegationNames = agent.delegations();
-			if (!delegationNames.isEmpty()) {
-				String parentName = agent.name();
-				AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-				for (String targetName : delegationNames) {
-					AgentDefinition target = query.findAgentByName(targetName);
-					String targetDesc = target != null ? target.description() : "No description";
-					String toolName = "delegate_to_" + targetName.replace('-', '_');
-					registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this));
-				}
-				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it,
-				// unless the agent already selected it explicitly (subagent.wait_for_subagent).
-				if (registry.getTool(WaitForSubagentTool.NAME) == null) {
-					registry.register(new WaitForSubagentTool());
-				}
-			}
+			registerDelegationTools(registry, agent, capabilities);
 		}
+
+		// Last, so that it sees every tool the agent ended up with - delegation tools included.
+		registry.register(listToolsTool(agent, registry.tools(), skillTool));
 
 		return registry.freeze();
 	}
 
-	private ToolRegistry buildDynamicToolCatalog(AgentDefinition agent, boolean includeDelegation, boolean readOnly) {
+	private ToolRegistry buildDynamicToolCatalog(AgentDefinition agent, boolean includeDelegation, boolean readOnly,
+			AgentCapabilities capabilities) {
 		ToolCatalog baseCatalog = new ToolCatalog();
 
 		// Register only bootstrap tools from the agent's tools list
@@ -653,146 +662,403 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		// Delegation tools go in the base (architectural)
 		if (includeDelegation) {
-			List<String> delegationNames = agent.delegations();
-			if (!delegationNames.isEmpty()) {
-				String parentName = agent.name();
-				AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-				for (String targetName : delegationNames) {
-					AgentDefinition target = query.findAgentByName(targetName);
-					String targetDesc = target != null ? target.description() : "No description";
-					String toolName = "delegate_to_" + targetName.replace('-', '_');
-					baseCatalog.register(
-						new DelegationTool(toolName, targetDesc, targetName, parentName, this));
-				}
-				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it,
-				// unless the agent already selected it explicitly (subagent.wait_for_subagent).
-				if (baseCatalog.getTool(WaitForSubagentTool.NAME) == null) {
-					baseCatalog.register(new WaitForSubagentTool());
-				}
-			}
+			registerDelegationTools(baseCatalog, agent, capabilities);
 		}
 
 		DynamicToolCatalog dynamicCatalog = new DynamicToolCatalog(baseCatalog.freeze());
 
+		// What is callable without loading anything, for the self-inspection tool below. The base plus
+		// loadSkill itself, which is a tool of this agent like any other.
+		List<Tool> ownTools = new ArrayList<>(baseCatalog.tools());
+
 		// Build SkillTool with dynamic catalog and tool resolver
 		Set<String> preloadedSkills = LoadedSkillsBinding.getSkills();
-		SkillTool skillTool = buildDynamicSkillTool(agent, dynamicCatalog, preloadedSkills);
+		SkillTool skillTool = buildDynamicSkillTool(agent, dynamicCatalog, preloadedSkills, capabilities);
 		if (skillTool != null) {
 			ToolCatalog skillToolOverlay = new ToolCatalog();
 			for (Tool tool : AnnotatedTools.from(skillTool)) {
 				skillToolOverlay.register(tool);
+				ownTools.add(tool);
 			}
 			dynamicCatalog.addOverlay(skillToolOverlay.freeze());
+
+			// Not for lookup - so that a call for one of these before its skill is loaded is answered
+			// with "load that skill" rather than with "no such tool".
+			dynamicCatalog.setReachableBySkill(skillTool.declaredToolNames());
 		}
+
+		// Its own overlay rather than the base, because it has to be built after the SkillTool whose
+		// state it reports, and the base is frozen by then.
+		ToolCatalog selfInspection = new ToolCatalog();
+		selfInspection.register(listToolsTool(agent, ownTools, skillTool));
+		dynamicCatalog.addOverlay(selfInspection.freeze());
 
 		return dynamicCatalog;
 	}
 
+	/**
+	 * The agent's {@code listTools} tool: what this agent carries, filtered for whoever calls it.
+	 *
+	 * <p>
+	 * Injected into every agent's catalog rather than declared in {@code <tools>}, for the same reason
+	 * {@code loadSkill} is: it is a property of being an agent, not a capability an application decides
+	 * to hand out. An agent that could be configured without it would answer a question about a named
+	 * tool by guessing - see {@link ListToolsTool} and {@code tl-ai-demo/doc/secdemo/testbed.md} rows C3/C4.
+	 * </p>
+	 *
+	 * @param ownTools
+	 *        The tools already in the agent's catalog, which are exactly the ones callable without a
+	 *        {@code loadSkill}.
+	 * @param skillTool
+	 *        The agent's {@code loadSkill} tool, or <code>null</code> if it has none.
+	 */
+	private static Tool listToolsTool(AgentDefinition agent, List<Tool> ownTools, SkillTool skillTool) {
+		List<SkillDefinition> skills = new ArrayList<>();
+		Function<String, SkillDefinition> lookup = skillLookup();
+		for (String skillName : agent.skills()) {
+			SkillDefinition skill = lookup.apply(skillName);
+			if (skill != null) {
+				skills.add(skill);
+			}
+		}
+		return new ListToolsTool(agent.name(), ownTools, skills, skillTool);
+	}
+
 	private SkillTool buildDynamicSkillTool(AgentDefinition agent, DynamicToolCatalog dynamicCatalog,
-			Set<String> preloadedSkillIds) {
+			Set<String> preloadedSkillIds, AgentCapabilities capabilities) {
 		List<String> skillNames = agent.skills();
 		if (skillNames.isEmpty()) {
 			return null;
 		}
 
-		Map<String, Skill> skillMap = new LinkedHashMap<>();
-		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-		for (String skillName : skillNames) {
-			SkillDefinition sd = query.findSkillByName(skillName);
-			if (sd != null && sd.content() != null) {
-				skillMap.put(sd.name(), new Skill(sd.name(), sd.description(), sd.content(), sd.tools()));
-			} else {
-				Logger.warn("Skill not found: " + skillName, AgentFactory.class);
-			}
-		}
-
+		Map<String, Skill> skillMap = buildSkillMap(skillNames, skillLookup(), capabilities);
 		if (skillMap.isEmpty()) {
 			return null;
 		}
 
 		Function<String, Tool> resolver = name -> ToolRegistryService.getInstance().getTool(name);
-		return new SkillTool(skillMap, dynamicCatalog, resolver, preloadedSkillIds);
+		return new SkillTool(skillMap, dynamicCatalog, resolver, capabilities.permitted(),
+			preloadedSkillIds, absenceReason(agent, capabilities));
+	}
+
+	/**
+	 * Why a skill the agent's {@link SkillTool} cannot hand over is not there.
+	 *
+	 * <p>
+	 * The skill map is already filtered, so a withheld skill and a misspelled id both arrive as "no
+	 * such entry". Handing the reason down keeps the decision in one place - {@link AgentCapabilities}
+	 * - and stops the refusal from being the one message the model has to guess about.
+	 * </p>
+	 */
+	static Function<String, String> absenceReason(AgentDefinition agent,
+			AgentCapabilities capabilities) {
+		List<String> declared = agent.skills();
+		return skillId -> capabilities.skillAbsenceReason(skillId, declared);
 	}
 
 	/**
 	 * Builds a {@link SkillTool} for the agent's skills, or {@code null} if the agent has no
 	 * skills.
 	 */
-	private SkillTool buildSkillTool(AgentDefinition agent) {
+	private SkillTool buildSkillTool(AgentDefinition agent, AgentCapabilities capabilities) {
 		List<String> skillNames = agent.skills();
 		if (skillNames.isEmpty()) {
 			return null;
 		}
 
-		Map<String, Skill> skillMap = new LinkedHashMap<>();
+		Map<String, Skill> skillMap = buildSkillMap(skillNames, skillLookup(), capabilities);
+		return skillMap.isEmpty() ? null
+			: new SkillTool(skillMap, null, null, null, null, absenceReason(agent, capabilities));
+	}
+
+	/** Resolves a skill name against the merged config and knowledge-base definitions. */
+	private static Function<String, SkillDefinition> skillLookup() {
 		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+		return query::findSkillByName;
+	}
+
+	/**
+	 * Resolves the named skills to the {@link Skill}s this run's principal can actually use.
+	 *
+	 * <p>
+	 * Applied to the loadable skill map as well as to the prompt catalog, and for the same reason:
+	 * {@code loadSkill} called on a name recovered from an older transcript has to refuse what the
+	 * catalog no longer offers, or the two disagree.
+	 * </p>
+	 *
+	 * @param skills
+	 *        Resolves a skill name to its definition, or <code>null</code> if there is none.
+	 */
+	static Map<String, Skill> buildSkillMap(List<String> skillNames,
+			Function<String, SkillDefinition> skills, AgentCapabilities capabilities) {
+		Map<String, Skill> skillMap = new LinkedHashMap<>();
 		for (String skillName : skillNames) {
-			SkillDefinition sd = query.findSkillByName(skillName);
+			SkillDefinition sd = skills.apply(skillName);
 			if (sd != null && sd.content() != null) {
+				if (capabilities.unusableReason(sd) != null) {
+					// Logged once per run where the catalog is generated - see skillCatalog.
+					continue;
+				}
 				skillMap.put(sd.name(), new Skill(sd.name(), sd.description(), sd.content(), sd.tools()));
 			} else {
 				Logger.warn("Skill not found: " + skillName, AgentFactory.class);
 			}
 		}
-		return skillMap.isEmpty() ? null : new SkillTool(skillMap);
+		return skillMap;
 	}
 
 	/**
 	 * Reads skill references from the agent and injects a catalog of available skill names and
 	 * descriptions into the system prompt. Full skill content is loaded on demand via
 	 * {@link SkillTool}.
+	 *
+	 * <p>
+	 * Skills that can do nothing for the run's principal are left out, and where the run enforces
+	 * tool access the catalog is followed by the capabilities that principal lacks - see
+	 * {@link AgentCapabilities}. This is the single place every agent's prompt passes through,
+	 * config-defined and knowledge-base-defined alike.
+	 * </p>
 	 */
-	private String injectSkills(AgentDefinition agent, String systemPrompt) {
-		List<String> skillNames = agent.skills();
+	private String injectSkills(AgentDefinition agent, String systemPrompt, AgentCapabilities capabilities) {
 		String base = systemPrompt != null ? systemPrompt : "";
+		String catalog = skillCatalog(agent.name(), agent.skills(), agent.tools(), skillLookup(), capabilities);
+		return replacePlaceholderOrAppend(base, SKILLS_PLACEHOLDER, catalog);
+	}
 
-		if (skillNames.isEmpty()) {
-			// Remove placeholder if present, even when there are no skills.
-			return base.replace(SKILLS_PLACEHOLDER, "");
-		}
-
+	/**
+	 * The generated {@code ### Available Skills} section, followed by the run's capability notice.
+	 *
+	 * <p>
+	 * Either part can be absent. An agent that declares no skills gets no skill section - and still gets
+	 * the notice, because what it cannot do is not a property of its skills: it is the one thing its user
+	 * has to be told, and an agent whose run is unattended learns that here too. An unenforced run gets
+	 * no notice, so an application that has configured no {@code <tool-access>} policy keeps the section
+	 * byte for byte.
+	 * </p>
+	 *
+	 * @param skills
+	 *        Resolves a skill name to its definition, or <code>null</code> if there is none.
+	 */
+	static String skillCatalog(String agentName, List<String> skillNames, List<String> agentToolNames,
+			Function<String, SkillDefinition> skills, AgentCapabilities capabilities) {
 		StringBuilder catalog = new StringBuilder();
-		catalog.append("### Available Skills\n\n");
-		catalog.append("You have specialized skills. ");
-		catalog.append("Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
+		List<SkillDefinition> declared = new ArrayList<>();
 
-		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-		for (String skillName : skillNames) {
-			SkillDefinition sd = query.findSkillByName(skillName);
-			if (sd != null) {
+		if (!skillNames.isEmpty()) {
+			catalog.append("### Available Skills\n\n");
+			catalog.append("You have specialized skills. ");
+			catalog.append(
+				"Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
+
+			for (String skillName : skillNames) {
+				SkillDefinition sd = skills.apply(skillName);
+				if (sd == null) {
+					continue;
+				}
+				declared.add(sd);
+				String unusable = capabilities.unusableReason(sd);
+				if (unusable != null) {
+					// Silent capability loss is the failure mode this filter must not have: an
+					// operator asked why the agent "forgot how to do X" must find the answer here.
+					Logger.info("Agent '" + agentName + "': skill '" + sd.name()
+						+ "' is not offered to the current user - " + unusable, AgentFactory.class);
+					continue;
+				}
 				catalog.append("- `").append(sd.name()).append("`: ");
 				catalog.append(sd.description() != null ? sd.description() : "No description");
 				catalog.append("\n");
 			}
 		}
 
-		return replacePlaceholderOrAppend(base, SKILLS_PLACEHOLDER, catalog.toString());
+		// Every declared skill, not only the offered ones: the capabilities behind a skill that was
+		// dropped entirely are exactly the ones worth naming.
+		String notice = capabilities.notice(agentToolNames, declared);
+		if (catalog.isEmpty()) {
+			// The notice separates itself from the skill list above it with a leading newline. With no
+			// list, that newline would be the section's first character, and land as a blank line after
+			// the rule replacePlaceholderOrAppend writes.
+			return notice.stripLeading();
+		}
+		catalog.append(notice);
+
+		return catalog.toString();
 	}
 
 	/**
 	 * Injects descriptions of available delegate agents into the system prompt.
+	 *
+	 * <p>
+	 * Delegates that can do nothing for the run's principal are left out, and one that can do only
+	 * part of what it declares is offered with the capabilities it cannot use named - see
+	 * {@link #delegateCatalog}.
+	 * </p>
 	 */
-	private String injectDelegateDescriptions(AgentDefinition agent, String systemPrompt) {
-		List<String> delegationNames = agent.delegations();
+	private String injectDelegateDescriptions(AgentDefinition agent, String systemPrompt,
+			AgentCapabilities capabilities) {
 		String base = systemPrompt != null ? systemPrompt : "";
 
-		if (delegationNames.isEmpty()) {
+		if (agent.delegations().isEmpty()) {
 			return base.replace(DELEGATES_PLACEHOLDER, "");
+		}
+
+		return replacePlaceholderOrAppend(base, DELEGATES_PLACEHOLDER,
+			delegateCatalog(agent.name(), delegateOffers(agent, capabilities)));
+	}
+
+	/**
+	 * The generated {@code ### Available Delegates} section, empty if the agent has no delegate the
+	 * run's principal can use.
+	 *
+	 * <p>
+	 * The single place a dropped delegate is logged, as {@link #skillCatalog} is for a dropped skill:
+	 * every surface filters, and logging in each of them would say the same thing three times.
+	 * </p>
+	 *
+	 * @param agentName
+	 *        The delegating agent, for the log line.
+	 * @param offers
+	 *        Its delegates, already judged.
+	 */
+	static String delegateCatalog(String agentName, List<DelegateOffer> offers) {
+		List<DelegateOffer> offered = new ArrayList<>();
+		for (DelegateOffer offer : offers) {
+			if (offer.offered()) {
+				offered.add(offer);
+				continue;
+			}
+			// Silent capability loss is the failure mode this filter must not have: an operator asked
+			// why the agent "stopped handing work to X" must find the answer here.
+			Logger.info("Agent '" + agentName + "': delegate '" + offer.targetName()
+				+ "' is not offered to the current user - " + offer.unusableReason(), AgentFactory.class);
+		}
+		if (offered.isEmpty()) {
+			return "";
 		}
 
 		StringBuilder section = new StringBuilder();
 		section.append("\n\n### Available Delegates\n\n");
 		section.append("You can delegate tasks to these specialized agents:\n\n");
 
-		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-		for (String targetName : delegationNames) {
-			AgentDefinition target = query.findAgentByName(targetName);
-			String targetDesc = target != null ? target.description() : "No description";
-			String toolName = "delegate_to_" + targetName.replace('-', '_');
-			section.append("- **").append(targetName).append("** (`").append(toolName).append("`): ");
-			section.append(targetDesc != null ? targetDesc : "No description").append("\n");
+		boolean anyLimited = false;
+		for (DelegateOffer offer : offered) {
+			section.append("- **").append(offer.targetName()).append("** (`")
+				.append(offer.toolName()).append("`): ");
+			section.append(offer.description() != null ? offer.description() : "No description")
+				.append("\n");
+			if (offer.limited()) {
+				anyLimited = true;
+				section.append("  Limited for this user - it cannot use:");
+				for (String capability : offer.unreachableCapabilities()) {
+					section.append("\n    - ").append(AgentCapabilities.describeCapability(capability));
+				}
+				section.append("\n");
+			}
+		}
+		if (anyLimited) {
+			// A delegate inherits this run's permissions unchanged, so the parent finding out by
+			// sending work that comes back refused is a wasted child run and a wasted turn.
+			section.append("\nA delegate marked limited still works, for whatever the capabilities it"
+				+ " keeps allow. Do not send it work that needs one of the capabilities named under"
+				+ " it: it acts with this user's permissions and would come back refused.\n");
 		}
 
-		return replacePlaceholderOrAppend(base, DELEGATES_PLACEHOLDER, section.toString());
+		return section.toString();
+	}
+
+	/**
+	 * Registers a {@code delegate_to_*} tool for every delegate the run's principal can use.
+	 *
+	 * <p>
+	 * Shared by both catalog paths, because a delegate the prompt does not offer and a
+	 * {@code delegate_to_*} tool the model can still call would contradict each other: filtering only
+	 * the prompt text would be cosmetic.
+	 * </p>
+	 */
+	void registerDelegationTools(ToolCatalog catalog, AgentDefinition agent,
+			AgentCapabilities capabilities) {
+		boolean anyOffered = false;
+		for (DelegateOffer offer : delegateOffers(agent, capabilities)) {
+			if (!offer.offered()) {
+				// Logged once per run where the catalog is generated - see delegateCatalog.
+				continue;
+			}
+			catalog.register(new DelegationTool(offer.toolName(), offer.description(),
+				offer.targetName(), agent.name(), this));
+			anyOffered = true;
+		}
+		if (anyOffered && catalog.getTool(WaitForSubagentTool.NAME) == null) {
+			// delegate_to_* runs asynchronously, so the await tool is wired in alongside it, unless
+			// the agent already selected it explicitly (subagent.wait_for_subagent). With nothing to
+			// delegate to there is nothing to await either.
+			catalog.register(new WaitForSubagentTool());
+		}
+	}
+
+	/**
+	 * The delegates the given agent declares, each judged for the run's principal.
+	 *
+	 * <p>
+	 * Computed once per surface rather than per surface differently: the prompt catalog and the
+	 * {@code delegate_to_*} registration both read this list, so they cannot drift apart.
+	 * </p>
+	 */
+	static List<DelegateOffer> delegateOffers(AgentDefinition agent, AgentCapabilities capabilities) {
+		List<DelegateOffer> offers = new ArrayList<>();
+		for (String targetName : agent.delegations()) {
+			AgentDefinition target = capabilities.graph().agent(targetName);
+			offers.add(new DelegateOffer(targetName, delegationToolName(targetName),
+				target != null ? target.description() : null,
+				capabilities.unusableReason(target),
+				capabilities.unreachableCapabilities(target)));
+		}
+		return offers;
+	}
+
+	/**
+	 * The delegates of the given agent that are offered to the run's principal, in declaration order.
+	 */
+	public static List<String> offeredDelegates(AgentDefinition agent, AgentCapabilities capabilities) {
+		List<String> offered = new ArrayList<>();
+		for (DelegateOffer offer : delegateOffers(agent, capabilities)) {
+			if (offer.offered()) {
+				offered.add(offer.targetName());
+			}
+		}
+		return offered;
+	}
+
+	/** The name of the tool that delegates to the agent of the given name. */
+	public static String delegationToolName(String targetAgentName) {
+		return "delegate_to_" + targetAgentName.replace('-', '_');
+	}
+
+	/**
+	 * One delegation edge of an agent, judged for the principal of one run.
+	 *
+	 * @param targetName
+	 *        The delegate's agent name.
+	 * @param toolName
+	 *        The name of the {@code delegate_to_*} tool that reaches it.
+	 * @param description
+	 *        The delegate's own description, or <code>null</code> if it declares none - or if no agent
+	 *        of that name exists.
+	 * @param unusableReason
+	 *        Why the delegate can do nothing for the principal, or <code>null</code> if it can do
+	 *        something.
+	 * @param unreachableCapabilities
+	 *        The capabilities some of the delegate's tools need and the principal does not hold.
+	 */
+	record DelegateOffer(String targetName, String toolName, String description,
+			String unusableReason, Set<String> unreachableCapabilities) {
+
+		/** Whether the delegate is offered to the run at all. */
+		boolean offered() {
+			return unusableReason == null;
+		}
+
+		/** Whether the delegate is offered but cannot do everything it declares. */
+		boolean limited() {
+			return offered() && !unreachableCapabilities.isEmpty();
+		}
 	}
 }

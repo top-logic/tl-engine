@@ -42,6 +42,7 @@ import com.top_logic.tl.ai.core.tools.model.messages.TypeListResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.TypePartInfo;
 import com.top_logic.tl.ai.core.tools.model.messages.TypePartListResponse;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
@@ -106,7 +107,7 @@ public class ModelBrowserTool {
 	@ToolMethod(description = "List modules in the TopLogic application model. By default, only application-specific "
 		+ "modules are returned. Framework/platform modules (tl.*, tl5.*) are excluded unless "
 		+ "includeFramework is set to true. Use includeFramework=true only when you need to "
-		+ "discover framework base types for extending or referencing.", mode = ToolMode.READ)
+		+ "discover framework base types for extending or referencing.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
 	public String listModules(
 			@P("Set to true to include framework/platform modules (tl.*, tl5.*). "
 				+ "Default: false (application modules only).")
@@ -178,7 +179,7 @@ public class ModelBrowserTool {
 	 *        The name of the module to list types from.
 	 * @return JSON array of types, or error JSON if module not found.
 	 */
-	@ToolMethod(description = "List all types (classes, enumerations, datatypes) in a specific module with inheritance information", mode = ToolMode.READ)
+	@ToolMethod(description = "List all types (classes, enumerations, datatypes) in a specific module with inheritance information", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
 	public String listTypes(@P("The name of the module to list types from") String moduleName) {
 		Map<String, Object> args = new HashMap<>();
 		args.put("moduleName", moduleName);
@@ -284,7 +285,7 @@ public class ModelBrowserTool {
 	 * @return JSON array of parts, or error JSON if module/type not found or type is not
 	 *         structured.
 	 */
-	@ToolMethod(description = "List all parts (properties and references) of a specific type with multiplicity and constraints. Set {@code includeInherited=true} to include inherited parts from supertypes.", mode = ToolMode.READ)
+	@ToolMethod(description = "List all parts (properties and references) of a specific type with multiplicity and constraints. Set {@code includeInherited=true} to include inherited parts from supertypes.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
 	public String listTypeParts(
 			@P("The module containing the type") String moduleName,
 			@P("The name of the type") String typeName,
@@ -404,7 +405,7 @@ public class ModelBrowserTool {
 	 *        The name of the enumeration type
 	 * @return JSON string containing enumeration metadata and classifier list with annotations
 	 */
-	@ToolMethod(description = "List all classifiers in a TopLogic enumeration with annotations", mode = ToolMode.READ)
+	@ToolMethod(description = "List all classifiers in a TopLogic enumeration with annotations", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
 	public String listClassifiers(
 			@P("The name of the module containing the enumeration") String moduleName,
 			@P("The name of the enumeration type") String enumName) {
@@ -519,7 +520,7 @@ public class ModelBrowserTool {
 		+ "type its parts with target types, multiplicity, inheritance, and derived/composite/mandatory "
 		+ "markers. Use this FIRST for any question about model structure — it replaces enumerating with "
 		+ "listModules + listTypes + listTypeParts. Framework modules and runtime instance data are "
-		+ "excluded; for annotations, instances, or usages use the dedicated tools.", mode = ToolMode.READ)
+		+ "excluded; for annotations, instances, or usages use the dedicated tools.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
 	public String outlineModel(
 			@P("Set to true to include framework/platform modules (tl.*, tl5.*). Default: false.")
 			Boolean includeFramework) {

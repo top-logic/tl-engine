@@ -25,11 +25,12 @@ import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolFactoryListRe
 import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolListResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolParamInfo;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolSummary;
-import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
+import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
 import com.top_logic.tl.ai.core.tools.registry.ToolDescriptions;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
@@ -92,7 +93,7 @@ public class ScriptToolAuthoringTool {
 	 */
 	@ToolMethod(description = "Create a TL-Script tool (a tool whose body is a TL-Script expression). "
 		+ "Persists to the named factory (default 'custom') and restarts the tool registry; "
-		+ "the tool is immediately usable as {factory}.{name}.")
+		+ "the tool is immediately usable as {factory}.{name}.", group = ToolGroups.AGENT_AUTHORING)
 	public String createScriptTool(
 			@P("Unique tool name; letters, digits, _ and -") String name,
 			@P(value = "Human-readable label", required = false) String label,
@@ -126,7 +127,7 @@ public class ScriptToolAuthoringTool {
 	 * @return JSON-serialized {@link OperationResult}.
 	 */
 	@ToolMethod(description = "Update an existing TL-Script tool. "
-		+ "Omitted fields are left unchanged. Changes take effect immediately.")
+		+ "Omitted fields are left unchanged. Changes take effect immediately.", group = ToolGroups.AGENT_AUTHORING)
 	public String updateScriptTool(
 			@P("Name of the tool to update") String name,
 			@P(value = "New label (omit to leave unchanged)", required = false) String label,
@@ -156,7 +157,7 @@ public class ScriptToolAuthoringTool {
 	 *
 	 * @return JSON-serialized {@link OperationResult}.
 	 */
-	@ToolMethod(description = "Delete a TL-Script tool. Takes effect immediately.")
+	@ToolMethod(description = "Delete a TL-Script tool. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING)
 	public String deleteScriptTool(
 			@P("Name of the tool to delete") String name,
 			@P(value = "Factory name (default 'custom')", required = false) String factory) {
@@ -179,7 +180,7 @@ public class ScriptToolAuthoringTool {
 	 * @return JSON-serialized {@link ScriptToolDetail}; {@code exists} is {@code false} if absent.
 	 */
 	@ToolMethod(description = "Get the full definition of a TL-Script tool",
-		mode = ToolMode.READ)
+		mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String getScriptTool(
 			@P("Tool name") String name,
 			@P(value = "Factory name (default 'custom')", required = false) String factory) {
@@ -225,7 +226,7 @@ public class ScriptToolAuthoringTool {
 	@ToolMethod(description = "List all TL-Script tools in a factory. Tools are referenced as "
 		+ "{factory}__{name} (double underscore); parse the factory prefix from any known tool name "
 		+ "to call this correctly. If the factory is unknown, call listScriptToolFactories first.",
-		mode = ToolMode.READ)
+		mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String listScriptTools(
 			@P(value = "Factory name (default 'custom')", required = false) String factory) {
 		String factoryName = resolveFactory(factory);
@@ -253,7 +254,7 @@ public class ScriptToolAuthoringTool {
 	@ToolMethod(
 		description = "Returns all distinct factory names that have registered TL-Script tools. "
 			+ "Call this before listScriptTools when the factory name is unknown.",
-		mode = ToolMode.READ)
+		mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String listScriptToolFactories() {
 		try {
 			ScriptToolFactoryListResult result = ScriptToolFactoryListResult.create();

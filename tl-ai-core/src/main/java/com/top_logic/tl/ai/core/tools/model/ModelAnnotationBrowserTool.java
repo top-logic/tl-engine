@@ -33,6 +33,7 @@ import com.top_logic.tl.ai.core.tools.config.ConfigSchemaTool;
 import com.top_logic.tl.ai.core.tools.model.messages.AnnotationListResponse;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.model.ModelService;
@@ -142,7 +143,7 @@ public class ModelAnnotationBrowserTool {
 	 *        {@code false}.
 	 * @return JSON string containing annotation information, or error JSON if the operation fails.
 	 */
-	@ToolMethod(description = "Get all annotations currently set on a model element (module, type, enumeration, part, classifier) with optional inheritance", mode = ToolMode.READ)
+	@ToolMethod(description = "Get all annotations currently set on a model element (module, type, enumeration, part, classifier) with optional inheritance", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
 	public String getCurrentAnnotations(
 			@P("Target reference in format 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Include inherited annotations from supertypes/definitions (default: false)") Boolean includeInherited) {

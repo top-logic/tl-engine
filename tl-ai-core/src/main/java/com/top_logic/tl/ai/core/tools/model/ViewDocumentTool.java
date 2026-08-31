@@ -22,10 +22,12 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.tools.perception.BinaryPerception;
 import com.top_logic.tl.ai.core.tools.perception.ModelPerception;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
@@ -43,12 +45,14 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  * </p>
  *
  * <p>
- * Read access is checked through the security context, whose read check is still a framework-wide
- * placeholder that returns {@code true} for everyone.
+ * Read access is checked through the run's {@link SecurityContext#modelSecurity() model security},
+ * which consults the engine's model access rights for the run's principal. The check is where the TID
+ * is resolved: {@link TidResolver} refuses an object the principal may not read, so this tool never
+ * holds one.
  * </p>
  *
  * @see BinaryPerception
- * @see SecurityContext#hasReadAccess(Object)
+ * @see SecurityContext#modelSecurity()
  */
 public class ViewDocumentTool {
 
@@ -83,10 +87,9 @@ public class ViewDocumentTool {
 	 *
 	 * <p>
 	 * The stored payload is an adversarial input, not merely a large one: which object is read is
-	 * decided by a model-supplied TID, and {@link SecurityContext#hasReadAccess(Object)} is still a
-	 * framework-wide placeholder returning {@code true}. Its size is therefore bounded before anything
-	 * is buffered ({@link BinaryPerception#MAX_SOURCE_BYTES}), and its content - stored text included -
-	 * is treated as untrusted by {@link BinaryPerception}.
+	 * decided by a model-supplied TID. Its size is therefore bounded before anything is buffered
+	 * ({@link BinaryPerception#MAX_SOURCE_BYTES}), and its content - stored text included - is treated
+	 * as untrusted by {@link BinaryPerception}.
 	 * </p>
 	 *
 	 * @param tid
@@ -105,28 +108,29 @@ public class ViewDocumentTool {
 			+ "result, text documents are returned inline. Use it to see a saved screenshot, a "
 			+ "stored image or an attached document. Pass the object's TID; pass 'attribute' only "
 			+ "when the object stores more than one binary and the tool asks for it.",
-		mode = ToolMode.READ)
+		mode = ToolMode.READ,
+		group = ToolGroups.DATA_READ)
 	public ToolResult viewDocument(
 			@P("The TopLogic identifier (TID) of the object holding the content, "
 				+ "format 'TypeName:id'.") String tid,
 			@P(value = "Name of the binary attribute to read; only needed when the object has "
 				+ "several.", required = false) String attribute,
 			ToolExecutionContext context) {
+		// Resolved outside the try on purpose: a call that cannot name its principal is a programming
+		// error and must not be reported to the model as a failed lookup.
+		ModelSecurity security = readAccess(context).modelSecurity();
+
 		TLObject object;
 		try {
-			object = TidResolver.resolve(tid);
+			// Single access-control seam for this tool: resolving a TID is a read check against the
+			// run's principal, and an object this run may not read is refused here as a missing one.
+			object = TidResolver.resolve(tid, security);
 		} catch (IllegalArgumentException ex) {
 			return ToolResult.of("Error: " + ex.getMessage() + ".");
 		} catch (RuntimeException ex) {
 			Logger.error("viewDocument() could not resolve TID '" + tid + "': " + ex.getMessage(), ex,
 				ViewDocumentTool.class);
 			return ToolResult.of("Error: cannot resolve TID '" + tid + "': " + ex.getMessage());
-		}
-
-		// Single access-control seam for this tool. Today SecurityContext.hasReadAccess is a
-		// framework-wide placeholder returning true; when it becomes real, this call enforces it.
-		if (!readAccess(context).hasReadAccess(object)) {
-			return ToolResult.of("Error: you do not have read access to " + tid + ".");
 		}
 
 		List<TLStructuredTypePart> binaries = binaryAttributes(object);
@@ -184,14 +188,19 @@ public class ViewDocumentTool {
 	}
 
 	/**
-	 * The security context used for the read check, falling back to
-	 * {@link SecurityContext#UNRESTRICTED} when the tool runs outside an agent loop (scripting,
-	 * tests).
+	 * The security context used for the read check.
+	 *
+	 * <p>
+	 * Every caller passes the {@link ToolContext} of a run, which names the acting principal. There is
+	 * no permissive fallback: a read check that cannot name whom it is for would grant everything.
+	 * </p>
 	 */
 	private static SecurityContext readAccess(ToolExecutionContext context) {
-		return context instanceof ToolContext toolContext
-			? toolContext.security()
-			: SecurityContext.UNRESTRICTED;
+		if (context instanceof ToolContext toolContext) {
+			return toolContext.security();
+		}
+		throw new IllegalStateException("Reading a document is checked against the run's principal, and"
+			+ " this call has no run to ask. Execute the tool with the ToolContext of an agent run.");
 	}
 
 	/**

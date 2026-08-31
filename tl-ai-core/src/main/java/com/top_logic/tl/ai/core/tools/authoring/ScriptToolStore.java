@@ -16,7 +16,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.html.i18n.HtmlResKey;
-import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.model.search.configured.ScriptParameter;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;

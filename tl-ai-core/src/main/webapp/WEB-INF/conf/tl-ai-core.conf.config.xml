@@ -41,8 +41,40 @@
 					<module key="com.top_logic.tl.ai.core.tools.web.BrowserToolsService$Module" value="true"/>
 					<!-- Cookie Pool Service: encrypted, persistent login state for browserSaveCookies / browserUseCookies -->
 					<module key="com.top_logic.tl.ai.core.cookiepool.CookiePoolService$Module" value="true"/>
+					<!--
+						Role-based tool access, applied to every agent run. Active by default and not
+						switchable: a policy present while the module was off would be silently
+						ignored, which is the failure mode this layer must never have.
+
+						With no <tool-access> configured, every user holds the read-only default
+						baseline below and nothing more.
+
+						See doc/security/tool-access-configuration.md.
+					-->
+					<module key="com.top_logic.tl.ai.core.security.AiToolAccessService$Module" value="true"/>
 				</modules>
 			</instance>
+		</config>
+
+		<!--
+			The role-to-tool policy. Empty as shipped, which is not the same as unenforced: the policy is
+			evaluated for every run, and an empty one grants each user only the implicit "interaction" and
+			"introspection" capabilities plus the read-only default baseline - model.read and data.read -
+			so that an application which has configured nothing still has a working, read-only agent
+			(#293).
+
+			The default baseline lives in Java (RoleToolAccess.DEFAULT_BASELINE), deliberately not as a
+			<baseline> element here: a keyless configuration list composes additively across
+			configuration files, so a shipped element would be unioned with an application's own rather
+			than replaced by it. Resolving it in Java keeps "an application that writes <baseline>
+			replaces the default" exactly true, and lets <baseline/> mean "grant nothing to everyone".
+
+			An application authors its own policy with a <tool-access> block; see
+			doc/security/tool-access-configuration.md for a minimal working example and
+			doc/security/agent-security-architecture.md section 4.1 for the full specification.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService"/>
 		</config>
 
 		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
@@ -164,7 +196,7 @@
 			<instance class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
 				<skills>
 					<skill name="TL_agenticAuthoring"
-						description="Load when creating, editing, or discussing agents, skills, or TL-Script tools. Covers the philosophy of skills vs agents, tool assignment, authoring TL-Script-backed tools, prompt writing best practices, and post-creation wiring."
+						description="Load when creating or editing agents, skills, or TL-Script tools - NOT for executing a script and NOT for editing the data model. Covers skills versus agents, tool assignment, authoring TL-Script-backed tools, prompt writing, and post-creation wiring. To run TL-Script or create an instance, load TL_tlScriptWriting; to change modules, types or attributes, load TL_topLogicModeling. If one of those is not available to you, relay the reason loadSkill gives and stop - it names the capability, and there is no other route to it."
 					>
 						<content><![CDATA[<philosophy>
 Agents start lean — minimal tools, minimal context. Skills are the delivery mechanism for capabilities: when an agent loads a skill, it gets the instructions AND the tools together, on demand. This keeps the agent's context window clean and focused.
@@ -341,7 +373,7 @@ Editing an existing tool:
 					</tools>
 					</skill>
 					<skill name="TL_promptModelEditor"
-						description="How to delegate to TL_ModelEditor — send domain intent and business requirements, never modeling instructions. Load when delegating model creation or modification tasks."
+						description="Load when you will delegate the creation or modification of the data model to the TL_ModelEditor agent: send domain intent and business requirements, never modeling instructions."
 					>
 						<content><![CDATA[# How to Delegate to TL_ModelEditor
 
@@ -417,7 +449,7 @@ Pass ALL gathered context to the TL_ModelEditor. It uses this to avoid duplicate
 ]]></content>
 					</skill>
 					<skill name="TL_promptModelExplorer"
-						description="How to delegate to TL_ModelExplorer for raw model context only—especially extracting TLScript from annotations verbatim—then chain analysis to the appropriate agent."
+						description="Load when you will delegate to the TL_ModelExplorer agent: it explains how to ask for raw model context only - especially extracting TL-Script from annotations verbatim - and how to chain the analysis to the right agent afterwards. To explore the model yourself instead, load TL_modelExploration - and if it is not available to you, relay the reason loadSkill gives and stop, rather than looking for another route."
 					>
 						<content><![CDATA[# How to Write Effective Delegation Work Orders (ModelExplorer Caller)
 
@@ -740,7 +772,7 @@ addAnnotation("module:Type#attr",
 					</tools>
 					</skill>
 					<skill name="TL_topLogicModeling"
-						description="TopLogic modeling expertise — modeling philosophy, reasoning process, framework discovery protocol, and modeling patterns. Load before planning any model creation involving new types."
+						description="Load before planning any change to the data model that introduces new types - modules, classes, enumerations. Covers modeling philosophy, the reasoning process, the framework discovery protocol, and modeling patterns."
 					>
 						<content><![CDATA[# TopLogic Modeling Expertise
 
@@ -943,7 +975,7 @@ Annotations: `model-annotation-editor.addAnnotation` / `removeAnnotation`, `conf
 					</tools>
 					</skill>
 					<skill name="TL_tlScriptWriting"
-						description="TLScript syntax, idioms, validation workflow, and function discovery. Load before writing, explaining, or validating TLScript."
+						description="Load when you need to write, validate, or execute TL-Script - including creating or modifying instances. This is the skill that carries executeTLScript and validateTLScript. Covers syntax, idioms, the validation workflow, and function discovery."
 					>
 						<content><![CDATA[<core_rules>
 TOOL-FIRST — Before writing ANY TLScript or explaining ANY function, verify the function exists and check its signature using documentation tools. An answer that uses unverified functions is INVALID.
@@ -972,11 +1004,17 @@ Control flow: expression-only: `cond ? a : b`, `switch { ... }`.
 5. Fix — If execution fails, read the error, fix the script, and execute again. Do NOT present unverified TLScript to the user.
 </workflow>
 
+<security>
+A script runs with YOUR USER'S rights, and the result is filtered for them - but only the model OBJECTS in it are. A value the script has already reduced to plain data is returned in full: a count (`all(\`m:T\`).size()`), and a LABEL produced by `toString($obj)` or `"" + $obj` (the label is resolved through the engine's MetaLabelProvider, which is deliberately not access-checked; object labels are non-secret by design).
+So: wrap fetched objects in `filterSecurity(...)` INSIDE the script - `filterSecurity(all(\`m:T\`))` - before you count them, coerce them to text, or present them. It applies the current user's read permissions to a value and drops what they may not read.
+NEVER rely on a label being filtered, and never present a label out of a script as proof the user may see that object.
+</security>
+
 <tools_ref>
 `script-doc.listTLScriptFunctions` — discover available functions.
 `script-doc.getTLScriptFunctionDocumentation` — verify a function's exact name, signature, and semantics before using it.
 `script-exec.validateTLScript` — validate a script without running it (read-only "check this" requests).
-`script-exec.executeTLScript` — run a script; it validates internally first, so for execution do NOT call `validateTLScript` separately. The `commit` argument controls whether changes persist.
+`script-exec.executeTLScript` — run a script; it validates internally first, so for execution do NOT call `validateTLScript` separately. The `withCommit` argument controls whether changes persist.
 `model-browser.listTypes` / `model-browser.listTypeParts` / `model-browser.listClassifiers` — verify a model literal (`` `module:type#part` ``) before using it.
 </tools_ref>
 
@@ -1006,7 +1044,7 @@ Choosing `.` vs `..`:
 					</tools>
 					</skill>
 					<skill name="TL_modelExploration"
-						description="How to effectively explore the TopLogic application model: exploration strategy, annotation discovery, framework type assessment, output formatting."
+						description="Load when you need to inspect the application model or read instances yourself - it carries the model browser, model search and instance tools. Covers exploration strategy, annotation discovery, framework type assessment, and output formatting."
 					>
 						<content><![CDATA[<core_rules>
 Call at least one exploration tool before stating any fact about the model. Training data is not valid evidence. Only tool calls made in this session count as evidence.
@@ -1075,7 +1113,7 @@ Available tools:
 					</tools>
 					</skill>
 					<skill name="TL_tlScriptInstanceCreation"
-						description="Load when creating instances, test data, or sample entries via TLScript. Covers new(...) patterns, composition placement, mandatory values, I18N/HTML value types, enum references, and filtering by business key."
+						description="Load when creating instances, test data, or sample entries - it carries executeTLScript and covers new(...) patterns, composition placement, mandatory values, I18N/HTML value types, enum references, and filtering by business key."
 					>
 						<content><![CDATA[# TLScript Instance Creation
 
@@ -1200,6 +1238,9 @@ Lambda helper for repeated creations of the same type:
 - Missing mandatory attribute — execution rejected; round-trip wasted.
 </failure_modes>
 ]]></content>
+					<tools>
+						<tool name="script-exec.executeTLScript"/>
+					</tools>
 					</skill>
 					<skill name="TL_DesignHtmlPage"
 						description="Design and persist one self-contained HTML page for the user's request, then reply with a markdown link to the served URL. Use whenever the user asks for a report, dashboard, slideshow, infographic, essay, or any other visual artefact."
@@ -1371,7 +1412,7 @@ saved image or PDF - a screenshot you just took, say - call `view-document.viewD
 						</tools>
 					</skill>
 					<skill name="TL_spawnSubagents"
-						description="Load when delegating work to other agents — to run one or more predefined agents asynchronously and collect their results. Especially for fanning out independent sub-tasks in parallel."
+						description="Load when delegating work to other agents - to run one or more predefined agents asynchronously and collect their results. Especially for fanning out independent sub-tasks in parallel."
 					>
 						<content><![CDATA[# Spawning Subagents
 
@@ -1437,7 +1478,11 @@ You are an autonomous agent. Keep working until the user's request is fully reso
 <tool_loading>
 You start with minimal tools. Full capabilities live in skills — load them on demand.
 - Check the Available Skills list below first — each entry names the skill and what it does. Match the request against those descriptions and call loadSkill for the one that fits.
-- When the user names a specific tool — especially one shaped like `{factory}__{name}` or `{factory}.{name}` — do not assume it is absent. Load `TL_agenticAuthoring` and confirm with `listScriptToolFactories` / `listScriptTools` / `getScriptTool`, deriving the factory from the prefix (e.g. `pizzashop__findX` → factory `pizzashop`), before telling the user it does not exist.
+- When the user names a specific tool - especially one shaped like `{factory}__{name}` or `{factory}.{name}` - do not assume it is absent, and do not assume it is present. Call `listTools` FIRST. It lists your own tools, every skill you carry and the tools of each, and says per entry whether the current user may use it and, if not, why. Then answer from what it said:
+  - in your catalog and usable -> use it, loading its skill first if `listTools` says the tool comes from one.
+  - in your catalog but withheld from this user -> relay the reason `listTools` gave, which names the capability an administrator would have to grant. That is final; do not retry and do not route around it.
+  - not in your catalog at all -> say plainly that this tool is not in this agent's toolset and that an administrator would have to add it. This is NOT a permission problem: `listTools` did not report one, so do not name a capability, do not mention this user's roles, and do not present any skill's refusal as the reason.
+- "Can you use tool X?" and "does this application have a tool called X?" are DIFFERENT questions. `listTools` answers the first, completely. Answer the second only if the user explicitly asks it, and keep the two apart in your reply. The second needs the application-wide registry check in `TL_agenticAuthoring` (`listScriptToolFactories` / `listScriptTools` / `getScriptTool`, deriving the factory from the prefix, e.g. `pizzashop__findX` -> factory `pizzashop`). If that skill is not available to you, say that you cannot check the application-wide registry and give the reason loadSkill gave for the skill - as the reason THAT CHECK is unavailable, never as the reason the tool the user named is unreachable.
 - Once loaded, a skill's tools are immediately available. Never load the same skill twice.
 - NEVER call a tool you don't have yet — load its skill first.
 - NEVER fabricate tool names or results.
@@ -1457,7 +1502,7 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 </workflow>
 
 <core_rules>
-- Call `model-browser.outlineModel` when — and only when — the answer genuinely requires the application's data model: its types, properties, or modules. Questions about the available tools, the TL-Script tool registry, or authoring tools are answered from the tool and skill catalog (e.g. `listScriptToolFactories` / `listScriptTools`), never from `outlineModel`. Do not call it by default or as orientation.
+- Call `model-browser.outlineModel` when — and only when — the answer genuinely requires the application's data model: its types, properties, or modules. Questions about what you yourself can do are answered by `listTools`; questions about the TL-Script tool registry or the authoring tools of the whole application by `listScriptToolFactories` / `listScriptTools`. Never by `outlineModel`. Do not call it by default or as orientation.
 - If a tool returns a result, USE it — never repeat the same call with identical arguments
 - Never ask the user for model information you can look up yourself
 - Never silently drop failed operations or planned elements

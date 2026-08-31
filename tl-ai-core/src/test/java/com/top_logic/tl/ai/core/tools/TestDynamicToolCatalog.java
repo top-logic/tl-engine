@@ -7,9 +7,13 @@ package com.top_logic.tl.ai.core.tools;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.message.ToolCall;
+import com.top_logic.tl.ai.core.message.ToolResultMessage;
+import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -84,7 +88,48 @@ public class TestDynamicToolCatalog extends TestCase {
 		assertEquals(3, schemas.size());
 	}
 
+	/**
+	 * A tool of a skill that is not loaded yet is answered with "load that skill", not "no such tool".
+	 *
+	 * <p>
+	 * The two absences look identical from the catalog - {@link DynamicToolCatalog#getTool(String)}
+	 * returns <code>null</code> for both - and they take opposite actions from the model: one is
+	 * corrected by picking another name, the other by loading a skill.
+	 * </p>
+	 */
+	public void testToolOfAnUnloadedSkillSaysToLoadIt() {
+		DynamicToolCatalog catalog = catalogWithBase("baseTool");
+		catalog.setReachableBySkill(Set.of("skillTool"));
+
+		assertTrue(catalog.isReachableBySkill("skillTool"));
+		assertNull("An unloaded skill's tool must not be callable.", catalog.getTool("skillTool"));
+
+		String error = errorOf(catalog, "skillTool");
+		assertTrue(error, error.contains("skill of yours that is not loaded yet"));
+		assertFalse("It exists, so this is not the unknown-tool case: " + error,
+			error.contains("Unknown tool"));
+	}
+
+	/** A name no skill declares and nothing registers stays the plain unknown-tool answer. */
+	public void testNameNothingKnowsStaysUnknown() {
+		DynamicToolCatalog catalog = catalogWithBase("baseTool");
+		catalog.setReachableBySkill(Set.of("skillTool"));
+
+		String error = errorOf(catalog, "listEverythingEverywhere");
+		assertTrue(error, error.contains("Unknown tool: 'listEverythingEverywhere'"));
+		assertTrue("The hint the model corrects itself with must stay: " + error,
+			error.contains("Available:"));
+	}
+
 	// ===== Helpers =====
+
+	/** The message a call for the given name produces, with no security context involved. */
+	private static String errorOf(DynamicToolCatalog catalog, String toolName) {
+		ToolResultMessage result = catalog.execute(new ToolCall("c1", toolName, "{}"), null);
+		assertTrue("Expected a refused call, got: " + result.state(),
+			result.state() instanceof ToolState.Failed);
+		return ((ToolState.Failed) result.state()).error();
+	}
 
 	private static DynamicToolCatalog catalogWithBase(String toolName) {
 		ToolCatalog base = catalogWith(toolName);

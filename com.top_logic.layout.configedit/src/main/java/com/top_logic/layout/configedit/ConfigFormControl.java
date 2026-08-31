@@ -10,11 +10,11 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.configedit.ConfigPendingEntries.PendingEntry;
 import com.top_logic.layout.configedit.ConfigValidation.Violation;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -52,27 +52,6 @@ import com.top_logic.util.Resources;
  */
 public class ConfigFormControl extends ReactFormLayoutControl {
 
-	/**
-	 * The CSS classes of {@link #_formError}.
-	 *
-	 * <p>
-	 * {@code tlFormField__error} is the very class the React form field's own error area carries,
-	 * so a form-level refusal is styled like the field-level errors it accompanies.
-	 * {@code tlFormLayout__formError} is what puts it on a row of its own: a form lays its children
-	 * out in columns sized for fields, so without it the message is auto-placed beside whatever
-	 * stands in that row - and beside an editor taller than the viewport, it is stretched to that
-	 * height and its text pinned to the top of it, out of sight of the button that produced it.
-	 * </p>
-	 */
-	private static final String FORM_ERROR_CSS_CLASS = "tlFormField__error tlFormLayout__formError";
-
-	/**
-	 * The ARIA role of {@link #_formError}: the same {@code alert} the React form field and panel
-	 * put on their own error areas, so a refusal that appears without the reader having moved
-	 * anywhere is announced rather than sitting silently on screen.
-	 */
-	private static final String ALERT_ROLE = "alert";
-
 	private final ReactContext _context;
 
 	private final ConfigFormModel _model;
@@ -88,25 +67,6 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * actually finds the very instance {@link ConfigFormModel#addListener(Runnable)} was given.
 	 */
 	private final Runnable _onModeChange = this::rebuild;
-
-	/**
-	 * The line carrying a refusal that no field could carry, or {@code null} outside edit mode.
-	 *
-	 * <p>
-	 * A {@link ReactTextControl} rather than a dialog: a refused Apply leaves the user in the form
-	 * they were already editing, and a modal interruption to say so would have to be dismissed
-	 * before the very fields it talks about could be reached. It is created empty with every
-	 * rebuild into edit mode and filled only by {@link #apply()}, so entering, leaving, and
-	 * re-entering edit mode never carries an earlier attempt's message over.
-	 * </p>
-	 *
-	 * <p>
-	 * Styled with the {@code tlFormField__error} class the React form field's own error area
-	 * already uses, so a form-level refusal reads as the same kind of message as the field-level
-	 * ones it accompanies rather than as unmarked text.
-	 * </p>
-	 */
-	private ReactTextControl _formError;
 
 	/**
 	 * Creates a {@link ConfigFormControl} with a full edit mode.
@@ -182,16 +142,69 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 
 		if (_withEditMode) {
 			if (_model.isEditMode()) {
-				_formError = new ReactTextControl(_context, "", FORM_ERROR_CSS_CLASS);
-				_formError.setRole(ALERT_ROLE);
-				addChild(_formError);
 				addChild(applyButton());
 				addChild(cancelButton());
 			} else {
-				_formError = null;
 				addChild(editButton());
 			}
 		}
+	}
+
+	/**
+	 * A refused Apply, carrying the given reason.
+	 *
+	 * <p>
+	 * The reason is set as the result's <em>title</em> - the snackbar's headline - and the details
+	 * name what has to change, one line each. Without a title The React
+	 * servlet builds the snackbar's headline from {@link HandlerResult#getErrorTitle()} and falls
+	 * back to a generic "the command failed" when there is none - which is all the user would read,
+	 * since the details it lists come from {@link HandlerResult#getErrorMessage()} and the
+	 * exception's causes, not from the error list that {@link HandlerResult#error(ResKey)} fills.
+	 * The reason stays in that list as well, so the result still counts as failed.
+	 * </p>
+	 */
+	private static HandlerResult refusal(ResKey reason, List<ResKey> details) {
+		HandlerResult result = new HandlerResult();
+		result.setErrorTitle(reason);
+		result.addErrorMessage(reason);
+		for (ResKey detail : details) {
+			result.addErrorMessage(detail);
+		}
+		return result;
+	}
+
+	/** A refused Apply whose reason is all there is to say. */
+	private static HandlerResult refusal(ResKey reason) {
+		return refusal(reason, List.of());
+	}
+
+	/**
+	 * Refuses while some collection below still holds an entry nobody confirmed, and says so at that
+	 * entry as well as at the form.
+	 *
+	 * <p>
+	 * A pending entry is not in the configuration, so {@link ConfigValidation} cannot see it, and
+	 * applying would rebuild the form over the original and drop it. The user would watch what they
+	 * typed disappear with no explanation - the same silent discard a rejected input once was.
+	 * </p>
+	 *
+	 * <p>
+	 * The message goes on the entry's own key field, where the eye already is, rather than only at
+	 * the form: with several collections open there would otherwise be nothing saying which entry is
+	 * meant.
+	 * </p>
+	 *
+	 * @return Whether an entry was found, and Apply must therefore not proceed.
+	 */
+	private boolean refuseUnconfirmedEntries() {
+		List<PendingEntry> pending = _index.pending();
+		if (pending.isEmpty()) {
+			return false;
+		}
+		for (PendingEntry entry : pending) {
+			entry.setKeyFieldError(I18NConstants.ERROR_CONFIRM_OR_DISCARD_ENTRY);
+		}
+		return true;
 	}
 
 	/**
@@ -228,31 +241,29 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * the form would be Cancel, discarding the user's work.
 	 * </p>
 	 */
-	private void apply() {
+	private HandlerResult apply() {
 		_index.clearModelErrors();
-		setFormError(null);
 
+		// Before the unreadable-input check, not after: an unconfirmed entry whose key is already
+		// spoken for carries exactly such an input error, and "an entry could not be read" would
+		// then be said about a key that reads perfectly well and is merely taken.
+		if (refuseUnconfirmedEntries()) {
+			return refusal(I18NConstants.ERROR_ENTRY_NOT_CONFIRMED);
+		}
 		if (_index.hasInputError()) {
-			setFormError(I18NConstants.ERROR_INPUT_NOT_READABLE);
-			return;
+			return refusal(I18NConstants.ERROR_INPUT_NOT_READABLE);
 		}
 		List<Violation> violations = ConfigValidation.check(_model.edited());
 		if (!violations.isEmpty()) {
-			boolean complete = ConfigValidation.report(violations, _index);
-			setFormError(complete ? null : I18NConstants.ERROR_CANNOT_APPLY);
-			return;
+			ConfigValidation.report(violations, _index);
+			// Every violation is listed, not only those that found no field: the fields are spread
+			// over a form taller than the screen, and the list is what says how many there are and
+			// what they are without hunting for them.
+			return refusal(I18NConstants.ERROR_CANNOT_APPLY,
+				violations.stream().map(Violation::message).toList());
 		}
 		_model.apply();
-	}
-
-	/**
-	 * Shows the given message at form level, or clears the line if {@code null} is given.
-	 */
-	private void setFormError(ResKey message) {
-		if (_formError == null) {
-			return;
-		}
-		_formError.setText(message == null ? "" : Resources.getInstance().getString(message));
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -269,10 +280,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * The button offered in edit mode that {@link #apply()}s the working copy.
 	 */
 	private ReactButtonControl applyButton() {
-		return new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.APPLY), ctx -> {
-			apply();
-			return HandlerResult.DEFAULT_RESULT;
-		});
+		return new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.APPLY), ctx -> apply());
 	}
 
 	/**

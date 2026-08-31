@@ -195,6 +195,80 @@ public class TestConfigPendingEntries extends TestCase {
 		assertNull("The entry that took the key first is not the one at fault.", errorOf(first));
 	}
 
+	/**
+	 * A key an existing entry already has is complained about while it is being typed, not only when
+	 * the entry is confirmed.
+	 *
+	 * <p>
+	 * Waiting for the confirmation makes the user finish an entry before learning that its name was
+	 * never available. The complaint costs nothing while typing and is what every other form does.
+	 * </p>
+	 */
+	public void testAKeyTakenByAnExistingEntryIsReportedWhileTyping() {
+		Item existing = TypedConfiguration.newConfigItem(Item.class);
+		existing.setName("taken");
+		_value.add(existing);
+		PendingEntry pending = start();
+
+		name(pending, "taken");
+		_pending.checkKeys();
+
+		assertEquals(I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE, errorOf(pending).plain());
+		assertEquals("Complaining is not committing - the entry stays pending.",
+			1, _pending.entries().size());
+	}
+
+	/** Two new entries carrying the same key are both told, since neither is more at fault. */
+	public void testTwoNewEntriesWithTheSameKeyAreBothReported() {
+		PendingEntry first = start();
+		PendingEntry second = start();
+
+		name(first, "same");
+		name(second, "same");
+		_pending.checkKeys();
+
+		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE, errorOf(first).plain());
+		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE, errorOf(second).plain());
+	}
+
+	/** Renaming one of them clears the complaint at both. */
+	public void testRenamingClearsTheComplaintAtBothEnds() {
+		PendingEntry first = start();
+		PendingEntry second = start();
+		name(first, "same");
+		name(second, "same");
+		_pending.checkKeys();
+
+		name(second, "other");
+		_pending.checkKeys();
+
+		assertNull("The entry that kept its key is no longer in conflict.", errorOf(first));
+		assertNull(errorOf(second));
+	}
+
+	/** An entry nobody has named yet is not complained about. */
+	public void testAnUnnamedEntryIsNotReported() {
+		PendingEntry pending = start();
+
+		_pending.checkKeys();
+
+		assertNull("An empty key is unfinished, not wrong.", errorOf(pending));
+	}
+
+	/** Confirming one of two clashing entries turns the other's complaint into the taken-key one. */
+	public void testConfirmingOneTurnsTheOthersComplaintIntoATakenKey() {
+		PendingEntry first = start();
+		PendingEntry second = start();
+		name(first, "same");
+		name(second, "same");
+		_pending.checkKeys();
+
+		_pending.confirm(first);
+
+		assertEquals("The key is now held by an entry that really is in the collection.",
+			I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE, errorOf(second).plain());
+	}
+
 	/** Discarding removes exactly the given entry and never touches the collection. */
 	public void testDiscardingRemovesOnlyThatEntry() {
 		PendingEntry first = start();

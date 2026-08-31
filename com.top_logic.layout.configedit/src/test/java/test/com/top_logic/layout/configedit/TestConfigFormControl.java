@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.configedit;
 
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -19,6 +20,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
@@ -41,8 +43,8 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -144,6 +146,21 @@ public class TestConfigFormControl extends TestCase {
 
 		/** @see #getTitle() */
 		void setTitle(String value);
+	}
+
+	/**
+	 * A configuration with a <em>keyed</em> LIST property. Only a keyed collection has pending
+	 * entries: its "+" cannot insert straight away, because the collection is indexed by a property
+	 * of its entries and a fresh entry's key is empty, so the entry waits until it is confirmed.
+	 */
+	public interface KeyedCollectionConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getEntries()}. */
+		String ENTRIES = "entries";
+
+		@Name(ENTRIES)
+		@Key(ListEntry.TITLE)
+		java.util.List<ListEntry> getEntries();
 	}
 
 	/**
@@ -484,22 +501,174 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
-	 * The text currently shown on the form-level message line, or {@code null} if the form has no
-	 * such line (view mode, or no edit mode at all).
+	 * Presses Apply and returns the message it refused with, or {@code null} if it went through.
+	 *
+	 * <p>
+	 * A refusal travels back as a failed {@link HandlerResult}, which is what the React servlet
+	 * turns into the application's own error display - the same route every other command takes.
+	 * </p>
 	 */
-	private String formErrorText(TestableConfigFormControl form) {
-		ReactTextControl line = formErrorControl(form);
-		return line == null ? null : (String) line.scriptingScalarState().get("text");
+	private ResKey applyRefusal(TestableConfigFormControl form) {
+		HandlerResult result = applyResult(form);
+		if (result.isSuccess()) {
+			return null;
+		}
+		ResKey title = result.getErrorTitle();
+		assertNotNull("A refusal must carry a title: that is the snackbar's headline, and without "
+			+ "one the user reads only a generic 'the command failed'.", title);
+		assertEquals("The title must also be among the errors, or the result would count as a success.",
+			title, result.getEncodedErrors().get(0));
+		return title;
 	}
 
-	/** The form-level message line itself, or {@code null} if the form has none. */
-	private ReactTextControl formErrorControl(TestableConfigFormControl form) {
-		for (ReactControl child : form.children()) {
-			if (child instanceof ReactTextControl text) {
-				return text;
+	/** The lines a refusal lists below its headline - one per thing the user has to change. */
+	private List<ResKey> applyRefusalDetails(TestableConfigFormControl form) {
+		List<ResKey> errors = applyResult(form).getEncodedErrors();
+		return errors.subList(1, errors.size());
+	}
+
+	/**
+	 * A field's error is shown by its own chrome, under the field and with the error icon - the way
+	 * every other form in the application shows one.
+	 *
+	 * <p>
+	 * The input control marks itself (a red border, {@code aria-invalid}), but the message itself
+	 * belongs to the chrome's error area, which is what carries the icon and the text. Nothing fed
+	 * it: the chrome was built with no error and never told about a later one.
+	 * </p>
+	 */
+	public void testAFieldErrorReachesItsChrome() {
+		FormatConfig config = TypedConfiguration.newConfigItem(FormatConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		fieldOf(form, FormatConfig.TIMEOUT).setValue("5 potatoes");
+
+		assertEquals("The chrome around the field must show what the field rejected.",
+			label(fieldOf(form, FormatConfig.TIMEOUT).getError()), chromeErrorOf(form, FormatConfig.TIMEOUT));
+	}
+
+	/** And it goes away again once the field accepts what it is given. */
+	public void testAFieldErrorLeavesItsChromeAgain() {
+		FormatConfig config = TypedConfiguration.newConfigItem(FormatConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, FormatConfig.TIMEOUT).setValue("5 potatoes");
+
+		fieldOf(form, FormatConfig.TIMEOUT).setValue("5h 10min");
+
+		assertNull("A corrected field must not keep showing the old complaint.",
+			chromeErrorOf(form, FormatConfig.TIMEOUT));
+	}
+
+	/** A violation the form places at a field reaches that field's chrome too. */
+	public void testAViolationReachesItsChrome() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		fieldOf(form, MandatoryConfig.NAME).setValue(null);
+
+		applyResult(form);
+
+		assertEquals("The refusal must be readable under the field it is about.",
+			label(fieldOf(form, MandatoryConfig.NAME).getError()), chromeErrorOf(form, MandatoryConfig.NAME));
+	}
+
+	/**
+	 * The error text the chrome around the named property's field currently shows, or {@code null}
+	 * if it shows none.
+	 */
+	private String chromeErrorOf(ReactControl control, String propertyName) {
+		if (control instanceof ReactFormFieldChromeControl chrome
+			&& fieldOf(chrome, propertyName) != null) {
+			return (String) chrome.scriptingScalarState().get("error");
+		}
+		for (ReactControl child : control.scriptingChildren()) {
+			String found = chromeErrorOf(child, propertyName);
+			if (found != null) {
+				return found;
 			}
 		}
 		return null;
+	}
+
+	/** Presses Apply and hands back its result. */
+	private HandlerResult applyResult(TestableConfigFormControl form) {
+		return click(findButton(form, label(I18NConstants.APPLY)));
+	}
+
+	/**
+	 * An entry the user started but never confirmed blocks Apply, rather than being thrown away
+	 * without a word.
+	 *
+	 * <p>
+	 * A pending entry is not in the configuration - that is what "pending" means - so
+	 * {@link com.top_logic.layout.configedit.ConfigValidation} cannot see it, and applying would
+	 * rebuild the form over the original and drop it. The user typed something and would watch it
+	 * vanish, which is the same silent discard a rejected input once was.
+	 * </p>
+	 */
+	public void testApplyIsRefusedWhileAnEntryIsUnconfirmed() {
+		KeyedCollectionConfig config = TypedConfiguration.newConfigItem(KeyedCollectionConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		click(findAddButton(form));
+
+		ResKey refusal = applyRefusal(form);
+
+		assertNotNull("An unconfirmed entry must keep edit mode open.",
+			findButton(form, label(I18NConstants.APPLY)));
+		assertEquals("The unconfirmed entry must not have been applied.", 0, config.getEntries().size());
+		assertEquals(I18NConstants.ERROR_ENTRY_NOT_CONFIRMED, refusal);
+	}
+
+	/** Naming the entry is not enough either - it is confirming that puts it into the collection. */
+	public void testApplyIsRefusedWhileANamedEntryIsUnconfirmed() {
+		KeyedCollectionConfig config = TypedConfiguration.newConfigItem(KeyedCollectionConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		click(findAddButton(form));
+		fieldOf(form, ListEntry.TITLE).setValue("typed but not confirmed");
+
+		ResKey refusal = applyRefusal(form);
+
+		assertNotNull("A named but unconfirmed entry must keep edit mode open.",
+			findButton(form, label(I18NConstants.APPLY)));
+		assertEquals(0, config.getEntries().size());
+		assertEquals(I18NConstants.ERROR_ENTRY_NOT_CONFIRMED, refusal);
+		assertNotNull("The entry itself must say what to do about it.",
+			fieldOf(form, ListEntry.TITLE).getError());
+	}
+
+	/** Confirming the entry clears the way: Apply then goes through and keeps the entry. */
+	public void testApplyProceedsOnceTheEntryIsConfirmed() {
+		KeyedCollectionConfig config = TypedConfiguration.newConfigItem(KeyedCollectionConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		click(findAddButton(form));
+		fieldOf(form, ListEntry.TITLE).setValue("confirmed");
+		click(findButton(form, "\u2713"));
+
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		assertNotNull("Applying must have returned to view mode.", findButton(form, label(I18NConstants.EDIT)));
+		assertEquals(1, config.getEntries().size());
+		assertEquals("confirmed", config.getEntries().get(0).getTitle());
+	}
+
+	/** Discarding the entry clears the way too. */
+	public void testApplyProceedsOnceTheEntryIsDiscarded() {
+		KeyedCollectionConfig config = TypedConfiguration.newConfigItem(KeyedCollectionConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		click(findAddButton(form));
+
+		click(findButton(form, "\u2715"));
+		click(findButton(form, label(I18NConstants.APPLY)));
+
+		assertNotNull("Applying must have returned to view mode.", findButton(form, label(I18NConstants.EDIT)));
+		assertEquals(0, config.getEntries().size());
 	}
 
 	/**
@@ -604,11 +773,11 @@ public class TestConfigFormControl extends TestCase {
 		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
 		click(findButton(form, label(I18NConstants.EDIT)));
 
-		click(findButton(form, label(I18NConstants.APPLY)));
+		List<ResKey> details = applyRefusalDetails(form);
 
 		assertNotNull("Edit mode must stay open.", findButton(form, label(I18NConstants.APPLY)));
-		assertEquals("The refusal must be readable at form level.",
-			label(I18NConstants.ERROR_CANNOT_APPLY), formErrorText(form));
+		assertEquals("A violation with no field of its own must still be named in the list.",
+			1, details.size());
 	}
 
 	/**
@@ -624,25 +793,14 @@ public class TestConfigFormControl extends TestCase {
 		click(findButton(form, label(I18NConstants.EDIT)));
 		fieldOf(form, MandatoryConfig.NAME).setValue(null);
 
-		click(findButton(form, label(I18NConstants.APPLY)));
+		ResKey refusal = applyRefusal(form);
 
-		assertNotNull("Precondition: the violation must have reached its field.",
+		assertNotNull("The violation must have reached its field.",
 			fieldOf(form, MandatoryConfig.NAME).getError());
-		assertEquals("Nothing to add at form level.", "", formErrorText(form));
-	}
-
-	/** Leaving and re-entering edit mode drops an earlier refusal's message. */
-	public void testTheFormLevelMessageIsDroppedOnCancel() {
-		HiddenMandatoryConfig config = TypedConfiguration.newConfigItem(HiddenMandatoryConfig.class);
-		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
-		click(findButton(form, label(I18NConstants.EDIT)));
-		click(findButton(form, label(I18NConstants.APPLY)));
-
-		click(findButton(form, label(I18NConstants.CANCEL)));
-		click(findButton(form, label(I18NConstants.EDIT)));
-
-		assertEquals("A fresh edit starts without the previous attempt's message.",
-			"", formErrorText(form));
+		assertEquals("A refused Apply says so, whether or not a field also shows why.",
+			I18NConstants.ERROR_CANNOT_APPLY, refusal);
+		assertEquals("And it names what has to change, so the user need not hunt the form for it.",
+			1, applyRefusalDetails(form).size());
 	}
 
 	/**
@@ -696,20 +854,8 @@ public class TestConfigFormControl extends TestCase {
 		click(findButton(form, label(I18NConstants.EDIT)));
 		fieldOf(form, FormatConfig.TIMEOUT).setValue("5 potatoes");
 
-		click(findButton(form, label(I18NConstants.APPLY)));
-
-		assertEquals("The refusal must be readable at form level.",
-			label(I18NConstants.ERROR_INPUT_NOT_READABLE), formErrorText(form));
-	}
-
-	/** And it is announced, not merely displayed. */
-	public void testTheFormLevelMessageIsAnAlert() {
-		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
-		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
-
-		click(findButton(form, label(I18NConstants.EDIT)));
-
-		assertEquals("alert", formErrorControl(form).scriptingScalarState().get("role"));
+		assertEquals("The refusal must name what went wrong.",
+			I18NConstants.ERROR_INPUT_NOT_READABLE, applyRefusal(form));
 	}
 
 	/**

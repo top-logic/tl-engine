@@ -577,6 +577,22 @@ public class TestConfigEditorControl extends TestCase {
 	 * {@link ReactControl#scriptingChildren()} is empty and the inner loop below simply moves on.
 	 * </p>
 	 */
+	/**
+	 * The error text the chrome around an entry's key field shows - the state that actually
+	 * reaches the browser, as opposed to the field model's own error the chrome is meant to
+	 * mirror.
+	 */
+	private String keyFieldChromeError(ReactControl elementGroup) {
+		for (ReactControl child : elementGroup.scriptingChildren()) {
+			Object label = child.scriptingScalarState().get("label");
+			if (label == null || "Type".equals(label)) {
+				continue;
+			}
+			return (String) child.scriptingScalarState().get("error");
+		}
+		return null;
+	}
+
 	private FieldModel findKeyFieldModel(ReactControl elementGroup) {
 		for (ReactControl child : elementGroup.scriptingChildren()) {
 			Object label = child.scriptingScalarState().get("label");
@@ -1071,6 +1087,89 @@ public class TestConfigEditorControl extends TestCase {
 			config.getKeyedItems().size());
 		assertNotNull("The clash must be reported at the second entry's own key field.",
 			findKeyFieldModel(elementGroups(editor).get(1)).getError());
+	}
+
+	/**
+	 * Typing a key an existing entry already holds is complained about at the field right away,
+	 * without the entry having to be confirmed first.
+	 */
+	public void testTypingATakenKeyIsReportedAtTheFieldImmediately() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ListItem first = TypedConfiguration.newConfigItem(ListItem.class);
+		first.setName("Apple");
+		config.getKeyedItems().add(first);
+
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		clickAddButton(editor);
+		FieldModel keyField = findKeyFieldModel(elementGroups(editor).get(1));
+		keyField.setValue("Apple");
+
+		assertEquals("The taken key must be complained about while it is typed, not on confirmation.",
+			I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE, keyField.getError().plain());
+
+		keyField.setValue("Banana");
+
+		assertNull("Typing a free key clears the complaint.", keyField.getError());
+	}
+
+	/**
+	 * Two pending entries given the same key are told about each other while typing, at both
+	 * fields - neither of the two is the one at fault.
+	 */
+	public void testTwoPendingEntriesTypingTheSameKeyAreBothTold() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		clickAddButton(editor);
+		clickAddButton(editor);
+		findKeyFieldModel(elementGroups(editor).get(0)).setValue("dup");
+		findKeyFieldModel(elementGroups(editor).get(1)).setValue("dup");
+
+		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE,
+			findKeyFieldModel(elementGroups(editor).get(0)).getError().plain());
+		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE,
+			findKeyFieldModel(elementGroups(editor).get(1)).getError().plain());
+
+		confirmPending(editor, 0);
+
+		assertEquals("The entry left behind now really does clash with a committed entry.",
+			I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE,
+			findKeyFieldModel(elementGroups(editor).get(1)).getError().plain());
+	}
+
+	/**
+	 * The order the user actually works in: name the first new entry, only then add the second and
+	 * name it too - so the second entry's group is built by a rebuild that happens while the first
+	 * one already carries the key.
+	 */
+	public void testAddingTheSecondEntryAfterNamingTheFirstStillReportsTheClash() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		clickAddButton(editor);
+		findKeyFieldModel(elementGroups(editor).get(0)).setValue("eee");
+
+		clickAddButton(editor);
+		findKeyFieldModel(elementGroups(editor).get(1)).setValue("eee");
+
+		assertNotNull("The entry named second must be told the key is already being used.",
+			findKeyFieldModel(elementGroups(editor).get(1)).getError());
+		assertNotNull("The entry named first must be told as well.",
+			findKeyFieldModel(elementGroups(editor).get(0)).getError());
+
+		// The field models carry the complaint; what decides whether the user ever sees it is
+		// whether the chrome around each field mirrored it into the state sent to the browser.
+		assertNotNull("The complaint must have reached the second field's chrome.",
+			keyFieldChromeError(elementGroups(editor).get(1)));
+		assertNotNull("...and the first field's chrome.",
+			keyFieldChromeError(elementGroups(editor).get(0)));
 	}
 
 	/**

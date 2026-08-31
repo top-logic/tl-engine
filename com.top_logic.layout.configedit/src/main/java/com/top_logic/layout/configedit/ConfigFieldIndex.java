@@ -5,8 +5,13 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.top_logic.layout.configedit.ConfigPendingEntries.PendingEntry;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -39,6 +44,17 @@ public final class ConfigFieldIndex {
 
 	private final Map<ConfigurationItem, Map<PropertyDescriptor, ConfigFieldModel>> _fields =
 		new IdentityHashMap<>();
+
+	/**
+	 * The entries a collection editor below the form has started and nobody has confirmed yet.
+	 *
+	 * <p>
+	 * A pending entry is not in the configuration - that is what pending means - so validation
+	 * cannot see it, and applying would rebuild the form over the original and drop it without a
+	 * word. Whoever renders one registers it here, so the form can refuse instead.
+	 * </p>
+	 */
+	private final List<PendingEntry> _pending = new ArrayList<>();
 
 	/**
 	 * Registers the {@link ConfigFieldModel} that displays the given property of the given
@@ -164,7 +180,23 @@ public final class ConfigFieldIndex {
 	 * Every render cycle refills the index, so what an earlier cycle put there must go.
 	 * </p>
 	 */
+	/** Remembers an entry that has been started but not yet confirmed. */
+	public void registerPending(PendingEntry pending) {
+		_pending.add(pending);
+	}
+
+	/** Forgets an entry that has been confirmed, discarded, or is no longer rendered. */
+	public void unregisterPending(PendingEntry pending) {
+		_pending.remove(pending);
+	}
+
+	/** The entries below the form that are still waiting to be confirmed. */
+	public List<PendingEntry> pending() {
+		return Collections.unmodifiableList(_pending);
+	}
+
 	public void clear() {
 		_fields.clear();
+		_pending.clear();
 	}
 }

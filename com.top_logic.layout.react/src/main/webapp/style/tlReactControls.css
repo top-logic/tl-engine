@@ -2998,17 +2998,6 @@ button.tlMenu__item--disabled:hover {
 	padding: var(--page-inset);
 }
 
-/* A message about the form as a whole - a refusal to apply, say - rather than about one field.
-   It takes a row of its own: the form's columns are sized for fields, so a plain grid child would
-   be auto-placed into the next free column, beside whatever stands in that row. Next to a nested
-   editor that is taller than the viewport, the row's height becomes the editor's, the message is
-   stretched to match, and its text ends up pinned to the top of that row - far above the buttons
-   the reader just pressed, and unreachable by scrolling. Spanning every column keeps it on its own
-   line, directly where it belongs. */
-.tlFormLayout__formError {
-	grid-column: 1 / -1;
-}
-
 .tlFormLayout--empty {
 	display: flex;
 	align-items: center;

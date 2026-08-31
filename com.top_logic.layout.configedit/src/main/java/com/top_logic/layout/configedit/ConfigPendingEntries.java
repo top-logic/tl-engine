@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.Labels;
 
 /**
@@ -94,6 +95,43 @@ public final class ConfigPendingEntries {
 		 */
 		public void setKeyFieldModel(ConfigFieldModel keyFieldModel) {
 			_keyFieldModel = keyFieldModel;
+		}
+
+		/**
+		 * Reports the given complaint about what has been typed into this entry's key, or clears it
+		 * when {@code null} is given.
+		 *
+		 * <p>
+		 * The input channel, not {@link ConfigFieldModel#setModelValidationError(ResKey)}: a key
+		 * already spoken for is a complaint about the text in the field, it must survive the
+		 * clearing that a refused Apply does to the verdicts <em>it</em> placed, and the next
+		 * keystroke should drop it - all of which is what that channel does.
+		 * </p>
+		 */
+		void setKeyFieldInputError(ResKey message) {
+			if (_keyFieldModel != null) {
+				_keyFieldModel.setError(message);
+			}
+		}
+
+		/**
+		 * Reports the given message at this entry's key field, if it has one yet.
+		 *
+		 * <p>
+		 * Reported as a verdict on the entry rather than on what was typed into the key - the same
+		 * distinction {@link ConfigFieldModel#setModelValidationError(ResKey)} carries everywhere
+		 * else, so that clearing one channel never silently erases the other.
+		 * </p>
+		 */
+		public void setKeyFieldError(ResKey message) {
+			if (_keyFieldModel != null) {
+				_keyFieldModel.setModelValidationError(message);
+				// A model validation error stays hidden until it is revealed - see
+				// AbstractFieldModel#getError, which answers null while isRevealed() is false. The
+				// field has nothing to reveal on its own: nobody typed anything wrong into it, the
+				// entry around it is simply unfinished.
+				_keyFieldModel.setRevealed(true);
+			}
 		}
 	}
 
@@ -181,7 +219,59 @@ public final class ConfigPendingEntries {
 		}
 		_entries.remove(pending);
 		_value.add(entry);
+		checkKeys();
 		_onChanged.accept(entry);
+	}
+
+	/**
+	 * Re-reports, at each pending entry's key field, whether the key typed there is already spoken
+	 * for.
+	 *
+	 * <p>
+	 * Called on every key change, so the complaint appears while the name is being typed rather than
+	 * only when the entry is confirmed - otherwise the user finishes an entry before learning that
+	 * its name was never available.
+	 * </p>
+	 *
+	 * <p>
+	 * Every entry is re-examined, not only the one just typed into: a clash has two ends, and
+	 * renaming one of them has to clear the complaint at the other. An empty key is not complained
+	 * about - it is unfinished, not wrong.
+	 * </p>
+	 *
+	 * <p>
+	 * Complaining is broader than refusing. {@link #confirm(PendingEntry)} still refuses only a key
+	 * an entry <em>in the collection</em> holds: two entries being filled in side by side may pass
+	 * through the same text, and whichever is confirmed first is entitled to the name. The other is
+	 * then told the key is taken - by then truthfully, since it now is.
+	 * </p>
+	 */
+	public void checkKeys() {
+		for (PendingEntry pending : _entries) {
+			pending.setKeyFieldInputError(clash(pending));
+		}
+	}
+
+	/**
+	 * What is wrong with the key of the given pending entry, or {@code null} if nothing is.
+	 */
+	private ResKey clash(PendingEntry pending) {
+		ConfigurationItem entry = pending.entry();
+		PropertyDescriptor keyProperty = _value.keyProperty(entry);
+		Object key = entry.value(keyProperty);
+		if (key == null || key.toString().isEmpty()) {
+			return null;
+		}
+		String propertyLabel = Labels.propertyLabel(keyProperty, false);
+		if (_value.hasEntryWithKey(key)) {
+			return I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE.fill(propertyLabel, key);
+		}
+		for (PendingEntry other : _entries) {
+			if (other != pending && key.equals(other.entry().value(_value.keyProperty(other.entry())))) {
+				return I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE.fill(propertyLabel, key);
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -190,6 +280,7 @@ public final class ConfigPendingEntries {
 	 */
 	public void discard(PendingEntry pending) {
 		_entries.remove(pending);
+		checkKeys();
 		_onChanged.accept(null);
 	}
 

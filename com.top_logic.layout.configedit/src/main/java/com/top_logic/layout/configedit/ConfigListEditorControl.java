@@ -231,6 +231,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 				addChild(createPendingElementGroup(pending));
 			}
 
+			// Now that every pending entry has the key field of this render cycle, put the standing
+			// complaints back on them. A rebuild replaces those field models, so a complaint placed
+			// on the previous cycle's field would otherwise disappear with it - most visibly right
+			// after confirming one of two entries that were being given the same key.
+			_pending.checkKeys();
+
 			// Add button at the bottom. Not rendered at all while !_editable - the requirement is
 			// that no collection action is offered in view mode, not merely a disabled one.
 			ReactButtonControl addButton =
@@ -343,12 +349,30 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		PropertyDescriptor keyProperty = _value.keyProperty(entry);
 		List<ReactControl> bodyChildren = createBodyChildren(entry, keyProperty, pending);
 
+		if (keyProperty != null) {
+			// Re-examine every pending key on each keystroke, so that a key already spoken for is
+			// complained about while it is being typed instead of only when the entry is confirmed.
+			// All of them, not just this one: renaming one end of a clash has to clear the
+			// complaint at the other end too.
+			ConfigurationListener keyListener = change -> _pending.checkKeys();
+			entry.addConfigurationListener(keyProperty, keyListener);
+			_listeners.add(new ListenerRegistration(entry, keyProperty, keyListener));
+		}
+
 		ReactFormGroupControl group = new ReactFormGroupControl(
 			_context, null, true, false, "subtle", true,
 			headerActions, bodyChildren);
 		group.setHeader(createHeaderControl(label));
 
 		registerTitleListener(entry, group);
+
+		if (_index != null) {
+			// The form above cannot see a pending entry - it is not in the configuration - so it is
+			// told here, and untold when this group goes away, whether because the entry was
+			// confirmed, discarded, or merely re-rendered.
+			_index.registerPending(pending);
+			group.addCleanupAction(() -> _index.unregisterPending(pending));
+		}
 
 		return group;
 	}

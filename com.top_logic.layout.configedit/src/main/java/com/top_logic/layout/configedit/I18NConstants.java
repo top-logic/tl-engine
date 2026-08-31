@@ -60,6 +60,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_INPUT_NOT_READABLE;
 
+	/**
+	 * @en The configuration cannot be applied because an entry has not been confirmed yet.
+	 */
+	public static ResKey ERROR_ENTRY_NOT_CONFIRMED;
+
+	/**
+	 * @en Confirm this entry, or discard it.
+	 */
+	public static ResKey ERROR_CONFIRM_OR_DISCARD_ENTRY;
+
+	/**
+	 * @en Another new entry already uses {0} "{1}".
+	 */
+	public static ResKey2 ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

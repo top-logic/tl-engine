@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.tools.web;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.junit.Assume;
 import org.junit.runner.RunWith;
 
 import junit.framework.TestCase;
@@ -184,7 +185,8 @@ public class TestBrowserFailureSurfaces extends TestCase {
 	 * A server-side redirect off the allowlist is blocked and reported cleanly and promptly - the
 	 * regression that returned a raw 30 s {@code Frame.goto} {@code TimeoutError}. Uses a public
 	 * redirect service; if that service is not answering with its redirect there is nothing to assert
-	 * about the tool, so the test skips itself. Gated behind {@code -Dtl.ai.browser.e2e=true}.
+	 * about the tool, so the test reports itself as skipped. Gated behind
+	 * {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testOffAllowlistRedirectReportedCleanlyEndToEnd() {
 		BrowserE2e.assumeEnabled();
@@ -198,12 +200,11 @@ public class TestBrowserFailureSurfaces extends TestCase {
 				ToolContext.EMPTY);
 			long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
 
-			if (!result.contains("example.com")) {
-				// The public redirect service did not redirect (it is occasionally unavailable, and
-				// httpbin.org - the original fixture - was serving 503 when this was written). Nothing
-				// about the tool's behaviour can be concluded from that.
-				return;
-			}
+			// The public redirect service is occasionally unavailable (httpbin.org - the original
+			// fixture - was serving 503 when this was written). Nothing about the tool's behaviour can
+			// be concluded from that, so the test skips rather than passes on an empty check.
+			Assume.assumeTrue("the public redirect service did not redirect: " + result,
+				result.contains("example.com"));
 			assertTrue("the redirect is refused, not rendered: " + result, result.startsWith("Error:"));
 			assertTrue("reports the policy, not a network failure: " + result,
 				result.contains("blocked or off-allowlist origin"));

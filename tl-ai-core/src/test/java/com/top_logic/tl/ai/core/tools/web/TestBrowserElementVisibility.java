@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.tools.web;
 
 import java.util.List;
 
+import org.junit.Assume;
 import org.junit.runner.RunWith;
 
 import junit.framework.TestCase;
@@ -245,10 +246,9 @@ public class TestBrowserElementVisibility extends TestCase {
 			Object sessionKey = new Object();
 			PageView landing = service.navigate(sessionKey, "https://www.top-logic.com/");
 			String acceptRef = refWhereNameContains(landing.elements(), "akzeptieren");
-			if (acceptRef == null) {
-				// No consent banner on this visit - nothing to dismiss, so nothing to assert.
-				return;
-			}
+			// No consent banner on this visit - nothing to dismiss, so nothing to assert. Skip rather
+			// than pass on an empty check.
+			Assume.assumeTrue("no consent banner on this visit - nothing to dismiss", acceptRef != null);
 
 			PageView afterAccept = service.click(sessionKey, acceptRef);
 			assertNull("the accepted banner is gone from the click's own element list: "

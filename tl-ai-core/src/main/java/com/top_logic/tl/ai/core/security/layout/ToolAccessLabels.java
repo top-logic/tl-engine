@@ -26,7 +26,7 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * A provenance sentence names both sides whenever two rules disagreed. "Denied" alone sends nobody
- * anywhere. "Capped by the background allowlist. Role projectPartner grants it, but a run nobody
+ * anywhere. "Capped by the background allowlist. Role {@code projectPartner} grants it, but a run nobody
  * watches may not use it." names the control to change and the grant that is already there.
  * </p>
  */
@@ -117,7 +117,7 @@ public class ToolAccessLabels {
 	 * How a rule is named <em>inside</em> a sentence about another rule.
 	 *
 	 * <p>
-	 * "role projectPartner grants it" rather than "Grant of role projectPartner grants it".
+	 * "role {@code projectPartner} grants it" rather than "Grant of role {@code projectPartner} grants it".
 	 * </p>
 	 */
 	private static String subject(ToolAccessRule rule) {

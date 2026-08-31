@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	"Token (30 Tage)". Billable tokens - input plus output - kept apart from the cache traffic,
-	because the cached share is what makes a run cheap and mixing the two hides exactly that.
+	"Token (24 h)". Billable tokens - input plus output - kept apart from the cache traffic, because
+	the cached share is what makes a run cheap and mixing the two hides exactly that.
+	
+	24 hours, like the other two counting tiles, and no longer 30 days. Five numbers side by side are
+	read as one row, and "8 Fehler" next to "75 Mio. Token" is unreadable when the two count
+	different stretches of time. The thirty-day picture is not lost: it is one tab further on in
+	Verbrauch, where it belongs, and the trend chart under these tiles carries it too.
+	
+	The period stays a fixed number in the expression rather than becoming a setting. A tile states
+	its period in its own label and the table behind it in its title, and both are static resources;
+	a configurable period would have to vanish from both, and a KPI whose period is invisible is
+	worse than one whose period cannot be changed.
 	
 	Deliberately not a euro figure: see the note in overviewView.xml.
 -->
@@ -18,7 +28,7 @@
 					model -> {
 						recent = all(`tl.ai.execution:AgentExecution`)
 							.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
-								>= now().toSystemCalendar().withDayAdded(-30).toDate());
+								>= now().toSystemCalendar().withDayAdded(-1).toDate());
 						value = a -> e -> ifElse(isEmpty($e.get($a)), 0, $e.get($a));
 						billable = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#inputTokens`)($e)
 							+ $value(`tl.ai.execution:AgentExecution#outputTokens`)($e)).sum();
@@ -51,7 +61,7 @@
 				<elements><![CDATA[
 					model -> all(`tl.ai.execution:AgentExecution`)
 						.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
-							>= now().toSystemCalendar().withDayAdded(-30).toDate())
+							>= now().toSystemCalendar().withDayAdded(-1).toDate())
 				]]></elements>
 				<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
 			</modelBuilder>

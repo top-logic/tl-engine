@@ -52,7 +52,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
-import com.top_logic.tl.ai.core.execution.model.TlAiAgentFactory;
+import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
@@ -476,7 +476,7 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
-		TLClassifier chatKind = TlAiAgentFactory.getCHATSessionKindClassifier();
+		TLClassifier chatKind = TlAiExecutionFactory.getCHATSessionKindClassifier();
 		PendingInteractionsResponse response = PendingInteractionsResponse.create();
 		for (InteractionRequest request : AgentExecutionStore.getInstance().pendingInteractionsFor(person)) {
 			AgentExecution execution = request.getExecution();

@@ -52,7 +52,7 @@ Authentication enforced by TopLogic's `ChatSessionFilter` mapped to `/chat/*`.
 
 ## Persistence Model
 
-- **Module**: `tl.ai.agent` (tl-ai-core), **Types**: `AgentSession` (kind CHAT) + `AgentExecution` per run
+- **Module**: `tl.ai.execution` (tl-ai-core), **Types**: `AgentSession` (kind CHAT) + `AgentExecution` per run
 - Session: `title`, `kind`, `owner`, `metadata` (approved tools, approval mode, tasks, skills), timestamps
 - Execution: `runId`, `agentName`, `model`, `provider`, `status`, `stopReason`, token columns, `transcript` (CLOB)
 - Transcript format: `ConversationLog` turns serialized via `ConversationLogSerializer` (tl-ai-core, `PersistedConversationV2`)

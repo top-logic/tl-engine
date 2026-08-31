@@ -30,7 +30,7 @@ public interface AgentTaskBase extends com.top_logic.model.TLObject {
 	 * Part <code>lastTouchedByExecution</code> of <code>AgentTask</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.ai.agent:AgentExecution</code> in configuration.
+	 * Declared as <code>tl.ai.execution:AgentExecution</code> in configuration.
 	 * </p>
 	 */
 	String LAST_TOUCHED_BY_EXECUTION_ATTR = "lastTouchedByExecution";
@@ -48,7 +48,7 @@ public interface AgentTaskBase extends com.top_logic.model.TLObject {
 	 * Part <code>session</code> of <code>AgentTask</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.ai.agent:AgentSession</code> in configuration.
+	 * Declared as <code>tl.ai.execution:AgentSession</code> in configuration.
 	 * </p>
 	 */
 	String SESSION_ATTR = "session";

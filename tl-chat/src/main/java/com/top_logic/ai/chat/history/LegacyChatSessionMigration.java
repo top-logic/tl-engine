@@ -78,7 +78,7 @@ import com.top_logic.util.model.ModelService;
  * <code>WEB-INF/autoconf/model.tl.ai.chat.config.xml</code>.</li>
  * <li>Delete this class and its module entry in <code>tl-chat.conf.config.xml</code>.</li>
  * <li>Drop the ChatSession reference from the comment in tl-ai-core
- * <code>WEB-INF/model/tl.ai.agent.model.xml</code>.</li>
+ * <code>WEB-INF/model/tl.ai.execution.model.xml</code>.</li>
  * </ol>
  */
 @ServiceDependencies({

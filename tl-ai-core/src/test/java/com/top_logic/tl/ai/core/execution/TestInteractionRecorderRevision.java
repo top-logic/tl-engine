@@ -21,7 +21,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
-import com.top_logic.tl.ai.core.execution.model.TlAiAgentFactory;
+import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -96,7 +96,7 @@ public class TestInteractionRecorderRevision extends BasicTestCase {
 
 	private static InteractionRequest findByRequestId(String requestId) {
 		for (TLObject obj : MetaElementUtil.getAllInstancesOf(
-				TlAiAgentFactory.getInteractionRequestType(), TLObject.class)) {
+				TlAiExecutionFactory.getInteractionRequestType(), TLObject.class)) {
 			InteractionRequest request = (InteractionRequest) obj;
 			if (requestId.equals(request.getRequestId())) {
 				return request;

@@ -110,7 +110,7 @@
 		/>
 	</metaobject>
 
-	<!-- tl.ai.agent execution model. References (kind, owner, session, parentExecution,
+	<!-- tl.ai.execution model. References (kind, owner, session, parentExecution,
 	     status, ...) and date attributes use generic flex/association storage. -->
 
 	<metaobject

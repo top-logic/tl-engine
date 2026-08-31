@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
-	<module name="tl.ai.agent">
+	<module name="tl.ai.execution">
 		<annotations>
 			<package-binding
 				implementation-package="com.top_logic.tl.ai.core.execution.model.impl"
@@ -50,7 +50,7 @@
 				</annotations>
 				<attributes>
 					<reference name="kind"
-						type="tl.ai.agent:SessionKind"
+						type="tl.ai.execution:SessionKind"
 						mandatory="true"
 					/>
 					<reference name="owner"
@@ -91,11 +91,11 @@
 				</annotations>
 				<attributes>
 					<reference name="session"
-						type="tl.ai.agent:AgentSession"
+						type="tl.ai.execution:AgentSession"
 						mandatory="true"
 					/>
 					<reference name="parentExecution"
-						type="tl.ai.agent:AgentExecution"
+						type="tl.ai.execution:AgentExecution"
 					/>
 					<property name="runId"
 						mandatory="true"
@@ -112,7 +112,7 @@
 						type="tl.core:String"
 					/>
 					<reference name="status"
-						type="tl.ai.agent:ExecutionStatus"
+						type="tl.ai.execution:ExecutionStatus"
 						mandatory="true"
 					/>
 					<property name="stopReason"
@@ -168,7 +168,7 @@
 				</annotations>
 				<attributes>
 					<reference name="execution"
-						type="tl.ai.agent:AgentExecution"
+						type="tl.ai.execution:AgentExecution"
 						mandatory="true"
 					/>
 					<property name="requestId"
@@ -176,11 +176,11 @@
 						type="tl.core:String"
 					/>
 					<reference name="type"
-						type="tl.ai.agent:InteractionType"
+						type="tl.ai.execution:InteractionType"
 						mandatory="true"
 					/>
 					<reference name="state"
-						type="tl.ai.agent:InteractionState"
+						type="tl.ai.execution:InteractionState"
 						mandatory="true"
 					/>
 					<property name="header"
@@ -222,11 +222,11 @@
 				</annotations>
 				<attributes>
 					<reference name="session"
-						type="tl.ai.agent:AgentSession"
+						type="tl.ai.execution:AgentSession"
 						mandatory="true"
 					/>
 					<reference name="lastTouchedByExecution"
-						type="tl.ai.agent:AgentExecution"
+						type="tl.ai.execution:AgentExecution"
 					/>
 					<property name="taskId"
 						mandatory="true"

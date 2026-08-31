@@ -182,7 +182,7 @@ public class SkillTool {
 	 *
 	 * <p>
 	 * Read per call, so a {@code listTools} in a later turn reflects everything loaded since, for
-	 * {@code listTools}: "already in your tool list" and "call loadSkill first" are different answers,
+	 * {@code listTools}: "already in your tool list" and "call {@code loadSkill} first" are different answers,
 	 * and getting them the wrong way round costs a wasted turn.
 	 * </p>
 	 */

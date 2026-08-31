@@ -9,7 +9,7 @@
  *
  * <p>
  * Three views over {@link com.top_logic.tl.ai.core.security.AiToolAccessService}, contributed as a tab
- * of <em>Administration &rarr; Berechtigungen</em> by
+ * of <em>Administration &#8594; Berechtigungen</em> by
  * {@code WEB-INF/layouts/admin/security/index.layout.overlay.xml}:
  * </p>
  * <ul>

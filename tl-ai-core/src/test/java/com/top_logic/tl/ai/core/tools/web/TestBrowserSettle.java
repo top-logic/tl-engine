@@ -7,8 +7,11 @@ package com.top_logic.tl.ai.core.tools.web;
 
 import java.util.List;
 
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
@@ -21,7 +24,7 @@ import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
  * re-snapshot.
  *
  * <p>
- * These launch a real Chromium (gated behind {@code -Dtl.ai.browser.e2e=true}, like the other
+ * These launch a real Chromium (gated behind {@link BrowserE2e}, like the other
  * browser E2E tests) but need <b>no network</b>: a fixture whose script appends a
  * {@code <button id="late">} ~800 ms after load is injected straight into the page and taken
  * through the real {@link BrowserSession#settle() settle} path. With the settle on (default) the
@@ -30,6 +33,7 @@ import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
  * settles at ~the debounce window, far under the cap, so fast pages are not meaningfully slowed.
  * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestBrowserSettle extends TestCase {
 
 	/** Allow-any policy: no real navigation happens (content is injected), so it is irrelevant. */
@@ -75,9 +79,7 @@ public class TestBrowserSettle extends TestCase {
 	 * load: the late button is present in the elements and has been assigned a ref.
 	 */
 	public void testLateInjectedContentCapturedWhenSettleOn() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = open(DEFAULT_SETTLE_MILLIS);
 		try {
 			PageView view = session.loadHtmlWithSettleForTest(LATE_INJECTION_FIXTURE);
@@ -95,9 +97,7 @@ public class TestBrowserSettle extends TestCase {
 	 * the settle closes (the previous immediate-capture behaviour).
 	 */
 	public void testLateInjectedContentMissedWhenSettleOff() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = open(0);
 		try {
 			PageView view = session.loadHtmlWithSettleForTest(LATE_INJECTION_FIXTURE);
@@ -116,9 +116,7 @@ public class TestBrowserSettle extends TestCase {
 	 * quiet pages. Also asserts the page was captured normally (its static button got a ref).
 	 */
 	public void testQuietPageSettlesWellUnderCap() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		int largeCap = 5_000;
 		BrowserSession session = open(largeCap);
 		try {
@@ -147,9 +145,4 @@ public class TestBrowserSettle extends TestCase {
 			}
 		}
 		return null;
-	}
-
-	private static boolean e2eEnabled() {
-		return Boolean.getBoolean("tl.ai.browser.e2e");
-	}
-}
+	}}

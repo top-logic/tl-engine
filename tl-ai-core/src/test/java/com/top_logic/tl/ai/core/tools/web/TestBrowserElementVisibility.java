@@ -7,10 +7,13 @@ package com.top_logic.tl.ai.core.tools.web;
 
 import java.util.List;
 
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
@@ -39,12 +42,13 @@ import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
  * </p>
  *
  * <p>
- * These launch a real Chromium (gated behind {@code -Dtl.ai.browser.e2e=true}) but need <b>no
+ * These launch a real Chromium (gated behind {@link BrowserE2e}) but need <b>no
  * network</b>: fixture HTML is loaded straight into the page, so each hiding mechanism can be
  * exercised in isolation. One test does hit the live {@code top-logic.com} to prove the real banner
  * is gone after it is accepted.
  * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestBrowserElementVisibility extends TestCase {
 
 	/** Allow-any policy: fixtures are injected, not navigated, so the policy is irrelevant. */
@@ -153,9 +157,7 @@ public class TestBrowserElementVisibility extends TestCase {
 	 * {@code opacity:0} on the control <em>itself</em> is a styling idiom, not a hidden element.
 	 */
 	public void testTransparentCheckboxStaysAddressable() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = open(0);
 		try {
 			PageView view = session.loadHtmlForTest(TRANSPARENT_CHECKBOX_FIXTURE);
@@ -180,9 +182,7 @@ public class TestBrowserElementVisibility extends TestCase {
 	 * merely being inside a component.
 	 */
 	public void testShadowRootJudgedByComposedVisibility() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = open(0);
 		try {
 			PageView view = session.loadHtmlForTest(SHADOW_MIXED_FIXTURE);
@@ -201,9 +201,7 @@ public class TestBrowserElementVisibility extends TestCase {
 	 * the visibility test drops its buttons. The unrelated button on the page is unaffected.
 	 */
 	public void testFadingBannerGoneAfterSettle() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = open(DEFAULT_SETTLE_MILLIS);
 		try {
 			PageView view = session.loadHtmlWithSettleForTest(FADING_BANNER_FIXTURE);
@@ -222,9 +220,7 @@ public class TestBrowserElementVisibility extends TestCase {
 	 * CSS animation mutates no DOM and the DOM-quiet wait alone resolves straight through it.
 	 */
 	public void testFadingBannerStillPresentWithoutSettle() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = open(0);
 		try {
 			PageView view = session.loadHtmlWithSettleForTest(FADING_BANNER_FIXTURE);
@@ -242,9 +238,7 @@ public class TestBrowserElementVisibility extends TestCase {
 	 * present the banner (already consented, or the plugin changed).
 	 */
 	public void testLiveConsentBannerGoneAfterAcceptEndToEnd() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newService("top-logic.com");
 		service.startUp();
 		try {
@@ -275,9 +269,7 @@ public class TestBrowserElementVisibility extends TestCase {
 	 * next to them survives.
 	 */
 	private static void assertBannerDropped(String fixture, String mechanism) {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = open(0);
 		try {
 			PageView view = session.loadHtmlForTest(fixture);
@@ -322,10 +314,6 @@ public class TestBrowserElementVisibility extends TestCase {
 			out.append('[').append(element.ref()).append(' ').append(element.name()).append(']');
 		}
 		return out.toString();
-	}
-
-	private static boolean e2eEnabled() {
-		return Boolean.getBoolean("tl.ai.browser.e2e");
 	}
 
 	/** A service allowing only {@code allowedDomain}, with production defaults otherwise. */

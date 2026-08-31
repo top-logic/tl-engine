@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
 
 /**
@@ -32,9 +35,10 @@ import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
  * <p>
  * A real browser is the only honest fixture here: the assertion is about OS processes, so it is made
  * against {@link ProcessHandle}s, not against a mock. Gated behind
- * {@code -Dtl.ai.browser.e2e=true} like the other browser E2E tests; it needs <b>no network</b>.
+ * {@link BrowserE2e} like the other browser E2E tests; it needs <b>no network</b>.
  * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestBrowserSessionTeardown extends TestCase {
 
 	/** No navigation happens, so the domain policy is irrelevant. */
@@ -58,9 +62,7 @@ public class TestBrowserSessionTeardown extends TestCase {
 	 * the JVM's interest in them entirely.
 	 */
 	public void testWedgedSessionLeavesNoProcessBehind() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("wedged-teardown", TIMEOUT_MILLIS, ALLOW_ANY);
 		List<ProcessHandle> tree;
 		try {
@@ -96,9 +98,7 @@ public class TestBrowserSessionTeardown extends TestCase {
 
 	/** The ordinary path is unchanged: an orderly close leaves nothing running either. */
 	public void testHealthySessionClosesWithoutLeavingProcesses() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("clean-teardown", TIMEOUT_MILLIS, ALLOW_ANY);
 		ProcessHandle driver = session.driverProcessForTest();
 		assertNotNull(driver);
@@ -120,9 +120,7 @@ public class TestBrowserSessionTeardown extends TestCase {
 	 * that no longer exists.
 	 */
 	public void testPoolReleasesTheSlotOfAWedgedSession() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		List<BrowserSession> opened = new ArrayList<>();
 		BrowserSessionPool<BrowserSession> pool = new BrowserSessionPool<>(1, 60_000L, 30_000L,
 			System::nanoTime,
@@ -185,9 +183,4 @@ public class TestBrowserSessionTeardown extends TestCase {
 				.append(process.info().command().orElse("?")).append(' ');
 		}
 		return out.toString();
-	}
-
-	private static boolean e2eEnabled() {
-		return Boolean.getBoolean("tl.ai.browser.e2e");
-	}
-}
+	}}

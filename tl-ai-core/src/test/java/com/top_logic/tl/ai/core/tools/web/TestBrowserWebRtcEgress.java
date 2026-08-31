@@ -11,6 +11,9 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Assume;
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
 import com.microsoft.playwright.Browser;
@@ -20,6 +23,7 @@ import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.WaitUntilState;
 
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.AddressResolver;
@@ -29,7 +33,7 @@ import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
 /**
  * End-to-end tests, with a real Chromium, that a page can no longer make the browser emit <b>UDP</b>
  * towards an address of its choosing - the SSRF egress path the {@link FilteringProxy} cannot cover,
- * because <em>WebRTC does not honour an HTTP proxy</em>. Gated behind {@code -Dtl.ai.browser.e2e=true}.
+ * because <em>WebRTC does not honour an HTTP proxy</em>. Gated behind {@link BrowserE2e}.
  *
  * <p>
  * <b>Why the fixture is shaped this way.</b> The proxy tests of {@link TestBrowserProxyEnforcement}
@@ -51,6 +55,7 @@ import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
  * itself without it.
  * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestBrowserWebRtcEgress extends TestCase {
 
 	/** A public hostname used as the permitted origin of the fixture page; only DNS is needed. */
@@ -80,9 +85,7 @@ public class TestBrowserWebRtcEgress extends TestCase {
 	 * what needs fixing, not the product.
 	 */
 	public void testWebRtcUdpEscapesWithoutTheSwitchNegativeControl() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		Integer packets = probeUdpEgress(null, BASE_ARGS);
 		if (packets == null) {
 			return;
@@ -96,9 +99,7 @@ public class TestBrowserWebRtcEgress extends TestCase {
 	 * added switch: not one datagram leaves towards the listener.
 	 */
 	public void testWebRtcUdpIsSuppressedByTheSwitch() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		Integer packets = probeUdpEgress(null, concat(BASE_ARGS, WEBRTC_SWITCH));
 		if (packets == null) {
 			return;
@@ -120,9 +121,7 @@ public class TestBrowserWebRtcEgress extends TestCase {
 	 * </p>
 	 */
 	public void testHeadlessShellCannotHonourTheSwitchWhichIsWhyTheChannelIsPinned() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		Integer packets = probeUdpEgress("chromium-headless-shell", concat(BASE_ARGS, WEBRTC_SWITCH));
 		if (packets == null) {
 			return;
@@ -138,9 +137,8 @@ public class TestBrowserWebRtcEgress extends TestCase {
 	 * navigation that fails to leak is asserted to have produced a real, readable page.
 	 */
 	public void testProductionSessionNeverEmitsWebRtcUdpEndToEnd() {
-		if (!e2eEnabled() || !resolves(PERMITTED_HOST)) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve " + PERMITTED_HOST + " - no network", resolves(PERMITTED_HOST));
 		try (RecordingUdpListener stun = RecordingUdpListener.startOrNull()) {
 			if (stun == null) {
 				return;
@@ -305,9 +303,4 @@ public class TestBrowserWebRtcEgress extends TestCase {
 		} catch (UnknownHostException ex) {
 			return false;
 		}
-	}
-
-	private static boolean e2eEnabled() {
-		return Boolean.getBoolean("tl.ai.browser.e2e");
-	}
-}
+	}}

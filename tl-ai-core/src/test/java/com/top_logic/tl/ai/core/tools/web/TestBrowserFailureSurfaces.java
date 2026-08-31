@@ -8,11 +8,14 @@ package com.top_logic.tl.ai.core.tools.web;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
 
@@ -40,10 +43,11 @@ import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
  *
  * <p>
  * The mapping tests are plain unit tests. The end-to-end tests launch a real Chromium (gated behind
- * {@code -Dtl.ai.browser.e2e=true}); the click test needs no network, the redirect test uses a public
- * redirect service and skips itself if that service is not answering.
+ * {@link BrowserE2e}); the click test needs no network, the redirect test uses a public redirect
+ * service and skips itself if that service is not answering.
  * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestBrowserFailureSurfaces extends TestCase {
 
 	/** Allow-any policy for fixture-only sessions: nothing is navigated, so it is irrelevant. */
@@ -153,9 +157,7 @@ public class TestBrowserFailureSurfaces extends TestCase {
 	 * {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testRouteAbortReportsPolicyBlockFastEndToEnd() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newService(List.of("quotes.toscrape.com"));
 		service.startUp();
 		try {
@@ -185,9 +187,7 @@ public class TestBrowserFailureSurfaces extends TestCase {
 	 * about the tool, so the test skips itself. Gated behind {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testOffAllowlistRedirectReportedCleanlyEndToEnd() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newService(List.of("httpbingo.org"));
 		service.startUp();
 		try {
@@ -223,9 +223,7 @@ public class TestBrowserFailureSurfaces extends TestCase {
 	 * timeout. Needs no network. Gated behind {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testCoveredElementClickFailsFastAndActionablyEndToEnd() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("dead-click", TIMEOUT_MILLIS, ACTION_TIMEOUT_MILLIS,
 			0, ALLOW_ANY, null, false, false, null);
 		try {
@@ -258,9 +256,7 @@ public class TestBrowserFailureSurfaces extends TestCase {
 	 * {@link BrowserSessionBrokenException}. Gated behind {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testSessionSurvivesDeadClickEndToEnd() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("dead-click-recovery", TIMEOUT_MILLIS,
 			ACTION_TIMEOUT_MILLIS, 0, ALLOW_ANY, null, false, false, null);
 		try {
@@ -316,10 +312,6 @@ public class TestBrowserFailureSurfaces extends TestCase {
 		int start = html.indexOf("<title>");
 		int end = html.indexOf("</title>");
 		return (start < 0 || end < start) ? null : html.substring(start + "<title>".length(), end);
-	}
-
-	private static boolean e2eEnabled() {
-		return Boolean.getBoolean("tl.ai.browser.e2e");
 	}
 
 	private static BrowserToolsService newService(List<String> allowedDomains) {

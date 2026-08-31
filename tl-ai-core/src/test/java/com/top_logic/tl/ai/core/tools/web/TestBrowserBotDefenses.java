@@ -7,8 +7,11 @@ package com.top_logic.tl.ai.core.tools.web;
 
 import java.util.regex.Pattern;
 
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
 
@@ -19,10 +22,11 @@ import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
  * fingerprint shim are verified deterministically, without depending on any live bot-protected site.
  *
  * <p>
- * Gated behind {@code -Dtl.ai.browser.e2e=true}, exactly like {@link TestBrowserShadowDom} and the
+ * Gated behind {@link BrowserE2e}, exactly like {@link TestBrowserShadowDom} and the
  * other browser E2E tests, because they launch Chromium.
  * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestBrowserBotDefenses extends TestCase {
 
 	/** Navigation never happens (content is injected), so the policy is irrelevant. */
@@ -61,9 +65,7 @@ public class TestBrowserBotDefenses extends TestCase {
 	 * agent sees - not a silent empty element list.
 	 */
 	public void testBlockPageDetectedAndRenderedEndToEnd() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("block-detected", TIMEOUT_MILLIS, ALLOW_ANY);
 		try {
 			PageView view = session.loadHtmlForTest(AKAMAI_ACCESS_DENIED);
@@ -83,9 +85,7 @@ public class TestBrowserBotDefenses extends TestCase {
 
 	/** A normal page containing only the word "denied" is NOT misclassified as blocked. */
 	public void testNormalPageNotFlaggedEndToEnd() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("block-normal", TIMEOUT_MILLIS, ALLOW_ANY);
 		try {
 			PageView view = session.loadHtmlForTest(NORMAL_PAGE_WITH_DENIED_WORD);
@@ -107,9 +107,7 @@ public class TestBrowserBotDefenses extends TestCase {
 	 * "byte-for-byte unchanged when off" guarantee.
 	 */
 	public void testDefaultSessionKeepsHeadlessFingerprint() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("evasion-off", TIMEOUT_MILLIS, ALLOW_ANY);
 		try {
 			session.loadHtmlForTest("<!doctype html><html><body>hi</body></html>");
@@ -129,9 +127,7 @@ public class TestBrowserBotDefenses extends TestCase {
 	 * with no {@code HeadlessChrome} token.
 	 */
 	public void testEvasionMasksWebdriverAndSetsChromeUserAgent() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("evasion-on", TIMEOUT_MILLIS, 0, ALLOW_ANY,
 			null, false, true);
 		try {
@@ -193,9 +189,7 @@ public class TestBrowserBotDefenses extends TestCase {
 	 * </p>
 	 */
 	public void testEveryLaunchUsesTheFullChromiumBuild() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession defaultSession = BrowserSession.open("build-default", TIMEOUT_MILLIS, ALLOW_ANY);
 		String defaultUa;
 		try {
@@ -224,9 +218,4 @@ public class TestBrowserBotDefenses extends TestCase {
 			REDUCED_UA_VERSION.matcher(evasionUa).find());
 		assertEquals("both paths launch the very same binary now (raw build user-agent)", defaultUa,
 			evasionUa);
-	}
-
-	private static boolean e2eEnabled() {
-		return Boolean.getBoolean("tl.ai.browser.e2e");
-	}
-}
+	}}

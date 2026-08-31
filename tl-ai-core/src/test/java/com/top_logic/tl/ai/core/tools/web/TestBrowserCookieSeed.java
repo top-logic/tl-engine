@@ -7,10 +7,13 @@ package com.top_logic.tl.ai.core.tools.web;
 
 import java.util.List;
 
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
 
 /**
@@ -20,11 +23,12 @@ import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
  * pool-seed-on-open wiring without any network fixture.
  *
  * <p>
- * Launches a real Chromium, so it is gated behind {@code -Dtl.ai.browser.e2e=true} like the other
+ * Launches a real Chromium, so it is gated behind {@link BrowserE2e} like the other
  * browser E2E tests. It needs <b>no network</b>: seeding and re-reading {@code storageState} never
  * navigates.
  * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestBrowserCookieSeed extends TestCase {
 
 	/** Allow-any policy: no navigation happens, so the policy is irrelevant. */
@@ -52,9 +56,7 @@ public class TestBrowserCookieSeed extends TestCase {
 	 * {@link BrowserSession#captureStorageState()}; an unseeded session does not.
 	 */
 	public void testSeededSessionCarriesCookies() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession seeded =
 			BrowserSession.open("cookie-seed", TIMEOUT_MILLIS, 0, ALLOW_ANY, SEED_STATE, false, false);
 		try {
@@ -89,9 +91,7 @@ public class TestBrowserCookieSeed extends TestCase {
 	 * </p>
 	 */
 	public void testDecryptedSeedIsDroppedOnceTheContextCarriesIt() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newAllowAnyService();
 		service.startUp();
 		try {
@@ -136,9 +136,4 @@ public class TestBrowserCookieSeed extends TestCase {
 		config.update(config.descriptor().getProperty(BrowserToolsService.Config.ALLOWED_DOMAINS),
 			List.of());
 		return new BrowserToolsService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
-	}
-
-	private static boolean e2eEnabled() {
-		return Boolean.getBoolean("tl.ai.browser.e2e");
-	}
-}
+	}}

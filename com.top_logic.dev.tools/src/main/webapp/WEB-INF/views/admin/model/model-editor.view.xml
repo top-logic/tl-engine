@@ -105,6 +105,7 @@
 									withEditMode="true"
 								>
 									<field attribute="name"/>
+									<field attribute="annotations"/>
 								</form>
 							</panel>
 						</pane>
@@ -412,6 +413,7 @@
 									withEditMode="true"
 								>
 									<field attribute="name"/>
+									<field attribute="annotations"/>
 								</form>
 							</panel>
 						</pane>

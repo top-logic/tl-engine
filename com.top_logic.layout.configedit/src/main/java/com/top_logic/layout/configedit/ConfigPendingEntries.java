@@ -44,7 +44,7 @@ import com.top_logic.layout.form.values.edit.Labels;
  */
 public final class ConfigPendingEntries {
 
-	private final ConfigCollectionValue _value;
+	private final ConfigCollection _value;
 
 	private final Consumer<ConfigurationItem> _onChanged;
 
@@ -144,7 +144,7 @@ public final class ConfigPendingEntries {
 	 *        Re-renders the editor, expanding the given entry, or none if it is {@code null}. Called
 	 *        by every operation here that changes what is displayed.
 	 */
-	public ConfigPendingEntries(ConfigCollectionValue value, Consumer<ConfigurationItem> onChanged) {
+	public ConfigPendingEntries(ConfigCollection value, Consumer<ConfigurationItem> onChanged) {
 		_value = value;
 		_onChanged = onChanged;
 	}

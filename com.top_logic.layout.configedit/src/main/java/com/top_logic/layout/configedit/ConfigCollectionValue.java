@@ -17,6 +17,8 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyDescriptorImpl;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.layout.form.values.edit.Labels;
+import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 
 /**
  * The collection a {@link ConfigListEditorControl} edits: its elements as a sequence, addressed by
@@ -35,7 +37,7 @@ import com.top_logic.basic.config.TypedConfiguration;
  * without a rendering context.
  * </p>
  */
-public final class ConfigCollectionValue {
+public final class ConfigCollectionValue implements ConfigCollection {
 
 	private final ConfigurationItem _parentConfig;
 
@@ -93,6 +95,7 @@ public final class ConfigCollectionValue {
 	 * </p>
 	 */
 	@SuppressWarnings("unchecked")
+	@Override
 	public List<ConfigurationItem> elements() {
 		Object value = _parentConfig.value(_property);
 		if (_property.kind() == PropertyKind.ARRAY) {
@@ -156,6 +159,7 @@ public final class ConfigCollectionValue {
 	}
 
 	/** The position of the given element, or {@code -1} if it is not in the collection. */
+	@Override
 	public int indexOf(ConfigurationItem item) {
 		List<ConfigurationItem> items = elements();
 		return items != null ? items.indexOf(item) : -1;
@@ -174,11 +178,13 @@ public final class ConfigCollectionValue {
 	 * order it is handed. Rearranging that order is therefore both meaningful and persistent.
 	 * </p>
 	 */
+	@Override
 	public boolean isReorderable() {
 		return _property.isOrdered() || _property.kind() == PropertyKind.MAP;
 	}
 
 	/** Whether the collection is indexed by a property of its entries. */
+	@Override
 	public boolean isKeyed() {
 		return _property.getKeyProperty() != null;
 	}
@@ -203,6 +209,7 @@ public final class ConfigCollectionValue {
 	 *        The entry whose key property is resolved.
 	 * @return {@code null} if the collection is not {@link #isKeyed() keyed}.
 	 */
+	@Override
 	public PropertyDescriptor keyProperty(ConfigurationItem entry) {
 		PropertyDescriptor declaredKeyProperty = _property.getKeyProperty();
 		if (declaredKeyProperty == null) {
@@ -227,6 +234,7 @@ public final class ConfigCollectionValue {
 	 * @param key
 	 *        The candidate key. Never {@code null} or empty.
 	 */
+	@Override
 	public boolean hasEntryWithKey(Object key) {
 		List<ConfigurationItem> items = elements();
 		if (items == null) {
@@ -241,6 +249,7 @@ public final class ConfigCollectionValue {
 	}
 
 	/** Appends the given element. */
+	@Override
 	public void add(ConfigurationItem entry) {
 		List<ConfigurationItem> items = elements();
 		items.add(entry);
@@ -248,6 +257,7 @@ public final class ConfigCollectionValue {
 	}
 
 	/** Removes the element at the given index, if there is one. */
+	@Override
 	public void remove(int index) {
 		List<ConfigurationItem> items = elements();
 		if (items != null && index >= 0 && index < items.size()) {
@@ -269,6 +279,7 @@ public final class ConfigCollectionValue {
 	 * @param delta
 	 *        How far to move it, negative towards the front.
 	 */
+	@Override
 	public void move(int index, int delta) {
 		List<ConfigurationItem> items = elements();
 		if (items == null) {
@@ -284,6 +295,7 @@ public final class ConfigCollectionValue {
 	}
 
 	/** Puts the given element in the place of the one at the given index. */
+	@Override
 	public void replace(int index, ConfigurationItem replacement) {
 		List<ConfigurationItem> items = elements();
 		if (items != null && index >= 0 && index < items.size()) {
@@ -296,6 +308,21 @@ public final class ConfigCollectionValue {
 	 * Creates an element of the collection's own element type - the fallback for a collection that
 	 * offers no polymorphic options to pick a type from.
 	 */
+	@Override
+	public String label() {
+		return Labels.propertyLabel(_property, false);
+	}
+
+	@Override
+	public PropertyDescriptor titleProperty(ConfigurationItem entry) {
+		TitleProperty declared = _property.getAnnotation(TitleProperty.class);
+		if (declared == null || declared.name().isEmpty()) {
+			return null;
+		}
+		return entry.descriptor().getProperty(declared.name());
+	}
+
+	@Override
 	public ConfigurationItem newElement() {
 		return TypedConfiguration.newConfigItem(elementType());
 	}

@@ -65,16 +65,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 	private final ReactContext _context;
 
-	private final ConfigurationItem _parentConfig;
-
-	private final PropertyDescriptor _property;
-
 	/**
 	 * The edited collection, which is where every difference between a LIST, an ARRAY and a MAP
 	 * property lives - see {@link ConfigCollectionValue}. This class works in element indices and
 	 * never asks what shape holds them.
 	 */
-	private final ConfigCollectionValue _value;
+	private final ConfigCollection _value;
 
 	private final PolymorphicOptions.Choices _choices;
 
@@ -168,8 +164,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			PropertyDescriptor property, ConfigFieldIndex index, boolean editable) {
 		super(context);
 		_context = context;
-		_parentConfig = parentConfig;
-		_property = property;
 		_index = index;
 		_editable = editable;
 		_value = new ConfigCollectionValue(parentConfig, property);
@@ -240,7 +234,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			// Add button at the bottom. Not rendered at all while !_editable - the requirement is
 			// that no collection action is offered in view mode, not merely a disabled one.
 			ReactButtonControl addButton =
-				new ReactButtonControl(_context, "+ " + Labels.propertyLabel(_property, false),
+				new ReactButtonControl(_context, "+ " + _value.label(),
 					ctx -> {
 						addElement();
 						return HandlerResult.DEFAULT_RESULT;
@@ -684,13 +678,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private PropertyDescriptor resolveTitleProperty(ConfigurationItem item) {
-		// 1. @TitleProperty on the LIST property itself.
-		TitleProperty titleOnList = _property.getAnnotation(TitleProperty.class);
-		if (titleOnList != null && !titleOnList.name().isEmpty()) {
-			PropertyDescriptor prop = item.descriptor().getProperty(titleOnList.name());
-			if (prop != null) {
-				return prop;
-			}
+		// 1. What the collection itself declares.
+		PropertyDescriptor declared = _value.titleProperty(item);
+		if (declared != null) {
+			return declared;
 		}
 
 		// 2. @TitleProperty on the element type.
@@ -702,8 +693,9 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			}
 		}
 
-		// 3. Key property.
-		PropertyDescriptor keyProp = _property.getKeyProperty();
+		// 3. The key property - asked of the collection, so it is the entry's own instance, the
+		// same one every other key lookup here uses.
+		PropertyDescriptor keyProp = _value.keyProperty(item);
 		if (keyProp != null) {
 			return keyProp;
 		}

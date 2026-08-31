@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Every interaction request of the last 30 days, open ones first by default.
+	Every interaction request, oldest first - an unanswered question does not become less
+	interesting for being old, which is the strongest argument against the 30-day window this table
+	used to carry. Narrowing the list is the state and date filters' job.
 	
 	"Zugewiesen" being empty is not a formatting gap but the finding: a question raised by a
 	BACKGROUND or SCHEDULED run has no responder, so nobody is told it exists and the run stays
@@ -16,8 +18,6 @@
 	<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
 		<elements><![CDATA[
 			model -> all(`tl.ai.execution:InteractionRequest`)
-				.filter(r -> $r.get(`tl.ai.execution:InteractionRequest#createdAt`)
-					>= now().toSystemCalendar().withDayAdded(-30).toDate())
 		]]></elements>
 		<supportsElement>element -> $element.instanceOf(`tl.ai.execution:InteractionRequest`)</supportsElement>
 	</modelBuilder>

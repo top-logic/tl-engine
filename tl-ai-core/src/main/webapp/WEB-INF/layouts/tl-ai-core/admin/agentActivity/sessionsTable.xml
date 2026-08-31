@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The session list. Four of its columns are computed rather than stored - how many runs a session
-	had, how many of them failed, how many tokens they billed, and how many questions of that
-	session still wait for a human. Each one walks the AgentExecution#session reference backwards
-	with referers(), which costs one indexed association query per row and column.
+	Every session, without a time limit. Finding one is the header filters' job, not the model
+	builder's.
 	
-	That cost is why the model builder pre-filters to the last 30 days: the table's own column
-	filters run *after* the rows have been built, so they would not save a single query. The title
-	says the limit out loud rather than letting a reader wonder where an old session went. Should
-	the list have to reach further back, the answer is denormalised counters maintained by
-	AgentExecutionStore, not a wider query here.
+	An earlier revision of this file pre-filtered to the last 30 days, on the theory that the four
+	computed columns - how many runs a session had, how many failed, how many tokens they billed,
+	how many questions still wait for a human - each walk AgentExecution#session backwards with
+	referers() and so cost one indexed association query per row and column, which the table's own
+	filters could not save because they run after the rows are built.
+	
+	The premise was right and the conclusion was wrong, and the measurement is in the pull request:
+	over 500 sessions and 3874 runs, loading every session takes 1 ms and the date filter that used
+	to bound it takes 2 ms - the window cost twice what it saved, because the filter evaluates
+	now().withDayAdded(-30) once per row. All four referers() columns together evaluate over every
+	row in 37 ms, and even that is only paid when a user sorts or filters on one: a column value is
+	fetched per rendered cell, and only the current page is rendered.
 -->
 <tableView name="aiSessionsTable"
 	objectType="tl.ai.execution:AgentSession"
@@ -21,12 +26,6 @@
 	<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
 		<elements><![CDATA[
 			model -> all(`tl.ai.execution:AgentSession`)
-				.filter(s -> {
-					touched = ifElse(isEmpty($s.get(`tl.ai.execution:AgentSession#lastUpdated`)),
-						$s.get(`tl.ai.execution:AgentSession#createdAt`),
-						$s.get(`tl.ai.execution:AgentSession#lastUpdated`));
-					isEmpty($touched) or $touched >= now().toSystemCalendar().withDayAdded(-30).toDate();
-				})
 		]]></elements>
 		<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentSession`)</supportsElement>
 	</modelBuilder>

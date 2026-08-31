@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The run list, pre-filtered to the last 7 days for the same reason the session list is filtered
-	to 30: the computed columns walk references per row, and the table's own filters run after the
-	rows exist. Runs are far more numerous than sessions, hence the shorter window.
+	Every run, main agents and sub-agents, without a time limit. An earlier revision bounded this to
+	the last 7 days because the computed columns walk references per row and the table's own filters
+	run after the rows exist. The measurement in the pull request says the bound was the more
+	expensive half of that trade: loading all 3874 runs takes 2 ms, applying the 7-day filter takes
+	8 ms, and both referers() columns evaluated over every row take 12 ms - which the table does not
+	do anyway, because a column value is fetched per rendered cell and only the current page is
+	rendered. Which runs a reader wants is a question for the column filters.
 	
 	"Dauer", "Token", "Teilagenten" and "Offene Rückfragen" are computed. A running run has no
 	endedAt, so its duration is measured against now - that is what an operator wants to read there,
 	and the value is a snapshot, not a ticking clock; pressing Aktualisieren re-reads it. The last
-	two are the ones that cost a backward query per row, which is why they are reachable through the
-	column chooser rather than shown by default.
+	two stay out of the default column set for legibility, not for cost: a run row that carries
+	every count at once is a row nobody reads. They are one click away in the column chooser.
 -->
 <tableView name="aiExecutionsTable"
 	objectType="tl.ai.execution:AgentExecution"
@@ -20,8 +24,6 @@
 	<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
 		<elements><![CDATA[
 			model -> all(`tl.ai.execution:AgentExecution`)
-				.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
-					>= now().toSystemCalendar().withDayAdded(-7).toDate())
 		]]></elements>
 		<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
 	</modelBuilder>

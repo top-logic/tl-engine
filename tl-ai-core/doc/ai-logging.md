@@ -13,7 +13,7 @@ target and controlled independently of the main application log.
   per-run trace. Everything is guarded by `Logger.isDebugEnabled(...)`, so `debug` off means zero
   cost.
 - **The log never contains prompts, tool arguments or tool results.** That content is persisted in
-  the `tl.ai.agent` execution model (`AgentExecution` and friends). The log only carries
+  the `tl.ai.execution` model (`AgentExecution` and friends). The log only carries
   diagnostics - sizes, timings, counts, stop reasons - correlated to those records by `runId`.
 
 ## What is and is not logged

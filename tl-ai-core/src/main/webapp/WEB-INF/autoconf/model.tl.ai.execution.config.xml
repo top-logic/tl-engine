@@ -7,7 +7,7 @@
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance class="com.top_logic.element.model.DynamicModelService">
 				<declarations>
-					<declaration file="/WEB-INF/model/tl.ai.agent.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.ai.execution.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

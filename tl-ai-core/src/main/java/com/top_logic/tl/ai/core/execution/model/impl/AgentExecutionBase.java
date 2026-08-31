@@ -54,6 +54,15 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	String CANCEL_REQUESTED_ATTR = "cancelRequested";
 
 	/**
+	 * Part <code>displayName</code> of <code>AgentExecution</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String DISPLAY_NAME_ATTR = "displayName";
+
+	/**
 	 * Part <code>endedAt</code> of <code>AgentExecution</code>
 	 * 
 	 * <p>
@@ -102,7 +111,7 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 * Part <code>parentExecution</code> of <code>AgentExecution</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.ai.agent:AgentExecution</code> in configuration.
+	 * Declared as <code>tl.ai.execution:AgentExecution</code> in configuration.
 	 * </p>
 	 */
 	String PARENT_EXECUTION_ATTR = "parentExecution";
@@ -138,7 +147,7 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 * Part <code>session</code> of <code>AgentExecution</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.ai.agent:AgentSession</code> in configuration.
+	 * Declared as <code>tl.ai.execution:AgentSession</code> in configuration.
 	 * </p>
 	 */
 	String SESSION_ATTR = "session";
@@ -156,7 +165,7 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 * Part <code>status</code> of <code>AgentExecution</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.ai.agent:ExecutionStatus</code> in configuration.
+	 * Declared as <code>tl.ai.execution:ExecutionStatus</code> in configuration.
 	 * </p>
 	 */
 	String STATUS_ATTR = "status";
@@ -242,6 +251,13 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setCancelRequested(boolean newValue) {
 		tUpdateByName(CANCEL_REQUESTED_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #DISPLAY_NAME_ATTR}.
+	 */
+	default String getDisplayName() {
+		return (String) tValueByName(DISPLAY_NAME_ATTR);
 	}
 
 	/**

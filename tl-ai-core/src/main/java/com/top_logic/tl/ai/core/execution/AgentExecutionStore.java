@@ -35,12 +35,12 @@ import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.AgentTask;
 import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
-import com.top_logic.tl.ai.core.execution.model.TlAiAgentFactory;
+import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Service that persists and retrieves the <code>tl.ai.agent</code> execution model:
+ * Service that persists and retrieves the <code>tl.ai.execution</code> model:
  * {@link AgentSession}, {@link AgentExecution}, {@link InteractionRequest} and {@link AgentTask}.
  *
  * <p>
@@ -76,7 +76,7 @@ import com.top_logic.util.model.ModelService;
 public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionStore.Config<?>> {
 
 	/**
-	 * How an {@link AgentSession} was started. Mirrors the <code>tl.ai.agent:SessionKind</code>
+	 * How an {@link AgentSession} was started. Mirrors the <code>tl.ai.execution:SessionKind</code>
 	 * enumeration.
 	 */
 	public enum SessionKind {
@@ -92,7 +92,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 
 	/**
 	 * Lifecycle state of an {@link AgentExecution}. Mirrors the
-	 * <code>tl.ai.agent:ExecutionStatus</code> enumeration.
+	 * <code>tl.ai.execution:ExecutionStatus</code> enumeration.
 	 */
 	public enum ExecutionStatus {
 		/** The agent loop is currently running (or crashed without reaching a terminal state). */
@@ -108,7 +108,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
-	 * Kind of human-in-the-loop request. Mirrors the <code>tl.ai.agent:InteractionType</code>
+	 * Kind of human-in-the-loop request. Mirrors the <code>tl.ai.execution:InteractionType</code>
 	 * enumeration.
 	 */
 	public enum InteractionType {
@@ -122,7 +122,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 
 	/**
 	 * Lifecycle state of an {@link InteractionRequest}. Mirrors the
-	 * <code>tl.ai.agent:InteractionState</code> enumeration.
+	 * <code>tl.ai.execution:InteractionState</code> enumeration.
 	 */
 	public enum InteractionState {
 		/** Waiting for a response. */
@@ -194,7 +194,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 					TLClassifier cancelledState = interactionStateClassifier(InteractionState.CANCELLED);
 					Date now = new Date();
 					int count = 0;
-					for (TLObject obj : allInstances(TlAiAgentFactory.getInteractionRequestType())) {
+					for (TLObject obj : allInstances(TlAiExecutionFactory.getInteractionRequestType())) {
 						InteractionRequest request = (InteractionRequest) obj;
 						if (pending.equals(request.getState())) {
 							request.setState(cancelledState);
@@ -303,7 +303,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	public AgentSession createSession(SessionKind kind, Person owner, String title) {
 		return write(() -> {
 		try (Transaction tx = beginTx("Create agent session")) {
-			AgentSession session = TlAiAgentFactory.getInstance().createAgentSession();
+			AgentSession session = TlAiExecutionFactory.getInstance().createAgentSession();
 			session.setKind(kindClassifier(kind));
 			if (owner != null) {
 				session.setOwner(owner);
@@ -375,7 +375,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		if (sessionId == null || sessionId.isEmpty()) {
 			return null;
 		}
-		for (TLObject obj : allInstances(TlAiAgentFactory.getAgentSessionType())) {
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentSessionType())) {
 			AgentSession session = (AgentSession) obj;
 			if (sessionId.equals(KBUtils.getWrappedObjectName(session).toString())) {
 				return session;
@@ -396,7 +396,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			return result;
 		}
 		TLClassifier kindFilter = kind != null ? kindClassifier(kind) : null;
-		for (TLObject obj : allInstances(TlAiAgentFactory.getAgentSessionType())) {
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentSessionType())) {
 			AgentSession session = (AgentSession) obj;
 			if (!owner.equals(session.getOwner())) {
 				continue;
@@ -438,7 +438,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			String model, String provider, AgentExecution parent) {
 		return write(() -> {
 		try (Transaction tx = beginTx("Begin agent execution " + runId)) {
-			AgentExecution execution = TlAiAgentFactory.getInstance().createAgentExecution();
+			AgentExecution execution = TlAiExecutionFactory.getInstance().createAgentExecution();
 			execution.setSession(session);
 			execution.setRunId(runId);
 			execution.setAgentName(agentName);
@@ -581,7 +581,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		if (runId == null || runId.isEmpty()) {
 			return null;
 		}
-		for (TLObject obj : allInstances(TlAiAgentFactory.getAgentExecutionType())) {
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentExecutionType())) {
 			AgentExecution execution = (AgentExecution) obj;
 			if (runId.equals(execution.getRunId())) {
 				return execution;
@@ -595,7 +595,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 */
 	public List<AgentExecution> executionsOf(AgentSession session) {
 		List<AgentExecution> result = new ArrayList<>();
-		for (TLObject obj : allInstances(TlAiAgentFactory.getAgentExecutionType())) {
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentExecutionType())) {
 			AgentExecution execution = (AgentExecution) obj;
 			if (session.equals(execution.getSession())) {
 				result.add(execution);
@@ -617,13 +617,13 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		write(() -> {
 		try (Transaction tx = beginTx("Delete agent session")) {
 			List<AgentExecution> executions = executionsOf(session);
-			for (TLObject obj : allInstances(TlAiAgentFactory.getInteractionRequestType())) {
+			for (TLObject obj : allInstances(TlAiExecutionFactory.getInteractionRequestType())) {
 				InteractionRequest request = (InteractionRequest) obj;
 				if (executions.contains(request.getExecution())) {
 					request.tDelete();
 				}
 			}
-			for (TLObject obj : allInstances(TlAiAgentFactory.getAgentTaskType())) {
+			for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentTaskType())) {
 				AgentTask task = (AgentTask) obj;
 				if (session.equals(task.getSession())) {
 					task.tDelete();
@@ -649,7 +649,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 */
 	public TokenUsage totalUsageWithChildren(AgentExecution root) {
 		List<AgentExecution> all = new ArrayList<>();
-		for (TLObject obj : allInstances(TlAiAgentFactory.getAgentExecutionType())) {
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentExecutionType())) {
 			all.add((AgentExecution) obj);
 		}
 		TokenUsage sum = usageOf(root);
@@ -691,7 +691,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			String requestId, String header, String prompt, String payload) {
 		return write(() -> {
 		try (Transaction tx = beginTx("Create interaction request " + requestId)) {
-			InteractionRequest request = TlAiAgentFactory.getInstance().createInteractionRequest();
+			InteractionRequest request = TlAiExecutionFactory.getInstance().createInteractionRequest();
 			request.setExecution(execution);
 			request.setType(interactionTypeClassifier(type));
 			request.setState(interactionStateClassifier(InteractionState.PENDING));
@@ -766,7 +766,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		if (requestId == null) {
 			return null;
 		}
-		for (TLObject obj : allInstances(TlAiAgentFactory.getInteractionRequestType())) {
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getInteractionRequestType())) {
 			InteractionRequest request = (InteractionRequest) obj;
 			if (requestId.equals(request.getRequestId())) {
 				return request;
@@ -785,7 +785,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	public List<InteractionRequest> pendingInteractionsFor(Person responder) {
 		TLClassifier pending = interactionStateClassifier(InteractionState.PENDING);
 		List<InteractionRequest> result = new ArrayList<>();
-		for (TLObject obj : allInstances(TlAiAgentFactory.getInteractionRequestType())) {
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getInteractionRequestType())) {
 			InteractionRequest request = (InteractionRequest) obj;
 			if (!pending.equals(request.getState())) {
 				continue;
@@ -809,7 +809,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			String status, int ordinal, AgentExecution touchedBy) {
 		return write(() -> {
 		try (Transaction tx = beginTx("Create agent task " + taskId)) {
-			AgentTask task = TlAiAgentFactory.getInstance().createAgentTask();
+			AgentTask task = TlAiExecutionFactory.getInstance().createAgentTask();
 			task.setSession(session);
 			task.setTaskId(taskId);
 			task.setSubject(subject);
@@ -874,7 +874,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 */
 	public List<AgentTask> tasksOf(AgentSession session) {
 		List<AgentTask> result = new ArrayList<>();
-		for (TLObject obj : allInstances(TlAiAgentFactory.getAgentTaskType())) {
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getAgentTaskType())) {
 			AgentTask task = (AgentTask) obj;
 			if (session.equals(task.getSession())) {
 				result.add(task);
@@ -894,7 +894,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	private void cancelPendingInteractions(AgentExecution execution) {
 		TLClassifier pending = interactionStateClassifier(InteractionState.PENDING);
 		Date now = new Date();
-		for (TLObject obj : allInstances(TlAiAgentFactory.getInteractionRequestType())) {
+		for (TLObject obj : allInstances(TlAiExecutionFactory.getInteractionRequestType())) {
 			InteractionRequest request = (InteractionRequest) obj;
 			if (execution.equals(request.getExecution()) && pending.equals(request.getState())) {
 				request.setState(interactionStateClassifier(InteractionState.CANCELLED));
@@ -927,13 +927,13 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	private static TLClassifier kindClassifier(SessionKind kind) {
 		switch (kind) {
 			case CHAT:
-				return TlAiAgentFactory.getCHATSessionKindClassifier();
+				return TlAiExecutionFactory.getCHATSessionKindClassifier();
 			case BACKGROUND:
-				return TlAiAgentFactory.getBACKGROUNDSessionKindClassifier();
+				return TlAiExecutionFactory.getBACKGROUNDSessionKindClassifier();
 			case SCHEDULED:
-				return TlAiAgentFactory.getSCHEDULEDSessionKindClassifier();
+				return TlAiExecutionFactory.getSCHEDULEDSessionKindClassifier();
 			case SCRIPT:
-				return TlAiAgentFactory.getSCRIPTSessionKindClassifier();
+				return TlAiExecutionFactory.getSCRIPTSessionKindClassifier();
 		}
 		throw new IllegalArgumentException("Unknown session kind: " + kind);
 	}
@@ -941,15 +941,15 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	private static TLClassifier statusClassifier(ExecutionStatus status) {
 		switch (status) {
 			case RUNNING:
-				return TlAiAgentFactory.getRUNNINGExecutionStatusClassifier();
+				return TlAiExecutionFactory.getRUNNINGExecutionStatusClassifier();
 			case COMPLETE:
-				return TlAiAgentFactory.getCOMPLETEExecutionStatusClassifier();
+				return TlAiExecutionFactory.getCOMPLETEExecutionStatusClassifier();
 			case ERROR:
-				return TlAiAgentFactory.getERRORExecutionStatusClassifier();
+				return TlAiExecutionFactory.getERRORExecutionStatusClassifier();
 			case CANCELLED:
-				return TlAiAgentFactory.getCANCELLEDExecutionStatusClassifier();
+				return TlAiExecutionFactory.getCANCELLEDExecutionStatusClassifier();
 			case REJECTED:
-				return TlAiAgentFactory.getREJECTEDExecutionStatusClassifier();
+				return TlAiExecutionFactory.getREJECTEDExecutionStatusClassifier();
 		}
 		throw new IllegalArgumentException("Unknown execution status: " + status);
 	}
@@ -957,11 +957,11 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	private static TLClassifier interactionTypeClassifier(InteractionType type) {
 		switch (type) {
 			case APPROVAL:
-				return TlAiAgentFactory.getAPPROVALInteractionTypeClassifier();
+				return TlAiExecutionFactory.getAPPROVALInteractionTypeClassifier();
 			case QUESTION:
-				return TlAiAgentFactory.getQUESTIONInteractionTypeClassifier();
+				return TlAiExecutionFactory.getQUESTIONInteractionTypeClassifier();
 			case CHOICE:
-				return TlAiAgentFactory.getCHOICEInteractionTypeClassifier();
+				return TlAiExecutionFactory.getCHOICEInteractionTypeClassifier();
 		}
 		throw new IllegalArgumentException("Unknown interaction type: " + type);
 	}
@@ -969,13 +969,13 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	private static TLClassifier interactionStateClassifier(InteractionState state) {
 		switch (state) {
 			case PENDING:
-				return TlAiAgentFactory.getPENDINGInteractionStateClassifier();
+				return TlAiExecutionFactory.getPENDINGInteractionStateClassifier();
 			case RESOLVED:
-				return TlAiAgentFactory.getRESOLVEDInteractionStateClassifier();
+				return TlAiExecutionFactory.getRESOLVEDInteractionStateClassifier();
 			case TIMED_OUT:
-				return TlAiAgentFactory.getTIMEDOUTInteractionStateClassifier();
+				return TlAiExecutionFactory.getTIMEDOUTInteractionStateClassifier();
 			case CANCELLED:
-				return TlAiAgentFactory.getCANCELLEDInteractionStateClassifier();
+				return TlAiExecutionFactory.getCANCELLEDInteractionStateClassifier();
 		}
 		throw new IllegalArgumentException("Unknown interaction state: " + state);
 	}

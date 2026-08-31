@@ -58,6 +58,15 @@
 			<artifactId>tl-contact</artifactId>
 		</dependency>
 
+		<!-- TL-Script: AttributeByExpression backs the derived attributes of the
+		     tl.ai.execution model, and 12 classes compile against
+		     com.top_logic.model.search. Declared explicitly rather than relying on
+		     the transitive path through tl-contact. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-model-search</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-element</artifactId>
@@ -149,7 +158,7 @@
 									<goal>generate-java</goal>
 								</goals>
 								<configuration>
-									<modules>tl.ai.core,tl.ai.htmlpages,tl.ai.agent,tl.ai.screenshots,tl.ai.cookiepool</modules>
+									<modules>tl.ai.core,tl.ai.htmlpages,tl.ai.execution,tl.ai.screenshots,tl.ai.cookiepool</modules>
 								</configuration>
 							</execution>
 						</executions>

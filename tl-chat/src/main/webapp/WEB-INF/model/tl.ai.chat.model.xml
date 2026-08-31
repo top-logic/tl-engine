@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<!-- Obsolete: replaced by tl.ai.agent:AgentSession (tl-ai-core). Instances are migrated
+<!-- Obsolete: replaced by tl.ai.execution:AgentSession (tl-ai-core). Instances are migrated
      eagerly at startup by LegacyChatSessionMigration.
      TODO: Delete this model in the next release via a migration (delete-class/delete-module +
      DeleteTableProcessor) — see the checklist in LegacyChatSessionMigration. -->

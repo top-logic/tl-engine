@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
-	<module name="tl.ai.agent">
+	<module name="tl.ai.execution">
 		<annotations>
 			<package-binding
 				implementation-package="com.top_logic.tl.ai.core.execution.model.impl"
@@ -46,11 +46,39 @@
 			<class name="AgentSession">
 				<annotations>
 					<table name="AgentSession"/>
+					<id-column value="displayName"/>
 					<main-properties properties="title,kind,status,lastUpdated"/>
 				</annotations>
 				<attributes>
+					<!--
+						Readable identity. Sessions started by a background job, a schedule or a
+						script never get a title, so fall back to the owner and the creation time.
+						Derived rather than stored: the value is composed and is correct for rows
+						that already exist, without a backfill.
+					-->
+					<property name="displayName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										s -> {
+											title = $s.get(`tl.ai.execution:AgentSession#title`);
+											owner = $s.get(`tl.ai.execution:AgentSession#owner`);
+											createdAt = $s.get(`tl.ai.execution:AgentSession#createdAt`);
+											fallback =
+												ifElse(isEmpty($owner), "", $owner.label() + ifElse(isEmpty($createdAt), "", " - "))
+												+ ifElse(isEmpty($createdAt), "", dateFormat("yyyy-MM-dd HH:mm:ss").format($createdAt));
+											ifElse(isEmpty($title), $fallback, $title);
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
 					<reference name="kind"
-						type="tl.ai.agent:SessionKind"
+						type="tl.ai.execution:SessionKind"
 						mandatory="true"
 					/>
 					<reference name="owner"
@@ -86,16 +114,42 @@
 			<class name="AgentExecution">
 				<annotations>
 					<table name="AgentExecution"/>
-					<id-column value="runId"/>
+					<id-column value="displayName"/>
 					<main-properties properties="runId,agentName,status,startedAt"/>
 				</annotations>
 				<attributes>
+					<!--
+						Readable identity. The run ID alone is an opaque UUID; leading with the agent
+						and the start time makes the row readable, and a short run-ID suffix keeps it
+						a discriminator: parallel sub-agent spawns can start within the same second.
+					-->
+					<property name="displayName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										e -> {
+											agentName = $e.get(`tl.ai.execution:AgentExecution#agentName`);
+											startedAt = $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+											runId = $e.get(`tl.ai.execution:AgentExecution#runId`);
+											shortId = ifElse(length($runId) > 6, $runId.subString(0, 6), $runId);
+											$agentName
+												+ ifElse(isEmpty($startedAt), "", " - " + dateFormat("yyyy-MM-dd HH:mm:ss").format($startedAt))
+												+ ifElse(isEmpty($shortId), "", " (" + $shortId + ")");
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
 					<reference name="session"
-						type="tl.ai.agent:AgentSession"
+						type="tl.ai.execution:AgentSession"
 						mandatory="true"
 					/>
 					<reference name="parentExecution"
-						type="tl.ai.agent:AgentExecution"
+						type="tl.ai.execution:AgentExecution"
 					/>
 					<property name="runId"
 						mandatory="true"
@@ -112,7 +166,7 @@
 						type="tl.core:String"
 					/>
 					<reference name="status"
-						type="tl.ai.agent:ExecutionStatus"
+						type="tl.ai.execution:ExecutionStatus"
 						mandatory="true"
 					/>
 					<property name="stopReason"
@@ -163,12 +217,40 @@
 			<class name="InteractionRequest">
 				<annotations>
 					<table name="AgentInteractionRequest"/>
-					<id-column value="requestId"/>
+					<id-column value="displayName"/>
 					<main-properties properties="requestId,type,state,createdAt"/>
 				</annotations>
 				<attributes>
+					<!--
+						Readable identity: what is being asked, about what, and when. The subject is
+						the header, or the beginning of the prompt when no header was given; the
+						prompt is free text, so its line breaks are collapsed.
+					-->
+					<property name="displayName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										r -> {
+											header = $r.get(`tl.ai.execution:InteractionRequest#header`);
+											prompt = regex("\\s+").regexReplace($r.get(`tl.ai.execution:InteractionRequest#prompt`), " ");
+											excerpt = ifElse(length($prompt) > 60, $prompt.subString(0, 60) + "...", $prompt);
+											subject = ifElse(isEmpty($header), $excerpt, $header);
+											type = $r.get(`tl.ai.execution:InteractionRequest#type`);
+											createdAt = $r.get(`tl.ai.execution:InteractionRequest#createdAt`);
+											ifElse(isEmpty($type), "", $type.label())
+												+ ifElse(isEmpty($subject), "", ": " + $subject)
+												+ ifElse(isEmpty($createdAt), "", " (" + dateFormat("yyyy-MM-dd HH:mm:ss").format($createdAt) + ")");
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
 					<reference name="execution"
-						type="tl.ai.agent:AgentExecution"
+						type="tl.ai.execution:AgentExecution"
 						mandatory="true"
 					/>
 					<property name="requestId"
@@ -176,11 +258,11 @@
 						type="tl.core:String"
 					/>
 					<reference name="type"
-						type="tl.ai.agent:InteractionType"
+						type="tl.ai.execution:InteractionType"
 						mandatory="true"
 					/>
 					<reference name="state"
-						type="tl.ai.agent:InteractionState"
+						type="tl.ai.execution:InteractionState"
 						mandatory="true"
 					/>
 					<property name="header"
@@ -217,16 +299,38 @@
 			<class name="AgentTask">
 				<annotations>
 					<table name="AgentTask"/>
-					<id-column value="taskId"/>
+					<id-column value="displayName"/>
 					<main-properties properties="taskId,subject,status,ordinal"/>
 				</annotations>
 				<attributes>
+					<!--
+						Readable identity: the position in the plan plus the subject. Falls back to
+						the task ID for a task that has no subject yet.
+					-->
+					<property name="displayName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										t -> {
+											ordinal = $t.get(`tl.ai.execution:AgentTask#ordinal`);
+											subject = $t.get(`tl.ai.execution:AgentTask#subject`);
+											ifElse(isEmpty($ordinal), "", $ordinal + ". ")
+												+ ifElse(isEmpty($subject), $t.get(`tl.ai.execution:AgentTask#taskId`), $subject);
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
 					<reference name="session"
-						type="tl.ai.agent:AgentSession"
+						type="tl.ai.execution:AgentSession"
 						mandatory="true"
 					/>
 					<reference name="lastTouchedByExecution"
-						type="tl.ai.agent:AgentExecution"
+						type="tl.ai.execution:AgentExecution"
 					/>
 					<property name="taskId"
 						mandatory="true"

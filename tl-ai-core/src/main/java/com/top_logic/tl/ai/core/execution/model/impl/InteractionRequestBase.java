@@ -27,10 +27,19 @@ public interface InteractionRequestBase extends com.top_logic.model.TLObject {
 	String CREATED_AT_ATTR = "createdAt";
 
 	/**
+	 * Part <code>displayName</code> of <code>InteractionRequest</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String DISPLAY_NAME_ATTR = "displayName";
+
+	/**
 	 * Part <code>execution</code> of <code>InteractionRequest</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.ai.agent:AgentExecution</code> in configuration.
+	 * Declared as <code>tl.ai.execution:AgentExecution</code> in configuration.
 	 * </p>
 	 */
 	String EXECUTION_ATTR = "execution";
@@ -102,7 +111,7 @@ public interface InteractionRequestBase extends com.top_logic.model.TLObject {
 	 * Part <code>state</code> of <code>InteractionRequest</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.ai.agent:InteractionState</code> in configuration.
+	 * Declared as <code>tl.ai.execution:InteractionState</code> in configuration.
 	 * </p>
 	 */
 	String STATE_ATTR = "state";
@@ -111,7 +120,7 @@ public interface InteractionRequestBase extends com.top_logic.model.TLObject {
 	 * Part <code>type</code> of <code>InteractionRequest</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.ai.agent:InteractionType</code> in configuration.
+	 * Declared as <code>tl.ai.execution:InteractionType</code> in configuration.
 	 * </p>
 	 */
 	String TYPE_ATTR = "type";
@@ -128,6 +137,13 @@ public interface InteractionRequestBase extends com.top_logic.model.TLObject {
 	 */
 	default void setCreatedAt(java.util.Date newValue) {
 		tUpdateByName(CREATED_AT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #DISPLAY_NAME_ATTR}.
+	 */
+	default String getDisplayName() {
+		return (String) tValueByName(DISPLAY_NAME_ATTR);
 	}
 
 	/**

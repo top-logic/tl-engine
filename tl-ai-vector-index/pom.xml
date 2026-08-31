@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-ai-parent</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.2-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-ai-vector-index</artifactId>
@@ -20,7 +20,7 @@
   <properties>
 	  <!-- Use the latest version whenever possible. -->
 	  <jackson.version>2.19.0</jackson.version>
-	  <langchain4j.version>1.18.1</langchain4j.version>
+	  <langchain4j.version>1.19.0</langchain4j.version>
 	</properties>
 
 	<dependencyManagement>
@@ -63,7 +63,7 @@
 	<dependency>
 	  <groupId>io.qdrant</groupId>
 	  <artifactId>client</artifactId>
-	  <version>1.18.3</version>
+	  <version>1.19.0</version>
 	</dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -94,12 +94,12 @@
 	<dependency>
 	    <groupId>dev.langchain4j</groupId>
 	    <artifactId>langchain4j-qdrant</artifactId>
-	    <version>1.18.1-beta28</version>
+	    <version>1.19.0-beta29</version>
 	</dependency>
 	<dependency>
 	    <groupId>dev.langchain4j</groupId>
 	    <artifactId>langchain4j-community-jvector</artifactId>
-	    <version>1.18.0-beta28</version>
+	    <version>1.19.0-beta29</version>
 	</dependency>
   </dependencies>
   

@@ -37,7 +37,16 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
- * Visual test for the conversation memory system — prints the full lifecycle to stdout.
+ * Visual harness for the conversation memory system - prints the full lifecycle to stdout for a
+ * human to read.
+ *
+ * <p>
+ * This is <b>not test coverage</b>: it asserts nothing. Its whole value is the rendered transcript,
+ * so it is gated behind {@code -Dtl.ai.visual=true} like the browser end-to-end tests are gated
+ * behind {@code -Dtl.ai.browser.e2e=true}. Without the flag every method returns immediately, so a
+ * package-wide run such as {@code -Dtest='com.top_logic.tl.ai.core.**'} neither fails on the missing
+ * {@code ThreadContextManager} nor reports a passing test that checked nothing.
+ * </p>
  *
  * <p>Demonstrates three scenarios:</p>
  * <ol>
@@ -48,7 +57,7 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  *
  * <p>Run manually:</p>
  * <pre>
- * mvn test -pl tl-ai-core -Dtest=VisualConversationMemoryTest -DskipTests=false
+ * mvn test -pl tl-ai-core -DskipTests=false -Dtl.ai.visual=true -Dtest=VisualConversationMemoryTest
  * </pre>
  */
 public class VisualConversationMemoryTest extends TestCase {
@@ -72,6 +81,9 @@ public class VisualConversationMemoryTest extends TestCase {
 	 * Shows how the ByteBasedTokenEstimator estimates tokens for each message type.
 	 */
 	public void testTokenEstimation() {
+		if (!visualEnabled()) {
+			return;
+		}
 		header("Token Estimation — bytes/4 heuristic");
 
 		UserMessage shortUser = new UserMessage("u1", T0,
@@ -102,6 +114,9 @@ public class VisualConversationMemoryTest extends TestCase {
 	 * Demonstrates the TruncatingStrategy dropping old messages and maintaining tool pairing.
 	 */
 	public void testTruncationCompaction() {
+		if (!visualEnabled()) {
+			return;
+		}
 		header("Truncation Compaction — drop oldest, preserve recent");
 
 		Conversation conv = new Conversation();
@@ -148,6 +163,9 @@ public class VisualConversationMemoryTest extends TestCase {
 	 * Demonstrates the SummarizingStrategy replacing old messages with an LLM-generated summary.
 	 */
 	public void testSummarizingCompaction() {
+		if (!visualEnabled()) {
+			return;
+		}
 		header("Summarizing Compaction — LLM summary replaces old messages");
 
 		Conversation conv = new Conversation();
@@ -191,6 +209,9 @@ public class VisualConversationMemoryTest extends TestCase {
 	 * Demonstrates hybrid token estimation: API baseline + heuristic for new messages.
 	 */
 	public void testHybridEstimation() {
+		if (!visualEnabled()) {
+			return;
+		}
 		header("Hybrid Token Estimation — API baseline + heuristic delta");
 
 		ConversationMemory memory = new ConversationMemory(
@@ -238,6 +259,9 @@ public class VisualConversationMemoryTest extends TestCase {
 	 * Full end-to-end: agent loop with a tiny context window that triggers auto-compaction.
 	 */
 	public void testAgentLoopAutoCompaction() {
+		if (!visualEnabled()) {
+			return;
+		}
 		header("Agent Loop with Auto-Compaction");
 
 		System.out.println(ANSI_DIM + "\n  Scenario: 500-token context window, 100 reserved → 400 usable"
@@ -338,6 +362,13 @@ public class VisualConversationMemoryTest extends TestCase {
 	}
 
 	// --- Helpers ---
+
+	/**
+	 * Whether the visual harnesses are enabled, via {@code -Dtl.ai.visual=true}.
+	 */
+	private static boolean visualEnabled() {
+		return Boolean.getBoolean("tl.ai.visual");
+	}
 
 	private void printEstimate(String label, Message msg) {
 		int tokens = _estimator.estimateTokens(msg);

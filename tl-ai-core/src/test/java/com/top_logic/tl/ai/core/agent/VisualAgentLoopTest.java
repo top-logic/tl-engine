@@ -32,7 +32,15 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
- * Visual agent loop test — prints the full agent loop lifecycle to stdout.
+ * Visual agent loop harness - prints the full agent loop lifecycle to stdout for a human to read.
+ *
+ * <p>
+ * This is <b>not test coverage</b>: it asserts nothing. Its whole value is the rendered transcript,
+ * so it is gated behind {@code -Dtl.ai.visual=true} like the browser end-to-end tests are gated
+ * behind {@code -Dtl.ai.browser.e2e=true}. Without the flag every method returns immediately, so a
+ * package-wide run such as {@code -Dtest='com.top_logic.tl.ai.core.**'} neither fails on the missing
+ * {@code ThreadContextManager} nor reports a passing test that checked nothing.
+ * </p>
  *
  * <p>Two modes:</p>
  * <ul>
@@ -42,8 +50,8 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  *
  * <p>Run manually:</p>
  * <pre>
- * mvn test -pl tl-ai-core -Dtest=VisualAgentLoopTest -DskipTests=false
- * source env.sh &amp;&amp; mvn test -pl tl-ai-core -Dtest=VisualAgentLoopTest -DskipTests=false
+ * mvn test -pl tl-ai-core -DskipTests=false -Dtl.ai.visual=true -Dtest=VisualAgentLoopTest
+ * source env.sh &amp;&amp; mvn test -pl tl-ai-core -DskipTests=false -Dtl.ai.visual=true -Dtest=VisualAgentLoopTest
  * </pre>
  */
 public class VisualAgentLoopTest extends TestCase {
@@ -60,6 +68,9 @@ public class VisualAgentLoopTest extends TestCase {
 	 * Simulated 3-turn agent loop with tool calls, a tool error, and final completion.
 	 */
 	public void testMockAgentLoop() {
+		if (!visualEnabled()) {
+			return;
+		}
 		System.out.println("\n" + ANSI_CYAN + "═══════════════════════════════════════════" + ANSI_RESET);
 		System.out.println(ANSI_CYAN + "  Agent Loop — Mock Simulation (3 turns)" + ANSI_RESET);
 		System.out.println(ANSI_CYAN + "═══════════════════════════════════════════" + ANSI_RESET);
@@ -129,6 +140,9 @@ public class VisualAgentLoopTest extends TestCase {
 	 * Live agent loop against Anthropic API with a tool.
 	 */
 	public void testLiveAgentLoop() {
+		if (!visualEnabled()) {
+			return;
+		}
 		String apiKey = System.getenv("ANTHROPIC_API_KEY");
 		if (apiKey == null || apiKey.isEmpty()) {
 			System.out.println("\nSKIP: testLiveAgentLoop — no ANTHROPIC_API_KEY (source env.sh)");
@@ -169,6 +183,13 @@ public class VisualAgentLoopTest extends TestCase {
 		AgentResult result = loop.run(conv, printingListener());
 
 		printResult(result, conv);
+	}
+
+	/**
+	 * Whether the visual harnesses are enabled, via {@code -Dtl.ai.visual=true}.
+	 */
+	private static boolean visualEnabled() {
+		return Boolean.getBoolean("tl.ai.visual");
 	}
 
 	private static AgentEventListener printingListener() {

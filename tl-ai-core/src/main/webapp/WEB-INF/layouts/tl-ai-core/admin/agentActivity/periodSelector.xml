@@ -3,65 +3,161 @@
 <!--
 	The period control that the tiles and charts of one tab read.
 	
-	A <selector> is the framework's own component for "pick one value and publish it": it shows a
-	single select field and writes the chosen option to its selection channel, which every panel of
-	the tab takes as its model. The engine's own demo builds a chart cockpit exactly this way
-	(com.top_logic.demo/structure/demoTypes/chart/demoChartCockpit.xml reads
-	selection(DemoTypesVersionSelector)), so this is the existing idiom rather than a new one.
+	Two components, one channel. A <selector> is the framework's own component for "pick one value
+	and publish it", and it is what makes the five presets a single click. A custom range is two
+	dates, which a select field cannot hold, so it lives in a <settings> form beside it - the
+	framework's own component for "edit a transient object and hand it to dependent components",
+	built exactly the way the engine's demo builds one
+	(com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml is a von/bis
+	form of this shape).
 	
-	The options are plain day counts, with 0 for "no lower bound at all". They are deliberately not
-	a model enum: the period is a property of this view, not of the data, and a classifier would
-	have to be migrated into every application that ships this monitor.
+	The channel that every panel of the tab reads is the form's model, not the selector's selection.
+	That is the whole trick: the selector feeds the form, the form owns the value, and a panel still
+	reads one channel carrying one period. Nothing downstream has to know that a period now has two
+	shapes; it asks the period for its window and its label and gets them
+	(see tl.ai.monitor:Period, where those are derived attributes).
 	
-	A bounded option means the last N times 24 hours counted back from now, not the last N calendar
+	The options are plain day counts, with 0 for "no lower bound at all" and -1 for "the two dates in
+	the form". They are deliberately not a model enum: the option set is a property of this view, and
+	a classifier would have to be migrated into every application that ships this monitor.
+	
+	A bounded preset means the last N times 24 hours counted back from now, not the last N calendar
 	days, so that the tiles and the ranking charts of a tab count exactly the same runs. The two
 	time-series charts are the exception and have to be: their bars are calendar days, so they start
 	at the midnight of the oldest day the period touches and consequently cover a few hours more.
-	Each of the two states its own range on its axis.
+	Each of the two states its own range on its axis. A custom range does not have that gap, because
+	both of its ends are whole days already - on a custom range every panel of a tab counts exactly
+	the same runs.
 	
-	The component has no business model of its own - the options are a constant - and says so
-	through supportsModel. That is not cosmetic: a selector observes every type, and with the
-	default "everything is a possible model" it would invalidate itself on every single agent run.
+	Neither component has a business model of its own - the options are a constant and the form model
+	is made here - and the selector says so through supportsModel. That is not cosmetic: a selector
+	observes every type, and with the default "everything is a possible model" it would invalidate
+	itself on every single agent run.
 	
-	One selector per tab, not one per panel. Five period pickers on one screen that can disagree
-	with each other would be worse than the fixed windows they replace.
+	One control per tab, not one per panel. Five period pickers on one screen that can disagree with
+	each other would be worse than the fixed windows they replace.
 -->
 <template>
 	<params>
 		<param name="selectorName"/>
+		<param name="rangeName"/>
 	</params>
 
-	<selector name="${selectorName}"
-		alphabeticalOrder="false"
-		securityObject="securityRoot"
-		showMaximize="false"
-		showMinimize="false"
-		showPopOut="false"
-		titleKey="admin.ai.agentActivity.period.label"
-		toolbar="true"
+	<layout name="${rangeName}Row"
+		horizontal="true"
+		resizable="false"
 	>
-		<layoutInfo size="78px"/>
-		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
-			elements="model -> list(1, 7, 30, 90, 0)"
-			supportsModel="model -> isEmpty($model)"
-		/>
-		<optionLabelProvider class="com.top_logic.model.search.providers.LabelProviderByExpression">
-			<label><![CDATA[
-				period -> ifElse($period == 0,
-					#('All'@en, 'Alle'@de).localize(),
-					ifElse($period == 1,
-						#('1 day'@en, '1 Tag'@de).localize(),
-						#('{0} days'@en, '{0} Tage'@de).fill($period).localize()))
-			]]></label>
-		</optionLabelProvider>
-		<!--
-			30 days, so that a reader who does not touch the control sees what the charts showed
-			when their period was fixed. The tiles used to count 24 hours and now start at 30 days
-			too - two panels sharing one control cannot keep two different defaults, and the trend
-			charts are the panels whose period a reader is more likely to have in mind.
-		-->
-		<defaultSelectionProvider class="com.top_logic.model.search.providers.ListSelectionProviderByExpression"
-			function="options -> 30"
-		/>
-	</selector>
+		<layoutInfo size="86px"/>
+		<components>
+			<selector name="${selectorName}"
+				alphabeticalOrder="false"
+				securityObject="securityRoot"
+				showMaximize="false"
+				showMinimize="false"
+				showPopOut="false"
+				titleKey="admin.ai.agentActivity.period.label"
+				toolbar="true"
+			>
+				<layoutInfo size="300px"/>
+				<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+					elements="model -> list(1, 7, 30, 90, 0, -1)"
+					supportsModel="model -> isEmpty($model)"
+				/>
+				<optionLabelProvider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+					<label><![CDATA[
+						period -> ifElse($period < 0,
+							#('Custom'@en, 'Benutzerdefiniert'@de).localize(),
+							ifElse($period == 0,
+								#('All'@en, 'Alle'@de).localize(),
+								ifElse($period == 1,
+									#('1 day'@en, '1 Tag'@de).localize(),
+									#('{0} days'@en, '{0} Tage'@de).fill($period).localize())))
+					]]></label>
+				</optionLabelProvider>
+				<!--
+					30 days, so that a reader who does not touch the control sees what the charts
+					showed when their period was fixed. The tiles used to count 24 hours and now
+					start at 30 days too - two panels sharing one control cannot keep two different
+					defaults, and the trend charts are the panels whose period a reader is more
+					likely to have in mind.
+				-->
+				<defaultSelectionProvider class="com.top_logic.model.search.providers.ListSelectionProviderByExpression"
+					function="options -> 30"
+				/>
+			</selector>
+
+			<settings name="${rangeName}"
+				securityObject="securityRoot"
+				showMaximize="false"
+				showMinimize="false"
+				showPopOut="false"
+				titleKey="admin.ai.agentActivity.period.range.title"
+				toolbar="true"
+			>
+				<!--
+					The period itself, remade whenever the selector changes. A fresh object rather
+					than a mutated one on purpose: a channel notifies its readers when its value
+					changes, and a value that is the same object as before has not changed.
+					
+					The two dates survive a trip through the presets, so that going back to
+					Benutzerdefiniert returns to the range that was last looked at instead of an
+					empty form. On the first switch to it they are prefilled with the window that
+					was on screen a moment ago - the numbers therefore do not jump at the moment of
+					switching, and the two fields start out saying what the tiles already said.
+				-->
+				<model class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					input="selection(${selectorName})"
+				>
+					<function><![CDATA[
+						selected -> old -> {
+							preset = ifElse(isEmpty($selected), 30, $selected);
+							previous = ifElse(isEmpty($old), 30, $old.get(`tl.ai.monitor:Period#preset`));
+							from = ifElse(isEmpty($old), null, $old.get(`tl.ai.monitor:Period#fromDay`));
+							to = ifElse(isEmpty($old), null, $old.get(`tl.ai.monitor:Period#toDay`));
+							period = new(`tl.ai.monitor:Period`, transient: true);
+							$period.set(`tl.ai.monitor:Period#preset`, $preset);
+							$period.set(`tl.ai.monitor:Period#fromDay`,
+								ifElse($preset >= 0 || !isEmpty($from), $from,
+									now().roundDay().toSystemCalendar()
+										.withDayAdded(ifElse($previous > 0, -$previous, -30))
+										.toDate().roundDay()));
+							$period.set(`tl.ai.monitor:Period#toDay`,
+								ifElse($preset >= 0 || !isEmpty($to), $to, now().roundDay()));
+							$period;
+						}
+					]]></function>
+				</model>
+				<modelBuilder class="com.top_logic.element.layout.formeditor.builder.EditFormBuilder"/>
+				<buttons>
+					<!--
+						Applying is a copy, for the same reason the transform above builds a new
+						object: the form writes its two fields into the model it was built from, so
+						after form-apply the period is already correct but is still the same object,
+						and the panels reading the channel would never hear about it. The copy is
+						what makes the change a change.
+					-->
+					<button id="applyAgentActivityPeriod"
+						class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+						group="System"
+						image="css:fas fa-check"
+						operation="period -> $period.copy(transient: true)"
+						transaction="false"
+					>
+						<resourceKey key="admin.ai.agentActivity.period.range.apply"/>
+						<executability>
+							<rule-by-expression
+								decision="period -> ifElse($period.get(`tl.ai.monitor:Period#preset`) &lt; 0, true, #('Only for the option &quot;Custom&quot;.'@en, 'Nur bei der Option &quot;Benutzerdefiniert&quot;.'@de))"
+								show-disabled="true"
+							/>
+						</executability>
+						<postCreateActions>
+							<setModel target="model(self())">
+								<input/>
+							</setModel>
+						</postCreateActions>
+					</button>
+				</buttons>
+			</settings>
+		</components>
+	</layout>
 </template>

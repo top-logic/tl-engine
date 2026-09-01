@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The period that the agent-activity monitor is read through.
+	
+	This module exists for exactly one type, and that type is never stored. A Period is allocated
+	transiently by the period control of a tab, lives on that tab's model channel, and dies with the
+	view. It is a model type all the same, because that is what the framework needs in order to show
+	two date fields: a form is built from a type, and a value travels a channel as an object.
+	
+	Why a type rather than a plain value: the presets alone fitted into an integer on the channel,
+	but a custom range is two dates, and a channel carries one value. Making the period an object
+	keeps the number of channels at one - the panels of a tab read a period, exactly as before, and
+	the period now has a from/to case in addition to its preset case.
+	
+	The derived attributes are the point of the type. They turn a period into the four numbers a
+	panel actually needs - two instants to filter runs by, two days to draw an axis between - and a
+	label to write next to a count. Every panel of the monitor reads those instead of deriving a
+	window of its own, so a tile and the chart under it cannot disagree about what "the period" is.
+	They are derived rather than stored because a preset is relative to now: a stored window would
+	age while the tab stays open. A derived attribute is evaluated on every read.
+-->
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.monitor">
+		<types>
+			<!--
+				A period, in one of three shapes, distinguished by preset:
+				
+				  N > 0   the last N times 24 hours, counted back from now
+				  0       everything, no bound in either direction
+				  -1      the closed day range fromDay .. toDay, both days counted in full
+				  
+				The preset numbers are the day counts the control offers, so that the option a user
+				picked is readable in the value rather than encoded. -1 is the only synthetic one.
+			-->
+			<class name="Period">
+				<annotations>
+					<!--
+						Only the two date fields are a form. The preset is written by the period
+						selector next to the form, not by the user typing into this form, and the
+						derived attributes are outputs.
+					-->
+					<form-definition>
+						<form columns="TWO">
+							<field
+								attribute="fromDay"
+								fullQualifiedName="tl.ai.monitor:Period#fromDay"
+								type="tl.core:Date"
+							/>
+							<field
+								attribute="toDay"
+								fullQualifiedName="tl.ai.monitor:Period#toDay"
+								type="tl.core:Date"
+							/>
+						</form>
+					</form-definition>
+				</annotations>
+				<attributes>
+					<property name="preset"
+						type="tl.core:Integer"
+					/>
+
+					<!--
+						The two ends of a custom range, at day granularity. Both days count in
+						full - see windowEnd, which adds the day rather than cutting it off.
+						
+						They are hidden unless the period is a custom one, and mandatory when it
+						is. That is not decoration: a range with only one end filled has no
+						defensible reading, and a mandatory field is how the framework refuses it
+						before the range is ever applied.
+					-->
+					<property name="fromDay"
+						type="tl.core:Date"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression">
+									<function>p -&gt; $p.get(`tl.ai.monitor:Period#preset`) &lt; 0 ? "mandatory" : "hidden"</function>
+								</mode-selector>
+							</dynamic-visibility>
+						</annotations>
+					</property>
+					<property name="toDay"
+						type="tl.core:Date"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression">
+									<function>p -&gt; $p.get(`tl.ai.monitor:Period#preset`) &lt; 0 ? "mandatory" : "hidden"</function>
+								</mode-selector>
+							</dynamic-visibility>
+							<constraints>
+								<!--
+									"To" before "from" is the one input error a date range invites,
+									and it is silent: the range simply selects nothing. Refusing it
+									at the field is the only place where the user still knows which
+									of the two dates they meant to change.
+								-->
+								<constraint-by-expression>
+									<check><![CDATA[
+										value -> object -> ifElse(isEmpty($value), null, {
+											from = $object.get(`tl.ai.monitor:Period#fromDay`);
+											ifElse(isEmpty($from), null,
+												ifElse($from.isDateGreater($value),
+													#('The end of the period must not lie before its start.'@en,
+														'Das Ende des Zeitraums darf nicht vor seinem Anfang liegen.'@de),
+													null));
+										})
+									]]></check>
+								</constraint-by-expression>
+							</constraints>
+						</annotations>
+					</property>
+
+					<!--
+						The window a panel filters runs by: startedAt >= windowStart and
+						startedAt < windowEnd, each test dropped when its end is empty.
+						
+						windowEnd is exclusive and is the midnight *after* toDay, which is what
+						makes the last day of a custom range count in full. An inclusive end at
+						toDay's own midnight would silently drop everything that happened on the
+						last day - the off-by-one that nobody notices and everybody misreads.
+					-->
+					<property name="windowStart"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										p -> {
+											preset = $p.get(`tl.ai.monitor:Period#preset`);
+											ifElse($preset > 0,
+												now().toSystemCalendar().withDayAdded(-$preset).toDate(),
+												ifElse($preset < 0, {
+													from = $p.get(`tl.ai.monitor:Period#fromDay`);
+													ifElse(isEmpty($from), null, $from.roundDay());
+												}, null));
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="windowEnd"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										p -> ifElse($p.get(`tl.ai.monitor:Period#preset`) < 0, {
+											to = $p.get(`tl.ai.monitor:Period#toDay`);
+											ifElse(isEmpty($to), null,
+												$to.roundDay().toSystemCalendar().withDayAdded(1).toDate());
+										}, null)
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+
+					<!--
+						The two ends of a day-bucketed axis, as whole days. A time-series chart
+						cannot start at windowStart, because its bars are days and windowStart of a
+						preset falls in the middle of one; it starts at the midnight of the oldest
+						day the period touches and therefore covers a few hours more than the
+						counting panels of the same tab. A custom range has no such gap - its ends
+						are days already, so on a custom range every panel of a tab counts exactly
+						the same runs.
+						
+						firstDay is empty for "all": the left edge is then the oldest run there is,
+						which this type cannot know without reading the data.
+					-->
+					<property name="firstDay"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										p -> {
+											preset = $p.get(`tl.ai.monitor:Period#preset`);
+											ifElse($preset > 0,
+												now().roundDay().toSystemCalendar().withDayAdded(-$preset).toDate().roundDay(),
+												ifElse($preset < 0, {
+													from = $p.get(`tl.ai.monitor:Period#fromDay`);
+													ifElse(isEmpty($from), null, $from.roundDay());
+												}, null));
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="lastDay"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										p -> {
+											to = ifElse($p.get(`tl.ai.monitor:Period#preset`) < 0,
+												$p.get(`tl.ai.monitor:Period#toDay`), null);
+											ifElse(isEmpty($to), now().roundDay(), $to.roundDay());
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+
+					<!--
+						What the period is called where a number needs its period written next to
+						it - a tile label, a chart's empty state. A custom range says both of its
+						days, because "Benutzerdefiniert" next to a count would name the control
+						rather than the stretch of time the count covers, and that is the same lie
+						as a stale "(30 Tage)".
+						
+						The year is written only when the range leaves the current one: five tiles
+						sit side by side and "Fehler (01.08. - 15.08.)" fits where the four-digit
+						form does not.
+					-->
+					<property name="label"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										p -> {
+											preset = $p.get(`tl.ai.monitor:Period#preset`);
+											ifElse($preset < 0, {
+												from = $p.get(`tl.ai.monitor:Period#fromDay`);
+												to = $p.get(`tl.ai.monitor:Period#toDay`);
+												ifElse(isEmpty($from) || isEmpty($to),
+													#('Custom'@en, 'Benutzerdefiniert'@de).localize(),
+													{
+														thisYear = now().toSystemCalendar().year();
+														pattern = ifElse($from.toSystemCalendar().year() == $thisYear
+																&& $to.toSystemCalendar().year() == $thisYear,
+															'dd.MM.', 'dd.MM.yy');
+														dateFormat($pattern).format($from) + ' - '
+															+ dateFormat($pattern).format($to);
+													});
+											},
+											ifElse($preset == 0,
+												#('All'@en, 'Alle'@de).localize(),
+												ifElse($preset == 1,
+													#('1 day'@en, '1 Tag'@de).localize(),
+													#('{0} days'@en, '{0} Tage'@de).fill($preset).localize())));
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+				</attributes>
+			</class>
+		</types>
+	</module>
+</model>

@@ -6,7 +6,7 @@
 	change in the ratio between them is the first sign that prompt caching stopped working - which a
 	single total would hide completely.
 	
-	The period is the selection of this tab's period selector, on the model channel; the bucket width
+	The period is the value of this tab's period control, on the model channel; the bucket width
 	follows the period the same way as in "Läufe im Zeitverlauf" - see the comment there for why the
 	title does not name it.
 	
@@ -15,31 +15,36 @@
 	fall below the chroma floor and read as grey.
 -->
 <chartjs name="aiTokensPerDayChart"
-	model="selection(aiUsagePeriodSelector)"
+	model="model(aiUsagePeriod)"
 	toolbar="true"
 	securityObject="securityRoot"
 	titleKey="admin.ai.agentActivity.charts.tokensPerDay"
 >
 	<data><![CDATA[
 		model -> {
-			period = ifElse(isEmpty($model), 30, $model);
+			period = ifElse(isEmpty($model),
+				new(`tl.ai.monitor:Period`, transient: true)
+					..set(`tl.ai.monitor:Period#preset`, 30),
+				$model);
 			executions = all(`tl.ai.execution:AgentExecution`);
 			startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
 			cal = d -> $d.toSystemCalendar();
-			today = now().roundDay();
 
-			// The left edge of the axis. For "Alle" that is the oldest run there is, found by
-			// sorting the start dates - the one extra pass over the table that this option needs
-			// and a bounded period does not.
-			first = ifElse($period > 0,
-				$cal($today).withDayAdded(-$period).toDate().roundDay(),
-				ifElse(isEmpty($executions), $today,
+			// The two edges of the axis, as whole days: the period knows them, because a period is
+			// asked for its axis and not only for its window. The single exception is the left edge
+			// of "Alle" - that is the oldest run there is, which a period cannot know without
+			// reading the table. Finding it costs one sort of the start dates, the extra pass that
+			// this one option needs and the others do not.
+			last = $period.get(`tl.ai.monitor:Period#lastDay`);
+			bounded = $period.get(`tl.ai.monitor:Period#firstDay`);
+			first = ifElse(!isEmpty($bounded), $bounded,
+				ifElse(isEmpty($executions), $last,
 					$executions.map(e -> $startedAt($e)).sort().firstElement().roundDay()));
+			axisEnd = $cal($last).withDayAdded(1).toDate().roundDay();
 
 			// One bar per day while a reader can still count the bars, one bar per month beyond
-			// that. Only "Alle" can reach the second case, and it has to: a monitor that has been
-			// collecting for a year would otherwise draw four hundred hairlines.
-			monthly = ($today.toMillis() - $first.toMillis()) / 86400000 > 120;
+			// that. A year of days would otherwise be four hundred hairlines.
+			monthly = ($last.toMillis() - $first.toMillis()) / 86400000 > 120;
 
 			// The buckets, oldest first. The month count is exact calendar arithmetic rather than a
 			// division of the day span: a span of a few weeks can straddle three months, and an
@@ -47,20 +52,23 @@
 			// millisecond division, deliberately generous by one and then trimmed against the left
 			// edge, because that division comes out one short across a daylight-saving shift.
 			depth = ifElse($monthly,
-				($cal($today).year() - $cal($first).year()) * 12
-					+ $cal($today).month() - $cal($first).month(),
-				($today.toMillis() - $first.toMillis()) / 86400000 + 1);
+				($cal($last).year() - $cal($first).year()) * 12
+					+ $cal($last).month() - $cal($first).month(),
+				($last.toMillis() - $first.toMillis()) / 86400000 + 1);
 			buckets = ifElse($monthly,
-				$cal($today).withDay(1).toDate().roundDay()
+				$cal($last).withDay(1).toDate().roundDay()
 					.recursion(d -> $cal($d).withMonthAdded(-1).toDate(), 0, $depth)
 					.reverse(),
-				$today.recursion(d -> $cal($d).withDayAdded(-1).toDate().roundDay(), 0, $depth)
+				$last.recursion(d -> $cal($d).withDayAdded(-1).toDate().roundDay(), 0, $depth)
 					.reverse()
 					.filter(b -> $b >= $first));
 			bucketOf = d -> ifElse($monthly, $cal($d).withDay(1).toDate().roundDay(), $d.roundDay());
 
+			// Trimmed against the day edges, not against the first bucket: in the monthly case the
+			// first bucket starts on the 1st, which for a custom range can lie before the range
+			// does, and the leftmost bar would then count days the reader did not ask for.
 			byBucket = $executions
-				.filter(e -> $startedAt($e) >= $buckets.firstElement())
+				.filter(e -> $startedAt($e) >= $first && $startedAt($e) < $axisEnd)
 				.groupBy(e -> $bucketOf($startedAt($e)));
 			totals = attr -> $buckets.map(b -> {
 				runs = $byBucket[$b];
@@ -88,7 +96,21 @@
 				},
 				'options': {
 					'maintainAspectRatio': false,
-					'plugins': { 'legend': { 'position': 'bottom' } },
+					'plugins': {
+						'legend': { 'position': 'bottom' },
+						// A row of empty day slots is a perfectly plausible chart - a quiet
+						// fortnight looks like that - so the case where every slot is empty has to
+						// name itself rather than let the axis imply that the days were quiet.
+						'title': {
+							'display': isEmpty($byBucket),
+							'text': ifElse($first > now().roundDay(),
+								#('The selected period lies in the future.'@en,
+									'Der gewählte Zeitraum liegt in der Zukunft.'@de).localize(),
+								#('No runs in the selected period.'@en,
+									'Keine Läufe im gewählten Zeitraum.'@de).localize()),
+							'color': '#8a8a8a'
+						}
+					},
 					'scales': {
 						'x': { 'stacked': true },
 						'y': { 'stacked': true, 'beginAtZero': true }

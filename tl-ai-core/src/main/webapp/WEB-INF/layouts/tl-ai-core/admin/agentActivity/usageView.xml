@@ -9,7 +9,7 @@
 	aggregation lives here and the tables stay lists of real runs.
 	
 	One period control at the top governs all three charts, the same way the Überblick tab works. Its
-	own selector rather than a shared one: a control that stays visible on the Sitzungen, Läufe and
+	own control rather than a shared one: a control that stays visible on the Sitzungen, Läufe and
 	Rückfragen tabs, where it changes nothing, would be a control that lies about its reach.
 	
 	No euro figures anywhere: the data model has no price, and a rate guessed here would be quoted
@@ -27,6 +27,7 @@
 		>
 			<components>
 				<include name="tl-ai-core/admin/agentActivity/periodSelector.xml"
+					rangeName="aiUsagePeriod"
 					selectorName="aiUsagePeriodSelector"
 				/>
 				<include name="tl-ai-core/admin/agentActivity/charts/tokensPerDayChart.xml"/>

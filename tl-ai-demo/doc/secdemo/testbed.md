@@ -299,6 +299,7 @@ agent entry points that is a valid surface here:
 | Security context | captures the caller's `TLSubSessionContext` and re-enters it on the background thread (`ThreadContextManager.inContext(...)`), with a `TopLogicSecurityContext` | `ToolContext.forCurrentUser()`, i.e. a `TopLogicSecurityContext` for the account bound to the calling thread |
 | Runs as | **the account that executed the script**, marked as a background run | the same account, as an attended run |
 | Blocks the console | no, returns a handle immediately | yes, until the agent is finished |
+| Usable from the console at all | yes, if fire and collect are two executions | **no** - the inline run commits past the revision the console request pinned, so the request dies rendering the result with `Session revision invalid: Expected 95 but got 89` after the agent has done its work (issue **#249**) |
 
 Because the async variant re-enters the caller's sub-session, `TLContext.currentUser()` inside the
 agent's tools is the account that pressed the button, and `ModelAccessRights` evaluates *that* account's
@@ -311,6 +312,10 @@ with a person, which is exactly the property these scenarios rely on. Two conseq
   ([5.5](#55-unattended-runs---the-background-allowlist)).
 - The run commits in its own transaction on the background thread, independent of the console request -
   which is why the read-only console does not stop it, and why fire and collect must be two executions.
+  Two executions are not a convenience here: within the request that started a run, `aiAgentRunStatus`
+  returns `null` - not `RUNNING` - because the run's session was committed at a revision newer than the
+  one that request pinned, however long the script sleeps. `fire.tlscript` therefore hands the handles
+  to `collect.tlscript` through the session (`storeInSession`/`loadFromSession`).
 
 ### 4.2 The Script console grant
 

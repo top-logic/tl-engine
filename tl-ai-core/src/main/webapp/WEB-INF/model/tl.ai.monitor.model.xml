@@ -8,30 +8,32 @@
 	view. It is a model type all the same, because that is what the framework needs in order to show
 	two date fields: a form is built from a type, and a value travels a channel as an object.
 	
-	Why a type rather than a plain value: the presets alone fitted into an integer on the channel,
-	but a custom range is two dates, and a channel carries one value. Making the period an object
-	keeps the number of channels at one - the panels of a tab read a period, exactly as before, and
-	the period now has a from/to case in addition to its preset case.
+	A period is a closed range of days, always - fromDay and toDay are filled whatever the user did
+	to get there. Picking "30 Tage" is not a second kind of period; it is a quick way of writing two
+	dates into the two fields. That is the whole point of the type: what stands in the two fields is
+	what every panel of the tab counts, so a tile and the control beside it cannot say different
+	things. preset survives only as the *name* of the range - which option produced it - and is what
+	a tile writes next to its number while that name is still true.
 	
-	The derived attributes are the point of the type. They turn a period into the four numbers a
-	panel actually needs - two instants to filter runs by, two days to draw an axis between - and a
-	label to write next to a count. Every panel of the monitor reads those instead of deriving a
-	window of its own, so a tile and the chart under it cannot disagree about what "the period" is.
-	They are derived rather than stored because a preset is relative to now: a stored window would
-	age while the tab stays open. A derived attribute is evaluated on every read.
+	The derived attributes turn those two days into what a panel actually needs: two instants to
+	filter runs by and two whole days to draw an axis between. Every panel reads those instead of
+	deriving a window of its own. They are derived rather than stored because they are functions of
+	the two days, and a function of a stored value has no business being stored twice.
 -->
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.ai.monitor">
 		<types>
 			<!--
-				A period, in one of three shapes, distinguished by preset:
+				A period is fromDay .. toDay, both days counted in full. preset says where those
+				two days came from:
 				
-				  N > 0   the last N times 24 hours, counted back from now
-				  0       everything, no bound in either direction
-				  -1      the closed day range fromDay .. toDay, both days counted in full
+				  N > 0   the option "N Tage": the N days before today, plus today
+				  0       the option "Alle": the whole span the data covers
+				  -1      typed into the fields by hand
 				  
-				The preset numbers are the day counts the control offers, so that the option a user
-				picked is readable in the value rather than encoded. -1 is the only synthetic one.
+				The positive numbers are the day counts the control offers, so that the option a
+				user picked is readable in the value rather than encoded. 0 and -1 are the two
+				synthetic ones.
 			-->
 			<class name="Period">
 				<annotations>
@@ -61,34 +63,24 @@
 					/>
 
 					<!--
-						The two ends of a custom range, at day granularity. Both days count in
+						The period itself: the two ends of a closed day range, both days counted in
 						full - see windowEnd, which adds the day rather than cutting it off.
 						
-						They are hidden unless the period is a custom one, and mandatory when it
-						is. That is not decoration: a range with only one end filled has no
-						defensible reading, and a mandatory field is how the framework refuses it
-						before the range is ever applied.
+						Always visible and always editable, whichever option is selected, because a
+						reader who picks "30 Tage" wants to see which thirty days those are and
+						then move one of the ends. Mandatory, because a range with only one end
+						filled has no defensible reading, and a mandatory field is how the framework
+						refuses it before the range is ever applied.
 					-->
 					<property name="fromDay"
+						mandatory="true"
 						type="tl.core:Date"
-					>
-						<annotations>
-							<dynamic-visibility>
-								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression">
-									<function>p -&gt; $p.get(`tl.ai.monitor:Period#preset`) &lt; 0 ? "mandatory" : "hidden"</function>
-								</mode-selector>
-							</dynamic-visibility>
-						</annotations>
-					</property>
+					/>
 					<property name="toDay"
+						mandatory="true"
 						type="tl.core:Date"
 					>
 						<annotations>
-							<dynamic-visibility>
-								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression">
-									<function>p -&gt; $p.get(`tl.ai.monitor:Period#preset`) &lt; 0 ? "mandatory" : "hidden"</function>
-								</mode-selector>
-							</dynamic-visibility>
 							<constraints>
 								<!--
 									"To" before "from" is the one input error a date range invites,
@@ -113,64 +105,16 @@
 					</property>
 
 					<!--
-						The window a panel filters runs by: startedAt >= windowStart and
-						startedAt < windowEnd, each test dropped when its end is empty.
+						The two edges of a day-bucketed axis, as whole days. These are the two
+						stored days, rounded; the rounding is here rather than at every reader
+						because a date field hands out whatever time of day the widget happened to
+						parse.
 						
-						windowEnd is exclusive and is the midnight *after* toDay, which is what
-						makes the last day of a custom range count in full. An inclusive end at
-						toDay's own midnight would silently drop everything that happened on the
-						last day - the off-by-one that nobody notices and everybody misreads.
-					-->
-					<property name="windowStart"
-						type="tl.core:DateTime"
-					>
-						<annotations>
-							<storage-algorithm>
-								<query>
-									<expr><![CDATA[
-										p -> {
-											preset = $p.get(`tl.ai.monitor:Period#preset`);
-											ifElse($preset > 0,
-												now().toSystemCalendar().withDayAdded(-$preset).toDate(),
-												ifElse($preset < 0, {
-													from = $p.get(`tl.ai.monitor:Period#fromDay`);
-													ifElse(isEmpty($from), null, $from.roundDay());
-												}, null));
-										}
-									]]></expr>
-								</query>
-							</storage-algorithm>
-						</annotations>
-					</property>
-					<property name="windowEnd"
-						type="tl.core:DateTime"
-					>
-						<annotations>
-							<storage-algorithm>
-								<query>
-									<expr><![CDATA[
-										p -> ifElse($p.get(`tl.ai.monitor:Period#preset`) < 0, {
-											to = $p.get(`tl.ai.monitor:Period#toDay`);
-											ifElse(isEmpty($to), null,
-												$to.roundDay().toSystemCalendar().withDayAdded(1).toDate());
-										}, null)
-									]]></expr>
-								</query>
-							</storage-algorithm>
-						</annotations>
-					</property>
-
-					<!--
-						The two ends of a day-bucketed axis, as whole days. A time-series chart
-						cannot start at windowStart, because its bars are days and windowStart of a
-						preset falls in the middle of one; it starts at the midnight of the oldest
-						day the period touches and therefore covers a few hours more than the
-						counting panels of the same tab. A custom range has no such gap - its ends
-						are days already, so on a custom range every panel of a tab counts exactly
-						the same runs.
-						
-						firstDay is empty for "all": the left edge is then the oldest run there is,
-						which this type cannot know without reading the data.
+						The fallbacks are for a period that was never filled - one built by a panel
+						because its channel was still empty. Such a period has nothing but its
+						preset, and the preset's own meaning is the best reading of it. In normal
+						operation the control fills both days before any panel sees the period, so
+						neither fallback is taken.
 					-->
 					<property name="firstDay"
 						type="tl.core:DateTime"
@@ -180,13 +124,14 @@
 								<query>
 									<expr><![CDATA[
 										p -> {
-											preset = $p.get(`tl.ai.monitor:Period#preset`);
-											ifElse($preset > 0,
-												now().roundDay().toSystemCalendar().withDayAdded(-$preset).toDate().roundDay(),
-												ifElse($preset < 0, {
-													from = $p.get(`tl.ai.monitor:Period#fromDay`);
-													ifElse(isEmpty($from), null, $from.roundDay());
-												}, null));
+											from = $p.get(`tl.ai.monitor:Period#fromDay`);
+											ifElse(!isEmpty($from), $from.roundDay(), {
+												preset = $p.get(`tl.ai.monitor:Period#preset`);
+												ifElse($preset > 0,
+													now().roundDay().toSystemCalendar()
+														.withDayAdded(-$preset).toDate().roundDay(),
+													null);
+											});
 										}
 									]]></expr>
 								</query>
@@ -201,8 +146,7 @@
 								<query>
 									<expr><![CDATA[
 										p -> {
-											to = ifElse($p.get(`tl.ai.monitor:Period#preset`) < 0,
-												$p.get(`tl.ai.monitor:Period#toDay`), null);
+											to = $p.get(`tl.ai.monitor:Period#toDay`);
 											ifElse(isEmpty($to), now().roundDay(), $to.roundDay());
 										}
 									]]></expr>
@@ -212,15 +156,74 @@
 					</property>
 
 					<!--
+						The same range as an instant window, which is how a panel filters runs:
+						startedAt >= windowStart and startedAt < windowEnd, each test dropped when
+						its end is empty.
+						
+						windowEnd is exclusive and is the midnight *after* the last day, which is
+						what makes that day count in full. An inclusive end at its own midnight
+						would silently drop everything that happened on it - the off-by-one that
+						nobody notices and everybody misreads.
+						
+						windowStart is the first day itself, because a day range starts at a
+						midnight. That is why the counting tiles and the time-series chart of a tab
+						now agree exactly: both read the same two days, where the tiles used to
+						count back from the current hour and the chart from a midnight.
+					-->
+					<property name="windowStart"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										p -> $p.get(`tl.ai.monitor:Period#firstDay`)
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="windowEnd"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										p -> {
+											last = $p.get(`tl.ai.monitor:Period#lastDay`);
+											ifElse(isEmpty($last), null,
+												$last.toSystemCalendar().withDayAdded(1).toDate().roundDay());
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+
+					<!--
 						What the period is called where a number needs its period written next to
-						it - a tile label, a chart's empty state. A custom range says both of its
-						days, because "Benutzerdefiniert" next to a count would name the control
-						rather than the stretch of time the count covers, and that is the same lie
-						as a stale "(30 Tage)".
+						it - a tile label, a chart's empty state.
+						
+						A preset says its own name, because "30 Tage" is the shorter and more
+						familiar answer and it is now guaranteed to be true: the preset wrote the
+						two days that are counted, and the moment either of them is touched by hand
+						the period stops being that preset and starts naming its two days instead.
+						A range that was typed says both of its days, because "Benutzerdefiniert"
+						next to a count would name the control rather than the stretch of time the
+						count covers.
 						
 						The year is written only when the range leaves the current one: five tiles
 						sit side by side and "Fehler (01.08. - 15.08.)" fits where the four-digit
 						form does not.
+						
+						The name is picked first and localized afterwards, once, and that order is
+						load-bearing rather than tidy: localize() on a literal message with no
+						arguments is a constant expression, and the compiler folds it away at model
+						load time - which happens once, in whatever language the server started in.
+						A tile then read "Fehler (Alle)" in an English session while the control
+						beside it read "All". Localizing a value that depends on the period leaves
+						nothing for the folder to fold, and the language is decided per reader.
 					-->
 					<property name="label"
 						type="tl.core:String"
@@ -231,25 +234,22 @@
 									<expr><![CDATA[
 										p -> {
 											preset = $p.get(`tl.ai.monitor:Period#preset`);
-											ifElse($preset < 0, {
-												from = $p.get(`tl.ai.monitor:Period#fromDay`);
-												to = $p.get(`tl.ai.monitor:Period#toDay`);
-												ifElse(isEmpty($from) || isEmpty($to),
-													#('Custom'@en, 'Benutzerdefiniert'@de).localize(),
-													{
-														thisYear = now().toSystemCalendar().year();
-														pattern = ifElse($from.toSystemCalendar().year() == $thisYear
-																&& $to.toSystemCalendar().year() == $thisYear,
-															'dd.MM.', 'dd.MM.yy');
-														dateFormat($pattern).format($from) + ' - '
-															+ dateFormat($pattern).format($to);
-													});
-											},
-											ifElse($preset == 0,
-												#('All'@en, 'Alle'@de).localize(),
-												ifElse($preset == 1,
-													#('1 day'@en, '1 Tag'@de).localize(),
-													#('{0} days'@en, '{0} Tage'@de).fill($preset).localize())));
+											from = $p.get(`tl.ai.monitor:Period#fromDay`);
+											to = $p.get(`tl.ai.monitor:Period#toDay`);
+											name = ifElse($preset == 0, #('All'@en, 'Alle'@de),
+												ifElse($preset == 1, #('1 day'@en, '1 Tag'@de),
+													ifElse($preset > 1, #('{0} days'@en, '{0} Tage'@de).fill($preset),
+														#('Custom'@en, 'Benutzerdefiniert'@de))));
+											ifElse($preset >= 0 || isEmpty($from) || isEmpty($to),
+												$name.localize(),
+												{
+													thisYear = now().toSystemCalendar().year();
+													pattern = ifElse($from.toSystemCalendar().year() == $thisYear
+															&& $to.toSystemCalendar().year() == $thisYear,
+														'dd.MM.', 'dd.MM.yy');
+													dateFormat($pattern).format($from) + ' - '
+														+ dateFormat($pattern).format($to);
+												});
 										}
 									]]></expr>
 								</query>

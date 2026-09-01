@@ -30,17 +30,20 @@
 			startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
 			cal = d -> $d.toSystemCalendar();
 
-			// The two edges of the axis, as whole days: the period knows them, because a period is
-			// asked for its axis and not only for its window. The single exception is the left edge
-			// of "Alle" - that is the oldest run there is, which a period cannot know without
-			// reading the table. Finding it costs one sort of the start dates, the extra pass that
-			// this one option needs and the others do not.
+			// The two edges of the axis, as whole days, and the exclusive upper bound - all three
+			// read off the period rather than derived here a second time. That is what makes this
+			// chart and the counting tiles of the same tab agree exactly: both now cover
+			// [firstDay, windowEnd), where the tiles used to count back from the current hour and
+			// only this chart started at a midnight.
+			//
+			// The fallback is for a period with no left edge at all - one that was never filled -
+			// and is the oldest run there is, which a period cannot know without reading the table.
 			last = $period.get(`tl.ai.monitor:Period#lastDay`);
 			bounded = $period.get(`tl.ai.monitor:Period#firstDay`);
 			first = ifElse(!isEmpty($bounded), $bounded,
 				ifElse(isEmpty($executions), $last,
 					$executions.map(e -> $startedAt($e)).sort().firstElement().roundDay()));
-			axisEnd = $cal($last).withDayAdded(1).toDate().roundDay();
+			axisEnd = $period.get(`tl.ai.monitor:Period#windowEnd`);
 
 			// One bar per day while a reader can still count the bars, one bar per month beyond
 			// that. A year of days would otherwise be four hundred hairlines.

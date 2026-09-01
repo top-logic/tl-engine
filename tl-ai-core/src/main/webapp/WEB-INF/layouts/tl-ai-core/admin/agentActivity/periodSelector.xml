@@ -3,31 +3,33 @@
 <!--
 	The period control that the tiles and charts of one tab read.
 	
-	Two components, one channel. A <selector> is the framework's own component for "pick one value
-	and publish it", and it is what makes the five presets a single click. A custom range is two
-	dates, which a select field cannot hold, so it lives in a <settings> form beside it - the
+	Two components, one channel. The right one holds the period itself - two date fields, always
+	visible, always editable - and the left one is a list of quick ways to fill them. A reader who
+	picks "30 Tage" therefore sees which thirty days those are and can drag one end of the range
+	without first switching into some other mode. What stands in the two fields is what every panel
+	of the tab counts.
+	
+	A <selector> is the framework's own component for "pick one value and publish it", and it is what
+	makes a preset a single click. The two dates live in a <settings> form beside it - the
 	framework's own component for "edit a transient object and hand it to dependent components",
 	built exactly the way the engine's demo builds one
 	(com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml is a von/bis
 	form of this shape).
 	
 	The channel that every panel of the tab reads is the form's model, not the selector's selection.
-	That is the whole trick: the selector feeds the form, the form owns the value, and a panel still
-	reads one channel carrying one period. Nothing downstream has to know that a period now has two
-	shapes; it asks the period for its window and its label and gets them
+	That is the whole trick: the selector fills the form, the form owns the value, and a panel still
+	reads one channel carrying one period. Nothing downstream has to know how the two days were
+	arrived at; it asks the period for its window and its label and gets them
 	(see tl.ai.monitor:Period, where those are derived attributes).
 	
-	The options are plain day counts, with 0 for "no lower bound at all" and -1 for "the two dates in
-	the form". They are deliberately not a model enum: the option set is a property of this view, and
-	a classifier would have to be migrated into every application that ships this monitor.
+	The traffic runs both ways, and has to. Picking an option writes two days into the form; editing
+	a day by hand and pressing the check mark writes "Benutzerdefiniert" back into the selector. It
+	must never be possible for the selector to read "30 Tage" while the fields say something else -
+	that is the same lie as a tile whose caption has drifted from the number beside it.
 	
-	A bounded preset means the last N times 24 hours counted back from now, not the last N calendar
-	days, so that the tiles and the ranking charts of a tab count exactly the same runs. The two
-	time-series charts are the exception and have to be: their bars are calendar days, so they start
-	at the midnight of the oldest day the period touches and consequently cover a few hours more.
-	Each of the two states its own range on its axis. A custom range does not have that gap, because
-	both of its ends are whole days already - on a custom range every panel of a tab counts exactly
-	the same runs.
+	The options are plain day counts, with 0 for "the whole span the data covers" and -1 for "typed
+	in by hand". They are deliberately not a model enum: the option set is a property of this view,
+	and a classifier would have to be migrated into every application that ships this monitor.
 	
 	Neither component has a business model of its own - the options are a constant and the form model
 	is made here - and the selector says so through supportsModel. That is not cosmetic: a selector
@@ -99,11 +101,19 @@
 					than a mutated one on purpose: a channel notifies its readers when its value
 					changes, and a value that is the same object as before has not changed.
 					
-					The two dates survive a trip through the presets, so that going back to
-					Benutzerdefiniert returns to the range that was last looked at instead of an
-					empty form. On the first switch to it they are prefilled with the window that
-					was on screen a moment ago - the numbers therefore do not jump at the moment of
-					switching, and the two fields start out saying what the tiles already said.
+					Every branch fills both days - that is what makes a preset nothing more than a
+					quick way of writing two dates. "N Tage" is the N days before today plus today,
+					which is the range the trend charts have drawn under that option all along.
+					"Alle" reads the oldest and the newest run there is, so that even the unbounded
+					option says over what it is counting; it is the one branch that has to touch the
+					table, and it does so once per click on that option rather than on every read.
+					Its upper end is at least today, so that a run recorded with a future date - a
+					clock skew, an import - cannot fall outside "Alle".
+					
+					"Benutzerdefiniert" picked from the list is the only branch that fills nothing
+					new: it keeps the days that are on screen, so switching to it changes the label
+					and not the numbers. It is reached from the list only when a reader wants the
+					preset name gone; the ordinary way in is to edit a day and press the check mark.
 				-->
 				<model class="com.top_logic.model.search.providers.TransformLinkingByExpression"
 					input="selection(${selectorName})"
@@ -111,18 +121,35 @@
 					<function><![CDATA[
 						selected -> old -> {
 							preset = ifElse(isEmpty($selected), 30, $selected);
-							previous = ifElse(isEmpty($old), 30, $old.get(`tl.ai.monitor:Period#preset`));
+							today = now().roundDay();
+							daysBack = n -> $today.toSystemCalendar().withDayAdded(-$n).toDate().roundDay();
 							from = ifElse(isEmpty($old), null, $old.get(`tl.ai.monitor:Period#fromDay`));
 							to = ifElse(isEmpty($old), null, $old.get(`tl.ai.monitor:Period#toDay`));
 							period = new(`tl.ai.monitor:Period`, transient: true);
 							$period.set(`tl.ai.monitor:Period#preset`, $preset);
-							$period.set(`tl.ai.monitor:Period#fromDay`,
-								ifElse($preset >= 0 || !isEmpty($from), $from,
-									now().roundDay().toSystemCalendar()
-										.withDayAdded(ifElse($previous > 0, -$previous, -30))
-										.toDate().roundDay()));
-							$period.set(`tl.ai.monitor:Period#toDay`,
-								ifElse($preset >= 0 || !isEmpty($to), $to, now().roundDay()));
+							ifElse($preset > 0, {
+									$period.set(`tl.ai.monitor:Period#fromDay`, $daysBack($preset));
+									$period.set(`tl.ai.monitor:Period#toDay`, $today);
+								},
+								ifElse($preset == 0, {
+										starts = all(`tl.ai.execution:AgentExecution`)
+											.map(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`))
+											.filter(d -> !isEmpty($d))
+											.sort();
+										$period.set(`tl.ai.monitor:Period#fromDay`,
+											ifElse(isEmpty($starts), $today, $starts.firstElement().roundDay()));
+										$period.set(`tl.ai.monitor:Period#toDay`,
+											ifElse(isEmpty($starts), $today, {
+												newest = $starts.lastElement().roundDay();
+												ifElse($newest.isDateGreater($today), $newest, $today);
+											}));
+									},
+									{
+										$period.set(`tl.ai.monitor:Period#fromDay`,
+											ifElse(isEmpty($from), $daysBack(30), $from));
+										$period.set(`tl.ai.monitor:Period#toDay`,
+											ifElse(isEmpty($to), $today, $to));
+									}));
 							$period;
 						}
 					]]></function>
@@ -135,22 +162,28 @@
 						after form-apply the period is already correct but is still the same object,
 						and the panels reading the channel would never hear about it. The copy is
 						what makes the change a change.
+						
+						It is also where the period loses its preset name. Two days that a reader
+						entered are no longer "die letzten 30 Tage", even when they happen to be the
+						same two days, and a caption that still claimed so would be exactly the drift
+						this control exists to prevent. Writing -1 back into the selector is what
+						moves the visible option along with the value; when the selector already
+						stands there it changes nothing, which is why the model is pushed as well.
 					-->
 					<button id="applyAgentActivityPeriod"
 						class="com.top_logic.model.search.providers.CommandHandlerByExpression"
 						group="System"
 						image="css:fas fa-check"
-						operation="period -> $period.copy(transient: true)"
+						operation="period -> $period.copy(transient: true)..set(`tl.ai.monitor:Period#preset`, -1)"
 						transaction="false"
 					>
 						<resourceKey key="admin.ai.agentActivity.period.range.apply"/>
-						<executability>
-							<rule-by-expression
-								decision="period -> ifElse($period.get(`tl.ai.monitor:Period#preset`) &lt; 0, true, #('Only for the option &quot;Custom&quot;.'@en, 'Nur bei der Option &quot;Benutzerdefiniert&quot;.'@de))"
-								show-disabled="true"
-							/>
-						</executability>
 						<postCreateActions>
+							<setModel target="selection(${selectorName})">
+								<input class="com.top_logic.model.search.providers.ValueTransformationByExpression"
+									function="period -> -1"
+								/>
+							</setModel>
 							<setModel target="model(self())">
 								<input/>
 							</setModel>

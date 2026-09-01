@@ -59,11 +59,11 @@
 						startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
 						start = $period.get(`tl.ai.monitor:Period#windowStart`);
 						end = $period.get(`tl.ai.monitor:Period#windowEnd`);
-						// "Alle" drops the filter rather than widening it: an unfiltered pass over the table is
-						// measurably cheaper than one that tests a date on every row.
-						recent = ifElse(isEmpty($start) && isEmpty($end), $executions,
-							$executions.filter(e -> (isEmpty($start) || $startedAt($e) >= $start)
-								&& (isEmpty($end) || $startedAt($e) < $end)));
+						// A bound that is empty is dropped rather than tested. A period is normally a closed day
+						// range with both ends filled - even "Alle", which reads them off the data - but one that
+						// was never filled has no edges, and then it selects everything.
+						recent = $executions.filter(e -> (isEmpty($start) || $startedAt($e) >= $start)
+							&& (isEmpty($end) || $startedAt($e) < $end));
 						value = a -> e -> ifElse(isEmpty($e.get($a)), 0, $e.get($a));
 						billable = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#inputTokens`)($e)
 							+ $value(`tl.ai.execution:AgentExecution#outputTokens`)($e)).sum();
@@ -104,11 +104,11 @@
 						startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
 						start = $period.get(`tl.ai.monitor:Period#windowStart`);
 						end = $period.get(`tl.ai.monitor:Period#windowEnd`);
-						// "Alle" drops the filter rather than widening it: an unfiltered pass over the table is
-						// measurably cheaper than one that tests a date on every row.
-						recent = ifElse(isEmpty($start) && isEmpty($end), $executions,
-							$executions.filter(e -> (isEmpty($start) || $startedAt($e) >= $start)
-								&& (isEmpty($end) || $startedAt($e) < $end)));
+						// A bound that is empty is dropped rather than tested. A period is normally a closed day
+						// range with both ends filled - even "Alle", which reads them off the data - but one that
+						// was never filled has no edges, and then it selects everything.
+						recent = $executions.filter(e -> (isEmpty($start) || $startedAt($e) >= $start)
+							&& (isEmpty($end) || $startedAt($e) < $end));
 						$recent;
 					}
 				]]></elements>

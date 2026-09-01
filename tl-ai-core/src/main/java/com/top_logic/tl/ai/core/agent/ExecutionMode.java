@@ -14,9 +14,12 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * modify application structure) are only permitted in {@link #DEVELOPMENT} and
  * {@link #MAINTENANCE} modes, never in {@link #PRODUCTION}.</p>
  *
- * <p>The bridge module maps this to TopLogic's {@code MaintenanceWindowManager} states.</p>
+ * <p>The bridge module folds TopLogic's two operational axes onto this one: the runtime
+ * maintenance window ({@code MaintenanceWindowManager}) and the boot-time environment the
+ * engine's {@code OperationModeService} reports.</p>
  *
  * @see SecurityContext#executionMode()
+ * @see TopLogicSecurityContext#executionMode() Where the two axes are folded together.
  */
 public enum ExecutionMode {
 

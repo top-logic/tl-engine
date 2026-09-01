@@ -9,7 +9,8 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
-import com.top_logic.basic.core.workspace.Environment;
+import com.top_logic.base.operation.OperationMode;
+import com.top_logic.base.operation.OperationModeService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
@@ -22,7 +23,7 @@ import com.top_logic.tl.ai.tool.api.Tool;
 /**
  * {@link SecurityContext} implementation backed by TopLogic's runtime.
  *
- * <p>Maps TopLogic's {@link MaintenanceWindowManager} and {@link Environment} to
+ * <p>Maps TopLogic's {@link MaintenanceWindowManager} and {@link OperationModeService} to
  * {@link ExecutionMode}. User-level security ({@link #hasToolPermission}) is answered against the
  * roles the run's principal holds, and per-object access ({@link #modelSecurity()}) against that
  * principal's model access rights. Both are unconditional: there is no configuration that switches
@@ -200,14 +201,72 @@ public class TopLogicSecurityContext implements SecurityContext {
 	/** */
 	@Override
 	public ExecutionMode executionMode() {
-		MaintenanceWindowManager mgr = MaintenanceWindowManager.getInstance();
-		if (mgr != null
-				&& mgr.getMaintenanceModeState() == MaintenanceWindowManager.IN_MAINTENANCE_MODE) {
+		return executionMode(MaintenanceWindowManager.isMaintenanceActive(), configuredOperationMode());
+	}
+
+	/**
+	 * Folds the engine's two operational axes into the single {@link ExecutionMode} tl-ai gates tools
+	 * with.
+	 *
+	 * <p>
+	 * The engine keeps runtime maintenance and the boot-time environment apart - a production install
+	 * can be in a maintenance window - and tl-ai does not, because the only question it asks of both
+	 * is whether a {@code STRUCTURAL} tool may run. Maintenance therefore wins over the environment:
+	 * an operator who opened a maintenance window did so to let exactly those tools run.
+	 * </p>
+	 *
+	 * <p>
+	 * {@link OperationMode#TEST} has no counterpart in tl-ai's vocabulary and is deliberately folded
+	 * onto {@link ExecutionMode#DEVELOPMENT} rather than overlooked: a test install is not a live one,
+	 * so the restriction that exists to protect live data does not apply to it.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@code null} mode - the service is not started, see {@link #configuredOperationMode()} - and
+	 * any mode the engine may add in the future both yield {@link ExecutionMode#PRODUCTION}. This path
+	 * gates tools, so an unknown environment has to be the most restricted one; guessing the
+	 * permissive mode would silently open {@code STRUCTURAL} tools on an install nobody classified.
+	 * </p>
+	 *
+	 * @param maintenanceActive
+	 *        Whether a maintenance window is currently open, from
+	 *        {@link MaintenanceWindowManager#isMaintenanceActive()}.
+	 * @param mode
+	 *        The installation's environment, or <code>null</code> if it cannot be determined.
+	 */
+	static ExecutionMode executionMode(boolean maintenanceActive, OperationMode mode) {
+		if (maintenanceActive) {
 			return ExecutionMode.MAINTENANCE;
 		}
-		if (!Environment.isDeployed()) {
-			return ExecutionMode.DEVELOPMENT;
+		if (mode == null) {
+			return ExecutionMode.PRODUCTION;
 		}
-		return ExecutionMode.PRODUCTION;
+		switch (mode) {
+			case DEVELOPMENT:
+			case TEST:
+				return ExecutionMode.DEVELOPMENT;
+			case PRODUCTION:
+			default:
+				return ExecutionMode.PRODUCTION;
+		}
+	}
+
+	/**
+	 * The environment {@link OperationModeService} reports, or <code>null</code> if that service is
+	 * not started.
+	 *
+	 * <p>
+	 * {@link OperationModeService#getInstance()} throws on an unstarted module, and this method sits
+	 * on the tool-gating path of every run - including in unit tests and other minimal setups that
+	 * boot no services at all. Answering <code>null</code> there lets
+	 * {@link #executionMode(boolean, OperationMode)} fall back to the most restricted mode instead of
+	 * failing the run.
+	 * </p>
+	 */
+	private static OperationMode configuredOperationMode() {
+		if (!OperationModeService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		return OperationModeService.getInstance().getMode();
 	}
 }

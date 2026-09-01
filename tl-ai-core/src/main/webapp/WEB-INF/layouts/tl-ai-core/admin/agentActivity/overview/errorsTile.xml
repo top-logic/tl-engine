@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	"Fehler (24 h)". Both the count and the share, because five failures out of six runs and five
-	out of five hundred are different situations and the count alone cannot tell them apart.
+	"Fehler", over the period the tab's selector names. Both the count and the share, because five
+	failures out of six runs and five out of five hundred are different situations and the count
+	alone cannot tell them apart.
 -->
 <securityLayout name="aiOverviewErrorsTile"
 	titleKey="admin.ai.agentActivity.overview.errors.label"
@@ -10,17 +11,42 @@
 	<tile-info name="aiOverviewErrors"
 		label="admin.ai.agentActivity.overview.errors.label"
 	>
-		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
+		<!--
+			The label is a TL-Script expression exactly like the number, so that the period the
+			number counts is written next to it and cannot drift from the control:
+			ModelBasedTilePreview takes its label from a TilePreviewPartProvider.Text just as it
+			takes its description, and evaluates both against the model configured here - which is
+			the period, off the tab's selector. The tile-info label below stays a plain resource; it
+			is what the drill-down breadcrumb says, and a breadcrumb does not need the period.
+		-->
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
+			model="selection(aiOverviewPeriodSelector)"
+		>
+			<label class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[
+					model -> {
+						period = ifElse(isEmpty($model), 30, $model);
+						span = ifElse($period == 0,
+							#('All'@en, 'Alle'@de).localize(),
+							ifElse($period == 1,
+								#('1 day'@en, '1 Tag'@de).localize(),
+								#('{0} days'@en, '{0} Tage'@de).fill($period).localize()));
+						#('Failures ({0})'@en, 'Fehler ({0})'@de).fill($span).localize();
+					}
+				]]></text>
+			</label>
 			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
 				<text><![CDATA[
 					model -> {
-						since = now().toSystemCalendar().withDayAdded(-1).toDate();
-						recent = all(`tl.ai.execution:AgentExecution`)
-							.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`) >= $since);
+						period = ifElse(isEmpty($model), 30, $model);
+						executions = all(`tl.ai.execution:AgentExecution`);
+						recent = ifElse($period == 0, $executions,
+							$executions.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
+								>= now().toSystemCalendar().withDayAdded(-$period).toDate()));
 						failed = $recent.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == `tl.ai.execution:ExecutionStatus#ERROR`).size();
 						{{{
 							<div class="aiKpi">
-								<div class="aiKpiValue">{$failed}</div>
+								<div class="aiKpiValue">{numberFormat('#,##0').format($failed)}</div>
 								<div class="aiKpiNote">
 									{#('of {0} runs'@en, 'von {0} Läufen'@de).fill($recent.size())}
 								</div>
@@ -33,15 +59,21 @@
 	</tile-info>
 	<components>
 		<tableView name="aiOverviewErrorsTable"
+			model="selection(aiOverviewPeriodSelector)"
 			objectType="tl.ai.execution:AgentExecution"
 			securityObject="securityRoot"
 			titleKey="admin.ai.agentActivity.overview.errors.title"
 		>
 			<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
 				<elements><![CDATA[
-					model -> all(`tl.ai.execution:AgentExecution`)
-						.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`) >= now().toSystemCalendar().withDayAdded(-1).toDate())
-						.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == `tl.ai.execution:ExecutionStatus#ERROR`)
+					model -> {
+						period = ifElse(isEmpty($model), 30, $model);
+						executions = all(`tl.ai.execution:AgentExecution`);
+						ifElse($period == 0, $executions,
+								$executions.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
+									>= now().toSystemCalendar().withDayAdded(-$period).toDate()))
+							.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == `tl.ai.execution:ExecutionStatus#ERROR`);
+					}
 				]]></elements>
 				<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
 			</modelBuilder>

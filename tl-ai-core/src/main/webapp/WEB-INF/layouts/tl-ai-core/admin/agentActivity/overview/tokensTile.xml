@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	"Token (24 h)". Billable tokens - input plus output - kept apart from the cache traffic, because
-	the cached share is what makes a run cheap and mixing the two hides exactly that.
+	"Token", over the period the tab's selector names. Billable tokens - input plus output - kept
+	apart from the cache traffic, because the cached share is what makes a run cheap and mixing the
+	two hides exactly that.
 	
-	24 hours, like the other two counting tiles, and no longer 30 days. Five numbers side by side are
-	read as one row, and "8 Fehler" next to "75 Mio. Token" is unreadable when the two count
-	different stretches of time. The thirty-day picture is not lost: it is one tab further on in
-	Verbrauch, where it belongs, and the trend chart under these tiles carries it too.
+	One period for all three counting tiles, so that "8 Fehler" next to "75 Mio. Token" always counts
+	the same stretch of time; five numbers side by side are read as one row.
 	
-	The period stays a fixed number in the expression rather than becoming a setting. A tile states
-	its period in its own label and the table behind it in its title, and both are static resources;
-	a configurable period would have to vanish from both, and a KPI whose period is invisible is
-	worse than one whose period cannot be changed.
+	The period used to be a fixed number here, on the grounds that a tile has to state its period and
+	that neither the tile label nor the table title can render a value. That is only half true: a
+	ModelBasedTilePreview label is a TilePreviewPartProvider.Text and takes a TL-Script expression,
+	so the label states the selected period and follows it. The table title behind the tile cannot,
+	and no longer tries to name a window.
 	
 	Deliberately not a euro figure: see the note in overviewView.xml.
 -->
@@ -22,13 +22,38 @@
 	<tile-info name="aiOverviewTokens"
 		label="admin.ai.agentActivity.overview.tokens.label"
 	>
-		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
+		<!--
+			The label is a TL-Script expression exactly like the number, so that the period the
+			number counts is written next to it and cannot drift from the control:
+			ModelBasedTilePreview takes its label from a TilePreviewPartProvider.Text just as it
+			takes its description, and evaluates both against the model configured here - which is
+			the period, off the tab's selector. The tile-info label below stays a plain resource; it
+			is what the drill-down breadcrumb says, and a breadcrumb does not need the period.
+		-->
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
+			model="selection(aiOverviewPeriodSelector)"
+		>
+			<label class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[
+					model -> {
+						period = ifElse(isEmpty($model), 30, $model);
+						span = ifElse($period == 0,
+							#('All'@en, 'Alle'@de).localize(),
+							ifElse($period == 1,
+								#('1 day'@en, '1 Tag'@de).localize(),
+								#('{0} days'@en, '{0} Tage'@de).fill($period).localize()));
+						#('Tokens ({0})'@en, 'Token ({0})'@de).fill($span).localize();
+					}
+				]]></text>
+			</label>
 			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
 				<text><![CDATA[
 					model -> {
-						recent = all(`tl.ai.execution:AgentExecution`)
-							.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
-								>= now().toSystemCalendar().withDayAdded(-1).toDate());
+						period = ifElse(isEmpty($model), 30, $model);
+						executions = all(`tl.ai.execution:AgentExecution`);
+						recent = ifElse($period == 0, $executions,
+							$executions.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
+								>= now().toSystemCalendar().withDayAdded(-$period).toDate()));
 						value = a -> e -> ifElse(isEmpty($e.get($a)), 0, $e.get($a));
 						billable = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#inputTokens`)($e)
 							+ $value(`tl.ai.execution:AgentExecution#outputTokens`)($e)).sum();
@@ -53,15 +78,20 @@
 	</tile-info>
 	<components>
 		<tableView name="aiOverviewTokensTable"
+			model="selection(aiOverviewPeriodSelector)"
 			objectType="tl.ai.execution:AgentExecution"
 			securityObject="securityRoot"
 			titleKey="admin.ai.agentActivity.overview.tokens.title"
 		>
 			<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
 				<elements><![CDATA[
-					model -> all(`tl.ai.execution:AgentExecution`)
-						.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
-							>= now().toSystemCalendar().withDayAdded(-1).toDate())
+					model -> {
+						period = ifElse(isEmpty($model), 30, $model);
+						executions = all(`tl.ai.execution:AgentExecution`);
+						ifElse($period == 0, $executions,
+							$executions.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
+								>= now().toSystemCalendar().withDayAdded(-$period).toDate()));
+					}
 				]]></elements>
 				<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
 			</modelBuilder>

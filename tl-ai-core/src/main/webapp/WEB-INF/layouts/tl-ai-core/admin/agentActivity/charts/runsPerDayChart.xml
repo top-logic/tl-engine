@@ -1,33 +1,78 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	"Läufe pro Tag", stacked by outcome. The one panel of this view that answers "is this getting
-	worse" rather than "how much right now": a failure rate that climbs over a fortnight is invisible
-	in any table of the current rows, however it is sorted.
+	"Läufe im Zeitverlauf", stacked by outcome. The one panel of this view that answers "is this
+	getting worse" rather than "how much right now": a failure rate that climbs over a fortnight is
+	invisible in any table of the current rows, however it is sorted.
 	
-	Days without a run keep their slot on the axis. A gap is as much of a finding as a spike - a
-	scheduled job that stopped running produces exactly that shape - and dropping empty days would
-	quietly compress it away.
+	The period is the selection of the tab's period selector, delivered on this component's model
+	channel; ChartJsComponent re-evaluates this whole expression when that model changes and animates
+	into the new shape. 30 days when the channel carries nothing, which is what the chart showed
+	while its window was hardcoded.
+	
+	The title no longer names the bucket width, because the bucket width is no longer fixed: one bar
+	per day while the period is one that a reader can count in days, one bar per month beyond that.
+	Only "Alle" can reach the second case, and it has to - a monitor that has been collecting for a
+	year would otherwise draw four hundred hairlines.
+	
+	Empty buckets keep their slot on the axis. A gap is as much of a finding as a spike - a scheduled
+	job that stopped running produces exactly that shape - and dropping empty days would quietly
+	compress it away.
 	
 	The series colours are the theme's reserved status colours, the same ones the tables use, rather
 	than the component's default Tableau10 scheme: a reader who has learnt that red means ERROR in
 	the Läufe table must not have to learn a second mapping here.
 -->
 <chartjs name="aiRunsPerDayChart"
+	model="selection(aiOverviewPeriodSelector)"
 	toolbar="true"
 	securityObject="securityRoot"
 	titleKey="admin.ai.agentActivity.charts.runsPerDay"
 >
 	<data><![CDATA[
 		model -> {
-			days = now().roundDay()
-				.recursion(d -> $d.toSystemCalendar().withDayAdded(-1).toDate().roundDay(), 0, 30)
-				.reverse();
-			byDay = all(`tl.ai.execution:AgentExecution`)
-				.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`) >= $days.firstElement())
-				.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`).roundDay());
-			counts = status -> $days.map(d -> {
-				runs = $byDay[$d];
+			period = ifElse(isEmpty($model), 30, $model);
+			executions = all(`tl.ai.execution:AgentExecution`);
+			startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+			cal = d -> $d.toSystemCalendar();
+			today = now().roundDay();
+
+			// The left edge of the axis. For "Alle" that is the oldest run there is, found by
+			// sorting the start dates - the one extra pass over the table that this option needs
+			// and a bounded period does not.
+			first = ifElse($period > 0,
+				$cal($today).withDayAdded(-$period).toDate().roundDay(),
+				ifElse(isEmpty($executions), $today,
+					$executions.map(e -> $startedAt($e)).sort().firstElement().roundDay()));
+
+			// One bar per day while a reader can still count the bars, one bar per month beyond
+			// that. Only "Alle" can reach the second case, and it has to: a monitor that has been
+			// collecting for a year would otherwise draw four hundred hairlines.
+			monthly = ($today.toMillis() - $first.toMillis()) / 86400000 > 120;
+
+			// The buckets, oldest first. The month count is exact calendar arithmetic rather than a
+			// division of the day span: a span of a few weeks can straddle three months, and an
+			// undershoot would drop a whole month of runs without a trace. The day count is a
+			// millisecond division, deliberately generous by one and then trimmed against the left
+			// edge, because that division comes out one short across a daylight-saving shift.
+			depth = ifElse($monthly,
+				($cal($today).year() - $cal($first).year()) * 12
+					+ $cal($today).month() - $cal($first).month(),
+				($today.toMillis() - $first.toMillis()) / 86400000 + 1);
+			buckets = ifElse($monthly,
+				$cal($today).withDay(1).toDate().roundDay()
+					.recursion(d -> $cal($d).withMonthAdded(-1).toDate(), 0, $depth)
+					.reverse(),
+				$today.recursion(d -> $cal($d).withDayAdded(-1).toDate().roundDay(), 0, $depth)
+					.reverse()
+					.filter(b -> $b >= $first));
+			bucketOf = d -> ifElse($monthly, $cal($d).withDay(1).toDate().roundDay(), $d.roundDay());
+
+			byBucket = $executions
+				.filter(e -> $startedAt($e) >= $buckets.firstElement())
+				.groupBy(e -> $bucketOf($startedAt($e)));
+			counts = status -> $buckets.map(b -> {
+				runs = $byBucket[$b];
 				ifElse(isEmpty($runs), 0,
 					$runs.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == $status).size());
 			});
@@ -39,7 +84,9 @@
 			{
 				'type': 'bar',
 				'data': {
-					'labels': $days.map(d -> dateFormat('dd.MM.').format($d)),
+					'labels': $buckets.map(b -> ifElse($monthly,
+						dateFormat('MM.yyyy').format($b),
+						dateFormat('dd.MM.').format($b))),
 					'datasets': list(
 						$bar(`tl.ai.execution:ExecutionStatus#COMPLETE`)('#04a38d'),
 						$bar(`tl.ai.execution:ExecutionStatus#ERROR`)('#d3181b'),

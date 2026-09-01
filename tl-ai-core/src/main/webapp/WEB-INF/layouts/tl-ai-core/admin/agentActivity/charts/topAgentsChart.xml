@@ -1,24 +1,30 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	"Aktivste Agenten", runs per agent over 30 days. Answers which agent the load actually comes
-	from, which the run table can only answer by filtering one agent at a time.
+	"Aktivste Agenten", runs per agent over the period the tab's selector names. Answers which agent
+	the load actually comes from, which the run table can only answer by filtering one agent at a
+	time.
 	
 	Horizontal bars because agent names are words, not dates: on a vertical axis they would be
 	rotated or truncated. Ten at most - the tail of a long agent catalogue says nothing that the
 	table behind the Läufe tab does not say better.
 -->
 <chartjs name="aiTopAgentsChart"
+	model="selection(aiOverviewPeriodSelector)"
 	toolbar="true"
 	securityObject="securityRoot"
 	titleKey="admin.ai.agentActivity.charts.topAgents"
 >
 	<data><![CDATA[
 		model -> {
-			since = now().toSystemCalendar().withDayAdded(-30).toDate().roundDay();
-			byAgent = all(`tl.ai.execution:AgentExecution`)
-				.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`) >= $since)
-				.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#agentName`));
+			period = ifElse(isEmpty($model), 30, $model);
+			executions = all(`tl.ai.execution:AgentExecution`);
+			// "Alle" drops the filter rather than widening it: an unfiltered pass over the table is
+			// measurably cheaper than one that tests a date on every row.
+			recent = ifElse($period == 0, $executions,
+				$executions.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
+					>= now().toSystemCalendar().withDayAdded(-$period).toDate()));
+			byAgent = $recent.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#agentName`));
 			ranked = $byAgent.keySet().toList().sort(desc(comparator(n -> $byAgent[$n].size())));
 			names = ifElse($ranked.size() > 10, $ranked.subList(0, 10), $ranked);
 			{

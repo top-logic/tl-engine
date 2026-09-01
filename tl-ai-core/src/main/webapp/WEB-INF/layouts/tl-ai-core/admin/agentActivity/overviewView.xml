@@ -17,9 +17,16 @@
 	the height of the cards: it also has to hold a table once a tile is opened, so it is sized for
 	the table and the cards leave some air under them. The split is draggable either way.
 	
+	One period control at the top governs the whole tab: the three counting tiles, the two charts and
+	the tables behind those tiles all read its selection channel as their model. It sits above the
+	tile band rather than inside a panel because it belongs to none of them - a control per panel
+	would let five numbers on one screen state five different periods. The two current-state tiles,
+	"Läuft jetzt" and "Wartet auf einen Menschen", are not windowed and ignore it; a period on a
+	count of what is happening right now would suggest a meaning it does not have.
+	
 	Everything here is evaluated when it is rendered. There is no auto-refresh anywhere in this view;
-	each table behind a tile carries an Aktualisieren command, and re-entering the tab re-evaluates
-	the tiles and both charts.
+	each table behind a tile carries an Aktualisieren command, and re-entering the tab or changing
+	the period re-evaluates the tiles and both charts.
 	
 	No cost tile: the data model has no price. A euro figure derived from a guessed rate would be
 	quoted by somebody, and a wrong number in a monitor is worse than a missing one.
@@ -35,8 +42,22 @@
 			resizable="true"
 		>
 			<components>
+				<include name="tl-ai-core/admin/agentActivity/periodSelector.xml"
+					selectorName="aiOverviewPeriodSelector"
+				/>
+				<!--
+					The root tile takes the period as its model only in order to be redrawn by it. A
+					tile preview is written during the repaint of the tile control and registers no
+					listener of its own, so the repaint has to be asked for; setting a component's
+					model ends in LayoutComponent.invalidate(), and this is the component of the
+					tile chain whose control is a ComponentWrappingControl, which is the one that
+					listens for that and repaints. The group below it renders through a plain
+					LayoutControlAdapter, which does not - a model on the group has no effect. The
+					previews read the period themselves, off the selector.
+				-->
 				<component class="com.top_logic.mig.html.layout.tiles.RootTileComponent"
 					name="aiAgentOverviewRootTile"
+					model="selection(aiOverviewPeriodSelector)"
 					titleKey="admin.ai.agentActivity.overview.title"
 				>
 					<layoutInfo size="32%"/>

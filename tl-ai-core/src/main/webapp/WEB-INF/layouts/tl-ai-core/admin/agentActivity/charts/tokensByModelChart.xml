@@ -1,23 +1,26 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	"Token nach Modell", billable tokens per model over 30 days. Billable means input plus output;
-	cache reads are deliberately left out, because a model that looks expensive here and cheap in the
-	daily chart is a model whose prompts are not being cached.
+	"Token nach Modell", billable tokens per model over the period the tab's selector names. Billable
+	means input plus output; cache reads are deliberately left out, because a model that looks
+	expensive here and cheap in the time-series chart is a model whose prompts are not being cached.
 -->
 <chartjs name="aiTokensByModelChart"
+	model="selection(aiUsagePeriodSelector)"
 	toolbar="true"
 	securityObject="securityRoot"
 	titleKey="admin.ai.agentActivity.charts.tokensByModel"
 >
 	<data><![CDATA[
 		model -> {
-			since = now().toSystemCalendar().withDayAdded(-30).toDate().roundDay();
+			period = ifElse(isEmpty($model), 30, $model);
+			executions = all(`tl.ai.execution:AgentExecution`);
 			billable = e -> ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#inputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#inputTokens`))
 				+ ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#outputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#outputTokens`));
-			byModel = all(`tl.ai.execution:AgentExecution`)
-				.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`) >= $since)
-				.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#model`));
+			recent = ifElse($period == 0, $executions,
+				$executions.filter(e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`)
+					>= now().toSystemCalendar().withDayAdded(-$period).toDate()));
+			byModel = $recent.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#model`));
 			ranked = $byModel.keySet().toList().sort(desc(comparator(m -> $byModel[$m].map(e -> $billable($e)).sum())));
 			names = ifElse($ranked.size() > 10, $ranked.subList(0, 10), $ranked);
 			{

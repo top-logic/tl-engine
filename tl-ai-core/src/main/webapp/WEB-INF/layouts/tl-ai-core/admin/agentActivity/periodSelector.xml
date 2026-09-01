@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The period control that the tiles and charts of one tab read.
+	
+	A <selector> is the framework's own component for "pick one value and publish it": it shows a
+	single select field and writes the chosen option to its selection channel, which every panel of
+	the tab takes as its model. The engine's own demo builds a chart cockpit exactly this way
+	(com.top_logic.demo/structure/demoTypes/chart/demoChartCockpit.xml reads
+	selection(DemoTypesVersionSelector)), so this is the existing idiom rather than a new one.
+	
+	The options are plain day counts, with 0 for "no lower bound at all". They are deliberately not
+	a model enum: the period is a property of this view, not of the data, and a classifier would
+	have to be migrated into every application that ships this monitor.
+	
+	A bounded option means the last N times 24 hours counted back from now, not the last N calendar
+	days, so that the tiles and the ranking charts of a tab count exactly the same runs. The two
+	time-series charts are the exception and have to be: their bars are calendar days, so they start
+	at the midnight of the oldest day the period touches and consequently cover a few hours more.
+	Each of the two states its own range on its axis.
+	
+	The component has no business model of its own - the options are a constant - and says so
+	through supportsModel. That is not cosmetic: a selector observes every type, and with the
+	default "everything is a possible model" it would invalidate itself on every single agent run.
+	
+	One selector per tab, not one per panel. Five period pickers on one screen that can disagree
+	with each other would be worse than the fixed windows they replace.
+-->
+<template>
+	<params>
+		<param name="selectorName"/>
+	</params>
+
+	<selector name="${selectorName}"
+		alphabeticalOrder="false"
+		securityObject="securityRoot"
+		showMaximize="false"
+		showMinimize="false"
+		showPopOut="false"
+		titleKey="admin.ai.agentActivity.period.label"
+		toolbar="true"
+	>
+		<layoutInfo size="78px"/>
+		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model -> list(1, 7, 30, 90, 0)"
+			supportsModel="model -> isEmpty($model)"
+		/>
+		<optionLabelProvider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+			<label><![CDATA[
+				period -> ifElse($period == 0,
+					#('All'@en, 'Alle'@de).localize(),
+					ifElse($period == 1,
+						#('1 day'@en, '1 Tag'@de).localize(),
+						#('{0} days'@en, '{0} Tage'@de).fill($period).localize()))
+			]]></label>
+		</optionLabelProvider>
+		<!--
+			30 days, so that a reader who does not touch the control sees what the charts showed
+			when their period was fixed. The tiles used to count 24 hours and now start at 30 days
+			too - two panels sharing one control cannot keep two different defaults, and the trend
+			charts are the panels whose period a reader is more likely to have in mind.
+		-->
+		<defaultSelectionProvider class="com.top_logic.model.search.providers.ListSelectionProviderByExpression"
+			function="options -> 30"
+		/>
+	</selector>
+</template>

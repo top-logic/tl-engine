@@ -20,7 +20,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.top_logic.ai.chat.api.ChatSSEHandler;
+import com.top_logic.ai.chat.api.ChatEventHandler;
+import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
@@ -168,11 +169,11 @@ public class ChatProcessor {
 			// Look up SSE handler here (deferred from sendMessage) to avoid race condition:
 			// the JS client reconnects SSE during session creation, and the new connection
 			// may not be ready when /chat/send arrives. Retry briefly to allow it to connect.
-			ChatSSEHandler sseHandler = ChatSSEHandler.findHandler(taskTracker);
+			ChatEventHandler sseHandler = ChatEventHandlerRegistry.find(taskTracker);
 			if (sseHandler == null) {
 				for (int i = 0; i < 10 && sseHandler == null; i++) {
 					Thread.sleep(100);
-					sseHandler = ChatSSEHandler.findHandler(taskTracker);
+					sseHandler = ChatEventHandlerRegistry.find(taskTracker);
 				}
 			}
 			state.setSseHandler(sseHandler);
@@ -195,7 +196,7 @@ public class ChatProcessor {
 				if (runSessionId != null && !runSessionId.equals(taskTracker.getActiveSessionId())) {
 					return;
 				}
-				ChatSSEHandler currentHandler = ChatSSEHandler.findHandler(taskTracker);
+				ChatEventHandler currentHandler = ChatEventHandlerRegistry.find(taskTracker);
 				if (currentHandler != null) {
 					currentHandler.onEvent(event);
 				}
@@ -304,7 +305,9 @@ public class ChatProcessor {
 
 	/**
 	 * Shared send logic: adds user message, starts task, submits background orchestrator.
-	 * Real-time updates are delivered via SSE ({@link com.top_logic.ai.chat.api.ChatSSEHandler}).
+	 * Real-time updates are delivered to the chat UI registered for the tracker (see
+	 * {@link com.top_logic.ai.chat.api.ChatEventHandlerRegistry}); in this module that is the SSE
+	 * handler.
 	 *
 	 * @param tracker
 	 *        Task progress tracker for this session.
@@ -583,7 +586,7 @@ public class ChatProcessor {
 						executeOrchestrator(_taskTracker, state, _conversationMemory, _userMessage, _attachments);
 						state.completeSuccessfully();
 
-						ChatSSEHandler handler = state.getSseHandler();
+						ChatEventHandler handler = state.getSseHandler();
 						if (handler != null) {
 							String responseText = state.getLastAgentResponse();
 							if (responseText != null && !responseText.isEmpty()) {
@@ -627,7 +630,7 @@ public class ChatProcessor {
 				message = pe.getMessage();
 			}
 			// Send via SSE if handler is available
-			ChatSSEHandler handler = state.getSseHandler();
+			ChatEventHandler handler = state.getSseHandler();
 			if (handler != null) {
 				try {
 					ProviderErrorEvent event = ProviderErrorEvent.create()
@@ -679,7 +682,7 @@ public class ChatProcessor {
 		private final List<ChatMessage> _pendingMessages = new ArrayList<>();
 
 		// SSE handler and thread tracking for push-based updates and cancellation
-		private volatile ChatSSEHandler _sseHandler;
+		private volatile ChatEventHandler _sseHandler;
 		private volatile Thread _agentThread;
 		private volatile CancellationToken _cancellationToken;
 		private volatile String _lastAgentResponse;
@@ -837,7 +840,7 @@ public class ChatProcessor {
 		}
 
 		/** The SSE handler for push-based real-time updates; may be null. */
-		public ChatSSEHandler getSseHandler() {
+		public ChatEventHandler getSseHandler() {
 			return _sseHandler;
 		}
 
@@ -847,7 +850,7 @@ public class ChatProcessor {
 		 * @param handler
 		 *        The handler; may be null.
 		 */
-		public void setSseHandler(ChatSSEHandler handler) {
+		public void setSseHandler(ChatEventHandler handler) {
 			_sseHandler = handler;
 		}
 

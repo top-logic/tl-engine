@@ -37,7 +37,11 @@ Authentication enforced by TopLogic's `ChatSessionFilter` mapped to `/chat/*`.
 
 - **`ChatProcessor`** – Static utility: background thread pool, orchestrator execution, state sync
 - **`TaskProgressTracker`** – Session-scoped chat state, manages processing states and session metadata
-- **`ChatSSEHandler`** – Push-based SSE handler implementing `AgentEventListener`
+- **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
+  final-message and provider-error notifications `ChatProcessor` produces itself
+- **`ChatEventHandlerRegistry`** – Interface-typed lookup of the chat UI observing a `TaskProgressTracker`;
+  `ChatProcessor` resolves the handler here per event, so a UI other than the SSE servlet can register
+- **`ChatSSEHandler`** – Push-based SSE implementation of `ChatEventHandler`
 - **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatMessage>` (max 500)
 - **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.

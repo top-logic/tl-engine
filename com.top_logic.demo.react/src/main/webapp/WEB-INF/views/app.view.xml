@@ -8,6 +8,14 @@
 		/>
 	</channels>
 	<app-shell>
+		<!--
+			System-wide notices, shown between app bar and content. Each element decides for itself
+			whether it has anything to announce; the area occupies no space while all of them stay
+			silent, so nothing is reserved during normal operation.
+		-->
+		<notices>
+			<maintenance-notice/>
+		</notices>
 		<content>
 			<sidebar
 				active-item="attributes"

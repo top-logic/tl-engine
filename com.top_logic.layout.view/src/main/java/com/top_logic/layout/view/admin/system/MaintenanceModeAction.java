@@ -160,10 +160,11 @@ public class MaintenanceModeAction implements ViewAction {
 				minutes = Math.max(0, number.longValue());
 			}
 			allowLogin = Boolean.TRUE.equals(model.tValueByName(ALLOW_LOGIN));
+			// Set on every activation, clearing it when the field was left empty: the message
+			// belongs to this window, and keeping the previous one would silently announce the
+			// last window's reason again.
 			Object message = model.tValueByName(MESSAGE);
-			if (message instanceof String text && !text.isBlank()) {
-				manager.setMessage(text);
-			}
+			manager.setMessage(message instanceof String text && !text.isBlank() ? text : null);
 		}
 		manager.enterMaintenanceWindow(minutes * 60 * 1000, allowLogin);
 	}

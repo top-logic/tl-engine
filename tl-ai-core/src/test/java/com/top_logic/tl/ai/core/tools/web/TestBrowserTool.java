@@ -20,6 +20,8 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.runner.RunWith;
+
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
@@ -27,6 +29,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.BlockSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.CaptchaSignal;
@@ -44,11 +47,12 @@ import junit.framework.TestCase;
  * The security-relevant behaviour (SSRF rejection, layered domain policy, untrusted-data framing,
  * truncation) and the concurrency policy of {@link BrowserSessionPool} (reuse, fail-fast, LRU and
  * idle eviction) are verified without launching a browser. The end-to-end tests that prove the
- * tool reads and drives a real JavaScript-rendered page are gated behind the system property
- * {@code tl.ai.browser.e2e=true}, because they download/launch Chromium and need network access -
- * infeasible in a plain unit-test CI run.
+ * tool reads and drives a real JavaScript-rendered page are gated behind {@link BrowserE2e},
+ * because they download/launch Chromium and need network access - infeasible in a plain unit-test
+ * CI run. Without the gate they report as skipped, not as passed.
  * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestBrowserTool extends TestCase {
 
 	/** JavaScript-rendered page: the quotes are injected client-side, absent from the raw HTML. */
@@ -1038,9 +1042,7 @@ public class TestBrowserTool extends TestCase {
 	 * domain policy is enforced. Gated behind {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testBrowserReadEndToEnd() throws Exception {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newService("quotes.toscrape.com");
 		service.startUp();
 		try {
@@ -1094,9 +1096,7 @@ public class TestBrowserTool extends TestCase {
 	 * </p>
 	 */
 	public void testDelayedContentAppearsOnLaterSnapshotEndToEnd() throws Exception {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newService("quotes.toscrape.com");
 		service.startUp();
 		try {
@@ -1125,9 +1125,7 @@ public class TestBrowserTool extends TestCase {
 	 * (does not see the first session's login cookie). Gated behind {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testInteractiveLoginAndSessionIsolationEndToEnd() throws Exception {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newService("quotes.toscrape.com");
 		service.startUp();
 		try {
@@ -1176,9 +1174,7 @@ public class TestBrowserTool extends TestCase {
 	 * {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testConcurrencyCapBoundsLiveSessionsEndToEnd() throws Exception {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newService(List.of("quotes.toscrape.com"), List.of(), false, 1);
 		service.startUp();
 		try {
@@ -1198,9 +1194,7 @@ public class TestBrowserTool extends TestCase {
 	 * {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testBlocklistAndAllowAnyEndToEnd() throws Exception {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		// Blocklist rejection under the default allowlist-enforced mode.
 		BrowserToolsService blocking = newService(List.of("quotes.toscrape.com"),
 			List.of("quotes.toscrape.com"), false);
@@ -1247,9 +1241,7 @@ public class TestBrowserTool extends TestCase {
 	 * A current-generation ref must still work. Gated behind {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testStaleRefIsRejectedEndToEnd() throws Exception {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newService("quotes.toscrape.com");
 		service.startUp();
 		try {
@@ -1304,9 +1296,7 @@ public class TestBrowserTool extends TestCase {
 	 * {@code TestScreenshotService}. Gated behind {@code -Dtl.ai.browser.e2e=true}.
 	 */
 	public void testScreenshotCaptureEndToEnd() throws Exception {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newService("quotes.toscrape.com");
 		service.startUp();
 		try {
@@ -1346,10 +1336,6 @@ public class TestBrowserTool extends TestCase {
 	private static String firstRef(String rendered) {
 		Matcher matcher = Pattern.compile("\\[(s\\d+e\\d+)\\]").matcher(rendered);
 		return matcher.find() ? matcher.group(1) : null;
-	}
-
-	private static boolean e2eEnabled() {
-		return Boolean.getBoolean("tl.ai.browser.e2e");
 	}
 
 	private static String refWhere(List<InteractiveElement> elements, Predicate<InteractiveElement> match) {

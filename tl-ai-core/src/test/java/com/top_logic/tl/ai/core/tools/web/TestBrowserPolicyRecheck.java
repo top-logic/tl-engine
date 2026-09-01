@@ -10,8 +10,12 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Assume;
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.ScreenshotCapture;
@@ -46,9 +50,10 @@ import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
  * </p>
  *
  * <p>
- * Gated behind {@code -Dtl.ai.browser.e2e=true}.
+ * Gated behind {@link BrowserE2e}.
  * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestBrowserPolicyRecheck extends TestCase {
 
 	/** The one host the policy permits; only its DNS resolution is needed. */
@@ -98,9 +103,8 @@ public class TestBrowserPolicyRecheck extends TestCase {
 	 * follows must report the refusal rather than hand back the page it is sitting on.
 	 */
 	public void testSnapshotReportsAnOffPolicyHopInsteadOfContent() {
-		if (!e2eEnabled() || !resolvable()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve the fixture hosts - no network", resolvable());
 		try (RecordingServer origin = RecordingServer.serving(DELAYED_HOP_FIXTURE);
 				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, resolvingTo(origin))) {
 			BrowserSession session = openSession("snapshot-recheck", proxy);
@@ -142,9 +146,8 @@ public class TestBrowserPolicyRecheck extends TestCase {
 	 * </p>
 	 */
 	public void testAnOffPolicyHopIsReportedOnceNotOnEverySnapshot() {
-		if (!e2eEnabled() || !resolvable()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve the fixture hosts - no network", resolvable());
 		try (RecordingServer origin = RecordingServer.serving(DELAYED_HOP_FIXTURE);
 				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, resolvingTo(origin))) {
 			BrowserSession session = openSession("snapshot-clean", proxy);
@@ -185,9 +188,8 @@ public class TestBrowserPolicyRecheck extends TestCase {
 	 * </p>
 	 */
 	public void testScreenshotReportsAnOffPolicyHopInsteadOfImageBytes() {
-		if (!e2eEnabled() || !resolvable()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve the fixture hosts - no network", resolvable());
 		try (RecordingServer origin = RecordingServer.serving(DELAYED_HOP_FIXTURE);
 				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, resolvingTo(origin))) {
 			BrowserSession session = openSession("screenshot-recheck", proxy);
@@ -233,9 +235,8 @@ public class TestBrowserPolicyRecheck extends TestCase {
 	 * </p>
 	 */
 	public void testScreenshotOfACommittedOffPolicyDocumentIsRefused() {
-		if (!e2eEnabled() || !resolvable()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve the fixture hosts - no network", resolvable());
 		try (RecordingServer offPolicy = RecordingServer.serving(OFF_POLICY_FIXTURE);
 				RecordingServer origin = RecordingServer
 					.start(target -> RecordingServer.Reply.redirect("http://" + OFF_POLICY_HOST + "/"));
@@ -274,9 +275,8 @@ public class TestBrowserPolicyRecheck extends TestCase {
 	 * the browser has not left yet.
 	 */
 	public void testTypeReportsAnOffPolicyHopInsteadOfContent() {
-		if (!e2eEnabled() || !resolvable()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve the fixture hosts - no network", resolvable());
 		try (RecordingServer origin = RecordingServer.serving(HOP_ON_INPUT_FIXTURE);
 				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, resolvingTo(origin))) {
 			BrowserSession session = openSession("type-recheck", proxy);
@@ -300,9 +300,8 @@ public class TestBrowserPolicyRecheck extends TestCase {
 
 	/** Typing into a field that does nothing is unaffected. */
 	public void testTypeIntoAnOrdinaryFieldStillWorks() {
-		if (!e2eEnabled() || !resolvable()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve the fixture hosts - no network", resolvable());
 		String fixture = "<!doctype html><html><head><title>fixture</title></head><body>"
 			+ "<h1>permitted fixture page</h1>"
 			+ "<input id=\"q\" name=\"q\" aria-label=\"query\"></body></html>";
@@ -330,9 +329,7 @@ public class TestBrowserPolicyRecheck extends TestCase {
 	 * fetched from somewhere, not the browser's own starting state.
 	 */
 	public void testSnapshotOfABlankSessionIsNotAPolicyError() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("blank-recheck", TIMEOUT_MILLIS,
 			BrowserSession.DEFAULT_ACTION_TIMEOUT_MILLIS, 0, ONLY_PERMITTED_HOST, null, false, false, null);
 		try {
@@ -405,9 +402,4 @@ public class TestBrowserPolicyRecheck extends TestCase {
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 		}
-	}
-
-	private static boolean e2eEnabled() {
-		return Boolean.getBoolean("tl.ai.browser.e2e");
-	}
-}
+	}}

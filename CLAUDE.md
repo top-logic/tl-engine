@@ -26,6 +26,20 @@ mvn test -pl tl-ai-core               # Test specific module
 mvn clean install -DskipTests          # Skip tests
 ```
 
+### Browser end-to-end tests
+
+The `tools/web` browser tests launch a real Chromium, so they are off unless
+`-Dtl.ai.browser.e2e=true` is given. Without it they report as **skipped** (never as passed) - see
+`BrowserE2e` and `AssumptionAwareRunner` in `tl-ai-core/src/test/java`. To run them:
+
+```bash
+mvn -pl tl-ai-core -am test -DskipTests=false -Dtl.ai.browser.e2e=true -Dtest='TestBrowser*'
+```
+
+Playwright provisions Chromium into `~/.cache/ms-playwright` on first use; it must be the full
+Chromium build, not `chrome-headless-shell` (a plain `playwright install chromium` supplies both).
+Tests that reach public sites skip themselves separately when DNS does not resolve.
+
 ## Architecture
 
 ### Tool API (tl-ai-tool-api)

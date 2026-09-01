@@ -10,10 +10,14 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import org.junit.Assume;
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.AddressResolver;
@@ -24,7 +28,7 @@ import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
  * End-to-end tests, with a real Chromium, that the browser is genuinely <b>constrained by</b> the
  * filtering forward proxy - and in particular that the SSRF-on-redirect residual is closed: a page on
  * a permitted origin can no longer make the browser send even a single request to a forbidden origin.
- * Gated behind {@code -Dtl.ai.browser.e2e=true}.
+ * Gated behind {@link BrowserE2e}.
  *
  * <p>
  * <b>Why the fixture is shaped this way.</b> A redirect hop is the only path that reaches the proxy
@@ -45,6 +49,7 @@ import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
  * this change adds).
  * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestBrowserProxyEnforcement extends TestCase {
 
 	/** A public hostname used as the permitted first hop; only its DNS resolution is needed. */
@@ -70,9 +75,8 @@ public class TestBrowserProxyEnforcement extends TestCase {
 	 * </p>
 	 */
 	public void testEveryConnectionTraversesTheProxyEndToEnd() {
-		if (!e2eEnabled() || !resolves(PERMITTED_HOST)) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve " + PERMITTED_HOST + " - no network", resolves(PERMITTED_HOST));
 		RequestPolicy refuseEverything = host -> "refused by the test policy.";
 		try (FilteringProxy proxy = FilteringProxy.start(refuseEverything)) {
 			BrowserSession session = openSession("traversal", proxy);
@@ -101,9 +105,8 @@ public class TestBrowserProxyEnforcement extends TestCase {
 	 * contract - the proxy is on the path, and being on the path does not break the path.
 	 */
 	public void testPermittedTrafficIsServedThroughTheProxyEndToEnd() {
-		if (!e2eEnabled() || !resolves(PERMITTED_HOST)) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve " + PERMITTED_HOST + " - no network", resolves(PERMITTED_HOST));
 		try (RecordingServer origin = RecordingServer.serving(
 			"<!doctype html><html><body><h1>proxied fixture</h1></body></html>")) {
 			try (FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, resolvingTo(origin))) {
@@ -132,9 +135,8 @@ public class TestBrowserProxyEnforcement extends TestCase {
 	 * records no contact at all, and the operation still fails with the clean policy message.
 	 */
 	public void testRedirectToPrivateAddressNeverReachesItEndToEnd() {
-		if (!e2eEnabled() || !resolves(PERMITTED_HOST)) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve " + PERMITTED_HOST + " - no network", resolves(PERMITTED_HOST));
 		try (RecordingServer victim = RecordingServer.serving("<html>internal secret</html>")) {
 			try (RecordingServer redirector =
 				RecordingServer.start(target -> RecordingServer.Reply.redirect(victim.origin() + "/"))) {
@@ -169,9 +171,8 @@ public class TestBrowserProxyEnforcement extends TestCase {
 	 * top-level/sub-resource distinction in the policy means.
 	 */
 	public void testSubResourceRedirectToPrivateAddressNeverReachesItEndToEnd() {
-		if (!e2eEnabled() || !resolves(PERMITTED_HOST)) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve " + PERMITTED_HOST + " - no network", resolves(PERMITTED_HOST));
 		try (RecordingServer victim = RecordingServer.serving("<html>internal secret</html>")) {
 			try (RecordingServer origin = RecordingServer.start(target -> target.contains("hop")
 				? RecordingServer.Reply.redirect(victim.origin() + "/pixel.png")
@@ -202,9 +203,7 @@ public class TestBrowserProxyEnforcement extends TestCase {
 	 * cloud-metadata endpoint is still refused, and so is loopback.
 	 */
 	public void testAllowAnyDomainsStillRefusesIpLiteralTargetsEndToEnd() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newService(List.of(), List.of(), true);
 		service.startUp();
 		try {
@@ -229,9 +228,7 @@ public class TestBrowserProxyEnforcement extends TestCase {
 	 * through it. Needs internet access.
 	 */
 	public void testAllowlistedHttpsSiteStillRendersThroughTheProxyEndToEnd() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserToolsService service = newService(List.of("quotes.toscrape.com"), List.of(), false);
 		service.startUp();
 		try {
@@ -279,10 +276,6 @@ public class TestBrowserProxyEnforcement extends TestCase {
 		} catch (UnknownHostException ex) {
 			return false;
 		}
-	}
-
-	private static boolean e2eEnabled() {
-		return Boolean.getBoolean("tl.ai.browser.e2e");
 	}
 
 	private static BrowserToolsService newService(List<String> allowedDomains, List<String> blockedDomains,

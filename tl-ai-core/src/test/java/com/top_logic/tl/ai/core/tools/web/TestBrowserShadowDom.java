@@ -7,8 +7,11 @@ package com.top_logic.tl.ai.core.tools.web;
 
 import java.util.List;
 
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.web.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
@@ -21,12 +24,13 @@ import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
  * <em>closed</em> shadow root stays unreachable (a documented DOM limit).
  *
  * <p>
- * These launch a real Chromium (gated behind {@code -Dtl.ai.browser.e2e=true}, like the other
+ * These launch a real Chromium (gated behind {@link BrowserE2e}, like the other
  * browser E2E tests) but need <b>no network</b>: the fixture HTML is loaded straight into the page
  * via a test hook, so a controlled open/nested/closed shadow-DOM document can be exercised without
  * a public site or a loopback server (which SSRF would block anyway).
  * </p>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class TestBrowserShadowDom extends TestCase {
 
 	/** Allow-any policy: no navigation happens (content is injected), so the policy is irrelevant. */
@@ -85,9 +89,7 @@ public class TestBrowserShadowDom extends TestCase {
 	 * {@code [data-tl-ref]} locator activates it (the light-DOM marker flips).
 	 */
 	public void testOpenShadowButtonTaggedAndClickable() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("shadow-open", TIMEOUT_MILLIS, ALLOW_ANY);
 		try {
 			PageView view = session.loadHtmlForTest(OPEN_SHADOW_FIXTURE);
@@ -104,9 +106,7 @@ public class TestBrowserShadowDom extends TestCase {
 
 	/** A button two shadow roots deep is reached by the recursive descent and is clickable. */
 	public void testNestedShadowButtonTaggedAndClickable() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("shadow-nested", TIMEOUT_MILLIS, ALLOW_ANY);
 		try {
 			PageView view = session.loadHtmlForTest(NESTED_SHADOW_FIXTURE);
@@ -123,9 +123,7 @@ public class TestBrowserShadowDom extends TestCase {
 
 	/** A normal light-DOM page is tagged identically - a plain button still gets a ref. */
 	public void testLightDomStillTaggedIdentically() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("shadow-light", TIMEOUT_MILLIS, ALLOW_ANY);
 		try {
 			PageView view = session.loadHtmlForTest(LIGHT_DOM_FIXTURE);
@@ -142,9 +140,7 @@ public class TestBrowserShadowDom extends TestCase {
 	 * future vision fallback), while a sibling light-DOM button is still tagged.
 	 */
 	public void testClosedShadowButtonRemainsUnreachable() {
-		if (!e2eEnabled()) {
-			return;
-		}
+		BrowserE2e.assumeEnabled();
 		BrowserSession session = BrowserSession.open("shadow-closed", TIMEOUT_MILLIS, ALLOW_ANY);
 		try {
 			PageView view = session.loadHtmlForTest(CLOSED_SHADOW_FIXTURE);
@@ -164,9 +160,4 @@ public class TestBrowserShadowDom extends TestCase {
 			}
 		}
 		return null;
-	}
-
-	private static boolean e2eEnabled() {
-		return Boolean.getBoolean("tl.ai.browser.e2e");
-	}
-}
+	}}

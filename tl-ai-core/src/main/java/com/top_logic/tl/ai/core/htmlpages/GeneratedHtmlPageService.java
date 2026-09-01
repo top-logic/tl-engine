@@ -22,8 +22,8 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.htmlpages.GeneratedHtmlPage;
-import com.top_logic.tl.ai.htmlpages.TlAiHtmlpagesFactory;
+import com.top_logic.tl.ai.core.htmlpages.model.GeneratedHtmlPage;
+import com.top_logic.tl.ai.core.htmlpages.model.TlAiHtmlpagesFactory;
 import com.top_logic.util.model.ModelService;
 
 /**

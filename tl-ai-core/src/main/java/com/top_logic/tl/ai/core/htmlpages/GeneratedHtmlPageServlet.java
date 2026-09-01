@@ -12,7 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.io.binary.BinaryDataSource;
-import com.top_logic.tl.ai.htmlpages.GeneratedHtmlPage;
+import com.top_logic.tl.ai.core.htmlpages.model.GeneratedHtmlPage;
 import com.top_logic.util.NoContextServlet;
 
 /**

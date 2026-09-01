@@ -19,7 +19,7 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.tl.ai.htmlpages.GeneratedHtmlPage;
+import com.top_logic.tl.ai.core.htmlpages.model.GeneratedHtmlPage;
 import com.top_logic.util.model.ModelService;
 
 /**

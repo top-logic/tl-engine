@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.htmlpages;
+package com.top_logic.tl.ai.core.htmlpages.model;
 
 /**
  * Factory for <code>tl.ai.htmlpages</code> objects.
@@ -20,26 +20,6 @@ public class TlAiHtmlpagesFactory extends com.top_logic.element.meta.kbbased.Abs
 	 * Name of the structure <code>tl.ai.htmlpages</code> defined by {@link TlAiHtmlpagesFactory}.
 	 */
 	public static final String TL_AI_HTMLPAGES_STRUCTURE = "tl.ai.htmlpages";
-
-	/**
-	 * Name of the enumeration <code>SecurityMode</code> in module {@value #TL_AI_HTMLPAGES_STRUCTURE}.
-	 */
-	public static final String SECURITY_MODE_ENUM = "SecurityMode";
-
-	/**
-	 * Name of the classifier <code>AUTHENTICATED</code> in enumeration {@value #SECURITY_MODE_ENUM}.
-	 */
-	public static final String AUTHENTICATED_SECURITY_MODE_CLASSIFIER = "AUTHENTICATED";
-
-	/**
-	 * Name of the classifier <code>OWNER</code> in enumeration {@value #SECURITY_MODE_ENUM}.
-	 */
-	public static final String OWNER_SECURITY_MODE_CLASSIFIER = "OWNER";
-
-	/**
-	 * Name of the classifier <code>PUBLIC</code> in enumeration {@value #SECURITY_MODE_ENUM}.
-	 */
-	public static final String PUBLIC_SECURITY_MODE_CLASSIFIER = "PUBLIC";
 
 	/**
 	 * Lookup {@link GeneratedHtmlPage} type.
@@ -70,45 +50,10 @@ public class TlAiHtmlpagesFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
-	 * Lookup {@link GeneratedHtmlPage#SECURITY_MODE_ATTR} of {@link GeneratedHtmlPage}.
-	 */
-	public static com.top_logic.model.TLReference getSecurityModeGeneratedHtmlPageAttr() {
-		return (com.top_logic.model.TLReference) getGeneratedHtmlPageType().getPart(GeneratedHtmlPage.SECURITY_MODE_ATTR);
-	}
-
-	/**
 	 * Lookup {@link GeneratedHtmlPage#TITLE_ATTR} of {@link GeneratedHtmlPage}.
 	 */
 	public static com.top_logic.model.TLProperty getTitleGeneratedHtmlPageAttr() {
 		return (com.top_logic.model.TLProperty) getGeneratedHtmlPageType().getPart(GeneratedHtmlPage.TITLE_ATTR);
-	}
-
-	/**
-	 * Lookup {@value #SECURITY_MODE_ENUM} enumeration.
-	 */
-	public static com.top_logic.model.TLEnumeration getSecurityModeEnum() {
-		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_AI_HTMLPAGES_STRUCTURE).getType(SECURITY_MODE_ENUM);
-	}
-
-	/**
-	 * Lookup classifier {@value #AUTHENTICATED_SECURITY_MODE_CLASSIFIER} of enumeration {@value #SECURITY_MODE_ENUM}.
-	 */
-	public static com.top_logic.model.TLClassifier getAUTHENTICATEDSecurityModeClassifier() {
-		return getSecurityModeEnum().getClassifier(AUTHENTICATED_SECURITY_MODE_CLASSIFIER);
-	}
-
-	/**
-	 * Lookup classifier {@value #OWNER_SECURITY_MODE_CLASSIFIER} of enumeration {@value #SECURITY_MODE_ENUM}.
-	 */
-	public static com.top_logic.model.TLClassifier getOWNERSecurityModeClassifier() {
-		return getSecurityModeEnum().getClassifier(OWNER_SECURITY_MODE_CLASSIFIER);
-	}
-
-	/**
-	 * Lookup classifier {@value #PUBLIC_SECURITY_MODE_CLASSIFIER} of enumeration {@value #SECURITY_MODE_ENUM}.
-	 */
-	public static com.top_logic.model.TLClassifier getPUBLICSecurityModeClassifier() {
-		return getSecurityModeEnum().getClassifier(PUBLIC_SECURITY_MODE_CLASSIFIER);
 	}
 
 	/**

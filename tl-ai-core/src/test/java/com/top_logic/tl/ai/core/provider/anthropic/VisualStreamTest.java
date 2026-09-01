@@ -9,8 +9,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.Assume;
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import com.top_logic.tl.ai.core.junit.VisualHarness;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
@@ -21,10 +26,10 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
  *
  * <p>
  * This is <b>not test coverage</b>: it asserts nothing, and it spends a real Anthropic API call. So
- * it is gated behind {@code -Dtl.ai.visual=true} like the browser end-to-end tests are gated behind
- * {@code -Dtl.ai.browser.e2e=true}, and without the flag it returns immediately - a package-wide run
- * such as {@code -Dtest='com.top_logic.tl.ai.core.**'} must not bill an API call nor report a
- * passing test that checked nothing.
+ * it is gated behind {@link VisualHarness}, like the browser end-to-end tests are gated behind
+ * {@code BrowserE2e}. Without the flag it reports as <b>skipped</b> - a package-wide run such as
+ * {@code -Dtest='com.top_logic.tl.ai.core.**'} must neither bill an API call nor report a passing
+ * test that checked nothing.
  * </p>
  *
  * <p>Run manually:</p>
@@ -33,18 +38,15 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
  * mvn test -pl tl-ai-core -DskipTests=false -Dtl.ai.visual=true -Dtest=VisualStreamTest
  * </pre>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class VisualStreamTest extends TestCase {
 
 	/** */
 	public void testStreamToConsole() throws Exception {
-		if (!visualEnabled()) {
-			return;
-		}
+		VisualHarness.assumeEnabled();
 		String apiKey = System.getenv("ANTHROPIC_API_KEY");
-		if (apiKey == null || apiKey.isEmpty()) {
-			System.out.println("SKIP: No ANTHROPIC_API_KEY set (source env.sh)");
-			return;
-		}
+		Assume.assumeTrue("no ANTHROPIC_API_KEY in the environment (source env.sh)",
+			apiKey != null && !apiKey.isEmpty());
 
 		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(apiKey);
 
@@ -76,12 +78,5 @@ public class VisualStreamTest extends TestCase {
 					+ done.usage().outputTokens() + " out");
 			}
 		});
-	}
-
-	/**
-	 * Whether the visual harnesses are enabled, via {@code -Dtl.ai.visual=true}.
-	 */
-	private static boolean visualEnabled() {
-		return Boolean.getBoolean("tl.ai.visual");
 	}
 }

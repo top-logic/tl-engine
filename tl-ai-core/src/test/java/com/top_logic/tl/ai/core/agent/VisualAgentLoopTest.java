@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.Assume;
+import org.junit.runner.RunWith;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -19,6 +22,8 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import com.top_logic.tl.ai.core.junit.VisualHarness;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
@@ -41,9 +46,9 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  *
  * <p>
  * This is <b>not test coverage</b>: it asserts nothing. Its whole value is the rendered transcript,
- * so it is gated behind {@code -Dtl.ai.visual=true} like the browser end-to-end tests are gated
- * behind {@code -Dtl.ai.browser.e2e=true}. Without the flag every method returns immediately, so a
- * package-wide run such as {@code -Dtest='com.top_logic.tl.ai.core.**'} neither fails on the missing
+ * so it is gated behind {@link VisualHarness}, like the browser end-to-end tests are gated behind
+ * {@code BrowserE2e}. Without the flag every method reports as <b>skipped</b>, so a package-wide run
+ * such as {@code -Dtest='com.top_logic.tl.ai.core.**'} neither fails on the missing
  * {@code ThreadContextManager} nor reports a passing test that checked nothing.
  * </p>
  *
@@ -59,16 +64,23 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * source env.sh &amp;&amp; mvn test -pl tl-ai-core -DskipTests=false -Dtl.ai.visual=true -Dtest=VisualAgentLoopTest
  * </pre>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class VisualAgentLoopTest extends TestCase {
 
 	/**
 	 * The agent loop resolves the acting sub-session, so the harness only produces its transcript
-	 * with the module system running - but booting it costs a second, and there is nothing to see
-	 * while the harness is switched off, so the setup is put in place only when it is switched on.
+	 * with the module system running.
+	 *
+	 * <p>
+	 * The switched-off harness does not need it: booting the module system costs a second and can
+	 * fail for reasons that have nothing to do with this class, and a harness that renders nothing
+	 * must not be able to break an ordinary build. What makes the methods skip is
+	 * {@link VisualHarness#assumeEnabled()}, not this fork.
+	 * </p>
 	 */
 	public static Test suite() {
 		TestSuite tests = new TestSuite(VisualAgentLoopTest.class);
-		return visualEnabled()
+		return VisualHarness.enabled()
 			? ModuleTestSetup.setupModule(ServiceTestSetup.withThreadContext(tests))
 			: tests;
 	}
@@ -85,9 +97,7 @@ public class VisualAgentLoopTest extends TestCase {
 	 * Simulated 3-turn agent loop with tool calls, a tool error, and final completion.
 	 */
 	public void testMockAgentLoop() {
-		if (!visualEnabled()) {
-			return;
-		}
+		VisualHarness.assumeEnabled();
 		System.out.println("\n" + ANSI_CYAN + "═══════════════════════════════════════════" + ANSI_RESET);
 		System.out.println(ANSI_CYAN + "  Agent Loop — Mock Simulation (3 turns)" + ANSI_RESET);
 		System.out.println(ANSI_CYAN + "═══════════════════════════════════════════" + ANSI_RESET);
@@ -157,14 +167,10 @@ public class VisualAgentLoopTest extends TestCase {
 	 * Live agent loop against Anthropic API with a tool.
 	 */
 	public void testLiveAgentLoop() {
-		if (!visualEnabled()) {
-			return;
-		}
+		VisualHarness.assumeEnabled();
 		String apiKey = System.getenv("ANTHROPIC_API_KEY");
-		if (apiKey == null || apiKey.isEmpty()) {
-			System.out.println("\nSKIP: testLiveAgentLoop — no ANTHROPIC_API_KEY (source env.sh)");
-			return;
-		}
+		Assume.assumeTrue("no ANTHROPIC_API_KEY in the environment (source env.sh)",
+			apiKey != null && !apiKey.isEmpty());
 
 		System.out.println("\n" + ANSI_CYAN + "═══════════════════════════════════════════" + ANSI_RESET);
 		System.out.println(ANSI_CYAN + "  Agent Loop — Live (Anthropic API)" + ANSI_RESET);
@@ -200,13 +206,6 @@ public class VisualAgentLoopTest extends TestCase {
 		AgentResult result = loop.run(conv, printingListener());
 
 		printResult(result, conv);
-	}
-
-	/**
-	 * Whether the visual harnesses are enabled, via {@code -Dtl.ai.visual=true}.
-	 */
-	private static boolean visualEnabled() {
-		return Boolean.getBoolean("tl.ai.visual");
 	}
 
 	private static AgentEventListener printingListener() {

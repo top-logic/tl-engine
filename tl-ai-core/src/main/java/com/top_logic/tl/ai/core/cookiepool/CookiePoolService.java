@@ -55,6 +55,17 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
+ * <b>Every pool has an owner.</b> {@link #upsertPool(String, byte[], Person) Saving a pool} refuses
+ * a {@code null} owner instead of storing an owner-less pool. Such a pool would be
+ * {@code shared = false} with nobody to match, so no caller could ever select it again, while the
+ * save reported success; and every owner-less caller would share one bucket per pool name, so one
+ * unattended run would silently overwrite another's stored login. The alternative - defaulting
+ * owner-less pools to {@code shared = true} - would turn a credential store into something every
+ * session can read, which is a deliberate administrative choice, not a fallback. An unattended run
+ * that needs a login therefore uses a pool an administrator marked shared; it cannot create one.
+ * </p>
+ *
+ * <p>
  * Mirrors {@code ScreenshotService} in shape: it does <b>not</b> open its own {@code Transaction}.
  * The pool-upsert call happens from the {@code browserSaveCookies} verb, a
  * {@link com.top_logic.tl.ai.tool.api.ToolMode#DATA_WRITE DATA_WRITE} tool whose transaction is
@@ -114,15 +125,24 @@ public class CookiePoolService extends ConfiguredManagedClass<CookiePoolService.
 	 * encrypted here and only the ciphertext is persisted.
 	 * </p>
 	 *
+	 * <p>
+	 * The owner is mandatory: an owner-less pool could never be selected again and would collide
+	 * with every other owner-less save of the same name, so this refuses rather than storing one
+	 * (see the class comment). Callers that cannot resolve a {@link Person} - an unattended or
+	 * background run - must report that to the user instead of saving.
+	 * </p>
+	 *
 	 * @param name
 	 *        The pool handle; must not be {@code null} or blank.
 	 * @param stateJson
 	 *        The raw {@code storageState} JSON bytes to store (encrypted); must not be {@code null}
 	 *        or empty.
 	 * @param owner
-	 *        The owning user. May be {@code null} when it cannot be resolved on the execution thread;
-	 *        a null-owner pool is only selectable when explicitly shared.
+	 *        The owning user; must not be {@code null}.
 	 * @return The created or updated (not-yet-committed) pool.
+	 * @throws IllegalArgumentException
+	 *         If {@code name} is blank, {@code stateJson} is empty, or {@code owner} is
+	 *         {@code null}.
 	 */
 	public CookiePool upsertPool(String name, byte[] stateJson, Person owner) {
 		if (name == null || name.isBlank()) {
@@ -130,6 +150,11 @@ public class CookiePoolService extends ConfiguredManagedClass<CookiePoolService.
 		}
 		if (stateJson == null || stateJson.length == 0) {
 			throw new IllegalArgumentException("stateJson must not be empty");
+		}
+		if (owner == null) {
+			throw new IllegalArgumentException("A cookie pool must have an owner: an unattended run has no "
+				+ "Person to own the pool, and an owner-less pool could never be selected again. Save the "
+				+ "login from a session with a logged-in user, or use a pool an administrator marked shared.");
 		}
 
 		byte[] cipher = encrypt(stateJson);
@@ -139,9 +164,7 @@ public class CookiePoolService extends ConfiguredManagedClass<CookiePoolService.
 			pool = TlAiCookiepoolFactory.getInstance().createCookiePool();
 			pool.setName(name);
 			pool.setShared(Boolean.FALSE);
-			if (owner != null) {
-				pool.setOwner(owner);
-			}
+			pool.setOwner(owner);
 		}
 		pool.setState(BinaryDataFactory.createBinaryData(cipher, STATE_CONTENT_TYPE, name));
 		pool.setUpdatedAt(new Date());
@@ -228,11 +251,13 @@ public class CookiePoolService extends ConfiguredManagedClass<CookiePoolService.
 		pool.tDelete();
 	}
 
+	/**
+	 * The pool with that name owned by {@code owner} (never {@code null}), or {@code null} if the
+	 * owner has no pool of that name yet.
+	 */
 	private CookiePool findOwnedByName(String name, Person owner) {
 		for (CookiePool pool : allPools()) {
-			// Ownership match for upsert: null owner matches a prior null-owner pool of that name, so
-			// repeated unattended saves reuse one bucket rather than piling up orphans.
-			if (name.equals(pool.getName()) && Objects.equals(pool.getOwner(), owner)) {
+			if (name.equals(pool.getName()) && owner.equals(pool.getOwner())) {
 				return pool;
 			}
 		}

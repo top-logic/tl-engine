@@ -5,9 +5,14 @@
  */
 package com.top_logic.tl.ai.core.junit;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+
 import org.junit.Assume;
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.internal.runners.JUnit38ClassRunner;
+import org.junit.internal.runners.SuiteMethod;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -15,7 +20,9 @@ import org.junit.runner.notification.RunListener;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runner.notification.StoppedByUserException;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
 /**
  * Runner for JUnit-3 style {@link TestCase}s that reports a violated {@link Assume assumption} as a
@@ -51,9 +58,12 @@ import junit.framework.TestCase;
  *
  * <p>
  * {@code @RunWith} takes precedence over both the {@code suite()} method and the plain JUnit-3
- * fallback, so nothing else about the test class has to change. Filtering and ordering - and with
- * them surefire's {@code -Dtest=TestSomething#testNeedingAChromium} - keep working, because they
- * are inherited unchanged.
+ * fallback, so nothing else about the test class has to change. A test class that declares a static
+ * {@code suite()} keeps it: this runner looks the method up the way {@link SuiteMethod} does and
+ * runs what it returns, so a suite wrapped in a {@code TestSetup} decorator - the JUnit-3 way of
+ * booting the module system around a test class - still gets its setup. Filtering and ordering -
+ * and with them surefire's {@code -Dtest=TestSomething#testNeedingAChromium} - keep working,
+ * because they are inherited unchanged.
  * </p>
  */
 public class AssumptionAwareRunner extends JUnit38ClassRunner {
@@ -64,8 +74,36 @@ public class AssumptionAwareRunner extends JUnit38ClassRunner {
 	 * @param testClass
 	 *        The {@link TestCase} class to run.
 	 */
-	public AssumptionAwareRunner(Class<?> testClass) {
-		super(testClass);
+	public AssumptionAwareRunner(Class<?> testClass) throws Throwable {
+		super(testFrom(testClass));
+	}
+
+	/**
+	 * What the given class asks to be run: the result of its static {@code suite()} method if it
+	 * declares one, otherwise all of its test methods.
+	 *
+	 * <p>
+	 * {@link JUnit38ClassRunner#JUnit38ClassRunner(Class)} always builds a plain {@link TestSuite}
+	 * from the class and so silently ignores {@code suite()}. That is fine for a test class that
+	 * has none, but it would drop the {@code TestSetup} decorator of a class that wraps its suite
+	 * to boot the module system.
+	 * </p>
+	 */
+	private static Test testFrom(Class<?> testClass) throws Throwable {
+		Method suiteMethod;
+		try {
+			suiteMethod = testClass.getMethod("suite");
+		} catch (NoSuchMethodException ex) {
+			return new TestSuite(testClass.asSubclass(TestCase.class));
+		}
+		if (!Modifier.isStatic(suiteMethod.getModifiers())) {
+			throw new IllegalArgumentException(testClass.getName() + ".suite() must be static");
+		}
+		try {
+			return (Test) suiteMethod.invoke(null);
+		} catch (InvocationTargetException ex) {
+			throw ex.getCause();
+		}
 	}
 
 	@Override

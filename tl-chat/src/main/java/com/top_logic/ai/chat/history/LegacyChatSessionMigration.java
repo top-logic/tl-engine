@@ -188,13 +188,13 @@ public class LegacyChatSessionMigration
 			}
 		}
 
+		// Preserve the original timestamps for correct history ordering. This has to go through
+		// the store: it owns the single writer thread that is allowed to modify agent data, and a
+		// session created there is not yet visible to this thread's interaction.
+		store.setSessionTimestamps(session, createdAt != null ? createdAt : new Date(), lastUpdated);
+
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(ResKey.text("Migrate legacy chat session"))) {
-			// Preserve the original timestamps for correct history ordering.
-			session.tUpdateByName(ATTR_CREATED_AT, createdAt != null ? createdAt : new Date());
-			if (lastUpdated != null) {
-				session.tUpdateByName(ATTR_LAST_UPDATED, lastUpdated);
-			}
+		try (Transaction tx = kb.beginTransaction(ResKey.text("Delete migrated legacy chat session"))) {
 			legacy.tDelete();
 			tx.commit();
 		}

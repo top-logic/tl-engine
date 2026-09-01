@@ -44,6 +44,16 @@ import com.top_logic.util.model.ModelService;
  * used by {@link ExportToDataFolderCommand} / {@link ImportFromDataFolderCommand} without a running
  * UI, matching the behaviour a user triggers via the editor buttons.
  * </p>
+ *
+ * <p>
+ * Root cause E ("duplicates compound") is no longer reproducible on {@code Agent}: issue #172 added
+ * a persistence-level unique index on the agent name, so the two same-name agents this suite used
+ * to create can no longer be committed at all. That guard is covered by
+ * {@link TestUniqueAgentSkillName}; the resolver contract it used to test - delete <em>every</em>
+ * match, not just the first - is covered by
+ * {@link TestNameBasedInstanceResolver#testResolveDeletesAllDuplicates()} on a type that still
+ * permits duplicate names.
+ * </p>
  */
 public class TestImportFromDataFolder extends BasicTestCase {
 
@@ -100,29 +110,6 @@ public class TestImportFromDataFolder extends BasicTestCase {
 		assertFalse("Re-import deletes and recreates the instance; the previously selected "
 			+ "object is now invalid - the editor must not keep it selected.", held.tValid());
 		assertNotNull("A fresh instance with the same name must exist.", findAgent("Beta"));
-	}
-
-	/**
-	 * Regression for root cause E: duplicates must not compound. Without a uniqueness guard the
-	 * store may hold several instances with the same name; the resolver must delete every match so a
-	 * re-import cleans the store up instead of leaving leftovers behind.
-	 */
-	public void testResolverDeletesAllDuplicates() throws Exception {
-		TlAiCoreFactory factory = TlAiCoreFactory.getInstance();
-		try (Transaction tx = kb().beginTransaction()) {
-			createAgent(factory, "Dup", "one");
-			createAgent(factory, "Dup", "two");
-			tx.commit();
-		}
-
-		NameBasedInstanceResolver resolver = new NameBasedInstanceResolver();
-		try (Transaction tx = kb().beginTransaction()) {
-			resolver.resolve(null, null, AGENT_KIND, "Dup");
-			tx.commit();
-		}
-
-		assertEquals("Regression target: the resolver must clean up ALL duplicates, not just the "
-			+ "first.", 0, countAgents("Dup"));
 	}
 
 	/**
@@ -205,16 +192,6 @@ public class TestImportFromDataFolder extends BasicTestCase {
 			}
 		}
 		return null;
-	}
-
-	private static int countAgents(String name) {
-		int count = 0;
-		for (TLObject instance : allAgents()) {
-			if (name.equals(instance.tValueByName(Agent.NAME_ATTR))) {
-				count++;
-			}
-		}
-		return count;
 	}
 
 	private static List<TLObject> allAgents() {

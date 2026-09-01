@@ -333,6 +333,40 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
+	 * The whole agent loop runs inline on the calling thread and blocks until the run finishes, which
+	 * can take minutes. Called from a request, it holds that request (and its servlet thread) for the
+	 * entire run.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Not usable from the Script console. Use {@link #agentChatAsync(String, Object)} there.</b> A
+	 * request pins the knowledge-base revision it started at, and an inline run commits past it: the
+	 * run's own {@link AgentSession}/{@link AgentExecution} records are committed out-of-band on the
+	 * {@link AgentExecutionStore} writer thread, and any writing tool the agent calls commits as well.
+	 * Merely recording the run is therefore enough. When the console then renders the result row, the
+	 * cache refuses the request's now-stale revision and the request fails with
+	 * {@code KnowledgeBaseRuntimeException: Session revision invalid: Expected 95 but got 89} (the
+	 * revision numbers vary) - after the agent has already done its work. The symptom is a long hang
+	 * followed by an internal error, not a lost run.
+	 * </p>
+	 *
+	 * <p>
+	 * Reading an async run back needs a <b>second</b> console execution: within the request that
+	 * started it, {@link #agentRunStatus(Object)} returns {@code null} (not {@code RUNNING}) for the
+	 * same revision-pinning reason, however long the script waits. See
+	 * {@link #agentChatAsync(String, Object)}.
+	 * </p>
+	 *
+	 * <p>
+	 * Acts as the account that executed the script: the run's {@link ToolContext} is built for the
+	 * user bound to the calling thread, so every tool call is authorized against that account's roles
+	 * and model access against that account's rights, and the call is refused outright when the
+	 * calling thread has no user. There is no unrestricted mode to fall back to. A script has no
+	 * approval surface, so the tool calls the account is permitted to make are auto-approved rather
+	 * than confirmed by a human.
+	 * </p>
+	 *
+	 * <p>
 	 * Example usage in TL-Script:
 	 * </p>
 	 *
@@ -345,6 +379,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @param userMessage
 	 *        The user message to send to the agent.
 	 * @return The agent's final text response.
+	 * @see #agentChatAsync(String, Object)
+	 * @see ToolContext#forCurrentUser()
 	 */
 	public static String agentChat(String agentName, Object userMessage) {
 		AgentFactory factory = AgentFactory.getInstance();
@@ -405,13 +441,36 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * Example usage in TL-Script:
+	 * <b>Poll the handle in a separate request.</b> The run stays invisible for the rest of the
+	 * request that started it, however long that request sleeps: the session was committed at a
+	 * revision newer than this request's pinned one, so the handle does not resolve here and
+	 * {@link #agentRunStatus(Object)} returns {@code null} - not {@code RUNNING}. In the Script
+	 * console this means two executions: one starts the run and keeps the handle, a later one reads
+	 * status and result. Carry the handle over with {@code storeInSession}/{@code loadFromSession}, or
+	 * paste it into the follow-up script.
+	 * </p>
+	 *
+	 * <p>
+	 * Example usage in TL-Script. The first execution starts the run and keeps its handle:
 	 * </p>
 	 *
 	 * <pre>
-	 * handle = aiAgentChatAsync("my-agent", "Summarize the latest changes.");
-	 * // ... later ...
-	 * aiAgentRunStatus(handle) == "COMPLETE" ? aiAgentRunResult(handle) : null
+	 * {
+	 *     handle = aiAgentChatAsync("my-agent", "Summarize the latest changes.");
+	 *     $handle.storeInSession(key: "my-run");
+	 *     $handle;
+	 * }
+	 * </pre>
+	 *
+	 * <p>
+	 * A later execution, once the run has finished, reads it back:
+	 * </p>
+	 *
+	 * <pre>
+	 * {
+	 *     handle = loadFromSession("my-run");
+	 *     aiAgentRunStatus($handle) == "COMPLETE" ? aiAgentRunResult($handle) : null;
+	 * }
 	 * </pre>
 	 *
 	 * @param agentName
@@ -547,6 +606,15 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * ({@code RUNNING}, {@code COMPLETE}, {@code ERROR}, {@code CANCELLED}, {@code REJECTED}).
 	 * While the run is still queued or its recording has not yet become visible on the calling
 	 * thread, {@code RUNNING} is returned.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Not in the request that started the run.</b> Called from the same request as
+	 * {@link #agentChatAsync(String, Object)}, this returns {@code null} rather than {@code RUNNING},
+	 * however long the script waits in between: the run's session was committed at a revision newer
+	 * than that request's pinned one, so the handle resolves to nothing there and an unresolvable
+	 * handle cannot be reported as running. Poll from a later request, i.e. from a separate Script
+	 * console execution.
 	 * </p>
 	 *
 	 * @param handle

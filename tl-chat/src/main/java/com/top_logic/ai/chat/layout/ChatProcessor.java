@@ -476,8 +476,7 @@ public class ChatProcessor {
 					+ "' (mode=" + request.mode() + ", approvalRequestId="
 					+ request.approvalRequestId() + "). Blocking until user responds.",
 					ChatProcessor.class);
-				CompletableFuture<String> future =
-					interactionStore.registerApproval(request.approvalRequestId());
+				CompletableFuture<String> future = interactionStore.registerApproval(request);
 				try {
 					String response = future.get(
 						request.timeout().toMillis(), TimeUnit.MILLISECONDS);
@@ -495,6 +494,11 @@ public class ChatProcessor {
 					Logger.error("Approval future failed for tool '" + request.toolName()
 						+ "': " + e.getMessage(), e, ChatProcessor.class);
 					return new ApprovalResult.TimedOut();
+				} finally {
+					// Nobody waits on this future any more. Answering removes the registration
+					// already, this drops it on every other exit so that a timed-out approval
+					// does not linger as a phantom in getPendingApprovals().
+					interactionStore.discardApproval(request.approvalRequestId());
 				}
 			};
 		}

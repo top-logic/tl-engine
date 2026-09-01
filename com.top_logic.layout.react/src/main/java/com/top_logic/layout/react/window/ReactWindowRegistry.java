@@ -17,6 +17,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.protocol.WindowFocusEvent;
 import com.top_logic.layout.react.protocol.WindowOpenEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -397,6 +398,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	@Override
 	public void valueUnbound(HttpSessionBindingEvent event) {
 		for (WindowEntry entry : _windows.values()) {
+			requestReload(entry.getQueue());
 			ReactControl rootControl = entry.getRootControl();
 			if (rootControl != null) {
 				rootControl.cleanupTree();
@@ -405,6 +407,35 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		}
 		_windows.clear();
 		_singletonKeys.clear();
+	}
+
+	/**
+	 * Tells the browser of the given window to reload, so that it does not keep displaying a page
+	 * belonging to a session that no longer exists.
+	 *
+	 * <p>
+	 * A session can end without the browser doing anything: an administrator terminates it, or the
+	 * maintenance mode starts and logs out everybody who may not stay. The page then still shows the
+	 * previous user and their content, while the first interaction merely establishes a fresh
+	 * anonymous session behind the scenes and appears to do nothing at all. Reloading brings the
+	 * browser back as the anonymous user, showing the login and whatever the application announces
+	 * to it.
+	 * </p>
+	 *
+	 * @implNote Enqueued before the queue is shut down, because {@link SSEUpdateQueue#enqueue} writes
+	 *           through immediately while {@link SSEUpdateQueue#shutdown()} closes the connection and
+	 *           discards whatever is still pending. A window whose browser is already gone simply has
+	 *           no connection to write to.
+	 */
+	private static void requestReload(SSEUpdateQueue queue) {
+		try {
+			queue.enqueue(JSSnipplet.create().setCode("window.location.reload();"));
+		} catch (RuntimeException ex) {
+			// The session is ending either way: a window that cannot be reached must not keep the
+			// remaining ones from being told.
+			Logger.error("Failed to request a reload of a window whose session ended.", ex,
+				ReactWindowRegistry.class);
+		}
 	}
 
 	/**

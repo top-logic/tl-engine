@@ -175,7 +175,8 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 			throws IOException, ServletException {
 		setCachePolicy(response);
 
-		if (!processSessionCheck(request)) {
+		boolean cookieCheck = isCookieCheckRequired();
+		if (cookieCheck && !processSessionCheck(request)) {
 			this.forwardToPage(ApplicationPages.getInstance().getNoCookiePage(), request, response);
 			return;
 		}
@@ -183,7 +184,7 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 		TLSessionContext session = this.getSession(request, response);
 		if (session == null) {
 
-			if (initSessionCheck(request, response)) {
+			if (cookieCheck && initSessionCheck(request, response)) {
 				return;
 			}
 
@@ -227,6 +228,33 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
 		// Nothing to do here
+	}
+
+	/**
+	 * Whether a request without a valid session must pass the check that the browser accepts
+	 * cookies.
+	 *
+	 * <p>
+	 * The check costs a redirect round-trip and stores a one-shot marker on the session, which
+	 * {@link #processSessionCheck(HttpServletRequest)} consumes and whose session it then
+	 * invalidates. Two requests running it at the same time therefore cannot both succeed: the
+	 * second finds neither marker nor session and is answered with the "cookies cannot be set"
+	 * page, however well the browser handles cookies.
+	 * </p>
+	 *
+	 * <p>
+	 * That is only ever right for a top-level navigation. An endpoint answering
+	 * {@code XMLHttpRequest}s should return {@code false}: a redirect to an HTML page is of no use
+	 * to its caller, and the check cannot fail there for its intended reason anyway, since such a
+	 * request follows a page that was already loaded with a session, and thus with cookies.
+	 * </p>
+	 *
+	 * @return Whether to run the check; {@code true} by default. A servlet returning {@code false}
+	 *         must answer {@link #handleNoSession(HttpServletRequest, HttpServletResponse)} in a way
+	 *         its caller understands, because that is where a request without a session then ends.
+	 */
+	protected boolean isCookieCheckRequired() {
+		return true;
 	}
 
 	/** Sets a log mark with the session id while executing the runnable. */

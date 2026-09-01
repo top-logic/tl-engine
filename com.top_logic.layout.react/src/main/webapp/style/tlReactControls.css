@@ -2350,6 +2350,39 @@ button.tlDrawer__closeBtn:focus-visible {
 	overflow: hidden;
 }
 
+/* Notice area between header and content. Carries neither padding nor border of its own, so it
+   collapses to zero height while every notice inside it is hidden (a hidden TLNoticeBar renders
+   nothing at all). */
+.tlAppShell__notices {
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 auto;
+}
+
+/* --- TLNoticeBar (system-wide notice) ------------------------------------- */
+
+.tlNoticeBar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-02) var(--spacing-05);
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	text-align: center;
+}
+
+.tlNoticeBar--info    { background: var(--background-inverse, #393939); color: var(--text-inverse, #fff); }
+.tlNoticeBar--warning { background: var(--support-warning, #f1c21b); color: #000; }
+.tlNoticeBar--error   { background: var(--support-error, #da1e28); color: #fff; }
+
+/* Tabular figures keep the count-down from jittering as the digits change every second. */
+.tlNoticeBar__countdown {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
 .tlAppShell .tlBreadcrumb {
 	padding: var(--spacing-02) var(--spacing-05);
 }

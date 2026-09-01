@@ -23,8 +23,10 @@ import com.top_logic.layout.responsive.DisplayClassModel;
  *
  * <p>
  * The shell renders a full-height flex column with the header at the top, the content filling the
- * remaining space, and the footer at the bottom. A singleton {@link ReactSnackbarControl} is
- * embedded and accessible to any code via {@link #showSnackbar(String, Variant)}.
+ * remaining space, and the footer at the bottom. Between header and content sits the notice area,
+ * which carries system-wide notices such as an announced maintenance window; it occupies no space
+ * while all of its notices are hidden. A singleton {@link ReactSnackbarControl} is embedded and
+ * accessible to any code via {@link #showSnackbar(String, Variant)}.
  * </p>
  *
  * <p>
@@ -37,6 +39,7 @@ import com.top_logic.layout.responsive.DisplayClassModel;
  * </p>
  * <ul>
  * <li>{@code header} - optional header slot control (e.g. an app bar)</li>
+ * <li>{@code notices} - optional notice-area control shown between header and content</li>
  * <li>{@code content} - the main content control (gets {@code flex:1})</li>
  * <li>{@code footer} - optional footer slot control (e.g. a bottom bar)</li>
  * <li>{@code snackbar} - built-in snackbar child descriptor (managed internally)</li>
@@ -48,6 +51,8 @@ public class ReactAppShellControl extends ReactControl {
 	private static final String REACT_MODULE = "TLAppShell";
 
 	private static final String HEADER = "header";
+
+	private static final String NOTICES = "notices";
 
 	private static final String CONTENT = "content";
 
@@ -62,12 +67,6 @@ public class ReactAppShellControl extends ReactControl {
 	/** The {@link ReactCommandHandler} that records the client's responsive display class. */
 	public static final String REPORT_DISPLAY_CLASS_COMMAND = "reportDisplayClass";
 
-	private final ReactControl _header;
-
-	private final ReactControl _content;
-
-	private final ReactControl _footer;
-
 	private final ReactSnackbarControl _snackbar;
 
 	private final ReactDialogManagerControl _dialogManager;
@@ -77,12 +76,14 @@ public class ReactAppShellControl extends ReactControl {
 	private final ErrorSink _errorSink;
 
 	/**
-	 * Creates an application shell with all three slots.
+	 * Creates an application shell with all four slots.
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
 	 * @param header
 	 *        Optional header control (e.g. app bar), or {@code null}.
+	 * @param notices
+	 *        Optional notice-area control shown between header and content, or {@code null}.
 	 * @param content
 	 *        The main content control (gets {@code flex:1}).
 	 * @param footer
@@ -95,12 +96,9 @@ public class ReactAppShellControl extends ReactControl {
 	 *        The shared {@link ReactMenuControl} mounted as app-shell overlay, or {@code null} if no
 	 *        context-menu overlay is required.
 	 */
-	public ReactAppShellControl(ReactContext context, ReactControl header, ReactControl content, ReactControl footer,
-			ReactSnackbarControl snackbar, ErrorSink errorSink, ReactMenuControl menuControl) {
+	public ReactAppShellControl(ReactContext context, ReactControl header, ReactControl notices, ReactControl content,
+			ReactControl footer, ReactSnackbarControl snackbar, ErrorSink errorSink, ReactMenuControl menuControl) {
 		super(context, null, REACT_MODULE);
-		_header = header;
-		_content = content;
-		_footer = footer;
 		_snackbar = snackbar;
 		_dialogManager = new ReactDialogManagerControl(context);
 		_menuControl = menuControl;
@@ -108,6 +106,9 @@ public class ReactAppShellControl extends ReactControl {
 
 		if (header != null) {
 			putState(HEADER, header);
+		}
+		if (notices != null) {
+			putState(NOTICES, notices);
 		}
 		putState(CONTENT, content);
 		if (footer != null) {

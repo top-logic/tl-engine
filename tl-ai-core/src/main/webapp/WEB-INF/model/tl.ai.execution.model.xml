@@ -41,7 +41,7 @@
 			<!--
 				Durable context + cumulative working state + presentation.
 				A chat is kind=CHAT with a Person owner and a title; a background job is
-				kind=BACKGROUND with a system principal. ChatSession generalizes into this.
+				kind=BACKGROUND with a system principal.
 			-->
 			<class name="AgentSession">
 				<annotations>

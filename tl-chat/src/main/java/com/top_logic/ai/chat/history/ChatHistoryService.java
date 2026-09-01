@@ -38,8 +38,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * Sessions and executions are stored through the {@link AgentExecutionStore}; the conversation
  * itself lives as one transcript blob per {@link AgentExecution}, written by the agent runner at
  * the end of each run. This class merges those per-run transcripts back into a single
- * conversation for loading. Legacy <code>tl.ai.chat:ChatSession</code> blobs are migrated
- * eagerly at startup by {@link LegacyChatSessionMigration}.
+ * conversation for loading. Legacy <code>tl.ai.chat:ChatSession</code> blobs were migrated
+ * eagerly at startup by {@link LegacyChatSessionMigration}; that model has since been removed.
  * </p>
  *
  * <p>

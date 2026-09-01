@@ -13,9 +13,12 @@
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance>
 				<modules>
-					<!-- Eager startup migration of legacy tl.ai.chat:ChatSession objects.
-					     TODO: Remove together with the legacy model — see the checklist in
-					     LegacyChatSessionMigration. -->
+					<!--
+						Converts legacy tl.ai.chat:ChatSession rows to tl.ai.execution:AgentSession.
+						The legacy model itself is gone (Refs #230), so this service has nothing
+						left to do. Remove it together with LegacyChatSessionMigration once every
+						deployment is known to have booted a version containing it.
+					-->
 					<module key="com.top_logic.ai.chat.history.LegacyChatSessionMigration$Module" value="true"/>
 				</modules>
 			</instance>

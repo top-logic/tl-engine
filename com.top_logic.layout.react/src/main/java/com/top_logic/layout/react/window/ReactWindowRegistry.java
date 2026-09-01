@@ -38,6 +38,22 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	private static final String SESSION_ATTRIBUTE_KEY = "tl.react.windowRegistry";
 
+	/**
+	 * The registries of all live sessions, by session ID.
+	 *
+	 * <p>
+	 * A registry is reachable through its HTTP session, but a session that ends is announced by its
+	 * ID alone - {@link com.top_logic.base.bus.UserEvent} carries no session object, and the
+	 * container hands out none for a foreign ID. This index closes that gap.
+	 * </p>
+	 *
+	 * @implNote Entries are removed in {@link #valueUnbound(HttpSessionBindingEvent)}, which the
+	 *           container calls for every attribute of an ending session, so the index cannot
+	 *           outlive the sessions it points to.
+	 */
+	private static final ConcurrentHashMap<String, ReactWindowRegistry> REGISTRIES_BY_SESSION_ID =
+		new ConcurrentHashMap<>();
+
 	private static final SecureRandom RANDOM = new SecureRandom();
 
 	private final ConcurrentHashMap<String, WindowEntry> _windows = new ConcurrentHashMap<>();
@@ -59,10 +75,17 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	private final ReentrantLock _requestLock = new ReentrantLock();
 
+	/** The ID of the session this registry belongs to, remembered for the index. */
+	private final String _sessionId;
+
 	/**
 	 * Creates a new {@link ReactWindowRegistry}.
+	 *
+	 * @param sessionId
+	 *        The ID of the session this registry belongs to.
 	 */
-	public ReactWindowRegistry() {
+	public ReactWindowRegistry(String sessionId) {
+		_sessionId = sessionId;
 	}
 
 	/**
@@ -75,8 +98,9 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			synchronized (session) {
 				registry = (ReactWindowRegistry) session.getAttribute(SESSION_ATTRIBUTE_KEY);
 				if (registry == null) {
-					registry = new ReactWindowRegistry();
+					registry = new ReactWindowRegistry(session.getId());
 					session.setAttribute(SESSION_ATTRIBUTE_KEY, registry);
+					REGISTRIES_BY_SESSION_ID.put(session.getId(), registry);
 				}
 			}
 		}
@@ -397,6 +421,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	@Override
 	public void valueUnbound(HttpSessionBindingEvent event) {
+		REGISTRIES_BY_SESSION_ID.remove(_sessionId, this);
 		for (WindowEntry entry : _windows.values()) {
 			requestReload(entry.getQueue());
 			ReactControl rootControl = entry.getRootControl();
@@ -407,6 +432,29 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		}
 		_windows.clear();
 		_singletonKeys.clear();
+	}
+
+	/**
+	 * Tells every window of the identified session to reload.
+	 *
+	 * <p>
+	 * Called when a session was logged out without being invalidated, which is how the maintenance
+	 * mode and an administrator terminating a session end one: the HTTP session stays alive, so
+	 * {@link #valueUnbound(HttpSessionBindingEvent)} never runs and the browser would keep showing
+	 * a user who is no longer logged in.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The ID of the session whose windows are to reload; an unknown ID is ignored.
+	 */
+	public static void reloadWindowsOfSession(String sessionId) {
+		ReactWindowRegistry registry = REGISTRIES_BY_SESSION_ID.get(sessionId);
+		if (registry == null) {
+			return;
+		}
+		for (WindowEntry entry : registry._windows.values()) {
+			requestReload(entry.getQueue());
+		}
 	}
 
 	/**

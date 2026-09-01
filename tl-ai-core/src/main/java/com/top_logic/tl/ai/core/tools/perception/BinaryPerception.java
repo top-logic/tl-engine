@@ -29,8 +29,9 @@ import com.top_logic.tl.ai.tool.api.ToolContent;
  * <p>
  * Every path is bounded, and the bounds are the point rather than housekeeping: the payload is named
  * by the model and written by whoever supplied the document, so its size, its declared pixel count and
- * its text are all adversarial inputs. See {@link #MAX_SOURCE_BYTES}, {@link ImageDownscaler#MAX_PIXELS}
- * and {@link #MAX_IMAGE_BYTES}.
+ * its text are all adversarial inputs. See {@link #MAX_SOURCE_BYTES}, {@link ImageDownscaler#MAX_PIXELS},
+ * {@link #MAX_IMAGE_BYTES} and {@link #MAX_PDF_BYTES} - the latter two stated on the base64-encoded
+ * size, because that is what is sent.
  * </p>
  *
  * @see com.top_logic.tl.ai.core.tools.model.ViewDocumentTool
@@ -50,9 +51,6 @@ public final class BinaryPerception {
 	 */
 	public static final int MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-	/** Maximum PDF size accepted as an attachment. */
-	public static final int MAX_PDF_BYTES = 20 * 1024 * 1024;
-
 	/** Maximum number of characters returned for a text document. */
 	public static final int MAX_TEXT_CHARS = 100_000;
 
@@ -60,16 +58,35 @@ public final class BinaryPerception {
 	 * Largest stored payload a tool may read into memory to bring it here at all.
 	 *
 	 * <p>
-	 * The caps above bound what leaves for the provider; this one bounds the {@code byte[]} on the way
-	 * in, which is the allocation a caller controls least: the object to read from is named by the model,
-	 * so without a bound a single tool call can be pointed at an arbitrarily large stored binary. It is
-	 * the largest payload any of the three paths can still do something with - the PDF cap - so nothing
+	 * The caps around it bound what leaves for the provider; this one bounds the {@code byte[]} on the
+	 * way in, which is the allocation a caller controls least: the object to read from is named by the
+	 * model, so without a bound a single tool call can be pointed at an arbitrarily large stored binary.
+	 * It is the largest <b>raw</b> payload any of the three paths can still do something with - a PDF,
+	 * whose cap {@link #MAX_PDF_BYTES} is this same limit expressed after base64 encoding - so nothing
 	 * that could have been shown is refused by it.
 	 * </p>
 	 *
 	 * @see com.top_logic.tl.ai.core.tools.model.ViewDocumentTool
 	 */
-	public static final int MAX_SOURCE_BYTES = MAX_PDF_BYTES;
+	public static final int MAX_SOURCE_BYTES = 20 * 1024 * 1024;
+
+	/**
+	 * Maximum <b>base64-encoded</b> PDF size accepted as an attachment.
+	 *
+	 * <p>
+	 * Compared against the encoded size rather than the raw one for the same reason as
+	 * {@link #MAX_IMAGE_BYTES}: the encoded payload is what is actually sent, so a limit stated on the
+	 * raw size is a limit nobody can check against what the provider sees.
+	 * </p>
+	 *
+	 * <p>
+	 * The number is therefore not a round one: it is exactly the encoded length of
+	 * {@link #MAX_SOURCE_BYTES}, the 20 MB raw payload this has always accepted. Switching the
+	 * comparison to the encoded size keeps every document that passed before passing now, instead of
+	 * silently tightening the limit by a quarter.
+	 * </p>
+	 */
+	public static final int MAX_PDF_BYTES = (int) base64Length(MAX_SOURCE_BYTES);
 
 	private BinaryPerception() {
 		// Static utility.
@@ -190,10 +207,11 @@ public final class BinaryPerception {
 			return new Plan(cannotPerceive("PDF documents", model)
 				+ " " + label + " is a PDF of " + data.length + " bytes.", null);
 		}
-		if (data.length > MAX_PDF_BYTES) {
+		long encodedBytes = base64Length(data.length);
+		if (encodedBytes > MAX_PDF_BYTES) {
 			return new Plan("Cannot show " + label + ": the PDF is " + data.length
-				+ " bytes, above the " + MAX_PDF_BYTES + " byte limit for documents sent to a model.",
-				null);
+				+ " bytes (" + encodedBytes + " base64-encoded), above the " + MAX_PDF_BYTES
+				+ " byte limit for documents sent to a model.", null);
 		}
 		ToolContent.Document pdf = new ToolContent.Document(
 			Base64.getEncoder().encodeToString(data), "application/pdf");
@@ -202,8 +220,14 @@ public final class BinaryPerception {
 			+ unknownSupportHint(support, model, "PDF documents"), pdf);
 	}
 
-	/** The length base64 encoding turns {@code rawBytes} into: four output bytes per three input ones. */
-	private static long base64Length(int rawBytes) {
+	/**
+	 * The length base64 encoding turns {@code rawBytes} into: four output bytes per three input ones.
+	 *
+	 * @param rawBytes
+	 *        Size of the unencoded payload.
+	 * @return The size of its base64 encoding, which is what the caps on attachments are stated in.
+	 */
+	public static long base64Length(int rawBytes) {
 		return 4L * ((rawBytes + 2L) / 3L);
 	}
 

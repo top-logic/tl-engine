@@ -244,15 +244,34 @@ public class TestBinaryPerception extends TestCase {
 		assertTrue(plan.message().contains("above the"));
 	}
 
-	/** */
+	/**
+	 * A PDF whose encoding exceeds the cap is refused with a clear reason. Base64 grows in steps of
+	 * four output bytes per three input ones, so the first raw size that encodes past the cap is three
+	 * bytes above the raw limit, not one.
+	 */
 	public void testOversizedPdfIsRefused() {
-		byte[] huge = new byte[BinaryPerception.MAX_PDF_BYTES + 1];
+		byte[] huge = new byte[BinaryPerception.MAX_SOURCE_BYTES + 3];
 
 		BinaryPerception.Plan plan =
 			BinaryPerception.plan("huge.pdf", huge, "application/pdf", vision());
 
 		assertFalse(plan.attaches());
 		assertTrue(plan.message().contains("above the"));
+	}
+
+	/**
+	 * The cap moved from the raw size to the encoded one, and the number moved with it: a document of
+	 * exactly the raw size that was accepted before is still accepted, rather than being refused for
+	 * encoding to a third more than it measures.
+	 */
+	public void testPdfAtTheRawLimitIsStillAccepted() {
+		byte[] atLimit = new byte[BinaryPerception.MAX_SOURCE_BYTES];
+
+		BinaryPerception.Plan plan =
+			BinaryPerception.plan("big.pdf", atLimit, "application/pdf", vision());
+
+		assertTrue("A 20 MB PDF passed before the cap was restated; it must still pass: "
+			+ plan.message(), plan.attaches());
 	}
 
 	/**

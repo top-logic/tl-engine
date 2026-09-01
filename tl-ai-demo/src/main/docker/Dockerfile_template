@@ -16,10 +16,15 @@ RUN ln -s /usr/share/java/*.jar $CATALINA_HOME/lib/
 #
 # The browser is installed with the Playwright CLI taken out of the deployed WAR itself, so the
 # installed browser revision always matches the playwright-java version that is actually shipped -
-# there is no second place holding a version that could drift. "install chromium" provides the full
-# Chromium build (Playwright channel "chromium"), which every session launches: the lighter
-# chrome-headless-shell is deliberately never used, because the switch that disables WebRTC's UDP
-# egress does not exist in it. Do not slim this step down to the shell - that reopens an SSRF hole.
+# there is no second place holding a version that could drift, and no version literal here that a
+# dependency bump could silently invalidate.
+#
+# "install chromium" provides the full Chromium build (Playwright channel "chromium"), which is what
+# every session launches. --no-shell keeps chrome-headless-shell out of the image. It is not merely
+# unused: the switch that disables WebRTC's UDP egress is compiled out of the shell, so a session
+# that ran on it would put datagrams past the filtering proxy. Excluding it from the image turns
+# "the code must never select the shell" into "this image cannot run the shell", and saves 262 MB
+# on the way. Never turn this into --only-shell - that reopens the SSRF hole.
 #
 # No --shm-size is needed when running the container: the tool launches Chromium with
 # --disable-dev-shm-usage, so the default 64 MB /dev/shm is not used.
@@ -29,7 +34,7 @@ RUN apt-get update \
  && unzip -j -q $CATALINA_HOME/webapps/*.war \
       'WEB-INF/lib/playwright.jar' 'WEB-INF/lib/driver.jar' 'WEB-INF/lib/driver-bundle.jar' \
       -d /tmp/playwright-cli \
- && java -cp '/tmp/playwright-cli/*' com.microsoft.playwright.CLI install --with-deps chromium \
+ && java -cp '/tmp/playwright-cli/*' com.microsoft.playwright.CLI install --with-deps --no-shell chromium \
  && chmod -R a+rX $PLAYWRIGHT_BROWSERS_PATH \
  && rm -rf /tmp/playwright-cli /var/lib/apt/lists/*
 

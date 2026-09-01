@@ -10,6 +10,7 @@ import java.util.List;
 import junit.framework.Test;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
+import com.top_logic.base.operation.OperationModeService;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
 import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -115,6 +116,9 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 
 		assertEquals("Precondition: an agent-authoring tool is STRUCTURAL.",
 			ToolMode.STRUCTURAL, structural.mode());
+		assertTrue("Precondition: the engine's operation-mode service answers here, so the mode is"
+			+ " the real one and not the fallback of a context that has no service.",
+			OperationModeService.Module.INSTANCE.isActive());
 		assertEquals("Precondition: the test application reports PRODUCTION.",
 			ExecutionMode.PRODUCTION, security.executionMode());
 
@@ -329,9 +333,13 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 * Creates the test suite.
 	 */
 	public static Test suite() {
-		// The filter consults the ExecutionMode for STRUCTURAL tools, which reads the maintenance
-		// window - see testTheExecutionModeHalfWithholdsStructuralToolsIndependently.
-		return suite(SecDemoSchemaFilterTest.class, MaintenanceWindowManager.Module.INSTANCE);
+		// The filter consults the ExecutionMode for STRUCTURAL tools, which folds the maintenance
+		// window and the engine's operational environment - see
+		// testTheExecutionModeHalfWithholdsStructuralToolsIndependently. Both services are booted so
+		// that the mode the test pins is the one the engine reports, not the fail-closed fallback
+		// that a context without them falls back to.
+		return suite(SecDemoSchemaFilterTest.class, MaintenanceWindowManager.Module.INSTANCE,
+			OperationModeService.Module.INSTANCE);
 	}
 
 }

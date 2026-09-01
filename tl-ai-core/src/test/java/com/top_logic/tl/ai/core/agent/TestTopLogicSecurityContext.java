@@ -15,6 +15,8 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.base.operation.OperationMode;
+import com.top_logic.base.operation.OperationModeService;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
@@ -144,6 +146,82 @@ public class TestTopLogicSecurityContext extends TestCase {
 		assertSame(ModelSecurity.UNCHECKED, SecurityContext.UNRESTRICTED.modelSecurity());
 		assertNull(SecurityContext.UNRESTRICTED.capabilityDenialReason(ToolGroups.DATA_WRITE,
 			"executing TL-Script with withCommit=true"));
+	}
+
+	/**
+	 * A live install is {@link ExecutionMode#PRODUCTION}, which is what withholds {@code STRUCTURAL}
+	 * tools.
+	 *
+	 * <p>
+	 * The mapping that matters operationally: whatever else changes about how the environment is
+	 * determined, {@link OperationMode#PRODUCTION} has to keep arriving at the restricted mode.
+	 * </p>
+	 */
+	public void testAProductionInstallIsProductionMode() {
+		assertEquals(ExecutionMode.PRODUCTION,
+			TopLogicSecurityContext.executionMode(false, OperationMode.PRODUCTION));
+	}
+
+	/** A developer workspace is unrestricted - that is what makes the authoring tools usable at all. */
+	public void testADeveloperWorkspaceIsDevelopmentMode() {
+		assertEquals(ExecutionMode.DEVELOPMENT,
+			TopLogicSecurityContext.executionMode(false, OperationMode.DEVELOPMENT));
+	}
+
+	/**
+	 * A test install maps onto the unrestricted mode, deliberately rather than by omission.
+	 *
+	 * <p>
+	 * {@link OperationMode#TEST} has no counterpart in tl-ai's vocabulary. It is not a live install, so
+	 * the restriction that exists to protect live data does not apply to it.
+	 * </p>
+	 */
+	public void testATestInstallIsTreatedAsDevelopment() {
+		assertEquals(ExecutionMode.DEVELOPMENT,
+			TopLogicSecurityContext.executionMode(false, OperationMode.TEST));
+	}
+
+	/**
+	 * An open maintenance window wins over the environment, production included.
+	 *
+	 * <p>
+	 * The two axes are orthogonal in the engine - a production install can be in a maintenance window
+	 * - and folding them the other way round would make the window useless: an operator opens one
+	 * precisely to let the tools run that production withholds.
+	 * </p>
+	 */
+	public void testMaintenanceWinsOverEveryEnvironment() {
+		for (OperationMode mode : OperationMode.values()) {
+			assertEquals("A maintenance window overrides " + mode + ".",
+				ExecutionMode.MAINTENANCE, TopLogicSecurityContext.executionMode(true, mode));
+		}
+		assertEquals("...and it does not need the environment to be known at all.",
+			ExecutionMode.MAINTENANCE, TopLogicSecurityContext.executionMode(true, null));
+	}
+
+	/**
+	 * An environment that cannot be determined is treated as production, not as development.
+	 *
+	 * <p>
+	 * {@link OperationModeService#getInstance()} throws on an unstarted module, so every context that
+	 * boots no services - unit tests, minimal setups - reaches this branch. It gates tools, so it has
+	 * to fail closed: the permissive guess would open {@code STRUCTURAL} tools on an install nobody
+	 * classified.
+	 * </p>
+	 */
+	public void testAnUnknownEnvironmentFailsClosed() {
+		assertEquals(ExecutionMode.PRODUCTION, TopLogicSecurityContext.executionMode(false, null));
+	}
+
+	/**
+	 * The fallback above is reachable, not theoretical: this suite boots no
+	 * {@link OperationModeService}, and the context answers anyway.
+	 */
+	public void testAContextWithoutTheServiceStillAnswers() {
+		assertFalse("Precondition: this suite boots no OperationModeService.",
+			OperationModeService.Module.INSTANCE.isActive());
+		assertEquals(ExecutionMode.PRODUCTION,
+			TopLogicSecurityContext.forRun(policy(), null, Set.of()).executionMode());
 	}
 
 	/** A minimal {@link Tool} carrying a name and a declared group. */

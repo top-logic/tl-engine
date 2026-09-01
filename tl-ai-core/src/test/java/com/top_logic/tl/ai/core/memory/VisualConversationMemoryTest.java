@@ -9,7 +9,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.runner.RunWith;
+
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
@@ -17,6 +24,8 @@ import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import com.top_logic.tl.ai.core.junit.VisualHarness;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -37,7 +46,16 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
- * Visual test for the conversation memory system — prints the full lifecycle to stdout.
+ * Visual harness for the conversation memory system - prints the full lifecycle to stdout for a
+ * human to read.
+ *
+ * <p>
+ * This is <b>not test coverage</b>: it asserts nothing. Its whole value is the rendered transcript,
+ * so it is gated behind {@link VisualHarness}, like the browser end-to-end tests are gated behind
+ * {@code BrowserE2e}. Without the flag every method reports as <b>skipped</b>, so a package-wide run
+ * such as {@code -Dtest='com.top_logic.tl.ai.core.**'} neither fails on the missing
+ * {@code ThreadContextManager} nor reports a passing test that checked nothing.
+ * </p>
  *
  * <p>Demonstrates three scenarios:</p>
  * <ol>
@@ -48,10 +66,29 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  *
  * <p>Run manually:</p>
  * <pre>
- * mvn test -pl tl-ai-core -Dtest=VisualConversationMemoryTest -DskipTests=false
+ * mvn test -pl tl-ai-core -DskipTests=false -Dtl.ai.visual=true -Dtest=VisualConversationMemoryTest
  * </pre>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class VisualConversationMemoryTest extends TestCase {
+
+	/**
+	 * The agent loop resolves the acting sub-session, so the harness only produces its transcript
+	 * with the module system running.
+	 *
+	 * <p>
+	 * The switched-off harness does not need it: booting the module system costs a second and can
+	 * fail for reasons that have nothing to do with this class, and a harness that renders nothing
+	 * must not be able to break an ordinary build. What makes the methods skip is
+	 * {@link VisualHarness#assumeEnabled()}, not this fork.
+	 * </p>
+	 */
+	public static Test suite() {
+		TestSuite tests = new TestSuite(VisualConversationMemoryTest.class);
+		return VisualHarness.enabled()
+			? ModuleTestSetup.setupModule(ServiceTestSetup.withThreadContext(tests))
+			: tests;
+	}
 
 	private static final String ANSI_RESET = "\u001B[0m";
 	private static final String ANSI_CYAN = "\u001B[36m";
@@ -72,6 +109,7 @@ public class VisualConversationMemoryTest extends TestCase {
 	 * Shows how the ByteBasedTokenEstimator estimates tokens for each message type.
 	 */
 	public void testTokenEstimation() {
+		VisualHarness.assumeEnabled();
 		header("Token Estimation — bytes/4 heuristic");
 
 		UserMessage shortUser = new UserMessage("u1", T0,
@@ -102,6 +140,7 @@ public class VisualConversationMemoryTest extends TestCase {
 	 * Demonstrates the TruncatingStrategy dropping old messages and maintaining tool pairing.
 	 */
 	public void testTruncationCompaction() {
+		VisualHarness.assumeEnabled();
 		header("Truncation Compaction — drop oldest, preserve recent");
 
 		Conversation conv = new Conversation();
@@ -148,6 +187,7 @@ public class VisualConversationMemoryTest extends TestCase {
 	 * Demonstrates the SummarizingStrategy replacing old messages with an LLM-generated summary.
 	 */
 	public void testSummarizingCompaction() {
+		VisualHarness.assumeEnabled();
 		header("Summarizing Compaction — LLM summary replaces old messages");
 
 		Conversation conv = new Conversation();
@@ -191,6 +231,7 @@ public class VisualConversationMemoryTest extends TestCase {
 	 * Demonstrates hybrid token estimation: API baseline + heuristic for new messages.
 	 */
 	public void testHybridEstimation() {
+		VisualHarness.assumeEnabled();
 		header("Hybrid Token Estimation — API baseline + heuristic delta");
 
 		ConversationMemory memory = new ConversationMemory(
@@ -238,6 +279,7 @@ public class VisualConversationMemoryTest extends TestCase {
 	 * Full end-to-end: agent loop with a tiny context window that triggers auto-compaction.
 	 */
 	public void testAgentLoopAutoCompaction() {
+		VisualHarness.assumeEnabled();
 		header("Agent Loop with Auto-Compaction");
 
 		System.out.println(ANSI_DIM + "\n  Scenario: 500-token context window, 100 reserved → 400 usable"

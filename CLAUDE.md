@@ -40,6 +40,21 @@ Playwright provisions Chromium into `~/.cache/ms-playwright` on first use; it mu
 Chromium build, not `chrome-headless-shell` (a plain `playwright install chromium` supplies both).
 Tests that reach public sites skip themselves separately when DNS does not resolve.
 
+### Visual harnesses
+
+The `Visual*` classes assert nothing: they render a transcript to stdout for a human to read, and
+two of them spend a real Anthropic API call doing it. They use the same gate, behind
+`-Dtl.ai.visual=true` - see `VisualHarness` next to `AssumptionAwareRunner`. Without it they report
+as **skipped**. To run them:
+
+```bash
+source env.sh   # for the two that call the API
+mvn -pl tl-ai-core -am test -DskipTests=false -Dtl.ai.visual=true -Dtest='Visual*'
+```
+
+The two that call the API skip themselves separately when `ANTHROPIC_API_KEY` is not in the
+environment.
+
 ## Architecture
 
 ### Tool API (tl-ai-tool-api)

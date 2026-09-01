@@ -9,31 +9,44 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.Assume;
+import org.junit.runner.RunWith;
+
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import com.top_logic.tl.ai.core.junit.VisualHarness;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 
 /**
- * Visual streaming test — prints tokens to stdout as they arrive.
+ * Visual streaming harness - prints tokens to stdout as they arrive, for a human to read.
  *
- * <p>Excluded from the default test suite. Run manually:</p>
+ * <p>
+ * This is <b>not test coverage</b>: it asserts nothing, and it spends a real Anthropic API call. So
+ * it is gated behind {@link VisualHarness}, like the browser end-to-end tests are gated behind
+ * {@code BrowserE2e}. Without the flag it reports as <b>skipped</b> - a package-wide run such as
+ * {@code -Dtest='com.top_logic.tl.ai.core.**'} must neither bill an API call nor report a passing
+ * test that checked nothing.
+ * </p>
+ *
+ * <p>Run manually:</p>
  * <pre>
  * source env.sh
- * mvn test -pl tl-ai-core -Pintegration-test -DskipTests=false -Dtest=VisualStreamTest
+ * mvn test -pl tl-ai-core -DskipTests=false -Dtl.ai.visual=true -Dtest=VisualStreamTest
  * </pre>
  */
+@RunWith(AssumptionAwareRunner.class)
 public class VisualStreamTest extends TestCase {
 
 	/** */
 	public void testStreamToConsole() throws Exception {
+		VisualHarness.assumeEnabled();
 		String apiKey = System.getenv("ANTHROPIC_API_KEY");
-		if (apiKey == null || apiKey.isEmpty()) {
-			System.out.println("SKIP: No ANTHROPIC_API_KEY set (source env.sh)");
-			return;
-		}
+		Assume.assumeTrue("no ANTHROPIC_API_KEY in the environment (source env.sh)",
+			apiKey != null && !apiKey.isEmpty());
 
 		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(apiKey);
 

@@ -15,6 +15,7 @@
 		-->
 		<notices>
 			<maintenance-notice/>
+			<session-timeout-notice/>
 		</notices>
 		<content>
 			<sidebar

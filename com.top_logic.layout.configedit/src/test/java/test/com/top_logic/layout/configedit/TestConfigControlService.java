@@ -59,6 +59,8 @@ import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
+import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.react.control.form.ReactIconSelectControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 
@@ -403,6 +405,9 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getText()}. */
 		String TEXT = "text";
 
+		/** Property name for {@link #getIcon()}. */
+		String ICON = "icon";
+
 		/** Property name for {@link #getCount()}. */
 		String COUNT = "count";
 
@@ -511,6 +516,10 @@ public class TestConfigControlService extends TestCase {
 		/** Free text. */
 		@Name(TEXT)
 		String getText();
+
+		/** An icon, the same value an icon-typed model attribute holds. */
+		@Name(ICON)
+		ThemeImage getIcon();
 
 		/** A whole number. */
 		@Name(COUNT)
@@ -755,6 +764,40 @@ public class TestConfigControlService extends TestCase {
 	/** A string property keeps the text input. */
 	public void testString() {
 		assertTrue(control(TestConfig.TEXT) instanceof ReactTextInputControl);
+	}
+
+	/**
+	 * An icon property is picked from the theme's icons, as an icon model attribute is.
+	 *
+	 * <p>
+	 * Without the claim it would reach the built-in fallback and be offered as its encoded text -
+	 * something like {@code css:fas fa-edit}, which one has to know by heart to type.
+	 * </p>
+	 */
+	public void testIconIsPicked() {
+		assertTrue("An icon must be picked, not typed.",
+			control(TestConfig.ICON) instanceof ReactIconSelectControl);
+	}
+
+	/**
+	 * The icon control is handed the icon itself, not its encoded text.
+	 *
+	 * <p>
+	 * The claim decides this too: a property with a value provider would otherwise get the format
+	 * model over the encoded string, and the control reads and writes a {@link ThemeImage}.
+	 * </p>
+	 */
+	public void testIconModelCarriesTheIconItself() {
+		ConfigFieldModel model = model(TestConfig.ICON);
+
+		assertFalse("The encoded text is not what the icon control edits.",
+			model instanceof ConfigFormatFieldModel);
+
+		ThemeImage icon = ThemeImage.icon("css:fas fa-star");
+		model.setValue(icon);
+
+		assertEquals("The property must hold the icon.", icon, _config.getIcon());
+		assertEquals(icon, model.getValue());
 	}
 
 	/** A boolean property keeps the checkbox. */

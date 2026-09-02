@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 
@@ -68,6 +69,9 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getOwner()}. */
 	String OWNER = "owner";
+
+	/** Configuration name for the value of {@link #getIcon()}. */
+	String ICON = "icon";
 
 	/**
 	 * Priority classifier for {@link DemoEditorConfig#getPriority()}.
@@ -180,6 +184,13 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	@Name(OWNER)
 	@Mandatory
 	String getOwner();
+
+	/**
+	 * The icon standing for this configuration - picked from the theme's icons, the way an icon
+	 * model attribute is, rather than typed as its encoded form.
+	 */
+	@Name(ICON)
+	ThemeImage getIcon();
 
 	/**
 	 * A postal address.

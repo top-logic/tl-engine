@@ -18,6 +18,9 @@
 						Contribute additional value-type-to-provider mappings here - e.g. from a
 						module above this one, such as the TL-Script editor in tl-model-search-react.
 					-->
+					<provider type="com.top_logic.layout.basic.ThemeImage">
+						<impl class="com.top_logic.layout.configedit.IconSelectConfigProvider"/>
+					</provider>
 				</providers>
 				<formats>
 					<!--

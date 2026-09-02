@@ -5,11 +5,12 @@
  */
 package com.top_logic.element.layout.meta;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.top_logic.basic.config.constraint.algorithm.GenericValueDependency;
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
@@ -55,7 +56,7 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 			return;
 		}
 
-		List<List<? extends TLStructuredTypePart>> attributeGroups = new ArrayList<>();
+		Map<TLStructuredType, List<? extends TLStructuredTypePart>> attributesByType = new LinkedHashMap<>();
 
 		TLStructuredType type = typeModel.getValue();
 		if (type != null) {
@@ -63,14 +64,14 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 			 * attributes are contributed by the generalizations below, since the generalizations of
 			 * the persistent type may already have been removed from the selection being
 			 * checked. */
-			attributeGroups.add(type.getLocalParts());
+			attributesByType.put(type, type.getLocalParts());
 		}
 
 		for (TLClass generalization : generalizations) {
-			attributeGroups.add(generalization.getAllParts());
+			attributesByType.put(generalization, generalization.getAllParts());
 		}
 
-		ResKey problem = checkAttributes(attributeGroups);
+		ResKey problem = checkAttributes(attributesByType);
 		if (problem != null) {
 			generalizationsModel.setProblemDescription(problem);
 		}
@@ -85,12 +86,12 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 	 * </p>
 	 */
 	public static void checkClasses(Collection<TLClass> classes) {
-		List<List<? extends TLStructuredTypePart>> attributeGroups = new ArrayList<>();
+		Map<TLStructuredType, List<? extends TLStructuredTypePart>> attributesByType = new LinkedHashMap<>();
 		for (TLClass clazz : classes) {
-			attributeGroups.add(clazz.getAllParts());
+			attributesByType.put(clazz, clazz.getAllParts());
 		}
 
-		ResKey problem = checkAttributes(attributeGroups);
+		ResKey problem = checkAttributes(attributesByType);
 		if (problem != null) {
 			throw new TopLogicException(problem);
 		}
@@ -100,28 +101,33 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 	 * Searches for attributes with the same name but different
 	 * {@link TLStructuredTypePart#getDefinition() definitions}.
 	 *
-	 * @param attributeGroups
-	 *        The attributes to check, each entry holding the attributes of a single type.
+	 * @param attributesByType
+	 *        The attributes to check by the type they were found in.
 	 * @return The problem description of the first conflict found, or <code>null</code>, if there is
 	 *         no conflicting attribute.
 	 */
-	private static ResKey checkAttributes(List<List<? extends TLStructuredTypePart>> attributeGroups) {
+	private static ResKey checkAttributes(
+			Map<TLStructuredType, List<? extends TLStructuredTypePart>> attributesByType) {
 		Map<String, TLStructuredTypePart> attributeByName = new HashMap<>();
+		Map<String, TLStructuredType> typeByName = new HashMap<>();
 
-		for (List<? extends TLStructuredTypePart> attributes : attributeGroups) {
-			for (TLStructuredTypePart attribute1 : attributes) {
-				String name = attribute1.getName();
+		for (Entry<TLStructuredType, List<? extends TLStructuredTypePart>> entry : attributesByType.entrySet()) {
+			TLStructuredType type = entry.getKey();
 
-				TLStructuredTypePart attribute2 = attributeByName.get(name);
+			for (TLStructuredTypePart attribute : entry.getValue()) {
+				String name = attribute.getName();
 
-				if (attribute2 == null) {
-					attributeByName.put(name, attribute1);
+				TLStructuredTypePart clash = attributeByName.get(name);
+
+				if (clash == null) {
+					attributeByName.put(name, attribute);
+					typeByName.put(name, type);
 				} else {
-					TLStructuredTypePart definition1 = attribute1.getDefinition();
-					TLStructuredTypePart definition2 = attribute2.getDefinition();
+					TLStructuredTypePart definition = attribute.getDefinition();
+					TLStructuredTypePart clashDefinition = clash.getDefinition();
 
-					if (!definition2.equals(definition1)) {
-						return errorKey(name, attribute1, definition1, attribute2, definition2);
+					if (!clashDefinition.equals(definition)) {
+						return errorKey(name, typeByName.get(name), clashDefinition, type, definition);
 					}
 				}
 			}
@@ -130,19 +136,30 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 		return null;
 	}
 
-	private static ResKey errorKey(String name, TLTypePart attribute1, TLTypePart definition1, TLTypePart attribute2, TLTypePart definition2) {
+	/**
+	 * The problem description for an attribute that is declared in two conflicting ways.
+	 *
+	 * @param name
+	 *        The name of the conflicting attribute.
+	 * @param type1
+	 *        The type the attribute was found in.
+	 * @param definition1
+	 *        The definition of the attribute found in {@code type1}.
+	 * @param type2
+	 *        The other type declaring an attribute with the same {@code name}.
+	 * @param definition2
+	 *        The definition of the attribute found in {@code type2}.
+	 */
+	private static ResKey errorKey(String name, TLStructuredType type1, TLTypePart definition1,
+			TLStructuredType type2, TLTypePart definition2) {
 		ResKey5 key = I18NConstants.ERROR_CONFLICTING_ATTRIBUTE__NAME_TYPE1_DEFINITION1_TYPE2_DEFINITION2;
 
-		String type1Name = getOwnerName(attribute1);
-		String definition1Name = getOwnerName(definition1);
-		String type2Name = getOwnerName(attribute2);
-		String definition2Name = getOwnerName(definition2);
-
-		return key.fill(name, type1Name, definition1Name, type2Name, definition2Name);
+		return key.fill(name, TLModelUtil.qualifiedName(type1), getOwnerName(definition1),
+			TLModelUtil.qualifiedName(type2), getOwnerName(definition2));
 	}
 
-	private static String getOwnerName(TLTypePart attribute1) {
-		return TLModelUtil.qualifiedName(attribute1.getOwner());
+	private static String getOwnerName(TLTypePart part) {
+		return TLModelUtil.qualifiedName(part.getOwner());
 	}
 
 }

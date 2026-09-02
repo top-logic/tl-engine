@@ -250,16 +250,41 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *         or {@link PropertyKind#COMPLEX}.
 	 */
 	public ConfigFieldModel createModel(ConfigurationItem config, PropertyDescriptor property) {
+		return createModel(config, property, config);
+	}
+
+	/**
+	 * Remembers on the model what is being edited as a whole, so a control built from it later can
+	 * resolve options that look outwards.
+	 */
+	private static <M extends ConfigFieldModel> M withFormModel(M model, ConfigurationItem formModel) {
+		model.setFormModel(formModel);
+		return model;
+	}
+
+	/**
+	 * The field model for the given property, told what is being edited as a whole.
+	 *
+	 * @param formModel
+	 *        The root of the configuration under edit. An option function or mapping of the property
+	 *        may need it - see
+	 *        {@link ConfigPropertyOptions#optionProvider(ConfigurationItem, PropertyDescriptor)} -
+	 *        and it cannot be derived from {@code config}, since the way up is not available on every
+	 *        configuration.
+	 */
+	public ConfigFieldModel createModel(ConfigurationItem config, PropertyDescriptor property,
+			ConfigurationItem formModel) {
 		checkSupportedKind(property);
 
 		// Resolved once and passed to every step below that would otherwise resolve it again
 		// (isSpecialized, isSelect, selectOptions) - this is also where the mapping check
 		// belongs, see isSelect's own JavaDoc.
-		DerivedProperty<? extends Iterable<?>> optionProvider = ConfigPropertyOptions.optionProvider(property);
+		DerivedProperty<? extends Iterable<?>> optionProvider =
+			ConfigPropertyOptions.optionProvider(formModel, property);
 		ConfigControlProvider formatProvider = formatProvider(property);
 
 		if (!isSpecialized(property, optionProvider, formatProvider) && isDirectlyEditable(property.getType())) {
-			return new ConfigFieldModel(config, property);
+			return withFormModel(new ConfigFieldModel(config, property), formModel);
 		}
 		if (isSelect(property, optionProvider)) {
 			ConfigSelectFieldModel selectModel =
@@ -270,7 +295,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 				// Without a provider the options are a plain enum's constants, which cannot change.
 				selectModel.trackOptions(optionProvider);
 			}
-			return selectModel;
+			return withFormModel(selectModel, formModel);
 		}
 		if (property.getAnnotation(Encrypted.class) == null && isClaimed(property, formatProvider)) {
 			// Claimed: the claim states that the control bound to this model edits the value in
@@ -296,12 +321,12 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			// the format model and the password control) is covered by
 			// testEncryptedWinsOverFormatProviderMapping, taken via isSpecialized's earlier,
 			// always-reachable @Encrypted check instead.
-			return new ConfigFieldModel(config, property);
+			return withFormModel(new ConfigFieldModel(config, property), formModel);
 		}
 		if (property.getValueProvider() != null) {
-			return new ConfigFormatFieldModel(config, property);
+			return withFormModel(new ConfigFormatFieldModel(config, property), formModel);
 		}
-		return new ConfigFieldModel(config, property);
+		return withFormModel(new ConfigFieldModel(config, property), formModel);
 	}
 
 	/**
@@ -338,7 +363,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 		// 3. Edited by selecting.
 		if (model instanceof ConfigSelectFieldModel selectModel) {
-			return new ReactSelectFormFieldControl(context, selectModel, selectLabels(property));
+			return new ReactSelectFormFieldControl(context, selectModel,
+				selectLabels(selectModel.getFormModel(), property));
 		}
 
 		// 4. Configured provider by value type.
@@ -427,7 +453,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			ConfigControlProvider formatProvider) {
 		Class<?> type = property.getType();
 
-		if (!isSpecialized(property, ConfigPropertyOptions.optionProvider(property), formatProvider)) {
+		if (!isSpecialized(property, ConfigPropertyOptions.optionProvider(model.getFormModel(), property),
+			formatProvider)) {
 			if (type == boolean.class || type == Boolean.class) {
 				return new ReactCheckboxControl(context, model);
 			}
@@ -545,9 +572,14 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	/**
 	 * The {@link LabelProvider} for the options of a property
 	 * {@link #isSelect(PropertyDescriptor, DerivedProperty) edited by selecting}.
+	 *
+	 * @param config
+	 *        The item the property belongs to - the option labels may be built by a mapping that
+	 *        needs the surrounding configuration, see
+	 *        {@link ConfigPropertyOptions#optionProvider(ConfigurationItem, PropertyDescriptor)}.
 	 */
-	private LabelProvider selectLabels(PropertyDescriptor property) {
-		LabelProvider labels = ConfigPropertyOptions.optionLabels(property);
+	private LabelProvider selectLabels(ConfigurationItem formModel, PropertyDescriptor property) {
+		LabelProvider labels = ConfigPropertyOptions.optionLabels(formModel, property);
 		return labels != null ? labels : MetaLabelProvider.INSTANCE;
 	}
 

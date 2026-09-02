@@ -66,7 +66,7 @@ public class PolymorphicOptions {
 	 *        The property whose options are requested.
 	 */
 	public static Choices compute(ConfigurationItem parentConfig, PropertyDescriptor property) {
-		DerivedProperty<? extends Iterable<?>> provider = ConfigPropertyOptions.optionProvider(property);
+		DerivedProperty<? extends Iterable<?>> provider = ConfigPropertyOptions.optionProvider(parentConfig, property);
 		if (provider == null) {
 			return Choices.NONE;
 		}

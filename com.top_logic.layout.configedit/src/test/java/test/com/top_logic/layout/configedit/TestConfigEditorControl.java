@@ -408,7 +408,7 @@ public class TestConfigEditorControl extends TestCase {
 		@Override
 		protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
 				Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
-				boolean editable) {
+				boolean editable, ConfigurationItem formModel) {
 			return new TestableConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index,
 				editable);
 		}

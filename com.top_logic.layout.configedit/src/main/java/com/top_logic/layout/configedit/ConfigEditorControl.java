@@ -67,6 +67,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 */
 	private final boolean _editable;
 
+	private final ConfigurationItem _formModel;
+
 	/**
 	 * Creates a {@link ConfigEditorControl} for all visible properties.
 	 *
@@ -165,9 +167,27 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
 			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
 			boolean editable) {
+		this(context, config, hiddenProperties, skipTreeProperties, index, editable, config);
+	}
+
+	/**
+	 * Creates a {@link ConfigEditorControl} that knows what is being edited as a whole.
+	 *
+	 * @param formModel
+	 *        The root of the configuration under edit, handed down to every field and nested editor.
+	 *        An option function or mapping of a property may need it, and it cannot be found by
+	 *        walking up from the property's own item - see
+	 *        {@link ConfigPropertyOptions#optionProvider(ConfigurationItem, PropertyDescriptor)}. The
+	 *        outermost editor is the one that knows it; the constructors above take the item they
+	 *        edit, which is right for exactly that case.
+	 */
+	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
+			boolean editable, ConfigurationItem formModel) {
 		super(context);
 		_index = index;
 		_editable = editable;
+		_formModel = formModel;
 
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
 			if (hiddenProperties.contains(property)) {
@@ -208,7 +228,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			if (property.kind() == PropertyKind.LIST || property.kind() == PropertyKind.ARRAY
 				|| property.kind() == PropertyKind.MAP) {
 				ConfigListEditorControl listEditor =
-					new ConfigListEditorControl(context, config, property, _index, _editable);
+					new ConfigListEditorControl(context, config, property, _index, _editable, _formModel);
 				// Over the full row, like the nested-item group above: a collection holds whole
 				// forms - one per entry, each with its own header and actions - and a third of the
 				// row is not a place to put a form. It also keeps a collection recognizable as one
@@ -221,7 +241,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				continue;
 			}
 
-			ConfigFieldModel model = ConfigControlService.getInstance().createModel(config, property);
+			ConfigFieldModel model =
+				ConfigControlService.getInstance().createModel(config, property, _formModel);
 			model.setEditable(_editable);
 			index(config, property, model);
 			addCleanupAction(model::detach);
@@ -298,7 +319,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * @return A new editor control for the nested item.
 	 */
 	protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
-		return newEditor(context, nested, Collections.emptySet(), false, _index, _editable);
+		return newEditor(context, nested, Collections.emptySet(), false, _index, _editable, _formModel);
 	}
 
 	/**
@@ -331,8 +352,9 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 */
 	protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
 			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
-			boolean editable) {
-		return new ConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index, editable);
+			boolean editable, ConfigurationItem formModel) {
+		return new ConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index, editable,
+			formModel);
 	}
 
 	/**

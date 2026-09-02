@@ -72,6 +72,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	private final ConfigCollection _value;
 
+	private final ConfigurationItem _formModel;
+
 	private final PolymorphicOptions.Choices _choices;
 
 	/**
@@ -162,8 +164,22 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	public ConfigListEditorControl(ReactContext context, ConfigurationItem parentConfig,
 			PropertyDescriptor property, ConfigFieldIndex index, boolean editable) {
+		this(context, parentConfig, property, index, editable, parentConfig);
+	}
+
+	/**
+	 * Creates a {@link ConfigListEditorControl} that knows what is being edited as a whole.
+	 *
+	 * @param formModel
+	 *        The root of the configuration under edit, handed down to every field and nested editor -
+	 *        see {@link ConfigEditorControl#ConfigEditorControl(ReactContext, ConfigurationItem, Set,
+	 *        boolean, ConfigFieldIndex, boolean, ConfigurationItem)}.
+	 */
+	public ConfigListEditorControl(ReactContext context, ConfigurationItem parentConfig,
+			PropertyDescriptor property, ConfigFieldIndex index, boolean editable,
+			ConfigurationItem formModel) {
 		this(context, new ConfigCollectionValue(parentConfig, property),
-			PolymorphicOptions.compute(parentConfig, property), index, editable);
+			PolymorphicOptions.compute(parentConfig, property), index, editable, formModel);
 	}
 
 	/**
@@ -190,10 +206,25 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	public ConfigListEditorControl(ReactContext context, ConfigCollection value,
 			PolymorphicOptions.Choices choices, ConfigFieldIndex index, boolean editable) {
+		this(context, value, choices, index, editable, null);
+	}
+
+	/**
+	 * Creates a {@link ConfigListEditorControl} over any collection, knowing what is being edited as
+	 * a whole.
+	 *
+	 * @param formModel
+	 *        The root of the configuration under edit, or {@code null} when there is none - a
+	 *        collection held by a form field has no surrounding configuration.
+	 */
+	public ConfigListEditorControl(ReactContext context, ConfigCollection value,
+			PolymorphicOptions.Choices choices, ConfigFieldIndex index, boolean editable,
+			ConfigurationItem formModel) {
 		super(context);
 		_context = context;
 		_index = index;
 		_editable = editable;
+		_formModel = formModel;
 		_value = value;
 		_choices = choices;
 		_pending = new ConfigPendingEntries(_value, this::rebuild);
@@ -212,6 +243,14 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			reg.item().removeConfigurationListener(reg.property(), reg.listener());
 		}
 		_listeners.clear();
+	}
+
+	/**
+	 * The form model this editor was told about, or the given entry when it was told none - an entry
+	 * of a collection that is nobody's property is the best answer available.
+	 */
+	private ConfigurationItem formModelOr(ConfigurationItem entry) {
+		return _formModel != null ? _formModel : entry;
 	}
 
 	/**
@@ -422,7 +461,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		if (!polymorphic || isTypeSelected(item)) {
 			bodyChildren.add(new ConfigEditorControl(_context, item,
 				keyProperty == null ? Collections.emptySet() : Collections.singleton(keyProperty), false, _index,
-				_editable));
+				_editable, formModelOr(item)));
 		}
 		return bodyChildren;
 	}
@@ -474,7 +513,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		// never rendered (see #rebuild). Still combined explicitly rather than relied upon, so this
 		// stays correct even if that invariant ever changes.
 		boolean editable = _editable && pending != null;
-		ConfigFieldModel model = ConfigControlService.getInstance().createModel(entry, keyProperty);
+		ConfigFieldModel model =
+			ConfigControlService.getInstance().createModel(entry, keyProperty, formModelOr(entry));
 		model.setEditable(editable);
 		index(entry, keyProperty, model);
 		if (pending != null) {

@@ -16,6 +16,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.customization.AnnotationCustomizations;
 import com.top_logic.basic.config.customization.ConfiguredAnnotationCustomizations;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
@@ -59,6 +60,31 @@ public class ConfigPropertyOptions extends LazyTypedAnnotatable implements Decla
 		_property = property;
 	}
 
+	/**
+	 * Creates a {@link ConfigPropertyOptions} that also offers the edited configuration as the form
+	 * model.
+	 *
+	 * @param formModel
+	 *        What is being edited as a whole, or {@code null} if the caller does not know. Becomes
+	 *        {@link DeclarativeFormBuilder#FORM_MODEL}, which is what an option function or mapping
+	 *        reaches for when it needs to know the surroundings of the property -
+	 *        {@code SingletonConfig.LocalTypeMapping}, for one, reads the module's name off it and
+	 *        fails outright without it.
+	 *
+	 *        <p>
+	 *        Passed in rather than derived from the property's own item: the way up is
+	 *        {@link com.top_logic.basic.config.ConfigPart#container()}, and not every configuration
+	 *        on the way is a {@code ConfigPart} - {@code SingletonConfig} is not - so walking up
+	 *        stops early and silently at the wrong item.
+	 *        </p>
+	 */
+	public ConfigPropertyOptions(ConfigurationItem formModel, PropertyDescriptor property) {
+		this(property);
+		if (formModel != null) {
+			set(DeclarativeFormBuilder.FORM_MODEL, formModel);
+		}
+	}
+
 	@Override
 	public PropertyDescriptor getProperty() {
 		return _property;
@@ -80,7 +106,9 @@ public class ConfigPropertyOptions extends LazyTypedAnnotatable implements Decla
 	 *        The property to resolve options for.
 	 */
 	public static List<?> optionsFor(ConfigurationItem config, PropertyDescriptor property) {
-		DerivedProperty<? extends Iterable<?>> provider = optionProvider(property);
+		DerivedProperty<? extends Iterable<?>> provider = optionProvider(config, property);
+		// The item doubles as the form model here: this helper serves a caller that has nothing
+		// else, and the item itself is a better answer than none.
 		if (provider == null) {
 			return Collections.emptyList();
 		}
@@ -127,7 +155,21 @@ public class ConfigPropertyOptions extends LazyTypedAnnotatable implements Decla
 	 * </p>
 	 */
 	public static DerivedProperty<? extends Iterable<?>> optionProvider(PropertyDescriptor property) {
-		return Fields.optionProvider(new ConfigPropertyOptions(property));
+		return optionProvider(null, property);
+	}
+
+	/**
+	 * The option provider for the given property of the given item.
+	 *
+	 * <p>
+	 * To be preferred over {@link #optionProvider(PropertyDescriptor)} wherever the form model is at
+	 * hand: the provider and its mapping are built here, and a mapping that needs the surrounding
+	 * configuration can only find it if the form model was passed.
+	 * </p>
+	 */
+	public static DerivedProperty<? extends Iterable<?>> optionProvider(ConfigurationItem formModel,
+			PropertyDescriptor property) {
+		return Fields.optionProvider(new ConfigPropertyOptions(formModel, property));
 	}
 
 	/**
@@ -135,7 +177,15 @@ public class ConfigPropertyOptions extends LazyTypedAnnotatable implements Decla
 	 * default labels.
 	 */
 	public static LabelProvider optionLabels(PropertyDescriptor property) {
-		return Fields.optionLabelsOrNull(new ConfigPropertyOptions(property));
+		return optionLabels(null, property);
+	}
+
+	/**
+	 * The labels for the options of the given property, with the form model an option mapping may
+	 * need - see {@link #optionProvider(ConfigurationItem, PropertyDescriptor)}.
+	 */
+	public static LabelProvider optionLabels(ConfigurationItem formModel, PropertyDescriptor property) {
+		return Fields.optionLabelsOrNull(new ConfigPropertyOptions(formModel, property));
 	}
 
 }

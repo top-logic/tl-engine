@@ -25,6 +25,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLNamedPart;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
@@ -34,6 +35,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.config.EnumConfig;
+import com.top_logic.model.config.NamedPartConfig;
 
 /**
  * {@link ReactFieldControlProvider} for the {@code annotations} attribute of a
@@ -125,8 +127,12 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 			new ConfigFieldPush(() -> binding.push(new ArrayList<>(container.getAnnotations())));
 		index.observeFields(push::watch);
 
+		// The container is the form model: an option function or mapping inside an annotation looks
+		// outwards for it - SingletonConfig's type mapping reads the module's name off it - and
+		// there is no finding it by walking up, since not every configuration on the way offers a
+		// way up.
 		ReactControl editor =
-			new ConfigListEditorControl(context, value, choices, index, model.isEditable());
+			new ConfigListEditorControl(context, value, choices, index, model.isEditable(), container);
 		push.armed();
 		return editor;
 	}
@@ -169,6 +175,18 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 	 * </p>
 	 */
 	static AnnotatedConfig<? extends TLAnnotation> containerFor(TLObject owner) {
+		AnnotatedConfig<? extends TLAnnotation> container = emptyContainerFor(owner);
+		// The surroundings are of no use while they are blank. An option function reaching outwards
+		// asks the container real questions - SingletonConfig.LocalTypeMapping reads the module's
+		// name off it and fails outright on a nameless one - so what the element is called is
+		// carried over, the same way the legacy form builders fill their EditModel from the part.
+		if (container instanceof NamedPartConfig named && owner instanceof TLNamedPart namedOwner) {
+			named.setName(namedOwner.getName());
+		}
+		return container;
+	}
+
+	private static AnnotatedConfig<? extends TLAnnotation> emptyContainerFor(TLObject owner) {
 		if (owner instanceof TLModule) {
 			return TypedConfiguration.newConfigItem(ModuleConfig.class);
 		}

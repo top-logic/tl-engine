@@ -21,6 +21,8 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.element.config.AttributeConfig;
 import com.top_logic.element.config.ClassConfig;
+import com.top_logic.element.config.SingletonConfig;
+import com.top_logic.element.config.annotation.TLSingletons;
 import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.layout.configedit.ConfigControlService;
@@ -201,6 +203,35 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 		assertEquals("The annotation must have reached the field.",
 			1, ((List<?>) model.getValue()).size());
 		assertEquals("Its own write-back must not restart it.", 1, built.size());
+	}
+
+	/**
+	 * An annotation whose options reach out of it can be rendered.
+	 *
+	 * <p>
+	 * {@link TLSingletons} holds {@code SingletonConfig}s, whose type is chosen from options built by
+	 * a mapping that reads the module's name off the surrounding form model. Without that model - or
+	 * with a nameless container - the mapping's constructor fails and the whole field is refused with
+	 * "Error during instantiation". This is the case the design warned about: an annotation copied on
+	 * its own has nothing to navigate to.
+	 * </p>
+	 */
+	public void testAnAnnotationWhoseOptionsReachOutwards() {
+		TLSingletons singletons = TypedConfiguration.newConfigItem(TLSingletons.class);
+		// With an entry, as mandatorStructure has: an empty collection builds no field for the
+		// entry's type, so nothing would ever ask for the options that need the form model.
+		SingletonConfig singleton = TypedConfiguration.newConfigItem(SingletonConfig.class);
+		singleton.setName("ROOT");
+		singletons.getSingletons().add(singleton);
+		List<TLAnnotation> values = new ArrayList<>(List.of(singletons));
+		FieldModel model = new AbstractFieldModel(values);
+		ModuleConfig container = container();
+		container.setName("mandatorStructure");
+
+		ReactControl holder = AnnotationsFieldControlProvider.createControl(_context, model, () -> container);
+
+		assertNotNull(holder);
+		assertEquals("The annotation must have been taken over.", 1, container.getAnnotations().size());
 	}
 
 	/**

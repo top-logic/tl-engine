@@ -45,6 +45,8 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 
 	private final PropertyDescriptor _property;
 
+	private ConfigurationItem _formModel;
+
 	/**
 	 * Creates a {@link ConfigFieldModel}.
 	 *
@@ -266,6 +268,24 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 	 */
 	public PropertyDescriptor getProperty() {
 		return _property;
+	}
+
+	/**
+	 * What is being edited as a whole, or the bound item itself if nobody said otherwise.
+	 *
+	 * <p>
+	 * Needed by an option function or mapping of this model's property that looks outwards; it
+	 * cannot be derived from {@link #getConfig()}, see
+	 * {@link ConfigPropertyOptions#optionProvider(ConfigurationItem, PropertyDescriptor)}.
+	 * </p>
+	 */
+	public ConfigurationItem getFormModel() {
+		return _formModel == null ? _config : _formModel;
+	}
+
+	/** @see #getFormModel() */
+	public void setFormModel(ConfigurationItem formModel) {
+		_formModel = formModel;
 	}
 
 	/**

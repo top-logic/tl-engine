@@ -310,7 +310,6 @@ public class TLStructuredTypeFormBuilder
 		@OptionLabels(MetaResourceProvider.class)
 		@DynamicMode(fun = HideImmutableIf.class, args = @Ref(CREATE))
 		@ControlProvider(SelectionControlProvider.class)
-		@Constraint(value = TypeHasNoConflictingAttributes.class, args = { @Ref(EDITED_TYPE) })
 		List<TLClass> getSpecializationTypes();
 
 		@Override

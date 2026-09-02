@@ -26,8 +26,15 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ValueConstraint} that checks that a {@link TLStructuredType types} generalizations and
- * specializations do not have attributes with the same name and different definitions.
+ * {@link ValueConstraint} that checks that the {@link TLClass generalizations} selected for a
+ * {@link TLStructuredType type} do not introduce attributes with the same name but different
+ * definitions.
+ *
+ * <p>
+ * The constraint must not be used for the specializations of a type: Two specializations of the
+ * same type are unrelated to each other, therefore both may declare an attribute with the same
+ * name.
+ * </p>
  *
  * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
  */

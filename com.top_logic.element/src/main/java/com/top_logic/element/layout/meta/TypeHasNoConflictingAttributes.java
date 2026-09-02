@@ -5,12 +5,11 @@
  */
 package com.top_logic.element.layout.meta;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.top_logic.basic.config.constraint.algorithm.GenericValueDependency;
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
@@ -49,28 +48,34 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 	}
 
 	@Override
-	protected void checkValue(PropertyModel<List<TLClass>> typesModel, PropertyModel<TLStructuredType> typeModel) {
-		Set<TLClass> classes = new HashSet<>();
+	protected void checkValue(PropertyModel<List<TLClass>> generalizationsModel,
+			PropertyModel<TLStructuredType> typeModel) {
+		List<TLClass> generalizations = generalizationsModel.getValue();
+		if (CollectionUtilShared.isEmptyOrNull(generalizations)) {
+			return;
+		}
+
+		List<List<? extends TLStructuredTypePart>> attributeGroups = new ArrayList<>();
 
 		TLStructuredType type = typeModel.getValue();
-		if (type instanceof TLClass) {
-			classes.add((TLClass) type);
+		if (type != null) {
+			/* Only the local attributes of the edited type must be checked. Its inherited
+			 * attributes are contributed by the generalizations below, since the generalizations of
+			 * the persistent type may already have been removed from the selection being
+			 * checked. */
+			attributeGroups.add(type.getLocalParts());
 		}
 
-		List<TLClass> types = typesModel.getValue();
-		if (!CollectionUtilShared.isEmptyOrNull(types)) {
-			classes.addAll(types);
+		for (TLClass generalization : generalizations) {
+			attributeGroups.add(generalization.getAllParts());
 		}
 
-		if (classes.size() > 1) {
-			try {
-				checkClasses(classes);
-			} catch (TopLogicException exception) {
-				typesModel.setProblemDescription(exception.getErrorKey());
-			}
+		ResKey problem = checkAttributes(attributeGroups);
+		if (problem != null) {
+			generalizationsModel.setProblemDescription(problem);
 		}
 	}
-	
+
 	/**
 	 * Checks if the given {@link TLClass classes} have attributes with the same name but different
 	 * definitions.
@@ -80,11 +85,30 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 	 * </p>
 	 */
 	public static void checkClasses(Collection<TLClass> classes) {
-		Map<String, TLStructuredTypePart> attributeByName = new HashMap<>();
-		
+		List<List<? extends TLStructuredTypePart>> attributeGroups = new ArrayList<>();
 		for (TLClass clazz : classes) {
-			List<? extends TLStructuredTypePart> attributes = clazz.getAllParts();
+			attributeGroups.add(clazz.getAllParts());
+		}
 
+		ResKey problem = checkAttributes(attributeGroups);
+		if (problem != null) {
+			throw new TopLogicException(problem);
+		}
+	}
+
+	/**
+	 * Searches for attributes with the same name but different
+	 * {@link TLStructuredTypePart#getDefinition() definitions}.
+	 *
+	 * @param attributeGroups
+	 *        The attributes to check, each entry holding the attributes of a single type.
+	 * @return The problem description of the first conflict found, or <code>null</code>, if there is
+	 *         no conflicting attribute.
+	 */
+	private static ResKey checkAttributes(List<List<? extends TLStructuredTypePart>> attributeGroups) {
+		Map<String, TLStructuredTypePart> attributeByName = new HashMap<>();
+
+		for (List<? extends TLStructuredTypePart> attributes : attributeGroups) {
 			for (TLStructuredTypePart attribute1 : attributes) {
 				String name = attribute1.getName();
 
@@ -97,11 +121,13 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 					TLStructuredTypePart definition2 = attribute2.getDefinition();
 
 					if (!definition2.equals(definition1)) {
-						throw new TopLogicException(errorKey(name, attribute1, definition1, attribute2, definition2));
+						return errorKey(name, attribute1, definition1, attribute2, definition2);
 					}
 				}
 			}
 		}
+
+		return null;
 	}
 
 	private static ResKey errorKey(String name, TLTypePart attribute1, TLTypePart definition1, TLTypePart attribute2, TLTypePart definition2) {

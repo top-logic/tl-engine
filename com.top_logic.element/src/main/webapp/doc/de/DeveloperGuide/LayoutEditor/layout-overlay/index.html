@@ -1,28 +1,49 @@
-<p>Manchmal ist es nicht ausreichend, nur die Haupt-Layout XML Datei zu verwenden, um das Layout einer spezifischen Anwendung oder Sicht zu bestimmen. Dies kann beispielsweise der Fall sein, wenn eine Anwendung eine angepasste Darstellung oder zusätzliche Komponenten benötigt, die nur für diese Anwendung oder ein spezifisches Modul relevant sind.</p>
+<p>Ein Layout-Overlay erlaubt es einer Anwendung, ein Layout zu verändern, das von einem TopLogic-Modul ausgeliefert wird, ohne die betroffene Layout-Datei zu kopieren. Die Anpassung bleibt dadurch von der Weiterentwicklung des Originals getrennt: Ändert sich das Layout im Modul, greift die eigene Anpassung weiterhin. Typische Anwendungsfälle sind das Ergänzen eines Tabs in der Administration und das Hinzufügen einer Funktion zu einer bestehenden Administrationssicht.</p>
+<p>Ein Overlay ist eine inkrementelle Konfiguration: Die Datei beschreibt nur die Unterschiede zum Original, also geänderte Attribute und zusätzliche Einträge in Listen. Alles, was nicht erwähnt wird, bleibt unverändert.</p>
+<h2>Ablage und Dateiname</h2>
+<p>Ein Overlay wird ausschließlich über seinen Dateinamen dem Ziel-Layout zugeordnet: Der Pfad des Overlays relativ zu <code class="hljs inlineCode">WEB-INF/layouts</code> muss dem Pfad des Ziel-Layouts entsprechen, wobei die Endung <code class="hljs inlineCode">.layout.xml</code> durch <code class="hljs inlineCode">.layout.overlay.xml</code> ersetzt wird. Im Inhalt der Datei steht keine Referenz auf das Ziel. Der Pfad ist dabei Groß-/Kleinschreibung-sensitiv.</p>
+<p>Um beispielsweise das Layout <code class="hljs inlineCode">com.top_logic.contact/admin/personContacts/personContactView.layout.xml</code> aus dem Modul Contact anzupassen, legt die Anwendung die Datei <code class="hljs inlineCode">WEB-INF/layouts/com.top_logic.contact/admin/personContacts/personContactView.layout.overlay.xml</code> an. Das Overlay liegt also im Verzeichnisbaum der eigenen Anwendung, spiegelt darin aber den Pfad des fremden Layouts.</p>
+<h2>Argument-Overlay</h2>
+<p>Ist das Ziel-Layout ein Aufruf eines <a class="tlObject" data-custom="true" href="?page=layout-templates&amp;uuid=10dc0623-2937-48e2-bd6b-9e6d55b90bcd">Layout-Templates</a> (Root-Tag <code class="hljs inlineCode">config:template-call</code>), so kann das Overlay die Argumente dieses Template-Aufrufs verändern. Ein solches Overlay hat das Root-Tag <code class="hljs inlineCode">arguments</code> und wird mit dem <code class="hljs inlineCode">arguments</code>-Abschnitt des Ziel-Layouts verschmolzen.</p>
+<p>Das Layout <code class="hljs inlineCode">admin/studio/index.layout.xml</code> definiert die Tabs der Entwickleroptionen als Argument <code class="hljs inlineCode">components</code> seines Template-Aufrufs. Ein Overlay kann dieser Liste einen weiteren Tab hinzufügen:</p>
+<pre><code class="language-xml">&lt;?xml version="1.0" encoding="utf-8" ?&gt;
 
-<p> </p>
+&lt;arguments&gt;
+  &lt;components&gt;
+    &lt;layout-reference resource="myapp/admin/myAdminTab.layout.xml"/&gt;
+  &lt;/components&gt;
+&lt;/arguments&gt;</code></pre>
+<p>Ein <code class="hljs inlineCode">layout-reference</code> verweist auf ein eigenes Layout, das dadurch als zusätzlicher Tab erscheint. Attribute, die im Overlay angegeben werden, überschreiben das entsprechende Argument des Template-Aufrufs.</p>
+<h2>Komponenten-Overlay</h2>
+<p>Ein Komponenten-Overlay verändert einzelne Komponenten des Ziel-Layouts. Es hat das Root-Tag <code class="hljs inlineCode">components</code> und enthält darunter je Komponente einen Eintrag, der die Komponente über ihr Attribut <code class="hljs inlineCode">name</code> adressiert. Die Adressierung erfolgt allein über diesen Namen: Es ist unerheblich, wie tief die Komponente im Layout verschachtelt ist und über welche Include- oder Template-Aufrufe sie in das Layout gelangt ist. Diese Form ist auch dann nutzbar, wenn das Ziel-Layout kein Template-Aufruf ist.</p>
+<p>Das folgende Overlay ergänzt die Sicht auf die Personenkontakte um einen Import-Dialog. Adressiert wird die Komponente <code class="hljs inlineCode">personContactEdit</code>, die im Ziel-Layout nicht direkt, sondern über ein Include enthalten ist:</p>
+<pre><code class="language-xml">&lt;?xml version="1.0" encoding="utf-8" ?&gt;
 
-<h2>Funktionsweise von Layout Overlay</h2>
-
-<p>In einer <code class="hljs inlineCode">*.layout.overlay.xml</code> -Datei spielt die Parent-Child-Beziehung keine Rolle. Stattdesssen werden in dieser Datei Komponenten der anzupassenden Sicht über ihren lokalen Namen referenziert. Der Inhalt dieser Datei stellt eine inkrementelle Konfiguration dar, die Änderungen oder Ergänzungen zu bestehenden Komponenten beschreibt.</p>
-
-<p> </p>
-
-<h2>Anwendungsfall: Anpassung der modellbasierten Suche</h2>
-
-<p>Ein Beispiel ist die modellbasierte Suche, die im Modul Element definiert wird. Möchte man in einem zusätzlichen Modul, beispielsweise einem Demo-Modul, eine abweichende Version dieser Suche implementierten, etwa durch das Hinzufügen einer Komponente mit spezifischen Informationen, kann eine <code class="hljs inlineCode">*.layout.overlay.xml</code> -Datei erstellt werden.</p>
-
-<p>Angenommen, man möchte im Demo-Modul die modellbasierte Suche verändern, indem zusätzliche Spalten definiert und der Title-Key einer Komponente geändert werden. Dies könnte in einer Datei wie <code class="hljs inlineCode">com.top_logic.element/search/searchinput.layout.overlay.xml</code> so aussehen:</p>
-
-<pre>
-<code class="language-xml">&lt;components&gt;
-   &lt;component name="SearchAttributedSearchInput" columns="columns(com.top_logic.reporting/search/searchResult.layout.xml#SearchAttributedSearchResultTable)"
-   /&gt;
-   &lt;securityLayout name="searchInput"
-      titleKey="pos.search.input.tabber"
-   /&gt;
+&lt;components&gt;
+  &lt;component name="personContactEdit"&gt;
+    &lt;dialogs&gt;
+      &lt;include name="commons/dispatchingImportEVA_dialog.xml"
+        importerNames="personExcel, personCSV"
+        masterComponent="personContactFilterTable"
+        namePrefix="MyPersonImport"
+        securityObject="securityRoot"
+      /&gt;
+    &lt;/dialogs&gt;
+  &lt;/component&gt;
 &lt;/components&gt;</code></pre>
+<p>Eine bestehende Komponente kann ein Komponenten-Overlay auch entfernen, indem es den Eintrag mit <code class="hljs inlineCode">config:operation="remove"</code> markiert. Was es nicht kann, ist eine neue Komponente auf oberster Ebene ergänzen: Enthält das Overlay einen Namen, der im Ziel-Layout nicht vorkommt, wird die Konfiguration mit dem Fehler "Unable to add components ... Don't know where to set it." abgewiesen. Eine zusätzliche Komponente wird stattdessen immer innerhalb einer bereits vorhandenen Komponente angelegt, wie im Beispiel oben im Abschnitt <code class="hljs inlineCode">dialogs</code>.</p>
+<h2>Positionierung in Listen</h2>
+<p>Einträge, die ein Overlay zu einer Liste beiträgt, werden standardmäßig am Ende angefügt. Über das Attribut <code class="hljs inlineCode">config:position</code> aus dem Namensraum <code class="hljs inlineCode">http://www.top-logic.com/ns/config/6.0</code> kann die Position gesteuert werden. Möglich sind <code class="hljs inlineCode">begin</code>, <code class="hljs inlineCode">end</code>, <code class="hljs inlineCode">before</code> und <code class="hljs inlineCode">after</code>; bei <code class="hljs inlineCode">before</code> und <code class="hljs inlineCode">after</code> benennt <code class="hljs inlineCode">config:reference</code> den Eintrag, relativ zu dem eingefügt wird. Damit erscheint der neue Tab an einer definierten Stelle statt hinten:</p>
+<pre><code class="language-xml">&lt;?xml version="1.0" encoding="utf-8" ?&gt;
 
-<p> </p>
-
-<p> </p>
+&lt;arguments xmlns:config="http://www.top-logic.com/ns/config/6.0"&gt;
+  &lt;components&gt;
+    &lt;layout-reference
+      config:position="begin"
+      resource="myapp/admin/myAdminTab.layout.xml"
+    /&gt;
+  &lt;/components&gt;
+&lt;/arguments&gt;</code></pre>
+<h2>Mehrere Overlays zum selben Layout</h2>
+<p>Zu einem Layout-Key können mehrere Module gleichzeitig ein Overlay beitragen. Alle diese Overlays werden angewendet, und zwar von der unspezifischsten zur spezifischsten Quelle. Die Anwendung selbst kommt damit zuletzt und kann die Angaben der Module überschreiben.</p>
+<p>Zu beachten ist dabei eine Einschränkung: Argument-Overlays können nur angewendet werden, solange noch kein Komponenten-Overlay angewendet wurde. Trägt ein unspezifischeres Modul ein Komponenten-Overlay bei und ein spezifischeres ein Argument-Overlay, so wird letzteres wirkungslos verworfen und im Log mit "Argument overlay ... could not be applied after a component overlay." vermerkt. In diesem Fall ist auch die spezifischere Anpassung als Komponenten-Overlay zu formulieren.</p>

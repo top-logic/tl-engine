@@ -122,6 +122,27 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	private static final String CSS_SNACKBAR_TITLE = "tlSnackbar__title";
 
+	/**
+	 * This endpoint answers {@code XMLHttpRequest}s, for whose caller the check's redirect to an
+	 * HTML page is of no use. Skipping it also keeps a command that arrives while the session is
+	 * ending from racing the reloading page for the check's one-shot marker - a race whose loser is
+	 * told that cookies cannot be set.
+	 */
+	@Override
+	protected boolean isCookieCheckRequired() {
+		return false;
+	}
+
+	/**
+	 * Answers a request whose session is gone with the error code the client reloads on, rather than
+	 * with the empty response the inherited implementation would produce.
+	 */
+	@Override
+	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_CODE_STALE_UI, "No session.");
+	}
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {

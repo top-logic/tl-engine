@@ -17,6 +17,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.protocol.WindowFocusEvent;
 import com.top_logic.layout.react.protocol.WindowOpenEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -36,6 +37,22 @@ import com.top_logic.model.listen.ModelScope;
 public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	private static final String SESSION_ATTRIBUTE_KEY = "tl.react.windowRegistry";
+
+	/**
+	 * The registries of all live sessions, by session ID.
+	 *
+	 * <p>
+	 * A registry is reachable through its HTTP session, but a session that ends is announced by its
+	 * ID alone - {@link com.top_logic.base.bus.UserEvent} carries no session object, and the
+	 * container hands out none for a foreign ID. This index closes that gap.
+	 * </p>
+	 *
+	 * @implNote Entries are removed in {@link #valueUnbound(HttpSessionBindingEvent)}, which the
+	 *           container calls for every attribute of an ending session, so the index cannot
+	 *           outlive the sessions it points to.
+	 */
+	private static final ConcurrentHashMap<String, ReactWindowRegistry> REGISTRIES_BY_SESSION_ID =
+		new ConcurrentHashMap<>();
 
 	private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -58,10 +75,17 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	private final ReentrantLock _requestLock = new ReentrantLock();
 
+	/** The ID of the session this registry belongs to, remembered for the index. */
+	private final String _sessionId;
+
 	/**
 	 * Creates a new {@link ReactWindowRegistry}.
+	 *
+	 * @param sessionId
+	 *        The ID of the session this registry belongs to.
 	 */
-	public ReactWindowRegistry() {
+	public ReactWindowRegistry(String sessionId) {
+		_sessionId = sessionId;
 	}
 
 	/**
@@ -74,8 +98,9 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			synchronized (session) {
 				registry = (ReactWindowRegistry) session.getAttribute(SESSION_ATTRIBUTE_KEY);
 				if (registry == null) {
-					registry = new ReactWindowRegistry();
+					registry = new ReactWindowRegistry(session.getId());
 					session.setAttribute(SESSION_ATTRIBUTE_KEY, registry);
+					REGISTRIES_BY_SESSION_ID.put(session.getId(), registry);
 				}
 			}
 		}
@@ -396,7 +421,9 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	@Override
 	public void valueUnbound(HttpSessionBindingEvent event) {
+		REGISTRIES_BY_SESSION_ID.remove(_sessionId, this);
 		for (WindowEntry entry : _windows.values()) {
+			requestReload(entry.getQueue());
 			ReactControl rootControl = entry.getRootControl();
 			if (rootControl != null) {
 				rootControl.cleanupTree();
@@ -405,6 +432,58 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		}
 		_windows.clear();
 		_singletonKeys.clear();
+	}
+
+	/**
+	 * Tells every window of the identified session to reload.
+	 *
+	 * <p>
+	 * Called when a session was logged out without being invalidated, which is how the maintenance
+	 * mode and an administrator terminating a session end one: the HTTP session stays alive, so
+	 * {@link #valueUnbound(HttpSessionBindingEvent)} never runs and the browser would keep showing
+	 * a user who is no longer logged in.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The ID of the session whose windows are to reload; an unknown ID is ignored.
+	 */
+	public static void reloadWindowsOfSession(String sessionId) {
+		ReactWindowRegistry registry = REGISTRIES_BY_SESSION_ID.get(sessionId);
+		if (registry == null) {
+			return;
+		}
+		for (WindowEntry entry : registry._windows.values()) {
+			requestReload(entry.getQueue());
+		}
+	}
+
+	/**
+	 * Tells the browser of the given window to reload, so that it does not keep displaying a page
+	 * belonging to a session that no longer exists.
+	 *
+	 * <p>
+	 * A session can end without the browser doing anything: an administrator terminates it, or the
+	 * maintenance mode starts and logs out everybody who may not stay. The page then still shows the
+	 * previous user and their content, while the first interaction merely establishes a fresh
+	 * anonymous session behind the scenes and appears to do nothing at all. Reloading brings the
+	 * browser back as the anonymous user, showing the login and whatever the application announces
+	 * to it.
+	 * </p>
+	 *
+	 * @implNote Enqueued before the queue is shut down, because {@link SSEUpdateQueue#enqueue} writes
+	 *           through immediately while {@link SSEUpdateQueue#shutdown()} closes the connection and
+	 *           discards whatever is still pending. A window whose browser is already gone simply has
+	 *           no connection to write to.
+	 */
+	private static void requestReload(SSEUpdateQueue queue) {
+		try {
+			queue.enqueue(JSSnipplet.create().setCode("window.location.reload();"));
+		} catch (RuntimeException ex) {
+			// The session is ending either way: a window that cannot be reached must not keep the
+			// remaining ones from being told.
+			Logger.error("Failed to request a reload of a window whose session ended.", ex,
+				ReactWindowRegistry.class);
+		}
 	}
 
 	/**

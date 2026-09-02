@@ -3,7 +3,8 @@
 <!--
 	Model editor (admin hub, Model section). A master/detail editor over the application model:
 	the module table (left) selects a module; the class diagram (center) shows and selects the
-	module's types and their attributes; the detail forms edit the selected module / part. The
+	module's types and their attributes; the detail form (bottom) edits whichever of the two is
+	selected - the model element, or the module itself while the diagram has no selection. The
 	toolbars create and delete modules, types and attributes through the ModelEditAction; the reload
 	channel is bumped after a diagram-affecting mutation so the diagram re-reads the (unchanged)
 	module input and reflects the change.
@@ -13,6 +14,15 @@
 		<channel name="selectedModule"/>
 		<channel name="selectedPart"/>
 		<channel name="reload"/>
+		<!--
+			What the detail form edits: the selected model element, or the module itself while
+			nothing is selected in the diagram. A module carries a name and annotations like every
+			other model part, so one form serves both and the module needs no panel of its own.
+		-->
+		<derived-channel name="selectedDetail"
+			expr="part -> module -> ifElse($part != null, $part, $module)"
+			inputs="selectedPart, selectedModule"
+		/>
 	</channels>
 	<split-panel
 		orientation="horizontal"
@@ -23,94 +33,64 @@
 				size="25"
 				unit="%"
 			>
-				<split-panel
-					orientation="vertical"
-					resizable="true"
-				>
-					<panes>
-						<pane
-							size="65"
-							unit="%"
+				<panel fill="true">
+					<title>
+						<en>Modules</en>
+						<de>Module</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
 						>
-							<panel fill="true">
-								<title>
-									<en>Modules</en>
-									<de>Module</de>
-								</title>
-								<commands>
-									<generic-command
-										image="css:bi bi-plus-lg"
-										placement="TOOLBAR"
-									>
-										<label>
-											<en>New module</en>
-											<de>Neues Modul</de>
-										</label>
-										<execute-script function="x -> new(`tl.devtools:NewModule`, transient: true)"/>
-										<open-dialog
-											bind-input-to="model"
-											dialog-view="admin/model/create-module.view.xml"
-										>
-											<bind
-												channel="selection"
-												to="selectedModule"
-											/>
-										</open-dialog>
-									</generic-command>
-									<generic-command
-										clique="more"
-										image="css:bi bi-trash"
-										input="selectedModule"
-										placement="TOOLBAR"
-									>
-										<label>
-											<en>Delete module</en>
-											<de>Modul löschen</de>
-										</label>
-										<executability>
-											<null-input-disabled/>
-										</executability>
-										<confirm expr="x -> #('Delete the selected module and all its contents?'@en, 'Das ausgewählte Modul und seinen gesamten Inhalt löschen?'@de)"/>
-										<with-transaction>
-											<action class="com.top_logic.dev.tools.model.ModelEditAction"
-												mode="DELETE"
-											/>
-										</with-transaction>
-										<write-channel name="selectedModule"/>
-									</generic-command>
-								</commands>
-								<table
-									observed-types="tl.model:TLModule"
-									selection="selectedModule"
-									types="tl.model:TLModule"
-								>
-									<columns>
-										<column attribute="name"/>
-									</columns>
-									<rows>all(`tl.model:TLModule`)</rows>
-								</table>
-							</panel>
-						</pane>
-						<pane
-							size="35"
-							unit="%"
+							<label>
+								<en>New module</en>
+								<de>Neues Modul</de>
+							</label>
+							<execute-script function="x -> new(`tl.devtools:NewModule`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="admin/model/create-module.view.xml"
+							>
+								<bind
+									channel="selection"
+									to="selectedModule"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-trash"
+							input="selectedModule"
+							placement="TOOLBAR"
 						>
-							<panel>
-								<title>
-									<en>Module</en>
-									<de>Modul</de>
-								</title>
-								<form
-									input="selectedModule"
-									withEditMode="true"
-								>
-									<field attribute="name"/>
-									<field attribute="annotations"/>
-								</form>
-							</panel>
-						</pane>
-					</panes>
-				</split-panel>
+							<label>
+								<en>Delete module</en>
+								<de>Modul löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm expr="x -> #('Delete the selected module and all its contents?'@en, 'Das ausgewählte Modul und seinen gesamten Inhalt löschen?'@de)"/>
+							<with-transaction>
+								<action class="com.top_logic.dev.tools.model.ModelEditAction"
+									mode="DELETE"
+								/>
+							</with-transaction>
+							<write-channel name="selectedModule"/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="tl.model:TLModule"
+						selection="selectedModule"
+						types="tl.model:TLModule"
+					>
+						<columns>
+							<column attribute="name"/>
+						</columns>
+						<rows>all(`tl.model:TLModule`)</rows>
+					</table>
+				</panel>
 			</pane>
 			<pane
 				size="75"
@@ -403,19 +383,79 @@
 							size="30"
 							unit="%"
 						>
-							<panel>
-								<title>
-									<en>Details</en>
-									<de>Details</de>
-								</title>
-								<form
-									input="selectedPart"
-									withEditMode="true"
-								>
-									<field attribute="name"/>
-									<field attribute="annotations"/>
-								</form>
-							</panel>
+							<!--
+								What a model element is decides what there is to say about it, so the
+								detail panel is chosen by the kind of the selection rather than
+								showing the lowest common denominator of all of them. The default
+								covers everything with no panel of its own - an enumeration, a
+								classifier, a datatype - with what every model part has.
+							-->
+							<switch input="selectedDetail">
+								<case test="p -> $p != null &amp;&amp; $p.instanceOf(`tl.model:TLModule`)">
+									<panel>
+										<title>
+											<en>Module</en>
+											<de>Modul</de>
+										</title>
+										<form
+											input="selectedDetail"
+											withEditMode="true"
+										>
+											<field attribute="name"/>
+											<field attribute="annotations"/>
+										</form>
+									</panel>
+								</case>
+								<case test="p -> $p != null &amp;&amp; $p.instanceOf(`tl.model:TLStructuredTypePart`)">
+									<panel>
+										<title>
+											<en>Attribute</en>
+											<de>Attribut</de>
+										</title>
+										<form
+											input="selectedDetail"
+											withEditMode="true"
+										>
+											<field attribute="name"/>
+											<field attribute="mandatory"/>
+											<field attribute="multiple"/>
+											<field attribute="annotations"/>
+										</form>
+									</panel>
+								</case>
+								<case test="p -> $p != null &amp;&amp; $p.instanceOf(`tl.model:TLClass`)">
+									<panel>
+										<title>
+											<en>Class</en>
+											<de>Klasse</de>
+										</title>
+										<form
+											input="selectedDetail"
+											withEditMode="true"
+										>
+											<field attribute="name"/>
+											<field attribute="abstract"/>
+											<field attribute="final"/>
+											<field attribute="annotations"/>
+										</form>
+									</panel>
+								</case>
+								<default>
+									<panel>
+										<title>
+											<en>Details</en>
+											<de>Details</de>
+										</title>
+										<form
+											input="selectedDetail"
+											withEditMode="true"
+										>
+											<field attribute="name"/>
+											<field attribute="annotations"/>
+										</form>
+									</panel>
+								</default>
+							</switch>
 						</pane>
 					</panes>
 				</split-panel>

@@ -30,8 +30,8 @@
 			<instance>
 				<providers>
 					<provider name="documentationRoot">
-						<impl class="com.top_logic.model.search.providers.SecurityObjectByExpression"
-							function="`tl.doc#ROOT`"
+						<impl class="com.top_logic.tool.boundsec.securityObjectProvider.ModuleSingletonSecurityProvider"
+							module="tl.doc"
 						/>
 					</provider>
 				</providers>

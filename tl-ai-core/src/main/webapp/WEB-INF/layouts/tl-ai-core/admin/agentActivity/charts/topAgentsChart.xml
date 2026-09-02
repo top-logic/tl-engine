@@ -11,9 +11,9 @@
 -->
 <chartjs name="aiTopAgentsChart"
 	model="model(aiOverviewPeriod)"
-	toolbar="true"
 	securityObject="securityRoot"
 	titleKey="admin.ai.agentActivity.charts.topAgents"
+	toolbar="true"
 >
 	<data><![CDATA[
 		model -> {

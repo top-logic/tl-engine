@@ -93,7 +93,7 @@
 						$recent;
 					}
 				]]></elements>
-				<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
+				<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
 			</modelBuilder>
 			<table
 				defaultColumns="displayName,session,status,model,startedAt,parentExecution"

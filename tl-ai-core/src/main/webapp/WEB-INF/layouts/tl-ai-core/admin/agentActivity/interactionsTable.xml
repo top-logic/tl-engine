@@ -19,7 +19,7 @@
 		<elements><![CDATA[
 			model -> all(`tl.ai.execution:InteractionRequest`)
 		]]></elements>
-		<supportsElement>element -> $element.instanceOf(`tl.ai.execution:InteractionRequest`)</supportsElement>
+		<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:InteractionRequest`)</supportsElement>
 	</modelBuilder>
 	<table
 		defaultColumns="displayName,state,execution,responder,waitingMinutes"
@@ -92,9 +92,9 @@
 			</configurationProvider>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
 				columnId="sessionOfRequest"
-				columnVisibility="hidden"
 				columnLabel="admin.ai.agentActivity.interactions.session"
 				columnType="tl.ai.execution:AgentSession"
+				columnVisibility="hidden"
 			>
 				<accessor><![CDATA[
 					r -> $r.get(`tl.ai.execution:InteractionRequest#execution`).get(`tl.ai.execution:AgentExecution#session`)

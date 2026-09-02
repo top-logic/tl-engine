@@ -57,8 +57,8 @@
 					previews read the period themselves, off the same channel.
 				-->
 				<component class="com.top_logic.mig.html.layout.tiles.RootTileComponent"
-					name="aiAgentOverviewRootTile"
 					model="model(aiOverviewPeriod)"
+					name="aiAgentOverviewRootTile"
 					titleKey="admin.ai.agentActivity.overview.title"
 				>
 					<layoutInfo size="32%"/>

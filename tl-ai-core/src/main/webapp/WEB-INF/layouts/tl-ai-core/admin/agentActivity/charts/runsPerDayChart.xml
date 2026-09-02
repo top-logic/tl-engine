@@ -25,9 +25,9 @@
 -->
 <chartjs name="aiRunsPerDayChart"
 	model="model(aiOverviewPeriod)"
-	toolbar="true"
 	securityObject="securityRoot"
 	titleKey="admin.ai.agentActivity.charts.runsPerDay"
+	toolbar="true"
 >
 	<data><![CDATA[
 		model -> {

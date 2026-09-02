@@ -7,9 +7,9 @@
 -->
 <chartjs name="aiTokensByModelChart"
 	model="model(aiUsagePeriod)"
-	toolbar="true"
 	securityObject="securityRoot"
 	titleKey="admin.ai.agentActivity.charts.tokensByModel"
+	toolbar="true"
 >
 	<data><![CDATA[
 		model -> {

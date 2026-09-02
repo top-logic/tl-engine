@@ -25,7 +25,7 @@
 		<elements><![CDATA[
 			model -> all(`tl.ai.execution:AgentExecution`)
 		]]></elements>
-		<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
+		<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
 	</modelBuilder>
 	<table
 		defaultColumns="displayName,status,session,model,startedAt,durationSeconds,tokenCount"
@@ -143,9 +143,9 @@
 			</configurationProvider>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
 				columnId="childCount"
-				columnVisibility="hidden"
 				columnLabel="admin.ai.agentActivity.executions.childCount"
 				columnType="tl.core:Integer"
+				columnVisibility="hidden"
 			>
 				<accessor><![CDATA[
 					e -> $e.referers(`tl.ai.execution:AgentExecution#parentExecution`).size()
@@ -153,9 +153,9 @@
 			</configurationProvider>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
 				columnId="pendingCount"
-				columnVisibility="hidden"
 				columnLabel="admin.ai.agentActivity.executions.pendingCount"
 				columnType="tl.core:Integer"
+				columnVisibility="hidden"
 			>
 				<accessor><![CDATA[
 					e -> $e.referers(`tl.ai.execution:InteractionRequest#execution`)

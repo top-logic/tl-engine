@@ -17,9 +17,8 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	template="com.top_logic.element/form.template.xml"
 >
-	<arguments
+	<arguments name="admin.ai.agentActivity.sessions.detail"
 		model="selection(tl-ai-core/admin/agentActivity/agentActivityView.layout.xml#aiSessionsTable)"
-		name="admin.ai.agentActivity.sessions.detail"
 		showNoModel="false"
 		type="tl.ai.execution:AgentSession"
 	>

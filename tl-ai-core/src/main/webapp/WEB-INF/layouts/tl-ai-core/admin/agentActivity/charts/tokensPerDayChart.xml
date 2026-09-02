@@ -16,9 +16,9 @@
 -->
 <chartjs name="aiTokensPerDayChart"
 	model="model(aiUsagePeriod)"
-	toolbar="true"
 	securityObject="securityRoot"
 	titleKey="admin.ai.agentActivity.charts.tokensPerDay"
+	toolbar="true"
 >
 	<data><![CDATA[
 		model -> {

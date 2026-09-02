@@ -27,7 +27,7 @@
 		<elements><![CDATA[
 			model -> all(`tl.ai.execution:AgentSession`)
 		]]></elements>
-		<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentSession`)</supportsElement>
+		<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentSession`)</supportsElement>
 	</modelBuilder>
 	<table
 		defaultColumns="displayName,kind,owner,runCount,errorCount,pendingCount,tokenCount,lastUpdated"

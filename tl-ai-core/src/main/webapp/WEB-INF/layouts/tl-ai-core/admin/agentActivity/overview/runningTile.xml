@@ -46,7 +46,7 @@
 					model -> all(`tl.ai.execution:AgentExecution`)
 						.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == `tl.ai.execution:ExecutionStatus#RUNNING`)
 				]]></elements>
-				<supportsElement>element -> $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
+				<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
 			</modelBuilder>
 			<table
 				defaultColumns="displayName,session,model,startedAt,runningSeconds,cancelRequested"

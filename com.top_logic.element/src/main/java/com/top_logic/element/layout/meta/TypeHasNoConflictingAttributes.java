@@ -29,7 +29,7 @@ import com.top_logic.util.error.TopLogicException;
  * {@link ValueConstraint} that checks that a {@link TLStructuredType types} generalizations and
  * specializations do not have attributes with the same name and different definitions.
  *
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<TLClass>, TLStructuredType> {
 

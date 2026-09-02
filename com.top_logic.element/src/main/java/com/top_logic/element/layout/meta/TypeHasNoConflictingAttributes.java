@@ -5,7 +5,8 @@
  */
 package com.top_logic.element.layout.meta;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -56,45 +57,106 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 			return;
 		}
 
-		Map<TLStructuredType, List<? extends TLStructuredTypePart>> attributesByType = new LinkedHashMap<>();
-
-		TLStructuredType type = typeModel.getValue();
-		if (type != null) {
-			/* Only the local attributes of the edited type must be checked. Its inherited
-			 * attributes are contributed by the generalizations below, since the generalizations of
-			 * the persistent type may already have been removed from the selection being
-			 * checked. */
-			attributesByType.put(type, type.getLocalParts());
-		}
-
-		for (TLClass generalization : generalizations) {
-			attributesByType.put(generalization, generalization.getAllParts());
-		}
-
-		ResKey problem = checkAttributes(attributesByType);
+		ResKey problem = checkGeneralizations(typeModel.getValue(), generalizations);
 		if (problem != null) {
 			generalizationsModel.setProblemDescription(problem);
 		}
 	}
 
 	/**
-	 * Checks if the given {@link TLClass classes} have attributes with the same name but different
-	 * definitions.
+	 * Checks that the given {@link TLClass generalizations} can be assigned to the given type.
+	 * 
+	 * <p>
+	 * Beside the type itself, its {@link TLClass#getSpecializations() specializations} are checked,
+	 * too, since they inherit the attributes of the given generalizations as well.
+	 * </p>
+	 * 
+	 * <p>
+	 * Only the {@link TLStructuredType#getLocalParts() locally declared} attributes of the type and
+	 * its specializations are relevant, because all inherited attributes are contributed by the
+	 * given generalizations. The attributes inherited by the persistent type may still stem from a
+	 * generalization that has already been removed from the given selection.
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type being edited, or <code>null</code>, if a new type is being created.
+	 * @param generalizations
+	 *        The generalizations selected for the given type.
+	 * @return The problem description of the first conflict found, or <code>null</code>, if there is
+	 *         no conflicting attribute.
+	 */
+	private static ResKey checkGeneralizations(TLStructuredType type, List<TLClass> generalizations) {
+		Map<TLStructuredType, List<? extends TLStructuredTypePart>> generalizationAttributes =
+			new LinkedHashMap<>();
+		for (TLClass generalization : generalizations) {
+			generalizationAttributes.put(generalization, generalization.getAllParts());
+		}
+
+		if (type == null) {
+			return checkAttributes(generalizationAttributes);
+		}
+
+		for (TLStructuredType specialization : withSpecializations(type)) {
+			Map<TLStructuredType, List<? extends TLStructuredTypePart>> attributesByType = new LinkedHashMap<>();
+			attributesByType.put(specialization, specialization.getLocalParts());
+			attributesByType.putAll(generalizationAttributes);
+
+			ResKey problem = checkAttributes(attributesByType);
+			if (problem != null) {
+				return problem;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Checks that adding the given generalization to the given class does not create conflicting
+	 * attributes.
+	 * 
+	 * <p>
+	 * Beside the class itself, its {@link TLClass#getSpecializations() specializations} are checked,
+	 * too, since they inherit the attributes of the new generalization as well.
+	 * </p>
 	 * 
 	 * <p>
 	 * If a conflicting attribute is found then a {@link TopLogicException} is thrown.
 	 * </p>
+	 * 
+	 * @param specialization
+	 *        The class that should extend the given generalization.
+	 * @param generalization
+	 *        The generalization to add.
 	 */
-	public static void checkClasses(Collection<TLClass> classes) {
-		Map<TLStructuredType, List<? extends TLStructuredTypePart>> attributesByType = new LinkedHashMap<>();
-		for (TLClass clazz : classes) {
-			attributesByType.put(clazz, clazz.getAllParts());
+	public static void checkNewGeneralization(TLClass specialization, TLClass generalization) {
+		for (TLStructuredType type : withSpecializations(specialization)) {
+			Map<TLStructuredType, List<? extends TLStructuredTypePart>> attributesByType = new LinkedHashMap<>();
+			attributesByType.put(type, type.getAllParts());
+			attributesByType.put(generalization, generalization.getAllParts());
+
+			ResKey problem = checkAttributes(attributesByType);
+			if (problem != null) {
+				throw new TopLogicException(problem);
+			}
+		}
+	}
+
+	/**
+	 * The given type followed by all its transitive {@link TLClass#getSpecializations()
+	 * specializations} in a stable order.
+	 */
+	private static List<TLStructuredType> withSpecializations(TLStructuredType type) {
+		List<TLStructuredType> result = new ArrayList<>();
+		result.add(type);
+
+		if (type instanceof TLClass) {
+			List<TLClass> specializations =
+				new ArrayList<>(TLModelUtil.getTransitiveSpecializations((TLClass) type));
+			specializations.sort(Comparator.comparing(TLModelUtil::qualifiedName));
+			result.addAll(specializations);
 		}
 
-		ResKey problem = checkAttributes(attributesByType);
-		if (problem != null) {
-			throw new TopLogicException(problem);
-		}
+		return result;
 	}
 
 	/**

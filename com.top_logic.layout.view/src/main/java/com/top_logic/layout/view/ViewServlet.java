@@ -115,6 +115,10 @@ public class ViewServlet extends TopLogicServlet {
 		String routePath = extractRoutePath(pathInfo, windowName);
 
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
+		// Rendering the page restarts the session's inactivity timeout. A reload renders the tree the
+		// window already holds, so the controls counting down to the end of the session are the ones
+		// created before this request and have to be told.
+		windowRegistry.noteActivity(session);
 		// Collect the windows whose page was unloaded and did not come back within the grace period.
 		windowRegistry.sweepUnloadedWindows();
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);

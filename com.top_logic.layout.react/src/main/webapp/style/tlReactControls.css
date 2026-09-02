@@ -2376,6 +2376,11 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlNoticeBar--warning { background: var(--support-warning, #f1c21b); color: #000; }
 .tlNoticeBar--error   { background: var(--support-error, #da1e28); color: #fff; }
 
+/* A notice offering an action is a button spanning the whole bar, as its tooltip announces. */
+.tlNoticeBar--clickable {
+	cursor: pointer;
+}
+
 /* Tabular figures keep the count-down from jittering as the digits change every second. */
 .tlNoticeBar__countdown {
 	font-weight: 600;

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	"Token", over the period the tab's selector names. Billable tokens - input plus output - kept
+	apart from the cache traffic, because the cached share is what makes a run cheap and mixing the
+	two hides exactly that.
+	
+	One period for all three counting tiles, so that "8 Fehler" next to "75 Mio. Token" always counts
+	the same stretch of time; five numbers side by side are read as one row.
+	
+	The period used to be a fixed number here, on the grounds that a tile has to state its period and
+	that neither the tile label nor the table title can render a value. That is only half true: a
+	ModelBasedTilePreview label is a TilePreviewPartProvider.Text and takes a TL-Script expression,
+	so the label states the selected period and follows it. The table title behind the tile cannot,
+	and no longer tries to name a window.
+	
+	Deliberately not a euro figure: see the note in overviewView.xml.
+-->
+<securityLayout name="aiOverviewTokensTile"
+	titleKey="admin.ai.agentActivity.overview.tokens.label"
+>
+	<tile-info name="aiOverviewTokens"
+		label="admin.ai.agentActivity.overview.tokens.label"
+	>
+		<!--
+			The label is a TL-Script expression exactly like the number, so that the period the
+			number counts is written next to it and cannot drift from the control:
+			ModelBasedTilePreview takes its label from a TilePreviewPartProvider.Text just as it
+			takes its description, and evaluates both against the model configured here - which is
+			the period the tab's control publishes. A period says what it is called, so a custom
+			range names its two days here rather than the word "Benutzerdefiniert", which would name
+			the control and not the stretch of time the number covers. The tile-info label below
+			stays a plain resource; it is what the drill-down breadcrumb says, and a breadcrumb does
+			not need the period.
+		-->
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview"
+			model="model(aiOverviewPeriod)"
+		>
+			<label class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[
+					model -> {
+						period = ifElse(isEmpty($model),
+							new(`tl.ai.monitor:Period`, transient: true)
+								..set(`tl.ai.monitor:Period#preset`, 30),
+							$model);
+						#('Tokens ({0})'@en, 'Token ({0})'@de)
+							.fill($period.get(`tl.ai.monitor:Period#label`)).localize();
+					}
+				]]></text>
+			</label>
+			<description class="com.top_logic.model.search.tiles.DynamicTilePreviewText">
+				<text><![CDATA[
+					model -> {
+						period = ifElse(isEmpty($model),
+							new(`tl.ai.monitor:Period`, transient: true)
+								..set(`tl.ai.monitor:Period#preset`, 30),
+							$model);
+						executions = all(`tl.ai.execution:AgentExecution`);
+						startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+						start = $period.get(`tl.ai.monitor:Period#windowStart`);
+						end = $period.get(`tl.ai.monitor:Period#windowEnd`);
+						// A bound that is empty is dropped rather than tested. A period is normally a closed day
+						// range with both ends filled - even "Alle", which reads them off the data - but one that
+						// was never filled has no edges, and then it selects everything.
+						recent = $executions.filter(e -> (isEmpty($start) || $startedAt($e) >= $start)
+							&& (isEmpty($end) || $startedAt($e) < $end));
+						value = a -> e -> ifElse(isEmpty($e.get($a)), 0, $e.get($a));
+						billable = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#inputTokens`)($e)
+							+ $value(`tl.ai.execution:AgentExecution#outputTokens`)($e)).sum();
+						cached = $recent.map(e -> $value(`tl.ai.execution:AgentExecution#cacheReadTokens`)($e)).sum();
+						// A seven-digit number is not a number a reader takes in at a glance; the exact value is one
+						// click away in the table behind this tile.
+						short = v -> $v >= 1000000
+							? numberFormat('#,##0.0').format($v / 1000000) + ' Mio.'
+							: numberFormat('#,##0').format($v);
+						{{{
+							<div class="aiKpi">
+								<div class="aiKpiValue">{$short($billable)}</div>
+								<div class="aiKpiNote">
+									{#('billable, {0} from the cache'@en, 'abrechenbar, {0} aus dem Cache'@de).fill($short($cached))}
+								</div>
+							</div>
+						}}};
+					}
+				]]></text>
+			</description>
+		</preview>
+	</tile-info>
+	<components>
+		<tableView name="aiOverviewTokensTable"
+			model="model(aiOverviewPeriod)"
+			objectType="tl.ai.execution:AgentExecution"
+			securityObject="securityRoot"
+			titleKey="admin.ai.agentActivity.overview.tokens.title"
+		>
+			<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+				<elements><![CDATA[
+					model -> {
+						period = ifElse(isEmpty($model),
+							new(`tl.ai.monitor:Period`, transient: true)
+								..set(`tl.ai.monitor:Period#preset`, 30),
+							$model);
+						executions = all(`tl.ai.execution:AgentExecution`);
+						startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+						start = $period.get(`tl.ai.monitor:Period#windowStart`);
+						end = $period.get(`tl.ai.monitor:Period#windowEnd`);
+						// A bound that is empty is dropped rather than tested. A period is normally a closed day
+						// range with both ends filled - even "Alle", which reads them off the data - but one that
+						// was never filled has no edges, and then it selects everything.
+						recent = $executions.filter(e -> (isEmpty($start) || $startedAt($e) >= $start)
+							&& (isEmpty($end) || $startedAt($e) < $end));
+						$recent;
+					}
+				]]></elements>
+				<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
+			</modelBuilder>
+			<table
+				defaultColumns="displayName,agentName,model,startedAt,inputTokens,outputTokens,thinkingTokens,cacheReadTokens,cacheWriteTokens"
+				defaultSortOrder="startedAt:descending"
+				fixedColumns="1"
+			>
+				<columns>
+					<column name="displayName"
+						columnWidth="280px"
+						visibility="mandatory"
+					/>
+					<column name="agentName"
+						columnWidth="160px"
+					/>
+					<column name="model"
+						columnWidth="170px"
+					/>
+					<column name="startedAt"
+						columnWidth="150px"
+					/>
+					<column name="inputTokens"
+						columnWidth="120px"
+					/>
+					<column name="outputTokens"
+						columnWidth="125px"
+					/>
+					<column name="thinkingTokens"
+						columnWidth="115px"
+					/>
+					<column name="cacheReadTokens"
+						columnWidth="140px"
+					/>
+					<column name="cacheWriteTokens"
+						columnWidth="145px"
+					/>
+					<column name="transcript"
+						visibility="excluded"
+					/>
+					<column name="transcriptHtml"
+						visibility="excluded"
+					/>
+					<column name="response"
+						visibility="excluded"
+					/>
+				</columns>
+			</table>
+			<buttons>
+				<button id="refreshTokens"
+					class="com.top_logic.layout.form.component.InvalidateCommand"
+				/>
+				<button id="exportExcel"
+					class="com.top_logic.layout.table.export.ExcelExportHandler"
+				/>
+			</buttons>
+		</tableView>
+	</components>
+</securityLayout>

@@ -72,6 +72,17 @@
 			<artifactId>tl-element</artifactId>
 		</dependency>
 
+		<!-- Chart.js component: the four charts of the agent activity monitor
+		     (admin/agentActivity) are the one panel that answers "is this getting
+		     worse" rather than "how much now". Declared explicitly rather than
+		     relying on tl-ai-demo pulling it in: the layouts ship inside this
+		     module, so an application that depends on tl-ai-core alone would
+		     otherwise get a view that cannot render. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chart-chartjs</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>com.vladsch.flexmark</groupId>
 			<artifactId>flexmark-html2md-converter</artifactId>

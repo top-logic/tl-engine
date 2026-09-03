@@ -859,8 +859,8 @@ button.fChoose:hover,
 	outline: none !important;
 }
 
-.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled button,
-.sblLogo .cImageButton.cmdButtonDisabled button {
+.tlAdditionalRightContent .cButton.cImageButton.tl-cmd-button--disabled button,
+.sblLogo .cImageButton.tl-cmd-button--disabled button {
 	color: var(--icon-on-color-disabled);
 	cursor: default;
 }

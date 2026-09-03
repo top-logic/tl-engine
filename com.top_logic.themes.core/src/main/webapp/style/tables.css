@@ -80,16 +80,15 @@ td.tblRight {
 	text-align: right;
 }
 
-td.tblRight span.cDecoratedCell,
-td.tblRight span.cDateInput,
-td.tblRight span.cTextPopup,
-td.tblRight span.cDatetime,
-td.tblRight span.cDateInput,
-td.tblRight span.cTimeInput,
-td.tblRight span.cTextInput,
-td.tblRight span.cIconChooser,
-td.tblRight span.cIntegerInput,
-td.tblRight span.cExpandableTextInput {
+td.tblRight span.tl-decorated-cell,
+td.tblRight span.tl-date-input,
+td.tblRight span.tl-text-popup,
+td.tblRight span.tl-datetime,
+td.tblRight span.tl-time-input,
+td.tblRight span.tl-text-input,
+td.tblRight span.tl-icon-chooser,
+td.tblRight span.tl-integer-input,
+td.tblRight span.tl-expandable-text-input {
 	justify-content: safe flex-end;
 }
 

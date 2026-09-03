@@ -130,7 +130,7 @@ public class IconChooserControl extends AbstractVisibleControl {
 
 	private void writeFixedHeaderSearch(DisplayContext context, TagWriter out) throws IOException {
 		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, "tl-seach-text-field");
+		out.writeAttribute(CLASS_ATTR, "tl-search-text-field");
 		out.endBeginTag();
 		createPatternFieldControl().write(context, out);
 		Icons.ICON_CHOOSER__SEARCH.write(context, out);

@@ -1656,7 +1656,8 @@ td.tl-table__cell--selected .tl-decorated-cell a.input-image:focus {
 
 .lFixedRight button:hover,
 .lFixedRight a:hover,
-.tl-expandable-button a:hover {
+.tl-expandable-button a:hover,
+.tl-expandable-button button:hover {
 	background: var(--field-hover);
 	text-decoration: none;
 }
@@ -1664,6 +1665,7 @@ td.tl-table__cell--selected .tl-decorated-cell a.input-image:focus {
 .lFixedRight button:focus-within,
 .lFixedRight a:focus-within,
 .tl-expandable-button a:focus-within,
+.tl-expandable-button button:focus-within,
 .lFixedRight .tl-button-minus:focus-within::after {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	border-left: none;
@@ -1673,6 +1675,7 @@ td.tl-table__cell--selected .tl-decorated-cell a.input-image:focus {
 .lFixedRight button.disabled,
 .lFixedRight a.disabled,
 .tl-expandable-button a.disabled,
+.tl-expandable-button button.disabled,
 .lFixedRight .fChoose.disabled,
 .lFixedRight span.disabled,
 .lFixedRight span span.disabled,
@@ -1683,13 +1686,15 @@ input.is-checkbox[disabled] {
 
 .lFixedRight button.disabled:hover,
 .lFixedRight a.disabled:hover,
-.tl-expandable-button a.disabled:hover {
+.tl-expandable-button a.disabled:hover,
+.tl-expandable-button button.disabled:hover {
 	background: var(--field);
 }
 
 .lFixedRight button.disabled:focus,
 .lFixedRight a.disabled:focus,
 .tl-expandable-button a.disabled:focus,
+.tl-expandable-button button.disabled:focus,
 .lFixedRight .tl-button-minus:focus::after {
 	box-shadow: none;
 	outline: none !important;
@@ -1842,17 +1847,17 @@ input.is-checkbox[disabled] {
 }
 
 /* Display side-by-side if there is an error element next to the text input. */
-.content:has(.cTextInput, .cError) {
+.content:has(.tl-text-input, .cError) {
 	display: flex;
 }
 
 /* If there is an error element, make the text input grow and shrink automatically. */
-.content:has(.cError) .cTextInput {
+.content:has(.cError) .tl-text-input {
 	flex: auto;
 }
 
 /* If the error element is next to a text input, center it automatically (x and y). */
-.content:has(.cTextInput) .cError {
+.content:has(.tl-text-input) .cError {
 	margin: auto;
 }
 
@@ -2056,7 +2061,8 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 	align-items: stretch;
 }
 
-.tl-expandable-button a {
+.tl-expandable-button a,
+.tl-expandable-button button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2366,7 +2372,7 @@ div.imageContainer {
 /* ======    Icon Chooser css     ===== */
 /* ==================================== */
 .tl-icon-chooser > .header > .expertTextField input.is-input,
-.tl-icon-chooser > .header > .tl-seach-text-field input.is-input {
+.tl-icon-chooser > .header > .tl-search-text-field input.is-input {
 	height: 22px;
 }
 
@@ -2374,7 +2380,7 @@ div.imageContainer {
 	border: 0px;
 }
 
-.tl-icon-chooser > .header > .tl-seach-text-field .search {
+.tl-icon-chooser > .header > .tl-search-text-field .search {
 	color: var(--icon-secondary);
 }
 
@@ -2432,12 +2438,12 @@ div.imageContainer {
 	justify-content: center;
 }
 
-.tl-icon-chooser > .header > .tl-seach-text-field {
+.tl-icon-chooser > .header > .tl-search-text-field {
 	flex-grow: 1;
 	position: relative;
 }
 
-.tl-icon-chooser > .header > .tl-seach-text-field i {
+.tl-icon-chooser > .header > .tl-search-text-field i {
 	position: absolute;
 	right: 2px;
 	top: 2px;
@@ -2672,11 +2678,11 @@ td.tl-table__cell .tl-data-item li {
 	pointer-events: none;
 }
 
-.cImgUpload label .cmdImg {
+.cImgUpload label .tl-cmd-button__img {
 	padding-right: var(--spacing-02);
 }
 
-.cImgUpload label .cmdLabel {
+.cImgUpload label .tl-cmd-button__label {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
@@ -2686,32 +2692,32 @@ td.tl-table__cell .tl-data-item li {
 	border-color: var(--button-primary);
 }
 
-.cImgUpload label:hover:not(.cmdButtonDisabled) {
+.cImgUpload label:hover:not(.tl-cmd-button--disabled) {
 	background: var(--field-hover);
 	border-color: var(--border-strong);
 }
 
-.cImgUpload input[type="file"]:focus + label:not(.cmdButtonDisabled) {
+.cImgUpload input[type="file"]:focus + label:not(.tl-cmd-button--disabled) {
 	border-color: var(--focus);
 }
 
-.cImgUpload label:active:not(.cmdButtonDisabled) {
+.cImgUpload label:active:not(.tl-cmd-button--disabled) {
 	background: var(--field-hover);
 	border-color: var(--button-primary);
 	color: var(--button-primary-active);
 }
 
-.cImgUpload label.cmdButtonDisabled {
+.cImgUpload label.tl-cmd-button--disabled {
 	display: inline-flex;
 	background: var(--button-disabled);
 	cursor: default;
 }
 
-.cImgUpload label.cmdButtonDisabled .cmdLabel {
+.cImgUpload label.tl-cmd-button--disabled .tl-cmd-button__label {
 	color: var(--text-on-color-disabled);
 }
 
-.cImgUpload label.cmdButtonDisabled .cmdImg {
+.cImgUpload label.tl-cmd-button--disabled .tl-cmd-button__img {
 	color: var(--text-on-color-disabled);
 }
 

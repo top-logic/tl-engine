@@ -31,12 +31,17 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.layout.view.form.AnnotationsFieldControlProvider;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.config.TLModuleAnnotation;
+import com.top_logic.model.TLFormObjectBase;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TransientObject;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.JavaPackage;
@@ -258,6 +263,76 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 		model.setEditable(false);
 
 		assertEquals("Being told the real mode must build the editor afresh.", 2, built.size());
+	}
+
+	/**
+	 * The element edited in edit mode is reached through the overlay in front of it.
+	 *
+	 * <p>
+	 * {@code AttributeFieldModel#getObject()} answers "base object or overlay": in view mode the
+	 * element itself, in edit mode the overlay buffering the changes. An overlay is no
+	 * {@link com.top_logic.model.TLModule}, so asking it directly which container an annotation
+	 * needs finds no answer at all - which is what the model editor showed when the panel was
+	 * switched to editing.
+	 * </p>
+	 */
+	public void testAnOverlayIsUnwrappedToTheEditedElement() {
+		TLObject edited = new TransientObject() {
+			// The element behind the overlay; only its identity matters here.
+		};
+		TLObject overlay = new OverlayDouble(edited);
+
+		assertSame("The overlay must be seen through, not taken for the element.",
+			edited, AnnotationsFieldControlProvider.editedObject(overlay));
+		assertSame("An element that is no overlay is itself what is edited.",
+			edited, AnnotationsFieldControlProvider.editedObject(edited));
+	}
+
+	/** A stand-in for the overlay a form puts in front of the object it edits. */
+	static class OverlayDouble extends TransientObject implements TLFormObjectBase {
+
+		private final TLObject _edited;
+
+		OverlayDouble(TLObject edited) {
+			_edited = edited;
+		}
+
+		@Override
+		public boolean isCreate() {
+			return false;
+		}
+
+		@Override
+		public TLObject getEditedObject() {
+			return _edited;
+		}
+
+		// Nothing below is asked for here; only the unwrapping is under test.
+
+		@Override
+		public Object defaultValue(TLStructuredTypePart part) {
+			return null;
+		}
+
+		@Override
+		public String getDomain() {
+			return null;
+		}
+
+		@Override
+		public Object getFieldValue(TLStructuredTypePart attribute) {
+			return null;
+		}
+
+		@Override
+		public Object getBaseValue(TLStructuredTypePart attribute) {
+			return null;
+		}
+
+		@Override
+		public FormMember getField(TLStructuredTypePart attribute) {
+			return null;
+		}
 	}
 
 	/**

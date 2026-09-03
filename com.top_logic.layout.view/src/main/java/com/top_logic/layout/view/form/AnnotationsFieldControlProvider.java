@@ -24,17 +24,16 @@ import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.model.TLClass;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLNamedPart;
-import com.top_logic.model.TLClassifier;
-import com.top_logic.model.TLEnumeration;
-import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLReference;
+import com.top_logic.model.TLType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.config.EnumConfig;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.model.config.NamedPartConfig;
 
 /**
@@ -160,10 +159,31 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 	 */
 	private static TLObject ownerOf(FieldModel model) {
 		if (model instanceof AttributeFieldModel attributeField) {
-			return attributeField.getObject();
+			return editedObject(attributeField.getObject());
 		}
 		throw new IllegalArgumentException(
 			"Annotations can only be edited on a model element, but the field is a " + model.getClass().getName());
+	}
+
+	/**
+	 * The model element behind the given object: what a form puts in front of it while editing is
+	 * seen through.
+	 *
+	 * <p>
+	 * {@link AttributeFieldModel#getObject()} answers the element itself in view mode, but the
+	 * overlay buffering the changes in edit mode. The overlay is no model element of any kind, so
+	 * asking it which surroundings an annotation needs would find no answer - and the panel could
+	 * not be switched to editing at all.
+	 * </p>
+	 */
+	public static TLObject editedObject(TLObject object) {
+		if (object instanceof TLFormObjectBase form) {
+			TLObject edited = form.getEditedObject();
+			if (edited != null) {
+				return edited;
+			}
+		}
+		return object;
 	}
 
 	/**
@@ -186,26 +206,62 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 		return container;
 	}
 
+	/**
+	 * The meta type an element must have for each container, most specific first.
+	 *
+	 * <p>
+	 * Asked of the element's {@link TLObject#tType() type} rather than of its Java class. The two
+	 * agree for a model element, but not for everything a form hands over: an overlay that cannot be
+	 * unwrapped is no {@code TLModule} in Java while its type says perfectly well what it stands for.
+	 * Going through the model also keeps this closed under new concrete meta types - a further kind
+	 * of type or of attribute is covered by the entry for its generalization.
+	 * </p>
+	 *
+	 * <p>
+	 * There are four kinds of annotation - module, type, attribute and classifier - and this
+	 * repository defines no fifth: every {@code AnnotatedConfig} in it is over one of
+	 * {@code TLModuleAnnotation}, {@code TLTypeAnnotation}, {@code TLAttributeAnnotation} or
+	 * {@code TLClassifierAnnotation}. The entries below are more numerous only because a class, an
+	 * enumeration and a datatype are given the container of their own shape, so that an option
+	 * function navigating out of an annotation finds the surroundings it would find in a model file.
+	 * </p>
+	 */
+	private static final List<ContainerKind> CONTAINERS = List.of(
+		new ContainerKind("tl.model:TLModule", ModuleConfig.class),
+		new ContainerKind("tl.model:TLClassifier", EnumConfig.ClassifierConfig.class),
+		new ContainerKind("tl.model:TLReference", ReferenceConfig.class),
+		new ContainerKind("tl.model:TLStructuredTypePart", AttributeConfig.class),
+		new ContainerKind("tl.model:TLEnumeration", EnumConfig.class),
+		new ContainerKind("tl.model:TLClass", ClassConfig.class),
+		new ContainerKind("tl.model:TLType", ClassConfig.class));
+
+	/**
+	 * One entry of {@link #CONTAINERS}: the meta type and the configuration standing in for it.
+	 */
+	private record ContainerKind(String typeName, Class<? extends AnnotatedConfig<? extends TLAnnotation>> config) {
+
+		/** Whether the given element's type is this one or a specialization of it. */
+		boolean matches(TLType type) {
+			try {
+				return TLModelUtil.isCompatibleType(TLModelUtil.findType(typeName()), type);
+			} catch (TopLogicException ex) {
+				// The meta type is not in this application's model at all, so nothing can match it.
+				return false;
+			}
+		}
+	}
+
 	private static AnnotatedConfig<? extends TLAnnotation> emptyContainerFor(TLObject owner) {
-		if (owner instanceof TLModule) {
-			return TypedConfiguration.newConfigItem(ModuleConfig.class);
+		TLType type = owner.tType();
+		if (type != null) {
+			for (ContainerKind kind : CONTAINERS) {
+				if (kind.matches(type)) {
+					return TypedConfiguration.newConfigItem(kind.config());
+				}
+			}
 		}
-		if (owner instanceof TLEnumeration) {
-			return TypedConfiguration.newConfigItem(EnumConfig.class);
-		}
-		if (owner instanceof TLClassifier) {
-			return TypedConfiguration.newConfigItem(EnumConfig.ClassifierConfig.class);
-		}
-		if (owner instanceof TLReference) {
-			return TypedConfiguration.newConfigItem(ReferenceConfig.class);
-		}
-		if (owner instanceof TLStructuredTypePart) {
-			return TypedConfiguration.newConfigItem(AttributeConfig.class);
-		}
-		if (owner instanceof TLClass) {
-			return TypedConfiguration.newConfigItem(ClassConfig.class);
-		}
-		throw new IllegalArgumentException("No annotation container known for " + owner);
+		throw new IllegalArgumentException("No annotation container known for " + owner
+			+ (type == null ? " (no type)" : " of type " + TLModelUtil.qualifiedName(type)));
 	}
 
 }

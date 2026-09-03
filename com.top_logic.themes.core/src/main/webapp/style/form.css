@@ -615,7 +615,7 @@ div.dfListAdd {
 
 .dfEntryTitle .lFixedRight button:not(.lFlexible),
 .dfEntryTitle .lFixedRight a:not(.lFlexible),
-.dfEntryTitle .lFixedRight:not(.tl-timepart) span:not(.lFlexible),
+.dfEntryTitle .lFixedRight:not(.tl-datetime__time-part) span:not(.lFlexible),
 .dfEntryTitle .lFixedRight span span:not(.lFlexible),
 .dfEntryTitle .lFixedRight .fChoose:not(.lFlexible) {
     display: inline-flex;
@@ -1551,7 +1551,7 @@ div.cal_zoom_inAnimation {
 	align-items: center;
 }
 
-.tl-datetime .tl-timepart {
+.tl-datetime .tl-datetime__time-part {
 	background: transparent;
 }
 
@@ -1630,7 +1630,7 @@ td.tl-table__cell--selected .tl-decorated-cell a.input-image:focus {
 
 .lFixedRight button:not(.lFlexible),
 .lFixedRight a:not(.lFlexible),
-.lFixedRight:not(.tl-timepart) span:not(.lFlexible),
+.lFixedRight:not(.tl-datetime__time-part) span:not(.lFlexible),
 .lFixedRight span span:not(.lFlexible),
 .lFixedRight .fChoose:not(.lFlexible) {
     display: inline-flex;
@@ -1722,7 +1722,7 @@ input.is-checkbox[disabled] {
 .tl-datetime,
 .tl-time-input,
 .tl-popup-select,
-.tl-checklist-counts,
+.tl-checklist__counts,
 .tl-boolean-choice,
 .ddwttImmutableItem {
 	color: var(--highlight, inherit);
@@ -1734,7 +1734,7 @@ input.is-checkbox[disabled] {
 .tl-table__cell .tl-datetime,
 .tl-table__cell .tl-time-input,
 .tl-table__cell .tl-popup-select,
-.tl-table__cell .tl-checklist-counts,
+.tl-table__cell .tl-checklist__counts,
 .tl-table__cell .tl-boolean-choice,
 .tl-table__cell .ddwttImmutableItem {
 	color: var(--highlight-fg, inherit);
@@ -2372,7 +2372,7 @@ div.imageContainer {
 /* ======    Icon Chooser css     ===== */
 /* ==================================== */
 .tl-icon-chooser > .header > .expertTextField input.is-input,
-.tl-icon-chooser > .header > .tl-search-text-field input.is-input {
+.tl-icon-chooser > .header > .tl-icon-chooser__search input.is-input {
 	height: 22px;
 }
 
@@ -2380,11 +2380,11 @@ div.imageContainer {
 	border: 0px;
 }
 
-.tl-icon-chooser > .header > .tl-search-text-field .search {
+.tl-icon-chooser > .header > .tl-icon-chooser__search .search {
 	color: var(--icon-secondary);
 }
 
-.tl-icon-chooser .tl-form-page__body-content .tl-displayed-icons {
+.tl-icon-chooser .tl-form-page__body-content .tl-icon-chooser__icon {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -2404,17 +2404,17 @@ div.imageContainer {
 	max-height: 30px;
 }
 
-.tl-icon-chooser .tl-form-page__body-content .tl-displayed-icons {
+.tl-icon-chooser .tl-form-page__body-content .tl-icon-chooser__icon {
 	background-color: var(--layer);
 	color: var(--layer-text);
 	--button-fg: var(--layer-icon);
 }
 
-.tl-icon-chooser .tl-form-page__body-content .tl-displayed-icons.selected {
+.tl-icon-chooser .tl-form-page__body-content .tl-icon-chooser__icon.selected {
 	background-color: var(--layer-selected);
 }
 
-.tl-icon-chooser .tl-form-page__body-content .tl-displayed-icons:hover {
+.tl-icon-chooser .tl-form-page__body-content .tl-icon-chooser__icon:hover {
 	background-color: var(--layer-hover);
 }
 
@@ -2438,12 +2438,12 @@ div.imageContainer {
 	justify-content: center;
 }
 
-.tl-icon-chooser > .header > .tl-search-text-field {
+.tl-icon-chooser > .header > .tl-icon-chooser__search {
 	flex-grow: 1;
 	position: relative;
 }
 
-.tl-icon-chooser > .header > .tl-search-text-field i {
+.tl-icon-chooser > .header > .tl-icon-chooser__search i {
 	position: absolute;
 	right: 2px;
 	top: 2px;
@@ -2722,18 +2722,18 @@ td.tl-table__cell .tl-data-item li {
 }
 
 /* ==================================== */
-/* ======   tl-download-control   ===== */
+/* ======   tl-download--download-mode   ===== */
 /* ==================================== */
 
-.tl-download-control input {
+.tl-download--download-mode input {
 	margin-left: 2px;
 }
 
-.tl-download-control input.first {
+.tl-download--download-mode input.first {
 	margin-left: 0px;
 }
 
-.tl-download-control input {
+.tl-download--download-mode input {
     background-color: var(--background);
 }
 

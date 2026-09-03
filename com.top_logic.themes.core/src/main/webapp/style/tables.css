@@ -941,7 +941,7 @@ table td span.tl-expandable-text-input,
 table td span.tl-text-input,
 table td span.tl-icon-chooser,
 table td span.tl-data-item.download,
-table td span.tl-download-control {
+table td span.tl-download--download-mode {
 	display: flex;
 	flex-wrap: nowrap;
 	align-items: center;
@@ -979,7 +979,7 @@ table td span.tl-text-popup span.content {
 }
 
 table td .tl-data-item span.lFlexible span.content,
-table td span.tl-download-control span.content {
+table td span.tl-download--download-mode span.content {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }

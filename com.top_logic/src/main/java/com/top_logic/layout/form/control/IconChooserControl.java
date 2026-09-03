@@ -130,7 +130,7 @@ public class IconChooserControl extends AbstractVisibleControl {
 
 	private void writeFixedHeaderSearch(DisplayContext context, TagWriter out) throws IOException {
 		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, "tl-search-text-field");
+		out.writeAttribute(CLASS_ATTR, "tl-icon-chooser__search");
 		out.endBeginTag();
 		createPatternFieldControl().write(context, out);
 		Icons.ICON_CHOOSER__SEARCH.write(context, out);
@@ -190,9 +190,9 @@ public class IconChooserControl extends AbstractVisibleControl {
 
 			for (ThemeImage img : icon.getImages()) {
 				if (img.equals(selectedImage)) {
-					cssClass = "tl-displayed-icons selected";
+					cssClass = "tl-icon-chooser__icon selected";
 				} else {
-					cssClass = "tl-displayed-icons";
+					cssClass = "tl-icon-chooser__icon";
 				}
 
 				renderButton(context, out, img, cssClass, icon.getLabel(), null, true);
@@ -293,7 +293,7 @@ public class IconChooserControl extends AbstractVisibleControl {
 	}
 
 	private String iconListId() {
-		return getID() + "-tl-form-page__body";
+		return getID() + "-icons";
 	}
 
 	private TextInputControl createPatternFieldControl() {

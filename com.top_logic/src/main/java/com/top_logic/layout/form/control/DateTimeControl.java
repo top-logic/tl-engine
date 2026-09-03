@@ -40,7 +40,7 @@ public class DateTimeControl extends AbstractFormFieldControl {
 
 	private static final String DATE_TIME_CLASS = "tl-datetime";
 
-	private static final String TIME_CSS_CLASS = "tl-timepart";
+	private static final String TIME_CSS_CLASS = "tl-datetime__time-part";
 
 	private static final String TIME_CONTAINER_CSS = FIXED_RIGHT_CSS_CLASS + " " + TIME_CSS_CLASS;
 

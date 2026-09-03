@@ -13,10 +13,13 @@ import java.util.function.Supplier;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.element.config.AttributeConfig;
-import com.top_logic.element.config.ClassConfig;
-import com.top_logic.element.config.ModuleConfig;
-import com.top_logic.element.config.ReferenceConfig;
+import com.top_logic.element.layout.meta.TLEnumerationFormBuilder;
+import com.top_logic.element.layout.meta.TLModuleFormBuilder;
+import com.top_logic.element.layout.meta.TLPropertyFormBuilder;
+import com.top_logic.element.layout.meta.TLReferenceFormBuilder;
+import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder;
+import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder;
+import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.PartModel;
 import com.top_logic.layout.configedit.ConfigCollectionValue;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
@@ -26,16 +29,19 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.model.TLFormObjectBase;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLNamedPart;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.config.EnumConfig;
+import com.top_logic.model.config.FullQualifiedName;
+import com.top_logic.model.config.NamedPartConfig;
+import com.top_logic.model.config.TypeRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
-import com.top_logic.model.config.NamedPartConfig;
 
 /**
  * {@link ReactFieldControlProvider} for the {@code annotations} attribute of a
@@ -51,11 +57,26 @@ import com.top_logic.model.config.NamedPartConfig;
  * <b>The surroundings have to be built, not preserved.</b> The owner of an annotation is a model
  * element, not a configuration, so there is no configuration tree above it to copy along - and an
  * annotation copied on its own has no container at all. Anything inside it that navigates outwards
- * (an option function, a derived property, a constraint) would find nothing. So a container of the
- * shape the annotation expects is created for it: {@link ModuleConfig} for a module,
- * {@link ClassConfig} for a class, and so on. This is what the legacy form builders do with their
- * {@code EditModel} interfaces, which extend exactly these configurations; what they add on top is
- * form furniture - a name, a label, a create flag - that nobody edits here.
+ * (an option function, a derived property, a constraint) would find nothing. So the surroundings are
+ * built: legacy's own {@code EditModel} interfaces, one per kind of element -
+ * {@link TLStructuredTypeFormBuilder.EditModel} for a type, {@link TLModuleFormBuilder.EditModel}
+ * for a module, and so on.
+ * </p>
+ *
+ * <p>
+ * Legacy's interfaces rather than the plain configurations they extend, because what they add is not
+ * form furniture. {@code TLStructuredTypeFormBuilder.EditModel} is also a
+ * {@link com.top_logic.model.config.FullQualifiedName} and a
+ * {@link com.top_logic.model.config.TypeRef}, and that is exactly what an option function asks it
+ * for: {@code PartNamesOptionProvider}, behind the {@code main-properties} annotation, casts the
+ * form model to both. A plain {@code ClassConfig} is neither, and the whole field is then refused
+ * with "Error during instantiation". The values those two carry are filled in the same way legacy
+ * fills them, from the edited element (see {@link #surroundingsFor(TLObject)}).
+ * </p>
+ *
+ * <p>
+ * For an attribute the annotations do not sit in the form model at all but in the {@code PartModel}
+ * nested inside it, so the two are kept apart; see {@link Surroundings}.
  * </p>
  *
  * <p>
@@ -79,7 +100,7 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 		// The identity is the edited element: two elements that both carry no annotations produce no
 		// value change at all, yet the editor must be rebuilt - what may be added depends on the kind
 		// of element, not on what is there already.
-		return createControl(context, model, () -> containerFor(ownerOf(model)), () -> ownerOf(model));
+		return build(context, model, () -> surroundingsFor(ownerOf(model)), () -> ownerOf(model));
 	}
 
 	/**
@@ -98,18 +119,44 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 	 */
 	public static ReactControl createControl(ReactContext context, FieldModel model,
 			Supplier<AnnotatedConfig<? extends TLAnnotation>> containers) {
-		return createControl(context, model, containers, null);
+		return build(context, model, () -> {
+			AnnotatedConfig<? extends TLAnnotation> container = containers.get();
+			return new Surroundings(container, container);
+		}, null);
 	}
 
-	private static ReactControl createControl(ReactContext context, FieldModel model,
-			Supplier<AnnotatedConfig<? extends TLAnnotation>> containers, Supplier<Object> identity) {
+	private static ReactControl build(ReactContext context, FieldModel model,
+			Supplier<Surroundings> surroundings, Supplier<Object> identity) {
 		ConfigFieldBinding binding = new ConfigFieldBinding(context, model, identity);
-		binding.start(() -> buildEditor(context, model, containers.get(), binding));
+		binding.start(() -> buildEditor(context, model, surroundings.get(), binding));
 		return binding.holder();
 	}
 
+	/**
+	 * What an annotation is edited inside of: the configuration holding it, and the form model an
+	 * option function reaches for.
+	 *
+	 * <p>
+	 * Two objects, because they are not always the same one. For a type they are - legacy's
+	 * {@code TLStructuredTypeFormBuilder.EditModel} is itself the {@code ClassConfig} carrying the
+	 * annotations. For an attribute they are not: the annotations sit in the nested
+	 * {@code PartModel}, while what the form is built over, and what an option function is handed,
+	 * is the {@code EditModel} around it.
+	 * </p>
+	 *
+	 * @param formModel
+	 *        Handed to the editor as {@code DeclarativeFormBuilder.FORM_MODEL}.
+	 * @param annotations
+	 *        The configuration whose {@code annotations} property is edited.
+	 */
+	private record Surroundings(ConfigurationItem formModel,
+			AnnotatedConfig<? extends TLAnnotation> annotations) {
+		// Fields only.
+	}
+
 	private static ReactControl buildEditor(ReactContext context, FieldModel model,
-			AnnotatedConfig<? extends TLAnnotation> container, ConfigFieldBinding binding) {
+			Surroundings surroundings, ConfigFieldBinding binding) {
+		AnnotatedConfig<? extends TLAnnotation> container = surroundings.annotations();
 		PropertyDescriptor annotations =
 			container.descriptor().getProperty(AnnotatedConfig.ANNOTATIONS);
 
@@ -134,7 +181,8 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 		// there is no finding it by walking up, since not every configuration on the way offers a
 		// way up.
 		ReactControl editor =
-			new ConfigListEditorControl(context, value, choices, index, model.isEditable(), container);
+			new ConfigListEditorControl(context, value, choices, index, model.isEditable(),
+				surroundings.formModel());
 		push.armed();
 		// Also once up front, not only on every later change: a form entered on annotations that
 		// are already incomplete would otherwise be saved untouched, since nothing was edited and
@@ -228,8 +276,9 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 	 * container's {@code annotations} property that decides which annotations apply.
 	 * </p>
 	 */
-	static AnnotatedConfig<? extends TLAnnotation> containerFor(TLObject owner) {
-		AnnotatedConfig<? extends TLAnnotation> container = emptyContainerFor(owner);
+	static Surroundings surroundingsFor(TLObject owner) {
+		Surroundings surroundings = emptySurroundingsFor(owner);
+		AnnotatedConfig<? extends TLAnnotation> container = surroundings.annotations();
 		// The surroundings are of no use while they are blank. An option function reaching outwards
 		// asks the container real questions - SingletonConfig.LocalTypeMapping reads the module's
 		// name off it and fails outright on a nameless one - so what the element is called is
@@ -237,7 +286,41 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 		if (container instanceof NamedPartConfig named && owner instanceof TLNamedPart namedOwner) {
 			named.setName(namedOwner.getName());
 		}
-		return container;
+		// ... and so is where it sits in the model. PartNamesOptionProvider resolves the edited part
+		// from the form model's FullQualifiedName and its target type from the form model's TypeRef;
+		// neither answers anything on a blank container, and the whole field is then refused with
+		// "Error during instantiation". This is what the legacy form builders fill in
+		// fillFormModel(): setFullQualifiedName(qualifiedName(part)) and setTypeSpec(...).
+		String qualifiedName = qualifiedNameOf(owner);
+		if (qualifiedName != null) {
+			for (ConfigurationItem each : new ConfigurationItem[] { surroundings.formModel(), container }) {
+				if (each instanceof FullQualifiedName named) {
+					named.setFullQualifiedName(qualifiedName);
+				}
+				if (each instanceof TypeRef typed && !(each instanceof PartModel)) {
+					// A PartModel's type spec is the type of the attribute's value, not of the
+					// attribute itself, and the EditModel above derives its own from it - writing
+					// the part's own name there would misname both.
+					typed.setTypeSpec(qualifiedName);
+				}
+			}
+		}
+		return surroundings;
+	}
+
+	/**
+	 * The qualified name of the given model element, or {@code null} if it has none.
+	 */
+	private static String qualifiedNameOf(TLObject owner) {
+		if (owner instanceof TLModelPart part) {
+			try {
+				return TLModelUtil.qualifiedName(part);
+			} catch (RuntimeException ex) {
+				// Not every model part has a qualified name - an unnamed or detached one has not.
+				return null;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -261,18 +344,21 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 	 * </p>
 	 */
 	private static final List<ContainerKind> CONTAINERS = List.of(
-		new ContainerKind("tl.model:TLModule", ModuleConfig.class),
-		new ContainerKind("tl.model:TLClassifier", EnumConfig.ClassifierConfig.class),
-		new ContainerKind("tl.model:TLReference", ReferenceConfig.class),
-		new ContainerKind("tl.model:TLStructuredTypePart", AttributeConfig.class),
-		new ContainerKind("tl.model:TLEnumeration", EnumConfig.class),
-		new ContainerKind("tl.model:TLClass", ClassConfig.class),
-		new ContainerKind("tl.model:TLType", ClassConfig.class));
+		new ContainerKind("tl.model:TLModule", TLModuleFormBuilder.EditModel.class, null),
+		new ContainerKind("tl.model:TLClassifier", EnumConfig.ClassifierConfig.class, null),
+		new ContainerKind("tl.model:TLReference", TLReferenceFormBuilder.EditModel.class,
+			TLReferenceFormBuilder.ReferenceModel.class),
+		new ContainerKind("tl.model:TLStructuredTypePart", TLPropertyFormBuilder.EditModel.class,
+			TLPropertyFormBuilder.PropertyModel.class),
+		new ContainerKind("tl.model:TLEnumeration", TLEnumerationFormBuilder.EditModel.class, null),
+		new ContainerKind("tl.model:TLClass", TLStructuredTypeFormBuilder.EditModel.class, null),
+		new ContainerKind("tl.model:TLType", TLStructuredTypeFormBuilder.EditModel.class, null));
 
 	/**
 	 * One entry of {@link #CONTAINERS}: the meta type and the configuration standing in for it.
 	 */
-	private record ContainerKind(String typeName, Class<? extends AnnotatedConfig<? extends TLAnnotation>> config) {
+	private record ContainerKind(String typeName, Class<? extends ConfigurationItem> formModel,
+			Class<? extends AnnotatedConfig<? extends TLAnnotation>> partModel) {
 
 		/** Whether the given element's type is this one or a specialization of it. */
 		boolean matches(TLType type) {
@@ -285,12 +371,22 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 		}
 	}
 
-	private static AnnotatedConfig<? extends TLAnnotation> emptyContainerFor(TLObject owner) {
+	@SuppressWarnings("unchecked")
+	private static Surroundings emptySurroundingsFor(TLObject owner) {
 		TLType type = owner.tType();
 		if (type != null) {
 			for (ContainerKind kind : CONTAINERS) {
 				if (kind.matches(type)) {
-					return TypedConfiguration.newConfigItem(kind.config());
+					ConfigurationItem formModel = TypedConfiguration.newConfigItem(kind.formModel());
+					if (kind.partModel() == null) {
+						return new Surroundings(formModel,
+							(AnnotatedConfig<? extends TLAnnotation>) formModel);
+					}
+					AnnotatedConfig<? extends TLAnnotation> part =
+						TypedConfiguration.newConfigItem(kind.partModel());
+					((TLStructuredTypePartFormBuilder.EditModel) formModel)
+						.setPartModel((PartModel) part);
+					return new Surroundings(formModel, part);
 				}
 			}
 		}

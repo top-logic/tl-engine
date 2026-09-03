@@ -36,6 +36,12 @@ import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.layout.view.form.AnnotationsFieldControlProvider;
+import com.top_logic.element.layout.meta.TLEnumerationFormBuilder;
+import com.top_logic.element.layout.meta.TLModuleFormBuilder;
+import com.top_logic.element.layout.meta.TLPropertyFormBuilder;
+import com.top_logic.element.layout.meta.TLReferenceFormBuilder;
+import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder;
+import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLModuleDisplayGroup;
 import com.top_logic.model.config.TLModuleAnnotation;
@@ -169,6 +175,42 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 
 		model.setRevealed(true);
 		assertFalse("Nothing is wrong with this annotation.", model.hasError());
+	}
+
+	/**
+	 * Every configuration the provider builds surroundings from can actually be built, and carries
+	 * the {@code annotations} property that is then edited.
+	 *
+	 * <p>
+	 * The pairs below are the ones {@code CONTAINERS} names. Restated here because that table is
+	 * reached only through a model element, which a unit test has none of - and its entries are
+	 * legacy's own {@code EditModel} interfaces, chosen because option functions navigate to them:
+	 * an entry that cannot be instantiated, or that turns out not to hold annotations at all, takes
+	 * out the whole field with "Error during instantiation", which is exactly the failure this
+	 * mapping exists to avoid.
+	 * </p>
+	 */
+	public void testEveryContainerCanBeBuiltAndHoldsAnnotations() {
+		assertHoldsAnnotations(TLModuleFormBuilder.EditModel.class);
+		assertHoldsAnnotations(EnumConfig.ClassifierConfig.class);
+		assertHoldsAnnotations(TLEnumerationFormBuilder.EditModel.class);
+		assertHoldsAnnotations(TLStructuredTypeFormBuilder.EditModel.class);
+		// For an attribute the annotations sit in the nested part model, not in the form model.
+		assertHoldsAnnotations(TLPropertyFormBuilder.PropertyModel.class);
+		assertHoldsAnnotations(TLReferenceFormBuilder.ReferenceModel.class);
+
+		// ...and the form model an attribute's annotations hang below must accept that part model.
+		TLStructuredTypePartFormBuilder.EditModel formModel =
+			TypedConfiguration.newConfigItem(TLStructuredTypePartFormBuilder.EditModel.class);
+		formModel.setPartModel(TypedConfiguration.newConfigItem(TLPropertyFormBuilder.PropertyModel.class));
+		assertNotNull("The part model must be reachable from the form model.", formModel.getPartModel());
+	}
+
+	private void assertHoldsAnnotations(Class<? extends ConfigurationItem> configType) {
+		ConfigurationItem container = TypedConfiguration.newConfigItem(configType);
+		assertNotNull("Must be instantiable: " + configType.getName(), container);
+		assertNotNull("Must hold annotations: " + configType.getName(),
+			container.descriptor().getProperty(AnnotatedConfig.ANNOTATIONS));
 	}
 
 	/** An element with no annotations yet starts with an empty container. */

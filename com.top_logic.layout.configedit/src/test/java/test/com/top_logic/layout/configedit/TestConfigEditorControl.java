@@ -47,6 +47,7 @@ import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.FieldCollectionValue;
 import com.top_logic.layout.configedit.I18NConstants;
 import com.top_logic.layout.configedit.PolymorphicOptions;
+import com.top_logic.layout.provider.label.ClassLabelProvider;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
@@ -366,6 +367,17 @@ public class TestConfigEditorControl extends TestCase {
 
 		@Name(PLAIN_ITEMS)
 		java.util.List<ListItem> getPlainItems();
+
+		/** Property name for {@link #getByType()}. */
+		String BY_TYPE = "byType";
+
+		/**
+		 * A collection keyed by the configuration interface - the shape every {@code annotations}
+		 * property has.
+		 */
+		@Name(BY_TYPE)
+		@Key(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
+		java.util.List<ListItem> getByType();
 	}
 
 	/**
@@ -597,6 +609,17 @@ public class TestConfigEditorControl extends TestCase {
 				continue;
 			}
 			return (String) child.scriptingScalarState().get("error");
+		}
+		return null;
+	}
+
+	/** The text of the header control an element group carries. */
+	private String headerOf(ReactControl elementGroup) {
+		for (ReactControl child : elementGroup.scriptingChildren()) {
+			Object text = child.scriptingScalarState().get("text");
+			if (text != null) {
+				return String.valueOf(text);
+			}
 		}
 		return null;
 	}
@@ -1237,6 +1260,74 @@ public class TestConfigEditorControl extends TestCase {
 
 		assertEquals("second", ((ListItem) value.elements().get(0)).getName());
 		assertEquals("first", ((ListItem) value.elements().get(1)).getName());
+	}
+
+	/**
+	 * A key that is the configuration interface is not offered as a field.
+	 *
+	 * <p>
+	 * That key is no input of the user's: it is the entry's type, which the type selector beside it
+	 * already decides. Offering it as text invites typing a class name.
+	 * </p>
+	 */
+	public void testAConfigurationInterfaceKeyIsNoField() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		ListItem entry = TypedConfiguration.newConfigItem(ListItem.class);
+		config.getByType().add(entry);
+
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.BY_TYPE);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		assertNull("The type is picked, not typed.",
+			findKeyFieldModel(elementGroups(editor).get(0)));
+	}
+
+	/**
+	 * Such an entry is titled by its type, not by the empty key.
+	 *
+	 * <p>
+	 * The key holds nothing - the configuration interface is not stored text - so the usual title
+	 * would fall back to "&lt;tag name&gt; (empty)", which says both too little and the wrong thing.
+	 * </p>
+	 */
+	public void testAConfigurationInterfaceKeyTitlesByType() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		config.getByType().add(TypedConfiguration.newConfigItem(ListItem.class));
+
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.BY_TYPE);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		// Against the framework's own label provider, which is the contract: the title is what the
+		// type is called for the user - the same label the type selector shows - and notably not the
+		// tag name, which for this type would be the bare "ListItem".
+		assertEquals("The entry is titled by its type's label.",
+			new ClassLabelProvider().getLabel(ListItem.class), headerOf(elementGroups(editor).get(0)));
+	}
+
+	/**
+	 * A second entry of a type the collection already holds is refused, and says so.
+	 *
+	 * <p>
+	 * The refusal used to be reported at the key field. There is none any more for a type-keyed
+	 * collection, so it must reach the user another way - and must certainly not fail on a field
+	 * that is not there.
+	 * </p>
+	 */
+	public void testASecondEntryOfTheSameTypeIsRefused() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		config.getByType().add(TypedConfiguration.newConfigItem(ListItem.class));
+
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.BY_TYPE);
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+		clickAddButton(editor);
+
+		HandlerResult result = click(findHeaderButton(elementGroups(editor).get(1), "\u2713"));
+
+		assertFalse("Taking a second entry of the same type must be refused.", result.isSuccess());
+		assertEquals("...and the collection must not have grown.", 1, config.getByType().size());
 	}
 
 	/**

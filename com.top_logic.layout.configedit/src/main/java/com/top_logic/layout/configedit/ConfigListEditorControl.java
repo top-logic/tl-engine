@@ -15,6 +15,7 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.configedit.ConfigPendingEntries.PendingEntry;
@@ -394,8 +395,16 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		Label label = resolveElementLabel(entry);
 
 		ReactButtonControl confirmButton = new ReactButtonControl(_context, "\u2713", ctx -> {
-			_pending.confirm(pending);
-			return HandlerResult.DEFAULT_RESULT;
+			ResKey refusal = _pending.confirm(pending);
+			if (refusal == null) {
+				return HandlerResult.DEFAULT_RESULT;
+			}
+			// Said out loud, not only at the key field: a type-keyed collection has no such field,
+			// and the button would otherwise appear to do nothing.
+			HandlerResult result = new HandlerResult();
+			result.setErrorTitle(refusal);
+			result.addErrorMessage(refusal);
+			return result;
 		});
 		confirmButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 
@@ -455,7 +464,9 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		if (polymorphic && _choices.options().size() > 1) {
 			bodyChildren.add(createTypeSelector(item, pending));
 		}
-		if (keyProperty != null) {
+		if (keyProperty != null && !isTypeKeyed(item)) {
+			// A key that is the entry's type is decided by the type selector above, not typed:
+			// offering it as text would invite writing a class name by hand.
 			bodyChildren.add(createKeyField(item, keyProperty, pending));
 		}
 		if (!polymorphic || isTypeSelected(item)) {
@@ -724,6 +735,14 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 */
 	private Label resolveElementLabel(ConfigurationItem item) {
 		String typeName = ConfigTagName.of(item);
+		if (isTypeKeyed(item)) {
+			// The key is the entry's own type, so the type is what it should be called - and by the
+			// name the user knows it under, the same label the type selector shows, not the tag
+			// name the XML uses. Falling through would read the key property, find it empty - a
+			// configuration interface is not stored text - and settle for "<tag name> (empty)",
+			// which says the wrong thing about an entry that is perfectly complete.
+			return new Label(PolymorphicOptions.labelFor(item.descriptor().getConfigurationInterface()), false);
+		}
 		PropertyDescriptor titleProp = resolveTitleProperty(item);
 		if (titleProp == null) {
 			return new Label(typeName, false);
@@ -735,6 +754,21 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		String label = Resources.getInstance()
 			.getString(I18NConstants.LIST_ELEMENT_EMPTY_TITLE__TYPE.fill(typeName));
 		return new Label(label, true);
+	}
+
+	/**
+	 * Whether the collection is keyed by the entry's own configuration interface.
+	 *
+	 * <p>
+	 * Such a key is no input of the user's - it is the type, which a polymorphic collection already
+	 * offers a selector for, and which every {@code annotations} property is keyed by. It is
+	 * therefore neither shown as a field nor read as a title.
+	 * </p>
+	 */
+	private boolean isTypeKeyed(ConfigurationItem item) {
+		PropertyDescriptor keyProperty = _value.keyProperty(item);
+		return keyProperty != null
+			&& ConfigurationItem.CONFIGURATION_INTERFACE_NAME.equals(keyProperty.getPropertyName());
 	}
 
 	/**

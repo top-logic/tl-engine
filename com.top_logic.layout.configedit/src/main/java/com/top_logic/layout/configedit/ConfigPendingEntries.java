@@ -200,27 +200,41 @@ public final class ConfigPendingEntries {
 	 * </p>
 	 *
 	 * @param pending
-	 *        The entry to confirm. Its key field must have been built at least once, since that is
-	 *        where a refusal is reported.
+	 *        The entry to confirm.
+	 * @return The reason it was refused, or {@code null} if it joined the collection. Also reported
+	 *         at the entry's key field, where there is one.
 	 */
-	public void confirm(PendingEntry pending) {
+	public ResKey confirm(PendingEntry pending) {
 		ConfigurationItem entry = pending._entry;
 		PropertyDescriptor keyProperty = _value.keyProperty(entry);
 		Object key = entry.value(keyProperty);
 		if (key == null || key.toString().isEmpty()) {
-			pending._keyFieldModel.setError(
+			return refuse(pending,
 				I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(keyProperty, false)));
-			return;
 		}
 		if (_value.hasEntryWithKey(key)) {
-			pending._keyFieldModel.setError(I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE
+			return refuse(pending, I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE
 				.fill(Labels.propertyLabel(keyProperty, false), key));
-			return;
 		}
 		_entries.remove(pending);
 		_value.add(entry);
 		checkKeys();
 		_onChanged.accept(entry);
+		return null;
+	}
+
+	/**
+	 * Reports the given reason at the entry's key field and hands it back for the caller to show.
+	 *
+	 * <p>
+	 * The field is where the reason belongs when there is one, but a collection keyed by the
+	 * entry's type has no key field at all - and a refusal nobody is told about is the one thing
+	 * this must never be. So the reason travels back either way.
+	 * </p>
+	 */
+	private ResKey refuse(PendingEntry pending, ResKey reason) {
+		pending.setKeyFieldInputError(reason);
+		return reason;
 	}
 
 	/**

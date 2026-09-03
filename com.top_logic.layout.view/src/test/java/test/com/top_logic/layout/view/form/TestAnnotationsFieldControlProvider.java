@@ -235,6 +235,32 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 	}
 
 	/**
+	 * A change of editability rebuilds the editor.
+	 *
+	 * <p>
+	 * {@code AttributeFieldControl} builds the field control first and applies the form's mode
+	 * afterwards, so the editor is built while the model still carries its default - editable - and
+	 * is told the truth only a moment later. An editor that read the flag once would offer a
+	 * read-only form for editing until something else rebuilt it.
+	 * </p>
+	 */
+	public void testEditabilityRebuildsTheEditor() {
+		List<ModuleConfig> built = new ArrayList<>();
+		AbstractFieldModel model = new AbstractFieldModel(new ArrayList<>());
+
+		AnnotationsFieldControlProvider.createControl(_context, model, () -> {
+			ModuleConfig fresh = container();
+			built.add(fresh);
+			return fresh;
+		});
+		assertEquals("Built once to begin with.", 1, built.size());
+
+		model.setEditable(false);
+
+		assertEquals("Being told the real mode must build the editor afresh.", 2, built.size());
+	}
+
+	/**
 	 * Every container the provider can build must actually be buildable.
 	 *
 	 * <p>

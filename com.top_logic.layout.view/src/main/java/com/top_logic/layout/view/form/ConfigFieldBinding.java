@@ -78,7 +78,14 @@ final class ConfigFieldBinding {
 
 			@Override
 			public void onEditabilityChanged(FieldModel source, boolean editable) {
-				// The editor is built with the editability it had; a mode change rebuilds the form.
+				// The editor renders read-only or editable once, when it is built, so being told
+				// something else has to build it again. This is not only about entering and leaving
+				// edit mode: AttributeFieldControl builds the field control first and applies the
+				// form's mode afterwards, so the very first editor is built while the model still
+				// carries its default - editable - and learns the truth a moment later.
+				if (_build != null) {
+					rebuild();
+				}
 			}
 
 			@Override

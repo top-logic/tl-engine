@@ -42,6 +42,7 @@ import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
 import com.top_logic.layout.configedit.ConfigCollection;
+import com.top_logic.layout.configedit.ConfigCollectionValue;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.FieldCollectionValue;
@@ -452,6 +453,11 @@ public class TestConfigEditorControl extends TestCase {
 
 		TestableConfigListEditorControl(ReactContext context, ConfigCollection value) {
 			super(context, value, PolymorphicOptions.Choices.NONE, null, true);
+		}
+
+		TestableConfigListEditorControl(ReactContext context, ConfigCollection value,
+				PolymorphicOptions.Choices choices, ConfigFieldIndex index, boolean editable) {
+			super(context, value, choices, index, editable);
 		}
 
 		java.util.List<ReactControl> getChildrenList() {
@@ -1328,6 +1334,39 @@ public class TestConfigEditorControl extends TestCase {
 
 		assertFalse("Taking a second entry of the same type must be refused.", result.isSuccess());
 		assertEquals("...and the collection must not have grown.", 1, config.getByType().size());
+	}
+
+	/**
+	 * The type an entry actually has is offered, even when it is no longer among the options.
+	 *
+	 * <p>
+	 * Options say what may be chosen for a <em>new</em> entry; an annotation not marked for in-app
+	 * use, for instance, is left out of them. An entry that already has such a type must still show
+	 * it: a selector whose current value is not among its options shows nothing at all, which says
+	 * something false about an entry that is perfectly well typed - and invites losing the value.
+	 * </p>
+	 */
+	public void testTheTypeInUseIsOfferedEvenWhenItIsNotAnOption() {
+		KeyedPolymorphicTestConfig config = TypedConfiguration.newConfigItem(KeyedPolymorphicTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(KeyedPolymorphicTestConfig.ITEMS);
+		PolymorphicOptions.Choices all = PolymorphicOptions.compute(config, property);
+
+		// Built through the mapping, the way the editor builds a new entry: an option is not simply
+		// the entry's configuration interface, so an item created directly would belong to no option.
+		Object own = all.options().get(0);
+		ConfigCollection value = new ConfigCollectionValue(config, property);
+		value.add((ConfigurationItem) all.mapping().toSelection(own));
+
+		// An option list that has moved on: everything but the type the entry actually has.
+		List<Object> reduced = new ArrayList<>(all.options());
+		reduced.remove(0);
+		assertFalse("The fixture needs more than one implementation.", reduced.isEmpty());
+
+		TestableConfigListEditorControl editor = new TestableConfigListEditorControl(createTestContext(),
+			value, new PolymorphicOptions.Choices(reduced, all.mapping()), null, true);
+
+		FieldModel typeModel = findTypeFieldModel(elementGroups(editor).get(0));
+		assertNotNull("The type in use must be selected, not left blank.", typeModel.getValue());
 	}
 
 	/**

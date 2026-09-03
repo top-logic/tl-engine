@@ -577,7 +577,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * currently chosen type must stay legible to the reader even where it may not be changed.
 	 */
 	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item, PendingEntry pending) {
-		List<Object> rawOptions = _choices.options();
+		List<Object> rawOptions = offeredOptions(item);
 		List<String> keys = new ArrayList<>(rawOptions.size());
 		for (int i = 0; i < rawOptions.size(); i++) {
 			keys.add(PolymorphicOptions.keyFor(i));
@@ -769,6 +769,34 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		PropertyDescriptor keyProperty = _value.keyProperty(item);
 		return keyProperty != null
 			&& ConfigurationItem.CONFIGURATION_INTERFACE_NAME.equals(keyProperty.getPropertyName());
+	}
+
+	/**
+	 * The options to offer for the given entry: the collection's own, and the type the entry
+	 * actually has where that is not among them.
+	 *
+	 * <p>
+	 * Options say what may be chosen for a <em>new</em> entry, and that set can be narrower than
+	 * what exists - an annotation not marked for in-app use is left out of it. An entry that already
+	 * carries such a type must still show it: a selector whose value is not among its options shows
+	 * nothing at all, which says something false about an entry that is perfectly well typed, and
+	 * invites losing the value on the next write.
+	 * </p>
+	 */
+	private List<Object> offeredOptions(ConfigurationItem item) {
+		List<Object> options = _choices.options();
+		if (PolymorphicOptions.keyForItem(options, _choices.mapping(), item) != null) {
+			return options;
+		}
+		Object own = _choices.mapping() == null ? null : _choices.mapping().asOption(options, item);
+		if (own == null) {
+			// Nothing to add that the selector could match the entry against; better the empty
+			// selector than an option it would never select.
+			return options;
+		}
+		List<Object> extended = new ArrayList<>(options);
+		extended.add(0, own);
+		return extended;
 	}
 
 	/**

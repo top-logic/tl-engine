@@ -108,6 +108,15 @@ public final class ConfigFieldIndex {
 		_observers.add(observer);
 	}
 
+	/**
+	 * The {@link ConfigFieldModel} previously {@link #register(ConfigurationItem, PropertyDescriptor, ConfigFieldModel)
+	 * registered} for the given item and property, or {@code null} if none was.
+	 *
+	 * @param item
+	 *        The configuration item the property belongs to.
+	 * @param property
+	 *        The property to look up.
+	 */
 	public ConfigFieldModel lookup(ConfigurationItem item, PropertyDescriptor property) {
 		Map<PropertyDescriptor, ConfigFieldModel> byProperty = _fields.get(item);
 		return byProperty == null ? null : byProperty.get(property);
@@ -223,6 +232,13 @@ public final class ConfigFieldIndex {
 		return Collections.unmodifiableList(_pending);
 	}
 
+	/**
+	 * Forgets all registrations.
+	 *
+	 * <p>
+	 * Every render cycle refills the index, so what an earlier cycle put there must go.
+	 * </p>
+	 */
 	public void clear() {
 		_fields.clear();
 		_pending.clear();

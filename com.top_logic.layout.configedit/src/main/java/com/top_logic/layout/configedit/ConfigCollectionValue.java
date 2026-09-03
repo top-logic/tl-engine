@@ -71,7 +71,7 @@ public final class ConfigCollectionValue implements ConfigCollection {
 	 *
 	 * <p>
 	 * For a {@link PropertyKind#LIST} property this is the configuration's own live list, so a
-	 * mutation of it takes effect directly - which is what lets TypedConfiguration reject a
+	 * mutation of it takes effect directly - which is what lets {@link TypedConfiguration} reject a
 	 * duplicate key at the moment of the change. For a {@link PropertyKind#ARRAY} property it is a
 	 * detached copy that only reaches the configuration through {@link #store(List)}.
 	 * </p>
@@ -121,7 +121,7 @@ public final class ConfigCollectionValue implements ConfigCollection {
 	 * the same polymorphism reason that method exists for. A duplicate key cannot reach this
 	 * method: a pending entry is refused one before it is committed, which matters here in a way it
 	 * does not for a keyed LIST - {@link Map#put(Object, Object)} on an existing key silently
-	 * overwrites it, unlike inserting a duplicate key into a keyed LIST, which TypedConfiguration
+	 * overwrites it, unlike inserting a duplicate key into a keyed LIST, which {@link TypedConfiguration}
 	 * rejects with an {@link IllegalArgumentException}.
 	 * </p>
 	 *
@@ -224,9 +224,9 @@ public final class ConfigCollectionValue implements ConfigCollection {
 	 * <p>
 	 * Resolves each existing entry's key via {@link #keyProperty(ConfigurationItem)}, not
 	 * {@link #property()}'s declared key property, for the same reason every other key lookup here
-	 * does - see that method's own JavaDoc. This is also what makes a duplicate key impossible for a
-	 * {@link PropertyKind#MAP} property: unlike a keyed LIST, where TypedConfiguration itself
-	 * rejects a colliding insert, {@link Map#put(Object, Object)} on an already-used key would
+	 * does - see that method's own documentation. This is also what makes a duplicate key impossible
+	 * for a {@link PropertyKind#MAP} property: unlike a keyed LIST, where {@link TypedConfiguration}
+	 * itself rejects a colliding insert, {@link Map#put(Object, Object)} on an already-used key would
 	 * silently overwrite the existing entry - so this check, not the underlying structure, is the
 	 * only thing standing in the way.
 	 * </p>

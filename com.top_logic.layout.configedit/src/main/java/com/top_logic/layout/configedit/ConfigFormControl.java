@@ -75,13 +75,14 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		INLINE,
 
 		/**
-		 * Not by this control: they are handed out through {@link ConfigFormControl#commands()} for
-		 * an enclosing toolbar to render.
+		 * Not by this control: they are handed out for an enclosing toolbar to render.
 		 *
 		 * <p>
 		 * What a form generated from a model does, and therefore what a configuration form inside a
 		 * panel should do - the commands sit in the panel's toolbar and the form fills the panel.
 		 * </p>
+		 *
+		 * @see ConfigFormControl#commands()
 		 */
 		TOOLBAR;
 	}

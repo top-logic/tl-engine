@@ -57,6 +57,7 @@ import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -339,6 +340,18 @@ public class TestConfigEditorControl extends TestCase {
 		HandlerConfig[] getHandlerArray();
 
 		void setHandlerArray(HandlerConfig[] value);
+
+		/** Property name for {@link #getHandlersByType()}. */
+		String HANDLERS_BY_TYPE = "handlersByType";
+
+		/**
+		 * A polymorphic collection keyed by the entry's own configuration interface - the shape
+		 * every {@code annotations} property has, where the type selector <em>is</em> the key
+		 * control.
+		 */
+		@Name(HANDLERS_BY_TYPE)
+		@Key(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
+		java.util.List<HandlerConfig> getHandlersByType();
 	}
 
 	/** Element type of {@link ListTestConfig#getKeyedItems()} and {@link ListTestConfig#getPlainItems()}. */
@@ -515,6 +528,59 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * Where the entry's type is the collection's key, it is settled before the entry joins and
+	 * fixed afterwards - the rule every key follows, applied to the control that carries this one.
+	 */
+	public void testTheTypeIsFixedOnceATypeKeyedEntryIsCommitted() {
+		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(PolymorphicTestConfig.HANDLERS_BY_TYPE);
+		config.getHandlersByType().add(TypedConfiguration.newConfigItem(HandlerAConfig.class));
+
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		assertFalse("A committed entry's type is its key and must no longer be changeable.",
+			findTypeFieldModel(elementGroups(editor).get(0)).isEditable());
+
+		clickAddButton(editor);
+		assertEquals("The pending entry must be rendered next to the committed one.", 2,
+			elementGroups(editor).size());
+		assertTrue("A pending entry's type is still to be chosen.",
+			findTypeFieldModel(elementGroups(editor).get(1)).isEditable());
+	}
+
+	/**
+	 * The key control heads its entry's group rather than standing among the entry's properties -
+	 * the place the group otherwise shows a title in, which is what the key is.
+	 */
+	public void testTheKeyHeadsItsEntrysGroup() {
+		ListTestConfig config = TypedConfiguration.newConfigItem(ListTestConfig.class);
+		config.getKeyedItems().add(newListItem("Apple"));
+		PropertyDescriptor property = config.descriptor().getProperty(ListTestConfig.KEYED_ITEMS);
+
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		ReactControl group = elementGroups(editor).get(0);
+		assertNotNull("The key must still be rendered.", findKeyFieldModel(group));
+		assertNull("The group must show no title of its own beside the key heading it.",
+			findHeaderText(group));
+	}
+
+	/**
+	 * The text of a group's title control, or {@code null} if the group is headed by something
+	 * else - a key control, in particular.
+	 */
+	private String findHeaderText(ReactControl elementGroup) {
+		for (ReactControl child : elementGroup.scriptingChildren()) {
+			if (child instanceof ReactTextControl) {
+				return (String) child.scriptingScalarState().get("text");
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Simulates clicking the given editor's "+" add button, as an end user would.
 	 */
 	private void clickAddButton(TestableConfigListEditorControl editor) {
@@ -612,6 +678,14 @@ public class TestConfigEditorControl extends TestCase {
 		for (ReactControl child : elementGroup.scriptingChildren()) {
 			Object label = child.scriptingScalarState().get("label");
 			if (label == null || "Type".equals(label)) {
+				continue;
+			}
+			// A header action button (Confirm, Remove) carries a label too, and now precedes the
+			// key field among the children - they are sorted by the name of the state holding
+			// them, and the key field heads the group ("headerControl") while the buttons sit in
+			// "headerActions". Eliminated the same way findKeyFieldModel(ReactControl) does: a
+			// button wraps no control of its own.
+			if (child.scriptingChildren().isEmpty()) {
 				continue;
 			}
 			return (String) child.scriptingScalarState().get("error");

@@ -30,6 +30,7 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
+import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
@@ -361,9 +362,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		ReactFormGroupControl group = new ReactFormGroupControl(
 			_context, null, true, !expanded, "subtle", true,
 			headerActions, bodyChildren);
-		group.setHeader(createHeaderControl(label));
+		ReactControl header = createEntryHeader(item, keyProperty, null, label);
+		group.setHeader(header);
 
-		registerTitleListener(item, group);
+		registerTitleListener(item, group, header instanceof ReactTextControl);
 
 		return group;
 	}
@@ -432,9 +434,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		ReactFormGroupControl group = new ReactFormGroupControl(
 			_context, null, true, false, "subtle", true,
 			headerActions, bodyChildren);
-		group.setHeader(createHeaderControl(label));
+		ReactControl header = createEntryHeader(entry, keyProperty, pending, label);
+		group.setHeader(header);
 
-		registerTitleListener(entry, group);
+		registerTitleListener(entry, group, header instanceof ReactTextControl);
 
 		if (_index != null) {
 			// The form above cannot see a pending entry - it is not in the configuration - so it is
@@ -461,13 +464,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			PendingEntry pending) {
 		List<ReactControl> bodyChildren = new ArrayList<>();
 		boolean polymorphic = _choices.hasOptions();
-		if (polymorphic && _choices.options().size() > 1) {
-			bodyChildren.add(createTypeSelector(item, pending));
-		}
-		if (keyProperty != null && !isTypeKeyed(item)) {
-			// A key that is the entry's type is decided by the type selector above, not typed:
-			// offering it as text would invite writing a class name by hand.
-			bodyChildren.add(createKeyField(item, keyProperty, pending));
+		// Only where the type is not the key. Where it is, it is the entry's key control and
+		// belongs in the header with every other key - see #createEntryHeader.
+		if (polymorphic && _choices.options().size() > 1 && !isTypeKeyed(item)) {
+			bodyChildren.add(createTypeSelector(item, pending, false));
 		}
 		if (!polymorphic || isTypeSelected(item)) {
 			bodyChildren.add(new ConfigEditorControl(_context, item,
@@ -482,9 +482,16 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * {@link #createElementGroup(ConfigurationItem, int, int, boolean)} and
 	 * {@link #createPendingElementGroup(PendingEntry)}.
 	 */
-	private void registerTitleListener(ConfigurationItem item, ReactFormGroupControl group) {
+	private void registerTitleListener(ConfigurationItem item, ReactFormGroupControl group,
+			boolean headerIsTitle) {
 		PropertyDescriptor titleProp = resolveTitleProperty(item);
-		if (titleProp != null) {
+		// Only where the header actually shows a title. Where the collection has a key, the header
+		// is the key control itself, which shows the key without being told; swapping it for a text
+		// would be wrong twice over, since the title property is the very key being typed into it -
+		// every keystroke would fire this listener, and
+		// ReactFormGroupControl#setHeader(ReactControl) disposes the control it replaces, tearing
+		// the field out from under the caret.
+		if (headerIsTitle && titleProp != null) {
 			ConfigurationListener listener = change -> {
 				group.setHeader(createHeaderControl(resolveElementLabel(item)));
 			};
@@ -535,7 +542,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		String label = Labels.propertyLabel(keyProperty, false);
 		ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(_context, label,
-			model.isMandatory(), false, null, null, null, false, true, input);
+			model.isMandatory(), false, null, null, LabelPosition.HIDDEN, false, true, input);
 		// Detach when this specific field is disposed (on the next rebuild(), or when this whole
 		// control is cleaned up) - the same lifecycle ConfigEditorControl#addCleanupAction(Runnable)
 		// ties its own field models to, just anchored on the field's own chrome control instead of
@@ -566,6 +573,42 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 	}
 
+	/**
+	 * The control heading an entry's group: its key, where the collection has one, and its title
+	 * otherwise.
+	 *
+	 * <p>
+	 * The key names the entry, so it belongs where the entry is named - the group's own header row,
+	 * the place a title would otherwise occupy. It is editable only while the entry is pending,
+	 * because the key decides where the entry sits in the collection and re-keying a committed
+	 * entry would re-index the collection under it. Once committed it stays, immutable, and an
+	 * immutable field renders as plain text - so the header goes on reading as the title it also
+	 * is. The classic declarative form settles the key the same way, in a dialog before the entry
+	 * is added ({@code ListEditor}'s {@code AddDialog}), and renders it immutable afterwards.
+	 * </p>
+	 *
+	 * <p>
+	 * The key control is labelled for the tooltip but rendered {@link LabelPosition#HIDDEN}: the
+	 * header is a single row shared with the collapse toggle and the Confirm and Remove buttons,
+	 * which a label stacked above the input would push apart.
+	 * </p>
+	 */
+	private ReactControl createEntryHeader(ConfigurationItem item, PropertyDescriptor keyProperty,
+			PendingEntry pending, Label label) {
+		if (keyProperty != null) {
+			if (isTypeKeyed(item)) {
+				// A key that is the entry's type is picked, not typed: offering it as text would
+				// invite writing a class name by hand.
+				if (_choices.hasOptions() && _choices.options().size() > 1) {
+					return createTypeSelector(item, pending, true);
+				}
+			} else {
+				return createKeyField(item, keyProperty, pending);
+			}
+		}
+		return createHeaderControl(label);
+	}
+
 	private ReactTextControl createHeaderControl(Label label) {
 		return new ReactTextControl(_context, label.text(), label.placeholder() ? PLACEHOLDER_CSS : null);
 	}
@@ -576,24 +619,40 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * is {@code false}, the same way {@link PolymorphicItemControl}'s top-level counterpart is: the
 	 * currently chosen type must stay legible to the reader even where it may not be changed.
 	 */
-	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item, PendingEntry pending) {
-		List<Object> rawOptions = offeredOptions(item);
-		List<String> keys = new ArrayList<>(rawOptions.size());
-		for (int i = 0; i < rawOptions.size(); i++) {
+	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item, PendingEntry pending,
+			boolean inHeader) {
+		List<Object> options = _choices.options();
+		Object own = ownOptionIfMissing(item);
+
+		// Two lists, because a key is a position and the two orders must not be the same one. What
+		// a key resolves against only ever grows at the end, so every option keeps the key it had
+		// no matter whether this entry contributes one of its own - a key is quoted in recorded
+		// scripts and sent back by the client, and must mean the same thing for every entry of the
+		// collection. What is displayed puts the entry's own type first.
+		List<Object> resolution = new ArrayList<>(options);
+		List<String> keys = new ArrayList<>(options.size() + 1);
+		if (own != null) {
+			resolution.add(own);
+			keys.add(PolymorphicOptions.keyFor(options.size()));
+		}
+		for (int i = 0; i < options.size(); i++) {
 			keys.add(PolymorphicOptions.keyFor(i));
 		}
-		String currentKey = PolymorphicOptions.keyForItem(rawOptions, _choices.mapping(), item);
+		String currentKey = PolymorphicOptions.keyForItem(resolution, _choices.mapping(), item);
 		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentKey, keys, false);
 		typeModel.setMandatory(true);
 		typeModel.setNullable(false);
-		typeModel.setEditable(_editable);
+		// In the header the type is the entry's key, so it follows the key's rule: settled before
+		// the entry joins the collection, fixed afterwards. Elsewhere it is an ordinary property of
+		// the entry and may be changed for as long as the form is editable.
+		typeModel.setEditable(inHeader ? _editable && pending != null : _editable);
 
-		LabelProvider labelProvider = PolymorphicOptions.indexLabelProvider(rawOptions);
+		LabelProvider labelProvider = PolymorphicOptions.indexLabelProvider(resolution);
 
 		typeModel.addListener(new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				onTypeChanged(item, PolymorphicOptions.optionForKey(rawOptions, (String) newValue), pending);
+				onTypeChanged(item, PolymorphicOptions.optionForKey(resolution, (String) newValue), pending);
 			}
 
 			@Override
@@ -609,7 +668,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		ReactSelectFormFieldControl typeSelect =
 			new ReactSelectFormFieldControl(_context, typeModel, labelProvider);
-		return new ReactFormFieldChromeControl(_context, "Type", typeSelect);
+		return new ReactFormFieldChromeControl(_context, "Type", false, false, null, null,
+			inHeader ? LabelPosition.HIDDEN : null, false, true, typeSelect);
 	}
 
 	/**
@@ -772,8 +832,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * The options to offer for the given entry: the collection's own, and the type the entry
-	 * actually has where that is not among them.
+	 * The option standing for the type the given entry actually has, where the collection does not
+	 * offer that type itself - {@code null} where it does, or where no option can be made of it.
 	 *
 	 * <p>
 	 * Options say what may be chosen for a <em>new</em> entry, and that set can be narrower than
@@ -783,20 +843,15 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * invites losing the value on the next write.
 	 * </p>
 	 */
-	private List<Object> offeredOptions(ConfigurationItem item) {
+	private Object ownOptionIfMissing(ConfigurationItem item) {
 		List<Object> options = _choices.options();
-		if (PolymorphicOptions.keyForItem(options, _choices.mapping(), item) != null) {
-			return options;
+		if (_choices.mapping() == null
+			|| PolymorphicOptions.keyForItem(options, _choices.mapping(), item) != null) {
+			return null;
 		}
-		Object own = _choices.mapping() == null ? null : _choices.mapping().asOption(options, item);
-		if (own == null) {
-			// Nothing to add that the selector could match the entry against; better the empty
-			// selector than an option it would never select.
-			return options;
-		}
-		List<Object> extended = new ArrayList<>(options);
-		extended.add(0, own);
-		return extended;
+		// May still be null - then there is nothing the selector could match the entry against, and
+		// an empty selector is better than an option it would never select.
+		return _choices.mapping().asOption(options, item);
 	}
 
 	/**

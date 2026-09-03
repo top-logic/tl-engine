@@ -143,6 +143,27 @@ public class ReactServlet extends TopLogicServlet {
 		sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_CODE_STALE_UI, "No session.");
 	}
 
+	/**
+	 * Announces the request to the session's windows before answering it.
+	 *
+	 * <p>
+	 * Every request through this servlet restarts the session's inactivity timeout as a side effect.
+	 * A control counting down to the end of the session has no other way of learning that, so it is
+	 * told here, at the one point every React request passes through.
+	 * </p>
+	 *
+	 * @see ReactWindowRegistry#noteActivity(HttpSession)
+	 */
+	@Override
+	protected void doService(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		HttpSession session = request.getSession(false);
+		if (session != null) {
+			ReactWindowRegistry.forSession(session).noteActivity(session);
+		}
+		super.doService(request, response);
+	}
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {

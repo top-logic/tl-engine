@@ -2359,6 +2359,12 @@ button.tlDrawer__closeBtn:focus-visible {
 	flex: 0 0 auto;
 }
 
+/* Several notices stack flush: they are full-width bars, and the gap a stack puts between its
+   children would show the page through as a stripe between two announcements. */
+.tlAppShell__notices .tlStack {
+	gap: 0;
+}
+
 /* --- TLNoticeBar (system-wide notice) ------------------------------------- */
 
 .tlNoticeBar {
@@ -2375,6 +2381,11 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlNoticeBar--info    { background: var(--background-inverse, #393939); color: var(--text-inverse, #fff); }
 .tlNoticeBar--warning { background: var(--support-warning, #f1c21b); color: #000; }
 .tlNoticeBar--error   { background: var(--support-error, #da1e28); color: #fff; }
+
+/* A notice offering an action is a button spanning the whole bar, as its tooltip announces. */
+.tlNoticeBar--clickable {
+	cursor: pointer;
+}
 
 /* Tabular figures keep the count-down from jittering as the digits change every second. */
 .tlNoticeBar__countdown {

@@ -6,7 +6,9 @@
 package com.top_logic.layout.react.window;
 
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.servlet.http.HttpSession;
@@ -56,6 +58,31 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	private static final SecureRandom RANDOM = new SecureRandom();
 
+	/**
+	 * Listener on the requests of a session, which are what keeps the session from timing out.
+	 *
+	 * @see ReactWindowRegistry#addActivityListener(ActivityListener)
+	 */
+	public interface ActivityListener {
+
+		/**
+		 * Called while a request of the session is being handled, which is when the container
+		 * restarts the session's inactivity timeout.
+		 *
+		 * @param accessTime
+		 *        When the request arrived, as epoch milliseconds. This is the reference point of the
+		 *        renewed timeout - deliberately not
+		 *        {@link jakarta.servlet.http.HttpSession#getLastAccessedTime()}, which reports the
+		 *        request before this one while the container measures inactivity from this one.
+		 * @param maxInactiveSeconds
+		 *        How long the session survives without a request, see
+		 *        {@link jakarta.servlet.http.HttpSession#getMaxInactiveInterval()}. A value
+		 *        {@code <= 0} means that it never times out.
+		 */
+		void handleActivity(long accessTime, int maxInactiveSeconds);
+
+	}
+
 	private final ConcurrentHashMap<String, WindowEntry> _windows = new ConcurrentHashMap<>();
 
 	/** Maps singleton keys to window IDs for singleton window reuse. */
@@ -77,6 +104,13 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	/** The ID of the session this registry belongs to, remembered for the index. */
 	private final String _sessionId;
+
+	/**
+	 * The listeners to inform about the requests of this session.
+	 *
+	 * @see #noteActivity(HttpSession)
+	 */
+	private final List<ActivityListener> _activityListeners = new CopyOnWriteArrayList<>();
 
 	/**
 	 * Creates a new {@link ReactWindowRegistry}.
@@ -105,6 +139,62 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			}
 		}
 		return registry;
+	}
+
+	/**
+	 * Registers a listener on the requests of this session.
+	 *
+	 * <p>
+	 * Nothing else tells a control that the session's inactivity timeout was restarted: a request
+	 * renews it as a side effect, and the moment it would expire passes without any request at all.
+	 * A control counting down to that moment therefore has to be told about every request, see
+	 * {@code SessionTimeoutNoticeElement}.
+	 * </p>
+	 *
+	 * @param listener
+	 *        Informed about every request of this session until it is
+	 *        {@link #removeActivityListener(ActivityListener) removed}. A control registering one
+	 *        must remove it when it is disposed, since the registry outlives the windows it holds.
+	 */
+	public void addActivityListener(ActivityListener listener) {
+		_activityListeners.add(listener);
+	}
+
+	/**
+	 * Removes a listener registered with {@link #addActivityListener(ActivityListener)}.
+	 */
+	public void removeActivityListener(ActivityListener listener) {
+		_activityListeners.remove(listener);
+	}
+
+	/**
+	 * Reports that a request of this registry's session is being handled, restarting the session's
+	 * inactivity timeout.
+	 *
+	 * @param session
+	 *        The session the request belongs to, read for its inactivity interval.
+	 *
+	 * @implNote The reference point passed on is the current time rather than
+	 *           {@link HttpSession#getLastAccessedTime()}: the latter reports the request before
+	 *           this one, while the container measures the inactivity that ends the session from
+	 *           this one.
+	 */
+	public void noteActivity(HttpSession session) {
+		if (_activityListeners.isEmpty()) {
+			return;
+		}
+		long accessTime = System.currentTimeMillis();
+		int maxInactiveSeconds = session.getMaxInactiveInterval();
+		for (ActivityListener listener : _activityListeners) {
+			try {
+				listener.handleActivity(accessTime, maxInactiveSeconds);
+			} catch (RuntimeException ex) {
+				// A listener that fails must not keep the request from being answered, nor the
+				// remaining listeners from being informed.
+				Logger.error("Failed to announce the activity of session '" + _sessionId + "'.", ex,
+					ReactWindowRegistry.class);
+			}
+		}
 	}
 
 	/**
@@ -432,6 +522,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 		}
 		_windows.clear();
 		_singletonKeys.clear();
+		_activityListeners.clear();
 	}
 
 	/**

@@ -34,6 +34,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 MAINTENANCE_NOTICE_ACTIVE__MESSAGE;
 
+	/**
+	 * @en Your session ends in
+	 */
+	public static ResKey SESSION_TIMEOUT_NOTICE;
+
+	/**
+	 * @en Click here to continue working in this session.
+	 */
+	public static ResKey SESSION_TIMEOUT_EXTEND;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

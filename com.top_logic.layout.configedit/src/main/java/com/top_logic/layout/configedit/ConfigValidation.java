@@ -125,6 +125,86 @@ public final class ConfigValidation {
 	}
 
 	/**
+	 * Why an edited configuration may not be handed over yet, or {@code null} if nothing stands in
+	 * the way.
+	 *
+	 * @param message
+	 *        What to tell the user.
+	 * @param details
+	 *        The individual violations behind {@code message}, empty where it stands on its own.
+	 */
+	public record Refusal(ResKey message, List<ResKey> details) {
+		// Fields only.
+	}
+
+	/**
+	 * Runs every check that stands between an edited configuration and being handed over, and puts
+	 * what it finds on the fields that caused it.
+	 *
+	 * <p>
+	 * One method rather than a sequence each caller repeats, because there are two callers with
+	 * nothing else in common - a standalone {@link ConfigFormControl} with its own Apply, and a
+	 * configuration edited as one field of a surrounding form - and a rule enforced in only one of
+	 * them is worse than no rule at all: the same configuration would be refused or accepted
+	 * depending on where it is being edited.
+	 * </p>
+	 *
+	 * <p>
+	 * The order matters. An unconfirmed entry whose key is already spoken for carries an input
+	 * error of its own, and "an entry could not be read" would then be said about a key that reads
+	 * perfectly well and is merely taken.
+	 * </p>
+	 *
+	 * @param edited
+	 *        The configuration to check.
+	 * @param index
+	 *        The fields the configuration is rendered in, both to report on and to ask about
+	 *        unreadable input and unconfirmed entries.
+	 */
+	public static Refusal refusalFor(ConfigurationItem edited, ConfigFieldIndex index) {
+		return refusalFor(Collections.singletonList(edited), index);
+	}
+
+	/**
+	 * The same for several configurations checked as one, where what is edited is a collection
+	 * rather than a single item.
+	 *
+	 * <p>
+	 * Each entry is checked on its own rather than the collection's owner being checked as a whole:
+	 * where the owner exists only to hold them - the container built around an annotation, say - it
+	 * carries requirements of its own that nobody is editing here, and a form must not be blocked
+	 * by a value it does not offer a field for.
+	 * </p>
+	 */
+	public static Refusal refusalFor(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index) {
+		index.clearModelErrors();
+
+		List<ConfigPendingEntries.PendingEntry> pending = index.pending();
+		if (!pending.isEmpty()) {
+			for (ConfigPendingEntries.PendingEntry entry : pending) {
+				entry.setKeyFieldError(I18NConstants.ERROR_CONFIRM_OR_DISCARD_ENTRY);
+			}
+			return new Refusal(I18NConstants.ERROR_ENTRY_NOT_CONFIRMED, Collections.emptyList());
+		}
+		if (index.hasInputError()) {
+			return new Refusal(I18NConstants.ERROR_INPUT_NOT_READABLE, Collections.emptyList());
+		}
+		List<Violation> violations = new ArrayList<>();
+		for (ConfigurationItem item : edited) {
+			violations.addAll(check(item));
+		}
+		if (!violations.isEmpty()) {
+			report(violations, index);
+			// Every violation is listed, not only those that found no field: the fields are spread
+			// over a form taller than the screen, and the list is what says how many there are and
+			// what they are without hunting for them.
+			return new Refusal(I18NConstants.ERROR_CANNOT_APPLY,
+				violations.stream().map(Violation::message).toList());
+		}
+		return null;
+	}
+
+	/**
 	 * Walks the given item and every nested item and collection entry reachable through its ITEM,
 	 * LIST, ARRAY and MAP properties, adding a {@link Violation} for every mandatory property with
 	 * no value.

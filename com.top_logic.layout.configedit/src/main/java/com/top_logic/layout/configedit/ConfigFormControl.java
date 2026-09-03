@@ -10,8 +10,6 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.configedit.ConfigPendingEntries.PendingEntry;
-import com.top_logic.layout.configedit.ConfigValidation.Violation;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
@@ -280,35 +278,6 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Refuses while some collection below still holds an entry nobody confirmed, and says so at that
-	 * entry as well as at the form.
-	 *
-	 * <p>
-	 * A pending entry is not in the configuration, so {@link ConfigValidation} cannot see it, and
-	 * applying would rebuild the form over the original and drop it. The user would watch what they
-	 * typed disappear with no explanation - the same silent discard a rejected input once was.
-	 * </p>
-	 *
-	 * <p>
-	 * The message goes on the entry's own key field, where the eye already is, rather than only at
-	 * the form: with several collections open there would otherwise be nothing saying which entry is
-	 * meant.
-	 * </p>
-	 *
-	 * @return Whether an entry was found, and Apply must therefore not proceed.
-	 */
-	private boolean refuseUnconfirmedEntries() {
-		List<PendingEntry> pending = _index.pending();
-		if (pending.isEmpty()) {
-			return false;
-		}
-		for (PendingEntry entry : pending) {
-			entry.setKeyFieldError(I18NConstants.ERROR_CONFIRM_OR_DISCARD_ENTRY);
-		}
-		return true;
-	}
-
-	/**
 	 * Checks {@link ConfigFormModel#edited()} against {@link ConfigValidation} and either
 	 * {@link ConfigFormModel#apply() carries it over} - which leaves edit mode via the model's
 	 * listener - or puts every violation found on the field that caused it, leaving edit mode
@@ -343,25 +312,9 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private HandlerResult apply() {
-		_index.clearModelErrors();
-
-		// Before the unreadable-input check, not after: an unconfirmed entry whose key is already
-		// spoken for carries exactly such an input error, and "an entry could not be read" would
-		// then be said about a key that reads perfectly well and is merely taken.
-		if (refuseUnconfirmedEntries()) {
-			return refusal(I18NConstants.ERROR_ENTRY_NOT_CONFIRMED);
-		}
-		if (_index.hasInputError()) {
-			return refusal(I18NConstants.ERROR_INPUT_NOT_READABLE);
-		}
-		List<Violation> violations = ConfigValidation.check(_model.edited());
-		if (!violations.isEmpty()) {
-			ConfigValidation.report(violations, _index);
-			// Every violation is listed, not only those that found no field: the fields are spread
-			// over a form taller than the screen, and the list is what says how many there are and
-			// what they are without hunting for them.
-			return refusal(I18NConstants.ERROR_CANNOT_APPLY,
-				violations.stream().map(Violation::message).toList());
+		ConfigValidation.Refusal refusal = ConfigValidation.refusalFor(_model.edited(), _index);
+		if (refusal != null) {
+			return refusal(refusal.message(), refusal.details());
 		}
 		_model.apply();
 		return HandlerResult.DEFAULT_RESULT;

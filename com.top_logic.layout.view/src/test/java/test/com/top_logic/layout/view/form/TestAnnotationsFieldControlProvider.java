@@ -37,6 +37,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.layout.view.form.AnnotationsFieldControlProvider;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.TLModuleDisplayGroup;
 import com.top_logic.model.config.TLModuleAnnotation;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
@@ -140,6 +141,34 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 		assertEquals("The container must have taken the annotation over.", 1, container.getAnnotations().size());
 		assertNotSame("...as a copy, not as the element's own object.",
 			original, container.getAnnotations().iterator().next());
+	}
+
+	/**
+	 * An annotation whose mandatory value was never filled in must keep the surrounding form from
+	 * being saved - the marker on the field is a rule, not decoration.
+	 */
+	public void testAnIncompleteAnnotationKeepsTheFormFromBeingSaved() {
+		TLModuleDisplayGroup incomplete = TypedConfiguration.newConfigItem(TLModuleDisplayGroup.class);
+		AbstractFieldModel model = new AbstractFieldModel(new ArrayList<TLAnnotation>(List.of(incomplete)));
+
+		AnnotationsFieldControlProvider.createControl(_context, model, this::container);
+
+		// What the surrounding form does before it asks whether it may be saved.
+		model.setRevealed(true);
+		assertTrue("A mandatory annotation value left empty must be reported at the edited field.",
+			model.hasError());
+	}
+
+	/** ...and an annotation that is complete leaves the form saveable. */
+	public void testACompleteAnnotationLeavesTheFormSaveable() {
+		TLModuleDisplayGroup complete = TypedConfiguration.newConfigItem(TLModuleDisplayGroup.class);
+		complete.setValue("some.group");
+		AbstractFieldModel model = new AbstractFieldModel(new ArrayList<TLAnnotation>(List.of(complete)));
+
+		AnnotationsFieldControlProvider.createControl(_context, model, this::container);
+
+		model.setRevealed(true);
+		assertFalse("Nothing is wrong with this annotation.", model.hasError());
 	}
 
 	/** An element with no annotations yet starts with an empty container. */

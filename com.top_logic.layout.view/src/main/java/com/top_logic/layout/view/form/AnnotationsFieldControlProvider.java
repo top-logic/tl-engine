@@ -20,6 +20,7 @@ import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.layout.configedit.ConfigCollectionValue;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
+import com.top_logic.layout.configedit.ConfigValidation;
 import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
@@ -122,8 +123,10 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 		PolymorphicOptions.Choices choices = PolymorphicOptions.compute(container, annotations);
 
 		ConfigFieldIndex index = new ConfigFieldIndex();
-		ConfigFieldPush push =
-			new ConfigFieldPush(() -> binding.push(new ArrayList<>(container.getAnnotations())));
+		ConfigFieldPush push = new ConfigFieldPush(() -> {
+			binding.push(new ArrayList<>(container.getAnnotations()));
+			validate(model, container, index);
+		});
 		index.observeFields(push::watch);
 
 		// The container is the form model: an option function or mapping inside an annotation looks
@@ -133,7 +136,38 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 		ReactControl editor =
 			new ConfigListEditorControl(context, value, choices, index, model.isEditable(), container);
 		push.armed();
+		// Also once up front, not only on every later change: a form entered on annotations that
+		// are already incomplete would otherwise be saved untouched, since nothing was edited and
+		// nothing therefore checked.
+		validate(model, container, index);
 		return editor;
+	}
+
+	/**
+	 * Reports at the edited field whatever keeps the annotations from being handed over.
+	 *
+	 * <p>
+	 * The annotations are edited as one field of a surrounding form, and that form decides whether
+	 * it may be saved by asking its fields ({@link FieldModel#hasError()}). So the verdict
+	 * {@link ConfigFormControl} reaches by refusing its own Apply has to arrive here as an error on
+	 * the field instead - otherwise the rules a configuration is displayed under would hold in the
+	 * standalone configuration form and nowhere else: the mandatory marker would be drawn on a
+	 * value that may be left empty, an unconfirmed entry would be silently dropped, and an input
+	 * the field could not read would be saved as the value it had before.
+	 * </p>
+	 *
+	 * <p>
+	 * Only while editable. In view mode there is nothing to save and nothing to keep from being
+	 * saved, and marking what is merely being looked at would be noise.
+	 * </p>
+	 */
+	private static void validate(FieldModel model, AnnotatedConfig<? extends TLAnnotation> container,
+			ConfigFieldIndex index) {
+		if (!model.isEditable()) {
+			return;
+		}
+		ConfigValidation.Refusal refusal = ConfigValidation.refusalFor(container.getAnnotations(), index);
+		model.setModelValidationError(refusal == null ? null : refusal.message());
 	}
 
 	@SuppressWarnings("unchecked")

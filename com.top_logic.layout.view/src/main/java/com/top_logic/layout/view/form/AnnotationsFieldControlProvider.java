@@ -287,25 +287,72 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 			named.setName(namedOwner.getName());
 		}
 		// ... and so is where it sits in the model. PartNamesOptionProvider resolves the edited part
-		// from the form model's FullQualifiedName and its target type from the form model's TypeRef;
-		// neither answers anything on a blank container, and the whole field is then refused with
-		// "Error during instantiation". This is what the legacy form builders fill in
-		// fillFormModel(): setFullQualifiedName(qualifiedName(part)) and setTypeSpec(...).
-		String qualifiedName = qualifiedNameOf(owner);
-		if (qualifiedName != null) {
-			for (ConfigurationItem each : new ConfigurationItem[] { surroundings.formModel(), container }) {
-				if (each instanceof FullQualifiedName named) {
-					named.setFullQualifiedName(qualifiedName);
-				}
-				if (each instanceof TypeRef typed && !(each instanceof PartModel)) {
-					// A PartModel's type spec is the type of the attribute's value, not of the
-					// attribute itself, and the EditModel above derives its own from it - writing
-					// the part's own name there would misname both.
-					typed.setTypeSpec(qualifiedName);
-				}
-			}
-		}
+		// from the form model's FullQualifiedName and its target type from its TypeRef; neither
+		// answers anything on a blank container, and the whole field is then refused with "Error
+		// during instantiation". Filled the way the legacy form builders fill them in
+		// fillFormModel() - see TLStructuredTypePartFormBuilder, which writes the part's own
+		// qualified name and, as the type spec, the qualified name of the part's value type.
+		fill(surroundings.formModel(), surroundings.annotations(), qualifiedNameOf(owner),
+			typeSpecOf(owner));
 		return surroundings;
+	}
+
+	/**
+	 * Writes what an option function reads off the surroundings, wherever it can be written.
+	 *
+	 * <p>
+	 * Public so that a test can hold every container this class builds against it: which of the two
+	 * properties a container declares, and which of them it merely derives, differs per container
+	 * and is exactly what this has to get right.
+	 * </p>
+	 *
+	 * @param qualifiedName
+	 *        The edited element's own qualified name, or {@code null} if it has none.
+	 * @param typeSpec
+	 *        The qualified name of the type an option function should offer the parts of: the
+	 *        edited type itself, or an attribute's value type. {@code null} where there is none.
+	 */
+	public static void fill(ConfigurationItem formModel, ConfigurationItem annotations,
+			String qualifiedName, String typeSpec) {
+		for (ConfigurationItem each : new ConfigurationItem[] { formModel, annotations }) {
+			set(each, FullQualifiedName.FULL_QUALIFIED_NAME, qualifiedName);
+			set(each, TypeRef.TYPE_SPEC, typeSpec);
+		}
+	}
+
+	/**
+	 * Writes the given property of the given configuration, where it has one that can be written.
+	 *
+	 * <p>
+	 * Not every container declares both properties, and an attribute's form model
+	 * <em>derives</em> both of them from the part model nested in it - writing one there throws
+	 * outright ("Derived property ... cannot be set"), and taking the whole field down with it.
+	 * Setting the part model alone is also enough: the form model above then answers with what was
+	 * written there.
+	 * </p>
+	 */
+	private static void set(ConfigurationItem item, String propertyName, String value) {
+		if (value == null) {
+			return;
+		}
+		PropertyDescriptor property = item.descriptor().getProperty(propertyName);
+		if (property != null && !property.isDerived()) {
+			item.update(property, value);
+		}
+	}
+
+	/**
+	 * The qualified name of the type whose parts an option function should offer: the edited type
+	 * itself, or the value type of the edited attribute.
+	 */
+	private static String typeSpecOf(TLObject owner) {
+		if (owner instanceof TLType type) {
+			return qualifiedNameOf(type);
+		}
+		if (owner instanceof TLStructuredTypePart part) {
+			return qualifiedNameOf(part.getType());
+		}
+		return null;
 	}
 
 	/**

@@ -50,6 +50,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.annotate.AnnotatedConfig;
+import com.top_logic.model.config.FullQualifiedName;
+import com.top_logic.model.config.TypeRef;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.JavaPackage;
 
@@ -204,6 +206,59 @@ public class TestAnnotationsFieldControlProvider extends TestCase {
 			TypedConfiguration.newConfigItem(TLStructuredTypePartFormBuilder.EditModel.class);
 		formModel.setPartModel(TypedConfiguration.newConfigItem(TLPropertyFormBuilder.PropertyModel.class));
 		assertNotNull("The part model must be reachable from the form model.", formModel.getPartModel());
+	}
+
+	/**
+	 * Every container can also be told where its element sits in the model.
+	 *
+	 * <p>
+	 * Separate from {@link #testEveryContainerCanBeBuiltAndHoldsAnnotations()} because being
+	 * buildable says nothing about being writable: an attribute's form model <em>derives</em> both
+	 * of these properties from the part model nested in it, and writing one there throws "Derived
+	 * property ... cannot be set" - taking down the whole field, which is what a container is built
+	 * for in the first place.
+	 * </p>
+	 */
+	public void testEveryContainerCanBeToldWhereItsElementSits() {
+		assertFillable(TLModuleFormBuilder.EditModel.class, null);
+		assertFillable(EnumConfig.ClassifierConfig.class, null);
+		assertFillable(TLEnumerationFormBuilder.EditModel.class, null);
+		assertFillable(TLStructuredTypeFormBuilder.EditModel.class, null);
+		assertFillable(TLPropertyFormBuilder.EditModel.class, TLPropertyFormBuilder.PropertyModel.class);
+		assertFillable(TLReferenceFormBuilder.EditModel.class, TLReferenceFormBuilder.ReferenceModel.class);
+	}
+
+	/**
+	 * Fills the given container pair the way the provider does, and checks that what an option
+	 * function reads is answered afterwards.
+	 *
+	 * @param partType
+	 *        The nested part model holding the annotations, or {@code null} where the form model
+	 *        holds them itself.
+	 */
+	private void assertFillable(Class<? extends ConfigurationItem> formType,
+			Class<? extends ConfigurationItem> partType) {
+		ConfigurationItem formModel = TypedConfiguration.newConfigItem(formType);
+		ConfigurationItem annotations =
+			partType == null ? formModel : TypedConfiguration.newConfigItem(partType);
+		if (partType != null) {
+			((TLStructuredTypePartFormBuilder.EditModel) formModel)
+				.setPartModel((TLStructuredTypePartFormBuilder.PartModel) annotations);
+		}
+
+		AnnotationsFieldControlProvider.fill(formModel, annotations, "my.module:MyType", "my.module:MyType");
+
+		// Not every container declares these - a module has no qualified name of this shape, and no
+		// option function asks it for one. Where a container does declare them, they must answer
+		// afterwards, including where the form model only derives them from the part model.
+		if (formModel instanceof FullQualifiedName named) {
+			assertEquals("The form model must answer what PartNamesOptionProvider asks it for: "
+				+ formType.getName(), "my.module:MyType", named.getFullQualifiedName());
+		}
+		if (formModel instanceof TypeRef typed) {
+			assertEquals("...and its target type: " + formType.getName(),
+				"my.module:MyType", typed.getTypeSpec());
+		}
 	}
 
 	private void assertHoldsAnnotations(Class<? extends ConfigurationItem> configType) {

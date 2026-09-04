@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +66,7 @@ import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
+import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
@@ -103,6 +105,9 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getColumns()}. */
 		String COLUMNS = "columns";
+
+		/** Configuration name for {@link #getFixedColumns()}. */
+		String FIXED_COLUMNS = "fixed-columns";
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
@@ -149,6 +154,19 @@ public class TableElement implements UIElement {
 		 */
 		@Name(COLUMNS)
 		ColumnsConfig getColumns();
+
+		/**
+		 * How many of the leading columns stay in place while the table is scrolled horizontally.
+		 *
+		 * <p>
+		 * With a table wider than its viewport, the columns beyond these disappear behind them. The
+		 * user can move the boundary (by dragging it, or through the column header's context menu);
+		 * the value configured here is what a table starts with, until a personalization of its own
+		 * exists. Zero (default) keeps no column in place.
+		 * </p>
+		 */
+		@Name(FIXED_COLUMNS)
+		int getFixedColumns();
 
 		/**
 		 * Optional {@link ViewChannel} to write the selected row object(s) to.
@@ -346,8 +364,11 @@ public class TableElement implements UIElement {
 			columns.add(setup.binding().createColumn(setup));
 		}
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
-		DefaultTableView<Object> view = DefaultTableView.create(columns, source,
-			PersonalConfigViewStateStore.INSTANCE, tableId(), defaultSort());
+		Set<String> hiddenByDefault = hiddenByDefault(setups.stream().map(ColumnSetup::attribute).toList());
+		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
+		initialState.setFrozenCount(_config.getFixedColumns());
+		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
+			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault);
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 
@@ -411,8 +432,10 @@ public class TableElement implements UIElement {
 			resolveObservedTypes(),
 			inputChannels,
 			refresh);
-		control.addBeforeWriteAction(() -> observer.attach(context.getModelScope()));
-		control.addCleanupAction(observer::detach);
+		// Observe the model only while the table is displayed: a table that is not attached - the
+		// inactive child of a tab bar, a page nobody looks at - must not react to model changes.
+		control.addAttachListener(() -> observer.attach(context.getModelScope()));
+		control.addDetachListener(observer::detach);
 
 		return control;
 	}
@@ -442,11 +465,15 @@ public class TableElement implements UIElement {
 		ChannelRef selectionRef = _config.getSelection();
 		ViewChannel selectionChannel = selectionRef != null ? context.resolveChannel(selectionRef) : null;
 
+		List<RowSetTableControl.TableColumn> editColumns = editColumns(rowType);
 		RowSetTableControl control =
-			new RowSetTableControl(context, formControl, binding, editColumns(rowType), _config.getRowEdit());
+			new RowSetTableControl(context, formControl, binding, editColumns, _config.getRowEdit());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
+		control.setHiddenByDefault(
+			hiddenByDefault(editColumns.stream().map(RowSetTableControl.TableColumn::attribute).toList()));
 		control.setDefaultSort(defaultSort());
+		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
 		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), resolveObservedTypes(), inputChannels);
 		control.init();
@@ -458,8 +485,9 @@ public class TableElement implements UIElement {
 
 	/**
 	 * The data columns of the editable variant: one per configured {@code <column>} (with its
-	 * read-only flag and resolved filter binding), or - when no columns are configured - one per
-	 * non-hidden attribute of the row type.
+	 * read-only flag and resolved filter binding), followed by the {@link #offeredParts offered}
+	 * remainder of the row type - or, when no columns are configured, one per non-hidden attribute
+	 * of the row type.
 	 */
 	private List<RowSetTableControl.TableColumn> editColumns(TLStructuredType rowType) {
 		List<RowSetTableControl.TableColumn> columns = new ArrayList<>();
@@ -469,6 +497,12 @@ public class TableElement implements UIElement {
 				String attribute = columnConfig.getAttribute();
 				columns.add(new RowSetTableControl.TableColumn(attribute, columnConfig.getReadonly(),
 					_bindings.get(attribute)));
+			}
+			for (TLStructuredTypePart part : offeredParts(configuredAttributes())) {
+				// An offered column has no <column> to declare a read-only flag, so it is editable
+				// exactly as a form field for that attribute would be.
+				columns.add(new RowSetTableControl.TableColumn(part.getName(),
+					!DisplayAnnotations.isEditable(part), ColumnBinding.TYPE_DERIVED));
 			}
 		} else if (rowType != null) {
 			for (TLStructuredTypePart part : rowType.getAllParts()) {
@@ -505,11 +539,9 @@ public class TableElement implements UIElement {
 			com.top_logic.layout.view.I18NConstants.COMPOSITION_TABLE_ADD, Icons.COMPOSITION_TABLE_ADD,
 			formControl, ctx -> control.addRow());
 		scope.addCommand(addCommand);
-		formControl.addBeforeWriteAction(addCommand::attach);
-		formControl.addCleanupAction(() -> {
-			scope.removeCommand(addCommand);
-			addCommand.detach();
-		});
+		formControl.addAttachListener(addCommand::attach);
+		formControl.addDetachListener(addCommand::detach);
+		formControl.addCleanupAction(() -> scope.removeCommand(addCommand));
 	}
 
 	/**
@@ -582,8 +614,9 @@ public class TableElement implements UIElement {
 
 	/**
 	 * The resolved column descriptors: one per configured {@code <column>} (using its
-	 * {@link #resolveBinding resolved binding}), or - when no columns are configured - one per
-	 * non-hidden attribute of the row type, each type-derived.
+	 * {@link #resolveBinding resolved binding}), followed by the {@link #offeredParts offered}
+	 * remainder of the row type - or, when no columns are configured, one per non-hidden attribute
+	 * of the row type, each type-derived.
 	 */
 	private List<ColumnSetup> columnSetups(TLStructuredType rowType, ViewContext context) {
 		List<ColumnSetup> setups = new ArrayList<>();
@@ -594,6 +627,11 @@ public class TableElement implements UIElement {
 				TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
 				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
 					_bindings.get(attribute)));
+			}
+			for (TLStructuredTypePart part : offeredParts(configuredAttributes())) {
+				String attribute = part.getName();
+				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
+					ColumnBinding.TYPE_DERIVED));
 			}
 		} else if (rowType != null) {
 			// No explicit columns configured: derive a default set from the row type's
@@ -612,6 +650,73 @@ public class TableElement implements UIElement {
 				"A <table> requires either explicit <column>s or a resolvable row type to derive them from.");
 		}
 		return setups;
+	}
+
+	/**
+	 * The attributes a table with explicitly configured {@code <column>}s <em>offers</em> in
+	 * addition: those of its {@link Config#getTypes() configured types} that no column covers and
+	 * that a form would display, too - so a user can add any attribute of the row type to the table
+	 * through the column selection, without the table having to enumerate them all.
+	 *
+	 * <p>
+	 * Their columns start out hidden (see {@link #hiddenByDefault(Collection)}); a table configures
+	 * the columns it considers worth showing, and the rest is a choice, not a default.
+	 * </p>
+	 *
+	 * @param covered
+	 *        The attributes of the configured columns, which are not offered a second time.
+	 */
+	private List<TLStructuredTypePart> offeredParts(Collection<String> covered) {
+		// Only an explicitly configured type gives a stable set of columns; a type guessed from the
+		// first row would offer different columns depending on the data at hand.
+		List<TLModelPartRef> typeRefs = _config.getTypes();
+		if (typeRefs == null || typeRefs.isEmpty()) {
+			return List.of();
+		}
+		Set<String> seen = new HashSet<>(covered);
+		List<TLStructuredTypePart> result = new ArrayList<>();
+		for (TLModelPartRef typeRef : typeRefs) {
+			TLStructuredType type;
+			try {
+				type = typeRef.resolveClass();
+			} catch (ConfigurationException ex) {
+				throw new RuntimeException("Failed to resolve type: " + typeRef.qualifiedName(), ex);
+			}
+			for (TLStructuredTypePart part : type.getAllParts()) {
+				if (DisplayAnnotations.isHidden(part) || !seen.add(part.getName())) {
+					continue;
+				}
+				result.add(part);
+			}
+		}
+		return result;
+	}
+
+	/** The attributes of the configured {@code <column>}s, empty if none are configured. */
+	private Set<String> configuredAttributes() {
+		ColumnsConfig columnsConfig = _config.getColumns();
+		if (columnsConfig == null || columnsConfig.getColumns().isEmpty()) {
+			return Set.of();
+		}
+		Set<String> result = new LinkedHashSet<>();
+		for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
+			result.add(columnConfig.getAttribute());
+		}
+		return result;
+	}
+
+	/**
+	 * Which of the given columns the table does not display until the user selects them: everything
+	 * beyond the configured {@code <column>}s, i.e. the {@link #offeredParts offered} attributes.
+	 */
+	private Set<String> hiddenByDefault(Collection<String> columns) {
+		Set<String> configured = configuredAttributes();
+		if (configured.isEmpty()) {
+			return Set.of();
+		}
+		Set<String> result = new LinkedHashSet<>(columns);
+		result.removeAll(configured);
+		return result;
 	}
 
 	/**

@@ -242,79 +242,17 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		}
 	}
 
-	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_headerContent != null) {
-			_headerContent.attach();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.attach();
-		}
-		if (_footerContent != null) {
-			_footerContent.attach();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.attach();
-		}
-		if (_activeItemId != null) {
-			ReactControl content = _contentCache.get(_activeItemId);
-			if (content != null) {
-				content.attach();
-			}
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_headerContent != null) {
-			_headerContent.detach();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.detach();
-		}
-		if (_footerContent != null) {
-			_footerContent.detach();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.detach();
-		}
-		if (_activeItemId != null) {
-			ReactControl content = _contentCache.get(_activeItemId);
-			if (content != null) {
-				content.detach();
-			}
-		}
-	}
-
+	/**
+	 * Also disposes the contents of items visited earlier: only the active item's content is part of
+	 * the state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
-		if (_activeItemId != null) {
-			ReactControl active = _contentCache.get(_activeItemId);
-			if (active != null) {
-				active.detach();
-			}
-		}
+		super.cleanupChildren();
 		for (ReactControl cached : _contentCache.values()) {
 			cached.cleanupTree();
 		}
 		_contentCache.clear();
-		if (_headerContent != null) {
-			_headerContent.cleanupTree();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.cleanupTree();
-		}
-		if (_footerContent != null) {
-			_footerContent.cleanupTree();
-		}
-		if (_footerCollapsedContent != null) {
-			_footerCollapsedContent.cleanupTree();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.cleanupTree();
-		}
 	}
 
 	/**

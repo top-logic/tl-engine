@@ -17,6 +17,19 @@
 		</metaobject>
 
 		<metaobject
+			object_name="TLSecUnsecuredData"
+			super_class="TLObject"
+		>
+			<attributes>
+				<mo_attribute
+					att_name="data"
+					att_type="String"
+					mandatory="false"
+				/>
+			</attributes>
+		</metaobject>
+
+		<metaobject
 			object_name="TLSecProject"
 			super_class="TLObject"
 		>

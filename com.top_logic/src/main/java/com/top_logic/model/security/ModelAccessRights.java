@@ -8,6 +8,7 @@ package com.top_logic.model.security;
 
 import java.util.Set;
 
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -28,8 +29,36 @@ public interface ModelAccessRights {
 	 * Returns the roles that are permitted to perform the given command group on instances of the
 	 * given type. Applies to both built-in command groups (Read, Write, Delete) and custom business
 	 * operations (Approve, Cancel, etc.).
+	 *
+	 * <p>
+	 * An empty set means that no role may perform the command group. For a type
+	 * {@link #isWithoutSecurity(TLClass) without security} however, the result is meaningless, since
+	 * access to such a type is granted independent of roles.
+	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup);
+
+	/**
+	 * Whether objects of the given type are not access controlled at all.
+	 *
+	 * <p>
+	 * Every user may access the objects of a type without security, no matter which roles the user
+	 * has on them. That cannot be expressed as a set of roles, therefore
+	 * {@link #getAllowedRoles(TLClass, BoundCommandGroup)} must not be used to decide access for
+	 * such a type. The access checks ({@link #isAllowed(Person, TLObject, BoundCommandGroup)} and
+	 * its variants) already take the types without security into account.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects to access, typically {@link TLObject#tType()} of the object in
+	 *        question.
+	 *
+	 * @implSpec An implementation without a notion of types excluded from access control answers
+	 *           <code>false</code> for every type.
+	 */
+	default boolean isWithoutSecurity(TLClass type) {
+		return false;
+	}
 
 	/**
 	 * Returns the roles of which the user must hold at least one <em>in addition</em> to the
@@ -152,8 +181,66 @@ public interface ModelAccessRights {
 
 	/**
 	 * Determines the single {@link ModelAccessRights} instance.
+	 *
+	 * <p>
+	 * Within an {@link #uncheckedSecurity(Runnable) unchecked scope}, an implementation granting
+	 * every access is delivered. Otherwise the {@link SecurityConfigurationService} must be started;
+	 * asking for access rights without a security configuration is an error and is reported as one.
+	 * </p>
 	 */
 	static ModelAccessRights getInstance() {
+		ModelAccessRights unchecked = UncheckedAccessRights.active();
+		if (unchecked != null) {
+			return unchecked;
+		}
 		return SecurityConfigurationService.Module.INSTANCE.getImplementationInstance();
+	}
+
+	/**
+	 * Runs the given job without any access check.
+	 *
+	 * <p>
+	 * Within the job (and everything it calls in the current thread), {@link #getInstance()} delivers
+	 * an implementation that grants every access. This is required where the security configuration
+	 * cannot exist yet: the {@link SecurityConfigurationService} resolves the configured type and
+	 * attribute names against the application model and therefore depends on the
+	 * {@link com.top_logic.util.model.ModelService}. Setting up the model in turn touches the model
+	 * itself - allocating the module singletons applies the default values of their attributes, and a
+	 * {@code default-by-expression} default that allocates objects executes <i>TL-Script</i>. An
+	 * access check at that point would ask for a service that is still starting up.
+	 * </p>
+	 *
+	 * <p>
+	 * The scope must be opened deliberately and kept as small as possible. It is not a fallback for
+	 * a security configuration that failed to start: outside such a scope, a missing security
+	 * configuration must fail loudly instead of silently operating an application without access
+	 * control.
+	 * </p>
+	 *
+	 * <p>
+	 * Note that this switches off the <em>model based</em> access rights only. It neither affects the
+	 * rights of a command, nor does it establish a
+	 * {@link com.top_logic.basic.thread.ThreadContext#isSystemContext() system context}.
+	 * </p>
+	 *
+	 * @param job
+	 *        The job to run without an access check. A surrounding scope stays open afterwards.
+	 * @return The result of the given job.
+	 */
+	static <T, E1 extends Throwable, E2 extends Throwable> T uncheckedSecurity(ComputationEx2<T, E1, E2> job)
+			throws E1, E2 {
+		return UncheckedAccessRights.execute(job);
+	}
+
+	/**
+	 * Runs the given job without any access check.
+	 *
+	 * @see #uncheckedSecurity(ComputationEx2)
+	 */
+	static void uncheckedSecurity(Runnable job) {
+		UncheckedAccessRights.execute(() -> {
+			job.run();
+			return null;
+		});
 	}
 }

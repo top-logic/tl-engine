@@ -11,9 +11,11 @@ import java.util.function.Predicate;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
@@ -200,6 +202,196 @@ public class TestDefaultTableView extends TestCase {
 		view.setColumnVisible("age", false);
 		assertEquals(List.of("name"),
 			view.columns().stream().map(ColumnView::name).toList());
+	}
+
+	public void testColumnOptionsOfferHiddenColumnsLast() {
+		TableView<Person> view = newView();
+		view.setColumnVisible("age", false);
+
+		List<ColumnOption> options = view.columnOptions();
+		assertEquals(List.of("name", "age"), options.stream().map(ColumnOption::name).toList());
+		assertTrue(options.get(0).visible());
+		assertFalse("A hidden column is still offered as an option.", options.get(1).visible());
+	}
+
+	public void testColumnOptionsFollowDisplayOrder() {
+		TableView<Person> view = newView();
+		view.moveColumn("age", 0);
+		assertEquals(List.of("age", "name"), view.columnOptions().stream().map(ColumnOption::name).toList());
+	}
+
+	public void testSetColumnOrderAppliesSelectionAndOrder() {
+		TableView<Person> view = newView();
+		view.setColumnOrder(List.of("age"));
+		assertEquals(List.of("age"), view.columns().stream().map(ColumnView::name).toList());
+
+		// The dropped column comes back through the same command, in the requested position.
+		view.setColumnOrder(List.of("name", "age"));
+		assertEquals(List.of("name", "age"), view.columns().stream().map(ColumnView::name).toList());
+	}
+
+	public void testSetColumnOrderIgnoresUnknownAndRepeatedColumns() {
+		TableView<Person> view = newView();
+		view.setColumnOrder(List.of("age", "missing", "age", "name"));
+		assertEquals(List.of("age", "name"), view.columns().stream().map(ColumnView::name).toList());
+	}
+
+	public void testSetColumnOrderShrinksFrozenPrefix() {
+		TableView<Person> view = newView();
+		view.setFrozenColumnCount(2);
+		view.setColumnOrder(List.of("name"));
+		assertEquals("The frozen prefix cannot reach beyond the remaining columns.", 1, view.frozenColumnCount());
+	}
+
+	public void testDefaultColumnOrderIsDeclarationOrder() {
+		TableView<Person> view = newView();
+		view.setColumnOrder(List.of("age"));
+		assertEquals(List.of("name", "age"), view.defaultColumnOrder());
+	}
+
+	public void testColumnSelectionPersistedAndRestored() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-columns");
+
+		TableView<Person> view1 = newView(store, id);
+		view1.setColumnOrder(List.of("age"));
+
+		TableView<Person> view2 = newView(store, id);
+		// The hidden column is restored as an option, not as a displayed column.
+		assertEquals(List.of("age"), view2.columns().stream().map(ColumnView::name).toList());
+		assertEquals(List.of("age", "name"), view2.columnOptions().stream().map(ColumnOption::name).toList());
+	}
+
+	private TableView<Person> newViewOffering(String hiddenColumn, ViewStateStore store, TableId id) {
+		List<Column<Person, ?>> columns = personColumns();
+		return DefaultTableView.create(columns, new ListRowSource<>(people(), columns), store, id,
+			SortSpec.NONE, List.of(hiddenColumn));
+	}
+
+	public void testColumnHiddenByDefaultIsOfferedNotDisplayed() {
+		TableView<Person> view = newViewOffering("age", null, null);
+		assertEquals(List.of("name"), view.columns().stream().map(ColumnView::name).toList());
+
+		List<ColumnOption> options = view.columnOptions();
+		assertEquals(List.of("name", "age"), options.stream().map(ColumnOption::name).toList());
+		assertFalse(options.get(1).visible());
+		assertEquals("Resetting must not show what the table only offers.", List.of("name"),
+			view.defaultColumnOrder());
+	}
+
+	public void testColumnHiddenByDefaultStaysHiddenOnRestore() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-offered");
+
+		// A personalization that predates the offered column: it knows neither of its display nor of
+		// its exclusion.
+		TableViewState persisted = new TableViewState();
+		persisted.setColumnOrder(List.of("name"));
+		store.save(id, persisted, com.top_logic.table.FilterCodec.NONE);
+
+		TableView<Person> view = newViewOffering("age", store, id);
+		assertEquals("An offered column must not appear as a newly added one.", List.of("name"),
+			view.columns().stream().map(ColumnView::name).toList());
+		assertEquals(List.of("name", "age"), view.columnOptions().stream().map(ColumnOption::name).toList());
+	}
+
+	public void testColumnHiddenByDefaultCanBeSelected() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-select-offered");
+
+		TableView<Person> view1 = newViewOffering("age", store, id);
+		view1.setColumnOrder(List.of("age", "name"));
+		assertEquals(List.of("age", "name"), view1.columns().stream().map(ColumnView::name).toList());
+
+		// The choice outlives the session, even though the column is hidden by default.
+		TableView<Person> view2 = newViewOffering("age", store, id);
+		assertEquals(List.of("age", "name"), view2.columns().stream().map(ColumnView::name).toList());
+	}
+
+	/** A table whose last column is an action column the user cannot decide about. */
+	private TableView<Person> newViewWithActionColumn() {
+		List<Column<Person, ?>> columns = new java.util.ArrayList<>(personColumns());
+		columns.add(DefaultColumn.<Person, Person> builder("_delete", row -> row)
+			.label(ResKey.text(""))
+			.selectable(false)
+			.build());
+		return DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+	}
+
+	public void testActionColumnIsNoOption() {
+		TableView<Person> view = newViewWithActionColumn();
+		assertEquals(List.of("name", "age", "_delete"), view.columns().stream().map(ColumnView::name).toList());
+		assertEquals("A column holding a button has no label to offer.", List.of("name", "age"),
+			view.columnOptions().stream().map(ColumnOption::name).toList());
+	}
+
+	public void testActionColumnKeepsItsPlace() {
+		TableView<Person> view = newViewWithActionColumn();
+		// The column selection knows nothing about the action column, so it cannot list it.
+		view.setColumnOrder(List.of("age", "name"));
+		assertEquals(List.of("age", "name", "_delete"), view.columns().stream().map(ColumnView::name).toList());
+		assertFalse("Hiding an action column would take away its action for good.",
+			view.state().getHiddenColumns().contains("_delete"));
+
+		// Also when the selection drops a column.
+		view.setColumnOrder(List.of("name"));
+		assertEquals(List.of("name", "_delete"), view.columns().stream().map(ColumnView::name).toList());
+	}
+
+	public void testTrailingActionColumnStaysLast() {
+		List<Column<Person, ?>> columns = new java.util.ArrayList<>(personColumns());
+		columns.add(DefaultColumn.<Person, Person> builder("extra", row -> row).selectable(true).build());
+		columns.add(DefaultColumn.<Person, Person> builder("_delete", row -> row)
+			.label(ResKey.text(""))
+			.selectable(false)
+			.build());
+		TableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		view.setColumnOrder(List.of("name", "age"));
+		assertEquals(List.of("name", "age", "_delete"), view.columns().stream().map(ColumnView::name).toList());
+
+		// Switching a further column on must not push the action column to the left of it.
+		view.setColumnOrder(List.of("name", "age", "extra"));
+		assertEquals(List.of("name", "age", "extra", "_delete"),
+			view.columns().stream().map(ColumnView::name).toList());
+	}
+
+	public void testLeadingActionColumnStaysFirst() {
+		List<Column<Person, ?>> columns = new java.util.ArrayList<>();
+		columns.add(DefaultColumn.<Person, Person> builder("_detail", row -> row)
+			.label(ResKey.text(""))
+			.selectable(false)
+			.build());
+		columns.addAll(personColumns());
+		TableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		view.setColumnOrder(List.of("age", "name"));
+		assertEquals(List.of("_detail", "age", "name"), view.columns().stream().map(ColumnView::name).toList());
+	}
+
+	public void testConfiguredFrozenCountIsTheInitialState() {
+		List<Column<Person, ?>> columns = personColumns();
+		TableViewState initial = DefaultTableView.initialState(columns, SortSpec.NONE, List.of());
+		initial.setFrozenCount(1);
+		TableView<Person> view =
+			new DefaultTableView<>(columns, new ListRowSource<>(people(), columns), initial, null, null, List.of());
+		assertEquals(1, view.frozenColumnCount());
+	}
+
+	public void testFrozenAreaDoesNotEndBehindAnActionColumn() {
+		List<Column<Person, ?>> columns = new java.util.ArrayList<>();
+		columns.add(DefaultColumn.<Person, Person> builder("_detail", row -> row)
+			.label(ResKey.text(""))
+			.frozenEligible(false)
+			.selectable(false)
+			.build());
+		columns.addAll(personColumns());
+		TableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+
+		view.setFrozenColumnCount(1);
+		assertEquals("A column holding a button is carried along, it does not end the frozen area.",
+			0, view.frozenColumnCount());
+
+		view.setFrozenColumnCount(2);
+		assertEquals(2, view.frozenColumnCount());
 	}
 
 	public void testListenerNotifiedOnSortAndFilter() {

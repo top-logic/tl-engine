@@ -184,57 +184,6 @@ public class ReactWindowControl extends ToolbarControl {
 		}
 	}
 
-	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_child != null) {
-			_child.attach();
-		}
-		for (ReactControl action : _actions) {
-			action.attach();
-		}
-		if (_toolbar != null) {
-			_toolbar.attach();
-		}
-		if (_buttonBar != null) {
-			_buttonBar.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_child != null) {
-			_child.detach();
-		}
-		for (ReactControl action : _actions) {
-			action.detach();
-		}
-		if (_toolbar != null) {
-			_toolbar.detach();
-		}
-		if (_buttonBar != null) {
-			_buttonBar.detach();
-		}
-	}
-
-	@Override
-	protected void cleanupChildren() {
-		if (_child != null) {
-			_child.cleanupTree();
-		}
-		for (ReactControl action : _actions) {
-			action.cleanupTree();
-		}
-		if (_toolbar != null) {
-			_toolbar.cleanupTree();
-		}
-		if (_buttonBar != null) {
-			_buttonBar.cleanupTree();
-		}
-		cleanupToolbarButtons();
-	}
-
 	/**
 	 * Handles the close button click.
 	 */

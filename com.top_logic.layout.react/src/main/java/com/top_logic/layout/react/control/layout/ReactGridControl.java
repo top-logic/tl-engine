@@ -67,14 +67,6 @@ public class ReactGridControl extends ReactControl {
 		putState(CHILDREN, _children);
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		for (ReactControl child : _children) {
-			child.cleanupTree();
-		}
-	}
-
-
 	/**
 	 * Rendering-only state keys, omitted from the headless projection.
 	 */

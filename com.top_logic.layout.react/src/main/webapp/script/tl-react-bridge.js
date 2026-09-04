@@ -567,7 +567,7 @@ function Yg() {
       controlId: "",
       command: "windowClosed",
       windowName: c,
-      arguments: { windowId: c }
+      arguments: { windowId: c, unload: !0 }
     }), f = new Blob([o], { type: "application/json" });
     navigator.sendBeacon(`${i}/react-api/command`, f);
   });
@@ -10978,7 +10978,7 @@ function vb(i) {
   if (!o)
     return;
   const f = i.target;
-  if (f && o.contains(f) || f instanceof Element && f.closest(`[${oh}]`))
+  if (f && o.contains(f) || f && f.contains(o) || f instanceof Element && f.closest(`[${oh}]`))
     return;
   const r = (c.getFocusTarget && c.getFocusTarget()) ?? Ho(o) ?? o;
   r && r !== document.activeElement && r.focus();

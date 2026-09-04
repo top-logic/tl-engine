@@ -40,21 +40,6 @@ public class ReactInsetControl extends ReactControl {
 		putState(CHILD, child);
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		_child.cleanupTree();
-	}
-
-	@Override
-	protected void propagateAttach() {
-		_child.attach();
-	}
-
-	@Override
-	protected void propagateDetach() {
-		_child.detach();
-	}
-
 	/**
 	 * Structural: this control is a padding/inset wrapper and is elided from the headless projection.
 	 */

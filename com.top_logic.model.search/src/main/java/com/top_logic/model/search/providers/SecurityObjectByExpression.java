@@ -70,6 +70,13 @@ public class SecurityObjectByExpression extends AbstractConfiguredInstance<Secur
 		 * is required. It must return the security object for the given model.
 		 * </p>
 		 * 
+		 * <p>
+		 * The function is evaluated without security. In contrast to other expressions, objects
+		 * that the current user is not allowed to see are neither filtered from navigations nor
+		 * from search results. This is required, because a missing security object would make the
+		 * secured view a technical one that is visible for everybody.
+		 * </p>
+		 * 
 		 * @implNote The returned object must be a {@link BoundObject}.
 		 */
 		@Mandatory
@@ -100,6 +107,11 @@ public class SecurityObjectByExpression extends AbstractConfiguredInstance<Secur
 	public SecurityObjectByExpression(InstantiationContext context, Config config) {
 		super(context, config);
 		_function = QueryExecutor.compile(config.getFunction());
+		/* The result of this function is used as security object. It is not offered to the user.
+		 * When the user would not be allowed to see the element, then null is returned as security
+		 * object. A view with null security object is treated as technical view without security
+		 * and the view is visible for the user. */
+		_function.disableSecurity();
 		TLModel applicationModel = ModelService.getApplicationModel();
 		for (TLModelPartRef secObjectType : config.getSecurityObjectTypes()) {
 			try {

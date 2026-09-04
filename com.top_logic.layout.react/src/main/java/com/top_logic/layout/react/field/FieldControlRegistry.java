@@ -15,11 +15,13 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
+import com.top_logic.layout.react.control.form.ReactBooleanChoiceControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.model.annotate.ui.BooleanPresentation;
 
 /**
  * The {@link ReactFieldControlProvider}s that edit values, by value type.
@@ -62,10 +64,11 @@ public class FieldControlRegistry {
 	 */
 	protected FieldControlRegistry() {
 		register(String.class, TEXT);
-		register(Boolean.class, (context, field, model) -> new ReactCheckboxControl(context, model));
+		register(Boolean.class, FieldControlRegistry::createBooleanControl);
 		register(Number.class,
 			(context, field, model) -> new ReactNumberInputControl(context, model, decimals(field)));
-		register(Date.class, (context, field, model) -> new ReactDatePickerControl(context, model));
+		register(Date.class,
+			(context, field, model) -> new ReactDatePickerControl(context, model, field.getDateKind()));
 		register(BinaryData.class, (context, field, model) -> new ReactBinaryFieldControl(context, model));
 		// An internationalized text is edited in the current language, with the other languages
 		// reachable through the editor's dialog.
@@ -126,6 +129,23 @@ public class FieldControlRegistry {
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		ReactFieldControlProvider provider = lookup(field.getValueType());
 		return (provider == null ? TEXT : provider).createControl(context, field, model);
+	}
+
+	/**
+	 * Edits a boolean value as a checkbox, or as radio buttons or a select when it
+	 * {@link FieldSpec#getBooleanPresentation() asks} for it.
+	 *
+	 * <p>
+	 * A {@link FieldSpec#isTriState() tri-state} value keeps a state for "no value": the checkbox
+	 * gets a third state, the choice a third option.
+	 * </p>
+	 */
+	private static ReactControl createBooleanControl(ReactContext context, FieldSpec field, FieldModel model) {
+		BooleanPresentation presentation = field.getBooleanPresentation();
+		if (presentation == BooleanPresentation.CHECKBOX) {
+			return new ReactCheckboxControl(context, model, field.isTriState());
+		}
+		return new ReactBooleanChoiceControl(context, model, presentation, field.isTriState());
 	}
 
 	/**

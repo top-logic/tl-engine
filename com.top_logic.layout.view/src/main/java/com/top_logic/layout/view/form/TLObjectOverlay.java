@@ -12,11 +12,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.layout.form.FormMember;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
+import com.top_logic.model.annotate.util.ConstraintCheck;
 
 /**
  * Lean overlay over a persistent {@link TLObject} that intercepts writes.
@@ -25,8 +30,16 @@ import com.top_logic.model.TransientObject;
  * Unchanged attributes delegate to the base object. Changed attributes are stored in a local map.
  * This serves as the transient editing buffer for the form system.
  * </p>
+ *
+ * <p>
+ * The overlay stands for the object it wraps: it reports that object as its
+ * {@link #getEditedObject() edited object} and shares its {@link #tId() identity}. An algorithm
+ * receiving the editing buffer instead of the object - most notably a {@link ConstraintCheck}
+ * comparing the checked object with objects found in the database - therefore recognizes the edited
+ * object instead of treating it as a stranger.
+ * </p>
  */
-public class TLObjectOverlay extends TransientObject {
+public class TLObjectOverlay extends TransientObject implements TLFormObjectBase {
 
 	private final TLObject _base;
 
@@ -45,6 +58,39 @@ public class TLObjectOverlay extends TransientObject {
 	@Override
 	public TLStructuredType tType() {
 		return _base.tType();
+	}
+
+	@Override
+	public boolean isCreate() {
+		return false;
+	}
+
+	@Override
+	public TLObject getEditedObject() {
+		return getBase();
+	}
+
+	@Override
+	public String getDomain() {
+		return null;
+	}
+
+	/**
+	 * The identity of the {@link #getEditedObject() edited object}.
+	 *
+	 * @implNote Sharing the identity makes the overlay {@link #equals(Object) equal} to the object
+	 *           it stands for, so an algorithm comparing the edited object with objects read from
+	 *           the database (e.g. a uniqueness check) does not report a conflict of the object
+	 *           with itself.
+	 */
+	@Override
+	public ObjectKey tId() {
+		return _base.tId();
+	}
+
+	@Override
+	public KnowledgeItem tHandle() {
+		return _base.tHandle();
 	}
 
 	@Override
@@ -68,6 +114,32 @@ public class TLObjectOverlay extends TransientObject {
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object value) {
 		_changes.put(part, value);
+	}
+
+	@Override
+	public Object getFieldValue(TLStructuredTypePart attribute) {
+		// All values displayed in the form are read through this overlay, so the buffered value is
+		// the value being displayed.
+		return tValue(attribute);
+	}
+
+	/**
+	 * Always <code>null</code>, since a React form is not built from {@link FormMember}s but from
+	 * {@link AttributeFieldModel}s.
+	 */
+	@Override
+	public FormMember getField(TLStructuredTypePart attribute) {
+		return null;
+	}
+
+	@Override
+	public Object getBaseValue(TLStructuredTypePart attribute) {
+		return _base.tValue(attribute);
+	}
+
+	@Override
+	public Object defaultValue(TLStructuredTypePart part) {
+		return _base.tValue(part);
 	}
 
 	/**
@@ -148,6 +220,8 @@ public class TLObjectOverlay extends TransientObject {
 
 	/**
 	 * The base object this overlay wraps.
+	 *
+	 * @see #getEditedObject()
 	 */
 	public TLObject getBase() {
 		return _base;

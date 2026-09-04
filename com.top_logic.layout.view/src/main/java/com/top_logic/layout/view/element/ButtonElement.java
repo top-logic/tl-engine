@@ -130,8 +130,8 @@ public class ButtonElement implements UIElement {
 		}
 		control.setAppearance(_config.getAppearance());
 		control.setSize(_config.getSize());
-		control.addBeforeWriteAction(model::attach);
-		control.addCleanupAction(model::detach);
+		control.addAttachListener(model::attach);
+		control.addDetachListener(model::detach);
 		return control;
 	}
 }

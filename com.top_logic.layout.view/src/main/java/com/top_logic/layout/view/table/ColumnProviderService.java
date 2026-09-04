@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,11 +27,13 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
+import com.top_logic.layout.view.form.DatePickerControlProvider;
 import com.top_logic.layout.view.form.FieldControlService;
-import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLObject;
@@ -245,17 +248,24 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 				// The kind describes the storage format; the values seen here are application
 				// values, whose type is defined by the storage mapping. A datatype whose mapping
 				// translates to a different application type (e.g. I18NString: stored as string,
-				// application value ResKey) gets the label-based fallback column instead.
-				Class<?> applicationType = primitive.getStorageMapping().getApplicationType();
+				// application value ResKey) gets the label-based fallback column instead. A mapping
+				// may declare its application type as a primitive (e.g.
+				// com.top_logic.element.meta.kbbased.storage.mappings.BooleanMapping: boolean), while
+				// the values passing through a column are always boxed - so compare against the
+				// wrapper type.
+				Class<?> applicationType =
+					PrimitiveTypeUtil.asNonPrimitive(primitive.getStorageMapping().getApplicationType());
 				switch (primitive.getKind()) {
 					case BOOLEAN:
+						// A two-valued boolean has no empty cells, so the filter offers just the
+						// two value options.
+						if (Boolean.class.isAssignableFrom(applicationType)) {
+							return booleanColumn(attribute, label, part, false);
+						}
+						break;
 					case TRISTATE:
 						if (Boolean.class.isAssignableFrom(applicationType)) {
-							// Label the filter's true/false options with the values' display labels.
-							return typedColumn(attribute, label, part, Boolean.class,
-								Comparator.<Boolean> naturalOrder(),
-								new BooleanColumnFilter(ResKey.text(label(Boolean.TRUE)),
-									ResKey.text(label(Boolean.FALSE))));
+							return booleanColumn(attribute, label, part, true);
 						}
 						break;
 					case INT:
@@ -269,10 +279,13 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 						break;
 					case DATE:
 						if (Date.class.isAssignableFrom(applicationType)) {
+							// A date, a time of day and a date with a time of day share this kind;
+							// which one it is decides the format a filter bound is entered in.
+							ReactDatePickerControl.Kind temporalKind = DatePickerControlProvider.kind(part);
 							return typedColumn(attribute, label, part, Date.class,
 								Comparator.<Date> naturalOrder(),
 								new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
-									ColumnProviderService::parseDate));
+									text -> parseTemporal(temporalKind, text)));
 						}
 						break;
 					case STRING:
@@ -287,6 +300,19 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			}
 		}
 		return labelColumn(attribute, label, part);
+	}
+
+	/**
+	 * A column over a boolean attribute, filtered by the value options labelled exactly as the
+	 * column renders them.
+	 *
+	 * @param nullable
+	 *        Whether the attribute has a no-value state (a tri-state boolean).
+	 */
+	private static Column<Object, Boolean> booleanColumn(String attribute, ResKey label, TLStructuredTypePart part,
+			boolean nullable) {
+		return typedColumn(attribute, label, part, Boolean.class, Comparator.<Boolean> naturalOrder(),
+			new BooleanColumnFilter(ResKey.text(label(Boolean.TRUE)), ResKey.text(label(Boolean.FALSE)), nullable));
 	}
 
 	/**
@@ -373,12 +399,20 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
 	}
 
-	private static Date parseDate(String text) {
-		try {
-			return HTMLFormatter.getInstance().getDateFormat().parse(text.trim());
-		} catch (ParseException ex) {
-			return null;
+	/**
+	 * Parses a filter bound of a temporal column in the formats belonging to its kind: a time of day
+	 * is entered as a time, not as a date.
+	 */
+	private static Date parseTemporal(ReactDatePickerControl.Kind kind, String text) {
+		String trimmed = text.trim();
+		for (DateFormat format : kind.inputFormats()) {
+			try {
+				return format.parse(trimmed);
+			} catch (ParseException ex) {
+				// Try the next accepted format; an unparsable bound leaves the filter unbounded.
+			}
 		}
+		return null;
 	}
 
 	/**

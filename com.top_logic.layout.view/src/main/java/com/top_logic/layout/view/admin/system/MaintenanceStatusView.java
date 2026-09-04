@@ -87,25 +87,28 @@ public class MaintenanceStatusView implements UIElement {
 
 	/**
 	 * The localized one-line status for the current maintenance state, including the scheduled activation
-	 * time while a window is pending and the user message while a window is scheduled or active.
+	 * time while a window is pending and, when an administrator entered one, the message shown to users.
 	 */
 	private static String statusText() {
 		MaintenanceWindowManager manager = MaintenanceWindowManager.getInstance();
 		Resources resources = Resources.getInstance();
 		switch (manager.getMaintenanceModeState()) {
 			case MaintenanceWindowManager.IN_MAINTENANCE_MODE:
-				return withMessage(resources.getString(I18NConstants.MAINTENANCE_STATUS_ACTIVE), manager.getMessage());
+				return withMessage(resources.getString(I18NConstants.MAINTENANCE_STATUS_ACTIVE),
+					manager.getUserMessage());
 			case MaintenanceWindowManager.ABOUT_TO_ENTER_MAINTENANCE_MODE:
 				String when = HTMLFormatter.getInstance().formatShortDateTime(new Date(manager.getFinishedTime()));
 				return withMessage(resources.getString(I18NConstants.MAINTENANCE_STATUS_PENDING__TIME.fill(when)),
-					manager.getMessage());
+					manager.getUserMessage());
 			default:
 				return resources.getString(I18NConstants.MAINTENANCE_STATUS_NORMAL);
 		}
 	}
 
 	/**
-	 * The given status text, with the user message appended in parentheses when it is non-empty.
+	 * The given status text, with the administrator's message appended in parentheses when one was
+	 * entered. A generic default is deliberately not appended: it would tell the administrator
+	 * nothing beyond the status already shown.
 	 */
 	private static String withMessage(String text, String message) {
 		if (message == null || message.isBlank()) {

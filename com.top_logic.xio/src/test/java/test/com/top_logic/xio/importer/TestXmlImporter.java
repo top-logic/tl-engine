@@ -156,7 +156,7 @@ public class TestXmlImporter extends TestCase {
 			(TLClass) model.getModule("test.com.top_logic.xio.importer.context").getType("Container");
 		TLObject container = TransientObjectFactory.INSTANCE.createObject(containerType, null, null, null);
 
-		ModelBinding binding = new TransientModelBinding(model);
+		ModelBinding binding = new TransientModelBinding(model, false);
 
 		// The import declaration does not create a root object but links the imported items into the
 		// scope. The scope is supplied through the context argument.
@@ -192,7 +192,7 @@ public class TestXmlImporter extends TestCase {
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
 			FileManager.getInstance().getData("/WEB-INF/model/tl.model.i18n.model.xml"));
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE, resource(modelResource));
-		ModelBinding binding = new TransientModelBinding(model);
+		ModelBinding binding = new TransientModelBinding(model, false);
 		return (TLObject) importer.importModel(binding, new StreamSource(resource(xmlResource).getStream()));
 	}
 

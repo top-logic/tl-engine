@@ -55,6 +55,11 @@ public class SSEServlet extends HttpServlet {
 		asyncContext.setTimeout(0);
 
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+		// Establishing the connection restarts the session's inactivity timeout just as any other
+		// request does, so a control counting down to the end of the session has to hear about it.
+		// Nothing further arrives through this connection: the heartbeats travel down the one
+		// request opened here and never touch the session again.
+		registry.noteActivity(session);
 		Logger.info("SSEServlet: windowName='" + windowName + "', registry@" + System.identityHashCode(registry),
 			SSEServlet.class);
 		SSEUpdateQueue queue = registry.getOrCreateQueue(windowName);

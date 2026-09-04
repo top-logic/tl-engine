@@ -105,7 +105,7 @@ public class ViewServlet extends TopLogicServlet {
 		// fresh SubSession is created. This mirrors the traditional layout system's
 		// ContentHandlersRegistry.startLogin() but without the SubsessionHandler /
 		// MainLayout setup that is specific to the traditional layout engine.
-		ensureSubSession(request, windowName);
+		TLSubSessionContext subSession = ensureSubSession(request, windowName);
 
 		// A login/logout initiated from the React UI swaps the underlying session here, on the
 		// reload request, rather than inside the command pipeline (see PendingSessionAction). This
@@ -118,32 +118,51 @@ public class ViewServlet extends TopLogicServlet {
 
 		String routePath = extractRoutePath(pathInfo, windowName);
 
-		// Check if this is a programmatically opened window with a control provider.
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
+		// Rendering the page restarts the session's inactivity timeout. A reload renders the tree the
+		// window already holds, so the controls counting down to the end of the session are the ones
+		// created before this request and have to be told.
+		windowRegistry.noteActivity(session);
+		// Collect the windows whose page was unloaded and did not come back within the grace period.
+		windowRegistry.sweepUnloadedWindows();
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
-		WindowEntry windowEntry = windowRegistry.getWindow(windowName);
-		if (windowEntry != null) {
-			windowEntry.markConnected();
-			ReactControlProvider controlProvider = windowEntry.getControlProvider();
-			if (controlProvider != null) {
-				ReactContext baseContext = new DefaultReactContext(
-					request.getContextPath(), windowName, sseQueue, windowRegistry);
-				wireRouteManager(baseContext, sseQueue, routePath);
-				ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
-				ReactMenuControl menu = createWindowMenu(baseContext);
-				ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
-				ReactContext displayContext = withWindowContextMenu(
-					withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
-				ReactControl content = controlProvider.createControl(
-					displayContext, windowEntry.getModel());
-				ReactControl rootControl =
-					new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
-				windowEntry.setRootControl(rootControl);
-				sseQueue.setRootControl(rootControl);
-				rootControl.attach();
-				renderPage(request, response, rootControl, displayContext);
+		// Every window is represented by an entry, an ordinary browser tab as well: it holds the tree
+		// the window displays, which the registry detaches when the page is unloaded and disposes when
+		// the window is torn down.
+		WindowEntry windowEntry = windowRegistry.getOrCreateWindow(windowName);
+		windowEntry.markConnected();
+
+		// A reload renders the tree the window still holds instead of replacing it: everything the tree
+		// holds - a table's selection, its scroll position and expansion, the input of a form, the
+		// position of a pager - is state the user produced, and a rebuild throws all of it away.
+		ReactControl displayed = windowEntry.getRootControl();
+
+		// A programmatically opened window brings its own control provider instead of a view file.
+		ReactControlProvider controlProvider = windowEntry.getControlProvider();
+		if (controlProvider != null) {
+			// The provider and the model of a window never change, so a tree it already has always
+			// fits - unlike a view, which has to be the same one.
+			if (displayed != null) {
+				renderAgain(request, response, displayed, sseQueue, routePath);
 				return;
 			}
+
+			ReactContext baseContext = new DefaultReactContext(
+				request.getContextPath(), windowName, sseQueue, windowRegistry);
+			wireRouteManager(baseContext, sseQueue, routePath);
+			ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
+			ReactMenuControl menu = createWindowMenu(baseContext);
+			ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
+			ReactContext displayContext = withWindowContextMenu(
+				withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
+			ReactControl content = controlProvider.createControl(
+				displayContext, windowEntry.getModel());
+			ReactControl rootControl =
+				new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
+			windowEntry.setRootControl(rootControl);
+			sseQueue.setRootControl(rootControl);
+			renderPage(request, response, rootControl, displayContext);
+			return;
 		}
 
 		String viewPath = resolveViewPath(pathInfo);
@@ -156,6 +175,19 @@ public class ViewServlet extends TopLogicServlet {
 			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 				"Failed to load view: " + ex.getMessage());
 			return;
+		}
+
+		// Reuse is correct only for the same view.
+		RenderedView rendered = RenderedView.lookup(subSession);
+		if (displayed != null && rendered != null && rendered.matches(viewPath, view)) {
+			renderAgain(request, response, displayed, sseQueue, routePath);
+			return;
+		}
+		if (displayed != null) {
+			// Another view, or a view file edited in the meantime: the old tree is never rendered
+			// again, so release the model listeners its controls hold.
+			displayed.detach();
+			displayed.cleanupTree();
 		}
 
 		ReactContext baseContext = new DefaultReactContext(
@@ -174,15 +206,40 @@ public class ViewServlet extends TopLogicServlet {
 		ReactControl rootControl =
 			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);
-
-		// The page about to be rendered is the displayed one, so its controls are attached. Without
-		// this, only a view rooted in an <app-shell> would ever be attached (the shell attaches
-		// itself), and everything keyed on the display state - a form contributing its commands to the
-		// enclosing toolbar, the registration of routing participants - would silently not happen in
-		// e.g. a <window>-rooted login view.
-		rootControl.attach();
+		windowEntry.setRootControl(rootControl);
+		RenderedView.store(subSession, new RenderedView(viewPath, view));
 
 		renderPage(request, response, rootControl, displayContext);
+	}
+
+	/**
+	 * Renders a control tree the browser tab already holds into a freshly loaded page.
+	 *
+	 * <p>
+	 * The rendered output carries the full state of every control and reuses their IDs, so the new
+	 * client addresses the same controls as the old one. Events still queued for the previous client
+	 * are dropped: they describe steps towards a state the rendering below already contains.
+	 * </p>
+	 *
+	 * @param routePath
+	 *        The route requested by the URL, applied when it differs from the one the tree currently
+	 *        shows (a deep link entered in an existing tab).
+	 */
+	private void renderAgain(HttpServletRequest request, HttpServletResponse response,
+			ReactControl rootControl, SSEUpdateQueue sseQueue, String routePath) throws IOException {
+		ReactContext context = rootControl.getReactContext();
+
+		sseQueue.discardPendingEvents();
+		sseQueue.setRootControl(rootControl);
+		wireRouteManager(context, sseQueue, routePath);
+
+		RouteManager routeManager = context.getRouteManager();
+		if (routeManager != null && routePath != null && !routePath.isEmpty()
+				&& !routePath.equals(routeManager.currentUrl())) {
+			routeManager.navigateToRoute(routePath);
+		}
+
+		renderPage(request, response, rootControl, context);
 	}
 
 	/**
@@ -210,8 +267,7 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Creates the window-level context menu overlay that serves windows whose view does not embed an
-	 * app shell (which carries its own overlay), e.g. the View Designer window.
+	 * Creates the context menu overlay of the browser window, serving every view it displays.
 	 *
 	 * <p>
 	 * A {@link ReactMenuControl} positions itself at viewport coordinates, so exactly one overlay per
@@ -253,7 +309,7 @@ public class ViewServlet extends TopLogicServlet {
 
 	/**
 	 * Derives a context whose {@link ReactContext#getContextMenuOpener()} is the window-level opener,
-	 * so a view that does not embed an app shell can still open context menus.
+	 * so any view the window displays can open a context menu.
 	 */
 	private static ReactContext withWindowContextMenu(ReactContext context, ContextMenuOpener opener) {
 		ReactContext result = new ForwardingReactContext(context) {
@@ -276,10 +332,10 @@ public class ViewServlet extends TopLogicServlet {
 	 * subsequent commands and uploads.
 	 * </p>
 	 */
-	private void ensureSubSession(HttpServletRequest request, String windowName) {
+	private TLSubSessionContext ensureSubSession(HttpServletRequest request, String windowName) {
 		TLSessionContext sessionContext = TLContextManager.getSession();
 		if (sessionContext == null) {
-			return;
+			return null;
 		}
 
 		TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
@@ -299,6 +355,8 @@ public class ViewServlet extends TopLogicServlet {
 		// view rendering (e.g. for locale resolution).
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		displayContext.installSubSessionContext(subSession);
+
+		return subSession;
 	}
 
 	/**
@@ -484,9 +542,27 @@ public class ViewServlet extends TopLogicServlet {
 
 	/**
 	 * Renders the HTML page with the root control using the {@link IReactControl#write} path.
+	 *
+	 * <p>
+	 * The page about to be rendered is the displayed one, so its tree is attached first. Rendering
+	 * alone would attach each control as it is serialized, which is too late for anything that acts on
+	 * a <em>different</em> control when it attaches: a {@code <slot-content>} registers its
+	 * contribution with the slot registry, and the {@code <slot>} placeholder it is routed to may
+	 * already have been written - the contribution would then reach the client as a patch after the
+	 * first paint instead of being part of it.
+	 * </p>
+	 *
+	 * <p>
+	 * Attaching here also makes the display state reliable for views nobody else attaches: only a view
+	 * rooted in an {@code <app-shell>} attaches itself, so in e.g. a {@code <window>}-rooted login view
+	 * everything keyed on being displayed - a form contributing its commands to the enclosing toolbar,
+	 * the registration of routing participants - would silently not happen.
+	 * </p>
 	 */
 	private void renderPage(HttpServletRequest request, HttpServletResponse response,
-			IReactControl rootControl, ReactContext context) throws IOException {
+			ReactControl rootControl, ReactContext context) throws IOException {
+		rootControl.attach();
+
 		response.setContentType("text/html");
 		response.setCharacterEncoding("UTF-8");
 

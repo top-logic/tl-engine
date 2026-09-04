@@ -185,7 +185,8 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 
 				List<NameValuePair> values = new ArrayList<>(parts.size());
 				for (int i = 0; i < executors.length; i++) {
-					addNameValue(values, parts.get(i), executors[i].execute(args));
+					// An intermediate result of the calling script, see JSONRequestBody.
+					addNameValue(values, parts.get(i), executors[i].executeIntermediate(args));
 				}
 				request.setEntity(new UrlEncodedFormEntity(values, StandardCharsets.UTF_8));
 			}
@@ -225,7 +226,8 @@ public class MultiPartRequestBody extends AbstractConfiguredInstance<MultiPartRe
 
 				Object[] args = JSONRequestBody.createCallArguments(call, method);
 				for (int i = 0; i < executors.length; i++) {
-					addBodyPart(builder, parts.get(i), executors[i].execute(args));
+					// An intermediate result of the calling script, see JSONRequestBody.
+					addBodyPart(builder, parts.get(i), executors[i].executeIntermediate(args));
 
 				}
 				request.setEntity(builder.build());

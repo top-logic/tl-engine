@@ -30,15 +30,15 @@
 
 	<properties>
 		<tl.version>8.0.0-SNAPSHOT</tl.version>
-		<jetty.version>12.1.11</jetty.version>
+		<jetty.version>12.1.12</jetty.version>
 		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>
 		<zookeeper.version>3.9.5</zookeeper.version>
 		<slf4j.version>2.0.18</slf4j.version>
 		<log4j.version>2.26.1</log4j.version>
-		<fasterxml.version>2.22.1</fasterxml.version>
+		<fasterxml.version>2.22.2</fasterxml.version>
 		<msgbuf.version>1.2.2</msgbuf.version>
-		<bouncycastle.version>1.84</bouncycastle.version>
+		<bouncycastle.version>1.85</bouncycastle.version>
 		<batik.version>1.19</batik.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		
@@ -889,7 +889,7 @@
 			<dependency>
 				<groupId>com.networknt</groupId>
 				<artifactId>json-schema-validator</artifactId>
-				<version>3.0.6</version>
+				<version>3.0.7</version>
 			</dependency>
 			<dependency>
 				<groupId>jakarta.servlet</groupId>
@@ -989,12 +989,12 @@
 			<dependency>
 			    <groupId>commons-codec</groupId>
 			    <artifactId>commons-codec</artifactId>
-			    <version>1.22.0</version>
+			    <version>1.22.1</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.commons</groupId>
 			    <artifactId>commons-collections4</artifactId>
-			    <version>4.5.0</version>
+			    <version>4.6.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.httpcomponents</groupId>
@@ -1004,7 +1004,7 @@
 			<dependency>
 			    <groupId>org.apache.httpcomponents.client5</groupId>
 			    <artifactId>httpclient5</artifactId>
-			    <version>5.6.2</version>
+			    <version>5.6.4</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.commons</groupId>
@@ -1140,6 +1140,16 @@
 			    <artifactId>bcprov-jdk18on</artifactId>
 			    <version>${bouncycastle.version}</version>
 			</dependency>
+		    <dependency>
+		        <groupId>org.bouncycastle</groupId>
+		        <artifactId>bcutil-jdk18on</artifactId>
+		        <version>${bouncycastle.version}</version>
+		    </dependency>
+		    <dependency>
+		        <groupId>org.bouncycastle</groupId>
+		        <artifactId>bcpkix-jdk18on</artifactId>
+		        <version>${bouncycastle.version}</version>
+		    </dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>ext-org-chartjs</artifactId>
@@ -1188,7 +1198,7 @@
 			<dependency>
 			    <groupId>org.yaml</groupId>
 			    <artifactId>snakeyaml</artifactId>
-			    <version>2.6</version>
+			    <version>2.7</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
@@ -1300,7 +1310,7 @@
 			<dependency>
 			    <groupId>org.jsoup</groupId>
 			    <artifactId>jsoup</artifactId>
-			    <version>1.22.2</version>
+			    <version>1.23.2</version>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -1310,7 +1320,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-oidc</artifactId>
-    			<version>6.5.5</version>
+    			<version>6.5.7</version>
 			</dependency>
 			<dependency>
 				<groupId>net.minidev</groupId>
@@ -1320,7 +1330,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-jakartaee</artifactId>
-    			<version>6.5.5</version>
+    			<version>6.5.7</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>
@@ -1401,7 +1411,7 @@
     		<dependency>
 				<groupId>org.commonmark</groupId>
 				<artifactId>commonmark</artifactId>
-				<version>0.29.0</version>
+				<version>0.30.0</version>
 			</dependency>
 			
 			<!-- Test modules -->

@@ -9,6 +9,8 @@ import java.util.List;
 
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.react.control.form.ReactDatePickerControl;
+import com.top_logic.model.annotate.ui.BooleanPresentation;
 
 /**
  * What is being edited, independent of where the edited value is stored.
@@ -38,6 +40,12 @@ public final class FieldSpec {
 	private boolean _editable = true;
 
 	private int _multilineRows;
+
+	private BooleanPresentation _booleanPresentation = BooleanPresentation.CHECKBOX;
+
+	private boolean _triState;
+
+	private ReactDatePickerControl.Kind _dateKind = ReactDatePickerControl.Kind.DATE;
 
 	private List<?> _options;
 
@@ -144,6 +152,57 @@ public final class FieldSpec {
 	 */
 	public FieldSpec setMultilineRows(int multilineRows) {
 		_multilineRows = multilineRows;
+		return this;
+	}
+
+	/**
+	 * How a boolean value asks to be displayed.
+	 */
+	public BooleanPresentation getBooleanPresentation() {
+		return _booleanPresentation;
+	}
+
+	/**
+	 * Sets the {@link #getBooleanPresentation() presentation} of a boolean value.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setBooleanPresentation(BooleanPresentation booleanPresentation) {
+		_booleanPresentation = booleanPresentation;
+		return this;
+	}
+
+	/**
+	 * Whether a boolean value keeps a state of its own for "no value".
+	 */
+	public boolean isTriState() {
+		return _triState;
+	}
+
+	/**
+	 * Sets whether a boolean value is {@link #isTriState() tri-state}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setTriState(boolean triState) {
+		_triState = triState;
+		return this;
+	}
+
+	/**
+	 * Which part of a point in time the value holds: a date, a time of day, or both.
+	 */
+	public ReactDatePickerControl.Kind getDateKind() {
+		return _dateKind;
+	}
+
+	/**
+	 * Sets which {@link #getDateKind() part of a point in time} the value holds.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setDateKind(ReactDatePickerControl.Kind dateKind) {
+		_dateKind = dateKind;
 		return this;
 	}
 

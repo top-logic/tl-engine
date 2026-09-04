@@ -14,7 +14,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.component.model.ModelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -66,8 +65,9 @@ public class ModelProviderByExpression extends AbstractConfiguredInstance<ModelP
 
 	@Override
 	public Object getBusinessModel(LayoutComponent businessComponent) {
-		// Secure the component model: only objects the current user is allowed to read.
-		return SearchExpression.filterSecurity(_provider.execute());
+		// Note: The component model contains only objects the current user is allowed to read, the
+		// executor secures it, see QueryExecutor#executeWith(EvalContext, Args).
+		return _provider.execute();
 	}
 
 }

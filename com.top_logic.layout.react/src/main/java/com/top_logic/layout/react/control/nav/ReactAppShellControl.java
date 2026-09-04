@@ -21,8 +21,10 @@ import com.top_logic.layout.responsive.DisplayClassModel;
  *
  * <p>
  * The shell renders a full-height flex column with the header at the top, the content filling the
- * remaining space, and the footer at the bottom. A singleton {@link ReactSnackbarControl} is
- * embedded and accessible to any code via {@link #showSnackbar(String, Variant)}.
+ * remaining space, and the footer at the bottom. Between header and content sits the notice area,
+ * which carries system-wide notices such as an announced maintenance window; it occupies no space
+ * while all of its notices are hidden. A singleton {@link ReactSnackbarControl} is embedded and
+ * accessible to any code via {@link #showSnackbar(String, Variant)}.
  * </p>
  *
  * <p>
@@ -36,10 +38,10 @@ import com.top_logic.layout.responsive.DisplayClassModel;
  * </p>
  * <ul>
  * <li>{@code header} - optional header slot control (e.g. an app bar)</li>
+ * <li>{@code notices} - optional notice-area control shown between header and content</li>
  * <li>{@code content} - the main content control (gets {@code flex:1})</li>
  * <li>{@code footer} - optional footer slot control (e.g. a bottom bar)</li>
  * <li>{@code snackbar} - built-in snackbar child descriptor (managed internally)</li>
- * <li>{@code dialogManager} - built-in dialog manager child descriptor (managed internally)</li>
  * </ul>
  */
 public class ReactAppShellControl extends ReactControl {
@@ -48,34 +50,30 @@ public class ReactAppShellControl extends ReactControl {
 
 	private static final String HEADER = "header";
 
+	private static final String NOTICES = "notices";
+
 	private static final String CONTENT = "content";
 
 	private static final String FOOTER = "footer";
 
 	private static final String SNACKBAR = "snackbar";
 
-
-
 	/** The {@link ReactCommandHandler} that records the client's responsive display class. */
 	public static final String REPORT_DISPLAY_CLASS_COMMAND = "reportDisplayClass";
-
-	private final ReactControl _header;
-
-	private final ReactControl _content;
-
-	private final ReactControl _footer;
 
 	private final ReactSnackbarControl _snackbar;
 
 	private final ErrorSink _errorSink;
 
 	/**
-	 * Creates an application shell with all three slots.
+	 * Creates an application shell with all four slots.
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
 	 * @param header
 	 *        Optional header control (e.g. app bar), or {@code null}.
+	 * @param notices
+	 *        Optional notice-area control shown between header and content, or {@code null}.
 	 * @param content
 	 *        The main content control (gets {@code flex:1}).
 	 * @param footer
@@ -85,17 +83,17 @@ public class ReactAppShellControl extends ReactControl {
 	 * @param errorSink
 	 *        The error sink that routes messages to the snackbar.
 	 */
-	public ReactAppShellControl(ReactContext context, ReactControl header, ReactControl content, ReactControl footer,
-			ReactSnackbarControl snackbar, ErrorSink errorSink) {
+	public ReactAppShellControl(ReactContext context, ReactControl header, ReactControl notices, ReactControl content,
+			ReactControl footer, ReactSnackbarControl snackbar, ErrorSink errorSink) {
 		super(context, null, REACT_MODULE);
-		_header = header;
-		_content = content;
-		_footer = footer;
 		_snackbar = snackbar;
 		_errorSink = errorSink;
 
 		if (header != null) {
 			putState(HEADER, header);
+		}
+		if (notices != null) {
+			putState(NOTICES, notices);
 		}
 		putState(CONTENT, content);
 		if (footer != null) {
@@ -157,44 +155,6 @@ public class ReactAppShellControl extends ReactControl {
 			}
 		}
 		DisplayClassModel.forCurrentSubSession().setDisplayClass(displayClass);
-	}
-
-	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_header != null) {
-			_header.attach();
-		}
-		_content.attach();
-		if (_footer != null) {
-			_footer.attach();
-		}
-		_snackbar.attach();
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_header != null) {
-			_header.detach();
-		}
-		_content.detach();
-		if (_footer != null) {
-			_footer.detach();
-		}
-		_snackbar.detach();
-	}
-
-	@Override
-	protected void cleanupChildren() {
-		if (_header != null) {
-			_header.cleanupTree();
-		}
-		_content.cleanupTree();
-		if (_footer != null) {
-			_footer.cleanupTree();
-		}
-		_snackbar.cleanupTree();
 	}
 
 }

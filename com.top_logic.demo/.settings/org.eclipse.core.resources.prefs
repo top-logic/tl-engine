@@ -57,8 +57,6 @@ encoding//src/main/webapp/WEB-INF/conf/resources/model.test.transient.messages_d
 encoding//src/main/webapp/WEB-INF/conf/resources/model.test.transient.messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.test.webfolder.messages_de.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.test.webfolder.messages_en.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.contact.ui.messages_de.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.contact.ui.messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.demo.aspect.messages_de.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.demo.aspect.messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.demo.forms.messages_de.properties=UTF-8

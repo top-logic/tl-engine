@@ -61,9 +61,14 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 		String XML_KEY_PATTERN = "person-name-pattern";
 
 		/**
-		 * Default value for {@link #getUserNamePattern()}.
+		 * Default value for {@link #getUserNamePattern()}: Unicode letters ({@code \p{L}}) and digits
+		 * ({@code \p{N}}), plus {@code _ . @ + ~ -}; no whitespace or control characters; non-empty.
+		 * Using the Unicode letter/digit classes (rather than the ASCII-only {@code \w}) admits
+		 * non-ASCII names such as {@code José}, so directory (LDAP) accounts are not rejected. Admits
+		 * e-mail addresses as account names and the bootstrap names {@code root} / {@code anonymous}
+		 * (Ticket #29423).
 		 */
-		String DEFAULT_PATTERN = "[a-zA-Z]\\w*";
+		String DEFAULT_PATTERN = "[\\p{L}\\p{N}_.@+~-]+";
 
 		/**
 		 * Configuration name for {@link #getPersonNameMaxLength()}.
@@ -157,6 +162,22 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 	 */
 	public Person getAnonymous() {
 		return Person.byName(kb(), getAnonymousUserName());
+	}
+
+	/**
+	 * Whether the given account is the {@link #getAnonymous() anonymous account}.
+	 *
+	 * <p>
+	 * In contrast to {@link #getAnonymous()}, this check does not look the account up and therefore
+	 * also recognizes the anonymous account while it is being created, see
+	 * {@link #ensureAnonymousAccount()}.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account to check, may be <code>null</code>.
+	 */
+	public boolean isAnonymous(Person account) {
+		return account != null && Person.normalizeName(getAnonymousUserName()).equals(account.getName());
 	}
 
 	private String getAnonymousUserName() {

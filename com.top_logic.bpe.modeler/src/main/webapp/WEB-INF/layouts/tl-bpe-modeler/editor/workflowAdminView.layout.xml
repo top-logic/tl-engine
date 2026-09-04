@@ -6,6 +6,6 @@
 	z_legacy_tabLabel="tl.bpe.modeler.admin.tabber"
 >
 	<components>
-		<include name="tl-bpe-modeler/editor/workflowAdminLegacy.xml"/>
+		<include name="tl-bpe-modeler/editor/workflowAdmin.xml"/>
 	</components>
 </include>

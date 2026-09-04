@@ -315,31 +315,6 @@ public class ReactSplitPanelControl extends ReactControl {
 		_indexInParent = indexInParent;
 	}
 
-	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		for (ChildEntry entry : _children) {
-			// Also a collapsed pane stays part of the displayed tree: its control is still rendered,
-			// only sized down, and expanding it must not depend on an attach that never happened.
-			entry._control.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		for (ChildEntry entry : _children) {
-			entry._control.detach();
-		}
-	}
-
-	@Override
-	protected void cleanupChildren() {
-		for (ChildEntry entry : _children) {
-			entry._control.cleanupTree();
-		}
-	}
-
 	private void patchChildren() {
 		putState(CHILDREN, _childDescriptors);
 	}

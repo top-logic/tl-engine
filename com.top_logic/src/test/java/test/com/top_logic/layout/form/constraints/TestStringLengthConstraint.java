@@ -94,6 +94,35 @@ public class TestStringLengthConstraint extends BasicTestCase {
 		constraint.check("123456");
 	}
 
+	/**
+	 * Tests that an upper bound of {@link Integer#MAX_VALUE} is normalized to
+	 * {@link StringLengthConstraint#NO_LIMIT}, while a real bound is kept.
+	 *
+	 * <p>
+	 * Ticket #29465: An unbounded <code>&lt;size-constraint/&gt;</code> yields an upper bound of
+	 * {@link Integer#MAX_VALUE}. Keeping that value would make
+	 * {@link StringLengthConstraint#hasMaxLength()} report a limit that can never be reached,
+	 * because {@link String#length()} is an <code>int</code>.
+	 * </p>
+	 */
+	public void testUnlimitedUpperBound() throws Exception {
+		StringLengthConstraint unlimited =
+			new StringLengthConstraint(StringLengthConstraint.NO_LIMIT, Integer.MAX_VALUE);
+		assertFalse(unlimited.hasMaxLength());
+		assertEquals(StringLengthConstraint.NO_LIMIT, unlimited.getMaxLength());
+		unlimited.check("Some text that must be accepted.");
+
+		StringLengthConstraint limited = new StringLengthConstraint(StringLengthConstraint.NO_LIMIT, 5);
+		assertTrue(limited.hasMaxLength());
+		assertEquals(5, limited.getMaxLength());
+		try {
+			limited.check("123456");
+			fail("Expected CheckException");
+		} catch (CheckException e) {
+			// expected
+		}
+	}
+
 	public void testLowerUpperBound() throws Exception {
 		StringLengthConstraint constraint = new StringLengthConstraint(4, 5);
 

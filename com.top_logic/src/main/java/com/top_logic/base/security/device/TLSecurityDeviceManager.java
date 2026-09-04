@@ -47,7 +47,15 @@ import com.top_logic.knowledge.wrap.person.Person;
 @Label("Security devices")
 public class TLSecurityDeviceManager extends ManagedClass {
 	
-	private static final String DB_SECURITY = "dbSecurity";
+	/**
+	 * Device ID of the built-in local (database) authentication device.
+	 *
+	 * <p>
+	 * An account bound to this device is managed locally; an account bound to any other device (or to
+	 * no device at all) is managed externally.
+	 * </p>
+	 */
+	public static final String DB_SECURITY = "dbSecurity";
 
 	/**
 	 * Configuration of the {@link TLSecurityDeviceManager}. 

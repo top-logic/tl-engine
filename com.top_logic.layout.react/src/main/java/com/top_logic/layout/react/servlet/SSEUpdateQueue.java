@@ -322,6 +322,22 @@ public class SSEUpdateQueue {
 	}
 
 	/**
+	 * Drops all events that are still waiting for a client.
+	 *
+	 * <p>
+	 * Called when a page is (re)rendered from scratch: the rendered output carries the full state of
+	 * every control, so a queued update from before that rendering is at best redundant and at worst
+	 * describes a state the fresh page has already passed. Unlike a
+	 * {@link #setConnection(jakarta.servlet.AsyncContext) reconnect} - which deliberately keeps
+	 * pending events, because one-off events such as the logout reload are not part of any control
+	 * state - a full page render replaces what the events would have delivered.
+	 * </p>
+	 */
+	public void discardPendingEvents() {
+		_pendingEvents.clear();
+	}
+
+	/**
 	 * Enqueues an event and immediately flushes it to the connected SSE client.
 	 */
 	public void enqueue(SSEEvent event) {

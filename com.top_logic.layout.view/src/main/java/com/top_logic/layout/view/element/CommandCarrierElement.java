@@ -113,12 +113,12 @@ public abstract class CommandCarrierElement extends ContainerElement {
 	 * when input channels change.
 	 */
 	protected void registerLifecycle(List<ViewCommandModel> models, ReactControl host) {
-		host.addBeforeWriteAction(() -> {
+		host.addAttachListener(() -> {
 			for (ViewCommandModel model : models) {
 				model.attach();
 			}
 		});
-		host.addCleanupAction(() -> {
+		host.addDetachListener(() -> {
 			for (ViewCommandModel model : models) {
 				model.detach();
 			}

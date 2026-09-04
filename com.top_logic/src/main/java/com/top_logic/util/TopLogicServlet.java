@@ -175,7 +175,8 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 			throws IOException, ServletException {
 		setCachePolicy(response);
 
-		if (!processSessionCheck(request)) {
+		boolean cookieCheck = isCookieCheckRequired();
+		if (cookieCheck && !processSessionCheck(request)) {
 			this.forwardToPage(ApplicationPages.getInstance().getNoCookiePage(), request, response);
 			return;
 		}
@@ -183,7 +184,7 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 		TLSessionContext session = this.getSession(request, response);
 		if (session == null) {
 
-			if (initSessionCheck(request, response)) {
+			if (cookieCheck && initSessionCheck(request, response)) {
 				return;
 			}
 
@@ -227,6 +228,31 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
 		// Nothing to do here
+	}
+
+	/**
+	 * Whether a request without a valid session must pass the check that the browser accepts
+	 * cookies.
+	 *
+	 * <p>
+	 * The check costs a redirect round-trip and stores a one-shot marker on the session, which
+	 * {@link #processSessionCheck(HttpServletRequest)} consumes and whose session it then
+	 * invalidates.
+	 * </p>
+	 *
+	 * <p>
+	 * That is only ever right for a top-level navigation. An endpoint answering
+	 * {@code XMLHttpRequest}s should return {@code false}: a redirect to an HTML page is of no use
+	 * to its caller, and the check cannot fail there for its intended reason anyway, since such a
+	 * request follows a page that was already loaded with a session, and thus with cookies.
+	 * </p>
+	 *
+	 * @return Whether to run the check; {@code true} by default. A servlet returning {@code false}
+	 *         must answer {@link #handleNoSession(HttpServletRequest, HttpServletResponse)} in a way
+	 *         its caller understands, because that is where a request without a session then ends.
+	 */
+	protected boolean isCookieCheckRequired() {
+		return true;
 	}
 
 	/** Sets a log mark with the session id while executing the runnable. */
@@ -538,6 +564,28 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 	}
 
 	/**
+	 * Whether the browser returned the session id it was given, which it can only do by storing the
+	 * cookie carrying it.
+	 *
+	 * <p>
+	 * This is the whole question the cookie check asks. It is answered by the request itself, and
+	 * it stays answered when the session behind the id has meanwhile ended - what the check is
+	 * about is the browser, not the session.
+	 * </p>
+	 *
+	 * @implNote Reading the answer off the request rather than off the marker
+	 *           {@link #initSessionCheck(HttpServletRequest, HttpServletResponse)} leaves behind is
+	 *           what lets the check tolerate a request its first half did not send: a reload of the
+	 *           parameter's URL, or a sibling window whose check consumed the marker first. The
+	 *           price is a client that returns a session id but never stores the replacement - it
+	 *           is sent to the start page again for every request instead of being told once that
+	 *           cookies cannot be set. A browser stores the cookie, a script may not.
+	 */
+	private static boolean cookieReturned(HttpServletRequest request) {
+		return request.isRequestedSessionIdFromCookie();
+	}
+
+	/**
 	 * 
 	 * Checks whether cookies can be set.
 	 * 
@@ -546,8 +594,13 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 	 * </p>
 	 * 
 	 * <p>
-	 * This method checks whether the attribute that was set in
-	 * {@link #initSessionCheck(HttpServletRequest, HttpServletResponse)} can be read.
+	 * The question is whether the browser sent back the session that
+	 * {@link #initSessionCheck(HttpServletRequest, HttpServletResponse)} gave it, so only a request
+	 * that carries no session cookie fails. The marker set there is consumed if it is still
+	 * present, but it is not what decides: the parameter outlives the check in the address bar, so
+	 * the page carrying it can be loaded again long after the marker was consumed - by the user, or
+	 * by a reload the server requested - and such a request must neither be told that cookies are
+	 * impossible nor lose a session that is not the test's.
 	 * </p>
 	 *
 	 * @return <code>true</code> if cookies are enabled.
@@ -555,21 +608,25 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 	 * @see #initSessionCheck(HttpServletRequest, HttpServletResponse)
 	 */
 	private boolean processSessionCheck(HttpServletRequest request) {
-		boolean result = true;
-
-		if (request.getParameter(TopLogicServlet.SESSION_CHECK) != null) {
-			HttpSession session = request.getSession(false);
-			if (session != null) {
-				Object test = session.getAttribute(TEST_SESSION);
-				result = (test != null && test instanceof Boolean);
-				session.removeAttribute(TEST_SESSION);
-				session.invalidate();
-			} else {
-				result = false;
-			}
+		if (request.getParameter(TopLogicServlet.SESSION_CHECK) == null) {
+			// Not the second half of a check.
+			return true;
 		}
 
-		return result;
+		HttpSession session = request.getSession(false);
+		if (session != null && session.getAttribute(TEST_SESSION) instanceof Boolean) {
+			// The session created for the check has served its purpose and must not linger as a
+			// session of its own.
+			session.removeAttribute(TEST_SESSION);
+			session.invalidate();
+		}
+
+		// The marker of this particular check need not be there to answer the question: the
+		// parameter outlives the check in the address bar, so the page carrying it can be loaded
+		// again long after the marker was consumed - by the user, or by a reload the server
+		// requested. Such a request must neither be told that cookies are impossible nor lose a
+		// session that is not the test's.
+		return cookieReturned(request);
 	}
 
 	/**
@@ -583,12 +640,27 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 	 * This method creates a session and sets a cookie. The method
 	 * {@link #processSessionCheck(HttpServletRequest)} checks whether the cookie can be read.
 	 * </p>
+	 *
+	 * <p>
+	 * A request that already returned a session id starts no check at all: the browser has shown
+	 * that it keeps what it is given, whether or not the session behind the id still exists. That
+	 * happens whenever somebody is logged out without their HTTP session being invalidated - the
+	 * maintenance mode, an administrator terminating a session - and the check would then mark a
+	 * session it did not create.
+	 * </p>
 	 * 
 	 * @return <code>true</code> iff a redirect was sent.
 	 * 
 	 * @see #processSessionCheck(HttpServletRequest)
 	 */
 	private boolean initSessionCheck(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		if (cookieReturned(request)) {
+			// Nothing to check: the browser stores cookies. Starting a check anyway would cost a
+			// redirect round-trip and, worse, attach the check's marker to a session it did not
+			// create - a session without a login is not this check's to discard.
+			return false;
+		}
+
 		if (request.getParameter(TopLogicServlet.SESSION_CHECK) == null) {
 			HttpSession testSession = request.getSession(true);
 			testSession.setAttribute(TEST_SESSION, true);

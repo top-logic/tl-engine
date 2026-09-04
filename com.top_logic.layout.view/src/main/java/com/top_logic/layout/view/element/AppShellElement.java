@@ -32,10 +32,10 @@ import com.top_logic.layout.view.command.CommandScope;
  * UIElement that wraps {@link ReactAppShellControl}.
  *
  * <p>
- * Provides three slots: an optional header, a mandatory content area, and an optional footer. Slot
- * properties use list types so that {@code @TagName} resolution works (e.g. {@code <stack>} inside
- * {@code <content>}). If multiple elements are configured in a slot, they are wrapped in a
- * {@link com.top_logic.layout.react.control.layout.ReactStackControl}.
+ * Provides four slots: an optional header, an optional notice area, a mandatory content area, and
+ * an optional footer. Slot properties use list types so that {@code @TagName} resolution works
+ * (e.g. {@code <stack>} inside {@code <content>}). If multiple elements are configured in a slot,
+ * they are wrapped in a {@link com.top_logic.layout.react.control.layout.ReactStackControl}.
  * </p>
  */
 @InApp
@@ -54,6 +54,9 @@ public class AppShellElement implements UIElement {
 		/** Configuration name for {@link #getHeader()}. */
 		String HEADER = "header";
 
+		/** Configuration name for {@link #getNotices()}. */
+		String NOTICES = "notices";
+
 		/** Configuration name for {@link #getContent()}. */
 		String CONTENT = "content";
 
@@ -67,6 +70,19 @@ public class AppShellElement implements UIElement {
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getHeader();
+
+		/**
+		 * Optional system-wide notices displayed between header and content.
+		 *
+		 * <p>
+		 * Holds elements that announce a state of the whole application rather than of any single
+		 * view, e.g. a {@code <maintenance-notice/>}. Each of them decides for itself whether it
+		 * has anything to say; the area occupies no space while all of them stay silent.
+		 * </p>
+		 */
+		@Name(NOTICES)
+		@TreeProperty
+		List<PolymorphicConfiguration<? extends UIElement>> getNotices();
 
 		/**
 		 * The main content element.
@@ -87,6 +103,8 @@ public class AppShellElement implements UIElement {
 
 	private final List<UIElement> _header;
 
+	private final List<UIElement> _notices;
+
 	private final List<UIElement> _content;
 
 	private final List<UIElement> _footer;
@@ -97,6 +115,7 @@ public class AppShellElement implements UIElement {
 	@CalledByReflection
 	public AppShellElement(InstantiationContext context, Config config) {
 		_header = instantiateAll(context, config.getHeader());
+		_notices = instantiateAll(context, config.getNotices());
 		_content = instantiateAll(context, config.getContent());
 		_footer = instantiateAll(context, config.getFooter());
 
@@ -127,15 +146,16 @@ public class AppShellElement implements UIElement {
 			.withErrorSink(errorSink)
 			.withScope(CommandScope.class, sharedScope);
 
-		// Create slot controls. Each of the three structural slots (header, content, footer) gets
-		// its own slot-path segment so that <slot> placeholders and <slot-content> contributions
-		// declared in different regions have distinct positions for routing.
+		// Create slot controls. Each of the four structural slots (header, notices, content, footer)
+		// gets its own slot-path segment so that <slot> placeholders and <slot-content>
+		// contributions declared in different regions have distinct positions for routing.
 		ReactControl header = createSlotControl(scopedContext.withChildSlotPath("header"), _header);
+		ReactControl notices = createSlotControl(scopedContext.withChildSlotPath("notices"), _notices);
 		ReactControl content = createSlotControl(scopedContext.withChildSlotPath("content"), _content);
 		ReactControl footer = createSlotControl(scopedContext.withChildSlotPath("footer"), _footer);
 
 		ReactAppShellControl shellControl =
-			new ReactAppShellControl(context, header, content, footer, snackbar, errorSink);
+			new ReactAppShellControl(context, header, notices, content, footer, snackbar, errorSink);
 		shellControl.attach();
 		return shellControl;
 	}

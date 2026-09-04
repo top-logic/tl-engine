@@ -14,6 +14,7 @@ const COMPACT_MAX_WIDTH = 768;
  *
  * State:
  * - header:   ChildDescriptor | null  (optional, fixed height)
+ * - notices:  ChildDescriptor | null  (optional, system-wide notices between header and content)
  * - content:  ChildDescriptor         (required, flex:1)
  * - footer:   ChildDescriptor | null  (optional, fixed height)
  * - snackbar: ChildDescriptor         (built-in notification service)
@@ -36,6 +37,7 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   const header = state.header as unknown;
+  const notices = state.notices as unknown;
   const content = state.content as unknown;
   const footer = state.footer as unknown;
   const snackbar = state.snackbar as unknown;
@@ -45,6 +47,11 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
       {header && (
         <div className="tlAppShell__header">
           <TLChild control={header} />
+        </div>
+      )}
+      {notices && (
+        <div className="tlAppShell__notices">
+          <TLChild control={notices} />
         </div>
       )}
       <div className="tlAppShell__content">

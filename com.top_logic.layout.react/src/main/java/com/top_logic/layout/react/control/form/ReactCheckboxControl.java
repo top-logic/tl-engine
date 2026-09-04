@@ -14,8 +14,13 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
  */
 public class ReactCheckboxControl extends ReactFormFieldControl {
 
+	/** State key telling the client that the checkbox has a third, "no value" state. */
+	private static final String TRI_STATE = "triState";
+
+	private final boolean _triState;
+
 	/**
-	 * Creates a new {@link ReactCheckboxControl}.
+	 * Creates a two-valued {@link ReactCheckboxControl}.
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
@@ -23,21 +28,42 @@ public class ReactCheckboxControl extends ReactFormFieldControl {
 	 *        The field model.
 	 */
 	public ReactCheckboxControl(ReactContext context, FieldModel model) {
-		super(context, model, "TLCheckbox");
+		this(context, model, false);
 	}
 
 	/**
-	 * Handles a checkbox toggle: its value is a {@code boolean}, so it has its own typed arguments
-	 * rather than the base field's text value.
+	 * Creates a {@link ReactCheckboxControl}.
+	 *
+	 * @param triState
+	 *        Whether the field has a third state for "no value" (a tri-state boolean). The client
+	 *        then shows an unset checkbox as indeterminate and cycles through the states on click:
+	 *        checked, unchecked, unset - the order the classic UI uses.
+	 * @see #ReactCheckboxControl(ReactContext, FieldModel)
+	 */
+	public ReactCheckboxControl(ReactContext context, FieldModel model, boolean triState) {
+		super(context, model, "TLCheckbox");
+		_triState = triState;
+		if (triState) {
+			putState(TRI_STATE, Boolean.TRUE);
+		}
+	}
+
+	/**
+	 * Handles a checkbox toggle: its value is a boolean, so it has its own typed arguments rather
+	 * than the base field's text value.
 	 */
 	@ReactCommandHandler(CMD_VALUE_CHANGED)
 	void handleChecked(CheckboxValueArguments args) {
-		clientValueChanged(args.isChecked());
+		clientValueChanged(parseClientValue(args.getChecked()));
 	}
 
 	@Override
 	protected Object parseClientValue(Object rawValue) {
-		return Boolean.TRUE.equals(rawValue);
+		if (_triState && rawValue == null) {
+			// The third state is the absence of a value, not "false".
+			return null;
+		}
+		return Boolean.valueOf(Boolean.TRUE.equals(rawValue));
 	}
 
 }

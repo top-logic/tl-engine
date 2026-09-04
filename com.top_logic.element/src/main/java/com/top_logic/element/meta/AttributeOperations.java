@@ -748,12 +748,15 @@ public class AttributeOperations {
 
 	/**
 	 * The upper bound of the given size annotation, or some default value, if none is given.
+	 *
+	 * @return {@link Integer#MAX_VALUE}, if the annotation declares
+	 *         {@link TLSize#NO_UPPER_BOUND no upper bound}.
 	 */
 	public static int getUpperBound(TLSize annotation) {
 		if (annotation == null) {
 			return 255;
 		}
-		return (int) annotation.getUpperBound();
+		return toIntBound(annotation.getUpperBound());
 	}
 
 	public static int getLowerBound(TLModelPart modelPart) {
@@ -767,7 +770,18 @@ public class AttributeOperations {
 		if (annotation == null) {
 			return 0;
 		}
-		return (int) annotation.getLowerBound();
+		return toIntBound(annotation.getLowerBound());
+	}
+
+	/**
+	 * Converts a bound declared as {@code long} in a {@link TLSize} annotation to an {@code int}.
+	 *
+	 * @implNote Saturates at {@link Integer#MAX_VALUE} instead of truncating. Without this,
+	 *           {@link TLSize#NO_UPPER_BOUND} ({@link Long#MAX_VALUE}) would become {@code -1},
+	 *           making an unbounded size constraint reject every non-empty text.
+	 */
+	private static int toIntBound(long bound) {
+		return (int) Math.min(bound, Integer.MAX_VALUE);
 	}
 
 	/**
@@ -781,7 +795,11 @@ public class AttributeOperations {
 		if (annotation == null) {
 			return null;
 		}
-		return (int) annotation.getUpperBound();
+		long upperBound = annotation.getUpperBound();
+		if (upperBound >= TLSize.NO_UPPER_BOUND) {
+			return null;
+		}
+		return toIntBound(upperBound);
 	}
 
 	/**

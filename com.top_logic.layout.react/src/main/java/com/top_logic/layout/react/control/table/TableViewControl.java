@@ -43,6 +43,8 @@ import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactFormBuilder;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.layout.LabelPosition;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
@@ -145,8 +147,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final int MIN_WIDTH = 50;
 
+	/** State key telling the client whether to offer the column selection. */
+	private static final String COLUMN_SELECT = "columnSelect";
+
 	// Command names.
 	private static final String CMD_OPEN_FILTER = "openFilter";
+
+	private static final String CMD_OPEN_COLUMN_SELECT = "openColumnSelect";
 
 	private static final String CMD_SCROLL = "scroll";
 
@@ -228,6 +235,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/** View-supplied custom filter UIs, keyed by column name. */
 	private final Map<String, ColumnFilterUI> _filterUIs = new LinkedHashMap<>();
 
+	/** Whether the user may choose which columns are displayed, and in which order. */
+	private boolean _columnSelect = true;
+
 	/**
 	 * Creates a {@link TableViewControl}.
 	 *
@@ -248,6 +258,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		putState(ROW_HEIGHT, Integer.valueOf(36));
 		putState(SELECTION_MODE, _selectionMode);
 		putState(TREE_MODE, Boolean.valueOf(_treeMode));
+		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
 		buildFullState();
 	}
 
@@ -256,6 +267,19 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 */
 	public void setSelectionListener(SelectionListener listener) {
 		_selectionListener = listener;
+	}
+
+	/**
+	 * Whether the table offers the column selection (which columns are displayed, in which order).
+	 *
+	 * <p>
+	 * Switch this off for a table whose columns are part of what it means - a matrix over a fixed
+	 * set of columns, or a table whose rows are only meaningful next to a specific neighbour.
+	 * </p>
+	 */
+	public void setColumnSelect(boolean columnSelect) {
+		_columnSelect = columnSelect;
+		putState(COLUMN_SELECT, Boolean.valueOf(columnSelect));
 	}
 
 	/**
@@ -497,8 +521,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		return cells;
 	}
 
+	/**
+	 * Also disposes the cells built for rows outside the current viewport: only the rendered rows are
+	 * part of the state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
+		super.cleanupChildren();
 		for (Map<String, ReactControl> cells : _cellCache.values()) {
 			cells.values().forEach(ReactControl::cleanupTree);
 		}
@@ -550,7 +579,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			// exactly like every other form.
 			ReactFormBuilder form = new ReactFormBuilder(context);
 			for (FilterField field : editor.fields()) {
-				form.addField(label(resources, field.label()), fieldControl(context, field));
+				ReactControl input = fieldControl(context, field);
+				ReactFormFieldChromeControl chrome = form.addField(label(resources, field.label()), input);
+				if (input instanceof ReactCheckboxControl) {
+					// A checkbox reads as its own statement ("Yes", "case sensitive"), so the label
+					// belongs next to the box - above it, the two look like unrelated lines.
+					chrome.setLabelPosition(LabelPosition.AFTER);
+				}
 			}
 			body = form.build();
 			readState = editor::read;
@@ -585,6 +620,78 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		dialogs.openDialog(true, window, result -> {
 			// Reset / Apply already acted; Cancel discards.
 		});
+	}
+
+	// -- Column selection dialog --
+
+	/**
+	 * Opens the column selection: which columns the table displays, and in which order.
+	 *
+	 * <p>
+	 * The dialog edits a working copy in a {@link ReactColumnSelectControl} and applies it in one
+	 * step on {@code apply}, so a cancelled dialog leaves the table untouched and an accepted one
+	 * persists a single arrangement rather than every intermediate one.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_OPEN_COLUMN_SELECT)
+	void handleOpenColumnSelect() {
+		if (!_columnSelect) {
+			return;
+		}
+		ReactContext context = getReactContext();
+		DialogManager dialogs = context.getDialogManager();
+		if (dialogs == null) {
+			return;
+		}
+		Resources resources = Resources.getInstance();
+
+		ReactColumnSelectControl selection = new ReactColumnSelectControl(context, _view.columnOptions());
+		// Wider than the filter dialog: three actions, one of them a spelled-out "show all columns".
+		ReactWindowControl window = new ReactWindowControl(context,
+			resources.getString(I18NConstants.JS_TABLE_COLUMNS), DisplayDimension.px(460),
+			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
+		window.setChild(selection);
+		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
+			applyColumns(selection.visibleColumns());
+			dialogs.closeTopDialog(DialogResult.ok(null));
+			return HandlerResult.DEFAULT_RESULT;
+		});
+		applyButton.markAsDefault();
+		window.setActions(List.of(
+			new ReactButtonControl(context, resources.getString(I18NConstants.TABLE_COLUMNS_RESET), ctx -> {
+				applyColumns(_view.defaultColumnOrder());
+				dialogs.closeTopDialog(DialogResult.ok(null));
+				return HandlerResult.DEFAULT_RESULT;
+			}),
+			MessageButtons.cancel(context, ctx -> {
+				dialogs.closeTopDialog(DialogResult.cancelled());
+				return HandlerResult.DEFAULT_RESULT;
+			}),
+			applyButton));
+		dialogs.openDialog(true, window, result -> {
+			// Reset / Apply already acted; Cancel discards.
+		});
+	}
+
+	/**
+	 * Applies a new set of displayed columns and re-renders: the cell controls of the buffered rows
+	 * belong to the previous columns, so they are rebuilt for the new ones.
+	 *
+	 * <p>
+	 * Columns and rows must reach the client as one patch: a client that already knows a newly shown
+	 * column but still holds the rows of the previous column set would render a cell that has no
+	 * control yet.
+	 * </p>
+	 */
+	private void applyColumns(List<String> columns) {
+		Object update = beginUpdate();
+		try {
+			_view.setColumnOrder(columns);
+			clearCells();
+			buildFullState();
+		} finally {
+			commitUpdate(update);
+		}
 	}
 
 	/**

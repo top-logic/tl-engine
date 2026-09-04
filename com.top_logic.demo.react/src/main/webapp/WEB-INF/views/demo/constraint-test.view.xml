@@ -65,8 +65,11 @@
 								attribute="name"
 								sort="ASC"
 							/>
+							<column attribute="uniqueName"/>
 							<column attribute="sizedString"/>
 							<column attribute="mandatorySizedString"/>
+							<column attribute="unboundedSizedString"/>
+							<column attribute="minSizedString"/>
 							<column attribute="rangedInt"/>
 							<column attribute="rangedDouble"/>
 							<column attribute="uppercaseStart"/>
@@ -87,8 +90,11 @@
 					</title>
 					<form input="selectedObject">
 						<field attribute="name"/>
+						<field attribute="uniqueName"/>
 						<field attribute="sizedString"/>
 						<field attribute="mandatorySizedString"/>
+						<field attribute="unboundedSizedString"/>
+						<field attribute="minSizedString"/>
 						<field attribute="rangedInt"/>
 						<field attribute="rangedDouble"/>
 						<field attribute="uppercaseStart"/>

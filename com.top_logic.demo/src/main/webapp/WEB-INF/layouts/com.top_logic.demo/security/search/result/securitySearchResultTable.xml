@@ -5,8 +5,8 @@
 	metaElement="DemoSecurity.A,DemoSecurity.B"
 	namePrefix="SecuritySearch"
 >
-	<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
-		function="`DemoSecurity#ROOT`"
+	<securityObject class="com.top_logic.tool.boundsec.securityObjectProvider.ModuleSingletonSecurityProvider"
+		module="DemoSecurity"
 	/>
 	<columnDefinitions>
 		<columns>

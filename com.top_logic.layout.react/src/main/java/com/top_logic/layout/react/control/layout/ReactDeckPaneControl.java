@@ -143,30 +143,13 @@ public class ReactDeckPaneControl extends ReactControl {
 		}
 	}
 
-	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		ReactControl content = _childCache.get(Integer.valueOf(_activeIndex));
-		if (content != null) {
-			content.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		ReactControl content = _childCache.get(Integer.valueOf(_activeIndex));
-		if (content != null) {
-			content.detach();
-		}
-	}
-
+	/**
+	 * Also disposes the panes built earlier but not displayed right now: only the active one is part
+	 * of the state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
-		ReactControl active = _childCache.get(Integer.valueOf(_activeIndex));
-		if (active != null) {
-			active.detach();
-		}
+		super.cleanupChildren();
 		for (ReactControl cached : _childCache.values()) {
 			cached.cleanupTree();
 		}

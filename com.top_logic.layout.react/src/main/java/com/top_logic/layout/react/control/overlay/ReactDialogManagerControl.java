@@ -108,26 +108,8 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 	}
 
 	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		for (DialogEntry entry : _stack) {
-			entry.dialog().attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		for (DialogEntry entry : _stack) {
-			entry.dialog().detach();
-		}
-	}
-
-	@Override
 	protected void cleanupChildren() {
-		for (DialogEntry entry : _stack) {
-			entry.dialog().cleanupTree();
-		}
+		super.cleanupChildren();
 		_stack.clear();
 	}
 

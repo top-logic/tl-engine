@@ -78,6 +78,15 @@ function onFocusIn(e: FocusEvent): void {
   if (target && el.contains(target)) {
     return;
   }
+  if (target && target.contains(el)) {
+    // Focus was dropped, not stolen: a click on a spot inside the surface that cannot take focus
+    // (a label, the space beside a field) sends it to the nearest focusable ancestor - the
+    // backdrop wrapping the dialog - or to the document body. Nothing has left the surface, and
+    // pulling focus back would put the caret into the surface's first field and scroll there,
+    // throwing away where the user was reading. That is what the main window does, too: the click
+    // simply leaves the field.
+    return;
+  }
   if (target instanceof Element && target.closest(`[${ANCHORED_OVERLAY_ATTR}]`)) {
     return;
   }

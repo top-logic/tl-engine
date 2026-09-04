@@ -122,6 +122,48 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	private static final String CSS_SNACKBAR_TITLE = "tlSnackbar__title";
 
+	/**
+	 * This endpoint answers {@code XMLHttpRequest}s, for whose caller the check's redirect to an
+	 * HTML page is of no use. Skipping it also keeps a command that arrives while the session is
+	 * ending from racing the reloading page for the check's one-shot marker - a race whose loser is
+	 * told that cookies cannot be set.
+	 */
+	@Override
+	protected boolean isCookieCheckRequired() {
+		return false;
+	}
+
+	/**
+	 * Answers a request whose session is gone with the error code the client reloads on, rather than
+	 * with the empty response the inherited implementation would produce.
+	 */
+	@Override
+	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_CODE_STALE_UI, "No session.");
+	}
+
+	/**
+	 * Announces the request to the session's windows before answering it.
+	 *
+	 * <p>
+	 * Every request through this servlet restarts the session's inactivity timeout as a side effect.
+	 * A control counting down to the end of the session has no other way of learning that, so it is
+	 * told here, at the one point every React request passes through.
+	 * </p>
+	 *
+	 * @see ReactWindowRegistry#noteActivity(HttpSession)
+	 */
+	@Override
+	protected void doService(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		HttpSession session = request.getSession(false);
+		if (session != null) {
+			ReactWindowRegistry.forSession(session).noteActivity(session);
+		}
+		super.doService(request, response);
+	}
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -380,6 +422,13 @@ public class ReactServlet extends TopLogicServlet {
 		if ("windowClosed".equals(commandName)) {
 			String closedWindowId = arguments != null ? (String) arguments.get("windowId") : null;
 			ReactWindowRegistry registry = ReactWindowRegistry.forSession(request.getSession());
+			if (arguments != null && Boolean.TRUE.equals(arguments.get("unload"))) {
+				// Reported on beforeunload, which fires for a reload as well: keep the window's state
+				// for a grace period instead of tearing it down.
+				registry.windowUnloaded(closedWindowId);
+				sendSuccess(response);
+				return;
+			}
 			// Acquire the request lock so the close callback (which may patch the opener's
 			// snackbar state and flush SSE events) does not race with concurrent commands.
 			ReentrantLock requestLock = registry.getRequestLock();

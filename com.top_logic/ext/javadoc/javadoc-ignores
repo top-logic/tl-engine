@@ -4662,12 +4662,9 @@ com.top_logic.mig.html.layout.MainLayout.java: Invalid camel case word 'MetaObje
 com.top_logic.mig.html.layout.MainLayout.java: Invalid camel case word 'TagWriter', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.mig.html.layout.MainLayout.java: Invalid camel case word 'aString', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.mig.html.layout.MainLayout.java: Invalid camel case word 'appCotext', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.mig.html.layout.MainLayout.java: Invalid camel case word 'shortcutIcon', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.mig.html.layout.MainLayout.java: Missing documentation: com.top_logic.mig.html.layout.MainLayout.Config
 com.top_logic.mig.html.layout.MainLayout.java: Missing documentation: com.top_logic.mig.html.layout.MainLayout.Config.getHeaderIncludeFilePath
-com.top_logic.mig.html.layout.MainLayout.java: Missing documentation: com.top_logic.mig.html.layout.MainLayout.Config.getIcon
 com.top_logic.mig.html.layout.MainLayout.java: Missing documentation: com.top_logic.mig.html.layout.MainLayout.Config.getPostProcessorClassName
-com.top_logic.mig.html.layout.MainLayout.java: Missing documentation: com.top_logic.mig.html.layout.MainLayout.Config.getShortcutIcon
 com.top_logic.mig.html.layout.MainLayout.java: Missing documentation: com.top_logic.mig.html.layout.MainLayout.NotifyUnload.COMMAND_ID
 com.top_logic.mig.html.layout.MainLayout.java: Missing documentation: com.top_logic.mig.html.layout.MainLayout.basicAJAXSupport
 com.top_logic.mig.html.layout.MainLayout.java: Missing documentation: com.top_logic.mig.html.layout.MainLayout.controlSupport
@@ -5113,7 +5110,6 @@ com.top_logic.tool.boundsec.util.BoundSecurityFilter.java: Invalid camel case wo
 com.top_logic.tool.boundsec.util.BoundSecurityFilter.java: Invalid camel case word 'BoundObjects', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.util.BoundSecurityFilter.java: Invalid camel case word 'CommandGroup', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.util.BoundSecurityFilter.java: Invalid camel case word 'commandGroup', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.util.CommandGroupComparator.java: Invalid camel case word 'BoundCommandGroups', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.wrap.BoundedRole.java: Invalid camel case word 'BoundObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.wrap.BoundedRole.java: Invalid camel case word 'BoundedRol', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.wrap.BoundedRole.java: Invalid camel case word 'BoundedRole', this may only be used within JavaDoc links or HTML code tags.

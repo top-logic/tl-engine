@@ -28,6 +28,24 @@
 					</attributes>
 				</class>
 
+				<class name="UnsecuredData">
+					<annotations>
+						<table name="TLSecUnsecuredData"/>
+					</annotations>
+					<attributes>
+						<property name="data"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="UnsecuredDataSub">
+					<generalizations>
+						<generalization type="UnsecuredData"/>
+					</generalizations>
+				</class>
+
+
 				<class name="Project">
 					<annotations>
 						<table name="TLSecProject"/>

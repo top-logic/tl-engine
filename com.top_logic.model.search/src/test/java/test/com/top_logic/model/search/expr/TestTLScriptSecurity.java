@@ -32,7 +32,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
@@ -56,7 +56,9 @@ import com.top_logic.util.error.TopLogicException;
  * </ul>
  * <p>
  * {@code Employee} has no grant and is therefore not readable for non-administrative users
- * (deny-by-default).
+ * (deny-by-default). {@code UnsecuredData} has no grant either, but is declared without security, so
+ * its objects &ndash; and those of its specialization {@code UnsecuredDataSub} &ndash; are
+ * accessible for everybody.
  * </p>
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -78,6 +80,13 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			+ ".get(`TestTLScriptSecurity:Employee#salary`) > 1000)";
 
 	private static final String ALL_EMPLOYEES = "all(`TestTLScriptSecurity:Employee`)";
+
+	/** Navigates to the responsible employee of the given project. */
+	private static final String RESPONSIBLE_OF = "p -> $p.get(`TestTLScriptSecurity:Project#responsible`)";
+
+	/** Reads the salary of the responsible employee of the given project. */
+	private static final String SALARY_OF_RESPONSIBLE =
+		RESPONSIBLE_OF + ".get(`TestTLScriptSecurity:Employee#salary`)";
 
 	private KnowledgeBase _kb;
 
@@ -224,16 +233,16 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 
 	/**
 	 * Employees are not readable for a non-administrative user (deny-by-default), so the result
-	 * filter removes them.
+	 * filter of the {@link QueryExecutor} removes them.
 	 */
 	public void testEmployeesNotReadable() throws Exception {
 		QueryExecutor query = QueryExecutor.compile(kb(), model(), search(ALL_EMPLOYEES));
 
 		becomeUser(_root);
-		assertEquals(set(_e1, _e2, _m1), asSet(SearchExpression.filterSecurity(query.execute())));
+		assertEquals(set(_e1, _e2, _m1), asSet(query.execute()));
 
 		becomeUser(_user);
-		assertEquals(set(), asSet(SearchExpression.filterSecurity(query.execute())));
+		assertEquals(set(), asSet(query.execute()));
 	}
 
 	/**
@@ -245,7 +254,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		QueryExecutor query = QueryExecutor.compile(kb(), model(), search("all(`TestTLScriptSecurity:Project`)"));
 
 		becomeUser(_user);
-		assertEquals(set(_p1, _p2), asSet(SearchExpression.filterSecurity(query.execute())));
+		assertEquals(set(_p1, _p2), asSet(query.execute()));
 	}
 
 	/**
@@ -283,6 +292,82 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			QueryExecutor.compile(kb(), model(), search(PROJECTS_WITH_WELL_PAID_RESPONSIBLE));
 		unsecured.disableSecurity();
 		assertEquals(set(_p1), asSet(unsecured.execute()));
+	}
+
+	/**
+	 * The result of an execution is secured by the {@link QueryExecutor}: the reference navigation
+	 * itself delivers the referenced employee unfiltered, but the employee is not readable for the
+	 * user, so the result of the execution is {@code null}.
+	 */
+	public void testResultSecuredByExecutor() throws Exception {
+		QueryExecutor responsible = QueryExecutor.compile(kb(), model(), search(RESPONSIBLE_OF));
+
+		becomeUser(_root);
+		assertEquals(_e1, responsible.execute(_p1));
+
+		becomeUser(_user);
+		assertNull("The user must not read the navigated employee.", responsible.execute(_p1));
+	}
+
+	/**
+	 * Disabling the security switches off the result filter as well.
+	 */
+	public void testDisableSecurityKeepsForbiddenResults() throws Exception {
+		becomeUser(_user);
+
+		QueryExecutor secured = QueryExecutor.compile(kb(), model(), search(ALL_EMPLOYEES));
+		assertEquals(set(), asSet(secured.execute()));
+
+		QueryExecutor unsecured = QueryExecutor.compile(kb(), model(), search(ALL_EMPLOYEES));
+		unsecured.disableSecurity();
+		assertEquals(set(_e1, _e2, _m1), asSet(unsecured.execute()));
+	}
+
+	/**
+	 * The result filter keeps model elements: they are meta-data a computation works with, not
+	 * business objects.
+	 *
+	 * <p>
+	 * No rights are configured for the meta-model, so a non-administrative user holds no role on a
+	 * {@code TLClass}. A script delivering a type (or the type of an object) must nevertheless return
+	 * it, otherwise the computation would silently lose its meta-data.
+	 * </p>
+	 */
+	public void testModelElementsNotFiltered() throws Exception {
+		becomeUser(_other);
+		assertFalse("Test premise: the user holds no read right on the meta-model.",
+			ModelAccessRights.getInstance().isReadAllowed(_other, (TLObject) projectType()));
+
+		assertEquals(projectType(), execute(search("`TestTLScriptSecurity:Project`")));
+		assertEquals(part("Project", "budget"), execute(search("`TestTLScriptSecurity:Project#budget`")));
+
+		becomeUser(_user);
+		assertEquals(projectType(), execute(search("p -> $p.type()"), _p1));
+	}
+
+	private TLClass projectType() {
+		return (TLClass) TLModelUtil.findType("TestTLScriptSecurity:Project");
+	}
+
+	/**
+	 * A nested execution (a script called from within an ongoing evaluation) delivers its result
+	 * unfiltered, since it is an intermediate result of the calling script.
+	 *
+	 * <p>
+	 * The security of the executed expression itself is unaffected, therefore the salary of the
+	 * navigated employee stays inaccessible even in a nested execution.
+	 * </p>
+	 */
+	public void testNestedResultNotFiltered() throws Exception {
+		becomeUser(_user);
+
+		QueryExecutor responsible = QueryExecutor.compile(kb(), model(), search(RESPONSIBLE_OF));
+		assertEquals("A nested result must keep the objects the calling script computes with.",
+			_e1, responsible.executeIntermediate(_p1));
+
+		QueryExecutor salary = QueryExecutor.compile(kb(), model(), search(SALARY_OF_RESPONSIBLE));
+		assertNull("The attribute of an unreadable object stays inaccessible in a nested execution.",
+			salary.executeIntermediate(_p1));
 	}
 
 	/**
@@ -468,7 +553,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 
 		becomeUser(_reader);
 		// _reader is a member of p1 only, so it may read p1 but not p2.
-		assertEquals(set(_p1), asSet(SearchExpression.filterSecurity(allProjects.execute())));
+		assertEquals(set(_p1), asSet(allProjects.execute()));
 
 		// ProjectReader has no write grant: updating the project is denied.
 		assertPermissionDenied(() -> {
@@ -807,6 +892,85 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		becomeUser(_root);
 		assertTrue(accessRights.isAllowed(_root, _p1, secret, SimpleBoundCommandGroup.WRITE));
 		assertTrue(accessRights.isReadAllowed(_root, _p1, secret));
+	}
+
+	/**
+	 * An object of a type without security is accessible for everybody, including its attribute
+	 * values and the creation of such an object.
+	 *
+	 * <p>
+	 * {@code UnsecuredData} is declared without security and has no grant at all (see the test
+	 * config). Therefore a user without any role may read, write and delete the object as well as
+	 * {@code UnsecuredData#data}, and may create objects of that type. The same user has no access
+	 * to an access controlled type without a matching grant.
+	 * </p>
+	 */
+	public void testTypeWithoutSecurityAccessibleForEverybody() throws Exception {
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		TLClass unsecuredType = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:UnsecuredData");
+		TLStructuredTypePart data = part("UnsecuredData", "data");
+		TLStructuredTypePart budget = part("Project", "budget");
+
+		TLObject unsecured;
+		try (Transaction tx = beginTx()) {
+			unsecured = newObject("UnsecuredData");
+			unsecured.tUpdateByName("data", "some unsecured value");
+			tx.commit();
+		}
+
+		assertTrue(accessRights.isWithoutSecurity(unsecuredType));
+
+		becomeUser(_other);
+		// The attribute values.
+		assertTrue(accessRights.isReadAllowed(_other, unsecured, data));
+		assertTrue(accessRights.isAllowed(_other, unsecured, data, SimpleBoundCommandGroup.WRITE));
+		// The object itself.
+		assertTrue(accessRights.isReadAllowed(_other, unsecured));
+		assertTrue(accessRights.isAllowed(_other, unsecured, SimpleBoundCommandGroup.WRITE));
+		assertTrue(accessRights.isAllowed(_other, unsecured, SimpleBoundCommandGroup.DELETE));
+		// The creation of such an object. Note: The cast selects the type-based overload, since a
+		// TLClass is a TLObject, too.
+		assertTrue(accessRights.isAllowedCreate(_other, unsecuredType, (TLObject) null));
+		// The type is reported as accessible, although no rights are configured for it.
+		assertTrue(accessRights.getAccessibleTypes(_other, SimpleBoundCommandGroup.READ)
+			.contains(unsecuredType));
+
+		// An access controlled type without a matching grant stays inaccessible.
+		assertFalse(accessRights.isReadAllowed(_other, _p1, budget));
+		assertFalse(accessRights.isAllowed(_other, _p1, SimpleBoundCommandGroup.WRITE));
+	}
+
+	/**
+	 * A specialization of a type without security is without security, too.
+	 *
+	 * <p>
+	 * {@code UnsecuredDataSub} specializes {@code UnsecuredData}, which is declared without
+	 * security, and has no own configuration entry (see the test config), yet its objects are
+	 * accessible for a user without any role.
+	 * </p>
+	 */
+	public void testSpecializationOfTypeWithoutSecurityIsWithoutSecurity() throws Exception {
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		TLStructuredTypePart data = part("UnsecuredData", "data");
+
+		TLObject sub;
+		try (Transaction tx = beginTx()) {
+			sub = newObject("UnsecuredDataSub");
+			tx.commit();
+		}
+
+		assertTrue(accessRights
+			.isWithoutSecurity((TLClass) TLModelUtil.findType("TestTLScriptSecurity:UnsecuredDataSub")));
+
+		becomeUser(_other);
+		assertTrue(accessRights.isReadAllowed(_other, sub, data));
+		assertTrue(accessRights.isAllowed(_other, sub, data, SimpleBoundCommandGroup.WRITE));
+		assertTrue(accessRights.isAllowed(_other, sub, SimpleBoundCommandGroup.DELETE));
+	}
+
+	private TLStructuredTypePart part(String className, String partName) {
+		TLClass type = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className);
+		return type.getPart(partName);
 	}
 
 	@SuppressWarnings("unchecked")

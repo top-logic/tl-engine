@@ -13,11 +13,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.util.model.ModelService;
 import com.top_logic.xio.importer.binding.ImportContext;
+import com.top_logic.xio.importer.binding.ModelBinding;
 
 /**
  * {@link NestedImportHandler} selecting a new import scope by evaluating a function.
@@ -59,7 +57,7 @@ public class ScopedImportHandler<C extends ScopedImportHandler.Config<?>> extend
 		Expr getExpr();
 	}
 
-	private QueryExecutor _scope;
+	private final Expr _scope;
 	
 	/**
 	 * Creates a {@link ScopedImportHandler} from configuration.
@@ -73,13 +71,18 @@ public class ScopedImportHandler<C extends ScopedImportHandler.Config<?>> extend
 	public ScopedImportHandler(InstantiationContext context, C config) {
 		super(context, config);
 
-		_scope = QueryExecutor.compile(PersistencyLayer.getKnowledgeBase(), ModelService.getApplicationModel(),
-			config.getExpr());
+		_scope = config.getExpr();
 	}
 
+	/**
+	 * @implNote Evaluates through the {@link ModelBinding} of the import (instead of an own
+	 *           {@link com.top_logic.model.search.expr.query.QueryExecutor}), so that the security
+	 *           setting of the import applies to this expression as well, see
+	 *           {@link com.top_logic.xio.importer.binding.AbstractModelBinding#usesSecurity()}.
+	 */
 	@Override
 	public Object importXml(ImportContext context, XMLStreamReader in) throws XMLStreamException {
-		Object newScope = _scope.execute(context.getVar(getConfig().getArgumentVar()));
+		Object newScope = context.eval(_scope, context.getVar(getConfig().getArgumentVar()));
 		return context.withVar(getConfig().getScopeVar(), newScope, in, (context1, in1) -> {
 			return importXmlInScope(context1, in1);
 		});

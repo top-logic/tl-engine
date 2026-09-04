@@ -93,6 +93,7 @@
 						</generic-command>
 					</commands>
 					<table
+						fixed-columns="1"
 						observed-types="demo.react:Demo"
 						selection="selected"
 						types="demo.react:Demo"
@@ -298,6 +299,7 @@
 					<form input="gridAnchor">
 						<table
 							create-type="demo.react:Demo"
+							fixed-columns="2"
 							observed-types="demo.react:Demo"
 							on-remove="DELETE"
 							row-edit="SELECTED"

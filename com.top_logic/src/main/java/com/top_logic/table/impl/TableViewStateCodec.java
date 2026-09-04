@@ -7,6 +7,7 @@ package com.top_logic.table.impl;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +38,8 @@ import com.top_logic.table.TableViewState;
 public final class TableViewStateCodec {
 
 	private static final String COLUMN_ORDER = "columnOrder";
+
+	private static final String HIDDEN_COLUMNS = "hiddenColumns";
 
 	private static final String WIDTHS = "widths";
 
@@ -70,6 +73,9 @@ public final class TableViewStateCodec {
 	public static Map<String, Object> toJson(TableViewState state, FilterCodec filters) {
 		Map<String, Object> json = new LinkedHashMap<>();
 		json.put(COLUMN_ORDER, new ArrayList<>(state.getColumnOrder()));
+		if (!state.getHiddenColumns().isEmpty()) {
+			json.put(HIDDEN_COLUMNS, new ArrayList<>(state.getHiddenColumns()));
+		}
 
 		Map<String, Object> widths = new LinkedHashMap<>();
 		for (Map.Entry<String, Integer> entry : state.getWidths().entrySet()) {
@@ -121,6 +127,11 @@ public final class TableViewStateCodec {
 		Object order = json.get(COLUMN_ORDER);
 		if (order instanceof List<?> list) {
 			target.setColumnOrder(strings(list));
+		}
+
+		Object hidden = json.get(HIDDEN_COLUMNS);
+		if (hidden instanceof List<?> list) {
+			target.setHiddenColumns(new LinkedHashSet<>(strings(list)));
 		}
 
 		Object widths = json.get(WIDTHS);

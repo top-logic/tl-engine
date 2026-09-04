@@ -107,6 +107,23 @@ public class AJAXServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * This endpoint answers {@code XMLHttpRequest}s, for whose caller the check's redirect to an
+	 * HTML page is of no use. Skipping it also keeps two requests that arrive while the session is
+	 * ending from racing for the check's one-shot marker - a race whose loser is told that cookies
+	 * cannot be set, however well the browser handles them.
+	 *
+	 * @implNote A request without a session ends in
+	 *           {@link #handleNoSession(jakarta.servlet.http.HttpServletRequest, jakarta.servlet.http.HttpServletResponse)},
+	 *           which is not overridden here: the client has no handling for a dedicated answer, so
+	 *           it reports a generic error either way. It did so before as well, only after an
+	 *           additional redirect round-trip and on a response it first tried to parse.
+	 */
+	@Override
+	protected boolean isCookieCheckRequired() {
+		return false;
+	}
+
+	/**
 	 * Response header that marks an AJAX response.
 	 * 
 	 * <p>

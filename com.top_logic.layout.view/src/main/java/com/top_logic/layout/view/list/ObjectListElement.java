@@ -290,8 +290,8 @@ public class ObjectListElement implements UIElement {
 			resolveObservedTypes(),
 			List.of(container),
 			control::showElements);
-		control.addBeforeWriteAction(() -> observer.attach(context.getModelScope()));
-		control.addCleanupAction(observer::detach);
+		control.addAttachListener(() -> observer.attach(context.getModelScope()));
+		control.addDetachListener(observer::detach);
 
 		return control;
 	}

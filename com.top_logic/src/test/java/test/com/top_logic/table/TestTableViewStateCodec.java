@@ -6,6 +6,7 @@
 package test.com.top_logic.table;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +43,26 @@ public class TestTableViewStateCodec extends TestCase {
 		assertEquals(2, restored.getFrozenCount());
 		assertEquals(List.of(new SortColumn("salary", false), new SortColumn("name", true)), restored.getSort());
 		assertEquals(List.of("department"), restored.getGrouping().columns());
+	}
+
+	public void testHiddenColumnsRoundTrip() {
+		TableViewState original = new TableViewState();
+		original.setColumnOrder(List.of("name"));
+		original.setHiddenColumns(new LinkedHashSet<>(List.of("salary", "active")));
+
+		TableViewState restored = new TableViewState();
+		TableViewStateCodec.readInto(restored, TableViewStateCodec.toJson(original));
+
+		assertEquals(List.of("name"), restored.getColumnOrder());
+		assertEquals(new LinkedHashSet<>(List.of("salary", "active")), restored.getHiddenColumns());
+	}
+
+	public void testNoHiddenColumnsWritesNoEntry() {
+		TableViewState original = new TableViewState();
+		original.setColumnOrder(List.of("name"));
+
+		assertFalse("A table with all columns displayed must not persist an empty exclusion list.",
+			TableViewStateCodec.toJson(original).containsKey("hiddenColumns"));
 	}
 
 	/**

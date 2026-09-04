@@ -198,28 +198,6 @@ public class ReactStackControl extends ReactControl {
 		putState(GROW_FIRST, Boolean.valueOf(growFirst));
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		for (ReactControl child : _children) {
-			child.cleanupTree();
-		}
-	}
-
-	@Override
-	protected void propagateAttach() {
-		for (ReactControl child : _children) {
-			child.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		for (ReactControl child : _children) {
-			child.detach();
-		}
-	}
-
-
 	/**
 	 * Structural: this control is a flex layout container and is elided from the headless projection.
 	 */

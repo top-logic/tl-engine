@@ -8,6 +8,7 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -55,6 +56,7 @@ import com.top_logic.table.GroupKey;
 import com.top_logic.table.Sort;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
+import com.top_logic.table.TableViewState;
 import com.top_logic.table.ViewStateStore;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -139,6 +141,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private SortSpec _defaultSort = SortSpec.NONE;
 
+	/** @see #setHiddenByDefault(Collection) */
+	private Set<String> _hiddenByDefault = Set.of();
+
+	/** @see #setFixedColumns(int) */
+	private int _fixedColumns;
+
 	private ViewChannel _selectionChannel;
 
 	private ViewChannel.ChannelListener _selectionChannelListener;
@@ -154,9 +162,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private ListRowSource<TLObject> _rowSource;
 
 	private RowSourceObserver<TLObject> _observer;
-
-	/** Whether the first client write happened (the point from which observers attach directly). */
-	private boolean _written;
 
 	/** Guard breaking the notification cycle between selection channel and table selection. */
 	private boolean _applyingFromChannel;
@@ -195,11 +200,23 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		putState(ERROR_ICON,
 			com.top_logic.layout.react.control.layout.Icons.VALIDATION_ERROR.resolve().toEncodedForm());
+	}
 
-		addBeforeWriteAction(() -> {
-			_written = true;
-			attachObserver();
-		});
+	@Override
+	protected void onAttach() {
+		super.onAttach();
+		attachObserver();
+	}
+
+	@Override
+	protected void onDetach() {
+		// Pause the observer rather than dropping it: the table keeps its rows while it is not
+		// displayed, and becoming displayed again resumes observing. Dropping it is reserved for a
+		// table rebuild and for disposal, where a new observer is created (or none at all).
+		if (_observer != null) {
+			_observer.detach();
+		}
+		super.onDetach();
 	}
 
 	/**
@@ -257,6 +274,29 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	public void setDefaultSort(SortSpec defaultSort) {
 		_defaultSort = defaultSort;
+	}
+
+	/**
+	 * The columns offered but not displayed until the user selects them in the column selection.
+	 *
+	 * @param columns
+	 *        Attribute names among the table's {@link TableColumn columns}; unknown names are
+	 *        ignored.
+	 */
+	public void setHiddenByDefault(Collection<String> columns) {
+		_hiddenByDefault = new LinkedHashSet<>(columns);
+	}
+
+	/**
+	 * How many of the leading data columns stay in place while the table is scrolled horizontally.
+	 *
+	 * <p>
+	 * Counted among the data columns: a leading action column (the detail button) is carried along,
+	 * because it sits left of them all.
+	 * </p>
+	 */
+	public void setFixedColumns(int fixedColumns) {
+		_fixedColumns = fixedColumns;
 	}
 
 	/**
@@ -360,6 +400,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDetailButton(ctx, row))))
 				.width(48)
 				.frozenEligible(false)
+				// Holds a per-row button, not data: nothing to offer in the column selection.
+				.selectable(false)
 				.build());
 		}
 
@@ -374,14 +416,31 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row))))
 				.width(48)
 				.frozenEligible(false)
+				// Holds a per-row button, not data: nothing to offer in the column selection.
+				.selectable(false)
 				.build());
 		}
 
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
 		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
-		DefaultTableView<TLObject> view =
-			DefaultTableView.create(columns, _rowSource, _store, _store != null ? _tableId : null, _defaultSort);
+		TableViewState initialState =
+			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
+		if (_fixedColumns > 0) {
+			// The configured number counts data columns; a leading action column has to be added on
+			// top of it, or freezing "the first two columns" would freeze the detail button and one
+			// data column.
+			int leadingActions = 0;
+			for (Column<TLObject, ?> column : columns) {
+				if (column.selectable()) {
+					break;
+				}
+				leadingActions++;
+			}
+			initialState.setFrozenCount(Math.min(_fixedColumns + leadingActions, columns.size()));
+		}
+		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
+			_store != null ? _tableId : null, _hiddenByDefault);
 
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();
@@ -410,7 +469,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 					table.refreshData();
 					reapplySelectionFromChannel();
 				});
-			if (_written) {
+			if (isAttached()) {
 				attachObserver();
 			}
 		}
@@ -643,22 +702,18 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	@Override
-	protected void cleanupChildren() {
-		super.cleanupChildren();
+	protected void onCleanup() {
 		detachObserver();
 		if (_selectionChannel != null && _selectionChannelListener != null) {
 			_selectionChannel.removeListener(_selectionChannelListener);
 			_selectionChannelListener = null;
 		}
-		if (_toolbar != null) {
-			_toolbar.cleanupTree();
-			_toolbar = null;
-			_addButton = null;
-		}
-		if (_tableControl != null) {
-			_tableControl.cleanupTree();
-			_tableControl = null;
-		}
+		// The toolbar and the table itself are part of the state and are disposed with it; only the
+		// references are dropped here, so a trailing event cannot reach a torn-down control.
+		_toolbar = null;
+		_addButton = null;
+		_tableControl = null;
+		super.onCleanup();
 	}
 
 	/**

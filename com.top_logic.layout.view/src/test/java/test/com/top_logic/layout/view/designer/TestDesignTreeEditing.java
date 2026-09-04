@@ -67,7 +67,7 @@ public class TestDesignTreeEditing extends TestCase {
 
 		assertNull("A node with several tree properties is not itself a container",
 			node.getChildContainer());
-		assertEquals("One group node per tree property", 3, node.getChildren().size());
+		assertEquals("One group node per tree property", 4, node.getChildren().size());
 
 		for (DesignTreeNode group : node.getChildren()) {
 			assertNotNull("A group node is bound to its property", group.getChildContainer());

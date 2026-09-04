@@ -401,6 +401,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_INVALID_DATE__VALUE;
 
 	/**
+	 * @en No value
+	 */
+	public static ResKey VALUE_NONE;
+
+	/**
 	 * @en Languages…
 	 */
 	public static ResKey I18N_EDITOR_OPEN_BUTTON;
@@ -464,6 +469,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_UNFREEZE_ALL;
 
 	/**
+	 * @en Drag to choose the columns that stay in place while scrolling
+	 */
+	@CustomKey("js.table.freezeSplitter")
+	public static ResKey JS_TABLE_FREEZE_SPLITTER;
+
+	/**
 	 * @en Filter
 	 */
 	@CustomKey("js.table.filter")
@@ -474,6 +485,23 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.table.clear")
 	public static ResKey JS_TABLE_CLEAR;
+
+	/**
+	 * @en Columns
+	 */
+	@CustomKey("js.table.columns")
+	public static ResKey JS_TABLE_COLUMNS;
+
+	/**
+	 * @en Find column
+	 */
+	@CustomKey("js.table.columnSearch")
+	public static ResKey JS_TABLE_COLUMN_SEARCH;
+
+	/**
+	 * @en Restore default
+	 */
+	public static ResKey TABLE_COLUMNS_RESET;
 
 	/**
 	 * @en Selection changed.

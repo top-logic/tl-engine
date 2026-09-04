@@ -272,12 +272,4 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 		super.onCleanup();
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		if (_currentChild != null) {
-			_currentChild.cleanupTree();
-			_currentChild = null;
-		}
-	}
-
 }

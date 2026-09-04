@@ -32,12 +32,18 @@ public interface SecurityParentsConfig extends ConfigurationItem {
 
 	/**
 	 * The list of known {@link NavigationRuleConfig security rule} configurations.
+	 *
+	 * <p>
+	 * A security parent is determined by pure navigation: In contrast to a
+	 * {@link RoleRulesConfig#getRules() role rule}, no role is granted, therefore the additional
+	 * options of a {@link RoleRuleConfig} are not offered here.
+	 * </p>
 	 */
 	@Name(RULES)
 	@EntryTag(RULE)
-	@Key(RoleRuleConfig.ID)
+	@Key(NavigationRuleConfig.ID)
 	@DefaultContainer
-	List<RoleRuleConfig> getRules();
+	List<NavigationRuleConfig> getRules();
 
 }
 

@@ -43,6 +43,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.ui.BooleanDisplay;
+import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelPartRef;
@@ -146,17 +148,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 	private Map<String, ReactFieldControlProvider> _providerByQualifiedType;
 
-	private final ReactFieldControlProvider _checkboxProvider = new CheckboxControlProvider();
-
-	private final ReactFieldControlProvider _numberProvider = new NumberInputControlProvider();
-
-	private final ReactFieldControlProvider _dateProvider = new DatePickerControlProvider();
-
-	private final ReactFieldControlProvider _textProvider = new TextInputControlProvider();
-
 	private final ReactFieldControlProvider _selectProvider = new SelectControlProvider();
-
-	private final ReactFieldControlProvider _binaryProvider = new BinaryControlProvider();
 
 	/**
 	 * Creates a {@link FieldControlService} from configuration.
@@ -260,7 +252,10 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		return FieldSpec.of(valueType(part), MetaLabelProvider.INSTANCE.getLabel(part))
 			.setMandatory(model.isMandatory())
 			.setEditable(model.isEditable())
-			.setMultilineRows(multilineRows(part));
+			.setMultilineRows(multilineRows(part))
+			.setBooleanPresentation(booleanPresentation(part))
+			.setTriState(isTriState(part))
+			.setDateKind(DatePickerControlProvider.kind(part));
 	}
 
 	/**
@@ -281,6 +276,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			}
 			switch (primitive.getKind()) {
 				case BOOLEAN:
+				case TRISTATE:
 					return Boolean.class;
 				case INT:
 					return Long.class;
@@ -293,6 +289,35 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			}
 		}
 		return String.class;
+	}
+
+	/**
+	 * How the given attribute asks to be displayed, {@link BooleanPresentation#CHECKBOX} when it
+	 * says nothing.
+	 *
+	 * <p>
+	 * An annotation at the attribute wins over the one of its type, which is what lets a single
+	 * attribute deviate from how its type is displayed everywhere else.
+	 * </p>
+	 */
+	private static BooleanPresentation booleanPresentation(TLStructuredTypePart part) {
+		BooleanDisplay annotation = part.getAnnotation(BooleanDisplay.class);
+		if (annotation == null) {
+			TLType type = part.getType();
+			annotation = type == null ? null : type.getAnnotation(BooleanDisplay.class);
+		}
+		if (annotation == null || annotation.getPresentation() == null) {
+			return BooleanPresentation.CHECKBOX;
+		}
+		return annotation.getPresentation();
+	}
+
+	/**
+	 * Whether the given attribute keeps a state of its own for "no value".
+	 */
+	private static boolean isTriState(TLStructuredTypePart part) {
+		TLType type = part.getType();
+		return type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.TRISTATE;
 	}
 
 	/**

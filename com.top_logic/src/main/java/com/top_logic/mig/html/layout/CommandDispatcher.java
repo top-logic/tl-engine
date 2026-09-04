@@ -322,11 +322,21 @@ public class CommandDispatcher {
      * @return an {@link ExecutableState} containing information about the executability of the command
      */
     public static final ExecutableState resolveExecutableState(CommandHandler aCommand, LayoutComponent aChecker, Map<String, Object> someArguments) {
-		if (!ComponentUtil.isValid(aChecker.getModel())) {
+		Object componentModel = aChecker.getModel();
+		if (!ComponentUtil.isValid(componentModel)) {
 			return ExecutableState.NO_EXEC_INVALID;
 		}
 
 		Object model = CommandHandlerUtil.getTargetModel(aCommand, aChecker, someArguments);
+		if (model != componentModel) {
+			// Command doesn't operate on the components model.
+			if (!ComponentUtil.isValid(model)) {
+				return ExecutableState.NO_EXEC_INVALID;
+			}
+		} else {
+			// Validity of component model already checked.
+		}
+
 		ExecutableState commandState = aCommand.isExecutable(aChecker, model, someArguments);
 		if (!commandState.isExecutable()) {
 			return commandState;

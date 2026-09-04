@@ -43,6 +43,7 @@ import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
@@ -56,6 +57,8 @@ import com.top_logic.model.search.expr.visit.Visitor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
+
+import de.haumacher.msgbuf.data.ReflectiveDataObject;
 
 /**
  * Part of an executable search model.
@@ -271,10 +274,29 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	/**
 	 * Filters the given value such that the result contains only elements that the given user is
 	 * allowed to see.
-	 * 
+	 *
+	 * <p>
+	 * Only <em>business objects</em> are filtered. A {@link TLModelPart model element} (a type, an
+	 * attribute, a module) is meta-data that a computation works with - a script may e.g. deliver the
+	 * type of an object, or a table column may be described by its attribute. Dropping such a value
+	 * would break the computation instead of protecting data, therefore model elements are kept.
+	 * Reading the <em>attribute values</em> of a model element is a separate question that is decided
+	 * by the access check of the attribute access itself.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link ReflectiveDataObject} (e.g. a diagram assembled by a script) is kept for the same
+	 * reason. It is a <em>structured value</em>, not a container of business objects: its properties
+	 * form an object graph that may be cyclic, and a filtered copy would be a plain {@link Map} that
+	 * cannot take the place of the original - filtering it would destroy the value instead of
+	 * protecting data. A business object that a script stores in such a value is therefore
+	 * <em>not</em> filtered: whoever passes that object on to the user is responsible for checking
+	 * the read rights, see {@link ModelAccessRights#isReadAllowed(Person, TLObject)}.
+	 * </p>
+	 *
 	 * @param value
 	 *        The value to filter for security. May be null;
-	 * 
+	 *
 	 * @return A value containing only allowed elements. When the value is (recursively) allowed,
 	 *         the given value is returned.
 	 */
@@ -282,8 +304,16 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		if (value == null) {
 			return null;
 		}
+		if (value instanceof TLModelPart) {
+			// Meta-data, not a business object, see above.
+			return value;
+		}
 		if (value instanceof TLObject object) {
 			return filterSecurityTLObject(user, object);
+		}
+		if (value instanceof ReflectiveDataObject) {
+			// A structured value, not a container of business objects, see above.
+			return value;
 		}
 		if (value instanceof Collection collectionValue) {
 			return filterSecurityCollection(user, collectionValue);

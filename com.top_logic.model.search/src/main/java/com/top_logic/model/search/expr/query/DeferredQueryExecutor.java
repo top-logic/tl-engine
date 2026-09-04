@@ -59,7 +59,7 @@ public final class DeferredQueryExecutor extends QueryExecutor {
 	}
 
 	@Override
-	public void disableSecurity() {
+	protected void internalDisableSecurity() {
 		_disableSecurity = true;
 		if (_executor != null) {
 			_executor.disableSecurity();
@@ -71,9 +71,14 @@ public final class DeferredQueryExecutor extends QueryExecutor {
 		return executor().getSearch();
 	}
 
+	/**
+	 * @implNote Delegates to the unfiltered execution of the lazily compiled executor, since the
+	 *           result is secured by this {@link DeferredQueryExecutor} itself. Filtering in both
+	 *           executors would apply the filter twice.
+	 */
 	@Override
-	public Object executeWith(EvalContext definitions, Args args) {
-		return executor().executeWith(definitions, args);
+	protected Object internalExecuteWith(EvalContext definitions, Args args) {
+		return executor().executeIntermediate(definitions, args);
 	}
 
 }

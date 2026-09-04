@@ -27,12 +27,12 @@ import com.top_logic.model.TLObject;
  * <p>
  * The token is meant to be written to the channel that the {@code maintenance.view.xml} commands gate on
  * (via {@code <visible-if>}) and that the {@link MaintenanceStatusView} re-renders from. For
- * {@link Mode#ENTER} the delay and message are read from the configured {@link Config#getModel() model
- * channel} (the transient {@code tl.admin:MaintenanceMode} bound to the enter dialog's form); an empty or
- * zero delay enters maintenance mode immediately.
+ * {@link Mode#ENTER} the delay, the login decision and the message are read from the configured
+ * {@link Config#getModel() model channel} (the transient {@code tl.admin:MaintenanceMode} bound to the
+ * enter dialog's form); an empty or zero delay enters maintenance mode immediately.
  * </p>
  *
- * @implNote Delegates to {@link MaintenanceWindowManager#enterMaintenanceWindow(long)},
+ * @implNote Delegates to {@link MaintenanceWindowManager#enterMaintenanceWindow(long, boolean)},
  *           {@link MaintenanceWindowManager#abortEnterMaintenanceWindow()} and
  *           {@link MaintenanceWindowManager#leaveMaintenanceWindow()}; the resulting state comes from
  *           {@link MaintenanceWindowManager#getMaintenanceModeState()}.
@@ -51,6 +51,14 @@ public class MaintenanceModeAction implements ViewAction {
 	/** Model attribute holding the delay in minutes before entering maintenance mode. */
 	private static final String DELAY_MINUTES = "delayMinutes";
 
+	/**
+	 * Model attribute deciding whether users may still log in while the maintenance mode is announced,
+	 * but not active yet.
+	 * 
+	 * @see MaintenanceWindowManager#enterMaintenanceWindow(long, boolean)
+	 */
+	private static final String ALLOW_LOGIN = "allowLogin";
+
 	/** Model attribute holding the message shown to logged-in users. */
 	private static final String MESSAGE = "message";
 
@@ -61,7 +69,7 @@ public class MaintenanceModeAction implements ViewAction {
 		/** Just return the current maintenance state. */
 		REFRESH,
 
-		/** Enter (or schedule entering) maintenance mode using the model channel's delay and message. */
+		/** Enter (or schedule entering) maintenance mode using the model channel's input. */
 		ENTER,
 
 		/** Abort a scheduled, not-yet-active maintenance window. */
@@ -140,22 +148,25 @@ public class MaintenanceModeAction implements ViewAction {
 	}
 
 	/**
-	 * Enters (or schedules entering) maintenance mode using the delay and message from the model channel.
+	 * Enters (or schedules entering) maintenance mode using the input from the model channel.
 	 */
 	private void enter(ReactContext context, MaintenanceWindowManager manager) {
 		long minutes = 0;
+		boolean allowLogin = false;
 		TLObject model = model(context);
 		if (model != null) {
 			Object delay = model.tValueByName(DELAY_MINUTES);
 			if (delay instanceof Number number) {
 				minutes = Math.max(0, number.longValue());
 			}
+			allowLogin = Boolean.TRUE.equals(model.tValueByName(ALLOW_LOGIN));
+			// Set on every activation, clearing it when the field was left empty: the message
+			// belongs to this window, and keeping the previous one would silently announce the
+			// last window's reason again.
 			Object message = model.tValueByName(MESSAGE);
-			if (message instanceof String text && !text.isBlank()) {
-				manager.setMessage(text);
-			}
+			manager.setMessage(message instanceof String text && !text.isBlank() ? text : null);
 		}
-		manager.enterMaintenanceWindow(minutes * 60 * 1000);
+		manager.enterMaintenanceWindow(minutes * 60 * 1000, allowLogin);
 	}
 
 	/**

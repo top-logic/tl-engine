@@ -421,9 +421,13 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 
 					KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 					boolean transientImport = ((Config) getConfig()).getTransient();
-					ModelBinding modelBinding = transientImport ? 
-						new TransientModelBinding(ModelService.getApplicationModel()) : 
-						new ApplicationModelBinding(kb, ModelService.getApplicationModel());
+					// The import definition is application configuration and runs with definer's
+					// rights; that this user may import at all is decided by the execution right of
+					// this command, see AbstractModelBinding#usesSecurity().
+					boolean usesSecurity = false;
+					ModelBinding modelBinding = transientImport ?
+						new TransientModelBinding(ModelService.getApplicationModel(), usesSecurity) :
+						new ApplicationModelBinding(kb, ModelService.getApplicationModel(), usesSecurity);
 
 					try (InputStream stream = dataItem.getStream()) {
 						InputStream in =

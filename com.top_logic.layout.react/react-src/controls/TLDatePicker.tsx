@@ -4,7 +4,10 @@ import type { TLCellProps } from 'tl-react-bridge';
 const { useCallback } = React;
 
 /**
- * A date picker field rendered via React.
+ * A field for a point in time rendered via React.
+ *
+ * Which HTML input it is - a date, a time of day, or both - the server decides from the attribute's
+ * type and states in `inputType`; the value is exchanged in the ISO form belonging to that input.
  */
 const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [value, setValue] = useTLFieldValue();
@@ -17,7 +20,7 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
   );
 
   if (state.editable === false) {
-    // View mode: show the localized date (e.g. "01.06.2026") supplied by the server, falling
+    // View mode: show the localized value (e.g. "01.06.2026") supplied by the server, falling
     // back to the ISO value if no localized form was emitted.
     const display = (state.displayValue as string) ?? (value as string) ?? '';
     return (
@@ -38,7 +41,7 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
   return (
     <span id={controlId}>
       <input
-        type="date"
+        type={(state.inputType as string) ?? 'date'}
         value={(value as string) ?? ''}
         onChange={handleChange}
         disabled={state.disabled === true}

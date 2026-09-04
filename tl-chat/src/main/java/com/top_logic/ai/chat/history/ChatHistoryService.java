@@ -20,6 +20,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
+import com.top_logic.tl.ai.core.execution.CancelledWriteException;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
@@ -114,6 +115,12 @@ public class ChatHistoryService {
 		}
 		try {
 			store().saveMetadata((AgentSession) session, metadataJson);
+		} catch (CancelledWriteException ex) {
+			// Expected: cancelling a run interrupts its thread, which ends the wait for the
+			// agent-data writer. The metadata write is queued and still commits - this is not a
+			// failure and must not be logged as one.
+			Logger.info("Chat run cancelled; session metadata is saved without waiting for it.",
+				ChatHistoryService.class);
 		} catch (RuntimeException ex) {
 			Logger.error("Failed to save chat session metadata: " + ex.getMessage(), ex,
 				ChatHistoryService.class);

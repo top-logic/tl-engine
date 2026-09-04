@@ -99,6 +99,13 @@ public final class InteractionRecorder {
 		}
 		try {
 			AgentExecutionStore.getInstance().resolveInteraction(requestId, state, resolution);
+		} catch (CancelledWriteException ex) {
+			// Expected: cancelling a run unparks the thread waiting on the question or approval,
+			// and that thread resolves the request here while still carrying the interrupt. The
+			// write is queued and still commits; only the wait for it is given up.
+			Logger.info("Run cancelled while interaction request " + requestId
+				+ " was open; its resolution is written without waiting for it.",
+				InteractionRecorder.class);
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to resolve interaction request " + requestId + ": "
 				+ ex.getMessage(), ex, InteractionRecorder.class);

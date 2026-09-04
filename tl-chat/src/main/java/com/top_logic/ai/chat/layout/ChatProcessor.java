@@ -128,8 +128,15 @@ public class ChatProcessor {
 		Set<String> loadedSkills = ConcurrentHashMap.newKeySet();
 		loadedSkills.addAll(taskTracker.getLoadedSkills());
 
-		try (AgentEnvironment env =
-				AgentEnvironment.open(logListener, taskStore, interactionStore, loadedSkills)) {
+		// One token per run, shared by the tool context, the transaction scope and the run's
+		// thread-local environment. Created here rather than in buildToolContext so that the
+		// environment below already binds it: everything the run does afterwards - including the
+		// recording writes after the loop returned - can then tell an interrupt caused by
+		// /chat/cancel apart from an interrupt with any other cause.
+		CancellationToken cancellationToken = new CancellationToken();
+
+		try (AgentEnvironment env = AgentEnvironment.open(logListener, taskStore, interactionStore,
+				loadedSkills, cancellationToken)) {
 
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
@@ -158,10 +165,10 @@ public class ChatProcessor {
 				UUID.randomUUID().toString(), Instant.now(), contentParts));
 
 			// Build ToolContext with real security, approval, and transaction scope
-			ToolContext toolContext = buildToolContext(interactionStore, taskTracker);
+			ToolContext toolContext = buildToolContext(interactionStore, taskTracker, cancellationToken);
 			// Expose the run's cancellation token so /chat/cancel can fire cooperative-cancellation
 			// listeners in addition to interrupting the agent thread.
-			state.setCancellationToken(toolContext.cancellationToken());
+			state.setCancellationToken(cancellationToken);
 
 			// Run the entry point agent via AgentLoop
 			String entryPointAgent = agentFactory.getEntryPointAgentName();
@@ -466,7 +473,7 @@ public class ChatProcessor {
 	 * </p>
 	 */
 	private static ToolContext buildToolContext(UserInteractionStore interactionStore,
-			TaskProgressTracker taskTracker) {
+			TaskProgressTracker taskTracker, CancellationToken cancellationToken) {
 		ApprovalCallback approvalCallback;
 		if (taskTracker.getApprovalMode() == ApprovalMode.AUTO_APPROVE) {
 			approvalCallback = ApprovalCallback.AUTO_APPROVE;
@@ -502,9 +509,8 @@ public class ChatProcessor {
 				}
 			};
 		}
-		// Share one cancellation token between context and transaction scope so lock-retry
+		// The one token of the run is shared between context and transaction scope so lock-retry
 		// waits also end promptly when the user cancels the run.
-		CancellationToken cancellationToken = new CancellationToken();
 		// The chat user is the run's principal: their roles decide which tools the agent may use, and
 		// their model access rights which objects those tools may touch. An interactive run always
 		// has a human who can answer an approval prompt, so it is not a background run.

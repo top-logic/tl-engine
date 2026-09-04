@@ -96,8 +96,8 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		ConfigurationItem currentValue = (ConfigurationItem) parentConfig.value(property);
 		List<Object> rawOptions = _choices.options();
 		List<String> keys = new ArrayList<>(rawOptions.size());
-		for (int i = 0; i < rawOptions.size(); i++) {
-			keys.add(PolymorphicOptions.keyFor(i));
+		for (Object option : rawOptions) {
+			keys.add(PolymorphicOptions.keyFor(option));
 		}
 		String currentKey = PolymorphicOptions.keyForItem(rawOptions, _choices.mapping(), currentValue);
 		_typeModel = new SimpleSelectFieldModel(currentKey, keys, false);
@@ -106,7 +106,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		_typeModel.setNullable(nullable);
 		_typeModel.setEditable(_editable);
 
-		LabelProvider labelProvider = PolymorphicOptions.indexLabelProvider(rawOptions);
+		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(rawOptions);
 
 		boolean showSelector = _choices.hasOptions() && (_choices.options().size() > 1 || nullable);
 		if (showSelector) {

@@ -622,23 +622,15 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item, PendingEntry pending,
 			boolean inHeader) {
 		List<Object> options = _choices.options();
-		Object own = ownOptionIfMissing(item);
-
-		// Two lists, because a key is a position and the two orders must not be the same one. What
-		// a key resolves against only ever grows at the end, so every option keeps the key it had
-		// no matter whether this entry contributes one of its own - a key is quoted in recorded
-		// scripts and sent back by the client, and must mean the same thing for every entry of the
-		// collection. What is displayed puts the entry's own type first.
-		List<Object> resolution = new ArrayList<>(options);
-		List<String> keys = new ArrayList<>(options.size() + 1);
-		if (own != null) {
-			resolution.add(own);
-			keys.add(PolymorphicOptions.keyFor(options.size()));
+		List<String> keys = new ArrayList<>(options.size());
+		for (Object option : options) {
+			keys.add(PolymorphicOptions.keyFor(option));
 		}
-		for (int i = 0; i < options.size(); i++) {
-			keys.add(PolymorphicOptions.keyFor(i));
-		}
-		String currentKey = PolymorphicOptions.keyForItem(resolution, _choices.mapping(), item);
+		// Answers even for a type the options do not offer - an annotation not marked for in-app
+		// use, say - because a key is the type's name rather than a position among them. The field
+		// then carries a value none of its options names, and ReactSelectFormFieldControl adds it,
+		// the same way it does for every other select.
+		String currentKey = PolymorphicOptions.keyForItem(options, _choices.mapping(), item);
 		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentKey, keys, false);
 		typeModel.setMandatory(true);
 		typeModel.setNullable(false);
@@ -647,12 +639,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		// the entry and may be changed for as long as the form is editable.
 		typeModel.setEditable(inHeader ? _editable && pending != null : _editable);
 
-		LabelProvider labelProvider = PolymorphicOptions.indexLabelProvider(resolution);
+		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(options);
 
 		typeModel.addListener(new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				onTypeChanged(item, PolymorphicOptions.optionForKey(resolution, (String) newValue), pending);
+				onTypeChanged(item, PolymorphicOptions.optionForKey(options, (String) newValue), pending);
 			}
 
 			@Override
@@ -831,28 +823,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			&& ConfigurationItem.CONFIGURATION_INTERFACE_NAME.equals(keyProperty.getPropertyName());
 	}
 
-	/**
-	 * The option standing for the type the given entry actually has, where the collection does not
-	 * offer that type itself - {@code null} where it does, or where no option can be made of it.
-	 *
-	 * <p>
-	 * Options say what may be chosen for a <em>new</em> entry, and that set can be narrower than
-	 * what exists - an annotation not marked for in-app use is left out of it. An entry that already
-	 * carries such a type must still show it: a selector whose value is not among its options shows
-	 * nothing at all, which says something false about an entry that is perfectly well typed, and
-	 * invites losing the value on the next write.
-	 * </p>
-	 */
-	private Object ownOptionIfMissing(ConfigurationItem item) {
-		List<Object> options = _choices.options();
-		if (_choices.mapping() == null
-			|| PolymorphicOptions.keyForItem(options, _choices.mapping(), item) != null) {
-			return null;
-		}
-		// May still be null - then there is nothing the selector could match the entry against, and
-		// an empty selector is better than an option it would never select.
-		return _choices.mapping().asOption(options, item);
-	}
 
 	/**
 	 * Resolves the title property for a list element.

@@ -16,6 +16,7 @@ import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.provider.label.ClassLabelProvider;
+import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 
 /**
  * Adapter that looks up the polymorphic options for a {@link PropertyDescriptor} through
@@ -102,65 +103,104 @@ public class PolymorphicOptions {
 	}
 
 	/**
-	 * A {@link LabelProvider} resolving index-based option keys (as {@link String}) to their
-	 * {@link #labelFor(Object) labels}.
+	 * A {@link LabelProvider} resolving option keys to their {@link #labelFor(Object) labels}.
+	 *
+	 * <p>
+	 * A key the given options do not name is labelled from the key itself, not left blank: the key
+	 * is a type name, and a selector is given the type an entry actually has even where that type
+	 * is no longer offered (see {@link ReactSelectFormFieldControl}).
+	 * </p>
 	 */
-	public static LabelProvider indexLabelProvider(List<?> options) {
+	public static LabelProvider keyLabelProvider(List<?> options) {
 		return value -> {
 			if (!(value instanceof String key) || key.isEmpty()) {
 				return "";
 			}
-			int idx = parseIndex(key);
-			if (idx < 0 || idx >= options.size()) {
-				return key;
+			for (Object option : options) {
+				if (key.equals(keyFor(option))) {
+					return labelFor(option);
+				}
 			}
-			return labelFor(options.get(idx));
+			return labelForTypeName(key);
 		};
 	}
 
 	/**
-	 * Computes the index-based string key for an option at the given position.
+	 * The key addressing the given option: the name of the type behind it.
+	 *
+	 * <p>
+	 * A name rather than a position in the option list. A position means something only together
+	 * with the list it indexes, so it changes when the list does - between two entries of the same
+	 * collection, or between two renderings of the same entry - while a key is quoted in recorded
+	 * scripts, sent back by the client, and must mean the same thing every time. A name also exists
+	 * for a type the list does not offer at all, which is what lets a selector show the type an
+	 * entry actually has.
+	 * </p>
+	 *
+	 * @return The key, or {@code null} for an option that names no type.
 	 */
-	public static String keyFor(int index) {
-		return Integer.toString(index);
+	public static String keyFor(Object option) {
+		Class<?> type = typeOf(option);
+		return type == null ? null : type.getName();
 	}
 
 	/**
-	 * Resolves an index-based key back to the option at that position, or {@code null} if the key
-	 * is unknown.
+	 * Resolves a key back to the option it addresses, or {@code null} if none of the given options
+	 * does.
 	 */
 	public static Object optionForKey(List<?> options, String key) {
-		int idx = parseIndex(key);
-		if (idx < 0 || idx >= options.size()) {
+		if (key == null) {
 			return null;
 		}
-		return options.get(idx);
+		for (Object option : options) {
+			if (key.equals(keyFor(option))) {
+				return option;
+			}
+		}
+		return null;
 	}
 
 	/**
-	 * Finds the index-based key for the option currently represented by the given configuration
-	 * item, using the {@link OptionMapping} to invert the mapping.
+	 * The key for the type the given configuration item currently has, using the
+	 * {@link OptionMapping} to invert the mapping.
+	 *
+	 * <p>
+	 * Answers even where the item's type is not among {@code options}: the key is the type's name,
+	 * which does not depend on what is offered.
+	 * </p>
 	 */
 	public static String keyForItem(List<?> options, OptionMapping mapping, Object item) {
 		if (item == null || mapping == null) {
 			return null;
 		}
-		Object option = mapping.asOption(options, item);
-		if (option == null) {
-			return null;
-		}
-		int idx = options.indexOf(option);
-		return idx >= 0 ? keyFor(idx) : null;
+		return keyFor(mapping.asOption(options, item));
 	}
 
-	private static int parseIndex(String key) {
-		if (key == null) {
-			return -1;
+	/**
+	 * The type an option stands for, or {@code null} for an option that stands for none.
+	 */
+	private static Class<?> typeOf(Object option) {
+		if (option instanceof Class<?> cls) {
+			return cls;
 		}
+		if (option instanceof PolymorphicConfiguration<?> cfg) {
+			return cfg.getImplementationClass();
+		}
+		return null;
+	}
+
+	/**
+	 * The label for a type named by a key, resolved through the class where that is possible and
+	 * left as the bare name where it is not.
+	 */
+	private static String labelForTypeName(String key) {
 		try {
-			return Integer.parseInt(key);
-		} catch (NumberFormatException ex) {
-			return -1;
+			return CLASS_LABELS.getLabel(Class.forName(key));
+		} catch (ClassNotFoundException | LinkageError ex) {
+			// The key names a type this application does not have. Nothing better than the name
+			// itself to say, and saying it beats saying nothing.
+			return key;
 		}
 	}
+
 }

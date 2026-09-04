@@ -903,9 +903,9 @@ public class TestConfigEditorControl extends TestCase {
 		List<Object> options =
 			com.top_logic.layout.configedit.PolymorphicOptions.compute(config, property).options();
 		assertTrue("Needs more than one type option to switch between.", options.size() > 1);
-		for (int n = 0; n < options.size(); n++) {
-			String key = com.top_logic.layout.configedit.PolymorphicOptions.keyFor(n);
-			if (!key.equals(currentKey)) {
+		for (Object option : options) {
+			String key = com.top_logic.layout.configedit.PolymorphicOptions.keyFor(option);
+			if (key != null && !key.equals(currentKey)) {
 				return key;
 			}
 		}
@@ -1411,16 +1411,20 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * The type an entry actually has is offered, even when it is no longer among the options.
+	 * The selector carries the type an entry actually has, even when the options no longer offer
+	 * it.
 	 *
 	 * <p>
 	 * Options say what may be chosen for a <em>new</em> entry; an annotation not marked for in-app
 	 * use, for instance, is left out of them. An entry that already has such a type must still show
-	 * it: a selector whose current value is not among its options shows nothing at all, which says
-	 * something false about an entry that is perfectly well typed - and invites losing the value.
+	 * it, and that takes two things: a key for a type nobody offers - which is why a key is the
+	 * type's name and not a position among the options - and a field that hands such a value to the
+	 * client along with its options, which is
+	 * {@link com.top_logic.layout.react.control.form.ReactSelectFormFieldControl}'s doing and tested
+	 * there. This is the first half: the value exists at all.
 	 * </p>
 	 */
-	public void testTheTypeInUseIsOfferedEvenWhenItIsNotAnOption() {
+	public void testTheTypeInUseIsCarriedEvenWhenItIsNotAnOption() {
 		KeyedPolymorphicTestConfig config = TypedConfiguration.newConfigItem(KeyedPolymorphicTestConfig.class);
 		PropertyDescriptor property = config.descriptor().getProperty(KeyedPolymorphicTestConfig.ITEMS);
 		PolymorphicOptions.Choices all = PolymorphicOptions.compute(config, property);
@@ -1685,11 +1689,12 @@ public class TestConfigEditorControl extends TestCase {
 
 		List<Object> options =
 			com.top_logic.layout.configedit.PolymorphicOptions.compute(config, property).options();
-		int handlerBIndex = options.indexOf(HandlerB.class);
-		assertTrue("HandlerB must be an available option for the array property too", handlerBIndex >= 0);
+		String handlerBKey = com.top_logic.layout.configedit.PolymorphicOptions.keyFor(HandlerB.class);
+		assertTrue("HandlerB must be an available option for the array property too",
+			options.contains(HandlerB.class));
 
 		FieldModel typeModel = findTypeFieldModel(elementGroups(editor).get(0));
-		typeModel.setValue(com.top_logic.layout.configedit.PolymorphicOptions.keyFor(handlerBIndex));
+		typeModel.setValue(handlerBKey);
 
 		Object value = config.value(property);
 		assertTrue("An array property must still hold an array after a type change.", value.getClass().isArray());
@@ -1848,15 +1853,13 @@ public class TestConfigEditorControl extends TestCase {
 		assertNotNull("Should have PolymorphicItemControl", polyControl);
 		assertNotNull("Should have nested editor for HandlerAConfig", polyControl.getNestedEditor());
 
-		// Change type to the HandlerB implementation. The type selector uses index-based option
-		// keys, so resolve HandlerB's key from the computed options.
+		// Change type to the HandlerB implementation, addressed by its own key - the type's name.
 		PropertyDescriptor handlerProp = config.descriptor().getProperty(PolymorphicTestConfig.HANDLER);
 		java.util.List<Object> options =
 			com.top_logic.layout.configedit.PolymorphicOptions.compute(config, handlerProp).options();
-		int handlerBIndex = options.indexOf(HandlerB.class);
-		assertTrue("HandlerB must be an available option", handlerBIndex >= 0);
+		assertTrue("HandlerB must be an option.", options.contains(HandlerB.class));
 		polyControl.getTypeModel()
-			.setValue(com.top_logic.layout.configedit.PolymorphicOptions.keyFor(handlerBIndex));
+			.setValue(com.top_logic.layout.configedit.PolymorphicOptions.keyFor(HandlerB.class));
 
 		// Verify the config was updated.
 		assertNotNull("Handler should be set", config.getHandler());

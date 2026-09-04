@@ -402,7 +402,10 @@
 											withEditMode="true"
 										>
 											<field attribute="name"/>
-											<field attribute="annotations"/>
+											<field
+												attribute="annotations"
+												full-line="true"
+											/>
 										</form>
 									</panel>
 								</case>
@@ -419,7 +422,10 @@
 											<field attribute="name"/>
 											<field attribute="mandatory"/>
 											<field attribute="multiple"/>
-											<field attribute="annotations"/>
+											<field
+												attribute="annotations"
+												full-line="true"
+											/>
 										</form>
 									</panel>
 								</case>
@@ -436,7 +442,10 @@
 											<field attribute="name"/>
 											<field attribute="abstract"/>
 											<field attribute="final"/>
-											<field attribute="annotations"/>
+											<field
+												attribute="annotations"
+												full-line="true"
+											/>
 										</form>
 									</panel>
 								</case>
@@ -451,7 +460,10 @@
 											withEditMode="true"
 										>
 											<field attribute="name"/>
-											<field attribute="annotations"/>
+											<field
+												attribute="annotations"
+												full-line="true"
+											/>
 										</form>
 									</panel>
 								</default>

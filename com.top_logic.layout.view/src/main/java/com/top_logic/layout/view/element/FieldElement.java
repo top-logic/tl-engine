@@ -56,6 +56,9 @@ public class FieldElement implements UIElement {
 		/** Configuration name for {@link #getLabelPosition()}. */
 		String LABEL_POSITION = "label-position";
 
+		/** Configuration name for {@link #getFullLine()}. */
+		String FULL_LINE = "full-line";
+
 		/**
 		 * The name of the model attribute to display.
 		 */
@@ -91,6 +94,27 @@ public class FieldElement implements UIElement {
 		@Name(LABEL_POSITION)
 		@Nullable
 		LabelPosition getLabelPosition();
+
+		/**
+		 * Whether the field takes a row of the form grid to itself instead of sharing one with the
+		 * fields around it.
+		 *
+		 * <p>
+		 * For a field whose input is not a single line - a collection of configurations, a text
+		 * area, a table - a column of the grid is too narrow to read, and the fields beside it are
+		 * dragged to its height.
+		 * </p>
+		 *
+		 * <p>
+		 * Three-valued on purpose: left unset, a
+		 * {@link com.top_logic.model.annotate.RenderWholeLineAnnotation} on the model attribute
+		 * still decides, so a view says something here only where it wants to depart from what the
+		 * model already says.
+		 * </p>
+		 */
+		@Name(FULL_LINE)
+		@Nullable
+		Boolean getFullLine();
 	}
 
 	private final Config _config;
@@ -118,7 +142,8 @@ public class FieldElement implements UIElement {
 		// 2. Create AttributeFieldControl (self-registers as FormModelListener).
 		AttributeFieldControl fieldControl =
 			new AttributeFieldControl(context, formModel, formControl, _config.getAttribute(),
-				_config.getLabel(), _config.getReadonly(), _config.getLabelPosition());
+				_config.getLabel(), _config.getReadonly(), _config.getLabelPosition(),
+				_config.getFullLine());
 
 		// 3. Create the chrome-wrapped control.
 		ReactFormFieldChromeControl chrome = fieldControl.createChromeControl();

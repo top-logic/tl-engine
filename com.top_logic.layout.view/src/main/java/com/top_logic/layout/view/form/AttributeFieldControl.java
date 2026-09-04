@@ -62,6 +62,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 	private final LabelPosition _labelPositionOverride;
 
+	private final Boolean _fullLineOverride;
+
 	private AttributeFieldModel _model;
 
 	private FieldModelListener _modelListener;
@@ -102,6 +104,22 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
 			String attributeName, ResKey labelOverride, boolean forceReadonly,
 			LabelPosition labelPositionOverride) {
+		this(context, formModel, formControl, attributeName, labelOverride, forceReadonly,
+			labelPositionOverride, null);
+	}
+
+	/**
+	 * Creates an {@link AttributeFieldControl} whose field takes a whole row, or shares one, as the
+	 * view says rather than as the model attribute says.
+	 *
+	 * @param fullLineOverride
+	 *        What the view decided, or {@code null} to leave the decision to the attribute's
+	 *        {@link com.top_logic.model.annotate.RenderWholeLineAnnotation}.
+	 */
+	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
+			String attributeName, ResKey labelOverride, boolean forceReadonly,
+			LabelPosition labelPositionOverride, Boolean fullLineOverride) {
+		_fullLineOverride = fullLineOverride;
 		_context = context;
 		_formModel = formModel;
 		_formControl = formControl;
@@ -124,9 +142,12 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				_context, new AbstractFieldModel(null) {
 					// Placeholder model with default state.
 				});
+			// The view's own decision already applies to the placeholder: a field that will take a
+			// whole row should take it before an object is loaded too, or the form re-flows under
+			// the reader as soon as one is.
 			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
-				false, false, null, null, wirePosition(_labelPositionOverride, false), false, true,
-				_innerControl);
+				false, false, null, null, wirePosition(_labelPositionOverride, false),
+				Boolean.TRUE.equals(_fullLineOverride), true, _innerControl);
 			_chrome.setAgentName(_attributeName);
 			return _chrome;
 		}
@@ -542,6 +563,9 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	}
 
 	private boolean resolveFullLine(TLStructuredTypePart part) {
+		if (_fullLineOverride != null) {
+			return _fullLineOverride.booleanValue();
+		}
 		RenderWholeLineAnnotation annotation = part.getAnnotation(RenderWholeLineAnnotation.class);
 		if (annotation != null) {
 			return annotation.getValue();

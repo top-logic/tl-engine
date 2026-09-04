@@ -1,0 +1,49 @@
+<p>A layout overlay allows an application to modify a layout that is delivered by a TopLogic module, without copying the layout file in question. This keeps the customization separate from the further development of the original: if the layout changes within the module, the customization still applies. Typical use cases are adding a tab to the administration and adding a function to an existing administration view.</p>
+<p>An overlay is an incremental configuration: the file only describes the differences from the original, i.e. changed attributes and additional entries in lists. Everything that is not mentioned remains unchanged.</p>
+<h2>Location and file name</h2>
+<p>An overlay is assigned to its target layout solely by its file name: the path of the overlay relative to <code class="hljs inlineCode">WEB-INF/layouts</code> must match the path of the target layout, with the suffix <code class="hljs inlineCode">.layout.xml</code> replaced by <code class="hljs inlineCode">.layout.overlay.xml</code>. The content of the file does not contain any reference to the target. Note that the path is case-sensitive.</p>
+<p>To customize the layout <code class="hljs inlineCode">com.top_logic.contact/admin/personContacts/personContactView.layout.xml</code> from the Contact module, for example, the application creates the file <code class="hljs inlineCode">WEB-INF/layouts/com.top_logic.contact/admin/personContacts/personContactView.layout.overlay.xml</code>. The overlay therefore resides in the directory tree of the application itself, but mirrors the path of the foreign layout within it.</p>
+<h2>Argument overlay</h2>
+<p>If the target layout is a call of a <a class="tlObject" data-custom="true" href="?page=layout-templates&amp;uuid=10dc0623-2937-48e2-bd6b-9e6d55b90bcd">layout template</a> (root tag <code class="hljs inlineCode">config:template-call</code>), the overlay can modify the arguments of that template call. Such an overlay has the root tag <code class="hljs inlineCode">arguments</code> and is merged with the <code class="hljs inlineCode">arguments</code> section of the target layout.</p>
+<p>The layout <code class="hljs inlineCode">admin/studio/index.layout.xml</code> defines the tabs of the developer options as the argument <code class="hljs inlineCode">components</code> of its template call. An overlay can add another tab to this list:</p>
+<pre><code class="language-xml">&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+
+&lt;arguments&gt;
+  &lt;components&gt;
+    &lt;layout-reference resource="myapp/admin/myAdminTab.layout.xml"/&gt;
+  &lt;/components&gt;
+&lt;/arguments&gt;</code></pre>
+<p>A <code class="hljs inlineCode">layout-reference</code> points to a layout of your own, which thereby appears as an additional tab. Attributes given in the overlay override the corresponding argument of the template call.</p>
+<h2>Component overlay</h2>
+<p>A component overlay modifies individual components of the target layout. It has the root tag <code class="hljs inlineCode">components</code> and contains one entry per component below it, addressing the component by its <code class="hljs inlineCode">name</code> attribute. Addressing works by this name alone: it does not matter how deeply the component is nested within the layout, nor through which include or template calls it got there. This form can also be used when the target layout is not a template call.</p>
+<p>The following overlay adds an import dialog to the view of the person contacts. It addresses the component <code class="hljs inlineCode">personContactEdit</code>, which the target layout does not contain directly but through an include:</p>
+<pre><code class="language-xml">&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+
+&lt;components&gt;
+  &lt;component name="personContactEdit"&gt;
+    &lt;dialogs&gt;
+      &lt;include name="commons/dispatchingImportEVA_dialog.xml"
+        importerNames="personExcel, personCSV"
+        masterComponent="personContactFilterTable"
+        namePrefix="MyPersonImport"
+        securityObject="securityRoot"
+      /&gt;
+    &lt;/dialogs&gt;
+  &lt;/component&gt;
+&lt;/components&gt;</code></pre>
+<p>A component overlay can also remove an existing component by marking its entry with <code class="hljs inlineCode">config:operation="remove"</code>. What it cannot do is add a new component at the top level: if the overlay contains a name that does not occur in the target layout, the configuration is rejected with the error "Unable to add components ... Don't know where to set it." An additional component is therefore always created inside a component that already exists, as in the <code class="hljs inlineCode">dialogs</code> section of the example above.</p>
+<h2>Positioning within lists</h2>
+<p>Entries that an overlay contributes to a list are appended at the end by default. The position can be controlled through the attribute <code class="hljs inlineCode">config:position</code> from the namespace <code class="hljs inlineCode">http://www.top-logic.com/ns/config/6.0</code>. The possible values are <code class="hljs inlineCode">begin</code>, <code class="hljs inlineCode">end</code>, <code class="hljs inlineCode">before</code> and <code class="hljs inlineCode">after</code>; for <code class="hljs inlineCode">before</code> and <code class="hljs inlineCode">after</code>, <code class="hljs inlineCode">config:reference</code> names the entry relative to which the insertion happens. This makes the new tab appear at a defined place instead of at the end:</p>
+<pre><code class="language-xml">&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+
+&lt;arguments xmlns:config="http://www.top-logic.com/ns/config/6.0"&gt;
+  &lt;components&gt;
+    &lt;layout-reference
+      config:position="begin"
+      resource="myapp/admin/myAdminTab.layout.xml"
+    /&gt;
+  &lt;/components&gt;
+&lt;/arguments&gt;</code></pre>
+<h2>Several overlays for the same layout</h2>
+<p>Multiple modules can contribute an overlay for the same layout key at the same time. All of these overlays are applied, from the least specific to the most specific source. The application itself therefore comes last and can override what the modules specify.</p>
+<p>One restriction has to be observed here: argument overlays can only be applied as long as no component overlay has been applied yet. If a less specific module contributes a component overlay and a more specific one contributes an argument overlay, the latter is discarded without effect and noted in the log as "Argument overlay ... could not be applied after a component overlay." In this case the more specific customization has to be formulated as a component overlay as well.</p>

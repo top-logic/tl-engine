@@ -602,7 +602,9 @@ The last four belong to the administration views, whose own documentation is
 they run in this suite because they need the same booted fixture.
 
 Every part of that command line earns its place. `-Dtest=...`: a bare `mvn test` here runs only
-`test/TestAll.java`, which `tl-ai-demo` does not have.
+`test/TestAll.java`, which collects the classes under `src/test/java/test/` - and these classes are not
+there, they sit in `src/test/java/com/top_logic/ai/demo/`. (`test/com/top_logic/ai/demo/TestModelResources`
+is the one class that is, so that the i18n guard of issue #325 runs without anybody naming it.)
 `-Dsurefire.failIfNoSpecifiedTests=false`: the pattern reaches every module `-am` builds on the way and
 matches nothing in `tl-ai-tool-api` or `tl-ai-core`. `-am`: `tl-ai-demo` boots the classes of
 `tl-ai-core`, and a `~/.m2` copy left by another worktree is a different `tl-ai-core`. Never `mvn install`

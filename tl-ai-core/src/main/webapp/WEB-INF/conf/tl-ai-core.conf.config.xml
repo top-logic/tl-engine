@@ -1384,12 +1384,16 @@ Read -> act -> re-read:
    current refs, NOT the page text.
 3. `browserSnapshot` again whenever you need to READ the result before acting further.
 
-To keep a login for later sessions: log in, then `browserSaveCookies(pool)` - the pool is owned by
-the current user, so an unattended run (no logged-in user) cannot save one and is told so. To reuse
-one: call `browserUseCookies(pool)` BEFORE navigating - this is also how an unattended agent starts
-from an administrator's shared pool. Need a visual record of a page? `browserScreenshot`. To
-actually SEE a saved image or PDF - a screenshot you just took, say - call
-`view-document.viewDocument` with its TID.
+To keep a login for later sessions: log in, then `browserSaveCookies(pool)`. That pool is PRIVATE to
+the current user, so it needs one: an unattended run (no logged-in user) cannot save a private pool
+and is told so. `browserSaveCookies(pool, shared=true)` saves a SHARED pool instead - selectable by
+every user and every agent session of this installation, and savable without a logged-in user, which
+is how an unattended run stores a login. Use that flag ONLY when the user (or your instructions)
+explicitly asked for a login every session may reuse; a shared pool is a credential store the whole
+installation can use, so when in doubt save privately. To reuse a pool: call
+`browserUseCookies(pool)` BEFORE navigating - this is also how an unattended agent starts from a
+shared pool. Need a visual record of a page? `browserScreenshot`. To actually SEE a saved image or
+PDF - a screenshot you just took, say - call `view-document.viewDocument` with its TID.
 
 ## Invariants
 

@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.tools.web;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.util.List;
@@ -36,6 +37,7 @@ import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.CaptchaSignal;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 
 import junit.framework.TestCase;
@@ -543,6 +545,38 @@ public class TestBrowserTool extends TestCase {
 		assertNotNull("browserScreenshot is a @ToolMethod", annotation);
 		assertEquals("browserScreenshot writes data", com.top_logic.tl.ai.tool.api.ToolMode.DATA_WRITE,
 			annotation.mode());
+	}
+
+	/**
+	 * The "save as a shared pool" flag is an OPTIONAL, nullable parameter, so leaving it out means
+	 * private - the safe default. A primitive {@code boolean} would instead make every call that omits
+	 * the flag fail argument coercion, because a missing primitive is rejected rather than defaulted.
+	 * Its description must also tell the model to pass it only when a shared pool was asked for.
+	 */
+	public void testSharedCookiePoolFlagIsOptionalAndNullable() {
+		Method save = null;
+		for (Method method : BrowserTool.class.getDeclaredMethods()) {
+			if (method.getName().equals("browserSaveCookies")) {
+				save = method;
+			}
+		}
+		assertNotNull("browserSaveCookies exists", save);
+
+		Parameter flag = null;
+		for (Parameter param : save.getParameters()) {
+			if (param.getName().equals("shared")) {
+				flag = param;
+			}
+		}
+		assertNotNull("browserSaveCookies takes a 'shared' parameter", flag);
+		assertEquals("the flag must be nullable, so an omitted flag can mean private", Boolean.class,
+			flag.getType());
+
+		P described = flag.getAnnotation(P.class);
+		assertNotNull("the flag is described to the model", described);
+		assertFalse("the flag must be optional - saving privately is the default", described.required());
+		assertTrue("the description must restrict the flag to an explicit request",
+			described.value().contains("ONLY"));
 	}
 
 	// --- Ref generation tagging: parse the snapshot generation out of a ref. ---

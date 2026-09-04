@@ -46,23 +46,37 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * <b>Scoping.</b> A pool created by a user defaults to {@code owner = that user}, {@code shared =
- * false}, and is selectable only by its owner. A pool with {@code shared = true} (an admin/explicit
- * choice, not something the agent verbs set) is selectable by any session, including an unattended
- * one - the intended shared-login use case. Selection therefore returns the caller's own pools plus
- * shared pools; this owner/shared filter is enforced explicitly here rather than left to
- * {@code SecurityContext.modelSecurity()}, which grants everything in a run whose mode does not
- * enforce model access - which is the default - and therefore cannot carry this isolation.
+ * false}, and is selectable only by its owner. A pool with {@code shared = true} - an explicit
+ * choice at save time, or an administrator's edit, never a fallback - is selectable by any session,
+ * including an unattended one: the intended shared-login use case. Selection therefore returns the
+ * caller's own pools plus shared pools; this owner/shared filter is enforced explicitly here rather
+ * than left to {@code SecurityContext.modelSecurity()}, which grants everything in a run whose mode
+ * does not enforce model access - which is the default - and therefore cannot carry this isolation.
  * </p>
  *
  * <p>
- * <b>Every pool has an owner.</b> {@link #upsertPool(String, byte[], Person) Saving a pool} refuses
- * a {@code null} owner instead of storing an owner-less pool. Such a pool would be
- * {@code shared = false} with nobody to match, so no caller could ever select it again, while the
- * save reported success; and every owner-less caller would share one bucket per pool name, so one
- * unattended run would silently overwrite another's stored login. The alternative - defaulting
- * owner-less pools to {@code shared = true} - would turn a credential store into something every
- * session can read, which is a deliberate administrative choice, not a fallback. An unattended run
- * that needs a login therefore uses a pool an administrator marked shared; it cannot create one.
+ * <b>Every private pool has an owner.</b> {@link #upsertPool(String, byte[], Person, boolean)
+ * Saving a private pool} refuses a {@code null} owner instead of storing an owner-less pool. Such a
+ * pool would be {@code shared = false} with nobody to match, so no caller could ever select it
+ * again, while the save reported success; and every owner-less caller would share one bucket per
+ * pool name, so one unattended run would silently overwrite another's stored login. Quietly
+ * defaulting an owner-less save to {@code shared = true} is rejected for the reason that is still
+ * why it is not the default: it would turn a credential store into something every session can
+ * read, behind the caller's back.
+ * </p>
+ *
+ * <p>
+ * <b>Saving a shared pool is the sanctioned opt-in.</b> A save that passes {@code shared = true}
+ * asks for that scope and gets it: the pool is marked shared, is selectable by every user and every
+ * agent session of the installation, and may be saved <em>without</em> an owner - which is what lets
+ * an unattended run create the login it needs. The current user, when one is resolvable, is still
+ * recorded as the owner of a newly created shared pool, as an audit trail; the pool is just
+ * additionally marked shared. The safeguard is that the wide scope must be asked for explicitly and
+ * is named in the confirmation, not that it is unreachable. Two rules keep that opt-in from widening
+ * anything implicitly: an existing pool is updated in place only if it is <em>already</em> shared -
+ * a private pool is never flipped - and a shared save is refused when the caller already owns a
+ * private pool of that name, because {@link #findSelectablePool(String, Person) selection} would
+ * keep preferring that private pool and hide the shared one from the very caller who created it.
  * </p>
  *
  * <p>
@@ -73,7 +87,7 @@ import com.top_logic.util.model.ModelService;
  * the turn. Programmatic callers (and tests) supply their own transaction.
  * </p>
  *
- * @see #upsertPool(String, byte[], Person)
+ * @see #upsertPool(String, byte[], Person, boolean)
  */
 @ServiceDependencies({
 	ModelService.Module.class,
@@ -114,22 +128,35 @@ public class CookiePoolService extends ConfiguredManagedClass<CookiePoolService.
 	}
 
 	/**
-	 * Creates or updates the caller's cookie pool with the given name, storing the (encrypted)
+	 * Creates or updates a cookie pool with the given name, storing the (encrypted)
 	 * {@code storageState} in the <em>ambient</em> transaction.
 	 *
 	 * <p>
-	 * If the caller already owns a pool with this name, its state and {@code updatedAt} are updated
-	 * in place (its {@code owner}/{@code shared} are left untouched). Otherwise a new pool is created
-	 * owned by {@code owner} with {@code shared = false}. A shared pool owned by someone else is
-	 * never overwritten - a different, caller-owned pool is created instead. The plaintext state is
-	 * encrypted here and only the ciphertext is persisted.
+	 * {@code shared = false} saves a pool private to {@code owner}: if that user already owns a pool
+	 * with this name, its state and {@code updatedAt} are updated in place - its {@code owner} and
+	 * {@code shared} are left untouched, so a pool that is already shared stays shared, and this
+	 * path never narrows a pool any more than it widens one - otherwise a new {@code shared = false}
+	 * pool owned by {@code owner} is created. A pool owned by somebody else is never overwritten. The owner is mandatory on this
+	 * path: an owner-less private pool could never be selected again and would collide with every
+	 * other owner-less save of the same name, so this refuses rather than storing one (see the class
+	 * comment). A caller that cannot resolve a {@link Person} - an unattended or background run -
+	 * either reports that to the user, or saves a shared pool on purpose.
 	 * </p>
 	 *
 	 * <p>
-	 * The owner is mandatory: an owner-less pool could never be selected again and would collide
-	 * with every other owner-less save of the same name, so this refuses rather than storing one
-	 * (see the class comment). Callers that cannot resolve a {@link Person} - an unattended or
-	 * background run - must report that to the user instead of saving.
+	 * {@code shared = true} saves a pool that every user and every agent session of the installation
+	 * can select, so it is passed only when exactly that was asked for. {@code owner} may be
+	 * {@code null} here - that is what lets an unattended run create the login it needs - and a
+	 * resolvable {@link Person} is still recorded as the owner of a newly created pool, as an audit
+	 * trail. An existing pool with this name is updated in place only if it is already shared, no
+	 * matter who owns it; a private pool is never widened. The save is refused when {@code owner}
+	 * already owns a <em>private</em> pool with this name, because
+	 * {@link #findSelectablePool(String, Person) selection} prefers that private pool and would hide
+	 * the new shared one from the very caller who asked for it.
+	 * </p>
+	 *
+	 * <p>
+	 * The plaintext state is encrypted here and only the ciphertext is persisted.
 	 * </p>
 	 *
 	 * @param name
@@ -138,33 +165,52 @@ public class CookiePoolService extends ConfiguredManagedClass<CookiePoolService.
 	 *        The raw {@code storageState} JSON bytes to store (encrypted); must not be {@code null}
 	 *        or empty.
 	 * @param owner
-	 *        The owning user; must not be {@code null}.
+	 *        The owning user; must not be {@code null} unless {@code shared} is {@code true}.
+	 * @param shared
+	 *        Whether to save a pool every session of this installation can select, instead of one
+	 *        private to {@code owner}.
 	 * @return The created or updated (not-yet-committed) pool.
 	 * @throws IllegalArgumentException
-	 *         If {@code name} is blank, {@code stateJson} is empty, or {@code owner} is
-	 *         {@code null}.
+	 *         If {@code name} is blank, {@code stateJson} is empty, {@code owner} is {@code null}
+	 *         for a private save, or a shared save collides with a private pool of {@code owner}.
 	 */
-	public CookiePool upsertPool(String name, byte[] stateJson, Person owner) {
+	public CookiePool upsertPool(String name, byte[] stateJson, Person owner, boolean shared) {
 		if (name == null || name.isBlank()) {
 			throw new IllegalArgumentException("name must not be blank");
 		}
 		if (stateJson == null || stateJson.length == 0) {
 			throw new IllegalArgumentException("stateJson must not be empty");
 		}
-		if (owner == null) {
-			throw new IllegalArgumentException("A cookie pool must have an owner: an unattended run has no "
-				+ "Person to own the pool, and an owner-less pool could never be selected again. Save the "
-				+ "login from a session with a logged-in user, or use a pool an administrator marked shared.");
+		if (owner == null && !shared) {
+			throw new IllegalArgumentException("A private cookie pool must have an owner: an unattended run "
+				+ "has no Person to own the pool, and an owner-less private pool could never be selected "
+				+ "again. Save the login from a session with a logged-in user, or - if every session of this "
+				+ "installation is meant to reuse this login - save it as a shared pool.");
+		}
+		if (shared && owner != null) {
+			CookiePool own = findOwnedByName(name, owner);
+			if (own != null && !isShared(own)) {
+				// Refuse rather than produce a shared pool its own creator cannot select: selection
+				// prefers their private pool of the same name. Flipping that private pool to shared
+				// instead would publish a login they saved as private, which nobody asked for.
+				throw new IllegalArgumentException("Cannot save a shared cookie pool named '" + name
+					+ "': that name is already taken by a private pool of yours, and selecting a pool "
+					+ "prefers your own pool over a shared one - so the shared pool would be invisible to "
+					+ "you. Use a different name for the shared pool, or delete your private pool first.");
+			}
 		}
 
 		byte[] cipher = encrypt(stateJson);
 
-		CookiePool pool = findOwnedByName(name, owner);
+		CookiePool pool = shared ? findSharedByName(name, owner) : findOwnedByName(name, owner);
 		if (pool == null) {
 			pool = TlAiCookiepoolFactory.getInstance().createCookiePool();
 			pool.setName(name);
-			pool.setShared(Boolean.FALSE);
-			pool.setOwner(owner);
+			pool.setShared(Boolean.valueOf(shared));
+			if (owner != null) {
+				// A shared save may have no Person at all; record one whenever there is one.
+				pool.setOwner(owner);
+			}
 		}
 		pool.setState(BinaryDataFactory.createBinaryData(cipher, STATE_CONTENT_TYPE, name));
 		pool.setUpdatedAt(new Date());
@@ -262,6 +308,26 @@ public class CookiePoolService extends ConfiguredManagedClass<CookiePoolService.
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The <em>shared</em> pool with that name - {@code owner}'s own preferred, so a repeated shared
+	 * save keeps hitting the same pool - or {@code null} if no shared pool carries that name.
+	 */
+	private CookiePool findSharedByName(String name, Person owner) {
+		CookiePool result = null;
+		for (CookiePool pool : allPools()) {
+			if (!name.equals(pool.getName()) || !isShared(pool)) {
+				continue;
+			}
+			if (owner != null && owner.equals(pool.getOwner())) {
+				return pool;
+			}
+			if (result == null) {
+				result = pool;
+			}
+		}
+		return result;
 	}
 
 	private static List<CookiePool> allPools() {

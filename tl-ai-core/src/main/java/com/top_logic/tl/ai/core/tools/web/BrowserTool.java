@@ -381,41 +381,65 @@ public class BrowserTool {
 	}
 
 	/**
-	 * Saves this session's current login state into a named, persistent, encrypted cookie pool owned
-	 * by the current user.
+	 * Saves this session's current login state into a named, persistent, encrypted cookie pool -
+	 * private to the current user by default, or shared with the whole installation on request.
 	 *
 	 * <p>
-	 * A pool must have an owner, so this refuses when no current user can be resolved - an unattended
-	 * or background run. Storing an owner-less pool would report success while creating something
-	 * {@code browserUseCookies} could never select again, and every owner-less run would share one
-	 * bucket per pool name (see {@link CookiePoolService}). An unattended run that needs a login uses
-	 * a pool an administrator marked shared instead.
+	 * A private pool must have an owner, so a private save refuses when no current user can be
+	 * resolved - an unattended or background run. Storing an owner-less pool would report success
+	 * while creating something {@code browserUseCookies} could never select again, and every
+	 * owner-less run would share one bucket per pool name (see {@link CookiePoolService}). Such a run
+	 * either selects a pool that is already shared, or - when a login every session may reuse is what
+	 * was actually asked for - saves one itself with {@code shared = true}, the explicit path that
+	 * needs no owner.
+	 * </p>
+	 *
+	 * <p>
+	 * That flag is never guessed on the agent's behalf: the tool and parameter descriptions tell the
+	 * model to pass it only when the user (or the system prompt) asked for a shared pool, and the
+	 * confirmation names the scope the pool actually ended up with rather than the one that was
+	 * requested.
 	 * </p>
 	 *
 	 * @param poolName
-	 *        The pool handle to save into (created if new, overwritten if the caller already owns it).
+	 *        The pool handle to save into (created if new, overwritten if it is the caller's own pool,
+	 *        or an already shared pool of that name for a shared save).
+	 * @param shared
+	 *        Whether to save a pool every user and agent session of this installation can select,
+	 *        instead of one private to the current user. {@code null} - the parameter omitted - means
+	 *        the private default.
 	 * @param context
 	 *        Injected execution context; identifies the agent session and the current user.
-	 * @return A short confirmation naming the pool, or an error string.
+	 * @return A short confirmation naming the pool and its scope, or an error string.
 	 */
 	@ToolMethod(
 		description = "Save this browser session's current login state (cookies + storage) into a named, "
 			+ "persistent cookie pool so a LATER browser session can start already logged in. Call this AFTER "
 			+ "you have logged a site in (typed credentials and submitted) in this session. 'poolName' is a "
-			+ "handle you choose (e.g. 'acme-intranet'); saving again with the same name overwrites your pool. "
-			+ "The saved state is stored ENCRYPTED at rest and is PRIVATE to you (the current user) - only "
-			+ "your own sessions can select it later, unless an administrator marks the pool shared. Every "
-			+ "pool needs an owner, so this REQUIRES a logged-in user: in an unattended/background run it "
-			+ "fails with an explanation - such a run uses a shared pool provided by an administrator via "
-			+ "browserUseCookies instead of saving its own. "
-			+ "Returns a confirmation with the pool name; it does not return the cookies themselves.",
+			+ "handle you choose (e.g. 'acme-intranet'); saving again with the same name overwrites that pool. "
+			+ "The saved state is stored ENCRYPTED at rest and is by default PRIVATE to you (the current "
+			+ "user) - only your own sessions can select it later. A private pool needs an owner, so the "
+			+ "default REQUIRES a logged-in user: in an unattended/background run it fails with an "
+			+ "explanation. Passing shared=true saves a SHARED pool instead: selectable by every user and "
+			+ "every agent session of this installation, and savable even without a logged-in user - that is "
+			+ "how an unattended run can store a login. Set shared=true ONLY when the user or your "
+			+ "instructions EXPLICITLY asked for a login every session may reuse; a shared pool is a "
+			+ "credential store the whole installation can use, so when in doubt save privately. "
+			+ "Returns a confirmation with the pool name and the scope it actually has; it does not return "
+			+ "the cookies themselves.",
 		mode = ToolMode.DATA_WRITE,
 		group = ToolGroups.EGRESS,
 		// One browser page per session; not safe to run in parallel with other calls in the run.
 		concurrencySafe = false)
 	public String browserSaveCookies(
-			@P("The name of the cookie pool to save this session's login into (owned by you, private "
-				+ "unless an administrator marked that pool shared).") String poolName,
+			@P("The name of the cookie pool to save this session's login into (private to you unless you "
+				+ "pass shared=true, or that pool is already shared).") String poolName,
+			@P(value = "Save a SHARED pool - selectable by every user and every agent session of this "
+				+ "installation - instead of a pool private to you. Default false. Set it to true ONLY when "
+				+ "the user or your instructions explicitly asked for a login that every session may reuse; "
+				+ "a shared pool is a credential store everyone on this installation can use. When in doubt, "
+				+ "omit it and save privately.",
+				required = false) Boolean shared,
 			ToolExecutionContext context) {
 		if (poolName == null || poolName.isBlank()) {
 			return "Error: poolName is required.";
@@ -435,17 +459,21 @@ public class BrowserTool {
 		if (sessionKey == null) {
 			return "Error: no execution context is available for the browser session.";
 		}
+		boolean saveShared = Boolean.TRUE.equals(shared);
 		Person owner = currentPersonQuietly();
-		if (owner == null) {
-			// Refused before the state is even captured: a pool without an owner is nobody's, so it
-			// could never be selected again, and it would collide with every other owner-less save of
-			// the same name. Do not silently widen it to a shared pool - that would publish a
-			// credential store to every session, which is an administrator's decision.
-			return "Error: cannot save a cookie pool in this run: there is no logged-in user to own it. "
-				+ "An unattended/background run has no Person, and a pool without an owner could never be "
-				+ "selected again - so nothing was saved. Save the login from an interactive session (one "
-				+ "with a logged-in user), or ask an administrator to provide a SHARED pool and select it "
-				+ "here with browserUseCookies(\"" + poolName.trim() + "\").";
+		if (owner == null && !saveShared) {
+			// Refused before the state is even captured: a private pool without an owner is nobody's,
+			// so it could never be selected again, and it would collide with every other owner-less
+			// save of the same name. Widening it to a shared pool is not done here on the caller's
+			// behalf - that has to be asked for, so name it as the way out instead of taking it.
+			return "Error: cannot save a private cookie pool in this run: there is no logged-in user to own "
+				+ "it. An unattended/background run has no Person, and a pool without an owner could never "
+				+ "be selected again - so nothing was saved. Either save the login from an interactive "
+				+ "session (one with a logged-in user), or - if a login that EVERY session of this "
+				+ "installation may reuse is what was asked for - save it as a shared pool with "
+				+ "browserSaveCookies(\"" + poolName.trim() + "\", shared=true). Only do that when the user "
+				+ "or your instructions actually asked for a shared login; otherwise select an existing "
+				+ "shared pool with browserUseCookies(\"" + poolName.trim() + "\").";
 		}
 		String stateJson;
 		try {
@@ -465,16 +493,21 @@ public class BrowserTool {
 		String name = poolName.trim();
 		CookiePool pool;
 		try {
-			pool = pools.upsertPool(name, stateJson.getBytes(StandardCharsets.UTF_8), owner);
+			pool = pools.upsertPool(name, stateJson.getBytes(StandardCharsets.UTF_8), owner, saveShared);
+		} catch (IllegalArgumentException ex) {
+			// A refusal this verb is meant to hit - a shared save colliding with the caller's own
+			// private pool of that name. Its message explains the way out, so pass it on rather than
+			// logging it as a system failure.
+			return "Error: " + ex.getMessage();
 		} catch (RuntimeException ex) {
 			// Most likely: no encryption key installed (cookie state is never stored in plaintext).
 			Logger.error("Saving cookie pool '" + name + "' failed: " + ex.getMessage(), ex, BrowserTool.class);
 			return "Error: could not save the cookie pool: " + ex.getMessage();
 		}
-		// Only claim privacy the pool actually has: an existing pool an administrator marked shared
-		// keeps that flag through an update, and is then readable by every session.
+		// Only claim the scope the pool actually has: a shared save marks it shared, and an update of
+		// an already shared pool keeps that flag even when this save did not ask for it.
 		String scope = Boolean.TRUE.equals(pool.getShared())
-			? "encrypted, but marked SHARED - every session in this installation can select it"
+			? "encrypted, and SHARED - every user and every agent session of this installation can select it"
 			: "encrypted, private to you";
 		return "Saved this session's login into cookie pool \"" + name + "\" (" + scope + "). "
 			+ "A later browser session can start logged in with browserUseCookies(\"" + name + "\").";
@@ -495,9 +528,10 @@ public class BrowserTool {
 			+ "Call this BEFORE browserNavigate: it (re)opens this session's browser seeded with the pool's "
 			+ "saved login, so navigating to the site the pool was saved from is already authenticated - no "
 			+ "need to log in again. 'poolName' is a pool you saved earlier with browserSaveCookies, OR a "
-			+ "shared pool an administrator provided (a background/unattended agent uses a shared pool the same "
-			+ "way). You can only select your OWN pools plus shared ones; a private pool owned by someone else "
-			+ "is not visible. After this succeeds, call browserNavigate to open the target page.",
+			+ "SHARED pool (one saved with shared=true, or marked shared by an administrator) - a "
+			+ "background/unattended agent uses a shared pool the same way. You can only select your OWN "
+			+ "pools plus shared ones; a private pool owned by someone else is not visible. After this "
+			+ "succeeds, call browserNavigate to open the target page.",
 		mode = ToolMode.READ,
 		group = ToolGroups.EGRESS,
 		// Rebinds the session's context; not safe to run in parallel with other calls in the run.
@@ -534,9 +568,10 @@ public class BrowserTool {
 				// selectable at all, so "it may not exist" alone would be misleading in an unattended run.
 				if (caller == null) {
 					return "Error: no cookie pool named \"" + name + "\" is available to this run. This run "
-						+ "has no logged-in user, so only pools an administrator marked SHARED can be "
-						+ "selected - a private pool is out of reach even if it exists. Ask an administrator "
-						+ "for a shared pool with this name.";
+						+ "has no logged-in user, so only SHARED pools can be selected - a private pool is "
+						+ "out of reach even if it exists. Use a shared pool that already exists, or, if the "
+						+ "user asked for a login every session may reuse, log the site in here and save it "
+						+ "with browserSaveCookies(\"" + name + "\", shared=true).";
 				}
 				return "Error: no cookie pool named \"" + name + "\" is available to you. It may not exist, "
 					+ "or it is a private pool owned by another user. Use a pool you saved yourself, or a "
@@ -644,9 +679,10 @@ public class BrowserTool {
 	 * </p>
 	 *
 	 * <p>
-	 * What {@code null} then means is the caller's decision, and the two callers differ: a screenshot
-	 * is still worth keeping without an owner, whereas a cookie pool without an owner is unusable, so
-	 * {@code browserSaveCookies} refuses instead of saving one.
+	 * What {@code null} then means is the caller's decision, and the callers differ: a screenshot is
+	 * still worth keeping without an owner, whereas a <em>private</em> cookie pool without an owner is
+	 * unusable, so {@code browserSaveCookies} refuses instead of saving one - unless it was explicitly
+	 * asked to save a shared pool, which needs no owner.
 	 * </p>
 	 */
 	private static Person currentPersonQuietly() {

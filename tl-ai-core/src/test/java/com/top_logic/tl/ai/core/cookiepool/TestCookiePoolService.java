@@ -35,8 +35,9 @@ import com.top_logic.util.model.ModelService;
 /**
  * Tests for {@link CookiePoolService}: the storageState is encrypted at rest (round-trips on read,
  * not readable as plaintext), the owner-vs-shared selection filter isolates private pools while
- * exposing shared ones (including to an unattended, no-user session), and a save without an owner
- * is refused rather than producing a pool nobody can select.
+ * exposing shared ones (including to an unattended, no-user session), a <em>private</em> save
+ * without an owner is refused rather than producing a pool nobody can select, and the explicit
+ * shared save is the one path that works without an owner - without ever widening a private pool.
  *
  * <p>
  * Encryption is provided by the platform {@link EncryptionService}: the tl-ai-core test config
@@ -80,7 +81,7 @@ public class TestCookiePoolService extends BasicTestCase {
 	public void testEncryptDecryptRoundTrip() throws Exception {
 		CookiePool pool;
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			pool = _service.upsertPool("round-trip", STATE_JSON, _alice);
+			pool = _service.upsertPool("round-trip", STATE_JSON, _alice, false);
 			tx.commit();
 		}
 
@@ -101,8 +102,8 @@ public class TestCookiePoolService extends BasicTestCase {
 		CookiePool priv;
 		CookiePool shared;
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			priv = _service.upsertPool("alice-private", STATE_JSON, _alice);
-			shared = _service.upsertPool("team-shared", STATE_JSON, _alice);
+			priv = _service.upsertPool("alice-private", STATE_JSON, _alice, false);
+			shared = _service.upsertPool("team-shared", STATE_JSON, _alice, false);
 			shared.setShared(Boolean.TRUE);
 			tx.commit();
 		}
@@ -131,10 +132,10 @@ public class TestCookiePoolService extends BasicTestCase {
 	/** Listing returns the caller's own pools plus shared pools, and only shared for an unattended session. */
 	public void testListSelectablePools() throws Exception {
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			_service.upsertPool("list-alice-private", STATE_JSON, _alice);
-			CookiePool shared = _service.upsertPool("list-team-shared", STATE_JSON, _alice);
+			_service.upsertPool("list-alice-private", STATE_JSON, _alice, false);
+			CookiePool shared = _service.upsertPool("list-team-shared", STATE_JSON, _alice, false);
 			shared.setShared(Boolean.TRUE);
-			_service.upsertPool("list-bob-private", STATE_JSON, _bob);
+			_service.upsertPool("list-bob-private", STATE_JSON, _bob, false);
 			tx.commit();
 		}
 
@@ -155,15 +156,17 @@ public class TestCookiePoolService extends BasicTestCase {
 	}
 
 	/**
-	 * An unattended save (no {@link Person} to own the pool) is refused, and creates nothing: an
-	 * owner-less pool would be selectable by no one, so it must not reach the store.
+	 * An unattended <em>private</em> save (no {@link Person} to own the pool) is refused, and creates
+	 * nothing: an owner-less private pool would be selectable by no one, so it must not reach the
+	 * store. The explicit shared save is the only owner-less path, see
+	 * {@link #testUnattendedSharedSaveRoundTrips()}.
 	 */
 	public void testUnattendedSaveIsRefusedAndCreatesNothing() throws Exception {
 		String name = "unattended-refused";
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			try {
-				_service.upsertPool(name, STATE_JSON, null);
-				fail("Saving a cookie pool without an owner must be refused.");
+				_service.upsertPool(name, STATE_JSON, null, false);
+				fail("Saving a private cookie pool without an owner must be refused.");
 			} catch (IllegalArgumentException expected) {
 				assertContains("The refusal must name the missing owner as the reason.", "owner",
 					expected.getMessage());
@@ -181,17 +184,17 @@ public class TestCookiePoolService extends BasicTestCase {
 	}
 
 	/**
-	 * The name-collision case from the ticket - two unattended callers saving the same pool name -
-	 * is unreachable now that the save itself is refused: neither call creates a pool, so neither can
-	 * overwrite the other's login.
+	 * The name-collision case from the ticket - two unattended callers saving the same pool name
+	 * privately - is unreachable now that such a save is refused: neither call creates a pool, so
+	 * neither can overwrite the other's login.
 	 */
 	public void testUnattendedNameCollisionCannotHappen() throws Exception {
 		String name = "shared-bucket";
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			for (int run = 0; run < 2; run++) {
 				try {
-					_service.upsertPool(name, STATE_JSON, null);
-					fail("Unattended save " + run + " must be refused.");
+					_service.upsertPool(name, STATE_JSON, null, false);
+					fail("Unattended private save " + run + " must be refused.");
 				} catch (IllegalArgumentException expected) {
 					// Expected: no bucket to collide in.
 				}
@@ -205,7 +208,7 @@ public class TestCookiePoolService extends BasicTestCase {
 	public void testOwnedSaveRemainsSelectable() throws Exception {
 		CookiePool pool;
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			pool = _service.upsertPool("owned-selectable", STATE_JSON, _alice);
+			pool = _service.upsertPool("owned-selectable", STATE_JSON, _alice, false);
 			tx.commit();
 		}
 		assertSame("the pool must be owned by its saver", _alice, pool.getOwner());
@@ -218,17 +221,133 @@ public class TestCookiePoolService extends BasicTestCase {
 			Arrays.equals(STATE_JSON, _service.decryptState(selected.get())));
 	}
 
+	/**
+	 * The round trip that was impossible before: an unattended run (no {@link Person}) saves a pool
+	 * with the explicit shared flag, and can select it again afterwards - as can any user.
+	 */
+	public void testUnattendedSharedSaveRoundTrips() throws Exception {
+		String name = "unattended-shared";
+		CookiePool pool;
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			pool = _service.upsertPool(name, STATE_JSON, null, true);
+			tx.commit();
+		}
+		assertEquals("an explicit shared save must mark the pool shared", Boolean.TRUE, pool.getShared());
+		assertNull("an unattended save has no Person to record as owner", pool.getOwner());
+
+		Optional<CookiePool> unattendedView = _service.findSelectablePool(name, null);
+		assertTrue("the unattended run must find the shared pool it just saved", unattendedView.isPresent());
+		assertSame(pool, unattendedView.get());
+		assertTrue("the pool must decrypt to the saved state",
+			Arrays.equals(STATE_JSON, _service.decryptState(unattendedView.get())));
+		assertTrue("a shared pool is selectable by any user", _service.findSelectablePool(name, _bob).isPresent());
+	}
+
+	/** A shared save by a logged-in user records that user as the owner AND marks the pool shared. */
+	public void testSharedSaveRecordsOwnerAndSharesPool() throws Exception {
+		String name = "owned-shared";
+		CookiePool pool;
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			pool = _service.upsertPool(name, STATE_JSON, _alice, true);
+			tx.commit();
+		}
+		assertSame("a resolvable Person must still be recorded as the owner", _alice, pool.getOwner());
+		assertEquals("the pool must be marked shared", Boolean.TRUE, pool.getShared());
+		assertSame("the owner selects their own pool", pool, _service.findSelectablePool(name, _alice).get());
+		assertSame("another user selects it because it is shared", pool,
+			_service.findSelectablePool(name, _bob).get());
+	}
+
+	/**
+	 * A second shared save under the same name updates that shared pool in place - whoever owns it -
+	 * instead of piling up a duplicate; the recorded owner survives an unattended update.
+	 */
+	public void testSharedSaveUpdatesSharedPoolInPlace() throws Exception {
+		String name = "shared-in-place";
+		byte[] otherState = "{\"cookies\":[],\"origins\":[]}".getBytes(StandardCharsets.UTF_8);
+		CookiePool first;
+		CookiePool second;
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			first = _service.upsertPool(name, STATE_JSON, _alice, true);
+			tx.commit();
+		}
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			// An unattended run updating the shared login alice saved.
+			second = _service.upsertPool(name, otherState, null, true);
+			tx.commit();
+		}
+		assertSame("the second shared save must update the same pool", first, second);
+		assertEquals("no duplicate pool must be created", 1, poolsNamed(name).size());
+		assertSame("the recorded owner must survive an unattended update", _alice, second.getOwner());
+		assertEquals("the pool must stay shared", Boolean.TRUE, second.getShared());
+		assertTrue("the state must reflect the second save",
+			Arrays.equals(otherState, _service.decryptState(second)));
+	}
+
+	/**
+	 * A shared save is refused when the caller already owns a private pool of that name: selection
+	 * prefers their own pool, so the shared pool would be invisible to the very caller who asked for
+	 * it. The private pool must be left alone - never widened - and no second pool created.
+	 */
+	public void testSharedSaveRefusedWhenOwnPrivatePoolExists() throws Exception {
+		String name = "private-then-shared";
+		CookiePool priv;
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			priv = _service.upsertPool(name, STATE_JSON, _alice, false);
+			tx.commit();
+		}
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			try {
+				_service.upsertPool(name, STATE_JSON, _alice, true);
+				fail("A shared save colliding with the caller's own private pool must be refused.");
+			} catch (IllegalArgumentException expected) {
+				assertContains("The refusal must name the private pool as the reason.", "private",
+					expected.getMessage());
+			}
+			tx.commit();
+		}
+		assertEquals("the refused shared save must not have created a pool", 1, poolsNamed(name).size());
+		assertEquals("the caller's private pool must not have been widened", Boolean.FALSE, priv.getShared());
+		assertFalse("nothing shared must have become selectable for an unattended run",
+			_service.findSelectablePool(name, null).isPresent());
+	}
+
+	/**
+	 * Somebody else's private pool of the same name blocks nothing and is not touched: the shared
+	 * save creates its own pool, and each caller keeps selecting the one meant for them.
+	 */
+	public void testSharedSaveLeavesForeignPrivatePoolAlone() throws Exception {
+		String name = "foreign-private";
+		CookiePool bobsPrivate;
+		CookiePool shared;
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			bobsPrivate = _service.upsertPool(name, STATE_JSON, _bob, false);
+			tx.commit();
+		}
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			shared = _service.upsertPool(name, STATE_JSON, _alice, true);
+			tx.commit();
+		}
+		assertNotSame("bob's private pool must not be reused by a shared save", bobsPrivate, shared);
+		assertEquals("bob's private pool must stay private", Boolean.FALSE, bobsPrivate.getShared());
+		assertEquals("the shared pool must be marked shared", Boolean.TRUE, shared.getShared());
+		assertSame("bob keeps selecting his own private pool", bobsPrivate,
+			_service.findSelectablePool(name, _bob).get());
+		assertSame("an unattended run selects the shared pool", shared,
+			_service.findSelectablePool(name, null).get());
+	}
+
 	/** Saving again under the same name updates the caller's pool in place rather than creating a second. */
 	public void testUpsertUpdatesOwnPoolInPlace() throws Exception {
 		CookiePool first;
 		CookiePool second;
 		byte[] otherState = "{\"cookies\":[],\"origins\":[]}".getBytes(StandardCharsets.UTF_8);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			first = _service.upsertPool("reused", STATE_JSON, _alice);
+			first = _service.upsertPool("reused", STATE_JSON, _alice, false);
 			tx.commit();
 		}
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			second = _service.upsertPool("reused", otherState, _alice);
+			second = _service.upsertPool("reused", otherState, _alice, false);
 			tx.commit();
 		}
 		assertSame("second save must update the same pool object", first, second);
@@ -247,6 +366,11 @@ public class TestCookiePoolService extends BasicTestCase {
 			result.add((CookiePool) obj);
 		}
 		return result;
+	}
+
+	/** Every pool carrying that name, regardless of owner or shared flag - the duplicate check. */
+	private static List<CookiePool> poolsNamed(String name) {
+		return allPools().stream().filter(pool -> name.equals(pool.getName())).toList();
 	}
 
 	private static byte[] readBytes(BinaryDataSource source) throws Exception {

@@ -1,0 +1,73 @@
+name: Feature
+about: A capability that does not exist yet and is agreed
+labels: ["type/feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when *what* to build is settled and only the work is left.
+        If the right answer is still open, file an **Idea** instead - it gets decided there first.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: >-
+        Pick every part this touches. Gitea cannot turn this answer into a label, so a
+        maintainer still has to set the matching `area/*` label by hand - this field is
+        what tells them which one.
+      multiple: true
+      options:
+        - area/agent-core
+        - area/browser
+        - area/security
+        - area/model
+        - area/ui
+        - area/mcp
+        - area/docs
+        - area/build
+    validations:
+      required: true
+
+  - type: textarea
+    id: gap
+    attributes:
+      label: The gap
+      description: >-
+        What cannot be done today, and the evidence that it really is missing rather than
+        just hard to find: the servlet that does not exist, the empty grep, the workaround
+        people use instead.
+      placeholder: |
+        Today: ...
+        Missing: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed capability
+      description: >-
+        What should exist, described concretely enough to start on: the new tool, servlet,
+        layout, config option, and where in the code it would live.
+    validations:
+      required: true
+
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: >-
+        Optional. What has to be true for this to count as delivered, and how it would be
+        verified. Anything deliberately out of scope belongs here too.
+    validations:
+      required: false
+
+  - type: input
+    id: related
+    attributes:
+      label: Related issues and PRs
+      description: Optional. Where this came from - the PR it was split out of, issues it depends on.
+      placeholder: "#205, PR #314"
+    validations:
+      required: false

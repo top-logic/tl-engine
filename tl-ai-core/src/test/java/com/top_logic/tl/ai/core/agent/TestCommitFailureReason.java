@@ -18,6 +18,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.tl.ai.core.model.TlAiCoreFactory;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -82,6 +83,42 @@ public class TestCommitFailureReason extends BasicTestCase {
 				assertTrue("The reason the nested transaction gave must survive into the message: "
 					+ message, message.contains(VETO));
 			}
+		}
+	}
+
+	/**
+	 * A rollback leaves no revision behind that a later reader could mistake for this turn's.
+	 *
+	 * <p>
+	 * A {@link TransactionScope} lives for a whole run: one KB transaction per turn, and
+	 * {@link TransactionScope#commit()} nulls the transaction so the scope is reusable. The commit
+	 * revision, however, used to survive a rollback, so after a turn that failed the scope still
+	 * reported the revision an <em>earlier</em> turn had committed.
+	 * </p>
+	 */
+	public void testRollbackClearsTheCommitRevision() {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+
+		try (TransactionScope scope = new TransactionScope()) {
+			scope.begin();
+			// A commit that changed nothing produces no revision, so this turn has to write.
+			TlAiCoreFactory.getInstance().createAgent()
+				.tUpdate(TlAiCoreFactory.getNameAgentAttr(), "revision-probe");
+			scope.commit();
+			assertNotNull("A successful commit produces a revision.", scope.commitRevision());
+
+			scope.begin();
+			poisonWithVetoedNestedTransaction(kb);
+			try {
+				scope.commit();
+				fail("A transaction poisoned by a nested rollback must not commit.");
+			} catch (TransactionException expected) {
+				// The commit deliberately leaves the transaction intact so the caller can roll back.
+			}
+			scope.rollback();
+
+			assertNull("Nothing was persisted by this turn, so there is no revision to report.",
+				scope.commitRevision());
 		}
 	}
 

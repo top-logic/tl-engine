@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -53,12 +52,11 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 
 /**
- * Push-based SSE handler that implements {@link AgentEventListener}.
+ * Push-based SSE implementation of {@link ChatEventHandler}.
  *
  * <p>
  * Receives agent events directly via {@link #onEvent(AgentEvent)}, buffers them in a
@@ -86,7 +84,7 @@ import com.top_logic.tl.ai.tool.api.json.JsonEscape;
  * <li>{@code heartbeat} - Keep-alive ping</li>
  * </ul>
  */
-public class ChatSSEHandler implements AgentEventListener {
+public class ChatSSEHandler implements ChatEventHandler {
 
 	private static final long FLUSH_INTERVAL_MS = 50;
 	private static final long HEARTBEAT_INTERVAL_MS = 15000;
@@ -102,9 +100,6 @@ public class ChatSSEHandler implements AgentEventListener {
 				t.setDaemon(true);
 				return t;
 			});
-
-	/** Active handlers, keyed for lookup by tracker. */
-	private static final CopyOnWriteArraySet<ChatSSEHandler> ACTIVE_HANDLERS = new CopyOnWriteArraySet<>();
 
 	private final TaskProgressTracker _tracker;
 	private final AsyncContext _asyncContext;
@@ -136,35 +131,22 @@ public class ChatSSEHandler implements AgentEventListener {
 		_writer = writer;
 	}
 
-	/**
-	 * Returns the tracker associated with this handler.
-	 */
+	@Override
 	public TaskProgressTracker getTracker() {
 		return _tracker;
 	}
 
-	/**
-	 * Finds the active (non-closed) handler for the given tracker, or {@code null} if none.
-	 * When multiple handlers exist for the same tracker (during SSE reconnection),
-	 * the non-closed one is preferred.
-	 */
-	public static ChatSSEHandler findHandler(TaskProgressTracker tracker) {
-		ChatSSEHandler candidate = null;
-		for (ChatSSEHandler handler : ACTIVE_HANDLERS) {
-			if (handler._tracker == tracker && !handler._closed.get()) {
-				candidate = handler;
-			}
-		}
-		return candidate;
+	@Override
+	public boolean isActive() {
+		return !_closed.get();
 	}
 
 	/**
 	 * Starts the SSE event stream.
 	 */
 	public void start() {
-		// Remove stale handlers for the same tracker (e.g. during SSE reconnection)
-		ACTIVE_HANDLERS.removeIf(h -> h._tracker == _tracker && h._closed.get());
-		ACTIVE_HANDLERS.add(this);
+		// Registering also drops stale handlers of the same tracker (e.g. on SSE reconnection).
+		ChatEventHandlerRegistry.register(this);
 
 		_asyncContext.addListener(new AsyncListener() {
 			@Override
@@ -203,7 +185,7 @@ public class ChatSSEHandler implements AgentEventListener {
 	 */
 	public void stop() {
 		if (_closed.compareAndSet(false, true)) {
-			ACTIVE_HANDLERS.remove(this);
+			ChatEventHandlerRegistry.unregister(this);
 			if (_flushTask != null) {
 				_flushTask.cancel(false);
 			}
@@ -220,7 +202,7 @@ public class ChatSSEHandler implements AgentEventListener {
 		if (_closed.get()) {
 			// This handler's SSE connection is gone (browser reconnected).
 			// Forward to the current active handler for the same tracker.
-			ChatSSEHandler current = findHandler(_tracker);
+			ChatEventHandler current = ChatEventHandlerRegistry.find(_tracker);
 			if (current != null && current != this) {
 				current.onEvent(event);
 			} else {
@@ -236,11 +218,13 @@ public class ChatSSEHandler implements AgentEventListener {
 	 * Sends a {@link MessageCompleteEvent} directly to the SSE stream. Called from
 	 * {@link ChatProcessor} after the run completes, not via {@link #onEvent(AgentEvent)}.
 	 */
+	@Override
 	public void sendMessageComplete(MessageCompleteEvent event) {
 		sendEvent("message_complete", DtoMapper.toJson(event));
 	}
 
 	/** Sends a provider error event to the client. */
+	@Override
 	public void sendProviderError(ProviderErrorEvent event) {
 		sendEvent("provider_error", DtoMapper.toJson(event));
 	}

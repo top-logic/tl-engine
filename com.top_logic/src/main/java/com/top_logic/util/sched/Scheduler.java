@@ -32,6 +32,7 @@ import com.top_logic.basic.Reloadable;
 import com.top_logic.basic.ReloadableManager;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.GCQueue;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -668,14 +669,15 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	}
 
 	private List<SchedulerEntry> getWaitingEntries() {
-		@SuppressWarnings("unchecked")
+		Filter<? super SchedulerEntry> enabledOrStarted = or(
+			EnabledSchedulerEntryFilter.INSTANCE,
+			ManuallyStartedSchedulerEntryFilter.INSTANCE);
+		Filter<? super SchedulerEntry> valid = not(BrokenSchedulerEntryFilter.INSTANCE);
 		List<SchedulerEntry> result = toList(getEntries().getAllEntries(
 			and(
 				TopLevelSchedulerEntryFilter.INSTANCE,
-				or(
-					EnabledSchedulerEntryFilter.INSTANCE,
-					ManuallyStartedSchedulerEntryFilter.INSTANCE),
-				not(BrokenSchedulerEntryFilter.INSTANCE),
+				enabledOrStarted,
+				valid,
 				new SchedulerEntryStateFilter(SchedulerEntry.State.WAITING))));
 		Collections.sort(result, new SchedulerEntryByTaskComparator(TaskComparator.INSTANCE));
 		return result;
@@ -1751,15 +1753,12 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * The {@link Task}s that are running or starting.
 	 */
 	protected Collection<SchedulerEntry> getActiveEntries() {
+		Filter<? super SchedulerEntry> isActive = or(
+			new SchedulerEntryStateFilter(SchedulerEntry.State.RUNNING),
+			new SchedulerEntryStateFilter(SchedulerEntry.State.STARTING),
+			new SchedulerEntryStateFilter(SchedulerEntry.State.WAITING_FOR_MAINTENANCE_MODE));
 		return getEntries().getAllEntries(
-			and(
-				TopLevelSchedulerEntryFilter.INSTANCE,
-				or(
-					new SchedulerEntryStateFilter(SchedulerEntry.State.RUNNING),
-					new SchedulerEntryStateFilter(SchedulerEntry.State.STARTING),
-					new SchedulerEntryStateFilter(SchedulerEntry.State.WAITING_FOR_MAINTENANCE_MODE))
-				)
-			);
+			and(TopLevelSchedulerEntryFilter.INSTANCE, isActive));
 	}
 
     /**

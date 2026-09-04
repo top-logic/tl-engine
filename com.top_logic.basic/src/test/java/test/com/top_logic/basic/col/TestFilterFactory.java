@@ -12,6 +12,7 @@ import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+
 import test.com.top_logic.basic.BasicTestCase;
 
 import com.top_logic.basic.col.Filter;
@@ -48,7 +49,8 @@ public class TestFilterFactory extends TestCase {
 		assertSame(falseFilter(), not(trueFilter()));
 		assertSame(trueFilter(), not(falseFilter()));
 		EqualsFilter filter = new EqualsFilter("X");
-		assertSame(filter, not(not(filter)));
+		Filter<Object> notEquals = not(filter);
+		assertSame(filter, not(notEquals));
 	}
 	
 	public void testAndArray() {

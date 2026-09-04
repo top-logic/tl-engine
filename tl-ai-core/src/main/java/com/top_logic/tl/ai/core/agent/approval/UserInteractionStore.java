@@ -13,7 +13,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Session-scoped store for pending user interaction requests.
+ * Session-scoped store for the interactions an agent run is waiting on.
+ *
+ * <p>
+ * Holds two kinds, both discoverable and both resolvable through
+ * {@link #resolve(String, String)}: questions the agent asked
+ * ({@link #getPendingRequests()}) and tool approvals it needs
+ * ({@link #getPendingApprovals()}).
+ * </p>
  *
  * <p>
  * Thread-safe: the agent thread creates requests, the servlet thread resolves them.
@@ -23,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class UserInteractionStore {
 
 	private final Map<String, UserInteractionRequest> _pending = new ConcurrentHashMap<>();
-	private final Map<String, CompletableFuture<String>> _approvalFutures = new ConcurrentHashMap<>();
+	private final Map<String, PendingApproval> _approvals = new ConcurrentHashMap<>();
 	private final AtomicInteger _nextId = new AtomicInteger(1);
 	private final String _storeId = UUID.randomUUID().toString().substring(0, 8);
 
@@ -48,28 +55,55 @@ public class UserInteractionStore {
 	}
 
 	/**
-	 * Registers a pending approval request under a caller-supplied ID.
+	 * Registers a pending approval the agent thread is about to block on.
 	 *
 	 * <p>
-	 * Used by the {@link com.top_logic.tl.ai.core.agent.approval.ApprovalCallback} bridge: the agent loop
-	 * generates the approval request ID and emits it via SSE, then the callback registers a future
-	 * under that same ID so the servlet can resolve it when the user responds.
+	 * Used by the {@link ApprovalCallback} bridge: the agent loop generates the approval request
+	 * ID and emits it as an
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ApprovalRequired} event, then the
+	 * callback registers a future under that same ID so the UI can resolve it when the user
+	 * responds. Registering the whole {@link ApprovalRequest} - not just its ID - is what makes
+	 * the approval discoverable through {@link #getPendingApprovals()} by a UI that never saw
+	 * that event.
 	 * </p>
 	 *
-	 * @param approvalRequestId The ID to register under (matches the SSE event's
-	 *                          {@code approvalRequestId}).
+	 * <p>
+	 * The caller must drop the registration through {@link #discardApproval(String)} when its
+	 * wait ends without a user response (timeout, interruption), so that a dead approval does not
+	 * linger in {@link #getPendingApprovals()}.
+	 * </p>
+	 *
+	 * @param request The approval to register. Its {@link ApprovalRequest#approvalRequestId()} is
+	 *                the ID {@link #resolve(String, String)} expects.
 	 * @return A future that completes with the user's response string.
 	 */
-	public CompletableFuture<String> registerApproval(String approvalRequestId) {
+	public CompletableFuture<String> registerApproval(ApprovalRequest request) {
 		CompletableFuture<String> future = new CompletableFuture<>();
-		_approvalFutures.put(approvalRequestId, future);
+		_approvals.put(request.approvalRequestId(),
+			new PendingApproval(request, System.currentTimeMillis(), future));
 		return future;
 	}
 
 	/**
-	 * Resolves a pending request with the user's response.
+	 * Drops a registered approval without completing its future.
 	 *
-	 * @param requestId The request ID to resolve.
+	 * <p>
+	 * For the caller of {@link #registerApproval(ApprovalRequest)} to call when it stops waiting
+	 * on its own (timeout, interruption). Resolving an approval through
+	 * {@link #resolve(String, String)} already removes it, so this is a no-op then.
+	 * </p>
+	 *
+	 * @param approvalRequestId The ID the approval was registered under.
+	 */
+	public void discardApproval(String approvalRequestId) {
+		_approvals.remove(approvalRequestId);
+	}
+
+	/**
+	 * Resolves a pending interaction request or approval with the user's response.
+	 *
+	 * @param requestId The ID of the {@link UserInteractionRequest} or {@link PendingApproval} to
+	 *                  resolve.
 	 * @param response  The user's response string.
 	 */
 	public void resolve(String requestId, String response) {
@@ -78,19 +112,46 @@ public class UserInteractionStore {
 			request.getFuture().complete(response);
 			return;
 		}
-		CompletableFuture<String> approvalFuture = _approvalFutures.remove(requestId);
-		if (approvalFuture != null) {
-			approvalFuture.complete(response);
+		PendingApproval approval = _approvals.remove(requestId);
+		if (approval != null) {
+			approval.future().complete(response);
 		}
 	}
 
-	/** Returns all currently pending requests. */
+	/**
+	 * Returns all currently pending interaction requests, i.e. the questions the agent asked
+	 * through {@link com.top_logic.tl.ai.core.tools.interaction.AskUserTool}.
+	 *
+	 * <p>
+	 * Pending tool approvals are <em>not</em> part of this list; they have their own shape and are
+	 * returned by {@link #getPendingApprovals()}.
+	 * </p>
+	 */
 	public List<UserInteractionRequest> getPendingRequests() {
 		return List.copyOf(_pending.values());
 	}
 
-	/** Whether any requests are currently pending. */
+	/**
+	 * Returns all tool approvals currently waiting for a user decision.
+	 *
+	 * <p>
+	 * Each entry can be answered through {@link #resolve(String, String)} using its
+	 * {@link PendingApproval#id()} and one of the response strings the registering
+	 * {@link ApprovalCallback} understands (for the chat UI: {@code "APPROVED"},
+	 * {@code "APPROVED_FOR_SESSION"}, {@code "REJECTED"} or {@code "REJECTED:<comment>"}).
+	 * </p>
+	 */
+	public List<PendingApproval> getPendingApprovals() {
+		return List.copyOf(_approvals.values());
+	}
+
+	/** Whether any interaction requests are currently pending. */
 	public boolean hasPending() {
 		return !_pending.isEmpty();
+	}
+
+	/** Whether any tool approvals are currently waiting for a user decision. */
+	public boolean hasPendingApprovals() {
+		return !_approvals.isEmpty();
 	}
 }

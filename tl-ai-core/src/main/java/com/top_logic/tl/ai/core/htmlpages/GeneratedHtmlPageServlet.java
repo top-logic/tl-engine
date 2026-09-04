@@ -30,6 +30,13 @@ import com.top_logic.util.NoContextServlet;
  * HTML runs in an opaque origin: scripts work for interactivity, but the document cannot read the
  * viewer's session cookies or impersonate them against the application's APIs.
  * </p>
+ *
+ * <p>
+ * The {@code /html/*} mapping of this servlet also covers paths that belong to other modules'
+ * static web resources, which a servlet mapping shadows. {@link PdfJsResourceServlet} carves the
+ * one known collision, {@code /html/pdfjs/*}, back out; anything similar has to be carved out the
+ * same way.
+ * </p>
  */
 public class GeneratedHtmlPageServlet extends NoContextServlet {
 

@@ -14,4 +14,21 @@
 		<servlet-name>GeneratedHtmlPageServlet</servlet-name>
 		<url-pattern>/html/*</url-pattern>
 	</servlet-mapping>
+
+	<!--
+		The mapping above shadows the static PDF.js viewer resources that
+		ext-org-mozilla-pdfjs deploys below /html/pdfjs/, because a servlet mapping wins
+		over the container's handling of static web resources. The more specific prefix
+		below takes precedence over /html/* and hands that sub-tree back to a plain
+		resource delivery. See PdfJsResourceServlet.
+	-->
+	<servlet>
+		<servlet-name>PdfJsResourceServlet</servlet-name>
+		<servlet-class>com.top_logic.tl.ai.core.htmlpages.PdfJsResourceServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>PdfJsResourceServlet</servlet-name>
+		<url-pattern>/html/pdfjs/*</url-pattern>
+	</servlet-mapping>
 </web-fragment>

@@ -49,7 +49,7 @@ public class TestFilterFactory extends TestCase {
 		assertSame(falseFilter(), not(trueFilter()));
 		assertSame(trueFilter(), not(falseFilter()));
 		EqualsFilter filter = new EqualsFilter("X");
-		Filter<Object> notEquals = not(filter);
+		Filter<? super Object> notEquals = not(filter);
 		assertSame(filter, not(notEquals));
 	}
 	

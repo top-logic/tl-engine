@@ -6,8 +6,10 @@
 package com.top_logic.tl.ai.core.session;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -63,6 +65,20 @@ public class ConversationLogListener implements AgentEventListener {
 	private final StringBuilder _thinkingBuffer = new StringBuilder();
 
 	private final Map<String, Part.DelegationPart> _activeDelegations = new ConcurrentHashMap<>();
+
+	/**
+	 * The tool calls inside the currently open KB transaction, or <code>null</code> when none is
+	 * open.
+	 *
+	 * <p>
+	 * Tracked explicitly rather than derived from the part order, because the position of the
+	 * {@link Part.TransactionType#BEGAN} part does not delimit the transaction: the loop opens the
+	 * transaction while executing the first write tool, so that tool's
+	 * {@link AgentEvent.ToolCallStarted} arrives <em>before</em>
+	 * {@link AgentEvent.TransactionBegan} - and it is the call that matters most.
+	 * </p>
+	 */
+	private volatile Set<String> _openTransactionCalls;
 
 	/**
 	 * Optional parent listener that receives delegated child-agent events which must reach the
@@ -215,6 +231,10 @@ public class ConversationLogListener implements AgentEventListener {
 			Part.ToolCallPart part = Part.ToolCallPart.started(
 				e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson());
 			turn.addAssistantPart(part);
+			Set<String> open = _openTransactionCalls;
+			if (open != null) {
+				open.add(e.toolCallId());
+			}
 		}
 	}
 
@@ -317,6 +337,16 @@ public class ConversationLogListener implements AgentEventListener {
 	private void handleTransactionBegan(AgentEvent.TransactionBegan e) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
+			// The write tool that made the loop open this transaction is still running, so it is
+			// seeded into the window here; every call started while the window is open joins it.
+			Set<String> open = ConcurrentHashMap.newKeySet();
+			for (Part part : turn.assistantParts()) {
+				if (part instanceof Part.ToolCallPart tc
+					&& tc.status() == Part.ToolCallStatus.RUNNING) {
+					open.add(tc.id());
+				}
+			}
+			_openTransactionCalls = open;
 			turn.addAssistantPart(new Part.TransactionPart(
 				UUID.randomUUID().toString(), e.timestamp(),
 				Part.TransactionType.BEGAN, -1, null));
@@ -324,6 +354,7 @@ public class ConversationLogListener implements AgentEventListener {
 	}
 
 	private void handleTransactionCommitted(AgentEvent.TransactionCommitted e) {
+		_openTransactionCalls = null;
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
 			turn.addAssistantPart(new Part.TransactionPart(
@@ -333,11 +364,60 @@ public class ConversationLogListener implements AgentEventListener {
 	}
 
 	private void handleTransactionRolledBack(AgentEvent.TransactionRolledBack e) {
+		Set<String> open = _openTransactionCalls;
+		_openTransactionCalls = null;
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
+			retractCompletedWrites(turn, open, e.reason());
 			turn.addAssistantPart(new Part.TransactionPart(
 				UUID.randomUUID().toString(), e.timestamp(),
 				Part.TransactionType.ROLLED_BACK, -1, e.reason()));
+		}
+	}
+
+	/**
+	 * Marks every tool call that reported success inside the rolled-back transaction as
+	 * {@link Part.ToolCallStatus#ROLLED_BACK}.
+	 *
+	 * <p>
+	 * A write tool commits only a transaction nested inside the turn's, which writes no SQL, so its
+	 * {@code COMPLETED} was a claim about a commit that had not happened yet. Once the turn is rolled
+	 * back the claim is void, and the recorded history has to say so - otherwise a transcript
+	 * reloaded from the database shows a successful write, and
+	 * {@link ConversationLogReplay} feeds the model a successful tool result, for a change that was
+	 * never persisted.
+	 * </p>
+	 *
+	 * <p>
+	 * Only the calls of <em>this</em> transaction are retracted: the scope lives for the whole run,
+	 * one KB transaction per loop turn, and the writes of an earlier turn whose own commit succeeded
+	 * are genuinely persisted - retracting those would be the same lie in the other direction. The
+	 * amendment is a pure in-memory edit; the log is persisted once, after the run.
+	 * </p>
+	 *
+	 * <p>
+	 * A read-only tool call that happens to sit in the window is retracted too, because neither the
+	 * event nor the {@link Part.ToolCallPart} records the tool's
+	 * {@link com.top_logic.tl.ai.tool.api.ToolMode}: nothing here can tell a read from a write. That
+	 * costs a reloaded conversation the read's result and is deliberately preferred over the
+	 * alternative, which is telling the model a write landed that did not - the retraction the
+	 * replay writes therefore also invites re-reading.
+	 * </p>
+	 */
+	private static void retractCompletedWrites(Turn turn, Set<String> openCalls, String reason) {
+		if (openCalls == null || openCalls.isEmpty()) {
+			return;
+		}
+		List<Part.ToolCallPart> retracted = new ArrayList<>();
+		for (Part part : turn.assistantParts()) {
+			if (part instanceof Part.ToolCallPart tc
+				&& tc.status() == Part.ToolCallStatus.COMPLETED
+				&& openCalls.contains(tc.id())) {
+				retracted.add(tc);
+			}
+		}
+		for (Part.ToolCallPart tc : retracted) {
+			turn.updatePart(tc.id(), tc.rolledBack(reason));
 		}
 	}
 

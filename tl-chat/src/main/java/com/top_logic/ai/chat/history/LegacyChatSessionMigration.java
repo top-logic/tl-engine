@@ -51,35 +51,27 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * TODO: Remove the legacy <code>tl.ai.chat</code> model in the release AFTER this eager migration
- * has shipped (every deployment that booted once has an empty <code>ChatSession</code> table
- * then). Checklist:
- * </p>
- * <ol>
- * <li>Register <code>tl-chat</code> as a migration module (MigrationService config in
- * <code>tl-chat.conf.config.xml</code>) and create a migration via the
- * <code>create_migration_script_template</code> Ant task containing:
- *
- * <pre>
- * &lt;pre-processors&gt;
- *     &lt;processor class="com.top_logic.knowledge.service.migration.DeleteTableProcessor"&gt;
- *         &lt;tables&gt;
- *             &lt;table object_name="ChatSession"/&gt;
- *         &lt;/tables&gt;
- *     &lt;/processor&gt;
- *     &lt;delete-class name="tl.ai.chat:ChatSession"/&gt;
- *     &lt;delete-module name="tl.ai.chat"/&gt;
- * &lt;/pre-processors&gt;
- * </pre>
- *
- * </li>
- * <li>Delete <code>WEB-INF/model/tl.ai.chat.model.xml</code>,
+ * The rest of the legacy model is gone: <code>WEB-INF/model/tl.ai.chat.model.xml</code>,
  * <code>WEB-INF/kbase/ChatMeta.xml</code> and
- * <code>WEB-INF/autoconf/model.tl.ai.chat.config.xml</code>.</li>
- * <li>Delete this class and its module entry in <code>tl-chat.conf.config.xml</code>.</li>
- * <li>Drop the ChatSession reference from the comment in tl-ai-core
- * <code>WEB-INF/model/tl.ai.execution.model.xml</code>.</li>
- * </ol>
+ * <code>WEB-INF/autoconf/model.tl.ai.chat.config.xml</code> have been deleted, and the tl-ai-core
+ * migration <code>Issue_230_remove_module_tl_ai_chat</code> drops the table and the module from
+ * databases it reaches (Refs #230).
+ * </p>
+ *
+ * <p>
+ * With the model gone, this service no longer has anything to do: whether or not the migration
+ * reaches a database, <code>DynamicModelService</code> drops the undeclared <code>tl.ai.chat</code>
+ * module during its incremental model upgrade, which runs before this service starts. It is kept
+ * only so that the removal of the legacy model can still be reverted in one place, and because
+ * deleting it is only safe once every deployment has run it.
+ * </p>
+ *
+ * <p>
+ * TODO: Delete this class and its module entry in <code>tl-chat.conf.config.xml</code> once every
+ * target deployment has booted a version containing it - only then is every legacy row known to be
+ * converted. That is a fact about deployments, not about this repository, so it cannot be decided
+ * here.
+ * </p>
  */
 @ServiceDependencies({
 	ModelService.Module.class,
@@ -188,13 +180,13 @@ public class LegacyChatSessionMigration
 			}
 		}
 
+		// Preserve the original timestamps for correct history ordering. This has to go through
+		// the store: it owns the single writer thread that is allowed to modify agent data, and a
+		// session created there is not yet visible to this thread's interaction.
+		store.setSessionTimestamps(session, createdAt != null ? createdAt : new Date(), lastUpdated);
+
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(ResKey.text("Migrate legacy chat session"))) {
-			// Preserve the original timestamps for correct history ordering.
-			session.tUpdateByName(ATTR_CREATED_AT, createdAt != null ? createdAt : new Date());
-			if (lastUpdated != null) {
-				session.tUpdateByName(ATTR_LAST_UPDATED, lastUpdated);
-			}
+		try (Transaction tx = kb.beginTransaction(ResKey.text("Delete migrated legacy chat session"))) {
 			legacy.tDelete();
 			tx.commit();
 		}

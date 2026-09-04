@@ -1,0 +1,63 @@
+name: Maintenance
+about: Cleanup, test or doc debt - no user-visible change
+labels: ["type/maintenance"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For work that leaves behaviour as it is: failing or flaky tests, dead code, stale
+        docs, build noise. If users would notice the outcome, it is a **Bug** or a **Feature**.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: >-
+        Pick every part this touches. Gitea cannot turn this answer into a label, so a
+        maintainer still has to set the matching `area/*` label by hand - this field is
+        what tells them which one.
+      multiple: true
+      options:
+        - area/agent-core
+        - area/browser
+        - area/security
+        - area/model
+        - area/ui
+        - area/mcp
+        - area/docs
+        - area/build
+    validations:
+      required: true
+
+  - type: textarea
+    id: debt
+    attributes:
+      label: The debt
+      description: >-
+        What is wrong, listed concretely: the test classes that fail and with what error,
+        the files to delete, the docs that no longer match the code.
+      placeholder: |
+        - `TestFoo` - 3 failing, `...`
+        - `Bar.java` - unused since #123
+    validations:
+      required: true
+
+  - type: textarea
+    id: why-now
+    attributes:
+      label: How it surfaced
+      description: >-
+        Optional. What made this visible and what it currently costs - work that had to
+        route around it, a green build that hides a real failure.
+    validations:
+      required: false
+
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: >-
+        What has to be true to close this, and how it is verified. If a test is involved,
+        say explicitly that it must pass rather than be weakened or deleted.
+    validations:
+      required: true

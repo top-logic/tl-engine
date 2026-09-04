@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.htmlpages.impl;
+package com.top_logic.tl.ai.core.htmlpages.model.impl;
 
 /**
  * Basic interface for {@link #GENERATED_HTML_PAGE_TYPE} business objects.
@@ -43,15 +43,6 @@ public interface GeneratedHtmlPageBase extends com.top_logic.model.TLObject {
 	 * </p>
 	 */
 	String OWNER_ATTR = "owner";
-
-	/**
-	 * Part <code>securityMode</code> of <code>GeneratedHtmlPage</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.ai.htmlpages:SecurityMode</code> in configuration.
-	 * </p>
-	 */
-	String SECURITY_MODE_ATTR = "securityMode";
 
 	/**
 	 * Part <code>title</code> of <code>GeneratedHtmlPage</code>
@@ -102,20 +93,6 @@ public interface GeneratedHtmlPageBase extends com.top_logic.model.TLObject {
 	 */
 	default void setOwner(com.top_logic.knowledge.wrap.person.Person newValue) {
 		tUpdateByName(OWNER_ATTR, newValue);
-	}
-
-	/**
-	 * Getter for part {@link #SECURITY_MODE_ATTR}.
-	 */
-	default com.top_logic.model.TLClassifier getSecurityMode() {
-		return (com.top_logic.model.TLClassifier) tValueByName(SECURITY_MODE_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #SECURITY_MODE_ATTR}.
-	 */
-	default void setSecurityMode(com.top_logic.model.TLClassifier newValue) {
-		tUpdateByName(SECURITY_MODE_ATTR, newValue);
 	}
 
 	/**

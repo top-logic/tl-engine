@@ -4,8 +4,8 @@
 	<module name="tl.ai.htmlpages">
 		<annotations>
 			<package-binding
-				implementation-package="com.top_logic.tl.ai.htmlpages.impl"
-				interface-package="com.top_logic.tl.ai.htmlpages"
+				implementation-package="com.top_logic.tl.ai.core.htmlpages.model.impl"
+				interface-package="com.top_logic.tl.ai.core.htmlpages.model"
 			/>
 		</annotations>
 		<types>

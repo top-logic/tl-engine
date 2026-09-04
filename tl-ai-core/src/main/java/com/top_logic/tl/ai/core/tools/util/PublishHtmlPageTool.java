@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import com.top_logic.basic.AliasManager;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService;
-import com.top_logic.tl.ai.htmlpages.GeneratedHtmlPage;
+import com.top_logic.tl.ai.core.htmlpages.model.GeneratedHtmlPage;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;

@@ -298,6 +298,7 @@ public class TLStructuredTypeFormBuilder
 		@OptionLabels(MetaResourceProvider.class)
 		@ControlProvider(SelectionControlProvider.class)
 		@DynamicMode(fun = ActiveIf.class, args = { @Ref(NO_INSTANCES) })
+		@Constraint(value = TypeHasNoConflictingAttributes.class, args = { @Ref(EDITED_TYPE) })
 		List<TLClass> getGeneralizationTypes();
 
 		/**

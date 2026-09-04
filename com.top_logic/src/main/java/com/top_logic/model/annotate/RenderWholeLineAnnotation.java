@@ -8,14 +8,15 @@ package com.top_logic.model.annotate;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.InAppClassifierConstants;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.model.config.TLTypeAnnotation;
 
 /**
- * {@link TLAnnotation} to annotate whether an element is rendered over the whole line. So it
- * stretches over more than 1 column.
+ * {@link TLAnnotation} deciding whether an element takes a whole line of the form to itself,
+ * stretching over more than one column instead of sharing a line with the elements beside it.
  * 
  * @see RenderWholeLine Corresponding annotation for {@link PropertyDescriptor} and
  *      {@link ConfigurationDescriptor}.
@@ -24,6 +25,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
  */
 @TagName("render-whole-line")
 @InApp(classifiers = { InAppClassifierConstants.FORM_RELEVANT })
+@Label("Whole line")
 public interface RenderWholeLineAnnotation extends TLAttributeAnnotation, TLTypeAnnotation, BooleanAnnotation {
 	// Pure sum interface.
 }

@@ -105,8 +105,8 @@ public class DialogComponent extends AbstractDialogModel {
 		private static final Filter<? super Object> IS_CLOSE_DIALOG_HANDLER;
 		static {
 			Filter<? super Object> isCloseHandler = createClassFilter(CloseModalDialogCommandHandler.class);
-			Filter<? super Object> isCreateHandler = createClassFilter(AbstractCreateCommandHandler.class);
-			IS_CLOSE_DIALOG_HANDLER = and(isCloseHandler, not(isCreateHandler));
+			Filter<? super Object> isNotCreateHandler = not(createClassFilter(AbstractCreateCommandHandler.class));
+			IS_CLOSE_DIALOG_HANDLER = and(isCloseHandler, isNotCreateHandler);
 		}
 		
 		private CloseModalDialogCommandHandler closeHandler;

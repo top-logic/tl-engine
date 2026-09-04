@@ -71,6 +71,7 @@ public class FilterFactory {
 	 * 
 	 * @return never <code>null</code>
 	 */
+	@SafeVarargs
 	public static <T> Filter<? super T> and(Filter<? super T>... filters) {
 		switch (filters.length) {
 			case 0:
@@ -155,6 +156,7 @@ public class FilterFactory {
 	 * 
 	 * @return never <code>null</code>
 	 */
+	@SafeVarargs
 	public static <T> Filter<? super T> or(Filter<? super T>... filters) {
 		switch (filters.length) {
 			case 0:
@@ -212,8 +214,8 @@ public class FilterFactory {
 		if (isFalse(filter)) {
 			return FilterFactory.trueFilter();
 		}
-		if (filter instanceof NOTFilter<?>) {
-			return ((NOTFilter<? super T>) filter).getInnerFilter();
+		if (filter instanceof NOTFilter<? super T> not) {
+			return not.getInnerFilter();
 		}
 		return new NOTFilter<>(filter);
 	}
@@ -266,7 +268,8 @@ public class FilterFactory {
 	 * @param innerFilter
 	 *        the filter to delegate to
 	 */
-	public static <T> Filter<? super Object> createClassFilter(Class<? extends T> testClass, final Filter<? super T> innerFilter) {
+	public static <T> Filter<Object> createClassFilter(Class<? extends T> testClass,
+			final Filter<? super T> innerFilter) {
 		return new ClassFilter<T>(testClass, innerFilter);
 	}
 
@@ -275,7 +278,7 @@ public class FilterFactory {
 	 * 
 	 * @see #createClassFilter(Class)
 	 */
-	public static Filter<? super Object> createClassFilter(String className) throws ClassNotFoundException {
+	public static Filter<Object> createClassFilter(String className) throws ClassNotFoundException {
 		return createClassFilter(Class.forName(className));
 	}
 
@@ -286,7 +289,7 @@ public class FilterFactory {
 	 * @param testClass
 	 *        the class of the type of objects the inner filter can process
 	 */
-	public static Filter<? super Object> createClassFilter(Class<?> testClass) {
+	public static Filter<Object> createClassFilter(Class<?> testClass) {
 		return createClassFilter(testClass, trueFilter());
 	}
 

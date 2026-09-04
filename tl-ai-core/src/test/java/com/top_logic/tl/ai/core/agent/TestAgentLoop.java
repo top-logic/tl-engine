@@ -1761,6 +1761,92 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
+	 * A failed commit must correct the picture the model was left with, in the very same provider
+	 * request that first carries the tool results it corrects.
+	 *
+	 * <p>
+	 * The bug this pins: the tool of the turn reported {@code COMPLETED} before the turn's SQL ever
+	 * ran, the commit then failed, and the model was told nothing - so it answered the user that the
+	 * write had happened. See {@link TestCommitFailureReason} for the engine-level failure this
+	 * simulates.
+	 * </p>
+	 */
+	public void testCommitFailureTellsTheModel() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Create a document"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(globalTool("edit_model", toolSpec));
+		registry.freeze();
+
+		List<List<Message>> requests = new ArrayList<>();
+		LLMProvider provider = recording(requests, mockProvider(
+			List.of(new ToolCall("tc1", "edit_model", "{}")),
+			List.of(new TextContent("Created."))));
+
+		TransactionScope failingCommitScope = new TestableTransactionScope() {
+			@Override
+			public void commit() {
+				throw new TransactionException(
+					TransactionScope.COMMIT_FAILED_PREFIX + "Database operation failed.");
+			}
+		};
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE,
+			failingCommitScope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener -> {
+			// no listener assertions here
+		});
+
+		assertEquals("A failed commit is not a failed run: the model still has to answer.",
+			StopReason.COMPLETE, result.stopReason());
+
+		String notice = frameworkNotice(conv);
+		assertNotNull("The model must be told that the writes of the turn are gone.", notice);
+		assertTrue("The notice must name the reason, but was: " + notice,
+			notice.contains("Database operation failed."));
+		assertTrue("The notice must say that a result reported as successful is void, but was: "
+			+ notice, notice.contains("successful"));
+
+		assertEquals("The loop must ask the provider again after the failed commit.",
+			2, requests.size());
+		assertTrue("The correction must reach the model in the same request as the tool result it"
+			+ " corrects - otherwise the model has already formed the false belief.",
+			containsNotice(requests.get(1)));
+	}
+
+	/**
+	 * Whether the message history a provider request carried contains the {@code [Framework notice]}
+	 * correction.
+	 */
+	private static boolean containsNotice(List<Message> messages) {
+		for (Message message : messages) {
+			if (message instanceof UserMessage user) {
+				for (ContentPart part : user.content()) {
+					if (part instanceof TextContent text
+						&& text.text().startsWith("[Framework notice]")) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Wraps a provider so that the message history of every request is recorded, letting a test
+	 * assert what the model was shown and in which round-trip.
+	 */
+	private static LLMProvider recording(List<List<Message>> requests, LLMProvider delegate) {
+		return (request, handler) -> {
+			requests.add(List.copyOf(request.messages()));
+			delegate.stream(request, handler);
+		};
+	}
+
+	/**
 	 * A denied write tool must not acquire the lock or open a transaction.
 	 * The security gate runs before {@code ensureTransaction}.
 	 */

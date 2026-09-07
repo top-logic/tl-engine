@@ -18,10 +18,10 @@ import junit.framework.TestCase;
  * Guards the shipped default of the {@link MCPServerService.Module} switch.
  *
  * <p>
- * {@code /mcp/*} authenticates nobody: the servlet is mapped with no filter and no
- * {@code security-constraint}, and every resource handler reads the KnowledgeBase in a system
- * interaction, which bypasses model access rights. Serving that endpoint is therefore an
- * administrative decision and not a default - see {@code doc/security/mcp-endpoint.md} and issue #261.
+ * The endpoint authenticates its callers since issue #261, so this is no longer a hole being kept
+ * shut - it is that <em>publishing</em> an application's model and business data over HTTP is a
+ * deployment decision and not a default. An application that wants {@code /mcp/*} switches the module
+ * on and configures an authentication for it; see {@code doc/security/mcp-endpoint.md}.
  * </p>
  *
  * <p>
@@ -54,9 +54,10 @@ public class TestShippedModuleDefault extends TestCase {
 		Matcher entry = MODULE_ENTRY.matcher(contents);
 		assertTrue("No entry for MCPServerService$Module in " + config
 			+ " - the switch must stay declared, and declared as false.", entry.find());
-		assertEquals("The MCP endpoint authenticates nobody (issue #261), so this module must ship"
-			+ " switched off. Do not flip it here: an application that wants the endpoint overrides"
-			+ " the module in its own configuration - see doc/security/mcp-endpoint.md.",
+		assertEquals("Serving /mcp/* publishes this application's model and business data over HTTP,"
+			+ " which is a deployment decision, so this module must ship switched off. Do not flip it"
+			+ " here: an application that wants the endpoint overrides the module in its own"
+			+ " configuration - see doc/security/mcp-endpoint.md.",
 			"false", entry.group(1));
 	}
 
@@ -75,9 +76,10 @@ public class TestShippedModuleDefault extends TestCase {
 			message.contains("com.top_logic.ai.mcp.server.MCPServerService$Module"));
 		assertTrue("The answer must say that off is the default, not an accident.",
 			message.contains("off by default"));
-		assertTrue("The answer must name the reason, so nobody re-enables it without reading it.",
-			message.contains("authenticates nobody"));
-		assertTrue("The answer must point at the tracked follow-up.", message.contains("#261"));
+		assertTrue("The answer must name the second step, because enabling the module alone still"
+			+ " serves nothing.", message.contains("configure an authentication"));
+		assertTrue("The answer must point at the page that explains both steps.",
+			message.contains("doc/security/mcp-endpoint.md"));
 	}
 
 	/**

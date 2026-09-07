@@ -39,6 +39,13 @@
 			<artifactId>tl-ai-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<!-- The pluggable HTTP authentication framework that guards /mcp/*: HTTP basic, API key and
+		     OAuth bearer, each resolving a Person. Already on the tl-ai-demo classpath, so this adds
+		     nothing to the deployment. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-service-openapi-server</artifactId>
+		</dependency>
 
 		<!-- MCP SDK -->
 		<dependency>
@@ -85,8 +92,10 @@
 					<includes>
 						<include>test/TestAll.java</include>
 						<include>**/TestShippedModuleDefault.java</include>
-						<include>**/TestMcpToolContexts.java</include>
 						<include>**/TestModuleTypesResource.java</include>
+						<include>**/TestMcpAuthentication.java</include>
+						<include>**/TestMcpAuthenticationFilter.java</include>
+						<include>**/TestMcpSessionPrincipals.java</include>
 					</includes>
 				</configuration>
 			</plugin>

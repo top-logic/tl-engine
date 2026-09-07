@@ -2205,6 +2205,72 @@
   };
 
   // ========================================================================
+  // Countdown - the remaining time on an approval / question prompt
+  //
+  // Both deadlines are configured server-side (InteractionTimeoutService) and reach the
+  // client as the milliseconds that are left, not as the full timeout: a prompt raised
+  // minutes ago - a reopened chat, a batched SSE flush - then shows the clock the waiting
+  // agent thread is really running.
+  // ========================================================================
+  const Countdown = {
+    /** Below this the chip switches to seconds and to the urgent colour. */
+    _URGENT_MS: 60000,
+
+    /**
+     * Fills `chipEl` with the time left and keeps it current every second, until the
+     * deadline passes or the chip leaves the document (the prompt was answered or the chat
+     * switched). Renders nothing when there is no deadline to show.
+     */
+    attach(chipEl, remainingMs, onExpire) {
+      if (!chipEl || !(remainingMs > 0)) return;
+      const deadline = Date.now() + remainingMs;
+      chipEl.title = "Expires at " + new Date(deadline).toLocaleTimeString();
+      let expired = false;
+      const tick = () => {
+        if (!chipEl.isConnected) {
+          clearInterval(timer);
+          return;
+        }
+        const left = deadline - Date.now();
+        chipEl.textContent = this.label(left);
+        chipEl.classList.toggle("urgent", left <= this._URGENT_MS);
+        if (left <= 0 && !expired) {
+          expired = true;
+          clearInterval(timer);
+          if (onExpire) onExpire();
+        }
+      };
+      const timer = setInterval(tick, 1000);
+      tick();
+    },
+
+    /**
+     * The time left, phrased for a person: whole minutes while there is no hurry, and
+     * seconds only in the last two minutes, so a half-hour deadline does not tick away in
+     * the corner of the eye.
+     */
+    label(ms) {
+      if (ms <= 0) return "Expired";
+      const seconds = Math.ceil(ms / 1000);
+      if (seconds < 120) {
+        return (
+          Math.floor(seconds / 60) +
+          ":" +
+          String(seconds % 60).padStart(2, "0") +
+          " left"
+        );
+      }
+      const minutes = Math.ceil(seconds / 60);
+      if (minutes < 60) return minutes + " min left";
+      const hours = Math.floor(minutes / 60);
+      const rest = minutes % 60;
+      return rest === 0
+        ? hours + " h left"
+        : hours + " h " + rest + " min left";
+    },
+  };
+
+  // ========================================================================
   // Approval — Approval prompt rendering
   // ========================================================================
   const Approval = {
@@ -2228,8 +2294,11 @@
       el.dataset.approvalId = data.approvalRequestId;
 
       el.innerHTML =
-        '<div class="tl-chat-approval-header">Approval required: ' +
+        '<div class="tl-chat-approval-header">' +
+        '<span class="tl-chat-approval-title">Approval required: ' +
         Utils.escapeHtml(data.toolName) +
+        "</span>" +
+        '<span class="tl-chat-approval-clock"></span>' +
         "</div>" +
         '<div class="tl-chat-approval-reason">' +
         Utils.escapeHtml(data.displayReason || "") +
@@ -2279,6 +2348,24 @@
       // Insert at the top of the input section, above the input row
       section.insertBefore(el, section.firstChild);
       this._currentPrompt = el;
+      Countdown.attach(
+        el.querySelector(".tl-chat-approval-clock"),
+        data.remainingMs,
+        () => this._markExpired(el),
+      );
+    },
+
+    /**
+     * Shows that the deadline has passed. The decision cannot be delivered any more - the
+     * agent thread has stopped waiting and the request is gone from the store - so the
+     * controls are disabled rather than left inviting an answer that goes nowhere. The
+     * server's own approval_resolved (TIMED_OUT) replaces the panel a moment later.
+     */
+    _markExpired(el) {
+      el.classList.add("tl-chat-approval-expired");
+      el.querySelectorAll("button, input, textarea").forEach((control) => {
+        control.disabled = true;
+      });
     },
 
     /**
@@ -2393,7 +2480,10 @@
 
       const headerHtml =
         '<div class="tl-chat-approval-header">' +
+        '<span class="tl-chat-approval-title">' +
         Utils.escapeHtml(data.header || "Input requested") +
+        "</span>" +
+        '<span class="tl-chat-approval-clock"></span>' +
         "</div>" +
         '<div class="tl-chat-approval-reason">' +
         (data.questionHtml || Utils.escapeHtml(data.question)) +
@@ -2495,6 +2585,17 @@
       }
 
       section.insertBefore(el, section.firstChild);
+      Countdown.attach(
+        el.querySelector(".tl-chat-approval-clock"),
+        data.remainingMs,
+        () => {
+          // Also give the main composer back: while a question is active it routes what the
+          // user types to /chat/respond, and once the question has expired that answer would
+          // go nowhere.
+          Store.activeInteractionRequestId = null;
+          this._markExpired(el);
+        },
+      );
       if (focusEl) focusEl.focus();
     },
 
@@ -3797,11 +3898,16 @@
         (x) => x.sessionId === sessionId && x.type === "approval",
       );
       if (!it) return;
+      // An approval past its deadline can no longer be answered: the agent thread has
+      // stopped waiting for it. Rebuilding it would put an actionable prompt in front of
+      // the user and lock the composer behind a decision nobody is listening for.
+      if (!(it.remainingMs > 0)) return;
       Approval.showPrompt({
         approvalRequestId: it.requestId,
         toolName: it.header,
         displayReason: it.prompt,
         argsJson: it.payload || "",
+        remainingMs: it.remainingMs,
       });
       // Only reflect the awaiting-approval state if the prompt was actually rendered — otherwise
       // the composer would be locked with no visible prompt to act on.

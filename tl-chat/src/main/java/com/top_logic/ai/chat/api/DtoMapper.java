@@ -6,6 +6,7 @@
 package com.top_logic.ai.chat.api;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -21,6 +22,7 @@ import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatMessage;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.scripting.Converters;
@@ -105,6 +107,12 @@ public final class DtoMapper {
 	/**
 	 * Converts a {@link UserInteractionRequest} to a {@link UserInteractionEvent}.
 	 *
+	 * <p>
+	 * The remaining time is computed from the request's creation time rather than passed on as the
+	 * full timeout: a question is re-emitted when the chat is reopened, and the clock the user then
+	 * sees has to be the one the waiting agent thread is actually running.
+	 * </p>
+	 *
 	 * @param req
 	 *        The pending interaction request.
 	 * @return The event DTO ready for SSE serialization.
@@ -116,12 +124,27 @@ public final class DtoMapper {
 			.setQuestionHtml(Converters.markdownToHtmlString(req.getQuestion()))
 			.setHeader(req.getHeader())
 			.setType(req.getType())
-			.setMultiSelect(req.isMultiSelect());
+			.setMultiSelect(req.isMultiSelect())
+			.setRemainingMs(remainingMs(req.getCreatedAt(),
+				InteractionTimeoutService.questionTimeout()));
 		String options = req.getOptions();
 		if (options != null && !options.isEmpty()) {
 			parseInteractionOptions(options, event);
 		}
 		return event;
+	}
+
+	/**
+	 * Milliseconds left of a deadline that started at {@code startedAt}, never negative.
+	 *
+	 * @param startedAt
+	 *        When the request was raised, in milliseconds since the epoch.
+	 * @param timeout
+	 *        How long the request waits in total.
+	 */
+	public static long remainingMs(long startedAt, Duration timeout) {
+		long elapsed = System.currentTimeMillis() - startedAt;
+		return Math.max(0L, timeout.toMillis() - elapsed);
 	}
 
 	/**

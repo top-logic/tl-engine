@@ -383,7 +383,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setApprovalRequestId(e.approvalRequestId())
 				.setToolName(e.toolName())
 				.setArgsJson(e.argsJson())
-				.setDisplayReason(e.displayReason())));
+				.setDisplayReason(e.displayReason())
+				.setRemainingMs(remainingMs(e))));
 		} else if (event instanceof AgentEvent.ApprovalResolved e) {
 			sendEvent("approval_resolved", DtoMapper.toJson(ApprovalResolvedEvent.create()
 				.setToolCallId(e.toolCallId())
@@ -466,7 +467,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 			innerData = DtoMapper.toJson(ApprovalRequiredEvent.create()
 				.setToolCallId(e.toolCallId()).setApprovalRequestId(e.approvalRequestId())
 				.setToolName(e.toolName()).setArgsJson(e.argsJson())
-				.setDisplayReason(e.displayReason()));
+				.setDisplayReason(e.displayReason()).setRemainingMs(remainingMs(e)));
 		} else if (child instanceof AgentEvent.ApprovalResolved e) {
 			innerType = "approval_resolved";
 			innerData = DtoMapper.toJson(ApprovalResolvedEvent.create()
@@ -507,6 +508,19 @@ public class ChatSSEHandler implements ChatEventHandler {
 			.setDelegationToolCallId(delegated.delegationToolCallId())
 			.setEventType(innerType)
 			.setEventData(innerData)));
+	}
+
+	/**
+	 * Milliseconds left of an approval's deadline at the moment the frame is written.
+	 *
+	 * <p>
+	 * Events are queued and flushed in batches, and this frame may also be a re-delivery, so the
+	 * remaining time is measured against the event's own timestamp rather than assumed to be the
+	 * full timeout.
+	 * </p>
+	 */
+	private static long remainingMs(AgentEvent.ApprovalRequired event) {
+		return DtoMapper.remainingMs(event.timestamp().toEpochMilli(), event.timeout());
 	}
 
 	private void pollUserInteractions() {

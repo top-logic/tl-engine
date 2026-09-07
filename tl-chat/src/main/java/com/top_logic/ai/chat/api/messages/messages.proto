@@ -233,6 +233,13 @@ message PendingInteractionDto {
 	 * ISO-8601 timestamp of when the request was created.
 	 */
 	string createdAt;
+
+	/**
+	 * Milliseconds left for the user to respond, counted from the moment this response was
+	 * written. Zero when the request's deadline has already passed, so a client can tell a
+	 * request it can still answer from one that is only waiting to be cleaned up.
+	 */
+	long remainingMs;
 }
 
 /**
@@ -341,6 +348,13 @@ message UserInteractionEvent {
 	 * Whether multiple selections are allowed (for "choice" type).
 	 */
 	boolean multiSelect;
+
+	/**
+	 * Milliseconds left for the user to answer, counted from the moment this event was sent.
+	 * Zero when the request has no time left. A re-emitted question (the chat was reopened)
+	 * carries what is left of its deadline, not the full one.
+	 */
+	long remainingMs;
 }
 
 /**
@@ -476,6 +490,13 @@ message ApprovalRequiredEvent {
 
 	/** Human-readable reason for approval. */
 	string displayReason;
+
+	/**
+	 * Milliseconds left for the user to decide, counted from the moment this event was sent.
+	 * Zero when the request has no time left; the client shows the remaining time so the user
+	 * knows there is a clock.
+	 */
+	long remainingMs;
 }
 
 /** SSE event for approval resolved. */

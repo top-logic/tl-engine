@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.api;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
@@ -98,6 +100,9 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String TRANSCRIPT_SUFFIX = "/transcript";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
+
+	/** The {@link #interactionTypeName(TLClassifier)} of a tool approval. */
+	private static final String TYPE_APPROVAL = "approval";
 
 	private static final int MAX_ATTACHMENTS = 5;
 	private static final long MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -486,9 +491,10 @@ public class ChatServlet extends TopLogicServlet {
 			if (session == null || !chatKind.equals(session.getKind())) {
 				continue;
 			}
+			String type = interactionTypeName(request.getType());
 			PendingInteractionDto dto = PendingInteractionDto.create()
 				.setRequestId(request.getRequestId())
-				.setType(interactionTypeName(request.getType()))
+				.setType(type)
 				.setHeader(request.getHeader())
 				.setPrompt(request.getPrompt())
 				.setPayload(request.getPayload())
@@ -497,11 +503,29 @@ public class ChatServlet extends TopLogicServlet {
 			Date createdAt = request.getCreatedAt();
 			if (createdAt != null) {
 				dto.setCreatedAt(formatIso(createdAt));
+				dto.setRemainingMs(DtoMapper.remainingMs(createdAt.getTime(), responseDeadline(type)));
 			}
 			response.addInteraction(dto);
 		}
 
 		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/**
+	 * How long the responder has for a request of the given kind.
+	 *
+	 * <p>
+	 * The deadline is not persisted with the request, so it is taken from the configuration the
+	 * waiting agent thread is using.
+	 * </p>
+	 *
+	 * @param type
+	 *        Lowercased interaction type as sent to the client.
+	 */
+	private static Duration responseDeadline(String type) {
+		return TYPE_APPROVAL.equals(type)
+			? InteractionTimeoutService.approvalTimeout()
+			: InteractionTimeoutService.questionTimeout();
 	}
 
 	/** Lowercased classifier name ("approval"/"question"/"choice") of an interaction type. */

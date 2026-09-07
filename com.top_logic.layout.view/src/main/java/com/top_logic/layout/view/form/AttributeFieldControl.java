@@ -7,9 +7,7 @@ package com.top_logic.layout.view.form;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.util.ResKey;
@@ -64,6 +62,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 	private final LabelPosition _labelPositionOverride;
 
+	private final Boolean _fullLineOverride;
+
 	private AttributeFieldModel _model;
 
 	private FieldModelListener _modelListener;
@@ -104,6 +104,22 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
 			String attributeName, ResKey labelOverride, boolean forceReadonly,
 			LabelPosition labelPositionOverride) {
+		this(context, formModel, formControl, attributeName, labelOverride, forceReadonly,
+			labelPositionOverride, null);
+	}
+
+	/**
+	 * Creates an {@link AttributeFieldControl} whose field takes a whole row, or shares one, as the
+	 * view says rather than as the model attribute says.
+	 *
+	 * @param fullLineOverride
+	 *        What the view decided, or {@code null} to leave the decision to the attribute's
+	 *        {@link com.top_logic.model.annotate.RenderWholeLineAnnotation}.
+	 */
+	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
+			String attributeName, ResKey labelOverride, boolean forceReadonly,
+			LabelPosition labelPositionOverride, Boolean fullLineOverride) {
+		_fullLineOverride = fullLineOverride;
 		_context = context;
 		_formModel = formModel;
 		_formControl = formControl;
@@ -126,9 +142,12 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				_context, new AbstractFieldModel(null) {
 					// Placeholder model with default state.
 				});
+			// The view's own decision already applies to the placeholder: a field that will take a
+			// whole row should take it before an object is loaded too, or the form re-flows under
+			// the reader as soon as one is.
 			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
-				false, false, null, null, wirePosition(_labelPositionOverride, false), false, true,
-				_innerControl);
+				false, false, null, null, wirePosition(_labelPositionOverride, false),
+				Boolean.TRUE.equals(_fullLineOverride), true, _innerControl);
 			_chrome.setAgentName(_attributeName);
 			return _chrome;
 		}
@@ -481,19 +500,9 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				if (_chrome == null) {
 					return;
 				}
-				if (source.hasError()) {
-					_chrome.setError(Resources.getInstance().getString(source.getError()));
-				} else {
-					_chrome.setError(null);
-				}
-				if (source.hasWarnings()) {
-					List<String> msgs = source.getWarnings().stream()
-						.map(key -> Resources.getInstance().getString(key))
-						.collect(Collectors.toList());
-					_chrome.setWarnings(msgs);
-				} else {
-					_chrome.setWarnings(null);
-				}
+				// The error and the warnings are drawn by the chrome itself, which follows its own
+				// field - see ReactFormFieldChromeControl#followField(). Only what the chrome
+				// cannot know is set here.
 				_chrome.setRequired(source.isMandatory());
 
 				// What the user sees changed, so commands gated on visible errors must re-evaluate.
@@ -554,6 +563,9 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	}
 
 	private boolean resolveFullLine(TLStructuredTypePart part) {
+		if (_fullLineOverride != null) {
+			return _fullLineOverride.booleanValue();
+		}
 		RenderWholeLineAnnotation annotation = part.getAnnotation(RenderWholeLineAnnotation.class);
 		if (annotation != null) {
 			return annotation.getValue();

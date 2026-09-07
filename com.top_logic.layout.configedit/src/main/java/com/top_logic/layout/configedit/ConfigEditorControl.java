@@ -26,24 +26,50 @@ import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
-import com.top_logic.layout.react.field.FieldControlRegistry;
 
 /**
- * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, and LIST properties of a
- * {@link ConfigurationItem}.
+ * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, LIST, ARRAY, and MAP
+ * properties of a {@link ConfigurationItem}, plus a COMPLEX property that also has a value
+ * provider (e.g. a {@link com.top_logic.basic.util.ResKey} property).
  *
  * <p>
- * Each PLAIN/REF property is wrapped in a {@link ReactFormFieldChromeControl} with label, mandatory
- * indicator, and help text. ITEM properties are rendered as collapsible
- * {@link ReactFormGroupControl} sections containing a nested {@link ConfigEditorControl} — unless the
- * configuration writes the item as text, in which case that text is edited as a field, see
- * {@link ConfigTextFieldModel}. LIST properties are rendered as collapsible sections containing
- * nested editors for each list element.
- * A DERIVED property is displayed read-only, because its value is computed. MAP and ARRAY
- * properties are skipped, as are properties whose values are only representable as nested XML.
+ * Each PLAIN/REF property, and a COMPLEX property with a value provider, is wrapped in a
+ * {@link ReactFormFieldChromeControl} with label, mandatory indicator, and help text. ITEM
+ * properties are rendered as collapsible {@link ReactFormGroupControl} sections containing a
+ * nested {@link ConfigEditorControl} - unless the configuration writes the item as text, a
+ * TL-Script expression for instance, in which case that text is edited as a field. LIST, ARRAY,
+ * and MAP properties are rendered as collapsible sections containing nested editors for each
+ * element - the same editor for all three, MAP differing only in the value's shape and in being
+ * unordered. DERIVED and a binding-only COMPLEX property are skipped.
  * </p>
  */
 public class ConfigEditorControl extends ReactFormLayoutControl {
+
+	private final ConfigFieldIndex _index;
+
+	/**
+	 * Whether every field and collection action this editor builds accepts input.
+	 *
+	 * <p>
+	 * {@code false} while a {@link ConfigFormControl}'s own edit mode is off:
+	 * {@link ConfigFieldModel#setEditable(boolean)} is applied to every PLAIN/REF/COMPLEX field as
+	 * it is built, and this value is passed straight into {@link ConfigListEditorControl} - which,
+	 * for a LIST/ARRAY/MAP property, renders no add/remove/reorder button at all rather than a
+	 * disabled one - and into {@link PolymorphicItemControl} (via
+	 * {@link #createPolymorphicGroup(ReactContext, String, ConfigurationItem, PropertyDescriptor, boolean)})
+	 * for a polymorphic ITEM property, whose own type selector is disabled the same way a plain
+	 * field is rather than left out - the currently chosen type must stay legible even while it may
+	 * not be changed. Propagated unchanged into every nested {@link ConfigEditorControl} (via
+	 * {@link #createNestedEditor(ReactContext, ConfigurationItem)}) and into every nested editor a
+	 * {@link ConfigListEditorControl} builds over its own entries, so a form built with
+	 * {@code editable = false} stays non-editable at every nesting depth. Every constructor that
+	 * predates this field defaults it to {@code true}, keeping the view designer's write-through
+	 * behaviour unchanged.
+	 * </p>
+	 */
+	private final boolean _editable;
+
+	private final ConfigurationItem _formModel;
 
 	/**
 	 * Creates a {@link ConfigEditorControl} for all visible properties.
@@ -89,13 +115,87 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 */
 	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
 			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties) {
+		this(context, config, hiddenProperties, skipTreeProperties, null);
+	}
+
+	/**
+	 * Creates a {@link ConfigEditorControl}, hiding the given properties, optionally skipping tree
+	 * properties, and reporting every field it builds to the given {@link ConfigFieldIndex}.
+	 *
+	 * <p>
+	 * Editable - see the six-argument constructor for a form that is not.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param config
+	 *        The configuration item to edit.
+	 * @param hiddenProperties
+	 *        Properties to exclude from the form.
+	 * @param skipTreeProperties
+	 *        If {@code true}, properties annotated with {@link TreeProperty} are skipped. Use
+	 *        {@code true} for top-level tree node configurations, {@code false} for nested/inline
+	 *        sub-configurations.
+	 * @param index
+	 *        The {@link ConfigFieldIndex} to report every built field to, or {@code null} if
+	 *        nobody is collecting.
+	 */
+	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index) {
+		this(context, config, hiddenProperties, skipTreeProperties, index, true);
+	}
+
+	/**
+	 * Creates a {@link ConfigEditorControl}, hiding the given properties, optionally skipping tree
+	 * properties, reporting every field it builds to the given {@link ConfigFieldIndex}, and
+	 * deciding whether any of it may be changed.
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param config
+	 *        The configuration item to edit.
+	 * @param hiddenProperties
+	 *        Properties to exclude from the form.
+	 * @param skipTreeProperties
+	 *        If {@code true}, properties annotated with {@link TreeProperty} are skipped. Use
+	 *        {@code true} for top-level tree node configurations, {@code false} for nested/inline
+	 *        sub-configurations.
+	 * @param index
+	 *        The {@link ConfigFieldIndex} to report every built field to, or {@code null} if
+	 *        nobody is collecting.
+	 * @param editable
+	 *        Whether the built fields and collection actions accept input - see {@link #_editable}.
+	 */
+	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
+			boolean editable) {
+		this(context, config, hiddenProperties, skipTreeProperties, index, editable, config);
+	}
+
+	/**
+	 * Creates a {@link ConfigEditorControl} that knows what is being edited as a whole.
+	 *
+	 * @param formModel
+	 *        The root of the configuration under edit, handed down to every field and nested editor.
+	 *        An option function or mapping of a property may need it, and it cannot be found by
+	 *        walking up from the property's own item - see
+	 *        {@link ConfigPropertyOptions#optionProvider(ConfigurationItem, PropertyDescriptor)}. The
+	 *        outermost editor is the one that knows it; the constructors above take the item they
+	 *        edit, which is right for exactly that case.
+	 */
+	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
+			boolean editable, ConfigurationItem formModel) {
 		super(context);
+		_index = index;
+		_editable = editable;
+		_formModel = formModel;
 
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
 			if (hiddenProperties.contains(property)) {
 				continue;
 			}
-			if (!isEditable(property)) {
+			if (!isSupportedKind(property)) {
 				continue;
 			}
 			if (isHidden(property)) {
@@ -107,11 +207,11 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 
 			// An item the configuration writes as text - a TL-Script expression, for instance - is
 			// edited as that text below, instead of as a form over its syntax tree.
-			if (property.kind() == PropertyKind.ITEM && !ConfigTextFieldModel.isFormatted(property)) {
+			if (property.kind() == PropertyKind.ITEM && property.getValueProvider() == null) {
 				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
 					String label = resolveLabel(property);
 					PolymorphicItemControl polyGroup =
-						createPolymorphicGroup(context, label, config, property);
+						createPolymorphicGroup(context, label, config, property, _editable);
 					polyGroup.setHeader(createGroupHeader(context, property));
 					addChild(polyGroup);
 				} else {
@@ -129,29 +229,34 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				continue;
 			}
 
-			if (property.kind() == PropertyKind.LIST) {
+			if (property.kind() == PropertyKind.LIST || property.kind() == PropertyKind.ARRAY
+				|| property.kind() == PropertyKind.MAP) {
 				ConfigListEditorControl listEditor =
-					new ConfigListEditorControl(context, config, property);
+					new ConfigListEditorControl(context, config, property, _index, _editable, _formModel);
+				// Over the full row, like the nested-item group above: a collection holds whole
+				// forms - one per entry, each with its own header and actions - and a third of the
+				// row is not a place to put a form. It also keeps a collection recognizable as one
+				// section rather than as a column of the surrounding grid.
 				ReactFormGroupControl listGroup = new ReactFormGroupControl(
-					context, null, true, false, "default", false,
+					context, null, true, false, "default", true,
 					List.of(), List.of(listEditor));
 				listGroup.setHeader(createGroupHeader(context, property));
 				addChild(listGroup);
 				continue;
 			}
 
-			ConfigFieldModel model = new ConfigFieldModel(config, property);
+			ConfigFieldModel model =
+				ConfigControlService.getInstance().createModel(config, property, _formModel);
+			// A read-only value is displayed, but cannot be changed.
+			model.setEditable(_editable && !isReadOnly(property));
+			index(config, property, model);
 			addCleanupAction(model::detach);
 
-			// A computed or read-only value is displayed, but cannot be changed.
-			if (property.kind() == PropertyKind.DERIVED || isReadOnly(property)) {
-				model.setEditable(false);
-			}
+			ReactControl input = ConfigControlService.getInstance().createControl(context, model);
 
 			String label = resolveLabel(property);
 			String tooltip = resolveTooltip(property);
 
-			ReactControl input = ConfigFieldDispatch.createPlainControl(context, model, label);
 			LabelPosition labelPosition = (property.getType() == boolean.class || property.getType() == Boolean.class)
 				? LabelPosition.AFTER : null;
 
@@ -188,8 +293,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Creates a header {@link ReactTextControl} for a property group (ITEM/LIST), carrying the
-	 * property's label and, if available, its {@code JavaDoc} tooltip.
+	 * Creates a header {@link ReactTextControl} for a property group (ITEM/LIST/ARRAY), carrying
+	 * the property's label and, if available, its {@code JavaDoc} tooltip.
 	 */
 	protected ReactTextControl createGroupHeader(ReactContext context, PropertyDescriptor property) {
 		String label = resolveLabel(property);
@@ -208,6 +313,11 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * Subclasses may override this to customize the nested editor (e.g. for testing).
 	 * </p>
 	 *
+	 * <p>
+	 * Propagates {@link #_editable} unchanged, so a form built read-only stays read-only at every
+	 * nesting depth.
+	 * </p>
+	 *
 	 * @param context
 	 *        The React context.
 	 * @param nested
@@ -215,11 +325,46 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * @return A new editor control for the nested item.
 	 */
 	protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
-		return new ConfigEditorControl(context, nested);
+		return newEditor(context, nested, Collections.emptySet(), false, _index, _editable, _formModel);
 	}
 
 	/**
-	 * Creates a {@link PolymorphicItemControl} for a polymorphic ITEM property.
+	 * The seam a test double replaces to build a differently configured nested editor (e.g. one
+	 * that bypasses {@link Labels}/{@link Resources} for testing) - constructs an editor, deciding
+	 * nothing.
+	 *
+	 * <p>
+	 * Kept separate from {@link #createNestedEditor(ReactContext, ConfigurationItem)} so that
+	 * method's decision - which properties to hide, whether to skip tree properties, which
+	 * {@link ConfigFieldIndex} to hand down, and whether the nested editor accepts input - is real
+	 * production logic a test exercises too, rather than something a test double silently replaces
+	 * along with the construction itself.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param config
+	 *        The configuration item to edit.
+	 * @param hiddenProperties
+	 *        Properties to exclude from the form.
+	 * @param skipTreeProperties
+	 *        If {@code true}, properties annotated with {@link TreeProperty} are skipped.
+	 * @param index
+	 *        The {@link ConfigFieldIndex} to report every built field to, or {@code null} if
+	 *        nobody is collecting.
+	 * @param editable
+	 *        Whether the built editor's fields and collection actions accept input.
+	 * @return A new editor control.
+	 */
+	protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
+			boolean editable, ConfigurationItem formModel) {
+		return new ConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index, editable,
+			formModel);
+	}
+
+	/**
+	 * Creates the {@link PolymorphicItemControl} for a polymorphic ITEM property.
 	 *
 	 * <p>
 	 * Subclasses may override this to customize the polymorphic editor (e.g. for testing).
@@ -233,29 +378,65 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *        The parent configuration item.
 	 * @param property
 	 *        The polymorphic ITEM property.
+	 * @param editable
+	 *        Whether the built control's type selector accepts a change.
 	 * @return A new polymorphic item control.
 	 */
 	protected PolymorphicItemControl createPolymorphicGroup(ReactContext context, String label,
-			ConfigurationItem parentConfig, PropertyDescriptor property) {
-		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor);
+			ConfigurationItem parentConfig, PropertyDescriptor property, boolean editable) {
+		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor, editable);
 	}
 
 	/**
-	 * Whether the given property is displayed in the form.
+	 * Whether the given property is rendered as a field in this form.
 	 *
 	 * <p>
-	 * Besides the structural kinds the form renders itself, a property is displayed whenever a control
-	 * is registered for the type of its value - an internationalized text, for instance, is not
-	 * representable as a plain value but has an editor of its own.
+	 * {@link PropertyKind#PLAIN}, {@link PropertyKind#REF}, {@link PropertyKind#ITEM},
+	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, and {@link PropertyKind#MAP} are
+	 * always supported - LIST, ARRAY, and MAP are the same sequence-of-elements editor, differing
+	 * only in the value's shape and, for MAP, in being unordered. An ITEM is a nested form, except
+	 * when the configuration writes it as text: such an item has a
+	 * {@link PropertyDescriptor#getValueProvider() value provider} and is edited as that text, by
+	 * the same service the other fields go through. A {@link PropertyKind#COMPLEX}
+	 * property - e.g. a {@link com.top_logic.basic.util.ResKey} property, whose type carries both
+	 * a {@code @Format} and a {@code ConfigurationValueBinding} - is supported only when it also
+	 * has a {@link PropertyDescriptor#getValueProvider() value provider}: exactly the subset
+	 * {@link ConfigControlService#createModel(ConfigurationItem, PropertyDescriptor)} and
+	 * {@link ConfigControlService#createControl(ReactContext, ConfigFieldModel)} accept.
+	 * Admitting more here would hand them a property they reject with an
+	 * {@link IllegalArgumentException}.
 	 * </p>
 	 */
-	private static boolean isEditable(PropertyDescriptor property) {
+	private static boolean isSupportedKind(PropertyDescriptor property) {
 		PropertyKind kind = property.kind();
-		if (kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
-			|| kind == PropertyKind.LIST || kind == PropertyKind.DERIVED) {
-			return true;
+		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
+			|| kind == PropertyKind.LIST || kind == PropertyKind.ARRAY || kind == PropertyKind.MAP
+			|| (kind == PropertyKind.COMPLEX && property.getValueProvider() != null);
+	}
+
+	/**
+	 * Reports a field to the {@link ConfigFieldIndex} this editor was given, if it was given one.
+	 *
+	 * <p>
+	 * Nobody collects fields unless something is validating - the view designer and every nested
+	 * editor built without one pass {@code null}. The check lives here, once, rather than at every
+	 * place a field is built.
+	 * </p>
+	 *
+	 * <p>
+	 * The registration lasts exactly as long as the field does: it is taken back when this editor
+	 * is disposed, on the same {@link #addCleanupAction(Runnable) cleanup} the field model's own
+	 * {@link ConfigFieldModel#detach() detach} rides on. An editor is discarded and rebuilt for
+	 * reasons the {@link ConfigFieldIndex}'s owner never hears about - a
+	 * {@link ConfigListEditorControl} rebuilds on every add, remove and move - so a registration
+	 * that outlived its field would leave the index answering for something no longer on screen.
+	 * </p>
+	 */
+	private void index(ConfigurationItem item, PropertyDescriptor property, ConfigFieldModel model) {
+		if (_index != null) {
+			_index.register(item, property, model);
+			addCleanupAction(() -> _index.unregister(item, property));
 		}
-		return FieldControlRegistry.getInstance().lookup(property.getType()) != null;
 	}
 
 	private static boolean isHidden(PropertyDescriptor property) {

@@ -220,7 +220,7 @@ public class ConstraintChecker {
 		DefaultPropertyModel<?>[] models = resolveArguments(config, property, argSpecs);
 		if (models != null) {
 			algorithm.check(models);
-			checkResult(config, spec, models);
+			checkResult(spec, models);
 		}
 	}
 
@@ -246,14 +246,31 @@ public class ConstraintChecker {
 		return createModel(value.getItem(), value.getProperty());
 	}
 
-	private void checkResult(ConfigurationItem checkedItem, ConstraintSpec spec, DefaultPropertyModel<?>[] models) {
+	/**
+	 * Records a {@link ConstraintFailure} for every {@link DefaultPropertyModel} the algorithm
+	 * reported a problem on.
+	 * 
+	 * <p>
+	 * The failure names the model's own {@link DefaultPropertyModel#getItem() item}, not the item
+	 * whose constraint fired: a constraint argument declared with a multi-step {@link Ref} resolves
+	 * to a property of a <em>different</em> item, and a problem reported there belongs to that
+	 * item. Pairing it with the checked item instead would leave
+	 * {@link ConstraintFailure#getItem()} and {@link ConstraintFailure#getContextProperty()}
+	 * describing two different objects - which
+	 * {@link ConstraintFailure#getMessage()} cannot even render (it reads the property's value off
+	 * the item), and which sends a caller resolving the pair to a form field to the wrong field or
+	 * to none at all.
+	 * </p>
+	 */
+	private void checkResult(ConstraintSpec spec, DefaultPropertyModel<?>[] models) {
 		for (DefaultPropertyModel<?> model : models) {
 			ResKey problemDescription = model.getProblemDescription();
 			if (problemDescription == null) {
 				continue;
 			}
 
-			_errors.add(new ConstraintFailure(checkedItem, spec.asWarning(), model.getProperty(), problemDescription));
+			_errors.add(
+				new ConstraintFailure(model.getItem(), spec.asWarning(), model.getProperty(), problemDescription));
 		}
 	}
 

@@ -39,6 +39,8 @@ public final class FieldSpec {
 
 	private boolean _editable = true;
 
+	private boolean _multiple;
+
 	private int _multilineRows;
 
 	private BooleanPresentation _booleanPresentation = BooleanPresentation.CHECKBOX;
@@ -135,6 +137,29 @@ public final class FieldSpec {
 	 */
 	public FieldSpec setEditable(boolean editable) {
 		_editable = editable;
+		return this;
+	}
+
+	/**
+	 * Whether the field holds several values rather than one.
+	 *
+	 * <p>
+	 * A control that edits a collection of values - a list of configurations, say - needs to know
+	 * this even where the field is currently empty, since an empty collection and no value look
+	 * alike in the {@link FieldModel}.
+	 * </p>
+	 */
+	public boolean isMultiple() {
+		return _multiple;
+	}
+
+	/**
+	 * Sets whether the field holds {@link #isMultiple() several values}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setMultiple(boolean multiple) {
+		_multiple = multiple;
 		return this;
 	}
 

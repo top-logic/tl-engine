@@ -361,6 +361,22 @@ export interface TLFieldValueOptions {
    * controls (checkbox, select, date picker) that should commit on every change.
    */
   debounceMs?: number;
+
+  /**
+   * When `true`, no typed value is sent while the user is still in the field: `setValue` only
+   * updates the local store, and the pending value is sent by `flush` (on blur), before any action
+   * command (see {@link enqueueCommand}), or on unmount. Overrides
+   * {@link TLFieldValueOptions.debounceMs}.
+   *
+   * For a field whose server-side model rewrites the text it is given - a value parsed and
+   * re-formatted through a format, say - rather than storing it verbatim. Debouncing is not enough
+   * there: it only decides *when* the round-trip happens, and whenever it happens mid-edit the
+   * field is re-rendered from the normalized value, throwing away what was being typed. A comma
+   * separated list is the clearest case: pausing after `"red, "` sends that text, which parses to
+   * `["red"]` and formats back to `"red"` - the comma and the space the user just typed are gone
+   * from under the cursor.
+   */
+  sendOnBlur?: boolean;
 }
 
 /**
@@ -378,7 +394,8 @@ export function useTLFieldValue(
   const sendCommand = useTLCommand();
   const ctx = useContext(TLControlContext);
 
-  const debounceMs = options?.debounceMs ?? 0;
+  const sendOnBlur = options?.sendOnBlur === true;
+  const debounceMs = sendOnBlur ? 0 : (options?.debounceMs ?? 0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingRef = useRef<{ value: unknown } | null>(null);
 
@@ -418,7 +435,12 @@ export function useTLFieldValue(
       // Optimistically update the local store so the controlled input reflects the new value
       // immediately, without waiting for a server round-trip.
       ctx?.store.applyPatch({ value: newValue });
-      if (debounceMs > 0) {
+      if (sendOnBlur) {
+        // Hold the value back entirely - no timer. flush() still sends it on blur, before any
+        // action command, and on unmount, so nothing typed is ever lost.
+        pendingRef.current = { value: newValue };
+        registerPendingFlush(stableFlushRef.current!);
+      } else if (debounceMs > 0) {
         pendingRef.current = { value: newValue };
         registerPendingFlush(stableFlushRef.current!);
         if (timerRef.current !== null) {
@@ -432,7 +454,7 @@ export function useTLFieldValue(
         send(newValue);
       }
     },
-    [send, ctx, debounceMs]
+    [send, ctx, debounceMs, sendOnBlur]
   );
 
   // Flush a pending value if the field is unmounted mid-edit (e.g. a dialog closes before blur).

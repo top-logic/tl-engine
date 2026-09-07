@@ -2543,6 +2543,52 @@ button.tlMenu__item--disabled:hover {
 	white-space: nowrap;
 }
 
+/* --- TLMenuRegion ---------------------------------------------------------- */
+
+/* A right-click region is pure pass-through: it adds no box of its own, so the content it wraps
+   lays out exactly as it would without the region. */
+.tlMenuRegion {
+	display: contents;
+}
+
+/* A click region is the visible trigger of a drop-down, so it does become a box: an inline row
+   carrying the affordances of a control. */
+.tlMenuRegion--click {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	padding: var(--spacing-02) var(--spacing-03);
+	border-radius: var(--border-radius-02, 4px);
+	cursor: pointer;
+	user-select: none;
+}
+
+.tlMenuRegion--click:hover {
+	background: var(--layer-hover);
+}
+
+.tlMenuRegion--click:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* --- User menu ------------------------------------------------------------- */
+
+/* The account name beside the avatar. It yields before the work area does: at narrow widths the
+   avatar alone identifies the session. */
+.tlUserMenu__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 12rem;
+}
+
+@media (max-width: 640px) {
+	.tlUserMenu__name {
+		display: none;
+	}
+}
+
 /* --- TLTableView ----------------------------------------------------------- */
 
 .tlTableView {
@@ -3178,6 +3224,13 @@ button.tlMenu__item--disabled:hover {
 	font-weight: 600;
 	letter-spacing: 0.02em;
 	user-select: none;
+}
+
+/* An avatar without a name - an anonymous session, or an empty channel. It keeps its circle and
+   fills it faintly, so that an avatar used as a menu trigger stays visible and clickable. */
+.tlAvatar--empty {
+	background: var(--layer-accent, #e5e7eb);
+	border: 1px solid var(--border-subtle);
 }
 
 /* --- TLRelativeTime ---------------------------------------------------- */

@@ -1,13 +1,17 @@
 import { React, useTLState, useTLCommand, useFocusTrap } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
 interface MenuItem {
   id: string;
   label: string;
+  /** Encoded theme image, rendered through {@link ThemeIcon}. */
   icon?: string;
   disabled?: boolean;
+  /** Additional CSS classes declared on the command this entry renders. */
+  cssClasses?: string;
   type: 'item' | 'separator';
 }
 
@@ -139,13 +143,14 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
             key={item.id}
             type="button"
             className={'tlMenu__item' + (isFocused ? ' tlMenu__item--focused' : '') +
-              (item.disabled ? ' tlMenu__item--disabled' : '')}
+              (item.disabled ? ' tlMenu__item--disabled' : '') +
+              (item.cssClasses ? ' ' + item.cssClasses : '')}
             role="menuitem"
             disabled={item.disabled}
             tabIndex={isFocused ? 0 : -1}
             onClick={() => handleSelect(item.id)}
           >
-            {item.icon && <i className={'tlMenu__icon ' + item.icon} aria-hidden="true" />}
+            {item.icon && <ThemeIcon encoded={item.icon} className="tlMenu__icon" />}
             <span className="tlMenu__label">{item.label}</span>
           </button>
         );

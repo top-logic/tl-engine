@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The account area of an app bar: who is logged in, and what they can do about it.
+
+	Referenced rather than copied - an application places it with
+
+		<app-bar>
+			<children>
+				<view-ref view="user-menu.view.xml"/>
+			</children>
+		</app-bar>
+
+	and wires nothing, because the channel feeding the trigger is declared here.
+
+	A depending module or the application adds entries with a same-path overlay
+	(WEB-INF/views/user-menu.view.xml of its own module); the ViewLoader merges all copies in
+	dependency order, so an entry is contributed without this module knowing the contributor. The
+	administration view is extended the same way - see admin/admin.view.xml.
+-->
+<view>
+	<channels>
+		<!-- Feeds the trigger; read-only, recomputed per session. Null while the session is anonymous. -->
+		<derived-channel name="currentUser"
+			expr="currentUser()"
+		/>
+	</channels>
+
+	<!--
+		The children are the trigger, the commands are the entries. The avatar renders an empty
+		circle for a null name rather than nothing at all, so the trigger stays clickable while the
+		session is anonymous - which is the state in which the Login entry is the only one offered.
+	-->
+	<menu>
+		<avatar input="currentUser"/>
+		<text css-class="tlUserMenu__name"
+			input="currentUser"
+			overflow="ellipsis"
+		/>
+
+		<commands>
+			<!-- Shown only for the anonymous user; opens the login dialog over a transient credentials object. -->
+			<generic-command image="css:bi bi-box-arrow-in-right">
+				<label>
+					<en>Login</en>
+					<de>Anmeldung</de>
+				</label>
+				<executability>
+					<anonymous-only/>
+				</executability>
+				<execute-script function="x -> new(`tl.login:Credentials`, transient: true)"/>
+				<open-dialog
+					bind-input-to="model"
+					close-on-backdrop="false"
+					dialog-view="login.view.xml"
+				/>
+			</generic-command>
+
+			<logout-command image="css:bi bi-box-arrow-right">
+				<label>
+					<en>Logout</en>
+					<de>Abmeldung</de>
+				</label>
+				<executability>
+					<authenticated-only/>
+				</executability>
+			</logout-command>
+		</commands>
+
+		<!--
+			One entry per theme configured in UIThemeService, labelled and iconed by the theme
+			itself, with the active one offered as disabled. An application configuring a single
+			theme has nothing to switch to and gets no entries here.
+		-->
+		<command-sources>
+			<theme-commands/>
+		</command-sources>
+	</menu>
+</view>

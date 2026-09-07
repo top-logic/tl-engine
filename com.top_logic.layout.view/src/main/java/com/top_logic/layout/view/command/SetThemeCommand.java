@@ -63,12 +63,25 @@ public class SetThemeCommand implements ViewCommand {
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		UIThemeService.getInstance().setActiveThemeId(_theme);
+		return applyTheme(context, _theme);
+	}
+
+	/**
+	 * Persists the given theme as the current user's preference and applies it on the client.
+	 *
+	 * @param context
+	 *        The context whose update queue carries the change to the browser.
+	 * @param themeId
+	 *        Id of the theme to activate.
+	 * @return The result of the activation.
+	 */
+	public static HandlerResult applyTheme(ReactContext context, String themeId) {
+		UIThemeService.getInstance().setActiveThemeId(themeId);
 
 		SSEUpdateQueue queue = context.getSSEQueue();
 		if (queue != null) {
 			queue.enqueue(JSSnipplet.create()
-				.setCode("document.documentElement.setAttribute('data-theme', '" + _theme + "');"));
+				.setCode("document.documentElement.setAttribute('data-theme', '" + themeId + "');"));
 		}
 		return HandlerResult.DEFAULT_RESULT;
 	}

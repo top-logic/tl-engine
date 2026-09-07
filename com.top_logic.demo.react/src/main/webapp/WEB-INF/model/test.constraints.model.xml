@@ -13,7 +13,7 @@
 			<annotations>
 				<table name="GenericObject"/>
 				<instance-presentation icon="css:bi bi-check-circle"/>
-				<id-column value="mandatoryString"/>
+				<id-column value="name"/>
 			</annotations>
 			<attributes>
 				<!-- The object's name: mandatory, and used as its label -->

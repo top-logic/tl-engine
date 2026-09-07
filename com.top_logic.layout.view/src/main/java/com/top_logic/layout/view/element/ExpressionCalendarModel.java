@@ -186,12 +186,12 @@ public class ExpressionCalendarModel implements CalendarModel {
 	}
 
 	@Override
-	public CalendarEvent createEvent(Date start, Date end, boolean allDay) {
+	public CalendarEvent createEvent(Date start, Date end, boolean allDay, String title) {
 		if (_onCreate == null) {
 			return null;
 		}
 		Object[] created = {null};
-		inTransaction(() -> created[0] = _onCreate.execute(start, end, Boolean.valueOf(allDay)));
+		inTransaction(() -> created[0] = _onCreate.execute(start, end, Boolean.valueOf(allDay), title));
 		if (created[0] != null) {
 			_objects.add(created[0]);
 		}

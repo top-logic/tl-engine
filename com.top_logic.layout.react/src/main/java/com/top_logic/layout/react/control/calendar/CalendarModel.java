@@ -88,9 +88,11 @@ public interface CalendarModel {
 	 *        The exclusive end of the selected slot.
 	 * @param allDay
 	 *        Whether the slot was selected in the all-day area.
+	 * @param title
+	 *        The title the user typed for the new event, or <code>null</code> if none was entered.
 	 * @return The created event, or <code>null</code> if creation was not performed.
 	 */
-	CalendarEvent createEvent(Date start, Date end, boolean allDay);
+	CalendarEvent createEvent(Date start, Date end, boolean allDay, String title);
 
 	/**
 	 * Registers a listener notified whenever this model's event set changes.

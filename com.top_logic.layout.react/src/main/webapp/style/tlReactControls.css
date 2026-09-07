@@ -5237,7 +5237,7 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 .tlCalBody { flex: 1; min-height: 0; display: flex; overflow: hidden; }
 
 /* ---- Time grid ---- */
-.tlCalTimeGrid { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.tlCalTimeGrid { display: flex; flex-direction: column; flex: 1; min-height: 0; user-select: none; }
 .tlCalGutter { width: 56px; flex: none; box-sizing: border-box; }
 
 .tlCalTimeHeader { display: flex; border-bottom: 1px solid var(--border-subtle-01, #e0e0e0); flex: none; }
@@ -5313,9 +5313,21 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 .tlCalEvent--dragging { opacity: .7; }
 .tlCalEvent--preview { background: var(--button-primary, #0f62fe); opacity: .4; z-index: 6; }
 .tlCalResizeHandle { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; cursor: ns-resize; }
+.tlCalCreateInput {
+	width: 100%;
+	min-width: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	padding: 0;
+	outline: none;
+	user-select: text;
+}
+.tlCalCreateInput::placeholder { color: inherit; opacity: .7; }
 
 /* ---- Month grid ---- */
-.tlCalMonth { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.tlCalMonth { display: flex; flex-direction: column; flex: 1; min-height: 0; user-select: none; }
 .tlCalMonthHead { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--border-subtle-01, #e0e0e0); flex: none; }
 .tlCalMonthWeekday { text-align: center; padding: 4px; font-size: .75rem; color: var(--text-secondary, #525252); text-transform: uppercase; }
 .tlCalMonthBody { flex: 1; display: flex; flex-direction: column; min-height: 0; }
@@ -5342,6 +5354,7 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	padding: 0 2px;
 	pointer-events: none;
 }
+.tlCalMonthCreate { margin: 0 4px; opacity: 1; }
 .tlCalMonthBar {
 	background: var(--cal-ev-bg, #4589ff);
 	color: #fff;

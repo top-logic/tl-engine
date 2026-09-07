@@ -78,8 +78,8 @@ public class DefaultCalendarModel implements CalendarModel {
 	}
 
 	@Override
-	public CalendarEvent createEvent(Date start, Date end, boolean allDay) {
-		DefaultCalendarEvent event = new DefaultCalendarEvent(null, start, end).setAllDay(allDay);
+	public CalendarEvent createEvent(Date start, Date end, boolean allDay, String title) {
+		DefaultCalendarEvent event = new DefaultCalendarEvent(title, start, end).setAllDay(allDay);
 		return addEvent(event);
 	}
 

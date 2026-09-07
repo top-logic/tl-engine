@@ -143,6 +143,8 @@ public class CalendarViewControl extends ReactControl {
 
 	private static final String ARG_ALL_DAY = "allDay";
 
+	private static final String ARG_TITLE = "title";
+
 	private final CalendarModel _model;
 
 	private final CalendarModelListener _modelListener = source -> rebuild();
@@ -657,8 +659,10 @@ public class CalendarViewControl extends ReactControl {
 		Long start = asLong(args.get(ARG_START));
 		Long end = asLong(args.get(ARG_END));
 		boolean allDay = Boolean.TRUE.equals(args.get(ARG_ALL_DAY));
+		String title = (String) args.get(ARG_TITLE);
 		if (start != null && end != null) {
-			CalendarEvent created = _model.createEvent(new Date(start.longValue()), new Date(end.longValue()), allDay);
+			CalendarEvent created =
+				_model.createEvent(new Date(start.longValue()), new Date(end.longValue()), allDay, title);
 			if (created != null) {
 				// Select the freshly created event so its detail view opens immediately.
 				applySelection(created.getBusinessObject());

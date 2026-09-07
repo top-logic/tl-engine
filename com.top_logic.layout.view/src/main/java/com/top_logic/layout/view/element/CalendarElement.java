@@ -202,8 +202,9 @@ public class CalendarElement implements UIElement {
 		Expr getOnResize();
 
 		/**
-		 * Write-back function <code>start, end, allDay -&gt; object</code> applied when the user
-		 * selects an empty slot. Without it, creation is disabled.
+		 * Write-back function <code>start, end, allDay, title -&gt; object</code> applied when the
+		 * user selects an empty slot and confirms the title typed into the calendar. Without it,
+		 * creation is disabled.
 		 */
 		@Name(ON_CREATE)
 		Expr getOnCreate();

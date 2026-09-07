@@ -809,6 +809,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_CALENDAR_ALL_DAY;
 
 	/**
+	 * @en Event title
+	 */
+	@CustomKey("js.calendar.newEventTitle")
+	public static ResKey JS_CALENDAR_NEW_EVENT_TITLE;
+
+	/**
 	 * @en more
 	 */
 	@CustomKey("js.calendar.more")

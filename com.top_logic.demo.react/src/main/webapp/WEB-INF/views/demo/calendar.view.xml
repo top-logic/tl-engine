@@ -48,7 +48,7 @@
 						</event>
 						<on-move>obj -&gt; start -&gt; end -&gt; { $obj.set(`demo.calendar:Appointment#start`, $start); $obj.set(`demo.calendar:Appointment#end`, $end); }</on-move>
 						<on-resize>obj -&gt; end -&gt; $obj.set(`demo.calendar:Appointment#end`, $end)</on-resize>
-						<on-create>start -&gt; end -&gt; allDay -&gt; { appt = new(`demo.calendar:Appointment`); $appt.set(`demo.calendar:Appointment#name`, "New appointment"); $appt.set(`demo.calendar:Appointment#start`, $start); $appt.set(`demo.calendar:Appointment#end`, $end); $appt.set(`demo.calendar:Appointment#allDay`, $allDay); $appt; }</on-create>
+						<on-create>start -&gt; end -&gt; allDay -&gt; title -&gt; { appt = new(`demo.calendar:Appointment`); $appt.set(`demo.calendar:Appointment#name`, if($title == null || $title == "", "New appointment", $title)); $appt.set(`demo.calendar:Appointment#start`, $start); $appt.set(`demo.calendar:Appointment#end`, $end); $appt.set(`demo.calendar:Appointment#allDay`, $allDay); $appt; }</on-create>
 					</calendar>
 				</panel>
 			</pane>
@@ -82,11 +82,7 @@
 						</generic-command>
 					</commands>
 					<inset>
-						<form
-							initial-edit-mode="true"
-							input="appointment"
-							mode-switch="false"
-						>
+						<form input="appointment">
 							<field attribute="name"/>
 							<field attribute="start"/>
 							<field attribute="end"/>

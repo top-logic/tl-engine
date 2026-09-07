@@ -20,6 +20,7 @@ const I18N_KEYS = {
   'js.calendar.year': 'Year',
   'js.calendar.allDay': 'All day',
   'js.calendar.more': 'more',
+  'js.calendar.newEventTitle': 'Event title',
 };
 
 type Granularity = 'DAY' | 'WORK_WEEK' | 'WEEK' | 'MONTH' | 'YEAR';
@@ -238,6 +239,85 @@ type TimeDrag =
   | { mode: 'resize'; id: string; dayStart: number; startMin: number; endMin: number; origEndMs: number }
   | { mode: 'create'; dayStart: number; fromMin: number; toMin: number };
 
+/** A slot the user selected but has not confirmed yet. It exists in the browser only. */
+type PendingCreate = { start: number; end: number; allDay: boolean };
+
+/**
+ * Routes the rest of the pointer gesture to the element it started on and suppresses the native
+ * text selection, so that dragging sideways over an event's label does not abort the drag.
+ */
+const capturePointer = (e: React.PointerEvent) => {
+  e.preventDefault();
+  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+};
+
+/**
+ * Title input of an event that is not created yet: Enter creates it with the entered title,
+ * Escape and losing the focus drop the stub without contacting the server.
+ */
+const CreateStub: React.FC<{
+  className: string;
+  placeholder: string;
+  style?: React.CSSProperties;
+  onCommit: (title: string) => void;
+  onDiscard: () => void;
+}> = ({ className, placeholder, style, onCommit, onDiscard }) => {
+  // Enter both commits and blurs the input: whichever event arrives first decides.
+  const settled = useRef(false);
+  const settle = (title: string | null) => {
+    if (settled.current) {
+      return;
+    }
+    settled.current = true;
+    if (title === null) {
+      onDiscard();
+    } else {
+      onCommit(title);
+    }
+  };
+  return (
+    <div className={className} style={style}>
+      <input
+        className="tlCalCreateInput"
+        autoFocus
+        placeholder={placeholder}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key === 'Enter') {
+            settle(e.currentTarget.value);
+          } else if (e.key === 'Escape') {
+            settle(null);
+          }
+        }}
+        onBlur={() => settle(null)}
+      />
+    </div>
+  );
+};
+
+/** The slot a grid currently offers for creation, and the ways to end that state. */
+const usePendingCreate = (send: Ctx['send']) => {
+  const [pending, setPending] = useState<PendingCreate | null>(null);
+  // Read through a ref so that committing does not have to be re-created per keystroke.
+  const pendingRef = useRef<PendingCreate | null>(null);
+  pendingRef.current = pending;
+  const open = useCallback((slot: PendingCreate) => setPending(slot), []);
+  const discard = useCallback(() => setPending(null), []);
+  const commit = useCallback(
+    (title: string) => {
+      const slot = pendingRef.current;
+      if (slot) {
+        send('createSlot', { ...slot, title });
+      }
+      setPending(null);
+    },
+    [send]
+  );
+  return { pending, open, commit, discard };
+};
+
 const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularity }> = ({
   ctx,
   rangeStart,
@@ -258,6 +338,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
     return all;
   }, [rangeStart, granularity, nonWorkingDays]);
 
+  const create = usePendingCreate(send);
   const colsRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<TimeDrag | null>(null);
@@ -326,23 +407,29 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
         const from = Math.min(d.fromMin, d.toMin);
         const to = Math.max(d.fromMin, d.toMin);
         if (to - from >= SNAP_MIN) {
-          send('createSlot', { start: d.dayStart + from * MS_MIN, end: d.dayStart + to * MS_MIN, allDay: false });
+          create.open({ start: d.dayStart + from * MS_MIN, end: d.dayStart + to * MS_MIN, allDay: false });
         }
       }
     };
+    // The browser cancels the pointer sequence e.g. when a native gesture takes over. Without
+    // this, the drag state would survive with no pointer to end it.
+    const onCancel = () => setDrag(null);
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp, { once: true });
+    window.addEventListener('pointercancel', onCancel);
     return () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onCancel);
     };
-  }, [drag, days, pointerToDayMin, send]);
+  }, [drag, days, pointerToDayMin, send, create.open]);
 
   const startMove = (e: React.PointerEvent, ev: Ev, dayStart: number) => {
     if (!editable || !ev.movable) {
       return;
     }
     e.stopPropagation();
+    capturePointer(e);
     const { min } = pointerToDayMin(e.clientX, e.clientY);
     const dur = (ev.end - ev.start) / MS_MIN;
     setDrag({
@@ -356,6 +443,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
       return;
     }
     e.stopPropagation();
+    capturePointer(e);
     setDrag({
       mode: 'resize', id: ev.id, dayStart, startMin: minutesOfDay(ev.start),
       endMin: minutesOfDay(ev.end), origEndMs: ev.end,
@@ -366,23 +454,43 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
     if (!editable || e.button !== 0) {
       return;
     }
+    capturePointer(e);
     const { min } = pointerToDayMin(e.clientX, e.clientY);
     setDrag({ mode: 'create', dayStart, fromMin: snap(min), toMin: snap(min) });
   };
 
   const hours = Array.from({ length: 24 }, (_, h) => h);
 
+  // A dragged event is laid out at its dragged position, so its bar follows the pointer across
+  // day columns instead of staying in the column it started in.
+  const displayEvents = useMemo(() => {
+    if (drag === null || !('id' in drag)) {
+      return events;
+    }
+    const d = drag;
+    return events.map((ev) => {
+      if (ev.id !== d.id) {
+        return ev;
+      }
+      if (d.mode === 'move') {
+        const start = d.dayStart + d.startMin * MS_MIN;
+        return { ...ev, start, end: start + d.dur * MS_MIN };
+      }
+      return { ...ev, end: d.dayStart + d.endMin * MS_MIN };
+    });
+  }, [events, drag]);
+
   const timedByDay = useMemo(() => {
     return days.map((day) =>
       layoutDay(
-        events.filter((ev) => !ev.allDay && ev.start < day + MS_DAY && ev.end > day)
+        displayEvents.filter((ev) => !ev.allDay && ev.start < day + MS_DAY && ev.end > day)
       )
     );
-  }, [days, events]);
+  }, [days, displayEvents]);
 
   const allDayByDay = useMemo(() => {
-    return days.map((day) => events.filter((ev) => ev.allDay && ev.start < day + MS_DAY && ev.end > day));
-  }, [days, events]);
+    return days.map((day) => displayEvents.filter((ev) => ev.allDay && ev.start < day + MS_DAY && ev.end > day));
+  }, [days, displayEvents]);
 
   const workTop = dayStartHour * HOUR_HEIGHT;
   const workBot = dayEndHour * HOUR_HEIGHT;
@@ -413,8 +521,16 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
           <div
             key={day}
             className="tlCalAllDayCell"
-            onClick={() => editable && send('createSlot', { start: day, end: day + MS_DAY, allDay: true })}
+            onClick={() => editable && create.open({ start: day, end: day + MS_DAY, allDay: true })}
           >
+            {create.pending && create.pending.allDay && create.pending.start === day && (
+              <CreateStub
+                className="tlCalAllDayEvent tlCalEvent--preview"
+                placeholder={i18n['js.calendar.newEventTitle']}
+                onCommit={create.commit}
+                onDiscard={create.discard}
+              />
+            )}
             {allDayByDay[di].map((ev) => (
               <div
                 key={ev.id}
@@ -461,16 +577,9 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
                   )}
 
                   {timedByDay[di].map((p) => {
-                    const dragging = drag && 'id' in drag && drag.id === p.ev.id;
-                    let top = (p.topMin / 60) * HOUR_HEIGHT;
-                    let height = ((p.botMin - p.topMin) / 60) * HOUR_HEIGHT;
-                    if (dragging && drag) {
-                      if (drag.mode === 'move' && drag.dayStart === day) {
-                        top = (drag.startMin / 60) * HOUR_HEIGHT;
-                      } else if (drag.mode === 'resize') {
-                        height = ((drag.endMin - drag.startMin) / 60) * HOUR_HEIGHT;
-                      }
-                    }
+                    const dragging = drag !== null && 'id' in drag && drag.id === p.ev.id;
+                    const top = (p.topMin / 60) * HOUR_HEIGHT;
+                    const height = ((p.botMin - p.topMin) / 60) * HOUR_HEIGHT;
                     const widthPct = 100 / p.cols;
                     return (
                       <div
@@ -497,6 +606,19 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
                     );
                   })}
 
+                  {create.pending && !create.pending.allDay && startOfDay(create.pending.start) === day && (
+                    <CreateStub
+                      className="tlCalEvent tlCalEvent--preview"
+                      placeholder={i18n['js.calendar.newEventTitle']}
+                      style={{
+                        top: (minutesOfDay(create.pending.start) / 60) * HOUR_HEIGHT,
+                        height: ((create.pending.end - create.pending.start) / MS_MIN / 60) * HOUR_HEIGHT,
+                      }}
+                      onCommit={create.commit}
+                      onDiscard={create.discard}
+                    />
+                  )}
+
                   {preview && preview.mode === 'create' && (
                     <div
                       className="tlCalEvent tlCalEvent--preview"
@@ -521,7 +643,9 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
 const MAX_CHIPS = 3;
 
 const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }> = ({ ctx, rangeStart, anchorMonth }) => {
-  const { events, locale, nonWorkingDays, send, editable, now } = ctx;
+  const { events, locale, nonWorkingDays, send, editable, now, i18n } = ctx;
+
+  const create = usePendingCreate(send);
 
   const weeks = useMemo(() => {
     const w: number[][] = [];
@@ -579,7 +703,7 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
                       }
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => onDropDay(e, day)}
-                      onClick={() => editable && send('createSlot', { start: day, end: day + MS_DAY, allDay: true })}
+                      onClick={() => editable && create.open({ start: day, end: day + MS_DAY, allDay: true })}
                     >
                       <div
                         className={'tlCalMonthDayNum' + (today ? ' tlCalMonthDayNum--today' : '')}
@@ -590,6 +714,14 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
                       >
                         {new Date(day).getDate()}
                       </div>
+                      {create.pending && create.pending.start === day && (
+                        <CreateStub
+                          className="tlCalMonthBar tlCalEvent--preview tlCalMonthCreate"
+                          placeholder={i18n['js.calendar.newEventTitle']}
+                          onCommit={create.commit}
+                          onDiscard={create.discard}
+                        />
+                      )}
                     </div>
                   );
                 })}

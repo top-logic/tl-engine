@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -61,6 +62,8 @@ final class RecordingServer implements AutoCloseable {
 	private final List<String> _requestLines = Collections.synchronizedList(new ArrayList<>());
 
 	private final List<String> _heads = Collections.synchronizedList(new ArrayList<>());
+
+	private final List<String> _bodies = Collections.synchronizedList(new ArrayList<>());
 
 	private volatile boolean _closed;
 
@@ -127,6 +130,21 @@ final class RecordingServer implements AutoCloseable {
 		}
 	}
 
+	/**
+	 * The request bodies received so far, one per request that announced a {@code Content-Length}.
+	 *
+	 * <p>
+	 * That the body is read <em>before</em> the reply is written is what makes this fixture the shape a
+	 * real server has: a proxy that waited for the response head before forwarding the request body
+	 * would deadlock against it rather than quietly work.
+	 * </p>
+	 */
+	List<String> bodies() {
+		synchronized (_bodies) {
+			return new ArrayList<>(_bodies);
+		}
+	}
+
 	@Override
 	public void close() {
 		_closed = true;
@@ -151,6 +169,34 @@ final class RecordingServer implements AutoCloseable {
 		}
 	}
 
+	/** The {@code Content-Length} a request head announces, or {@code 0} when it announces none. */
+	private static int announcedLength(String head) {
+		for (String line : head.split("\n")) {
+			if (line.toLowerCase(Locale.ROOT).startsWith("content-length:")) {
+				try {
+					return Integer.parseInt(line.substring(line.indexOf(':') + 1).trim());
+				} catch (NumberFormatException malformed) {
+					return 0;
+				}
+			}
+		}
+		return 0;
+	}
+
+	/** Reads exactly {@code length} characters, which are bytes because the stream is ISO-8859-1. */
+	private static String read(BufferedReader in, int length) throws IOException {
+		char[] body = new char[length];
+		int filled = 0;
+		while (filled < length) {
+			int read = in.read(body, filled, length - filled);
+			if (read < 0) {
+				break;
+			}
+			filled += read;
+		}
+		return new String(body, 0, filled);
+	}
+
 	private void serve(Socket client) throws IOException {
 		client.setSoTimeout(5_000);
 		BufferedReader in =
@@ -166,6 +212,10 @@ final class RecordingServer implements AutoCloseable {
 			received.append('\n').append(line);
 		}
 		_heads.add(received.toString());
+		int bodyLength = announcedLength(received.toString());
+		if (bodyLength > 0) {
+			_bodies.add(read(in, bodyLength));
+		}
 		String[] parts = requestLine.split(" ");
 		Reply reply = _replies.apply(parts.length > 1 ? parts[1] : "/");
 		byte[] body = reply.body().getBytes(StandardCharsets.UTF_8);

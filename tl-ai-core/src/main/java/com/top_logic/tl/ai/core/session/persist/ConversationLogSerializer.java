@@ -29,6 +29,7 @@ import com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto;
 import com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
@@ -162,6 +163,7 @@ public final class ConversationLogSerializer {
 			ToolCallPartDto data = ToolCallPartDto.create();
 			data.setToolName(tc.toolName());
 			data.setArgsJson(nullToEmpty(tc.argsJson()));
+			data.setMode(tc.mode() != null ? tc.mode().name() : "");
 			data.setStatus(tc.status().name());
 			data.setResult(nullToEmpty(tc.result()));
 			data.setErrorMessage(nullToEmpty(tc.errorMessage()));
@@ -263,6 +265,7 @@ public final class ConversationLogSerializer {
 					id, timestamp,
 					data.getToolName(),
 					emptyToNull(data.getArgsJson()),
+					data.getMode().isEmpty() ? null : ToolMode.valueOf(data.getMode()),
 					Part.ToolCallStatus.valueOf(data.getStatus()),
 					emptyToNull(data.getResult()),
 					emptyToNull(data.getErrorMessage()),

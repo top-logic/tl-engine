@@ -21,6 +21,7 @@ import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Converts {@link AgentEvent}s into {@link Part}s and appends them to a
@@ -242,7 +243,7 @@ public class ConversationLogListener implements AgentEventListener {
 			flushTextBuffer(turn);
 			flushThinkingBuffer(turn);
 			Part.ToolCallPart part = Part.ToolCallPart.started(
-				e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson());
+				e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson(), e.mode());
 			turn.addAssistantPart(part);
 			Set<String> open = _openTransactionCalls;
 			if (open != null) {
@@ -278,7 +279,7 @@ public class ConversationLogListener implements AgentEventListener {
 		if (turn != null) {
 			flushTextBuffer(turn);
 			Part.ToolCallPart denied = Part.ToolCallPart.denied(
-				e.toolCallId(), e.timestamp(), e.toolName(), "", e.reason());
+				e.toolCallId(), e.timestamp(), e.toolName(), "", null, e.reason());
 			turn.addAssistantPart(denied);
 		}
 	}
@@ -389,8 +390,8 @@ public class ConversationLogListener implements AgentEventListener {
 	}
 
 	/**
-	 * Marks every tool call that reported success inside the rolled-back transaction as
-	 * {@link Part.ToolCallStatus#ROLLED_BACK}.
+	 * Marks every tool call that reported a <em>write</em> success inside the rolled-back
+	 * transaction as {@link Part.ToolCallStatus#ROLLED_BACK}.
 	 *
 	 * <p>
 	 * A write tool commits only a transaction nested inside the turn's, which writes no SQL, so its
@@ -409,12 +410,12 @@ public class ConversationLogListener implements AgentEventListener {
 	 * </p>
 	 *
 	 * <p>
-	 * A read-only tool call that happens to sit in the window is retracted too, because neither the
-	 * event nor the {@link Part.ToolCallPart} records the tool's
-	 * {@link com.top_logic.tl.ai.tool.api.ToolMode}: nothing here can tell a read from a write. That
-	 * costs a reloaded conversation the read's result and is deliberately preferred over the
-	 * alternative, which is telling the model a write landed that did not - the retraction the
-	 * replay writes therefore also invites re-reading.
+	 * A call whose {@link Part.ToolCallPart#mode()} is {@link ToolMode#READ} wrote nothing, so the
+	 * rollback does not touch it: its result stays {@code COMPLETED} and a reloaded conversation
+	 * keeps the data it read. Every other mode is retracted, and so is an <em>unknown</em>
+	 * ({@code null}) mode - a log written before the mode was recorded, or a tool the loop could not
+	 * resolve. Unknown counts as a write on purpose: guessing wrong the other way tells the model a
+	 * write landed that did not.
 	 * </p>
 	 */
 	private static void retractCompletedWrites(Turn turn, Set<String> openCalls, String reason) {
@@ -425,7 +426,8 @@ public class ConversationLogListener implements AgentEventListener {
 		for (Part part : turn.assistantParts()) {
 			if (part instanceof Part.ToolCallPart tc
 				&& tc.status() == Part.ToolCallStatus.COMPLETED
-				&& openCalls.contains(tc.id())) {
+				&& openCalls.contains(tc.id())
+				&& tc.mode() != ToolMode.READ) {
 				retracted.add(tc);
 			}
 		}
@@ -652,7 +654,7 @@ public class ConversationLogListener implements AgentEventListener {
 			} else if (event instanceof AgentEvent.ToolCallStarted e) {
 				flushChildBuffers(dp);
 				dp.childParts().add(Part.ToolCallPart.started(
-					e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson()));
+					e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson(), e.mode()));
 				forwardToParent(event);
 			} else if (event instanceof AgentEvent.ToolCallCompleted e) {
 				updateChildPart(dp, e.toolCallId(), p -> {

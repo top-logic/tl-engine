@@ -19,6 +19,7 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tests for {@link ConversationLogReplay}.
@@ -55,7 +56,7 @@ public class TestConversationLogReplay extends TestCase {
 		Turn turn = log.startTurn();
 		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.now(), "Read /tmp")));
 		Part.ToolCallPart tc = Part.ToolCallPart.started("tc1", Instant.now(),
-			"readFile", "{\"path\":\"/tmp\"}");
+			"readFile", "{\"path\":\"/tmp\"}", ToolMode.READ);
 		turn.addAssistantPart(tc.completed("contents", Duration.ofMillis(10)));
 		turn.addAssistantPart(new Part.TextPart("p1", Instant.now(), "Here it is."));
 		turn.addUsage(TokenUsage.EMPTY);
@@ -84,7 +85,7 @@ public class TestConversationLogReplay extends TestCase {
 		Turn turn = log.startTurn();
 		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.now(), "Delete it")));
 		turn.addAssistantPart(Part.ToolCallPart.denied("tc1", Instant.now(),
-			"deleteFile", "{}", "User denied: too dangerous"));
+			"deleteFile", "{}", ToolMode.DATA_WRITE, "User denied: too dangerous"));
 		turn.addAssistantPart(new Part.TextPart("p1", Instant.now(), "OK."));
 		turn.addUsage(TokenUsage.EMPTY);
 		log.completeTurn();
@@ -119,7 +120,7 @@ public class TestConversationLogReplay extends TestCase {
 		Turn turn = log.startTurn();
 		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.now(), "Create a document")));
 		Part.ToolCallPart tc = Part.ToolCallPart.started("tc1", Instant.now(),
-			"createDocument", "{\"name\":\"Q3\"}");
+			"createDocument", "{\"name\":\"Q3\"}", ToolMode.DATA_WRITE);
 		turn.addAssistantPart(tc.completed("{uuid=4f2c}", Duration.ofMillis(10))
 			.rolledBack("Database operation failed."));
 		turn.addUsage(TokenUsage.EMPTY);

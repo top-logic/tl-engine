@@ -30,6 +30,7 @@ import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MORepository;
+import com.top_logic.element.layout.meta.ContextTypePartNames;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.element.meta.kbbased.storage.ForeignKeyStorage;
@@ -39,7 +40,6 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.SimpleQuery;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.provider.PartNamesOptionProvider;
 import com.top_logic.layout.table.provider.ColumnOptionLabelProvider;
 import com.top_logic.layout.table.provider.ColumnOptionMapping;
 import com.top_logic.model.StorageDetail;
@@ -49,19 +49,28 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.TLConstraints;
 import com.top_logic.model.annotate.util.ConstraintCheck;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.util.Pointer;
 
 /**
  * {@link ConstraintCheck} ensuring that the value of the annotated attribute is unique among all
- * instances of the attribute's owner type (including instances of subtypes).
+ * instances of the type declaring the constraint (including instances of subtypes).
  *
  * <p>
  * Additional attributes may participate in the constraint. In that case, the value of the
  * annotated attribute must be unique only among those objects that share the values of all
  * additional attributes. This expresses uniqueness within a scope: A name that must be unique
  * within its container declares the container reference as additional attribute.
+ * </p>
+ *
+ * <p>
+ * A subtype overriding the constrained attribute inherits the constraint and stays part of the
+ * same uniqueness domain. Declaring the constraint on an override instead of on the attribute
+ * definition narrows the domain to the instances of the overriding type: Those are then checked
+ * against each other only. Declarations on sibling types accordingly constrain independent
+ * uniqueness domains.
  * </p>
  *
  * <p>
@@ -101,7 +110,7 @@ public class UniqueConstraint extends AbstractConfiguredInstance<UniqueConstrain
 		 */
 		@Name(ADDITIONAL_ATTRIBUTES)
 		@Format(CommaSeparatedStrings.class)
-		@Options(fun = PartNamesOptionProvider.class, mapping = ColumnOptionMapping.class)
+		@Options(fun = ContextTypePartNames.SingleValued.class, mapping = ColumnOptionMapping.class)
 		@OptionLabels(value = ColumnOptionLabelProvider.class)
 		List<String> getAdditionalAttributes();
 
@@ -171,7 +180,7 @@ public class UniqueConstraint extends AbstractConfiguredInstance<UniqueConstrain
 	 *         unique.
 	 */
 	public TLObject findConflict(TLObject object, TLStructuredTypePart attribute) {
-		TLClass scope = (TLClass) attribute.getOwner();
+		TLClass declaringType = declaringType(attribute);
 		String attributeName = attribute.getName();
 		List<String> additionalNames = getConfig().getAdditionalAttributes();
 
@@ -190,13 +199,13 @@ public class UniqueConstraint extends AbstractConfiguredInstance<UniqueConstrain
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		MORepository repository = kb.getMORepository();
-		for (Entry<String, Set<TLClass>> tableEntry : AttributeOperations.typesByTableName(scope).entrySet()) {
+		for (Entry<String, Set<TLClass>> tableEntry : AttributeOperations.typesByTableName(declaringType).entrySet()) {
 			MOClass table;
 			try {
 				table = (MOClass) repository.getType(tableEntry.getKey());
 			} catch (UnknownTypeException ex) {
 				throw new ConfigurationError(
-					"Undefined table '" + tableEntry.getKey() + "' for type '" + scope + "'.", ex);
+					"Undefined table '" + tableEntry.getKey() + "' for type '" + declaringType + "'.", ex);
 			}
 
 			SimpleQuery<TLObject> query =
@@ -298,6 +307,51 @@ public class UniqueConstraint extends AbstractConfiguredInstance<UniqueConstrain
 			return ((TLFormObjectBase) object).getEditedObject();
 		}
 		return object;
+	}
+
+	/**
+	 * The type whose instance set the uniqueness spans: the type declaring the constraint.
+	 *
+	 * <p>
+	 * The given attribute is the most specific definition of the constrained attribute visible in
+	 * the checked object's type. That is not necessarily the attribute carrying the constraint,
+	 * because an override inherits the constraints of the attribute it overrides. The search
+	 * therefore starts at the attribute that declares the constraint, so that an override made for
+	 * an unrelated reason does not silently shrink the uniqueness domain.
+	 * </p>
+	 */
+	private static TLClass declaringType(TLStructuredTypePart attribute) {
+		TLStructuredTypePart declaration = attribute;
+		while (declaration.getAnnotationLocal(TLConstraints.class) == null) {
+			TLStructuredTypePart overridden = overridden(declaration);
+			if (overridden == null || overridden == declaration) {
+				break;
+			}
+			declaration = overridden;
+		}
+		return (TLClass) declaration.getOwner();
+	}
+
+	/**
+	 * The attribute that the given attribute overrides, or <code>null</code> if the given attribute
+	 * is a definition.
+	 */
+	private static TLStructuredTypePart overridden(TLStructuredTypePart attribute) {
+		if (!attribute.isOverride()) {
+			return null;
+		}
+		TLStructuredType owner = attribute.getOwner();
+		if (!(owner instanceof TLClass)) {
+			return null;
+		}
+		String name = attribute.getName();
+		for (TLClass generalization : ((TLClass) owner).getGeneralizations()) {
+			TLStructuredTypePart result = generalization.getPart(name);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
 	}
 
 	private static TLStructuredTypePart resolvePart(TLStructuredType type, String name) {

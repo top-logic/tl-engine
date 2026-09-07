@@ -23,6 +23,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.TLConstraints;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
@@ -244,8 +245,51 @@ public class TestUniqueConstraint extends TLModelTest {
 		}
 	}
 
+	/**
+	 * Tests that a constraint declared at the definition of an attribute also spans the instances
+	 * of a subtype overriding that attribute.
+	 */
+	public void testInheritedConstraintScope() {
+		TLClass base = (TLClass) TLModelUtil.findType(getModel(), "TestXMLInstanceImporter:UniqueBase");
+		TLClass sub = (TLClass) TLModelUtil.findType(getModel(), "TestXMLInstanceImporter:UniqueSub");
+		TLStructuredTypePart baseCode = base.getPart("code");
+		TLStructuredTypePart subCode = sub.getPart("code");
+		assertTrue("The subtype overrides the constrained attribute.", subCode.isOverride());
+		UniqueConstraint check = declaredConstraint(subCode);
+
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		Transaction tx = kb.beginTransaction();
+		try {
+			TLObject baseObject = getFactory().createObject(base, null, null);
+			baseObject.tUpdate(baseCode, "TUC-inherited");
+
+			TLObject subObject = getFactory().createObject(sub, null, null);
+			subObject.tUpdate(subCode, "TUC-inherited");
+
+			assertNotNull("The constraint declared at the definition spans the overriding subtype.",
+				check.check(subObject, subCode));
+			assertNotNull("The constraint spans all subtypes of its declaring type.",
+				check.check(baseObject, baseCode));
+
+			subObject.tUpdate(subCode, "TUC-inherited-other");
+			assertNull("Distinct values do not conflict.", check.check(subObject, subCode));
+		} finally {
+			tx.rollback();
+		}
+	}
+
 	private TLObject newA() {
 		return getFactory().createObject(_typeA, null, null);
+	}
+
+	/**
+	 * The {@link UniqueConstraint} declared at the given attribute.
+	 */
+	private UniqueConstraint declaredConstraint(TLStructuredTypePart attribute) {
+		TLConstraints annotation = attribute.getAnnotation(TLConstraints.class);
+		assertNotNull("Attribute '" + attribute + "' has a constraint annotation.", annotation);
+		return (UniqueConstraint) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+			.getInstance(annotation.getConstraints().get(0));
 	}
 
 	private UniqueConstraint newConstraint(String... additionalAttributes) {

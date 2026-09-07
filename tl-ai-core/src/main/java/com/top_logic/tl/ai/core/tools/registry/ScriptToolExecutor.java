@@ -97,10 +97,11 @@ public class ScriptToolExecutor implements Tool {
 		try {
 			// Both directions are filtered. An object argument the principal may not read is refused
 			// where the TID is resolved, and the result is disclosed through the same filter -
-			// SearchExpression.asString labels a model object, and a label is business data.
+			// SearchExpression.asString labels a model object, and a label is business data. Being
+			// business data is also what the rendering is marked as, for the model's benefit.
 			Object[] positional = _coercion.coerce(args, readFilter.security());
 			Object result = _executor.executeWith(Args.some(positional));
-			return ToolResult.of(readFilter.text(result));
+			return ToolResult.of(readFilter.text(_name, result));
 		} catch (Exception ex) {
 			Logger.error("Error executing script tool '" + _name + "': " + ex.getMessage(), ex,
 				ScriptToolExecutor.class);

@@ -58,6 +58,13 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * filtering came to be missing here in the first place.
  * </p>
  *
+ * <p>
+ * Both results are additionally {@link ReadFilter#marked(String, String) marked} as business data.
+ * An attribute value is free text some other end user typed into a shared record, so it is the same
+ * kind of input as a fetched web page and carries the same standing note. The marking sits on the
+ * success response only - a refusal is this application's own sentence, not something it disclosed.
+ * </p>
+ *
  * @see #listInstances(String, String, Integer, String, ToolExecutionContext)
  * @see #getInstance(String, ToolExecutionContext)
  * @see ReadFilter
@@ -112,8 +119,8 @@ public class InstanceBrowserTool {
 	 *        Pagination cursor from previous response (null/empty for first page).
 	 * @param context
 	 *        Injected execution context, supplying the read filter of the run.
-	 * @return JSON object with paginated instance TIDs and pagination metadata, or error JSON if
-	 *         type not found.
+	 * @return JSON object with paginated instance TIDs and pagination metadata, marked as business
+	 *         data; or error JSON, unmarked, if the type was not found.
 	 */
 	@ToolMethod(description = "Get a paginated list of instances for a specific type. Only instances you may read are listed, and the total count is the number of those. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
 	public String listInstances(
@@ -130,6 +137,7 @@ public class InstanceBrowserTool {
 		args.put("cursor", cursor);
 		return ToolResults.invoke(InstanceBrowserTool.class, "listInstances()", args,
 			"Error accessing instances: ",
+			json -> ReadFilter.marked(moduleName + ":" + typeName, json),
 			() -> doListInstances(moduleName, typeName, limit, cursor, ReadFilter.of(context)));
 	}
 
@@ -264,8 +272,9 @@ public class InstanceBrowserTool {
 	 *        The TopLogic identifier in format "TypeName:id".
 	 * @param context
 	 *        Injected execution context, supplying the read filter of the run.
-	 * @return JSON object with instance details, or error JSON if the instance does not exist or the
-	 *         principal may not read it - deliberately the same answer, see
+	 * @return JSON object with instance details, marked as business data; or error JSON, unmarked, if
+	 *         the instance does not exist or the principal may not read it - deliberately the same
+	 *         answer, see
 	 *         {@link TidResolver#resolve(String, com.top_logic.tl.ai.core.security.ModelSecurity)}.
 	 */
 	@ToolMethod(description = "Get detailed information about a single instance by its TID including the attribute values you may read", mode = ToolMode.READ, group = ToolGroups.DATA_READ)
@@ -275,7 +284,9 @@ public class InstanceBrowserTool {
 		Map<String, Object> args = new HashMap<>();
 		args.put("tid", tid);
 		return ToolResults.invoke(InstanceBrowserTool.class, "getInstance()", args,
-			"Error retrieving instance: ", () -> doGetInstance(tid, ReadFilter.of(context)));
+			"Error retrieving instance: ",
+			json -> ReadFilter.marked(tid, json),
+			() -> doGetInstance(tid, ReadFilter.of(context)));
 	}
 
 	private InstanceResponse doGetInstance(String tid, ReadFilter readFilter) throws IOException {

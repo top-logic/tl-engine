@@ -138,10 +138,11 @@ public class TLScriptExecutor {
 
 		/**
 		 * Serializes this execution result to a JSON string, disclosing only what the run's principal
-		 * may read.
+		 * may read and marking it as business data.
 		 *
 		 * <p>
-		 * On success, returns a JSON object with:
+		 * On success, returns a JSON object - inside the untrusted-content envelope, see
+		 * {@link ReadFilter#marked(String, String)} - with:
 		 * </p>
 		 * <ul>
 		 * <li>success: boolean - true</li>
@@ -166,7 +167,9 @@ public class TLScriptExecutor {
 		 *
 		 * @param readFilter
 		 *        The disclosure filter of the run whose principal executed the script.
-		 * @return JSON string representation of the execution result.
+		 * @return The execution result as JSON: on success marked as business data, on failure the
+		 *         plain error document, which is this application's own message rather than a
+		 *         disclosure.
 		 */
 		public String toJson(ReadFilter readFilter) {
 			if (!_success) {
@@ -199,7 +202,10 @@ public class TLScriptExecutor {
 				json.name("message").value("Script executed successfully");
 				json.endObject();
 
-				return buffer.toString();
+				// Marked, not only filtered: what a script returns is business data other end users
+				// wrote, and the model has to be told that before it reads it. The failure branch above
+				// is deliberately unmarked - that message is this application's own.
+				return ReadFilter.marked("TL-Script result", buffer.toString());
 
 			} catch (Exception ex) {
 				// Fallback to ErrorResult if serialization fails

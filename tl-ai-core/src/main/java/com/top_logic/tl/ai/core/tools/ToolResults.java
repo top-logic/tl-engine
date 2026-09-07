@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.tools;
 
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import de.haumacher.msgbuf.data.DataObject;
 
@@ -65,9 +66,31 @@ public final class ToolResults {
 	 */
 	public static <T extends DataObject> String invoke(Class<?> toolClass, String operationName,
 			Map<String, Object> args, String errorPrefix, ThrowingSupplier<T> work) {
+		return invoke(toolClass, operationName, args, errorPrefix, UnaryOperator.identity(), work);
+	}
+
+	/**
+	 * Runs {@code work} like {@link #invoke(Class, String, Map, String, ThrowingSupplier)} does, and
+	 * puts {@code framing} around the serialized response.
+	 *
+	 * <p>
+	 * Around the <b>success</b> response and only around it. The framing a caller passes says something
+	 * about what the tool disclosed - that it is business data somebody else wrote, say. An error
+	 * response discloses nothing: it is this application's own sentence about a call that failed, and
+	 * framing it as content from elsewhere would be untrue. A framing that throws is treated like a
+	 * failure of the work itself, so a broken framing cannot hand the model an unframed payload.
+	 * </p>
+	 *
+	 * @param framing
+	 *        Applied to the serialized success response.
+	 * @see #invoke(Class, String, Map, String, ThrowingSupplier)
+	 */
+	public static <T extends DataObject> String invoke(Class<?> toolClass, String operationName,
+			Map<String, Object> args, String errorPrefix, UnaryOperator<String> framing,
+			ThrowingSupplier<T> work) {
 		try {
 			T result = work.get();
-			return DataClassSerializer.toJson(result, toolClass, operationName, args);
+			return framing.apply(DataClassSerializer.toJson(result, toolClass, operationName, args));
 		} catch (Exception ex) {
 			Logger.error(operationName + " error: " + ex.getMessage(), ex, toolClass);
 			return DataClassSerializer.errorToJson(errorPrefix + ex.getMessage(), toolClass,

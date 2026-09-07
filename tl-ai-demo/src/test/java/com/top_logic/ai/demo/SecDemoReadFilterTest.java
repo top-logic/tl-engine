@@ -185,13 +185,13 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 		int seeded = tickets().size();
 
 		assertEquals("The unfiltered count reports every ticket, whatever Dora may read.",
-			String.valueOf(seeded), callTool(DORA, CLASSIFIED_READ_SCRIPT_TOOL, Map.of()).trim());
+			String.valueOf(seeded), MarkedResults.disclosed(callTool(DORA, CLASSIFIED_READ_SCRIPT_TOOL, Map.of())));
 		assertEquals("The filtered count reports what she may actually see.",
-			"0", callTool(DORA, FILTERED_COUNT_SCRIPT_TOOL, Map.of()).trim());
+			"0", MarkedResults.disclosed(callTool(DORA, FILTERED_COUNT_SCRIPT_TOOL, Map.of())));
 
 		assertEquals("For a persona who may read the tickets the two agree, which is why the difference"
 			+ " is easy to miss and worth a test.", String.valueOf(seeded),
-			callTool(BEN, FILTERED_COUNT_SCRIPT_TOOL, Map.of()).trim());
+			MarkedResults.disclosed(callTool(BEN, FILTERED_COUNT_SCRIPT_TOOL, Map.of())));
 	}
 
 	/**

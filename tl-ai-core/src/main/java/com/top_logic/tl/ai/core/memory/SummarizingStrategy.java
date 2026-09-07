@@ -28,6 +28,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 
 /**
  * Compaction strategy that calls an LLM to summarize older messages.
@@ -361,8 +362,13 @@ public class SummarizingStrategy implements CompactionStrategy {
 			throws com.top_logic.tl.ai.core.provider.ProviderException {
 		List<Message> prepared = prepareForSummarization(messagesToSummarize);
 
+		// The standing rule travels with the messages: what is summarized here includes tool results
+		// whose marked blocks somebody else wrote, and the summary this call produces re-enters the
+		// conversation as the application's own text. The summarizer gets no tools, so it cannot be
+		// made to call one - but it can be told what to write, and that is what the rule answers.
 		ProviderRequest request = new ProviderRequest(
-			_model, SUMMARIZATION_PROMPT, prepared, List.of(), _maxOutputTokens, Map.of());
+			_model, UntrustedEnvelope.withStandingRule(SUMMARIZATION_PROMPT), prepared, List.of(),
+			_maxOutputTokens, Map.of());
 
 		StringBuilder summary = new StringBuilder();
 		_provider.stream(request, event -> {

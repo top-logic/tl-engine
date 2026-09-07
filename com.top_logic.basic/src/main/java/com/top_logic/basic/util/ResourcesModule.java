@@ -39,6 +39,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.LocaleValueProvider;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -50,12 +51,13 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.tools.resources.ResourceFile;
 
 /**
- * The class {@link ResourcesModule} manages {@link I18NBundle}s.
- * 
+ * Manages the internationalization resource bundles ({@link I18NBundle}s) of the application.
+ *
  * @since 5.7.4
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Internationalization resources")
 public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Config> {
 
 	/** Flag indicating that the key was found and no default was given. */

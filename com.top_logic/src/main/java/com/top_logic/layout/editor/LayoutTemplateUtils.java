@@ -11,7 +11,9 @@ import java.io.IOError;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -619,18 +621,31 @@ public class LayoutTemplateUtils {
 	 *         When the arguments of the given {@link LayoutTemplateCall} could not be parsed.
 	 */
 	public static void writeTemplate(File file, TLLayout layout, boolean markFinal) throws ConfigurationException {
-			FileUtilities.ensureFileExisting(file);
+		/* Write and normalize a temporary sibling file, then atomically move it into place. This way,
+		 * a concurrent reader (e.g. the LayoutStorage background prefetch) observes either the complete
+		 * old or the complete new file, but never a partially written one, and a layout that is written
+		 * for the first time becomes visible with its content. The temporary file is created in the
+		 * target's own directory, so the move stays within one file system and is guaranteed to be
+		 * atomic. Its name marks it as a hidden file, which makes it invisible to the FileManager and
+		 * to the layout invalidation watching the layout directory. */
+		Path target = file.toPath();
+		Path directory = file.getAbsoluteFile().getParentFile().toPath();
+		try {
+			Files.createDirectories(directory);
 
-			try (OutputStream outputStream = new FileOutputStream(file)) {
-				layout.writeTo(outputStream, markFinal);
-			} catch (IOException ex) {
-				throw new IOError(ex);
-			}
+			Path tmp = Files.createTempFile(directory, "." + file.getName(), ".tmp");
 			try {
-				XMLPrettyPrinter.normalizeFile(file);
-			} catch (IOException | SAXException exception) {
-				throw new IOError(exception);
+				try (OutputStream outputStream = new FileOutputStream(tmp.toFile())) {
+					layout.writeTo(outputStream, markFinal);
+				}
+				XMLPrettyPrinter.normalizeFile(tmp.toFile());
+				Files.move(tmp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+			} finally {
+				Files.deleteIfExists(tmp);
 			}
+		} catch (IOException | SAXException ex) {
+			throw new IOError(ex);
+		}
 	}
 
 	/**

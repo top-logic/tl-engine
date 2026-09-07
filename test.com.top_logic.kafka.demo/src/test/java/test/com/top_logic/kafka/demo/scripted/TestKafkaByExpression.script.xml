@@ -33,7 +33,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Kafka Produzenten-Service"
+									name="Kafka-Produzenten"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -182,7 +182,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Kafka Empfänger Service"
+									name="Kafka-Konsumenten"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -488,6 +488,20 @@
 								tab-path="Administration > Development > Modell Editor > Instanzen"
 							/>
 						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+							columns="Zeilenselektion,In Formular anzeigen,Name,nicht externalisiert,Mehrfach-Klassifikation"
+							label="true"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+								/>
+								<path>
+									<named-member name="fieldTable"/>
+								</path>
+							</model-name>
+						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 							comparision="equals"
 							inverted="false"
@@ -590,7 +604,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Kafka Empfänger Service"
+									name="Kafka-Konsumenten"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -666,7 +680,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="Kafka Produzenten-Service"
+									name="Kafka-Produzenten"
 								/>
 								<selection-state boolean="true"/>
 							</selection>

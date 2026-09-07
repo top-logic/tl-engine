@@ -25,7 +25,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
-import com.top_logic.layout.react.headless.ScriptRecorder;
+import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
@@ -172,6 +172,19 @@ public class SSEUpdateQueue {
 	}
 
 	/**
+	 * Whether any control is registered with this queue.
+	 *
+	 * <p>
+	 * A queue without any controls did not render a page in this session - it was typically
+	 * created empty by an SSE reconnect after the session was replaced underneath an open page.
+	 * Commands arriving for such a window target the control tree of a discarded session.
+	 * </p>
+	 */
+	public boolean hasControls() {
+		return !_controls.isEmpty();
+	}
+
+	/**
 	 * Looks up a previously registered control by its ID.
 	 *
 	 * @return The control, or {@code null} if not found.
@@ -306,6 +319,22 @@ public class SSEUpdateQueue {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Drops all events that are still waiting for a client.
+	 *
+	 * <p>
+	 * Called when a page is (re)rendered from scratch: the rendered output carries the full state of
+	 * every control, so a queued update from before that rendering is at best redundant and at worst
+	 * describes a state the fresh page has already passed. Unlike a
+	 * {@link #setConnection(jakarta.servlet.AsyncContext) reconnect} - which deliberately keeps
+	 * pending events, because one-off events such as the logout reload are not part of any control
+	 * state - a full page render replaces what the events would have delivered.
+	 * </p>
+	 */
+	public void discardPendingEvents() {
+		_pendingEvents.clear();
 	}
 
 	/**

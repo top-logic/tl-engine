@@ -54,7 +54,17 @@ public class FormCommandModel implements CommandModel {
 
 	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
 
-	private final FormModelListener _formModelListener = this::handleFormStateChanged;
+	private final FormModelListener _formModelListener = new FormModelListener() {
+		@Override
+		public void onFormStateChanged(FormModel source) {
+			handleFormStateChanged(source);
+		}
+
+		@Override
+		public void onValidityChanged(FormModel source) {
+			handleFormStateChanged(source);
+		}
+	};
 
 	private FormCommandModel(String name, ResKey labelKey, ThemeImage image, CommandPlacement placement,
 			FormControl form, Consumer<ReactContext> action, Predicate<FormControl> executableWhen,
@@ -75,7 +85,8 @@ public class FormCommandModel implements CommandModel {
 	 * Creates the "Edit" command model.
 	 *
 	 * <p>
-	 * Executable when a current object exists and the form is not in edit mode.
+	 * Executable when a current object exists, the form is not in edit mode, and the form's
+	 * {@link FormControl#editPermission() edit permission} grants editing it.
 	 * </p>
 	 *
 	 * @param form
@@ -86,15 +97,16 @@ public class FormCommandModel implements CommandModel {
 		return new FormCommandModel("formEdit", I18NConstants.FORM_EDIT, Icons.FORM_EDIT,
 			CommandPlacement.TOOLBAR, form,
 			ctx -> form.enterEditMode(),
-			f -> f.getCurrentObject() != null && !f.isEditMode(),
-			f -> f.getCurrentObject() != null && !f.isEditMode());
+			f -> f.getCurrentObject() != null && !f.isEditMode() && f.editPermission().isExecutable(),
+			f -> f.getCurrentObject() != null && !f.isEditMode() && f.editPermission().isVisible());
 	}
 
 	/**
 	 * Creates the "Save" command model with default behavior.
 	 *
 	 * <p>
-	 * Executable when the form is in edit mode. Calls {@link FormControl#executeSave()}.
+	 * Executable while the form is in edit mode and displays no validation errors. Calls
+	 * {@link FormControl#executeSave()}.
 	 * </p>
 	 *
 	 * @param form
@@ -105,7 +117,7 @@ public class FormCommandModel implements CommandModel {
 		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
 			CommandPlacement.TOOLBAR, form,
 			ctx -> form.executeSave(),
-			FormControl::isEditMode,
+			FormCommandModel::isSavable,
 			FormControl::isEditMode);
 	}
 
@@ -113,8 +125,8 @@ public class FormCommandModel implements CommandModel {
 	 * Creates the "Save" command model with a custom action chain.
 	 *
 	 * <p>
-	 * Executable when the form is in edit mode. Executes the given action instead of calling
-	 * {@link FormControl#executeSave()}.
+	 * Executable while the form is in edit mode and displays no validation errors. Executes the
+	 * given action instead of calling {@link FormControl#executeSave()}.
 	 * </p>
 	 *
 	 * @param form
@@ -127,8 +139,19 @@ public class FormCommandModel implements CommandModel {
 		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
 			CommandPlacement.TOOLBAR, form,
 			action,
-			FormControl::isEditMode,
+			FormCommandModel::isSavable,
 			FormControl::isEditMode);
+	}
+
+	/**
+	 * Whether the form can currently be saved: it is being edited and shows no validation errors.
+	 *
+	 * <p>
+	 * Errors that are still hidden do not block the save - the save attempt is what reveals them.
+	 * </p>
+	 */
+	private static boolean isSavable(FormControl form) {
+		return form.isEditMode() && !form.hasVisibleErrors();
 	}
 
 	/**
@@ -167,6 +190,35 @@ public class FormCommandModel implements CommandModel {
 	public static FormCommandModel cancelCommand(FormControl form, Consumer<ReactContext> action) {
 		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, Icons.FORM_CANCEL,
 			CommandPlacement.TOOLBAR, form,
+			action,
+			FormControl::isEditMode,
+			FormControl::isEditMode);
+	}
+
+	/**
+	 * Creates a toolbar command that is visible and executable only while the form is in edit
+	 * mode.
+	 *
+	 * <p>
+	 * Used for commands operating on the form's edit session beyond the built-in lifecycle
+	 * commands, e.g. adding a row to a table edited within the form.
+	 * </p>
+	 *
+	 * @param name
+	 *        The command name.
+	 * @param label
+	 *        The button label.
+	 * @param image
+	 *        The button icon.
+	 * @param form
+	 *        The form control whose state gates the command.
+	 * @param action
+	 *        The action to execute.
+	 * @return The command model.
+	 */
+	public static FormCommandModel editModeCommand(String name, ResKey label, ThemeImage image, FormControl form,
+			Consumer<ReactContext> action) {
+		return new FormCommandModel(name, label, image, CommandPlacement.TOOLBAR, form,
 			action,
 			FormControl::isEditMode,
 			FormControl::isEditMode);
@@ -216,9 +268,19 @@ public class FormCommandModel implements CommandModel {
 		return _placement;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The condition is re-evaluated here rather than read from the state last published to the
+	 * client: a guarding rule can turn against the command without a form state change to observe
+	 * (a security scope that resolves through a channel, say), and the client's button state may
+	 * lag behind it.
+	 * </p>
+	 */
 	@Override
 	public HandlerResult executeCommand(ReactContext context) {
-		if (!_executable) {
+		if (!_executableWhen.test(_form)) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 		_action.accept(context);

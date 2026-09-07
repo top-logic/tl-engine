@@ -227,6 +227,58 @@ public class TLModelOperations {
 	}
 
 	/**
+	 * Computes the parts that override the given part, i.e. the {@link TLStructuredTypePart} that
+	 * have the same {@link TLStructuredTypePart#getDefinition()} and whose owner is a
+	 * specialisation of the owner of the given part.
+	 */
+	public Set<TLStructuredTypePart> getOverrides(TLStructuredTypePart part) {
+		TLStructuredType owner = part.getOwner();
+		if (owner.getModelKind() != ModelKind.CLASS) {
+			return Collections.emptySet();
+		}
+
+		return computeOverrides((TLClass) owner, part);
+	}
+
+	/**
+	 * Computes the result for {@link #getOverrides(TLStructuredTypePart)} in case the owner of the
+	 * part is a {@link TLClass}.
+	 */
+	protected Set<TLStructuredTypePart> computeOverrides(TLClass owner, TLStructuredTypePart part) {
+		String partName = part.getName();
+		Set<TLStructuredTypePart> allParts = Collections.emptySet();
+
+		Set<TLClass> specializations = getSubClasses(owner);
+		for (TLClass specialization : specializations) {
+			if (specialization == owner) {
+				// part
+				continue;
+			}
+			for (TLStructuredTypePart localPart : specialization.getLocalParts()) {
+				if (localPart.getName().equals(partName)) {
+					switch (allParts.size()) {
+						case 0: {
+							allParts = Collections.singleton(localPart);
+							break;
+						}
+						case 1: {
+							allParts = new HashSet<>(allParts);
+							allParts.add(localPart);
+							break;
+						}
+						default: {
+							allParts.add(localPart);
+							break;
+						}
+					}
+					break;
+				}
+			}
+		}
+		return allParts;
+	}
+
+	/**
 	 * The global {@link TLClass}es in the given {@link TLModel}.
 	 * <p>
 	 * "Global" means, it is either defined directly in the scope of a {@link TLModule} or

@@ -15,7 +15,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
-import com.top_logic.layout.react.headless.ScriptRecorder;
+import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.util.Resources;
 

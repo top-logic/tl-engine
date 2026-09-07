@@ -17,16 +17,17 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.kafka.services.common.TopicChecker;
 
 /**
- * A {@link ManagedClass} providing kafka producer services.
- * 
+ * Provides access to the configured Kafka message producers.
+ *
  * @author <a href="mailto:tgi@top-logic.com">tgi</a>
  */
+@Label("Kafka producers")
 public class KafkaProducerService extends ConfiguredManagedClass<KafkaProducerService.Config> {
 
 	/**

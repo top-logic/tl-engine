@@ -6,7 +6,7 @@
 
 /**
  * The script-recorder side-window: a {@link com.top_logic.layout.view.command.ViewAction} controlling
- * the opener window's {@link com.top_logic.layout.react.headless.ScriptRecorder} and a
+ * the opener window's {@link com.top_logic.layout.react.scripting.ScriptRecorder} and a
  * {@link com.top_logic.layout.view.UIElement} rendering its captured steps.
  */
 package com.top_logic.layout.view.recorder;

@@ -123,7 +123,11 @@ public class I18NEditorDialog {
 	 * <p>
 	 * Editing other languages is an intrinsic part of an internationalized value, so the dialog
 	 * wiring (and hiding the button outside edit mode) is encapsulated here — callers need no
-	 * further assembly. The languages button is laid out as an inline adornment so the input keeps
+	 * further assembly. Hiding is a display decision only: the button stays mounted and its
+	 * command stays addressable, so the write itself is closed by
+	 * {@link ReactButtonControl#handleClick(ReactContext)} refusing a button that is not offered,
+	 * and again by {@link #openEditor(ReactContext, FieldModel, I18NValueEditor, String)} refusing
+	 * a field that may not be edited. The languages button is laid out as an inline adornment so the input keeps
 	 * the full field width. When the application supports fewer than two locales, there is nothing
 	 * to switch to and the inline control is returned unadorned.
 	 * </p>
@@ -176,6 +180,13 @@ public class I18NEditorDialog {
 	 */
 	public static void openEditor(ReactContext context, FieldModel mainModel, I18NValueEditor valueEditor,
 			String fieldLabel) {
+		if (!mainModel.isEditable()) {
+			// The dialog exists to write: its OK button merges the panes into the main model. A
+			// field that may not be edited must not be offered that path, however the request to
+			// open the dialog arrived. The inline control still shows the value (falling back to
+			// the best available translation), so nothing legible is lost by refusing here.
+			return;
+		}
 		DialogManager dialogManager = context.getDialogManager();
 		if (dialogManager == null) {
 			return;

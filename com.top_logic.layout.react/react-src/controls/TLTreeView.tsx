@@ -32,6 +32,20 @@ const TLTreeView: React.FC<TLCellProps> = () => {
   const [focusIndex, setFocusIndex] = React.useState(-1);
   const listRef = React.useRef<HTMLUListElement>(null);
 
+  // Scroll the selected node into view when the selection changes (e.g. set externally by the
+  // "select view" picker). block:'nearest' scrolls minimally, so it is a no-op when the node is
+  // already visible (normal clicks).
+  const selectedNodeId = nodes.find(n => n.selected)?.id ?? null;
+  React.useEffect(() => {
+    if (selectedNodeId == null) {
+      return;
+    }
+    const selectedEl = listRef.current?.querySelector('.tlTreeView__node--selected');
+    if (selectedEl) {
+      selectedEl.scrollIntoView({ block: 'nearest' });
+    }
+  }, [selectedNodeId]);
+
   const handleToggle = React.useCallback((nodeId: string, expanded: boolean) => {
     sendCommand(expanded ? 'collapse' : 'expand', { nodeId });
   }, [sendCommand]);

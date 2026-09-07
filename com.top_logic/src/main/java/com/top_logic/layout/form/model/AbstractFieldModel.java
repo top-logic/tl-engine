@@ -210,6 +210,21 @@ public class AbstractFieldModel implements FieldModel {
 	}
 
 	/**
+	 * The error rejecting the last raw input (e.g. an unparsable number), or {@code null}.
+	 *
+	 * <p>
+	 * Unlike a model validation error, this one is not produced by a constraint but by the input
+	 * control, which keeps the rejected text on screen while the model still holds the last
+	 * accepted value. It is therefore visible regardless of {@link #isRevealed()}.
+	 * </p>
+	 *
+	 * @see #setError(ResKey)
+	 */
+	public ResKey getInputError() {
+		return _error;
+	}
+
+	/**
 	 * Sets an error on this model directly (e.g. for parse errors).
 	 *
 	 * <p>

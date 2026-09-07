@@ -28,6 +28,7 @@ import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.service.openapi.client.registry.impl.call.Call;
 import com.top_logic.service.openapi.client.registry.impl.call.CallBuilder;
 import com.top_logic.service.openapi.client.registry.impl.call.CallBuilderFactory;
@@ -64,6 +65,7 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 		 * the TL-Script function for the corresponding parameter.
 		 * </p>
 		 */
+		@ScriptContextVariables(MethodParameterVariables.class)
 		@PropertyEditor(PlainEditor.class)
 		@Name(JSON)
 		Expr getJson();
@@ -110,7 +112,11 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 				@Override
 				protected String jsonBody(ClassicHttpRequest request, Call call) {
 					Object[] args = createCallArguments(call, method);
-					Object value = json.execute(args);
+					// A call of an OpenAPI client method is performed during the evaluation of the calling
+					// script (see RPCMethod), so this value is an intermediate result of that script and
+					// must not be filtered for read access - the script's own execution secures its final
+					// result.
+					Object value = json.executeIntermediate(args);
 					return JSON.toString(value);
 				}
 			};

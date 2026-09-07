@@ -7,6 +7,7 @@ package com.top_logic.layout.react;
 
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.listen.ModelScope;
@@ -80,5 +81,10 @@ public class ForwardingReactContext implements ReactContext {
 	@Override
 	public com.top_logic.layout.react.control.overlay.ContextMenuOpener getContextMenuOpener() {
 		return _delegate.getContextMenuOpener();
+	}
+
+	@Override
+	public RouteManager getRouteManager() {
+		return _delegate.getRouteManager();
 	}
 }

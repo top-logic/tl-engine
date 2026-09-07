@@ -21,7 +21,6 @@ import com.top_logic.basic.config.ConfigurationException;
  * 
  * @since 5.8.0
  * 
- *          com.top_logic.knowledge.service.xml.MORepositoryImporter$MetaObjectHandler
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DBTypeFormat extends AbstractConfigurationValueProvider<DBType> {

@@ -8,6 +8,7 @@ package com.top_logic.layout.view.element;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
@@ -29,6 +30,7 @@ import com.top_logic.layout.view.ViewContext;
  * Renders a CSS Grid container with responsive auto-fit columns.
  * </p>
  */
+@InApp
 public class GridElement extends ContainerElement {
 
 	/**

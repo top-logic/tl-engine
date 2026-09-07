@@ -14,6 +14,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.component.Editor;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
@@ -21,6 +22,7 @@ import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.search.ui.TLScriptPropertyEditor;
 import com.top_logic.util.error.TopLogicException;
 
@@ -42,7 +44,7 @@ public class ServiceMethodBuilderByExpression extends AbstractConfiguredInstance
 		Config.TRANSACTION
 	})
 	@TagName("method-by-expression")
-	public interface Config extends PolymorphicConfiguration<ServiceMethodBuilderByExpression> {
+	public interface Config extends PolymorphicConfiguration<ServiceMethodBuilderByExpression>, ConfigPart {
 
 		/**
 		 * @see #getOperation()
@@ -76,6 +78,7 @@ public class ServiceMethodBuilderByExpression extends AbstractConfiguredInstance
 		 *           the expression for validity: When executing the query it is enhanced by adding
 		 *           the defined parameters. These parameters are not available at input time.
 		 */
+		@ScriptContextVariables(OperationParameterVariables.class)
 		@Name(OPERATION)
 		@Mandatory
 		@PropertyEditor(PlainEditor.class)

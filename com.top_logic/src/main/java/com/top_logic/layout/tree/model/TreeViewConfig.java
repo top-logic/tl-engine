@@ -8,14 +8,14 @@ package com.top_logic.layout.tree.model;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
-import com.top_logic.layout.component.Selectable;
+import com.top_logic.layout.component.DefaultSelectionProviderConfig;
 
 /**
  * Configuration for displaying tree alike structures.
- * 
+ *
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
-public interface TreeViewConfig extends Selectable.SelectableConfig {
+public interface TreeViewConfig extends DefaultSelectionProviderConfig {
 
 	/**
 	 * The configuration parameter for {@link #getExpandSelected()}.

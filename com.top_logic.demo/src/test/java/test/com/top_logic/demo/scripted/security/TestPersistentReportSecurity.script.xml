@@ -9,22 +9,38 @@
 			comment="Create user"
 		>
 			<actions>
-				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-					template="script:/Rolle/Action-Rolle-Anlegen.xml"
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Anlegen"
+					business-object="Nutzer"
 				>
 					<parameters>
-						<parameter name="Name">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="publisher"
-							/>
-						</parameter>
-						<parameter name="Berechtigungsstruktur">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Zentrale Berechtigungen"
-							/>
-						</parameter>
+						<parameter name="Vorname"
+							value="User_TestPersistentReportSecurity_1"
+						/>
+						<parameter name="Nachname"
+							value="User_TestPersistentReportSecurity_1"
+						/>
+						<parameter name="Loginname"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 						<parameter name="ergebnis"
-							value="publisher"
+							value="User_TestPersistentReportSecurity_1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+					template-name-comment="Gruppe Zuordnen"
+				>
+					<parameters>
+						<parameter name="Login"
+							value="User_TestPersistentReportSecurity_1"
+						/>
+						<parameter name="Gruppe1"
+							value="Benutzer"
+						/>
+						<parameter name="Gruppe2"
+							value="Superusers"
 						/>
 					</parameters>
 				</action>
@@ -33,598 +49,35 @@
 					business-object="Nutzer"
 				>
 					<parameters>
-						<parameter name="Vorname">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
-						<parameter name="Nachname">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
-						<parameter name="Loginname">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
-						<parameter name="ergebnis">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Rolle zuweisen"
-					business-object="Nutzer"
-				>
-					<parameters>
-						<parameter name="kontext">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
-						<parameter name="Rolle">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="publisher"
-							/>
-						</parameter>
-						<parameter name="Berechtigungsstruktur">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Zentrale Berechtigungen"
-							/>
-						</parameter>
-						<parameter name="Knoten"
-							value="SecurityRoot"
+						<parameter name="Vorname"
+							value="User_TestPersistentReportSecurity_2"
+						/>
+						<parameter name="Nachname"
+							value="User_TestPersistentReportSecurity_2"
+						/>
+						<parameter name="Loginname"
+							value="User_TestPersistentReportSecurity_2"
+						/>
+						<parameter name="ergebnis"
+							value="User_TestPersistentReportSecurity_2"
 						/>
 					</parameters>
 				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Anlegen"
-					business-object="Nutzer"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+					template-name-comment="Gruppe Zuordnen"
 				>
 					<parameters>
-						<parameter name="Vorname">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_2"
-							/>
-						</parameter>
-						<parameter name="Nachname">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_2"
-							/>
-						</parameter>
-						<parameter name="Loginname">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_2"
-							/>
-						</parameter>
-						<parameter name="ergebnis">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_2"
-							/>
-						</parameter>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Rolle zuweisen"
-					business-object="Nutzer"
-				>
-					<parameters>
-						<parameter name="kontext">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_2"
-							/>
-						</parameter>
-						<parameter name="Rolle">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="publisher"
-							/>
-						</parameter>
-						<parameter name="Berechtigungsstruktur">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Zentrale Berechtigungen"
-							/>
-						</parameter>
-						<parameter name="Knoten"
-							value="SecurityRoot"
+						<parameter name="Login"
+							value="User_TestPersistentReportSecurity_2"
+						/>
+						<parameter name="Gruppe1"
+							value="Benutzer"
+						/>
+						<parameter name="Gruppe2"
+							value="Superusers"
 						/>
 					</parameters>
-				</action>
-			</actions>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Assign role profiles"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Anzeigen"
-					business-object="Sicht"
-				>
-					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Administration > Berechtigungen"
-							/>
-						</parameter>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-						tab-path="Administration > Berechtigungen"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Berechtigungsstruktur"
-									field-name="structure"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="Zentrale Berechtigungen"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Anzeigen"
-					business-object="Sicht"
-				>
-					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Administration > Berechtigungen > Rollenprofile"
-							/>
-						</parameter>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Setze Rechte für OwnerRole"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
-							columns="Rechte,OwnerRole"
-							label="true"
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<named-member name="tree"/>
-								</path>
-							</model-name>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Druecken"
-							business-object="Knopf"
-						>
-							<parameters>
-								<parameter name="Name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="Bearbeiten"
-									/>
-								</parameter>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Druecken"
-							business-object="Knopf"
-						>
-							<parameters>
-								<parameter name="Name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="Rollenprofile aufklappen"
-									/>
-								</parameter>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="Häkchen setzen"
-						>
-							<actions>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Suche (Lesen)"
-												/>
-											</object>
-											<named-member name="OwnerRole"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Suche (Lesen)"
-												/>
-											</object>
-											<named-member name="OwnerRole"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Suche (Suchanfragen bearbeiten)"
-												/>
-											</object>
-											<named-member name="OwnerRole"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Suchergebnis (Lesen)"
-												/>
-											</object>
-											<named-member name="OwnerRole"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Auswertungen (Lesen)"
-												/>
-											</object>
-											<named-member name="OwnerRole"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Auswertungen (Suchanfragen bearbeiten)"
-												/>
-											</object>
-											<named-member name="OwnerRole"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-									business-action="Druecken"
-									business-object="Knopf"
-								>
-									<parameters>
-										<parameter name="Name">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-												string="Speichern"
-											/>
-										</parameter>
-									</parameters>
-								</action>
-							</actions>
-						</action>
-					</actions>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Setze Rechte für publisher"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
-							columns="Rechte,publisher"
-							label="true"
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<named-member name="tree"/>
-								</path>
-							</model-name>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Druecken"
-							business-object="Knopf"
-						>
-							<parameters>
-								<parameter name="Name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="Bearbeiten"
-									/>
-								</parameter>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Druecken"
-							business-object="Knopf"
-						>
-							<parameters>
-								<parameter name="Name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="Rollenprofile aufklappen"
-									/>
-								</parameter>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="Häkchen setzen"
-						>
-							<actions>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Suche (Lesen)"
-												/>
-											</object>
-											<named-member name="publisher"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Suche (Lesen)"
-												/>
-											</object>
-											<named-member name="publisher"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Suche (Suchanfragen bearbeiten)"
-												/>
-											</object>
-											<named-member name="publisher"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Suche (Anlegen)"
-												/>
-											</object>
-											<named-member name="publisher"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Suche (Suchanfragen veröffentlichen)"
-												/>
-											</object>
-											<named-member name="publisher"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Suchergebnis (Lesen)"
-												/>
-											</object>
-											<named-member name="publisher"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Auswertungen (Lesen)"
-												/>
-											</object>
-											<named-member name="publisher"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Auswertungen (Anlegen)"
-												/>
-											</object>
-											<named-member name="publisher"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Auswertungen (Suchanfragen veröffentlichen)"
-												/>
-											</object>
-											<named-member name="publisher"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-									business-action="Druecken"
-									business-object="Knopf"
-								>
-									<parameters>
-										<parameter name="Name">
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-												string="Speichern"
-											/>
-										</parameter>
-									</parameters>
-								</action>
-							</actions>
-						</action>
-					</actions>
 				</action>
 			</actions>
 		</action>
@@ -638,16 +91,12 @@
 					business-object="Sicht"
 				>
 					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Suche"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Pfad"
+							value="Suche"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
@@ -678,16 +127,12 @@
 					business-object="Knopf"
 				>
 					<parameters>
-						<parameter name="Name">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Suchen"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Name"
+							value="Suchen"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
@@ -695,16 +140,12 @@
 					business-object="Sicht"
 				>
 					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Auswertungen"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Pfad"
+							value="Auswertungen"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -884,13 +325,12 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
 								raw-value="true"
 							>
-								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-									label="&quot;Nicht gesetzt&quot;"
-								>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name">
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
 										tab-path="Auswertungen"
 									/>
+									<label>"Nicht gesetzt"</label>
 								</field-name>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
@@ -952,13 +392,12 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
 								raw-value="true"
 							>
-								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-									label="&quot;Nicht gesetzt&quot;"
-								>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name">
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
 										tab-path="Auswertungen"
 									/>
+									<label>"Nicht gesetzt"</label>
 								</field-name>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
@@ -1018,16 +457,12 @@
 					business-object="Sicht"
 				>
 					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Suche"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Pfad"
+							value="Suche"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
@@ -1058,16 +493,12 @@
 					business-object="Knopf"
 				>
 					<parameters>
-						<parameter name="Name">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Suchen"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Name"
+							value="Suchen"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
@@ -1075,16 +506,12 @@
 					business-object="Sicht"
 				>
 					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Auswertungen"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Pfad"
+							value="Auswertungen"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -1269,16 +696,12 @@
 							business-object="Sicht"
 						>
 							<parameters>
-								<parameter name="Pfad">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="Suche"
-									/>
-								</parameter>
-								<parameter name="Tester">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="User_TestPersistentReportSecurity_2"
-									/>
-								</parameter>
+								<parameter name="Pfad"
+									value="Suche"
+								/>
+								<parameter name="Tester"
+									value="User_TestPersistentReportSecurity_2"
+								/>
 							</parameters>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
@@ -1309,16 +732,12 @@
 							business-object="Knopf"
 						>
 							<parameters>
-								<parameter name="Name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="Suchen"
-									/>
-								</parameter>
-								<parameter name="Tester">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="User_TestPersistentReportSecurity_2"
-									/>
-								</parameter>
+								<parameter name="Name"
+									value="Suchen"
+								/>
+								<parameter name="Tester"
+									value="User_TestPersistentReportSecurity_2"
+								/>
 							</parameters>
 						</action>
 						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
@@ -1326,16 +745,12 @@
 							business-object="Sicht"
 						>
 							<parameters>
-								<parameter name="Pfad">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="Auswertungen"
-									/>
-								</parameter>
-								<parameter name="Tester">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="User_TestPersistentReportSecurity_2"
-									/>
-								</parameter>
+								<parameter name="Pfad"
+									value="Auswertungen"
+								/>
+								<parameter name="Tester"
+									value="User_TestPersistentReportSecurity_2"
+								/>
 							</parameters>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
@@ -1368,13 +783,12 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
 								raw-value="true"
 							>
-								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-									label="&quot;Nicht gesetzt&quot;"
-								>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name">
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
 										tab-path="Auswertungen"
 									/>
+									<label>"Nicht gesetzt"</label>
 								</field-name>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
@@ -1414,16 +828,12 @@
 					business-object="Sicht"
 				>
 					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Suche"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Pfad"
+							value="Suche"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
@@ -1454,16 +864,12 @@
 					business-object="Knopf"
 				>
 					<parameters>
-						<parameter name="Name">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Suchen"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Name"
+							value="Suchen"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
@@ -1471,16 +877,12 @@
 					business-object="Sicht"
 				>
 					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Auswertungen"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Pfad"
+							value="Auswertungen"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -1636,13 +1038,15 @@
 											/>
 										</field>
 										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Einteilung nach Wahrheitswert &quot;boolean&quot;"
 											field-name="item"
-										/>
+										>
+											<field-label-comment>Einteilung nach Wahrheitswert "boolean"</field-label-comment>
+										</field>
 										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="&quot;Nicht gesetzt&quot;"
 											field-name="add-empty"
-										/>
+										>
+											<field-label-comment>"Nicht gesetzt"</field-label-comment>
+										</field>
 									</field-path>
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
 										boolean="true"
@@ -1714,13 +1118,12 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
 								raw-value="true"
 							>
-								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-									label="&quot;Nicht gesetzt&quot;"
-								>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name">
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
 										tab-path="Auswertungen"
 									/>
+									<label>"Nicht gesetzt"</label>
 								</field-name>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
@@ -1760,16 +1163,12 @@
 					business-object="Sicht"
 				>
 					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Suche"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Pfad"
+							value="Suche"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
@@ -1800,16 +1199,12 @@
 					business-object="Knopf"
 				>
 					<parameters>
-						<parameter name="Name">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Suchen"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Name"
+							value="Suchen"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
@@ -1817,16 +1212,12 @@
 					business-object="Sicht"
 				>
 					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Auswertungen"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Pfad"
+							value="Auswertungen"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -2024,16 +1415,12 @@
 							business-object="Sicht"
 						>
 							<parameters>
-								<parameter name="Pfad">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="Suche"
-									/>
-								</parameter>
-								<parameter name="Tester">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="User_TestPersistentReportSecurity_2"
-									/>
-								</parameter>
+								<parameter name="Pfad"
+									value="Suche"
+								/>
+								<parameter name="Tester"
+									value="User_TestPersistentReportSecurity_2"
+								/>
 							</parameters>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
@@ -2064,16 +1451,12 @@
 							business-object="Knopf"
 						>
 							<parameters>
-								<parameter name="Name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="Suchen"
-									/>
-								</parameter>
-								<parameter name="Tester">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="User_TestPersistentReportSecurity_2"
-									/>
-								</parameter>
+								<parameter name="Name"
+									value="Suchen"
+								/>
+								<parameter name="Tester"
+									value="User_TestPersistentReportSecurity_2"
+								/>
 							</parameters>
 						</action>
 						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
@@ -2081,16 +1464,12 @@
 							business-object="Sicht"
 						>
 							<parameters>
-								<parameter name="Pfad">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="Auswertungen"
-									/>
-								</parameter>
-								<parameter name="Tester">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="User_TestPersistentReportSecurity_2"
-									/>
-								</parameter>
+								<parameter name="Pfad"
+									value="Auswertungen"
+								/>
+								<parameter name="Tester"
+									value="User_TestPersistentReportSecurity_2"
+								/>
 							</parameters>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
@@ -2123,13 +1502,12 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
 								raw-value="true"
 							>
-								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-									label="&quot;Nicht gesetzt&quot;"
-								>
+								<field-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name">
 									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										name="com.top_logic.demo/search/searchChart.layout.xml#Searchreporting_flex_search_searchResultChart_Configurator"
 										tab-path="Auswertungen"
 									/>
+									<label>"Nicht gesetzt"</label>
 								</field-name>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
@@ -2169,16 +1547,12 @@
 					business-object="Sicht"
 				>
 					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Suche"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Pfad"
+							value="Suche"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
@@ -2209,16 +1583,12 @@
 					business-object="Knopf"
 				>
 					<parameters>
-						<parameter name="Name">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Suchen"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Name"
+							value="Suchen"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
@@ -2226,16 +1596,12 @@
 					business-object="Sicht"
 				>
 					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Auswertungen"
-							/>
-						</parameter>
-						<parameter name="Tester">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
+						<parameter name="Pfad"
+							value="Auswertungen"
+						/>
+						<parameter name="Tester"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -2469,347 +1835,17 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Revert role profiles"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Anzeigen"
-					business-object="Sicht"
-				>
-					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Administration > Berechtigungen"
-							/>
-						</parameter>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-						tab-path="Administration > Berechtigungen"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Berechtigungsstruktur"
-									field-name="structure"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="Zentrale Berechtigungen"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Anzeigen"
-					business-object="Sicht"
-				>
-					<parameters>
-						<parameter name="Pfad">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Administration > Berechtigungen > Rollenprofile"
-							/>
-						</parameter>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
-					columns="Rechte,OwnerRole"
-					label="true"
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-							tab-path="Administration > Berechtigungen > Rollenprofile"
-						/>
-						<path>
-							<named-member name="tree"/>
-						</path>
-					</model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Druecken"
-					business-object="Knopf"
-				>
-					<parameters>
-						<parameter name="Name">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Bearbeiten"
-							/>
-						</parameter>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Druecken"
-					business-object="Knopf"
-				>
-					<parameters>
-						<parameter name="Name">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Rollenprofile aufklappen"
-							/>
-						</parameter>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Häkchen setzen"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Suche (Lesen)"
-										/>
-									</object>
-									<named-member name="OwnerRole"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="false"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Suche (Lesen)"
-										/>
-									</object>
-									<named-member name="OwnerRole"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="false"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Suche (Anlegen)"
-										/>
-									</object>
-									<named-member name="OwnerRole"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="false"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Suche (Suchanfragen veröffentlichen)"
-										/>
-									</object>
-									<named-member name="OwnerRole"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="false"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Suche (Suchanfragen bearbeiten)"
-										/>
-									</object>
-									<named-member name="OwnerRole"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="false"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Suchergebnis (Lesen)"
-										/>
-									</object>
-									<named-member name="OwnerRole"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="false"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Auswertungen (Lesen)"
-										/>
-									</object>
-									<named-member name="OwnerRole"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="false"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Auswertungen (Anlegen)"
-										/>
-									</object>
-									<named-member name="OwnerRole"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="false"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Auswertungen (Suchanfragen veröffentlichen)"
-										/>
-									</object>
-									<named-member name="OwnerRole"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="false"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Auswertungen (Suchanfragen bearbeiten)"
-										/>
-									</object>
-									<named-member name="OwnerRole"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="false"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Druecken"
-							business-object="Knopf"
-						>
-							<parameters>
-								<parameter name="Name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="Speichern"
-									/>
-								</parameter>
-							</parameters>
-						</action>
-					</actions>
-				</action>
-			</actions>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 			comment="Delete user"
 		>
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.DelGlobalVariableOp"
-					name="publisher"
-				/>
-				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-					template="script:/Rolle/Action-Rolle-Loeschen.xml"
-					template-name-comment="Rolle Loeschen"
+				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+					business-action="Loeschen"
+					business-object="Nutzer"
 				>
 					<parameters>
-						<parameter name="Berechtigungsstruktur">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="Zentrale Berechtigungen"
-							/>
-						</parameter>
-						<parameter name="Name">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="publisher"
-							/>
-						</parameter>
+						<parameter name="kontext"
+							value="User_TestPersistentReportSecurity_1"
+						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
@@ -2817,23 +1853,9 @@
 					business-object="Nutzer"
 				>
 					<parameters>
-						<parameter name="kontext">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_1"
-							/>
-						</parameter>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Loeschen"
-					business-object="Nutzer"
-				>
-					<parameters>
-						<parameter name="kontext">
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-								string="User_TestPersistentReportSecurity_2"
-							/>
-						</parameter>
+						<parameter name="kontext"
+							value="User_TestPersistentReportSecurity_2"
+						/>
 					</parameters>
 				</action>
 			</actions>

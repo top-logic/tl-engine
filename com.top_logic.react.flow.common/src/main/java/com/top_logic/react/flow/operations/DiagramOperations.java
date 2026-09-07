@@ -44,6 +44,27 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 
 	@Override
 	default void draw(SvgWriter out) {
+		draw(out, null, null);
+	}
+
+	/**
+	 * Draws this diagram as a standalone SVG document that carries the font defaults of the
+	 * {@link RenderContext} it was {@link #layout(RenderContext) laid out} with.
+	 *
+	 * <p>
+	 * A standalone document has no external stylesheet, so text without an explicit font would be
+	 * rendered in the viewer's default font instead of the one the layout reserved space for. Use
+	 * this method (not {@link #draw(SvgWriter)}) whenever the result is written to a file or
+	 * shipped as an export.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context this diagram was laid out with, or {@code null} to omit the font defaults
+	 *        (the surrounding document supplies them).
+	 * @param extraStyles
+	 *        Additional CSS rules to embed, or {@code null} for none.
+	 */
+	default void draw(SvgWriter out, RenderContext context, CharSequence extraStyles) {
 		Registration clickHandler = self().getClickHandler();
 		if (clickHandler != null) {
 			clickHandler.cancel();
@@ -59,6 +80,15 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 			self().getViewBoxY(),
 			self().getViewBoxWidth(),
 			self().getViewBoxHeight());
+		if (context != null) {
+			// The font the layout measured with, as presentation attributes on the root: text
+			// inherits it, an explicit font on a text or from a stylesheet rule still overrides it,
+			// and no selector support is required of the renderer.
+			out.setTextStyle(context.getDefaultFontDeclaration(), context.getDefaultFontSizePx(), null);
+		}
+		if (extraStyles != null) {
+			out.style(extraStyles);
+		}
 		self().setClickHandler(out.attachOnClick(this, self()));
 		out.write(root);
 		out.endSvg();

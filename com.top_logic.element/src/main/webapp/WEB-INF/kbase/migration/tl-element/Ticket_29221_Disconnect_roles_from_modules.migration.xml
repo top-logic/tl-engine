@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29221_Disconnect_roles_from_modules"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29384_unify_sequence_names"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<create-object
+			no-type-column="true"
+			table="BoundedRole"
+			type="tl.accounts:Role"
+		>
+			<values>
+				<value
+					column="NAME"
+					column-type="string"
+					value="navigation"
+				/>
+				<value
+					column="IS_SYSTEM"
+					column-type="boolean"
+					value="true"
+				/>
+				<value
+					column="DESCRIPTION"
+					column-type="string"
+					value="The navigation role is a technical role designed to be recursively inherited from an element to all its parent elements within a tree structure. This ensures that if a user has permission to navigate to an element, they can do so step by step, starting from the root of the tree."
+				/>
+			</values>
+		</create-object>
+		<create-object
+			no-type-column="true"
+			table="BoundedRole"
+			type="tl.accounts:Role"
+		>
+			<values>
+				<value
+					column="NAME"
+					column-type="string"
+					value="selection"
+				/>
+				<value
+					column="IS_SYSTEM"
+					column-type="boolean"
+					value="true"
+				/>
+				<value
+					column="DESCRIPTION"
+					column-type="string"
+					value="The selection role is a technical role designed to be assigned to elements that users should be able to select. A user who is assigned the selection role on an object should also be assigned the navigation role on that object."
+				/>
+			</values>
+		</create-object>
+
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_29221_Disconnect_roles_from_modules.model.xslt"
+		/>
+
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			column="annotations"
+			table="TLModule"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_29221_Disconnect_roles_from_modules.column.xslt"
+		/>
+
+		<processor class="com.top_logic.knowledge.service.migration.processors.RemoveApplicationTypesProcessor">
+			<application-tables>
+				<application-table name="definesRole"
+					db-name="DEFINES_ROLE"
+				/>
+			</application-tables>
+		</processor>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

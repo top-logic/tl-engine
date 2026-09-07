@@ -19,9 +19,13 @@ ace.define('ace/mode/tlscript', function(require, exports, module) {
 				
 				var line = session.getLine(pos.row);
 				var prefixLine = line.substring(0, pos.column);
-				
+
+				var fullText = session.getValue();
+				var cursorOffset = session.doc.positionToIndex(pos);
+				var textToCursor = fullText.substring(0, cursorOffset);
+
 				// Delegates the computation of suggestions to the server.
-				services.ajax.execute('dispatchControlCommand', {controlCommand: 'tlScriptAutoCompletion', controlID: controlID, prefix: prefix, line: prefixLine });
+				services.ajax.execute('dispatchControlCommand', {controlCommand: 'tlScriptAutoCompletion', controlID: controlID, prefix: prefix, line: prefixLine, textToCursor: textToCursor });
 			},
 			
 			/**

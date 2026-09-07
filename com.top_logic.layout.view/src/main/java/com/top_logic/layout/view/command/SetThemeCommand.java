@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -25,6 +26,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * setting the {@code data-theme} attribute on the document element - no page reload.
  * </p>
  */
+@InApp
 public class SetThemeCommand implements ViewCommand {
 
 	/**

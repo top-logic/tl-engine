@@ -990,6 +990,12 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		SQLPart oldContext = setContext(sql, buffer);
 
 		sql.getExpr().visit(this, buffer);
+		try {
+			buffer.sqlDialect.appendLikeCollation(buffer);
+		} catch (IOException ex) {
+			// SimpleSQLBuffer does not throw IOException.
+			throw new IOError(ex);
+		}
 		buffer.append(" LIKE '");
 		String pattern = sql.getPattern();
 		// Escape potential single quotes.

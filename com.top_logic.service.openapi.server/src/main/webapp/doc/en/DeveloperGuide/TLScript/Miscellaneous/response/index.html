@@ -12,6 +12,8 @@
 
 <p>Creates a response object that is returned in response to an HTTP request.</p>
 
+<p>If the operation is executed within a transaction, the <code class="hljs inlineCode">statusCode</code> determines its outcome: a successful status (<code class="hljs inlineCode">2xx</code>) commits the transaction, any other status rolls it back. This ensures that no changes are persisted to the database when the response indicates a failure.</p>
+
 <h2>Parameters</h2>
 
 <table class="tlDocTable">

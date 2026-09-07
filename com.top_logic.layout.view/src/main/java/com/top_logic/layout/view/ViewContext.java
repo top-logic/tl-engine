@@ -13,12 +13,9 @@ import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.form.FormModel;
-import com.top_logic.layout.view.security.SecurityScope;
 import com.top_logic.layout.view.slot.SlotPath;
 import com.top_logic.layout.view.slot.SlotRegistry;
-import com.top_logic.layout.view.tiles.TileStackScope;
 
 /**
  * Hierarchical context for UIElement control creation.
@@ -56,10 +53,36 @@ public interface ViewContext extends ReactContext {
 	String getPersonalizationKey();
 
 	/**
-	 * The {@link CommandScope} of the nearest enclosing panel, or {@code null} if no panel is in
-	 * scope.
+	 * The scope of the given type established by an enclosing element via
+	 * {@link #withScope(Class, Object)}, or {@code null} if none is in scope.
+	 *
+	 * <p>
+	 * A generic, type-keyed registry for the scoped services an enclosing element makes available to
+	 * its descendants (e.g. {@link com.top_logic.layout.view.command.CommandScope}, a security scope,
+	 * an object-list scope). Application code can introduce its own scope types this way without
+	 * extending this interface.
+	 * </p>
+	 *
+	 * @param type
+	 *        The scope type used as the registry key.
 	 */
-	CommandScope getCommandScope();
+	<S> S getScope(Class<S> type);
+
+	/**
+	 * Creates a derived context with the given scope registered under the given type.
+	 *
+	 * <p>
+	 * Descendant contexts inherit the scope; a nested {@link #withScope(Class, Object)} for the same
+	 * type overrides (does not stack) it.
+	 * </p>
+	 *
+	 * @param type
+	 *        The scope type used as the registry key, typically the scope's interface.
+	 * @param scope
+	 *        The scope instance to establish for descendants.
+	 * @return A new context with the scope registered.
+	 */
+	<S> ViewContext withScope(Class<S> type, S scope);
 
 	/**
 	 * The {@link FormModel} of the nearest enclosing form element, or {@code null} if no form is in
@@ -106,76 +129,6 @@ public interface ViewContext extends ReactContext {
 	 *        The dirty channel, or {@code null}.
 	 */
 	void setDirtyChannel(DirtyChannel dirtyChannel);
-
-	/**
-	 * Creates a derived context with the given {@link CommandScope}.
-	 *
-	 * <p>
-	 * Called by panel elements to establish their command scope for child elements.
-	 * </p>
-	 *
-	 * @param scope
-	 *        The command scope to set.
-	 * @return A new context with the given command scope but same display context, personalization
-	 *         path, and channels.
-	 */
-	ViewContext withCommandScope(CommandScope scope);
-
-	/**
-	 * The {@link SecurityScope} established by the nearest enclosing removable unit that carries an
-	 * {@code <access-control>}, or {@code null} if none is in scope.
-	 *
-	 * <p>
-	 * Command-level security rules
-	 * ({@link com.top_logic.layout.view.security.SecurityRule}) default to this scope when they do
-	 * not name one explicitly, mirroring the legacy "one {@code PersBoundComp}, many command groups"
-	 * model: the command shares the role mapping of the unit that already gates its visibility.
-	 * </p>
-	 */
-	SecurityScope getSecurityScope();
-
-	/**
-	 * Creates a derived context whose {@link #getSecurityScope() security scope} is the given scope.
-	 *
-	 * <p>
-	 * Called by removable elements (nav-item, tab, tile) carrying an {@code <access-control>} when
-	 * building their content subtree, so that command rules built underneath default to the unit's
-	 * scope. Nested units override (not stack) the scope.
-	 * </p>
-	 *
-	 * @param scope
-	 *        The security scope to establish for descendants.
-	 * @return A new context with the given security scope.
-	 */
-	ViewContext withSecurityScope(SecurityScope scope);
-
-	/**
-	 * The {@link TileStackScope} of the enclosing
-	 * {@link com.top_logic.layout.view.tiles.TileStackElement &lt;tile-stack&gt;}, or
-	 * {@code null} if no tile stack is in scope.
-	 *
-	 * <p>
-	 * Used by {@link com.top_logic.layout.view.tiles.NavigatePushCommand &lt;navigate-push&gt;} to
-	 * resolve the target stack from within a mounted frame.
-	 * </p>
-	 */
-	TileStackScope getTileStackScope();
-
-	/**
-	 * Creates a derived context with the given {@link TileStackScope}.
-	 *
-	 * <p>
-	 * Called by {@link com.top_logic.layout.view.tiles.TileStackElement} when mounting a frame to
-	 * make the stack reachable for descendants. Nested stacks deliberately override (not inherit)
-	 * the scope - {@code <navigate-push>} from inside a frame always targets the nearest
-	 * enclosing stack.
-	 * </p>
-	 *
-	 * @param scope
-	 *        The tile stack scope to set.
-	 * @return A new context with the given scope.
-	 */
-	ViewContext withTileStackScope(TileStackScope scope);
 
 	/**
 	 * The {@link ContextMenuOpener} of the nearest enclosing frame, or {@code null} if no opener is
@@ -281,6 +234,48 @@ public interface ViewContext extends ReactContext {
 	 * @return {@code true} if a channel with this name exists.
 	 */
 	boolean hasChannel(String name);
+
+	/**
+	 * Creates a derived context whose channel namespace is a copy of this context's namespace with
+	 * the given channel added (replacing a same-named channel from the enclosing scope).
+	 *
+	 * <p>
+	 * Called by elements that instantiate a content template once per model object (e.g.
+	 * {@link com.top_logic.layout.view.list.ObjectListElement &lt;object-list&gt;}): each instance
+	 * gets its own context where the item channel resolves to that instance's object, while all
+	 * channels of the enclosing scope stay visible. The local channel does not leak into the
+	 * enclosing scope.
+	 * </p>
+	 *
+	 * @param name
+	 *        The local channel name.
+	 * @param channel
+	 *        The channel instance visible only in the derived context (and its children).
+	 * @return A new context with the extended channel namespace.
+	 */
+	ViewContext withLocalChannel(String name, ViewChannel channel);
+
+	/**
+	 * Creates a derived context for an embedded view: a fresh, empty channel namespace and a fresh
+	 * form model, while all other ambient scopes (registered {@link #withScope(Class, Object) scopes},
+	 * error sink, dirty channel, {@link #getSlotPath() slot path} and personalization key) are
+	 * inherited.
+	 *
+	 * <p>
+	 * This is the shared seam for instantiating a self-contained view with its own channel scope:
+	 * used by {@link ReferenceElement &lt;view-ref&gt;} for each embedded view, and reached by an
+	 * {@link com.top_logic.layout.view.list.ObjectListElement &lt;object-list&gt;} row whose content
+	 * is a {@code <view-ref>}. Inheriting the slot path keeps distinct positions (hence distinct
+	 * personalization) for multiple instances; inheriting the object list scope keeps
+	 * {@link com.top_logic.layout.view.list.RemoveElementAction &lt;remove-element&gt;} and
+	 * {@link com.top_logic.layout.view.list.LinkElementAction &lt;link-element&gt;} working inside a
+	 * referenced row view. Channels shared with the embedded view are established afterwards via
+	 * {@link #registerChannel(String, ViewChannel)}.
+	 * </p>
+	 *
+	 * @return A new context with an isolated channel namespace.
+	 */
+	ViewContext withIsolatedChannels();
 
 	/**
 	 * Resolves a {@link ChannelRef} to its runtime {@link ViewChannel}.

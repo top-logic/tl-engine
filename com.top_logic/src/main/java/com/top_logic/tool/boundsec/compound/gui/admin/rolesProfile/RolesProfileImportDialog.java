@@ -5,14 +5,10 @@
  */
 package com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
 import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.io.BinaryContent;
@@ -34,8 +30,6 @@ import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConfigTree;
-import com.top_logic.mig.html.layout.MainLayout;
-import com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent;
 import com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
@@ -106,7 +100,7 @@ public class RolesProfileImportDialog extends SimpleFormDialog {
 		Transaction transaction =
 			PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.IMPORT_ROLES_PROFILE);
 		try {
-			boolean importOk = importRolesProfileInternal(context, uploadedItem);
+			boolean importOk = importRolesProfileInternal(uploadedItem);
 			if (importOk) {
 				transaction.commit();
 				updateRolesProfileComponent();
@@ -121,14 +115,8 @@ public class RolesProfileImportDialog extends SimpleFormDialog {
 		}
 	}
 
-	private boolean importRolesProfileInternal(DisplayContext context, BinaryContent uploadedItem)
-			throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException,
-			ConfigurationException {
-		if (getRolesProfileComponent() instanceof EditRolesProfileComponent) {
-			// old rolesprofile component based on the current mainlayout.
-			MainLayout mainLayout = context.getLayoutContext().getMainLayout();
-			return new RolesProfileHandler().importProfiles(mainLayout, uploadedItem.getStream());
-		}
+	private boolean importRolesProfileInternal(BinaryContent uploadedItem)
+			throws FactoryConfigurationError, ConfigurationException {
 		Collection<LayoutConfigTree> layoutTrees =
 			((EditSecurityProfileComponent) getRolesProfileComponent()).getAvailableLayoutTrees();
 		new RolesProfileHandler().importProfiles(layoutTrees, uploadedItem);

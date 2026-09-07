@@ -36,6 +36,11 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
+	public void style(CharSequence css) {
+		_impl.style(css);
+	}
+
+	@Override
 	public void beginGroup(Object model) {
 		_impl.beginGroup(model);
 	}

@@ -178,7 +178,7 @@
 							<include name="com.top_logic.demo/structure/demoTypes/treeGrid/tree_grid.xml"
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="${namePrefix}"
-								securityObject="model"
+								securityObject="model(DemoTypes:DemoTypes.All)"
 							>
 								<inject>
 									<tabInfo label="${resPrefix}demoStructureDemoTypesTreeGrid.tab"/>
@@ -263,6 +263,7 @@
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="Demo"
 								objectTypes="DemoTypes:DemoTypes.A, DemoTypes:DemoTypes.B, DemoTypes:DemoTypes.C.All, DemoTypes:DemoTypes.X, DemoTypes:DemoTypes.L"
+								securityObject="model(DemoTypes:DemoTypes.All)"
 							>
 								<inject>
 									<tabInfo label="${resPrefix}demoStructureDemoTypesCompareTreeComponent.tab"/>

@@ -8,6 +8,7 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -19,12 +20,15 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.form.CompositionTableControl;
+import com.top_logic.layout.view.form.AttributeRowSetBinding;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.RowEditPolicy;
+import com.top_logic.layout.view.form.RowSetTableControl;
+import com.top_logic.layout.view.table.ColumnBinding;
 
 /**
- * Declarative {@link UIElement} that creates a {@link CompositionTableControl} for an inline
+ * Declarative {@link UIElement} that creates a {@link RowSetTableControl} for an inline
  * composition table within a form.
  *
  * <p>
@@ -47,6 +51,7 @@ import com.top_logic.layout.view.form.FormModel;
  * &lt;/composition-table&gt;
  * </pre>
  */
+@InApp
 public class CompositionTableElement implements UIElement {
 
 	/**
@@ -195,18 +200,20 @@ public class CompositionTableElement implements UIElement {
 		// FormElement always sets a FormControl as the FormModel.
 		FormControl formControl = (FormControl) formModel;
 
-		// Convert config to CompositionTableControl.ColumnConfig list.
-		List<CompositionTableControl.ColumnConfig> columnConfigs = new ArrayList<>();
+		List<RowSetTableControl.TableColumn> columns = new ArrayList<>();
 		if (_config.getColumns() != null) {
 			for (ColumnConfig col : _config.getColumns().getColumns()) {
-				columnConfigs.add(new CompositionTableControl.ColumnConfig(
-					col.getAttribute(), col.getReadonly()));
+				columns.add(new RowSetTableControl.TableColumn(
+					col.getAttribute(), col.getReadonly(), ColumnBinding.TYPE_DERIVED));
 			}
 		}
 
-		CompositionTableControl control = new CompositionTableControl(
-			context, formControl, _config.getAttribute(), columnConfigs, _config.getDetailDialog());
-		control.initTable();
+		String attribute = _config.getAttribute();
+		RowSetTableControl control = new RowSetTableControl(
+			context, formControl, new AttributeRowSetBinding(attribute), columns, RowEditPolicy.ALL);
+		control.setFallbackTitle(attribute);
+		control.setDetailDialog(_config.getDetailDialog());
+		control.init();
 		return control;
 	}
 }

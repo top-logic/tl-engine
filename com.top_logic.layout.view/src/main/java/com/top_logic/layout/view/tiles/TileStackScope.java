@@ -18,9 +18,9 @@ import com.top_logic.layout.view.channel.ViewChannel;
  *
  * <p>
  * Installed by the stack into its frame's child {@link com.top_logic.layout.view.ViewContext} via
- * {@link com.top_logic.layout.view.ViewContext#withTileStackScope(TileStackScope)}. Commands
+ * {@link com.top_logic.layout.view.ViewContext#withScope(Class, Object)}. Commands
  * inside a frame (such as {@link NavigatePushCommand &lt;navigate-push&gt;}) look it up via
- * {@link com.top_logic.layout.view.ViewContext#getTileStackScope()} and call
+ * {@link com.top_logic.layout.view.ViewContext#getScope(Class)} and call
  * {@link #push(String, ResKey, Map)} / {@link #pop()} / {@link #popTo(int)} on it.
  * </p>
  *

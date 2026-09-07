@@ -13,8 +13,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The serializable, per-user view state of a table: column order, widths, frozen count,
- * sort, filters, grouping, expansion, selection and paging.
+ * The serializable, per-user view state of a table: column order and selection, widths, frozen
+ * count, sort, filters, grouping, expansion, selection and paging.
  *
  * <p>
  * This single value object is both the personalization payload persisted via a
@@ -30,6 +30,8 @@ public class TableViewState {
 	public static final int SHOW_ALL = 0;
 
 	private List<String> _columnOrder = new ArrayList<>();
+
+	private Set<String> _hiddenColumns = new LinkedHashSet<>();
 
 	private Map<String, Integer> _widths = new LinkedHashMap<>();
 
@@ -61,6 +63,27 @@ public class TableViewState {
 	 */
 	public void setColumnOrder(List<String> columnOrder) {
 		_columnOrder = columnOrder;
+	}
+
+	/**
+	 * The columns the user removed from the display, by {@link Column#name() name}.
+	 *
+	 * <p>
+	 * A column missing from {@link #getColumnOrder()} is not enough to tell apart the two ways a
+	 * column can be absent: the user hid it, or it did not yet exist when this state was persisted.
+	 * Only the ones named here stay hidden when the state is restored; anything else the table
+	 * defines is appended as a new column.
+	 * </p>
+	 */
+	public Set<String> getHiddenColumns() {
+		return _hiddenColumns;
+	}
+
+	/**
+	 * @see #getHiddenColumns()
+	 */
+	public void setHiddenColumns(Set<String> hiddenColumns) {
+		_hiddenColumns = hiddenColumns;
 	}
 
 	/**

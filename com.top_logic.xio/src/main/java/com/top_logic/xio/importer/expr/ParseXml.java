@@ -27,6 +27,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractMethodBuilder;
@@ -47,9 +48,17 @@ import com.top_logic.xio.importer.handlers.Handler;
  * {@link GenericMethod} parsing an XML stream into an object graph using a configured
  * {@link XmlImporter} declaration.
  *
+ * <p>
+ * The import is performed with the {@link #usesSecurity() security setting} of the calling script,
+ * see {@link com.top_logic.xio.importer.binding.AbstractModelBinding#usesSecurity()}. In contrast to
+ * an import that a command triggers, this expression must not become a bypass: a script that is
+ * executed with the current user's access rights must not read or write through the importer what it
+ * may not read or write directly.
+ * </p>
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ParseXml extends GenericMethod {
+public class ParseXml extends GenericMethodWithSecurity {
 
 	private final Handler _importDefinition;
 
@@ -58,15 +67,17 @@ public class ParseXml extends GenericMethod {
 	 *
 	 * @param importDefinition
 	 *        The top-level import {@link Handler} describing how to interpret the XML input.
+	 * @param usesSecurity
+	 *        See {@link #usesSecurity()}.
 	 */
-	protected ParseXml(String name, SearchExpression[] arguments, Handler importDefinition) {
-		super(name, arguments);
+	protected ParseXml(String name, SearchExpression[] arguments, Handler importDefinition, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 		_importDefinition = importDefinition;
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new ParseXml(getName(), arguments, _importDefinition);
+		return new ParseXml(getName(), arguments, _importDefinition, usesSecurity());
 	}
 
 	@Override
@@ -109,8 +120,9 @@ public class ParseXml extends GenericMethod {
 		importer.setLogCreations(logCreations);
 
 		ModelBinding binding = transientImport
-			? new TransientModelBinding(ModelService.getApplicationModel())
-			: new ApplicationModelBinding(PersistencyLayer.getKnowledgeBase(), ModelService.getApplicationModel());
+			? new TransientModelBinding(ModelService.getApplicationModel(), usesSecurity())
+			: new ApplicationModelBinding(PersistencyLayer.getKnowledgeBase(), ModelService.getApplicationModel(),
+				usesSecurity());
 
 		Object result;
 		try (InputStream in = input.toData().getStream()) {
@@ -170,7 +182,7 @@ public class ParseXml extends GenericMethod {
 
 		@Override
 		public ParseXml build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			return new ParseXml(getName(), args, _importDefinition);
+			return new ParseXml(getName(), args, _importDefinition, true);
 		}
 
 		@Override

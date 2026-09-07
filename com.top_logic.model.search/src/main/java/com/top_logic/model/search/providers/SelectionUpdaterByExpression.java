@@ -63,6 +63,8 @@ public class SelectionUpdaterByExpression extends AbstractConfiguredInstance<Sel
 	@Override
 	public void updateSelection(Selectable selectable) {
 		Object currentSelection = selectable.getSelected();
+		// Note: The computed selection contains only objects the current user is allowed to read, the
+		// executor secures it, see QueryExecutor#executeWith(EvalContext, Args).
 		Object newSelection = _algorithm.execute(selectable.getModel(), currentSelection);
 		selectable.setSelected(newSelection);
 

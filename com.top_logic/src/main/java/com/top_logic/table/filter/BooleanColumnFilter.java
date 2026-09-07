@@ -15,14 +15,21 @@ import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
 
 /**
- * A tri-state {@link ColumnFilter} over {@link Boolean}-valued cells, accepting any subset
- * of {@code true} / {@code false} / no-value as configured by a {@link BooleanFilterState}.
+ * A {@link ColumnFilter} over {@link Boolean}-valued cells, accepting any subset of
+ * {@code true} / {@code false} / no-value as configured by a {@link BooleanFilterState}.
  *
  * <p>
  * The {@code true} / {@code false} options carry their own display labels so the filter can
  * present each value exactly as the column renders it (e.g. "Yes" / "No"). Use the
  * {@link #INSTANCE default} for the generic "True" / "False" wording, or
  * {@link #BooleanColumnFilter(ResKey, ResKey)} to match a column's value rendering.
+ * </p>
+ *
+ * <p>
+ * A tri-state column also offers the no-value option; for a two-valued column (whose cells are
+ * never empty) it would be an option that can never match, so
+ * {@link #BooleanColumnFilter(ResKey, ResKey, boolean) a non-nullable filter} drops it and offers
+ * just the two value options.
  * </p>
  */
 public class BooleanColumnFilter implements ColumnFilter<Boolean> {
@@ -35,13 +42,31 @@ public class BooleanColumnFilter implements ColumnFilter<Boolean> {
 
 	private final ResKey _falseLabel;
 
+	private final boolean _nullable;
+
 	/**
-	 * Creates a {@link BooleanColumnFilter} with explicit option labels for {@code true} and
-	 * {@code false}, so the filter matches the column's value rendering.
+	 * Creates a tri-state {@link BooleanColumnFilter} with explicit option labels for {@code true}
+	 * and {@code false}, so the filter matches the column's value rendering.
 	 */
 	public BooleanColumnFilter(ResKey trueLabel, ResKey falseLabel) {
+		this(trueLabel, falseLabel, true);
+	}
+
+	/**
+	 * Creates a {@link BooleanColumnFilter}.
+	 *
+	 * @param trueLabel
+	 *        The label presenting the {@code true} option.
+	 * @param falseLabel
+	 *        The label presenting the {@code false} option.
+	 * @param nullable
+	 *        Whether the column has cells without a value, see
+	 *        {@link com.top_logic.table.FilterInput.Bool#nullable()}.
+	 */
+	public BooleanColumnFilter(ResKey trueLabel, ResKey falseLabel, boolean nullable) {
 		_trueLabel = trueLabel;
 		_falseLabel = falseLabel;
+		_nullable = nullable;
 	}
 
 	/** The label presenting the {@code true} option. */
@@ -56,7 +81,7 @@ public class BooleanColumnFilter implements ColumnFilter<Boolean> {
 
 	@Override
 	public FilterInput input() {
-		return new FilterInput.Bool();
+		return new FilterInput.Bool(_nullable);
 	}
 
 	@Override

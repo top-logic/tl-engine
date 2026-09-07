@@ -33,10 +33,12 @@ public class GroupModeObserver extends ModeObserver {
 	 *        Model to observe.
 	 * @param attribute
 	 *        The attribute to observe. Maybe <code>null</code>.
+	 * @param editMode
+	 *        Whether the observed form is in edit mode.
 	 */
 	public GroupModeObserver(AttributeUpdateContainer updateContainer, ModeSelector modeSelector, TLObject object,
-			TLStructuredTypePart attribute, VisibilityModel visibilityModel) {
-		super(updateContainer, modeSelector, object, attribute);
+			TLStructuredTypePart attribute, VisibilityModel visibilityModel, boolean editMode) {
+		super(updateContainer, modeSelector, object, attribute, editMode);
 
 		_visibilityModel = visibilityModel;
 	}

@@ -5,7 +5,6 @@
  */
 package test.com.top_logic.react.flow.server.layout;
 
-import java.util.List;
 
 import junit.framework.TestCase;
 

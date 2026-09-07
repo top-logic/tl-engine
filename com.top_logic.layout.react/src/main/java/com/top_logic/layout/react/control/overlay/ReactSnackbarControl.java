@@ -205,10 +205,10 @@ public class ReactSnackbarControl extends ReactControl {
 
 
 	/**
-	 * Rendering-only state keys, omitted from the headless agent projection.
+	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override
-	protected java.util.Set<String> agentPresentationKeys() {
+	protected java.util.Set<String> scriptingPresentationKeys() {
 		return java.util.Set.of("duration", "generation", "variant");
 	}
 

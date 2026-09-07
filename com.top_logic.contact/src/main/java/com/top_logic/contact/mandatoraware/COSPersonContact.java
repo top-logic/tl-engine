@@ -6,9 +6,11 @@
 package com.top_logic.contact.mandatoraware;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.contact.business.AbstractContact;
 import com.top_logic.contact.business.CompanyContact;
@@ -59,11 +61,11 @@ public class COSPersonContact extends PersonContact implements COSContactConstan
     /**
      * Use Mandator as security parent
      *
-     * @see com.top_logic.contact.business.PersonContact#getSecurityParent()
+     * @see com.top_logic.contact.business.PersonContact#getSecurityParents()
      */
     @Override
-	public BoundObject getSecurityParent() {
-        return this.getMandator();
+	public Collection<? extends BoundObject> getSecurityParents() {
+		return CollectionUtil.singletonOrEmptyList(this.getMandator());
     }
 
     /**

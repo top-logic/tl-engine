@@ -1,0 +1,45 @@
+<h2>Syntax</h2>
+
+<pre><code>$object.canRead()
+
+canRead($object)
+</code></pre>
+
+<h2>Description</h2>
+
+<p>Checks whether the currently logged-in user is allowed to read the given object and returns a boolean.</p>
+
+<p>In contrast to the implicit security enforcement when accessing attributes (which returns the empty value for a non-readable object), this function never fails and never filters. It lets a script branch explicitly on missing rights &ndash; for example to implement an alternative control flow for objects that must not be shown.</p>
+
+<p>The check is evaluated for the currently logged-in user and follows the same rules as the implicit permission enforcement: deny-by-default, role inheritance along the security hierarchy, and full access for administrators or executions in a system context.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Type</th><th>Type Description</th><th>Mandatory</th><th>Default</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>object</td><td>Business object</td><td>The object whose read access is checked.</td><td>yes</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p>
+
+<p><code class="hljs inlineCode">true</code> if the current user may read the object, <code class="hljs inlineCode">false</code> otherwise (in particular for <code class="hljs inlineCode">null</code>).</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1</h3>
+
+<pre><code>all(`my.module:Contract`).filter(c -&gt; $c.canRead())</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> All contracts that the logged-in user is allowed to read.</p>
+
+<h3>Example 2</h3>
+
+<pre><code>if($contract.canRead(), $contract.get(`my.module:Contract#name`), "(not visible)")</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> The contract name if it is readable, otherwise a placeholder &ndash; without provoking a permission error.</p>

@@ -39,6 +39,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * AuthenticationDevice and PersonDataAccessDevice against LDAP.
@@ -233,27 +234,34 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 				continue;
 			}
 
-			Person account = Person.byName(userName);
-			if (account == null) {
-				account = Person.create(PersistencyLayer.getKnowledgeBase(), userName, this);
-			}
-			existingPersons.add(account);
-			UserInterface localUser = account.getUser();
-			if (localUser != null) {
-				String surname = (String) ldapUser.getAttributeValue(UserInterface.NAME);
-				if (StringServices.isEmpty(surname)) {
-					Logger.warn(
-						"Encountered empty surname for user '" + userName + "' in attribute '"
-								+ ldapUser.getExternalAttrName(UserInterface.NAME) + "' in '" + getDeviceID()
-								+ "'. Using '" + userName + "' as name.",
-						this);
-					surname = userName;
+			try {
+				Person account = Person.byName(userName);
+				if (account == null) {
+					account = Person.create(PersistencyLayer.getKnowledgeBase(), userName, this);
 				}
-				localUser.setName(surname);
-				localUser.setFirstName((String) ldapUser.getAttributeValue(UserInterface.FIRST_NAME));
-				localUser.setTitle((String) ldapUser.getAttributeValue(UserInterface.TITLE));
-				localUser.setPhone((String) ldapUser.getAttributeValue(UserInterface.PHONE));
-				localUser.setEMail((String) ldapUser.getAttributeValue(UserInterface.EMAIL));
+				existingPersons.add(account);
+				UserInterface localUser = account.getUser();
+				if (localUser != null) {
+					String surname = (String) ldapUser.getAttributeValue(UserInterface.NAME);
+					if (StringServices.isEmpty(surname)) {
+						Logger.warn(
+							"Encountered empty surname for user '" + userName + "' in attribute '"
+									+ ldapUser.getExternalAttrName(UserInterface.NAME) + "' in '" + getDeviceID()
+									+ "'. Using '" + userName + "' as name.",
+							this);
+						surname = userName;
+					}
+					localUser.setName(surname);
+					localUser.setFirstName((String) ldapUser.getAttributeValue(UserInterface.FIRST_NAME));
+					localUser.setTitle((String) ldapUser.getAttributeValue(UserInterface.TITLE));
+					localUser.setPhone((String) ldapUser.getAttributeValue(UserInterface.PHONE));
+					localUser.setEMail((String) ldapUser.getAttributeValue(UserInterface.EMAIL));
+				}
+			} catch (TopLogicException ex) {
+				// A single directory account with an invalid or case-conflicting name must not abort
+				// the synchronization of all other accounts (Ticket #29423).
+				Logger.error("Cannot synchronize account '" + userName + "' from '" + getDeviceID()
+					+ "' (invalid or conflicting login name) - entry skipped.", ex, this);
 			}
 		}
 		return existingPersons;

@@ -51,6 +51,9 @@
 
 	<fileSets>
 		<fileSet filtered="true">
+			<directory>.mvn</directory>
+		</fileSet>
+		<fileSet filtered="true">
 			<directory>.settings</directory>
 		</fileSet>
 		<fileSet filtered="true">
@@ -69,6 +72,7 @@
 				<include>.factorypath</include>
 				<include>.gitignore</include>
 				<include>.project</include>
+				<include>local.conf.xml.template</include>
 			</includes>
 		</fileSet>
 	</fileSets>

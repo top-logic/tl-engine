@@ -8,9 +8,18 @@ package test.com.top_logic.model.search.persistency.attribute.macro.ui;
 import java.util.Collection;
 
 import junit.framework.Test;
+import junit.framework.TestSuite;
 
+import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import test.com.top_logic.layout.TestControl;
 
+import com.top_logic.basic.SessionContext;
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.HiddenField;
 import com.top_logic.model.TLModel;
@@ -19,6 +28,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.persistency.attribute.macro.ui.MacroDisplayControl;
 import com.top_logic.model.search.persistency.attribute.tempate.TemplateStorageMapping;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -37,12 +47,36 @@ import com.top_logic.util.model.ModelService;
 @SuppressWarnings("javadoc")
 public class TestMacroDisplayControl extends TestControl {
 
+	private Person _user;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			_user = TestPerson.createPerson("testMacroDisplayControl");
+			tx.commit();
+		}
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		try (Transaction tx =
+			_user.tKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			_user.tDelete();
+			tx.commit();
+		}
+		super.tearDown();
+	}
+
 	public void testMacroWithModelAccess() {
 		TLModel applicationModel = ModelService.getApplicationModel();
 		Collection<TLModule> modules = applicationModel.getModules();
 		assertTrue(!modules.isEmpty());
 
 		SearchExpression macro = createMacro("<b>name: {$model.get(`tl.model:TLModule#name`)}</b>");
+
+		becomeUser(PersonManager.getManager().getRoot());
 
 		for (TLModule module : modules) {
 			MacroDisplayControl control = createControl(module, macro);
@@ -51,6 +85,29 @@ public class TestMacroDisplayControl extends TestControl {
 			assertContains("<b>name: " + module.getName() + "</b>", output);
 		}
 
+		becomeUser(_user);
+
+		for (TLModule module : modules) {
+			MacroDisplayControl control = createControl(module, macro);
+
+			String output = writeControl(control);
+
+			assertContains("User has no right to see name of module.", "<b>name: " + "" + "</b>", output);
+		}
+
+	}
+
+	/**
+	 * Establishes a (non-system) person context for the given user.
+	 *
+	 * <p>
+	 * Setting the person automatically derives a {@link SessionContext#PERSON_ID_PREFIX person}
+	 * context id, so {@link ThreadContext#isSystemContext()} is {@code false} and the security
+	 * check is not bypassed.
+	 * </p>
+	 */
+	private static void becomeUser(Person person) {
+		TLContext.getContext().setCurrentPerson(person);
 	}
 
 	public void testMacroOutput() {
@@ -85,7 +142,9 @@ public class TestMacroDisplayControl extends TestControl {
 	}
 
 	public static Test suite() {
-		return TestControl.suite(TestMacroDisplayControl.class);
+		Test test = new TestSuite(TestMacroDisplayControl.class);
+		test = ServiceTestSetup.createSetup(test, PersonManager.Module.INSTANCE);
+		return TestControl.suite(test);
 	}
 
 }

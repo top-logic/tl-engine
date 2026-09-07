@@ -9,7 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -21,7 +25,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.view.UIElement;
@@ -42,6 +45,7 @@ import com.top_logic.util.Resources;
  * creates the content controls on demand and caches them.
  * </p>
  */
+@InApp
 public class TabBarElement implements UIElement {
 
 	/**
@@ -140,6 +144,7 @@ public class TabBarElement implements UIElement {
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 
@@ -157,12 +162,25 @@ public class TabBarElement implements UIElement {
 			List<UIElement> children = tabConfig.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
-			String label = Resources.getInstance().getString(tabConfig.getLabel());
+			String label = label(tabConfig);
 			String route = tabConfig.getRoute();
 			_tabs.add(new TabEntry(tabConfig.getId(), label, route, tabConfig.getIcon(),
 				tabConfig.getAccessControl(), children));
 		}
 		_activeTab = config.getActiveTab();
+	}
+
+	/**
+	 * The label to display on the tab.
+	 *
+	 * <p>
+	 * Falls back to the tab's {@link TabConfig#getId() ID} while no label is configured, so that a tab
+	 * added to a tab bar is visible and can be selected instead of rendering as a blank one.
+	 * </p>
+	 */
+	private static String label(TabConfig tabConfig) {
+		String label = Resources.getInstance().getString(tabConfig.getLabel(), null);
+		return StringServices.isEmpty(label) ? tabConfig.getId() : label;
 	}
 
 	@Override
@@ -200,17 +218,11 @@ public class TabBarElement implements UIElement {
 			.withChildSlotPath(entry._id);
 		// Establish the tab's security scope so command rules in its content default to it.
 		SecurityScope scope = AccessChecks.resolveScope(entry._accessControl());
-		ViewContext tabContext = scope != null ? baseContext.withSecurityScope(scope) : baseContext;
+		ViewContext tabContext = scope != null ? baseContext.withScope(SecurityScope.class, scope) : baseContext;
 		tabContext.setDirtyChannel(dirtyChannel);
 
 		List<UIElement> elements = entry._children;
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(tabContext);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(tabContext))
-			.collect(Collectors.toList());
-		return new ReactStackControl(tabContext, children);
+		return ContentControls.toControl(elements, tabContext);
 	}
 
 	private record TabEntry(String _id, String _label, String _route, String _icon,

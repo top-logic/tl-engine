@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
@@ -17,15 +18,15 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.Utils;
 
 /**
- * {@link SystemProperties} reads a section with system properties from the
- * configuration and transforms the read properties to
+ * Reads a section of system properties from the configuration and applies them as Java
  * {@link System#getProperties() system properties}.
- * 
+ *
  * No system properties are set in top-logic, but some examples are provided.
  * This may not work with a Security manager, as this may break global security.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("System properties")
 public class SystemProperties extends ManagedClass {
 	
 	/**

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.tiles;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
@@ -24,8 +25,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * {@link TileBreadcrumbElement &lt;tile-breadcrumb&gt;} write directly to the path channel.
  * </p>
  *
- * @implNote Resolves the target stack via {@link ViewContext#getTileStackScope()}.
+ * @implNote Resolves the target stack via {@link ViewContext#getScope(Class)}.
  */
+@InApp
 public class NavigatePopCommand implements ViewCommand {
 
 	/**
@@ -53,7 +55,7 @@ public class NavigatePopCommand implements ViewCommand {
 			throw new IllegalStateException(
 				"<navigate-pop> requires a ViewContext, got " + context.getClass().getName());
 		}
-		TileStackScope scope = viewContext.getTileStackScope();
+		TileStackScope scope = viewContext.getScope(TileStackScope.class);
 		if (scope == null) {
 			throw new IllegalStateException(
 				"<navigate-pop> executed outside of any enclosing <tile-stack>.");

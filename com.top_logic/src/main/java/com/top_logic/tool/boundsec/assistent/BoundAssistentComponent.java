@@ -31,7 +31,6 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundLayout;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.SecurityObjectProvider;
-import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
 import com.top_logic.tool.boundsec.WithSecurityMaster;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.Resources;
@@ -47,8 +46,7 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 	 * Configuration options for {@link BoundAssistentComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends AssistentComponent.Config, BoundCheckerLayoutConfig, SecurityObjectProviderConfig,
-			WithSecurityMaster {
+	public interface Config extends AssistentComponent.Config, BoundCheckerLayoutConfig, WithSecurityMaster {
 
 		/**
 		 * @see SubComponentConfig#getComponents()
@@ -82,7 +80,7 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 		if (commandGroups.isEmpty()) {
 			commandGroups = SimpleBoundCommandGroup.READ_SET;
         }
-		_securityProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
+		_securityProvider = config.resolveSecurityObject(context);
     }
 
 	@Override

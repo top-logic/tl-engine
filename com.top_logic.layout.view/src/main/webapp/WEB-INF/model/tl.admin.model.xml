@@ -64,10 +64,11 @@
 
 		<!--
 			Transient-only type holding the input of the "enter maintenance mode" dialog: the delay (in
-			minutes; empty or zero enters immediately) before the system switches to maintenance mode, and
-			an optional message shown to logged-in users. Instances are created with
-			new(`tl.admin:MaintenanceMode`, transient: true) and are never persisted (the action drives the
-			MaintenanceWindowManager directly), so no table is declared.
+			minutes; empty or zero enters immediately) before the system switches to maintenance mode,
+			whether users may still log in during that delay, and an optional message shown to logged-in
+			users. Instances are created with new(`tl.admin:MaintenanceMode`, transient: true) and are
+			never persisted (the action drives the MaintenanceWindowManager directly), so no table is
+			declared.
 		-->
 		<class name="MaintenanceMode">
 			<generalizations>
@@ -76,6 +77,9 @@
 			<attributes>
 				<property name="delayMinutes"
 					type="tl.core:Integer"
+				/>
+				<property name="allowLogin"
+					type="tl.core:Boolean"
 				/>
 				<property name="message"
 					type="tl.core:String"

@@ -68,7 +68,7 @@ public class TestBPMLImporter extends BasicTestCase {
 		Resources bundle = Resources.getInstance();
 		_importer = new BPMLImporter(_log.asI18NLog(bundle));
 		_kb = PersistencyLayer.getKnowledgeBase();
-		_binding = new ApplicationModelBinding(_kb, ModelService.getApplicationModel());
+		_binding = new ApplicationModelBinding(_kb, ModelService.getApplicationModel(), false);
 	}
 
 	@Override

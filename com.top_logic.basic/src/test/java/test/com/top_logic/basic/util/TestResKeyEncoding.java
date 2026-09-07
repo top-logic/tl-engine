@@ -158,6 +158,73 @@ public class TestResKeyEncoding extends TestCase {
 		assertNull(ResKey.decode(null));
 	}
 
+	public void testDecodeMalformedTaggedString() {
+		try {
+			ResKey.decode("#(unterminated");
+			fail("Expected IllegalArgumentException for an unterminated tagged resource key.");
+		} catch (IllegalArgumentException ex) {
+			// Expected: malformed input must be classified as illegal argument, not crash with NPE.
+		}
+	}
+
+	/**
+	 * A tagged translation that carries no translation at all is malformed too - and, unlike
+	 * {@link #testDecodeMalformedTaggedString()}, it consumes its whole input, so it reaches the
+	 * "input fully consumed" return rather than the trailing-content check.
+	 */
+	public void testDecodeTaggedStringWithoutAnyTranslation() {
+		for (String malformed : new String[] { "#(", "#()" }) {
+			try {
+				ResKey decoded = ResKey.decode(malformed);
+				fail("Expected IllegalArgumentException for '" + malformed + "', got: " + decoded);
+			} catch (IllegalArgumentException ex) {
+				// Expected: malformed input must be classified as illegal argument, rather than
+				// handed back as a null key that fails wherever it is later stored or resolved.
+			}
+		}
+	}
+
+	/**
+	 * The literal-string and fallback encodings must keep decoding - both reach the same null
+	 * {@code plain} the malformed tagged input does, so a guard placed too early would reject them.
+	 */
+	public void testDecodeLiteralAndFallbackStillWork() {
+		assertRoundtrip(ResKey.text("a literal"));
+		assertRoundtrip(ResKey.fallback(ResKey.internalCreate("a.b"), ResKey.text("fb")));
+	}
+
+	private void assertRoundtrip(ResKey key) {
+		String encoded = ResKey.encode(key);
+		assertEquals("Decoding '" + encoded + "' must yield the same encoding again.",
+			encoded, ResKey.encode(ResKey.decode(encoded)));
+	}
+
+	public void testDecodeMalformedArgumentsWithoutKey() {
+		try {
+			ResKey.decode("/i5/i6");
+			fail(
+				"Expected IllegalArgumentException for arguments without any key that do not encode a single literal string.");
+		} catch (IllegalArgumentException ex) {
+			// Expected: malformed input must be classified as illegal argument, not crash with NPE.
+		}
+	}
+
+	public void testValueFormatRejectsMalformedInput() {
+		try {
+			ResKey.ValueFormat.INSTANCE.getValue("test", "#(unterminated");
+			fail("Expected ConfigurationException for malformed resource key input.");
+		} catch (ConfigurationException ex) {
+			// Expected: this is the exception the configuration editor turns into a field error.
+			assertTrue(ex.getMessage().contains("Invalid resource key"));
+		}
+	}
+
+	public void testDecodeWellFormedRoundTrip() {
+		assertEncodeDecode(ResKey.text("Hello world"));
+		assertEncodeDecode(message("Message 1", Long.valueOf(123)));
+		assertEncodeDecode(ResKey.forTest("some.key"));
+	}
+
 	public void testDecodeLiteralArg() {
 		ResKey result = ResKey.decode(
 			"class.com.top_logic.mig.html.layout.I18NConstants.CONFIGURED_COMPONENT__NAME/[#(\"TestButtonCreationForExisitingDialogTable\"@de, tooltip: {\"TestButtonCreationForExisitingDialogTable\"@de})]");

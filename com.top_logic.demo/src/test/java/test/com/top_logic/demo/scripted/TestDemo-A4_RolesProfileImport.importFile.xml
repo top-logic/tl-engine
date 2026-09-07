@@ -2,7 +2,7 @@
 
 <security>
 	<profiles>
-		<profile name="SecurityStructure.Role_TestRolesProfileImport_01">
+		<profile name="Role_TestRolesProfileImport_01">
 			<view name="admin/index.layout.xml#adminView">
 				<commandGroup name="Read"/>
 			</view>

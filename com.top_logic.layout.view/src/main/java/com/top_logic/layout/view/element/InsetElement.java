@@ -6,8 +6,8 @@
 package com.top_logic.layout.view.element;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
@@ -15,7 +15,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactInsetControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -33,6 +32,7 @@ import com.top_logic.layout.view.ViewContext;
  *           names a content property (e.g. on {@code <card>}), which the tag resolver would treat as
  *           ambiguous.
  */
+@InApp
 public class InsetElement extends ContainerElement {
 
 	/**
@@ -58,15 +58,7 @@ public class InsetElement extends ContainerElement {
 	public IReactControl createControl(ViewContext context) {
 		List<IReactControl> childControls = createChildControls(context);
 
-		ReactControl content;
-		if (childControls.size() == 1) {
-			content = (ReactControl) childControls.get(0);
-		} else {
-			List<ReactControl> reactChildren = childControls.stream()
-				.map(c -> (ReactControl) c)
-				.collect(Collectors.toList());
-			content = new ReactStackControl(context, reactChildren);
-		}
+		ReactControl content = ContentControls.combine(context, childControls);
 
 		return new ReactInsetControl(context, content);
 	}

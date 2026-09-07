@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29221_Remove_security_domain"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			table="TemplateLayouts"
+			column="arguments"
+			transform="classpath:/com/top_logic/layout/tools/ticket29221/RemoveSecurityDomain.xslt"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

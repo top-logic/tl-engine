@@ -31,17 +31,18 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.reporting.flex.chart.config.color.HexEncodedPaint;
 
 /**
- * Service initializing the current {@link ChartTheme} in the {@link ChartFactory} to a configured
- * value.
- * 
+ * Applies the configured visual theme used when rendering charts.
+ *
  * @author <a href=mailto:cca@top-logic.com>cca</a>
  */
+@Label("Chart theme")
 public class ChartThemeConfigurator extends ManagedClass {
 
 	/**

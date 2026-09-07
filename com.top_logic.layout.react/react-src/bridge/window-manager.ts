@@ -131,6 +131,11 @@ function notifyWindowBlocked(windowId: string): void {
 /**
  * Send a self-close notification on page unload.
  * Handles the case where the opener has closed and nobody is polling this window.
+ *
+ * `beforeunload` cannot tell a reload from a close, so the notification is marked as an unload:
+ * the server then keeps the window's state for a grace period instead of tearing it down, and a
+ * reload arriving within that period keeps its control tree. A window that really went away is
+ * collected once the grace period has passed.
  */
 export function initSelfCloseNotification(): void {
   window.addEventListener('beforeunload', () => {
@@ -145,7 +150,7 @@ export function initSelfCloseNotification(): void {
       controlId: '',
       command: 'windowClosed',
       windowName: myWindowId,
-      arguments: { windowId: myWindowId },
+      arguments: { windowId: myWindowId, unload: true },
     });
     const blob = new Blob([payload], { type: 'application/json' });
     navigator.sendBeacon(`${contextPath}/react-api/command`, blob);

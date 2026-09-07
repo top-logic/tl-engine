@@ -12,7 +12,7 @@
 				<value>
 					<property name="tabLabel"/>
 					<property name="tabIcon"/>
-					<property name="securityDomain"/>
+
 					<property name="helpID"/>
 				</value>
 			</display-order>
@@ -47,7 +47,6 @@
 	<securityLayout name="TabLayout"
 		components="${components}"
 		helpID="${helpID}"
-		securityDomain="${securityDomain}"
 		titleKey="${tabLabel}"
 	>
 		<tabInfo

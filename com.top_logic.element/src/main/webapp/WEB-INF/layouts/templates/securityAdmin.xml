@@ -27,20 +27,7 @@
 				titleKey="admin.roles.filter.title"
 			>
 				<components>
-					<layoutControl componentName="${tabBarName}">
-						<layoutInfo
-							scrolleable="false"
-							size="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%"
-						/>
-						<componentControlProvider class="com.top_logic.layout.tabbar.TabBarControlProvider"/>
-					</layoutControl>
-
-					<include name="com.top_logic.element/admin/security/securityStructure.xml"
-						toolbar="false"
-					/>
-
 					<tabbar name="${tabBarName}">
-						<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
 						<components>${components}</components>
 					</tabbar>
 				</components>

@@ -44,11 +44,6 @@
 	</services>
 
 	<configs>
-		<config config:interface="com.top_logic.base.security.SecurityConfiguration">
-			<layout>
-				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper" />
-			</layout>
-		</config>
 	</configs>
 	
 </application>

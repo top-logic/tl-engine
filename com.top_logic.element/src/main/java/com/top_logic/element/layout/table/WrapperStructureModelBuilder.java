@@ -34,7 +34,7 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.component.model.ModelProvider;
+import com.top_logic.layout.component.model.SecurityRootModelProvider;
 import com.top_logic.layout.tree.component.AbstractTreeModelBuilder;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -45,7 +45,6 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.export.PreloadContext;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider;
 
 /**
  * Build a tree structure out of wrappers which are no structured elements.
@@ -121,7 +120,7 @@ public class WrapperStructureModelBuilder<C extends WrapperStructureModelBuilder
 	public WrapperStructureModelBuilder(InstantiationContext context, C config) throws ConfigurationException {
 		_config = config;
 		_builder = context.getInstance(config.getRootObjects());
-		_root = (Wrapper) new WrapperStructureModelProvider().getBusinessModel(null);
+		_root = (Wrapper) SecurityRootModelProvider.INSTANCE.getBusinessModel(null);
 		indexParts(context);
 	}
 
@@ -383,16 +382,4 @@ public class WrapperStructureModelBuilder<C extends WrapperStructureModelBuilder
 
 	}
 
-	/**
-	 * Model provider for a generic root object.
-	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
-	 */
-	public static class WrapperStructureModelProvider implements ModelProvider {
-
-		@Override
-		public Object getBusinessModel(LayoutComponent businessComponent) {
-			return SecurityRootObjectProvider.INSTANCE.getSecurityRoot();
-		}
-	}
 }

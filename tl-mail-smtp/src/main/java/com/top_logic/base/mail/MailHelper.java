@@ -24,6 +24,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.Named;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -41,12 +42,13 @@ import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Resources;
 
 /**
- * The MailHelper provides useful methods for sending mails.
- * 
+ * Provides convenience methods for composing and sending e-mails.
+ *
  * Instead of building up {@link Mail} objects yourself, you are encouraged to use this helper.
- * 
+ *
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
+@Label("Mail helper")
 public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Config<MailHelper>> {
 
     /** Attribute - subject of the e-mail */

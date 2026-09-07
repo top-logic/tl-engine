@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control.button;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -222,9 +223,30 @@ public class ReactButtonControl extends ReactControl {
 
 	/**
 	 * Handles the click command from the React client.
+	 *
+	 * <p>
+	 * A button that is not offered — hidden or disabled — is not pressed, whatever the client
+	 * sends. That holds for every button, not only for one backed by a {@link CommandModel}: a
+	 * hidden control keeps its React component tree (it is merely styled away), so it stays
+	 * mounted and its {@code click} command stays addressable by anything that can talk to the
+	 * server. A button built from a plain {@link ButtonAction} — the languages button of an
+	 * internationalized field, hidden exactly while the field may not be edited, is the case in
+	 * point — would otherwise still run its action from a view-only form.
+	 * </p>
+	 *
+	 * <p>
+	 * Where there is a {@link CommandModel}, it decides as well; a model that grants execution
+	 * unconditionally keeps its behavior.
+	 * </p>
 	 */
 	@ReactCommandHandler(CMD_CLICK)
 	HandlerResult handleClick(ReactContext context) {
+		if (isHidden() || Boolean.TRUE.equals(getState(DISABLED))) {
+			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+		}
+		if (_model != null && (!_model.isVisible() || !_model.isExecutable())) {
+			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+		}
 		return _action.execute(context);
 	}
 
@@ -258,10 +280,10 @@ public class ReactButtonControl extends ReactControl {
 
 
 	/**
-	 * Rendering-only state keys, omitted from the headless agent projection.
+	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override
-	protected java.util.Set<String> agentPresentationKeys() {
+	protected java.util.Set<String> scriptingPresentationKeys() {
 		return java.util.Set.of("appearance", "size", "keyGesture", "image");
 	}
 }

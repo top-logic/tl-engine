@@ -17,6 +17,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Subtypes;
@@ -28,8 +29,8 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
- * Registry of configured {@link AbstractConnectionPool}s of the application.
- * 
+ * Registry of the database connection pools configured for the application.
+ *
  * @see ConnectionPoolRegistry.Config
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -37,6 +38,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 @ServiceDependencies({
 	ThreadContextManager.Module.class,
 })
+@Label("Database connection pools")
 public class ConnectionPoolRegistry extends ManagedClass {
 
 	/**

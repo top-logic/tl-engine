@@ -5164,11 +5164,11 @@ services.form = {
 	},
 	
 	LogoutTimerControl: {
-		init: function(controlID, timeoutSeconds, countingSeconds, logoutUrl) {
+		init: function(controlID, timeoutSeconds, countingSeconds, loginUrl) {
 			var element = document.getElementById(controlID);
 			element.timeoutSeconds = timeoutSeconds;
 			element.countingSeconds = countingSeconds;
-			element.logoutUrl = logoutUrl;
+			element.loginUrl = loginUrl;
 			
 			this.resetTimer(controlID);
 			
@@ -5233,7 +5233,7 @@ services.form = {
 				var secondsLeft = Math.floor(millisLeft / 1000);
 				
 				if (secondsLeft < 0) {
-					services.ajax.showSessionTimeout(element.logoutUrl);
+					services.ajax.showSessionTimeout(element.loginUrl);
 				} else {
 					var minutesLeft = Math.floor(secondsLeft / 60);
 					var secondsRest = secondsLeft % 60;

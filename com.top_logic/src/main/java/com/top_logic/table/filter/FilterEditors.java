@@ -59,8 +59,8 @@ public final class FilterEditors {
 		if (input instanceof FilterInput.Options options) {
 			return new OptionsFilterEditor(options.values(), (OptionsFilterState) current, counts);
 		}
-		if (input instanceof FilterInput.Bool) {
-			return booleanEditor(filter, (BooleanFilterState) current);
+		if (input instanceof FilterInput.Bool bool) {
+			return booleanEditor(filter, (BooleanFilterState) current, bool.nullable());
 		}
 		if (input instanceof FilterInput.Range) {
 			return rangeEditor(filter, current);
@@ -71,11 +71,11 @@ public final class FilterEditors {
 		throw new IllegalArgumentException("No filter editor for input: " + input);
 	}
 
-	private static FilterEditor booleanEditor(ColumnFilter<?> filter, BooleanFilterState current) {
+	private static FilterEditor booleanEditor(ColumnFilter<?> filter, BooleanFilterState current, boolean nullable) {
 		if (filter instanceof BooleanColumnFilter bool) {
-			return new BooleanFilterEditor(current, bool.trueLabel(), bool.falseLabel());
+			return new BooleanFilterEditor(current, bool.trueLabel(), bool.falseLabel(), nullable);
 		}
-		return new BooleanFilterEditor(current, I18NConstants.VALUE_TRUE, I18NConstants.VALUE_FALSE);
+		return new BooleanFilterEditor(current, I18NConstants.VALUE_TRUE, I18NConstants.VALUE_FALSE, nullable);
 	}
 
 	private static FilterEditor rangeEditor(ColumnFilter<?> filter, FilterState current) {

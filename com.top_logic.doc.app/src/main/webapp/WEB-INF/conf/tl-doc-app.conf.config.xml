@@ -25,59 +25,64 @@
 			</instance>
 		</config>
 
+
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance class="com.top_logic.base.services.InitialRolesManager">
+				<roles>
+					<role name="SecurityStructure.Admin"/>
+					<role name="tl.doc.DocumentationReader"/>
+					<role name="tl.doc.DocumentationWriter"/>
+				</roles>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
 				<structures>
 					<structure name="tl.doc"/>
 				</structures>
+				<role-rules>
+					<singleton-rule
+						id="Admin"
+						target="SecurityStructure#ROOT"
+						role="SecurityStructure.Admin"
+					>
+						<group-with-name name="Admin"/>
+					</singleton-rule>
+
+					<singleton-rule
+						id="DocumentationReader"
+						target="tl.doc#ROOT"
+						role="tl.doc.DocumentationReader"
+					>
+						<group-with-name name="DocumentationReader"/>
+					</singleton-rule>
+
+					<singleton-rule
+						id="DocumentationWriter"
+						target="tl.doc#ROOT"
+						role="tl.doc.DocumentationWriter"
+					>
+						<group-with-name name="DocumentationWriter"/>
+					</singleton-rule>
+				</role-rules>
 			</instance>
 		</config>
 
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance>
 				<settings>
-					<module name="SecurityStructure">
-						<roles>
-							<role name="SecurityStructure.Admin"/>
-						</roles>
-						<singletons>
-							<singleton type="Root">
-								<role-assignments>
-									<role-assignment role="SecurityStructure.Admin" group="Admin"/>
-								</role-assignments>
-							</singleton>
-						</singletons>
-					</module>
 					<module name="tl.doc">
-						<roles>
-							<role name="tl.doc.DocumentationReader"/>
-							<role name="tl.doc.DocumentationWriter"/>
-						</roles>
 						<singletons>
-							<singleton type="Root">
-								<role-assignments>
-									<role-assignment
-										group="DocumentationReader"
-										role="tl.doc.DocumentationReader"
-									/>
-									<role-assignment
-										group="DocumentationWriter"
-										role="tl.doc.DocumentationWriter"
-									/>
-								</role-assignments>
-							</singleton>
+							<singleton type="Root"/>
 						</singletons>
 					</module>
 				</settings>
-		</instance></config>
+			</instance>
+		</config>
 	</services>
 
 	<configs>
-		<config config:interface="com.top_logic.base.security.SecurityConfiguration">
-			<layout>
-				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper"/>
-			</layout>
-		</config>
 		<config config:interface="com.top_logic.doc.command.validation.PageValidators">
 			<validator class="com.top_logic.doc.app.importDoc.TracWikiValidator"/>
 		</config>

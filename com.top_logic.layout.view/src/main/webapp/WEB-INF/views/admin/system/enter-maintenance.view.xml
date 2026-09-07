@@ -3,10 +3,10 @@
 <!--
 	Dialog to enter maintenance mode. The form edits a transient MaintenanceMode model (bound to the
 	model channel by the opening command): the delay in minutes before the switch (empty or zero enters
-	immediately) and an optional message shown to logged-in users. The primary command stores the form
-	state, runs the MaintenanceModeAction in ENTER mode (which reads the delay and message and drives the
-	MaintenanceWindowManager), writes the resulting state token back to the state channel bound to the
-	parent view, and closes the dialog.
+	immediately), whether the login stays enabled during that delay, and an optional message shown to
+	logged-in users. The primary command stores the form state, runs the MaintenanceModeAction in ENTER
+	mode (which reads the form input and drives the MaintenanceWindowManager), writes the resulting state
+	token back to the state channel bound to the parent view, and closes the dialog.
 -->
 <view>
 	<channels>
@@ -28,11 +28,12 @@
 		>
 			<text>
 				<label>
-					<en>Entering maintenance mode logs out all users that are not in an allowed group. A delay schedules the switch and informs logged-in users first; leave it empty to switch immediately.</en>
-					<de>Beim Aktivieren des Wartungsmodus werden alle Benutzer abgemeldet, die keiner zugelassenen Gruppe angehören. Eine Verzögerung plant den Wechsel und informiert angemeldete Benutzer zuvor; für einen sofortigen Wechsel leer lassen.</de>
+					<en>Entering maintenance mode logs out all users that are not in an allowed group. A delay schedules the switch and informs logged-in users first; leave it empty to switch immediately. During the delay, the login is denied unless it is explicitly allowed.</en>
+					<de>Beim Aktivieren des Wartungsmodus werden alle Benutzer abgemeldet, die keiner zugelassenen Gruppe angehören. Eine Verzögerung plant den Wechsel und informiert angemeldete Benutzer zuvor; für einen sofortigen Wechsel leer lassen. Während der Verzögerung ist die Anmeldung gesperrt, sofern sie nicht ausdrücklich erlaubt wird.</de>
 				</label>
 			</text>
 			<field attribute="delayMinutes"/>
+			<field attribute="allowLogin"/>
 			<field attribute="message"/>
 			<commands>
 				<generic-command

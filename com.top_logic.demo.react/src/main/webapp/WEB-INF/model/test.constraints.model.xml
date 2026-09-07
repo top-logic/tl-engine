@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.constraints">
+		<annotations>
+			<display-group value="demo"/>
+		</annotations>
+
+		<class name="ConstraintTestType">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="GenericObject"/>
+				<instance-presentation icon="css:bi bi-check-circle"/>
+				<id-column value="name"/>
+			</annotations>
+			<attributes>
+				<!-- The object's name: mandatory, and used as its label -->
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+
+				<!-- Globally unique value: the check excludes the edited object from the objects it compares against, so editing an object without changing this value stays valid -->
+				<property name="uniqueName"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<unique/>
+						</constraints>
+					</annotations>
+				</property>
+
+				<!-- String with size constraint: 3-50 characters -->
+				<property name="sizedString"
+					type="tl.core:String"
+				>
+					<annotations>
+						<size-constraint
+							lower-bound="3"
+							upper-bound="50"
+						/>
+					</annotations>
+				</property>
+
+				<!-- Mandatory string with size constraint -->
+				<property name="mandatorySizedString"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<size-constraint
+							lower-bound="5"
+							upper-bound="100"
+						/>
+					</annotations>
+				</property>
+
+				<!-- String with a bare size constraint: no bounds at all, must accept any text -->
+				<property name="unboundedSizedString"
+					type="tl.core:String"
+				>
+					<annotations>
+						<size-constraint/>
+					</annotations>
+				</property>
+
+				<!-- String with a size constraint that only declares a lower bound -->
+				<property name="minSizedString"
+					type="tl.core:String"
+				>
+					<annotations>
+						<size-constraint lower-bound="3"/>
+					</annotations>
+				</property>
+
+				<!-- Integer with range constraint and composition total check -->
+				<property name="rangedInt"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<value-range
+							max="10000.0"
+							min="0.0"
+						/>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[value -> obj -> {
+	total = $obj.get(`test.constraints:ConstraintTestType#items`)
+		.map(item -> {
+			q = $item.get(`test.constraints:ConstraintTestItem#quantity`);
+			p = $item.get(`test.constraints:ConstraintTestItem#unitPrice`);
+			if ($q != null and $p != null, $q * $p, 0)
+		})
+		.sum();
+	if ($value != null and $total > $value,
+		#("Item total ({0}) exceeds the limit ({1})."@en, "Summe der Eintraege ({0}) uebersteigt das Limit ({1})."@de).fill($total, $value),
+		null)
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+
+				<!-- Double with range constraint: -10.0 to 10.0 -->
+				<property name="rangedDouble"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<value-range
+							max="10.0"
+							min="-10.0"
+						/>
+					</annotations>
+				</property>
+
+				<!-- Expression-based constraint: must start with uppercase letter -->
+				<property name="uppercaseStart"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[value -> obj -> {
+	if ($value != null and $value.length() > 0,
+		if ($value.subString(0, 1) == $value.subString(0, 1).toUpperCase(),
+			null,
+			#("Must start with an uppercase letter."@en, "Muss mit einem Grossbuchstaben beginnen."@de)),
+		null)
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+
+				<!-- Warning constraint (non-blocking) -->
+				<property name="warningField"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression type="warning">
+								<check><![CDATA[value -> obj -> {
+	if ($value != null and $value.length() > 20,
+		#("Consider keeping text under 20 characters."@en, "Text sollte unter 20 Zeichen bleiben."@de),
+		null)
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+
+				<!-- Optional plain string (no constraints, for comparison) -->
+				<property name="freeText"
+					type="tl.core:String"
+				/>
+
+				<!-- Scope for the unique code below -->
+				<property name="category"
+					type="tl.core:String"
+				/>
+
+				<!-- Unique among all objects with the same category -->
+				<property name="codeInCategory"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<unique additional-attributes="category"/>
+						</constraints>
+					</annotations>
+				</property>
+
+				<!-- Composition reference: items owned by this object -->
+				<reference name="items"
+					composite="true"
+					multiple="true"
+					type="ConstraintTestItem"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[value -> obj -> {
+	if ($value == null or $value.size() == 0,
+		#("At least one item is required."@en, "Mindestens ein Eintrag ist erforderlich."@de),
+		null)
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+
+		<class name="ConstraintTestItem">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="GenericObject"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="quantity"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<value-range
+							max="1000.0"
+							min="1.0"
+						/>
+					</annotations>
+				</property>
+				<property name="unitPrice"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<value-range
+							max="99999.0"
+							min="0.01"
+						/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

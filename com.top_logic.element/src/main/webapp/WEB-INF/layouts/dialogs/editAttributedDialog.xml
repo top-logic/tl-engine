@@ -58,7 +58,6 @@
 
 	<securityLayout name="${namePrefix}EditAttributedDialog"
 		horizontal="false"
-		securityDomain="projElement"
 		titleKey="${resPrefix}.dialog.tabber"
 	>
 		<dialogInfo

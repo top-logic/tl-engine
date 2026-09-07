@@ -33,7 +33,6 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.util.Utils;
 
 /**
@@ -326,11 +325,6 @@ public class StoredQuery extends AttributedWrapper {
         else {
         	return StringServices.toListAllowEmpty(theColumns, ',');
         }
-    }
-
-    @Override
-	public BoundObject getSecurityParent() {
-        return super.getSecurityParent();
     }
 
     /**

@@ -9,6 +9,8 @@ export interface ChildDescriptor {
   controlId: string;
   module: string;
   state: Record<string, unknown>;
+  /** Source .view.xml path when this child is a view boundary; stamped as data-view-source. */
+  viewSource?: string;
 }
 
 /**
@@ -53,6 +55,20 @@ const TLChild: React.FC<{ control: unknown }> = ({ control }) => {
     childCtx.store.applyPatch(descriptor.state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateKey]);
+
+  // Stamp the view-boundary source path onto this control's real root element (which the
+  // component renders with id={controlId}). Done imperatively rather than via a wrapper so the
+  // attribute lands on a boxed element — the picker's hover-highlight reads its bounding rect —
+  // without disturbing flex/grid layout. writeAsChild only sends viewSource for view boundaries.
+  useEffect(() => {
+    if (!descriptor.viewSource) {
+      return;
+    }
+    const el = document.getElementById(descriptor.controlId);
+    if (el) {
+      el.setAttribute('data-view-source', descriptor.viewSource);
+    }
+  }, [descriptor.controlId, descriptor.viewSource, liveState]);
 
   if (!Component) {
     return <span>[Component not registered: {descriptor.module}]</span>;

@@ -38,6 +38,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.misc.NamedRegexp;
 import com.top_logic.basic.io.FileSystemCache;
@@ -89,6 +90,7 @@ import com.top_logic.util.error.TopLogicException;
 	DynamicComponentService.Module.class,
 	FileSystemCache.Module.class,
 })
+@Label("Layout storage")
 public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 
 	/**
@@ -257,7 +259,9 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 	}
 
 	private void fetchAvailableLayouts() {
-		Collection<String> layoutNames = _overlays.keySet();
+		/* A copy, because the load for the non-default themes is scheduled and must not observe the
+		 * overlays being replaced by a later re-initialization. */
+		Collection<String> layoutNames = new ArrayList<>(_overlays.keySet());
 		ThemeFactory themeFactory = ThemeFactory.getInstance();
 		List<Theme> choosableThemes =
 			CollectionUtil.topsort(theme -> theme.getParentThemes(), themeFactory.getChoosableThemes(), false);
@@ -490,8 +494,16 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 						installLayout(resolver, layoutName);
 						bufferProtocolTmp.checkErrors();
 					} catch (Exception ex) {
-						log.error("Unable to fetch layout '" + layoutName + "' for theme '" + theme.getName() + "'.",
-							ex);
+						if (existsLayoutFile(layoutName)) {
+							log.error(
+								"Unable to fetch layout '" + layoutName + "' for theme '" + theme.getName() + "'.", ex);
+						} else {
+							/* The layout has no file (any more): It was deleted while this load was
+							 * running, which happens when a view is deleted in design mode. The
+							 * incremental update drops such a layout in the same way. */
+							log.info("Skipping the layout '" + layoutName + "' for theme '" + theme.getName()
+								+ "', no file exists for it.");
+						}
 						/* Set new protocol that next layout is loaded without the problems from
 						 * current layout. */
 						bufferProtocolTmp = new BufferingProtocol();
@@ -765,6 +777,13 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 			return;
 		}
 		loadLayoutsForAllThemes(invalidLayoutKeys, choosableThemes);
+	}
+
+	/**
+	 * Whether a file for the layout with the given key (still) exists.
+	 */
+	private static boolean existsLayoutFile(String layoutKey) {
+		return FileManager.getInstance().getDataOrNull(layoutResource(layoutKey)) != null;
 	}
 
 	private static String layoutResource(String layoutKey) {

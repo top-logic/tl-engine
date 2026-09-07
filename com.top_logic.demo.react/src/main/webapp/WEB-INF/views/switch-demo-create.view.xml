@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog to create a Demo object for the <switch> showcase. The form edits a transient Demo object
+	(bound to the model channel by the opening command). Besides the name it offers the priority,
+	because that is the attribute the showcase's <switch> tests: the created object is written to the
+	selection channel, so the detail view chosen for the picked priority is shown right away.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+	<window width="480px">
+		<title>
+			<en>New demo object</en>
+			<de>Neues Demo-Objekt</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<field attribute="name"/>
+			<field attribute="string"/>
+			<field attribute="priority"/>
+			<field attribute="active"/>
+			<commands>
+				<generic-command placement="BUTTON_BAR">
+					<label>
+						<en>Create</en>
+						<de>Anlegen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<execute-script function="obj -> $obj.copy(transient: false)"/>
+					</with-transaction>
+					<write-channel name="selection"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

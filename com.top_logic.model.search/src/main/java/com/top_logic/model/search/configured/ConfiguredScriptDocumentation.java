@@ -7,7 +7,6 @@ package com.top_logic.model.search.configured;
 
 import java.io.IOException;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.layout.DisplayContext;
@@ -94,9 +93,9 @@ public class ConfiguredScriptDocumentation extends AbstractScriptDocumentation<S
 	@Override
 	protected void writeParameterDescription(DisplayContext context, TagWriter out, ScriptParameter parameter)
 			throws IOException {
-		ResKey description = parameter.getDescription();
+		HtmlResKey description = parameter.getDescription();
 		if (description != null) {
-			out.writeText(context.getResources().getString(description));
+			description.getHtml().write(context, out);
 		}
 	}
 

@@ -160,7 +160,7 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 	}
 
 	@Override
-	public void installUI(ColumnSetup setup, TableViewControl<Object> control) {
+	public void installUI(ColumnSetup setup, TableViewControl<?> control) {
 		List<ViewChannel> inputChannels = new ArrayList<>();
 		for (ChannelRef ref : _inputs) {
 			inputChannels.add(setup.viewContext().resolveChannel(ref));

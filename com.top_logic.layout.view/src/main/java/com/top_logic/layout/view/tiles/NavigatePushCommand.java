@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -55,8 +56,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * &lt;/button&gt;
  * </pre>
  *
- * @implNote Resolves the target stack via {@link ViewContext#getTileStackScope()}.
+ * @implNote Resolves the target stack via {@link ViewContext#getScope(Class)}.
  */
+@InApp
 public class NavigatePushCommand implements ViewCommand {
 
 	/**
@@ -159,7 +161,7 @@ public class NavigatePushCommand implements ViewCommand {
 			throw new IllegalStateException(
 				"<navigate-push> requires a ViewContext, got " + context.getClass().getName());
 		}
-		TileStackScope scope = viewContext.getTileStackScope();
+		TileStackScope scope = viewContext.getScope(TileStackScope.class);
 		if (scope == null) {
 			throw new IllegalStateException(
 				"<navigate-push> executed outside of any enclosing <tile-stack>.");

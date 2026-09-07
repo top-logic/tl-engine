@@ -23,7 +23,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
  *
  * <p>
  * The label only has to be unique among the control's options, not globally — so this provides
- * context-relative identity for the headless agent interface, selected automatically by the
+ * context-relative identity for the headless interface, selected automatically by the
  * {@link ReactOptionScope} value-context type.
  * </p>
  */

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	comment="TestWebFolder"
 >
 	<actions>
@@ -323,96 +324,19 @@
 						/>
 					</parameters>
 				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Anlegen"
-					business-object="Rolle"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+					template-name-comment="Gruppe Zuordnen"
 				>
 					<parameters>
-						<parameter name="Berechtigungsstruktur"
-							value="DemoTypes"
+						<parameter name="Login"
+							value="NutzerTestWebfolder1"
 						/>
-						<parameter name="ergebnis"
-							value="Rolle 1"
+						<parameter name="Gruppe1"
+							value="Demo-Administratoren"
 						/>
-						<parameter name="Name"
-							value="RolleTestWebfolder1"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Alle Rechte geben"
-					business-object="Rolle"
-				>
-					<parameters>
-						<parameter name="Berechtigungsstruktur"
-							value="DemoTypes"
-						/>
-						<parameter name="Name"
-							value="RolleTestWebfolder1"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Rolle zuweisen"
-					business-object="Nutzer"
-				>
-					<parameters>
-						<parameter name="Berechtigungsstruktur"
-							value="DemoTypes"
-						/>
-						<parameter name="kontext"
-							value="Nutzer 1"
-						/>
-						<parameter name="Rolle"
-							value="Rolle 1"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Anlegen"
-					business-object="Rolle"
-				>
-					<parameters>
-						<parameter name="Berechtigungsstruktur"
-							value="Zentrale Berechtigungen"
-						/>
-						<parameter name="ergebnis"
-							value="Rolle 2"
-						/>
-						<parameter name="Name"
-							value="RolleTestWebfolder2"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Alle Rechte geben"
-					business-object="Rolle"
-				>
-					<parameters>
-						<parameter name="Berechtigungsstruktur"
-							value="Zentrale Berechtigungen"
-						/>
-						<parameter name="Name"
-							value="RolleTestWebfolder2"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Rolle zuweisen"
-					business-object="Nutzer"
-				>
-					<parameters>
-						<parameter name="Berechtigungsstruktur"
-							value="Zentrale Berechtigungen"
-						/>
-						<parameter name="kontext"
-							value="Nutzer 1"
-						/>
-						<parameter name="Rolle"
-							value="Rolle 2"
-						/>
-						<parameter name="Knoten"
-							value="SecurityRoot"
+						<parameter name="Gruppe2"
+							value="Superusers"
 						/>
 					</parameters>
 				</action>
@@ -507,38 +431,6 @@
 						/>
 						<parameter name="Tester"
 							value="NutzerTestWebfolder1"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Loeschen"
-					business-object="Rolle"
-				>
-					<parameters>
-						<parameter name="Berechtigungsstruktur"
-							value="DemoTypes"
-						/>
-						<parameter name="kontext"
-							value="Rolle 1"
-						/>
-						<parameter name="Name"
-							value="RolleTestWebfolder1"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-					business-action="Loeschen"
-					business-object="Rolle"
-				>
-					<parameters>
-						<parameter name="Berechtigungsstruktur"
-							value="Zentrale Berechtigungen"
-						/>
-						<parameter name="kontext"
-							value="Rolle 2"
-						/>
-						<parameter name="Name"
-							value="RolleTestWebfolder2"
 						/>
 					</parameters>
 				</action>

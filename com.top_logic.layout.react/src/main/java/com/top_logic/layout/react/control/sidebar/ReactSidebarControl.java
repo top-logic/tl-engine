@@ -14,8 +14,9 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.AgentControl;
+import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
@@ -241,79 +242,17 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		}
 	}
 
-	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_headerContent != null) {
-			_headerContent.attach();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.attach();
-		}
-		if (_footerContent != null) {
-			_footerContent.attach();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.attach();
-		}
-		if (_activeItemId != null) {
-			ReactControl content = _contentCache.get(_activeItemId);
-			if (content != null) {
-				content.attach();
-			}
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_headerContent != null) {
-			_headerContent.detach();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.detach();
-		}
-		if (_footerContent != null) {
-			_footerContent.detach();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.detach();
-		}
-		if (_activeItemId != null) {
-			ReactControl content = _contentCache.get(_activeItemId);
-			if (content != null) {
-				content.detach();
-			}
-		}
-	}
-
+	/**
+	 * Also disposes the contents of items visited earlier: only the active item's content is part of
+	 * the state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
-		if (_activeItemId != null) {
-			ReactControl active = _contentCache.get(_activeItemId);
-			if (active != null) {
-				active.detach();
-			}
-		}
+		super.cleanupChildren();
 		for (ReactControl cached : _contentCache.values()) {
 			cached.cleanupTree();
 		}
 		_contentCache.clear();
-		if (_headerContent != null) {
-			_headerContent.cleanupTree();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.cleanupTree();
-		}
-		if (_footerContent != null) {
-			_footerContent.cleanupTree();
-		}
-		if (_footerCollapsedContent != null) {
-			_footerCollapsedContent.cleanupTree();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.cleanupTree();
-		}
 	}
 
 	/**
@@ -528,10 +467,21 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 
 	/**
 	 * Handles navigation item selection from the client.
+	 *
+	 * <p>
+	 * Only an item the sidebar actually offers can be navigated to: a {@link NavigationItem#isHidden()
+	 * hidden} item is not displayed, so selecting it is refused instead of switching to a view the
+	 * user interface does not present.
+	 * </p>
 	 */
 	@ReactCommandHandler(SELECT_ITEM_COMMAND)
-	void handleSelectItem(SelectItemArguments args) {
+	HandlerResult handleSelectItem(SelectItemArguments args) {
 		String itemId = args.getItemId();
+
+		NavigationItem targetItem = findNavItem(itemId, _items);
+		if (targetItem != null && targetItem.isHidden()) {
+			return HandlerResult.error(I18NConstants.ERROR_NAVIGATION_NOT_AVAILABLE);
+		}
 
 		// Check for dirty forms in the current sidebar item before switching.
 		NavigationItem currentItem = findNavItem(_activeItemId, _items);
@@ -543,6 +493,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		}
 
 		selectItem(itemId);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -640,9 +591,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 * {@code item[administration]}), so content addresses encode which sidebar item they belong to.
 	 */
 	@Override
-	public String agentChildSlot(ReactControl child) {
+	public String scriptingChildSlot(ReactControl child) {
 		if (child == getState(ACTIVE_CONTENT)) {
-			return AgentControl.slotSegment("item", _activeItemId);
+			return ScriptingControl.slotSegment("item", _activeItemId);
 		}
 		return null;
 	}

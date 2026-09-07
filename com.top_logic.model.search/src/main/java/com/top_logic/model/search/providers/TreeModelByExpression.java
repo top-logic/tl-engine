@@ -38,7 +38,6 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.model.util.TLModelPartRefsFormat;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -293,7 +292,7 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		 * @see TreeModelByExpression#getTypesToObserve()
 		 */
 		@Name(TYPES_TO_OBSERVE)
-		@Format(TLModelPartRefsFormat.class)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 		List<TLModelPartRef> getTypesToObserve();
 
 	}
@@ -373,7 +372,10 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 
 	@Override
 	public Iterator<? extends Object> getChildIterator(LayoutComponent contextComponent, Object node) {
-		return (SearchExpression.asCollection(_children.execute(node, contextComponent.getModel()))).iterator();
+		// Note: The child nodes contain only those the current user is allowed to read, the executor
+		// secures them (see QueryExecutor#executeWith(EvalContext, Args)). A forbidden node thereby
+		// drops out of the tree together with its subtree.
+		return SearchExpression.asCollection(_children.execute(node, contextComponent.getModel())).iterator();
 	}
 
 	@Override

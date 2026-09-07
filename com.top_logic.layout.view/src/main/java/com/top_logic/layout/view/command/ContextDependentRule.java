@@ -25,7 +25,7 @@ public interface ContextDependentRule {
 	 *
 	 * <p>
 	 * Called exactly once, before the rule is first evaluated. The rule should capture any
-	 * context-derived state (e.g. the enclosing {@link ViewContext#getSecurityScope() security
+	 * context-derived state (e.g. the enclosing {@link ViewContext#getScope(Class) security
 	 * scope} or a resolved channel) here.
 	 * </p>
 	 *

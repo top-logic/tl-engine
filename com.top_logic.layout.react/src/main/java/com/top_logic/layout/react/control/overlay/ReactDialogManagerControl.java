@@ -62,6 +62,13 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 		_stack.add(entry);
 		patchDialogsState();
 
+		if (isAttached()) {
+			// An opened dialog is displayed right away, so it must not stay detached: its content
+			// contributes to the display (e.g. a form adding its commands to the dialog's button bar)
+			// only while attached.
+			dialog.attach();
+		}
+
 		return result -> closeDialog(entry, result);
 	}
 
@@ -102,9 +109,7 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 
 	@Override
 	protected void cleanupChildren() {
-		for (DialogEntry entry : _stack) {
-			entry.dialog().cleanupTree();
-		}
+		super.cleanupChildren();
 		_stack.clear();
 	}
 

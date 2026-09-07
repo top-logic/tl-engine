@@ -342,6 +342,9 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		out.writeAttribute(ALT_ATTR, image.getName());
 		out.writeAttribute(SRC_ATTR,
 			getURLContext().getURL(context, imageHandler).appendParameter("itemVersion", _urlSuffix).getURL());
+		// Show the browser context menu (e.g. "copy image", "save image") when right-clicking the
+		// image instead of a surrounding TL context menu, so the displayed image can be extracted.
+		out.writeAttribute(TL_BROWSER_MENU_ATTR, true);
 		out.writeAttribute(ONLOAD_ATTR, IMAGEUPLOAD_CONTROL_CLASS + ".setInOrOut(this)");
 		out.endEmptyTag();
 		if (editable) {

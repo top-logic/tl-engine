@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.AgentControl;
+import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
@@ -123,36 +123,13 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		}
 	}
 
-	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_activeTabId != null) {
-			ReactControl content = _contentCache.get(_activeTabId);
-			if (content != null) {
-				content.attach();
-			}
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_activeTabId != null) {
-			ReactControl content = _contentCache.get(_activeTabId);
-			if (content != null) {
-				content.detach();
-			}
-		}
-	}
-
+	/**
+	 * Also disposes the contents of tabs visited earlier: only the active tab's content is part of the
+	 * state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
-		if (_activeTabId != null) {
-			ReactControl active = _contentCache.get(_activeTabId);
-			if (active != null) {
-				active.detach();
-			}
-		}
+		super.cleanupChildren();
 		for (ReactControl cached : _contentCache.values()) {
 			cached.cleanupTree();
 		}
@@ -291,9 +268,9 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	 * content addresses encode which tab they belong to.
 	 */
 	@Override
-	public String agentChildSlot(ReactControl child) {
+	public String scriptingChildSlot(ReactControl child) {
 		if (child == getState(ACTIVE_CONTENT)) {
-			return AgentControl.slotSegment("tab", _activeTabId);
+			return ScriptingControl.slotSegment("tab", _activeTabId);
 		}
 		return null;
 	}

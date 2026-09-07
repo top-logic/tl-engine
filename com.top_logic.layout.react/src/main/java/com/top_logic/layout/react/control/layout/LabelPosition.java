@@ -26,6 +26,9 @@ public enum LabelPosition {
 	/** Label after the input (e.g. trailing a checkbox); field level only. */
 	AFTER("after"),
 
+	/** No label at all; the input spans the full field width. Field level only. */
+	HIDDEN("hidden"),
+
 	/**
 	 * Resolve responsively between {@link #SIDE} and {@link #TOP} from the available width; layout
 	 * level only.

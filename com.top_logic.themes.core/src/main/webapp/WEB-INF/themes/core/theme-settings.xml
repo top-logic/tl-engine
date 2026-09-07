@@ -47,7 +47,7 @@
 		value="/images/appLogo.svg"
 	/>
 	<icon name="IMAGES_APP_LOGO_MINIMIZED"
-		value="/images/TL_App_icon_blue.svg"
+		value="/images/appLogoMinimized.svg"
 	/>
 	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
 		value="64px"
@@ -1961,7 +1961,10 @@
 	<icon name="com.top_logic.layout.messagebox.Icons.IN_PROGRESS"
 		value="css:fas fa-running"
 	/>
-
+	<icon name="ICON_RELOAD_ACCESSMANAGER"
+		value="css:fa-solid fa-arrows-spin"
+	/>
+	
 	<!-- Style Tokens -->
 	<!-- Color Tokens -->
 	<color name="sb-track-color"

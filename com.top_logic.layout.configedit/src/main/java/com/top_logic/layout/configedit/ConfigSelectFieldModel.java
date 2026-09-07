@@ -13,6 +13,9 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.layout.form.model.SelectFieldModel;
+import com.top_logic.layout.form.values.DerivedProperty;
+import com.top_logic.layout.form.values.ListenerBinding;
+import com.top_logic.layout.form.values.Value;
 
 /**
  * A {@link ConfigFieldModel} that also implements {@link SelectFieldModel} for properties whose
@@ -25,6 +28,9 @@ public class ConfigSelectFieldModel extends ConfigFieldModel implements SelectFi
 	private final boolean _multiple;
 
 	private List<SelectOptionsListener> _optionsListeners = Collections.emptyList();
+
+	/** Detaches {@link #trackOptions(DerivedProperty)}'s subscription, or {@code null} if none. */
+	private ListenerBinding _optionsBinding;
 
 	/**
 	 * Creates a {@link ConfigSelectFieldModel}.
@@ -43,6 +49,50 @@ public class ConfigSelectFieldModel extends ConfigFieldModel implements SelectFi
 		super(config, property);
 		_options = options;
 		_multiple = multiple;
+	}
+
+	/**
+	 * Follows the given option provider, so that options computed from other properties are
+	 * recomputed while the user edits those.
+	 *
+	 * <p>
+	 * Resolving the options once, when the field is built, leaves the user choosing from a list that
+	 * describes a state the configuration has since left - and letting them pick a value the
+	 * property no longer admits. {@link DerivedProperty#get(ConfigurationItem)} is that one-shot
+	 * read; {@link DerivedProperty#getValue(ConfigurationItem)} is the same computation as an
+	 * observable value that knows which properties it was derived from. The declarative form takes
+	 * the second for this very reason, and so does this.
+	 * </p>
+	 *
+	 * <p>
+	 * Only worth calling for a property that has an option provider at all. A plain enum's constants
+	 * are its options and cannot change, so nothing there needs following.
+	 * </p>
+	 *
+	 * @param provider
+	 *        The property's option provider.
+	 */
+	public void trackOptions(DerivedProperty<? extends Iterable<?>> provider) {
+		Value<? extends Iterable<?>> value = provider.getValue(getConfig());
+		_optionsBinding = value.addListener(sender -> setOptions(ConfigPropertyOptions.toList(value.get())));
+	}
+
+	/**
+	 * Also drops the option subscription of {@link #trackOptions(DerivedProperty)}.
+	 *
+	 * <p>
+	 * A field survives only until the next render cycle, while the configuration it was derived from
+	 * outlives every one of them - so a subscription left behind would both keep a discarded field
+	 * alive and recompute options nobody displays.
+	 * </p>
+	 */
+	@Override
+	public void detach() {
+		if (_optionsBinding != null) {
+			_optionsBinding.close();
+			_optionsBinding = null;
+		}
+		super.detach();
 	}
 
 	@Override

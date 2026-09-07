@@ -10,10 +10,12 @@ import java.util.Collections;
 import java.util.Set;
 
 import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.component.IComponent;
 import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProvider;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 
 /**
@@ -43,8 +45,14 @@ public interface BoundCheckerComponent extends BoundChecker, IComponent {
 
 	/**
 	 * The {@link SecurityObjectProvider} to use for transforming models into security contexts.
+	 * 
+	 * @implNote Classes that override this method must have a configuration that extends
+	 *           {@link SecurityObjectProviderConfig} and return
+	 *           {@link SecurityObjectProviderConfig#resolveSecurityObject(InstantiationContext)}
 	 */
-	SecurityObjectProvider getSecurityObjectProvider();
+	default SecurityObjectProvider getSecurityObjectProvider() {
+		return NullSecurityObjectProvider.INSTANCE;
+	}
 
 	@Override
 	default Collection<BoundCommandGroup> getCommandGroups() {

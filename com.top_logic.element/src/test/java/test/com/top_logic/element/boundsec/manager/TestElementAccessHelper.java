@@ -17,11 +17,12 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.element.util.ElementWebTestSetup;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.ElementAccessHelper;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClassifier;
-import com.top_logic.model.TLModule;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -33,7 +34,6 @@ import com.top_logic.util.list.ListUtil;
 public class TestElementAccessHelper extends BasicTestCase {
 
     private static final String ROLE_TEST_ROLE            = "testRole";
-    private static final String STRUCTURE_PROJECT_ELEMENT = "projElement";
 
     /**
      * Test the locating of classifiers
@@ -75,29 +75,24 @@ public class TestElementAccessHelper extends BasicTestCase {
         
     }
         
-    /**
-     * @see junit.framework.TestCase#setUp()
-     */
     @Override
 	protected void setUp() throws Exception {
         super.setUp();
         
-		TLModule scope = TLModelUtil.findModule(STRUCTURE_PROJECT_ELEMENT);
-        BoundedRole       theBR   = BoundedRole.createBoundedRole(ROLE_TEST_ROLE);
-		theBR.bind(scope);
-        theBR.getKnowledgeBase().commit();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction(ResKey.forTest("Create test role"))) {
+			BoundedRole.createBoundedRole(ROLE_TEST_ROLE);
+			tx.commit();
+		}
     }
     
-    /**
-     * @see junit.framework.TestCase#tearDown()
-     */
     @Override
 	protected void tearDown() throws Exception {
-        final BoundedRole   theBR = BoundedRole.getRoleByName(ROLE_TEST_ROLE);
-        final KnowledgeBase theKB = theBR.getKnowledgeBase();
-        theBR.unbind();
-        theBR.tDelete();
-        theKB.commit();
+		final BoundedRole testRole = BoundedRole.getRoleByName(ROLE_TEST_ROLE);
+		try (Transaction tx = testRole.getKnowledgeBase().beginTransaction(ResKey.forTest("Delete test role"))) {
+			testRole.tDelete();
+			tx.commit();
+		}
         super.tearDown();
     }
 

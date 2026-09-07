@@ -48,7 +48,6 @@
 		helpIDLegacy="${z_legacy_helpID}"
 		horizontal="false"
 		model="${securityModel}"
-		securityDomain="${domain}"
 		securityId="${securityId}"
 		titleKey="${z_legacy_tabLabel}"
 	>

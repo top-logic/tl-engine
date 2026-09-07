@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Displays a freshly issued invitation: where the application is, and the token admitting an agent
+	to this session. An agent needs both, so both are copied in one go. The invitation is held by a
+	transient IssuedAccessToken that the issue action hands over; it is shown in an editable field so
+	that it can be selected and copied, which a plain text rendering does not allow. This dialog is
+	the one and only place the token is readable - it is stored as a hash and cannot be recovered.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+	</channels>
+	<window width="560px">
+		<title>
+			<en>Invitation for an agent</en>
+			<de>Einladung f&#252;r einen Agenten</de>
+		</title>
+		<inset>
+			<form
+				initial-edit-mode="true"
+				input="model"
+				mode-switch="false"
+			>
+				<field attribute="invitation"/>
+				<text>
+					<label>
+						<en>Copy the invitation now and hand it to the agent: the token in it is shown this one time and cannot be read again.</en>
+						<de>Kopieren Sie die Einladung jetzt und geben Sie sie dem Agenten: Das darin enthaltene Token wird nur dieses eine Mal angezeigt und ist danach nicht mehr lesbar.</de>
+					</label>
+				</text>
+			</form>
+		</inset>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-check-lg"
+				>
+					<label>
+						<en>Done</en>
+						<de>Fertig</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

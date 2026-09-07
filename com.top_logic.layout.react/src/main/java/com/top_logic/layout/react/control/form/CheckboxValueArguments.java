@@ -14,20 +14,23 @@ import com.top_logic.layout.react.control.ReactCommand;
  * checked state.
  *
  * <p>
- * A checkbox's value is a {@code boolean}, not the text the base field assumes — hence its own typed
- * arguments.
+ * A checkbox's value is a boolean, not the text the base field assumes — hence its own typed
+ * arguments. It is the boxed {@link Boolean}, because a
+ * {@link ReactCheckboxControl#ReactCheckboxControl(com.top_logic.layout.react.ReactContext,
+ * com.top_logic.layout.form.model.FieldModel, boolean) tri-state checkbox} also has a state for
+ * "no value".
  * </p>
  */
 @Label("Set '{target}' to '{value}'")
 public interface CheckboxValueArguments extends ReactCommand {
 
-	/** @see #isChecked() */
+	/** @see #getChecked() */
 	String VALUE = "value";
 
 	/**
-	 * The new checked state of the checkbox.
+	 * The new checked state of the checkbox, {@code null} for the tri-state "no value".
 	 */
 	@Name(VALUE)
-	boolean isChecked();
+	Boolean getChecked();
 
 }

@@ -340,6 +340,10 @@ class Expressions {
 	 * @param multipleTargets
 	 *        whether the query shall find items that point to a specific target (<code>false</code>
 	 *        ) or to a target that is contained in a set of elements (<code>true</code>).
+	 * @param currentTargets
+	 *        Whether all targets later filled into the query are guaranteed to be current objects.
+	 *        In that case, {@link HistoryType#HISTORIC} references are not searched at all, see
+	 *        {@link #createMonomorphicQueriesForTypeAndAttribute(MetaObject, DeletionPolicy, Map, Boolean, boolean, Class)}.
 	 * @return queries that finds all items which refer via an reference with the given policy to a
 	 *         specific object or (if multiple) whose reference is contained in a given set of
 	 *         objects. The queries are indexed by the concrete type of a referrer.
@@ -347,12 +351,12 @@ class Expressions {
 	 * @see #anyRefereeArguments(Revision, KnowledgeItem) arguments for the returned query
 	 */
 	<T> Map<MetaObject, CompiledQuery<T>> anyRefereeQuery(MetaObject targetType, DeletionPolicy policy,
-			Boolean multipleTargets, Class<T> expectedType) {
-		Object key = TupleFactory.newTuple(targetType, policy, multipleTargets, expectedType);
+			Boolean multipleTargets, boolean currentTargets, Class<T> expectedType) {
+		Object key = TupleFactory.newTuple(targetType, policy, multipleTargets, currentTargets, expectedType);
 		Object cachedQuery = anyReferee.get(key);
 		if (cachedQuery == null) {
 			Map<MetaObject, CompiledQuery<T>> newQueries =
-				createAnyRefereeQuery(targetType, policy, multipleTargets, expectedType);
+				createAnyRefereeQuery(targetType, policy, multipleTargets, currentTargets, expectedType);
 			cachedQuery = MapUtil.putIfAbsent(anyReferee, key, newQueries);
 		}
 		@SuppressWarnings("unchecked")
@@ -361,11 +365,11 @@ class Expressions {
 	}
 
 	private <T> Map<MetaObject, CompiledQuery<T>> createAnyRefereeQuery(MetaObject targetType, DeletionPolicy policy,
-			Boolean multipleTargets, Class<T> expectedType) {
+			Boolean multipleTargets, boolean currentTargets, Class<T> expectedType) {
 		Map<MOClass, Collection<MOReferenceInternal>> typesWithReferenceAttribute =
 			kb.moRepository.getTypesWithReferenceAttribute();
 		return createMonomorphicQueriesForTypeAndAttribute(targetType, policy, typesWithReferenceAttribute,
-			multipleTargets, expectedType);
+			multipleTargets, currentTargets, expectedType);
 	}
 
 	/**
@@ -376,13 +380,19 @@ class Expressions {
 	 */
 	private <T> Map<MetaObject, CompiledQuery<T>> createMonomorphicQueriesForTypeAndAttribute(MetaObject targetType,
 			DeletionPolicy policy, Map<MOClass, Collection<MOReferenceInternal>> typesWithReferenceAttribute,
-			Boolean multipleTargets, Class<T> expectedType) {
+			Boolean multipleTargets, boolean currentTargets, Class<T> expectedType) {
 		Map<MetaObject, CompiledQuery<T>> result = new HashMap<>();
 		String itemParam = "_item";
 		for (Entry<MOClass, Collection<MOReferenceInternal>> entry : typesWithReferenceAttribute.entrySet()) {
 			List<CompiledQuery<T>> queries = new ArrayList<>();
 			MOClass refererType = entry.getKey();
 			for (MOReferenceInternal reference : entry.getValue()) {
+				if (currentTargets && reference.getHistoryType() == HistoryType.HISTORIC) {
+					/* The value of a historic reference is stabilized to a concrete revision when it
+					 * is stored. Therefore such a reference can never point to a current object and
+					 * searching it would be a query that is guaranteed to return nothing. */
+					continue;
+				}
 				Expression searchExpression;
 				if (policy == null || reference.getDeletionPolicy() == policy) {
 					KIReferenceStorage storage = reference.getStorage();
@@ -442,7 +452,7 @@ class Expressions {
 	 * OR-SQL's which can not be handled by MySQL (5.1) with good performance (wrong indexes are
 	 * used).
 	 * 
-	 * @see #createMonomorphicQueriesForTypeAndAttribute(MetaObject, DeletionPolicy, Map, Boolean, Class)
+	 * @see #createMonomorphicQueriesForTypeAndAttribute(MetaObject, DeletionPolicy, Map, Boolean, boolean, Class)
 	 */
 	@SuppressWarnings("unused")
 	private List<CompiledQuery<KnowledgeItem>> createMonomorphicQueriesForType(MetaObject targetType,
@@ -481,9 +491,9 @@ class Expressions {
 	 *        the object to which a reference must point
 	 * 
 	 * @return arguments to deliver to
-	 *         {@link #anyRefereeQuery(MetaObject, DeletionPolicy, Boolean, Class)}
+	 *         {@link #anyRefereeQuery(MetaObject, DeletionPolicy, Boolean, boolean, Class)}
 	 * 
-	 * @see #anyRefereeQuery(MetaObject, DeletionPolicy, Boolean, Class) query for the returned
+	 * @see #anyRefereeQuery(MetaObject, DeletionPolicy, Boolean, boolean, Class) query for the returned
 	 *      arguments with <code>false</code> for multiple targets.
 	 */
 	RevisionQueryArguments anyRefereeArguments(Revision requestedRevision, KnowledgeItem target) {
@@ -500,9 +510,9 @@ class Expressions {
 	 *        Only references that point to an object in the given targets will be found.
 	 * 
 	 * @return arguments to deliver to
-	 *         {@link #anyRefereeQuery(MetaObject, DeletionPolicy, Boolean, Class)}
+	 *         {@link #anyRefereeQuery(MetaObject, DeletionPolicy, Boolean, boolean, Class)}
 	 * 
-	 * @see #anyRefereeQuery(MetaObject, DeletionPolicy, Boolean, Class) query for the returned
+	 * @see #anyRefereeQuery(MetaObject, DeletionPolicy, Boolean, boolean, Class) query for the returned
 	 *      arguments with <code>true</code> for multiple targets.
 	 */
 	RevisionQueryArguments anyRefereeArguments(Revision requestedRevision, Iterable<? extends KnowledgeItem> targets) {

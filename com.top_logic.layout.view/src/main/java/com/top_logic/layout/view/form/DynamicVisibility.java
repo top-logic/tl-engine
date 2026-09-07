@@ -35,7 +35,7 @@ public class DynamicVisibility {
 	 */
 	private static final ModeSelector NONE = new ModeSelector() {
 		@Override
-		public FormVisibility getMode(TLObject object, TLStructuredTypePart attribute) {
+		public FormVisibility getMode(TLObject object, TLStructuredTypePart attribute, boolean editMode) {
 			return FormVisibility.DEFAULT;
 		}
 

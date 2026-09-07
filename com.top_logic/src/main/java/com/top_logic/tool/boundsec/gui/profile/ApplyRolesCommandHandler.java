@@ -6,7 +6,6 @@
 package com.top_logic.tool.boundsec.gui.profile;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,8 +13,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.model.BooleanField;
@@ -50,10 +47,6 @@ public class ApplyRolesCommandHandler extends AbstractApplyCommandHandler {
 		super(context, config);
 	}
 
-	private DisplayContext displayContext() {
-		return DefaultDisplayContext.getDisplayContext();
-	}
-
 	@Override
 	protected boolean storeChanges(LayoutComponent component, FormContext aContext, Object aModel) {
 		Collection<FormMember> changedMembers = aContext.getChangedMembers();
@@ -66,14 +59,9 @@ public class ApplyRolesCommandHandler extends AbstractApplyCommandHandler {
 				CommandNode node = member.get(EditSecurityProfileComponent.COMMAND_NODE);
 				ConfigNode configNode = node.configNode();
 				boolean asBoolean = ((BooleanField) member).getAsBoolean();
-				Set<BoundedRole> roles = ((EditSecurityProfileComponent) component)._rolesMap.get(member.getName());
-				configNode.storeRight(roles, node.group(), asBoolean);
-				Set<BoundedRole> set = layouts.get(configNode);
-				if (set == null) {
-					set = new HashSet<>();
-					layouts.put(configNode, set);
-				}
-				set.addAll(roles);
+				BoundedRole role = member.get(EditSecurityProfileComponent.ROLES);
+				configNode.storeRight(role, node.group(), asBoolean);
+				layouts.computeIfAbsent(configNode, unused -> new HashSet<>()).add(role);
 			}
 			for (ConfigNode node : layouts.keySet()) {
 				ensureRead(node, layouts.get(node));
@@ -86,16 +74,15 @@ public class ApplyRolesCommandHandler extends AbstractApplyCommandHandler {
 		List<BoundCommandGroup> commands = node.getCommandGroups();
 		boolean hasAnyRight = false;
 		for (BoundedRole role : roles) {
-			Set<BoundedRole> roleSet = Collections.singleton(role);
 			for (BoundCommandGroup cgn : commands) {
-				hasAnyRight = node.hasRight(roleSet, cgn);
+				hasAnyRight = node.hasRight(role, cgn);
 				if (hasAnyRight) {
 					break;
 				}
 			}
 			ConfigNode csl = node.getParent();
 			while (csl != null) {
-				if (ensureRead(csl, roleSet, hasAnyRight)) {
+				if (ensureRead(csl, role, hasAnyRight)) {
 					csl = csl.getParent();
 				} else {
 					break;
@@ -104,32 +91,32 @@ public class ApplyRolesCommandHandler extends AbstractApplyCommandHandler {
 		}
 	}
 
-	private boolean ensureRead(ConfigNode csl, Set<BoundedRole> roles, boolean shouldHaveRight) {
-		boolean hasRight = csl.hasRight(roles, SimpleBoundCommandGroup.READ);
+	private boolean ensureRead(ConfigNode csl, BoundedRole role, boolean shouldHaveRight) {
+		boolean hasRight = csl.hasRight(role, SimpleBoundCommandGroup.READ);
 		boolean hasChange = hasRight != shouldHaveRight;
 		if (hasChange) {
 			if (!shouldHaveRight) {
-				if (anySubNeedsRight(csl, roles)) {
+				if (anySubNeedsRight(csl, role)) {
 					return false;
 				}
 			}
-			csl.storeRight(roles, SimpleBoundCommandGroup.READ, shouldHaveRight);
+			csl.storeRight(role, SimpleBoundCommandGroup.READ, shouldHaveRight);
 		}
 		return hasChange;
 	}
 
-	private boolean anySubNeedsRight(ConfigNode csl, Set<BoundedRole> roles) {
+	private boolean anySubNeedsRight(ConfigNode csl, BoundedRole role) {
 		List<SecurityNode> children = csl.getChildren();
 		for (SecurityNode child : children) {
 			if (child instanceof ConfigNode) {
 				ConfigNode childConfigNode = (ConfigNode) child;
 				List<BoundCommandGroup> commands = childConfigNode.getCommandGroups();
 				for (BoundCommandGroup cgn : commands) {
-					if (childConfigNode.hasRight(roles, cgn)) {
+					if (childConfigNode.hasRight(role, cgn)) {
 						return true;
 					}
 				}
-				if (anySubNeedsRight(childConfigNode, roles)) {
+				if (anySubNeedsRight(childConfigNode, role)) {
 					return true;
 				}
 			}

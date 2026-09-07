@@ -103,11 +103,12 @@ public class ConfiguredScript extends AbstractConfiguredInstance<ConfiguredScrip
 		 * before the Executor is resolved. */
 		/* Note: "sideeffectfree" must not be used direct, because it needs the ModelService which
 		 * is eventually not yet started. */
-		return new QueryExecutorMethod(this::getExecutor, getConfig().getName(), args);
+		return new QueryExecutorMethod(this::getExecutor, getConfig().getName(), args, true);
 	}
 
-	private QueryExecutor getExecutor(String functionName) {
-		return ConfiguredTLScriptFunctions.Module.INSTANCE.getImplementationInstance().getExecutor(functionName);
+	private QueryExecutor getExecutor(String functionName, boolean usesSecurity) {
+		return ConfiguredTLScriptFunctions.Module.INSTANCE.getImplementationInstance()
+			.getExecutor(functionName, usesSecurity);
 	}
 
 	@Override

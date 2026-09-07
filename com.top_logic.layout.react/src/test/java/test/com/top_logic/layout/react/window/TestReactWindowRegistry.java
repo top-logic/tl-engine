@@ -24,8 +24,11 @@ import com.top_logic.layout.react.window.WindowOptions;
  */
 public class TestReactWindowRegistry extends TestCase {
 
+	/** Session ID for the registries under test; they are never looked up by it here. */
+	private static final String SESSION_ID = "testSession";
+
 	public void testOpenWindowCreatesEntry() {
-		ReactWindowRegistry registry = new ReactWindowRegistry();
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
 
 		SSEUpdateQueue openerQueue = registry.getOrCreateQueue("vOpener");
 		ReactContext openerCtx = new DefaultReactContext("", "vOpener", openerQueue, registry);
@@ -45,7 +48,7 @@ public class TestReactWindowRegistry extends TestCase {
 	}
 
 	public void testWindowIdsAreUnique() {
-		ReactWindowRegistry registry = new ReactWindowRegistry();
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
 		SSEUpdateQueue openerQueue = registry.getOrCreateQueue("vOpener");
 		ReactContext ctx = new DefaultReactContext("", "vOpener", openerQueue, registry);
 
@@ -57,7 +60,7 @@ public class TestReactWindowRegistry extends TestCase {
 	}
 
 	public void testWindowClosed() {
-		ReactWindowRegistry registry = new ReactWindowRegistry();
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
 		SSEUpdateQueue openerQueue = registry.getOrCreateQueue("vOpener");
 		ReactContext ctx = new DefaultReactContext("", "vOpener", openerQueue, registry);
 
@@ -69,13 +72,13 @@ public class TestReactWindowRegistry extends TestCase {
 	}
 
 	public void testGetNonexistentWindow() {
-		ReactWindowRegistry registry = new ReactWindowRegistry();
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
 
 		assertNull(registry.getWindow("vDoesNotExist"));
 	}
 
 	public void testOpenWindowWithProvider() {
-		ReactWindowRegistry registry = new ReactWindowRegistry();
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
 		SSEUpdateQueue openerQueue = registry.getOrCreateQueue("vOpener");
 		ReactContext openerCtx = new DefaultReactContext("", "vOpener", openerQueue, registry);
 

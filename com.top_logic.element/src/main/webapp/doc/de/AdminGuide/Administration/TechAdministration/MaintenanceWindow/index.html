@@ -1,11 +1,33 @@
 <p>Der Wartungsmodus dient dem Administrator dazu, Änderungen in der Anwendung durchzuführen ohne dass konkurrierende Zugriffe auf die Anwendung und die Datenbank durch andere Benutzer stattfinden.</p>
-<p>Durch aktivieren des Wartungsmodus</p>
+<h4>Ablauf</h4>
+<p>Nachdem der Button "Wartungsmodus aktivieren..." gedrückt wurde, erscheint ein Dialog-Fenster, in dem die Zeitspanne bis zum Aktivieren des Wartungsmodus eingegeben werden kann. Ohne Eingabe eines Wertes wird der Wartungsmodus sofort aktiv.</p>
+<p>Im selben Dialog kann über die Option "Anmeldung während der Übergangsphase erlauben" für jede Aktivierung einzeln entschieden werden, ob sich Benutzer bis zum Beginn des Wartungsmodus noch anmelden dürfen. Die Option ist standardmäßig nicht gesetzt.</p>
+<p>Wurde eine Zeitspanne angegeben, ist der Wartungsmodus zunächst nur angekündigt. Während dieser Übergangsphase</p>
 <ul>
- <li>können sich Benutzer ohne Administratorrechte nicht mehr anmelden</li>
- <li>werden angemeldete Benutzer informiert, dass der Wartungsmodus in einer festzulegenden Zeitspanne aktiviert wird</li>
- <li>werden angemeldete Benutzer (ohne Administratorrechte) nach dieser Zeitspanne abgemeldet</li>
+ <li>erscheint die Meldung "Das System begibt sich demnächst in den Wartungsmodus" zusammen mit der verbleibenden Restzeit,</li>
+ <li>arbeitet das System ansonsten normal weiter, so dass angemeldete Benutzer ihre Arbeiten beenden können,</li>
+ <li>ist die Anmeldung für Benutzer ohne Sonderrechte gesperrt — es sei denn, die Option "Anmeldung während der Übergangsphase erlauben" wurde beim Aktivieren gesetzt. Da der Wartungsmodus durchaus mit einer Vorlaufzeit von mehreren Stunden geplant wird, kann die Anmeldung so bis zum tatsächlichen Beginn offen gehalten werden.</li>
 </ul>
-<p>Nachdem der Button "Wartungsmodus aktivieren" gedrückt wurde, erscheint ein Dialog-Fenster, in dem die Zeitspanne bis zum aktivieren des Wartungsmodus eingegeben werden kann.</p>
-<p>Ohne Eingabe eines Wertes wird der Wartungsmodus sofort aktiv.</p>
-<p>Durch Drücken von "Wartungsmodus aktivieren" erscheint für die festgelegte Zeitsspanne die Meldung "Das System begibt sich demnächst in den Wartungsmodus". Dieser Zustand läßt sich durch Drücken des Buttons "Wartungsmodus abbrechen" beenden, um in den normalen Systemmodus zurückzuwechseln.</p>
-<p>Befindet sich das System im Wartungsmodus erscheint die Meldung "Das System befindet sich zur Zeit im Wartungsmodus". Dieser Zustand läßt sich durch Drücken des Buttons "Wartungsmodus abschaltenn" beenden, um in den normalen Systemmodus zurückzuwechseln.</p>
+<p>Die Ankündigung lässt sich durch Drücken des Buttons "Wartungsmodus abbrechen..." beenden, um in den normalen Systemmodus zurückzuwechseln.</p>
+<p>Ist der Wartungsmodus aktiv,</p>
+<ul>
+ <li>erscheint die Meldung "Das System befindet sich zur Zeit im Wartungsmodus",</li>
+ <li>werden alle angemeldeten Benutzer ohne Sonderrechte automatisch abgemeldet — auch diejenigen, die sich während der Übergangsphase angemeldet haben,</li>
+ <li>können sich Benutzer ohne Sonderrechte nicht mehr anmelden.</li>
+</ul>
+<p>Dieser Zustand lässt sich durch Drücken des Buttons "Wartungsmodus abschalten..." beenden, um in den normalen Systemmodus zurückzuwechseln.</p>
+<p>Sonderrechte in diesem Sinne haben Administratoren, Mitglieder der konfigurierten <code class="hljs inlineCode">allowed-groups</code> sowie Benutzer, die berechtigt sind, den Wartungsmodus zu beenden. Diese Benutzer werden nicht abgemeldet und dürfen sich jederzeit anmelden.</p>
+<p>Im Cluster-Betrieb kann der Wartungsmodus nicht sofort aktiviert werden. Wird er dort ohne Angabe einer Zeitspanne aktiviert, wird er stattdessen mit der konfigurierten Mindestwartezeit angekündigt.</p>
+<h4>Konfiguration</h4>
+<p>Der Wartungsmodus wird über den Dienst <code class="hljs inlineCode">MaintenanceWindowManager</code> konfiguriert:</p>
+<pre><code class="language-xml">&lt;config service-class="com.top_logic.base.administration.MaintenanceWindowManager"&gt;
+   &lt;instance&gt;
+      &lt;allowed-groups&gt;&lt;/allowed-groups&gt;
+      &lt;min-intervall-in-cluster&gt;20000&lt;/min-intervall-in-cluster&gt;
+   &lt;/instance&gt;
+&lt;/config&gt;
+</code></pre>
+<ul>
+ <li><code class="hljs inlineCode">allowed-groups</code>: Die Gruppen, deren Mitglieder sich auch im aktiven Wartungsmodus anmelden dürfen. Solche Benutzer unterliegen im Wartungsmodus keinerlei Einschränkungen. Ohne Angabe dürfen sich nur Administratoren und Benutzer anmelden, die den Wartungsmodus beenden dürfen.</li>
+ <li><code class="hljs inlineCode">min-intervall-in-cluster</code>: Im Cluster-Betrieb kann der Wartungsmodus nicht sofort aktiviert werden. Dies ist die minimale Wartezeit in Millisekunden.</li>
+</ul>

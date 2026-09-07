@@ -1,9 +1,6 @@
 eclipse.preferences.version=1
+encoding/.build.properties=UTF-8
 encoding//src/main/java=UTF-8
-encoding//src/main/webapp/html/contents/layoutdemo/glocke-UTF-16=UTF-16
-encoding//src/test/java=UTF-8
-encoding/<project>=UTF-8
-encoding//.build.properties=UTF-8
 encoding//src/main/java/META-INF/messages_de.properties=UTF-8
 encoding//src/main/java/META-INF/messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/DemoMessages_de.properties=UTF-8
@@ -60,8 +57,6 @@ encoding//src/main/webapp/WEB-INF/conf/resources/model.test.transient.messages_d
 encoding//src/main/webapp/WEB-INF/conf/resources/model.test.transient.messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.test.webfolder.messages_de.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.test.webfolder.messages_en.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.contact.ui.messages_de.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.contact.ui.messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.demo.aspect.messages_de.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.demo.aspect.messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.demo.forms.messages_de.properties=UTF-8
@@ -141,5 +136,6 @@ encoding//src/main/webapp/doc/en/tl-demo/TechnicalDemo/Tests/Override/page.prope
 encoding//src/main/webapp/doc/en/tl-demo/TechnicalDemo/Tests/page.properties=UTF-8
 encoding//src/main/webapp/doc/en/tl-demo/TechnicalDemo/page.properties=UTF-8
 encoding//src/main/webapp/doc/en/tl-demo/page.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.test.constraints.messages_de.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.test.constraints.messages_en.properties=UTF-8
+encoding//src/main/webapp/html/contents/layoutdemo/glocke-UTF-16=UTF-16
+encoding//src/test/java=UTF-8
+encoding/<project>=UTF-8

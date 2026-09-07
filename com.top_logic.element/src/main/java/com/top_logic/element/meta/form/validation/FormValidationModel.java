@@ -45,7 +45,14 @@ public class FormValidationModel implements OverlayLookup {
 	/** Map from persistent object to overlay (for edit overlays). */
 	private final Map<TLObject, TLObject> _overlaysByEdited = new HashMap<>();
 
-	/** All overlays including create overlays (which have no persistent base). */
+	/**
+	 * All overlays including create overlays (which have no persistent base).
+	 *
+	 * @implNote An overlay shares the identity of the object it edits, so it compares
+	 *           {@link Object#equals(Object) equal} to that object. Overlays must therefore be
+	 *           looked up and removed by identity, not by equality - otherwise the edited object
+	 *           would be mistaken for its own overlay.
+	 */
 	private final List<TLObject> _allOverlays = new ArrayList<>();
 
 	/** All constraint entries, grouped by owning (object, attribute). */
@@ -84,8 +91,8 @@ public class FormValidationModel implements OverlayLookup {
 	 * Removes an overlay and cleans up constraints and dependencies.
 	 */
 	public void removeOverlay(TLObject overlay) {
-		_allOverlays.remove(overlay);
-		_overlaysByEdited.values().remove(overlay);
+		_allOverlays.removeIf(registered -> registered == overlay);
+		_overlaysByEdited.values().removeIf(registered -> registered == overlay);
 
 		// Remove all constraint entries owned by this overlay.
 		List<ConstraintEntry> removed = new ArrayList<>();
@@ -111,10 +118,24 @@ public class FormValidationModel implements OverlayLookup {
 
 	@Override
 	public TLObject getExistingOverlay(TLObject object) {
-		if (_allOverlays.contains(object)) {
+		if (isRegistered(object)) {
 			return object;
 		}
 		return _overlaysByEdited.get(object);
+	}
+
+	/**
+	 * Whether the given object is one of the {@link #getOverlays() registered overlays}.
+	 *
+	 * @implNote Compares by identity, see {@link #_allOverlays}.
+	 */
+	private boolean isRegistered(TLObject object) {
+		for (TLObject overlay : _allOverlays) {
+			if (overlay == object) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -239,6 +260,24 @@ public class FormValidationModel implements OverlayLookup {
 				_constraintsByOwner.put(new PointerKey(overlay, part), entries);
 			}
 		}
+	}
+
+	/**
+	 * Re-runs all constraint checks of all overlays.
+	 *
+	 * <p>
+	 * Stored results can be outdated when persistent data has changed after the value was entered,
+	 * because checks are otherwise only re-run when a form value changes. Checks that consult
+	 * persistent data (e.g. uniqueness) must therefore be re-evaluated before the form state is
+	 * applied.
+	 * </p>
+	 */
+	public void revalidateAll() {
+		Set<ConstraintEntry> all = new HashSet<>();
+		for (List<ConstraintEntry> entries : _constraintsByOwner.values()) {
+			all.addAll(entries);
+		}
+		revalidate(all);
 	}
 
 	private void validateAllFor(TLObject overlay) {

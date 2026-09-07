@@ -168,6 +168,14 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		_invitationMail = QueryExecutor.compile(config.getInvitationMail());
 		_resetPasswordMail = QueryExecutor.compile(config.getResetPasswordMail());
 		_resetMFAMail = QueryExecutor.compile(config.getResetMFAMail());
+
+		// "Forgot password" and "reset MFA" are triggered from the login screen, i.e. before the
+		// user is authenticated. The corresponding scripts therefore run without a logged-in user
+		// and must not be subject to a user's access rights (they would otherwise be denied). The
+		// verification and invitation mails run with a logged-in user (after login / admin action)
+		// and keep security.
+		_resetPasswordMail.disableSecurity();
+		_resetMFAMail.disableSecurity();
 	}
 
 	/**

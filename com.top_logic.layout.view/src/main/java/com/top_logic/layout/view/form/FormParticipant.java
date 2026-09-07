@@ -19,7 +19,12 @@ import com.top_logic.knowledge.service.Transaction;
 public interface FormParticipant {
 
 	/**
-	 * Validates this participant's content.
+	 * Whether this participant's content is free of validation errors visible to the user.
+	 *
+	 * <p>
+	 * A pure query, called whenever the form re-evaluates what the user may do. Errors are made
+	 * visible by {@link #revealAll()}, which the form runs before validating on a save attempt.
+	 * </p>
 	 *
 	 * @return {@code true} if valid, {@code false} if validation errors exist.
 	 */

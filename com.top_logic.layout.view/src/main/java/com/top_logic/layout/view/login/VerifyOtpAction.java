@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.login;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -37,6 +38,7 @@ import com.top_logic.util.error.TopLogicException;
  *           secret is persisted via {@link com.top_logic.model.TLObject#tUpdateByName(String, Object)}
  *           on {@link Person#MFA_SECRET_ATTR} (avoiding the broken {@link Person#setMFASecret(Password)}).
  */
+@InApp
 public class VerifyOtpAction implements ViewAction {
 
 	/**

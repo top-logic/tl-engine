@@ -7,6 +7,7 @@ package com.top_logic.kafka.sync.knowledge.service;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -18,10 +19,11 @@ import com.top_logic.kafka.sync.knowledge.service.importer.ModelBasedImportConfi
 import com.top_logic.knowledge.service.PersistencyLayer;
 
 /**
- * Configuration of the {@link KafkaExportConfiguration} and {@link KafkaImportConfiguration}.
- * 
+ * Configures the export and import for Kafka-based data synchronization.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Kafka data synchronization")
 @ServiceDependencies(PersistencyLayer.Module.class)
 public class KafkaExportImportConfiguration extends ManagedClass {
 

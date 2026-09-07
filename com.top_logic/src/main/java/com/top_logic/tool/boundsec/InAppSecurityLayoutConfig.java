@@ -11,13 +11,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.ValueInitializer;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.initializer.UUIDInitializer;
 import com.top_logic.layout.help.UseHelpEditor;
-import com.top_logic.model.config.TLModelPartMapping;
-import com.top_logic.tool.boundsec.manager.SecurityStructures;
 
 /**
  * {@link com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.Config Security layout
@@ -30,18 +26,6 @@ public interface InAppSecurityLayoutConfig extends ConfigurationItem {
 
 	/** Configuration name for {@link #getHelpID()}. */
 	String HELP_ID = "helpID";
-
-	/** Configuration name for {@link #getSecurityDomain()}. */
-	String SECURITY_DOMAIN = "securityDomain";
-
-	/**
-	 * The name of the security structure for which configuration options are offered.
-	 */
-	@Nullable
-	@StringDefault("SecurityStructure")
-	@Name(SECURITY_DOMAIN)
-	@Options(fun = SecurityStructures.class, mapping = TLModelPartMapping.class)
-	String getSecurityDomain();
 
 	/**
 	 * If this property is set, a help page can be generated for the view.

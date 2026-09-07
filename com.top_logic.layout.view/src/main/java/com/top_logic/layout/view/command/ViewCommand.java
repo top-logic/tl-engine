@@ -12,9 +12,11 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.KeyStrokeFormat;
@@ -55,6 +57,9 @@ public interface ViewCommand {
 
 		/** Configuration name for {@link #getPlacement()}. */
 		String PLACEMENT = "placement";
+
+		/** Configuration name for {@link #getDisplay()}. */
+		String DISPLAY = "display";
 
 		/** Configuration name for {@link #getClique()}. */
 		String CLIQUE = "clique";
@@ -118,6 +123,20 @@ public interface ViewCommand {
 		CommandPlacement getPlacement();
 
 		/**
+		 * How this command's button displays icon and label, e.g. {@code icon-only} for a compact
+		 * icon button whose label becomes the tooltip.
+		 *
+		 * <p>
+		 * If not set, the default of the enclosing command scope applies, and without one the
+		 * button shows the icon (when configured) together with the label.
+		 * </p>
+		 */
+		@Name(DISPLAY)
+		@Nullable
+		@NullDefault
+		ButtonDisplayMode getDisplay();
+
+		/**
 		 * The clique name for grouping related commands.
 		 *
 		 * @see CommandCliques
@@ -175,4 +194,18 @@ public interface ViewCommand {
 	 * @return The result of the command execution.
 	 */
 	HandlerResult execute(ReactContext context, Object input);
+
+	/**
+	 * Whether executing this command applies the values entered into the enclosing form.
+	 *
+	 * <p>
+	 * Such a command is disabled while the form displays validation errors, since the form would
+	 * reject it.
+	 * </p>
+	 *
+	 * @see FormValid
+	 */
+	default boolean appliesFormState() {
+		return false;
+	}
 }

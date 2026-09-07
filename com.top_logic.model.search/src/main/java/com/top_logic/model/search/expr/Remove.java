@@ -23,18 +23,18 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  *
  * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
  */
-public class Remove extends GenericMethod {
+public class Remove extends GenericMethodWithSecurity {
 
 	/**
 	 * Creates a {@link Remove}.
 	 */
-	protected Remove(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected Remove(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new Remove(getName(), arguments);
+		return new Remove(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -46,6 +46,10 @@ public class Remove extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLObject obj = asTLObjectNonNull(arguments[0]);
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
+
+		if (usesSecurity()) {
+			Update.checkWritePermission(obj, part);
+		}
 
 		List<?> oldValue = asList(obj.tValue(part));
 		Set<?> removeSet = asSet(arguments[2]);
@@ -94,7 +98,7 @@ public class Remove extends GenericMethod {
 
 		@Override
 		public Remove build(Expr expr, SearchExpression[] args) {
-			return new Remove(getConfig().getName(), args);
+			return new Remove(getConfig().getName(), args, true);
 		}
 
 	}

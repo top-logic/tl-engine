@@ -44,6 +44,9 @@
 		<param name="columns"
 			value="name"
 		/>
+		<param name="securityObject"
+			optional="true"
+		/>
 	</params>
 
 	<layout name="${namePrefix}TableSidebarLayout"
@@ -71,6 +74,7 @@
 						modelBuilder="${modelBuilder}"
 						objectType="${type}"
 						resPrefix="${resPrefix}"
+						securityObject="${securityObject}"
 					>
 						<layoutInfo size="40%"/>
 						${table}

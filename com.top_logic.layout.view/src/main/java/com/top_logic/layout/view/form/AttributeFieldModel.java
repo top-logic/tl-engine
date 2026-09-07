@@ -73,6 +73,7 @@ public class AttributeFieldModel extends AbstractFieldModel {
 	 */
 	public void setObject(TLObject newObject) {
 		Object oldValue = getCachedValue();
+		boolean hadInputError = getInputError() != null;
 		_object = newObject;
 		_part = resolvePart(newObject);
 		setMandatory(_part.isMandatory());
@@ -80,12 +81,16 @@ public class AttributeFieldModel extends AbstractFieldModel {
 		setDefaultValue(newValue);
 		setValueInternal(newValue);
 
-		// Reset validation state from previous object.
+		// Reset validation state from previous object. This includes an input error: the raw text
+		// it rejected belongs to an edit that is over (saved, cancelled, or on another object).
 		setRevealed(false);
+		setError(null);
 		setModelValidationError(null);
 		setModelValidationWarnings(java.util.Collections.emptyList());
 
-		if (!Objects.equals(oldValue, newValue)) {
+		// A rejected raw input left the value unchanged, so only the input control still shows it.
+		// Push the value even though it did not change, to replace that text.
+		if (hadInputError || !Objects.equals(oldValue, newValue)) {
 			fireValueChanged(oldValue, newValue);
 		}
 	}
@@ -99,8 +104,14 @@ public class AttributeFieldModel extends AbstractFieldModel {
 
 	/**
 	 * The object this model currently reads from and writes to (base object or overlay).
+	 *
+	 * <p>
+	 * Public because a field control may have to look at what it is editing, not only at its value:
+	 * {@link AnnotationsFieldControlProvider} decides from the element's kind which surroundings to
+	 * build for an annotation.
+	 * </p>
 	 */
-	protected TLObject getObject() {
+	public TLObject getObject() {
 		return _object;
 	}
 

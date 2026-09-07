@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,6 +53,8 @@ public class TLScriptEditorReactControl extends ReactControl {
 
 	private Consumer<String> _valueCallback;
 
+	private final List<String> _contextVariables;
+
 	/**
 	 * Creates a new {@link TLScriptEditorReactControl}.
 	 *
@@ -61,11 +64,16 @@ public class TLScriptEditorReactControl extends ReactControl {
 	 *        The initial TL-Script text, may be {@code null}.
 	 * @param readOnly
 	 *        Whether the editor is read-only.
+	 * @param contextVariables
+	 *        Names of variables always in scope for completion; must not be {@code null} (an empty
+	 *        list if there are none).
 	 */
-	public TLScriptEditorReactControl(ReactContext context, String value, boolean readOnly) {
+	public TLScriptEditorReactControl(ReactContext context, String value, boolean readOnly,
+			List<String> contextVariables) {
 		super(context, null, "TLScriptEditor");
 		putState(VALUE, value != null ? value : "");
 		putState(READ_ONLY, Boolean.valueOf(readOnly));
+		_contextVariables = Objects.requireNonNull(contextVariables);
 	}
 
 	/**
@@ -90,6 +98,12 @@ public class TLScriptEditorReactControl extends ReactControl {
 
 	@ReactCommandHandler("valueChanged")
 	void handleValueChanged(Map<String, Object> arguments) {
+		if (Boolean.TRUE.equals(getState(READ_ONLY))) {
+			// The editor displays its text without offering an edit; a value arriving nevertheless
+			// comes from a client whose display lags behind the server, or from one sending an edit
+			// the user interface does not offer. Drop it instead of publishing it to the callback.
+			return;
+		}
 		Object rawValue = arguments.get(VALUE);
 		String newValue = rawValue != null ? rawValue.toString() : null;
 		if (_valueCallback != null) {
@@ -108,11 +122,12 @@ public class TLScriptEditorReactControl extends ReactControl {
 	void handleComplete(Map<String, Object> arguments) {
 		String line = (String) arguments.get("line");
 		String prefix = (String) arguments.get("prefix");
+		String textToCursor = (String) arguments.get("textToCursor");
 		String requestId = (String) arguments.get("requestId");
 
 		// Pass null for DisplayContext — documentation will be omitted for now.
 		List<CodeCompletion> completions =
-			TLScriptCompletionService.computeCompletions(null, line, prefix, false);
+			TLScriptCompletionService.computeCompletions(null, line, prefix, textToCursor, _contextVariables, false);
 
 		List<Map<String, Object>> items = new ArrayList<>();
 		for (CodeCompletion c : completions) {

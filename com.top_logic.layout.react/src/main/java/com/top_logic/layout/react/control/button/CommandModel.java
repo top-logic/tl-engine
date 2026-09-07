@@ -102,6 +102,14 @@ public interface CommandModel {
 	}
 
 	/**
+	 * The {@link ButtonDisplayMode} explicitly requested for this command's button, or
+	 * {@code null} (the default) to let the rendering container decide.
+	 */
+	default ButtonDisplayMode getDisplayMode() {
+		return null;
+	}
+
+	/**
 	 * The keyboard gesture that triggers this command, e.g. {@link KeyStroke#ENTER} or
 	 * {@code KeyStroke.of(Key.S).ctrl()}.
 	 *

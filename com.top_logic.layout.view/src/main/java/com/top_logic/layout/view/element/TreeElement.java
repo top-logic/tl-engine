@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -64,6 +65,7 @@ import com.top_logic.model.util.TLModelPartRef;
  * will be added when the view system gains model event integration.
  * </p>
  */
+@InApp
 public class TreeElement implements UIElement {
 
 	/**
@@ -328,11 +330,11 @@ public class TreeElement implements UIElement {
 			inputChannels
 		);
 
-		// 8. Lazy attach on render, cleanup on dispose.
-		treeControl.addBeforeWriteAction(() -> {
+		// 8. Observe the model only while the tree is displayed.
+		treeControl.addAttachListener(() -> {
 			observableModel.attach(context.getModelScope());
 		});
-		treeControl.addCleanupAction(observableModel::detach);
+		treeControl.addDetachListener(observableModel::detach);
 
 		return treeControl;
 	}

@@ -8,29 +8,26 @@
 				<settings>
 					<module name="DemoSecurity">
 						<factory value="com.top_logic.element.structured.wrap.StructuredElementWrapperFactory"/>
-						<roles>
-							<role name="DemoSecurity.Role1"/>
-							<role name="DemoSecurity.Role2"/>
-							<role name="DemoSecurity.Role3"/>
-							<role name="DemoSecurity.SecurityAdministrator"/>
-							<role name="DemoSecurity.SecurityAdministratorB"/>
-							<role name="DemoSecurity.User"/>
-							<role name="DemoSecurity.selection"/>
-							<role name="DemoSecurity.navigation"/>
-						</roles>
 						<singletons>
-							<singleton type="Root">
-								<role-assignments>
-									<role-assignment role="DemoSecurity.SecurityAdministrator" group="securityAdministrators"/>
-									<role-assignment role="DemoSecurity.User" group="user"/>
-								</role-assignments>
-							</singleton>
+							<singleton type="Root"/>
 						</singletons>
 					</module>
 				</settings>
 			</instance>
 		</config>
 	
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="DemoSecurity.Role1"/>
+					<role name="DemoSecurity.Role2"/>
+					<role name="DemoSecurity.SecurityAdministrator"/>
+					<role name="DemoSecurity.SecurityAdministratorB"/>
+					<role name="DemoSecurity.User"/>
+				</roles>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance
 				error-on-missing-key="true"
@@ -47,6 +44,23 @@
 	            <structures>
 	            	<structure name="DemoSecurity"/>
 				</structures>
+				<role-rules>
+					<singleton-rule
+						id="User"
+						target="DemoSecurity#ROOT"
+						role="DemoSecurity.User"
+					>
+						<group-with-name name="user"/>
+					</singleton-rule>
+
+					<singleton-rule
+						id="SecurityAdministrator"
+						target="DemoSecurity#ROOT"
+						role="DemoSecurity.SecurityAdministrator"
+					>
+						<group-with-name name="securityAdministrators"/>
+					</singleton-rule>
+				</role-rules>
 			</instance>
 		</config>
 	</services>

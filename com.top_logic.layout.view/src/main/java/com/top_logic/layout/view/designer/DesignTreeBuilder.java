@@ -8,11 +8,13 @@ package com.top_logic.layout.view.designer;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.layout.configedit.ConfigChildren;
 import com.top_logic.layout.view.ReferenceElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
@@ -49,7 +51,20 @@ public class DesignTreeBuilder {
 	 */
 	public DesignTreeNode build(String rootViewPath) throws ConfigurationException {
 		ViewElement.Config rootConfig = ViewLoader.getOrLoadConfig(rootViewPath);
-		return buildNode(rootConfig, rootViewPath);
+		return build(rootConfig, rootViewPath);
+	}
+
+	/**
+	 * Builds the design tree for an already loaded configuration.
+	 *
+	 * @param rootConfig
+	 *        The configuration forming the root of the tree.
+	 * @param sourceFile
+	 *        The {@code .view.xml} file the configuration originates from.
+	 * @return The root {@link DesignTreeNode}.
+	 */
+	public DesignTreeNode build(ConfigurationItem rootConfig, String sourceFile) throws ConfigurationException {
+		return buildNode(rootConfig, sourceFile);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -68,6 +83,12 @@ public class DesignTreeBuilder {
 
 		for (PropertyDescriptor property : treeProperties) {
 			DesignTreeNode target = inline ? node : createGroupNode(node, property, sourceFile);
+
+			// Bind the target node to the property its children are stored in, so that the
+			// structural edit commands can write through to the configuration. For an inlined
+			// property this is the config node itself; otherwise it is the group node.
+			target.setChildContainer(ConfigChildren.create(config, property));
+
 			if (property.kind() == PropertyKind.LIST) {
 				List<?> children = (List<?>) config.value(property);
 				if (children != null) {
@@ -83,11 +104,21 @@ public class DesignTreeBuilder {
 			}
 		}
 
-		// For ReferenceElement, also load referenced view as a child.
+		// For ReferenceElement, also load referenced view as a child. A broken referenced view must
+		// not abort building the whole design tree: skip it (keeping the referencing node) so the
+		// designer still opens, and log the offending path.
 		if (config instanceof ReferenceElement.Config refConfig) {
 			String refPath = ViewLoader.VIEW_BASE_PATH + refConfig.getView();
-			ViewElement.Config refViewConfig = ViewLoader.getOrLoadConfig(refPath);
-			addChild(node, refViewConfig, refPath);
+			try {
+				ViewElement.Config refViewConfig = ViewLoader.getOrLoadConfig(refPath);
+				addChild(node, refViewConfig, refPath);
+			} catch (Exception ex) {
+				Logger.warn("Adding error node for invalid referenced view '" + refPath
+					+ "' while building the design tree.", ex, DesignTreeBuilder.class);
+				DesignTreeNode errorNode = new ErrorDesignTreeNode(sourceFile, refConfig.getView(), ex.getMessage());
+				errorNode.setParent(node);
+				node.getChildren().add(errorNode);
+			}
 		}
 
 		return node;

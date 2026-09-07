@@ -4,10 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	template="com.top_logic/tab.template.xml"
 >
-	<arguments
-		securityDomain=""
-		tabIcon=""
-	>
+	<arguments tabIcon="">
 		<tabLabel key="dynamic.1a2e4790-a919-4037-92c4-9584db5cf395">
 			<en>Milestones</en>
 			<de>Meilensteine</de>

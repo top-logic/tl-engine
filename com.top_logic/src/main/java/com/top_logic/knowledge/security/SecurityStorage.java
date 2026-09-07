@@ -226,7 +226,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
     /**
      * Returns the AccessManager which uses this {@link SecurityStorage}.
      */
-    protected final AccessManager getAccessManager() {
+	protected AccessManager getAccessManager() {
     	return accessManager;
     }
 
@@ -1114,28 +1114,33 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 
 
     /**
-     * Updates the security storage, if {@link #isAutoUpdate()} is enabled.
-     *
-     * @param aChangesInformation
-     *            an Object containing all change informations needed for updates
-     * @throws StorageException
-     *             if some error occurs while requesting the database
-     */
-    public final void updateSecurity(Object aChangesInformation) throws StorageException {
-        if (autoUpdate) internalUpdateSecurity(aChangesInformation);
+	 * Updates the security storage, if {@link #isAutoUpdate()} is enabled.
+	 *
+	 * @param aChangesInformation
+	 *        an Object containing all change informations needed for updates
+	 * @param invalidRules
+	 *        an Object containing all invalid rules
+	 * @throws StorageException
+	 *         if some error occurs while requesting the database
+	 */
+	public final void updateSecurity(Object aChangesInformation, Object invalidRules)
+			throws StorageException {
+		if (autoUpdate)
+			internalUpdateSecurity(aChangesInformation, invalidRules);
     }
 
     /**
-     * Updates the security storage. This is a hook for subclasses which may extend this
-     * method to make updates.
-     *
-     * @param aChangesInformation
-     *            an Object containing all change informations needed by subclasses for
-     *            updates
-     * @throws StorageException
-     *             if some error occurs while requesting the database
-     */
-    protected void internalUpdateSecurity(Object aChangesInformation) throws StorageException {
+	 * Updates the security storage. This is a hook for subclasses which may extend this method to
+	 * make updates.
+	 *
+	 * @param aChangesInformation
+	 *        an Object containing all change informations needed by subclasses for updates
+	 * @param invalidRules
+	 *        an Object containing all invalid rules
+	 * @throws StorageException
+	 *         if some error occurs while requesting the database
+	 */
+	protected void internalUpdateSecurity(Object aChangesInformation, Object invalidRules) throws StorageException {
         // Nothing to do here
     }
 
@@ -1305,6 +1310,8 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			SQL_REMOVE_FOR_ALL_TARGETS_STATEMENT =
 				SQL_REMOVE_PREFIX + " WHERE " + attributeBusinessObjectColumnRef + "=? AND "
 					+ attributeRoleColumnRef + "=? AND " + attributeReasonColumnRef + "=?";
+			SQL_REMOVE_REASONS =
+					SQL_REMOVE_PREFIX + " WHERE " + attributeReasonColumnRef + " IN ";
 			SQL_HAS_ROLE_FROM_COLLECTION_STATEMENT_PART_1 =
 				SQL_HAS_ROLE_INFIX + " WHERE " + attributeGroupColumnRef + " IN ";
 			SQL_INSERT_STATEMENT = "INSERT INTO " + securityStorageTableRef + updateHint() + " VALUES (?, ?, ?, ?)";
@@ -1457,6 +1464,9 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
         protected final String SQL_REMOVE_FOR_ALL_TARGETS_STATEMENT;
 
         protected final String SQL_REMOVE_OBJECTS_PART_1;
+
+		/** SQL statement to remove all rows with one of the given reasons. */
+		protected final String SQL_REMOVE_REASONS;
 
         protected final String SQL_HAS_ROLE_FROM_COLLECTION_STATEMENT_PART_1;
 
@@ -1781,6 +1791,18 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
                 this.releaseWriteConnection(statementCache);
             }
         }
+
+		/**
+		 * Removes all entries stored for the given reasons.
+		 * 
+		 * @return Number of removed rows.
+		 */
+		public int removeReasons(Iterator<Integer> reasons) throws SQLException {
+			StringBuilder sb = new StringBuilder(1024);
+			sb.append(SQL_REMOVE_REASONS);
+			dbHelper.literalSet(sb, DBType.INT, reasons);
+			return DBUtil.executeUpdate(getWriteConnection(), sb.toString());
+		}
 
 		/**
 		 * Converts {@link TLID} objects in the given vector to their storage values.

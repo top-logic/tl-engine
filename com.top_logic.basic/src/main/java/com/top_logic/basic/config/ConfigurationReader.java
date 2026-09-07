@@ -598,10 +598,13 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 
 		private boolean initValue(XMLStreamReader reader, ConfigBuilder valueBuilder, PropertyDescriptor property,
 				Object value, Set<String> processedProperties) {
-			if (processedProperties.contains(property.getPropertyName())) {
+			String propertyName = property.getPropertyName();
+			if (processedProperties.contains(propertyName)) {
 				StringBuilder error = new StringBuilder();
 				error.append("Duplicate initialisation value '");
 				error.append(value);
+				error.append("' vs. '");
+				error.append(valueBuilder.value(property));
 				error.append("'");
 				appendForProperty(error, property);
 				appendAtLocation(error, reader);
@@ -609,7 +612,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				context.error(error.toString());
 				return false;
 			}
-			processedProperties.add(property.getPropertyName());
+			processedProperties.add(propertyName);
 			try {
 				valueBuilder.update(property, value);
 				return true;

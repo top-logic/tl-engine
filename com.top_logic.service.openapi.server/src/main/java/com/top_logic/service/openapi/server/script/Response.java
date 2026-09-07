@@ -46,6 +46,13 @@ public class Response {
 	}
 
 	/**
+	 * Whether this response indicates a successful request.
+	 */
+	public boolean isSuccess() {
+		return getStatus() >= 200 && getStatus() <= 299;
+	}
+
+	/**
 	 * The actual result to deliver in the HTTP response body.
 	 *
 	 * <p>

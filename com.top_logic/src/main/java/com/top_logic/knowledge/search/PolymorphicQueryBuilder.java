@@ -35,12 +35,10 @@ public abstract class PolymorphicQueryBuilder<C extends PolymorphicConfiguration
 	}
 
 	@Override
-	public SetExpression createInstancesQuery(MOClass table, Set<TLClass> types) {
-		return filter(
-			allOf(table),
-			inSet(
-				identifierExpression(table, types),
-				setLiteral(identifiers(table, types))));
+	public Expression createInstancesFilter(MOClass table, Set<TLClass> types) {
+		return inSet(
+			identifierExpression(table, types),
+			setLiteral(identifiers(table, types)));
 	}
 
 	/**
@@ -48,9 +46,9 @@ public abstract class PolymorphicQueryBuilder<C extends PolymorphicConfiguration
 	 * stored.
 	 * 
 	 * @param table
-	 *        See {@link #createInstancesQuery(MOClass, Set)}.
+	 *        See {@link #createInstancesFilter(MOClass, Set)}.
 	 * @param types
-	 *        See {@link #createInstancesQuery(MOClass, Set)}.
+	 *        See {@link #createInstancesFilter(MOClass, Set)}.
 	 * 
 	 * @see #identifiers(MOClass, Set)
 	 */
@@ -60,9 +58,9 @@ public abstract class PolymorphicQueryBuilder<C extends PolymorphicConfiguration
 	 * Identifiers which are stored in the database to identify the given types.
 	 * 
 	 * @param table
-	 *        See {@link #createInstancesQuery(MOClass, Set)}.
+	 *        See {@link #createInstancesFilter(MOClass, Set)}.
 	 * @param types
-	 *        See {@link #createInstancesQuery(MOClass, Set)}.
+	 *        See {@link #createInstancesFilter(MOClass, Set)}.
 	 * 
 	 * @see #identifierExpression(MOClass, Set)
 	 */

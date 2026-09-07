@@ -49,7 +49,7 @@ public @interface ReactCommandHandler {
 	String value();
 
 	/**
-	 * The arguments this command accepts, advertised to the headless agent interface so a consumer
+	 * The arguments this command accepts, advertised to the headless interface so a consumer
 	 * need not guess the shape of the {@code arguments} map. Empty for argument-less commands.
 	 */
 	ReactParam[] params() default {};
@@ -60,7 +60,7 @@ public @interface ReactCommandHandler {
 	 * intent.
 	 *
 	 * <p>
-	 * A technical command is omitted from the headless agent's advertised actions <em>and</em> never
+	 * A technical command is omitted from the headless interface's advertised actions <em>and</em> never
 	 * captured by the script recorder. Declaring it here, on the command, keeps the classification
 	 * co-located with the handler so it cannot drift out of a separately-maintained set.
 	 * </p>

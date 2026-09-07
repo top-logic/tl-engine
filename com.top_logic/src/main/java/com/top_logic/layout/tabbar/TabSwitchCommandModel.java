@@ -143,6 +143,15 @@ public class TabSwitchCommandModel extends ComponentCommandModel {
 		return new TabSwitchCommandModel(handler, component, tabName);
 	}
 
+	/**
+	 * No tooltip: The {@link CommandHandler} executing the tab switch is a technical
+	 * implementation detail whose documentation does not describe the tab this model switches to.
+	 */
+	@Override
+	protected String defaultTooltip() {
+		return null;
+	}
+
 	private void update() {
 		updateCardToSelect();
 		updateVisibility();

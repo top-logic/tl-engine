@@ -79,6 +79,10 @@ public class ExecutionEngine {
 						.filter(e -> $e.get(`tl.bpe.execution:ProcessExecution#executionState`) == `tl.bpe.execution:ExecutionState#RUNNING`)
 					""")).expr();
 			_activeExecutions = QueryExecutor.compile(expr);
+			// Process-execution logic runs partly in a userless scheduler context (BPETimeoutTask in
+			// a system context) and is system logic that must operate on the full process data
+			// regardless of who triggered it; therefore security is switched off.
+			_activeExecutions.disableSecurity();
 		} catch (ParseException ex) {
 			throw new UnreachableAssertion(ex);
 		}
@@ -436,7 +440,22 @@ public class ExecutionEngine {
 	 * @return result of evaluation
 	 */
 	public Object calculate(SearchExpression rule, Object... contextObjects) {
-		return QueryExecutor.compile(rule).execute(contextObjects);
+		return compileWithoutSecurity(rule).execute(contextObjects);
+	}
+
+	/**
+	 * Compiles the given engine expression with security switched off.
+	 *
+	 * <p>
+	 * Process-execution logic runs partly in a userless scheduler context (see
+	 * {@code BPETimeoutTask}) where a security check would be denied for lack of a current user, and
+	 * is system logic that must operate on the full process data regardless of who triggered it.
+	 * </p>
+	 */
+	private static QueryExecutor compileWithoutSecurity(SearchExpression rule) {
+		QueryExecutor executor = QueryExecutor.compile(rule);
+		executor.disableSecurity();
+		return executor;
 	}
 
 	/**
@@ -476,7 +495,7 @@ public class ExecutionEngine {
 			SearchExpression defaultOperation = processExecution.getProcess().getParticipant().getDefaultOperation();
 			if (defaultOperation != null &&
 				!(lastEdge instanceof SequenceFlow flow && flow.getSkipStandardOperation())) {
-				QueryExecutor.compile(defaultOperation).execute(processExecution, previousToken, nextToken,
+				compileWithoutSecurity(defaultOperation).execute(processExecution, previousToken, nextToken,
 					additional);
 			}
 
@@ -485,7 +504,7 @@ public class ExecutionEngine {
 					// Handle any edge-specific operations
 					SearchExpression operation = flow.getOperation();
 					if (operation != null) {
-						QueryExecutor.compile(operation).execute(processExecution, previousToken, nextToken,
+						compileWithoutSecurity(operation).execute(processExecution, previousToken, nextToken,
 							additional);
 					}
 				}

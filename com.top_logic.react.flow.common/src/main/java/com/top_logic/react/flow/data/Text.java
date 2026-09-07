@@ -62,7 +62,7 @@ public interface Text extends com.top_logic.react.flow.data.Box, com.top_logic.r
 	boolean hasFontWeight();
 
 	/**
-	 * The font size in pixels.
+	 * The font size in pixels, or <code>0</code> to use the font size of the render context.
 	 */
 	double getFontSize();
 

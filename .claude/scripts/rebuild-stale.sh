@@ -47,6 +47,13 @@
 # script exists to repair -- would abort the enumeration. Maven is invoked
 # only once (-N, no reactor) to obtain the local repository path.
 #
+# The script `exec`s a single `mvn -B clean install -pl <stale modules>`, so its
+# exit code is that build's, and the exit of the process is the only signal that
+# the run has ended. The output does not carry one: the reactor contains nested
+# Maven builds (the tl-archetype-* integration tests) whose banners are forwarded
+# with a doubled `[INFO] [INFO]` prefix, so `BUILD SUCCESS` appears several times
+# before the outer build's own banner. Progress messages (`>>> ...`) go to stderr.
+#
 # Usage:
 #   ./rebuild-stale.sh            # detect and rebuild
 #   ./rebuild-stale.sh --dry-run  # only list stale modules

@@ -26,9 +26,13 @@ public interface ModeSelector {
 	 *        The object instance that is displayed.
 	 * @param attribute
 	 *        The model attribute that is represented by a form field.
+	 * @param editMode
+	 *        Whether the form displaying the attribute is in edit mode. Allows mode-dependent
+	 *        visibility such as hiding an empty value in view mode while keeping it visible for
+	 *        editing.
 	 * @return The field mode of the field.
 	 */
-	FormVisibility getMode(TLObject object, TLStructuredTypePart attribute);
+	FormVisibility getMode(TLObject object, TLStructuredTypePart attribute, boolean editMode);
 
 	/**
 	 * Reports dependencies the computed field mode depends on.

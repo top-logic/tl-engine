@@ -12,6 +12,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.Resources;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
@@ -126,6 +127,11 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return placement == null ? CommandPlacement.NONE : placement;
 	}
 
+	@Override
+	public ButtonDisplayMode getDisplayMode() {
+		return _config.getDisplay();
+	}
+
 	/**
 	 * The command's clique.
 	 */
@@ -185,6 +191,14 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		if (_inputChannel != null) {
 			_inputChannel.addListener(this);
 		}
+		updateExecutableState();
+	}
+
+	/**
+	 * Re-evaluates the executability, e.g. after state a rule inspects changed without the input
+	 * channel changing.
+	 */
+	public void revalidate() {
 		updateExecutableState();
 	}
 

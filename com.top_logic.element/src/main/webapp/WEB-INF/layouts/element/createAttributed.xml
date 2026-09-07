@@ -41,9 +41,7 @@
 		<param name="securityObject"
 			value="model"
 		/>
-		<param name="securityDomain"
-			optional="true"
-		/>
+
 		<param name="height"
 			value="660px"
 		/>
@@ -75,7 +73,6 @@
 
 	<securityLayout name="${namePrefix}CreateAttributedDialog"
 		horizontal="false"
-		securityDomain="${securityDomain}"
 		titleKey="${resPrefix}.dialog.tabber"
 	>
 		<dialogInfo

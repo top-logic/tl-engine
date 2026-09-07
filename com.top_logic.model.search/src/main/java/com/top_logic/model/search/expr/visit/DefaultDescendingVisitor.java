@@ -13,6 +13,7 @@ import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.ArithmeticExpr;
 import com.top_logic.model.search.expr.AssociationNavigation;
 import com.top_logic.model.search.expr.At;
+import com.top_logic.model.search.expr.BinaryOperation;
 import com.top_logic.model.search.expr.Block;
 import com.top_logic.model.search.expr.Call;
 import com.top_logic.model.search.expr.Compare;
@@ -50,9 +51,11 @@ import com.top_logic.model.search.expr.Size;
 import com.top_logic.model.search.expr.Sort;
 import com.top_logic.model.search.expr.StringContains;
 import com.top_logic.model.search.expr.StringEndsWith;
+import com.top_logic.model.search.expr.StringOperation;
 import com.top_logic.model.search.expr.StringStartsWith;
 import com.top_logic.model.search.expr.Try;
 import com.top_logic.model.search.expr.TupleExpression;
+import com.top_logic.model.search.expr.UnaryOperation;
 import com.top_logic.model.search.expr.Union;
 import com.top_logic.model.search.expr.Update;
 import com.top_logic.model.search.expr.Var;
@@ -95,12 +98,12 @@ public class DefaultDescendingVisitor<R, A> extends DescendingVisitor<R, A> {
 
 	@Override
 	protected R composeUnion(Union expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeIntersection(Intersection expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
@@ -160,22 +163,22 @@ public class DefaultDescendingVisitor<R, A> extends DescendingVisitor<R, A> {
 
 	@Override
 	protected R composeIsEmpty(IsEmpty expr, A arg, R argumentResult) {
-		return compose(expr, arg, argumentResult);
+		return composeUnaryOperation(expr, arg, argumentResult);
 	}
 
 	@Override
 	protected R composeAnd(And expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeOr(Or expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeNot(Not expr, A arg, R argumentResult) {
-		return compose(expr, arg, argumentResult);
+		return composeUnaryOperation(expr, arg, argumentResult);
 	}
 
 	@Override
@@ -185,67 +188,67 @@ public class DefaultDescendingVisitor<R, A> extends DescendingVisitor<R, A> {
 
 	@Override
 	protected R composeEquals(IsEqual expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeCompareOp(CompareOp expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeCompare(Compare expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeRound(Round expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeGetDay(GetDay expr, A arg, R argumentResult) {
-		return compose(expr, arg, argumentResult);
+		return composeUnaryOperation(expr, arg, argumentResult);
 	}
 
 	@Override
 	protected R composeStringEquals(IsStringEqual expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeStringOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeStringGreater(IsStringGreater expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeStringOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeStringContains(StringContains expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeStringOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeStringStartsWith(StringStartsWith expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeStringOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeStringEndsWith(StringEndsWith expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeStringOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeContainsElement(ContainsElement expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeContainsAll(ContainsAll expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
 	protected R composeContainsSome(ContainsSome expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
@@ -260,17 +263,17 @@ public class DefaultDescendingVisitor<R, A> extends DescendingVisitor<R, A> {
 
 	@Override
 	protected R composeFlatten(Flatten expr, A arg, R argumentResult) {
-		return compose(expr, arg, argumentResult);
+		return composeUnaryOperation(expr, arg, argumentResult);
 	}
 
 	@Override
 	protected R composeSingleton(Singleton expr, A arg, R argumentResult) {
-		return compose(expr, arg, argumentResult);
+		return composeUnaryOperation(expr, arg, argumentResult);
 	}
 
 	@Override
 	protected R composeSingleElement(SingleElement expr, A arg, R argumentResult) {
-		return compose(expr, arg, argumentResult);
+		return composeUnaryOperation(expr, arg, argumentResult);
 	}
 
 	@Override
@@ -290,17 +293,17 @@ public class DefaultDescendingVisitor<R, A> extends DescendingVisitor<R, A> {
 
 	@Override
 	protected R composeDesc(Desc expr, A arg, R keyResult) {
-		return compose(expr, arg, keyResult);
+		return composeUnaryOperation(expr, arg, keyResult);
 	}
 
 	@Override
 	protected R composeLength(Length expr, A arg, R stringResult) {
-		return compose(expr, arg, stringResult);
+		return composeUnaryOperation(expr, arg, stringResult);
 	}
 
 	@Override
 	protected R composeSize(Size expr, A arg, R listResult) {
-		return compose(expr, arg, listResult);
+		return composeUnaryOperation(expr, arg, listResult);
 	}
 
 	@Override
@@ -315,7 +318,7 @@ public class DefaultDescendingVisitor<R, A> extends DescendingVisitor<R, A> {
 
 	@Override
 	protected R composeArithmetic(ArithmeticExpr expr, A arg, R leftResult, R rightResult) {
-		return compose(expr, arg, combine(leftResult, rightResult));
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
 	}
 
 	@Override
@@ -325,6 +328,52 @@ public class DefaultDescendingVisitor<R, A> extends DescendingVisitor<R, A> {
 		} else {
 			return compose(expr, arg, combine(tryResult, catchResult));
 		}
+	}
+
+	/**
+	 * Common compose case for all {@link StringOperation}.
+	 * 
+	 * @param expr
+	 *        {@link StringOperation} to compose
+	 * @param arg
+	 *        Visit argument.
+	 * @param leftResult
+	 *        Left result of the concrete compose operation.
+	 * @param rightResult
+	 *        Right result of the concrete compose operation.
+	 */
+	protected R composeStringOperation(StringOperation expr, A arg, R leftResult, R rightResult) {
+		return composeBinaryOperation(expr, arg, leftResult, rightResult);
+	}
+
+	/**
+	 * Common compose case for all {@link BinaryOperation}.
+	 * 
+	 * @param expr
+	 *        {@link BinaryOperation} to compose
+	 * @param arg
+	 *        Visit argument.
+	 * @param leftResult
+	 *        Left result of the concrete compose operation.
+	 * @param rightResult
+	 *        Right result of the concrete compose operation.
+	 */
+	protected R composeBinaryOperation(BinaryOperation expr, A arg, R leftResult, R rightResult) {
+		return compose(expr, arg, combine(leftResult, rightResult));
+	}
+
+	/**
+	 * Common compose case for all {@link UnaryOperation}.
+	 * 
+	 * @param expr
+	 *        {@link UnaryOperation} to compose
+	 * @param arg
+	 *        Visit argument.
+	 * @param result
+	 *        Result of the concrete compose operation.
+	 */
+	protected R composeUnaryOperation(UnaryOperation expr, A arg, R result) {
+		return compose(expr, arg, result);
 	}
 
 	/**

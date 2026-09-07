@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29492_enlarge_layout_key"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29447_anonymous_not_in_default_group"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<alter-column
+			table="TemplateLayouts"
+			column="layoutKey"
+			db_size="300"
+		/>
+		<alter-column
+			table="LayoutConfigurations"
+			column="layoutKey"
+			db_size="300"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29410_filename_binary"
+		module="tl-model-wysiwyg"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29221_Remove_security_domain"
+			module="tl"
+		/>
+		<dependency name="Ticket_29221_Disconnect_roles_from_modules"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-model-wysiwyg"
+		/>
+	</dependencies>
+	<processors>
+		<!--
+			Store the `filename` column of the structured-text image storage
+			case-sensitively (binary). The modifier is inherited by all subtypes
+			(e.g. I18NHTMLAttributeStorage).
+		-->
+		<processor class="com.top_logic.knowledge.service.db2.migration.AlterColumnProcessor"
+			table="HTMLAttributeStorage"
+			column="filename"
+			binary="true"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

@@ -26,7 +26,7 @@ public interface ReactCommandTarget {
 	String getID();
 
 	/**
-	 * Dispatches a command programmatically (headless agent, script replay, server-side code).
+	 * Dispatches a command programmatically (headless interface, script replay, server-side code).
 	 *
 	 * <p>
 	 * State changes the command makes are pushed to the client like any other server-side change —

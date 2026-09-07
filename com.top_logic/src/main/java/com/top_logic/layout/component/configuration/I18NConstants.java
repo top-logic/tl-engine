@@ -30,7 +30,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey LOGIN;
 
 	/**
-	 * @en Name
+	 * @en User name
 	 */
 	public static ResKey LOGIN_DIALOG_USERNAME_FIELD;
 

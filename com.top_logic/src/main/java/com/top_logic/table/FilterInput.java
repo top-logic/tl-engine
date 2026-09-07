@@ -52,10 +52,15 @@ public sealed interface FilterInput {
 	}
 
 	/**
-	 * A tri-state boolean filter ({@code true} / {@code false} / no-value).
+	 * A boolean filter selecting which of {@code true} / {@code false} (and, for a
+	 * {@link #nullable()} column, no-value) are accepted.
+	 *
+	 * @param nullable
+	 *        Whether the column has cells without a value, i.e. whether the no-value option is
+	 *        offered in addition to the two value options.
 	 */
-	record Bool() implements FilterInput {
-		// Descriptor; no payload.
+	record Bool(boolean nullable) implements FilterInput {
+		// Descriptor; the flag only decides whether the no-value option is offered.
 	}
 
 	/**

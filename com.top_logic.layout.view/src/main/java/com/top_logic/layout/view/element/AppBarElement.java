@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -47,6 +50,7 @@ import com.top_logic.util.Resources;
  * TOOLBAR} placement are automatically rendered as trailing action buttons in the app bar.
  * </p>
  */
+@InApp
 public class AppBarElement implements UIElement {
 
 	/**
@@ -98,6 +102,7 @@ public class AppBarElement implements UIElement {
 		@Name(COMMANDS)
 		@EntryTag("command")
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 
 		/**
@@ -111,6 +116,7 @@ public class AppBarElement implements UIElement {
 		 */
 		@Name(CHILDREN)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 
 		/**
@@ -124,6 +130,7 @@ public class AppBarElement implements UIElement {
 		 */
 		@Name(LEADING)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getLeading();
 	}
 
@@ -180,7 +187,7 @@ public class AppBarElement implements UIElement {
 		// Use parent scope when available so that commands contributed by descendants
 		// (e.g. form edit commands, dashboard layout edit) surface in the app bar.
 		// Fall back to a private scope if the app bar is used standalone.
-		CommandScope parentScope = context.getCommandScope();
+		CommandScope parentScope = context.getScope(CommandScope.class);
 		CommandScope scope;
 		ViewContext derivedContext;
 		if (parentScope != null) {
@@ -191,7 +198,7 @@ public class AppBarElement implements UIElement {
 			derivedContext = context;
 		} else {
 			scope = new CommandScope(commandModels);
-			derivedContext = context.withCommandScope(scope);
+			derivedContext = context.withScope(CommandScope.class, scope);
 		}
 
 		// Build inline children (e.g. a <slot> for content projected by descendant views).
@@ -206,17 +213,13 @@ public class AppBarElement implements UIElement {
 		ReactControl leadingControl;
 		if (_leading.isEmpty()) {
 			leadingControl = null;
-		} else if (_leading.size() == 1) {
-			ViewContext leadingContext = derivedContext.withChildSlotPath("leading-0");
-			leadingControl = (ReactControl) _leading.get(0).createControl(leadingContext);
 		} else {
 			List<ReactControl> leadingControls = new ArrayList<>(_leading.size());
 			for (int i = 0; i < _leading.size(); i++) {
 				ViewContext leadingContext = derivedContext.withChildSlotPath("leading-" + i);
 				leadingControls.add((ReactControl) _leading.get(i).createControl(leadingContext));
 			}
-			leadingControl = new com.top_logic.layout.react.control.layout.ReactStackControl(derivedContext,
-				leadingControls);
+			leadingControl = ContentControls.combine(derivedContext, leadingControls);
 		}
 
 		// Create the app bar control.

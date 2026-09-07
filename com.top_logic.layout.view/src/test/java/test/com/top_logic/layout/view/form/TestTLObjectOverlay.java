@@ -13,7 +13,13 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.StringID;
+import com.top_logic.dob.identifier.DefaultObjectKey;
+import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.MOClassImpl;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.view.form.TLObjectOverlay;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
@@ -22,6 +28,9 @@ import com.top_logic.model.TransientObject;
  * Tests for {@link TLObjectOverlay}.
  */
 public class TestTLObjectOverlay extends TestCase {
+
+	/** Branch context of the trunk branch, the only branch mock objects live on. */
+	private static final long TRUNK = 1L;
 
 	/**
 	 * Tests that unchanged attributes delegate to the base object.
@@ -174,6 +183,69 @@ public class TestTLObjectOverlay extends TestCase {
 	}
 
 	/**
+	 * Tests that the overlay is a {@link TLFormObjectBase} reporting the object it buffers the edits
+	 * for.
+	 */
+	public void testIsFormObject() {
+		MockTLObject base = new MockTLObject();
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+
+		assertTrue("An editing buffer must be a form object.", overlay instanceof TLFormObjectBase);
+		assertFalse(overlay.isCreate());
+		assertSame(base, overlay.getEditedObject());
+		assertNull(overlay.getDomain());
+	}
+
+	/**
+	 * Tests that the overlay stands for the object being edited, so that an identity-comparing
+	 * check (e.g. a uniqueness constraint) does not treat it as a different object.
+	 */
+	public void testStandsForEditedObject() {
+		MockTLObject base = new MockTLObject(objectKey("o1"));
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+
+		assertEquals(base.tId(), overlay.tId());
+		assertEquals("The overlay must be the object it stands for.", base, overlay);
+		assertEquals("Identity must be symmetric.", overlay, base);
+		assertEquals(base.hashCode(), overlay.hashCode());
+	}
+
+	/**
+	 * Tests that an overlay of a different object is not identity-equal.
+	 */
+	public void testDifferentObjectsNotEqual() {
+		TLObjectOverlay overlay1 = new TLObjectOverlay(new MockTLObject(objectKey("o1")));
+		TLObjectOverlay overlay2 = new TLObjectOverlay(new MockTLObject(objectKey("o2")));
+
+		assertFalse(overlay1.equals(overlay2));
+	}
+
+	/**
+	 * Tests that the form value of an attribute is the edited one, while the base value is the one
+	 * the editing started from.
+	 */
+	public void testFieldValueVsBaseValue() {
+		TLStructuredTypePart namePart = mockPart("name");
+		MockTLObject base = new MockTLObject();
+		base.set(namePart, "Alice");
+
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+		overlay.tUpdate(namePart, "Bob");
+
+		assertEquals("Bob", overlay.getFieldValue(namePart));
+		assertEquals("Alice", overlay.getBaseValue(namePart));
+		assertEquals("Alice", overlay.defaultValue(namePart));
+	}
+
+	/**
+	 * Creates an {@link ObjectKey} identifying a mock object.
+	 */
+	private static ObjectKey objectKey(String id) {
+		return new DefaultObjectKey(TRUNK, Revision.CURRENT_REV, new MOClassImpl("MockType"),
+			StringID.valueOf(id));
+	}
+
+	/**
 	 * Creates a mock {@link TLStructuredTypePart} using a dynamic proxy.
 	 *
 	 * <p>
@@ -225,7 +297,28 @@ public class TestTLObjectOverlay extends TestCase {
 	 */
 	private static class MockTLObject extends TransientObject {
 
+		private final ObjectKey _id;
+
 		private final Map<TLStructuredTypePart, Object> _values = new LinkedHashMap<>();
+
+		/**
+		 * Creates a {@link MockTLObject} without identity.
+		 */
+		MockTLObject() {
+			this(null);
+		}
+
+		/**
+		 * Creates a {@link MockTLObject} identified by the given key.
+		 */
+		MockTLObject(ObjectKey id) {
+			_id = id;
+		}
+
+		@Override
+		public ObjectKey tId() {
+			return _id;
+		}
 
 		@Override
 		public Object tValue(TLStructuredTypePart part) {

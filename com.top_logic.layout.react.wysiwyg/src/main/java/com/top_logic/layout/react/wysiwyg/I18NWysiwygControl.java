@@ -13,7 +13,6 @@ import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
@@ -48,9 +47,16 @@ public class I18NWysiwygControl extends ReactWysiwygControl {
 		super(context, new I18NLocalizedHtmlFieldModel(i18nModel));
 		_i18nModel = i18nModel;
 		if (TranslationService.isActive()) {
-			// Defer auto-translation to editor commit (blur); see #handleCommit.
+			// Defer auto-translation to editor commit (blur); see #onCommit.
 			putState(COMMIT_ON_BLUR, Boolean.TRUE);
 		}
+	}
+
+	@Override
+	protected boolean acceptsClientValue() {
+		// Edits reach the internationalized model behind the per-locale editing model, so both must
+		// take client input.
+		return super.acceptsClientValue() && _i18nModel.isEditable();
 	}
 
 	/**
@@ -63,8 +69,8 @@ public class I18NWysiwygControl extends ReactWysiwygControl {
 	 * after an actual edit, so merely focusing and leaving the editor translates nothing.
 	 * </p>
 	 */
-	@ReactCommandHandler(COMMIT_COMMAND)
-	void handleCommit() {
+	@Override
+	protected void onCommit() {
 		if (!TranslationService.isActive()) {
 			return;
 		}

@@ -35,10 +35,11 @@ public class GetBuilder extends TwoArgsMethodBuilder<SearchExpression> {
 	@Override
 	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs)
 			throws ConfigurationException {
+		boolean useSecurity = true;
 		if (arg1 instanceof Literal) {
-			return access(arg0, resolvePart(expr, arg1));
+			return access(arg0, resolvePart(expr, arg1), useSecurity);
 		} else {
-			return new DynamicGet(getConfig().getName(), allArgs);
+			return new DynamicGet(getConfig().getName(), allArgs, useSecurity);
 		}
 	}
 

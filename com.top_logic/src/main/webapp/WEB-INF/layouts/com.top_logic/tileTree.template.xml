@@ -15,7 +15,7 @@
 					<property name="modelBuilder"/>
 					<property name="dragSource"/>
 					<property name="dropTargets"/>
-					<property name="securityDomain"/>
+
 					<property name="securityObject"/>
 					<property name="helpID"/>
 				</value>
@@ -87,7 +87,6 @@
 
 	<securityLayout name="ContextTree"
 		helpID="${helpID}"
-		securityDomain="${securityDomain}"
 		titleKey="${name}"
 	>
 		<component class="com.top_logic.mig.html.layout.tiles.ContextTileComponent"

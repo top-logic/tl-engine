@@ -23,6 +23,7 @@ import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.ModuleConfig;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.mode.ActiveIf;
@@ -150,7 +151,7 @@ public class TLModuleFormBuilder extends DeclarativeFormBuilder<TLModule, TLModu
 
 		ResKey key = TLModelNamingConvention.getModuleLabelKey(businessModel);
 		formModel.setLabel(key);
-		formModel.setDescription(key.tooltip());
+		formModel.setDescription(new DefaultHtmlResKey(key.tooltip()));
 		formModel.setCreate(getConfig().isCreate());
 
 		for (TLAnnotation annotation : businessModel.getAnnotations()) {

@@ -32,6 +32,7 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.json.JSON;
@@ -50,10 +51,11 @@ import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Configuration Service for the StructuredText.
+ * Manages the editor configurations available for structured (WYSIWYG) text fields.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
+@Label("Structured text editor configuration")
 public class StructuredTextConfigService extends ManagedClass {
 	
 	/** Path of the ckeditor in webapp */

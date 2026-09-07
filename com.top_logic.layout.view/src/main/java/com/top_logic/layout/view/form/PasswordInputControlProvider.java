@@ -8,8 +8,9 @@ package com.top_logic.layout.view.form;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
-import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * {@link ReactFieldControlProvider} that renders a masked password input for string attributes.
@@ -22,7 +23,7 @@ import com.top_logic.model.TLStructuredTypePart;
 public class PasswordInputControlProvider implements ReactFieldControlProvider {
 
 	@Override
-	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		return new ReactPasswordInputControl(context, model);
 	}
 

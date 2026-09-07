@@ -15,6 +15,7 @@ import com.top_logic.knowledge.journal.Journallable;
 import com.top_logic.knowledge.journal.MessageJournalAttributeEntryImpl;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -59,24 +60,14 @@ public class DocumentJournalSupport {
                 ContainerWrapper theContainer = WebFolder.getContainer(aDoc);
 
                 if (theContainer instanceof AbstractBoundWrapper) {
-                    aJournallable = ((AbstractBoundWrapper) theContainer).getSecurityParent();
+					for (BoundObject secParent : ((AbstractBoundWrapper) theContainer).getSecurityParents()) {
+						internalJournalDocument(aDoc, secParent, aType, aVersion);
+					}
+				} else {
+					internalJournalDocument(aDoc, aJournallable, aType, aVersion);
                 }
-            }
-            
-            if (aJournallable instanceof Wrapper) {
-                String    theDocName   = aDoc.getName();
-                String    theMOName    = ((Wrapper)aJournallable).tHandle().tTable().getName();
-                if (aJournallable instanceof Journallable && JournalManager.getInstance().isToJournal(theMOName)) {
-                    JournalEntry theEntry  = new JournalEntryImpl(KBUtils.getWrappedObjectName(((Wrapper)aJournallable)), theMOName, 1);
-                    String       theDocMsg = Resources.getInstance().getString(I18NConstants.DOCUMENT_EVENT_TYPES.key(aType)) + " " + theDocName + " " + aVersion;
-                    theEntry.addAttribute(new MessageJournalAttributeEntryImpl(theDocMsg, theMOName, "read", theDocMsg));
-					PersonManager r = PersonManager.getManager();
-                    
-                    JournalLine  theLine   = new JournalLine(TLContext.currentUser().getName(), 1);
-                    theLine.add(theEntry);
-                    
-                    JournalManager.getInstance().journal(theLine);
-                }
+			} else {
+				internalJournalDocument(aDoc, aJournallable, aType, aVersion);
             }
         } catch (Exception e) {
             Logger.error("Failed to journal document download event", e, DocumentJournalSupport.class);
@@ -84,5 +75,24 @@ public class DocumentJournalSupport {
 
     }
 
+	private static void internalJournalDocument(Document aDoc, Object aJournallable, String aType, String aVersion) {
+		if (aJournallable instanceof Wrapper) {
+			String theDocName = aDoc.getName();
+			String theMOName = ((Wrapper) aJournallable).tHandle().tTable().getName();
+			if (aJournallable instanceof Journallable && JournalManager.getInstance().isToJournal(theMOName)) {
+				JournalEntry theEntry =
+					new JournalEntryImpl(KBUtils.getWrappedObjectName(((Wrapper) aJournallable)), theMOName, 1);
+				String theDocMsg = Resources.getInstance().getString(I18NConstants.DOCUMENT_EVENT_TYPES.key(aType))
+						+ " " + theDocName + " " + aVersion;
+				theEntry.addAttribute(new MessageJournalAttributeEntryImpl(theDocMsg, theMOName, "read", theDocMsg));
+				PersonManager r = PersonManager.getManager();
+
+				JournalLine theLine = new JournalLine(TLContext.currentUser().getName(), 1);
+				theLine.add(theEntry);
+
+				JournalManager.getInstance().journal(theLine);
+			}
+		}
+	}
     
 }

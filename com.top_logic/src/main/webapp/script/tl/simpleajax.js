@@ -179,11 +179,11 @@ services.AJAXServiceClass = function() {
 			'</div>';
 	};
 	
-	this.showSessionTimeout = function(logoutURL) {
-		this.topWindow.services.ajax._showSessionTimeout(logoutURL);
+	this.showSessionTimeout = function(loginURL) {
+		this.topWindow.services.ajax._showSessionTimeout(loginURL);
 	};
 	
-	this._showSessionTimeout = function(logoutURL) {
+	this._showSessionTimeout = function(loginURL) {
 		var waitPane = document.getElementById("waitPane");
 		var dialogPane = document.createElement("div");
 		waitPane.parentNode.appendChild(dialogPane);
@@ -203,7 +203,7 @@ services.AJAXServiceClass = function() {
 		
 		var dialog = document.getElementById("sxNetwork");
 		BAL.addEventListener(dialog, "click", function() {
-			window.location = logoutURL;
+			window.location = loginURL;
 		});
 	};
 	

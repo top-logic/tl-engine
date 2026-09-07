@@ -25,6 +25,7 @@ import {
   type RouteChangeEventData,
   type RouteVetoEventData,
 } from './route-sync';
+import { handleViewPick, type ViewPickEventData } from './view-picker';
 
 type StateListener = (state: Record<string, unknown>) => void;
 
@@ -221,6 +222,9 @@ function dispatch(data: unknown): void {
       break;
     case 'RouteVetoEvent':
       handleRouteVetoEvent(payload as unknown as RouteVetoEventData);
+      break;
+    case 'ViewPickEvent':
+      handleViewPick(payload as unknown as ViewPickEventData);
       break;
     default:
       console.warn('[TLReact] Unknown SSE event type:', typeCode);

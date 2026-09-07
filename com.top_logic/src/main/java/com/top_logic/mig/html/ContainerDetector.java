@@ -12,19 +12,21 @@ import java.util.Collections;
 import jakarta.servlet.ServletContext;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.services.ServletContextService;
 
 /**
- * A (hopefully) small set of functions to work around bugs in J2EEContainers.
- * 
+ * Detects the servlet container and works around known bugs in J2EE containers.
+ *
  * As Experience has show some J2EE containers do have bugs that will
  * not be fixed and we have to cope with them.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
+@Label("Servlet container detection")
 public class ContainerDetector extends ManagedClass {
     
     static ContainerDetector instance; 

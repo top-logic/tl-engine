@@ -17,6 +17,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -34,6 +35,7 @@ import com.top_logic.mig.html.HTMLConstants;
  * scoped CSS block, and tracks the per-user active theme.
  * </p>
  */
+@Label("UI themes")
 public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config> {
 
 	/** {@link PersonalConfiguration} key storing the user's selected theme id. */

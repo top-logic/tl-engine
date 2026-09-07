@@ -107,10 +107,13 @@ public class TLModelUtil {
 
 	private static final char SCOPE_ID_PART_SEPARATOR = '/';
 
-	/** Separator of of type and the part of its type in a qualified name. */
+	/**
+	 * Separator between model element and part in a qualified name, e.g. between type name and
+	 * attribute name, or module name and singleton name.
+	 */
 	public static final char QUALIFIED_NAME_PART_SEPARATOR = '#';
 
-	/** Separator of module and type in the qualified name of {@link TLType}. */
+	/** Separator between module and type in the qualified name of {@link TLType}. */
 	public static final char QUALIFIED_NAME_SEPARATOR = ':';
 
 	/** {@link Pattern} for splitting a qualified type name into its parts. */
@@ -892,6 +895,25 @@ public class TLModelUtil {
 		} else {
 			return c1.equals(c2);
 		}
+	}
+
+	/**
+	 * The value representing "no value" for the given part, depending on its multiplicity.
+	 *
+	 * <p>
+	 * For a single-valued part this is <code>null</code>. For a multiple part it is an empty
+	 * collection of the same kind that the storage returns for a non-empty value: an empty list for
+	 * an {@link TLStructuredTypePart#isOrdered() ordered} part, an empty set otherwise. The
+	 * collection type is determined by {@link TLStructuredTypePart#isOrdered()} alone; a
+	 * (non-ordered) {@link TLStructuredTypePart#isBag() bag} is returned as a set, just as the
+	 * storage does.
+	 * </p>
+	 */
+	public static Object getEmptyValue(TLStructuredTypePart part) {
+		if (part.isMultiple()) {
+			return part.isOrdered() ? Collections.emptyList() : Collections.emptySet();
+		}
+		return null;
 	}
 
 	/**

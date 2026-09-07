@@ -42,6 +42,14 @@ public class ReactFormFieldControl extends ReactControl {
 	/** State key telling the client to send {@link #COMMIT_COMMAND} when the field loses focus. */
 	protected static final String COMMIT_ON_BLUR = "commitOnBlur";
 
+	/**
+	 * State key telling the client to hold a typed value back until the field loses focus, instead
+	 * of sending it while the user is still typing.
+	 *
+	 * @see #setSendValueOnBlur(boolean)
+	 */
+	protected static final String SEND_VALUE_ON_BLUR = "sendValueOnBlur";
+
 	/** State key for the field value. */
 	protected static final String VALUE = "value";
 
@@ -257,6 +265,31 @@ public class ReactFormFieldControl extends ReactControl {
 	}
 
 	/**
+	 * Holds a typed value back until the field loses focus, instead of sending it while the user is
+	 * still typing.
+	 *
+	 * <p>
+	 * For a field whose {@link com.top_logic.layout.form.model.FieldModel} rewrites the text it is
+	 * given rather than storing it verbatim - a value parsed and re-formatted through a format, say.
+	 * Such a field cannot be round-tripped mid-edit at all: the round-trip re-renders it from the
+	 * normalized value, which throws away what was being typed. A comma separated list shows it
+	 * plainly - pausing after {@code "red, "} would send that text, which parses to one element and
+	 * formats back to {@code "red"}, taking the comma and the space out from under the cursor.
+	 * </p>
+	 *
+	 * <p>
+	 * Nothing typed is lost: the held value is sent when the field loses focus, before any action
+	 * command the user triggers meanwhile, and if the field is unmounted mid-edit. What it does cost
+	 * is server-side feedback while typing - an error from the model shows up when the field is
+	 * left, not during. That is the trade this is for; a field whose model stores what it is given
+	 * should keep the default debounce instead.
+	 * </p>
+	 */
+	public void setSendValueOnBlur(boolean sendOnBlur) {
+		putState(SEND_VALUE_ON_BLUR, sendOnBlur);
+	}
+
+	/**
 	 * Updates the mandatory state.
 	 */
 	protected void setMandatory(boolean mandatory) {
@@ -289,13 +322,96 @@ public class ReactFormFieldControl extends ReactControl {
 	 *
 	 * <p>
 	 * The value is typed as {@link String} here, which fits text-like fields. A field whose value is
-	 * a different JSON type (e.g. a checkbox's {@code boolean}) overrides this with its own typed
-	 * arguments, since the field value is polymorphic and cannot be one shared type.
+	 * a different JSON type (e.g. a checkbox's {@code boolean}) declares its own handler with its
+	 * own typed arguments — the field value is polymorphic and cannot be one shared type — and
+	 * passes the raw value to {@link #clientValueChanged(Object)}.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_VALUE_CHANGED)
-	void handleValueChanged(FieldValueArguments args) {
-		applyClientValue(parseClientValue(args.getValue()));
+	final void handleValueChanged(FieldValueArguments args) {
+		clientValueChanged(args.getValue());
+	}
+
+	/**
+	 * Handles the commit the client sends when an edited field loses focus.
+	 *
+	 * @see #onCommit()
+	 */
+	@ReactCommandHandler(COMMIT_COMMAND)
+	final void handleCommit() {
+		if (!acceptsClientValue()) {
+			return;
+		}
+		onCommit();
+	}
+
+	/**
+	 * The single entry for a value arriving from a client, applying it only if the field
+	 * {@link #acceptsClientValue() accepts client values}.
+	 *
+	 * <p>
+	 * A field whose value type needs its own command arguments funnels them through here rather
+	 * than writing the model itself, so that the acceptance check cannot be forgotten by a new
+	 * field variant. What happens with an accepted value is {@link #applyRawClientValue(Object)}.
+	 * </p>
+	 *
+	 * @param rawValue
+	 *        The unparsed value as sent by the client.
+	 */
+	protected final void clientValueChanged(Object rawValue) {
+		if (!acceptsClientValue()) {
+			return;
+		}
+		applyRawClientValue(rawValue);
+	}
+
+	/**
+	 * Applies a value the field {@link #acceptsClientValue() accepts}, parsing it through
+	 * {@link #parseClientValue(Object)}.
+	 *
+	 * <p>
+	 * The hook for a field that does more than parse and set — reporting a parse error on the
+	 * model, say. It runs below the acceptance check, so an override cannot write the model of a
+	 * field that takes no client input.
+	 * </p>
+	 *
+	 * @param rawValue
+	 *        The unparsed value as sent by the client.
+	 */
+	protected void applyRawClientValue(Object rawValue) {
+		applyClientValue(parseClientValue(rawValue));
+	}
+
+	/**
+	 * Reacts to the client committing the edited value, once per edit rather than per keystroke.
+	 *
+	 * <p>
+	 * Runs below the acceptance check, like {@link #applyRawClientValue(Object)}. Does nothing
+	 * unless a field overrides it.
+	 * </p>
+	 */
+	protected void onCommit() {
+		// Nothing to commit for a plain field.
+	}
+
+	/**
+	 * Whether a value arriving from a client may be written to the {@link #getFieldModel() field
+	 * model}.
+	 *
+	 * <p>
+	 * A non-{@link FieldModel#isEditable() editable} field is not written: the value either comes
+	 * from a client whose display lags behind the server (e.g. an editor flushing its content on
+	 * blur while the same interaction already left edit mode), or from a client that sends a value
+	 * the user interface does not offer at all. The model must not be modified outside an edit
+	 * session, so the value is dropped.
+	 * </p>
+	 *
+	 * <p>
+	 * A field that edits a model of its own beyond {@link #getFieldModel()} narrows this.
+	 * </p>
+	 */
+	protected boolean acceptsClientValue() {
+		return _fieldModel.isEditable();
 	}
 
 	/**
@@ -306,7 +422,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 *
 	 * <p>
 	 * The suppressed echo is recorded as a silent state change; when the command was dispatched
-	 * programmatically (script replay, headless agent) rather than by the browser, the framework
+	 * programmatically (script replay, headless interface) rather than by the browser, the framework
 	 * resends the control state after the command, so the value still reaches the client — see
 	 * {@link #executeCommand(String, java.util.Map)}.
 	 * </p>
@@ -315,10 +431,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 *        The parsed value to set.
 	 */
 	protected void applyClientValue(Object value) {
-		if (!_fieldModel.isEditable()) {
-			// A trailing edit from a client whose display lags behind the server (e.g. an editor
-			// flushing its content on blur while the same interaction already left edit mode).
-			// The model must not be modified outside an edit session; drop the stale value.
+		if (!acceptsClientValue()) {
 			return;
 		}
 		_clientValue = value;

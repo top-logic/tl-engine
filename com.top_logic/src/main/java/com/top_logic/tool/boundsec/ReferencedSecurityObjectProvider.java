@@ -5,10 +5,13 @@
  */
 package com.top_logic.tool.boundsec;
 
+import java.util.Set;
+
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.model.TLClass;
 
 /**
  * {@link SecurityObjectProvider} referencing a different {@link SecurityObjectProvider} that is
@@ -80,6 +83,11 @@ public final class ReferencedSecurityObjectProvider implements SecurityObjectPro
 			throw new IllegalStateException("Unresolved reference '" + _reference + "'.");
 		}
 		return _delegate.getSecurityObject(aChecker, model, aCommandGroup);
+	}
+
+	@Override
+	public Set<TLClass> getPossibleSecurityObjectTypes() {
+		return _delegate.getPossibleSecurityObjectTypes();
 	}
 
 }

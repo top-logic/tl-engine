@@ -17,7 +17,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -65,16 +64,10 @@ public class CompoundSecurityLayout extends BoundLayout {
 		// TODO: DELETE
 		boolean getUseDefaultChecker();
 
-		@Name(ATT_SECURITY_DOMAIN)
-		@Nullable
-		String getSecurityDomain();
-
 		@Override
 		@Mandatory
 		ComponentName getName();
 	}
-
-	private static final String ATT_SECURITY_DOMAIN = "securityDomain";
 
 	private static final String ATT_USE_DEFAULT_CHECKER = "useDefaultChecker";
 
@@ -84,16 +77,18 @@ public class CompoundSecurityLayout extends BoundLayout {
     /** The Sum of the command groups of all children */
 	private Collection<BoundCommandGroup> commandGroups;
 
-    private String securityDomain;
-
     /**
      * Create a CompoundSecurityLayout from XML which is the default usage.
      */
     public CompoundSecurityLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
         this.useDefaultChecker = atts.getUseDefaultChecker();
-		this.securityDomain = atts.getSecurityDomain();
-    }
+	}
+
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
+	}
 
     /**
      * Collect the CommandGroups of the children
@@ -107,10 +102,6 @@ public class CompoundSecurityLayout extends BoundLayout {
         } else {
             return this.commandGroups;
         }
-    }
-
-    public String getSecurityDomain() {
-        return this.securityDomain;
     }
 
 	@Override
@@ -193,14 +184,6 @@ public class CompoundSecurityLayout extends BoundLayout {
 		PolymorphicConfiguration<? extends CompoundSecurityLayoutCommandGroupCollector> commandGroupCollector =
 			securityConfiguration.getLayout().getCommandGroupCollector();
 		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(commandGroupCollector);
-    }
-
-    /**
-     * Create a Visitor as configured by "security.layout.collector.name"
-     */
-    public static com.top_logic.basic.col.Mapping getSecurityDomainMapper() {
-		return ApplicationConfig.getInstance().getConfig(com.top_logic.base.security.SecurityConfiguration.class)
-			.getLayout().getDomainMapper();
     }
 
     /**

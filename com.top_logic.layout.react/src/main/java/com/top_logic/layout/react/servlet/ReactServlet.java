@@ -9,11 +9,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.servlet.ServletException;
@@ -36,6 +39,7 @@ import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
@@ -48,8 +52,10 @@ import com.top_logic.layout.DynamicText;
 import com.top_logic.layout.UpdateWriter;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.component.ControlSupport;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.react.DataProvider;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.UploadHandler;
@@ -58,15 +64,16 @@ import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
-import com.top_logic.layout.react.headless.AgentSession;
-import com.top_logic.layout.react.headless.ReactWindowReplay;
-import com.top_logic.layout.react.headless.ScriptRecorder;
+import com.top_logic.layout.react.scripting.ScriptingSession;
+import com.top_logic.layout.react.scripting.ReactWindowReplay;
+import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.protocol.Property;
 import com.top_logic.layout.react.protocol.RouteVetoEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.window.PendingViewPick;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.RevalidationVisitor;
@@ -93,6 +100,69 @@ import com.top_logic.util.TopLogicServlet;
  */
 @MultipartConfig
 public class ReactServlet extends TopLogicServlet {
+
+	/**
+	 * Machine-readable error code signaling that the server-side UI state for the requesting page
+	 * no longer exists: the request has no session, or the session does not know the page's
+	 * window (e.g. the session was replaced underneath the open page by a login or logout, or the
+	 * server was restarted).
+	 *
+	 * <p>
+	 * The command channel of the React client reacts to a rejection carrying this code by
+	 * re-bootstrapping the page, instead of leaving a page whose interactions are all rejected
+	 * appearing frozen. The client-side counterpart of this constant is
+	 * {@code ERROR_CODE_STALE_UI} in {@code command-channel.ts}.
+	 * </p>
+	 */
+	public static final String ERROR_CODE_STALE_UI = "stale-ui";
+
+	/**
+	 * CSS class of the summary line of a command-error message, separating it from the detail
+	 * messages listed below it.
+	 */
+	private static final String CSS_SNACKBAR_TITLE = "tlSnackbar__title";
+
+	/**
+	 * This endpoint answers {@code XMLHttpRequest}s, for whose caller the check's redirect to an
+	 * HTML page is of no use. Skipping it also keeps a command that arrives while the session is
+	 * ending from racing the reloading page for the check's one-shot marker - a race whose loser is
+	 * told that cookies cannot be set.
+	 */
+	@Override
+	protected boolean isCookieCheckRequired() {
+		return false;
+	}
+
+	/**
+	 * Answers a request whose session is gone with the error code the client reloads on, rather than
+	 * with the empty response the inherited implementation would produce.
+	 */
+	@Override
+	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_CODE_STALE_UI, "No session.");
+	}
+
+	/**
+	 * Announces the request to the session's windows before answering it.
+	 *
+	 * <p>
+	 * Every request through this servlet restarts the session's inactivity timeout as a side effect.
+	 * A control counting down to the end of the session has no other way of learning that, so it is
+	 * told here, at the one point every React request passes through.
+	 * </p>
+	 *
+	 * @see ReactWindowRegistry#noteActivity(HttpSession)
+	 */
+	@Override
+	protected void doService(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		HttpSession session = request.getSession(false);
+		if (session != null) {
+			ReactWindowRegistry.forSession(session).noteActivity(session);
+		}
+		super.doService(request, response);
+	}
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -279,7 +349,7 @@ public class ReactServlet extends TopLogicServlet {
 			throws ServletException, IOException {
 		HttpSession session = request.getSession(false);
 		if (session == null) {
-			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_CODE_STALE_UI, "No session.");
 			return;
 		}
 
@@ -302,6 +372,9 @@ public class ReactServlet extends TopLogicServlet {
 					break;
 				case "/upload":
 					handleUpload(request, response, session);
+					break;
+				case "/view-pick":
+					handleViewPick(request, response, session);
 					break;
 				default:
 					sendError(response, HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
@@ -349,6 +422,13 @@ public class ReactServlet extends TopLogicServlet {
 		if ("windowClosed".equals(commandName)) {
 			String closedWindowId = arguments != null ? (String) arguments.get("windowId") : null;
 			ReactWindowRegistry registry = ReactWindowRegistry.forSession(request.getSession());
+			if (arguments != null && Boolean.TRUE.equals(arguments.get("unload"))) {
+				// Reported on beforeunload, which fires for a reload as well: keep the window's state
+				// for a grace period instead of tearing it down.
+				registry.windowUnloaded(closedWindowId);
+				sendSuccess(response);
+				return;
+			}
 			// Acquire the request lock so the close callback (which may patch the opener's
 			// snackbar state and flush SSE events) does not race with concurrent commands.
 			ReentrantLock requestLock = registry.getRequestLock();
@@ -389,7 +469,8 @@ public class ReactServlet extends TopLogicServlet {
 			Logger.warn("Command '" + commandName + "' for control '" + controlId
 				+ "' targets unknown window '" + windowName + "'. Known windows: "
 				+ ReactWindowRegistry.forSession(session).windowNames(), ReactServlet.class);
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, ERROR_CODE_STALE_UI,
+				"Unknown window: " + windowName);
 			return;
 		}
 		ReactCommandTarget control = queue.getControl(controlId);
@@ -401,6 +482,16 @@ public class ReactServlet extends TopLogicServlet {
 				Logger.debug("Dropped '" + commandName + "' for disposed control '" + controlId + "'.",
 					ReactServlet.class);
 				sendSuccess(response);
+				return;
+			}
+			if (!queue.hasControls()) {
+				// The window's queue holds no controls at all: it was created empty by an SSE
+				// reconnect after the session was replaced underneath the open page. The page's
+				// control tree lives in the discarded session - let the client re-bootstrap.
+				Logger.warn("Command '" + commandName + "' for control '" + controlId + "' targets window '"
+					+ windowName + "' without any registered controls (session replaced).", ReactServlet.class);
+				sendError(response, HttpServletResponse.SC_NOT_FOUND, ERROR_CODE_STALE_UI,
+					"Control not found: " + controlId);
 				return;
 			}
 			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
@@ -454,7 +545,7 @@ public class ReactServlet extends TopLogicServlet {
 	 * the window's {@link ScriptRecorder} is active.
 	 *
 	 * <p>
-	 * The target control is translated to its stable semantic {@link AgentSession#addressOf(ReactControl)
+	 * The target control is translated to its stable semantic {@link ScriptingSession#addressOf(ReactControl)
 	 * address}; a control that is not in the visible projection (e.g. a table cell sub-control) records
 	 * with a {@code null} address rather than failing the command.
 	 * </p>
@@ -472,7 +563,7 @@ public class ReactServlet extends TopLogicServlet {
 		// Let the control rewrite session-bound arguments (e.g. option ids → business keys) into a
 		// replay-stable typed item before capture.
 		RecordedCommand recorded = reactControl.recordCommand(commandName, arguments);
-		recorded.command().setAddress(AgentSession.forRoot(queue.getRootControl()).addressOf(reactControl));
+		recorded.command().setAddress(ScriptingSession.forRoot(queue.getRootControl()).addressOf(reactControl));
 		recorder.record(recorded.command(), recorded.coalescing());
 	}
 
@@ -518,6 +609,65 @@ public class ReactServlet extends TopLogicServlet {
 			queue.enqueue(veto);
 			sendSuccess(response);
 		}
+	}
+
+	/**
+	 * Handles a "select view" pick result posted by the main-window client: looks up the
+	 * {@link PendingViewPick} registered for the given token and runs its callback under the
+	 * designer window's sub-session, so the resulting channel/control updates flush to the
+	 * designer's SSE queue.
+	 */
+	@SuppressWarnings("unchecked")
+	private void handleViewPick(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws IOException {
+		String body = new String(request.getInputStream().readAllBytes(), "UTF-8");
+		Object parsed;
+		try {
+			parsed = JSON.fromString(body);
+		} catch (JSON.ParseException ex) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + ex.getMessage());
+			return;
+		}
+		if (!(parsed instanceof Map)) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Expected JSON object.");
+			return;
+		}
+		Map<String, Object> data = (Map<String, Object>) parsed;
+		String token = (String) data.get("token");
+		String path = (String) data.get("path");
+		if (token == null || path == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing token or path.");
+			return;
+		}
+
+		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+		PendingViewPick pending = registry.consumePick(token);
+		if (pending == null) {
+			// Unknown or already-consumed token: acknowledge without action.
+			sendSuccess(response);
+			return;
+		}
+
+		String designerWindowId = pending.designerWindowId();
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		SubsessionHandler rootHandler = installSubSession(displayContext, designerWindowId);
+
+		ReentrantLock requestLock = registry.getRequestLock();
+		requestLock.lock();
+		try {
+			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+			try {
+				pending.onPicked().accept(path);
+			} finally {
+				if (rootHandler != null) {
+					rootHandler.enableUpdate(updateBefore);
+				}
+			}
+			registry.synthesizeModelEvents(designerWindowId);
+		} finally {
+			requestLock.unlock();
+		}
+		sendSuccess(response);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -656,30 +806,76 @@ public class ReactServlet extends TopLogicServlet {
 	 *
 	 * <p>
 	 * Instead of returning HTTP 500, the error message from the {@link HandlerResult} is forwarded
-	 * to the snackbar so the user sees what went wrong.
+	 * to the snackbar so the user sees what went wrong. Detail messages chained as exception causes
+	 * (e.g. the individual constraint violations behind a vetoed commit) are listed below the
+	 * summary, so the user learns which value on which object was rejected and where one message
+	 * ends and the next begins.
 	 * </p>
 	 */
 	private void showCommandError(HandlerResult result, SSEUpdateQueue queue, ReactCommandTarget control) {
 		ErrorSink errorSink = control instanceof ReactControl rc ? rc.getReactContext().getErrorSink() : null;
 		if (errorSink != null) {
-			Resources resources = Resources.getInstance();
-
 			ResKey titleKey = result.getErrorTitle();
-			String title = titleKey != null ? resources.getString(titleKey) : "Command failed.";
+			HTMLFragment title = Fragments.div(CSS_SNACKBAR_TITLE,
+				titleKey != null ? Fragments.message(titleKey) : Fragments.message(I18NConstants.ERROR_COMMAND_FAILED));
 
-			ResKey messageKey = result.getErrorMessage();
-			String details = messageKey != null ? resources.getString(messageKey) : null;
-
-			String text;
-			if (details != null && !details.isEmpty() && !details.equals("null")) {
-				text = title + " " + details;
-			} else {
-				text = title;
-			}
-			errorSink.showError(com.top_logic.layout.basic.fragments.Fragments.text(text));
+			errorSink.showError(Fragments.concat(title, Fragments.messageList(errorDetails(result))));
 		} else {
 			Logger.warn("No ErrorSink available to show command error: " + result.getErrorTitle(),
 				ReactServlet.class);
+		}
+	}
+
+	/**
+	 * The detail messages of a failed command, each describing one aspect of the failure.
+	 *
+	 * <p>
+	 * The same message can arrive through several routes at once: title and message both fall back
+	 * to the exception's error key, and the original exception reappears as cause of the wrapper
+	 * created by {@link HandlerResult#error(ResKey, Throwable)}. Each distinct message is therefore
+	 * reported only once, and a message already shown as the summary is dropped.
+	 * </p>
+	 */
+	private static List<ResKey> errorDetails(HandlerResult result) {
+		Resources resources = Resources.getInstance();
+
+		Set<String> seen = new HashSet<>();
+		ResKey titleKey = result.getErrorTitle();
+		if (titleKey != null) {
+			seen.add(resources.getString(titleKey));
+		}
+
+		List<ResKey> details = new ArrayList<>();
+		addDetail(details, seen, resources, result.getErrorMessage());
+		// The list HandlerResult#error(ResKey) fills - the plainest way for a command to fail, and
+		// until this was read, its message reached nobody: the snackbar showed the generic
+		// "command failed" title and no detail at all.
+		for (ResKey error : result.getEncodedErrors()) {
+			addDetail(details, seen, resources, error);
+		}
+		if (result.getException() != null) {
+			for (Throwable cause = result.getException().getCause(); cause != null; cause = cause.getCause()) {
+				if (cause instanceof I18NFailure failure) {
+					addDetail(details, seen, resources, failure.getErrorKey());
+				}
+			}
+		}
+		return details;
+	}
+
+	/**
+	 * Appends the given message unless it is empty or was already reported.
+	 */
+	private static void addDetail(List<ResKey> details, Set<String> seen, Resources resources, ResKey messageKey) {
+		if (messageKey == null) {
+			return;
+		}
+		String message = resources.getString(messageKey);
+		if (message == null || message.isEmpty() || message.equals("null")) {
+			return;
+		}
+		if (seen.add(message)) {
+			details.add(messageKey);
 		}
 	}
 
@@ -739,11 +935,29 @@ public class ReactServlet extends TopLogicServlet {
 	}
 
 	private void sendError(HttpServletResponse response, int status, String message) throws IOException {
+		sendError(response, status, null, message);
+	}
+
+	/**
+	 * Writes a JSON error response, optionally carrying a machine-readable error code the client
+	 * dispatches on (e.g. {@link #ERROR_CODE_STALE_UI}).
+	 *
+	 * @param errorCode
+	 *        The machine-readable code identifying the error condition, or {@code null} for errors
+	 *        the client only logs.
+	 */
+	private void sendError(HttpServletResponse response, int status, String errorCode, String message)
+			throws IOException {
 		response.setStatus(status);
 		response.setContentType("application/json");
 		response.setCharacterEncoding("UTF-8");
 		PrintWriter writer = response.getWriter();
-		writer.write("{\"success\":false,\"error\":\"" + message.replace("\"", "\\\"") + "\"}");
+		StringBuilder json = new StringBuilder("{\"success\":false,");
+		if (errorCode != null) {
+			json.append("\"errorCode\":\"").append(errorCode).append("\",");
+		}
+		json.append("\"error\":\"").append(message.replace("\"", "\\\"")).append("\"}");
+		writer.write(json.toString());
 		writer.flush();
 	}
 

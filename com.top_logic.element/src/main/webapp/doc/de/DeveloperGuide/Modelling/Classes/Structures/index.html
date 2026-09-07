@@ -1,0 +1,37 @@
+<p>Viele Anwendungen bilden ihre Daten nicht als flache Liste ab, sondern als Baum: eine Organisation aus Bereichen und Einheiten, ein Mandant mit Untermandanten, ein Dokumentationsbaum aus Seiten. Für solche Bäume bringt das Modul <code class="hljs inlineCode">tl.element</code> zwei Basistypen mit, von denen eine eigene Struktur ableitet.</p>
+<h2>Die beiden Basistypen</h2>
+<p><code class="hljs inlineCode">tl.element:StructuredElement</code> ist der Basistyp eines Knotens. Er trägt die Referenz <code class="hljs inlineCode">parent</code> auf den Knoten, der ihn enthält.</p>
+<p><code class="hljs inlineCode">tl.element:StructuredElementContainer</code> leitet selbst von <code class="hljs inlineCode">StructuredElement</code> ab und ergänzt die Referenz <code class="hljs inlineCode">children</code> auf die enthaltenen Knoten. Ein Container ist also immer auch ein Knoten und kann damit selbst in einem anderen Container liegen — daraus entsteht die Schachtelung.</p>
+<p>Beide Referenzen sind <em>abstrakt</em>. Sie legen nur fest, <em>dass</em> es eine Eltern- und eine Kind-Beziehung gibt, nicht welche Typen darin auftreten dürfen. Genau deshalb muss jede Struktur sie redeklarieren.</p>
+<h2>Aufbau einer Struktur</h2>
+<p>Eine auf <code class="hljs inlineCode">StructuredElement</code> aufgebaute Struktur ist nach diesem Schema aufgebaut:</p>
+<pre><code>// Oberster Typ der Struktur - jeder Typ der Struktur leitet davon ab.
+MyNode extends StructuredElement {
+    parent: MyContainer
+}
+
+// Abstrakter Typ für Knoten mit Unterstruktur.
+abstract MyContainer extends MyNode, StructuredElementContainer {
+}
+
+// Konkrete Typen mit Kindern.
+NodeA extends MyContainer {
+    children: ...
+}
+
+NodeB extends MyContainer {
+    children: ...
+}
+
+// Konkreter Typ ohne Kinder.
+NodeC extends MyNode {
+}</code></pre>
+<p>Drei Punkte sind daran wesentlich:</p>
+<ul>
+ <li><strong>Der oberste Typ redeklariert <code class="hljs inlineCode">parent</code></strong> und verengt die Referenz auf den Container-Typ der eigenen Struktur. Damit weiß jeder Knoten, in was für einem Container er liegen kann.</li>
+ <li><strong>Jeder konkrete Typ mit Unterstruktur redeklariert <code class="hljs inlineCode">children</code></strong> und verengt die Referenz auf die Typen, die er enthalten darf. Über diese Verengung steuert das Modell, was der Nutzer unterhalb eines Knotens anlegen kann.</li>
+ <li><strong>Ein Typ ohne Kinder leitet nur von <code class="hljs inlineCode">MyNode</code> ab</strong>, nicht von <code class="hljs inlineCode">MyContainer</code>. So entstehen Blätter, unter denen nichts angelegt werden kann.</li>
+</ul>
+<h2>Warum die Redeklaration nötig ist</h2>
+<p>Auf ein abstraktes Attribut kann nicht zugegriffen werden — weder lesend noch schreibend. Fehlt die Redeklaration, schlägt daher jeder Zugriff auf <code class="hljs inlineCode">parent</code> oder <code class="hljs inlineCode">children</code> mit einem Fehler fehl.</p>
+<p>Frühere Versionen lieferten in diesem Fall stillschweigend <code class="hljs inlineCode">null</code>. Ein Modell, dem die Redeklaration fehlte, funktionierte dadurch scheinbar, verhielt sich aber an anderer Stelle unerklärlich. Seit TopLogic 8.0 wird der Fehler direkt gemeldet, damit die Inkonsistenz im Modell erkennbar wird.</p>

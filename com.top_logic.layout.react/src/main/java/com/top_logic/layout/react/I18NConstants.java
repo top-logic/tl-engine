@@ -32,6 +32,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_COMMAND_FAILED__MSG;
 
 	/**
+	 * @en The command failed.
+	 */
+	public static ResKey ERROR_COMMAND_FAILED;
+
+	/**
 	 * @en React button clicked.
 	 */
 	public static ResKey REACT_BUTTON_CLICK;
@@ -45,6 +50,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Internal error in React integration.
 	 */
 	public static ResKey ERROR_INTERNAL;
+
+	/**
+	 * @en The command is currently not executable.
+	 */
+	public static ResKey ERROR_COMMAND_NOT_EXECUTABLE;
+
+	/**
+	 * @en The requested view is currently not available.
+	 */
+	public static ResKey ERROR_NAVIGATION_NOT_AVAILABLE;
 
 	/**
 	 * @en Tab selected.
@@ -274,6 +289,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_FILE_UPLOAD_CHOOSE;
 
 	/**
+	 * @en Add file
+	 */
+	@CustomKey("js.fileChips.add")
+	public static ResKey JS_FILE_CHIPS_ADD;
+
+	/**
+	 * @en Remove {0}
+	 */
+	@CustomKey("js.fileChips.remove")
+	public static ResKey JS_FILE_CHIPS_REMOVE;
+
+	/**
 	 * @en Open camera
 	 */
 	@CustomKey("js.photoCapture.open")
@@ -374,6 +401,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_INVALID_DATE__VALUE;
 
 	/**
+	 * @en No value
+	 */
+	public static ResKey VALUE_NONE;
+
+	/**
 	 * @en Languages…
 	 */
 	public static ResKey I18N_EDITOR_OPEN_BUTTON;
@@ -437,6 +469,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_UNFREEZE_ALL;
 
 	/**
+	 * @en Drag to choose the columns that stay in place while scrolling
+	 */
+	@CustomKey("js.table.freezeSplitter")
+	public static ResKey JS_TABLE_FREEZE_SPLITTER;
+
+	/**
 	 * @en Filter
 	 */
 	@CustomKey("js.table.filter")
@@ -447,6 +485,23 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.table.clear")
 	public static ResKey JS_TABLE_CLEAR;
+
+	/**
+	 * @en Columns
+	 */
+	@CustomKey("js.table.columns")
+	public static ResKey JS_TABLE_COLUMNS;
+
+	/**
+	 * @en Find column
+	 */
+	@CustomKey("js.table.columnSearch")
+	public static ResKey JS_TABLE_COLUMN_SEARCH;
+
+	/**
+	 * @en Restore default
+	 */
+	public static ResKey TABLE_COLUMNS_RESET;
 
 	/**
 	 * @en Selection changed.
@@ -696,6 +751,74 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Assertion at ''{0}'' failed: mismatching state keys {1}
 	 */
 	public static ResKey2 ERROR_ASSERTION_FAILED__ADDRESS_KEYS;
+
+	// -- Calendar client-side i18n keys --
+
+	/**
+	 * @en Today
+	 */
+	@CustomKey("js.calendar.today")
+	public static ResKey JS_CALENDAR_TODAY;
+
+	/**
+	 * @en Previous
+	 */
+	@CustomKey("js.calendar.previous")
+	public static ResKey JS_CALENDAR_PREVIOUS;
+
+	/**
+	 * @en Next
+	 */
+	@CustomKey("js.calendar.next")
+	public static ResKey JS_CALENDAR_NEXT;
+
+	/**
+	 * @en Day
+	 */
+	@CustomKey("js.calendar.day")
+	public static ResKey JS_CALENDAR_DAY;
+
+	/**
+	 * @en Work week
+	 */
+	@CustomKey("js.calendar.workWeek")
+	public static ResKey JS_CALENDAR_WORK_WEEK;
+
+	/**
+	 * @en Week
+	 */
+	@CustomKey("js.calendar.week")
+	public static ResKey JS_CALENDAR_WEEK;
+
+	/**
+	 * @en Month
+	 */
+	@CustomKey("js.calendar.month")
+	public static ResKey JS_CALENDAR_MONTH;
+
+	/**
+	 * @en Year
+	 */
+	@CustomKey("js.calendar.year")
+	public static ResKey JS_CALENDAR_YEAR;
+
+	/**
+	 * @en All day
+	 */
+	@CustomKey("js.calendar.allDay")
+	public static ResKey JS_CALENDAR_ALL_DAY;
+
+	/**
+	 * @en Event title
+	 */
+	@CustomKey("js.calendar.newEventTitle")
+	public static ResKey JS_CALENDAR_NEW_EVENT_TITLE;
+
+	/**
+	 * @en more
+	 */
+	@CustomKey("js.calendar.more")
+	public static ResKey JS_CALENDAR_MORE;
 
 	static {
 		initConstants(I18NConstants.class);

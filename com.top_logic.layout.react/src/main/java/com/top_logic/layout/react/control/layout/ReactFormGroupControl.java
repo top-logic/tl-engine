@@ -141,17 +141,6 @@ public class ReactFormGroupControl extends ReactCompositeControl {
 		return _collapsed;
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		super.cleanupChildren();
-		for (ReactControl action : _headerActions) {
-			action.cleanupTree();
-		}
-		if (_headerControl != null) {
-			_headerControl.cleanupTree();
-		}
-	}
-
 	/**
 	 * Handles the toggleCollapse command sent when the user toggles the collapse state.
 	 */

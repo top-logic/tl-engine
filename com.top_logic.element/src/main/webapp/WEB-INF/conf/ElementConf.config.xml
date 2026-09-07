@@ -181,8 +181,6 @@
 		<config service-class="com.top_logic.tool.boundsec.SecurityObjectProviderManager">
 			<instance>
 				<providers>
-					<provider name="rootForCreate" impl="com.top_logic.element.boundsec.RootForCreateSecurityObjectProvider" />
-					<provider name="securityStrRoot" impl="com.top_logic.element.boundsec.SecurityStructureRootSecurityObjectProvider" />
 		            <provider name="searchSecurityObjectProvider">
 		             	<impl class="com.top_logic.tool.boundsec.DispatchingSecurityObjectProvider"
 		             		default="model"
@@ -215,11 +213,6 @@
 			</instance>
 		</config>
 		
-		<config service-class="com.top_logic.base.services.InitialGroupManager">
-			<instance class="com.top_logic.element.util.model.ElementGroupManager">
-			</instance>
-		</config>
-
 		<config service-class="com.top_logic.tool.boundsec.BoundHelper">
 			<instance class="com.top_logic.element.boundsec.ElementBoundHelper" />
 		</config>
@@ -913,10 +906,6 @@
 							<reference rule-id="InEditMode"/>
 						</executability>
 					</handler>
-		            <handler id="savePersonOrGroupRoles" class="com.top_logic.element.layout.person.SaveRolesHandler"
-						clique="save" group="System"/>
-		            <handler id="applyPersonOrGroupRoles" class="com.top_logic.element.layout.person.ApplyRolesHandler"
-						clique="apply" group="System"/>
 		            <handler id="newMandator" class="com.top_logic.element.layout.structured.MandatorAdminComponent$NewMandatorCommandHandler"
 						clique="create"/>
 		            <handler id="touchMetaAttribute" class="com.top_logic.element.meta.form.component.TouchMetaAttributeCommandHandler"/>
@@ -950,10 +939,6 @@
 		
 		            <handler id="ElementSwitchEditCommand" class="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
 						clique="edit"/>
-		
-		            <handler id="securityExport" class="com.top_logic.element.layout.security.handler.SecurityExportHandler"
-						clique="exportButtons"
-						image="theme:ICONS_BUTTON_XML_EXPORT" disabledImage="theme:ICONS_BUTTON_XML_EXPORT_DISABLED"/>
 		
 		            <handler id="addSelectedToClipboard" class="com.top_logic.element.layout.grid.GridComponent$AddSelectedToClipboard"
 						clique="clipboard"

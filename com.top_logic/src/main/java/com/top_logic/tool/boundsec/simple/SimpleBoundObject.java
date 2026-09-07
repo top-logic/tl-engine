@@ -26,7 +26,6 @@ import com.top_logic.model.TransientObject;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.IGroup;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
@@ -138,8 +137,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
 			result = rolesForPersons.get(aPerson);
         }
         if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-			BoundObject myParent = getSecurityParent();
-			if (myParent != null) {
+			for (BoundObject myParent : getSecurityParents()) {
 				result = BoundHelper.merge(result, myParent.getRoles(aPerson));
             }
         }
@@ -168,8 +166,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
 			coll = rolesForPersons.get(aPerson);
 		}
 		if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-			BoundObject myParent = getSecurityParent();
-			if (myParent != null) {
+			for (BoundObject myParent : getSecurityParents()) {
 				coll = BoundHelper.merge(coll, myParent.getRoles(aPerson));
 			}
 		}
@@ -226,13 +223,14 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
 				result.addAll(allRoles.next());
             }
         }
-        if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-			BoundObject myParent = getSecurityParent();
-			if (myParent != null) {
-				return BoundHelper.merge(result, myParent.getRoles());
-            }
+		if (0 == (flags & BoundHelper.INHERIT_ROLES)) {
+			return result;
+		}
+		Set<? extends BoundRole> mergedResult = result;
+		for (BoundObject myParent : getSecurityParents()) {
+			mergedResult = BoundHelper.merge(mergedResult, myParent.getRoles());
         }
-        return result;
+		return mergedResult;
 	}
     
     @Override
@@ -266,8 +264,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
 			result = rolesForPersons.get(aGroup);
         }
         if (0 != (flags & BoundHelper.INHERIT_ROLES)) {
-			BoundObject myParent = getSecurityParent();
-			if (myParent != null) {
+			for (BoundObject myParent : getSecurityParents()) {
 				result = BoundHelper.merge(result, myParent.getRoles(aGroup));
             }
         }
@@ -281,40 +278,4 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
 		return this.id.toString();
     }
 
-    /**
-     * Make the given group have the given Role for this Object
-     * 
-     * @param aGroup The group to add the role for
-     * @param aRole The role to add for the group
-     */
-    public void addRoleForGroup(IGroup aGroup, BoundRole aRole) {
-        if (rolesForPersons == null) 
-			rolesForPersons = new HashMap<>();
-        
-		Set<BoundRole> personRoles = rolesForPersons.get(aGroup);
-        if (personRoles == null) {
-			personRoles = new HashSet<>();
-            rolesForPersons.put(aGroup, personRoles);
-        }
-        personRoles.add(aRole);
-    }
-
-    /**
-     * Remove all "has_role" Associations for the Role and a Group.
-     * {@link com.top_logic.tool.boundsec.BoundObject}
-     * 
-     * @param aGroup  The Group to add the role for
-     * @param aRole    The role to remove for the Group, may be null to indicate all Roles.
-     */
-    public void removeRoleForGroup(IGroup aGroup, BoundRole aRole) {
-        if (rolesForPersons == null) 
-			rolesForPersons = new HashMap<>();
-        
-		Set<BoundRole> personRoles = rolesForPersons.get(aGroup);
-        if (personRoles == null) {
-			personRoles = new HashSet<>();
-        }
-        
-        personRoles.remove(aGroup);
-    }
 }

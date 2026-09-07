@@ -1,0 +1,37 @@
+<p>Many applications do not represent their data as a flat list but as a tree: an organization made of divisions and units, a mandator with sub-mandators, a documentation tree made of pages. For such trees, the module <code class="hljs inlineCode">tl.element</code> provides two base types a structure of your own derives from.</p>
+<h2>The two base types</h2>
+<p><code class="hljs inlineCode">tl.element:StructuredElement</code> is the base type of a node. It carries the reference <code class="hljs inlineCode">parent</code> to the node that contains it.</p>
+<p><code class="hljs inlineCode">tl.element:StructuredElementContainer</code> derives from <code class="hljs inlineCode">StructuredElement</code> itself and adds the reference <code class="hljs inlineCode">children</code> to the nodes it contains. A container is therefore always a node as well and can lie in another container, which is what makes the nesting possible.</p>
+<p>Both references are <em>abstract</em>. They only state <em>that</em> there is a parent and a child relation, not which types may appear in them. That is exactly why every structure has to redeclare them.</p>
+<h2>How a structure is built</h2>
+<p>A structure built on <code class="hljs inlineCode">StructuredElement</code> follows this scheme:</p>
+<pre><code>// Top-level type of the structure - each type of the structure extends it.
+MyNode extends StructuredElement {
+    parent: MyContainer
+}
+
+// Abstract type for nodes with a substructure.
+abstract MyContainer extends MyNode, StructuredElementContainer {
+}
+
+// Concrete types with children.
+NodeA extends MyContainer {
+    children: ...
+}
+
+NodeB extends MyContainer {
+    children: ...
+}
+
+// Concrete type without children.
+NodeC extends MyNode {
+}</code></pre>
+<p>Three things about it matter:</p>
+<ul>
+ <li><strong>The top-level type redeclares <code class="hljs inlineCode">parent</code></strong> and narrows the reference to the container type of its own structure. Every node thereby knows what kind of container it can lie in.</li>
+ <li><strong>Every concrete type with a substructure redeclares <code class="hljs inlineCode">children</code></strong> and narrows the reference to the types it may contain. Through this narrowing, the model controls what the user can create below a node.</li>
+ <li><strong>A type without children derives from <code class="hljs inlineCode">MyNode</code> only</strong>, not from <code class="hljs inlineCode">MyContainer</code>. This is how leaves arise, below which nothing can be created.</li>
+</ul>
+<h2>Why the redeclaration is necessary</h2>
+<p>An abstract attribute cannot be accessed, neither for reading nor for writing. Without the redeclaration, every access to <code class="hljs inlineCode">parent</code> or <code class="hljs inlineCode">children</code> therefore fails with an error.</p>
+<p>Earlier versions silently returned <code class="hljs inlineCode">null</code> in that case. A model that was missing the redeclaration appeared to work, but behaved inexplicably elsewhere. Since TopLogic 8.0 the error is reported directly, so that the inconsistency in the model becomes visible.</p>

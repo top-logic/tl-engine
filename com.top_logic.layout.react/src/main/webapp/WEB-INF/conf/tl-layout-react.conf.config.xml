@@ -15,6 +15,21 @@
 			</instance>
 		</config>
 
+		<!--
+			Reloads the browser windows of a session that has been logged out without being
+			invalidated, e.g. by the start of the maintenance mode. Contributed by name, so it joins
+			the listeners declared elsewhere instead of replacing them.
+		-->
+		<config service-class="com.top_logic.base.accesscontrol.SessionService">
+			<instance>
+				<listeners>
+					<listener name="reactSessionEndReload">
+						<impl class="com.top_logic.layout.react.window.SessionEndReloadListener"/>
+					</listener>
+				</listeners>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.layout.react.resource.ClientResources">
 			<instance class="com.top_logic.layout.react.resource.ClientResources">
 				<resources>

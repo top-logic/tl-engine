@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -27,7 +30,6 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl.ChildConstraint;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.view.UIElement;
@@ -41,6 +43,7 @@ import com.top_logic.layout.view.ViewContext;
  * its size, unit, and content elements.
  * </p>
  */
+@InApp
 public class SplitPanelElement implements UIElement {
 
 	/**
@@ -127,6 +130,7 @@ public class SplitPanelElement implements UIElement {
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 
@@ -157,12 +161,19 @@ public class SplitPanelElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		String key = resolveKey(context, "split-panel");
+		String configSignature = configSignature(_panes);
 
 		Map<Integer, Float> persistedSizes = loadPaneSizes(key);
+		if (!configSignature.equals(loadConfigSignature(key))) {
+			// The configured pane sizes have changed (or predate size persistence) since the sizes
+			// were last persisted: the personalized sizes are stale, so fall back to the configured
+			// sizes instead of masking the (new) configuration.
+			persistedSizes = Map.of();
+		}
 		Map<Integer, Boolean> persistedCollapse = loadCollapseStates(key);
 
 		ReactSplitPanelControl splitPanel = new ReactSplitPanelControl(context, _orientation, _resizable,
-			sizes -> savePaneSizes(key, sizes),
+			sizes -> savePaneSizes(key, sizes, configSignature),
 			(idx, collapsed) -> saveCollapseState(key, idx, collapsed));
 
 		for (int i = 0; i < _panes.size(); i++) {
@@ -175,7 +186,10 @@ public class SplitPanelElement implements UIElement {
 			DisplayUnit unit = persistedSizes.containsKey(idx)
 				? DisplayUnit.PIXEL : pane._unit;
 			ChildConstraint constraint = new ChildConstraint(size, unit, pane._minSize, Scrolling.AUTO);
-			ReactControl content = createContent(pane._children, context);
+			// Descend the personalization path per pane so that nested split panels get distinct
+			// personalization keys instead of all sharing the parent's key.
+			ViewContext paneContext = context.childContext(String.valueOf(i));
+			ReactControl content = createContent(pane._children, paneContext);
 
 			if (collapsed) {
 				// Restore collapsed state. The constraint holds the current (collapsed) size.
@@ -219,7 +233,7 @@ public class SplitPanelElement implements UIElement {
 		return Map.of();
 	}
 
-	private static void savePaneSizes(String key, Map<String, Float> controlIdToSize) {
+	private static void savePaneSizes(String key, Map<String, Float> controlIdToSize, String configSignature) {
 		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
 		if (pc == null) {
 			return;
@@ -231,6 +245,38 @@ public class SplitPanelElement implements UIElement {
 			i++;
 		}
 		pc.setJSONValue(key + ".sizes", indexed);
+		// Remember the configuration the persisted sizes were derived from, so a later change to the
+		// configured sizes invalidates them (see loadConfigSignature usage in createControl).
+		pc.setJSONValue(key + ".configSignature", configSignature);
+	}
+
+	/**
+	 * The configuration signature previously persisted alongside the pane sizes, or {@code null} if
+	 * none was stored.
+	 */
+	private static String loadConfigSignature(String key) {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return null;
+		}
+		Object value = pc.getJSONValue(key + ".configSignature");
+		return value instanceof String ? (String) value : null;
+	}
+
+	/**
+	 * A signature of the configured pane sizes, used to detect configuration changes that must
+	 * invalidate persisted (personalized) sizes.
+	 */
+	private static String configSignature(List<PaneEntry> panes) {
+		StringBuilder result = new StringBuilder();
+		for (PaneEntry pane : panes) {
+			result.append(pane._size);
+			result.append(pane._unit == null ? "" : pane._unit.getExternalName());
+			result.append(':');
+			result.append(pane._minSize);
+			result.append(';');
+		}
+		return result.toString();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -281,13 +327,7 @@ public class SplitPanelElement implements UIElement {
 	}
 
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context) {
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(context);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(context))
-			.collect(Collectors.toList());
-		return new ReactStackControl(context, children);
+		return ContentControls.toControl(elements, context);
 	}
 
 	private record PaneEntry(float _size, DisplayUnit _unit, int _minSize, List<UIElement> _children) {

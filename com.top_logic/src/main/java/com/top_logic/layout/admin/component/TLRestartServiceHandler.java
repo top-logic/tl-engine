@@ -10,15 +10,12 @@ import java.util.Map;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.BasicRuntimeModule;
-import com.top_logic.basic.module.ModuleUtil;
-import com.top_logic.basic.module.RestartException;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Restarts the given and all dependent TL services.
@@ -44,7 +41,7 @@ public class TLRestartServiceHandler extends AbstractStopServiceHandler {
 			Object model,
 			Map<String, Object> args) {
 		BasicRuntimeModule<?> module = (BasicRuntimeModule<?>) model;
-		restartService(module);
+		TLServiceUtils.restartService(module);
 		InfoService.showInfo(
 			I18NConstants.SERVICE_RESTARTED_MESSAGE__SERVICE.fill(MetaLabelProvider.INSTANCE.getLabel(module)));
 
@@ -56,18 +53,6 @@ public class TLRestartServiceHandler extends AbstractStopServiceHandler {
 	@Override
 	protected HTMLFragment getTitle(Object model) {
 		return Fragments.message(I18NConstants.SERVICE_RESTART_COMMAND_LABEL);
-	}
-
-	private void restartService(BasicRuntimeModule<?> module) {
-		try {
-			ModuleUtil.INSTANCE.restart(module, null);
-		} catch (RestartException exception) {
-			throw new TopLogicException(I18NConstants.SERVICE_RESTART_ERROR.fill(getServiceName(module)), exception);
-		}
-	}
-
-	private String getServiceName(BasicRuntimeModule<?> module) {
-		return ModuleUtil.INSTANCE.getModuleName(module);
 	}
 
 }

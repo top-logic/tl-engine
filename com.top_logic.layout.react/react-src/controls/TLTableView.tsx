@@ -39,7 +39,9 @@ const TableKeyBindings: React.FC<{
 const I18N_KEYS = {
   'js.table.freezeUpTo': 'Freeze up to here',
   'js.table.unfreezeAll': 'Unfreeze all',
+  'js.table.freezeSplitter': 'Drag to choose the columns that stay in place while scrolling',
   'js.table.filter': 'Filter',
+  'js.table.columns': 'Columns',
 };
 
 interface ColumnState {
@@ -69,6 +71,74 @@ const MIN_COL_WIDTH = 50;
  * React table component with virtual scrolling, server-driven cell controls,
  * multi-selection with checkbox column, and column resize.
  */
+/**
+ * Elements that handle a click themselves: the native form controls, and the controls that carry
+ * their role through ARIA instead of an element name — a dropdown, for one, is a `div` with
+ * `role="combobox"`, so leaving those out made a click on it look like a click on plain cell text.
+ */
+const INTERACTIVE_SELECTOR =
+  'input, textarea, select, button, a, [contenteditable="true"], '
+  + '[role="combobox"], [role="listbox"], [role="option"], [role="button"], [role="link"], '
+  + '[role="checkbox"], [role="radio"], [role="switch"], [role="textbox"], [role="spinbutton"], '
+  + '[role="slider"], [role="menu"], [role="menuitem"]';
+
+/**
+ * Whether the event originates from an interactive element inside a cell (input, button, link,
+ * editor, dropdown). Row-level gestures must leave such clicks alone: neither steal the element's
+ * focus for the table's keyboard scope, nor suppress its default mouse handling (e.g. double-click
+ * word selection in a text input), nor read them as a row selection.
+ */
+function isInteractiveTarget(event: React.SyntheticEvent): boolean {
+  const target = event.target as Element | null;
+  return !!target?.closest?.(INTERACTIVE_SELECTOR);
+}
+
+/**
+ * Elements that accept text/edit focus inside an editable cell. Disabled/read-only controls are
+ * excluded: a read-only row still renders its boolean columns as a disabled checkbox {@code
+ * <input>}, which must not count as "this row is editable".
+ */
+const EDITABLE_SELECTOR =
+  'input:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), '
+  + 'select:not([disabled]), [contenteditable="true"]';
+
+/** Every keyboard-focusable element inside a row cell, including enabled action buttons/links. */
+const FOCUSABLE_SELECTOR = EDITABLE_SELECTOR + ', button:not([disabled]), a[href]';
+
+/** The cell {@code <div>}s (carrying data-row/data-col) of the given row, in column order. */
+function rowCells(body: HTMLElement, rowId: string): HTMLElement[] {
+  return Array.from(body.querySelectorAll<HTMLElement>('[data-row][data-col]'))
+    .filter((c) => c.dataset.row === rowId);
+}
+
+/**
+ * The editable input to focus within a row: the given column's input when present, otherwise the
+ * first (or, with {@code last}, the last) editable cell in column order. Returns null when the row
+ * has no editable cell (e.g. a not-yet-selected row in a single-row-editing table).
+ */
+function editableInRow(
+  body: HTMLElement, rowId: string, opts: { col?: string; last?: boolean } = {}
+): HTMLElement | null {
+  const cells = rowCells(body, rowId);
+  if (opts.col) {
+    const target = cells.find((c) => c.dataset.col === opts.col);
+    const inCol = target?.querySelector<HTMLElement>(EDITABLE_SELECTOR);
+    if (inCol) return inCol;
+  }
+  if (opts.col) {
+    // Asked for one specific column: a cell whose control takes no caret (a dropdown, a checkbox)
+    // must not send the focus to some other column - that would move the focus, and the horizontal
+    // scroll position with it, away from the cell the user addressed.
+    return null;
+  }
+  const ordered = opts.last ? [...cells].reverse() : cells;
+  for (const c of ordered) {
+    const found = c.querySelector<HTMLElement>(EDITABLE_SELECTOR);
+    if (found) return found;
+  }
+  return null;
+}
+
 const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
@@ -109,6 +179,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const cursorIndex = (state.cursorIndex as number) ?? -1;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
+  const columnSelect = (state.columnSelect as boolean) ?? false;
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -120,8 +191,15 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const treeIndentWidth = 20;
 
   const headerRef = React.useRef<HTMLDivElement>(null);
+  const headerAreaRef = React.useRef<HTMLDivElement>(null);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = React.useRef<number | null>(null);
+
+  // A cell whose editable input should receive the caret once the server has re-rendered its row
+  // as editable. Set on a selecting cell-click (edit the clicked cell) and on Tab-wrap to a
+  // neighbouring row; consumed by the focus effect below. Addressed by row index (stable across
+  // virtual scrolling) rather than the transient row id.
+  const pendingFocusRef = React.useRef<{ index: number; col?: string; last?: boolean } | null>(null);
 
   // -- Resize state --
   const [columnWidthOverrides, setColumnWidthOverrides] = React.useState<Record<string, number>>({});
@@ -136,6 +214,31 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const [contextMenu, setContextMenu] = React.useState<{
     x: number; y: number; colIdx: number;
   } | null>(null);
+
+  // -- Frozen column splitter state: the boundary the running drag would drop the frozen area at. --
+  const [frozenPreview, setFrozenPreview] = React.useState<{ x: number; count: number } | null>(null);
+
+  // Width of the body's vertical scrollbar. The header has none, so its viewport is that much wider
+  // than the body's - and its scroll range that much shorter. Scrolled to the right end, the header
+  // would stop before the body does and the headings would sit beside the wrong columns; the header
+  // therefore ends with a reserve of this width. Measured rather than assumed: it depends on the
+  // platform, and it is zero for an overlay scrollbar or a table short enough not to scroll.
+  const [scrollbarWidth, setScrollbarWidth] = React.useState(0);
+
+  React.useEffect(() => {
+    const body = scrollContainerRef.current;
+    if (!body) {
+      return;
+    }
+    const measure = () => {
+      const width = body.offsetWidth - body.clientWidth;
+      setScrollbarWidth((previous) => (previous === width ? previous : width));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(body);
+    return () => observer.disconnect();
+  }, []);
 
 
   // Clear overrides when server pushes updated columns (resize confirmed).
@@ -157,6 +260,19 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       left += getColWidth(columns[i]);
     }
     return offsets;
+  }, [columns, frozenColumnCount, isMulti, checkboxWidth, getColWidth]);
+
+  // Where the frozen area ends, measured from the left edge of the table: the frozen cells stick to
+  // that edge, so this is a fixed position independent of the horizontal scroll offset.
+  const frozenWidth = React.useMemo(() => {
+    if (frozenColumnCount <= 0) {
+      return 0;
+    }
+    let width = isMulti ? checkboxWidth : 0;
+    for (let i = 0; i < frozenColumnCount && i < columns.length; i++) {
+      width += getColWidth(columns[i]);
+    }
+    return width;
   }, [columns, frozenColumnCount, isMulti, checkboxWidth, getColWidth]);
 
   const totalHeight = totalRowCount * rowHeight;
@@ -327,14 +443,32 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (selection && !selection.isCollapsed && event.currentTarget.contains(selection.anchorNode)) {
       return;
     }
-    // Give the body keyboard focus so the table's keyboard scope becomes active.
-    scrollContainerRef.current?.focus({ preventScroll: true });
+    // Give the body keyboard focus so the table's keyboard scope becomes active - except when
+    // the click landed in an interactive cell element (e.g. a text input of an editable cell),
+    // which must keep the focus to stay editable.
+    if (!isInteractiveTarget(event)) {
+      scrollContainerRef.current?.focus({ preventScroll: true });
+      // A plain selecting click enters the clicked cell for editing: once the row re-renders
+      // editable, the focus effect moves the caret into that column's input.
+      if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
+        const col = (event.target as Element)?.closest?.('[data-col]')?.getAttribute('data-col');
+        pendingFocusRef.current = { index: rowIndex, col: col ?? undefined };
+      }
+    }
+    // Operating a control inside an already selected row is not a selection gesture. Sending one
+    // anyway would have the server re-render the row, and that answer overwrites the value the
+    // control is sending at the same moment - the edit would be lost.
+    const row = rows.find((r) => r.index === rowIndex);
+    if (isInteractiveTarget(event) && row?.selected
+        && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+      return;
+    }
     sendCommand('select', {
       rowIndex,
       ctrlKey: event.ctrlKey || event.metaKey,
       shiftKey: event.shiftKey,
     });
-  }, [sendCommand]);
+  }, [sendCommand, rows]);
 
   // -- Keyboard navigation (server-resolved; see moveSelection) --
   const handleMove = React.useCallback((direction: string, extend: boolean, move: boolean) => {
@@ -376,6 +510,91 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [cursorIndex, rowHeight]);
 
+  // Once a row has re-rendered as editable (selected via cell-click or reached via Tab-wrap), move
+  // the caret into the intended cell. Runs on every server state update; a no-op until the target
+  // row is both rendered and editable, so it naturally waits out the select round-trip.
+  React.useEffect(() => {
+    const pending = pendingFocusRef.current;
+    const body = scrollContainerRef.current;
+    if (!pending || !body) {
+      return;
+    }
+    const row = rows.find((r) => r.index === pending.index);
+    if (!row) {
+      return;
+    }
+    // The row has to be editable first; until then this is a no-op and waits out the select
+    // round-trip. Once it is, the request is answered - successfully or not.
+    if (!editableInRow(body, row.id)) {
+      return;
+    }
+    pendingFocusRef.current = null;
+    // A click that opened a control of its own (a dropdown's option list, a date picker) has moved
+    // the focus out of the table on purpose; taking it back would close what was just opened.
+    const active = document.activeElement;
+    if (active && active !== document.body && !body.contains(active)) {
+      return;
+    }
+    const input = editableInRow(body, row.id, { col: pending.col, last: pending.last });
+    if (!input) {
+      return;
+    }
+    // The cell was just clicked, so it is on screen: scrolling to it can only move the viewport away
+    // from where the user is looking.
+    input.focus({ preventScroll: true });
+    if (input instanceof HTMLInputElement) {
+      input.select();
+    }
+  }, [rows]);
+
+  // Tab at a row boundary wraps to the neighbouring row: forward from the last editable cell to the
+  // start of the next row, backward from the first to the end of the previous row. In a single-row-
+  // editing table the neighbour must first be selected to become editable; when it is already
+  // editable (all rows editable) native Tab handles the move and this steps aside.
+  const handleBodyKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') {
+      return;
+    }
+    const body = scrollContainerRef.current;
+    const active = document.activeElement as HTMLElement | null;
+    if (!body || !active || !body.contains(active)) {
+      return;
+    }
+    const cell = active.closest<HTMLElement>('[data-row][data-col]');
+    if (!cell) {
+      return;
+    }
+    const rowId = cell.dataset.row!;
+    const row = rows.find((r) => r.id === rowId);
+    if (!row) {
+      return;
+    }
+    const focusables = rowCells(body, rowId)
+      .flatMap((c) => Array.from(c.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)));
+    const pos = focusables.indexOf(active);
+    if (pos < 0) {
+      return;
+    }
+    const forward = !e.shiftKey;
+    const atRowEnd = forward ? pos === focusables.length - 1 : pos === 0;
+    if (!atRowEnd) {
+      // Still room to move within the row: let native Tab handle it.
+      return;
+    }
+    const targetIndex = forward ? row.index + 1 : row.index - 1;
+    if (targetIndex < 0 || targetIndex >= totalRowCount) {
+      return;
+    }
+    const neighbour = rows.find((r) => r.index === targetIndex);
+    if (neighbour && editableInRow(body, neighbour.id)) {
+      // Neighbour already editable (all-rows-editable table): native Tab flows into it.
+      return;
+    }
+    e.preventDefault();
+    pendingFocusRef.current = { index: targetIndex, last: !forward };
+    sendCommand('select', { rowIndex: targetIndex, ctrlKey: false, shiftKey: false });
+  }, [rows, totalRowCount, sendCommand]);
+
   const handleCheckboxClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
     event.stopPropagation();
     sendCommand('select', { rowIndex, ctrlKey: true, shiftKey: false });
@@ -409,6 +628,48 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     setContextMenu(null);
   }, [sendCommand]);
 
+  // -- Frozen column splitter: drag the boundary of the frozen area onto another column border. --
+  const handleFrozenSplitStart = React.useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const area = headerAreaRef.current;
+    const header = headerRef.current;
+    if (!area || !header) {
+      return;
+    }
+
+    // The boundary snaps to a column border that is on screen right now. Measuring the rendered
+    // header cells covers the frozen columns (sticky, at their fixed offsets) and the scrolled ones
+    // alike, and it keeps the frozen area from growing wider than the visible table: a border that
+    // has scrolled out of view is no candidate.
+    const areaWidth = area.clientWidth;
+    const options: { x: number; count: number }[] = [{ x: 0, count: 0 }];
+    header.querySelectorAll<HTMLElement>('[data-col-idx]').forEach((cell) => {
+      const x = cell.getBoundingClientRect().right - area.getBoundingClientRect().left;
+      if (x > 0 && x <= areaWidth) {
+        options.push({ x, count: Number(cell.dataset.colIdx) + 1 });
+      }
+    });
+
+    let target = { x: frozenWidth, count: frozenColumnCount };
+    const move = (e: MouseEvent) => {
+      const x = e.clientX - area.getBoundingClientRect().left;
+      target = options.reduce(
+        (best, option) => (Math.abs(option.x - x) < Math.abs(best.x - x) ? option : best), options[0]);
+      setFrozenPreview(target);
+    };
+    const up = () => {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      setFrozenPreview(null);
+      if (target.count !== frozenColumnCount) {
+        sendCommand('setFrozenColumnCount', { count: target.count });
+      }
+    };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  }, [frozenWidth, frozenColumnCount, sendCommand]);
+
   // Close context menu on outside click; Escape is handled by the shared keyboard dispatcher.
   React.useEffect(() => {
     if (!contextMenu) return;
@@ -425,9 +686,26 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('openFilter', { column: columnName });
   }, [sendCommand]);
 
+  // -- Column selection: open the server-side dialog choosing the displayed columns. --
+  const handleOpenColumnSelect = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    sendCommand('openColumnSelect', {});
+  }, [sendCommand]);
+
   // -- Computed values --
   const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
     + (isMulti ? checkboxWidth : 0);
+
+  // Both the header row and the body end this much behind the last column, keeping the column
+  // button clear of it: otherwise the button covers the last column's funnel as soon as the columns
+  // fill the available width, and that filter cannot be opened at all. Matches the button's CSS
+  // width (2rem), and applies to the body as well so that scrolling to the right end frees the
+  // funnel there, too.
+  // Kept as padding rather than width: the last body cell grows into the remaining space, so adding
+  // the reserve to the width would make that cell wider than its header cell. Padding widens the
+  // scroll range without offering the cells any space to grow into.
+  const buttonReserve = columnSelect ? 32 : 0;
 
   const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
   const someSelected = selectedCount > 0 && selectedCount < totalRowCount;
@@ -467,9 +745,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       }}
       onDrop={handleDrop}
     >
-      {/* Header */}
+      {/* Header, plus the column selection sitting above the body's vertical scrollbar */}
+      <div className="tlTableView__headerArea" ref={headerAreaRef}>
       <div className="tlTableView__header" ref={headerRef}>
-        <div className="tlTableView__headerRow" style={{ width: tableWidth }}>
+        <div className="tlTableView__headerRow"
+          style={{ width: tableWidth, paddingRight: buttonReserve + scrollbarWidth }}>
           {isMulti && (
             <div className={'tlTableView__headerCell tlTableView__checkboxCell'
                 + (frozenColumnCount > 0 ? ' tlTableView__headerCell--frozen' : '')}
@@ -511,6 +791,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <div
                 key={col.name}
                 className={cellClass}
+                data-col-idx={colIdx}
                 style={{
                   width: w, minWidth: w,
                   position: isFrozen ? 'sticky' as const : 'relative' as const,
@@ -574,16 +855,38 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           />
         </div>
       </div>
+        {/* Grip on the boundary of the frozen columns. Confined to the header: a grip running down
+            the body would swallow the clicks on the cells behind it. */}
+        <div
+          className={'tlTableView__frozenSplitter'
+            + (frozenPreview ? ' tlTableView__frozenSplitter--active' : '')}
+          style={{ left: frozenWidth }}
+          title={i18n['js.table.freezeSplitter']}
+          onMouseDown={handleFrozenSplitStart}
+        />
+        {columnSelect && (
+          <button
+            type="button"
+            className="tlTableView__columnsButton"
+            title={i18n['js.table.columns']}
+            aria-label={i18n['js.table.columns']}
+            onClick={handleOpenColumnSelect}
+          >
+            <i className="bi bi-gear" />
+          </button>
+        )}
+      </div>
 
       {/* Scrollable body (focusable so keyboard row navigation can target it) */}
       <div
         ref={scrollContainerRef}
         className="tlTableView__body"
         onScroll={handleScroll}
+        onKeyDown={handleBodyKeyDown}
         tabIndex={0}
       >
         {/* Spacer for virtual scrolling */}
-        <div style={{ height: totalHeight, position: 'relative', width: tableWidth }}>
+        <div style={{ height: totalHeight, position: 'relative', width: tableWidth, paddingRight: buttonReserve }}>
           {rows.map((row) => (
             <div
               key={row.id}
@@ -597,6 +900,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 top: row.index * rowHeight,
                 height: rowHeight,
                 width: tableWidth,
+                paddingRight: buttonReserve,
                 ...(row.index === cursorIndex
                   ? { outline: '2px solid var(--color-primary, #1a73e8)', outlineOffset: '-2px' }
                   : {}),
@@ -604,8 +908,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               onMouseDown={(e) => {
                 // Suppress the text selection the browser would start as a side
                 // effect of row-selection gestures (shift/ctrl range or toggle,
-                // double-click); plain click-and-drag still selects cell text.
-                if (e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) {
+                // double-click); plain click-and-drag still selects cell text, and
+                // interactive cell elements keep their own mouse handling (e.g.
+                // double-click word selection in a text input).
+                if ((e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) && !isInteractiveTarget(e)) {
                   e.preventDefault();
                 }
               }}
@@ -664,10 +970,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                         ) : (
                           <span className="tlTableView__treeToggleSpacer" />
                         )}
-                        <TLChild control={row.cells[col.name]} />
+                        {/* A row that predates the current columns has no control for a newly shown
+                            column yet \u2014 leave that cell empty rather than tearing down the table. */}
+                        {row.cells[col.name] && <TLChild control={row.cells[col.name]} />}
                       </div>
                     ) : (
-                      <TLChild control={row.cells[col.name]} />
+                      row.cells[col.name] && <TLChild control={row.cells[col.name]} />
                     )}
                   </div>
                 );
@@ -676,6 +984,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           ))}
         </div>
       </div>
+
+      {/* Where the frozen area would end if the splitter were dropped now. Drawn over the whole
+          table, so the boundary can be judged against the rows, not only against the headings. */}
+      {frozenPreview && (
+        <div className="tlTableView__frozenPreview" style={{ left: frozenPreview.x }} />
+      )}
 
       {/* Column context menu */}
       {contextMenu && (

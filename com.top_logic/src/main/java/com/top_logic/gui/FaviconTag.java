@@ -1,14 +1,14 @@
 /*
  * SPDX-FileCopyrightText: 2020 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.gui;
 
 import static com.top_logic.mig.html.HTMLConstants.*;
 
-import java.io.IOError;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,28 +24,24 @@ import com.top_logic.layout.DisplayContext;
 /**
  * This Tag writes a favicon which is necessary for browsers to find. This tag must not be used if
  * the {@link ThemeBasedCSSTag} is already used.
- * 
+ *
  * <p>
  * It provides also utility methods to create favicons without a {@link FaviconTag}.
  * </p>
- * 
+ *
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public class FaviconTag extends TagSupport {
 
-	private static enum Relation {
-		SHORTCUT_ICON("shortcut icon"), ICON("icon");
-
-		Relation(String name) {
-			_name = name;
-		}
-
-		private String _name;
-
-		public String getName() {
-			return _name;
-		}
-	}
+	/**
+	 * Link relation under which a page icon is announced to the browser.
+	 *
+	 * @implNote The legacy relation <code>shortcut icon</code> is intentionally not written. It was
+	 *           introduced by the Internet Explorer and never became part of any standard. Since
+	 *           <code>rel</code> is a list of relations, <code>shortcut</code> is just an unknown
+	 *           relation that browsers ignore, which makes the legacy form equivalent to this one.
+	 */
+	private static final String ICON_RELATION = "icon";
 
 	private static final Map<String, String> TYPES = Stream.of(new String[][] {
 		{ "ico", TYPE_ICO },
@@ -54,30 +50,14 @@ public class FaviconTag extends TagSupport {
 		{ "svg", TYPE_SVG },
 	}).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
-	private static final String SHORTCUT_ICON_DEFAULT = "/images/shortcut.ico";
-
-	private static final String ICON_DEFAULT = SHORTCUT_ICON_DEFAULT;
-
-	private String _shortcutIcon = SHORTCUT_ICON_DEFAULT;
-
-	private String _icon = ICON_DEFAULT;
+	private String _icon;
 
 	// The context path of this application.
 	private String _contextPath;
 
 	/**
-	 * Overwrites the default value for the shortcut icon.
-	 * 
-	 * @param shortcutIcon
-	 *        Relative path to the shortcut icon file.
-	 */
-	public void setShortcutIcon(String shortcutIcon) {
-		_shortcutIcon = shortcutIcon;
-	}
-
-	/**
 	 * Overwrites the default value for the icon.
-	 * 
+	 *
 	 * @param icon
 	 *        Relative path to the icon file.
 	 */
@@ -92,70 +72,53 @@ public class FaviconTag extends TagSupport {
 		return SKIP_BODY;
 	}
 
+	@Override
+	public int doEndTag() throws JspException {
+		reset();
+
+		return super.doEndTag();
+	}
+
+	@Override
+	public void release() {
+		reset();
+
+		super.release();
+	}
+
+	/**
+	 * Drops the state of a single tag invocation.
+	 *
+	 * <p>
+	 * A tag handler instance is reused for other occurrences of the tag, which do not necessarily
+	 * specify the same attributes. Therefore, values that were explicitly set must not survive the
+	 * invocation they were set for.
+	 * </p>
+	 */
+	private void reset() {
+		_icon = null;
+		_contextPath = null;
+	}
+
 	private void write(JspWriter out) {
 		_contextPath = LinkTagUtil.getContextPath(this.pageContext, _contextPath);
-		String shortcutIcon = LinkTagUtil.getLink(_contextPath, _shortcutIcon);
-		String icon = LinkTagUtil.getLink(_contextPath, _icon);
-		write(out, shortcutIcon, icon);
+		writeIcon(out, iconLink(_contextPath, _icon));
 	}
 
 	/**
-	 * Writes a link for a given shortcut icon and icon. Ones for the relation 'shortcut icon' and
-	 * ones for 'icon'.
-	 * 
+	 * Writes the link that announces the given icon to the browser.
+	 *
 	 * @param out
 	 *        The {@link TagWriter} where to write the link.
-	 * @param shortcutIcon
-	 *        The path for the shortcut icon to write.
 	 * @param icon
-	 *        The path for the shortcut icon to write.
+	 *        The path of the icon to write.
 	 */
-	public static void write(TagWriter out, String shortcutIcon, String icon) {
-		write(out, Relation.SHORTCUT_ICON, shortcutIcon);
-		write(out, Relation.ICON, icon);
-	}
-
-	/**
-	 * Writes a link for a given shortcut icon and icon. Ones for the relation 'shortcut icon' and
-	 * ones for 'icon'.
-	 * 
-	 * @param out
-	 *        The {@link JspWriter} where to write the link.
-	 * @param shortcutIcon
-	 *        The path for the shortcut icon to write.
-	 * @param icon
-	 *        The path for the shortcut icon to write.
-	 */
-	public static void write(JspWriter out, String shortcutIcon, String icon) {
-		write(out, Relation.SHORTCUT_ICON, shortcutIcon);
-		write(out, Relation.ICON, icon);
-	}
-
-	private static void write(JspWriter out, Relation relation, String icon) {
-		try {
-			if (icon != null) {
-				String type = getType(icon);
-
-				out.write("<");
-				out.write(LINK + " ");
-				out.write(REL_ATTR + "=\"" + relation.getName() + "\" ");
-				if (type != null) {
-					out.write(TYPE_ATTR + "=\"" + type + "\" ");
-				}
-				out.write(HREF_ATTR + "=\"" + icon + "\"");
-				out.println("/>");
-			}
-		} catch (IOException ex) {
-			throw new IOError(ex);
-		}
-	}
-
-	private static void write(TagWriter out, Relation relation, String icon) {
+	public static void writeIcon(TagWriter out, String icon) {
 		if (icon != null) {
 			String type = getType(icon);
 
 			out.beginBeginTag(LINK);
-			out.writeAttribute(REL_ATTR, relation.getName());
+			out.writeAttribute(REL_ATTR, ICON_RELATION);
 			if (type != null) {
 				out.writeAttribute(TYPE_ATTR, type);
 			}
@@ -164,16 +127,43 @@ public class FaviconTag extends TagSupport {
 		}
 	}
 
+	/**
+	 * Writes the link that announces the given icon to the browser.
+	 *
+	 * @param out
+	 *        The {@link JspWriter} where to write the link.
+	 * @param icon
+	 *        The path of the icon to write.
+	 */
+	public static void writeIcon(JspWriter out, String icon) {
+		try {
+			if (icon != null) {
+				String type = getType(icon);
+
+				out.write("<");
+				out.write(LINK + " ");
+				out.write(REL_ATTR + "=\"" + ICON_RELATION + "\" ");
+				if (type != null) {
+					out.write(TYPE_ATTR + "=\"" + type + "\" ");
+				}
+				out.write(HREF_ATTR + "=\"" + icon + "\"");
+				out.println("/>");
+			}
+		} catch (IOException ex) {
+			throw new UncheckedIOException(ex);
+		}
+	}
+
 	private static String getType(String icon) {
 		String[] iconParts = icon.split("\\.");
 		String fileExtension = iconParts[iconParts.length - 1];
-		
+
 		return TYPES.get(fileExtension);
 	}
 
 	/**
-	 * Writes a default shortcut icon and default icon.
-	 * 
+	 * Writes the default icon.
+	 *
 	 * @see #write(TagWriter, String)
 	 */
 	public static void write(DisplayContext context, TagWriter out) {
@@ -182,28 +172,49 @@ public class FaviconTag extends TagSupport {
 	}
 
 	/**
-	 * Writes a default shortcut icon and icon.
-	 * 
+	 * Writes the default icon.
+	 *
 	 * @param contextPath
 	 *        The application's context path.
-	 * @see #write(TagWriter, String, String)
+	 * @see #writeIcon(TagWriter, String)
 	 */
 	public static void write(TagWriter out, String contextPath) {
-		String shortcutIcon = LinkTagUtil.getLink(contextPath, SHORTCUT_ICON_DEFAULT);
-		String icon = LinkTagUtil.getLink(contextPath, ICON_DEFAULT);
-		write(out, shortcutIcon, icon);
+		writeIcon(out, iconLink(contextPath, null));
 	}
 
 	/**
-	 * Writes a default shortcut icon and icon.
-	 * 
+	 * Writes the default icon.
+	 *
 	 * @param contextPath
 	 *        The application's context path.
-	 * @see #write(JspWriter, String, String)
+	 * @see #writeIcon(JspWriter, String)
 	 */
 	public static void write(JspWriter out, String contextPath) {
-		String shortcutIcon = LinkTagUtil.getLink(contextPath, SHORTCUT_ICON_DEFAULT);
-		String icon = LinkTagUtil.getLink(contextPath, ICON_DEFAULT);
-		write(out, shortcutIcon, icon);
+		writeIcon(out, iconLink(contextPath, null));
+	}
+
+	/**
+	 * Builds the link to announce for the given icon.
+	 *
+	 * @param icon
+	 *        The explicitly requested icon, or <code>null</code> to use the application's default
+	 *        icon.
+	 * @implNote The icon is also written on the health check page <code>SystemState.jsp</code>,
+	 *           whose purpose is to report which services of a partially started application are
+	 *           unavailable. An unavailable {@link ThemeFactory} must therefore not be the reason
+	 *           that page fails. This is why the default is taken from
+	 *           {@link ThemeVar#defaultValue()} instead of the theme, and why the theme-local
+	 *           variant of the image is only looked up when the service is there.
+	 */
+	private static String iconLink(String contextPath, String icon) {
+		String imgPath;
+		if (ThemeFactory.Module.INSTANCE.isActive()) {
+			imgPath = ThemeFactory.getTheme()
+				.getFileLink(icon != null ? icon : Icons.DEFAULT_ICON.get());
+		} else {
+			imgPath = icon != null ? icon : Icons.DEFAULT_ICON.defaultValue();
+		}
+
+		return LinkTagUtil.getLink(contextPath, imgPath);
 	}
 }

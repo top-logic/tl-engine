@@ -7,6 +7,7 @@ package com.top_logic.layout.view.login;
 
 import java.util.Arrays;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -45,6 +46,7 @@ import com.top_logic.util.error.TopLogicException;
  *           on success, the flow continues through {@link LoginAction#proceedAfterPassword} (which
  *           runs any required MFA step before completing the login).
  */
+@InApp
 public class ChangePasswordApplyAction implements ViewAction {
 
 	/**

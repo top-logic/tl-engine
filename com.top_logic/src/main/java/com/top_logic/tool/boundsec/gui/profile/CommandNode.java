@@ -5,16 +5,13 @@
  */
 package com.top_logic.tool.boundsec.gui.profile;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.Config;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -57,30 +54,18 @@ class CommandNode extends SecurityNode {
 		return resources.getString(key, resources.getString(prefix.key(id), id));
 	}
 
-	boolean hasRight(Set<BoundedRole> set) {
-		return configNode().hasRight(set, group());
+	boolean hasRight(BoundedRole role) {
+		return configNode().hasRight(role, group());
 	}
 
 	ConfigNode configNode() {
 		return (ConfigNode) getParent();
 	}
 
-	String getRoleNamesAsTooltip(Set<BoundedRole> colRoles) {
-		ArrayList<BoundedRole> roles = new ArrayList<>(colRoles);
-		Collections.sort(roles);
-
+	String getRoleNameAsTooltip(BoundedRole role) {
 		StringBuilder res = new StringBuilder();
 		Resources resources = Resources.getInstance();
 		ConfigNode configNode = configNode();
-		for (BoundedRole role : roles) {
-			if (!configNode.isRoleRelevantForDomain(role)) {
-				continue;
-			}
-			ResKey securityStructureKey =
-				TLModelNamingConvention.getModuleLabelKey(role.getScope());
-			String label = resources.getString(securityStructureKey);
-			res.append(label).append("<br/>");
-		}
 		Config securityLayout = configNode.securityLayout();
 		if (securityLayout != configNode.config()) {
 			ResKey secLayoutLabel = LayoutComponent.Config.getEffectiveTitleKey(securityLayout);

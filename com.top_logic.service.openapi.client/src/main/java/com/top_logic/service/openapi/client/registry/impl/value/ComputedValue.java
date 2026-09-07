@@ -100,7 +100,9 @@ public class ComputedValue extends AbstractConfiguredInstance<ComputedValue.Conf
 				for (int n = 0; n < cnt; n++) {
 					arguments[n] = producers[n].getValue(call);
 				}
-				return function.execute(arguments);
+				// An intermediate result of the calling script, see
+				// JSONRequestBody#createRequestModifier(MethodSpec).
+				return function.executeIntermediate(arguments);
 			}
 		};
 	}

@@ -6,8 +6,10 @@
 package com.top_logic.tl.ai.core.tools.authoring;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -187,8 +189,12 @@ public class ScriptToolStore {
 		try {
 			return ToolMode.valueOf(mode.trim().toUpperCase());
 		} catch (IllegalArgumentException ex) {
-			throw new IllegalArgumentException("Unknown tool mode '" + mode
-				+ "'. Expected one of READ, USER_SCOPED, DATA_WRITE, STRUCTURAL.", ex);
+			// Listed from the enum rather than spelled out: the message is read by the model, which
+			// then retries with one of the names in it, so a hand-written list that misses a
+			// constant makes that constant unreachable.
+			throw new IllegalArgumentException("Unknown tool mode '" + mode + "'. Expected one of "
+				+ Arrays.stream(ToolMode.values()).map(Enum::name).collect(Collectors.joining(", "))
+				+ ".", ex);
 		}
 	}
 

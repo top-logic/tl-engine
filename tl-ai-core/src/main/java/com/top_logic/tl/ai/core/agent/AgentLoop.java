@@ -636,6 +636,15 @@ public class AgentLoop {
 	 * Begins a transaction on first write. Locking is handled by individual
 	 * tools via {@link TransactionScope#acquireLock(String, com.top_logic.model.TLObject...)}.
 	 *
+	 * <p>
+	 * Only a tool that writes state this application's transaction covers - see
+	 * {@link ToolMode#writesApplicationState()} - opens one. A
+	 * {@link ToolMode#READ} tool has nothing to commit, and a {@link ToolMode#EXTERNAL} one has
+	 * nothing this transaction could commit or undo: the remote system commits by itself. Opening a
+	 * transaction for it would create one that only ever commits an empty change set, while
+	 * suggesting in the turn's events that the call could be taken back.
+	 * </p>
+	 *
 	 * @param tool     the resolved tool (may be {@code null} for unknown tools)
 	 * @param context  the current execution context
 	 * @param listener receives transaction events
@@ -649,7 +658,7 @@ public class AgentLoop {
 			return;
 		}
 
-		if (tool == null || tool.mode() == ToolMode.READ) {
+		if (tool == null || !tool.mode().writesApplicationState()) {
 			return;
 		}
 
@@ -813,12 +822,14 @@ public class AgentLoop {
 			return false;
 		}
 		if (tool.mode() != ToolMode.READ) {
-			// Only READ tools share concurrent batches. USER_SCOPED / DATA_WRITE / GLOBAL
+			// Only READ tools share concurrent batches. USER_SCOPED / DATA_WRITE / STRUCTURAL
 			// tools trigger ensureTransaction, which opens a KB transaction in the worker's
 			// own (interaction-scoped) DBContext; that transaction is auto-rolled-back when
 			// the worker's interaction unbinds, leaving the shared TransactionScope holding
 			// a zombie TX that the agent's end-of-turn commit then fails on with
-			// "Invalid nesting of transactions".
+			// "Invalid nesting of transactions". EXTERNAL opens no transaction and so escapes
+			// that hazard, but it is excluded for its own reason: every EXTERNAL call is put in
+			// front of a human, and a batch is precisely the shape in which nobody is asked.
 			return false;
 		}
 		if (!tool.isConcurrencySafe()) {

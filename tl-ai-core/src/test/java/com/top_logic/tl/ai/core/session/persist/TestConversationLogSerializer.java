@@ -196,6 +196,36 @@ public class TestConversationLogSerializer extends TestCase {
 		assertNull("A log without the field must not claim to know the mode.", rtc.mode());
 	}
 
+	/**
+	 * Every {@link ToolMode} survives a round trip, the newest constant included.
+	 *
+	 * <p>
+	 * The persisted shape carries the mode as its {@link Enum#name()} and reads it back with
+	 * {@code ToolMode.valueOf}, so a constant added to the enum needs nothing here - but only as
+	 * long as nobody replaces that with a hand-written mapping. Asserted over
+	 * {@link ToolMode#values()} so the guarantee is the enum's, not a list's.
+	 * </p>
+	 */
+	public void testEveryModeRoundTrips() {
+		for (ToolMode mode : ToolMode.values()) {
+			ConversationLog log = new ConversationLog();
+			Turn turn = log.startTurn();
+			turn.setUserParts(List.of(new Part.TextPart("u1", Instant.ofEpochMilli(1000), "Do it")));
+			turn.addAssistantPart(Part.ToolCallPart.started("tc1", Instant.ofEpochMilli(1001),
+				"aTool", "{}", mode).completed("done", Duration.ofMillis(3)));
+			turn.addUsage(TokenUsage.EMPTY);
+			log.completeTurn();
+
+			ConversationLog restored = ConversationLogSerializer.fromJson(
+				ConversationLogSerializer.toJson(log));
+			Part.ToolCallPart rtc =
+				(Part.ToolCallPart) restored.turns().get(0).assistantParts().get(0);
+
+			assertEquals(mode, rtc.mode());
+			assertEquals(Part.ToolCallStatus.COMPLETED, rtc.status());
+		}
+	}
+
 	/** An unknown mode survives a round trip as unknown rather than becoming a value. */
 	public void testUnknownModeRoundTripsAsUnknown() {
 		ConversationLog log = new ConversationLog();

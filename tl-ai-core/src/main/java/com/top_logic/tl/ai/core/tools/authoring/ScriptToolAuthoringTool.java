@@ -101,7 +101,7 @@ public class ScriptToolAuthoringTool {
 			@P(value = "Declared parameters. Each object has: name (string), type (qualified TL type, e.g. tl.core:String), description (string), mandatory (boolean). Optional fields: multiple (boolean, default false), defaultValue (TL-Script expression, default null).",
 				required = false) List<ScriptToolStore.ParamSpec> parameters,
 			@P("TL-Script body; parameters are bound as $name (e.g. \"Hello \" + $name)") String implementation,
-			@P(value = "Tool mode: READ (only reads data, no side effects), USER_SCOPED (reads user-specific state), DATA_WRITE (modifies data, default), STRUCTURAL (changes system config, requires approval)",
+			@P(value = "Tool mode: READ (only reads data, no side effects), USER_SCOPED (reads user-specific state), DATA_WRITE (modifies data, default), STRUCTURAL (changes system config, requires approval), EXTERNAL (calls a system outside this application, requires approval)",
 				required = false) String mode,
 			@P(value = "Whether the tool may run in parallel with other concurrency-safe tools (default true)",
 				required = false) Boolean concurrencySafe,

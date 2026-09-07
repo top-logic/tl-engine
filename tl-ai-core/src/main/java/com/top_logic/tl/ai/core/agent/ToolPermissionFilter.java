@@ -32,6 +32,17 @@ public class ToolPermissionFilter implements Predicate<Tool> {
 		_security = security;
 	}
 
+	/**
+	 * Whether the tool is available at all.
+	 *
+	 * <p>
+	 * {@link ToolMode#STRUCTURAL} is the only mode this gate refuses, and it refuses it because the
+	 * tool would change <em>this</em> application's model on a live installation. A
+	 * {@link ToolMode#EXTERNAL} tool passes: what it changes belongs to another system, which this
+	 * application's production state says nothing about. The control on an external call is the
+	 * approval prompt - see {@link SecurityContext#checkApproval} - not a mode a deployment is in.
+	 * </p>
+	 */
 	@Override
 	public boolean test(Tool tool) {
 		if (!_security.hasToolPermission(tool)) {

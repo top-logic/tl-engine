@@ -62,7 +62,7 @@ environment.
 Extracted contract module (package `com.top_logic.tl.ai.tool.api`) enabling tools to be defined without depending on tl-ai-core internals. Key types:
 
 - `Tool` interface — `execute(Map<String, Object> args, ToolExecutionContext context) → ToolResult`
-- `ToolMode` enum — READ (parallel-safe), USER_SCOPED (parallel-safe), GLOBAL (serial + locked)
+- `ToolMode` enum - READ (parallel-safe, no approval); USER_SCOPED / DATA_WRITE / STRUCTURAL (serial, need approval, enrol in the turn's transaction); EXTERNAL (serial, needs approval, no transaction - the change lands in another system)
 - `@ToolMethod` / `@P` — annotation framework for reflection-based tool creation
 - `ToolExecutionContext` — marker interface; concrete `ToolContext` lives in tl-ai-core
 - `ToolRegistryService` — service-level registry with qualified names `{factory}.{tool}`

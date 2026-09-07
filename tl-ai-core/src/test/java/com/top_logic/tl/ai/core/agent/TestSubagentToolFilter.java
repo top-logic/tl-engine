@@ -43,6 +43,19 @@ public class TestSubagentToolFilter extends TestCase {
 		assertFalse(AgentFactory.isReadOnlyTool(fakeTool("structural_tool", ToolMode.STRUCTURAL)));
 	}
 
+	/**
+	 * An external tool is excluded from a read-only catalog.
+	 *
+	 * <p>
+	 * It leaves this application's data untouched, which is exactly the wrong reason to hand it to a
+	 * run that was deliberately given no way to make changes: the change it makes lands somewhere
+	 * this application cannot take it back from.
+	 * </p>
+	 */
+	public void testExternalModeIsExcluded() {
+		assertFalse(AgentFactory.isReadOnlyTool(fakeTool("mcp__jira__createIssue", ToolMode.EXTERNAL)));
+	}
+
 	private static Tool fakeTool(String name, ToolMode mode) {
 		return new Tool() {
 			@Override

@@ -68,6 +68,27 @@ public class TestToolPermissionFilter extends TestCase {
 		assertNull(filter.denialReason(tool));
 	}
 
+	/**
+	 * EXTERNAL tool in every execution mode: allowed.
+	 *
+	 * <p>
+	 * The production ban exists because a {@code STRUCTURAL} tool would change this application's
+	 * own model on a live installation. An external call changes another system's data, which this
+	 * application's execution mode says nothing about - so denying it here would withhold a
+	 * legitimately granted tool behind a reason that is not true of it. Its control is the approval
+	 * prompt.
+	 * </p>
+	 */
+	public void testExternalAllowedInEveryExecutionMode() {
+		Tool tool = stubTool("mcp__jira__createIssue", ToolMode.EXTERNAL);
+
+		for (ExecutionMode mode : ExecutionMode.values()) {
+			ToolPermissionFilter filter = new ToolPermissionFilter(contextWithMode(mode));
+			assertTrue("EXTERNAL must pass the execution-mode gate in " + mode, filter.test(tool));
+			assertNull("EXTERNAL must have no denial reason in " + mode, filter.denialReason(tool));
+		}
+	}
+
 	/** Tool denied by user permission (hasToolPermission returns false). */
 	public void testUserPermissionDenied() {
 		SecurityContext ctx = new SecurityContext() {

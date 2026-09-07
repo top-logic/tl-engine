@@ -80,7 +80,7 @@ public class ScriptToolSummary extends de.haumacher.msgbuf.data.AbstractDataObje
 	}
 
 	/**
-	 * Tool mode: READ, USER_SCOPED, DATA_WRITE, or STRUCTURAL.
+	 * Tool mode: READ, USER_SCOPED, DATA_WRITE, STRUCTURAL, or EXTERNAL.
 	 */
 	public final String getMode() {
 		return _mode;

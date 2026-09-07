@@ -120,7 +120,7 @@ message ToolSummary {
 	/** Tool description. */
 	string description;
 
-	/** Tool mode: READ, USER_SCOPED, DATA_WRITE, or STRUCTURAL. */
+	/** Tool mode: READ, USER_SCOPED, DATA_WRITE, STRUCTURAL, or EXTERNAL. */
 	string mode;
 }
 
@@ -165,7 +165,7 @@ message ScriptToolSummary {
 	/** Tool description. */
 	string description;
 
-	/** Tool mode: READ, USER_SCOPED, DATA_WRITE, or STRUCTURAL. */
+	/** Tool mode: READ, USER_SCOPED, DATA_WRITE, STRUCTURAL, or EXTERNAL. */
 	string mode;
 }
 

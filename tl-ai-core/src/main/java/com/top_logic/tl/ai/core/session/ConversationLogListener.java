@@ -431,12 +431,20 @@ public class ConversationLogListener implements AgentEventListener {
 	 * </p>
 	 *
 	 * <p>
-	 * A call whose {@link Part.ToolCallPart#mode()} is {@link ToolMode#READ} wrote nothing, so the
-	 * rollback does not touch it: its result stays {@code COMPLETED} and a reloaded conversation
-	 * keeps the data it read. Every other mode is retracted, and so is an <em>unknown</em>
-	 * ({@code null}) mode - a log written before the mode was recorded, or a tool the loop could not
-	 * resolve. Unknown counts as a write on purpose: guessing wrong the other way tells the model a
-	 * write landed that did not.
+	 * Only a call whose {@link Part.ToolCallPart#mode()}
+	 * {@link ToolMode#writesApplicationState() writes this application's state} is retracted - the
+	 * same question the agent loop asked when it decided whether to open the transaction, so the two
+	 * cannot disagree. A {@link ToolMode#READ} call wrote nothing and a {@link ToolMode#EXTERNAL} one
+	 * wrote to a system this rollback cannot reach; both keep their {@code COMPLETED} result, and a
+	 * reloaded conversation keeps what they did. For {@code EXTERNAL} that is not leniency but
+	 * accuracy: the remote effect happened and still stands, and marking it rolled back would tell
+	 * the model something untrue about the world.
+	 * </p>
+	 *
+	 * <p>
+	 * An <em>unknown</em> ({@code null}) mode - a log written before the mode was recorded, or a tool
+	 * the loop could not resolve - is retracted. Unknown counts as a write on purpose: guessing wrong
+	 * the other way tells the model a write landed that did not.
 	 * </p>
 	 */
 	private static void retractCompletedWrites(Turn turn, Set<String> openCalls, String reason) {
@@ -448,7 +456,7 @@ public class ConversationLogListener implements AgentEventListener {
 			if (part instanceof Part.ToolCallPart tc
 				&& tc.status() == Part.ToolCallStatus.COMPLETED
 				&& openCalls.contains(tc.id())
-				&& tc.mode() != ToolMode.READ) {
+				&& (tc.mode() == null || tc.mode().writesApplicationState())) {
 				retracted.add(tc);
 			}
 		}

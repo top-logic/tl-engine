@@ -20,6 +20,7 @@
 					<bundle name="model.test.flowchart.messages"/>
 					<bundle name="model.tl.demo.projectManagement.messages"/>
 					<bundle name="model.demo.filter.messages"/>
+					<bundle name="model.demo.calendar.messages"/>
 				</bundles>
 			</instance>
 		</config>

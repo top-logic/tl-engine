@@ -440,6 +440,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
     }
     e.stopPropagation();
     capturePointer(e);
+    create.discard();
     const { min } = pointerToDayMin(e.clientX, e.clientY);
     const dur = (ev.end - ev.start) / MS_MIN;
     setDrag({
@@ -454,6 +455,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
     }
     e.stopPropagation();
     capturePointer(e);
+    create.discard();
     setDrag({
       mode: 'resize', id: ev.id, dayStart, startMin: minutesOfDay(ev.start),
       endMin: minutesOfDay(ev.end), origEndMs: ev.end,
@@ -465,6 +467,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
       return;
     }
     capturePointer(e);
+    create.discard();
     const { min } = pointerToDayMin(e.clientX, e.clientY);
     setDrag({ mode: 'create', dayStart, fromMin: snap(min), toMin: snap(min) });
   };

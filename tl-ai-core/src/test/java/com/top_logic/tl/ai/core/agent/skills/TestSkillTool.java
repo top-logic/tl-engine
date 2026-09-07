@@ -55,6 +55,33 @@ public class TestSkillTool extends TestCase {
 		assertTrue("Should contain skill content", result.contains("FRONTMATTER RULE"));
 	}
 
+	/**
+	 * <b>A loaded skill is not untrusted content, and must not be marked as any.</b>
+	 *
+	 * <p>
+	 * {@code loadSkill} is documented as returning "specialized instructions you MUST follow", so it is
+	 * the one tool result that is <em>meant</em> to be an instruction. The standing rule the system
+	 * prompt carries (see {@code UntrustedEnvelope.standingRule}) is scoped to spans marked with
+	 * {@code <untrusted_*>} tags precisely so that it leaves this alone: a rule that covered tool
+	 * results in general would switch the skills mechanism off, and a skill that arrived inside an
+	 * envelope would be told, by the framework, to be ignored.
+	 * </p>
+	 *
+	 * <p>
+	 * Pinned as its own test because the failure is silent. Nothing throws; the agent simply stops
+	 * doing what its skills say, and the reason is a sentence in a prompt half the codebase away.
+	 * </p>
+	 */
+	public void testLoadedSkillContentIsNotMarkedAsUntrusted() {
+		String result = _tool.loadSkill("test/frontmatter-skill");
+
+		assertTrue("Precondition: the skill content has to be in the result.",
+			result.contains("FRONTMATTER RULE"));
+		assertFalse("A loaded skill must carry no untrusted-content envelope - the standing rule would"
+			+ " then tell the model to treat its own instructions as data. Got:\n" + result,
+			result.contains("untrusted_"));
+	}
+
 	/** */
 	public void testLoadSkillRejectsUnregisteredSkill() {
 		String result = _tool.loadSkill("nonexistent/skill");

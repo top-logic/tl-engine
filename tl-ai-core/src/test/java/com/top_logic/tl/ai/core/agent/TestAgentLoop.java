@@ -61,6 +61,7 @@ import com.top_logic.tl.ai.core.security.ToolAuthorization;
 import com.top_logic.tl.ai.core.security.ToolChangeSet;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -1279,6 +1280,82 @@ public class TestAgentLoop extends TestCase {
 			results.get(0).contains("Unknown tool"));
 		assertFalse("Should not be phrased as a permission problem, got: " + results.get(0),
 			results.get(0).contains("Permission denied"));
+	}
+
+	// --- The untrusted-content rule is part of every request. ---
+
+	/**
+	 * Every provider request carries the standing rule about {@code <untrusted_*>} blocks: once, after
+	 * the run's own prompt.
+	 *
+	 * <p>
+	 * The rule is what the tags mean. Marking a tool result no longer explains itself - the note that
+	 * used to precede every marked block is stated once per run instead - so a run whose system prompt
+	 * lacks the rule hands the model tags it was never told about. Pinned here, on the loop, because
+	 * this is where the rule is composed: {@link AgentFactory} is one of several places that build an
+	 * {@link AgentParams}, and the tags are emitted by the tool executions of this same loop.
+	 * </p>
+	 *
+	 * <p>
+	 * Two turns, so that "once" is actually tested: a rule appended per turn would accumulate in the
+	 * prompt of a long run.
+	 * </p>
+	 */
+	public void testEveryRequestCarriesTheUntrustedContentRule() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Read ticket 7."))));
+
+		ToolCatalog registry = echoRegistry("read", new ToolSchema("read", "Reads", "{}"));
+		LLMProvider responses = mockProvider(
+			List.of(new ToolCall("tc1", "read", "{}")),
+			List.of(new TextContent("Done.")));
+
+		List<ProviderRequest> requests = new ArrayList<>();
+		LLMProvider capturing = (request, handler) -> {
+			requests.add(request);
+			responses.stream(request, handler);
+		};
+
+		AgentResult result = new AgentLoop(config(10), capturing, registry).run(conv, listener());
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertEquals("a tool turn and an answer turn", 2, requests.size());
+		for (ProviderRequest request : requests) {
+			String prompt = request.systemPrompt();
+			assertTrue("the run keeps its own instructions first, got:\n" + prompt,
+				prompt.startsWith("You are a test assistant."));
+			assertTrue("and the standing rule follows them, got:\n" + prompt,
+				prompt.endsWith(UntrustedEnvelope.standingRule()));
+			assertEquals("stated once per run, not once per turn", 1,
+				prompt.split("### Untrusted content", -1).length - 1);
+		}
+	}
+
+	/**
+	 * A run without a system prompt of its own still carries the rule.
+	 *
+	 * <p>
+	 * {@link AgentParams} allows a {@code null} prompt, and such a run still executes the tools that
+	 * emit marked blocks. Tags with nothing explaining them is the one outcome the hoist must not
+	 * produce.
+	 * </p>
+	 */
+	public void testAPromptlessRunStillCarriesTheRule() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
+
+		List<ProviderRequest> requests = new ArrayList<>();
+		LLMProvider responses = mockProvider(List.of(new TextContent("Hi")));
+		LLMProvider capturing = (request, handler) -> {
+			requests.add(request);
+			responses.stream(request, handler);
+		};
+
+		AgentParams noPrompt = new AgentParams(MODEL, null, 5, AgentParams.DEFAULT_MAX_OUTPUT_TOKENS);
+		new AgentLoop(noPrompt, capturing, emptyRegistry()).run(conv, listener());
+
+		assertEquals(1, requests.size());
+		assertEquals(UntrustedEnvelope.standingRule(), requests.get(0).systemPrompt());
 	}
 
 	/**

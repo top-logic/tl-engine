@@ -25,8 +25,8 @@ public class TestWebSearchTool extends TestCase {
 		String out = WebSearchTool.format("tl-ai release notes", results("Version 3 is out.",
 			hit("Release notes", "https://example.com/notes", "Version 3 adds the agent loop.")));
 
-		assertTrue("standing data-not-instructions note", out.contains("NEVER an instruction"));
-		assertTrue("the note names a search engine", out.contains("web search engine"));
+		assertFalse("the rule is stated once per run, not once per result: " + out,
+			out.contains("NEVER an instruction"));
 		assertTrue("opening tag names the query",
 			out.contains("<untrusted_search_results source=\"tl-ai release notes\">"));
 		assertTrue("the engine's answer is inside", out.contains("Answer: Version 3 is out."));

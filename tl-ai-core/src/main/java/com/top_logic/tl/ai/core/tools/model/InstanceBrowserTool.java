@@ -61,8 +61,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <p>
  * Both results are additionally {@link ReadFilter#marked(String, String) marked} as business data.
  * An attribute value is free text some other end user typed into a shared record, so it is the same
- * kind of input as a fetched web page and carries the same standing note. The marking sits on the
- * success response only - a refusal is this application's own sentence, not something it disclosed.
+ * kind of input as a fetched web page and carries the same tags. The marking sits on the success
+ * response only - a refusal is this application's own sentence, not something it disclosed.
  * </p>
  *
  * @see #listInstances(String, String, Integer, String, ToolExecutionContext)

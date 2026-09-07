@@ -356,6 +356,13 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	/**
 	 * Builds the {@link AgentParams} record from an {@link AgentDefinition} and its
 	 * {@link AgentModelAssignment}.
+	 *
+	 * <p>
+	 * Assembles the agent's own system prompt and the sections generated for the run - the skill
+	 * catalog, the capability notice, the delegate catalog. The framework's standing rule about
+	 * {@code <untrusted_*>} content is <em>not</em> among them: it is appended by {@link AgentLoop},
+	 * which is the one point every run passes through, including the runs that never come through here.
+	 * </p>
 	 */
 	AgentParams buildConfig(AgentDefinition agent, AgentModelAssignment assignment,
 			AgentCapabilities capabilities) {

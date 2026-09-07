@@ -392,9 +392,10 @@ public final class ReadFilter {
 	 * they say nothing about <em>what it is</em>. And what it is, on the production side, is the
 	 * agent's largest untrusted input: the free text in a shared record was written by some other end
 	 * user of the application, who is not the principal this run serves. So every rendering that
-	 * leaves this class carries the same standing note a fetched web page carries, from the same
-	 * {@link UntrustedEnvelope}, and it is stated here rather than in each tool for the reason the
-	 * filtering is stated here - three tools each writing their own were three tools each forgetting.
+	 * leaves this class carries the same envelope a fetched web page carries, from the same
+	 * {@link UntrustedEnvelope}, and so falls under the standing rule the system prompt states once
+	 * per run. It is marked here rather than in each tool for the reason the filtering is here - three
+	 * tools each writing their own were three tools each forgetting.
 	 * </p>
 	 *
 	 * <p>

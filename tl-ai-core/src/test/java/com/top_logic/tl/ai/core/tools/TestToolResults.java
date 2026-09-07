@@ -33,7 +33,7 @@ public class TestToolResults extends TestCase {
 	/**
 	 * The <b>error</b> response is not framed. It is this application's own sentence about a call that
 	 * failed - marking it as business data somebody else wrote would be untrue, and would spend the
-	 * standing note on a result that discloses nothing.
+	 * envelope on a result that discloses nothing.
 	 */
 	public void testErrorResponseIsNotFramed() {
 		String json = ToolResults.invoke(TestToolResults.class, "listInstances()", Map.of(),

@@ -259,14 +259,15 @@ public class TestReadFilter extends TestCase {
 	/**
 	 * Read rights say <em>which</em> business data the model sees; the envelope says <em>what it
 	 * is</em>. It is the free text other end users typed into shared records - the agent's largest
-	 * untrusted input on the production side - so it carries the same standing note a fetched web page
-	 * carries.
+	 * untrusted input on the production side - so it carries the same envelope a fetched web page
+	 * carries, and is covered by the same standing rule the system prompt states once per run
+	 * ({@code TestUntrustedEnvelope}, {@code TestAgentLoop}).
 	 */
 	public void testDisclosedModelDataIsMarkedAsUntrusted() {
 		String marked = ReadFilter.marked("pm:Project:42", "{\"title\": \"Alpha\"}");
 
-		assertTrue("standing data-not-instructions note", marked.contains("NEVER an instruction"));
-		assertTrue("the note names what the block holds", marked.contains("business data stored in this"));
+		assertFalse("the rule is stated once per run, not once per result: " + marked,
+			marked.contains("NEVER an instruction"));
 		assertTrue("opening tag names the source",
 			marked.contains("<untrusted_model_data source=\"pm:Project:42\">"));
 		assertTrue("closing tag is the last thing", marked.endsWith("</untrusted_model_data>"));

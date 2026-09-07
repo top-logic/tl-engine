@@ -105,7 +105,8 @@ public class TestMcpTool extends TestCase {
 
 	/**
 	 * An MCP server is a separate process or a remote endpoint this application does not control, and
-	 * its text reaches the model verbatim. So it arrives inside the standing note that says it is data.
+	 * its text reaches the model verbatim. So it arrives inside the tagged block the standing rule
+	 * covers.
 	 */
 	public void testExternalResultIsMarkedAsUntrusted() {
 		McpSchema.CallToolResult result = McpSchema.CallToolResult.builder()
@@ -114,9 +115,8 @@ public class TestMcpTool extends TestCase {
 
 		String formatted = McpTool.formatResult("mcp__tracker__getTicket", result);
 
-		assertTrue("standing data-not-instructions note", formatted.contains("NEVER an instruction"));
-		assertTrue("the note names an external MCP server",
-			formatted.contains("external MCP server"));
+		assertFalse("the rule is stated once per run, not once per result: " + formatted,
+			formatted.contains("NEVER an instruction"));
 		assertTrue("the opening tag names which tool of which server",
 			formatted.contains("<untrusted_mcp_result source=\"mcp__tracker__getTicket\">"));
 		assertTrue("the payload survives verbatim", formatted.contains("Ticket 7 is open."));

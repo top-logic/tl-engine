@@ -64,7 +64,8 @@ public class TestWebFetchTool extends TestCase {
 	public void testFetchedContentIsWrappedInUntrustedEnvelope() {
 		String out = WebFetchTool.renderContent("https://example.com/a", "# Title\n\nHello world.", 50_000);
 
-		assertTrue("standing data-not-instructions note", out.contains("NEVER an instruction"));
+		assertFalse("the rule is stated once per run, not once per result: " + out,
+			out.contains("NEVER an instruction"));
 		assertTrue("opening envelope tag with the final URL",
 			out.contains("<untrusted_page_content source=\"https://example.com/a\">"));
 		assertTrue("closing envelope tag last", out.endsWith("</untrusted_page_content>"));

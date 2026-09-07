@@ -473,13 +473,20 @@ public class CalendarViewControl extends ReactControl {
 		switch (_granularity) {
 			case DAY:
 				return format("EEEE, d MMMM yyyy", rangeStart);
-			case WORK_WEEK:
-			case WEEK: {
-				// The displayed week spans seven days from rangeStart.
-				Calendar last = calendar(new Date(rangeStart));
-				last.add(Calendar.DAY_OF_MONTH, 6);
-				return format("d MMM", rangeStart) + " – " + format("d MMM yyyy", last.getTimeInMillis());
+			case WORK_WEEK: {
+				// Only the working days are displayed as columns, so the title must not span the
+				// non-working days that are left out.
+				List<Integer> offsets = workWeekOffsets(rangeStart);
+				if (offsets.isEmpty()) {
+					// Every weekday is configured as non-working: no column is displayed.
+					return format("d MMM yyyy", rangeStart);
+				}
+				return weekTitle(rangeStart, offsets.get(0).intValue(),
+					offsets.get(offsets.size() - 1).intValue());
 			}
+			case WEEK:
+				// The displayed week spans seven days from rangeStart.
+				return weekTitle(rangeStart, 0, 6);
 			case MONTH:
 				// The anchor's month, not the grid start (which may lie in the previous month).
 				return format("MMMM yyyy", _anchor.getTime());
@@ -487,6 +494,46 @@ public class CalendarViewControl extends ReactControl {
 				return format("yyyy", rangeStart);
 		}
 		throw new IllegalStateException("Unhandled granularity: " + _granularity);
+	}
+
+	/**
+	 * The offsets in days from the start of the week of those days that
+	 * {@link Granularity#WORK_WEEK} displays, i.e. all days not excluded by
+	 * {@link #setNonWorkingDays(List)}.
+	 *
+	 * @param weekStart
+	 *        The start of the displayed week.
+	 * @return The offsets of the displayed days, in ascending order.
+	 */
+	private List<Integer> workWeekOffsets(long weekStart) {
+		Calendar cal = calendar(new Date(weekStart));
+		List<Integer> result = new ArrayList<>(7);
+		for (int offset = 0; offset < 7; offset++) {
+			if (!_nonWorkingDays.contains(Integer.valueOf(cal.get(Calendar.DAY_OF_WEEK) - 1))) {
+				result.add(Integer.valueOf(offset));
+			}
+			cal.add(Calendar.DAY_OF_MONTH, 1);
+		}
+		return result;
+	}
+
+	/**
+	 * The title of a week view displaying the days at the given offsets from the start of the week.
+	 *
+	 * @param weekStart
+	 *        The start of the displayed week.
+	 * @param firstOffset
+	 *        The offset in days of the first displayed day.
+	 * @param lastOffset
+	 *        The offset in days of the last displayed day.
+	 * @return The title spanning the displayed days.
+	 */
+	private String weekTitle(long weekStart, int firstOffset, int lastOffset) {
+		Calendar cal = calendar(new Date(weekStart));
+		cal.add(Calendar.DAY_OF_MONTH, firstOffset);
+		long first = cal.getTimeInMillis();
+		cal.add(Calendar.DAY_OF_MONTH, lastOffset - firstOffset);
+		return format("d MMM", first) + " – " + format("d MMM yyyy", cal.getTimeInMillis());
 	}
 
 	private String format(String pattern, long millis) {

@@ -311,8 +311,11 @@ public final class BinaryPerception {
 
 	/**
 	 * Whether a non-{@code text/*} content type still carries human-readable text.
+	 *
+	 * @param normalized
+	 *        The content type, lower-cased; parameters may be present and are ignored.
 	 */
-	private static boolean isTextLike(String normalized) {
+	public static boolean isTextLike(String normalized) {
 		String base = stripParameters(normalized);
 		return base.equals("application/json")
 			|| base.equals("application/xml")

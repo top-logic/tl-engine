@@ -27,6 +27,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 import io.modelcontextprotocol.spec.McpSchema;
 
@@ -163,13 +164,34 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 		List<Tool> tools = new ArrayList<>(mcpTools.size());
 
 		for (McpSchema.Tool mcpTool : mcpTools) {
-			String inputSchemaJson = serializeInputSchema(mcpTool.inputSchema());
-			String description = mcpTool.description() != null ? mcpTool.description() : "";
-
-			tools.add(new McpTool(serverName, mcpTool.name(), description, inputSchemaJson, this));
+			tools.add(createTool(serverName, mcpTool, this));
 		}
 
 		return tools;
+	}
+
+	/**
+	 * Wraps one MCP tool definition as an {@link McpTool}.
+	 *
+	 * <p>
+	 * Nothing the server says about the tool beyond its name, description and input schema is read.
+	 * The {@code annotations} of the definition - {@code readOnlyHint} and friends - are a server's
+	 * claims about itself, and every tool reached over MCP is {@link ToolMode#EXTERNAL} whatever they
+	 * say; see {@link McpTool#mode()}.
+	 * </p>
+	 *
+	 * @param serverName
+	 *        The server name as configured.
+	 * @param mcpTool
+	 *        The tool definition as the server declared it in its {@code tools/list} response.
+	 * @param registry
+	 *        The registry the tool delegates its calls to, or <code>null</code> for testing.
+	 */
+	static McpTool createTool(String serverName, McpSchema.Tool mcpTool, McpServerRegistry registry) {
+		String inputSchemaJson = serializeInputSchema(mcpTool.inputSchema());
+		String description = mcpTool.description() != null ? mcpTool.description() : "";
+
+		return new McpTool(serverName, mcpTool.name(), description, inputSchemaJson, registry);
 	}
 
 	/**

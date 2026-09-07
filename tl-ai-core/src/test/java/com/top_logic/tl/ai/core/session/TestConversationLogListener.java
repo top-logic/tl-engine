@@ -230,6 +230,76 @@ public class TestConversationLogListener extends TestCase {
 			((Part.ToolCallPart) turn.findPart("tc2")).status());
 	}
 
+	/**
+	 * A rollback retracts the writes of its transaction and leaves the reads alone.
+	 *
+	 * <p>
+	 * A turn that reads and then writes is ordinary. The read wrote nothing, so the rollback did
+	 * not void it: its result is still what the tool found, and a reloaded conversation must keep
+	 * it. Retracting it too would cost the model the data for no gain.
+	 * </p>
+	 */
+	public void testRollbackRetractsTheWriteAndKeepsTheRead() {
+		Instant now = Instant.now();
+		_log.startTurn();
+		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "searchModel", "{}",
+			ToolMode.READ));
+		_listener.onEvent(new AgentEvent.TransactionBegan("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 1, now, "tc1", "searchModel",
+			"3 documents found", Duration.ofMillis(7)));
+
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc2", "createDocument", "{}",
+			ToolMode.DATA_WRITE));
+		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 1, now, "tc2", "createDocument",
+			"{uuid=4f2c}", Duration.ofMillis(10)));
+
+		_listener.onEvent(new AgentEvent.TransactionRolledBack("r1", 1, now,
+			"Database operation failed."));
+
+		Turn turn = _log.currentTurn();
+		Part.ToolCallPart read = (Part.ToolCallPart) turn.findPart("tc1");
+		assertEquals("A read wrote nothing, so the rollback voided nothing to retract.",
+			Part.ToolCallStatus.COMPLETED, read.status());
+		assertEquals("The read's result is the data the model saw and must survive a reload.",
+			"3 documents found", read.result());
+		assertNull("A kept read carries no rollback reason.", read.errorMessage());
+
+		assertEquals("The write's success was a claim about a commit that never happened.",
+			Part.ToolCallStatus.ROLLED_BACK,
+			((Part.ToolCallPart) turn.findPart("tc2")).status());
+	}
+
+	/**
+	 * A call of unknown mode inside the rolled-back transaction is retracted.
+	 *
+	 * <p>
+	 * The mode is unknown for a call restored from a log written before it was recorded, and for a
+	 * tool the loop could not resolve. Unknown counts as a write: guessing the other way would tell
+	 * the model a write landed that did not.
+	 * </p>
+	 */
+	public void testRollbackRetractsACallOfUnknownMode() {
+		Instant now = Instant.now();
+		_log.startTurn();
+		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "unresolvedTool", "{}",
+			null));
+		_listener.onEvent(new AgentEvent.TransactionBegan("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 1, now, "tc1", "unresolvedTool",
+			"done", Duration.ofMillis(4)));
+		_listener.onEvent(new AgentEvent.TransactionRolledBack("r1", 1, now,
+			"Database operation failed."));
+
+		Part.ToolCallPart part = (Part.ToolCallPart) _log.currentTurn().findPart("tc1");
+		assertEquals("An unknown mode must be treated as a write, never risked as a read.",
+			Part.ToolCallStatus.ROLLED_BACK, part.status());
+		assertEquals("Database operation failed.", part.errorMessage());
+	}
+
 	/** A rollback does not resurrect a tool call that had already failed. */
 	public void testRollbackKeepsAFailedToolCallFailed() {
 		Instant now = Instant.now();

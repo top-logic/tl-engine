@@ -11,7 +11,21 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.message.AssistantMessage;
+import com.top_logic.tl.ai.core.message.CompactionMarker;
+import com.top_logic.tl.ai.core.message.ImageContent;
+import com.top_logic.tl.ai.core.message.Message;
+import com.top_logic.tl.ai.core.message.PdfContent;
+import com.top_logic.tl.ai.core.message.SystemMessage;
+import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.message.ToolCall;
+import com.top_logic.tl.ai.core.message.ToolResultMessage;
+import com.top_logic.tl.ai.core.message.ToolState;
+import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.session.CompactionFingerprint;
+import com.top_logic.tl.ai.core.session.CompactionSidecar;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
@@ -197,5 +211,135 @@ public class TestConversationLogSerializer extends TestCase {
 		Part.ToolCallPart rtc =
 			(Part.ToolCallPart) restored.turns().get(0).assistantParts().get(0);
 		assertNull(rtc.mode());
+	}
+
+	/**
+	 * A compaction's sidecar round-trips, with every message shape a preserve zone can hold.
+	 *
+	 * <p>
+	 * The replacement messages are the one thing in the log that cannot be derived from
+	 * anything else - they are what the summarizer wrote - so a lossy round trip here loses
+	 * history outright rather than merely costing tokens.
+	 * </p>
+	 */
+	public void testCompactionSidecarRoundTrip() {
+		List<Message> replacement = List.of(
+			new CompactionMarker("m1", Instant.ofEpochMilli(5000), 12, 9000, "proactive"),
+			new UserMessage("s1", Instant.ofEpochMilli(5001),
+				List.of(new TextContent("Summary of the earlier conversation."),
+					new ImageContent("https://example.org/chart.png", "image/png"),
+					new PdfContent("JVBERi0=", "application/pdf"))),
+			new AssistantMessage("a1", Instant.ofEpochMilli(5002),
+				List.of(new ThinkingContent("Considering.", "sig-42"),
+					new TextContent("Calling the tool."),
+					new ToolCall("tc9", "search", "{\"q\":\"x\"}")),
+				new TokenUsage(7, 8, 9, 10, 11), "tool_use"),
+			new ToolResultMessage("r1", Instant.ofEpochMilli(5003), "tc9", "search",
+				new ToolState.Completed("found", Instant.ofEpochMilli(5004),
+					Instant.ofEpochMilli(5005), true, "shortened", 128,
+					List.of(new TextContent("found")))),
+			new ToolResultMessage("r2", Instant.ofEpochMilli(5006), "tc8", "write",
+				new ToolState.Failed("denied", Instant.ofEpochMilli(5007),
+					Instant.ofEpochMilli(5008), true)),
+			new SystemMessage("y1", Instant.ofEpochMilli(5009), "Sub-agent finished."));
+
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.ofEpochMilli(1000), "Go")));
+		turn.addAssistantPart(new Part.CompactionPart("c1", Instant.ofEpochMilli(1001),
+			9000, 900, "proactive",
+			new CompactionSidecar(CompactionFingerprint.VERSION, "abc123", replacement)));
+		turn.addUsage(TokenUsage.EMPTY);
+		log.completeTurn();
+
+		ConversationLog restored = ConversationLogSerializer.fromJson(
+			ConversationLogSerializer.toJson(log));
+		Part.CompactionPart rcp =
+			(Part.CompactionPart) restored.turns().get(0).assistantParts().get(0);
+		assertEquals(9000, rcp.tokensBefore());
+		assertEquals(900, rcp.tokensAfter());
+		assertEquals("proactive", rcp.trigger());
+
+		CompactionSidecar sidecar = rcp.sidecar();
+		assertNotNull("The sidecar must survive storage - it is the only copy.", sidecar);
+		assertEquals(CompactionFingerprint.VERSION, sidecar.fingerprintVersion());
+		assertEquals("abc123", sidecar.fingerprint());
+		assertEquals(replacement, sidecar.replacementMessages());
+	}
+
+	/**
+	 * A compaction read from a log that predates the sidecar restores without one.
+	 *
+	 * <p>
+	 * The literal below is the shape a log written before {@link Part.CompactionPart#sidecar()}
+	 * existed has on disk: {@code compactionData} simply has no {@code sidecar} member.
+	 * Deserializing it must not fail and must not invent a sidecar - {@code null} is what
+	 * makes {@code ConversationLogReplay} rebuild the full history instead.
+	 * </p>
+	 */
+	public void testCompactionWithoutSidecarFieldRestoresWithoutOne() {
+		String legacyJson = "{\"turns\":[{"
+			+ "\"id\":\"t1\",\"turnNumber\":1,\"timestamp\":1000,"
+			+ "\"assistantParts\":[{"
+			+ "\"id\":\"c1\",\"timestamp\":1001,\"type\":\"compaction\","
+			+ "\"compactionData\":{\"tokensBefore\":9000,\"tokensAfter\":900,"
+			+ "\"trigger\":\"proactive\"}"
+			+ "}]}]}";
+
+		ConversationLog restored = ConversationLogSerializer.fromJson(legacyJson);
+		Part.CompactionPart rcp =
+			(Part.CompactionPart) restored.turns().get(0).assistantParts().get(0);
+		assertEquals(9000, rcp.tokensBefore());
+		assertEquals("proactive", rcp.trigger());
+		assertNull("A log without the field must not claim to have a sidecar.", rcp.sidecar());
+	}
+
+	/** A compaction whose sidecar is still unwritten round-trips without one. */
+	public void testRunningCompactionRoundTripsWithoutSidecar() {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.ofEpochMilli(1000), "Go")));
+		turn.addAssistantPart(Part.CompactionPart.started("c1", Instant.ofEpochMilli(1001),
+			9000, "reactive"));
+		turn.addUsage(TokenUsage.EMPTY);
+		log.completeTurn();
+
+		ConversationLog restored = ConversationLogSerializer.fromJson(
+			ConversationLogSerializer.toJson(log));
+		Part.CompactionPart rcp =
+			(Part.CompactionPart) restored.turns().get(0).assistantParts().get(0);
+		assertNull(rcp.sidecar());
+		assertEquals(0, rcp.tokensAfter());
+	}
+
+	/**
+	 * A sidecar this version cannot read costs the session its compacted size, not its log.
+	 *
+	 * <p>
+	 * The literal carries a message type from a hypothetical newer writer. Dropping just the
+	 * sidecar leaves the canonical history intact, which is all a replay actually needs;
+	 * letting the failure out of the codec would lose the whole session instead.
+	 * </p>
+	 */
+	public void testUnreadableSidecarIsDroppedNotFatal() {
+		String json = "{\"turns\":[{"
+			+ "\"id\":\"t1\",\"turnNumber\":1,\"timestamp\":1000,"
+			+ "\"userParts\":[{\"id\":\"u1\",\"timestamp\":1000,\"type\":\"text\","
+			+ "\"textData\":{\"text\":\"Go\"}}],"
+			+ "\"assistantParts\":[{"
+			+ "\"id\":\"c1\",\"timestamp\":1001,\"type\":\"compaction\","
+			+ "\"compactionData\":{\"tokensBefore\":9000,\"tokensAfter\":900,"
+			+ "\"trigger\":\"proactive\",\"sidecar\":{\"fingerprintVersion\":1,"
+			+ "\"fingerprint\":\"abc\",\"replacementMessages\":["
+			+ "{\"id\":\"m1\",\"timestamp\":1002,\"type\":\"telepathy\"}]}}"
+			+ "}]}]}";
+
+		ConversationLog restored = ConversationLogSerializer.fromJson(json);
+		assertEquals(1, restored.turns().size());
+		Part.CompactionPart rcp =
+			(Part.CompactionPart) restored.turns().get(0).assistantParts().get(0);
+		assertNull("An unreadable sidecar must be dropped.", rcp.sidecar());
+		assertEquals("The canonical log around it must survive intact.", "Go",
+			((Part.TextPart) restored.turns().get(0).userParts().get(0)).text());
 	}
 }

@@ -213,6 +213,177 @@ message CompactionPartDto {
 
 	/** What triggered the compaction. */
 	string trigger;
+
+	/**
+	 * What this compaction put in place of the history it replaced, so a reloaded session
+	 * comes back compacted instead of at its original size.
+	 *
+	 * <p>Absent in a log written before the sidecar existed, and in one whose compaction is
+	 * still running.</p>
+	 */
+	CompactionSidecarDto sidecar;
+}
+
+/**
+ * The replay sidecar of a compaction: the messages it produced, plus a fingerprint of the
+ * canonical history they replaced.
+ */
+message CompactionSidecarDto {
+	/**
+	 * Version of the fingerprint algorithm {@link #fingerprint} was computed with.
+	 *
+	 * <p>A sidecar whose version is not the reader's current one is rejected rather than
+	 * migrated: it is a cache, and the fallback - replaying the full canonical history - is
+	 * always available.</p>
+	 */
+	int fingerprintVersion;
+
+	/** Fingerprint of the message history this compaction replaced. */
+	string fingerprint;
+
+	/** The messages this compaction put in place of that history. */
+	repeated PersistedMessage replacementMessages;
+}
+
+/** One LLM conversation message. */
+message PersistedMessage {
+	/** Unique message identifier. */
+	string id;
+
+	/** Timestamp when this message was created. */
+	long timestamp;
+
+	/** Discriminator for the message type. */
+	string type;
+
+	/** User message data. */
+	UserMessageDto userData;
+
+	/** Assistant message data. */
+	AssistantMessageDto assistantData;
+
+	/** Tool result message data. */
+	ToolResultMessageDto toolResultData;
+
+	/** System message data. */
+	SystemMessageDto systemData;
+
+	/** Compaction marker data. */
+	CompactionMarkerDto markerData;
+}
+
+/** A message from the user. */
+message UserMessageDto {
+	/** The message content. */
+	repeated PersistedContent content;
+}
+
+/** A message from the assistant. */
+message AssistantMessageDto {
+	/** The message content. */
+	repeated PersistedContent content;
+
+	/** Token usage reported for this message. */
+	TokenUsageDto usage;
+
+	/** Why the model stopped producing this message. */
+	string finishReason;
+}
+
+/** The outcome of one tool call, as the model sees it. */
+message ToolResultMessageDto {
+	/** ID of the tool call this result answers. */
+	string toolCallId;
+
+	/** Name of the tool that was called. */
+	string toolName;
+
+	/** The state of the tool call. */
+	ToolStateDto state;
+}
+
+/** A system message in the message history. */
+message SystemMessageDto {
+	/** The message text. */
+	string content;
+}
+
+/** A marker recording that history was compacted at this point. */
+message CompactionMarkerDto {
+	/** How many messages were replaced. */
+	int messagesSummarized;
+
+	/** Token count before the compaction. */
+	int tokensBefore;
+
+	/** What triggered the compaction. */
+	string trigger;
+}
+
+/** One piece of message content. */
+message PersistedContent {
+	/** Discriminator for the content type. */
+	string type;
+
+	/** The text, for text and thinking content. */
+	string text;
+
+	/** Opaque provider token for multi-turn continuity, for thinking content. */
+	string continuityToken;
+
+	/** ID of the tool call, for tool call content. */
+	string toolCallId;
+
+	/** Name of the called tool, for tool call content. */
+	string toolName;
+
+	/** JSON-encoded arguments, for tool call content. */
+	string arguments;
+
+	/** The image URL, for image content. */
+	string url;
+
+	/** The base64-encoded document, for PDF content. */
+	string data;
+
+	/** The media type, for image and PDF content. */
+	string mediaType;
+}
+
+/** The lifecycle state of a tool call. */
+message ToolStateDto {
+	/** Discriminator for the state. */
+	string kind;
+
+	/** JSON-encoded arguments, for the pending and running states. */
+	string arguments;
+
+	/** When execution started. */
+	long startTime;
+
+	/** When execution ended. */
+	long endTime;
+
+	/** The result text, for the completed state. */
+	string result;
+
+	/** Whether the result was shortened, for the completed state. */
+	boolean compacted;
+
+	/** Summary of a shortened result, for the completed state. */
+	string summary;
+
+	/** How much of the result was dropped, for the completed state. */
+	int truncationHint;
+
+	/** Structured result content, for the completed state. */
+	repeated PersistedContent content;
+
+	/** The error text, for the failed state. */
+	string error;
+
+	/** Whether the failure was synthesized rather than reported by the tool. */
+	boolean synthetic;
 }
 
 /** Error event part. */

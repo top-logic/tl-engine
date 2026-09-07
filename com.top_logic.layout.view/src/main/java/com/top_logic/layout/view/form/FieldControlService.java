@@ -250,6 +250,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	private FieldSpec fieldSpec(TLStructuredTypePart part, FieldModel model) {
 		return FieldSpec.of(valueType(part), MetaLabelProvider.INSTANCE.getLabel(part))
+			.setMultiple(part.isMultiple())
 			.setMandatory(model.isMandatory())
 			.setEditable(model.isEditable())
 			.setMultilineRows(multilineRows(part))

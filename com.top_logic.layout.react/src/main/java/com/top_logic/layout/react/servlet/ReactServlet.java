@@ -847,6 +847,12 @@ public class ReactServlet extends TopLogicServlet {
 
 		List<ResKey> details = new ArrayList<>();
 		addDetail(details, seen, resources, result.getErrorMessage());
+		// The list HandlerResult#error(ResKey) fills - the plainest way for a command to fail, and
+		// until this was read, its message reached nobody: the snackbar showed the generic
+		// "command failed" title and no detail at all.
+		for (ResKey error : result.getEncodedErrors()) {
+			addDetail(details, seen, resources, error);
+		}
 		if (result.getException() != null) {
 			for (Throwable cause = result.getException().getCause(); cause != null; cause = cause.getCause()) {
 				if (cause instanceof I18NFailure failure) {

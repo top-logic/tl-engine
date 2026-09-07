@@ -226,12 +226,24 @@ public class ReactButtonControl extends ReactControl {
 	 *
 	 * <p>
 	 * A button that is not offered — hidden or disabled — is not pressed, whatever the client
-	 * sends. The {@link CommandModel} behind the button decides; a model that grants execution
+	 * sends. That holds for every button, not only for one backed by a {@link CommandModel}: a
+	 * hidden control keeps its React component tree (it is merely styled away), so it stays
+	 * mounted and its {@code click} command stays addressable by anything that can talk to the
+	 * server. A button built from a plain {@link ButtonAction} — the languages button of an
+	 * internationalized field, hidden exactly while the field may not be edited, is the case in
+	 * point — would otherwise still run its action from a view-only form.
+	 * </p>
+	 *
+	 * <p>
+	 * Where there is a {@link CommandModel}, it decides as well; a model that grants execution
 	 * unconditionally keeps its behavior.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_CLICK)
 	HandlerResult handleClick(ReactContext context) {
+		if (isHidden() || Boolean.TRUE.equals(getState(DISABLED))) {
+			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+		}
 		if (_model != null && (!_model.isVisible() || !_model.isExecutable())) {
 			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
 		}

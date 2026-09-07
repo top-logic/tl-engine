@@ -104,8 +104,14 @@ public class AttributeFieldModel extends AbstractFieldModel {
 
 	/**
 	 * The object this model currently reads from and writes to (base object or overlay).
+	 *
+	 * <p>
+	 * Public because a field control may have to look at what it is editing, not only at its value:
+	 * {@link AnnotationsFieldControlProvider} decides from the element's kind which surroundings to
+	 * build for an annotation.
+	 * </p>
 	 */
-	protected TLObject getObject() {
+	public TLObject getObject() {
 		return _object;
 	}
 

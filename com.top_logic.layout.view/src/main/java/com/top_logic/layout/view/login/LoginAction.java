@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.security.util.Password;
@@ -69,6 +70,7 @@ import com.top_logic.util.error.TopLogicException;
  * @implNote The deferred session swap is triggered by {@link #completeLogin}; the per-step MFA
  *           branching is in {@link #proceedAfterPassword}.
  */
+@InApp
 public class LoginAction implements ViewAction {
 
 	/** Name of the transient model type holding the change-password form input. */

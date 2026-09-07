@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -48,6 +51,7 @@ import com.top_logic.util.Resources;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@InApp
 public class AdaptiveDetailElement implements UIElement {
 
 	/**
@@ -90,6 +94,7 @@ public class AdaptiveDetailElement implements UIElement {
 		 */
 		@Name(SELECTOR)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getSelector();
 
 		/**
@@ -97,6 +102,7 @@ public class AdaptiveDetailElement implements UIElement {
 		 */
 		@Name(DETAIL)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getDetail();
 
 		/**

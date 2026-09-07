@@ -10,7 +10,8 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.I18NEditorDialog;
-import com.top_logic.layout.view.form.ReactFieldControlProvider;
+import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -27,10 +28,10 @@ import com.top_logic.model.TLStructuredTypePart;
 public class I18NHtmlControlProvider implements ReactFieldControlProvider {
 
 	@Override
-	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		I18NWysiwygControl inline = new I18NWysiwygControl(context, model);
 		return I18NEditorDialog.createEditor(context, model, inline, new I18NHtmlValueEditor(),
-			MetaLabelProvider.INSTANCE.getLabel(part));
+			field.getLabel());
 	}
 
 }

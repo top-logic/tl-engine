@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import java.util.Objects;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
@@ -47,6 +48,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * cited object is removed, even while the channel still holds the now-deleted object.
  * </p>
  */
+@InApp
 public class ScrollLinkElement implements UIElement {
 
 	/**

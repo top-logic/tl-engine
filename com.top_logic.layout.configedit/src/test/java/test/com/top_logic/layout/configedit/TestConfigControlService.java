@@ -399,6 +399,48 @@ public class TestConfigControlService extends TestCase {
 		// No properties needed.
 	}
 
+	/**
+	 * Sub-item type the configuration writes as text, standing in for the framework's real ones -
+	 * a TL-Script {@code Expr}, whose {@code @Format} turns the whole syntax tree into the source
+	 * it was parsed from.
+	 */
+	@Format(FormattedFormat.class)
+	public interface Formatted extends ConfigurationItem {
+
+		/** Property name for {@link #getSource()}. */
+		String SOURCE = "source";
+
+		/** The text this item was written as. */
+		@Name(SOURCE)
+		String getSource();
+
+		/** @see #getSource() */
+		void setSource(String value);
+	}
+
+	/**
+	 * The format of {@link Formatted}, carrying its {@link Formatted#getSource() source} verbatim.
+	 */
+	public static class FormattedFormat extends AbstractConfigurationValueProvider<Formatted> {
+
+		/** Creates a {@link FormattedFormat}. */
+		public FormattedFormat() {
+			super(Formatted.class);
+		}
+
+		@Override
+		protected Formatted getValueNonEmpty(String propertyName, CharSequence propertyValue) {
+			Formatted result = TypedConfiguration.newConfigItem(Formatted.class);
+			result.setSource(propertyValue.toString());
+			return result;
+		}
+
+		@Override
+		protected String getSpecificationNonNull(Formatted configValue) {
+			return configValue.getSource();
+		}
+	}
+
 	/** Configuration covering every value type the fallback distinguishes. */
 	public interface TestConfig extends ConfigurationItem {
 
@@ -461,6 +503,9 @@ public class TestConfigControlService extends TestCase {
 
 		/** Property name for {@link #getNested()}. */
 		String NESTED = "nested";
+
+		/** Property name for {@link #getFormattedItem()}. */
+		String FORMATTED_ITEM = "formattedItem";
 
 		/** Property name for {@link #getAnnotated()}. */
 		String ANNOTATED = "annotated";
@@ -650,6 +695,13 @@ public class TestConfigControlService extends TestCase {
 		@Name(NESTED)
 		@Options(fun = Tags.class)
 		Nested getNested();
+
+		/**
+		 * An ITEM property whose value type declares a {@code @Format}, so the configuration
+		 * writes it as text rather than as nested XML.
+		 */
+		@Name(FORMATTED_ITEM)
+		Formatted getFormattedItem();
 
 		/**
 		 * A {@code String} property naming its own control via {@link ConfigControl} - a plain
@@ -1337,6 +1389,30 @@ public class TestConfigControlService extends TestCase {
 		} catch (IllegalArgumentException expected) {
 			// Expected: only PLAIN and REF properties are resolved.
 		}
+	}
+
+	/**
+	 * An ITEM property the configuration writes as text is <em>not</em> rejected: it has a
+	 * {@link PropertyDescriptor#getValueProvider() value provider}, so it fits into a single
+	 * widget exactly like a {@code PLAIN} property with a format, and is edited as that text.
+	 *
+	 * <p>
+	 * The real case is a TL-Script expression, whose {@code Expr} is a configuration item with a
+	 * {@code @Format} - editing it as a form over its syntax tree is not what anyone wants.
+	 * </p>
+	 */
+	public void testFormattedItemKindIsEditedAsText() {
+		Formatted value = TypedConfiguration.newConfigItem(Formatted.class);
+		value.setSource("$x + 1");
+		set(_config, TestConfig.FORMATTED_ITEM, value);
+
+		ConfigFieldModel model = model(TestConfig.FORMATTED_ITEM);
+		assertTrue("A formatted item is edited through its format, hence as text.",
+			model instanceof ConfigFormatFieldModel);
+		assertEquals("The field must show the text the configuration writes.", "$x + 1", model.getValue());
+
+		assertTrue("A formatted item is typed, not chosen from options.",
+			control(TestConfig.FORMATTED_ITEM) instanceof ReactTextInputControl);
 	}
 
 	/**

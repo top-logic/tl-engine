@@ -16,6 +16,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.ReactContext;
@@ -35,10 +36,11 @@ import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
  * Each PLAIN/REF property, and a COMPLEX property with a value provider, is wrapped in a
  * {@link ReactFormFieldChromeControl} with label, mandatory indicator, and help text. ITEM
  * properties are rendered as collapsible {@link ReactFormGroupControl} sections containing a
- * nested {@link ConfigEditorControl}. LIST, ARRAY, and MAP properties are rendered as collapsible
- * sections containing nested editors for each element - the same editor for all three, MAP
- * differing only in the value's shape and in being unordered. DERIVED and a binding-only COMPLEX
- * property are skipped.
+ * nested {@link ConfigEditorControl} - unless the configuration writes the item as text, a
+ * TL-Script expression for instance, in which case that text is edited as a field. LIST, ARRAY,
+ * and MAP properties are rendered as collapsible sections containing nested editors for each
+ * element - the same editor for all three, MAP differing only in the value's shape and in being
+ * unordered. DERIVED and a binding-only COMPLEX property are skipped.
  * </p>
  */
 public class ConfigEditorControl extends ReactFormLayoutControl {
@@ -203,7 +205,9 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				continue;
 			}
 
-			if (property.kind() == PropertyKind.ITEM) {
+			// An item the configuration writes as text - a TL-Script expression, for instance - is
+			// edited as that text below, instead of as a form over its syntax tree.
+			if (property.kind() == PropertyKind.ITEM && property.getValueProvider() == null) {
 				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
 					String label = resolveLabel(property);
 					PolymorphicItemControl polyGroup =
@@ -243,7 +247,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 
 			ConfigFieldModel model =
 				ConfigControlService.getInstance().createModel(config, property, _formModel);
-			model.setEditable(_editable);
+			// A read-only value is displayed, but cannot be changed.
+			model.setEditable(_editable && !isReadOnly(property));
 			index(config, property, model);
 			addCleanupAction(model::detach);
 
@@ -251,6 +256,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 
 			String label = resolveLabel(property);
 			String tooltip = resolveTooltip(property);
+
 			LabelPosition labelPosition = (property.getType() == boolean.class || property.getType() == Boolean.class)
 				? LabelPosition.AFTER : null;
 
@@ -388,7 +394,10 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * {@link PropertyKind#PLAIN}, {@link PropertyKind#REF}, {@link PropertyKind#ITEM},
 	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, and {@link PropertyKind#MAP} are
 	 * always supported - LIST, ARRAY, and MAP are the same sequence-of-elements editor, differing
-	 * only in the value's shape and, for MAP, in being unordered. A {@link PropertyKind#COMPLEX}
+	 * only in the value's shape and, for MAP, in being unordered. An ITEM is a nested form, except
+	 * when the configuration writes it as text: such an item has a
+	 * {@link PropertyDescriptor#getValueProvider() value provider} and is edited as that text, by
+	 * the same service the other fields go through. A {@link PropertyKind#COMPLEX}
 	 * property - e.g. a {@link com.top_logic.basic.util.ResKey} property, whose type carries both
 	 * a {@code @Format} and a {@code ConfigurationValueBinding} - is supported only when it also
 	 * has a {@link PropertyDescriptor#getValueProvider() value provider}: exactly the subset
@@ -431,8 +440,40 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	}
 
 	private static boolean isHidden(PropertyDescriptor property) {
-		Hidden annotation = property.getAnnotation(Hidden.class);
+		Hidden annotation = annotation(property, Hidden.class);
 		return annotation != null && annotation.value();
+	}
+
+	/**
+	 * Whether the given property's value cannot be changed.
+	 */
+	private static boolean isReadOnly(PropertyDescriptor property) {
+		return annotation(property, ReadOnly.class) != null;
+	}
+
+	/**
+	 * The given annotation of the property, or of the property it overrides.
+	 *
+	 * <p>
+	 * A configuration overriding a property of its base configuration - narrowing the implementation
+	 * class of a {@link com.top_logic.basic.config.PolymorphicConfiguration PolymorphicConfiguration},
+	 * for instance - repeats neither the documentation nor the annotations of the declaration it
+	 * overrides, so an annotation is looked up along that chain rather than on the override alone.
+	 * </p>
+	 */
+	private static <T extends java.lang.annotation.Annotation> T annotation(PropertyDescriptor property,
+			Class<T> annotationType) {
+		T found = property.getAnnotation(annotationType);
+		if (found != null) {
+			return found;
+		}
+		for (PropertyDescriptor superProperty : property.getSuperProperties()) {
+			T inherited = annotation(superProperty, annotationType);
+			if (inherited != null) {
+				return inherited;
+			}
+		}
+		return null;
 	}
 
 	private static boolean isTreeProperty(PropertyDescriptor property) {

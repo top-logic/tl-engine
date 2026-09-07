@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -34,6 +37,7 @@ import com.top_logic.layout.view.security.WithAccessControl;
  * fraction and an optional {@link Config#getRowSpan() row span}.
  * </p>
  */
+@InApp
 public class TileElement implements UIElement {
 
 	/**
@@ -85,6 +89,7 @@ public class TileElement implements UIElement {
 		 */
 		@Name(CONTENT)
 		@DefaultContainer
+		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends UIElement> getContent();
 	}
 

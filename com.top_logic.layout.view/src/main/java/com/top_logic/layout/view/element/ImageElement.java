@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
@@ -33,6 +34,7 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * with that channel: when the channel value changes, the displayed image is updated.
  * </p>
  */
+@InApp
 public class ImageElement implements UIElement {
 
 	/**

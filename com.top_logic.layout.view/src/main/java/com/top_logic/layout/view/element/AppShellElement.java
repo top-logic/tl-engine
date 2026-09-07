@@ -9,6 +9,9 @@ import java.util.List;
 
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -16,14 +19,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.react.ForwardingReactContext;
-import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.nav.ReactAppShellControl;
-import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
-import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -39,6 +38,7 @@ import com.top_logic.layout.view.command.CommandScope;
  * they are wrapped in a {@link com.top_logic.layout.react.control.layout.ReactStackControl}.
  * </p>
  */
+@InApp
 public class AppShellElement implements UIElement {
 
 	/**
@@ -68,6 +68,7 @@ public class AppShellElement implements UIElement {
 		 */
 		@Name(HEADER)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getHeader();
 
 		/**
@@ -88,6 +89,7 @@ public class AppShellElement implements UIElement {
 		 */
 		@Name(CONTENT)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getContent();
 
 		/**
@@ -95,6 +97,7 @@ public class AppShellElement implements UIElement {
 		 */
 		@Name(FOOTER)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getFooter();
 	}
 
@@ -136,44 +139,12 @@ public class AppShellElement implements UIElement {
 			sharedScope = new CommandScope(List.of());
 		}
 
-		// Build the shared menu overlay and its opener. The opener is published into the view
-		// context so that deeply nested ContextMenuElements can resolve it without attaching a
-		// per-frame menu control.
-		ReactMenuControl menuControl = new ReactMenuControl(context, null, List.of(),
-			itemId -> { /* wired per open() via setSelectHandler */ },
-			() -> { /* wired per open() via setCloseHandler */ });
-		ContextMenuOpener.MenuRenderer renderer = new ContextMenuOpener.MenuRenderer() {
-			@Override
-			public void show(int x, int y, List<ReactMenuControl.MenuEntry> items,
-					java.util.function.Consumer<String> selectHandler, Runnable closeHandler) {
-				menuControl.updateItems(items);
-				menuControl.setSelectHandler(selectHandler);
-				menuControl.setCloseHandler(closeHandler);
-				menuControl.open(x, y);
-			}
-
-			@Override
-			public void hide() {
-				menuControl.close();
-			}
-		};
-		ContextMenuOpener opener = new ContextMenuOpener(renderer);
-
-		// Derive context with error sink, shared command scope, and context-menu opener.
+		// Derive context with error sink and shared command scope. The context-menu overlay belongs
+		// to the browser window, so the opener is inherited from the enclosing context rather than
+		// established here.
 		ViewContext scopedContext = context
 			.withErrorSink(errorSink)
-			.withScope(CommandScope.class, sharedScope)
-			.withContextMenuOpener(opener);
-
-		// Expose the opener on the underlying ReactContext too (fallback for nested DefaultViewContext
-		// instances that are constructed without inheriting the opener).
-		ReactContext openerContext = new ForwardingReactContext(scopedContext) {
-			@Override
-			public ContextMenuOpener getContextMenuOpener() {
-				return opener;
-			}
-		};
-		opener.bindReactContext(() -> openerContext);
+			.withScope(CommandScope.class, sharedScope);
 
 		// Create slot controls. Each of the four structural slots (header, notices, content, footer)
 		// gets its own slot-path segment so that <slot> placeholders and <slot-content>
@@ -183,8 +154,8 @@ public class AppShellElement implements UIElement {
 		ReactControl content = createSlotControl(scopedContext.withChildSlotPath("content"), _content);
 		ReactControl footer = createSlotControl(scopedContext.withChildSlotPath("footer"), _footer);
 
-		ReactAppShellControl shellControl = new ReactAppShellControl(context, header, notices, content, footer,
-			snackbar, errorSink, menuControl);
+		ReactAppShellControl shellControl =
+			new ReactAppShellControl(context, header, notices, content, footer, snackbar, errorSink);
 		shellControl.attach();
 		return shellControl;
 	}

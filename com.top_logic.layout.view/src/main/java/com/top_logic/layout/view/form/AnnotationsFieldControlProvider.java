@@ -28,6 +28,8 @@ import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLNamedPart;
@@ -96,7 +98,7 @@ import com.top_logic.util.error.TopLogicException;
 public class AnnotationsFieldControlProvider implements ReactFieldControlProvider {
 
 	@Override
-	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		// The identity is the edited element: two elements that both carry no annotations produce no
 		// value change at all, yet the editor must be rebuilt - what may be added depends on the kind
 		// of element, not on what is there already.

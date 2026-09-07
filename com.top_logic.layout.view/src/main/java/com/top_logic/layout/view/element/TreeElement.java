@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -64,6 +65,7 @@ import com.top_logic.model.util.TLModelPartRef;
  * will be added when the view system gains model event integration.
  * </p>
  */
+@InApp
 public class TreeElement implements UIElement {
 
 	/**

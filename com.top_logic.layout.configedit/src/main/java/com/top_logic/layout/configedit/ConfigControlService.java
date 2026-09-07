@@ -243,11 +243,13 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * @param config
 	 *        The configuration item holding the property.
 	 * @param property
-	 *        The property to bind to. Must be a {@link PropertyKind#PLAIN}, {@link PropertyKind#REF},
-	 *        or {@link PropertyKind#COMPLEX} property.
+	 *        The property to bind to. Must be a {@link PropertyKind#PLAIN} or
+	 *        {@link PropertyKind#REF} property, or a {@link PropertyKind#COMPLEX} or
+	 *        {@link PropertyKind#ITEM} one that has a
+	 *        {@link PropertyDescriptor#getValueProvider() value provider}.
 	 * @throws IllegalArgumentException
-	 *         If {@code property} is none of {@link PropertyKind#PLAIN}, {@link PropertyKind#REF},
-	 *         or {@link PropertyKind#COMPLEX}.
+	 *         If {@code property} is none of those, see
+	 *         {@link #checkSupportedKind(PropertyDescriptor)}.
 	 */
 	public ConfigFieldModel createModel(ConfigurationItem config, PropertyDescriptor property) {
 		return createModel(config, property, config);
@@ -337,11 +339,12 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * @param model
 	 *        The field model, created by {@link #createModel(ConfigurationItem, PropertyDescriptor)}.
 	 *        Its {@link ConfigFieldModel#getProperty() property} must be a
-	 *        {@link PropertyKind#PLAIN}, {@link PropertyKind#REF}, or {@link PropertyKind#COMPLEX}
-	 *        property.
+	 *        {@link PropertyKind#PLAIN} or {@link PropertyKind#REF} property, or a
+	 *        {@link PropertyKind#COMPLEX} or {@link PropertyKind#ITEM} one that has a
+	 *        {@link PropertyDescriptor#getValueProvider() value provider}.
 	 * @throws IllegalArgumentException
-	 *         If the model's property is none of {@link PropertyKind#PLAIN},
-	 *         {@link PropertyKind#REF}, or {@link PropertyKind#COMPLEX}.
+	 *         If the model's property is none of those, see
+	 *         {@link #checkSupportedKind(PropertyDescriptor)}.
 	 */
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
 		PropertyDescriptor property = model.getProperty();
@@ -413,8 +416,12 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * {@code COMPLEX} property with only a binding and no value provider - the framework's real
 	 * examples are {@code AbstractListBinding}, {@code MapAttributeBinding}, and
 	 * {@code XMLFragmentString}, none of which pair with a {@code ConfigurationValueProvider} -
-	 * has no way to become text and is rejected, the same as an {@link PropertyKind#ITEM},
-	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, or {@link PropertyKind#MAP} property.
+	 * has no way to become text and is rejected, the same as a {@link PropertyKind#LIST},
+	 * {@link PropertyKind#ARRAY}, or {@link PropertyKind#MAP} property. An
+	 * {@link PropertyKind#ITEM} property qualifies under the very same rule as {@code COMPLEX}: a
+	 * sub-configuration is a nested form and is rejected, but one the configuration writes as text
+	 * - a TL-Script expression, whose {@code Expr} type carries a {@code @Format} - has a value
+	 * provider and is edited as that text, exactly like a {@code PLAIN} property with a format.
 	 * A {@link PropertyKind#DERIVED} property is rejected as well, by the same rule read from the
 	 * other side: its value is computed from other properties, so there is nothing to write back -
 	 * it is displayed rather than edited, and a widget bound to it would offer an input that cannot
@@ -424,7 +431,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	private static void checkSupportedKind(PropertyDescriptor property) {
 		PropertyKind kind = property.kind();
 		boolean supported = kind == PropertyKind.PLAIN || kind == PropertyKind.REF
-			|| (kind == PropertyKind.COMPLEX && property.getValueProvider() != null);
+			|| ((kind == PropertyKind.COMPLEX || kind == PropertyKind.ITEM)
+				&& property.getValueProvider() != null);
 		if (!supported) {
 			throw new IllegalArgumentException(
 				"ConfigControlService cannot edit property '" + property.getPropertyName() + "' (kind "
@@ -487,12 +495,11 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * Whether the given property is edited by selecting from options.
 	 *
 	 * <p>
-	 * Only ever called for a {@link PropertyKind#PLAIN}, {@link PropertyKind#REF}, or
-	 * {@link PropertyKind#COMPLEX} property -
-	 * {@link #checkSupportedKind(PropertyDescriptor)} has already rejected every other kind by the
+	 * Only ever called for a property {@link #checkSupportedKind(PropertyDescriptor)} admits - it
+	 * has already rejected every other kind by the
 	 * time either public entry point reaches this method. That matters because
-	 * {@link ConfigPropertyOptions#optionProvider(PropertyDescriptor) answering non-null} for an
-	 * {@link PropertyKind#ITEM}/{@link PropertyKind#LIST} property does not mean "edit by
+	 * {@link ConfigPropertyOptions#optionProvider(PropertyDescriptor) answering non-null} for a
+	 * sub-configuration or a {@link PropertyKind#LIST} property does not mean "edit by
 	 * selecting" (see its own {@code JavaDoc}) - a caller invoking this method directly on such a property
 	 * would be relying on a guarantee this method no longer makes on its own.
 	 * </p>

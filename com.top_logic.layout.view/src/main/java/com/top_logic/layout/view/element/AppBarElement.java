@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -47,6 +50,7 @@ import com.top_logic.util.Resources;
  * TOOLBAR} placement are automatically rendered as trailing action buttons in the app bar.
  * </p>
  */
+@InApp
 public class AppBarElement implements UIElement {
 
 	/**
@@ -98,6 +102,7 @@ public class AppBarElement implements UIElement {
 		@Name(COMMANDS)
 		@EntryTag("command")
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 
 		/**
@@ -111,6 +116,7 @@ public class AppBarElement implements UIElement {
 		 */
 		@Name(CHILDREN)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 
 		/**
@@ -124,6 +130,7 @@ public class AppBarElement implements UIElement {
 		 */
 		@Name(LEADING)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getLeading();
 	}
 

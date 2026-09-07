@@ -21,17 +21,14 @@ import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.model.TLPrimitive;
-import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.access.StorageMapping;
+import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 
 /**
- * {@link ReactFieldControlProvider} rendering a configuration-valued attribute with the
- * configuration editor: the item editor for a single-valued attribute, the list editor for a
- * multi-valued one.
+ * {@link ReactFieldControlProvider} rendering a configuration-valued field with the configuration
+ * editor: the item editor for a single-valued field, the list editor for a multi-valued one.
  *
  * <p>
  * Registered in {@link FieldControlService} for a type whose values are {@link ConfigurationItem}s.
@@ -60,34 +57,27 @@ import com.top_logic.model.access.StorageMapping;
 public class ConfigFieldControlProvider implements ReactFieldControlProvider {
 
 	@Override
-	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
-		Class<? extends ConfigurationItem> type = configType(part);
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+		Class<? extends ConfigurationItem> type = configType(field);
 		if (type == null) {
-			throw new IllegalArgumentException("Attribute '" + part
+			throw new IllegalArgumentException("Field '" + field
 				+ "' is not configuration-valued, so it cannot be edited by the configuration editor.");
 		}
-		return part.isMultiple()
-			? createListControl(context, model, type, MetaLabelProvider.INSTANCE.getLabel(part))
+		return field.isMultiple()
+			? createListControl(context, model, type, field.getLabel())
 			: createItemControl(context, model, type);
 	}
 
 	/**
-	 * The configuration interface the attribute's values have, or {@code null} if its values are
-	 * not configurations at all.
+	 * The configuration interface the field's values have, or {@code null} if its values are not
+	 * configurations at all.
 	 */
-	private static Class<? extends ConfigurationItem> configType(TLStructuredTypePart part) {
-		if (!(part.getType() instanceof TLPrimitive primitive)) {
+	private static Class<? extends ConfigurationItem> configType(FieldSpec field) {
+		Class<?> valueType = field.getValueType();
+		if (valueType == null || !ConfigurationItem.class.isAssignableFrom(valueType)) {
 			return null;
 		}
-		StorageMapping<?> mapping = primitive.getStorageMapping();
-		if (mapping == null) {
-			return null;
-		}
-		Class<?> applicationType = mapping.getApplicationType();
-		if (!ConfigurationItem.class.isAssignableFrom(applicationType)) {
-			return null;
-		}
-		return applicationType.asSubclass(ConfigurationItem.class);
+		return valueType.asSubclass(ConfigurationItem.class);
 	}
 
 	/**
@@ -96,7 +86,7 @@ public class ConfigFieldControlProvider implements ReactFieldControlProvider {
 	 * <p>
 	 * Free of the model: everything this decides - copy, and push on the first change - is about the
 	 * field and the configuration. Available on its own for a caller that has a {@link FieldModel}
-	 * holding a configuration but no {@link TLStructuredTypePart} to read a type off.
+	 * holding a configuration but no {@link FieldSpec} to read a type off.
 	 * </p>
 	 */
 	public static ReactControl createItemControl(ReactContext context, FieldModel model,

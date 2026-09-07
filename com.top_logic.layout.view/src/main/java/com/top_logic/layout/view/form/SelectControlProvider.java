@@ -21,8 +21,9 @@ import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
-import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * {@link ReactFieldControlProvider} for attributes that are edited by selecting from a set of
@@ -94,7 +95,7 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 	}
 
 	@Override
-	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		SelectFieldModel selectModel = (SelectFieldModel) model;
 		LabelProvider labels = MetaLabelProvider.INSTANCE;
 		Comparator<?> optionOrder = LabelComparator.newCachingInstance(labels);

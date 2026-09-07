@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.CalledByReflection;
@@ -49,6 +50,7 @@ import com.top_logic.util.error.TopLogicException;
  *           setup) the code cannot be emailed; it is logged instead so the flow stays testable. In a
  *           properly configured deployment the code is only ever sent by email.
  */
+@InApp
 public class RequestPasswordResetAction implements ViewAction {
 
 	/** Dialog view (relative to {@link ViewLoader#VIEW_BASE_PATH}) for the password-reset step. */

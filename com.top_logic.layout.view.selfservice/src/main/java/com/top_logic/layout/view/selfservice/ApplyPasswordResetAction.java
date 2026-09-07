@@ -7,6 +7,7 @@ package com.top_logic.layout.view.selfservice;
 
 import java.util.Arrays;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -42,6 +43,7 @@ import com.top_logic.util.error.TopLogicException;
  *           from {@link InvitationModule}. The password is applied via
  *           {@link AuthenticationDevice#setPassword(Person, char[])}.
  */
+@InApp
 public class ApplyPasswordResetAction implements ViewAction {
 
 	/**

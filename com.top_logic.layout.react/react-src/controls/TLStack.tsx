@@ -10,6 +10,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - align: "start" | "center" | "end" | "stretch"  (default: "stretch")
  * - wrap: boolean  (default: false)
  * - growFirst: boolean  (default: false) — first child fills the main axis
+ * - cssClass: string - optional additional CSS class appended to the layout classes
  * - children: ChildDescriptor[]
  */
 const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
@@ -29,6 +30,7 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
     `tlStack--align-${align}`,
     wrap ? 'tlStack--wrap' : '',
     growFirst ? 'tlStack--grow-first' : '',
+    (state.cssClass as string) ?? '',
   ].filter(Boolean).join(' ');
 
   return (

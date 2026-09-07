@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
@@ -26,6 +27,7 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * Declarative {@link UIElement} displaying a channel's value (e.g. a person) as a circular
  * initials avatar.
  */
+@InApp
 public class AvatarElement implements UIElement {
 
 	/**

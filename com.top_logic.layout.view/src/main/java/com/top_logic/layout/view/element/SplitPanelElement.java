@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -40,6 +43,7 @@ import com.top_logic.layout.view.ViewContext;
  * its size, unit, and content elements.
  * </p>
  */
+@InApp
 public class SplitPanelElement implements UIElement {
 
 	/**
@@ -126,6 +130,7 @@ public class SplitPanelElement implements UIElement {
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 

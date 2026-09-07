@@ -8,6 +8,9 @@ package com.top_logic.layout.view.element;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -62,6 +65,7 @@ import com.top_logic.util.Resources;
  * &lt;/window&gt;
  * </pre>
  */
+@InApp
 public class WindowElement extends CommandScopeElement {
 
 	/**
@@ -124,6 +128,7 @@ public class WindowElement extends CommandScopeElement {
 		 */
 		@Name(ACTIONS)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getActions();
 	}
 

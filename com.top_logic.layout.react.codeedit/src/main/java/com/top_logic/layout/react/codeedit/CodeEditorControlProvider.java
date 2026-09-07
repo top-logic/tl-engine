@@ -13,7 +13,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.view.form.ReactFieldControlProvider;
+import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -58,7 +59,7 @@ public class CodeEditorControlProvider
 	}
 
 	@Override
-	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		CodeEditorLanguage language = getConfig().getLanguage();
 		return new ReactCodeEditorControl(context, model,
 			language != null ? language : CodeEditorLanguage.PLAIN);

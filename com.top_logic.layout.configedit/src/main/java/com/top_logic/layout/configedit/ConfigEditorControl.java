@@ -16,6 +16,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.ReactContext;
@@ -25,6 +26,7 @@ import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.layout.react.field.FieldControlRegistry;
 
 /**
  * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, and LIST properties of a
@@ -33,9 +35,12 @@ import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
  * <p>
  * Each PLAIN/REF property is wrapped in a {@link ReactFormFieldChromeControl} with label, mandatory
  * indicator, and help text. ITEM properties are rendered as collapsible
- * {@link ReactFormGroupControl} sections containing a nested {@link ConfigEditorControl}. LIST
- * properties are rendered as collapsible sections containing nested editors for each list element.
- * MAP, ARRAY, DERIVED, and COMPLEX properties are skipped.
+ * {@link ReactFormGroupControl} sections containing a nested {@link ConfigEditorControl} — unless the
+ * configuration writes the item as text, in which case that text is edited as a field, see
+ * {@link ConfigTextFieldModel}. LIST properties are rendered as collapsible sections containing
+ * nested editors for each list element.
+ * A DERIVED property is displayed read-only, because its value is computed. MAP and ARRAY
+ * properties are skipped, as are properties whose values are only representable as nested XML.
  * </p>
  */
 public class ConfigEditorControl extends ReactFormLayoutControl {
@@ -90,7 +95,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			if (hiddenProperties.contains(property)) {
 				continue;
 			}
-			if (!isSupportedKind(property.kind())) {
+			if (!isEditable(property)) {
 				continue;
 			}
 			if (isHidden(property)) {
@@ -100,7 +105,9 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				continue;
 			}
 
-			if (property.kind() == PropertyKind.ITEM) {
+			// An item the configuration writes as text - a TL-Script expression, for instance - is
+			// edited as that text below, instead of as a form over its syntax tree.
+			if (property.kind() == PropertyKind.ITEM && !ConfigTextFieldModel.isFormatted(property)) {
 				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
 					String label = resolveLabel(property);
 					PolymorphicItemControl polyGroup =
@@ -136,10 +143,15 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			ConfigFieldModel model = new ConfigFieldModel(config, property);
 			addCleanupAction(model::detach);
 
-			ReactControl input = ConfigFieldDispatch.createPlainControl(context, model);
+			// A computed or read-only value is displayed, but cannot be changed.
+			if (property.kind() == PropertyKind.DERIVED || isReadOnly(property)) {
+				model.setEditable(false);
+			}
 
 			String label = resolveLabel(property);
 			String tooltip = resolveTooltip(property);
+
+			ReactControl input = ConfigFieldDispatch.createPlainControl(context, model, label);
 			LabelPosition labelPosition = (property.getType() == boolean.class || property.getType() == Boolean.class)
 				? LabelPosition.AFTER : null;
 
@@ -228,14 +240,59 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor);
 	}
 
-	private static boolean isSupportedKind(PropertyKind kind) {
-		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
-			|| kind == PropertyKind.LIST;
+	/**
+	 * Whether the given property is displayed in the form.
+	 *
+	 * <p>
+	 * Besides the structural kinds the form renders itself, a property is displayed whenever a control
+	 * is registered for the type of its value - an internationalized text, for instance, is not
+	 * representable as a plain value but has an editor of its own.
+	 * </p>
+	 */
+	private static boolean isEditable(PropertyDescriptor property) {
+		PropertyKind kind = property.kind();
+		if (kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
+			|| kind == PropertyKind.LIST || kind == PropertyKind.DERIVED) {
+			return true;
+		}
+		return FieldControlRegistry.getInstance().lookup(property.getType()) != null;
 	}
 
 	private static boolean isHidden(PropertyDescriptor property) {
-		Hidden annotation = property.getAnnotation(Hidden.class);
+		Hidden annotation = annotation(property, Hidden.class);
 		return annotation != null && annotation.value();
+	}
+
+	/**
+	 * Whether the given property's value cannot be changed.
+	 */
+	private static boolean isReadOnly(PropertyDescriptor property) {
+		return annotation(property, ReadOnly.class) != null;
+	}
+
+	/**
+	 * The given annotation of the property, or of the property it overrides.
+	 *
+	 * <p>
+	 * A configuration overriding a property of its base configuration - narrowing the implementation
+	 * class of a {@link com.top_logic.basic.config.PolymorphicConfiguration PolymorphicConfiguration},
+	 * for instance - repeats neither the documentation nor the annotations of the declaration it
+	 * overrides, so an annotation is looked up along that chain rather than on the override alone.
+	 * </p>
+	 */
+	private static <T extends java.lang.annotation.Annotation> T annotation(PropertyDescriptor property,
+			Class<T> annotationType) {
+		T found = property.getAnnotation(annotationType);
+		if (found != null) {
+			return found;
+		}
+		for (PropertyDescriptor superProperty : property.getSuperProperties()) {
+			T inherited = annotation(superProperty, annotationType);
+			if (inherited != null) {
+				return inherited;
+			}
+		}
+		return null;
 	}
 
 	private static boolean isTreeProperty(PropertyDescriptor property) {

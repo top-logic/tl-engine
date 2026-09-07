@@ -9,7 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -41,6 +45,7 @@ import com.top_logic.util.Resources;
  * creates the content controls on demand and caches them.
  * </p>
  */
+@InApp
 public class TabBarElement implements UIElement {
 
 	/**
@@ -139,6 +144,7 @@ public class TabBarElement implements UIElement {
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 
@@ -156,12 +162,25 @@ public class TabBarElement implements UIElement {
 			List<UIElement> children = tabConfig.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
-			String label = Resources.getInstance().getString(tabConfig.getLabel());
+			String label = label(tabConfig);
 			String route = tabConfig.getRoute();
 			_tabs.add(new TabEntry(tabConfig.getId(), label, route, tabConfig.getIcon(),
 				tabConfig.getAccessControl(), children));
 		}
 		_activeTab = config.getActiveTab();
+	}
+
+	/**
+	 * The label to display on the tab.
+	 *
+	 * <p>
+	 * Falls back to the tab's {@link TabConfig#getId() ID} while no label is configured, so that a tab
+	 * added to a tab bar is visible and can be selected instead of rendering as a blank one.
+	 * </p>
+	 */
+	private static String label(TabConfig tabConfig) {
+		String label = Resources.getInstance().getString(tabConfig.getLabel(), null);
+		return StringServices.isEmpty(label) ? tabConfig.getId() : label;
 	}
 
 	@Override

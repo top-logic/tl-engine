@@ -9,6 +9,8 @@ import com.top_logic.element.config.annotation.ConfigType;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
@@ -34,8 +36,8 @@ public class DatePickerControlProvider implements ReactFieldControlProvider {
 	private static final String CONFIG_TYPE_DATE_TIME = "DATE_TIME";
 
 	@Override
-	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
-		return new ReactDatePickerControl(context, model, kind(part));
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+		return new ReactDatePickerControl(context, model, field.getDateKind());
 	}
 
 	/**

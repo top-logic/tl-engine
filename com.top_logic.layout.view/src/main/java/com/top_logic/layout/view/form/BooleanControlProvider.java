@@ -10,9 +10,8 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactBooleanChoiceControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
-import com.top_logic.model.TLPrimitive;
-import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.TLType;
+import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 
@@ -20,53 +19,21 @@ import com.top_logic.model.annotate.ui.BooleanPresentation;
  * {@link ReactFieldControlProvider} for boolean attributes.
  *
  * <p>
- * A checkbox by default, radio buttons or a yes/no select when the attribute's
- * {@link BooleanDisplay} annotation asks for it. A tri-state attribute keeps its state for
- * "no value": the checkbox gets a third state, the choice a third option.
+ * A checkbox by default, radio buttons or a yes/no select when the field
+ * {@link FieldSpec#getBooleanPresentation() asks} for it (a model attribute says so through its
+ * {@link BooleanDisplay} annotation). A {@link FieldSpec#isTriState() tri-state} field keeps a state
+ * for "no value": the checkbox gets a third state, the choice a third option.
  * </p>
  */
 public class BooleanControlProvider implements ReactFieldControlProvider {
 
 	@Override
-	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
-		boolean triState = isTriState(part);
-		BooleanPresentation presentation = presentation(part);
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+		BooleanPresentation presentation = field.getBooleanPresentation();
 		if (presentation == BooleanPresentation.CHECKBOX) {
-			return new ReactCheckboxControl(context, model, triState);
+			return new ReactCheckboxControl(context, model, field.isTriState());
 		}
-		return new ReactBooleanChoiceControl(context, model, presentation, triState);
-	}
-
-	/**
-	 * How the given attribute asks to be displayed, {@link BooleanPresentation#CHECKBOX} when it
-	 * says nothing.
-	 *
-	 * <p>
-	 * An annotation at the attribute wins over the one of its type, which is what lets a single
-	 * attribute deviate from how its type is displayed everywhere else.
-	 * </p>
-	 */
-	private static BooleanPresentation presentation(TLStructuredTypePart part) {
-		if (part == null) {
-			return BooleanPresentation.CHECKBOX;
-		}
-		BooleanDisplay annotation = part.getAnnotation(BooleanDisplay.class);
-		if (annotation == null) {
-			TLType type = part.getType();
-			annotation = type == null ? null : type.getAnnotation(BooleanDisplay.class);
-		}
-		if (annotation == null || annotation.getPresentation() == null) {
-			return BooleanPresentation.CHECKBOX;
-		}
-		return annotation.getPresentation();
-	}
-
-	private static boolean isTriState(TLStructuredTypePart part) {
-		if (part == null) {
-			return false;
-		}
-		TLType type = part.getType();
-		return type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.TRISTATE;
+		return new ReactBooleanChoiceControl(context, model, presentation, field.isTriState());
 	}
 
 }

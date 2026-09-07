@@ -326,7 +326,7 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
 		_listener.onEvent(new AgentEvent.ApprovalRequired("r1", 1, now, "tc1", "apr1",
-			"writeFile", "{\"path\":\"/etc/hosts\"}", "Write to system file"));
+			"writeFile", "{\"path\":\"/etc/hosts\"}", "Write to system file", Duration.ofMinutes(30)));
 
 		Part.ApprovalPart pending = (Part.ApprovalPart) _log.currentTurn().findPart("apr1");
 		assertNotNull(pending);

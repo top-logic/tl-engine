@@ -34,6 +34,7 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
+import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.DiagnosticLoggingListener;
@@ -1082,10 +1083,10 @@ public class AgentLoop {
 						tool.name(), toolCall.id(),
 						parsedArgs, tool.mode(),
 						needsApproval.displayReason(),
-						ApprovalRequest.DEFAULT_TIMEOUT);
+						InteractionTimeoutService.approvalTimeout());
 					emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
 						toolCall.id(), approvalRequestId, toolCall.name(),
-						toolCall.arguments(), request.displayReason()));
+						toolCall.arguments(), request.displayReason(), request.timeout()));
 					// Durable record of the pending approval, carrying the tool call's actual
 					// argument JSON (not the possibly-empty parsed copy shown above).
 					String interactionId = InteractionRecorder.begin(

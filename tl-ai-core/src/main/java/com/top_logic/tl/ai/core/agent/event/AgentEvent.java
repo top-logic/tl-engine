@@ -250,10 +250,13 @@ public sealed interface AgentEvent {
 	 * @param toolName name of the tool
 	 * @param argsJson the tool call's raw argument JSON, exactly as the model emitted it
 	 * @param displayReason human-readable reason shown to user
+	 * @param timeout how long the request waits for the user's decision, counted from
+	 *        {@link #timestamp()}; a UI shows the remaining time and the request resolves as
+	 *        {@link ApprovalOutcome#TIMED_OUT} when it elapses
 	 */
 	record ApprovalRequired(String runId, int turnNumber, Instant timestamp,
 			String toolCallId, String approvalRequestId, String toolName,
-			String argsJson, String displayReason) implements AgentEvent {}
+			String argsJson, String displayReason, Duration timeout) implements AgentEvent {}
 
 	/**
 	 * Emitted after the approval channel returns with a decision.

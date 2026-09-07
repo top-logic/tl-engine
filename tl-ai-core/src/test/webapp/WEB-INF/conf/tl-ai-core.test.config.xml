@@ -17,6 +17,18 @@
 				key="b8eb777bb2b74f111aa1d65f881a8c1d"
 			/>
 		</config>
+
+		<!--
+			Deliberately neither the shipped 30-minute default nor two equal values, so that
+			TestInteractionTimeoutService proves the configuration is really what the agent loop and
+			the askUser tool read.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService">
+			<instance class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService"
+				approval-timeout-minutes="7"
+				question-timeout-minutes="11"
+			/>
+		</config>
 	</services>
 	<configs>
 		<config config:interface="test.com.top_logic.basic.util.AbstractBasicTestAll$GlobalConfig"

@@ -41,6 +41,8 @@
 					<module key="com.top_logic.tl.ai.core.tools.web.BrowserToolsService$Module" value="true"/>
 					<!-- Cookie Pool Service: encrypted, persistent login state for browserSaveCookies / browserUseCookies -->
 					<module key="com.top_logic.tl.ai.core.cookiepool.CookiePoolService$Module" value="true"/>
+					<!-- Interaction Timeouts: how long an approval / an askUser question waits for the user -->
+					<module key="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService$Module" value="true"/>
 					<!--
 						Role-based tool access, applied to every agent run. Active by default and not
 						switchable: a policy present while the module was off would be silently
@@ -75,6 +77,17 @@
 		-->
 		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
 			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService"/>
+		</config>
+
+		<!--
+			The deadlines a human gets to answer the agent, both 30 minutes by default: long enough
+			that an end user asked to approve a write to shared business data can think about it,
+			ask a colleague, and come back. An application that needs a shorter or longer clock
+			sets it here; what expiry does is not configurable (an expired approval denies the tool
+			call, an expired question tells the agent to answer without it).
+		-->
+		<config service-class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService">
+			<instance class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService"/>
 		</config>
 
 		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">

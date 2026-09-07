@@ -100,7 +100,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 
 		ToolResult result = tool.execute(Map.of("message", "hello"), ToolContext.EMPTY);
 
-		assertEquals("hello", result.text());
+		assertEquals("hello", MarkedResults.disclosed(result.text()));
 	}
 
 	/**
@@ -117,7 +117,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 		Tool tool = singleTool(scriptConfig("greet", ToolMode.READ, "$greeting + \"!\"", p));
 		ToolResult result = tool.execute(Map.of(), ToolContext.EMPTY);
 
-		assertEquals("hi!", result.text());
+		assertEquals("hi!", MarkedResults.disclosed(result.text()));
 	}
 
 	/**
@@ -149,7 +149,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 		Tool tool = singleTool(scriptConfig("count", ToolMode.READ, "$items.size()", p));
 		ToolResult result = tool.execute(Map.of("items", List.of("a", "b", "c")), ToolContext.EMPTY);
 
-		assertEquals("3", result.text());
+		assertEquals("3", MarkedResults.disclosed(result.text()));
 	}
 
 	/**
@@ -189,7 +189,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 
 			ToolResult result = tool.execute(Map.of("target", tid), ToolContext.EMPTY);
 
-			assertEquals("fixture-ingredient", result.text());
+			assertEquals("fixture-ingredient", MarkedResults.disclosed(result.text()));
 		} finally {
 			try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
 				if (ingredient.tValid()) {
@@ -257,7 +257,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 
 			ToolResult result = tool.execute(Map.of("targets", List.of(tidA, tidB, tidC)), ToolContext.EMPTY);
 
-			assertEquals("a,b,c", result.text());
+			assertEquals("a,b,c", MarkedResults.disclosed(result.text()));
 		} finally {
 			try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
 				if (ingredientA.tValid()) {
@@ -289,13 +289,13 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 
 		// Declaration-order call
 		ToolResult result = tool.execute(Map.of("first", "a", "second", "b"), ToolContext.EMPTY);
-		assertEquals("a-b", result.text());
+		assertEquals("a-b", MarkedResults.disclosed(result.text()));
 
 		// Reversed insertion order in the map — result must be identical because binding is by name
 		Map<String, Object> reversed = new LinkedHashMap<>();
 		reversed.put("second", "b");
 		reversed.put("first", "a");
-		assertEquals("a-b", tool.execute(reversed, ToolContext.EMPTY).text());
+		assertEquals("a-b", MarkedResults.disclosed(tool.execute(reversed, ToolContext.EMPTY).text()));
 	}
 
 	/**

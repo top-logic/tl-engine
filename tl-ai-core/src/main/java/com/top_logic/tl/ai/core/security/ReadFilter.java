@@ -25,6 +25,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 
 /**
@@ -54,6 +55,15 @@ import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
  * the engine's own {@link SearchExpression#filterSecurity(Object)}, down to returning the input
  * unchanged when nothing had to be removed.</li>
  * </ul>
+ *
+ * <h2>What it says about what it discloses</h2>
+ *
+ * <p>
+ * Read rights decide which business data reaches the model; they do not say what that data <em>is</em>.
+ * It is text other end users wrote, so every rendering leaving this class is
+ * {@link #marked(String, String) marked} with the same untrusted-content envelope a fetched web page
+ * gets. The marking is additional to the filtering and replaces none of it.
+ * </p>
  *
  * <h2>What it does not claim</h2>
  *
@@ -153,7 +163,7 @@ public final class ReadFilter {
 	 * <p>
 	 * Structure-preserving: a {@link TLObject} stays a {@link TLObject}, a {@link List} stays a list, a
 	 * {@link Map} stays a map. Use it when the value is handed on to something that renders model
-	 * objects itself - {@link #text(Object)} does, and so does anything that only needs the value
+	 * objects itself - {@link #text(String, Object)} does, and so does anything that only needs the value
 	 * pruned. Use {@link #disclose(Object)} when the result has to become JSON data.
 	 * </p>
 	 *
@@ -353,15 +363,56 @@ public final class ReadFilter {
 
 	/**
 	 * The given value rendered the way TL-Script renders it, with everything the principal may not read
-	 * removed first.
+	 * removed first, {@link #marked(String, String) marked} as business data.
 	 *
 	 * <p>
 	 * For the tools whose result is a sentence rather than a JSON document - a configured TL-Script
 	 * tool, whose body may return anything at all. {@link SearchExpression#asString(Object)} labels a
 	 * model object, and a label is business data, so it must never see one the principal may not read.
 	 * </p>
+	 *
+	 * @param source
+	 *        What produced the value, for the envelope's {@code source} attribute - the tool's name,
+	 *        the query, the identifier that was asked about. Must not itself be business data: it sits
+	 *        in the tool's own framing, outside the read filter's reach.
+	 * @param value
+	 *        Any value, including <code>null</code>.
+	 * @return The marked rendering; never {@code null}.
 	 */
-	public String text(Object value) {
-		return SearchExpression.asString(visible(value));
+	public String text(String source, Object value) {
+		return marked(source, SearchExpression.asString(visible(value)));
+	}
+
+	/**
+	 * The given rendering of already-disclosed model data, marked as business data the model must not
+	 * take instructions from.
+	 *
+	 * <p>
+	 * <b>Why this is here.</b> Read rights decide <em>which</em> business data the model gets to see;
+	 * they say nothing about <em>what it is</em>. And what it is, on the production side, is the
+	 * agent's largest untrusted input: the free text in a shared record was written by some other end
+	 * user of the application, who is not the principal this run serves. So every rendering that
+	 * leaves this class carries the same envelope a fetched web page carries, from the same
+	 * {@link UntrustedEnvelope}, and so falls under the standing rule the system prompt states once
+	 * per run. It is marked here rather than in each tool for the reason the filtering is here - three
+	 * tools each writing their own were three tools each forgetting.
+	 * </p>
+	 *
+	 * <p>
+	 * Static because marking takes no security decision: it is the label on what the decisions already
+	 * produced, and a caller holding a rendering has, by construction, already asked a filter what it
+	 * may contain.
+	 * </p>
+	 *
+	 * @param source
+	 *        What produced the payload, for the envelope's {@code source} attribute. Never business
+	 *        data - see {@link #text(String, Object)}.
+	 * @param rendered
+	 *        The disclosed payload, JSON or text. May be {@code null}.
+	 * @return The marked payload; never {@code null}.
+	 * @see UntrustedEnvelope#MODEL_DATA
+	 */
+	public static String marked(String source, String rendered) {
+		return UntrustedEnvelope.MODEL_DATA.wrap(source, rendered);
 	}
 }

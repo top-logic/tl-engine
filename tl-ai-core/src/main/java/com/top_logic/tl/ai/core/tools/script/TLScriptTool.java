@@ -125,7 +125,8 @@ public class TLScriptTool {
 	 * @param context
 	 *        Injected execution context, supplying the capability check for the commit path and the
 	 *        {@link ReadFilter} the result is disclosed through.
-	 * @return JSON object containing execution result or error details. Model objects in the result
+	 * @return JSON object containing execution result or error details; a successful result is marked
+	 *         as business data, see {@link ReadFilter#marked(String, String)}. Model objects in the result
 	 *         carry only what the run's principal may read; ones it may not read are absent.
 	 */
 	@ToolMethod(description = "Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications. Objects in the result that you may not read are omitted, but only while they are still objects: a count or a sum, and a label produced by toString($obj) or \"\" + $obj, are plain values by the time the result is filtered and are returned in full. So wrap fetched model objects in filterSecurity(...) inside the script - filterSecurity(all(`m:T`)) - before you count them, coerce them to text, or present them, and never assume a label you got out of a script is one the user is allowed to see.", mode = ToolMode.DATA_WRITE, group = ToolGroups.SCRIPT)

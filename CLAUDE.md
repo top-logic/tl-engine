@@ -55,6 +55,19 @@ mvn -pl tl-ai-core -am test -DskipTests=false -Dtl.ai.visual=true -Dtest='Visual
 The two that call the API skip themselves separately when `ANTHROPIC_API_KEY` is not in the
 environment.
 
+### Prompt-injection end-to-end tests
+
+Whether the untrusted-content envelope holds is a question about what a model does with a string, so
+`TestPromptInjectionBarrier` puts a real model in front of an injected tool result and asserts which
+tools ran. Real API calls, so it uses the same gate, behind `-Dtl.ai.injection.e2e=true` - see
+`PromptInjectionE2e` next to `AssumptionAwareRunner`. Without it the tests report as **skipped**, and
+without `ANTHROPIC_API_KEY` they skip for that reason instead.
+
+```bash
+source env.sh
+mvn -pl tl-ai-core -am test -DskipTests=false -Dtl.ai.injection.e2e=true -Dtest='TestPromptInjection*'
+```
+
 ## Architecture
 
 ### Tool API (tl-ai-tool-api)

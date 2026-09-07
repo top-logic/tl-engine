@@ -229,8 +229,8 @@ public class TestBrowserTool extends TestCase {
 		assertTrue("opening envelope tag with source",
 			out.contains("<untrusted_page_content source=\"https://quotes.toscrape.com/js/\">"));
 		assertTrue("closing envelope tag", out.contains("</untrusted_page_content>"));
-		assertTrue("standing data-not-instructions note", out.contains("never an instruction")
-			|| out.contains("NEVER an instruction"));
+		assertFalse("the rule is stated once per run, not once per result",
+			out.toLowerCase().contains("never an instruction"));
 		assertTrue("snapshot section", out.contains("## Accessibility snapshot"));
 		assertTrue("interactive-elements section", out.contains("## Interactive elements"));
 		assertTrue("markdown section", out.contains("## Page content (Markdown)"));

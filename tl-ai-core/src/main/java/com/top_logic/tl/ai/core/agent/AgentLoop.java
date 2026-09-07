@@ -65,6 +65,7 @@ import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.security.PreCommitGuard;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -1322,7 +1323,7 @@ public class AgentLoop {
 
 		ProviderRequest request = new ProviderRequest(
 			_config.model(),
-			_config.systemPrompt(),
+			systemPrompt(),
 			conversation.messages(),
 			filteredTools,
 			_config.maxOutputTokens(),
@@ -1345,6 +1346,28 @@ public class AgentLoop {
 			}
 		}
 		return collector.toAssistantMessage();
+	}
+
+	/**
+	 * The system prompt of every request: the run's configured prompt, followed by the standing rule
+	 * that tells the model what an {@code <untrusted_*>} block is.
+	 *
+	 * <p>
+	 * Composed here, rather than where a prompt is assembled, because here it cannot be forgotten.
+	 * {@link AgentFactory#buildConfig} is one of several places that builds an {@link AgentParams} -
+	 * TL-Script's {@code ai.chat} is another, and so is every caller that constructs a loop directly -
+	 * while this is the one point at which a system prompt reaches a provider. It is also the loop whose
+	 * tool executions emit the tags, so the rule and the tags it explains cannot ship apart.
+	 * </p>
+	 *
+	 * <p>
+	 * Recomposed per turn rather than cached in a field: the result is a pure function of the
+	 * configuration, so nothing accumulates, and the string is a few hundred characters against a
+	 * request that carries the whole conversation.
+	 * </p>
+	 */
+	private String systemPrompt() {
+		return UntrustedEnvelope.withStandingRule(_config.systemPrompt());
 	}
 
 	/**

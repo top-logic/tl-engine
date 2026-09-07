@@ -339,6 +339,13 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 	/**
 	 * Returns {@code true} if the tool has a read-only mode ({@code READ} or {@code USER_SCOPED}).
+	 *
+	 * <p>
+	 * {@link ToolMode#EXTERNAL} is not one of them. A read-only catalog exists so that a subagent
+	 * cannot change anything, and an external call changes something - just not here. That it leaves
+	 * this application's data alone is exactly the wrong reason to hand it to a run that was
+	 * deliberately given no way to make changes.
+	 * </p>
 	 */
 	static boolean isReadOnlyTool(Tool tool) {
 		ToolMode mode = tool.mode();

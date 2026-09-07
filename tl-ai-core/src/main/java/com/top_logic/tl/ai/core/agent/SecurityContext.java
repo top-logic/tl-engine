@@ -259,7 +259,8 @@ public interface SecurityContext {
 	 *
 	 * <p>Only called after {@link #hasToolPermission} passes and the system mode gate allows
 	 * the tool. The default implementation requires approval for all state-changing
-	 * tools ({@link ToolMode#USER_SCOPED}, {@link ToolMode#DATA_WRITE}, and {@link ToolMode#STRUCTURAL}).</p>
+	 * tools ({@link ToolMode#USER_SCOPED}, {@link ToolMode#DATA_WRITE}, and {@link ToolMode#STRUCTURAL}),
+	 * and for {@link ToolMode#EXTERNAL} tools, whose state change lands in another system.</p>
 	 *
 	 * <p><b>Contract:</b> implementations must be side-effect-free and stable within a turn.
 	 * The agent loop calls this method more than once for the same tool call — first to
@@ -279,6 +280,12 @@ public interface SecurityContext {
 				"Modifies shared application data.", toolCall);
 			case STRUCTURAL -> new PermissionDecision.NeedsApproval(
 				"Modifies application structure.", toolCall);
+			// The only gate an external call answers to. Nothing else here reaches it: the remote
+			// system commits by itself, so rolling the turn back cannot undo it, and no retry or
+			// compensation exists to fall back on. Asking before it goes out is the whole control,
+			// which is why it is a prompt and not an allow.
+			case EXTERNAL -> new PermissionDecision.NeedsApproval(
+				"Sends data to a system outside this application.", toolCall);
 		};
 	}
 

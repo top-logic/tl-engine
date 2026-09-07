@@ -99,6 +99,54 @@ public class TestSecurityContext extends TestCase {
 			decision instanceof PermissionDecision.NeedsApproval);
 	}
 
+	/**
+	 * Default checkApproval: EXTERNAL tools need approval.
+	 *
+	 * <p>
+	 * The one gate an outward call answers to. It is not asserted in {@code PRODUCTION} only: the
+	 * prompt is owed in every execution mode, because what makes an external call irreversible is
+	 * that another system committed it, not which mode this installation happens to run in.
+	 * </p>
+	 */
+	public void testDefaultApprovalExternalNeedsApproval() {
+		ToolCall tc = new ToolCall("tc1", "mcp__jira__createIssue", "{}");
+		Tool externalTool = stubTool("mcp__jira__createIssue", ToolMode.EXTERNAL);
+
+		for (ExecutionMode mode : ExecutionMode.values()) {
+			PermissionDecision decision = contextWithMode(mode).checkApproval(externalTool, tc);
+			assertTrue("Expected NeedsApproval in " + mode + " but got "
+				+ decision.getClass().getSimpleName(),
+				decision instanceof PermissionDecision.NeedsApproval);
+		}
+	}
+
+	/**
+	 * The default approval decision is defined for every {@link ToolMode}, and {@code READ} is the
+	 * only one that is allowed outright.
+	 *
+	 * <p>
+	 * Asserted over {@link ToolMode#values()} rather than constant by constant, so that a mode added
+	 * later cannot slip in without a deliberate decision about its prompt. The switch in
+	 * {@code checkApproval} is exhaustive and would not compile without a case, but a case that
+	 * returns {@code Allowed} compiles fine - and that is the mistake worth failing on.
+	 * </p>
+	 */
+	public void testEveryModeIsDecided() {
+		SecurityContext ctx = contextWithMode(ExecutionMode.PRODUCTION);
+		for (ToolMode mode : ToolMode.values()) {
+			ToolCall tc = new ToolCall("tc1", "tool", "{}");
+			PermissionDecision decision = ctx.checkApproval(stubTool("tool", mode), tc);
+			if (mode == ToolMode.READ) {
+				assertTrue("READ must be allowed without a prompt.",
+					decision instanceof PermissionDecision.Allowed);
+			} else {
+				assertTrue(mode + " must need approval but got "
+					+ decision.getClass().getSimpleName(),
+					decision instanceof PermissionDecision.NeedsApproval);
+			}
+		}
+	}
+
 	private static SecurityContext contextWithMode(ExecutionMode mode) {
 		return new SecurityContext() {
 			@Override

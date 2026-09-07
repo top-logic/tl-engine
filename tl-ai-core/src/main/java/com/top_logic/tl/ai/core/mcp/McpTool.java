@@ -25,6 +25,11 @@ import io.modelcontextprotocol.spec.McpSchema;
  * call to the correct MCP server via JSON-RPC.
  * </p>
  *
+ * <p>
+ * Every tool reached this way is {@link ToolMode#EXTERNAL}, read and write alike, so that the one
+ * gate that fits an outward call - a human being asked first - is the one it goes through.
+ * </p>
+ *
  * @see McpServerRegistry
  */
 public class McpTool implements Tool {
@@ -90,14 +95,41 @@ public class McpTool implements Tool {
 		return ToolResult.of(formatResult(result));
 	}
 
+	/**
+	 * Always {@link ToolMode#EXTERNAL}: the call leaves this application.
+	 *
+	 * <p>
+	 * Not derived from what the tool does on the far side, and deliberately not from what the server
+	 * declares about it. The MCP {@code readOnlyHint} and {@code destructiveHint} annotations are a
+	 * server's claims about itself, and the specification tells clients not to base trust decisions
+	 * on them; a server that wanted to be auto-approved would only have to send
+	 * {@code readOnlyHint: true}. Reading them here would make exactly that work, so nothing reads
+	 * them, and a server's self-description influences no gate.
+	 * </p>
+	 *
+	 * <p>
+	 * Nor is the distinction worth having. A remote read is not the harmless thing a local
+	 * {@code READ} is: it sends the agent's arguments out of the application and takes an answer
+	 * back that the model then acts on. What the mode has to capture is that the call crosses the
+	 * boundary, and every MCP call does.
+	 * </p>
+	 */
 	@Override
 	public ToolMode mode() {
-		return ToolMode.READ;
+		return ToolMode.EXTERNAL;
 	}
 
+	/**
+	 * Never: follows from {@link #mode()}.
+	 *
+	 * <p>
+	 * Every {@link ToolMode#EXTERNAL} call is put in front of a human, and a concurrent batch is
+	 * precisely the shape in which nobody is asked.
+	 * </p>
+	 */
 	@Override
 	public boolean isConcurrencySafe() {
-		return true;
+		return false;
 	}
 
 	/**

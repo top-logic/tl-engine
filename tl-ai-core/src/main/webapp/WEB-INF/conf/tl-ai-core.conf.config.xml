@@ -335,7 +335,7 @@ A TL-Script tool is a tool whose body is a single TL-Script expression. Create o
 - Factory: optional grouping name (default `custom`). Choose a meaningful name for the domain (e.g. `reporting`, `fleet`). The tool is referenced as `{factory}.{name}`.
 - Parameters: each has a name (bound as `$name` in the body), a qualified TL type (e.g. `tl.core:String`, `tl.core:Integer`, `myModule:MyType`), a description, and mandatory/multiple flags. An optional parameter may also carry a `defaultValue` — a TL-Script expression evaluated when the argument is omitted (otherwise the binding is null).
 - Body: a TL-Script expression; the return value becomes the tool result. Example: `"Hello " + $name`.
-- Mode: READ (no writes), USER_SCOPED, DATA_WRITE (default), or STRUCTURAL.
+- Mode: READ (no writes), USER_SCOPED, DATA_WRITE (default), STRUCTURAL, or EXTERNAL (the body calls a system outside this application).
 - Validation is enforced at creation: unknown parameter types and unparseable scripts are rejected.
 
 Activation:

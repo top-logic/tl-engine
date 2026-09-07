@@ -273,6 +273,49 @@ public class TestConversationLogListener extends TestCase {
 	}
 
 	/**
+	 * A rollback does not retract an {@link ToolMode#EXTERNAL} call.
+	 *
+	 * <p>
+	 * Not leniency but accuracy. The external call never opened this transaction - the agent loop
+	 * does not enrol it, because the remote system commits by itself - and rolling the turn back has
+	 * no reach into another application. The issue really was filed, and it still exists. Marking it
+	 * rolled back would tell the model, and a reloaded conversation, something untrue about the
+	 * world, and would invite the model to do it a second time.
+	 * </p>
+	 */
+	public void testRollbackKeepsAnExternalCall() {
+		Instant now = Instant.now();
+		_log.startTurn();
+		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "createGiteaIssue",
+			"{}", ToolMode.EXTERNAL));
+		_listener.onEvent(new AgentEvent.TransactionBegan("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 1, now, "tc1", "createGiteaIssue",
+			"Issue #1 created.", Duration.ofMillis(120)));
+
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc2", "createDocument", "{}",
+			ToolMode.DATA_WRITE));
+		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 1, now, "tc2", "createDocument",
+			"{uuid=4f2c}", Duration.ofMillis(10)));
+
+		_listener.onEvent(new AgentEvent.TransactionRolledBack("r1", 1, now,
+			"Database operation failed."));
+
+		Turn turn = _log.currentTurn();
+		Part.ToolCallPart external = (Part.ToolCallPart) turn.findPart("tc1");
+		assertEquals("The remote effect happened and stands, whatever this transaction did.",
+			Part.ToolCallStatus.COMPLETED, external.status());
+		assertEquals("Issue #1 created.", external.result());
+		assertNull("A kept call carries no rollback reason.", external.errorMessage());
+
+		assertEquals("The local write in the same turn is still retracted.",
+			Part.ToolCallStatus.ROLLED_BACK,
+			((Part.ToolCallPart) turn.findPart("tc2")).status());
+	}
+
+	/**
 	 * A call of unknown mode inside the rolled-back transaction is retracted.
 	 *
 	 * <p>

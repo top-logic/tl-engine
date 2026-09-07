@@ -23,6 +23,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -52,6 +53,11 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.RoleToolAccess;
+import com.top_logic.tl.ai.core.security.RoleToolAccess.DeclaredGroups;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
+import com.top_logic.tl.ai.core.security.ToolAuthorization;
 import com.top_logic.tl.ai.core.security.ToolChangeSet;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
@@ -59,6 +65,7 @@ import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
@@ -1043,6 +1050,19 @@ public class TestAgentLoop extends TestCase {
 		};
 	}
 
+	private static Tool externalTool(String name, ToolSchema schema) {
+		return new Tool() {
+			@Override public String name() { return name; }
+			@Override public String description() { return ""; }
+			@Override public ToolSchema schema() { return schema; }
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+				return ToolResult.of("Result of " + name);
+			}
+			@Override public ToolMode mode() { return ToolMode.EXTERNAL; }
+			@Override public boolean isConcurrencySafe() { return false; }
+		};
+	}
+
 	private static SecurityContext productionSecurity() {
 		return new SecurityContext() {
 			@Override public boolean hasToolPermission(Tool tool) { return true; }
@@ -1651,6 +1671,200 @@ public class TestAgentLoop extends TestCase {
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertFalse("No transaction for read-only tools", events.contains("tx_begin"));
+	}
+
+	/**
+	 * No transaction is opened for an {@link ToolMode#EXTERNAL} tool call.
+	 *
+	 * <p>
+	 * Driven through the loop rather than by reading {@code ensureTransaction}, because what has to
+	 * hold is that no {@code TransactionBegan} reaches a listener. An external call cannot be
+	 * enrolled in a transaction of ours in any useful sense: the remote system committed it and
+	 * {@code rollbackTurn} has no reach into another application. A transaction opened for it would
+	 * only ever commit an empty change set, while telling a client watching the turn's events that
+	 * the call was taken back when the turn rolled back.
+	 * </p>
+	 */
+	public void testNoTransactionForExternalTool() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("File it"))));
+
+		ToolSchema toolSpec = new ToolSchema("mcp__jira__createIssue", "Files an issue", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "mcp__jira__createIssue", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("Filed.")));
+
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(externalTool("mcp__jira__createIssue", toolSpec));
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentEventListener listener = e -> {
+			if (e instanceof AgentEvent.TransactionBegan) {
+				events.add("tx_begin");
+			} else if (e instanceof AgentEvent.TransactionCommitted) {
+				events.add("tx_commit");
+			}
+		};
+
+		TestableTransactionScope scope = new TestableTransactionScope();
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertFalse("An external call must not open a transaction.", events.contains("tx_begin"));
+		assertFalse("Nothing was opened, so nothing may be committed.", events.contains("tx_commit"));
+		assertFalse("The scope must have stayed untouched.", scope.isActive());
+	}
+
+	/**
+	 * An {@link ToolMode#EXTERNAL} tool can be pre-authorised for an unattended run through the
+	 * existing tool-access configuration, and runs without anybody being asked.
+	 *
+	 * <p>
+	 * The full chain, because the point of the acceptance criterion is that no new mechanism was
+	 * needed: the policy grants {@code egress} to a role and names it in the
+	 * {@code <background-allowlist>}; the run is built as a background run, which is what
+	 * {@code AiToolAccessService} does for a scheduler job, an MCP client or an
+	 * {@code aiAgentChatAsync} call; the loop's own approval callback is
+	 * {@link ApprovalCallback#AUTO_APPROVE}, which is what an unattended run carries. The tool then
+	 * executes - asserted by its own side effect, not by a decision object.
+	 * </p>
+	 *
+	 * <p>
+	 * So {@code EXTERNAL} means "ask a human by default", not "unusable unattended". The
+	 * administrator's two statements - the role grant and the allowlist entry - are what replaces
+	 * the human.
+	 * </p>
+	 */
+	public void testExternalToolPreAuthorisedForBackgroundRun() {
+		ToolAccessPolicy policy = egressPolicy();
+		allowInBackground(policy, ToolGroups.EGRESS);
+
+		Conversation conv = new Conversation();
+		AtomicInteger calls = new AtomicInteger();
+		AgentResult result = runExternalTool(policy, conv, calls);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertEquals("The allowlisted external tool must actually have run.", 1, calls.get());
+		assertNull("Nothing may have failed: " + firstToolFailure(conv), firstToolFailure(conv));
+	}
+
+	/**
+	 * The same run without the allowlist entry: the role grant alone does not reach an unattended
+	 * run.
+	 *
+	 * <p>
+	 * The negative half, so that the positive one cannot pass because the ceiling is not applied at
+	 * all. The message has to send the administrator to the control that decided, which is why it is
+	 * asserted and not just the refusal.
+	 * </p>
+	 */
+	public void testExternalToolDeniedInBackgroundRunWithoutAllowlist() {
+		ToolAccessPolicy policy = egressPolicy();
+		allowInBackground(policy);
+
+		Conversation conv = new Conversation();
+		AtomicInteger calls = new AtomicInteger();
+		AgentResult result = runExternalTool(policy, conv, calls);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertEquals("Nothing may have run.", 0, calls.get());
+		String failure = firstToolFailure(conv);
+		assertNotNull("The model must be told why the call did not happen.", failure);
+		assertTrue("The refusal must name the control that decided, but was: " + failure,
+			failure.contains("background allowlist"));
+	}
+
+	/** The error of the first failed tool result in the conversation, or <code>null</code>. */
+	private static String firstToolFailure(Conversation conv) {
+		for (Message message : conv.messages()) {
+			if (message instanceof ToolResultMessage toolResult
+					&& toolResult.state() instanceof ToolState.Failed failed) {
+				return failed.error();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Runs one turn that calls a single {@link ToolMode#EXTERNAL} tool in the {@code egress} group,
+	 * as an unattended run authorized against the given policy.
+	 *
+	 * @param conv
+	 *        The conversation to run, filled with the user turn here; the caller keeps it in order
+	 *        to inspect the tool results afterwards.
+	 * @param calls
+	 *        Incremented by the tool when it actually executes.
+	 */
+	private static AgentResult runExternalTool(ToolAccessPolicy policy, Conversation conv,
+			AtomicInteger calls) {
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("File it"))));
+
+		ToolSchema toolSpec = new ToolSchema("createGiteaIssue", "Files an issue", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "createGiteaIssue", "{}")),
+			List.of(new TextContent("Filed.")));
+
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(new Tool() {
+			@Override public String name() { return "createGiteaIssue"; }
+			@Override public String description() { return "Files an issue"; }
+			@Override public ToolSchema schema() { return toolSpec; }
+			@Override public ToolMode mode() { return ToolMode.EXTERNAL; }
+			@Override public boolean isConcurrencySafe() { return false; }
+			@Override public String group() { return ToolGroups.EGRESS; }
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
+				calls.incrementAndGet();
+				return ToolResult.of("Issue #1 created.");
+			}
+		});
+		registry.freeze();
+
+		// A background run: no human, so the policy's background allowlist is the ceiling, and the
+		// callback auto-approves whatever survives it.
+		ToolAuthorization unattended = new ToolAuthorization(
+			new RoleToolAccess(policy, DeclaredGroups.NONE), null, Set.of("Reviewer"), true);
+		ToolContext ctx = new ToolContext(TopLogicSecurityContext.enforcedRun(unattended),
+			ApprovalCallback.AUTO_APPROVE, new TestableTransactionScope());
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		return loop.run(conv, ctx, e -> {
+			// The decisions are asserted on the conversation and the tool's own side effect.
+		});
+	}
+
+	/** A policy whose only role holds {@link ToolGroups#EGRESS} and nothing else. */
+	private static ToolAccessPolicy egressPolicy() {
+		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		RoleAccess role = TypedConfiguration.newConfigItem(RoleAccess.class);
+		role.setName("Reviewer");
+		role.getGrants().add(groupGrant(ToolGroups.EGRESS));
+		policy.getToolAccess().put(role.getName(), role);
+		// An explicitly empty baseline, so that a grant this test does not make cannot come from
+		// RoleToolAccess.DEFAULT_BASELINE.
+		policy.setBaseline(TypedConfiguration.newConfigItem(ToolAccessPolicy.Baseline.class));
+		return policy;
+	}
+
+	/** Declares the policy's background allowlist with the given capability groups. */
+	private static void allowInBackground(ToolAccessPolicy policy, String... groups) {
+		ToolAccessPolicy.BackgroundAllowlist allowlist =
+			TypedConfiguration.newConfigItem(ToolAccessPolicy.BackgroundAllowlist.class);
+		for (String group : groups) {
+			allowlist.getGrants().add(groupGrant(group));
+		}
+		policy.setBackgroundAllowlist(allowlist);
+	}
+
+	private static ToolAccessPolicy.Grant groupGrant(String group) {
+		ToolAccessPolicy.Grant grant = TypedConfiguration.newConfigItem(ToolAccessPolicy.Grant.class);
+		grant.setGroup(group);
+		return grant;
 	}
 
 	/**

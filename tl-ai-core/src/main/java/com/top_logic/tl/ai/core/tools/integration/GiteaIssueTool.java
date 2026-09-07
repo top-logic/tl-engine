@@ -35,6 +35,14 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * {@code tl_gitea_url}, {@code tl_gitea_token}, {@code tl_gitea_repo_owner},
  * {@code tl_gitea_repo_name}.
  * </p>
+ *
+ * <p>
+ * The tool is {@link ToolMode#EXTERNAL}: it creates a shared, publicly visible issue in another
+ * system, and nothing here can take it back. It declared {@link ToolMode#USER_SCOPED} before there
+ * was a mode for that - "changes scoped to the current user only" was untrue of it, and was said in
+ * order to obtain the approval prompt that mode happens to carry. Now the true classification and
+ * the prompt come from the same statement.
+ * </p>
  */
 public class GiteaIssueTool {
 
@@ -76,7 +84,7 @@ public class GiteaIssueTool {
 		description = "Create a Gitea issue to report a quality problem found during AI conversation review. "
 			+ "Use this to file issues for incorrect answers, bad delegation, tool misuse, "
 			+ "unhelpful responses, or inefficiencies.",
-		mode = ToolMode.USER_SCOPED, group = ToolGroups.EGRESS)
+		mode = ToolMode.EXTERNAL, group = ToolGroups.EGRESS)
 	public String createGiteaIssue(
 			@P("The issue title") String title,
 			@P("Category of the issue: incorrect-answer, bad-delegation, tool-misuse, "

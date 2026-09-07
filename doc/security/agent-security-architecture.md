@@ -71,7 +71,7 @@ the engine's own statement of the rule, and the control (`filterSecurity`).
 | Tool permission by name | Same | `SecurityContext.hasToolPermission(String)` still defaults to `true` for implementations that do not override it |
 | Data read/write check | **Enforced through one chokepoint** | `ModelSecurity` (typed, principal-bound) is reached as `ToolContext.modelSecurity()`; `ReadFilter` is the only converter of a `TLObject` into a tool result, and `TidResolver.resolve` refuses an object the run may not read |
 | Execution-mode gate | Live | `ToolPermissionFilter.java:36-45` denies `STRUCTURAL` in `PRODUCTION` |
-| Approval gate | Live | `SecurityContext.checkApproval` -> `AgentLoop.java:933`; `USER_SCOPED`/`DATA_WRITE`/`STRUCTURAL` need approval |
+| Approval gate | Live | `SecurityContext.checkApproval` -> `AgentLoop.java:933`; `USER_SCOPED`/`DATA_WRITE`/`STRUCTURAL`/`EXTERNAL` need approval |
 | Schema filter hook | Live but no-op | `AgentLoop.java:1143` builds the provider tool list through `ToolPermissionFilter` |
 | Invocation gate hook | Live but no-op | `AgentLoop.java:885-919` (`executeWithSecurityCheck`) |
 | Chat identity | Correct | `ChatProcessor.buildToolContext` (`ChatProcessor.java:460-499`) installs `TopLogicSecurityContext`; tools run inside the chat user's sub-session |

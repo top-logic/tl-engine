@@ -7,6 +7,8 @@ package com.top_logic.tl.ai.core.mcp;
 
 import java.util.List;
 
+import com.top_logic.tl.ai.tool.api.ToolMode;
+
 import io.modelcontextprotocol.spec.McpSchema;
 
 import junit.framework.TestCase;
@@ -92,15 +94,15 @@ public class TestMcpTool extends TestCase {
 	}
 
 	/** */
-	public void testModeIsRead() {
+	public void testModeIsExternal() {
 		McpTool tool = createTool("srv", "tool1", "desc", schemaJson());
-		assertEquals(com.top_logic.tl.ai.tool.api.ToolMode.READ, tool.mode());
+		assertEquals(ToolMode.EXTERNAL, tool.mode());
 	}
 
 	/** */
-	public void testIsConcurrencySafe() {
+	public void testIsNotConcurrencySafe() {
 		McpTool tool = createTool("srv", "tool1", "desc", schemaJson());
-		assertTrue(tool.isConcurrencySafe());
+		assertFalse(tool.isConcurrencySafe());
 	}
 
 	private static McpTool createTool(String serverName, String toolName,

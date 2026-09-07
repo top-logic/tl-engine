@@ -525,15 +525,18 @@ loses **both**. As `dora`, the same unchecked write is refused too.
 
 | # | Behaviour | Where | You should see |
 |---|---|---|---|
-| **P1** | `/mcp/*` is not served at all | `curl -i http://localhost:8080/tl-ai-demo/mcp` | **HTTP 503** and a message naming the switch: `MCPServerService` is not started, the endpoint is off by default because it authenticates nobody, and enabling the module `MCPServerService$Module` switches it on. Issue #261; [mcp-endpoint.md](../../../doc/security/mcp-endpoint.md) explains what enabling it publishes. Should you enable it, tool calls are refused on top of that - unconditionally, whatever the `<tool-access>` policy says; `TestMcpToolContexts` in `tl-ai-mcp-server` holds that message |
+| **P1** | `/mcp/*` is not served at all | `curl -i http://localhost:8080/tl-ai-demo/mcp` | **HTTP 503** and a message naming both steps: `MCPServerService` is not started, enabling the module `MCPServerService$Module` switches it on, and an authentication has to be configured for it because the endpoint serves no request it cannot attribute to an account. The demo does neither, so it answers 503. [mcp-endpoint.md](../../../doc/security/mcp-endpoint.md) is how to configure it, and what an authenticated caller then reaches |
 | **P2** | a run with no account does not start | test | `SecDemoBackgroundAccessTest.testARunWithoutAPrincipalCannotBeBuilt` is green. An agent definition cannot loosen anything either: a tool the acting user is denied stays denied whatever the definition carries |
 
-> The MCP **resource** surface (`toplogic://instance/...`) serializes instances the way the data tools
-> used to, and has not been through the read filter of [5.3](#53-read-filtering---what-a-permitted-tool-then-discloses-issue-289).
-> No `<tool-access>` policy ever applied to it, and its reads happen in a system interaction, so model
-> access rights are bypassed as well. It is closed today only by the endpoint **not being served**; it
-> needs the same chokepoint before it authenticates anybody. That is why P1 is a switched-off module
-> and not merely a refusal.
+> The MCP **resource** surface (`toplogic://instance/...`) used to serialize instances the way the data
+> tools did before [5.3](#53-read-filtering---what-a-permitted-tool-then-discloses-issue-289), in a
+> system interaction and for a caller nobody authenticated. Since issue #261 it reads as the
+> authenticated account and goes through the same read filter, and a tool call over MCP is authorized
+> by the same `<tool-access>` policy - bounded by the `<background-allowlist>` of
+> [5.5](#55-unattended-runs---the-background-allowlist), because an MCP caller has
+> nobody to answer an approval prompt. `SecDemoMcpEndpointTest` asserts both against these personas.
+> P1 stays a switched-off module because serving the endpoint at all is a deployment decision, not
+> because the endpoint would be unsafe if served.
 
 ---
 
@@ -569,7 +572,7 @@ mvn -o -pl tl-ai-demo -am test -DskipTests=false \
     -Dsurefire.failIfNoSpecifiedTests=false -Dtest='SecDemo*'
 ```
 
-That is 171 tests in 18 classes, green on this branch. The class name says which behaviour broke:
+That is 188 tests in 20 classes, green on this branch. The class name says which behaviour broke:
 
 | Class | Scenarios | Class | Scenarios |
 |---|---|---|---|
@@ -578,9 +581,9 @@ That is 171 tests in 18 classes, green on this branch. The class name says which
 | `SecDemoReadFilterTest` | D1 - D8 | `SecDemoBackgroundAccessTest` | A1 - A5, P1, P2 |
 | `SecDemoCapabilityNoticeTest` | C1, C2 | `SecDemoPreCommitGuardTest` | [5.6](#56-the-pre-commit-guard-l4) |
 | `SecDemoSkillAbsenceTest` | C1, C4 - C6 | `SecDemoRoleRuleTest` | R1 |
-| `SecDemoListToolsTest` | C3, C4 | | |
+| `SecDemoListToolsTest` | C3, C4 | `SecDemoMcpEndpointTest` | P1 |
 
-Seven more carry no scenario row of their own, because what they assert is not something you observe
+Eight more carry no scenario row of their own, because what they assert is not something you observe
 by logging in as a persona:
 
 - `SecDemoModelSecurityTest` - one test per case of
@@ -598,6 +601,8 @@ by logging in as a persona:
 - `SecDemoToolDescriptionTest` - that every framework tool carries an administrator-facing description
   in both languages, rather than falling back to the text written for the model.
 - `SecDemoGermanTerminologyTest` - that the German texts of tl-ai say "Tool" and never "Werkzeug".
+- `SecDemoApplyPolicyGuardTest` - that applying a policy from the editor cannot widen the policy the
+  applying account itself is bound by.
 
 The last four belong to the administration views, whose own documentation is
 [tool-access-configuration.md](../../../doc/security/tool-access-configuration.md#agent-sicherheit-the-view-that-explains-this-policy-and-the-one-that-writes-it);

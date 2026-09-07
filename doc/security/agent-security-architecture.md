@@ -78,7 +78,7 @@ the engine's own statement of the rule, and the control (`filterSecurity`).
 | Async agent identity | Correct | `AIScriptFunctions.agentChatAsync` (`:422-436`) refuses to start without a `Person`; the background run re-enters the caller's sub-session (`:448`, `:471`) |
 | TL-Script entry points | **Act as the calling account** | `ToolContext.forCurrentUser()` builds a `TopLogicSecurityContext` from `TLContext.currentUser()` and throws when the thread has none |
 | Test/EMPTY context | **Unrestricted, documented as a test seam** | `ToolContext.EMPTY` and `SecurityContext.UNRESTRICTED`; no production path builds a context this way, because `TopLogicSecurityContext.forRun` requires a `Person` |
-| MCP server | **Off by default; tool execution refused unconditionally when on** | `tl-ai-mcp-server/src/main/resources/META-INF/web-fragment.xml` maps `/mcp/*` with no `security-constraint`, and `tl-ai-demo/.../web.xml` has every filter commented out, so there is no caller identity to resolve (**#261**). Because of that, `MCPServerService$Module` ships as `false`: a default deployment answers `/mcp/*` with 503 and serves nothing. Where an application switches it on, `McpToolAdapter` refuses every tool call outright - not as a consequence of any mode or `<tool-access>` policy, but because an unauthenticated caller cannot be authorized; `McpToolContexts` is where the refusal is worded. The **resource** surface is not covered by tool-access policy at all and reads in a system interaction, which is the reason the module is opt-in - see [mcp-endpoint.md](mcp-endpoint.md) |
+| MCP server | **Off by default; authenticated and acting as its caller when on** (#261) | `tl-ai-mcp-server`'s `web-fragment.xml` maps `McpAuthenticationFilter` to `/mcp/*`, which authenticates every request through the OpenAPI server's `Authenticator` framework (HTTP basic, API key, OAuth bearer - a per-deployment choice) and opens the `TLContext` of the resolved `Person` for the whole request. `McpAuthentication` refuses everything when the application configured no authentication, so nothing is served open. `McpToolAdapter` then builds a real `ToolContext` over `TopLogicSecurityContext.forRun(person, background = true)` and applies the same `ToolPermissionFilter` as the chat path; the resource handlers read as that account and disclose through the same `ReadFilter` chokepoint as the data tools. `MCPServerService$Module` still ships as `false`, because serving the endpoint stays an administrative decision - see [mcp-endpoint.md](mcp-endpoint.md) |
 | Java data tools | **Read-filtered** (#289) | `InstanceBrowserTool` filters through `ReadFilter.readable(...)` before counting and paginating; `getInstance`, the TL-Script result and every configured script tool go through the same filter. Aggregates computed inside a script stay unfiltered and say so (**#291**) |
 | Model digest | Unfiltered | `ModelDigestGenerator.generate` walks all modules of the application model (`ModelDigestGenerator.java:46-51`) and is injected into the system prompt |
 
@@ -89,11 +89,13 @@ Two engine behaviours matter for the design and are verified against released `8
   `BoundChecker.isAllowedBypass` returns `TRUE` for `ThreadContext.isAdmin()` and `FALSE` for a
   `null` user. This is the right semantics, but it means *how tl-ai establishes its thread context
   decides whether any model security applies at all*.
-- **`ToolExecutions.execute` wraps every tool call in `ThreadContextManager.inSystemInteraction(...)`**
-  (`ToolExecutions.java:48`). That call **reuses an existing interaction** and only creates a system
-  interaction when none is bound. So the chat path keeps the user's identity (good), while the MCP
-  path and context-less background paths get a system interaction (full bypass). The behaviour is
-  correct-by-accident today and must become **explicit** (section 3.1).
+- **`ToolExecutions.execute` wraps a tool call in `ThreadContextManager.inSystemInteraction(...)`.**
+  That call **reuses an existing interaction** and only creates a system interaction when none is
+  bound. So the chat path keeps the user's identity (good), while a context-less background path gets
+  a system interaction (full bypass). The MCP path deliberately does **not** go through it: its
+  requests arrive with an authenticated account whose context the filter has opened, and it refuses
+  rather than falling back to a system interaction, because that fallback is exactly what #261 was.
+  `McpCallerContext` is the explicit counterpart on that path: no bound account, no read.
 
 ---
 
@@ -119,9 +121,10 @@ Two engine behaviours matter for the design and are verified against released `8
  └──────────────┘        └───────────────┬───────────────────┘
                                          │  ToolContext(security, approval, tx)
  ┌──────────────┐        ┌───────────────▼───────────────────┐
- │ External MCP │──HTTP─▶│ MCPTransportServlet  /mcp/*       │──▶ 503 by default (module off, #261)
- │ client       │        │  (no auth filter today, #261)     │──▶ if enabled: tools always refused,
- └──────────────┘        └───────────────────────────────────┘     resources readable, unfiltered
+ │ External MCP │──HTTP─▶│ McpAuthenticationFilter  /mcp/*   │──▶ 503 while the module is off
+ │ client       │        │  → Person → MCPTransportServlet   │──▶ 503 if no authentication configured
+ └──────────────┘        └───────────────┬───────────────────┘──▶ 401/403 without a valid credential
+                                         │  ToolContext(background), ReadFilter(person)
                                          │
  ┌──────────────┐        ┌───────────────▼───────────────────┐        ┌──────────────┐
  │ Scheduler /  │───────▶│ AIScriptFunctions.agentChatAsync  │───────▶│  AgentLoop   │
@@ -149,7 +152,7 @@ All gates in this design are deterministic Java checks on the call path, never p
 | **T4** | **Exfiltration via an outbound tool.** The agent is induced to put secret data into a `webFetch` URL, a Gitea issue body, or an MCP call to an external server. | Yes | L2 on the read side (it never gets the data), plus egress classification (3.2.4) |
 | **T5** | **Unattended/background over-privilege.** `agentChatAsync` runs with `ApprovalCallback.AUTO_APPROVE`: every approval-gated tool self-approves. | **Bounded** by the background allowlist | 3.1 (identity), 3.2.5 (background tool floor) |
 | **T6** | **The unrestricted bypasses.** `ToolContext.createUnrestricted()` used to grant `SecurityContext.UNRESTRICTED` + `AUTO_APPROVE` + `DEVELOPMENT` mode from a production path. | **Closed**: `createUnrestricted` is gone and the remaining permissive constructs are test seams | 3.1 |
-| **T7** | **The MCP bypass.** `/mcp/*` is unauthenticated. Every adapted tool used to execute with a `null` `ToolContext` in a system interaction - i.e. with the engine's super-user bypass; every *resource* read still does. | **Closed for a default deployment**: the module is off, so `/mcp/*` serves nothing. Where it is switched on, tool execution is refused unconditionally, because an unauthenticated caller cannot be authorized; the resource surface is exposed and the boot log says so | 3.1, 3.7, **#261** for the transport half |
+| **T7** | **The MCP bypass.** `/mcp/*` used to authenticate nobody: every adapted tool executed with a `null` `ToolContext` in a system interaction - the engine's super-user bypass - and every *resource* read did the same, so anyone who reached the port could read any object by TID. | **Closed** (#261): every request is authenticated to a `Person` and runs in that account's context; tool calls are authorized by `<tool-access>` and bounded by the background allowlist, and resource reads go through the `ReadFilter` chokepoint. An application that configures no authentication serves nothing, and the module still ships off. `tools/list` remains unfiltered per caller (SDK limitation) | 3.1, 3.7, [mcp-endpoint.md](mcp-endpoint.md) |
 | **T8** | **Privilege escalation via self-modification.** `AgentAuthoringTool`, `FrameworkWiringTool`, `ScriptToolAuthoringTool` let an agent create agents, add tools to agents and define new script tools. An agent that may edit agents can grant itself any tool. | Yes | 3.2.3 (privileged group), 3.2.6 (delegation cannot widen) |
 | **T9** | **Privilege escalation via self-selected security level.** Nothing stopped a caller from constructing a permissive `SecurityContext` or picking a laxer mode. | **Closed structurally**: there is no mode to pick, and no production path builds a permissive context | 3.1 |
 | **T10** | **RAG / vector-index leakage.** `searchVectorIndex` returns chunks derived from indexed objects with no per-user filter; the index is built by a background daemon under system rights. | Yes | 3.4.3 |
@@ -189,14 +192,12 @@ All gates in this design are deterministic Java checks on the call path, never p
   today's permissions is a separate ticket; the mitigation here is that less gets into them.
 - **Not the model-security policy itself.** *Which* roles may read *which* types is the application's
   `<security-config>` (#29088). This document defines how tl-ai *consumes* it.
-- **Not transport authentication for `/mcp/*`.** Section 3.7 states the requirement; implementing the
-  authentication filter is engine/app work, tracked as **issue #261**. What *is* done here are the two
-  halves that do not need it: the endpoint no longer executes tools with no security context - the
-  refusal is unconditional, in every deployment, and is not derived from any security mode or
-  `<tool-access>` policy - and `MCPServerService$Module` ships as `false`, so a default deployment does
-  not serve `/mcp/*` at all. Until #261 lands, using the MCP endpoint means accepting an
-  unauthenticated read of the resource surface, which is why it has to be switched on deliberately -
-  see [mcp-endpoint.md](mcp-endpoint.md).
+- **Not a credential mechanism of our own for `/mcp/*`.** The endpoint authenticates (section 3.7,
+  issue **#261**), and it does so by reusing the engine's existing `Authenticator` framework, so
+  *which* credential a deployment accepts - HTTP basic, an API key, an OAuth bearer token - is that
+  deployment's configuration and not a product decision. Not done: RFC 9728 protected-resource
+  metadata, so an OAuth client cannot discover this server automatically, and per-caller `tools/list`
+  filtering, which the MCP Java SDK does not support. See [mcp-endpoint.md](mcp-endpoint.md).
 
 ---
 
@@ -289,7 +290,7 @@ trip and produces a confusing half-run.
 | `AIScriptFunctions.aiAgentChat` | the account that executed the script (`ToolContext.forCurrentUser()`) |
 | `AIScriptFunctions.aiAgentChatAsync` | the same account; the function already refuses a sub-session without a `Person`, and the background run re-enters that sub-session |
 | Delegated child, detached subagent | the parent's principal, inherited unchanged |
-| `/mcp/*` | **none** - so the module ships off, and where it is switched on tool execution is refused outright, whatever the application's `<tool-access>` policy says (section 3.7, issue **#261**, [mcp-endpoint.md](mcp-endpoint.md)) |
+| `/mcp/*` | the account the request's credential names. `McpAuthenticationFilter` rejects a request it cannot attribute to one - and rejects a credential mapped to *no* account, which the framework would otherwise read as "run this in system context". The run is classified **background**, because an MCP caller has nobody to answer an approval prompt (section 3.7, [mcp-endpoint.md](mcp-endpoint.md)) |
 | A future scheduler entry point | must supply a **configured service account** - a real account holding real roles, administered like any other. There is no mode that lets it run without one |
 
 The resolved `Person` is captured on the `SecurityContext` at construction and is **not** re-read from
@@ -879,13 +880,14 @@ The tools that needed the retrofit, and what each got:
 | `TLScriptTool.executeTLScript` | The result is disclosed through `ReadFilter`; the reported `resultType` is the type of the *filtered* value, so a script whose whole result is one hidden object reports `null` rather than `object`. |
 | `ScriptToolExecutor` (every configured TL-Script tool) | Result rendered through `ReadFilter.text(...)` instead of `SearchExpression.asString(...)`, which labels a model object. Object-typed *arguments* are read-checked where their TID is resolved, so a script body cannot be handed an object the principal may not read. |
 | `ViewDocumentTool.viewDocument` | Its own `canRead` check replaced by the resolver's, so "no such object" and "not yours" are one answer. |
+| `tl-ai-mcp-server`'s `InstanceResource` / `TypeInstancesResource` / `<dynamic-resources>` | The MCP *resource* surface serialized instances the same way the two tools used to, and read in a system interaction for a caller nobody authenticated. It now reads as the authenticated account and discloses through this same filter: `InstanceResource` answers "not found" for an object the account may not read and leaves out an attribute it may not read; `TypeInstancesResource` filters before it counts and paginates; a configured TL-Script resource has its result passed through `visible(...)`. Same aggregate caveat (**#291**). Asserted against real accounts by `SecDemoMcpEndpointTest` (#261) |
 Still outstanding, and out of #289's scope:
 
 | Tool | Change |
 |---|---|
 | `ModelSearchTool.searchModel` | Searches *model elements* - types, attributes, labels - not instances, so it discloses model structure rather than business data. Bounded by `accessibleTypes(READ)` in section 3.4.2 rather than by the read filter |
 | `ModelBrowserTool.*`, `TypeAnalysisTool.*` | Restrict enumeration to `accessibleTypes(READ)` (section 3.4.2) |
-| `tl-ai-mcp-server`'s `InstanceResource` / `TypeInstancesResource` | The MCP *resource* surface serializes instances the same way the two tools used to, in a system interaction, and no tool-access policy ever applied to it. It is closed today only by *not being served*: `MCPServerService$Module` ships as `false` (#261, [mcp-endpoint.md](mcp-endpoint.md)). An application that switches the module on gets this surface unfiltered, and it needs the same chokepoint before the endpoint authenticates anybody |
+| `tl-ai-mcp-server`'s model-metadata resources (`ModuleTypesResource`, `TypePartsResource`, `EnumerationClassifiersResource`, `TypeUsagesResource`, `ConfigSchemaResource`) and `tools/list` | These disclose model *structure* rather than business data, so the read filter has nothing to filter. Bounding them by `accessibleTypes(READ)` is the same open question as `ModelBrowserTool` above (section 3.4.2); `tools/list` additionally cannot be filtered per caller within MCP Java SDK 1.1.4. Both are disclosed only to an *authenticated* caller since #261 |
 | `ModelEditorTool.*`, `ModelAnnotationEditorTool.*` | Structural: gated by the `model.structure` group at L1; L4 backstops the commit |
 | `TLScriptTool.executeTLScript` | Already enforced by the engine inside TL-Script as of `8.0.0-alpha7`; assert user context, never a system interaction. That enforcement was never gated by tl-ai at all, and it denies by default - see section 6 |
 | `VectorIndexSearchTool` | Section 3.4.3 |
@@ -1141,16 +1143,21 @@ in prose, and prose is not checked. That is inherent to the product.
 
 | Route | Today | Design |
 |---|---|---|
-| **MCP server** (`McpToolAdapter`, and the resource handlers) | Unauthenticated `/mcp/*`, `null` context, system interaction, engine super-user bypass | **Closed now, in two steps.** (1) `MCPServerService$Module` ships as `false`, so a default deployment answers `/mcp/*` with 503 and exposes neither tools nor resources; switching it on is an administrative decision documented in [mcp-endpoint.md](mcp-endpoint.md). (2) Where it *is* on, every tool call is refused unconditionally - not by mode and not by `<tool-access>`, but because the endpoint names no account to authorize against and none is invented. The **resource** handlers still read in a system interaction and are governed by nothing, which is why step 1 exists. **Later (#261):** `/mcp/*` authenticates and resolves to a `Person` (a `security-constraint` or an authentication filter in `web-fragment.xml`, plus token-to-`Person` mapping), the adapter builds a real `ToolContext` for that `Person`, the adapted tool set is filtered by the same `ToolPermissionFilter` as the chat path - one policy, two front ends - and the resource handlers go through the `ReadFilter` chokepoint. |
+| **MCP server** (`McpToolAdapter`, and the resource handlers) | Was: unauthenticated `/mcp/*`, `null` context, system interaction, engine super-user bypass | **Closed** (#261). `McpAuthenticationFilter` on `/mcp/*` authenticates every request - the MCP specification requires authorization on every request, not only on `initialize` - through the OpenAPI server's `Authenticator` framework, and opens the resolved `Person`'s `TLContext` for the whole request; the MCP server is built with `immediateExecution(true)`, which keeps the protocol handlers on that request thread. `McpToolAdapter` builds a `ToolContext` over `TopLogicSecurityContext.forRun(person, background = true)` and applies the same `ToolPermissionFilter` as the chat path - one policy, two front ends. The resource, dynamic-resource and completion handlers read in that account's context and disclose through the `ReadFilter` chokepoint. Nothing is served open: no configured authentication means every request is refused, a credential mapped to no account is refused rather than run in system context, and `MCPServerService$Module` still ships `false` so serving the endpoint at all stays deliberate. **Still open:** per-caller `tools/list` filtering (SDK) and RFC 9728 discovery metadata - see [mcp-endpoint.md](mcp-endpoint.md). |
 | **`createUnrestricted()`** (the TL-Script entry points) | Silent full bypass | **Closed:** removed. `ToolContext.forCurrentUser()` acts as the calling account and throws when the thread has none |
 | **`ToolContext.EMPTY`** | Full bypass reachable from production code | **Closed:** documented as a test seam, and no production path builds a context this way - `TopLogicSecurityContext.forRun` requires a `Person` |
 
 The MCP change is the one with real external impact: an existing external client (Claude Desktop,
-Cursor) reaches nothing until the application enables the module, and will need credentials once #261
-lands. That is the point - an unauthenticated endpoint that executes `deleteModelElement` under
-super-user rights was the single largest exposure in the system, and an unauthenticated endpoint that
-merely *reads* every instance of every type under the same bypass is not much smaller. Neither is
-something a deployment should get without asking for it.
+Cursor) reaches nothing until the application enables the module *and* configures a credential for it,
+and then sees only what its account may see. That is the point - an unauthenticated endpoint that
+executes `deleteModelElement` under super-user rights was the single largest exposure in the system,
+and an unauthenticated endpoint that merely *reads* every instance of every type under the same bypass
+is not much smaller. Neither is something a deployment should get without asking for it.
+
+An MCP session additionally belongs to the account that opened it. The transport keys every request
+after `initialize` by the `mcp-session-id` header and holds no owner of its own, so authenticating
+each request is necessary but not sufficient: without the ownership check, two accounts that both
+hold a valid credential could take turns on one session.
 
 ### 3.8 L6 - Audit
 
@@ -1409,15 +1416,16 @@ Ship L6 audit and a **dry-run** evaluator: compute the L1 and L4 decisions, log 
 denied, enforce nothing. It existed to give an installed base the input for writing its policy. With no
 installed base and no permissive mode there is nothing to dry-run against, so it was never built.
 
-### Phase 1 - Identity, MCP authentication · **done, except #261**
+### Phase 1 - Identity, MCP authentication · **done**
 
 - Every run carries a `Person` or refuses to start (3.1). The mode seam this phase originally
   introduced was deleted again by #288.
-- Require authentication on `/mcp/*` and build a real `ToolContext` for its caller (3.7, issue #261).
-  Until then the endpoint is not served at all unless an application switches
-  `MCPServerService$Module` on, and every tool call over it is refused unconditionally.
+- `/mcp/*` authenticates every request and builds a real `ToolContext` for the account it resolved
+  (3.7, issue **#261**). The endpoint is still not served unless an application switches
+  `MCPServerService$Module` on, and it serves nothing until that application also configures an
+  authentication.
 
-MCP authentication was pulled forward because it is the only externally reachable unauthenticated
+MCP authentication was pulled forward because it was the only externally reachable unauthenticated
 path, and it is independent of any application writing a `<security-config>`.
 
 ### Phase 2 - Pre-commit guard · **implemented** - and result filtering
@@ -1433,11 +1441,14 @@ transaction; turns that wrote nothing never open one and pay nothing.
 **Built:** L3 for the data tools - the `ReadFilter` chokepoint of section 3.3.2, issue **#289**.
 Removing the permissive mode made those leaks live rather than latent, which is why #289 came next.
 
-**Still open:** L3 for the model digest (3.4.2) and the vector index (3.4.3), and the MCP *resource*
-surface, which serializes instances the way the two tools used to, in a system interaction, and was
-never covered by tool-access policy. It is closed today only because `MCPServerService$Module` ships
-as `false` and so `/mcp/*` is not served (**#261**, [mcp-endpoint.md](mcp-endpoint.md)); an
-application that switches the module on gets it unfiltered.
+**Built:** L3 for the MCP *resource* surface, with #261. It serialized instances the way the two
+tools used to, in a system interaction, and was covered by no policy at all; it now reads in the
+authenticated account's context and discloses through the same `ReadFilter`
+([mcp-endpoint.md](mcp-endpoint.md)).
+
+**Still open:** L3 for the model digest (3.4.2) and the vector index (3.4.3), and the model-metadata
+half of the MCP resource surface, which discloses model structure rather than business data and needs
+the `accessibleTypes(READ)` bound of 3.4.2 rather than the read filter.
 
 ### Phase 3 - Tool RBAC · **implemented, except the administration UI**
 
@@ -1480,7 +1491,7 @@ because no human can approve. That is strictly more supervision than `SYSTEM` ga
 | No `<security-config>`, no `<tool-access>` | The agent may call the read tools (`DEFAULT_BASELINE`) and model access is deny-all, so it can ask and be told nothing. **Still the state to fix** - see [role-model-worked-example.md](role-model-worked-example.md) - but the agent is usable the moment a `<security-config>` appears |
 | `<security-config>` present, no `<tool-access>` | The intended smallest working setup: read tools from the default baseline, data rights per object from the engine |
 | Both present | The intended state |
-| Uses `/mcp/*` from an external client | **The endpoint is not served** until the application switches `MCPServerService$Module` on - it ships `false` and answers 503, because it authenticates nobody. Where it is switched on, **tool calls are refused** unconditionally (no mode and no `<tool-access>` entry changes that) and the **resource** surface is readable with model access rights bypassed. Both hold until #261 gives the endpoint an authenticated principal - see [mcp-endpoint.md](mcp-endpoint.md) |
+| Uses `/mcp/*` from an external client | Two switches, both explicit. **The endpoint is not served** until the application switches `MCPServerService$Module` on - it ships `false` and answers 503. With the module on but no `<authentications>` configured it still answers 503, because it serves no request it cannot attribute to an account. Once a credential is configured, the client authenticates on every request and then reaches exactly what its account reaches: tools by `<tool-access>` bounded by the `<background-allowlist>`, resources filtered by that account's model access rights - see [mcp-endpoint.md](mcp-endpoint.md) |
 | Uses `aiAgentChat` from TL-Script | Runs as the calling account. A script that relied on the unrestricted fallback fails with a clear message instead of running unchecked |
 | An unattended entry point (a scheduler) | Must supply a configured service account. None exists in the code today, so there is nothing wired yet |
 

@@ -23,7 +23,7 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 /**
  * The ceiling on a run that has nobody to answer an approval prompt, and the two other things that
  * follow from a run having no attending human: the boot rule that makes the ceiling mandatory, and
- * the MCP endpoint's refusal.
+ * that a run which cannot name its account does not start at all.
  *
  * <p>
  * An {@code aiAgentChatAsync} run, a scheduler job, an MCP call and a detached (fire-and-forget)
@@ -261,19 +261,19 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * The MCP endpoint cannot execute a tool in this deployment, because it names no user.
+	 * An unattended run that cannot name its account does not start.
 	 *
 	 * <p>
-	 * {@code /mcp/*} authenticates nobody, so an MCP tool call has no principal to authorize and
-	 * {@code McpToolAdapter} refuses it outright. What this pins in a booted application is the reason
-	 * it has to: a run with no principal cannot even build a security context, whatever the policy
-	 * says. The refusal <em>message</em> is pinned by {@code TestMcpToolContexts} in
-	 * tl-ai-mcp-server.
+	 * The structural half of the rule: whatever the policy says, a run with no principal cannot even
+	 * build a security context, because there is nothing to authorize against. This is why
+	 * {@code /mcp/*} refuses a credential that names no application account instead of processing the
+	 * request in system context - see {@code SecDemoMcpEndpointTest}, which covers the MCP endpoint
+	 * now that it authenticates its callers.
 	 * </p>
 	 */
 	public void testARunWithoutAPrincipalCannotBeBuilt() {
 		try {
-			// The shape an MCP tool call would have: no principal, unattended.
+			// The shape an unattended run with no resolved account would have.
 			TopLogicSecurityContext.forRun((Person) null, true);
 			fail("A run with no principal must be refused up front, not at the first tool call.");
 		} catch (IllegalStateException expected) {

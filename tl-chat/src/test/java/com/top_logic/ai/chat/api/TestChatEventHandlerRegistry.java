@@ -7,6 +7,7 @@ package com.top_logic.ai.chat.api;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -111,7 +112,7 @@ public class TestChatEventHandlerRegistry extends TestCase {
 			new AgentEvent.TextDelta("run1", 2, Instant.now(), "Hello"),
 			new AgentEvent.ToolCallStarted("run1", 3, Instant.now(), "tc-1", "search", "{}", ToolMode.READ),
 			new AgentEvent.ApprovalRequired("run1", 4, Instant.now(), "tc-2", "ar-1", "write", "{}",
-				"Writes data"),
+				"Writes data", Duration.ofMinutes(30)),
 			new AgentEvent.ApprovalResolved("run1", 5, Instant.now(), "tc-2", "ar-1",
 				ApprovalOutcome.APPROVED),
 			new AgentEvent.RunCompleted("run1", 6, Instant.now(), StopReason.COMPLETE,

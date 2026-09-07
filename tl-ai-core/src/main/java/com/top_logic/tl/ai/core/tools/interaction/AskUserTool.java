@@ -9,8 +9,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.agent.AgentTuning;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
@@ -36,9 +36,6 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * </ul>
  */
 public class AskUserTool {
-
-	/** Timeout for user interaction requests in minutes. */
-	private static final long INTERACTION_TIMEOUT_MINUTES = AgentTuning.INTERACTION_TIMEOUT_MINUTES;
 
 	/** Maximum number of options allowed for choice interactions. */
 	private static final int MAX_CHOICE_OPTIONS = 5;
@@ -104,7 +101,8 @@ public class AskUserTool {
 			cancellation.onCancel(() -> store.resolve(request.getId(), "cancelled"));
 
 		try {
-			String response = request.getFuture().get(INTERACTION_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+			String response = request.getFuture().get(
+				InteractionTimeoutService.questionTimeout().toMillis(), TimeUnit.MILLISECONDS);
 			Logger.info("User responded to interaction " + request.getId() + ": " + response,
 				AskUserTool.class);
 			if ("cancelled".equals(response)) {

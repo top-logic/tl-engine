@@ -5,18 +5,21 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * Central home for the agent-execution tuning constants that were previously scattered across
- * {@link AgentLoop}, {@link TransactionScope} and
- * {@link com.top_logic.tl.ai.core.tools.interaction.AskUserTool}.
+ * {@link AgentLoop} and {@link TransactionScope}.
  *
  * <p>
  * These are deliberate knobs, not derived values; keeping them in one place makes them easy to find
  * and tune, and removes the duplicated definitions (the backoff poll slice was defined identically
  * in both {@link AgentLoop} and {@link TransactionScope}). Values that merely happen to be equal but
  * mean different things are intentionally <em>not</em> merged.
+ * </p>
+ *
+ * <p>
+ * The deadlines a <em>human</em> has to answer an agent are deliberately not here: they belong to
+ * the application rather than to the engine and are configured through
+ * {@link com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService}.
  * </p>
  */
 public final class AgentTuning {
@@ -51,7 +54,4 @@ public final class AgentTuning {
 
 	/** Duration in milliseconds a UI lock is held once acquired. */
 	public static final long LOCK_DURATION_MS = 10 * 60 * 1000L;
-
-	/** Time to wait for a human response to an interaction request, in {@link TimeUnit#MINUTES}. */
-	public static final long INTERACTION_TIMEOUT_MINUTES = 5L;
 }

@@ -36,6 +36,9 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 	/** @see #isMultiSelect() */
 	public static final String MULTI_SELECT__PROP = "multiSelect";
 
+	/** @see #getRemainingMs() */
+	public static final String REMAINING_MS__PROP = "remainingMs";
+
 	private String _requestId = "";
 
 	private String _question = "";
@@ -49,6 +52,8 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 	private final java.util.List<com.top_logic.ai.chat.api.messages.InteractionOptionDto> _options = new java.util.ArrayList<>();
 
 	private boolean _multiSelect = false;
+
+	private long _remainingMs = 0L;
 
 	/**
 	 * Creates a {@link UserInteractionEvent} instance.
@@ -221,6 +226,28 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 		_multiSelect = value;
 	}
 
+	/**
+	 * Milliseconds left for the user to answer, counted from the moment this event was sent.
+	 * Zero when the request has no time left. A re-emitted question (the chat was reopened)
+	 * carries what is left of its deadline, not the full one.
+	 */
+	public final long getRemainingMs() {
+		return _remainingMs;
+	}
+
+	/**
+	 * @see #getRemainingMs()
+	 */
+	public com.top_logic.ai.chat.api.messages.UserInteractionEvent setRemainingMs(long value) {
+		internalSetRemainingMs(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRemainingMs()} without chain call utility. */
+	protected final void internalSetRemainingMs(long value) {
+		_remainingMs = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return USER_INTERACTION_EVENT__TYPE;
@@ -235,7 +262,8 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 			HEADER__PROP, 
 			TYPE__PROP, 
 			OPTIONS__PROP, 
-			MULTI_SELECT__PROP);
+			MULTI_SELECT__PROP, 
+			REMAINING_MS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -267,6 +295,7 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 			case TYPE__PROP: return getType();
 			case OPTIONS__PROP: return getOptions();
 			case MULTI_SELECT__PROP: return isMultiSelect();
+			case REMAINING_MS__PROP: return getRemainingMs();
 			default: return null;
 		}
 	}
@@ -281,6 +310,7 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 			case TYPE__PROP: internalSetType((String) value); break;
 			case OPTIONS__PROP: internalSetOptions(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.InteractionOptionDto.class, value)); break;
 			case MULTI_SELECT__PROP: internalSetMultiSelect((boolean) value); break;
+			case REMAINING_MS__PROP: internalSetRemainingMs((long) value); break;
 		}
 	}
 
@@ -317,6 +347,8 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 		out.endArray();
 		out.name(MULTI_SELECT__PROP);
 		out.value(isMultiSelect());
+		out.name(REMAINING_MS__PROP);
+		out.value(getRemainingMs());
 	}
 
 	@Override
@@ -338,6 +370,7 @@ public class UserInteractionEvent extends de.haumacher.msgbuf.data.AbstractDataO
 			}
 			break;
 			case MULTI_SELECT__PROP: setMultiSelect(in.nextBoolean()); break;
+			case REMAINING_MS__PROP: setRemainingMs(in.nextLong()); break;
 			default: super.readField(in, field);
 		}
 	}

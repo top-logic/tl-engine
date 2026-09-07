@@ -30,6 +30,9 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 	/** @see #getDisplayReason() */
 	public static final String DISPLAY_REASON__PROP = "displayReason";
 
+	/** @see #getRemainingMs() */
+	public static final String REMAINING_MS__PROP = "remainingMs";
+
 	private String _toolCallId = "";
 
 	private String _approvalRequestId = "";
@@ -39,6 +42,8 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 	private String _argsJson = "";
 
 	private String _displayReason = "";
+
+	private long _remainingMs = 0L;
 
 	/**
 	 * Creates a {@link ApprovalRequiredEvent} instance.
@@ -149,6 +154,28 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 		_displayReason = value;
 	}
 
+	/**
+	 * Milliseconds left for the user to decide, counted from the moment this event was sent.
+	 * Zero when the request has no time left; the client shows the remaining time so the user
+	 * knows there is a clock.
+	 */
+	public final long getRemainingMs() {
+		return _remainingMs;
+	}
+
+	/**
+	 * @see #getRemainingMs()
+	 */
+	public com.top_logic.ai.chat.api.messages.ApprovalRequiredEvent setRemainingMs(long value) {
+		internalSetRemainingMs(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRemainingMs()} without chain call utility. */
+	protected final void internalSetRemainingMs(long value) {
+		_remainingMs = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return APPROVAL_REQUIRED_EVENT__TYPE;
@@ -161,7 +188,8 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 			APPROVAL_REQUEST_ID__PROP, 
 			TOOL_NAME__PROP, 
 			ARGS_JSON__PROP, 
-			DISPLAY_REASON__PROP);
+			DISPLAY_REASON__PROP, 
+			REMAINING_MS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -191,6 +219,7 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 			case TOOL_NAME__PROP: return getToolName();
 			case ARGS_JSON__PROP: return getArgsJson();
 			case DISPLAY_REASON__PROP: return getDisplayReason();
+			case REMAINING_MS__PROP: return getRemainingMs();
 			default: return null;
 		}
 	}
@@ -203,6 +232,7 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 			case TOOL_NAME__PROP: internalSetToolName((String) value); break;
 			case ARGS_JSON__PROP: internalSetArgsJson((String) value); break;
 			case DISPLAY_REASON__PROP: internalSetDisplayReason((String) value); break;
+			case REMAINING_MS__PROP: internalSetRemainingMs((long) value); break;
 		}
 	}
 
@@ -231,6 +261,8 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 		out.value(getArgsJson());
 		out.name(DISPLAY_REASON__PROP);
 		out.value(getDisplayReason());
+		out.name(REMAINING_MS__PROP);
+		out.value(getRemainingMs());
 	}
 
 	@Override
@@ -241,6 +273,7 @@ public class ApprovalRequiredEvent extends de.haumacher.msgbuf.data.AbstractData
 			case TOOL_NAME__PROP: setToolName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case ARGS_JSON__PROP: setArgsJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DISPLAY_REASON__PROP: setDisplayReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case REMAINING_MS__PROP: setRemainingMs(in.nextLong()); break;
 			default: super.readField(in, field);
 		}
 	}

@@ -2236,10 +2236,44 @@
 }
 
 .tl-chat-approval-header {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
 	font-size: 13px;
 	font-weight: 500;
 	color: var(--chat-text-primary);
 	margin-bottom: 4px;
+}
+
+.tl-chat-approval-title {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+/* Remaining time until the request expires. Pushed to the trailing edge of the header,
+ * on one line, with fixed-width digits so the seconds do not shift the text as they run. */
+.tl-chat-approval-clock {
+	margin-left: auto;
+	flex: none;
+	font-size: 11px;
+	font-weight: 400;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	color: var(--chat-text-secondary);
+}
+
+.tl-chat-approval-clock.urgent {
+	color: var(--chat-status-error);
+	font-weight: 500;
+}
+
+/* The deadline has passed: the panel is still readable, but nothing on it can be used. */
+.tl-chat-approval-expired {
+	opacity: 0.6;
+}
+
+.tl-chat-approval-expired .tl-chat-approval-btn {
+	cursor: default;
 }
 
 .tl-chat-approval-reason {

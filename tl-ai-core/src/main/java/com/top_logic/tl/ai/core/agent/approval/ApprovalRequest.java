@@ -25,6 +25,7 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * @param mode              the tool's {@link ToolMode} (indicates scope of change)
  * @param displayReason     human-readable reason shown in the approval dialog
  * @param timeout           maximum time to wait for user response
+ *                          (see {@link InteractionTimeoutService#approvalTimeout()})
  *
  * @see ApprovalCallback
  */
@@ -36,9 +37,6 @@ public record ApprovalRequest(
 		ToolMode mode,
 		String displayReason,
 		Duration timeout) {
-
-	/** Default approval timeout. */
-	public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(120);
 
 	/** */
 	public ApprovalRequest {

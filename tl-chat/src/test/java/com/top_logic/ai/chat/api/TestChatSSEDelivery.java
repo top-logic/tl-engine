@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.api;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Proxy;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -79,7 +80,7 @@ public class TestChatSSEDelivery extends TestCase {
 			new AgentEvent.TextDelta("run1", 1, Instant.now(), "Hello"),
 			new AgentEvent.ToolCallStarted("run1", 1, Instant.now(), "tc-1", "search", "{}", ToolMode.READ),
 			new AgentEvent.ApprovalRequired("run1", 1, Instant.now(), "tc-2", "ar-1", "write", "{}",
-				"Writes data"),
+				"Writes data", Duration.ofMinutes(30)),
 			new AgentEvent.ApprovalResolved("run1", 1, Instant.now(), "tc-2", "ar-1",
 				ApprovalOutcome.APPROVED))) {
 			resolved.onEvent(event);

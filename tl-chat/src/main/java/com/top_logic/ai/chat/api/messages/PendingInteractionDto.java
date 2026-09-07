@@ -40,6 +40,9 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	/** @see #getCreatedAt() */
 	public static final String CREATED_AT__PROP = "createdAt";
 
+	/** @see #getRemainingMs() */
+	public static final String REMAINING_MS__PROP = "remainingMs";
+
 	private String _requestId = "";
 
 	private String _type = "";
@@ -55,6 +58,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	private String _sessionTitle = "";
 
 	private String _createdAt = "";
+
+	private long _remainingMs = 0L;
 
 	/**
 	 * Creates a {@link PendingInteractionDto} instance.
@@ -227,6 +232,28 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 		_createdAt = value;
 	}
 
+	/**
+	 * Milliseconds left for the user to respond, counted from the moment this response was
+	 * written. Zero when the request's deadline has already passed, so a client can tell a
+	 * request it can still answer from one that is only waiting to be cleaned up.
+	 */
+	public final long getRemainingMs() {
+		return _remainingMs;
+	}
+
+	/**
+	 * @see #getRemainingMs()
+	 */
+	public com.top_logic.ai.chat.api.messages.PendingInteractionDto setRemainingMs(long value) {
+		internalSetRemainingMs(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRemainingMs()} without chain call utility. */
+	protected final void internalSetRemainingMs(long value) {
+		_remainingMs = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return PENDING_INTERACTION_DTO__TYPE;
@@ -242,7 +269,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			PAYLOAD__PROP, 
 			SESSION_ID__PROP, 
 			SESSION_TITLE__PROP, 
-			CREATED_AT__PROP);
+			CREATED_AT__PROP, 
+			REMAINING_MS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -275,6 +303,7 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case SESSION_ID__PROP: return getSessionId();
 			case SESSION_TITLE__PROP: return getSessionTitle();
 			case CREATED_AT__PROP: return getCreatedAt();
+			case REMAINING_MS__PROP: return getRemainingMs();
 			default: return null;
 		}
 	}
@@ -290,6 +319,7 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case SESSION_ID__PROP: internalSetSessionId((String) value); break;
 			case SESSION_TITLE__PROP: internalSetSessionTitle((String) value); break;
 			case CREATED_AT__PROP: internalSetCreatedAt((String) value); break;
+			case REMAINING_MS__PROP: internalSetRemainingMs((long) value); break;
 		}
 	}
 
@@ -324,6 +354,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 		out.value(getSessionTitle());
 		out.name(CREATED_AT__PROP);
 		out.value(getCreatedAt());
+		out.name(REMAINING_MS__PROP);
+		out.value(getRemainingMs());
 	}
 
 	@Override
@@ -337,6 +369,7 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case SESSION_ID__PROP: setSessionId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case SESSION_TITLE__PROP: setSessionTitle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CREATED_AT__PROP: setCreatedAt(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case REMAINING_MS__PROP: setRemainingMs(in.nextLong()); break;
 			default: super.readField(in, field);
 		}
 	}

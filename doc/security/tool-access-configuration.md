@@ -294,9 +294,15 @@ see [What this does not decide](#what-this-does-not-decide).
 - **Administrators bypass all of it**, exactly as they bypass the model access rights.
 - **Unattended runs are additionally capped** by `<background-allowlist>`, which you must declare
   explicitly as soon as you list any role - see below.
-- **The MCP endpoint (`/mcp/*`) cannot execute tools at all.** It authenticates nobody, so a call there
-  has no account to act as; it is refused rather than run as the system, for every application. Tracked
-  as issue #261.
+- **The MCP endpoint (`/mcp/*`) is off by default, and cannot execute tools even when on.** It
+  authenticates nobody, so `tl-ai-mcp-server` ships with `MCPServerService$Module` set to `false` and a
+  default deployment answers `/mcp/*` with 503. Where an application switches it on, a tool call there
+  still has no account to act as and is refused rather than run as the system - unconditionally, for
+  every application, and **not** because of anything in this file: no `<tool-access>` entry enables MCP
+  tool execution and none is needed to block it. Note that the endpoint's **resource** surface
+  (`toplogic://instance/...` and friends) was never governed by this policy at all and reads with model
+  access rights bypassed, which is why the module is opt-in. Tracked as issue #261; see
+  [mcp-endpoint.md](mcp-endpoint.md).
 - **Every agent run needs a logged-in account.** The chat UI and a TL-Script call both act as the
   logged-in account. A run that cannot name one is refused where it starts, not at its first tool call.
   An unattended entry point has to be given a **configured service account** - a real account holding

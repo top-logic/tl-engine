@@ -67,17 +67,17 @@ public class ThemeCommands implements ViewCommandSource {
 			// Nothing to switch to.
 			return List.of();
 		}
-		String activeId = themes.getActiveThemeId();
 
 		List<CommandModel> result = new ArrayList<>();
 		for (UITheme theme : configured) {
 			String id = theme.getId();
-			boolean active = id.equals(activeId);
 			result.add(SimpleCommandModel
 				.create(id, Resources.getInstance().getString(theme.getLabel()),
 					ctx -> SetThemeCommand.applyTheme(ctx, id))
 				.setImage(theme.getIcon())
-				.setExecutable(() -> !active));
+				// Read on every display: the models outlive a switch, since the menu is built once
+				// per rendering of the element carrying it, while the active theme changes under it.
+				.setExecutable(() -> !id.equals(UIThemeService.getInstance().getActiveThemeId())));
 		}
 		return result;
 	}

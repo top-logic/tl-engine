@@ -6,13 +6,21 @@
 package com.top_logic.layout.view.element;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.MenuTrigger;
 import com.top_logic.layout.view.command.ViewCommandModel;
 
@@ -74,6 +82,20 @@ public class MenuElement extends AbstractMenuElement {
 	@Override
 	protected MenuTrigger getTrigger() {
 		return MenuTrigger.CLICK;
+	}
+
+	/**
+	 * A trigger reads as one control, so its parts sit side by side - an avatar next to the name it
+	 * belongs to, not above it.
+	 */
+	@Override
+	protected ReactControl createRegionContent(ViewContext context) {
+		List<IReactControl> children = createChildControls(context);
+		if (children.size() == 1) {
+			return (ReactControl) children.get(0);
+		}
+		return new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT, StackAlign.CENTER, false,
+			children.stream().map(child -> (ReactControl) child).collect(Collectors.toList()));
 	}
 
 	@Override

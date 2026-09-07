@@ -27,9 +27,10 @@
 	</channels>
 
 	<!--
-		The children are the trigger, the commands are the entries. The avatar renders an empty
-		circle for a null name rather than nothing at all, so the trigger stays clickable while the
-		session is anonymous - which is the state in which the Login entry is the only one offered.
+		The children are the trigger, the commands are the entries. currentUser() yields the
+		anonymous account rather than nothing while the session is anonymous, so the trigger names
+		that account and stays clickable - which is the state in which Login is the only entry
+		offered.
 	-->
 	<menu>
 		<avatar input="currentUser"/>

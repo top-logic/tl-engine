@@ -143,7 +143,7 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 
 		List<ViewCommandModel> commandModels = buildCommandModels(context);
 
-		ReactControl content = createContent(context);
+		ReactControl content = createRegionContent(context);
 
 		List<CommandModel> entries = new ArrayList<>(menuCommands(commandModels));
 		for (ViewCommandSource source : _commandSources) {
@@ -161,6 +161,17 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		registerLifecycle(commandModels, region);
 
 		return region;
+	}
+
+	/**
+	 * The single control built from this element's children, which becomes the menu region.
+	 *
+	 * <p>
+	 * Defaults to the standard combination of children, which stacks several of them in a column.
+	 * </p>
+	 */
+	protected ReactControl createRegionContent(ViewContext context) {
+		return createContent(context);
 	}
 
 	/**

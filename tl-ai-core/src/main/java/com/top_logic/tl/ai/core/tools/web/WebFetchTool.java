@@ -24,6 +24,7 @@ import org.jsoup.nodes.Element;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.scripting.Converters;
+import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -35,6 +36,13 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * <p>
  * Includes SSRF protection (no internal/private hosts, http(s) only, no credentials in URL),
  * manual redirect handling with per-hop re-validation, and byte/character caps.
+ * </p>
+ *
+ * <p>
+ * What it returns is a page somebody else wrote, so it comes back inside the
+ * {@link UntrustedEnvelope#PAGE_CONTENT untrusted-content envelope}. The tool's own sentences - every
+ * {@code "Error: ..."} and the notice about a document it cannot extract text from - stay outside it:
+ * they are this application speaking, and marking them as page content would say otherwise.
  * </p>
  */
 public class WebFetchTool {
@@ -141,18 +149,7 @@ public class WebFetchTool {
 						+ "), but it is not a text or HTML document; cannot extract text.";
 				}
 
-				text = text.strip();
-				boolean truncated = false;
-				if (text.length() > maxChars) {
-					text = text.substring(0, maxChars);
-					truncated = true;
-				}
-				StringBuilder out = new StringBuilder();
-				out.append("Content of ").append(currentUrl).append(":\n\n").append(text);
-				if (truncated) {
-					out.append("\n\n[Content truncated at ").append(maxChars).append(" characters.]");
-				}
-				return out.toString();
+				return renderContent(currentUrl, text.strip(), maxChars);
 			}
 			return "Error: too many redirects (more than " + MAX_REDIRECTS + ") starting from " + url;
 		} catch (InterruptedException ex) {
@@ -162,6 +159,25 @@ public class WebFetchTool {
 			Logger.error("Web fetch failed: " + ex.getMessage(), ex, WebFetchTool.class);
 			return "Error: web fetch failed: " + ex.getMessage();
 		}
+	}
+
+	/**
+	 * Renders the extracted page text into the untrusted-data envelope, applying the character cap.
+	 * Package-visible for testing.
+	 *
+	 * <p>
+	 * The same envelope, from the same place, that {@code BrowserTool} puts around what it reads: a
+	 * page is a page whether a browser rendered it or this tool fetched it, and a barrier that covered
+	 * only one of the two routes to a page would just tell an attacker which route to aim at.
+	 * </p>
+	 *
+	 * @param finalUrl
+	 *        The URL actually fetched, after any redirects - the page decided it, so it is escaped
+	 *        into the envelope's {@code source} attribute rather than trusted.
+	 * @see UntrustedEnvelope#PAGE_CONTENT
+	 */
+	static String renderContent(String finalUrl, String text, int maxChars) {
+		return UntrustedEnvelope.PAGE_CONTENT.wrap(finalUrl, text, maxChars);
 	}
 
 	/**

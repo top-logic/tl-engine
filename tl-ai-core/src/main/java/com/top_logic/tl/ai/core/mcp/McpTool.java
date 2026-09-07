@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.mcp;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -28,6 +29,14 @@ import io.modelcontextprotocol.spec.McpSchema;
  * <p>
  * Every tool reached this way is {@link ToolMode#EXTERNAL}, read and write alike, so that the one
  * gate that fits an outward call - a human being asked first - is the one it goes through.
+ * </p>
+ *
+ * <p>
+ * What comes back is <b>not</b> trusted. An MCP server is a separate process or a remote endpoint
+ * that this application does not control, and its result text reaches the model verbatim, so it is
+ * returned inside the {@link UntrustedEnvelope#MCP_TOOL_RESULT untrusted-content envelope}. tl-ai's
+ * own tools are not wrapped and need not be: what separates the two is the class rather than a flag,
+ * because no tool of this application is ever dispatched through here.
  * </p>
  *
  * @see McpServerRegistry
@@ -92,7 +101,7 @@ public class McpTool implements Tool {
 	@Override
 	public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 		McpSchema.CallToolResult result = _registry.callTool(_serverName, _mcpToolName, args);
-		return ToolResult.of(formatResult(result));
+		return ToolResult.of(formatResult(name(), result));
 	}
 
 	/**
@@ -137,13 +146,22 @@ public class McpTool implements Tool {
 	 * agent.
 	 *
 	 * <p>
-	 * Concatenates text content items, notes non-text items as placeholders. Error results are
-	 * prefixed with {@code "Error: "}.
+	 * Concatenates text content items, notes non-text items as placeholders, and puts the whole thing
+	 * into the untrusted-content envelope. Error results are prefixed with {@code "Error: "} - the
+	 * prefix outside the envelope, because that word is this application's, while the sentence
+	 * explaining the failure is the remote server's and is as attacker-controlled as a successful
+	 * result.
 	 * </p>
+	 *
+	 * @param source
+	 *        Which tool of which server produced the result, for the envelope's {@code source}
+	 *        attribute.
+	 * @see UntrustedEnvelope#MCP_TOOL_RESULT
 	 */
-	static String formatResult(McpSchema.CallToolResult result) {
+	static String formatResult(String source, McpSchema.CallToolResult result) {
 		List<McpSchema.Content> content = result.content();
 		if (content == null || content.isEmpty()) {
+			// Nothing came back from the server, so there is nothing of the server's to mark.
 			return Boolean.TRUE.equals(result.isError()) ? "Error: unknown" : "";
 		}
 
@@ -168,9 +186,10 @@ public class McpTool implements Tool {
 			}
 		}
 
+		String body = UntrustedEnvelope.MCP_TOOL_RESULT.wrap(source, sb.toString());
 		if (Boolean.TRUE.equals(result.isError())) {
-			return "Error: " + sb;
+			return "Error: " + body;
 		}
-		return sb.toString();
+		return body;
 	}
 }

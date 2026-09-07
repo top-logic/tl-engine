@@ -18,11 +18,18 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  * <p>
  * Tools access the {@code KnowledgeBase} and therefore need a thread-bound interaction. Rather than
  * having every tool establish one itself, the tool-call boundaries - the agent dispatcher
- * ({@link ToolCatalog}), the MCP server adapter, and the TL-Script bridge - route execution
- * through {@link #execute}. It reuses the caller's interaction when one is present (e.g. the chat
- * user's sub-session, so tools act in the user's context and on the user's UI), and otherwise
- * establishes a system interaction so context-less callers (the MCP server, background jobs) can
- * still reach the {@code KnowledgeBase}.
+ * ({@link ToolCatalog}) and the TL-Script bridge - route execution through {@link #execute}. It
+ * reuses the caller's interaction when one is present (e.g. the chat user's sub-session, so tools
+ * act in the user's context and on the user's UI), and otherwise establishes a system interaction so
+ * a context-less caller (a background job) can still reach the {@code KnowledgeBase}.
+ * </p>
+ *
+ * <p>
+ * <b>The MCP server adapter deliberately does not use this.</b> Its requests arrive with an
+ * authenticated account whose context {@code McpAuthenticationFilter} has already opened, and the
+ * fallback below would be the wrong answer if that ever failed: a system interaction is the engine's
+ * super-user bypass, and issue #261 was exactly the case of an MCP request being served in one. It
+ * calls the tool inside the caller's own context and refuses when there is none.
  * </p>
  *
  * @see ThreadContextManager#inSystemInteraction(Class, com.top_logic.basic.util.ComputationEx2)

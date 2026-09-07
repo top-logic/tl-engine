@@ -385,21 +385,24 @@ public class CalendarElement implements UIElement {
 					reapplySelection[0].run();
 				}
 			});
-		control.addBeforeWriteAction(() -> observer.attach(context.getModelScope()));
-		control.addCleanupAction(observer::detach);
+		// Observe the model only while the calendar is displayed: a calendar that is not attached - the
+		// inactive child of a tab bar, a page nobody looks at - must not react to model changes.
+		control.addAttachListener(() -> observer.attach(context.getModelScope()));
+		control.addDetachListener(observer::detach);
 
 		// Publish the displayed interval to the range channels. Registered after the observer's attach
-		// action (both run once, in order, on first render) so that seeding the channels triggers the
-		// already-attached observer to load the initial window's events.
+		// listener (both fire on attach, in registration order) so that seeding the channels triggers the
+		// already-attached observer to load the displayed window's events.
 		ChannelRef rangeStartRef = _config.getRangeStart();
 		ChannelRef rangeEndRef = _config.getRangeEnd();
 		if (rangeStartRef != null && rangeEndRef != null) {
 			ViewChannel rangeStartChannel = context.resolveChannel(rangeStartRef);
 			ViewChannel rangeEndChannel = context.resolveChannel(rangeEndRef);
-			control.addBeforeWriteAction(() -> control.setRangeListener((from, to) -> {
+			control.addAttachListener(() -> control.setRangeListener((from, to) -> {
 				rangeStartChannel.set(from);
 				rangeEndChannel.set(to);
 			}));
+			control.addDetachListener(() -> control.setRangeListener(null));
 		}
 
 		return control;

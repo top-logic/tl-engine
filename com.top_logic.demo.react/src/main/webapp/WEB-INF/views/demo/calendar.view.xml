@@ -4,8 +4,10 @@
 	<channels>
 		<channel name="model"/>
 		<channel name="appointment"/>
-		<!-- The calendar publishes its displayed interval here; the object query reads it back to load
-			only the visible window's appointments. -->
+		<!--
+			The calendar publishes its displayed interval here; the object query reads it back to load
+			only the visible window's appointments.
+		-->
 		<channel name="from"/>
 		<channel name="to"/>
 	</channels>
@@ -14,7 +16,8 @@
 		resizable="true"
 	>
 		<panes>
-			<pane size="72"
+			<pane
+				size="72"
 				unit="%"
 			>
 				<panel>
@@ -35,17 +38,17 @@
 							<input channel="from"/>
 							<input channel="to"/>
 						</inputs>
-						<objects>from -> to -> if($from == null || $to == null, list(), all(`demo.calendar:Appointment`).filter(a -> { s = $a.get(`demo.calendar:Appointment#start`); e = $a.get(`demo.calendar:Appointment#end`); $s != null &amp;&amp; $s &lt; $to &amp;&amp; if($e == null, $s, $e) &gt; $from; }))</objects>
+						<objects>from -&gt; to -&gt; if($from == null || $to == null, list(), all(`demo.calendar:Appointment`).filter(a -&gt; { s = $a.get(`demo.calendar:Appointment#start`); e = $a.get(`demo.calendar:Appointment#end`); $s != null &amp;&amp; $s &lt; $to &amp;&amp; if($e == null, $s, $e) &gt; $from; }))</objects>
 						<event>
-							<start>x -> $x.get(`demo.calendar:Appointment#start`)</start>
-							<end>x -> $x.get(`demo.calendar:Appointment#end`)</end>
-							<all-day>x -> $x.get(`demo.calendar:Appointment#allDay`)</all-day>
-							<title>x -> $x.get(`demo.calendar:Appointment#name`)</title>
-							<category>x -> $x.get(`demo.calendar:Appointment#category`)</category>
+							<start>x -&gt; $x.get(`demo.calendar:Appointment#start`)</start>
+							<end>x -&gt; $x.get(`demo.calendar:Appointment#end`)</end>
+							<all-day>x -&gt; $x.get(`demo.calendar:Appointment#allDay`)</all-day>
+							<title>x -&gt; $x.get(`demo.calendar:Appointment#name`)</title>
+							<category>x -&gt; $x.get(`demo.calendar:Appointment#category`)</category>
 						</event>
-						<on-move>obj -> start -> end -> { $obj.set(`demo.calendar:Appointment#start`, $start); $obj.set(`demo.calendar:Appointment#end`, $end); }</on-move>
-						<on-resize>obj -> end -> $obj.set(`demo.calendar:Appointment#end`, $end)</on-resize>
-						<on-create>start -> end -> allDay -> { appt = new(`demo.calendar:Appointment`); $appt.set(`demo.calendar:Appointment#name`, "New appointment"); $appt.set(`demo.calendar:Appointment#start`, $start); $appt.set(`demo.calendar:Appointment#end`, $end); $appt.set(`demo.calendar:Appointment#allDay`, $allDay); $appt; }</on-create>
+						<on-move>obj -&gt; start -&gt; end -&gt; { $obj.set(`demo.calendar:Appointment#start`, $start); $obj.set(`demo.calendar:Appointment#end`, $end); }</on-move>
+						<on-resize>obj -&gt; end -&gt; $obj.set(`demo.calendar:Appointment#end`, $end)</on-resize>
+						<on-create>start -&gt; end -&gt; allDay -&gt; { appt = new(`demo.calendar:Appointment`); $appt.set(`demo.calendar:Appointment#name`, "New appointment"); $appt.set(`demo.calendar:Appointment#start`, $start); $appt.set(`demo.calendar:Appointment#end`, $end); $appt.set(`demo.calendar:Appointment#allDay`, $allDay); $appt; }</on-create>
 					</calendar>
 				</panel>
 			</pane>

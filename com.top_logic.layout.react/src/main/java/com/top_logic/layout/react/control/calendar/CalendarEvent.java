@@ -68,6 +68,19 @@ public interface CalendarEvent {
 	String getCategory();
 
 	/**
+	 * The CSS color the event is rendered in, or <code>null</code> to derive the color from
+	 * {@link #getCategory()}.
+	 *
+	 * <p>
+	 * An application that owns its own color scheme - a category type with a color attribute, say -
+	 * returns the color here instead of relying on the palette entry the category key selects.
+	 * </p>
+	 */
+	default String getColor() {
+		return null;
+	}
+
+	/**
 	 * Whether the user may reschedule this event by dragging it to another time.
 	 *
 	 * @see CalendarModel#moveEvent(CalendarEvent, Date, Date)

@@ -44,7 +44,8 @@
 							<end>x -&gt; $x.get(`demo.calendar:Appointment#end`)</end>
 							<all-day>x -&gt; $x.get(`demo.calendar:Appointment#allDay`)</all-day>
 							<title>x -&gt; $x.get(`demo.calendar:Appointment#name`)</title>
-							<category>x -&gt; $x.get(`demo.calendar:Appointment#category`)</category>
+							<category>x -&gt; $x.get(`demo.calendar:Appointment#category`).get(`demo.calendar:AppointmentCategory#name`)</category>
+							<color>x -&gt; $x.get(`demo.calendar:Appointment#category`).get(`demo.calendar:AppointmentCategory#color`)</color>
 						</event>
 						<on-move>obj -&gt; start -&gt; end -&gt; { $obj.set(`demo.calendar:Appointment#start`, $start); $obj.set(`demo.calendar:Appointment#end`, $end); }</on-move>
 						<on-resize>obj -&gt; end -&gt; $obj.set(`demo.calendar:Appointment#end`, $end)</on-resize>

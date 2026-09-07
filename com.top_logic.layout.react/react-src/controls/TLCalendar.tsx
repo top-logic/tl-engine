@@ -33,6 +33,7 @@ interface Ev {
   title: string;
   tooltip?: string;
   category?: string;
+  color?: string;
   movable: boolean;
   resizable: boolean;
   selected: boolean;
@@ -90,6 +91,14 @@ function categoryClass(category?: string): string {
   return 'tlCalEvent--c' + (Math.abs(hash) % PALETTE_SIZE);
 }
 
+/**
+ * Style of an event bar, feeding an explicitly configured color into the custom property the
+ * renderers paint with. Without one, the palette class of the category applies.
+ */
+function eventStyle(ev: Ev, style?: React.CSSProperties): React.CSSProperties | undefined {
+  return ev.color ? ({ ...style, '--cal-ev-bg': ev.color } as React.CSSProperties) : style;
+}
+
 function parseEvents(raw: unknown): Ev[] {
   if (!Array.isArray(raw)) {
     return [];
@@ -102,6 +111,7 @@ function parseEvents(raw: unknown): Ev[] {
     title: (e.title as string) ?? '',
     tooltip: e.tooltip as string | undefined,
     category: e.category as string | undefined,
+    color: e.color as string | undefined,
     movable: e.movable === true,
     resizable: e.resizable === true,
     selected: e.selected === true,
@@ -535,6 +545,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
               <div
                 key={ev.id}
                 className={'tlCalAllDayEvent ' + categoryClass(ev.category) + (ev.selected ? ' tlCalEvent--selected' : '')}
+                style={eventStyle(ev)}
                 title={ev.tooltip}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -589,7 +600,12 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
                           (p.ev.selected ? ' tlCalEvent--selected' : '') +
                           (dragging ? ' tlCalEvent--dragging' : '')
                         }
-                        style={{ top, height, left: `${p.col * widthPct}%`, width: `calc(${widthPct}% - 2px)` }}
+                        style={eventStyle(p.ev, {
+                          top,
+                          height,
+                          left: `${p.col * widthPct}%`,
+                          width: `calc(${widthPct}% - 2px)`,
+                        })}
                         title={p.ev.tooltip}
                         onPointerDown={(e) => startMove(e, p.ev, day)}
                         onClick={(e) => {
@@ -735,7 +751,10 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
                     <div
                       key={ev.id}
                       className={'tlCalMonthBar ' + categoryClass(ev.category) + (ev.selected ? ' tlCalEvent--selected' : '')}
-                      style={{ gridColumn: `${from + 1} / ${Math.max(from + 1, toExcl) + 1}`, gridRow: si + 1 }}
+                      style={eventStyle(ev, {
+                        gridColumn: `${from + 1} / ${Math.max(from + 1, toExcl) + 1}`,
+                        gridRow: si + 1,
+                      })}
                       draggable={editable && ev.movable}
                       onDragStart={(e) => e.dataTransfer.setData('text/plain', ev.id)}
                       title={ev.tooltip}
@@ -758,7 +777,7 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
                     <div
                       key={ev.id}
                       className={'tlCalChip ' + categoryClass(ev.category) + (ev.selected ? ' tlCalEvent--selected' : '')}
-                      style={{ gridColumn: ci + 1, gridRow: barRows + 1 + k }}
+                      style={eventStyle(ev, { gridColumn: ci + 1, gridRow: barRows + 1 + k })}
                       draggable={editable && ev.movable}
                       onDragStart={(e) => e.dataTransfer.setData('text/plain', ev.id)}
                       title={ev.tooltip}

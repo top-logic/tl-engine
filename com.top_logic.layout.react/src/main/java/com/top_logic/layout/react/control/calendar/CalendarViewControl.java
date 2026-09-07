@@ -107,6 +107,8 @@ public class CalendarViewControl extends ReactControl {
 
 	private static final String EVENT_CATEGORY = "category";
 
+	private static final String EVENT_COLOR = "color";
+
 	private static final String EVENT_MOVABLE = "movable";
 
 	private static final String EVENT_RESIZABLE = "resizable";
@@ -392,6 +394,9 @@ public class CalendarViewControl extends ReactControl {
 			}
 			if (event.getCategory() != null) {
 				state.put(EVENT_CATEGORY, event.getCategory());
+			}
+			if (event.getColor() != null) {
+				state.put(EVENT_COLOR, event.getColor());
 			}
 			state.put(EVENT_MOVABLE, Boolean.valueOf(_editable && event.isMovable()));
 			state.put(EVENT_RESIZABLE, Boolean.valueOf(_editable && event.isResizable()));

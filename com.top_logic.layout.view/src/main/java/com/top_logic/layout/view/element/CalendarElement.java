@@ -234,6 +234,9 @@ public class CalendarElement implements UIElement {
 		/** Configuration name for {@link #getCategory()}. */
 		String CATEGORY = "category";
 
+		/** Configuration name for {@link #getColor()}. */
+		String COLOR = "color";
+
 		/** Configuration name for {@link #getMovable()}. */
 		String MOVABLE = "movable";
 
@@ -279,6 +282,14 @@ public class CalendarElement implements UIElement {
 		Expr getCategory();
 
 		/**
+		 * Function computing the event's CSS color, taking precedence over the color that the
+		 * category key selects. A value of the model type <code>tl.util:Color</code> is accepted
+		 * directly.
+		 */
+		@Name(COLOR)
+		Expr getColor();
+
+		/**
 		 * Function computing whether the event may be moved. Without it, events are movable.
 		 */
 		@Name(MOVABLE)
@@ -319,6 +330,7 @@ public class CalendarElement implements UIElement {
 			QueryExecutor.compileOptional(event.getTitle()),
 			QueryExecutor.compileOptional(event.getTooltip()),
 			QueryExecutor.compileOptional(event.getCategory()),
+			QueryExecutor.compileOptional(event.getColor()),
 			QueryExecutor.compileOptional(event.getMovable()),
 			QueryExecutor.compileOptional(event.getResizable()));
 

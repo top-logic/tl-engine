@@ -26,6 +26,8 @@ public class DefaultCalendarEvent implements CalendarEvent {
 
 	private String _category;
 
+	private String _color;
+
 	private boolean _movable = true;
 
 	private boolean _resizable = true;
@@ -121,6 +123,19 @@ public class DefaultCalendarEvent implements CalendarEvent {
 	 */
 	public DefaultCalendarEvent setCategory(String category) {
 		_category = category;
+		return this;
+	}
+
+	@Override
+	public String getColor() {
+		return _color;
+	}
+
+	/**
+	 * @see #getColor()
+	 */
+	public DefaultCalendarEvent setColor(String color) {
+		_color = color;
 		return this;
 	}
 

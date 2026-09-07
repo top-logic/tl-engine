@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -14,6 +15,7 @@ import java.util.List;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.form.format.ColorFormat;
 import com.top_logic.layout.react.control.calendar.CalendarEvent;
 import com.top_logic.layout.react.control.calendar.CalendarModel;
 import com.top_logic.layout.react.control.calendar.CalendarModelListener;
@@ -55,6 +57,8 @@ public class ExpressionCalendarModel implements CalendarModel {
 
 		final QueryExecutor _category;
 
+		final QueryExecutor _color;
+
 		final QueryExecutor _movable;
 
 		final QueryExecutor _resizable;
@@ -78,6 +82,9 @@ public class ExpressionCalendarModel implements CalendarModel {
 		 * @param category
 		 *        Function computing the {@link CalendarEvent#getCategory() category}, or
 		 *        <code>null</code>.
+		 * @param color
+		 *        Function computing the {@link CalendarEvent#getColor() color}, or <code>null</code>
+		 *        to derive it from the category.
 		 * @param movable
 		 *        Function computing {@link CalendarEvent#isMovable()}, or <code>null</code> for
 		 *        <code>true</code>.
@@ -86,13 +93,15 @@ public class ExpressionCalendarModel implements CalendarModel {
 		 *        <code>true</code>.
 		 */
 		public EventExprs(QueryExecutor start, QueryExecutor end, QueryExecutor allDay, QueryExecutor title,
-				QueryExecutor tooltip, QueryExecutor category, QueryExecutor movable, QueryExecutor resizable) {
+				QueryExecutor tooltip, QueryExecutor category, QueryExecutor color, QueryExecutor movable,
+				QueryExecutor resizable) {
 			_start = start;
 			_end = end;
 			_allDay = allDay;
 			_title = title;
 			_tooltip = tooltip;
 			_category = category;
+			_color = color;
 			_movable = movable;
 			_resizable = resizable;
 		}
@@ -243,6 +252,8 @@ public class ExpressionCalendarModel implements CalendarModel {
 
 		private final String _category;
 
+		private final String _color;
+
 		private final boolean _movable;
 
 		private final boolean _resizable;
@@ -256,6 +267,7 @@ public class ExpressionCalendarModel implements CalendarModel {
 			_title = toStringOrNull(eval(exprs._title, object));
 			_tooltip = toStringOrNull(eval(exprs._tooltip, object));
 			_category = toStringOrNull(eval(exprs._category, object));
+			_color = toCssColor(eval(exprs._color, object));
 			_movable = toBoolean(exprs._movable, object, true);
 			_resizable = toBoolean(exprs._resizable, object, true);
 		}
@@ -284,6 +296,22 @@ public class ExpressionCalendarModel implements CalendarModel {
 
 		private static String toStringOrNull(Object value) {
 			return value == null ? null : value.toString();
+		}
+
+		/**
+		 * Renders a color value as a CSS color, so that a model attribute of type
+		 * <code>tl.util:Color</code> can be used as the color function's result directly.
+		 */
+		private static String toCssColor(Object value) {
+			if (value instanceof Color color) {
+				return ColorFormat.formatColor(color);
+			}
+			return toStringOrNull(value);
+		}
+
+		@Override
+		public String getColor() {
+			return _color;
 		}
 
 		@Override

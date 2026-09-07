@@ -426,7 +426,8 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "Let me "));
 		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "think..."));
 		// Flushes the thinking buffer into a part, as the real event order does.
-		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}",
+			ToolMode.READ));
 
 		Part.ThinkingPart recorded = onlyThinkingPart(_log.currentTurn());
 		assertNull("The token is unknown while the deltas stream.", recorded.continuityToken());
@@ -450,7 +451,8 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
 		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "Thinking"));
-		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}",
+			ToolMode.READ));
 
 		Part.ThinkingPart recorded = onlyThinkingPart(_log.currentTurn());
 
@@ -477,7 +479,8 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
 		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "First"));
-		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}",
+			ToolMode.READ));
 
 		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY,
 			List.of(new ThinkingContent("First", "sig-1"), new ThinkingContent("Second", "sig-2"))));

@@ -304,9 +304,25 @@ public sealed interface Part {
 	 * @param tokensBefore token count before compaction
 	 * @param tokensAfter token count after compaction
 	 * @param trigger what triggered the compaction
+	 * @param sidecar what the compaction put in place of the history it replaced, so a
+	 *        reloaded session comes back compacted; {@code null} while the compaction is
+	 *        still running, and in a log written before the sidecar existed
 	 */
 	record CompactionPart(String id, Instant timestamp,
-			int tokensBefore, int tokensAfter, String trigger) implements Part {}
+			int tokensBefore, int tokensAfter, String trigger,
+			CompactionSidecar sidecar) implements Part {
+
+		/** Creates a compaction that is in progress and has produced nothing yet. */
+		public static CompactionPart started(String id, Instant timestamp,
+				int tokensBefore, String trigger) {
+			return new CompactionPart(id, timestamp, tokensBefore, 0, trigger, null);
+		}
+
+		/** Records what the compaction produced. */
+		public CompactionPart completed(int resultingTokens, CompactionSidecar result) {
+			return new CompactionPart(id, timestamp, tokensBefore, resultingTokens, trigger, result);
+		}
+	}
 
 	/**
 	 * Provider error.

@@ -24,11 +24,16 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/** @see #getTrigger() */
 	public static final String TRIGGER__PROP = "trigger";
 
+	/** @see #getSidecar() */
+	public static final String SIDECAR__PROP = "sidecar";
+
 	private int _tokensBefore = 0;
 
 	private int _tokensAfter = 0;
 
 	private String _trigger = "";
+
+	private com.top_logic.tl.ai.core.session.persist.messages.CompactionSidecarDto _sidecar = null;
 
 	/**
 	 * Creates a {@link CompactionPartDto} instance.
@@ -99,6 +104,37 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 		_trigger = value;
 	}
 
+	/**
+	 * What this compaction put in place of the history it replaced, so a reloaded session
+	 * comes back compacted instead of at its original size.
+	 *
+	 * <p>Absent in a log written before the sidecar existed, and in one whose compaction is
+	 * still running.</p>
+	 */
+	public final com.top_logic.tl.ai.core.session.persist.messages.CompactionSidecarDto getSidecar() {
+		return _sidecar;
+	}
+
+	/**
+	 * @see #getSidecar()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto setSidecar(com.top_logic.tl.ai.core.session.persist.messages.CompactionSidecarDto value) {
+		internalSetSidecar(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSidecar()} without chain call utility. */
+	protected final void internalSetSidecar(com.top_logic.tl.ai.core.session.persist.messages.CompactionSidecarDto value) {
+		_sidecar = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getSidecar()} has a value.
+	 */
+	public final boolean hasSidecar() {
+		return _sidecar != null;
+	}
+
 	@Override
 	public String jsonType() {
 		return COMPACTION_PART_DTO__TYPE;
@@ -109,7 +145,8 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 		java.util.List<String> local = java.util.Arrays.asList(
 			TOKENS_BEFORE__PROP, 
 			TOKENS_AFTER__PROP, 
-			TRIGGER__PROP);
+			TRIGGER__PROP, 
+			SIDECAR__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -137,6 +174,7 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case TOKENS_BEFORE__PROP: return getTokensBefore();
 			case TOKENS_AFTER__PROP: return getTokensAfter();
 			case TRIGGER__PROP: return getTrigger();
+			case SIDECAR__PROP: return getSidecar();
 			default: return null;
 		}
 	}
@@ -147,6 +185,7 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case TOKENS_BEFORE__PROP: internalSetTokensBefore((int) value); break;
 			case TOKENS_AFTER__PROP: internalSetTokensAfter((int) value); break;
 			case TRIGGER__PROP: internalSetTrigger((String) value); break;
+			case SIDECAR__PROP: internalSetSidecar((com.top_logic.tl.ai.core.session.persist.messages.CompactionSidecarDto) value); break;
 		}
 	}
 
@@ -171,6 +210,10 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 		out.value(getTokensAfter());
 		out.name(TRIGGER__PROP);
 		out.value(getTrigger());
+		if (hasSidecar()) {
+			out.name(SIDECAR__PROP);
+			getSidecar().writeTo(out);
+		}
 	}
 
 	@Override
@@ -179,6 +222,7 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case TOKENS_BEFORE__PROP: setTokensBefore(in.nextInt()); break;
 			case TOKENS_AFTER__PROP: setTokensAfter(in.nextInt()); break;
 			case TRIGGER__PROP: setTrigger(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case SIDECAR__PROP: setSidecar(com.top_logic.tl.ai.core.session.persist.messages.CompactionSidecarDto.readCompactionSidecarDto(in)); break;
 			default: super.readField(in, field);
 		}
 	}

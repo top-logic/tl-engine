@@ -10,17 +10,22 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.session.CompactionSidecar;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.CompactionSidecarDto;
 import com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedMessage;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
 import com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto;
@@ -200,6 +205,9 @@ public final class ConversationLogSerializer {
 			data.setTokensBefore(cp.tokensBefore());
 			data.setTokensAfter(cp.tokensAfter());
 			data.setTrigger(nullToEmpty(cp.trigger()));
+			if (cp.sidecar() != null) {
+				data.setSidecar(toSidecarDto(cp.sidecar()));
+			}
 			dto.setCompactionData(data);
 		} else if (part instanceof Part.ErrorPart ep) {
 			dto.setType(TYPE_ERROR);
@@ -305,7 +313,8 @@ public final class ConversationLogSerializer {
 					id, timestamp,
 					data.getTokensBefore(),
 					data.getTokensAfter(),
-					emptyToNull(data.getTrigger()));
+					emptyToNull(data.getTrigger()),
+					data.hasSidecar() ? fromSidecarDto(data.getSidecar()) : null);
 			}
 			case TYPE_ERROR: {
 				ErrorPartDto data = dto.getErrorData();
@@ -359,7 +368,44 @@ public final class ConversationLogSerializer {
 		}
 	}
 
-	private static TokenUsageDto toUsageDto(TokenUsage usage) {
+	private static CompactionSidecarDto toSidecarDto(CompactionSidecar sidecar) {
+		CompactionSidecarDto dto = CompactionSidecarDto.create();
+		dto.setFingerprintVersion(sidecar.fingerprintVersion());
+		dto.setFingerprint(sidecar.fingerprint());
+		for (Message message : sidecar.replacementMessages()) {
+			dto.addReplacementMessage(MessageSerializer.toDto(message));
+		}
+		return dto;
+	}
+
+	/**
+	 * Restores a compaction's sidecar, or <code>null</code> if it cannot be read.
+	 *
+	 * <p>
+	 * A sidecar is a cache over a canonical log that is still complete, so an unreadable one
+	 * costs a session its compacted size and nothing else - whereas letting the failure out
+	 * of here would cost it the whole log. That is the difference between a session that is
+	 * large and a session that is gone, so a message shape this version does not know is
+	 * logged and dropped rather than thrown.
+	 * </p>
+	 */
+	private static CompactionSidecar fromSidecarDto(CompactionSidecarDto dto) {
+		List<Message> messages = new ArrayList<>();
+		try {
+			for (PersistedMessage messageDto : dto.getReplacementMessages()) {
+				messages.add(MessageSerializer.fromDto(messageDto));
+			}
+		} catch (RuntimeException ex) {
+			Logger.warn("Dropping an unreadable compaction sidecar; the session will be"
+				+ " rebuilt from its full history: " + ex.getMessage(), ex,
+				ConversationLogSerializer.class);
+			return null;
+		}
+		return new CompactionSidecar(dto.getFingerprintVersion(), dto.getFingerprint(), messages);
+	}
+
+	/** Converts a token usage to its DTO. */
+	static TokenUsageDto toUsageDto(TokenUsage usage) {
 		TokenUsageDto dto = TokenUsageDto.create();
 		dto.setInputTokens(usage.inputTokens());
 		dto.setOutputTokens(usage.outputTokens());
@@ -369,7 +415,8 @@ public final class ConversationLogSerializer {
 		return dto;
 	}
 
-	private static TokenUsage fromUsageDto(TokenUsageDto dto) {
+	/** Restores a token usage from its DTO. */
+	static TokenUsage fromUsageDto(TokenUsageDto dto) {
 		return new TokenUsage(
 			dto.getInputTokens(),
 			dto.getOutputTokens(),

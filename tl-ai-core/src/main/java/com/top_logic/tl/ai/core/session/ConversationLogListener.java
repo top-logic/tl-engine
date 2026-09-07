@@ -19,6 +19,7 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.message.ContentPart;
+import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -313,9 +314,14 @@ public class ConversationLogListener implements AgentEventListener {
 	private void handleCompactionStarted(AgentEvent.CompactionStarted e) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
-			turn.addAssistantPart(new Part.CompactionPart(
+			// The compaction marks the end of the history it replaces, so anything still
+			// buffered belongs before it - the sidecar is fingerprinted against the parts
+			// recorded up to this position and must not be missing the last of them.
+			flushTextBuffer(turn);
+			flushThinkingBuffer(turn);
+			turn.addAssistantPart(Part.CompactionPart.started(
 				UUID.randomUUID().toString(), e.timestamp(),
-				e.tokensBefore(), 0, e.trigger()));
+				e.tokensBefore(), e.trigger()));
 		}
 	}
 
@@ -326,13 +332,28 @@ public class ConversationLogListener implements AgentEventListener {
 			for (int i = parts.size() - 1; i >= 0; i--) {
 				Part p = parts.get(i);
 				if (p instanceof Part.CompactionPart cp) {
-					turn.updatePart(cp.id(), new Part.CompactionPart(
-						cp.id(), cp.timestamp(), cp.tokensBefore(),
-						e.result().tokensAfter(), cp.trigger()));
+					turn.updatePart(cp.id(), cp.completed(e.result().tokensAfter(),
+						sidecarFor(cp.id(), e.result().replacementMessages())));
 					break;
 				}
 			}
 		}
+	}
+
+	/**
+	 * The {@link CompactionSidecar} to record on the given compaction, so that a reloaded
+	 * session comes back compacted rather than at the size this compaction just escaped.
+	 *
+	 * <p>
+	 * The replaced history is taken from the log rather than from the live conversation the
+	 * compaction actually ran on: a reader has nothing but the log, so the fingerprint has to
+	 * be over what the reader will reconstruct from it. The two agree by construction, both
+	 * going through {@link ConversationLogReplay}.
+	 * </p>
+	 */
+	private CompactionSidecar sidecarFor(String compactionPartId, List<Message> replacement) {
+		return CompactionSidecar.of(
+			ConversationLogReplay.replayedHistoryBefore(_log, compactionPartId), replacement);
 	}
 
 	// ---- Errors ----

@@ -280,6 +280,14 @@ abfragen kann – zum Beispiel die Typen eines Moduls, die
 Konfiguration einer Oberfläche oder das Schema eines
 Konfigurationstyps.
 
+**Stand heute ist diese Schnittstelle abgeschaltet.** Der
+MCP-Endpunkt `/mcp/*` authentifiziert niemanden; eine Anwendung
+muss ihn deshalb bewusst einschalten, und die Ausführung von
+Werkzeugen wird auch dann abgelehnt. Was das Einschalten
+offenlegt und wie es geht, steht in
+[doc/security/mcp-endpoint.md](security/mcp-endpoint.md)
+(Ticket #261).
+
 
 ## Der interne Agent
 

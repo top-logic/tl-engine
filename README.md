@@ -13,6 +13,8 @@ Core AI framework with custom agent loop, multi-provider LLM support (OpenAI, An
 ### [tl-ai-mcp-server](tl-ai-mcp-server/)
 Model Context Protocol (MCP) server implementation enabling AI agents to interact with TopLogic's model structure, metadata, and business logic through standardized resources and tools.
 
+**Switched off by default.** `/mcp/*` authenticates nobody, so enabling it publishes the application's model and business data to everyone who can reach the endpoint. [doc/security/mcp-endpoint.md](doc/security/mcp-endpoint.md) says what is exposed and how an administrator turns it on.
+
 ### [tl-chat](tl-chat/)
 Chat UI components and model definitions for building conversational interfaces within TopLogic applications. Chat messages are handled by the entry-point agent (tl-ai-core), which routes to specialist agents (ModelExplorer, ModelEditor, TLScriptAgent) via delegation; the UI shows a unified execution timeline (AgentCall vs ToolCall). Includes persistent chat sessions with per-user history stored in the KnowledgeBase.
 

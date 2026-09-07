@@ -525,13 +525,15 @@ loses **both**. As `dora`, the same unchecked write is refused too.
 
 | # | Behaviour | Where | You should see |
 |---|---|---|---|
-| **P1** | MCP cannot execute tools | external MCP client, any tool on `/mcp/*` | an error explaining that the endpoint authenticates nobody, so the call has no user to authorize, and that it is refused rather than run as the system. Issue #261; `TestMcpToolContexts` in `tl-ai-mcp-server` holds the message |
+| **P1** | `/mcp/*` is not served at all | `curl -i http://localhost:8080/tl-ai-demo/mcp` | **HTTP 503** and a message naming the switch: `MCPServerService` is not started, the endpoint is off by default because it authenticates nobody, and enabling the module `MCPServerService$Module` switches it on. Issue #261; [mcp-endpoint.md](../../../doc/security/mcp-endpoint.md) explains what enabling it publishes. Should you enable it, tool calls are refused on top of that - unconditionally, whatever the `<tool-access>` policy says; `TestMcpToolContexts` in `tl-ai-mcp-server` holds that message |
 | **P2** | a run with no account does not start | test | `SecDemoBackgroundAccessTest.testARunWithoutAPrincipalCannotBeBuilt` is green. An agent definition cannot loosen anything either: a tool the acting user is denied stays denied whatever the definition carries |
 
 > The MCP **resource** surface (`toplogic://instance/...`) serializes instances the way the data tools
 > used to, and has not been through the read filter of [5.3](#53-read-filtering---what-a-permitted-tool-then-discloses-issue-289).
-> It is closed today only because the endpoint authenticates nobody; it needs the same chokepoint before
-> it authenticates anybody.
+> No `<tool-access>` policy ever applied to it, and its reads happen in a system interaction, so model
+> access rights are bypassed as well. It is closed today only by the endpoint **not being served**; it
+> needs the same chokepoint before it authenticates anybody. That is why P1 is a switched-off module
+> and not merely a refusal.
 
 ---
 

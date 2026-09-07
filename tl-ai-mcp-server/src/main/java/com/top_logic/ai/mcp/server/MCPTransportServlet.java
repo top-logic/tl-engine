@@ -28,6 +28,22 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class MCPTransportServlet extends HttpServlet {
 
+	/**
+	 * Answer for a request that arrives while {@link MCPServerService} is not started.
+	 *
+	 * <p>
+	 * The servlet is registered statically, so {@code /mcp/*} is mapped in every application that has
+	 * this module on its classpath - including the ones that leave the service switched off, which is
+	 * the shipped state. Naming the switch in the answer keeps that state diagnosable: an
+	 * administrator who did not mean to disable the endpoint learns what to turn on, instead of
+	 * debugging a bare 503.
+	 * </p>
+	 */
+	static final String SERVICE_DISABLED_MESSAGE =
+		"MCP server not available: MCPServerService is not started. This endpoint is off by default,"
+			+ " because it authenticates nobody (issue #261); enable the module"
+			+ " com.top_logic.ai.mcp.server.MCPServerService$Module to switch it on.";
+
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
@@ -37,7 +53,7 @@ public class MCPTransportServlet extends HttpServlet {
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		MCPServerService service = MCPServerService.getInstance();
 		if (service == null) {
-			resp.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "MCP server not available");
+			resp.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, SERVICE_DISABLED_MESSAGE);
 			return;
 		}
 

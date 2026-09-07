@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 
 /**
@@ -329,6 +330,86 @@ public class TestConversationLogListener extends TestCase {
 		assertEquals(45, turn.cumulativeUsage().outputTokens());
 	}
 
+	/**
+	 * The continuity token of a completed turn is written into the recorded
+	 * {@link Part.ThinkingPart}.
+	 *
+	 * <p>
+	 * The provider only reveals the token when the thinking block is finished, which is after the
+	 * deltas that built the part have been flushed. Without the backfill a reloaded session replays
+	 * the thinking text without its token, and the provider can no longer continue its own
+	 * reasoning.
+	 * </p>
+	 */
+	public void testContinuityTokenBackfilledIntoThinkingPart() {
+		Instant now = Instant.now();
+		_log.startTurn();
+		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "Let me "));
+		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "think..."));
+		// Flushes the thinking buffer into a part, as the real event order does.
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}"));
+
+		Part.ThinkingPart recorded = onlyThinkingPart(_log.currentTurn());
+		assertNull("The token is unknown while the deltas stream.", recorded.continuityToken());
+
+		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY,
+			List.of(new ThinkingContent("Let me think...", "sig-1"))));
+
+		Part.ThinkingPart backfilled = onlyThinkingPart(_log.currentTurn());
+		assertEquals("The provider's continuity token has to reach the recorded part.",
+			"sig-1", backfilled.continuityToken());
+		assertEquals("The part is corrected in place, not replaced by a new one.",
+			recorded.id(), backfilled.id());
+		assertEquals(recorded.timestamp(), backfilled.timestamp());
+		assertEquals("Let me think...", backfilled.text());
+	}
+
+	/** A turn whose thinking carries no token leaves the recorded part untouched. */
+	public void testMissingContinuityTokenLeavesThinkingPartUntouched() {
+		Instant now = Instant.now();
+		_log.startTurn();
+		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "Thinking"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}"));
+
+		Part.ThinkingPart recorded = onlyThinkingPart(_log.currentTurn());
+
+		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY,
+			List.of(new ThinkingContent("Thinking", null))));
+
+		Part.ThinkingPart after = onlyThinkingPart(_log.currentTurn());
+		assertNull("Nothing to backfill means nothing to change.", after.continuityToken());
+		assertEquals(recorded.id(), after.id());
+		assertEquals("Thinking", after.text());
+	}
+
+	/**
+	 * Thinking parts and thinking contents are paired positionally, as far as both sides reach.
+	 *
+	 * <p>
+	 * A part is only recorded once its deltas are flushed, so the turn may hold fewer parts than
+	 * the completed message holds thinking blocks. The surplus is dropped rather than mispaired.
+	 * </p>
+	 */
+	public void testContinuityTokenBackfillPairsWhatBothSidesHave() {
+		Instant now = Instant.now();
+		_log.startTurn();
+		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "First"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}"));
+
+		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY,
+			List.of(new ThinkingContent("First", "sig-1"), new ThinkingContent("Second", "sig-2"))));
+
+		List<Part.ThinkingPart> parts = thinkingParts(_log.currentTurn());
+		assertEquals("The second block has no recorded part yet.", 1, parts.size());
+		assertEquals("sig-1", parts.get(0).continuityToken());
+	}
+
 	/** recordInteraction() creates and resolves InteractionParts. */
 	public void testInteractionRecording() {
 		_log.startTurn();
@@ -344,5 +425,18 @@ public class TestConversationLogListener extends TestCase {
 		_listener.resolveInteraction(id, "Postgres");
 		Part.InteractionPart resolved = (Part.InteractionPart) _log.currentTurn().findPart(id);
 		assertEquals("Postgres", resolved.userResponse());
+	}
+
+	private static Part.ThinkingPart onlyThinkingPart(Turn turn) {
+		List<Part.ThinkingPart> parts = thinkingParts(turn);
+		assertEquals("Expected exactly one thinking part.", 1, parts.size());
+		return parts.get(0);
+	}
+
+	private static List<Part.ThinkingPart> thinkingParts(Turn turn) {
+		return turn.assistantParts().stream()
+			.filter(Part.ThinkingPart.class::isInstance)
+			.map(Part.ThinkingPart.class::cast)
+			.toList();
 	}
 }

@@ -195,6 +195,22 @@ public class ConversationLogListener implements AgentEventListener {
 		}
 	}
 
+	/**
+	 * Writes the continuity tokens of a completed turn into the {@link Part.ThinkingPart}s recorded
+	 * for it.
+	 *
+	 * <p>
+	 * The parts are built from streamed deltas, which carry no token - the provider only reveals it
+	 * once the thinking block is complete. Without this correction a reloaded session replays the
+	 * thinking text without its token, and the provider cannot continue its own reasoning.
+	 * </p>
+	 *
+	 * <p>
+	 * Parts and contents are paired positionally as far as both sides reach: a part exists only
+	 * once its deltas were flushed, so the completed message may hold more thinking blocks than the
+	 * turn holds parts.
+	 * </p>
+	 */
 	private void backfillContinuityTokens(Turn turn, List<ContentPart> contentParts) {
 		List<ThinkingContent> thinkingContents = contentParts.stream()
 			.filter(ThinkingContent.class::isInstance)
@@ -212,11 +228,8 @@ public class ConversationLogListener implements AgentEventListener {
 			String token = thinkingContents.get(i).continuityToken();
 			if (token != null) {
 				Part.ThinkingPart old = thinkingParts.get(i);
-				int idx = turn.assistantParts().indexOf(old);
-				if (idx >= 0) {
-					turn.assistantParts().set(idx, new Part.ThinkingPart(
-						old.id(), old.timestamp(), old.text(), token));
-				}
+				turn.updatePart(old.id(), new Part.ThinkingPart(
+					old.id(), old.timestamp(), old.text(), token));
 			}
 		}
 	}

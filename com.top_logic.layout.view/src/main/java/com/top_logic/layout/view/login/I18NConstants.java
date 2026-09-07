@@ -94,6 +94,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_MFA_REQUIRED__USER;
 
+	/**
+	 * @en Two-factor authentication is not allowed for "{0}".
+	 */
+	public static ResKey1 ERROR_MFA_NOT_ALLOWED__USER;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

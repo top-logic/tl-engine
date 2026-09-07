@@ -97,11 +97,12 @@
 					</button>
 
 					<!--
-						Enabling asks the next login to set the second factor up, so there is
-						nothing to enter here; disabling takes it off again. Each is offered only in
-						the state where it means something. An account that is required to use a
-						second factor cannot switch it off, which the action itself refuses - that
-						is a question about the account, not about this view.
+						Setting a second factor up happens here and now, in the same enrollment
+						dialog the login flow uses: the account keeps its requirement, since a
+						factor the user chose is one they may drop again. Each button is offered
+						only in the state where it means something - by whether a secret is stored,
+						which is what having a second factor is. An account required to use one
+						keeps it whatever this view offers, which the action itself enforces.
 					-->
 					<button>
 						<action class="com.top_logic.layout.view.command.GenericViewCommand"
@@ -109,13 +110,13 @@
 							input="account"
 						>
 							<label>
-								<en>Enable two-factor authentication</en>
-								<de>Zwei-Faktor-Authentifizierung aktivieren</de>
+								<en>Set up two-factor authentication</en>
+								<de>Zwei-Faktor-Authentifizierung einrichten</de>
 							</label>
 							<executability>
 								<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) == null"/>
 							</executability>
-							<enable-mfa/>
+							<enroll-mfa/>
 						</action>
 					</button>
 					<button>
@@ -124,8 +125,8 @@
 							input="account"
 						>
 							<label>
-								<en>Disable two-factor authentication</en>
-								<de>Zwei-Faktor-Authentifizierung deaktivieren</de>
+								<en>Switch two-factor authentication off</en>
+								<de>Zwei-Faktor-Authentifizierung abschalten</de>
 							</label>
 							<executability>
 								<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null"/>

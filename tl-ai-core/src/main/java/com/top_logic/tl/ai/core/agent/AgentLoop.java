@@ -1138,7 +1138,8 @@ public class AgentLoop {
 
 		// All security and approval gates passed — signal that the call is about to run.
 		emit(listener, new AgentEvent.ToolCallStarted(runId, turn, now(),
-			toolCall.id(), toolCall.name(), toolCall.arguments()));
+			toolCall.id(), toolCall.name(), toolCall.arguments(),
+			tool != null ? tool.mode() : null));
 
 		// Ensure transaction is open before executing a write tool.
 		// Done here (after all security gates) so denied tools never open a transaction.

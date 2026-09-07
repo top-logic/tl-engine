@@ -20,6 +20,7 @@ import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Drives {@link ChatSSEHandler} over its real delivery path - register, resolve through
@@ -76,7 +77,7 @@ public class TestChatSSEDelivery extends TestCase {
 			new AgentEvent.RunStarted("run1", 0, Instant.now(), "claude-opus-5"),
 			new AgentEvent.TurnStarted("run1", 1, Instant.now()),
 			new AgentEvent.TextDelta("run1", 1, Instant.now(), "Hello"),
-			new AgentEvent.ToolCallStarted("run1", 1, Instant.now(), "tc-1", "search", "{}"),
+			new AgentEvent.ToolCallStarted("run1", 1, Instant.now(), "tc-1", "search", "{}", ToolMode.READ),
 			new AgentEvent.ApprovalRequired("run1", 1, Instant.now(), "tc-2", "ar-1", "write", "{}",
 				"Writes data"),
 			new AgentEvent.ApprovalResolved("run1", 1, Instant.now(), "tc-2", "ar-1",

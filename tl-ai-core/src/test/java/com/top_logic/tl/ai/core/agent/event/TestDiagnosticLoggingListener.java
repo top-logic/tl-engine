@@ -17,6 +17,7 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tests for {@link DiagnosticLoggingListener}.
@@ -44,7 +45,7 @@ public class TestDiagnosticLoggingListener extends TestCase {
 			new AgentEvent.TurnStarted(RUN, 1, T0),
 			new AgentEvent.TextDelta(RUN, 1, T0, "hello"),
 			new AgentEvent.ThinkingDelta(RUN, 1, T0, "thinking"),
-			new AgentEvent.ToolCallStarted(RUN, 1, T0, "tc1", "search", "{\"q\":\"x\"}"),
+			new AgentEvent.ToolCallStarted(RUN, 1, T0, "tc1", "search", "{\"q\":\"x\"}", ToolMode.READ),
 			new AgentEvent.ToolProgress(RUN, 1, T0, "tc1", "search", "working"),
 			new AgentEvent.ToolCallResultTruncated(RUN, 1, T0, "tc1", "search", 5000, 2000),
 			new AgentEvent.ToolCallCompleted(RUN, 1, T0, "tc1", "search", "result", Duration.ofMillis(42)),

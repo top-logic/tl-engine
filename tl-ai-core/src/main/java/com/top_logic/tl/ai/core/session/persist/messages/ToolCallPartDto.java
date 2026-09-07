@@ -21,6 +21,9 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getArgsJson() */
 	public static final String ARGS_JSON__PROP = "argsJson";
 
+	/** @see #getMode() */
+	public static final String MODE__PROP = "mode";
+
 	/** @see #getStatus() */
 	public static final String STATUS__PROP = "status";
 
@@ -42,6 +45,8 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	private String _toolName = "";
 
 	private String _argsJson = "";
+
+	private String _mode = "";
 
 	private String _status = "";
 
@@ -102,6 +107,29 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** Internal setter for {@link #getArgsJson()} without chain call utility. */
 	protected final void internalSetArgsJson(String value) {
 		_argsJson = value;
+	}
+
+	/**
+	 * What kind of state change the tool makes (the {@code ToolMode} name).
+	 *
+	 * <p>Empty when unknown - a log written before the mode was recorded, or a tool that could
+	 * not be resolved.</p>
+	 */
+	public final String getMode() {
+		return _mode;
+	}
+
+	/**
+	 * @see #getMode()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto setMode(String value) {
+		internalSetMode(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getMode()} without chain call utility. */
+	protected final void internalSetMode(String value) {
+		_mode = value;
 	}
 
 	/**
@@ -234,6 +262,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 		java.util.List<String> local = java.util.Arrays.asList(
 			TOOL_NAME__PROP, 
 			ARGS_JSON__PROP, 
+			MODE__PROP, 
 			STATUS__PROP, 
 			RESULT__PROP, 
 			RESULT_REF__PROP, 
@@ -266,6 +295,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 		switch (field) {
 			case TOOL_NAME__PROP: return getToolName();
 			case ARGS_JSON__PROP: return getArgsJson();
+			case MODE__PROP: return getMode();
 			case STATUS__PROP: return getStatus();
 			case RESULT__PROP: return getResult();
 			case RESULT_REF__PROP: return getResultRef();
@@ -281,6 +311,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 		switch (field) {
 			case TOOL_NAME__PROP: internalSetToolName((String) value); break;
 			case ARGS_JSON__PROP: internalSetArgsJson((String) value); break;
+			case MODE__PROP: internalSetMode((String) value); break;
 			case STATUS__PROP: internalSetStatus((String) value); break;
 			case RESULT__PROP: internalSetResult((String) value); break;
 			case RESULT_REF__PROP: internalSetResultRef((String) value); break;
@@ -309,6 +340,8 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 		out.value(getToolName());
 		out.name(ARGS_JSON__PROP);
 		out.value(getArgsJson());
+		out.name(MODE__PROP);
+		out.value(getMode());
 		out.name(STATUS__PROP);
 		out.value(getStatus());
 		out.name(RESULT__PROP);
@@ -328,6 +361,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 		switch (field) {
 			case TOOL_NAME__PROP: setToolName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case ARGS_JSON__PROP: setArgsJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case MODE__PROP: setMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case STATUS__PROP: setStatus(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case RESULT__PROP: setResult(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case RESULT_REF__PROP: setResultRef(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;

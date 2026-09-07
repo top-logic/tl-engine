@@ -16,6 +16,7 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tests for {@link ConversationLogListener}.
@@ -81,7 +82,7 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.TextDelta("r1", 1, now, "I'll read "));
 		_listener.onEvent(new AgentEvent.TextDelta("r1", 1, now, "that file."));
 
-		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}", ToolMode.READ));
 
 		Turn turn = _log.currentTurn();
 		List<Part> parts = turn.assistantParts();
@@ -113,7 +114,7 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
 		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile",
-			"{\"path\":\"/tmp\"}"));
+			"{\"path\":\"/tmp\"}", ToolMode.READ));
 
 		Turn turn = _log.currentTurn();
 		Part.ToolCallPart running = (Part.ToolCallPart) turn.findPart("tc1");
@@ -134,7 +135,8 @@ public class TestConversationLogListener extends TestCase {
 		_log.startTurn();
 		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
-		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "writeFile", "{}"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "writeFile", "{}",
+			ToolMode.DATA_WRITE));
 		_listener.onEvent(new AgentEvent.ToolCallFailed("r1", 1, now, "tc1", "writeFile",
 			"Permission denied", Duration.ofMillis(5)));
 
@@ -171,7 +173,8 @@ public class TestConversationLogListener extends TestCase {
 		_log.startTurn();
 		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
-		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "createDocument", "{}"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "createDocument", "{}",
+			ToolMode.DATA_WRITE));
 		_listener.onEvent(new AgentEvent.TransactionBegan("r1", 1, now));
 		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 1, now, "tc1", "createDocument",
 			"{uuid=4f2c}", Duration.ofMillis(10)));
@@ -204,14 +207,16 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
 
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
-		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "createDocument", "{}"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "createDocument", "{}",
+			ToolMode.DATA_WRITE));
 		_listener.onEvent(new AgentEvent.TransactionBegan("r1", 1, now));
 		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 1, now, "tc1", "createDocument",
 			"first", Duration.ofMillis(10)));
 		_listener.onEvent(new AgentEvent.TransactionCommitted("r1", 1, now, 4711));
 
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 2, now));
-		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 2, now, "tc2", "createDocument", "{}"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 2, now, "tc2", "createDocument", "{}",
+			ToolMode.DATA_WRITE));
 		_listener.onEvent(new AgentEvent.TransactionBegan("r1", 2, now));
 		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 2, now, "tc2", "createDocument",
 			"second", Duration.ofMillis(10)));
@@ -231,7 +236,8 @@ public class TestConversationLogListener extends TestCase {
 		_log.startTurn();
 		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
-		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "createDocument", "{}"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "createDocument", "{}",
+			ToolMode.DATA_WRITE));
 		_listener.onEvent(new AgentEvent.TransactionBegan("r1", 1, now));
 		_listener.onEvent(new AgentEvent.ToolCallFailed("r1", 1, now, "tc1", "createDocument",
 			"Name too long", Duration.ofMillis(3)));
@@ -289,7 +295,7 @@ public class TestConversationLogListener extends TestCase {
 		// AgentLoop turn 1: text + tool call
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
 		_listener.onEvent(new AgentEvent.TextDelta("r1", 1, now, "Reading file..."));
-		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}", ToolMode.READ));
 		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 1, now, "tc1", "readFile",
 			"contents", Duration.ofMillis(10)));
 		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, new TokenUsage(50, 20, 0, 0, 0), List.of()));
@@ -297,7 +303,8 @@ public class TestConversationLogListener extends TestCase {
 		// AgentLoop turn 2: text + tool call
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 2, now));
 		_listener.onEvent(new AgentEvent.TextDelta("r1", 2, now, "Now writing..."));
-		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 2, now, "tc2", "writeFile", "{}"));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 2, now, "tc2", "writeFile", "{}",
+			ToolMode.DATA_WRITE));
 		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 2, now, "tc2", "writeFile",
 			"ok", Duration.ofMillis(20)));
 		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 2, now, new TokenUsage(40, 15, 0, 0, 0), List.of()));

@@ -15,6 +15,7 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tests for {@link ConversationLogSerializer}.
@@ -33,7 +34,7 @@ public class TestConversationLogSerializer extends TestCase {
 			new Part.TextPart("u1", Instant.ofEpochMilli(1000), "What is 2+2?")));
 
 		Part.ToolCallPart tc = Part.ToolCallPart.started("tc1", Instant.ofEpochMilli(1001),
-			"calculator", "{\"expr\":\"2+2\"}");
+			"calculator", "{\"expr\":\"2+2\"}", ToolMode.READ);
 		turn1.addAssistantPart(tc.completed("4", Duration.ofMillis(10)));
 		turn1.addAssistantPart(new Part.TextPart("p1", Instant.ofEpochMilli(1002), "The answer is 4."));
 		turn1.addUsage(new TokenUsage(100, 50, 0, 80, 20));
@@ -77,6 +78,7 @@ public class TestConversationLogSerializer extends TestCase {
 
 		Part.ToolCallPart rtc = (Part.ToolCallPart) r1.assistantParts().get(0);
 		assertEquals("calculator", rtc.toolName());
+		assertEquals(ToolMode.READ, rtc.mode());
 		assertEquals(Part.ToolCallStatus.COMPLETED, rtc.status());
 		assertEquals("4", rtc.result());
 		assertEquals(10L, rtc.durationMs());
@@ -109,7 +111,7 @@ public class TestConversationLogSerializer extends TestCase {
 		Turn turn = log.startTurn();
 		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.now(), "Create a document")));
 		Part.ToolCallPart tc = Part.ToolCallPart.started("tc1", Instant.ofEpochMilli(1000),
-			"createDocument", "{\"name\":\"Q3\"}");
+			"createDocument", "{\"name\":\"Q3\"}", ToolMode.DATA_WRITE);
 		turn.addAssistantPart(tc.completed("{uuid=4f2c}", Duration.ofMillis(10))
 			.rolledBack("Database operation failed."));
 		turn.addAssistantPart(new Part.TransactionPart("tx1", Instant.ofEpochMilli(1001),
@@ -123,6 +125,7 @@ public class TestConversationLogSerializer extends TestCase {
 
 		Part.ToolCallPart rtc = (Part.ToolCallPart) parts.get(0);
 		assertEquals(Part.ToolCallStatus.ROLLED_BACK, rtc.status());
+		assertEquals(ToolMode.DATA_WRITE, rtc.mode());
 		assertEquals("Database operation failed.", rtc.errorMessage());
 		assertEquals("{uuid=4f2c}", rtc.result());
 		assertEquals(10L, rtc.durationMs());
@@ -150,5 +153,49 @@ public class TestConversationLogSerializer extends TestCase {
 		assertEquals("Pick one", rip.question());
 		assertEquals(3, rip.options().size());
 		assertEquals("B", rip.userResponse());
+	}
+
+	/**
+	 * A tool call read from a log that predates the mode field restores with an unknown mode.
+	 *
+	 * <p>
+	 * The literal below is the shape a log written before {@link Part.ToolCallPart#mode()} existed
+	 * has on disk: the {@code toolCallData} object simply has no {@code mode} member. Deserializing
+	 * it must not fail and must not invent a mode - {@code null} is what
+	 * {@code ConversationLogListener#retractCompletedWrites} treats as a write.
+	 * </p>
+	 */
+	public void testToolCallWithoutModeFieldRestoresAsUnknown() {
+		String legacyJson = "{\"turns\":[{"
+			+ "\"id\":\"t1\",\"turnNumber\":1,\"timestamp\":1000,"
+			+ "\"assistantParts\":[{"
+			+ "\"id\":\"tc1\",\"timestamp\":1001,\"type\":\"tool_call\","
+			+ "\"toolCallData\":{\"toolName\":\"createDocument\",\"argsJson\":\"{}\","
+			+ "\"status\":\"COMPLETED\",\"result\":\"{uuid=4f2c}\",\"durationMs\":10}"
+			+ "}]}]}";
+
+		ConversationLog restored = ConversationLogSerializer.fromJson(legacyJson);
+		Part.ToolCallPart rtc =
+			(Part.ToolCallPart) restored.turns().get(0).assistantParts().get(0);
+		assertEquals("createDocument", rtc.toolName());
+		assertEquals(Part.ToolCallStatus.COMPLETED, rtc.status());
+		assertNull("A log without the field must not claim to know the mode.", rtc.mode());
+	}
+
+	/** An unknown mode survives a round trip as unknown rather than becoming a value. */
+	public void testUnknownModeRoundTripsAsUnknown() {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.ofEpochMilli(1000), "Do it")));
+		turn.addAssistantPart(Part.ToolCallPart.started("tc1", Instant.ofEpochMilli(1001),
+			"unresolvedTool", "{}", null));
+		turn.addUsage(TokenUsage.EMPTY);
+		log.completeTurn();
+
+		ConversationLog restored = ConversationLogSerializer.fromJson(
+			ConversationLogSerializer.toJson(log));
+		Part.ToolCallPart rtc =
+			(Part.ToolCallPart) restored.turns().get(0).assistantParts().get(0);
+		assertNull(rtc.mode());
 	}
 }

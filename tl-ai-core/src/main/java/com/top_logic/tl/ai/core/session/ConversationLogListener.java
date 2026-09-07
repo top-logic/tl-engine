@@ -242,7 +242,7 @@ public class ConversationLogListener implements AgentEventListener {
 			flushTextBuffer(turn);
 			flushThinkingBuffer(turn);
 			Part.ToolCallPart part = Part.ToolCallPart.started(
-				e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson());
+				e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson(), e.mode());
 			turn.addAssistantPart(part);
 			Set<String> open = _openTransactionCalls;
 			if (open != null) {
@@ -278,7 +278,7 @@ public class ConversationLogListener implements AgentEventListener {
 		if (turn != null) {
 			flushTextBuffer(turn);
 			Part.ToolCallPart denied = Part.ToolCallPart.denied(
-				e.toolCallId(), e.timestamp(), e.toolName(), "", e.reason());
+				e.toolCallId(), e.timestamp(), e.toolName(), "", null, e.reason());
 			turn.addAssistantPart(denied);
 		}
 	}
@@ -409,12 +409,8 @@ public class ConversationLogListener implements AgentEventListener {
 	 * </p>
 	 *
 	 * <p>
-	 * A read-only tool call that happens to sit in the window is retracted too, because neither the
-	 * event nor the {@link Part.ToolCallPart} records the tool's
-	 * {@link com.top_logic.tl.ai.tool.api.ToolMode}: nothing here can tell a read from a write. That
-	 * costs a reloaded conversation the read's result and is deliberately preferred over the
-	 * alternative, which is telling the model a write landed that did not - the retraction the
-	 * replay writes therefore also invites re-reading.
+	 * A read-only tool call that happens to sit in the window is retracted too: the mode is now
+	 * recorded on the {@link Part.ToolCallPart}, but nothing here reads it yet.
 	 * </p>
 	 */
 	private static void retractCompletedWrites(Turn turn, Set<String> openCalls, String reason) {
@@ -652,7 +648,7 @@ public class ConversationLogListener implements AgentEventListener {
 			} else if (event instanceof AgentEvent.ToolCallStarted e) {
 				flushChildBuffers(dp);
 				dp.childParts().add(Part.ToolCallPart.started(
-					e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson()));
+					e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson(), e.mode()));
 				forwardToParent(event);
 			} else if (event instanceof AgentEvent.ToolCallCompleted e) {
 				updateChildPart(dp, e.toolCallId(), p -> {

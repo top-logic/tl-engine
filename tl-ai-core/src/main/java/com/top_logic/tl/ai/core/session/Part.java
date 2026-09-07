@@ -12,6 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * A content unit within a {@link Turn}. Each variant represents a different type
@@ -75,6 +76,11 @@ public sealed interface Part {
 	 * @param timestamp when the tool call was created
 	 * @param toolName name of the invoked tool
 	 * @param argsJson tool arguments as JSON
+	 * @param mode what kind of state change the tool makes; {@code null} when unknown, which is the
+	 *        case for a call restored from a log written before the mode was recorded and for a
+	 *        tool that could not be resolved. Consumers that decide by mode must treat
+	 *        {@code null} as the unsafe case, see
+	 *        {@code ConversationLogListener#retractCompletedWrites}.
 	 * @param status current lifecycle status
 	 * @param result tool execution result, or {@code null}
 	 * @param errorMessage error details, or the rollback reason for
@@ -83,34 +89,34 @@ public sealed interface Part {
 	 * @param durationMs execution time in milliseconds
 	 */
 	record ToolCallPart(
-			String id, Instant timestamp, String toolName, String argsJson,
+			String id, Instant timestamp, String toolName, String argsJson, ToolMode mode,
 			ToolCallStatus status, String result, String errorMessage,
 			String denyReason, long durationMs
 	) implements Part {
 
 		/** Creates a new tool call in {@link ToolCallStatus#RUNNING} state. */
 		public static ToolCallPart started(String id, Instant timestamp,
-				String toolName, String argsJson) {
-			return new ToolCallPart(id, timestamp, toolName, argsJson,
+				String toolName, String argsJson, ToolMode mode) {
+			return new ToolCallPart(id, timestamp, toolName, argsJson, mode,
 				ToolCallStatus.RUNNING, null, null, null, 0L);
 		}
 
 		/** Creates a tool call that was denied before execution. */
 		public static ToolCallPart denied(String id, Instant timestamp,
-				String toolName, String argsJson, String denyReason) {
-			return new ToolCallPart(id, timestamp, toolName, argsJson,
+				String toolName, String argsJson, ToolMode mode, String denyReason) {
+			return new ToolCallPart(id, timestamp, toolName, argsJson, mode,
 				ToolCallStatus.DENIED, null, null, denyReason, 0L);
 		}
 
 		/** Transitions this call to {@link ToolCallStatus#COMPLETED}. */
 		public ToolCallPart completed(String output, Duration duration) {
-			return new ToolCallPart(id, timestamp, toolName, argsJson,
+			return new ToolCallPart(id, timestamp, toolName, argsJson, mode,
 				ToolCallStatus.COMPLETED, output, null, null, duration.toMillis());
 		}
 
 		/** Transitions this call to {@link ToolCallStatus#FAILED}. */
 		public ToolCallPart failed(String error, Duration duration) {
-			return new ToolCallPart(id, timestamp, toolName, argsJson,
+			return new ToolCallPart(id, timestamp, toolName, argsJson, mode,
 				ToolCallStatus.FAILED, null, error, null, duration.toMillis());
 		}
 
@@ -135,7 +141,7 @@ public sealed interface Part {
 		 *        Why the turn was rolled back.
 		 */
 		public ToolCallPart rolledBack(String reason) {
-			return new ToolCallPart(id, timestamp, toolName, argsJson,
+			return new ToolCallPart(id, timestamp, toolName, argsJson, mode,
 				ToolCallStatus.ROLLED_BACK, result, reason, null, durationMs);
 		}
 	}

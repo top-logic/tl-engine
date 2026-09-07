@@ -14,6 +14,7 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Sealed hierarchy of lifecycle events emitted by an agent run.
@@ -155,9 +156,12 @@ public sealed interface AgentEvent {
 	 * @param toolCallId tool call identifier
 	 * @param toolName name of the tool
 	 * @param argsJson tool arguments as JSON
+	 * @param mode what kind of state change the tool makes, or {@code null} if the tool could not
+	 *        be resolved
 	 */
 	record ToolCallStarted(String runId, int turnNumber, Instant timestamp,
-			String toolCallId, String toolName, String argsJson) implements AgentEvent {}
+			String toolCallId, String toolName, String argsJson, ToolMode mode)
+			implements AgentEvent {}
 
 	/**
 	 * Emitted after a tool completes successfully.

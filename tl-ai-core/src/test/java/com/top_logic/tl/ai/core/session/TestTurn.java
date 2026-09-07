@@ -12,6 +12,7 @@ import java.util.List;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tests for {@link Turn}.
@@ -33,7 +34,7 @@ public class TestTurn extends TestCase {
 	public void testUpdatePart() {
 		Turn turn = new Turn("t1", 1);
 		Part.ToolCallPart started = Part.ToolCallPart.started("tc1", Instant.now(),
-			"readFile", "{}");
+			"readFile", "{}", ToolMode.READ);
 		turn.addAssistantPart(started);
 		assertEquals(Part.ToolCallStatus.RUNNING,
 			((Part.ToolCallPart) turn.findPart("tc1")).status());
@@ -59,7 +60,7 @@ public class TestTurn extends TestCase {
 		assertEquals(1, counts[0]);
 		assertEquals(0, counts[1]);
 
-		Part.ToolCallPart tc = Part.ToolCallPart.started("tc1", Instant.now(), "read", "{}");
+		Part.ToolCallPart tc = Part.ToolCallPart.started("tc1", Instant.now(), "read", "{}", ToolMode.READ);
 		turn.addAssistantPart(tc);
 		assertEquals(2, counts[0]);
 

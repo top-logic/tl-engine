@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 import junit.framework.TestCase;
 
@@ -36,7 +37,7 @@ public class TestPart extends TestCase {
 	public void testToolCallPartLifecycle() {
 		Instant now = Instant.now();
 		Part.ToolCallPart running = Part.ToolCallPart.started("tc1", now, "readFile",
-			"{\"path\":\"/tmp/test\"}");
+			"{\"path\":\"/tmp/test\"}", ToolMode.READ);
 		assertEquals(Part.ToolCallStatus.RUNNING, running.status());
 		assertNull(running.result());
 		assertEquals(0L, running.durationMs());
@@ -51,12 +52,16 @@ public class TestPart extends TestCase {
 		assertEquals("File not found", failed.errorMessage());
 
 		Part.ToolCallPart denied = Part.ToolCallPart.denied("tc2", now, "deleteFile",
-			"{}", "User denied: too risky");
+			"{}", ToolMode.DATA_WRITE, "User denied: too risky");
 		assertEquals(Part.ToolCallStatus.DENIED, denied.status());
 		assertEquals("User denied: too risky", denied.denyReason());
 
+		assertEquals("A transition must not reset the mode.", ToolMode.READ, completed.mode());
+		assertEquals("A transition must not reset the mode.", ToolMode.READ, failed.mode());
+
 		Part.ToolCallPart rolledBack = completed.rolledBack("Database operation failed.");
 		assertEquals(Part.ToolCallStatus.ROLLED_BACK, rolledBack.status());
+		assertEquals("A transition must not reset the mode.", ToolMode.READ, rolledBack.mode());
 		assertEquals("Database operation failed.", rolledBack.errorMessage());
 		assertEquals("The claim is kept next to its retraction.", "file contents here",
 			rolledBack.result());

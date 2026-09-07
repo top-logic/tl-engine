@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.UriPattern;
 import com.top_logic.ai.mcp.server.util.JsonResponseBuilder;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
@@ -111,7 +111,7 @@ public class TypeUsagesResource {
 	 * Handles requests to read a type's usages resource.
 	 *
 	 * <p>
-	 * Sets up TopLogic thread context and delegates to {@link #readTypeUsages(McpSchema.ReadResourceRequest)}.
+	 * Establishes the calling account's TopLogic context and delegates to {@link #readTypeUsages(McpSchema.ReadResourceRequest)}.
 	 * </p>
 	 *
 	 * @param exchange
@@ -124,8 +124,9 @@ public class TypeUsagesResource {
 			McpSyncServerExchange exchange,
 			McpSchema.ReadResourceRequest request) {
 
-		// Wrap database access in system interaction context
-		return ThreadContextManager.inSystemInteraction(TypeUsagesResource.class, () -> readTypeUsages(request));
+		// Read as the account this request was authenticated as, so that model access rights
+		// apply. The system interaction this used to open is the engine's super-user bypass.
+		return McpCallerContext.inCallerContext(() -> readTypeUsages(request));
 	}
 
 	/**

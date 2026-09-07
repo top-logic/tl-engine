@@ -10,7 +10,6 @@ import java.io.StringWriter;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.json.gstream.JsonWriter;
-import com.top_logic.model.TLObject;
 import com.top_logic.util.Resources;
 
 /**
@@ -166,40 +165,6 @@ public final class JsonResponseBuilder {
 		ResKey tooltipKey = resourceKey.tooltip();
 		String description = resources.getString(tooltipKey, null);
 		writeOptionalField(json, "description", description);
-	}
-
-	// ========== TLObject Reference Writing ==========
-
-	/**
-	 * Writes a TLObject reference as a structured object with type and TID.
-	 *
-	 * <p>
-	 * Used in {@code InstanceResource} to format references to other objects. Writes:
-	 * </p>
-	 *
-	 * <pre>
-	 * {
-	 *   "type": "reference",
-	 *   "tid": "...",
-	 *   "refType": "..."  // if type is available
-	 * }
-	 * </pre>
-	 *
-	 * @param json
-	 *        The {@code JsonWriter} to write to.
-	 * @param tlObject
-	 *        The TLObject to write as a reference.
-	 * @throws IOException
-	 *         If writing fails.
-	 */
-	public static void writeTLObjectReference(JsonWriter json, TLObject tlObject) throws IOException {
-		json.beginObject();
-		json.name("type").value("reference");
-		json.name("tid").value(tlObject.tId().toString());
-		if (tlObject.tType() != null) {
-			json.name("refType").value(tlObject.tType().getName());
-		}
-		json.endObject();
 	}
 
 	// ========== Error Response Building ==========

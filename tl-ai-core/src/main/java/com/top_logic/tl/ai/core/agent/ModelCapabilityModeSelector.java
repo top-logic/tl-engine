@@ -22,6 +22,7 @@ import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.util.Pointer;
+import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 
@@ -92,17 +93,18 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 		}
 
 		String agentName = (String) object.tValueByName("name");
-		String model;
+		AgentModelAssignment assignment;
 		try {
-			model = registry.resolveModel(agentName != null ? agentName : "");
+			assignment = registry.resolveModelAssignment(agentName != null ? agentName : "");
 		} catch (IllegalStateException e) {
 			// No model configured for this agent and no default — hide provider-specific fields.
 			return FormVisibility.HIDDEN;
 		}
+		String model = assignment.model();
 
 		// Provider check
 		if (!_providers.isEmpty()) {
-			String providerId = registry.getProviderId(model);
+			String providerId = registry.getProviderId(model, assignment.provider());
 			if (providerId == null || !_providers.contains(providerId)) {
 				return FormVisibility.HIDDEN;
 			}

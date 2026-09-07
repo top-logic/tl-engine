@@ -396,7 +396,7 @@ public class ChatSessionManager {
 		}
 		LLMProvider provider;
 		try {
-			provider = registry.buildProvider(defaultModel);
+			provider = registry.buildProvider(defaultModel, registry.getDefaultProvider());
 		} catch (IllegalStateException ex) {
 			Logger.warn("Default model '" + defaultModel + "' not found in any provider, falling back to truncation.",
 				ChatSessionManager.class);

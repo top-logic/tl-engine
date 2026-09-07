@@ -15,6 +15,8 @@ package com.top_logic.tl.ai.core.provider;
  * </p>
  *
  * @param model              the resolved model identifier (never {@code null})
+ * @param provider           the name of the provider serving the model, or {@code null} to let the
+ *                           model's only provider serve it
  * @param maxTokens          max output tokens per LLM call, or {@code null} for catalog default
  * @param contextWindow      context window size override, or {@code null} for catalog default
  * @param maxTurns           max agent loop turns, or {@code null} for default
@@ -33,6 +35,7 @@ package com.top_logic.tl.ai.core.provider;
  */
 public record AgentModelAssignment(
 		String model,
+		String provider,
 		Integer maxTokens,
 		Integer contextWindow,
 		Integer maxTurns,

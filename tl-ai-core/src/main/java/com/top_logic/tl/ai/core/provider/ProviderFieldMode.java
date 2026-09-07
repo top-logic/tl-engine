@@ -15,9 +15,9 @@ import com.top_logic.layout.form.model.FieldMode;
  * model's provider.
  *
  * <p>
- * Receives the model name as its single argument (via {@code @Ref(MODEL)}), resolves the
- * provider ID via {@link LLMService}, and returns {@link FieldMode#ACTIVE} if the
- * provider matches, {@link FieldMode#INVISIBLE} otherwise.
+ * Receives the model name and the provider serving it (via {@code @Ref(MODEL)} and
+ * {@code @Ref(PROVIDER)}), resolves the catalog provider ID via {@link LLMService}, and returns
+ * {@link FieldMode#ACTIVE} if the provider matches, {@link FieldMode#INVISIBLE} otherwise.
  * </p>
  */
 abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
@@ -30,6 +30,7 @@ abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 	@Override
 	public FieldMode invoke(Object... args) {
 		String model = arg(0, args);
+		String provider = arg(1, args);
 		if (model == null || model.isBlank()) {
 			return FieldMode.INVISIBLE;
 		}
@@ -37,7 +38,7 @@ abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 		if (registry == null) {
 			return FieldMode.INVISIBLE;
 		}
-		String providerId = registry.getProviderId(model);
+		String providerId = registry.getProviderId(model, provider);
 		if (providerId != null && providers().contains(providerId)) {
 			return FieldMode.ACTIVE;
 		}
@@ -46,7 +47,7 @@ abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 
 	@Override
 	public int getArgumentCount() {
-		return 1;
+		return 2;
 	}
 
 	@Override
@@ -76,6 +77,11 @@ abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 
 	/**
 	 * Shows field when the model supports temperature (i.e. is not a reasoning-only model).
+	 *
+	 * <p>
+	 * Takes only the model: which provider serves it does not change whether it accepts a
+	 * temperature. Hence not a {@link ProviderFieldMode}.
+	 * </p>
 	 */
 	public static class TemperatureFieldMode extends GenericFunction<FieldMode> {
 		@Override

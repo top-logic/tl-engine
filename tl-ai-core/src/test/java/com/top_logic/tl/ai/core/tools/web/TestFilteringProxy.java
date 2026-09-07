@@ -15,8 +15,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
@@ -361,6 +365,137 @@ public class TestFilteringProxy extends TestCase {
 	}
 
 	/**
+	 * <b>The relayed response is made single-request too.</b> Sending {@code Connection: close}
+	 * upstream is only half of that guarantee: an HTTP/1.1 server is free to ignore it and answer with
+	 * a {@code Content-Length} body and no close signal at all (this fixture does exactly that). The
+	 * client would then mark its connection <em>to the proxy</em> reusable and may send its next
+	 * request - for any origin at all - onto it, where the blind client-to-upstream pump would hand it
+	 * to <em>this</em> origin's already-checked server, along with that request's {@code Host} header
+	 * and cookies. So the relayed response head has to say {@code Connection: close} whatever the
+	 * server said.
+	 */
+	public void testRelayedResponseCarriesConnectionClose() throws IOException {
+		try (KeepAliveServer upstream = KeepAliveServer.start();
+				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, pinnedTo(upstream.port()))) {
+			try (Socket client = connectTo(proxy.port())) {
+				client.setSoTimeout(10_000);
+				send(client, "GET http://first.example/ HTTP/1.1\r\nHost: first.example\r\n\r\n");
+
+				InputStream in = client.getInputStream();
+				String head = readHead(in);
+				assertTrue("the answer is relayed back: " + statusLine(head),
+					head.startsWith("HTTP/1.1 200"));
+				assertEquals("the client is told the connection ends here, though the server did not: "
+					+ head, List.of("Connection: close"),
+					connectionHeaders(head));
+				assertTrue("the rest of the head is untouched: " + head,
+					head.contains("Content-Type: text/plain") && head.contains("Content-Length: 2"));
+				assertEquals("the body is delivered unchanged", "ok",
+					new String(in.readNBytes(2), StandardCharsets.UTF_8));
+			}
+		}
+	}
+
+	/**
+	 * <b>A request body still reaches the server before its answer is read.</b> The response head is
+	 * rewritten on the way back, and a relay that read it before it started forwarding the request body
+	 * would deadlock against every server that reads a {@code POST} before answering it - which is all
+	 * of them. {@link RecordingServer} is exactly that shape, so this exchange completing is the
+	 * assertion.
+	 */
+	public void testRequestBodyIsForwardedBeforeTheAnswerIsRead() throws IOException {
+		try (RecordingServer upstream = RecordingServer.serving("<html>accepted</html>");
+				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, pinnedTo(upstream))) {
+			String response = exchange(proxy, "POST http://fixture.example/submit HTTP/1.1\r\n"
+				+ "Host: fixture.example\r\nContent-Length: 9\r\n\r\nfield=one");
+
+			assertTrue("the answer comes back: " + statusLine(response), response.startsWith("HTTP/1.1 200"));
+			assertEquals("the body reached the server", List.of("field=one"), upstream.bodies());
+			assertTrue("and its answer is relayed whole", response.endsWith("<html>accepted</html>"));
+			assertEquals("made single-request like any other answer: " + headOf(response),
+				List.of("Connection: close"), connectionHeaders(headOf(response)));
+		}
+	}
+
+	/**
+	 * A server that already said {@code Connection: close} is relayed with that header once, not twice:
+	 * the upstream header is replaced rather than appended to, so the response the client parses stays
+	 * a well-formed one ({@link RecordingServer} answers {@code Connection: close} itself).
+	 */
+	public void testResponseAlreadySayingCloseIsNotDuplicated() throws IOException {
+		try (RecordingServer upstream = RecordingServer.serving("<html>fixture body</html>");
+				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, pinnedTo(upstream))) {
+			String response = exchange(proxy, "GET http://fixture.example/ HTTP/1.1\r\n"
+				+ "Host: fixture.example\r\n\r\n");
+
+			String head = headOf(response);
+			assertTrue("the answer is relayed back: " + statusLine(response),
+				response.startsWith("HTTP/1.1 200"));
+			assertEquals("the close signal appears exactly once: " + head, List.of("Connection: close"),
+				connectionHeaders(head));
+			assertTrue("the body is relayed back intact", response.endsWith("<html>fixture body</html>"));
+		}
+	}
+
+	/**
+	 * A server that explicitly asked for its connection to be kept alive does not get to contradict the
+	 * proxy either: its {@code Connection: keep-alive} is replaced, not left standing next to the close
+	 * signal, so the client is not handed a response that says both.
+	 */
+	public void testResponseAskingForKeepAliveIsOverridden() throws IOException {
+		try (KeepAliveServer upstream = KeepAliveServer.answering(List.of("Connection: keep-alive"), "ok");
+				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, pinnedTo(upstream.port()))) {
+			try (Socket client = connectTo(proxy.port())) {
+				client.setSoTimeout(10_000);
+				send(client, "GET http://first.example/ HTTP/1.1\r\nHost: first.example\r\n\r\n");
+
+				String head = readHead(client.getInputStream());
+				assertEquals("the server's keep-alive is replaced, not accompanied: " + head,
+					List.of("Connection: close"), connectionHeaders(head));
+			}
+		}
+	}
+
+	/**
+	 * <b>A large response is still streamed, not buffered whole.</b> Rewriting the response head must
+	 * not turn the relay into a store-and-forward one: these bodies are page payloads. The fixture
+	 * answers a body four times the proxy's pump buffer and then holds its tail back until this test
+	 * lets go, so a proxy that read the response to its end before relaying anything would deliver
+	 * neither a head nor a first chunk and the reads below would time out.
+	 */
+	public void testLargeResponseIsStreamedRatherThanBuffered() throws IOException {
+		int bodySize = 4 * FilteringProxy.PUMP_BUFFER_BYTES;
+		int firstChunk = FilteringProxy.PUMP_BUFFER_BYTES + 1;
+		byte[] body = pattern(bodySize);
+		try (TricklingServer upstream = TricklingServer.serving(body, firstChunk);
+				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, pinnedTo(upstream.port()))) {
+			try (Socket client = connectTo(proxy.port())) {
+				client.setSoTimeout(10_000);
+				send(client, "GET http://big.example/blob HTTP/1.1\r\nHost: big.example\r\n\r\n");
+
+				InputStream in = client.getInputStream();
+				String head = readHead(in);
+				assertTrue("the head arrives before the body is complete: " + statusLine(head),
+					head.startsWith("HTTP/1.1 200"));
+				assertTrue("the length the server announced is passed on: " + head,
+					head.contains("Content-Length: " + bodySize));
+				assertEquals("and it is made single-request like any other: " + head,
+					List.of("Connection: close"), connectionHeaders(head));
+
+				byte[] beginning = in.readNBytes(firstChunk);
+				upstream.release();
+				byte[] rest = in.readNBytes(bodySize - firstChunk);
+
+				ByteArrayOutputStream received = new ByteArrayOutputStream();
+				received.write(beginning);
+				received.write(rest);
+				assertEquals("the whole body arrived", bodySize, received.size());
+				assertTrue("byte-for-byte, in order", Arrays.equals(body, received.toByteArray()));
+			}
+		}
+	}
+
+	/**
 	 * A protocol upgrade (plain WebSocket) keeps its {@code Connection: upgrade} / {@code Upgrade}
 	 * headers: forcing {@code Connection: close} on it - which is right for an ordinary request, so a
 	 * blind relay can never carry a second request for a different origin - would break the handshake
@@ -577,6 +712,42 @@ public class TestFilteringProxy extends TestCase {
 		return proxy.droppedCount() > 0;
 	}
 
+	/** Sends one request head on an already connected client socket. */
+	private static void send(Socket client, String head) throws IOException {
+		OutputStream out = client.getOutputStream();
+		out.write(head.getBytes(StandardCharsets.ISO_8859_1));
+		out.flush();
+	}
+
+	/** The head of a complete response: everything up to the blank line that ends it. */
+	private static String headOf(String response) {
+		int end = response.indexOf("\r\n\r\n");
+		return end < 0 ? response : response.substring(0, end);
+	}
+
+	/**
+	 * Every {@code Connection} header line of a head, in order - the answer to both "is the client told
+	 * the connection ends here" and "is it told twice".
+	 */
+	private static List<String> connectionHeaders(String head) {
+		List<String> found = new ArrayList<>();
+		for (String line : head.split("\r?\n")) {
+			if (line.toLowerCase(Locale.ROOT).startsWith("connection:")) {
+				found.add(line.trim());
+			}
+		}
+		return found;
+	}
+
+	/** A body whose every byte is checkable, so a corrupted or reordered relay cannot pass. */
+	private static byte[] pattern(int size) {
+		byte[] body = new byte[size];
+		for (int i = 0; i < size; i++) {
+			body[i] = (byte) (i % 251);
+		}
+		return body;
+	}
+
 	/** Reads an HTTP head (status line plus headers), stopping at the blank line that ends it. */
 	private static String readHead(InputStream in) throws IOException {
 		StringBuilder head = new StringBuilder();
@@ -628,32 +799,51 @@ public class TestFilteringProxy extends TestCase {
 
 		private final boolean _switchProtocols;
 
+		/** The headers the ordinary answer carries beyond {@code Content-Length}. */
+		private final List<String> _responseHeaders;
+
+		private final String _body;
+
 		private final List<String> _requestLines = Collections.synchronizedList(new ArrayList<>());
 
 		private final StringBuilder _tunnelled = new StringBuilder();
 
 		private final Thread _worker;
 
-		private KeepAliveServer(ServerSocket listener, boolean switchProtocols) {
+		private KeepAliveServer(ServerSocket listener, boolean switchProtocols,
+				List<String> responseHeaders, String body) {
 			_listener = listener;
 			_switchProtocols = switchProtocols;
+			_responseHeaders = responseHeaders;
+			_body = body;
 			_worker = new Thread(this::serve, "keep-alive-fixture");
 			_worker.setDaemon(true);
 		}
 
-		/** A fixture answering an upgrade request with an ordinary, keep-alive {@code 200}. */
+		/**
+		 * A fixture answering with an ordinary {@code 200} that carries <b>no {@code Connection}
+		 * header at all</b> - an HTTP/1.1 answer a client is entitled to call reusable, which is the
+		 * state this fixture exists to create.
+		 */
 		static KeepAliveServer start() throws IOException {
-			return started(false);
+			return started(false, List.of(), "ok");
 		}
 
 		/** A fixture answering an upgrade request with {@code 101 Switching Protocols}. */
 		static KeepAliveServer switchingProtocols() throws IOException {
-			return started(true);
+			return started(true, List.of(), "ok");
 		}
 
-		private static KeepAliveServer started(boolean switchProtocols) throws IOException {
+		/** A fixture whose ordinary {@code 200} carries the given headers and body. */
+		static KeepAliveServer answering(List<String> responseHeaders, String body) throws IOException {
+			return started(false, responseHeaders, body);
+		}
+
+		private static KeepAliveServer started(boolean switchProtocols, List<String> responseHeaders,
+				String body) throws IOException {
 			KeepAliveServer server = new KeepAliveServer(
-				new ServerSocket(0, 16, InetAddress.getByName("127.0.0.1")), switchProtocols);
+				new ServerSocket(0, 16, InetAddress.getByName("127.0.0.1")), switchProtocols,
+				responseHeaders, body);
 			server._worker.start();
 			return server;
 		}
@@ -697,13 +887,15 @@ public class TestFilteringProxy extends TestCase {
 				InputStream in = client.getInputStream();
 				OutputStream out = client.getOutputStream();
 				recordHead(in);
-				byte[] body = "ok".getBytes(StandardCharsets.UTF_8);
+				byte[] body = _body.getBytes(StandardCharsets.UTF_8);
+				StringBuilder ordinary = new StringBuilder("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n");
+				for (String header : _responseHeaders) {
+					ordinary.append(header).append("\r\n");
+				}
+				ordinary.append("Content-Length: ").append(body.length).append("\r\n\r\n");
 				String head = _switchProtocols
 					? "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n"
-					// No Connection header at all: an ordinary HTTP/1.1 answer is reusable by default,
-					// which is the state this fixture exists to create.
-					: "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + body.length
-						+ "\r\n\r\n";
+					: ordinary.toString();
 				out.write(head.getBytes(StandardCharsets.ISO_8859_1));
 				if (!_switchProtocols) {
 					out.write(body);
@@ -735,6 +927,87 @@ public class TestFilteringProxy extends TestCase {
 				synchronized (_tunnelled) {
 					_tunnelled.append(new String(buffer, 0, read, StandardCharsets.ISO_8859_1));
 				}
+			}
+		}
+
+		@Override
+		public void close() {
+			try {
+				_listener.close();
+			} catch (IOException ex) {
+				// Going away either way.
+			}
+		}
+	}
+
+	/**
+	 * An upstream fixture that answers a body larger than the proxy's pump buffer and holds the tail of
+	 * it back until the test lets go, so that a relay which buffered the whole response before writing
+	 * anything can be told apart from one that streams it: the streaming one delivers the head and the
+	 * first chunk while the fixture is still waiting.
+	 */
+	private static final class TricklingServer implements AutoCloseable {
+
+		/** How long the fixture waits to be let go before giving up on the exchange. */
+		private static final int RELEASE_WINDOW_SECONDS = 30;
+
+		private final ServerSocket _listener;
+
+		private final byte[] _body;
+
+		private final int _firstChunk;
+
+		private final CountDownLatch _release = new CountDownLatch(1);
+
+		private final Thread _worker;
+
+		private TricklingServer(ServerSocket listener, byte[] body, int firstChunk) {
+			_listener = listener;
+			_body = body;
+			_firstChunk = firstChunk;
+			_worker = new Thread(this::serve, "trickling-fixture");
+			_worker.setDaemon(true);
+		}
+
+		/**
+		 * Starts a fixture answering {@code body}, of which only the first {@code firstChunk} bytes are
+		 * written before {@link #release()}.
+		 */
+		static TricklingServer serving(byte[] body, int firstChunk) throws IOException {
+			TricklingServer server = new TricklingServer(
+				new ServerSocket(0, 16, InetAddress.getByName("127.0.0.1")), body, firstChunk);
+			server._worker.start();
+			return server;
+		}
+
+		int port() {
+			return _listener.getLocalPort();
+		}
+
+		/** Lets the fixture write the rest of the body. */
+		void release() {
+			_release.countDown();
+		}
+
+		private void serve() {
+			try (Socket client = _listener.accept()) {
+				client.setSoTimeout(10_000);
+				readHead(client.getInputStream());
+				OutputStream out = client.getOutputStream();
+				// No Connection header: this fixture, too, answers as if its connection were reusable.
+				out.write(("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\n"
+					+ "Content-Length: " + _body.length + "\r\n\r\n")
+						.getBytes(StandardCharsets.ISO_8859_1));
+				out.write(_body, 0, _firstChunk);
+				out.flush();
+				if (_release.await(RELEASE_WINDOW_SECONDS, TimeUnit.SECONDS)) {
+					out.write(_body, _firstChunk, _body.length - _firstChunk);
+					out.flush();
+				}
+			} catch (IOException ex) {
+				// The peer hung up; whatever arrived is the result.
+			} catch (InterruptedException ex) {
+				Thread.currentThread().interrupt();
 			}
 		}
 

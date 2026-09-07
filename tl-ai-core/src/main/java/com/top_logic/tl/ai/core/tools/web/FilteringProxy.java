@@ -85,9 +85,13 @@ import com.top_logic.basic.Logger;
  * <b>Connection handling.</b> A permitted request is forwarded verbatim apart from the request line
  * (rewritten to origin form) and the hop-by-hop {@code Connection} / {@code Proxy-Connection}
  * headers, then both directions are pumped byte-for-byte, so an allowed page pays only one extra
- * loopback hop. Plain-HTTP connections are made single-request ({@code Connection: close} upstream):
- * a proxy connection may otherwise be re-used for a <em>different</em> origin, and a blind pump would
- * then deliver the second request to the first request's server. A protocol upgrade
+ * loopback hop. Plain-HTTP connections are made single-request: a proxy connection may otherwise be
+ * re-used for a <em>different</em> origin, and a blind pump would then deliver the second request to
+ * the first request's server. That takes both halves of the exchange - the request goes upstream with
+ * {@code Connection: close}, and the relayed response head is rewritten to say {@code Connection: close}
+ * too, whatever the server said - because a server that ignores the request's close signal would
+ * otherwise leave the client believing its connection <em>to the proxy</em> is reusable. Only the head
+ * is touched; the body is relayed byte-for-byte and never buffered. A protocol upgrade
  * ({@code Upgrade:} / {@code Connection: upgrade}, i.e. plain WebSocket) is exempt from that and
  * forwarded as-is - but only for as long as it really is one: the exemption holds once upstream has
  * answered {@code 101 Switching Protocols}, since such a connection belongs to one origin for the rest
@@ -197,19 +201,29 @@ final class FilteringProxy implements AutoCloseable {
 	 */
 	static final String REFUSAL_HEADER = "x-tl-browser-policy-refused";
 
-	/** How long the proxy waits for the client's request head before giving up on the connection. */
+	/**
+	 * How long the proxy waits for a head - the client's request head, or the response head it relays
+	 * back - before giving up on the connection.
+	 */
 	private static final int HEADER_READ_TIMEOUT_MILLIS = 30_000;
 
 	/** How long the proxy waits for the upstream TCP connect. */
 	private static final int CONNECT_TIMEOUT_MILLIS = 15_000;
 
-	/** Hard cap on the request head, so a client cannot make the proxy buffer without bound. */
+	/**
+	 * Hard cap on a head, so neither a client nor an upstream server can make the proxy buffer without
+	 * bound.
+	 */
 	private static final int MAX_HEAD_BYTES = 64 * 1024;
 
 	/** Hard cap on a single header line. */
 	private static final int MAX_LINE_BYTES = 8 * 1024;
 
-	private static final int PUMP_BUFFER_BYTES = 16 * 1024;
+	/**
+	 * How much of a relayed stream is moved per read. Package-visible so a test can size a response
+	 * body past it and thereby prove the relay streams rather than buffers.
+	 */
+	static final int PUMP_BUFFER_BYTES = 16 * 1024;
 
 	/** How many refused hosts are remembered for diagnostics and tests. */
 	private static final int REFUSAL_HISTORY = 64;
@@ -226,6 +240,37 @@ final class FilteringProxy implements AutoCloseable {
 	/** Hop-by-hop headers the proxy must not pass on. */
 	private static final List<String> HOP_BY_HOP =
 		List.of("proxy-connection", "connection", "keep-alive", "proxy-authorization", "te", "trailer");
+
+	/**
+	 * What a relayed connection must do with the answer upstream sends back - which is what decides
+	 * whether it may be blind-pumped at all.
+	 */
+	private enum ResponseHandling {
+
+		/**
+		 * Pump verbatim. A {@code CONNECT} tunnel has no HTTP response head of its own to parse (after
+		 * the {@code 200} this proxy writes, the bytes are TLS records), and it belongs to a single
+		 * origin for its whole life anyway.
+		 */
+		TUNNEL,
+
+		/**
+		 * Relay the response head with {@code Connection: close} forced into it, then pump the body.
+		 * The forwarded request said {@code Connection: close}; the client has to be told the same
+		 * thing whether or not the server honoured it.
+		 *
+		 * @see FilteringProxy#relayResponseHead(Socket, Socket, InputStream, OutputStream)
+		 */
+		FORCE_CLOSE,
+
+		/**
+		 * Relay the response head and grant the blind tunnel only on {@code 101 Switching Protocols};
+		 * any other answer ends the connection.
+		 *
+		 * @see FilteringProxy#confirmProtocolSwitch(Socket, Socket, InputStream, OutputStream)
+		 */
+		CONFIRM_UPGRADE;
+	}
 
 	private final ServerSocket _listener;
 
@@ -605,7 +650,8 @@ final class FilteringProxy implements AutoCloseable {
 			return;
 		}
 		relay(client, in, out, upstream,
-			"HTTP/1.1 200 Connection Established\r\n\r\n".getBytes(StandardCharsets.ISO_8859_1), null);
+			"HTTP/1.1 200 Connection Established\r\n\r\n".getBytes(StandardCharsets.ISO_8859_1), null,
+			ResponseHandling.TUNNEL);
 	}
 
 	/**
@@ -656,7 +702,7 @@ final class FilteringProxy implements AutoCloseable {
 		}
 		relay(client, in, out, upstream, null,
 			head(method, originForm(uri), version, headers).getBytes(StandardCharsets.ISO_8859_1),
-			isUpgrade(headers));
+			isUpgrade(headers) ? ResponseHandling.CONFIRM_UPGRADE : ResponseHandling.FORCE_CLOSE);
 	}
 
 	/**
@@ -668,17 +714,25 @@ final class FilteringProxy implements AutoCloseable {
 	 * Forcing the connection closed is what makes the byte-for-byte relay below safe: an HTTP proxy
 	 * connection may carry consecutive requests for <em>different</em> origins, and a blind pump
 	 * would send the second one to the first one's (already policy-checked) server. One request per
-	 * upstream connection removes that possibility entirely, at the cost of plain-HTTP keep-alive -
-	 * which real traffic barely uses, since https is tunnelled per origin anyway. An upgrade request
-	 * is exempt: its connection belongs to a single origin for its whole life, and stripping the
-	 * upgrade headers would break plain WebSocket outright.
+	 * upstream connection removes that possibility, at the cost of plain-HTTP keep-alive - which real
+	 * traffic barely uses, since https is tunnelled per origin anyway. An upgrade request is exempt:
+	 * its connection belongs to a single origin for its whole life, and stripping the upgrade headers
+	 * would break plain WebSocket outright.
 	 * </p>
 	 *
 	 * <p>
-	 * That exemption is only <em>provisional</em>, because an upgrade is a request, not a fact: a server
-	 * is free to answer it with an ordinary {@code 200}, and then the connection is a keep-alive
-	 * connection again with the {@code Connection: close} that would have made it safe left out. It is
-	 * therefore confirmed against the answer rather than the request - see
+	 * This is only <em>half</em> of that guarantee, because what the client decides connection reuse by
+	 * is the <em>response</em>: a server may ignore this header and answer as if the connection were
+	 * reusable, and then the client keeps its side open and may send the next request - for any origin
+	 * at all - into the blind pump. The other half therefore rewrites the relayed response head, see
+	 * {@link #relayResponseHead(Socket, Socket, InputStream, OutputStream)}.
+	 * </p>
+	 *
+	 * <p>
+	 * The upgrade exemption is only <em>provisional</em> for the same reason: an upgrade is a request,
+	 * not a fact, so a server is free to answer it with an ordinary {@code 200}, and then the connection
+	 * is a keep-alive connection again with the {@code Connection: close} that would have made it safe
+	 * left out. It is therefore confirmed against the answer rather than the request - see
 	 * {@link #protocolWasSwitched(InputStream, OutputStream)}.
 	 * </p>
 	 */
@@ -744,31 +798,22 @@ final class FilteringProxy implements AutoCloseable {
 	}
 
 	/**
-	 * Takes over a connected pair: writes the opening bytes each side is owed, then pumps both
-	 * directions byte-for-byte until either side hangs up - upstream-to-client on this thread,
-	 * client-to-upstream on a second one. Owns the teardown of <em>both</em> sockets, including when a
-	 * greeting cannot be written, so no socket can be left behind in {@link #_open}; closing them is
-	 * also what unblocks the second thread.
+	 * Takes over a connected pair: writes the opening bytes each side is owed, deals with the answer
+	 * upstream sends back as {@code handling} says, then pumps both directions byte-for-byte until
+	 * either side hangs up - upstream-to-client on this thread, client-to-upstream on a second one.
+	 * Owns the teardown of <em>both</em> sockets, including when a greeting cannot be written, so no
+	 * socket can be left behind in {@link #_open}; closing them is also what unblocks the second
+	 * thread.
 	 *
 	 * @param clientGreeting
 	 *        Bytes to send to the client first (the {@code CONNECT} success line), or {@code null}.
 	 * @param upstreamHead
 	 *        Bytes to send upstream first (the rewritten request head), or {@code null}.
+	 * @param handling
+	 *        What to do with the answer upstream sends back before the response is pumped on.
 	 */
 	private void relay(Socket client, InputStream in, OutputStream out, Socket upstream,
-			byte[] clientGreeting, byte[] upstreamHead) {
-		relay(client, in, out, upstream, clientGreeting, upstreamHead, false);
-	}
-
-	/**
-	 * @param upgradeRequest
-	 *        Whether the forwarded request asked for a protocol upgrade, in which case the answer
-	 *        decides whether this connection may become a blind tunnel at all.
-	 *
-	 * @see #relay(Socket, InputStream, OutputStream, Socket, byte[], byte[])
-	 */
-	private void relay(Socket client, InputStream in, OutputStream out, Socket upstream,
-			byte[] clientGreeting, byte[] upstreamHead, boolean upgradeRequest) {
+			byte[] clientGreeting, byte[] upstreamHead, ResponseHandling handling) {
 		InputStream fromUpstream;
 		try {
 			// A tunnel or a slow-trickling response must not be killed by the head-read timeout; the
@@ -792,7 +837,8 @@ final class FilteringProxy implements AutoCloseable {
 			return;
 		}
 		_forwardedCount.incrementAndGet();
-		if (upgradeRequest && !confirmProtocolSwitch(client, upstream, fromUpstream, out)) {
+		if (handling == ResponseHandling.CONFIRM_UPGRADE
+			&& !confirmProtocolSwitch(client, upstream, fromUpstream, out)) {
 			return;
 		}
 		try {
@@ -810,6 +856,13 @@ final class FilteringProxy implements AutoCloseable {
 			endRelay(client, upstream);
 			return;
 		}
+		// Only now, never before the client-to-upstream pump is running: a request body (a POST) is
+		// still on its way upstream, and a server that reads it before answering would deadlock
+		// against a proxy that waited for the answer first.
+		if (handling == ResponseHandling.FORCE_CLOSE
+			&& !relayResponseHead(client, upstream, fromUpstream, out)) {
+			return;
+		}
 		try {
 			copy(fromUpstream, out);
 		} catch (IOException ex) {
@@ -817,6 +870,51 @@ final class FilteringProxy implements AutoCloseable {
 		} finally {
 			endRelay(client, upstream);
 		}
+	}
+
+	/**
+	 * Relays the response head of a forwarded plain-HTTP request with {@code Connection: close} forced
+	 * into it, and reports whether the rest of the response may now be pumped.
+	 *
+	 * <p>
+	 * The request went upstream with {@code Connection: close}, but that is a request, not a fact: a
+	 * server may ignore it and answer with a {@code Content-Length} body and no close signal at all.
+	 * The client then marks its connection <em>to the proxy</em> reusable and may send its next request
+	 * - which may name any origin - onto it, where the blind pump would hand it to this origin's
+	 * already-checked server, along with that request's {@code Host} header and cookies. Rewriting the
+	 * one header the client decides reuse by is what makes the single-request guarantee hold on both
+	 * halves of the relay.
+	 * </p>
+	 *
+	 * <p>
+	 * Only the head is read and rebuilt; everything after it is pumped byte-for-byte, so a large
+	 * response is still streamed. Whatever {@link #readHeaders(InputStream)} read ahead stays in the
+	 * buffered stream the pump continues from.
+	 * </p>
+	 *
+	 * <p>
+	 * An answer that is not a head at all (an immediate end of stream, or a blank first line) ends the
+	 * connection: there is nothing to rewrite, and a body without a head would leave the client parsing
+	 * arbitrary bytes as one. The bound on this read is deliberate too - the body that follows is pumped
+	 * unbounded again, because a slow-trickling response is perfectly legitimate, but a head that never
+	 * ends must not pin a thread for good.
+	 * </p>
+	 */
+	private boolean relayResponseHead(Socket client, Socket upstream, InputStream fromUpstream,
+			OutputStream out) {
+		try {
+			upstream.setSoTimeout(HEADER_READ_TIMEOUT_MILLIS);
+			ResponseHead response = readResponseHead(fromUpstream);
+			if (response != null) {
+				writeResponseHead(response, out, true);
+				upstream.setSoTimeout(0);
+				return true;
+			}
+		} catch (IOException ex) {
+			// Upstream reset or stalled mid-head, or the client went away while it was relayed.
+		}
+		endRelay(client, upstream);
+		return false;
 	}
 
 	/**
@@ -866,27 +964,71 @@ final class FilteringProxy implements AutoCloseable {
 	 */
 	private static boolean protocolWasSwitched(InputStream fromUpstream, OutputStream out)
 			throws IOException {
-		String statusLine = readLine(fromUpstream);
-		if (statusLine == null || statusLine.isBlank()) {
+		ResponseHead response = readResponseHead(fromUpstream);
+		if (response == null) {
 			return false;
 		}
-		List<String> headers = readHeaders(fromUpstream);
-		boolean switched = statusOf(statusLine) == 101;
+		boolean switched = response.status() == 101;
+		writeResponseHead(response, out, !switched);
+		return switched;
+	}
+
+	/**
+	 * A response head as it arrived from upstream, unparsed beyond the split into lines.
+	 *
+	 * @param statusLine
+	 *        The status line, verbatim.
+	 * @param headers
+	 *        The header lines, verbatim and in order.
+	 */
+	private record ResponseHead(String statusLine, List<String> headers) {
+
+		/** The status code, or {@code -1} when the status line carries none. */
+		int status() {
+			return statusOf(statusLine);
+		}
+	}
+
+	/**
+	 * Reads one response head from upstream, leaving the stream positioned on the body.
+	 *
+	 * @return The head, or {@code null} when upstream answered nothing that is one (end of stream, or
+	 *         a blank first line).
+	 */
+	private static ResponseHead readResponseHead(InputStream fromUpstream) throws IOException {
+		String statusLine = readLine(fromUpstream);
+		if (statusLine == null || statusLine.isBlank()) {
+			return null;
+		}
+		return new ResponseHead(statusLine, readHeaders(fromUpstream));
+	}
+
+	/**
+	 * Writes a response head on to the client, as it arrived or - with {@code forceClose} - with every
+	 * {@code Connection} header the server sent replaced by a single {@code Connection: close}.
+	 *
+	 * <p>
+	 * Replaced rather than appended to: a server that already said {@code Connection: close} must not
+	 * end up with the header twice, and one that said {@code keep-alive} must not end up contradicting
+	 * itself.
+	 * </p>
+	 */
+	private static void writeResponseHead(ResponseHead response, OutputStream out, boolean forceClose)
+			throws IOException {
 		StringBuilder head = new StringBuilder();
-		head.append(statusLine).append("\r\n");
-		for (String header : headers) {
-			if (!switched && "connection".equals(nameOf(header))) {
+		head.append(response.statusLine()).append("\r\n");
+		for (String header : response.headers()) {
+			if (forceClose && "connection".equals(nameOf(header))) {
 				continue;
 			}
 			head.append(header).append("\r\n");
 		}
-		if (!switched) {
+		if (forceClose) {
 			head.append("Connection: close\r\n");
 		}
 		head.append("\r\n");
 		out.write(head.toString().getBytes(StandardCharsets.ISO_8859_1));
 		out.flush();
-		return switched;
 	}
 
 	/** The status code of an HTTP response status line, or {@code -1} if it carries none. */
@@ -1013,14 +1155,14 @@ final class FilteringProxy implements AutoCloseable {
 				return line.toString();
 			}
 			if (line.length() >= MAX_LINE_BYTES) {
-				throw new IOException("Request header line exceeds " + MAX_LINE_BYTES + " bytes.");
+				throw new IOException("A header line exceeds " + MAX_LINE_BYTES + " bytes.");
 			}
 			line.append((char) read);
 		}
 		return line.length() == 0 ? null : line.toString();
 	}
 
-	/** Reads the header lines up to (and consuming) the blank line that ends the request head. */
+	/** Reads the header lines up to (and consuming) the blank line that ends a request or response head. */
 	private static List<String> readHeaders(InputStream in) throws IOException {
 		List<String> headers = new ArrayList<>();
 		int total = 0;
@@ -1028,7 +1170,7 @@ final class FilteringProxy implements AutoCloseable {
 		while ((line = readLine(in)) != null && !line.isEmpty()) {
 			total += line.length();
 			if (total > MAX_HEAD_BYTES) {
-				throw new IOException("Request head exceeds " + MAX_HEAD_BYTES + " bytes.");
+				throw new IOException("A message head exceeds " + MAX_HEAD_BYTES + " bytes.");
 			}
 			headers.add(line);
 		}

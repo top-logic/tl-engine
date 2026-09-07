@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -27,6 +28,12 @@ import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
  * {@link MenuTrigger#CONTEXT_MENU}, below the region for {@link MenuTrigger#CLICK}. Either way the
  * client sends the viewport coordinates the menu is placed at, so the opener needs to know nothing
  * about the trigger.
+ * </p>
+ *
+ * <p>
+ * The commands arrive as several {@link ContextMenuContribution}s rather than one, because the
+ * opener separates the entries of one contribution from those of the next: the groups are what
+ * gives a menu of many entries its structure.
  * </p>
  *
  * @see com.top_logic.layout.view.element.ContextMenuElement
@@ -54,7 +61,7 @@ public class MenuRegionControl extends ReactControl {
 	/** Argument key for the viewport y coordinate the menu is placed at. */
 	private static final String ARG_Y = "y";
 
-	private final ContextMenuContribution _contribution;
+	private final List<ContextMenuContribution> _contributions;
 
 	private final Supplier<Object> _targetSupplier;
 
@@ -67,8 +74,8 @@ public class MenuRegionControl extends ReactControl {
 	 *        The React context.
 	 * @param child
 	 *        The child content control whose DOM region carries the trigger gesture.
-	 * @param contribution
-	 *        The contribution supplying commands.
+	 * @param contributions
+	 *        The groups of commands to offer, in order; the opener draws a separator between them.
 	 * @param targetSupplier
 	 *        Supplier for the current target value at trigger time.
 	 * @param opener
@@ -77,10 +84,10 @@ public class MenuRegionControl extends ReactControl {
 	 *        The gesture that opens the menu.
 	 */
 	public MenuRegionControl(ReactContext context, ReactControl child,
-			ContextMenuContribution contribution, Supplier<Object> targetSupplier, ContextMenuOpener opener,
-			MenuTrigger trigger) {
+			List<ContextMenuContribution> contributions, Supplier<Object> targetSupplier,
+			ContextMenuOpener opener, MenuTrigger trigger) {
 		super(context, null, REACT_MODULE);
-		_contribution = contribution;
+		_contributions = List.copyOf(contributions);
 		_targetSupplier = targetSupplier;
 		_opener = opener;
 
@@ -98,7 +105,11 @@ public class MenuRegionControl extends ReactControl {
 		int x = intArg(arguments, ARG_X);
 		int y = intArg(arguments, ARG_Y);
 		Object target = _targetSupplier == null ? null : _targetSupplier.get();
-		_opener.open(x, y, List.of(new Targeted(_contribution, target)));
+		List<Targeted> targeted = new ArrayList<>(_contributions.size());
+		for (ContextMenuContribution contribution : _contributions) {
+			targeted.add(new Targeted(contribution, target));
+		}
+		_opener.open(x, y, targeted);
 	}
 
 	private static int intArg(Map<String, Object> arguments, String key) {

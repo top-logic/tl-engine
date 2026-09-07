@@ -20,6 +20,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CONFIRM_TITLE;
 
 	/**
+	 * @en Changed language of "{0}".
+	 */
+	public static ResKey1 CHANGED_LANGUAGE__USER;
+
+	/**
 	 * @en Action ''{0}'' may not suspend inside a transaction. Place the guard (e.g. a confirmation)
 	 *     before the surrounding &lt;with-transaction&gt;.
 	 */

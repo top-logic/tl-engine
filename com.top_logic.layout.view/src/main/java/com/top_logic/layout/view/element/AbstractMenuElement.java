@@ -145,16 +145,19 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 
 		ReactControl content = createRegionContent(context);
 
-		List<CommandModel> entries = new ArrayList<>(menuCommands(commandModels));
-		for (ViewCommandSource source : _commandSources) {
-			entries.addAll(source.getCommands(context));
-		}
-
 		Consumer<Object> setter = target -> targetChannel.set(target);
 		Supplier<Object> targetSupplier = () -> targetChannel.get();
-		ContextMenuContribution contribution = new ContextMenuContribution(setter, entries);
 
-		MenuRegionControl region = new MenuRegionControl(context, content, contribution, targetSupplier,
+		// One contribution per group of entries, because the opener draws a separator between
+		// contributions: the commands written in the view are one group, and each source is
+		// another. A group that currently offers nothing is skipped along with its separator.
+		List<ContextMenuContribution> contributions = new ArrayList<>(1 + _commandSources.size());
+		contributions.add(new ContextMenuContribution(setter, menuCommands(commandModels)));
+		for (ViewCommandSource source : _commandSources) {
+			contributions.add(new ContextMenuContribution(setter, source.getCommands(context)));
+		}
+
+		MenuRegionControl region = new MenuRegionControl(context, content, contributions, targetSupplier,
 			opener, getTrigger());
 
 		// Lazy attach on render, cleanup on dispose.

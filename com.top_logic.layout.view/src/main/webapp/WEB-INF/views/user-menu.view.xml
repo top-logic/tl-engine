@@ -57,6 +57,37 @@
 				/>
 			</generic-command>
 
+			<!--
+				The password dialog of the login flow, opened here without one: it changes the
+				account of the session when no login is waiting for it.
+			-->
+			<generic-command image="css:bi bi-key">
+				<label>
+					<en>Change password</en>
+					<de>Passwort ändern</de>
+				</label>
+				<executability>
+					<authenticated-only/>
+				</executability>
+				<execute-script function="x -> new(`tl.login:PasswordChange`, transient: true)"/>
+				<open-dialog
+					bind-input-to="model"
+					dialog-view="change-password.view.xml"
+				/>
+			</generic-command>
+
+			<!-- The remaining personal settings, which want a form rather than an entry each. -->
+			<generic-command image="css:bi bi-sliders">
+				<label>
+					<en>Settings</en>
+					<de>Einstellungen</de>
+				</label>
+				<executability>
+					<authenticated-only/>
+				</executability>
+				<open-dialog dialog-view="settings.view.xml"/>
+			</generic-command>
+
 			<logout-command image="css:bi bi-box-arrow-right">
 				<label>
 					<en>Logout</en>
@@ -69,11 +100,14 @@
 		</commands>
 
 		<!--
-			One entry per theme configured in UIThemeService, labelled and iconed by the theme
-			itself, with the active one offered as disabled. An application configuring a single
-			theme has nothing to switch to and gets no entries here.
+			The one-decision preferences, an entry each rather than a form field: one entry per
+			language the application supports, and one per theme configured in UIThemeService,
+			labelled and iconed by the theme itself. Both mark the active choice by offering it as
+			disabled, and both contribute nothing when there is only one of them - so an application
+			with a single theme and a single language sees none of this.
 		-->
 		<command-sources>
+			<language-commands/>
 			<theme-commands/>
 		</command-sources>
 	</menu>

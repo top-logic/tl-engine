@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Personal settings of the logged-in user: the few things about themselves a user adjusts through a
+	form.
+
+	Deliberately small. What a user changes with a single decision - the language, the theme, the
+	password - is an entry of the user menu instead (user-menu.view.xml), one click from the app bar,
+	so this dialog holds only what genuinely wants a form.
+
+	The form is over the account (tl.accounts:Person), so this module carries no dependency on the
+	Contacts model. A module that has it - or the application - contributes the profile fields
+	through a same-path overlay (WEB-INF/views/settings.view.xml of its own module) merged by the
+	ViewLoader in dependency order, the way tl-model-search-react extends admin/admin.view.xml:
+
+		<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+			<window>
+				<form>
+					<field attribute="..." config:operation="add" config:position="end"/>
+				</form>
+			</window>
+		</view>
+-->
+<view>
+	<channels>
+		<!-- The account being edited: the session's own, always. -->
+		<derived-channel name="account"
+			expr="currentUser()"
+		/>
+	</channels>
+	<window resizable="false"
+		width="480px"
+	>
+		<title>
+			<en>Settings</en>
+			<de>Einstellungen</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="account"
+			mode-switch="false"
+		>
+			<field attribute="timezone"/>
+			<field attribute="country"/>
+			<commands>
+				<generic-command placement="BUTTON_BAR"
+					image="css:bi bi-check-lg"
+				>
+					<label>
+						<en>Save</en>
+						<de>Speichern</de>
+					</label>
+					<with-transaction>
+						<store-form-state/>
+					</with-transaction>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

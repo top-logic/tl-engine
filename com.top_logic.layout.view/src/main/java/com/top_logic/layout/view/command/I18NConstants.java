@@ -25,6 +25,26 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 CHANGED_LANGUAGE__USER;
 
 	/**
+	 * @en Reset the personal configuration of "{0}".
+	 */
+	public static ResKey1 RESET_PERSONAL_CONFIGURATION__USER;
+
+	/**
+	 * @en This page is now the one you start on.
+	 */
+	public static ResKey START_PAGE_REMEMBERED;
+
+	/**
+	 * @en You no longer start on a particular page.
+	 */
+	public static ResKey START_PAGE_FORGOTTEN;
+
+	/**
+	 * @en This page has no address of its own, so it cannot be the one you start on.
+	 */
+	public static ResKey START_PAGE_NOT_ADDRESSABLE;
+
+	/**
 	 * @en Action ''{0}'' may not suspend inside a transaction. Place the guard (e.g. a confirmation)
 	 *     before the surrounding &lt;with-transaction&gt;.
 	 */

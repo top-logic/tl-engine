@@ -20,7 +20,7 @@
 -->
 <view>
 	<channels>
-		<!-- Feeds the trigger; read-only, recomputed per session. Null while the session is anonymous. -->
+		<!-- Feeds the trigger; read-only, recomputed per session. -->
 		<derived-channel name="currentUser"
 			expr="currentUser()"
 		/>
@@ -40,6 +40,21 @@
 		/>
 
 		<commands>
+			<!--
+				Leaving comes first. It is the one entry a user looks for rather than browses to,
+				and the only one whose position should never depend on what a module contributed
+				below it.
+			-->
+			<logout-command image="css:bi bi-box-arrow-right">
+				<label>
+					<en>Logout</en>
+					<de>Abmeldung</de>
+				</label>
+				<executability>
+					<authenticated-only/>
+				</executability>
+			</logout-command>
+
 			<!-- Shown only for the anonymous user; opens the login dialog over a transient credentials object. -->
 			<generic-command image="css:bi bi-box-arrow-in-right">
 				<label>
@@ -57,26 +72,7 @@
 				/>
 			</generic-command>
 
-			<!--
-				The password dialog of the login flow, opened here without one: it changes the
-				account of the session when no login is waiting for it.
-			-->
-			<generic-command image="css:bi bi-key">
-				<label>
-					<en>Change password</en>
-					<de>Passwort ändern</de>
-				</label>
-				<executability>
-					<authenticated-only/>
-				</executability>
-				<execute-script function="x -> new(`tl.login:PasswordChange`, transient: true)"/>
-				<open-dialog
-					bind-input-to="model"
-					dialog-view="change-password.view.xml"
-				/>
-			</generic-command>
-
-			<!-- The remaining personal settings, which want a form rather than an entry each. -->
+			<!-- What describes the account, and what secures it. -->
 			<generic-command image="css:bi bi-sliders">
 				<label>
 					<en>Settings</en>
@@ -88,15 +84,33 @@
 				<open-dialog dialog-view="settings.view.xml"/>
 			</generic-command>
 
-			<logout-command image="css:bi bi-box-arrow-right">
+			<!--
+				Where the user begins. One entry for both directions: invoked on the page that is
+				already the start page it clears the choice.
+			-->
+			<generic-command image="css:bi bi-pin-angle">
 				<label>
-					<en>Logout</en>
-					<de>Abmeldung</de>
+					<en>Start on this page</en>
+					<de>Auf dieser Seite beginnen</de>
 				</label>
 				<executability>
 					<authenticated-only/>
 				</executability>
-			</logout-command>
+				<remember-start-page/>
+			</generic-command>
+
+			<!-- Puts the presentation back the way it looks to somebody who has never used the application. -->
+			<generic-command image="css:bi bi-arrow-counterclockwise">
+				<label>
+					<en>Reset personal settings</en>
+					<de>Persönliche Einstellungen zurücksetzen</de>
+				</label>
+				<executability>
+					<authenticated-only/>
+				</executability>
+				<confirm expr="x -> #('Discard the theme, column widths and everything else you have adjusted?'@en, 'Das Theme, die Spaltenbreiten und alles weitere Angepasste verwerfen?'@de)"/>
+				<reset-personal-configuration/>
+			</generic-command>
 		</commands>
 
 		<!--

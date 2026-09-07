@@ -119,6 +119,11 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		String routePath = extractRoutePath(pathInfo, windowName);
+		if (routePath == null) {
+			// Entered without naming a page, so the user's own choice of where to begin applies.
+			// A URL that does carry a route asks for that page and is never overridden.
+			routePath = StartPage.get();
+		}
 
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
 		// Rendering the page restarts the session's inactivity timeout. A reload renders the tree the

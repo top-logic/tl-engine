@@ -5,10 +5,13 @@
  */
 package com.top_logic.model.annotate.util;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.values.edit.InAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.TLConstraints;
@@ -19,10 +22,16 @@ import com.top_logic.model.util.Pointer;
  * Constraint checking algorithm that can be {@link TLConstraints annotated} to an attribute of a
  * model element.
  * 
+ * <p>
+ * Only implementations annotated {@link InApp} are offered for selection in the model editor, so an
+ * implementation serving as internal adapter for a model annotation of its own is not offered.
+ * </p>
+ * 
  * @see TLConstraints
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Options(fun = InAppImplementations.class)
 public interface ConstraintCheck {
 
 	/**

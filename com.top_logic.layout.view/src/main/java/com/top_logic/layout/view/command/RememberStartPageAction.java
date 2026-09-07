@@ -12,10 +12,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.StartPage;
+import com.top_logic.layout.view.ViewMessages;
 
 /**
  * Remembers the page the user is looking at as the one they start on, or forgets it again when
@@ -57,16 +57,16 @@ public class RememberStartPageAction implements ViewAction {
 		String current = routes == null ? null : routes.currentUrl();
 		if (StringServices.isEmpty(current)) {
 			// Nothing identifies this page, so there is nothing to come back to.
-			InfoService.showInfo(I18NConstants.START_PAGE_NOT_ADDRESSABLE);
+			ViewMessages.info(context, I18NConstants.START_PAGE_NOT_ADDRESSABLE);
 			return input;
 		}
 
 		if (current.equals(StartPage.get())) {
 			StartPage.set(null);
-			InfoService.showInfo(I18NConstants.START_PAGE_FORGOTTEN);
+			ViewMessages.info(context, I18NConstants.START_PAGE_FORGOTTEN);
 		} else {
 			StartPage.set(current);
-			InfoService.showInfo(I18NConstants.START_PAGE_REMEMBERED);
+			ViewMessages.info(context, I18NConstants.START_PAGE_REMEMBERED);
 		}
 		return input;
 	}

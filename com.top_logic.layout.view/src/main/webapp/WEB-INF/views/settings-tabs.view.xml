@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The tabs of the settings dialog (settings.view.xml), which opens this as its content.
+
+	At the root of a view of its own, so that a module contributes a tab by dropping a same-path
+	overlay (WEB-INF/views/settings-tabs.view.xml) into its own module and adding an entry to the
+	<tabs> list; the ViewLoader merges all copies in dependency order. See tl-layout-view-contact,
+	which adds the profile of the person behind the account.
+
+	Deliberately small. What a user changes with a single decision - the language, the theme, where
+	they start - is an entry of the user menu (user-menu.view.xml), one click from the app bar, so
+	this dialog holds only what wants a form or belongs with the account's security.
+
+	The account is read here rather than passed in: a <view-ref> gives its content a channel
+	namespace of its own, and the session's own account is what every tab edits.
+-->
+<view>
+	<channels>
+		<!-- The account being edited: the session's own, always. -->
+		<derived-channel name="account"
+			expr="currentUser()"
+		/>
+	</channels>
+	<tab-bar active-tab="account">
+		<tabs>
+			<tab id="account"
+				icon="css:bi bi-person"
+			>
+				<label>
+					<en>Account</en>
+					<de>Konto</de>
+				</label>
+				<!--
+					A panel of its own, so that the form's Save belongs to this tab: a panel
+					establishes the command scope its button bar is built from, while a form placed
+					directly in the tab would contribute to the enclosing window and offer Save
+					from every other tab as well.
+				-->
+				<panel>
+					<form
+						initial-edit-mode="true"
+						input="account"
+						mode-switch="false"
+					>
+						<field attribute="timezone"/>
+						<field attribute="country"/>
+						<commands>
+							<generic-command image="css:bi bi-check-lg"
+								placement="BUTTON_BAR"
+							>
+								<label>
+									<en>Save</en>
+									<de>Speichern</de>
+								</label>
+								<with-transaction>
+									<store-form-state/>
+								</with-transaction>
+							</generic-command>
+						</commands>
+					</form>
+				</panel>
+			</tab>
+
+			<!--
+				Each entry here acts on the account rather than holding a value of it, so the tab is
+				a list of buttons and not a form. They stretch across the tab because the list is
+				what the tab is - nothing else competes for the width, and a row of differently
+				sized buttons would only invite guessing which one matters.
+			-->
+			<tab id="security"
+				icon="css:bi bi-shield-lock"
+			>
+				<label>
+					<en>Security</en>
+					<de>Sicherheit</de>
+				</label>
+				<stack
+					align="stretch"
+					direction="column"
+					gap="compact"
+				>
+					<button>
+						<action class="com.top_logic.layout.view.command.GenericViewCommand"
+							image="css:bi bi-key"
+						>
+							<label>
+								<en>Change password</en>
+								<de>Passwort ändern</de>
+							</label>
+							<execute-script function="x -> new(`tl.login:PasswordChange`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="change-password.view.xml"
+							/>
+						</action>
+					</button>
+
+					<!--
+						Enabling asks the next login to set the second factor up, so there is
+						nothing to enter here; disabling takes it off again. Each is offered only in
+						the state where it means something. An account that is required to use a
+						second factor cannot switch it off, which the action itself refuses - that
+						is a question about the account, not about this view.
+					-->
+					<button>
+						<action class="com.top_logic.layout.view.command.GenericViewCommand"
+							image="css:bi bi-shield-plus"
+							input="account"
+						>
+							<label>
+								<en>Enable two-factor authentication</en>
+								<de>Zwei-Faktor-Authentifizierung aktivieren</de>
+							</label>
+							<executability>
+								<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) == null"/>
+							</executability>
+							<enable-mfa/>
+						</action>
+					</button>
+					<button>
+						<action class="com.top_logic.layout.view.command.GenericViewCommand"
+							image="css:bi bi-shield-minus"
+							input="account"
+						>
+							<label>
+								<en>Disable two-factor authentication</en>
+								<de>Zwei-Faktor-Authentifizierung deaktivieren</de>
+							</label>
+							<executability>
+								<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null"/>
+							</executability>
+							<confirm expr="account -> #('Log in with your password alone from now on?'@en, 'Künftig nur noch mit dem Passwort anmelden?'@de)"/>
+							<disable-mfa/>
+						</action>
+					</button>
+				</stack>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

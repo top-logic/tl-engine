@@ -52,6 +52,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.view.login.PendingSessionAction;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
@@ -574,7 +575,9 @@ public class ViewServlet extends TopLogicServlet {
 
 		out.writeContent(HTMLConstants.DOCTYPE_HTML);
 		out.beginBeginTag(HTMLConstants.HTML);
-		out.writeAttribute("lang", "en");
+		// The language the page is actually rendered in, so that assistive technology and the
+		// browser's own text handling follow the user's choice.
+		out.writeAttribute("lang", Resources.getCurrentLocale().getLanguage());
 		out.writeAttribute("data-theme", themes.getActiveThemeId());
 		out.endBeginTag();
 

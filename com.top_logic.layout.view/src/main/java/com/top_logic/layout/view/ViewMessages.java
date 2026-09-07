@@ -49,6 +49,17 @@ public class ViewMessages {
 		show(context, message, ErrorSink::showError);
 	}
 
+	/**
+	 * Reports that something the user asked for did not happen, and what stood in the way.
+	 *
+	 * @param details
+	 *        What went wrong underneath - typically the message of an exception, which says
+	 *        something to whoever reports the problem even when it says little to the user.
+	 */
+	public static void error(ReactContext context, ResKey message, ResKey details) {
+		error(context, ResKey.message(message, details));
+	}
+
 	private static void show(ReactContext context, ResKey message, Report report) {
 		ErrorSink sink = context == null ? null : context.getErrorSink();
 		if (sink == null) {

@@ -8,21 +8,26 @@ package com.top_logic.layout.view;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.ConfigurationSchemaConstants;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.xml.XMLStreamUtil;
 
 /**
  * Shared utility for loading and caching parsed {@link ViewElement} instances and their
@@ -219,14 +224,33 @@ public class ViewLoader {
 	}
 
 	/**
-	 * Whether the given view source is an overlay fragment (uses {@code config:operation} to
-	 * add/update/remove into a base) rather than a self-contained base view.
+	 * Whether the given view source is an overlay fragment - one that merges into a base through a
+	 * {@link ConfigurationSchemaConstants#LIST_OPERATION operation} attribute - rather than a
+	 * self-contained base view.
+	 *
+	 * <p>
+	 * Decided from the parsed document, so that only an actual attribute counts. A base view is
+	 * free to name the attribute in a comment, which is how a view documents the overlay it expects
+	 * contributors to write.
+	 * </p>
 	 */
 	private static boolean isOverlayFragment(BinaryData source) {
 		try (InputStream in = source.getStream()) {
-			// A base view never carries list-merge operations; an overlay always does.
-			return new String(in.readAllBytes(), StandardCharsets.UTF_8).contains("config:operation");
-		} catch (IOException ex) {
+			XMLStreamReader reader = XMLStreamUtil.getDefaultInputFactory().createXMLStreamReader(in);
+			try {
+				while (reader.hasNext()) {
+					if (reader.next() == XMLStreamConstants.START_ELEMENT
+						&& reader.getAttributeValue(ConfigurationSchemaConstants.CONFIG_NS,
+							ConfigurationSchemaConstants.LIST_OPERATION) != null) {
+						return true;
+					}
+				}
+			} finally {
+				reader.close();
+			}
+			return false;
+		} catch (IOException | XMLStreamException ex) {
+			// Not readable as XML: the reader reports the defect where the view is actually parsed.
 			return false;
 		}
 	}

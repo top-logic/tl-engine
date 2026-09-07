@@ -73,8 +73,10 @@ public class LanguageCommands implements ViewCommandSource {
 	@Override
 	public List<CommandModel> getCommands(ViewContext context) {
 		List<Locale> supported = ResourcesModule.getInstance().getSupportedLocales();
-		if (supported.size() < 2 || TLContext.currentUser() == null) {
-			// Nothing to switch to, or nobody to remember the choice for.
+		if (supported.size() < 2 || TLContext.isAnonymous()) {
+			// Nothing to switch to, or nobody to remember the choice for. An anonymous session has
+			// an account like any other - the anonymous one - so the session state is what decides,
+			// the same predicate the executability rules use.
 			return List.of();
 		}
 

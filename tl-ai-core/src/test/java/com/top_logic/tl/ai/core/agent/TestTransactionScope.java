@@ -5,15 +5,76 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.sql.SQLException;
+
 import junit.framework.TestCase;
+
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.KnowledgeBaseException;
 
 /**
  * Tests for {@link TransactionScope}.
  *
  * <p>Tests the state machine and no-op behavior without a running TopLogic
  * environment. KB integration tests require the TopLogic test harness.</p>
+ *
+ * @see TestCommitFailureReason
  */
 public class TestTransactionScope extends TestCase {
+
+	/**
+	 * The engine hides the real failure behind one constant, so the cause chain has to be reported.
+	 *
+	 * <p>
+	 * {@code DefaultDBContext} wraps any unexpected {@link Throwable} that escaped the commit as
+	 * {@code new KnowledgeBaseException("Database operation failed.", ex)}, and that string is all
+	 * {@code getMessage()} returns. Without the cause a deployment that hits this has nothing to go
+	 * on, and neither does the model.
+	 * </p>
+	 */
+	public void testCommitFailureNamesTheRootCause() {
+		KnowledgeBaseException failure = new KnowledgeBaseException("Database operation failed.",
+			new IllegalStateException("wrapper",
+				new SQLException("Data too long for column 'name'")));
+
+		String described = TransactionScope.describeCommitFailure(failure);
+
+		assertTrue("The engine's own message must survive: " + described,
+			described.startsWith("Database operation failed."));
+		assertTrue("The deepest cause is the one that says what went wrong: " + described,
+			described.contains("Data too long for column 'name'"));
+		assertTrue("Naming the exception type tells a reader what kind of failure it was: "
+			+ described, described.contains("SQLException"));
+		assertFalse("An intermediate wrapper says nothing and must not be reported: " + described,
+			described.contains("wrapper"));
+	}
+
+	/** A failure with no cause is reported as it is, without an empty parenthesis. */
+	public void testCommitFailureWithoutACauseIsUnchanged() {
+		assertEquals("Database operation failed.", TransactionScope.describeCommitFailure(
+			new KnowledgeBaseException("Database operation failed.", (KnowledgeBase) null)));
+	}
+
+	/** A cause that only repeats the message adds nothing and is not appended twice. */
+	public void testCommitFailureDoesNotRepeatItself() {
+		assertEquals("Constraint violated.", TransactionScope.describeCommitFailure(
+			new KnowledgeBaseException("Constraint violated.",
+				new SQLException("Constraint violated."))));
+	}
+
+	/**
+	 * A driver may quote a whole statement; the reason ends up in an LLM prompt, so it is bounded.
+	 */
+	public void testCommitFailureCauseIsBounded() {
+		String huge = "x".repeat(5000);
+		String described = TransactionScope.describeCommitFailure(
+			new KnowledgeBaseException("Database operation failed.",
+				new SQLException(huge)));
+
+		assertTrue("A multi-KB driver message must not reach the prompt in full: "
+			+ described.length(), described.length() < 700);
+		assertTrue("The truncation has to be visible: " + described, described.endsWith("...)"));
+	}
 
 	/**
 	 * NOOP scope: isActive() always false, holdsLock() always false.

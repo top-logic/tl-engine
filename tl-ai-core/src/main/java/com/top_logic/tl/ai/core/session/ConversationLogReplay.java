@@ -33,9 +33,9 @@ public class ConversationLogReplay {
 	 *
 	 * <p>User text parts become {@link UserMessage}s. Assistant text, thinking,
 	 * and tool call parts are accumulated and flushed as {@link AssistantMessage}s.
-	 * Completed and failed tool calls produce {@link ToolResultMessage}s. Parts
-	 * that are not relevant to LLM context (approvals, system events, compaction
-	 * markers, etc.) are skipped.</p>
+	 * Completed, failed, denied and rolled-back tool calls produce
+	 * {@link ToolResultMessage}s. Parts that are not relevant to LLM context
+	 * (approvals, system events, compaction markers, etc.) are skipped.</p>
 	 */
 	public static void rebuildMemory(ConversationLog log, Conversation conversation) {
 		for (Turn turn : log.turns()) {
@@ -112,6 +112,17 @@ public class ConversationLogReplay {
 		} else if (tc.status() == Part.ToolCallStatus.FAILED) {
 			state = new ToolState.Failed(
 				tc.errorMessage() != null ? tc.errorMessage() : "Unknown error", now, now);
+		} else if (tc.status() == Part.ToolCallStatus.ROLLED_BACK) {
+			// The tool ran and reported success, but the turn's transaction never persisted it.
+			// Replaying it as a failure is what keeps the correction the model was given live from
+			// being lost on a page reload - the alternative replays a green write for a change that
+			// does not exist and lets the model cite it again.
+			String reason = tc.errorMessage() != null ? tc.errorMessage() : "Unknown reason";
+			state = new ToolState.Failed(
+				"The data changes of this turn were rolled back and NOT persisted: " + reason
+					+ " Anything this call reported as changed does not exist. If it also returned"
+					+ " data you still need, read it again.",
+				now, now);
 		} else if (tc.status() == Part.ToolCallStatus.DENIED) {
 			String reason = tc.denyReason() != null ? tc.denyReason() : "";
 			state = new ToolState.Failed(

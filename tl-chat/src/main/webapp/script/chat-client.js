@@ -178,6 +178,10 @@
         turnUsage: null,
         totalUsage: null,
         cumulativeTokens: 0,
+        // Tool call ids inside the currently open KB transaction, or null when none is
+        // open. Needed to retract exactly the calls a rollback voids: the scope lives for
+        // the whole run, so the calls of an earlier turn that did commit must stay green.
+        txToolCallIds: null,
       };
     },
 
@@ -202,6 +206,9 @@
         isDelegation,
         progressMessage: null,
       });
+      if (this.currentRun.txToolCallIds) {
+        this.currentRun.txToolCallIds.add(id);
+      }
     },
 
     completeToolCall(id, result, durationMs) {
@@ -230,6 +237,50 @@
         del.status = "error";
         del.durationMs = durationMs;
       }
+    },
+
+    /**
+     * Opens the transaction window, seeded with the write tool call that is already
+     * running: the loop begins the transaction while executing it, so its start event
+     * arrived before this one.
+     */
+    beginTransaction() {
+      if (!this.currentRun) return;
+      const ids = new Set();
+      for (const [id, tc] of this.currentRun.toolCalls) {
+        if (tc.status === "running") {
+          ids.add(id);
+        }
+      }
+      this.currentRun.txToolCallIds = ids;
+    },
+
+    endTransaction() {
+      if (this.currentRun) {
+        this.currentRun.txToolCallIds = null;
+      }
+    },
+
+    /**
+     * Retracts every tool call of the open transaction that reported success, and returns
+     * their ids. A write tool commits only a transaction nested inside the turn's, which
+     * writes nothing, so its success was a claim about a commit that then failed.
+     */
+    rollBackTransaction(reason) {
+      if (!this.currentRun) return [];
+      const open = this.currentRun.txToolCallIds;
+      this.currentRun.txToolCallIds = null;
+      if (!open) return [];
+      const retracted = [];
+      for (const id of open) {
+        const tc = this.currentRun.toolCalls.get(id);
+        if (tc && tc.status === "success") {
+          tc.status = "rolled-back";
+          tc.error = reason;
+          retracted.push(id);
+        }
+      }
+      return retracted;
     },
 
     denyToolCall(id, reason) {
@@ -469,9 +520,12 @@
     },
 
     onTxBegan(data) {
-      /* No UI */
+      // No pill — but the tool calls of this transaction have to be known, so a rollback
+      // can retract them without touching the calls of a turn that already committed.
+      Store.beginTransaction();
     },
     onTxCommitted(data) {
+      Store.endTransaction();
       if (data.revisionNumber >= 0) {
         Timeline.addPill(
           "Committed (rev " + data.revisionNumber + ")",
@@ -480,7 +534,11 @@
       }
     },
     onTxRollback(data) {
-      Timeline.addPill("Rolled back: " + (data.reason || ""), "rollback");
+      const reason = data.reason || "";
+      for (const id of Store.rollBackTransaction(reason)) {
+        Tools.retractToolCall(id);
+      }
+      Timeline.addPill("Rolled back: " + reason, "rollback");
     },
 
     onCompactionStarted(data) {
@@ -2026,6 +2084,43 @@
       }
     },
 
+    /**
+     * Turns an already-rendered green tool call red and says why. Only the dot and one
+     * added block change - the result stays visible, because the reader needs to see the
+     * claim next to its retraction.
+     */
+    retractToolCall(toolCallId) {
+      const tc = Store.currentRun?.toolCalls.get(toolCallId);
+      if (!tc) return;
+      const root = Render._root || document;
+      const el = root.querySelector('[data-tool-call-id="' + toolCallId + '"]');
+      if (!el) return;
+
+      const dot = el.querySelector(".tl-chat-status-dot");
+      if (dot) {
+        dot.className = "tl-chat-status-dot rolled-back";
+      }
+
+      const name = el.querySelector(".tl-chat-tool-name");
+      if (name && !el.querySelector(".tl-chat-tool-rolled-back")) {
+        const badge = document.createElement("span");
+        badge.className = "tl-chat-tool-rolled-back";
+        badge.textContent = "rolled back";
+        name.insertAdjacentElement("afterend", badge);
+      }
+
+      const body = el.querySelector(".tl-chat-tool-body");
+      if (body && tc.error) {
+        const div = document.createElement("div");
+        div.innerHTML =
+          '<div class="tl-chat-tool-label" style="color:var(--chat-status-error)">Rolled back</div>' +
+          '<pre style="color:var(--chat-status-error)">' +
+          Utils.escapeHtml(tc.error) +
+          "</pre>";
+        body.appendChild(div);
+      }
+    },
+
     updateToolProgress(toolCallId) {
       const tc = Store.currentRun?.toolCalls.get(toolCallId);
       if (!tc || !tc.progressMessage) return;
@@ -2911,6 +3006,7 @@
         const approvals = [];
         const interactions = [];
         const delegations = [];
+        const transactions = [];
         let thinkingText = "";
         let wasCancelled = false;
 
@@ -2937,6 +3033,13 @@
               break;
             case "delegation":
               delegations.push(part.delegationData);
+              break;
+            case "transaction":
+              // The live view shows a pill per transaction outcome; without this case a
+              // reloaded transcript showed none, so a rolled-back turn looked successful.
+              if (part.transactionData) {
+                transactions.push(part.transactionData);
+              }
               break;
             case "text":
               if (i > lastToolIndex) {
@@ -2971,6 +3074,7 @@
           approvals.length > 0 ||
           interactions.length > 0 ||
           delegations.length > 0 ||
+          transactions.length > 0 ||
           thinkingText;
 
         const contentHtml = turn.contentHtml || "";
@@ -2981,6 +3085,7 @@
             approvals,
             interactions,
             delegations,
+            transactions,
             thinkingText,
             turn.usage,
             textContent,
@@ -3013,6 +3118,7 @@
       approvals,
       interactions,
       delegations,
+      transactions,
       thinkingText,
       usage,
       textContent,
@@ -3125,6 +3231,11 @@
         this._renderInteractionPart(toolsEl, inter);
       }
 
+      // Render the transaction outcome, matching the pills the live view showed.
+      for (const tx of transactions) {
+        this._renderTransactionPart(toolsEl, tx);
+      }
+
       traceBody.appendChild(toolsEl);
       traceWrapper.appendChild(traceHeader);
       traceWrapper.appendChild(traceBody);
@@ -3151,7 +3262,12 @@
 
       const isDenied = tc.status === "DENIED";
       const isFailed = tc.status === "FAILED";
-      const statusClass = isDenied || isFailed ? "error" : "success";
+      const isRolledBack = tc.status === "ROLLED_BACK";
+      const statusClass = isRolledBack
+        ? "rolled-back"
+        : isDenied || isFailed
+          ? "error"
+          : "success";
 
       const header = document.createElement("div");
       header.className = "tl-chat-tool-header";
@@ -3163,6 +3279,9 @@
         Utils.escapeHtml(tc.toolName || "") +
         "</span>" +
         (isDenied ? '<span class="tl-chat-tool-denied">denied</span>' : "") +
+        (isRolledBack
+          ? '<span class="tl-chat-tool-rolled-back">rolled back</span>'
+          : "") +
         '<span class="tl-chat-tool-tokens">~' +
         Utils.formatTokens(
           Tools._estimateTokens(tc.argsJson) + Tools._estimateTokens(tc.result),
@@ -3194,8 +3313,15 @@
         body.appendChild(deniedDiv);
       } else if (isFailed && tc.errorMessage) {
         body.appendChild(Tools._buildResultBlock("Error", tc.errorMessage));
-      } else if (tc.result) {
-        body.appendChild(Tools._buildResultBlock("Result", tc.result));
+      } else {
+        // A retracted call keeps its result: the reader needs the claim next to the
+        // retraction that voids it.
+        if (tc.result) {
+          body.appendChild(Tools._buildResultBlock("Result", tc.result));
+        }
+        if (isRolledBack && tc.errorMessage) {
+          body.appendChild(Tools._buildResultBlock("Rolled back", tc.errorMessage));
+        }
       }
 
       let expanded = false;
@@ -3210,6 +3336,29 @@
       el.appendChild(header);
       el.appendChild(body);
       container.appendChild(el);
+    },
+
+    /**
+     * A persisted transaction outcome, as the pill the live view added for it. A BEGAN
+     * carries no information for the reader and is skipped, exactly as live.
+     */
+    _renderTransactionPart(container, tx) {
+      const type = tx.type;
+      if (type !== "COMMITTED" && type !== "ROLLED_BACK") {
+        return;
+      }
+      const pill = document.createElement("div");
+      if (type === "COMMITTED") {
+        if (!(tx.revisionNumber >= 0)) {
+          return;
+        }
+        pill.className = "tl-chat-status-pill committed";
+        pill.textContent = "Committed (rev " + tx.revisionNumber + ")";
+      } else {
+        pill.className = "tl-chat-status-pill rollback";
+        pill.textContent = "Rolled back: " + (tx.reason || "");
+      }
+      container.appendChild(pill);
     },
 
     _renderDelegationPart(container, del) {

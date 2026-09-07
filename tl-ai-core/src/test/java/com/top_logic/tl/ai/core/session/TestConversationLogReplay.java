@@ -104,6 +104,46 @@ public class TestConversationLogReplay extends TestCase {
 		assertTrue("Expected denied tool result", hasDenial);
 	}
 
+	/**
+	 * A retracted tool call is replayed as a failure, so a reloaded session does not hand the model
+	 * a successful write for a change that was never persisted.
+	 *
+	 * <p>
+	 * This is what makes the correction survive a page reload. The live
+	 * {@code [Framework notice]} is not recorded as a part, so without this the model would re-read
+	 * a green {@code createDocument} and cite its identifier again.
+	 * </p>
+	 */
+	public void testRolledBackToolReplaysAsFailure() {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.now(), "Create a document")));
+		Part.ToolCallPart tc = Part.ToolCallPart.started("tc1", Instant.now(),
+			"createDocument", "{\"name\":\"Q3\"}");
+		turn.addAssistantPart(tc.completed("{uuid=4f2c}", Duration.ofMillis(10))
+			.rolledBack("Database operation failed."));
+		turn.addUsage(TokenUsage.EMPTY);
+		log.completeTurn();
+
+		Conversation conv = new Conversation();
+		ConversationLogReplay.rebuildMemory(log, conv);
+
+		ToolResultMessage result = null;
+		for (var m : conv.messages()) {
+			if (m instanceof ToolResultMessage trm) {
+				result = trm;
+			}
+		}
+		assertNotNull("The tool call itself must still be replayed - the model made it.", result);
+		assertTrue("A write that never landed must not come back as a success: " + result.state(),
+			result.state() instanceof ToolState.Failed);
+		String error = ((ToolState.Failed) result.state()).error();
+		assertTrue("The replayed failure must say the changes were not persisted: " + error,
+			error.contains("NOT persisted"));
+		assertTrue("The reason must survive the reload: " + error,
+			error.contains("Database operation failed."));
+	}
+
 	/** Approval parts are NOT replayed to the LLM. */
 	public void testApprovalNotReplayed() {
 		ConversationLog log = new ConversationLog();

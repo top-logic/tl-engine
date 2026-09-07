@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
@@ -601,9 +602,11 @@ public class AgentLoop {
 	 * Rolls the whole turn back and corrects the picture the model was left with.
 	 *
 	 * <p>
-	 * The one rollback route for "everything this turn wrote is gone": both a failed tool call and
-	 * a {@link com.top_logic.tl.ai.core.security.PreCommitGuard} violation go through here, so
-	 * all-or-nothing means the same thing in both cases and the model is told in the same shape.
+	 * The one rollback route for "everything this turn wrote is gone": a failed tool call, a
+	 * {@link com.top_logic.tl.ai.core.security.PreCommitGuard} violation and a commit that itself
+	 * failed all go through here, so all-or-nothing means the same thing in every case and the model
+	 * is told in the same shape. Leaving the commit-failure path out was what let an agent report a
+	 * created object, by the identifier its tool had returned, that no commit ever persisted.
 	 * </p>
 	 *
 	 * @param reason
@@ -670,8 +673,20 @@ public class AgentLoop {
 			long revNum = rev != null ? rev.getCommitNumber() : -1;
 			emit(listener, new AgentEvent.TransactionCommitted(runId, turn, now(), revNum));
 		} catch (TransactionException e) {
-			scope.rollback();
-			emit(listener, new AgentEvent.TransactionRolledBack(runId, turn, now(), rollbackReason(e)));
+			// Nothing else logs a failed commit: TransactionScope wraps the engine's exception
+			// without logging it and the rollback event is only traced at DEBUG, so without this a
+			// deployment that hits it has no way to find out why.
+			Logger.error("Agent run " + runId + " turn " + turn
+				+ ": the transaction of the turn could not be committed.", e, AgentLoop.class);
+			String reason = rollbackReason(e);
+			rollbackTurn(context, conversation, listener, runId, turn, reason,
+				"The data changes of this turn could NOT be saved and were rolled back: "
+					+ asSentence(reason)
+					+ " This includes every change a tool of this turn reported as successful -"
+					+ " those results are void, and any identifier they named does not exist."
+					+ " Tell the user that the change was not saved, and do not claim otherwise."
+					+ " The cause is a database failure, not a mistake of yours, so do not retry"
+					+ " the identical change.");
 		}
 	}
 
@@ -727,6 +742,22 @@ public class AgentLoop {
 			return message.substring(TransactionScope.COMMIT_FAILED_PREFIX.length());
 		}
 		return message;
+	}
+
+	/**
+	 * The reason as a sentence, so the notice built around it does not run two sentences together.
+	 *
+	 * <p>
+	 * A commit failure reason is whatever the engine produced: {@code "Database operation failed."}
+	 * ends in a full stop, a nested rollback's reason may not.
+	 * </p>
+	 */
+	private static String asSentence(String reason) {
+		if (StringServices.isEmpty(reason)) {
+			return "The database reported no reason.";
+		}
+		char last = reason.charAt(reason.length() - 1);
+		return last == '.' || last == '!' || last == '?' ? reason : reason + ".";
 	}
 
 	/** */

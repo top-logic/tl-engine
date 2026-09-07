@@ -69,6 +69,12 @@ public class TransactionScope implements AutoCloseable {
 	/** A {@code {0}}-style placeholder a resolved message left standing. */
 	private static final Pattern UNFILLED_PLACEHOLDER = Pattern.compile("\\{\\d+\\}");
 
+	/** How much of a cause message may reach the model and the user. */
+	private static final int MAX_CAUSE_LENGTH = 500;
+
+	/** How far {@link #rootCause(Throwable)} follows a cause chain. */
+	private static final int MAX_CAUSE_DEPTH = 20;
+
 	private static final int MAX_RETRIES = AgentTuning.LOCK_MAX_RETRIES;
 
 	private static final long RETRY_DELAY_MS = AgentTuning.LOCK_RETRY_DELAY_MS;
@@ -254,11 +260,20 @@ public class TransactionScope implements AutoCloseable {
 	 * nothing at all, so it is resolved here - in the acting user's locale, falling back to the
 	 * deployment's default.
 	 * </p>
+	 *
+	 * <p>
+	 * For every other failure the engine's message is the constant {@code "Database operation
+	 * failed."} - it wraps any unexpected {@link Throwable} that escaped the commit under that one
+	 * string, and the {@code SQLException} that actually says what went wrong is only reachable
+	 * through the cause chain. The deepest cause is therefore appended, which is what turns the
+	 * constant into {@code "Database operation failed. (SQLException: Data too long for column
+	 * 'name')"} - the only thing the user and the model can act on.
+	 * </p>
 	 */
 	static String describeCommitFailure(KnowledgeBaseException failure) {
 		String message = failure.getMessage();
 		if (message == null || !message.startsWith(ENCODED_RES_KEY_PREFIX)) {
-			return message;
+			return appendRootCause(message, failure);
 		}
 		ResKey reason = ResKey.decode(message.substring(ENCODED_RES_KEY_PREFIX.length()));
 		Resources resources = Resources.getInstance();
@@ -267,6 +282,53 @@ public class TransactionScope implements AutoCloseable {
 			return describeArguments(resources, reason);
 		}
 		return resolved;
+	}
+
+	/**
+	 * The message with the deepest cause of the failure appended, if there is one that adds
+	 * anything.
+	 *
+	 * <p>
+	 * Bounded to {@value #MAX_CAUSE_LENGTH} characters: a cause message is written by a database
+	 * driver, may quote a whole statement, and this string ends up in an LLM prompt.
+	 * </p>
+	 */
+	private static String appendRootCause(String message, KnowledgeBaseException failure) {
+		Throwable cause = rootCause(failure);
+		if (cause == null) {
+			return message;
+		}
+		String causeMessage = cause.getMessage();
+		if (StringServices.isEmpty(causeMessage)
+			|| (message != null && message.contains(causeMessage))) {
+			// Nothing to add, or the engine already said it.
+			return message;
+		}
+		if (causeMessage.length() > MAX_CAUSE_LENGTH) {
+			causeMessage = causeMessage.substring(0, MAX_CAUSE_LENGTH) + "...";
+		}
+		String detail = cause.getClass().getSimpleName() + ": " + causeMessage;
+		return StringServices.isEmpty(message) ? detail : message + " (" + detail + ")";
+	}
+
+	/**
+	 * The deepest cause of the given failure, or <code>null</code> if it has none.
+	 */
+	private static Throwable rootCause(Throwable failure) {
+		Throwable cause = failure.getCause();
+		if (cause == null) {
+			return null;
+		}
+		// A cause chain is short and acyclic in practice; the bound only guards against a
+		// self-referential one rather than expecting to be reached.
+		for (int depth = 0; depth < MAX_CAUSE_DEPTH; depth++) {
+			Throwable next = cause.getCause();
+			if (next == null || next == cause) {
+				break;
+			}
+			cause = next;
+		}
+		return cause;
 	}
 
 	/**
@@ -299,8 +361,15 @@ public class TransactionScope implements AutoCloseable {
 	/**
 	 * Roll back the active transaction and release all locks. Idempotent —
 	 * safe to call when no transaction is active.
+	 *
+	 * <p>
+	 * Clears {@link #commitRevision()} as well: a scope lives for a whole run, so after a turn was
+	 * rolled back the revision left standing would be the one an <em>earlier</em> turn committed -
+	 * and anything asking "which revision did this turn produce?" would be told the wrong one.
+	 * </p>
 	 */
 	public void rollback() {
+		_commitRevision = null;
 		if (_transaction != null) {
 			try {
 				_transaction.rollback();

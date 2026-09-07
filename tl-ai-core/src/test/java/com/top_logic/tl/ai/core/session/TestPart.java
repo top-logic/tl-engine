@@ -54,6 +54,14 @@ public class TestPart extends TestCase {
 			"{}", "User denied: too risky");
 		assertEquals(Part.ToolCallStatus.DENIED, denied.status());
 		assertEquals("User denied: too risky", denied.denyReason());
+
+		Part.ToolCallPart rolledBack = completed.rolledBack("Database operation failed.");
+		assertEquals(Part.ToolCallStatus.ROLLED_BACK, rolledBack.status());
+		assertEquals("Database operation failed.", rolledBack.errorMessage());
+		assertEquals("The claim is kept next to its retraction.", "file contents here",
+			rolledBack.result());
+		assertEquals("A rollback does not change how long the tool ran.", 42L,
+			rolledBack.durationMs());
 	}
 
 	/** Verify ApprovalPart captures user decisions. */

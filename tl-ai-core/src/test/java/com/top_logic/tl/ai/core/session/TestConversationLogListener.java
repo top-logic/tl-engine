@@ -156,6 +156,92 @@ public class TestConversationLogListener extends TestCase {
 		assertEquals("User denied: too risky", denied.denyReason());
 	}
 
+	/**
+	 * A rolled-back turn retracts the tool calls that reported success inside its transaction.
+	 *
+	 * <p>
+	 * A write tool commits only a transaction nested inside the turn's, which writes no SQL, so its
+	 * {@code COMPLETED} was a claim about a commit that had not happened yet. A transcript reloaded
+	 * from the database used to show a green write for a change that was never persisted.
+	 * </p>
+	 */
+	public void testRolledBackTurnRetractsItsCompletedToolCalls() {
+		Instant now = Instant.now();
+		_log.startTurn();
+		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "createDocument", "{}"));
+		_listener.onEvent(new AgentEvent.TransactionBegan("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 1, now, "tc1", "createDocument",
+			"{uuid=4f2c}", Duration.ofMillis(10)));
+		_listener.onEvent(new AgentEvent.TransactionRolledBack("r1", 1, now,
+			"Database operation failed."));
+
+		Part.ToolCallPart retracted = (Part.ToolCallPart) _log.currentTurn().findPart("tc1");
+		assertEquals("A write whose turn never committed must not stay COMPLETED.",
+			Part.ToolCallStatus.ROLLED_BACK, retracted.status());
+		assertEquals("The reason has to travel with the retraction.",
+			"Database operation failed.", retracted.errorMessage());
+		assertEquals("The result the tool claimed is kept, so a reader sees the claim next to its"
+			+ " retraction.", "{uuid=4f2c}", retracted.result());
+		assertEquals("The duration is not invalidated by the rollback.", 10L, retracted.durationMs());
+	}
+
+	/**
+	 * Only the tool calls of the rolled-back transaction are retracted.
+	 *
+	 * <p>
+	 * A {@link com.top_logic.tl.ai.core.agent.TransactionScope} lives for a whole run, one KB
+	 * transaction per turn. The writes of an earlier turn whose own commit succeeded are genuinely
+	 * persisted and must stay {@code COMPLETED} - the window starts at the most recent
+	 * {@code BEGAN}.
+	 * </p>
+	 */
+	public void testRollbackLeavesAnEarlierCommittedTurnAlone() {
+		Instant now = Instant.now();
+		_log.startTurn();
+		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
+
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "createDocument", "{}"));
+		_listener.onEvent(new AgentEvent.TransactionBegan("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 1, now, "tc1", "createDocument",
+			"first", Duration.ofMillis(10)));
+		_listener.onEvent(new AgentEvent.TransactionCommitted("r1", 1, now, 4711));
+
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 2, now));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 2, now, "tc2", "createDocument", "{}"));
+		_listener.onEvent(new AgentEvent.TransactionBegan("r1", 2, now));
+		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 2, now, "tc2", "createDocument",
+			"second", Duration.ofMillis(10)));
+		_listener.onEvent(new AgentEvent.TransactionRolledBack("r1", 2, now, "Commit failed"));
+
+		Turn turn = _log.currentTurn();
+		assertEquals("Revision 4711 persisted this write; retracting it would be the same lie in"
+			+ " the other direction.", Part.ToolCallStatus.COMPLETED,
+			((Part.ToolCallPart) turn.findPart("tc1")).status());
+		assertEquals(Part.ToolCallStatus.ROLLED_BACK,
+			((Part.ToolCallPart) turn.findPart("tc2")).status());
+	}
+
+	/** A rollback does not resurrect a tool call that had already failed. */
+	public void testRollbackKeepsAFailedToolCallFailed() {
+		Instant now = Instant.now();
+		_log.startTurn();
+		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "createDocument", "{}"));
+		_listener.onEvent(new AgentEvent.TransactionBegan("r1", 1, now));
+		_listener.onEvent(new AgentEvent.ToolCallFailed("r1", 1, now, "tc1", "createDocument",
+			"Name too long", Duration.ofMillis(3)));
+		_listener.onEvent(new AgentEvent.TransactionRolledBack("r1", 1, now,
+			"Tool execution failed"));
+
+		Part.ToolCallPart part = (Part.ToolCallPart) _log.currentTurn().findPart("tc1");
+		assertEquals(Part.ToolCallStatus.FAILED, part.status());
+		assertEquals("Name too long", part.errorMessage());
+	}
+
 	/** Approval events create ApprovalParts. */
 	public void testApprovalLifecycle() {
 		Instant now = Instant.now();

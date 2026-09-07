@@ -96,6 +96,42 @@ public class TestConversationLogSerializer extends TestCase {
 		assertTrue(restored.turns().isEmpty());
 	}
 
+	/**
+	 * A retracted tool call round-trips, including its reason and the result it retracts.
+	 *
+	 * <p>
+	 * The persisted status is a string, so the new value is additive: an older log simply never
+	 * carries it.
+	 * </p>
+	 */
+	public void testRolledBackToolCallRoundTrip() {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.now(), "Create a document")));
+		Part.ToolCallPart tc = Part.ToolCallPart.started("tc1", Instant.ofEpochMilli(1000),
+			"createDocument", "{\"name\":\"Q3\"}");
+		turn.addAssistantPart(tc.completed("{uuid=4f2c}", Duration.ofMillis(10))
+			.rolledBack("Database operation failed."));
+		turn.addAssistantPart(new Part.TransactionPart("tx1", Instant.ofEpochMilli(1001),
+			Part.TransactionType.ROLLED_BACK, -1, "Database operation failed."));
+		turn.addUsage(TokenUsage.EMPTY);
+		log.completeTurn();
+
+		ConversationLog restored = ConversationLogSerializer.fromJson(
+			ConversationLogSerializer.toJson(log));
+		List<Part> parts = restored.turns().get(0).assistantParts();
+
+		Part.ToolCallPart rtc = (Part.ToolCallPart) parts.get(0);
+		assertEquals(Part.ToolCallStatus.ROLLED_BACK, rtc.status());
+		assertEquals("Database operation failed.", rtc.errorMessage());
+		assertEquals("{uuid=4f2c}", rtc.result());
+		assertEquals(10L, rtc.durationMs());
+
+		Part.TransactionPart rtx = (Part.TransactionPart) parts.get(1);
+		assertEquals(Part.TransactionType.ROLLED_BACK, rtx.type());
+		assertEquals("Database operation failed.", rtx.reason());
+	}
+
 	/** InteractionPart with options round-trips. */
 	public void testInteractionRoundTrip() {
 		ConversationLog log = new ConversationLog();

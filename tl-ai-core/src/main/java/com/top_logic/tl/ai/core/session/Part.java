@@ -60,7 +60,9 @@ public sealed interface Part {
 		/** Tool threw an error. */
 		FAILED,
 		/** Tool was denied by security or approval. */
-		DENIED
+		DENIED,
+		/** Tool reported success, but the writes of its turn were rolled back and are void. */
+		ROLLED_BACK
 	}
 
 	/**
@@ -75,7 +77,8 @@ public sealed interface Part {
 	 * @param argsJson tool arguments as JSON
 	 * @param status current lifecycle status
 	 * @param result tool execution result, or {@code null}
-	 * @param errorMessage error details, or {@code null}
+	 * @param errorMessage error details, or the rollback reason for
+	 *        {@link ToolCallStatus#ROLLED_BACK}; {@code null} if neither applies
 	 * @param denyReason denial reason, or {@code null}
 	 * @param durationMs execution time in milliseconds
 	 */
@@ -109,6 +112,31 @@ public sealed interface Part {
 		public ToolCallPart failed(String error, Duration duration) {
 			return new ToolCallPart(id, timestamp, toolName, argsJson,
 				ToolCallStatus.FAILED, null, error, null, duration.toMillis());
+		}
+
+		/**
+		 * Transitions this call to {@link ToolCallStatus#ROLLED_BACK}, keeping what it reported.
+		 *
+		 * <p>
+		 * The real SQL of a turn runs only at the turn boundary - every write tool commits its own
+		 * transaction <em>nested</em> inside the turn's, which writes nothing - so a
+		 * {@link ToolCallStatus#COMPLETED} write is a provisional claim until the turn commits. Once
+		 * the turn is rolled back the claim is void, and the recorded history has to say so;
+		 * a transcript reloaded from the database would otherwise show a green tool call for a
+		 * change that was never persisted.
+		 * </p>
+		 *
+		 * <p>
+		 * The result is kept rather than dropped: it is what the model was shown while the turn ran,
+		 * and a reader of the transcript needs to see the claim next to its retraction.
+		 * </p>
+		 *
+		 * @param reason
+		 *        Why the turn was rolled back.
+		 */
+		public ToolCallPart rolledBack(String reason) {
+			return new ToolCallPart(id, timestamp, toolName, argsJson,
+				ToolCallStatus.ROLLED_BACK, result, reason, null, durationMs);
 		}
 	}
 

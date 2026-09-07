@@ -21,8 +21,15 @@
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance>
 				<modules>
-					<!-- MCP Server Service for AI model integration -->
-					<module key="com.top_logic.ai.mcp.server.MCPServerService$Module" value="true"/>
+					<!--
+						The MCP server is opt-in, because /mcp/* authenticates nobody.
+
+						Enabling it publishes the application's model and business data to
+						everyone who can reach the endpoint. See doc/security/mcp-endpoint.md
+						for what exactly is exposed and how to switch it on. Transport
+						authentication is issue #261.
+					-->
+					<module key="com.top_logic.ai.mcp.server.MCPServerService$Module" value="false"/>
 				</modules>
 			</instance>
 		</config>

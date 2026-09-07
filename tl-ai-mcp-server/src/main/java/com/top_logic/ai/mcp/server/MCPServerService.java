@@ -62,6 +62,14 @@ import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
  * </p>
  *
  * <p>
+ * <b>This service is switched off in the configuration this module ships</b>, because {@code /mcp/*}
+ * authenticates nobody: see {@code doc/security/mcp-endpoint.md} and issue #261. An application that
+ * wants the endpoint switches the module {@code MCPServerService$Module} to {@code true} itself, and
+ * gets a warning in its boot log stating what that publishes. While the service is off,
+ * {@code MCPTransportServlet} answers the whole {@code /mcp/*} path with 503.
+ * </p>
+ *
+ * <p>
  * The service uses {@link ServletContextService} to obtain the application's context path
  * at startup, ensuring that endpoint URLs sent to clients include the correct context path
  * regardless of the deployment configuration.
@@ -249,15 +257,26 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 * security validator is the SDK default that validates nothing. Whoever reaches the port reaches
 	 * the protocol. Tracked as issue #261.
 	 * </p>
+	 *
+	 * <p>
+	 * Reaching this method means an administrator switched the module on: it is {@code false} in this
+	 * module's own configuration. The warning therefore states what that decision published, rather
+	 * than reporting a default nobody chose.
+	 * </p>
 	 */
 	private void warnAboutUnauthenticatedEndpoint() {
 		Logger.warn("MCP server started on " + MCP_ENDPOINT
-			+ "/* WITHOUT transport authentication: the servlet is registered with no filter and no"
-			+ " security-constraint, so every registered agent tool and every exposed model resource"
-			+ " is reachable by anyone who can reach this endpoint. Restrict access to it at the"
-			+ " network or reverse-proxy level. Applications that enforce role-based agent tool"
-			+ " access (<tool-access>) refuse MCP tool execution outright, because an unauthenticated"
-			+ " caller cannot be authorized. See issue #261.", MCPServerService.class);
+			+ "/* WITHOUT transport authentication. This module ships switched off; it is running"
+			+ " because this application enabled MCPServerService$Module explicitly. The servlet is"
+			+ " registered with no filter and no security-constraint, so anyone who can reach this"
+			+ " endpoint can read the exposed model resources - every attribute of any object"
+			+ " addressed by TID, every instance of any type - and those reads run in a system"
+			+ " interaction, which bypasses model access rights entirely. tools/list additionally"
+			+ " discloses every tool name, description and input schema. Tool *execution* is refused"
+			+ " unconditionally, in every deployment and whatever <tool-access> says, because an"
+			+ " unauthenticated caller cannot be authorized. Restrict access to this endpoint at the"
+			+ " network or reverse-proxy level. See issue #261 and doc/security/mcp-endpoint.md.",
+			MCPServerService.class);
 	}
 
 	/**

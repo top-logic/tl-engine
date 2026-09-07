@@ -48,7 +48,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * <p>
  * This is the primary entry point for constructing agents from model-based definitions
  * ({@code tl.ai.core:Agent} instances). It delegates provider creation to
- * {@link LLMService#buildProvider(String)} and tool resolution to the service-level
+ * {@link LLMService#buildProvider(String, String)} and tool resolution to the service-level
  * {@link ToolRegistryService}.
  * </p>
  *
@@ -172,7 +172,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		AgentCapabilities capabilities = AgentCapabilities.forRun(context.security());
 
 		AgentParams coreConfig = buildConfig(agentDef, assignment, capabilities);
-		LLMProvider provider = buildProvider(coreConfig.model());
+		LLMProvider provider = buildProvider(coreConfig.model(), assignment.provider());
 		boolean hasDynamicLoading = !agentDef.skills().isEmpty();
 		ToolRegistry registry = sessionRegistry != null && hasDynamicLoading
 			? sessionRegistry
@@ -295,7 +295,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
 		AgentParams config = buildConfig(agentDef, assignment, capabilities);
-		LLMProvider provider = buildProvider(config.model());
+		LLMProvider provider = buildProvider(config.model(), assignment.provider());
 		ToolRegistry registry = buildToolCatalog(agentDef, capabilities);
 
 		int maxToolResultChars = resolveMaxToolResultChars(assignment);
@@ -328,7 +328,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
 		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
 		AgentParams config = buildConfig(agentDef, assignment, capabilities);
-		LLMProvider provider = buildProvider(config.model());
+		LLMProvider provider = buildProvider(config.model(), assignment.provider());
 		// Full parity with the parent agent's toolset, minus the ability to spawn subagents.
 		ToolRegistry registry = agentDef.skills().isEmpty()
 			? buildStaticToolCatalog(agentDef, false, false, capabilities)
@@ -363,7 +363,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			modelInfo = defaultModelInfo(model);
 		}
 
-		String providerId = llmRegistry.getProviderId(model);
+		String providerId = llmRegistry.getProviderId(model, assignment.provider());
 
 		String systemPrompt = agent.systemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt, capabilities);
@@ -508,18 +508,22 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	}
 
 	/**
-	 * Creates an {@link LLMProvider} for the given model name.
+	 * Creates an {@link LLMProvider} for the given model, served by the named provider.
 	 *
 	 * <p>
-	 * Delegates to {@link LLMService#buildProvider(String)}.
+	 * Delegates to {@link LLMService#buildProvider(String, String)}.
 	 * </p>
+	 *
+	 * @param providerName
+	 *        The provider the agent's assignment names, or {@code null} to let the model's only
+	 *        provider serve it.
 	 */
-	LLMProvider buildProvider(String modelName) {
+	LLMProvider buildProvider(String modelName, String providerName) {
 		LLMService registry = LLMService.getInstance();
 		if (registry == null) {
 			throw new IllegalStateException("LLMService is not available.");
 		}
-		return registry.buildProvider(modelName);
+		return registry.buildProvider(modelName, providerName);
 	}
 
 	/**

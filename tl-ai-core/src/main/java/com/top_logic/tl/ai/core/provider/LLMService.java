@@ -10,9 +10,11 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -38,6 +40,7 @@ import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
@@ -86,6 +89,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	@DisplayOrder({
 		NamedConfigMandatory.NAME_ATTRIBUTE,
 		AgentOverride.MODEL,
+		AgentOverride.PROVIDER,
 		AgentOverride.CONTEXT_WINDOW,
 		AgentOverride.MAX_TOKENS,
 		AgentOverride.MAX_TURNS,
@@ -103,6 +107,9 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	public interface AgentOverride extends NamedConfigMandatory, ConfigPart {
 		/** @see #getModel() */
 		String MODEL = "model";
+
+		/** @see #getProvider() */
+		String PROVIDER = "provider";
 
 		/** @see #getMaxTokens() */
 		String MAX_TOKENS = "max-tokens";
@@ -156,6 +163,24 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		@Options(fun = ServiceModelOptions.class)
 		@Constraint(value = ModelToolCallConstraint.class, args = @Ref(NAME_ATTRIBUTE))
 		String getModel();
+
+		/**
+		 * The provider serving this agent's model, or empty when only one provider exposes it.
+		 *
+		 * <p>
+		 * Name a provider when two provider entries expose the same model - separate accounts, or
+		 * an official endpoint next to a gateway. Left empty for a model exposed twice, the
+		 * service refuses to start. An agent inheriting the default model inherits the default
+		 * provider.
+		 * </p>
+		 *
+		 * @see #PROVIDER
+		 */
+		@Name(PROVIDER)
+		@Nullable
+		@Options(fun = ServiceProviderOptions.class)
+		@Constraint(value = ProviderExposesModelConstraint.class, args = @Ref(MODEL))
+		String getProvider();
 
 		/**
 		 * Maximum output tokens per LLM call, or {@code null} for catalog default.
@@ -216,7 +241,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(THINKING_EFFORT)
 		@Nullable
-		@DynamicMode(fun = ProviderFieldMode.AnthropicFieldMode.class, args = @Ref(MODEL))
+		@DynamicMode(fun = ProviderFieldMode.AnthropicFieldMode.class, args = { @Ref(MODEL), @Ref(PROVIDER) })
 		String getThinkingEffort();
 
 		/**
@@ -227,7 +252,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		@Label("Top-K")
 		@Name(TOP_K)
 		@Nullable
-		@DynamicMode(fun = ProviderFieldMode.AnthropicFieldMode.class, args = @Ref(MODEL))
+		@DynamicMode(fun = ProviderFieldMode.AnthropicFieldMode.class, args = { @Ref(MODEL), @Ref(PROVIDER) })
 		Integer getTopK();
 
 		/**
@@ -237,7 +262,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(REASONING_EFFORT)
 		@Nullable
-		@DynamicMode(fun = ProviderFieldMode.OpenAIFieldMode.class, args = @Ref(MODEL))
+		@DynamicMode(fun = ProviderFieldMode.OpenAIFieldMode.class, args = { @Ref(MODEL), @Ref(PROVIDER) })
 		String getReasoningEffort();
 
 		/**
@@ -247,7 +272,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(REASONING_SUMMARY)
 		@Nullable
-		@DynamicMode(fun = ProviderFieldMode.OpenAIFieldMode.class, args = @Ref(MODEL))
+		@DynamicMode(fun = ProviderFieldMode.OpenAIFieldMode.class, args = { @Ref(MODEL), @Ref(PROVIDER) })
 		String getReasoningSummary();
 
 		/**
@@ -342,6 +367,45 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	}
 
 	/**
+	 * Provides all configured provider names for selection in the admin UI.
+	 *
+	 * <p>
+	 * Derives the options from the {@link Config#getProviders() provider section} of the
+	 * configuration currently being edited, so a newly added provider becomes selectable without
+	 * saving and restarting the service first.
+	 * </p>
+	 */
+	public static class ConfiguredProviderOptions
+			extends Function1<List<String>, Map<String, LLMProviderConfig.Config>> {
+		@Override
+		public List<String> apply(Map<String, LLMProviderConfig.Config> providers) {
+			if (providers == null) {
+				return List.of();
+			}
+			return List.copyOf(providers.keySet());
+		}
+	}
+
+	/**
+	 * Provides provider names from the running {@link LLMService} instance.
+	 *
+	 * <p>
+	 * The {@link Container @Container}-free counterpart of {@link ConfiguredProviderOptions}, for
+	 * contexts where the container reference is not yet set - such as creating a new
+	 * {@link AgentOverride} entry in a keyed map.
+	 * </p>
+	 */
+	public static class ServiceProviderOptions extends Function0<List<String>> {
+		@Override
+		public List<String> apply() {
+			if (!LLMService.Module.INSTANCE.isActive()) {
+				return List.of();
+			}
+			return LLMService.getInstance().getConfiguredProviderNames();
+		}
+	}
+
+	/**
 	 * Agent execution configuration: chat entry point, default model, and per-agent overrides.
 	 *
 	 * <p>
@@ -354,6 +418,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	@DisplayOrder({
 		AgentExecutionConfig.CHAT_ENTRY_POINT,
 		AgentExecutionConfig.DEFAULT_MODEL,
+		AgentExecutionConfig.DEFAULT_PROVIDER,
 		AgentExecutionConfig.AGENT_OVERRIDES,
 	})
 	public interface AgentExecutionConfig extends ConfigPart {
@@ -363,6 +428,9 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
 		/** Configuration property name for {@link #getDefaultModel()}. */
 		String DEFAULT_MODEL = "default-model";
+
+		/** Configuration property name for {@link #getDefaultProvider()}. */
+		String DEFAULT_PROVIDER = "default-provider";
 
 		/** Configuration property name for {@link #getAgentOverrides()}. */
 		String AGENT_OVERRIDES = "agent-overrides";
@@ -414,6 +482,26 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 			@Step(Config.PROVIDERS),
 		}))
 		String getDefaultModel();
+
+		/**
+		 * The provider serving the default model, or empty when only one provider exposes it.
+		 *
+		 * <p>
+		 * Applies to every agent that has no provider of its own. Left empty for a default model
+		 * exposed by two providers, the service refuses to start rather than pick one by
+		 * configuration order.
+		 * </p>
+		 *
+		 * @see #DEFAULT_PROVIDER
+		 */
+		@Name(DEFAULT_PROVIDER)
+		@Nullable
+		@Options(fun = ConfiguredProviderOptions.class, args = @Ref(steps = {
+			@Step(OWNER),
+			@Step(Config.PROVIDERS),
+		}))
+		@Constraint(value = ProviderExposesModelConstraint.class, args = @Ref(DEFAULT_MODEL))
+		String getDefaultProvider();
 
 		/**
 		 * Per-agent overrides. Agents not listed here use the {@link #getDefaultModel()
@@ -576,9 +664,17 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	private final InstantiationContext _context;
 
 	/**
-	 * Index mapping model names to their resolved {@link LLMProviderConfig} instance.
+	 * Index mapping each model name to the names of the providers exposing it, in configuration
+	 * order.
+	 *
+	 * <p>
+	 * A model exposed by two provider entries has both of them here - neither is dropped. Which of
+	 * them serves a given agent is decided by that agent's {@link AgentOverride#getProvider()
+	 * provider}, never by iteration order; an unqualified reference to such a model is refused at
+	 * {@link #startUp()}.
+	 * </p>
 	 */
-	private Map<String, LLMProviderConfig> _modelProviderIndex;
+	private Map<String, List<String>> _modelProviders;
 
 	/**
 	 * Named provider configs, keyed by the provider config name.
@@ -589,8 +685,6 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 * Index mapping model IDs to their resolved {@link ModelInfo} metadata.
 	 */
 	private Map<String, ModelInfo> _models;
-
-	private Map<String, String> _agentModels;
 
 	/**
 	 * Creates a new {@link LLMService} from configuration.
@@ -622,25 +716,29 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		ModelDiscoveryHelper.clearCache();
 
 		Map<String, LLMProviderConfig> providerConfigs = new LinkedHashMap<>();
-		Map<String, LLMProviderConfig> modelIndex = new LinkedHashMap<>();
+		Map<String, List<String>> modelProviders = new LinkedHashMap<>();
 
 		for (Map.Entry<String, LLMProviderConfig.Config> entry : getConfig().getProviders().entrySet()) {
 			String providerName = entry.getKey();
 			LLMProviderConfig providerConfig = _context.getInstance(entry.getValue());
 			providerConfigs.put(providerName, providerConfig);
 
-			List<String> configured = providerConfig.getConfiguredModels();
-			for (String model : configured) {
-				LLMProviderConfig existing = modelIndex.putIfAbsent(model, providerConfig);
-				if (existing != null && existing != providerConfig) {
-					Logger.warn("Model '" + model + "' is exposed by multiple providers. Keeping the first mapping.",
-						LLMService.class);
+			for (String model : providerConfig.getConfiguredModels()) {
+				List<String> exposedBy = modelProviders.computeIfAbsent(model, name -> new ArrayList<>());
+				if (!exposedBy.contains(providerName)) {
+					exposedBy.add(providerName);
 				}
 			}
 		}
 
 		_providerConfigs = Map.copyOf(providerConfigs);
-		_modelProviderIndex = Map.copyOf(modelIndex);
+		Map<String, List<String>> index = new LinkedHashMap<>();
+		for (Map.Entry<String, List<String>> entry : modelProviders.entrySet()) {
+			index.put(entry.getKey(), List.copyOf(entry.getValue()));
+		}
+		_modelProviders = Map.copyOf(index);
+
+		refuseUnroutableReferences();
 
 		// --- Catalog phase ---
 		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
@@ -674,13 +772,6 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
 		_models = Map.copyOf(merged);
 
-		AgentExecutionConfig tuningConfig = getConfig().getAgentExecution();
-		Map<String, String> agentModelMap = new LinkedHashMap<>();
-		for (Map.Entry<String, AgentOverride> entry : tuningConfig.getAgentOverrides().entrySet()) {
-			agentModelMap.put(entry.getKey(), entry.getValue().getModel());
-		}
-		_agentModels = Map.copyOf(agentModelMap);
-
 		int overrideCount = overrides.size();
 		Logger.info("LLMService started with " +
 			getConfig().getProviders().size() + " provider(s), " +
@@ -693,13 +784,116 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	protected void shutDown() {
 		try {
 			_instance = null;
-			_modelProviderIndex = null;
+			_modelProviders = null;
 			_providerConfigs = null;
 			_models = null;
-			_agentModels = null;
 		} finally {
 			super.shutDown();
 		}
+	}
+
+	/**
+	 * Refuses the start when a configured model reference cannot be routed to exactly one
+	 * provider.
+	 *
+	 * <p>
+	 * Reported to the {@link InstantiationContext} so that a full application boot lists every
+	 * problem at once, and thrown so that this start fails whoever asked for it. The context alone
+	 * is not enough: {@link TypedRuntimeModule} tests it for errors <em>before</em> this method
+	 * runs, so at boot the refusal would only surface as the next service's failure, and an
+	 * in-app restart of this service alone would report nothing and leave an unroutable
+	 * configuration running.
+	 * </p>
+	 */
+	private void refuseUnroutableReferences() {
+		List<String> refusals =
+			refusals(getConfig().getAgentExecution(), _modelProviders, _providerConfigs.keySet());
+		if (refusals.isEmpty()) {
+			return;
+		}
+		for (String refusal : refusals) {
+			_context.error(refusal);
+		}
+		throw new ConfigurationError(ResKey.text("The agent model configuration cannot be routed to"
+			+ " providers, so this service is not running: " + String.join(" ", refusals)));
+	}
+
+	/**
+	 * Everything about the given agent execution configuration that must stop the service from
+	 * starting.
+	 *
+	 * <p>
+	 * Two things do: a reference to a provider that is not configured, and an unqualified
+	 * reference to a model that two providers expose. The second is a refusal rather than a
+	 * warning because there is no answer to give - the operator listed the model twice to keep the
+	 * two endpoints apart, and picking either one by configuration order would be guessing which
+	 * account, key or rate limit the agent was meant to use.
+	 * </p>
+	 *
+	 * <p>
+	 * A model that <em>no</em> provider exposes is deliberately not refused here: that stays the
+	 * runtime error of {@link #buildProvider(String, String)}, because the model catalog can be
+	 * completed after the start and an agent nobody runs should not stop the application.
+	 * </p>
+	 *
+	 * @param execution
+	 *        The agent execution section to inspect.
+	 * @param modelProviders
+	 *        Model name to the names of the providers exposing it.
+	 * @param providerNames
+	 *        The names of all configured providers.
+	 * @return One sentence per problem, in configuration order; empty for a routable
+	 *         configuration.
+	 */
+	static List<String> refusals(AgentExecutionConfig execution, Map<String, List<String>> modelProviders,
+			Set<String> providerNames) {
+		List<String> result = new ArrayList<>();
+		String defaultModel = execution.getDefaultModel();
+		String defaultProvider = execution.getDefaultProvider();
+
+		addRefusal(result, "The default model", modelRefOf(null, defaultModel, defaultProvider),
+			modelProviders, providerNames);
+		for (Map.Entry<String, AgentOverride> entry : execution.getAgentOverrides().entrySet()) {
+			addRefusal(result, "Agent '" + entry.getKey() + "'",
+				modelRefOf(entry.getValue(), defaultModel, defaultProvider), modelProviders, providerNames);
+		}
+		return result;
+	}
+
+	private static void addRefusal(List<String> refusals, String subject, ModelRef ref,
+			Map<String, List<String>> modelProviders, Set<String> providerNames) {
+		String model = ref.model();
+		if (model == null || model.isBlank()) {
+			// No model to route; reported by the resolution itself when the agent runs.
+			return;
+		}
+		List<String> exposedBy = modelProviders.getOrDefault(model, List.of());
+		String provider = ref.provider();
+		if (provider != null) {
+			if (!providerNames.contains(provider)) {
+				refusals.add(subject + ": the provider '" + provider + "' named for model '" + model
+					+ "' is not configured; configured providers are " + providerNames + ".");
+			} else if (!exposedBy.contains(provider)) {
+				refusals.add(subject + ": the provider '" + provider + "' does not expose model '" + model
+					+ "'; it exposes " + modelsOf(provider, modelProviders) + ".");
+			}
+		} else if (exposedBy.size() > 1) {
+			refusals.add(subject + ": model '" + model + "' is exposed by " + exposedBy
+				+ ", so one of them must be named as the provider.");
+		}
+	}
+
+	/**
+	 * The models the given provider exposes, for a refusal message.
+	 */
+	private static List<String> modelsOf(String providerName, Map<String, List<String>> modelProviders) {
+		List<String> result = new ArrayList<>();
+		for (Map.Entry<String, List<String>> entry : modelProviders.entrySet()) {
+			if (entry.getValue().contains(providerName)) {
+				result.add(entry.getKey());
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -740,27 +934,104 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	}
 
 	/**
-	 * Builds an {@link LLMProvider} for the given model name.
+	 * The names of all configured providers, in configuration order.
+	 */
+	public List<String> getConfiguredProviderNames() {
+		return List.copyOf(getConfig().getProviders().keySet());
+	}
+
+	/**
+	 * The names of the providers exposing the given model, in configuration order.
 	 *
 	 * <p>
-	 * Looks up the {@link LLMProviderConfig} whose model list contains the given model name,
-	 * then delegates to {@link LLMProviderConfig#createProvider()}.
+	 * More than one entry means the model must be referenced with a provider - see
+	 * {@link AgentOverride#getProvider()}.
 	 * </p>
 	 *
 	 * @param modelName
-	 *        The model name to find a provider for.
-	 * @return A ready-to-use provider.
-	 * @throws IllegalStateException
-	 *         if no provider is configured for the given model.
+	 *        The model to look up.
+	 * @return The provider names; empty if no configured provider exposes the model.
+	 */
+	public List<String> getProvidersOf(String modelName) {
+		if (_modelProviders == null) {
+			return List.of();
+		}
+		return _modelProviders.getOrDefault(modelName, List.of());
+	}
+
+	/**
+	 * Builds an {@link LLMProvider} for an unqualified model reference.
+	 *
+	 * @see #buildProvider(String, String)
 	 */
 	public LLMProvider buildProvider(String modelName) {
-		LLMProviderConfig providerConfig = _modelProviderIndex.get(modelName);
+		return buildProvider(modelName, null);
+	}
+
+	/**
+	 * Builds an {@link LLMProvider} for the given model, served by the named provider.
+	 *
+	 * @param modelName
+	 *        The model name to find a provider for.
+	 * @param providerName
+	 *        The configured provider that must serve the model, or {@code null} to let the
+	 *        model's only provider serve it.
+	 * @return A ready-to-use provider.
+	 * @throws IllegalStateException
+	 *         if the model cannot be routed to exactly one configured provider.
+	 */
+	public LLMProvider buildProvider(String modelName, String providerName) {
+		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
 		if (providerConfig == null) {
-			throw new IllegalStateException(
-				"No provider configured for model: " + modelName
-					+ ". Available models: " + _modelProviderIndex.keySet());
+			throw new IllegalStateException(unroutable(modelName, providerName));
 		}
 		return providerConfig.createProvider();
+	}
+
+	/**
+	 * The provider configuration serving the given model reference, or {@code null} if the
+	 * reference does not resolve to exactly one provider.
+	 *
+	 * @param modelName
+	 *        The model name.
+	 * @param providerName
+	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
+	 */
+	private LLMProviderConfig lookupProvider(String modelName, String providerName) {
+		if (_providerConfigs == null || modelName == null) {
+			return null;
+		}
+		List<String> exposedBy = getProvidersOf(modelName);
+		if (providerName != null && !providerName.isBlank()) {
+			// An allowlist that is bypassed is not an allowlist: a provider only serves the models
+			// it exposes, however it was named.
+			return exposedBy.contains(providerName) ? _providerConfigs.get(providerName) : null;
+		}
+		if (exposedBy.size() != 1) {
+			return null;
+		}
+		return _providerConfigs.get(exposedBy.get(0));
+	}
+
+	/**
+	 * Why the given model reference does not resolve to exactly one provider.
+	 */
+	private String unroutable(String modelName, String providerName) {
+		List<String> exposedBy = getProvidersOf(modelName);
+		if (providerName != null && !providerName.isBlank()) {
+			if (_providerConfigs == null || !_providerConfigs.containsKey(providerName)) {
+				return "No provider named '" + providerName + "' is configured for model '" + modelName
+					+ "'. Configured providers: " + getConfiguredProviderNames();
+			}
+			return "Provider '" + providerName + "' does not expose model '" + modelName
+				+ "'. It exposes: " + modelsOf(providerName, _modelProviders) + ".";
+		}
+		if (exposedBy.isEmpty()) {
+			return "No provider configured for model: " + modelName
+				+ ". Available models: " + (_modelProviders == null ? List.of() : _modelProviders.keySet());
+		}
+		return "Model '" + modelName + "' is exposed by the providers " + exposedBy
+			+ ". Name one of them to select the provider.";
 	}
 
 	/**
@@ -774,11 +1045,15 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	}
 
 	/**
-	 * Returns the catalog provider ID for the given model name, or {@code null} if unknown.
+	 * Returns the catalog provider ID for an unqualified model reference, or {@code null} if it
+	 * cannot be determined.
 	 *
 	 * <p>
-	 * Looks up which configured provider owns the given model and returns that provider's
-	 * {@link LLMProviderConfig#getCatalogProviderId() catalog provider ID}.
+	 * Two provider entries for the same vendor - the case this exists for, two Anthropic accounts
+	 * exposing the same model - agree on their
+	 * {@link LLMProviderConfig#getCatalogProviderId() catalog provider ID}, so the ID is
+	 * unambiguous even where the provider <em>instance</em> is not. Only providers that disagree
+	 * make the answer {@code null}.
 	 * </p>
 	 *
 	 * @param modelName
@@ -786,14 +1061,39 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 * @return The catalog provider ID (e.g. "anthropic", "openai"), or {@code null}.
 	 */
 	public String getProviderId(String modelName) {
-		if (_modelProviderIndex == null) {
+		if (_providerConfigs == null) {
 			return null;
 		}
-		LLMProviderConfig providerConfig = _modelProviderIndex.get(modelName);
-		if (providerConfig == null) {
-			return null;
+		String result = null;
+		boolean first = true;
+		for (String providerName : getProvidersOf(modelName)) {
+			String catalogId = _providerConfigs.get(providerName).getCatalogProviderId();
+			if (first) {
+				result = catalogId;
+				first = false;
+			} else if (!Objects.equals(result, catalogId)) {
+				return null;
+			}
 		}
-		return providerConfig.getCatalogProviderId();
+		return result;
+	}
+
+	/**
+	 * Returns the catalog provider ID of the given model reference, or {@code null} if the
+	 * reference does not resolve to exactly one provider.
+	 *
+	 * @param modelName
+	 *        The model name to look up.
+	 * @param providerName
+	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
+	 * @return The catalog provider ID (e.g. "anthropic", "openai"), or {@code null}.
+	 */
+	public String getProviderId(String modelName, String providerName) {
+		if (providerName == null || providerName.isBlank()) {
+			return getProviderId(modelName);
+		}
+		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
+		return providerConfig == null ? null : providerConfig.getCatalogProviderId();
 	}
 
 	/**
@@ -811,6 +1111,59 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	}
 
 	/**
+	 * Returns the provider serving the {@link #getDefaultModel() default model}, or {@code null}
+	 * if none is named.
+	 */
+	public String getDefaultProvider() {
+		return blankToNull(getConfig().getAgentExecution().getDefaultProvider());
+	}
+
+	/**
+	 * A model together with the provider that serves it.
+	 *
+	 * @param model
+	 *        The model name, or {@code null} if none is configured.
+	 * @param provider
+	 *        The name of the provider serving the model, or {@code null} for an unqualified
+	 *        reference that the model's only provider serves.
+	 */
+	record ModelRef(String model, String provider) {
+		// A pair, nothing more.
+	}
+
+	/**
+	 * The model and provider the given override effectively uses.
+	 *
+	 * <p>
+	 * Both fields fall back to the defaults independently, with one tie: an override that names no
+	 * model of its own inherits the default provider along with the default model, since a
+	 * provider for a model the override does not mention would be meaningless.
+	 * </p>
+	 *
+	 * @param override
+	 *        The agent's override, or {@code null} for an agent that has none.
+	 * @param defaultModel
+	 *        The configured default model.
+	 * @param defaultProvider
+	 *        The configured default provider, or {@code null}.
+	 */
+	static ModelRef modelRefOf(AgentOverride override, String defaultModel, String defaultProvider) {
+		if (override == null) {
+			return new ModelRef(defaultModel, blankToNull(defaultProvider));
+		}
+		String model = blankToNull(override.getModel());
+		String provider = blankToNull(override.getProvider());
+		if (model == null) {
+			return new ModelRef(defaultModel, provider != null ? provider : blankToNull(defaultProvider));
+		}
+		return new ModelRef(model, provider);
+	}
+
+	private static String blankToNull(String value) {
+		return value == null || value.isBlank() ? null : value;
+	}
+
+	/**
 	 * Resolves the model for the given agent.
 	 *
 	 * <p>
@@ -825,18 +1178,23 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 *         if no model can be resolved
 	 */
 	public String resolveModel(String agentName) {
-		if (_agentModels != null) {
-			String perAgent = _agentModels.get(agentName);
-			if (perAgent != null && !perAgent.isBlank()) {
-				return perAgent;
-			}
+		return resolveModelAssignment(agentName).model();
+	}
+
+	/**
+	 * Resolves the {@link ModelRef} of the given override, without checking that it names a model.
+	 */
+	private ModelRef modelRefOf(AgentOverride override) {
+		AgentExecutionConfig execution = getConfig().getAgentExecution();
+		return modelRefOf(override, execution.getDefaultModel(), execution.getDefaultProvider());
+	}
+
+	private static ModelRef requireModel(String agentName, ModelRef ref) {
+		if (ref.model() == null || ref.model().isBlank()) {
+			throw new IllegalStateException(
+				"No model assigned to agent '" + agentName + "' and no default model configured.");
 		}
-		String defaultModel = getDefaultModel();
-		if (defaultModel != null && !defaultModel.isBlank()) {
-			return defaultModel;
-		}
-		throw new IllegalStateException(
-			"No model assigned to agent '" + agentName + "' and no default model configured.");
+		return ref;
 	}
 
 	/**
@@ -859,14 +1217,9 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 */
 	public AgentModelAssignment resolveModelAssignment(String agentName) {
 		AgentOverride perAgent = getConfig().getAgentExecution().getAgentOverrides().get(agentName);
-		String model = (perAgent != null && perAgent.getModel() != null && !perAgent.getModel().isBlank())
-			? perAgent.getModel() : getDefaultModel();
-		if (model == null || model.isBlank()) {
-			throw new IllegalStateException(
-				"No model assigned to agent '" + agentName + "' and no default model configured.");
-		}
+		ModelRef ref = requireModel(agentName, modelRefOf(perAgent));
 		if (perAgent != null) {
-			return new AgentModelAssignment(model,
+			return new AgentModelAssignment(ref.model(), ref.provider(),
 				perAgent.getMaxTokens(), perAgent.getContextWindow(), perAgent.getMaxTurns(),
 				perAgent.getTemperature(), perAgent.getTopP(),
 				perAgent.getThinkingEffort(), perAgent.getTopK(),
@@ -875,7 +1228,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 				perAgent.getTimeoutSeconds(), perAgent.getMaxRetries(),
 				perAgent.getMaxToolResultChars());
 		}
-		return new AgentModelAssignment(model,
+		return new AgentModelAssignment(ref.model(), ref.provider(),
 			null, null, null, null, null, null, null, null, null, null, null, null, null);
 	}
 
@@ -884,18 +1237,15 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 */
 	private Map<String, Set<String>> buildCatalogProviderModels() {
 		Map<String, Set<String>> result = new LinkedHashMap<>();
-		for (Map.Entry<String, LLMProviderConfig> entry : _providerConfigs.entrySet()) {
-			LLMProviderConfig providerConfig = entry.getValue();
+		for (LLMProviderConfig providerConfig : _providerConfigs.values()) {
 			String catalogId = providerConfig.getCatalogProviderId();
 			if (catalogId == null || catalogId.isBlank()) {
 				continue;
 			}
-			Set<String> models = result.computeIfAbsent(catalogId, k -> new LinkedHashSet<>());
-			for (Map.Entry<String, LLMProviderConfig> modelEntry : _modelProviderIndex.entrySet()) {
-				if (modelEntry.getValue() == providerConfig) {
-					models.add(modelEntry.getKey());
-				}
-			}
+			// Every provider contributes its own allowlist: a model two providers expose is
+			// requested once per catalog ID, and neither provider's models go unrequested.
+			result.computeIfAbsent(catalogId, id -> new LinkedHashSet<>())
+				.addAll(providerConfig.getConfiguredModels());
 		}
 		return result;
 	}

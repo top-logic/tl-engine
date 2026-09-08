@@ -604,12 +604,29 @@ public class ReactServlet extends TopLogicServlet {
 			url = "";
 		}
 
+		// Adopting a URL changes the display like any other command does, and needs the same context
+		// for it: the subsession the controls belong to - without it a channel bound to a route
+		// parameter cannot look up the object the URL names - the update phase that lets the controls
+		// write their state, and the lock that keeps a second request out of the tree meanwhile.
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
+
+		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
+		requestLock.lock();
 		try {
-			routeManager.navigateToRoute(url);
-			// The display has taken the URL as far as it can: a segment it cannot reproduce is
-			// dropped, and what the display adds from here on is a navigation again.
-			routeManager.finishAdoption();
-			sendSuccess(response);
+			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+			try {
+				routeManager.navigateToRoute(url);
+
+				// The display has taken the URL as far as it can: a segment it cannot reproduce is
+				// dropped, and what the display adds from here on is a navigation again.
+				routeManager.finishAdoption();
+				sendSuccess(response);
+			} finally {
+				if (rootHandler != null) {
+					rootHandler.enableUpdate(updateBefore);
+				}
+			}
 		} catch (Exception ex) {
 			Logger.info("Route navigation vetoed for url '" + url + "': " + ex.getMessage(),
 				ReactServlet.class);
@@ -617,6 +634,8 @@ public class ReactServlet extends TopLogicServlet {
 				.setCurrentUrl(routeManager.currentUrl());
 			queue.enqueue(veto);
 			sendSuccess(response);
+		} finally {
+			requestLock.unlock();
 		}
 	}
 

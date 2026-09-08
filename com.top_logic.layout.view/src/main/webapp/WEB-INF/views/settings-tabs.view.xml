@@ -32,41 +32,40 @@
 					<de>Konto</de>
 				</label>
 				<!--
-					A panel of its own, so that the form's Save belongs to this tab: a panel
-					establishes the command scope its button bar is built from, while a form placed
-					directly in the tab would contribute to the enclosing window and offer Save
-					from every other tab as well.
+					Save reaches the dialog's own button bar, beside Close, because a form puts its
+					commands into the enclosing scope for as long as it is displayed - and a tab
+					that is not the active one is not. The other tabs therefore do not offer it.
 				-->
-				<panel>
-					<form
-						initial-edit-mode="true"
-						input="account"
-						mode-switch="false"
-					>
-						<field attribute="timezone"/>
-						<field attribute="country"/>
-						<commands>
-							<generic-command image="css:bi bi-check-lg"
-								placement="BUTTON_BAR"
-							>
-								<label>
-									<en>Save</en>
-									<de>Speichern</de>
-								</label>
-								<with-transaction>
-									<store-form-state/>
-								</with-transaction>
-							</generic-command>
-						</commands>
-					</form>
-				</panel>
+				<form
+					initial-edit-mode="true"
+					input="account"
+					mode-switch="false"
+				>
+					<field attribute="timezone"/>
+					<field attribute="country"/>
+					<commands>
+						<generic-command image="css:bi bi-check-lg"
+							placement="BUTTON_BAR"
+						>
+							<label>
+								<en>Save</en>
+								<de>Speichern</de>
+							</label>
+							<with-transaction>
+								<store-form-state/>
+							</with-transaction>
+						</generic-command>
+					</commands>
+				</form>
 			</tab>
 
 			<!--
 				Each entry here acts on the account rather than holding a value of it, so the tab is
 				a list of buttons and not a form. They stretch across the tab because the list is
 				what the tab is - nothing else competes for the width, and a row of differently
-				sized buttons would only invite guessing which one matters.
+				sized buttons would only invite guessing which one matters. The <inset> gives the
+				list the breathing room a form brings along by itself, so both tabs of this dialog
+				hold their content at the same distance from the border.
 			-->
 			<tab id="security"
 				icon="css:bi bi-shield-lock"
@@ -75,67 +74,69 @@
 					<en>Security</en>
 					<de>Sicherheit</de>
 				</label>
-				<stack
-					align="stretch"
-					direction="column"
-					gap="compact"
-				>
-					<button>
-						<action class="com.top_logic.layout.view.command.GenericViewCommand"
-							image="css:bi bi-key"
-						>
-							<label>
-								<en>Change password</en>
-								<de>Passwort ändern</de>
-							</label>
-							<execute-script function="x -> new(`tl.login:PasswordChange`, transient: true)"/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="change-password.view.xml"
-							/>
-						</action>
-					</button>
+				<inset>
+					<stack
+						align="stretch"
+						direction="column"
+						gap="compact"
+					>
+						<button>
+							<action class="com.top_logic.layout.view.command.GenericViewCommand"
+								image="css:bi bi-key"
+							>
+								<label>
+									<en>Change password</en>
+									<de>Passwort ändern</de>
+								</label>
+								<execute-script function="x -> new(`tl.login:PasswordChange`, transient: true)"/>
+								<open-dialog
+									bind-input-to="model"
+									dialog-view="change-password.view.xml"
+								/>
+							</action>
+						</button>
 
-					<!--
-						Setting a second factor up happens here and now, in the same enrollment
-						dialog the login flow uses: the account keeps its requirement, since a
-						factor the user chose is one they may drop again. Each button is offered
-						only in the state where it means something - by whether a secret is stored,
-						which is what having a second factor is. An account required to use one
-						keeps it whatever this view offers, which the action itself enforces.
-					-->
-					<button>
-						<action class="com.top_logic.layout.view.command.GenericViewCommand"
-							image="css:bi bi-shield-plus"
-							input="account"
-						>
-							<label>
-								<en>Set up two-factor authentication</en>
-								<de>Zwei-Faktor-Authentifizierung einrichten</de>
-							</label>
-							<executability>
-								<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) == null"/>
-							</executability>
-							<enroll-mfa/>
-						</action>
-					</button>
-					<button>
-						<action class="com.top_logic.layout.view.command.GenericViewCommand"
-							image="css:bi bi-shield-minus"
-							input="account"
-						>
-							<label>
-								<en>Switch two-factor authentication off</en>
-								<de>Zwei-Faktor-Authentifizierung abschalten</de>
-							</label>
-							<executability>
-								<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null"/>
-							</executability>
-							<confirm expr="account -> #('Log in with your password alone from now on?'@en, 'Künftig nur noch mit dem Passwort anmelden?'@de)"/>
-							<disable-mfa/>
-						</action>
-					</button>
-				</stack>
+						<!--
+							Setting a second factor up happens here and now, in the same enrollment
+							dialog the login flow uses: the account keeps its requirement, since a
+							factor the user chose is one they may drop again. Each button is offered
+							only in the state where it means something - by whether a secret is stored,
+							which is what having a second factor is. An account required to use one
+							keeps it whatever this view offers, which the action itself enforces.
+						-->
+						<button>
+							<action class="com.top_logic.layout.view.command.GenericViewCommand"
+								image="css:bi bi-shield-plus"
+								input="account"
+							>
+								<label>
+									<en>Set up two-factor authentication</en>
+									<de>Zwei-Faktor-Authentifizierung einrichten</de>
+								</label>
+								<executability>
+									<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) == null"/>
+								</executability>
+								<enroll-mfa/>
+							</action>
+						</button>
+						<button>
+							<action class="com.top_logic.layout.view.command.GenericViewCommand"
+								image="css:bi bi-shield-minus"
+								input="account"
+							>
+								<label>
+									<en>Switch two-factor authentication off</en>
+									<de>Zwei-Faktor-Authentifizierung abschalten</de>
+								</label>
+								<executability>
+									<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null"/>
+								</executability>
+								<confirm expr="account -> #('Log in with your password alone from now on?'@en, 'Künftig nur noch mit dem Passwort anmelden?'@de)"/>
+								<disable-mfa/>
+							</action>
+						</button>
+					</stack>
+				</inset>
 			</tab>
 		</tabs>
 	</tab-bar>

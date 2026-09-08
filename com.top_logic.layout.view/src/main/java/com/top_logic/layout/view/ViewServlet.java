@@ -355,10 +355,10 @@ public class ViewServlet extends TopLogicServlet {
 	 * Wires the {@link RouteManager} from the given context to the SSE queue.
 	 *
 	 * <p>
-	 * Sets the pending URL on the route manager (for deep-link resolution) and installs a URL
-	 * change handler that pushes {@link RouteChangeEvent}s via SSE. Also stores the route manager
-	 * on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet} can look it
-	 * up for handling {@code navigateToRoute} commands.
+	 * Hands the route manager the URL the loaded page displays (for deep-link resolution) and
+	 * installs a URL change handler that pushes {@link RouteChangeEvent}s via SSE. Also stores the
+	 * route manager on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet}
+	 * can look it up for handling {@code navigateToRoute} commands.
 	 * </p>
 	 */
 	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String routePath) {
@@ -367,9 +367,10 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		if (routePath != null && !routePath.isEmpty()) {
-			routeManager.setPendingUrl(routePath);
-		}
+		// Unconditionally, an empty route included: a freshly loaded page displays what its URL says,
+		// which for a bare view is nothing - and the address bar has to be completed from the display
+		// rather than left describing less than it shows.
+		routeManager.adoptUrl(routePath == null ? "" : routePath);
 
 		routeManager.setUrlChangeHandler((url, replace) -> {
 			RouteChangeEvent event = RouteChangeEvent.create()

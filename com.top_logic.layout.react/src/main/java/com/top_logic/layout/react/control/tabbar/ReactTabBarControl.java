@@ -154,8 +154,14 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		_activeTabId = tabId;
 
 		if (!isSSEAttached()) {
-			// Not yet rendered; just update state for deferred rendering.
+			// Not yet rendered, so the selection is applied by dropping the content of the tab left
+			// behind: onBeforeWrite() then mounts the content of the selected one, instead of writing
+			// the display of the tab that is no longer active.
 			putState(ACTIVE_TAB_ID, _activeTabId);
+			putState(ACTIVE_CONTENT, null);
+			if (previousContent != null) {
+				previousContent.detach();
+			}
 			return;
 		}
 

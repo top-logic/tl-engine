@@ -125,21 +125,21 @@ public final class RouteManager {
 	}
 
 	/**
-	 * Sets a pending URL for deferred resolution.
+	 * Begins adopting the URL the client displays.
 	 *
 	 * <p>
-	 * The pending URL is resolved incrementally as participants register. Each registration attempt
-	 * consumes the next unresolved segment from this URL.
+	 * Records the URL as the one the client shows, so that the display materializing into it is not
+	 * reported back as a navigation, and queues its segments for resolution: they are consumed
+	 * incrementally as participants register, and by {@link #resolvePending()} for the participants
+	 * that are registered already. Pass the empty URL for a client that displays no route at all -
+	 * the address bar is then completed from the display, in {@link #finishAdoption()}.
 	 * </p>
 	 *
 	 * @param url
-	 *        The URL to resolve (without leading slash).
+	 *        The URL the client displays (without leading slash), empty for none.
 	 */
-	public void setPendingUrl(String url) {
+	public void adoptUrl(String url) {
 		_pendingUrl = url;
-
-		// The client displays this URL: it is the one it requested. Recording it keeps the display
-		// it materializes from being reported back as a navigation.
 		_lastNotifiedUrl = url;
 		_adopting = true;
 	}
@@ -187,7 +187,7 @@ public final class RouteManager {
 		// navigation of its own. Recording it as the URL the client shows keeps every change the
 		// adoption causes - a participant selecting an item, a lazily rendered control registering
 		// afterwards - from pushing a history entry that would cancel the back navigation.
-		setPendingUrl(url);
+		adoptUrl(url);
 		resolvePending();
 	}
 

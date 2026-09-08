@@ -270,6 +270,14 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 
 		if (!isSSEAttached()) {
 			putState(ACTIVE_ITEM_ID, _activeItemId);
+
+			// Nothing is rendered yet, so the selection is applied by dropping the content of the item
+			// left behind: onBeforeWrite() then mounts the content of the selected one, instead of
+			// writing the display of the item the highlight no longer names.
+			putState(ACTIVE_CONTENT, null);
+			if (previousContent != null) {
+				previousContent.detach();
+			}
 			return;
 		}
 

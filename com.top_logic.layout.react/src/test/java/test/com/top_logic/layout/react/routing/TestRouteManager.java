@@ -96,7 +96,7 @@ public class TestRouteManager extends TestCase {
 	 */
 	public void testPendingUrlResolution() {
 		RouteManager rm = new RouteManager();
-		rm.setPendingUrl("explore");
+		rm.adoptUrl("explore");
 		MockParticipant sidebar = new MockParticipant(List.of(
 			RoutePattern.compile("/explore", "explore"),
 			RoutePattern.compile("/listings", "listings")));
@@ -110,7 +110,7 @@ public class TestRouteManager extends TestCase {
 	 */
 	public void testParamResolution() {
 		RouteManager rm = new RouteManager();
-		rm.setPendingUrl("property/42");
+		rm.adoptUrl("property/42");
 		MockParticipant sidebar = new MockParticipant(List.of(
 			RoutePattern.compile("/property/:id", "detail")));
 		rm.register(sidebar);
@@ -258,7 +258,7 @@ public class TestRouteManager extends TestCase {
 		rm.register(sidebar);
 		sidebar.simulateNavigation("explore", Map.of());
 
-		rm.setPendingUrl("listings");
+		rm.adoptUrl("listings");
 		rm.resolvePending();
 
 		assertEquals("listings", sidebar.lastActivation().itemId());
@@ -282,7 +282,7 @@ public class TestRouteManager extends TestCase {
 			urls.add(url);
 			replaceFlags.add(replace);
 		});
-		rm.setPendingUrl("nowhere");
+		rm.adoptUrl("nowhere");
 		rm.resolvePending();
 		assertEquals("Nothing is reported while the display may still materialize.", List.of(), urls);
 
@@ -290,6 +290,28 @@ public class TestRouteManager extends TestCase {
 
 		assertEquals(List.of("explore"), urls);
 		assertEquals(List.of(Boolean.TRUE), replaceFlags);
+	}
+
+	/**
+	 * Tests that a freshly loaded page is told the URL its display composes, even though an earlier
+	 * page of the same window was already shown that URL.
+	 */
+	public void testFreshPageIsToldTheComposedUrl() {
+		RouteManager rm = new RouteManager();
+		List<String> urls = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+
+		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+
+		// The page displays no route at all, whatever the page before it displayed.
+		rm.adoptUrl("");
+		rm.resolvePending();
+		rm.finishAdoption();
+
+		assertEquals(List.of("explore"), urls);
 	}
 
 	/**
@@ -312,7 +334,7 @@ public class TestRouteManager extends TestCase {
 		});
 
 		// The URL names the view but not the object within it.
-		rm.setPendingUrl("listings");
+		rm.adoptUrl("listings");
 		rm.resolvePending();
 
 		// Rendering the view registers its route parameter and selects a default.

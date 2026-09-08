@@ -10,12 +10,15 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
@@ -31,6 +34,7 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.MenuRegionControl;
 import com.top_logic.layout.view.command.MenuTrigger;
+import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewCommandSource;
 
@@ -80,6 +84,42 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		@Format(ChannelRefFormat.class)
 		ChannelRef getInput();
 
+		/** Configuration name for {@link #getGroups()}. */
+		String GROUPS = "groups";
+
+		/**
+		 * Further groups of entries, each set off from the one before it by a separator.
+		 *
+		 * <p>
+		 * The entries declared in {@link #getCommands()} are the first group; these follow it, and
+		 * the {@link #getCommandSources() sources} follow them. A group none of whose entries are
+		 * currently available is left out together with its separator, so a menu never opens on a
+		 * dividing line with nothing beneath it.
+		 * </p>
+		 */
+		@Name(GROUPS)
+		@EntryTag("group")
+		List<CommandGroup> getGroups();
+
+		/**
+		 * A group of menu entries, separated from the groups around it.
+		 */
+		interface CommandGroup extends ConfigurationItem {
+
+			/** Configuration name for {@link #getCommands()}. */
+			String COMMANDS = "commands";
+
+			/**
+			 * The commands offered as this group's entries.
+			 */
+			@Name(COMMANDS)
+			@DefaultContainer
+			@EntryTag("command")
+			@TreeProperty
+			@Options(fun = AllInAppImplementations.class)
+			List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
+		}
+
 		/** Configuration name for {@link #getCommandSources()}. */
 		String COMMAND_SOURCES = "command-sources";
 
@@ -100,6 +140,8 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 
 	private final Config _config;
 
+	private final List<Group> _groups;
+
 	private final List<ViewCommandSource> _commandSources;
 
 	/**
@@ -108,6 +150,11 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 	protected AbstractMenuElement(InstantiationContext context, Config config) {
 		super(context, config);
 		_config = config;
+		_groups = new ArrayList<>(config.getGroups().size());
+		for (Config.CommandGroup groupConfig : config.getGroups()) {
+			_groups.add(new Group(context, groupConfig.getCommands()));
+		}
+
 		_commandSources = new ArrayList<>(config.getCommandSources().size());
 		for (PolymorphicConfiguration<? extends ViewCommandSource> sourceConfig : config.getCommandSources()) {
 			ViewCommandSource source = context.getInstance(sourceConfig);
@@ -149,10 +196,20 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		Supplier<Object> targetSupplier = () -> targetChannel.get();
 
 		// One contribution per group of entries, because the opener draws a separator between
-		// contributions: the commands written in the view are one group, and each source is
-		// another. A group that currently offers nothing is skipped along with its separator.
-		List<ContextMenuContribution> contributions = new ArrayList<>(1 + _commandSources.size());
+		// contributions: the commands written in the view are one group, each configured group is
+		// another, and so is each source. A group that currently offers nothing is skipped along
+		// with its separator.
+		List<ContextMenuContribution> contributions =
+			new ArrayList<>(1 + _groups.size() + _commandSources.size());
 		contributions.add(new ContextMenuContribution(setter, menuCommands(commandModels)));
+
+		List<ViewCommandModel> groupModels = new ArrayList<>();
+		for (Group group : _groups) {
+			List<ViewCommandModel> models = group.buildModels(context);
+			groupModels.addAll(models);
+			contributions.add(new ContextMenuContribution(setter, menuCommands(models)));
+		}
+
 		for (ViewCommandSource source : _commandSources) {
 			contributions.add(new ContextMenuContribution(setter, source.getCommands(context)));
 		}
@@ -160,10 +217,40 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		MenuRegionControl region = new MenuRegionControl(context, content, contributions, targetSupplier,
 			opener, getTrigger());
 
-		// Lazy attach on render, cleanup on dispose.
-		registerLifecycle(commandModels, region);
+		// Lazy attach on render, cleanup on dispose. The grouped entries are commands of this
+		// element like the ungrouped ones, so their models follow the same lifecycle.
+		List<ViewCommandModel> allModels = new ArrayList<>(commandModels);
+		allModels.addAll(groupModels);
+		registerLifecycle(allModels, region);
 
 		return region;
+	}
+
+	/**
+	 * The commands of one configured group, kept beside their configurations so that their models
+	 * can be built per rendering.
+	 */
+	private static class Group {
+
+		private final List<ViewCommand> _commands = new ArrayList<>();
+
+		private final List<ViewCommand.Config> _configs = new ArrayList<>();
+
+		Group(InstantiationContext context, List<PolymorphicConfiguration<? extends ViewCommand>> configs) {
+			for (PolymorphicConfiguration<? extends ViewCommand> cmdConfig : configs) {
+				ViewCommand cmd = context.getInstance(cmdConfig);
+				if (cmd != null) {
+					_commands.add(cmd);
+					if (cmdConfig instanceof ViewCommand.Config) {
+						_configs.add((ViewCommand.Config) cmdConfig);
+					}
+				}
+			}
+		}
+
+		List<ViewCommandModel> buildModels(ViewContext context) {
+			return buildCommandModels(context, _commands, _configs);
+		}
 	}
 
 	/**

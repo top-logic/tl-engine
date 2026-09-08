@@ -31,6 +31,10 @@
 		anonymous account rather than nothing while the session is anonymous, so the trigger names
 		that account and stays clickable - which is the state in which Login is the only entry
 		offered.
+
+		Entering and leaving the session are the first group, everything about the account that
+		stays logged in follows after a separator. The two are one group rather than two, because
+		exactly one of them is ever offered: the state of the session decides which.
 	-->
 	<menu>
 		<avatar input="currentUser"/>
@@ -71,47 +75,51 @@
 					dialog-view="login.view.xml"
 				/>
 			</generic-command>
-
-			<!-- What describes the account, and what secures it. -->
-			<generic-command image="css:bi bi-sliders">
-				<label>
-					<en>Settings</en>
-					<de>Einstellungen</de>
-				</label>
-				<executability>
-					<authenticated-only/>
-				</executability>
-				<open-dialog dialog-view="settings.view.xml"/>
-			</generic-command>
-
-			<!--
-				Where the user begins. One entry for both directions: invoked on the page that is
-				already the start page it clears the choice.
-			-->
-			<generic-command image="css:bi bi-pin-angle">
-				<label>
-					<en>Start on this page</en>
-					<de>Auf dieser Seite beginnen</de>
-				</label>
-				<executability>
-					<authenticated-only/>
-				</executability>
-				<remember-start-page/>
-			</generic-command>
-
-			<!-- Puts the presentation back the way it looks to somebody who has never used the application. -->
-			<generic-command image="css:bi bi-arrow-counterclockwise">
-				<label>
-					<en>Reset personal settings</en>
-					<de>Persönliche Einstellungen zurücksetzen</de>
-				</label>
-				<executability>
-					<authenticated-only/>
-				</executability>
-				<confirm expr="x -> #('Discard the theme, column widths and everything else you have adjusted?'@en, 'Das Theme, die Spaltenbreiten und alles weitere Angepasste verwerfen?'@de)"/>
-				<reset-personal-configuration/>
-			</generic-command>
 		</commands>
+
+		<groups>
+			<group>
+				<!-- What describes the account, and what secures it. -->
+				<generic-command image="css:bi bi-sliders">
+					<label>
+						<en>Settings</en>
+						<de>Einstellungen</de>
+					</label>
+					<executability>
+						<authenticated-only/>
+					</executability>
+					<open-dialog dialog-view="settings.view.xml"/>
+				</generic-command>
+
+				<!--
+					Where the user begins. One entry for both directions: invoked on the page that is
+					already the start page it clears the choice.
+				-->
+				<generic-command image="css:bi bi-pin-angle">
+					<label>
+						<en>Start on this page</en>
+						<de>Auf dieser Seite beginnen</de>
+					</label>
+					<executability>
+						<authenticated-only/>
+					</executability>
+					<remember-start-page/>
+				</generic-command>
+
+				<!-- Puts the presentation back the way it looks to somebody who has never used the application. -->
+				<generic-command image="css:bi bi-arrow-counterclockwise">
+					<label>
+						<en>Reset personal settings</en>
+						<de>Persönliche Einstellungen zurücksetzen</de>
+					</label>
+					<executability>
+						<authenticated-only/>
+					</executability>
+					<confirm expr="x -> #('Discard the theme, column widths and everything else you have adjusted?'@en, 'Das Theme, die Spaltenbreiten und alles weitere Angepasste verwerfen?'@de)"/>
+					<reset-personal-configuration/>
+				</generic-command>
+			</group>
+		</groups>
 
 		<!--
 			The one-decision preferences, an entry each rather than a form field: one entry per

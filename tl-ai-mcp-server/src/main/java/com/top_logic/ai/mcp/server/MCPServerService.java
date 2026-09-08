@@ -67,9 +67,9 @@ import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
  * <p>
  * The service exposes HTTP endpoints (registered in web-fragment.xml under /mcp/*) that
  * implement the MCP protocol for bidirectional communication between AI clients and the
- * TopLogic application. {@link McpAuthenticationFilter} guards that path: it authenticates every
- * request and opens the {@code TLContext} of the account it resolved, which the protocol handlers
- * then run in.
+ * TopLogic application. {@link McpAuthenticationFilter MCP authentication filter} guards that
+ * path: it authenticates every request and opens the {@code TLContext} of the account it
+ * resolved, which the protocol handlers then run in.
  * </p>
  *
  * <p>

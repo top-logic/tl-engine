@@ -119,6 +119,12 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		String routePath = extractRoutePath(pathInfo, windowName);
+		if (PendingSessionAction.consumeSessionSwapped(session)) {
+			// A login or logout has just replaced the session, and the redirect it sent still names
+			// the page the previous user had navigated to. Whoever takes the session over begins
+			// where they begin, so that page is not theirs to inherit.
+			routePath = null;
+		}
 		if (routePath == null) {
 			// Entered without naming a page, so the user's own choice of where to begin applies.
 			// A URL that does carry a route asks for that page and is never overridden.

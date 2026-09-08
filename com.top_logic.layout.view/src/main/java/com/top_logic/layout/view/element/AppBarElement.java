@@ -79,6 +79,9 @@ public class AppBarElement implements UIElement {
 		/** Configuration name for {@link #getLeading()}. */
 		String LEADING = "leading";
 
+		/** Configuration name for {@link #getTrailing()}. */
+		String TRAILING = "trailing";
+
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
 
@@ -136,6 +139,19 @@ public class AppBarElement implements UIElement {
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getLeading();
+
+		/**
+		 * Elements closing the bar, right of the actions area (e.g. the account area).
+		 *
+		 * <p>
+		 * This is the right end of the bar, past the buttons of toolbar-placed commands. Several
+		 * elements render side by side in the order given.
+		 * </p>
+		 */
+		@Name(TRAILING)
+		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends UIElement>> getTrailing();
 	}
 
 	private final ResKey _title;
@@ -149,6 +165,8 @@ public class AppBarElement implements UIElement {
 	private final List<UIElement> _children;
 
 	private final List<UIElement> _leading;
+
+	private final List<UIElement> _trailing;
 
 	/**
 	 * Creates a new {@link AppBarElement} from configuration.
@@ -178,6 +196,11 @@ public class AppBarElement implements UIElement {
 		_leading = new ArrayList<>(config.getLeading().size());
 		for (PolymorphicConfiguration<? extends UIElement> leadingConfig : config.getLeading()) {
 			_leading.add(context.getInstance(leadingConfig));
+		}
+
+		_trailing = new ArrayList<>(config.getTrailing().size());
+		for (PolymorphicConfiguration<? extends UIElement> trailingConfig : config.getTrailing()) {
+			_trailing.add(context.getInstance(trailingConfig));
 		}
 	}
 
@@ -212,27 +235,13 @@ public class AppBarElement implements UIElement {
 			childControls.add((ReactControl) _children.get(i).createControl(childContext));
 		}
 
-		// Build the leading area. An app bar is a horizontal bar, so several leading elements - a
-		// drawer toggle and the account area, say - stand side by side and centered on the bar's
-		// height, not stacked the way the generic content combination would arrange them.
-		ReactControl leadingControl;
-		if (_leading.isEmpty()) {
-			leadingControl = null;
-		} else {
-			List<ReactControl> leadingControls = new ArrayList<>(_leading.size());
-			for (int i = 0; i < _leading.size(); i++) {
-				ViewContext leadingContext = derivedContext.withChildSlotPath("leading-" + i);
-				leadingControls.add((ReactControl) _leading.get(i).createControl(leadingContext));
-			}
-			leadingControl = leadingControls.size() == 1
-				? leadingControls.get(0)
-				: new ReactStackControl(derivedContext, StackDirection.ROW, StackGap.COMPACT,
-					StackAlign.CENTER, false, leadingControls);
-		}
+		// Build the two ends of the bar.
+		ReactControl leadingControl = buildBarEnd(derivedContext, _leading, "leading");
+		ReactControl trailingControl = buildBarEnd(derivedContext, _trailing, "trailing");
 
 		// Create the app bar control.
-		ReactAppBarControl appBar =
-			new ReactAppBarControl(derivedContext, title, _variant, leadingControl, List.of(), childControls);
+		ReactAppBarControl appBar = new ReactAppBarControl(derivedContext, title, _variant, leadingControl,
+			List.of(), childControls, trailingControl);
 
 		// Sync toolbar-placed commands as action buttons.
 		Map<CommandModel, ReactButtonControl> actionButtons = new HashMap<>();
@@ -255,6 +264,35 @@ public class AppBarElement implements UIElement {
 		});
 
 		return appBar;
+	}
+
+	/**
+	 * Composes the elements placed at one end of the bar into a single control.
+	 *
+	 * <p>
+	 * An app bar is a horizontal bar, so several elements at one end - a drawer toggle and the
+	 * account area, say - stand side by side and centered on the bar's height, rather than stacked
+	 * the way the generic content combination would arrange them.
+	 * </p>
+	 *
+	 * @param elements
+	 *        The elements configured for that end; empty yields {@code null}, i.e. no area at all.
+	 * @param slot
+	 *        Names the end in the child slot path, keeping the two ends' children distinguishable.
+	 */
+	private static ReactControl buildBarEnd(ViewContext context, List<UIElement> elements, String slot) {
+		if (elements.isEmpty()) {
+			return null;
+		}
+		List<ReactControl> controls = new ArrayList<>(elements.size());
+		for (int i = 0; i < elements.size(); i++) {
+			ViewContext elementContext = context.withChildSlotPath(slot + "-" + i);
+			controls.add((ReactControl) elements.get(i).createControl(elementContext));
+		}
+		return controls.size() == 1
+			? controls.get(0)
+			: new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT, StackAlign.CENTER,
+				false, controls);
 	}
 
 	private List<ViewCommandModel> buildCommandModels(ViewContext context) {

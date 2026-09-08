@@ -24,6 +24,7 @@ import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.LanguageFlags;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -85,6 +86,7 @@ public class LanguageCommands implements ViewCommandSource {
 			result.add(SimpleCommandModel
 				.create(locale.toString(), locale.getDisplayLanguage(locale),
 					ctx -> applyLanguage(ctx, locale))
+				.setImage(LanguageFlags.getInstance().getFlag(locale))
 				// Read on every display, since the models outlive a switch.
 				.setExecutable(() -> !isActive(locale)));
 		}

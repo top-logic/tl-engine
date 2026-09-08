@@ -34,35 +34,33 @@
 					<en>Profile</en>
 					<de>Profil</de>
 				</label>
-				<!-- Its own panel, so that Save belongs to this tab; see the base view. -->
-				<panel>
-					<form
-						initial-edit-mode="true"
-						input="contact"
-						mode-switch="false"
-					>
-						<field attribute="title"/>
-						<field attribute="firstname"/>
-						<field attribute="name"/>
-						<field attribute="company"/>
-						<field attribute="email"/>
-						<field attribute="phone"/>
-						<field attribute="phone_mobile"/>
-						<commands>
-							<generic-command image="css:bi bi-check-lg"
-								placement="BUTTON_BAR"
-							>
-								<label>
-									<en>Save</en>
-									<de>Speichern</de>
-								</label>
-								<with-transaction>
-									<store-form-state/>
-								</with-transaction>
-							</generic-command>
-						</commands>
-					</form>
-				</panel>
+				<!-- Save reaches the dialog's single button bar while this tab is displayed; see the base view. -->
+				<form
+					initial-edit-mode="true"
+					input="contact"
+					mode-switch="false"
+				>
+					<field attribute="title"/>
+					<field attribute="firstname"/>
+					<field attribute="name"/>
+					<field attribute="company"/>
+					<field attribute="email"/>
+					<field attribute="phone"/>
+					<field attribute="phone_mobile"/>
+					<commands>
+						<generic-command image="css:bi bi-check-lg"
+							placement="BUTTON_BAR"
+						>
+							<label>
+								<en>Save</en>
+								<de>Speichern</de>
+							</label>
+							<with-transaction>
+								<store-form-state/>
+							</with-transaction>
+						</generic-command>
+					</commands>
+				</form>
 			</tab>
 		</tabs>
 	</tab-bar>

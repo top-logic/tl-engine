@@ -1065,7 +1065,7 @@ const el = ({ controlId: l }) => {
     {
       className: "tlPhotoViewer__image",
       src: i,
-      alt: r["js.photoViewer.alt"]
+      alt: t.alt || r["js.photoViewer.alt"]
     }
   ));
 }, sl = {

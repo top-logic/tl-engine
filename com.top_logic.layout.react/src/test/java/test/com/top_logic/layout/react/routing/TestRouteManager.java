@@ -293,6 +293,44 @@ public class TestRouteManager extends TestCase {
 	}
 
 	/**
+	 * Tests that a display change carried out as a navigation reports one history entry, however many
+	 * participants appear and disappear while it is applied.
+	 */
+	public void testNavigationReportsOneHistoryEntry() {
+		RouteManager rm = new RouteManager();
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/listings", "listings")));
+		MockParticipant leavingTab = new MockParticipant(List.of(
+			RoutePattern.compile("/featured", "featured")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		leavingTab.simulateNavigation("featured", Map.of());
+		rm.register(leavingTab);
+
+		rm.setUrlChangeHandler((url, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+
+		MockParticipant enteringTab = new MockParticipant(List.of(
+			RoutePattern.compile("/nearby", "nearby")));
+		rm.navigate(() -> {
+			// What the item left behind displayed goes away, what the selected one displays appears.
+			rm.unregister(leavingTab);
+			enteringTab.simulateNavigation("nearby", Map.of());
+			rm.register(enteringTab);
+			sidebar.simulateNavigation("listings", Map.of());
+		});
+
+		assertEquals("listings/nearby", rm.currentUrl());
+		assertEquals(List.of("listings/nearby"), urls);
+		assertEquals(List.of(Boolean.FALSE), replaceFlags);
+	}
+
+	/**
 	 * Tests that a freshly loaded page is told the URL its display composes, even though an earlier
 	 * page of the same window was already shown that URL.
 	 */

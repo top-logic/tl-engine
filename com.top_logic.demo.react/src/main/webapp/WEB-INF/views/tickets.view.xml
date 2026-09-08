@@ -2,24 +2,26 @@
 
 <!--
 	Object list demo, and the demo of a model object carried in the URL:
-	the ticketKey channel maps the selected ticket onto its name and back, and
-	<param-bindings> puts that name into the address bar as a path segment below the
-	sidebar item, so selecting a ticket yields /view/tickets/<name>, opening such a link
-	selects the ticket, and browser back/forward walks the selection history.
+	the ticketId channel maps the selected ticket onto its identifier and back, and
+	<param-bindings> puts that identifier into the address bar as a path segment below the
+	sidebar item, so selecting a ticket yields /view/tickets/<id>, opening such a link
+	selects the ticket, and browser back/forward walks the selection history. An identifier
+	of a ticket that no longer exists resolves to no object, and the segment leaves the
+	address bar again.
 -->
 <view>
 	<channels>
 		<channel name="model"/>
 		<channel name="ticket"/>
-		<derived-channel name="ticketKey"
-			expr="t -> if($t == null, null, $t.get(`demo.tickets:Ticket#name`))"
+		<derived-channel name="ticketId"
+			expr="t -> objectId($t)"
 			inputs="ticket"
-			reverse="k -> if($k == null, null, all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $k).firstElement())"
+			reverse="id -> objectResolve(`demo.tickets:Ticket`, $id)"
 		/>
 	</channels>
 	<param-bindings>
 		<bind
-			channel="ticketKey"
+			channel="ticketId"
 			route-param="ticket"
 		/>
 	</param-bindings>

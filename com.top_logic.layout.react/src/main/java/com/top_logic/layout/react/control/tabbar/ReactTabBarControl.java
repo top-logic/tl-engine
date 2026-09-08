@@ -18,6 +18,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
 import com.top_logic.layout.react.routing.RouteChangeListener;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
 import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
@@ -165,6 +166,26 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 			return;
 		}
 
+		// Exchanging the display is how the navigation is carried out, so it is applied as one: the
+		// address bar gains a history entry for the tab now selected, and not a correction for every
+		// participant that appears or disappears on the way there.
+		RouteManager routeManager = getReactContext().getRouteManager();
+		if (routeManager != null) {
+			routeManager.navigate(() -> displayTab(tabId, previousContent));
+		} else {
+			displayTab(tabId, previousContent);
+		}
+	}
+
+	/**
+	 * Exchanges the displayed content for the content of the given tab.
+	 *
+	 * @param tabId
+	 *        The tab to display.
+	 * @param previousContent
+	 *        The content displayed until now, or {@code null} if there was none.
+	 */
+	private void displayTab(String tabId, ReactControl previousContent) {
 		ReactControl content = getOrCreateContent(tabId);
 
 		Object tx = beginUpdate();
@@ -179,7 +200,13 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 			content.attach();
 		}
 
-		// After successful selection, notify route listeners.
+		notifyRouteListeners(tabId);
+	}
+
+	/**
+	 * Reports the route of the given tab to the {@link RouteChangeListener}s.
+	 */
+	private void notifyRouteListeners(String tabId) {
 		TabDefinition newTab = findTab(tabId);
 		if (newTab.getRoute() != null) {
 			RoutePattern pattern = RoutePattern.compile(newTab.getRoute(), newTab.getId());

@@ -192,6 +192,31 @@ public final class RouteManager {
 	}
 
 	/**
+	 * Applies a change of the display that navigates.
+	 *
+	 * <p>
+	 * The URL the display composes afterwards becomes a history entry the user can come back from.
+	 * Participants appearing and disappearing while the change is applied report nothing of their
+	 * own: exchanging one display for another is how a navigation is carried out, not a series of
+	 * corrections of the address bar - and a correction arriving first would leave the navigation
+	 * with an address bar that already shows its target and thus nothing left to report.
+	 * </p>
+	 *
+	 * @param displayChange
+	 *        The change to apply.
+	 */
+	public void navigate(Runnable displayChange) {
+		boolean before = _suppressNotifications;
+		_suppressNotifications = true;
+		try {
+			displayChange.run();
+		} finally {
+			_suppressNotifications = before;
+		}
+		notifyUrlChange(false);
+	}
+
+	/**
 	 * Concludes the adoption of the URL the client requested.
 	 *
 	 * <p>

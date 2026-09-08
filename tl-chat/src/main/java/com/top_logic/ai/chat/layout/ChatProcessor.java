@@ -453,8 +453,12 @@ public class ChatProcessor {
 	 * {@link ImageContent#ACCEPTED_MEDIA_TYPES} is exactly that: being an image is not enough to be
 	 * sendable.
 	 * </p>
+	 *
+	 * <p>
+	 * Package-visible for testing.
+	 * </p>
 	 */
-	private static ContentPart toContentPart(AttachmentDto att) {
+	static ContentPart toContentPart(AttachmentDto att) {
 		String mimeType = ImageContent.normalizeMediaType(att.getMimeType());
 		String base64 = att.getBase64Data();
 		if (mimeType.startsWith("image/")) {

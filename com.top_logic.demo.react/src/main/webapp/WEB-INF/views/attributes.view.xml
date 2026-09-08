@@ -34,7 +34,7 @@
 								<de>Beispiele erzeugen</de>
 							</label>
 							<with-transaction>
-								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#count`, ($i + 1) * 100); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o; })"/>
+								<execute-script function="x -> count(6).foreach(i -> { o = new(`demo.react:Demo`, transient: false); $o.set(`demo.react:Demo#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`demo.react:Demo#string`, 'Value ' + ($i + 1)); $o.set(`demo.react:Demo#active`, $i % 2 == 0); $o.set(`demo.react:Demo#count`, ($i + 1) * 100); $o.set(`demo.react:Demo#amount`, ($i + 1) * 12.5); $o.set(`demo.react:Demo#date`, date(2026, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`demo.react:Demo#priority`, if($i % 3 == 0, `demo.react:Priority#low`, if($i % 3 == 1, `demo.react:Priority#medium`, `demo.react:Priority#high`))); $o.set(`demo.react:Demo#owner`, if($i % 2 == 0, currentUser(), null)); $o; })"/>
 							</with-transaction>
 						</generic-command>
 						<generic-command
@@ -93,11 +93,45 @@
 						</generic-command>
 					</commands>
 					<table
+						filter-bar="true"
 						fixed-columns="1"
 						observed-types="demo.react:Demo"
+						personalization-key="demo-attributes"
 						selection="selected"
 						types="demo.react:Demo"
 					>
+						<presets>
+							<preset name="mine">
+								<label>
+									<en>My objects</en>
+									<de>Meine Objekte</de>
+								</label>
+								<criterion
+									column="owner"
+									expr="currentUser()"
+								/>
+							</preset>
+							<preset name="active">
+								<label>
+									<en>Active only</en>
+									<de>Nur aktive</de>
+								</label>
+								<criterion
+									column="active"
+									expr="true"
+								/>
+							</preset>
+							<preset name="small-amount">
+								<label>
+									<en>Amount up to 50</en>
+									<de>Betrag bis 50</de>
+								</label>
+								<criterion
+									column="amount"
+									expr="list(0, 50)"
+								/>
+							</preset>
+						</presets>
 						<columns>
 							<column attribute="name">
 								<!-- Application-defined filter: predefined regexp facets as checkboxes. -->

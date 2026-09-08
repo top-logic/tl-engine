@@ -17,11 +17,14 @@ import java.util.Set;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Log;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -51,6 +54,7 @@ import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.layout.view.table.DeclaredFilters;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -66,9 +70,12 @@ import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
+import com.top_logic.table.NamedFilter;
+import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.table.impl.PersonalConfigNamedFilterStore;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
 
 /**
@@ -77,9 +84,23 @@ import com.top_logic.table.impl.PersonalConfigViewStateStore;
  *
  * <p>
  * Input data comes from {@link ViewChannel}s, rows are computed by a TL-Script expression, and each
- * configured column reads a model attribute. Columns are sortable and (per-column) filterable, with
- * no dependency on the legacy {@code TableModel}.
+ * configured column reads a model attribute. Columns are sortable and (per-column) filterable.
  * </p>
+ *
+ * <p>
+ * What the user personalizes about a table - the column order, the column widths, which columns are
+ * displayed, the sort order - and the filters the user saves under a name are stored under the
+ * element's personalization key. Without a configured one, that key is the table's structural
+ * signature: its row types plus the attributes of its columns. That signature changes whenever a
+ * column is added or removed, and everything the users of the table personalized - their saved
+ * filters included - is then left behind. Setting {@code personalization-key} gives the table an
+ * identity of its own that survives such an edit of the view, so set it on every table whose
+ * personalization is meant to last.
+ * </p>
+ *
+ * @implNote {@link #tableId()} derives the {@link TableId} from
+ *           {@link UIElement.Config#getPersonalizationKey()} when one is configured, and from the
+ *           structural signature otherwise.
  */
 @InApp
 public class TableElement implements UIElement {
@@ -123,6 +144,12 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getOnRemove()}. */
 		String ON_REMOVE = "on-remove";
+
+		/** Configuration name for {@link #getFilterBar()}. */
+		String FILTER_BAR = "filter-bar";
+
+		/** Configuration name for {@link #getPresets()}. */
+		String PRESETS = "presets";
 
 		/**
 		 * Optional qualified TL type name(s) of the row objects, used to resolve column
@@ -214,6 +241,134 @@ public class TableElement implements UIElement {
 		 */
 		@Name(ON_REMOVE)
 		RowSetBinding.RemoveMode getOnRemove();
+
+		/**
+		 * Whether the table shows its filter bar: the named filters it offers as chips, a search
+		 * field examining the displayed columns, and the option to save the current filter under a
+		 * name of the user's own.
+		 *
+		 * <p>
+		 * A table that declares {@link #getPresets() presets} shows the bar in any case - that is
+		 * where the presets are offered.
+		 * </p>
+		 */
+		@Name(FILTER_BAR)
+		boolean getFilterBar();
+
+		/**
+		 * Filter criteria this table offers under a name, displayed as chips in the filter bar.
+		 *
+		 * <p>
+		 * A preset is applied - and dropped again - in one click, and the bar marks the preset whose
+		 * criteria the table currently filters by. The user's own saved filters are offered next to
+		 * them; they are kept under the table's personalization key, so a table offering presets
+		 * should configure {@code personalization-key} as well.
+		 * </p>
+		 */
+		@Name(PRESETS)
+		PresetsConfig getPresets();
+	}
+
+	/**
+	 * Container for the list of {@link PresetConfig}s of a {@link TableElement}.
+	 */
+	public interface PresetsConfig extends ConfigurationItem {
+
+		/**
+		 * The named filters the table offers, in the order they are displayed in.
+		 */
+		@DefaultContainer
+		@Key(PresetConfig.NAME)
+		List<PresetConfig> getPresets();
+	}
+
+	/**
+	 * A filter criterion a {@link TableElement} offers under a name.
+	 */
+	@TagName("preset")
+	public interface PresetConfig extends ConfigurationItem {
+
+		/** Configuration name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Configuration name for {@link #getLabel()}. */
+		String LABEL = "label";
+
+		/** Configuration name for {@link #getCriteria()}. */
+		String CRITERIA = "criteria";
+
+		/**
+		 * Technical name identifying this preset among the table's named filters.
+		 *
+		 * <p>
+		 * It is what the user's choice of preset is remembered under, so it must not be changed
+		 * once the table is in use.
+		 * </p>
+		 */
+		@Name(NAME)
+		@Mandatory
+		String getName();
+
+		/**
+		 * The name displayed on this preset's chip. Without it, the technical
+		 * {@link #getName() name} is displayed.
+		 */
+		@Name(LABEL)
+		ResKey getLabel();
+
+		/**
+		 * What this preset filters by: one value per column.
+		 *
+		 * <p>
+		 * A column not mentioned here is not filtered by this preset.
+		 * </p>
+		 */
+		@Name(CRITERIA)
+		@DefaultContainer
+		List<CriterionConfig> getCriteria();
+	}
+
+	/**
+	 * The value a {@link PresetConfig} selects in one column.
+	 */
+	@TagName("criterion")
+	public interface CriterionConfig extends ConfigurationItem {
+
+		/** Configuration name for {@link #getColumn()}. */
+		String COLUMN = "column";
+
+		/** Configuration name for {@link #getExpr()}. */
+		String EXPR = "expr";
+
+		/**
+		 * The attribute of the column this criterion filters.
+		 *
+		 * <p>
+		 * The table must have a column for that attribute, and that column must be filterable.
+		 * </p>
+		 */
+		@Name(COLUMN)
+		@Mandatory
+		String getColumn();
+
+		/**
+		 * TL-Script expression computing the value the column is filtered by.
+		 *
+		 * <p>
+		 * It is evaluated once per user, when the table is built, so an expression like
+		 * {@code currentUser()} yields a preset that means something different to every user. Which
+		 * value the expression may yield depends on the filter of the column: a text filter accepts
+		 * any single value and matches its text, a selection filter accepts one of the values to
+		 * select or a list of them, a boolean filter accepts {@code true} or {@code false}, and a
+		 * range filter accepts a single value to match exactly or a list of two values as the
+		 * inclusive bounds of a range. A value the column's filter cannot express is reported as a
+		 * configuration error, and the preset is then not offered.
+		 * </p>
+		 */
+		@Name(EXPR)
+		@Mandatory
+		@NonNullable
+		Expr getExpr();
 	}
 
 	/**
@@ -302,8 +457,57 @@ public class TableElement implements UIElement {
 		return sortColumns.isEmpty() ? SortSpec.NONE : new SortSpec(sortColumns);
 	}
 
+	/**
+	 * Whether the table displays its filter bar.
+	 *
+	 * <p>
+	 * Switched on explicitly, or implied by declaring presets - which are offered in that very bar.
+	 * </p>
+	 */
+	private boolean filterBar() {
+		return _config.getFilterBar() || !_presets.isEmpty();
+	}
+
+	/**
+	 * Where the filters the user saves under a name are persisted, or {@code null} for a table
+	 * without a filter bar, which offers no way to save one.
+	 */
+	private NamedFilterStore filterStore() {
+		return filterBar() ? PersonalConfigNamedFilterStore.INSTANCE : null;
+	}
+
+	/**
+	 * The named filters this table declares, materialized over the given columns.
+	 *
+	 * <p>
+	 * The criterion expressions are evaluated here, once per built table, so a preset over
+	 * {@code currentUser()} means something different to every user, and the criteria of a chip the
+	 * user clicks are already computed.
+	 * </p>
+	 */
+	private List<NamedFilter> declaredFilters(List<? extends Column<?, ?>> columns) {
+		if (_presets.isEmpty()) {
+			return List.of();
+		}
+		List<DeclaredFilters.Declaration> declarations = new ArrayList<>(_presets.size());
+		for (CompiledPreset preset : _presets) {
+			List<DeclaredFilters.Criterion> criteria = new ArrayList<>(preset.criteria().size());
+			for (CompiledCriterion criterion : preset.criteria()) {
+				criteria.add(new DeclaredFilters.Criterion(criterion.column(), criterion.value().execute()));
+			}
+			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria));
+		}
+		return DeclaredFilters.resolve(_log, tableId().value(), declarations, columns);
+	}
+
 	/** Command name of the contributed {@link #contributeAddRowCommand add-row command}. */
 	private static final String COMMAND_ADD_ROW = "tableAddRow";
+
+	/**
+	 * Prefix distinguishing a {@link TableId} built from a configured
+	 * {@link UIElement.Config#getPersonalizationKey() personalization key}.
+	 */
+	private static final String KEY_PREFIX = "key:";
 
 	private final Config _config;
 
@@ -312,12 +516,51 @@ public class TableElement implements UIElement {
 	/** The column-integration strategy per configured column, keyed by attribute name. */
 	private final Map<String, ColumnBinding> _bindings = new HashMap<>();
 
+	/** The compiled {@link Config#getPresets() presets}, in the order they are offered. */
+	private final List<CompiledPreset> _presets;
+
+	/**
+	 * Where a preset that cannot be applied to this table's columns is reported.
+	 *
+	 * @implNote The criterion values are evaluated per session (see {@link CriterionConfig#getExpr()}),
+	 *           so whether a preset can be applied is only known when a session builds the table,
+	 *           after the configuration has been instantiated.
+	 */
+	private final Log _log;
+
+	/**
+	 * A {@link PresetConfig} with its criterion expressions compiled.
+	 *
+	 * @param id
+	 *        The {@link PresetConfig#getName() name} identifying the preset.
+	 * @param label
+	 *        The name to display.
+	 * @param criteria
+	 *        The compiled criteria, in declaration order.
+	 */
+	private record CompiledPreset(String id, ResKey label, List<CompiledCriterion> criteria) {
+		// Pure data carrier.
+	}
+
+	/**
+	 * A {@link CriterionConfig} with its expression compiled.
+	 *
+	 * @param column
+	 *        The attribute of the column to filter.
+	 * @param value
+	 *        Computes the value the column is filtered by.
+	 */
+	private record CompiledCriterion(String column, QueryExecutor value) {
+		// Pure data carrier.
+	}
+
 	/**
 	 * Creates a {@link TableElement} from configuration.
 	 */
 	@CalledByReflection
 	public TableElement(InstantiationContext context, Config config) {
 		_config = config;
+		_log = context;
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
 
 		ColumnsConfig columnsConfig = config.getColumns();
@@ -326,6 +569,30 @@ public class TableElement implements UIElement {
 				_bindings.put(columnConfig.getAttribute(), resolveBinding(context, columnConfig));
 			}
 		}
+
+		_presets = compilePresets(config.getPresets());
+	}
+
+	/**
+	 * Compiles the criterion expressions of the configured presets, so that building the table only
+	 * has to evaluate them.
+	 */
+	private static List<CompiledPreset> compilePresets(PresetsConfig presetsConfig) {
+		if (presetsConfig == null) {
+			return List.of();
+		}
+		List<CompiledPreset> result = new ArrayList<>(presetsConfig.getPresets().size());
+		for (PresetConfig presetConfig : presetsConfig.getPresets()) {
+			List<CompiledCriterion> criteria = new ArrayList<>(presetConfig.getCriteria().size());
+			for (CriterionConfig criterionConfig : presetConfig.getCriteria()) {
+				criteria.add(new CompiledCriterion(criterionConfig.getColumn(),
+					QueryExecutor.compile(criterionConfig.getExpr())));
+			}
+			ResKey label = presetConfig.getLabel();
+			result.add(new CompiledPreset(presetConfig.getName(),
+				label != null ? label : ResKey.text(presetConfig.getName()), criteria));
+		}
+		return result;
 	}
 
 	/**
@@ -368,9 +635,11 @@ public class TableElement implements UIElement {
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
 		initialState.setFrozenCount(_config.getFixedColumns());
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
-			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault);
+			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault, declaredFilters(columns),
+			filterStore());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
+		control.setFilterBar(filterBar());
 
 		// Let each column contribute any per-session UI (e.g. a custom filter dialog).
 		for (ColumnSetup setup : setups) {
@@ -479,6 +748,8 @@ public class TableElement implements UIElement {
 			new RowSetTableControl(context, formControl, binding, editColumns, _config.getRowEdit());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
+		control.setNamedFilters(this::declaredFilters, filterStore());
+		control.setFilterBar(filterBar());
 		control.setHiddenByDefault(
 			hiddenByDefault(editColumns.stream().map(RowSetTableControl.TableColumn::attribute).toList()));
 		control.setDefaultSort(defaultSort());
@@ -599,11 +870,23 @@ public class TableElement implements UIElement {
 	}
 
 	/**
-	 * A stable personalization key for this table, derived from its structural signature (row
-	 * types plus column attributes), so the same configured table restores its personalization
-	 * across sessions.
+	 * The stable identity of this table, under which its personalization and the user's saved
+	 * filters are stored.
+	 *
+	 * <p>
+	 * The configured {@link UIElement.Config#getPersonalizationKey() personalization key} when
+	 * there is one. Without it, the identity is the table's structural signature - its row types
+	 * plus its column attributes - which changes whenever a column is added or removed, so that a
+	 * configured key is what keeps a personalization across an edit of the view.
+	 * </p>
 	 */
-	private TableId tableId() {
+	public TableId tableId() {
+		String personalizationKey = _config.getPersonalizationKey();
+		if (!StringServices.isEmpty(personalizationKey)) {
+			// Namespaced, so that a short key cannot collide with the structural signature of some
+			// other table.
+			return new TableId(KEY_PREFIX + personalizationKey);
+		}
 		StringBuilder key = new StringBuilder();
 		List<TLModelPartRef> types = _config.getTypes();
 		if (types != null) {

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
@@ -113,11 +114,18 @@ public class TextColumnFilter<V> implements ColumnFilter<V> {
 	}
 
 	/**
-	 * A case-insensitive substring match of the given value's text.
+	 * A case-insensitive substring match of the text of the given value.
 	 *
 	 * <p>
-	 * Accepts any single value, matching the text of its {@link Object#toString()}. A collection is
-	 * rejected: a text pattern matches one text, so a set of alternatives is not expressible.
+	 * Accepts any single value. A value of the filtered column's own type is turned into text the
+	 * same way a cell holding it is - so a criterion over a column showing business objects names
+	 * them exactly as that column displays them, and the pattern matches the rows the criterion
+	 * means. Anything else contributes its own {@link Object#toString() text}.
+	 * </p>
+	 *
+	 * <p>
+	 * A collection is rejected: a text pattern matches one text, so a set of alternatives is not
+	 * expressible. So is a value with no text, which as a pattern would match every row.
 	 * </p>
 	 */
 	@Override
@@ -125,7 +133,26 @@ public class TextColumnFilter<V> implements ColumnFilter<V> {
 		if (value == null || value instanceof Collection<?> || value.getClass().isArray()) {
 			return null;
 		}
-		return TextFilterState.contains(value.toString());
+		String text = text(value);
+		return StringServices.isEmpty(text) ? null : TextFilterState.contains(text);
+	}
+
+	/**
+	 * The text a cell holding the given value is matched by, falling back to the value's own text
+	 * for a value of some other type than the filtered column's.
+	 */
+	private String text(Object value) {
+		try {
+			@SuppressWarnings("unchecked")
+			V typed = (V) value;
+			String text = _textOf.apply(typed);
+			if (!StringServices.isEmpty(text)) {
+				return text;
+			}
+		} catch (ClassCastException ex) {
+			// No value of the filtered column, so the conversion does not apply to it.
+		}
+		return value.toString();
 	}
 
 	@Override

@@ -174,6 +174,17 @@ public class TestColumnFilters extends TestCase {
 		assertEquals(TextFilterState.contains("30"), filter.stateFor(Integer.valueOf(30)));
 	}
 
+	public void testStateForTextOfBusinessObject() {
+		// The column shows its values through a label, so the criterion has to match that label -
+		// the value's own text names the object, not what the column displays of it.
+		TextColumnFilter<Department> filter =
+			new TextColumnFilter<>(department -> "Department " + department.key().toUpperCase());
+		FilterState state = filter.stateFor(new Department("dev"));
+		assertEquals(TextFilterState.contains("Department DEV"), state);
+		assertTrue(filter.predicate(state).test(new Department("dev")));
+		assertFalse(filter.predicate(state).test(new Department("ops")));
+	}
+
 	public void testStateForTextRejectsAlternatives() {
 		TextColumnFilter<String> filter = TextColumnFilter.forStrings();
 		assertNull("A text pattern matches one text, not a set of them.", filter.stateFor(List.of("a", "b")));

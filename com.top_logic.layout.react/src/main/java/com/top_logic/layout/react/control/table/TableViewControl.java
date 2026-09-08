@@ -150,6 +150,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/** State key telling the client whether to offer the column selection. */
 	private static final String COLUMN_SELECT = "columnSelect";
 
+	/** State key telling the client whether to display the filter bar. */
+	private static final String FILTER_BAR = "filterBar";
+
 	// Command names.
 	private static final String CMD_OPEN_FILTER = "openFilter";
 
@@ -238,6 +241,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/** Whether the user may choose which columns are displayed, and in which order. */
 	private boolean _columnSelect = true;
 
+	/** Whether the named filters, the search field and saving a filter are displayed. */
+	private boolean _filterBar;
+
 	/**
 	 * Creates a {@link TableViewControl}.
 	 *
@@ -259,6 +265,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		putState(SELECTION_MODE, _selectionMode);
 		putState(TREE_MODE, Boolean.valueOf(_treeMode));
 		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
+		putState(FILTER_BAR, Boolean.valueOf(_filterBar));
 		buildFullState();
 	}
 
@@ -280,6 +287,16 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	public void setColumnSelect(boolean columnSelect) {
 		_columnSelect = columnSelect;
 		putState(COLUMN_SELECT, Boolean.valueOf(columnSelect));
+	}
+
+	/**
+	 * Whether the table displays its filter bar: the {@link TableView#namedFilters() named filters}
+	 * it offers, the free-text search over its displayed columns, and saving the current filter
+	 * under a name.
+	 */
+	public void setFilterBar(boolean filterBar) {
+		_filterBar = filterBar;
+		putState(FILTER_BAR, Boolean.valueOf(filterBar));
 	}
 
 	/**

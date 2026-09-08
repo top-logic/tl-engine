@@ -189,6 +189,11 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	/**
 	 * Adapts a filter over the cell's display text to a column holding raw attribute values: the
 	 * predicate and facet keys see the value's display label, everything else delegates unchanged.
+	 *
+	 * <p>
+	 * A declared criterion value is passed on untouched: which value shapes a filter accepts is
+	 * part of its own contract, and a facet key or an option value is not a display label.
+	 * </p>
 	 */
 	private static ColumnFilter<Object> byLabel(ColumnFilter<String> filter) {
 		return new ColumnFilter<>() {
@@ -226,6 +231,11 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			@Override
 			public FilterState fromJson(Object json) {
 				return filter.fromJson(json);
+			}
+
+			@Override
+			public FilterState stateFor(Object value) {
+				return filter.stateFor(value);
 			}
 
 			@Override

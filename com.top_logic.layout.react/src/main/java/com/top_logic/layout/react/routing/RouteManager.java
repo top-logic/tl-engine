@@ -45,6 +45,8 @@ public final class RouteManager {
 
 	private Supplier<List<RoutingParticipant>> _displayedParticipants;
 
+	private boolean _adopting;
+
 	/**
 	 * Creates a new {@link RouteManager}.
 	 */
@@ -139,6 +141,7 @@ public final class RouteManager {
 		// The client displays this URL: it is the one it requested. Recording it keeps the display
 		// it materializes from being reported back as a navigation.
 		_lastNotifiedUrl = url;
+		_adopting = true;
 	}
 
 	/**
@@ -202,6 +205,7 @@ public final class RouteManager {
 	public void finishAdoption() {
 		_pendingUrl = null;
 		notifyUrlChange(true);
+		_adopting = false;
 	}
 
 	/**
@@ -271,14 +275,11 @@ public final class RouteManager {
 	}
 
 	private void onParticipantRouteChange(RoutingParticipant participant, RouteSegment newSegment) {
-		// Clear segments from participants below the changed one.
-		int index = _participants.indexOf(participant);
-		if (index >= 0) {
-			// Participants registered after this one may have stale segments, but we don't
-			// forcefully clear them - they will update when new child participants register.
-		}
-
-		notifyUrlChange(false);
+		// While a requested URL is being adopted, a segment appearing is the display settling into
+		// that URL, not a navigation away from it: a view that a URL leaves unspecified keeps the
+		// value it has - the default a table selects, for instance - and the address bar gains that
+		// value without an entry the user would have to press back twice to leave.
+		notifyUrlChange(_adopting);
 	}
 
 	/**

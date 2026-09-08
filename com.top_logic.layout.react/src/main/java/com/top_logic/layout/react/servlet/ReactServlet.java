@@ -116,6 +116,12 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	public static final String ERROR_CODE_STALE_UI = "stale-ui";
 
+	/** Name of the global command the client sends when the browser navigated in its history. */
+	private static final String CMD_NAVIGATE_TO_ROUTE = "navigateToRoute";
+
+	/** Name of the {@link #CMD_NAVIGATE_TO_ROUTE} argument holding the URL to adopt. */
+	private static final String ARG_URL = "url";
+
 	/**
 	 * CSS class of the summary line of a command-error message, separating it from the detail
 	 * messages listed below it.
@@ -447,7 +453,7 @@ public class ReactServlet extends TopLogicServlet {
 			sendSuccess(response);
 			return;
 		}
-		if ("navigateToRoute".equals(commandName)) {
+		if (CMD_NAVIGATE_TO_ROUTE.equals(commandName)) {
 			handleNavigateToRoute(request, response, session, windowName, arguments);
 			return;
 		}
@@ -593,13 +599,16 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		String url = arguments != null ? (String) arguments.get("url") : null;
+		String url = arguments != null ? (String) arguments.get(ARG_URL) : null;
 		if (url == null) {
 			url = "";
 		}
 
 		try {
 			routeManager.navigateToRoute(url);
+			// The display has taken the URL as far as it can: a segment it cannot reproduce is
+			// dropped, and what the display adds from here on is a navigation again.
+			routeManager.finishAdoption();
 			sendSuccess(response);
 		} catch (Exception ex) {
 			Logger.info("Route navigation vetoed for url '" + url + "': " + ex.getMessage(),

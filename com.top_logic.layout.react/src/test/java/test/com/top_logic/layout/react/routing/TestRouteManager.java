@@ -293,6 +293,40 @@ public class TestRouteManager extends TestCase {
 	}
 
 	/**
+	 * Tests that a value the display establishes for a segment the adopted URL left unspecified
+	 * reaches the address bar without a history entry.
+	 */
+	public void testDefaultValueOfAdoptedUrlCreatesNoHistoryEntry() {
+		RouteManager rm = new RouteManager();
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/listings", "listings")));
+		MockParticipant selection = new MockParticipant(List.of(
+			RoutePattern.compile("/:id", "id")));
+		rm.register(sidebar);
+
+		rm.setUrlChangeHandler((url, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+
+		// The URL names the view but not the object within it.
+		rm.setPendingUrl("listings");
+		rm.resolvePending();
+
+		// Rendering the view registers its route parameter and selects a default.
+		rm.register(selection);
+		selection.simulateNavigation("id", Map.of("id", "42"));
+		rm.finishAdoption();
+
+		assertEquals("listings/42", rm.currentUrl());
+		assertFalse("The default of an adopted URL must not push a history entry.",
+			replaceFlags.contains(Boolean.FALSE));
+		assertEquals("listings/42", urls.get(urls.size() - 1));
+	}
+
+	/**
 	 * Tests that a route change reported by a displayed participant pushes a history entry, so that
 	 * the user can undo the navigation with the back button.
 	 */

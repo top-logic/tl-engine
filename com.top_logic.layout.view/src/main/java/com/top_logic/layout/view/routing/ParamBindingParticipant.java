@@ -64,6 +64,14 @@ public class ParamBindingParticipant implements RoutingParticipant {
 		return List.of(_pattern);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A route that carries no value for the bound parameter leaves the channel untouched: the URL
+	 * says nothing about the value, so what the view establishes itself stands.
+	 * </p>
+	 */
 	@Override
 	public void activateRoute(RouteMatch match) {
 		// Backward: deep-link -> write param value into channel.

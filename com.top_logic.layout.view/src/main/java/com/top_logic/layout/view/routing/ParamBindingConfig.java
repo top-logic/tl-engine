@@ -16,6 +16,14 @@ import com.top_logic.basic.config.annotation.TagName;
  * <p>
  * Example: {@code <bind channel="estateId" route-param="estateId"/>}
  * </p>
+ *
+ * <p>
+ * The binding works in both directions: the value of the channel becomes the URL path segment, and
+ * the segment of an opened URL becomes the value of the channel. A URL without the segment leaves
+ * the channel as it is - it says nothing about the value, rather than saying that there is none - so
+ * a view opened that way keeps what it establishes itself, the element a table selects by default
+ * for instance, and the address bar then names that value.
+ * </p>
  */
 @TagName("bind")
 public interface ParamBindingConfig extends ConfigurationItem {

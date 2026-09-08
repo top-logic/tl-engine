@@ -48,6 +48,22 @@ public class TestParamBindingParticipant extends TestCase {
 	}
 
 	/**
+	 * Tests that a URL carrying no value for the parameter leaves the value the view established, so
+	 * that a default selection survives being deep-linked to.
+	 */
+	public void testAbsentParameterKeepsDefault() {
+		ViewChannel channel = new DefaultViewChannel("ticketKey");
+		channel.set("default-ticket");
+		ParamBindingParticipant participant = new ParamBindingParticipant("ticket", channel);
+
+		// A URL without the segment matches no route of the binding, so nothing is activated on it,
+		assertNull(participant.declaredRoutes().get(0).match(""));
+
+		// and the value the view established stands - and names itself in the address bar.
+		assertEquals("default-ticket", participant.activeRouteSegment().path());
+	}
+
+	/**
 	 * Tests that a segment which the binding resolves to nothing contributes no segment, so that the
 	 * address bar does not keep an object that is not displayed.
 	 */

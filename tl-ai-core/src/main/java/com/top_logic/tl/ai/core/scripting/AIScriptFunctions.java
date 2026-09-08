@@ -1001,6 +1001,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
+	 * An image is narrowed further, to {@link ImageContent#ACCEPTED_MEDIA_TYPES}: being an image is
+	 * not enough to be sendable, and a type outside that set is refused here by name rather than
+	 * being built into a payload that only the provider can reject.
+	 * </p>
+	 *
+	 * <p>
 	 * The declared content type is not taken at face value when it says nothing: TopLogic documents
 	 * {@code application/octet-stream} as the content type of a {@link BinaryDataSource} whose real
 	 * one is unknown, which is what a stored or uploaded document carries when nothing recorded it.
@@ -1032,9 +1038,17 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 		if (mediaType.startsWith("image/")) {
 			requireContent(binary, bytes, "image");
-			// The bare media type, not the declared content type: a data URI carrying MIME parameters
-			// is not one the providers accept.
-			return new ImageContent("data:" + mediaType + ";base64," + base64(bytes), mediaType);
+			// The normalized media type, not the declared content type: a data URI carrying MIME
+			// parameters is not one the providers accept, and "image/jpg" is a spelling none of them
+			// takes.
+			String imageType = ImageContent.normalizeMediaType(mediaType);
+			if (!ImageContent.isAccepted(imageType)) {
+				throw new IllegalArgumentException("Cannot attach '" + name(binary)
+					+ "' to an AI message: " + imageType + " images are not accepted by any provider. "
+					+ "Accepted image types are " + ImageContent.acceptedMediaTypes()
+					+ ". Convert the file before passing it to the model.");
+			}
+			return new ImageContent("data:" + imageType + ";base64," + base64(bytes), imageType);
 		}
 		if (PDF_MEDIA_TYPE.equals(mediaType)) {
 			requireContent(binary, bytes, "PDF document");

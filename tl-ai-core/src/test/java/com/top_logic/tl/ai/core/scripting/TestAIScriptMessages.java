@@ -53,6 +53,9 @@ public class TestAIScriptMessages extends TestCase {
 	private static final byte[] PNG_BYTES =
 		{ (byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3 };
 
+	/** The BMP file signature - an image format no provider accepts. */
+	private static final byte[] BMP_BYTES = { 'B', 'M', 0x36, 0x10, 0, 0, 0, 0, 0, 0 };
+
 	/**
 	 * A {@link ContentPart} in the message list reaches the {@link UserMessage} unchanged. Before
 	 * this worked, a caller-built PDF was stringified via {@code toString()} and the model received
@@ -229,6 +232,83 @@ public class TestAIScriptMessages extends TestCase {
 		} catch (IllegalArgumentException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().contains("application/octet-stream"));
 		}
+	}
+
+	/**
+	 * An image type no provider accepts is refused by name, rather than built into a payload only
+	 * the provider can reject - with an error naming neither the file nor the type.
+	 */
+	public void testBmpImageIsRefused() {
+		BinaryData binary = BinaryDataFactory.createBinaryData(BMP_BYTES, "image/bmp", "scan.bmp");
+
+		try {
+			AIScriptFunctions.createBinaryContent(binary);
+			fail("An image type no provider accepts must be refused.");
+		} catch (IllegalArgumentException ex) {
+			assertTrue("The type must be named: " + ex.getMessage(), ex.getMessage().contains("image/bmp"));
+			assertTrue("The file must be named: " + ex.getMessage(), ex.getMessage().contains("scan.bmp"));
+			assertTrue("The accepted types must be stated: " + ex.getMessage(),
+				ex.getMessage().contains("image/png, image/jpeg, image/gif, image/webp"));
+		}
+	}
+
+	/**
+	 * A payload declared only as {@code octet-stream} is sniffed before it is judged, so the refusal
+	 * names the format the file actually is instead of the placeholder it was stored under.
+	 */
+	public void testSniffedBmpIsRefusedByItsRealType() {
+		BinaryData binary =
+			BinaryDataFactory.createBinaryData(BMP_BYTES, "application/octet-stream", "scan.bmp");
+
+		try {
+			AIScriptFunctions.createBinaryContent(binary);
+			fail("A sniffed BMP must be refused.");
+		} catch (IllegalArgumentException ex) {
+			assertTrue("The sniffed type must be named: " + ex.getMessage(),
+				ex.getMessage().contains("image/bmp"));
+		}
+	}
+
+	/**
+	 * {@code image/jpg} is a spelling no provider takes - Anthropic rejects it outright - so it is
+	 * resolved to {@code image/jpeg} in both the media type and the data URI built from it.
+	 */
+	public void testJpgSpellingIsNormalisedToJpeg() {
+		byte[] jpeg = { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 1, 2, 3 };
+		BinaryData binary = BinaryDataFactory.createBinaryData(jpeg, "image/jpg", "photo.jpg");
+
+		ImageContent image = (ImageContent) AIScriptFunctions.createBinaryContent(binary);
+
+		assertEquals("image/jpeg", image.mediaType());
+		assertEquals("data:image/jpeg;base64," + Base64.getEncoder().encodeToString(jpeg), image.url());
+	}
+
+	/** Every accepted image type still reaches the provider unchanged. */
+	public void testAcceptedImageTypesAreBuiltUnchanged() {
+		for (String mediaType : ImageContent.ACCEPTED_MEDIA_TYPES) {
+			BinaryData binary = BinaryDataFactory.createBinaryData(PNG_BYTES, mediaType, "shot.img");
+
+			ImageContent image = (ImageContent) AIScriptFunctions.createBinaryContent(binary);
+
+			assertEquals(mediaType, image.mediaType());
+			assertEquals("data:" + mediaType + ";base64," + Base64.getEncoder().encodeToString(PNG_BYTES),
+				image.url());
+		}
+	}
+
+	/**
+	 * An {@code image/svg+xml} payload is inlined as text, not built as an image: it carries its own
+	 * source, which a model can read, so it never reaches the image branch and is never refused
+	 * there.
+	 */
+	public void testSvgIsInlinedAsTextNotBuiltAsAnImage() {
+		byte[] svg = "<svg xmlns=\"http://www.w3.org/2000/svg\"><rect/></svg>"
+			.getBytes(StandardCharsets.UTF_8);
+		BinaryData binary = BinaryDataFactory.createBinaryData(svg, "image/svg+xml", "logo.svg");
+
+		TextContent text = (TextContent) AIScriptFunctions.createBinaryContent(binary);
+
+		assertTrue("The source must reach the model: " + text.text(), text.text().contains("<rect/>"));
 	}
 
 	/**

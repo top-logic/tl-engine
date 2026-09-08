@@ -448,14 +448,25 @@ public class ChatProcessor {
 	 * Converts an {@link AttachmentDto} to a tl-ai-core {@link ContentPart}.
 	 *
 	 * <p>
-	 * Images are converted to {@link ImageContent}, PDFs to {@link PdfContent}. Unsupported
-	 * types produce a placeholder {@link TextContent}.
+	 * Images are converted to {@link ImageContent}, PDFs to {@link PdfContent}. Unsupported types
+	 * produce a placeholder {@link TextContent} - and an image type outside
+	 * {@link ImageContent#ACCEPTED_MEDIA_TYPES} is exactly that: being an image is not enough to be
+	 * sendable.
 	 * </p>
 	 */
 	private static ContentPart toContentPart(AttachmentDto att) {
-		String mimeType = att.getMimeType();
+		String mimeType = ImageContent.normalizeMediaType(att.getMimeType());
 		String base64 = att.getBase64Data();
-		if (mimeType != null && mimeType.startsWith("image/")) {
+		if (mimeType.startsWith("image/")) {
+			if (!ImageContent.isAccepted(mimeType)) {
+				// The upload check in ChatServlet refuses this type already, so reaching here means a
+				// caller that bypassed it. It is still answered the way every other unsendable
+				// attachment is - a marker the model can explain to the user - rather than by building
+				// a payload only the provider can reject.
+				return new TextContent("[Unsupported attachment: " + att.getFileName() + " - "
+					+ mimeType + " images are not accepted. Accepted image types are "
+					+ ImageContent.acceptedMediaTypes() + ".]");
+			}
 			return new ImageContent("data:" + mimeType + ";base64," + base64, mimeType);
 		} else if ("application/pdf".equals(mimeType)) {
 			return new PdfContent(base64, mimeType);

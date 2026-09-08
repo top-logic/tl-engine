@@ -12,6 +12,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.Base64;
 import java.util.Locale;
 
+import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
 import com.top_logic.tl.ai.tool.api.ToolContent;
 
@@ -173,6 +174,16 @@ public final class BinaryPerception {
 				+ " " + label + " is a " + contentType + " image of " + data.length + " bytes.", null);
 		}
 
+		String mediaType = ImageContent.normalizeMediaType(contentType);
+		if (!ImageContent.isAccepted(mediaType)) {
+			// Refused before anything decodes the payload: an image type no provider takes cannot
+			// become sendable further down, and a format nobody accepts is not one to hand to an
+			// image decoder either.
+			return new Plan("Cannot show " + label + ": " + mediaType + " images are not accepted by "
+				+ "any model provider. Accepted image types are " + ImageContent.acceptedMediaTypes()
+				+ ". Convert the file to one of them.", null);
+		}
+
 		if (ImageDownscaler.exceedsPixelBudget(data)) {
 			// A decompression bomb: a small file declaring enormous dimensions. Refused from its header,
 			// before anything allocates a raster from those dimensions and dies of it.
@@ -182,7 +193,7 @@ public final class BinaryPerception {
 				+ "read.", null);
 		}
 
-		ImageDownscaler.Scaled scaled = ImageDownscaler.downscale(data, contentType);
+		ImageDownscaler.Scaled scaled = ImageDownscaler.downscale(data, mediaType);
 		long encodedBytes = base64Length(scaled.data().length);
 		if (encodedBytes > MAX_IMAGE_BYTES) {
 			return new Plan("Cannot show " + label + ": the image is " + scaled.data().length

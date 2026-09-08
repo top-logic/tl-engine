@@ -8,9 +8,15 @@ import { React } from 'tl-react-bridge';
  *   <li>{@code css:fa-solid fa-home} — icon font (monochrome)</li>
  *   <li>{@code colored:fa-solid fa-star} — icon font (colored variant)</li>
  *   <li>{@code /icons/edit.png} or {@code theme:Icons.EDIT} — image reference</li>
+ *   <li>{@code none} — the invisible image, which renders nothing at all</li>
  * </ul>
  */
 export function ThemeIcon({ encoded, className }: { encoded: string; className?: string }) {
+  if (!encoded || encoded === 'none') {
+    // The invisible image occupies no space: an element carrying an icon class that draws nothing
+    // still takes the width of an icon, which indents whatever it sits beside.
+    return null;
+  }
   if (encoded.startsWith('css:')) {
     const cssClass = encoded.substring(4);
     return <i className={cssClass + (className ? ' ' + className : '')} />;

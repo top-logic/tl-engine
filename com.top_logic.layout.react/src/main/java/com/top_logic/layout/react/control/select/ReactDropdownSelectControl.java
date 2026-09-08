@@ -391,10 +391,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			descriptor.put(OPT_LABEL, _labelProvider.getLabel(option));
 
 			if (resourceProvider != null) {
-				ThemeImage image = resourceProvider.getImage(option, Flavor.DEFAULT);
-				if (image != null) {
-					descriptor.put(OPT_IMAGE, image.toEncodedForm());
-				}
+				putImage(descriptor, resourceProvider.getImage(option, Flavor.DEFAULT));
 			}
 
 			descriptors.add(descriptor);
@@ -424,10 +421,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			descriptor.put(OPT_LABEL, _labelProvider.getLabel(option));
 
 			if (resourceProvider != null) {
-				ThemeImage image = resourceProvider.getImage(option, Flavor.DEFAULT);
-				if (image != null) {
-					descriptor.put(OPT_IMAGE, image.toEncodedForm());
-				}
+				putImage(descriptor, resourceProvider.getImage(option, Flavor.DEFAULT));
 			}
 
 			descriptors.add(descriptor);
@@ -467,6 +461,24 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		Object[] array = options.toArray();
 		Arrays.sort(array, (Comparator) _optionComparator);
 		return Arrays.asList(array);
+	}
+
+	/**
+	 * Names the image of an option in its descriptor, unless the option has none.
+	 *
+	 * <p>
+	 * The image is resolved first, so a reference - the icon a theme configures for a type, say -
+	 * reaches the client as the image it stands for rather than as the reference, which the client
+	 * has no theme to look up. An invisible image is left out altogether: an option with no icon is
+	 * one whose descriptor names none, not one naming an icon that draws nothing but still takes
+	 * the width of one.
+	 * </p>
+	 */
+	private static void putImage(Map<String, Object> descriptor, ThemeImage image) {
+		if (image == null || image == ThemeImage.none()) {
+			return;
+		}
+		descriptor.put(OPT_IMAGE, image.resolve().toEncodedForm());
 	}
 
 	private ResourceProvider toResourceProvider(LabelProvider labelProvider) {

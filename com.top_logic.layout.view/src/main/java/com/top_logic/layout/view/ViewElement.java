@@ -153,10 +153,14 @@ public class ViewElement implements UIElement {
 			? _content.createControl(context)
 			: new ReactStackControl(context, List.of());
 
-		// Phase 4: Wire attach/detach — register/unregister participants with RouteManager.
+		// Phase 4: Anchor the participants in the display and wire attach/detach —
+		// register/unregister them with the RouteManager.
 		if (!participants.isEmpty() && rootControl instanceof ReactControl rc) {
 			RouteManager rm = context.getRouteManager();
 			if (rm != null) {
+				for (ParamBindingParticipant p : participants) {
+					rc.addRouteParticipant(p);
+				}
 				rc.addAttachListener(() -> {
 					for (ParamBindingParticipant p : participants) {
 						rm.register(p);

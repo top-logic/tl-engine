@@ -35,8 +35,6 @@ public class ParamBindingParticipant implements RoutingParticipant {
 
 	private final List<RouteChangeListener> _listeners = new ArrayList<>();
 
-	private String _currentValue;
-
 	/**
 	 * Creates a new {@link ParamBindingParticipant}.
 	 *
@@ -50,21 +48,13 @@ public class ParamBindingParticipant implements RoutingParticipant {
 		_channel = channel;
 		_pattern = RoutePattern.compile(":" + routeParamName, routeParamName);
 
-		// Listen to channel changes (forward: selection -> URL).
+		// Listen to channel changes (forward: selection -> URL). A cleared channel is reported as
+		// well, so that the segment leaves the address bar with the value it described.
 		_channel.addListener((sender, oldValue, newValue) -> {
-			String newStr = newValue != null ? newValue.toString() : null;
-			if (newStr != null && !newStr.equals(_currentValue)) {
-				_currentValue = newStr;
-				RouteSegment segment = new RouteSegment(_currentValue);
-				for (RouteChangeListener l : new ArrayList<>(_listeners)) {
-					l.onRouteChange(this, segment);
-				}
-			} else if (newStr == null && _currentValue != null) {
-				_currentValue = null;
-				// Parameter cleared - still notify to update URL.
-				for (RouteChangeListener l : new ArrayList<>(_listeners)) {
-					l.onRouteChange(this, new RouteSegment(""));
-				}
+			RouteSegment segment = segment(newValue);
+			RouteSegment reported = segment != null ? segment : new RouteSegment("");
+			for (RouteChangeListener l : new ArrayList<>(_listeners)) {
+				l.onRouteChange(this, reported);
 			}
 		});
 	}
@@ -79,17 +69,33 @@ public class ParamBindingParticipant implements RoutingParticipant {
 		// Backward: deep-link -> write param value into channel.
 		String value = match.params().get(_routeParamName);
 		if (value != null) {
-			_currentValue = value;
 			_channel.set(value);
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The segment is the value the channel holds, not the one the URL delivered: a segment the
+	 * binding resolved to nothing - a deleted object, a mistyped link - has no value to describe and
+	 * must not stay in the address bar beside a view that does not display it.
+	 * </p>
+	 */
 	@Override
 	public RouteSegment activeRouteSegment() {
-		if (_currentValue != null && !_currentValue.isEmpty()) {
-			return new RouteSegment(_currentValue);
+		return segment(_channel.get());
+	}
+
+	/**
+	 * The segment describing the given channel value, or {@code null} if the value contributes none.
+	 */
+	private static RouteSegment segment(Object value) {
+		if (value == null) {
+			return null;
 		}
-		return null;
+		String path = value.toString();
+		return path.isEmpty() ? null : new RouteSegment(path);
 	}
 
 	@Override

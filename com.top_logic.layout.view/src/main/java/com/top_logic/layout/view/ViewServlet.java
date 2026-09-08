@@ -210,8 +210,8 @@ public class ViewServlet extends TopLogicServlet {
 	 * </p>
 	 *
 	 * @param routePath
-	 *        The route requested by the URL, applied when it differs from the one the tree currently
-	 *        shows (a deep link entered in an existing tab).
+	 *        The route requested by the URL, adopted by the tree while it is rendered (a deep link
+	 *        entered in an existing tab).
 	 */
 	private void renderAgain(HttpServletRequest request, HttpServletResponse response,
 			ReactControl rootControl, SSEUpdateQueue sseQueue, String routePath) throws IOException {
@@ -220,12 +220,6 @@ public class ViewServlet extends TopLogicServlet {
 		sseQueue.discardPendingEvents();
 		sseQueue.setRootControl(rootControl);
 		wireRouteManager(context, sseQueue, routePath);
-
-		RouteManager routeManager = context.getRouteManager();
-		if (routeManager != null && routePath != null && !routePath.isEmpty()
-				&& !routePath.equals(routeManager.currentUrl())) {
-			routeManager.navigateToRoute(routePath);
-		}
 
 		renderPage(request, response, rootControl, context);
 	}
@@ -495,6 +489,14 @@ public class ViewServlet extends TopLogicServlet {
 			ReactControl rootControl, ReactContext context) throws IOException {
 		rootControl.attach();
 
+		// The display exists now, so the URL the request carries can be adopted: a page rendered into
+		// a control tree it already has registers no participants while attaching, and nothing else
+		// would hand them the requested route.
+		RouteManager routeManager = context.getRouteManager();
+		if (routeManager != null) {
+			routeManager.resolvePending();
+		}
+
 		response.setContentType("text/html");
 		response.setCharacterEncoding("UTF-8");
 
@@ -547,6 +549,11 @@ public class ViewServlet extends TopLogicServlet {
 		out.endTag(HTMLConstants.HTML);
 
 		out.flushBuffer();
+
+		// The display is complete now: whatever the requested URL still names is not part of it.
+		if (routeManager != null) {
+			routeManager.finishAdoption();
+		}
 	}
 
 	@Override

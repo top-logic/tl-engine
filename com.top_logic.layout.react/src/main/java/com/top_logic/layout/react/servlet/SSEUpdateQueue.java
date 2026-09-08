@@ -7,6 +7,8 @@ package com.top_logic.layout.react.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -29,6 +31,7 @@ import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -154,6 +157,33 @@ public class SSEUpdateQueue {
 	 */
 	public void setRouteManager(RouteManager routeManager) {
 		_routeManager = routeManager;
+		if (routeManager != null) {
+			routeManager.setDisplayedParticipants(this::displayedParticipants);
+		}
+	}
+
+	/**
+	 * The {@link RoutingParticipant}s the displayed control tree contains, in display order.
+	 *
+	 * @see RouteManager#setDisplayedParticipants(java.util.function.Supplier)
+	 */
+	private List<RoutingParticipant> displayedParticipants() {
+		List<RoutingParticipant> result = new ArrayList<>();
+		ReactControl root = _rootControl;
+		if (root != null) {
+			collectParticipants(root, result);
+		}
+		return result;
+	}
+
+	private static void collectParticipants(ReactControl control, List<RoutingParticipant> result) {
+		if (control instanceof RoutingParticipant participant) {
+			result.add(participant);
+		}
+		result.addAll(control.routeParticipants());
+		for (ReactControl child : control.displayedChildren()) {
+			collectParticipants(child, result);
+		}
 	}
 
 	/**

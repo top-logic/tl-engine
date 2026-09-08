@@ -177,4 +177,137 @@ public class TestRouteManager extends TestCase {
 		rm.unregister(sidebar);
 		assertEquals("", rm.currentUrl());
 	}
+
+	/**
+	 * Tests that the URL is composed from the displayed participants, not from the sequence in which
+	 * the participants registered.
+	 */
+	public void testCompositionFollowsDisplay() {
+		RouteManager rm = new RouteManager();
+		MockParticipant tabs = new MockParticipant(List.of(
+			RoutePattern.compile("/featured", "featured")));
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore")));
+
+		// A tab rendered lazily registers after the sidebar it is displayed in.
+		rm.register(tabs);
+		tabs.simulateNavigation("featured", Map.of());
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+
+		rm.setDisplayedParticipants(() -> List.of(sidebar, tabs));
+		assertEquals("explore/featured", rm.currentUrl());
+	}
+
+	/**
+	 * Tests that a participant that has left the display contributes no segment, even while it is
+	 * still registered.
+	 */
+	public void testUndisplayedParticipantIsNotComposed() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore")));
+		MockParticipant tabs = new MockParticipant(List.of(
+			RoutePattern.compile("/featured", "featured")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		rm.register(tabs);
+		tabs.simulateNavigation("featured", Map.of());
+
+		rm.setDisplayedParticipants(() -> List.of(sidebar));
+		assertEquals("explore", rm.currentUrl());
+	}
+
+	/**
+	 * Tests that adopting a URL the browser already displays creates no history entry, neither while
+	 * the URL is resolved nor for the display the resolution materializes afterwards.
+	 */
+	public void testNavigationCreatesNoHistoryEntry() {
+		RouteManager rm = new RouteManager();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/listings", "listings")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+
+		rm.setUrlChangeHandler((url, replace) -> replaceFlags.add(replace));
+		rm.navigateToRoute("listings");
+		assertEquals("listings", rm.currentUrl());
+
+		// The navigated-to view materializes its display only when it is rendered, so a tab of it
+		// enters the composition after the navigation has been resolved.
+		MockParticipant tabs = new MockParticipant(List.of(
+			RoutePattern.compile("/featured", "featured")));
+		tabs.simulateNavigation("featured", Map.of());
+		rm.register(tabs);
+
+		assertEquals("listings/featured", rm.currentUrl());
+		assertFalse("A browser navigation must not push a history entry.", replaceFlags.contains(Boolean.FALSE));
+	}
+
+	/**
+	 * Tests that a pending URL is adopted by a display that already exists, i.e. whose participants
+	 * are registered before the URL to adopt is known.
+	 */
+	public void testPendingUrlAdoptedByExistingDisplay() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/listings", "listings")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+
+		rm.setPendingUrl("listings");
+		rm.resolvePending();
+
+		assertEquals("listings", sidebar.lastActivation().itemId());
+		assertEquals("listings", rm.currentUrl());
+	}
+
+	/**
+	 * Tests that a URL the display cannot reproduce is corrected without a history entry, and only
+	 * once the adoption is through with the segments it can resolve.
+	 */
+	public void testUnresolvableUrlIsCorrected() {
+		RouteManager rm = new RouteManager();
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+
+		rm.setUrlChangeHandler((url, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+		rm.setPendingUrl("nowhere");
+		rm.resolvePending();
+		assertEquals("Nothing is reported while the display may still materialize.", List.of(), urls);
+
+		rm.finishAdoption();
+
+		assertEquals(List.of("explore"), urls);
+		assertEquals(List.of(Boolean.TRUE), replaceFlags);
+	}
+
+	/**
+	 * Tests that a route change reported by a displayed participant pushes a history entry, so that
+	 * the user can undo the navigation with the back button.
+	 */
+	public void testUserNavigationCreatesHistoryEntry() {
+		RouteManager rm = new RouteManager();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/listings", "listings")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+
+		rm.setUrlChangeHandler((url, replace) -> replaceFlags.add(replace));
+		sidebar.simulateNavigation("listings", Map.of());
+
+		assertEquals(List.of(Boolean.FALSE), replaceFlags);
+	}
 }

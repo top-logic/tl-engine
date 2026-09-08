@@ -238,6 +238,15 @@
 						it visible only at small viewports. The two names must match.
 					-->
 					<slot name="appbar-leading"/>
+
+					<!--
+						The account area: who is logged in, plus login, logout and the theme
+						entries. Provided by tl-layout-view, which also declares the channel
+						feeding it, so nothing here wires it. It leads the bar, ahead of the
+						title, so that who is logged in is read before what the application is
+						called.
+					-->
+					<view-ref view="user-menu.view.xml"/>
 				</leading>
 				<children>
 					<!--
@@ -247,13 +256,6 @@
 						The tiles demos use it to raise their drill-down breadcrumb to the app bar.
 					-->
 					<slot name="appbar-content"/>
-
-					<!--
-						The account area: who is logged in, plus login, logout and the theme
-						entries. Provided by tl-layout-view, which also declares the channel
-						feeding it, so nothing here wires it.
-					-->
-					<view-ref view="user-menu.view.xml"/>
 				</children>
 			</app-bar>
 		</header>

@@ -28,6 +28,10 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl.AppBarVariant;
 import com.top_logic.layout.view.UIElement;
@@ -208,8 +212,9 @@ public class AppBarElement implements UIElement {
 			childControls.add((ReactControl) _children.get(i).createControl(childContext));
 		}
 
-		// Build leading control. Typically a single <slot name="appbar-leading"/> placeholder; if
-		// multiple are configured we wrap them so they all render in the leading area.
+		// Build the leading area. An app bar is a horizontal bar, so several leading elements - a
+		// drawer toggle and the account area, say - stand side by side and centered on the bar's
+		// height, not stacked the way the generic content combination would arrange them.
 		ReactControl leadingControl;
 		if (_leading.isEmpty()) {
 			leadingControl = null;
@@ -219,7 +224,10 @@ public class AppBarElement implements UIElement {
 				ViewContext leadingContext = derivedContext.withChildSlotPath("leading-" + i);
 				leadingControls.add((ReactControl) _leading.get(i).createControl(leadingContext));
 			}
-			leadingControl = ContentControls.combine(derivedContext, leadingControls);
+			leadingControl = leadingControls.size() == 1
+				? leadingControls.get(0)
+				: new ReactStackControl(derivedContext, StackDirection.ROW, StackGap.COMPACT,
+					StackAlign.CENTER, false, leadingControls);
 		}
 
 		// Create the app bar control.

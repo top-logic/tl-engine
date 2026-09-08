@@ -44,6 +44,12 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * {@code "Error: ..."} and the notice about a document it cannot extract text from - stay outside it:
  * they are this application speaking, and marking them as page content would say otherwise.
  * </p>
+ *
+ * <p>
+ * {@link ToolMode#READ} is deliberate and says only that the fetch changes nothing in this
+ * application. That it sends a URL to a third party is the group's statement, not the mode's - see
+ * {@link ToolGroups#EGRESS}, which is where an administrator gates outbound access.
+ * </p>
  */
 public class WebFetchTool {
 

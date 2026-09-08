@@ -63,6 +63,13 @@ import com.top_logic.util.TLContext;
  * human-verification challenge is detected and reported as a hard stop - the tool never attempts
  * to solve one.
  * </p>
+ *
+ * <p>
+ * Where a verb here is {@link ToolMode#READ}, that is deliberate and says only that the verb
+ * changes nothing in this application - not that it stays inside it. Driving a browser out onto the
+ * public internet is the group's statement, not the mode's: see {@link ToolGroups#EGRESS}, which is
+ * where an administrator gates outbound access.
+ * </p>
  */
 public class BrowserTool {
 

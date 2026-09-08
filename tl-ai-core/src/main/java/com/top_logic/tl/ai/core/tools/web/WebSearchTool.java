@@ -30,6 +30,12 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * model, and putting it inside a block the model is told to treat as data would tell the model to
  * ignore it.
  * </p>
+ *
+ * <p>
+ * {@link ToolMode#READ} is deliberate and says only that the search changes nothing in this
+ * application. That it sends the query to a third party is the group's statement, not the mode's -
+ * see {@link ToolGroups#EGRESS}, which is where an administrator gates outbound access.
+ * </p>
  */
 public class WebSearchTool {
 

@@ -143,6 +143,15 @@
 							<de>Switch-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="calendar"
+						icon="css:bi bi-calendar3"
+					>
+						<view-ref view="demo/calendar.view.xml"/>
+						<label>
+							<en>Calendar</en>
+							<de>Kalender</de>
+						</label>
+					</nav-item>
 					<separator/>
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"

@@ -30,7 +30,7 @@
 
 	<properties>
 		<tl.version>8.0.0-SNAPSHOT</tl.version>
-		<jetty.version>12.1.12</jetty.version>
+		<jetty.version>12.1.13</jetty.version>
 		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>
 		<zookeeper.version>3.9.5</zookeeper.version>
@@ -1325,7 +1325,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-oidc</artifactId>
-    			<version>6.5.7</version>
+    			<version>6.5.8</version>
 			</dependency>
 			<dependency>
 				<groupId>net.minidev</groupId>
@@ -1335,7 +1335,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-jakartaee</artifactId>
-    			<version>6.5.7</version>
+    			<version>6.5.8</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>

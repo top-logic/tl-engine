@@ -28,6 +28,7 @@ import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
+import com.top_logic.table.SearchSpec;
 import com.top_logic.table.Selection;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
@@ -37,6 +38,7 @@ import com.top_logic.table.TableView;
 import com.top_logic.table.TableViewListener;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.ViewStateStore;
+import com.top_logic.table.filter.TextFilterState;
 
 /**
  * Default {@link TableView}: composes a column model, a {@link RowSource} and a
@@ -386,9 +388,42 @@ public class DefaultTableView<R> implements TableView<R> {
 		} else {
 			_state.getFilters().put(column, state);
 		}
-		_source.withFilter(new FilterSpec(_state.getFilters()));
+		applyFilter();
 		persist();
 		fireColumnsChanged();
+	}
+
+	@Override
+	public void search(TextFilterState term) {
+		_state.setSearch(term == null || term.isEmpty() ? null : term);
+		applyFilter();
+		persist();
+		fireColumnsChanged();
+	}
+
+	/**
+	 * Pushes the complete filter - the column filters and the search - into the row source.
+	 *
+	 * <p>
+	 * The single place the {@link FilterSpec} is built, so that changing one of its parts cannot
+	 * drop the other. The searched columns are derived here from
+	 * {@link TableViewState#getColumnOrder()}, the columns currently displayed, so the search
+	 * always examines what the user sees.
+	 * </p>
+	 */
+	private void applyFilter() {
+		_source.withFilter(new FilterSpec(_state.getFilters(),
+			new SearchSpec(_state.getSearch(), _state.getColumnOrder())));
+	}
+
+	/**
+	 * Re-applies the filter after a change to the displayed columns, which are the columns an
+	 * active search examines: a column the user hides is no longer searched, one they show is.
+	 */
+	private void searchScopeChanged() {
+		if (_state.getSearch() != null) {
+			applyFilter();
+		}
 	}
 
 	@Override
@@ -441,6 +476,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		// A column that was frozen may have been hidden or moved out of the frozen range; the
 		// frozen prefix can never reach beyond the columns that are left.
 		_state.setFrozenCount(Math.min(_state.getFrozenCount(), order.size()));
+		searchScopeChanged();
 		persist();
 		fireColumnsChanged();
 	}
@@ -511,6 +547,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		} else {
 			return;
 		}
+		searchScopeChanged();
 		persist();
 		fireColumnsChanged();
 	}
@@ -589,7 +626,8 @@ public class DefaultTableView<R> implements TableView<R> {
 	/**
 	 * Loads persisted personalization and merges it onto the current state: column order, widths
 	 * and sort are reconciled against the columns that actually exist (stale columns dropped, new
-	 * columns appended), and the persisted sort/grouping are re-applied to the row source.
+	 * columns appended), and the persisted sort, grouping, filters and search are re-applied to the
+	 * row source.
 	 */
 	private void restore() {
 		TableViewState persisted = _store.load(_id, filterCodec());
@@ -665,8 +703,14 @@ public class DefaultTableView<R> implements TableView<R> {
 				_state.getFilters().put(entry.getKey(), entry.getValue());
 			}
 		}
-		if (!_state.getFilters().isEmpty()) {
-			_source.withFilter(new FilterSpec(_state.getFilters()));
+
+		TextFilterState search = persisted.getSearch();
+		if (search != null && !search.isEmpty()) {
+			_state.setSearch(search);
+		}
+
+		if (!_state.getFilters().isEmpty() || _state.getSearch() != null) {
+			applyFilter();
 		}
 	}
 

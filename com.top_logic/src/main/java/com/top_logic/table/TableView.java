@@ -7,6 +7,8 @@ package com.top_logic.table;
 
 import java.util.List;
 
+import com.top_logic.table.filter.TextFilterState;
+
 /**
  * The single binding object the UI tier talks to: composes a column model, a
  * {@link RowSource} and a {@link TableViewState} into a windowed, command-driven view.
@@ -101,6 +103,22 @@ public interface TableView<R> {
 	 * column.
 	 */
 	void filter(String column, FilterState state);
+
+	/**
+	 * Applies (or clears, when the term is {@code null} or {@link TextFilterState#isEmpty()
+	 * empty}) the cross-column free-text search.
+	 *
+	 * <p>
+	 * The search examines the columns that are currently displayed, so it finds what the user
+	 * can see: a row is displayed when the term occurs in the
+	 * {@link Column#searchText(Object) searchable text} of at least one of them. It narrows
+	 * the rows in addition to the active column {@link #filter(String, FilterState) filters}.
+	 * </p>
+	 *
+	 * @param term
+	 *        The text pattern together with its matching flags.
+	 */
+	void search(TextFilterState term);
 
 	/**
 	 * Applies a new grouping.

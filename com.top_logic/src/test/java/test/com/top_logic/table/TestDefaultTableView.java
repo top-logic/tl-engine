@@ -181,6 +181,102 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals(List.of("Charlie", "alice"), names(view2));
 	}
 
+	public void testSearchCommand() {
+		TableView<Person> view = newView();
+		view.search(TextFilterState.contains("li"));
+		assertEquals(List.of("Charlie", "alice"), names(view));
+
+		// Clearing with an empty term restores all rows.
+		view.search(TextFilterState.contains(""));
+		assertEquals(3, view.rowCount());
+
+		view.search(TextFilterState.contains("li"));
+		assertEquals(2, view.rowCount());
+
+		// So does clearing with no term at all.
+		view.search(null);
+		assertEquals(3, view.rowCount());
+	}
+
+	public void testSearchLooksIntoEveryDisplayedColumn() {
+		TableView<Person> view = newView();
+		// "30" is the age of Charlie, found in the age column although the names hold no digit.
+		view.search(TextFilterState.contains("30"));
+		assertEquals(List.of("Charlie"), names(view));
+	}
+
+	public void testSearchAndColumnFilterIntersect() {
+		TableView<Person> view = newView();
+		// Column filter: name contains "li" -> Charlie, alice. Search: "30" -> Charlie.
+		view.filter("name", new Contains("li"));
+		view.search(TextFilterState.contains("30"));
+		assertEquals("Intersection of the column filter and the search, not their union.",
+			List.of("Charlie"), names(view));
+	}
+
+	public void testColumnFilterKeepsTheSearchInEffect() {
+		TableView<Person> view = newView();
+		view.search(TextFilterState.contains("li"));
+		assertEquals(List.of("Charlie", "alice"), names(view));
+
+		// Filtering afterwards narrows the searched rows further instead of replacing the search.
+		view.filter("name", new Contains("a"));
+		assertEquals(List.of("Charlie", "alice"), names(view));
+		view.filter("name", new Contains("C"));
+		assertEquals(List.of("Charlie"), names(view));
+
+		// Clearing the filter leaves the search in effect.
+		view.filter("name", new Contains(""));
+		assertEquals(List.of("Charlie", "alice"), names(view));
+	}
+
+	public void testSearchExaminesOnlyDisplayedColumns() {
+		TableView<Person> view = newView();
+		view.search(TextFilterState.contains("30"));
+		assertEquals(List.of("Charlie"), names(view));
+
+		view.setColumnVisible("age", false);
+		assertEquals("The only column holding the term is hidden, so nothing is found any more.",
+			List.of(), names(view));
+
+		view.setColumnVisible("age", true);
+		assertEquals("Showing the column again brings the match back.", List.of("Charlie"), names(view));
+	}
+
+	public void testSearchScopeFollowsColumnSelection() {
+		TableView<Person> view = newView();
+		view.search(TextFilterState.contains("30"));
+		view.setColumnOrder(List.of("name"));
+		assertEquals("The age column is deselected, so its text is not searched.", List.of(), names(view));
+
+		view.setColumnOrder(List.of("age", "name"));
+		assertEquals(List.of("Charlie"), names(view));
+	}
+
+	public void testSearchPersistedAndRestored() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-search");
+
+		TableView<Person> view1 = newView(store, id);
+		view1.search(new TextFilterState("LI", false, false, false));
+		assertEquals(List.of("Charlie", "alice"), names(view1));
+
+		// A fresh view over the same store restores the persisted search (and re-applies it).
+		TableView<Person> view2 = newView(store, id);
+		assertEquals("restored search re-applied to rows", List.of("Charlie", "alice"), names(view2));
+		assertEquals("LI", view2.state().getSearch().pattern());
+	}
+
+	public void testStateReflectsSearch() {
+		TableView<Person> view = newView();
+		TextFilterState term = TextFilterState.contains("li");
+		view.search(term);
+		assertEquals(term, view.state().getSearch());
+
+		view.search(TextFilterState.contains(""));
+		assertNull("An empty term is no search.", view.state().getSearch());
+	}
+
 	private List<Column<Person, ?>> textFilterColumns() {
 		Column<Person, String> name = DefaultColumn.<Person, String> builder("name", Person::name)
 			.filter(TextColumnFilter.forStrings())

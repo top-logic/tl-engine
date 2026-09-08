@@ -1,7 +1,7 @@
 import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, CMD_VALUE_CHANGED } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import type { TLCellProps } from 'tl-react-bridge';
-import FontIcon from './FontIcon';
+import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
 
@@ -15,13 +15,13 @@ interface OptionDescriptor {
 
 // -- Sub-components --
 
-/** Renders an option's image (URL or CSS class) */
+/** Renders an option's image, whatever encoded form it arrives in. */
 function OptionImage({ image }: { image?: string }) {
   if (!image) return null;
   if (image.startsWith('/')) {
     return <img src={image} alt="" className="tlDropdownSelect__optionImage" />;
   }
-  return <FontIcon image={image} className="tlDropdownSelect__optionIcon" />;
+  return <ThemeIcon encoded={image} className="tlDropdownSelect__optionIcon" />;
 }
 
 /** Renders a selected value as a chip/tag */

@@ -114,9 +114,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return Resources.getInstance().getString(key);
 	}
 
-	/**
-	 * The command's CSS classes.
-	 */
+	@Override
 	public String getCssClasses() {
 		return _config.getCssClasses();
 	}

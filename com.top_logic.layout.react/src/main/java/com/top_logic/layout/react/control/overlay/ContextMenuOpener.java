@@ -142,7 +142,8 @@ public class ContextMenuOpener {
 				contributionIndex + ":" + j,
 				cmd.getLabel(),
 				encodeIcon(cmd.getImage()),
-				!cmd.isExecutable()));
+				!cmd.isExecutable(),
+				cmd.getCssClasses()));
 			currentClique = clique;
 			first = false;
 		}

@@ -207,7 +207,7 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		}
 
 		active.remove(id);
-		UITheme theme = new UITheme(id, config.getLabel(), tokens);
+		UITheme theme = new UITheme(id, config.getLabel(), config.getIcon(), tokens);
 		result.put(id, theme);
 		return theme;
 	}

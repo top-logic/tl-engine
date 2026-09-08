@@ -162,25 +162,24 @@ public class TabBarElement implements UIElement {
 			List<UIElement> children = tabConfig.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
-			String label = label(tabConfig);
 			String route = tabConfig.getRoute();
-			_tabs.add(new TabEntry(tabConfig.getId(), label, route, tabConfig.getIcon(),
+			_tabs.add(new TabEntry(tabConfig.getId(), tabConfig.getLabel(), route, tabConfig.getIcon(),
 				tabConfig.getAccessControl(), children));
 		}
 		_activeTab = config.getActiveTab();
 	}
 
 	/**
-	 * The label to display on the tab.
+	 * The label to display on the tab, in the language of the session being served.
 	 *
 	 * <p>
 	 * Falls back to the tab's {@link TabConfig#getId() ID} while no label is configured, so that a tab
 	 * added to a tab bar is visible and can be selected instead of rendering as a blank one.
 	 * </p>
 	 */
-	private static String label(TabConfig tabConfig) {
-		String label = Resources.getInstance().getString(tabConfig.getLabel(), null);
-		return StringServices.isEmpty(label) ? tabConfig.getId() : label;
+	private static String label(TabEntry entry) {
+		String label = Resources.getInstance().getString(entry._label, null);
+		return StringServices.isEmpty(label) ? entry._id : label;
 	}
 
 	@Override
@@ -192,7 +191,7 @@ public class TabBarElement implements UIElement {
 				continue;
 			}
 			DirtyChannel dirtyChannel = new DirtyChannel();
-			TabDefinition tabDef = new TabDefinition(entry._id, entry._label,
+			TabDefinition tabDef = new TabDefinition(entry._id, label(entry),
 				() -> createContent(entry, context, dirtyChannel), dirtyChannel);
 			if (entry._icon != null && !entry._icon.isEmpty()) {
 				tabDef.withIcon(entry._icon);
@@ -225,7 +224,16 @@ public class TabBarElement implements UIElement {
 		return ContentControls.toControl(elements, tabContext);
 	}
 
-	private record TabEntry(String _id, String _label, String _route, String _icon,
+	/**
+	 * A configured tab, as far as it is the same for every session.
+	 *
+	 * <p>
+	 * The label stays a {@link ResKey}: an element is parsed once and shared by every session, so a
+	 * text resolved here would be the one language whichever session loaded the view first happened
+	 * to ask in.
+	 * </p>
+	 */
+	private record TabEntry(String _id, ResKey _label, String _route, String _icon,
 			AccessControl _accessControl, List<UIElement> _children) {
 	}
 }

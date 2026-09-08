@@ -110,6 +110,19 @@ public interface CommandModel {
 	}
 
 	/**
+	 * Additional CSS classes for the UI element rendering this command, separated by spaces.
+	 *
+	 * <p>
+	 * Appended to the class list of the command's button, and of a menu entry rendering the
+	 * command, so that a single command can be styled (e.g. marked as destructive) wherever it is
+	 * offered. Returns {@code null} by default (no additional classes).
+	 * </p>
+	 */
+	default String getCssClasses() {
+		return null;
+	}
+
+	/**
 	 * The keyboard gesture that triggers this command, e.g. {@link KeyStroke#ENTER} or
 	 * {@code KeyStroke.of(Key.S).ctrl()}.
 	 *

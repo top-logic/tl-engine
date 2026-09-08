@@ -7,6 +7,7 @@ package com.top_logic.layout.view;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 import jakarta.servlet.ServletException;
@@ -52,6 +53,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.view.login.PendingSessionAction;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
@@ -117,6 +119,17 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		String routePath = extractRoutePath(pathInfo, windowName);
+		if (PendingSessionAction.consumeSessionSwapped(session)) {
+			// A login or logout has just replaced the session, and the redirect it sent still names
+			// the page the previous user had navigated to. Whoever takes the session over begins
+			// where they begin, so that page is not theirs to inherit.
+			routePath = null;
+		}
+		if (routePath == null) {
+			// Entered without naming a page, so the user's own choice of where to begin applies.
+			// A URL that does carry a route asks for that page and is never overridden.
+			routePath = StartPage.get();
+		}
 
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
 		// Rendering the page restarts the session's inactivity timeout. A reload renders the tree the
@@ -177,15 +190,17 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		// Reuse is correct only for the same view.
+		// Reuse is correct only for the same view in the same language.
+		Locale locale = Resources.getCurrentLocale();
 		RenderedView rendered = RenderedView.lookup(subSession);
-		if (displayed != null && rendered != null && rendered.matches(viewPath, view)) {
+		if (displayed != null && rendered != null && rendered.matches(viewPath, view, locale)) {
 			renderAgain(request, response, displayed, sseQueue, routePath);
 			return;
 		}
 		if (displayed != null) {
-			// Another view, or a view file edited in the meantime: the old tree is never rendered
-			// again, so release the model listeners its controls hold.
+			// Another view, a view file edited in the meantime, or a language the tree was not built
+			// in: the old tree is never rendered again, so release the model listeners its controls
+			// hold.
 			displayed.detach();
 			displayed.cleanupTree();
 		}
@@ -207,7 +222,7 @@ public class ViewServlet extends TopLogicServlet {
 			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);
 		windowEntry.setRootControl(rootControl);
-		RenderedView.store(subSession, new RenderedView(viewPath, view));
+		RenderedView.store(subSession, new RenderedView(viewPath, view, locale));
 
 		renderPage(request, response, rootControl, displayContext);
 	}
@@ -574,7 +589,9 @@ public class ViewServlet extends TopLogicServlet {
 
 		out.writeContent(HTMLConstants.DOCTYPE_HTML);
 		out.beginBeginTag(HTMLConstants.HTML);
-		out.writeAttribute("lang", "en");
+		// The language the page is actually rendered in, so that assistive technology and the
+		// browser's own text handling follow the user's choice.
+		out.writeAttribute("lang", Resources.getCurrentLocale().getLanguage());
 		out.writeAttribute("data-theme", themes.getActiveThemeId());
 		out.endBeginTag();
 

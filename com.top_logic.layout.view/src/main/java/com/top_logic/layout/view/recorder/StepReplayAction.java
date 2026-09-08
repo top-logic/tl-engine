@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
@@ -67,14 +68,14 @@ public class StepReplayAction implements ViewAction {
 		ScriptRecorder recorder = RecorderAccess.openerRecorder(context);
 		String openerWindowId = RecorderAccess.openerWindowId(context);
 		if (recorder == null || openerWindowId == null) {
-			info(context, I18NConstants.ERROR_NO_RECORDER);
+			ViewMessages.info(context, I18NConstants.ERROR_NO_RECORDER);
 			return input;
 		}
 
 		List<ReactCommand> steps = recorder.steps();
 		int index = selectedIndex(input, steps.size());
 		if (index < 0) {
-			info(context, I18NConstants.SELECT_STEP_TO_REPLAY);
+			ViewMessages.info(context, I18NConstants.SELECT_STEP_TO_REPLAY);
 			return input;
 		}
 
@@ -83,11 +84,11 @@ public class StepReplayAction implements ViewAction {
 		try {
 			HandlerResult result = ReactWindowReplay.act(registry, openerWindowId, step);
 			if (!result.isSuccess()) {
-				error(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(step.getAddress())));
+				ViewMessages.error(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(step.getAddress())));
 				return input;
 			}
 		} catch (RuntimeException ex) {
-			error(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(ex.getMessage())));
+			ViewMessages.error(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(ex.getMessage())));
 			return input;
 		}
 
@@ -122,25 +123,5 @@ public class StepReplayAction implements ViewAction {
 		return Integer.toString(index + 1);
 	}
 
-	/**
-	 * Shows an informational message in the side-window through the React {@link ErrorSink}, a no-op
-	 * when the context has none.
-	 */
-	private static void info(ReactContext context, ResKey message) {
-		ErrorSink errorSink = context.getErrorSink();
-		if (errorSink != null) {
-			errorSink.showInfo(Fragments.text(Resources.getInstance().getString(message)));
-		}
-	}
 
-	/**
-	 * Shows an error message in the side-window through the React {@link ErrorSink}, a no-op when
-	 * the context has none.
-	 */
-	private static void error(ReactContext context, ResKey message) {
-		ErrorSink errorSink = context.getErrorSink();
-		if (errorSink != null) {
-			errorSink.showError(Fragments.text(Resources.getInstance().getString(message)));
-		}
-	}
 }

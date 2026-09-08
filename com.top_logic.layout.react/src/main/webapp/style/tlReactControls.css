@@ -1773,12 +1773,13 @@ button.tlDrawerToggle:focus-visible {
 }
 
 /* --- Controls placed on the primary (accent) app bar -------------------- */
-/* The primary app bar has a dark accent background; its title and slot text
-   inherit the on-accent (white) color. Buttons and the user-name text bring
-   their own foreground (accent-blue / primary-text), which is nearly
-   unreadable on the accent background. Re-map them to on-accent colors. */
+/* The primary app bar has a dark accent background; its title inherits the
+   on-accent (white) color. Text elements and buttons bring their own
+   foreground (primary-text / accent-blue), which is nearly unreadable on the
+   accent background - the account name beside the avatar above all. Re-map
+   them to on-accent colors. */
 
-.tlAppBar--primary .tlAppBarUser {
+.tlAppBar--primary .tlText {
 	color: var(--layer-accent-text);
 }
 

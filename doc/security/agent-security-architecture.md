@@ -11,8 +11,8 @@ this design sits on and is the page to read *before* this one;
 that works; [testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md) is the runnable fixture that shows it, one persona and one expected
 result per behaviour.
 **Depends on:** engine ticket **#29088** (`ModelAccessRights` / `SecurityConfigurationService`),
-**released** in engine `8.0.0-alpha7`, which tl-ai now builds against. All API references below are
-verified against that released artifact.
+**released** in engine `8.0.0-alpha7` and present in the `8.0.0-alpha8` engine tl-ai now builds
+against. All API references below are verified against that released artifact.
 **Companion spec:** `specs/model-based-access-rights.md` in tl-engine-7 (the model-security design this
 document builds on).
 **Language:** English, to stay consistent with the engine spec and with the Javadoc of the classes
@@ -1499,9 +1499,9 @@ because no human can approve. That is strictly more supervision than `SYSTEM` ga
 
 ## 6. What is built on this branch
 
-tl-ai builds against released engine **`8.0.0-alpha7`**, which contains #29088, so the whole design
-compiles against the real API - nothing here is reference code any more. All new types live in
-`tl-ai-core/src/main/java/com/top_logic/tl/ai/core/security/`.
+tl-ai builds against released engine **`8.0.0-alpha8`**, which contains #29088 (released in
+`8.0.0-alpha7`), so the whole design compiles against the real API - nothing here is reference code
+any more. All new types live in `tl-ai-core/src/main/java/com/top_logic/tl/ai/core/security/`.
 
 | Artifact | Status |
 |---|---|

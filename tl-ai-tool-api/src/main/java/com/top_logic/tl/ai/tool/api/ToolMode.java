@@ -24,10 +24,23 @@ package com.top_logic.tl.ai.tool.api;
  * exist. Last is also the safe position - the configuration framework defaults an unset enum
  * property to the *first* constant, and READ has to stay that one so that no omission can turn into
  * a silent grant.
+ *
+ * No mode says where a tool's data goes. The four points on the axis say nothing about it at all,
+ * and EXTERNAL says only that a change landed in another system, not what left this one. Because
+ * the default approval policy asks a human for every mode but READ, a READ label reads as
+ * "harmless" - and it is not one: a tool that changes nothing here can still hand its arguments to
+ * a third party, which is exactly what webFetch, webSearch and the browser verbs do while being
+ * READ. That property has its own axis, the tool's group. ToolGroups.EGRESS is the group an
+ * administrator grants, denies or reclassifies a tool into, the one the policy warnings read, and
+ * one a <background-allowlist> grant can name. Mode and group answer different questions, and
+ * neither stands in for the other.
  */
 public enum ToolMode {
 
-	/** Tool only reads data. No changes, no approval needed. */
+	/**
+	 * Tool changes nothing in this application's state - which says nothing about whether it reaches
+	 * outside it, a property carried by its group ({@link ToolGroups#EGRESS}).
+	 */
 	READ,
 
 	/** Tool makes changes scoped to the current user only (temp views, personal dashboards). */

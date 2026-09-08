@@ -261,17 +261,21 @@ public final class BedrockConverseRequestBuilder {
 	/**
 	 * Extracts the Bedrock image format string from a MIME type.
 	 *
+	 * <p>
+	 * The subtype of the {@link ImageContent#normalizeMediaType(String) canonical} media type: the
+	 * {@code image/jpg} spelling Bedrock does not accept is resolved by that shared rule, not by a
+	 * copy of it here, so this builder and the paths that decide what may be built agree on what a
+	 * type is. Whatever an unexpected type would produce is still sent as the format string: a
+	 * payload that got this far was built past the checks, and guessing on its behalf here would only
+	 * move the provider error somewhere less obvious.
+	 * </p>
+	 *
 	 * @return one of {@code png}, {@code jpeg}, {@code gif}, {@code webp}
 	 */
 	private static String extractImageFormat(String mediaType) {
-		// mediaType is e.g. "image/png", "image/jpeg"
-		int slashIdx = mediaType.indexOf('/');
-		String subType = slashIdx >= 0 ? mediaType.substring(slashIdx + 1) : mediaType;
-		// Normalize "jpg" → "jpeg" (Bedrock only accepts "jpeg")
-		if ("jpg".equalsIgnoreCase(subType)) {
-			return "jpeg";
-		}
-		return subType.toLowerCase();
+		String normalized = ImageContent.normalizeMediaType(mediaType);
+		int slashIdx = normalized.indexOf('/');
+		return slashIdx >= 0 ? normalized.substring(slashIdx + 1) : normalized;
 	}
 
 	private static Map<String, Object> buildAssistantMessage(AssistantMessage assistant) {

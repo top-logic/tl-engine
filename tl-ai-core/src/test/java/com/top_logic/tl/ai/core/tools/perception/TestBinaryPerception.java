@@ -12,6 +12,7 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelCapabilities;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelModalities;
@@ -23,6 +24,9 @@ import com.top_logic.tl.ai.tool.api.ToolContent;
 public class TestBinaryPerception extends TestCase {
 
 	private static final byte[] PDF_BYTES = "%PDF-1.7\nfake pdf body".getBytes(StandardCharsets.UTF_8);
+
+	/** The BMP file signature - an image format no provider accepts. */
+	private static final byte[] BMP_BYTES = { 'B', 'M', 0x36, 0x10, 0, 0, 0, 0, 0, 0 };
 
 	/**
 	 * An image is downscaled and attached as base64
@@ -230,6 +234,74 @@ public class TestBinaryPerception extends TestCase {
 
 		assertTrue(plan.attaches());
 		assertEquals("image/png", ((ToolContent.Image) plan.attachment()).mediaType());
+	}
+
+	/**
+	 * An image type no provider accepts is refused by name, instead of being attached and rejected
+	 * by the provider with an error the model cannot act on.
+	 */
+	public void testBmpIsRefusedNamingTheType() {
+		BinaryPerception.Plan plan = BinaryPerception.plan("scan.bmp", BMP_BYTES, "image/bmp", vision());
+
+		assertFalse("A BMP has nowhere to go.", plan.attaches());
+		assertTrue("The type must be named: " + plan.message(), plan.message().contains("image/bmp"));
+		assertTrue("The accepted types must be stated: " + plan.message(),
+			plan.message().contains("image/png, image/jpeg, image/gif, image/webp"));
+		assertTrue("The caller must be told what to do: " + plan.message(),
+			plan.message().contains("Convert"));
+	}
+
+	/**
+	 * The magic bytes still identify a BMP, and that is the point of keeping them: a payload stored
+	 * as {@code octet-stream} is refused as "image/bmp", which says what the file is, rather than as
+	 * an unrecognized blob, which says only that something went wrong.
+	 */
+	public void testSniffedBmpIsRefusedByItsRealType() {
+		BinaryPerception.Plan plan =
+			BinaryPerception.plan("scan.bmp", BMP_BYTES, "application/octet-stream", vision());
+
+		assertFalse(plan.attaches());
+		assertTrue("The sniffed type must be named: " + plan.message(),
+			plan.message().contains("image/bmp"));
+	}
+
+	/**
+	 * {@code image/jpg} is a spelling no provider takes, so the attachment states the canonical one.
+	 */
+	public void testJpgSpellingIsAttachedAsJpeg() {
+		byte[] jpeg = { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 1, 2, 3 };
+
+		BinaryPerception.Plan plan = BinaryPerception.plan("photo.jpg", jpeg, "image/jpg", vision());
+
+		assertTrue("A JPEG is accepted however it is spelled.", plan.attaches());
+		assertEquals("image/jpeg", ((ToolContent.Image) plan.attachment()).mediaType());
+	}
+
+	/**
+	 * An {@code image/svg+xml} payload is dispatched as text, not as an image: it carries its own
+	 * source, which a model can read, so it never reaches the image path and is never refused there.
+	 */
+	public void testSvgIsInlinedAsTextNotBuiltAsAnImage() {
+		byte[] svg = "<svg xmlns=\"http://www.w3.org/2000/svg\"><rect/></svg>"
+			.getBytes(StandardCharsets.UTF_8);
+
+		BinaryPerception.Plan plan = BinaryPerception.plan("logo.svg", svg, "image/svg+xml", vision());
+
+		assertFalse("An SVG is text, and text is returned inline.", plan.attaches());
+		assertTrue("The source must reach the model: " + plan.message(),
+			plan.message().contains("<rect/>"));
+	}
+
+	/** Every accepted image type is still attached, with its type unchanged. */
+	public void testAcceptedImageTypesAreStillAttached() throws IOException {
+		byte[] png = TestImageDownscaler.png(60, 60);
+
+		for (String mediaType : ImageContent.ACCEPTED_MEDIA_TYPES) {
+			BinaryPerception.Plan plan = BinaryPerception.plan("shot", png, mediaType, vision());
+
+			assertTrue(mediaType + " must be attached.", plan.attaches());
+			assertEquals(mediaType, ((ToolContent.Image) plan.attachment()).mediaType());
+		}
 	}
 
 	/** An image too large even after downscaling is refused with a clear reason. */

@@ -6,11 +6,15 @@
 package com.top_logic.tl.ai.core.scripting;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -57,6 +61,7 @@ import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
+import com.top_logic.tl.ai.core.tools.perception.BinaryPerception;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -83,6 +88,9 @@ import com.top_logic.util.TLContextManager;
  */
 @ScriptPrefix("ai")
 public class AIScriptFunctions extends TLScriptFunctions {
+
+	/** The media type of a PDF, as every provider request builder expects to see it. */
+	private static final String PDF_MEDIA_TYPE = "application/pdf";
 
 	/** No-op listener for TL-Script invocations, which have no event consumer. */
 	private static final AgentEventListener NO_LISTENER = event -> {
@@ -206,8 +214,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * Sends a multi-turn conversation to a chat completion provider.
 	 *
 	 * <p>
-	 * Messages can be strings, maps with role/content, or lists. Content can be text strings or
-	 * {@link BinaryDataSource} for images and documents.
+	 * Messages can be strings, maps with role/content, or lists. Content can be text strings or a
+	 * binary attachment carrying text, an image or a PDF document. An attachment of any other
+	 * content type is refused, naming it: no model provider can carry it.
 	 * </p>
 	 *
 	 * @param messages
@@ -978,12 +987,33 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Creates appropriate content from a {@link BinaryDataSource} based on its content type.
+	 * Creates the {@link ContentPart} for a {@link BinaryDataSource} attached to a message.
 	 *
 	 * <p>
-	 * Text is inlined, images become {@link ImageContent} and PDFs {@link PdfContent}. Any other
-	 * binary type is still described as a base64 text representation; proper content types (audio,
-	 * ...) will be added to tl-ai-core as needed.
+	 * Only what a provider request builder can actually carry is accepted: text is inlined, an image
+	 * becomes an {@link ImageContent} data URI and a PDF a {@link PdfContent}. Every other content
+	 * type is refused with an {@link IllegalArgumentException} naming it. It has nowhere to go - the
+	 * four builders (Anthropic, Bedrock, Chat Completions, OpenAI Responses) each render exactly
+	 * {@link TextContent}, {@link ImageContent} and {@link PdfContent} and silently drop anything
+	 * else - so encoding it as base64 inside a text block only hands the model an unreadable blob,
+	 * a third longer than the file itself and charged as text the whole way, and the run then fails
+	 * far from its cause. Naming the type here is what the caller can act on.
+	 * </p>
+	 *
+	 * <p>
+	 * An image is narrowed further, to {@link ImageContent#ACCEPTED_MEDIA_TYPES}: being an image is
+	 * not enough to be sendable, and a type outside that set is refused here by name rather than
+	 * being built into a payload that only the provider can reject.
+	 * </p>
+	 *
+	 * <p>
+	 * The declared content type is not taken at face value when it says nothing: TopLogic documents
+	 * {@code application/octet-stream} as the content type of a {@link BinaryDataSource} whose real
+	 * one is unknown, which is what a stored or uploaded document carries when nothing recorded it.
+	 * Such a payload is identified by its magic bytes, through the same
+	 * {@link BinaryPerception#resolveContentType(byte[], String) sniffing} the tool-side perception
+	 * path uses, so the two agree on what a given file is. A content type that does say something is
+	 * trusted.
 	 * </p>
 	 *
 	 * <p>
@@ -991,46 +1021,91 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 */
 	static ContentPart createBinaryContent(BinaryDataSource binary) {
+		byte[] bytes;
 		try {
-			String contentType = binary.getContentType();
-			byte[] bytes = StreamUtilities.readStreamContents(binary);
-
-			if (contentType != null && contentType.startsWith("text/")) {
-				String charset = extractCharset(contentType);
-				return new TextContent(new String(bytes, charset));
-			}
-
-			String base64 = java.util.Base64.getEncoder().encodeToString(bytes);
-
-			if (contentType != null && contentType.startsWith("image/")) {
-				String url = "data:" + contentType + ";base64," + base64;
-				return new ImageContent(url, contentType);
-			}
-
-			if (contentType != null && contentType.startsWith("application/pdf") && bytes.length > 0) {
-				// The bare media type, not the declared content type: providers accept exactly
-				// "application/pdf", so a content type carrying parameters would be rejected. An
-				// empty payload is no document and falls through to the description below rather
-				// than failing the whole script call.
-				return new PdfContent(base64, "application/pdf");
-			}
-
-			return new TextContent("[Binary content: " + contentType + ", base64: " + base64 + "]");
+			bytes = StreamUtilities.readStreamContents(binary);
 		} catch (IOException ex) {
 			throw new RuntimeException("Failed to read binary data: " + ex.getMessage(), ex);
 		}
+
+		String contentType = BinaryPerception.resolveContentType(bytes, binary.getContentType());
+		String mediaType = bareMediaType(contentType);
+
+		if (mediaType.startsWith("text/") || BinaryPerception.isTextLike(mediaType)) {
+			// No emptiness check: an empty text file is legitimately empty text. Only a document that
+			// has to reach the provider as base64 is refused for having no content.
+			return new TextContent(new String(bytes, charsetOf(contentType)));
+		}
+		if (mediaType.startsWith("image/")) {
+			requireContent(binary, bytes, "image");
+			// The normalized media type, not the declared content type: a data URI carrying MIME
+			// parameters is not one the providers accept, and "image/jpg" is a spelling none of them
+			// takes.
+			String imageType = ImageContent.normalizeMediaType(mediaType);
+			if (!ImageContent.isAccepted(imageType)) {
+				throw new IllegalArgumentException("Cannot attach '" + name(binary)
+					+ "' to an AI message: " + imageType + " images are not accepted by any provider. "
+					+ "Accepted image types are " + ImageContent.acceptedMediaTypes()
+					+ ". Convert the file before passing it to the model.");
+			}
+			return new ImageContent("data:" + imageType + ";base64," + base64(bytes), imageType);
+		}
+		if (PDF_MEDIA_TYPE.equals(mediaType)) {
+			requireContent(binary, bytes, "PDF document");
+			return new PdfContent(base64(bytes), PDF_MEDIA_TYPE);
+		}
+		throw new IllegalArgumentException("Cannot attach '" + name(binary)
+			+ "' to an AI message: content type " + contentType + " is not supported. A message can "
+			+ "carry text, images and PDF documents; no provider accepts anything else. Extract the "
+			+ "text of the file, or convert it, before passing it to the model.");
+	}
+
+	private static String base64(byte[] bytes) {
+		return Base64.getEncoder().encodeToString(bytes);
+	}
+
+	/**
+	 * Refuses an empty payload, which is no document however it was declared.
+	 *
+	 * <p>
+	 * {@link PdfContent} rejects empty data outright and a provider rejects an empty image, so the
+	 * alternative to this is the same failure without the file name that explains it.
+	 * </p>
+	 */
+	private static void requireContent(BinaryDataSource binary, byte[] bytes, String kind) {
+		if (bytes.length == 0) {
+			throw new IllegalArgumentException("Cannot attach '" + name(binary)
+				+ "' to an AI message: it is declared as a " + kind + " but has no content.");
+		}
+	}
+
+	private static String name(BinaryDataSource binary) {
+		String name = binary.getName();
+		return StringServices.isEmpty(name) ? "unnamed attachment" : name;
+	}
+
+	/** The content type without its MIME parameters, lower-cased. */
+	private static String bareMediaType(String contentType) {
+		int semicolon = contentType.indexOf(';');
+		String base = semicolon < 0 ? contentType : contentType.substring(0, semicolon);
+		return base.trim().toLowerCase(Locale.ROOT);
 	}
 
 	/**
 	 * Extracts the charset from a MIME type string, defaulting to UTF-8.
+	 *
+	 * <p>
+	 * A charset the JVM does not know falls back to UTF-8 as well: a name the sender got wrong must
+	 * not fail the whole script call.
+	 * </p>
 	 */
-	private static String extractCharset(String contentType) {
+	private static Charset charsetOf(String contentType) {
 		try {
 			jakarta.activation.MimeType mimeType = new jakarta.activation.MimeType(contentType);
 			String charset = mimeType.getParameter("charset");
-			return charset != null ? charset : StringServices.UTF8;
-		} catch (jakarta.activation.MimeTypeParseException ex) {
-			return StringServices.UTF8;
+			return charset == null ? StandardCharsets.UTF_8 : Charset.forName(charset);
+		} catch (jakarta.activation.MimeTypeParseException | IllegalArgumentException ex) {
+			return StandardCharsets.UTF_8;
 		}
 	}
 

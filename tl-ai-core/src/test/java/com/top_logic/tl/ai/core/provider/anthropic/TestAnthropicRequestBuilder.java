@@ -104,6 +104,28 @@ public class TestAnthropicRequestBuilder extends TestCase {
 		assertEquals(PDF_BASE64, source.get("data"));
 	}
 
+	/**
+	 * Every accepted image type reaches Anthropic with its media type unchanged. The builder states
+	 * {@link ImageContent#mediaType()} verbatim, which is why the set of types that may be built is
+	 * exactly the set the provider accepts.
+	 */
+	public void testAcceptedImageTypesReachTheProviderUnchanged() throws Exception {
+		for (String mediaType : ImageContent.ACCEPTED_MEDIA_TYPES) {
+			UserMessage user = new UserMessage(UUID.randomUUID().toString(), Instant.now(),
+				List.of(new ImageContent("data:" + mediaType + ";base64," + IMAGE_BASE64, mediaType)));
+
+			String json = AnthropicRequestBuilder.buildRequestJson(new ProviderRequest(
+				"claude-sonnet-4-20250514", "You are helpful.", List.<Message> of(user), List.of(), 256));
+
+			Map<String, Object> image = asMap(((List<?>) asMap(messages(json).get(0)).get("content")).get(0));
+			assertEquals("image", image.get("type"));
+			Map<String, Object> source = asMap(image.get("source"));
+			assertEquals("base64", source.get("type"));
+			assertEquals(mediaType, source.get("media_type"));
+			assertEquals(IMAGE_BASE64, source.get("data"));
+		}
+	}
+
 	/** A text-only tool result still serializes as a plain string, exactly as before. */
 	public void testTextOnlyToolResultStaysAString() throws Exception {
 		String json = buildJson(List.of());

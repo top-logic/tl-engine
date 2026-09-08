@@ -9,9 +9,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 import jakarta.servlet.AsyncContext;
@@ -39,6 +42,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
+import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
@@ -827,17 +831,33 @@ public class ChatServlet extends TopLogicServlet {
 		}
 	}
 
-	private static final java.util.Set<String> ALLOWED_MIME_TYPES = java.util.Set.of(
-		"image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf");
+	/**
+	 * The attachment types an upload may declare: every image a provider accepts, plus PDF.
+	 *
+	 * <p>
+	 * Derived from {@link ImageContent#ACCEPTED_MEDIA_TYPES} rather than restated, so this check and
+	 * the places that build the payload cannot drift apart - a type refused here must be exactly a
+	 * type nothing downstream could have sent.
+	 * </p>
+	 */
+	private static final Set<String> ALLOWED_MIME_TYPES = allowedMimeTypes();
+
+	private static Set<String> allowedMimeTypes() {
+		Set<String> allowed = new LinkedHashSet<>(ImageContent.ACCEPTED_MEDIA_TYPES);
+		allowed.add("application/pdf");
+		return Collections.unmodifiableSet(allowed);
+	}
 
 	private static String validateAttachments(List<AttachmentDto> attachments) {
 		if (attachments.size() > MAX_ATTACHMENTS) {
 			return "Too many attachments (max " + MAX_ATTACHMENTS + ")";
 		}
 		for (AttachmentDto att : attachments) {
-			if (att.getMimeType() == null || !ALLOWED_MIME_TYPES.contains(att.getMimeType())) {
+			// Normalized first, so an upload declaring "image/jpg" or a charset parameter is judged by
+			// the same rule that decides what the payload is finally built as.
+			if (!ALLOWED_MIME_TYPES.contains(ImageContent.normalizeMediaType(att.getMimeType()))) {
 				return "Unsupported file type: " + att.getMimeType()
-					+ ". Allowed: PNG, JPEG, GIF, WebP, and PDF.";
+					+ ". Allowed: " + String.join(", ", ALLOWED_MIME_TYPES) + ".";
 			}
 			if (att.getBase64Data() == null || att.getBase64Data().isEmpty()) {
 				return "Missing file data for: " + att.getFileName();

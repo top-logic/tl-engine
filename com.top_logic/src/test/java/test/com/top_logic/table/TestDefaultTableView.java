@@ -7,6 +7,7 @@ package test.com.top_logic.table;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import junit.framework.TestCase;
@@ -18,7 +19,10 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterInput;
+import com.top_logic.table.FilterCodec;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.NamedFilter;
+import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.SortColumn;
@@ -29,11 +33,14 @@ import com.top_logic.table.TableView;
 import com.top_logic.table.TableViewListener;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.ViewStateStore;
+import com.top_logic.table.filter.ComparableColumnFilter;
+import com.top_logic.table.filter.RangeFilterState;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.table.impl.NamedFilterCodec;
 import com.top_logic.table.impl.TableViewStateCodec;
 
 /**
@@ -574,6 +581,258 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals(1, view.state().getFrozenCount());
 		assertTrue(view.columns().get(0).frozen());
 		assertFalse(view.columns().get(1).frozen());
+	}
+
+
+	// ---- named filters ----
+
+	/** Identifier of the declared filter selecting the rows older than 26. */
+	private static final String OLDER = "older";
+
+	/** Identifier of the declared filter searching for "li". */
+	private static final String HOLDS_LI = "holdsLi";
+
+	/** An in-memory {@link NamedFilterStore} routing through the JSON codec, like the real store. */
+	private static final class MapNamedFilterStore implements NamedFilterStore {
+		private final Map<String, Object> _data = new java.util.HashMap<>();
+
+		@Override
+		public List<NamedFilter> load(TableId id, FilterCodec codec) {
+			return NamedFilterCodec.read(_data.get(id.value()), codec);
+		}
+
+		@Override
+		public void save(TableId id, List<NamedFilter> filters, FilterCodec codec) {
+			_data.put(id.value(), NamedFilterCodec.toJson(filters, codec));
+		}
+	}
+
+	/** Columns with filters that serialize, so a saved named filter can round-trip. */
+	private List<Column<Person, ?>> filterableColumns() {
+		Column<Person, String> name = DefaultColumn.<Person, String> builder("name", Person::name)
+			.filter(TextColumnFilter.forStrings())
+			.build();
+		Column<Person, Integer> age = DefaultColumn.<Person, Integer> builder("age", Person::age)
+			.filter(ComparableColumnFilter.integers())
+			.build();
+		return List.of(name, age);
+	}
+
+	private List<NamedFilter> declaredFilters() {
+		return List.of(
+			NamedFilter.declared(OLDER, ResKey.text("Older than 26"),
+				Map.of("age", RangeFilterState.between(Integer.valueOf(26), Integer.valueOf(50))), null),
+			NamedFilter.declared(HOLDS_LI, ResKey.text("Holds li"), Map.of(), TextFilterState.contains("li")));
+	}
+
+	private TableView<Person> newFilterBarView(NamedFilterStore filterStore, TableId id) {
+		return newFilterBarView(filterableColumns(), filterStore, id);
+	}
+
+	private TableView<Person> newFilterBarView(List<Column<Person, ?>> columns, NamedFilterStore filterStore,
+			TableId id) {
+		return DefaultTableView.create(columns, new ListRowSource<>(people(), columns), null, id, SortSpec.NONE,
+			List.of(), declaredFilters(), filterStore);
+	}
+
+	private static List<String> ids(List<NamedFilter> filters) {
+		return filters.stream().map(NamedFilter::id).toList();
+	}
+
+	public void testDeclaredFiltersAreOffered() {
+		TableView<Person> view = newFilterBarView(null, null);
+		assertEquals(List.of(OLDER, HOLDS_LI), ids(view.namedFilters()));
+		assertEquals(NamedFilter.Origin.DECLARED, view.namedFilters().get(0).origin());
+		assertNull("An unfiltered table is filtered by none of them.", view.activeNamedFilter());
+	}
+
+	public void testApplyDeclaredFilter() {
+		TableView<Person> view = newFilterBarView(null, null);
+		view.applyNamedFilter(OLDER);
+		assertEquals(List.of("Charlie", "Bob"), names(view));
+		assertEquals(OLDER, view.activeNamedFilter().id());
+
+		// A named filter holding only a search term.
+		view.applyNamedFilter(HOLDS_LI);
+		assertEquals(List.of("Charlie", "alice"), names(view));
+		assertEquals(HOLDS_LI, view.activeNamedFilter().id());
+	}
+
+	public void testApplyNamedFilterReplacesPreviousCriteria() {
+		TableView<Person> view = newFilterBarView(null, null);
+		view.filter("name", TextFilterState.contains("li"));
+		view.search(TextFilterState.contains("3"));
+		assertEquals(List.of("Charlie"), names(view));
+
+		view.applyNamedFilter(OLDER);
+		assertEquals("A chip means exactly what it says, it does not narrow what was set before.",
+			List.of("Charlie", "Bob"), names(view));
+		assertEquals(Map.of("age", RangeFilterState.between(Integer.valueOf(26), Integer.valueOf(50))),
+			view.state().getFilters());
+		assertNull("The search term of the named filter replaces the one that was entered.",
+			view.state().getSearch());
+
+		// The other way round: the column filter of the previously applied one is cleared.
+		view.applyNamedFilter(HOLDS_LI);
+		assertTrue(view.state().getFilters().isEmpty());
+		assertEquals(List.of("Charlie", "alice"), names(view));
+	}
+
+	public void testApplyNamedFilterDropsCriteriaOfMissingColumn() {
+		List<Column<Person, ?>> columns = filterableColumns();
+		TableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns), null, null,
+			SortSpec.NONE, List.of(),
+			List.of(NamedFilter.declared("ghost", ResKey.text("Ghost"),
+				Map.of("ghost", TextFilterState.contains("x")), null)),
+			null);
+		view.applyNamedFilter("ghost");
+		assertEquals("A criterion for a column this table does not have is dropped.", 3, view.rowCount());
+	}
+
+	public void testApplyUnknownNamedFilterLeavesTheTableAsItIs() {
+		TableView<Person> view = newFilterBarView(null, null);
+		view.filter("name", TextFilterState.contains("li"));
+		view.applyNamedFilter("missing");
+		assertEquals(List.of("Charlie", "alice"), names(view));
+	}
+
+	public void testActiveNamedFilterEndsWithAnEdit() {
+		TableView<Person> view = newFilterBarView(null, null);
+		view.applyNamedFilter(OLDER);
+		assertEquals(OLDER, view.activeNamedFilter().id());
+
+		view.filter("name", TextFilterState.contains("li"));
+		assertNull("Editing a column filter leaves no named filter active.", view.activeNamedFilter());
+
+		view.filter("name", null);
+		assertEquals("Undoing the edit brings the named filter back.", OLDER, view.activeNamedFilter().id());
+
+		view.search(TextFilterState.contains("3"));
+		assertNull("Editing the search leaves no named filter active either.", view.activeNamedFilter());
+	}
+
+	public void testActiveNamedFilterDetectedForHandSetCriteria() {
+		TableView<Person> view = newFilterBarView(null, null);
+		view.filter("age", RangeFilterState.between(Integer.valueOf(26), Integer.valueOf(50)));
+		assertEquals("A named filter is active because its criteria are, not because it was clicked.",
+			OLDER, view.activeNamedFilter().id());
+
+		view.filter("age", null);
+		view.search(TextFilterState.contains("li"));
+		assertEquals(HOLDS_LI, view.activeNamedFilter().id());
+	}
+
+	public void testSaveCapturesFiltersAndSearch() {
+		MapNamedFilterStore store = new MapNamedFilterStore();
+		TableId id = new TableId("t-named-save");
+
+		TableView<Person> view = newFilterBarView(store, id);
+		view.filter("name", TextFilterState.contains("li"));
+		view.search(TextFilterState.contains("3"));
+		assertEquals(List.of("Charlie"), names(view));
+
+		NamedFilter saved = view.saveNamedFilter("Mine");
+		assertEquals(NamedFilter.Origin.SAVED, saved.origin());
+		assertEquals(Map.of("name", TextFilterState.contains("li")), saved.filters());
+		assertEquals(TextFilterState.contains("3"), saved.search());
+		assertEquals("The filter just saved is the active one.", saved.id(), view.activeNamedFilter().id());
+		assertEquals(List.of(OLDER, HOLDS_LI, saved.id()), ids(view.namedFilters()));
+	}
+
+	public void testSavedFilterRoundTripsThroughTheStore() {
+		MapNamedFilterStore store = new MapNamedFilterStore();
+		TableId id = new TableId("t-named-roundtrip");
+
+		TableView<Person> view = newFilterBarView(store, id);
+		view.filter("name", TextFilterState.contains("li"));
+		view.search(TextFilterState.contains("3"));
+		NamedFilter saved = view.saveNamedFilter("Mine");
+
+		// A fresh view over the same store offers the saved filter and applies it as it was saved.
+		TableView<Person> fresh = newFilterBarView(store, id);
+		assertEquals(List.of(OLDER, HOLDS_LI, saved.id()), ids(fresh.namedFilters()));
+		assertNull("The fresh table is unfiltered, so nothing is active yet.", fresh.activeNamedFilter());
+
+		fresh.applyNamedFilter(saved.id());
+		assertEquals(List.of("Charlie"), names(fresh));
+		assertEquals(saved, fresh.activeNamedFilter());
+	}
+
+	public void testSaveUnderAnExistingNameReplacesItsCriteria() {
+		MapNamedFilterStore store = new MapNamedFilterStore();
+		TableId id = new TableId("t-named-replace");
+
+		TableView<Person> view = newFilterBarView(store, id);
+		view.filter("name", TextFilterState.contains("li"));
+		NamedFilter first = view.saveNamedFilter("Mine");
+
+		view.filter("name", TextFilterState.contains("Bob"));
+		NamedFilter second = view.saveNamedFilter("Mine");
+		assertEquals("The name identifies the saved filter, so it keeps its identifier.",
+			first.id(), second.id());
+		assertEquals(List.of(OLDER, HOLDS_LI, first.id()), ids(view.namedFilters()));
+		assertEquals(Map.of("name", TextFilterState.contains("Bob")), second.filters());
+	}
+
+	public void testDeleteSavedFilter() {
+		MapNamedFilterStore store = new MapNamedFilterStore();
+		TableId id = new TableId("t-named-delete");
+
+		TableView<Person> view = newFilterBarView(store, id);
+		view.filter("name", TextFilterState.contains("li"));
+		NamedFilter saved = view.saveNamedFilter("Mine");
+
+		view.deleteNamedFilter(saved.id());
+		assertEquals(List.of(OLDER, HOLDS_LI), ids(view.namedFilters()));
+		assertEquals("Deleting it outlives the session, too.", List.of(OLDER, HOLDS_LI),
+			ids(newFilterBarView(store, id).namedFilters()));
+	}
+
+	public void testDeclaredFilterCannotBeDeleted() {
+		MapNamedFilterStore store = new MapNamedFilterStore();
+		TableId id = new TableId("t-named-declared");
+
+		TableView<Person> view = newFilterBarView(store, id);
+		view.deleteNamedFilter(OLDER);
+		assertEquals("A declared filter is part of the table definition.", List.of(OLDER, HOLDS_LI),
+			ids(view.namedFilters()));
+	}
+
+	public void testSavedFilterOfALostColumnIsSkipped() {
+		MapNamedFilterStore store = new MapNamedFilterStore();
+		TableId id = new TableId("t-named-lost");
+
+		TableView<Person> view = newFilterBarView(store, id);
+		view.filter("age", RangeFilterState.between(Integer.valueOf(26), Integer.valueOf(50)));
+		NamedFilter saved = view.saveNamedFilter("Older");
+		assertNotNull(saved);
+
+		// A table that has lost the column the saved filter names.
+		List<Column<Person, ?>> reduced = List.of(DefaultColumn.<Person, String> builder("name", Person::name)
+			.filter(TextColumnFilter.forStrings())
+			.build());
+		TableView<Person> other = newFilterBarView(reduced, store, id);
+		assertEquals("A saved filter naming a column that is gone is skipped, not fatal.",
+			List.of(OLDER, HOLDS_LI), ids(other.namedFilters()));
+	}
+
+	public void testMalformedSavedFilterIsSkipped() {
+		MapNamedFilterStore store = new MapNamedFilterStore();
+		TableId id = new TableId("t-named-malformed");
+		store._data.put(id.value(), List.of("no filter at all", Map.of("id", "incomplete")));
+
+		assertEquals("A stored entry that does not parse is skipped, not fatal.", List.of(OLDER, HOLDS_LI),
+			ids(newFilterBarView(store, id).namedFilters()));
+	}
+
+	public void testWithoutFilterStoreOnlyDeclaredFiltersAreOffered() {
+		TableView<Person> view = newFilterBarView(null, null);
+		view.filter("name", TextFilterState.contains("li"));
+		assertNull("Saving needs a store to save into.", view.saveNamedFilter("Mine"));
+		assertEquals(List.of(OLDER, HOLDS_LI), ids(view.namedFilters()));
+
+		view.applyNamedFilter(OLDER);
+		assertEquals("The declared filters work without a store.", List.of("Charlie", "Bob"), names(view));
 	}
 
 }

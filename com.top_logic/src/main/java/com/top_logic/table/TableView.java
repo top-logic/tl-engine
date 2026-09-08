@@ -91,6 +91,68 @@ public interface TableView<R> {
 	 */
 	MatchCounts columnMatchCounts(String column);
 
+	// ---- named filters ----
+
+	/**
+	 * The filter criteria this table offers under a name: the ones its definition
+	 * {@link NamedFilter.Origin#DECLARED declares} first, then the ones the user
+	 * {@link #saveNamedFilter(String) saved}.
+	 */
+	List<NamedFilter> namedFilters();
+
+	/**
+	 * The {@link #namedFilters() named filter} whose criteria the table is filtered by, or
+	 * {@code null} if it is filtered by none of them.
+	 *
+	 * <p>
+	 * The result is derived from the live filter state, not remembered: it is the first named
+	 * filter {@link NamedFilter#matches(java.util.Map, TextFilterState) matching} the current
+	 * column filters and search term, so it is found as well when the user reached those criteria
+	 * through the filter editors, and it is gone as soon as they change any of them.
+	 * </p>
+	 */
+	NamedFilter activeNamedFilter();
+
+	/**
+	 * Filters the table by exactly the criteria of the {@link #namedFilters() named filter} with
+	 * the given {@link NamedFilter#id() identifier}.
+	 *
+	 * <p>
+	 * The named filter replaces the whole filter: a column it does not mention ends up unfiltered,
+	 * and its search term becomes the table's - applying it means what it says instead of narrowing
+	 * whatever was set before. A criterion for a column this table does not have, or does not
+	 * filter by, is dropped. An identifier no named filter has leaves the table as it is.
+	 * </p>
+	 */
+	void applyNamedFilter(String id);
+
+	/**
+	 * Saves the current column filters and search term as a {@link NamedFilter} of the user's own,
+	 * under the given name.
+	 *
+	 * <p>
+	 * Saving under the name of an existing saved filter replaces that filter's criteria, keeping
+	 * its {@link NamedFilter#id() identifier}.
+	 * </p>
+	 *
+	 * @param name
+	 *        The free-text name the user typed.
+	 * @return The saved filter, or {@code null} if this table persists no filters of its own (then
+	 *         it offers only the declared ones).
+	 */
+	NamedFilter saveNamedFilter(String name);
+
+	/**
+	 * Deletes the {@link NamedFilter.Origin#SAVED saved} filter with the given
+	 * {@link NamedFilter#id() identifier}.
+	 *
+	 * <p>
+	 * A declared filter is part of the table definition and cannot be deleted, so an identifier
+	 * naming one - like an identifier naming nothing - leaves the offered filters as they are.
+	 * </p>
+	 */
+	void deleteNamedFilter(String id);
+
 	// ---- commands (UI -> model) ----
 
 	/**

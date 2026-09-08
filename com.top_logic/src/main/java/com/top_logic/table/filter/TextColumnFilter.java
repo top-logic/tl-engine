@@ -5,6 +5,7 @@
  */
 package com.top_logic.table.filter;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -109,6 +110,22 @@ public class TextColumnFilter<V> implements ColumnFilter<V> {
 
 	private static boolean bool(Object value) {
 		return Boolean.TRUE.equals(value) || "true".equals(value);
+	}
+
+	/**
+	 * A case-insensitive substring match of the given value's text.
+	 *
+	 * <p>
+	 * Accepts any single value, matching the text of its {@link Object#toString()}. A collection is
+	 * rejected: a text pattern matches one text, so a set of alternatives is not expressible.
+	 * </p>
+	 */
+	@Override
+	public FilterState stateFor(Object value) {
+		if (value == null || value instanceof Collection<?> || value.getClass().isArray()) {
+			return null;
+		}
+		return TextFilterState.contains(value.toString());
 	}
 
 	@Override

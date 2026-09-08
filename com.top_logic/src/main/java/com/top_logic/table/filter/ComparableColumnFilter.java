@@ -5,8 +5,11 @@
  */
 package com.top_logic.table.filter;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -23,6 +26,15 @@ import com.top_logic.table.FilterState;
  *        The compared value type.
  */
 public class ComparableColumnFilter<V> implements ColumnFilter<V> {
+
+	/** JSON key of {@link RangeFilterState#operator()}. */
+	public static final String OPERATOR = "operator";
+
+	/** JSON key of {@link RangeFilterState#primary()}. */
+	public static final String PRIMARY = "primary";
+
+	/** JSON key of {@link RangeFilterState#secondary()}. */
+	public static final String SECONDARY = "secondary";
 
 	private final Comparator<? super V> _comparator;
 
@@ -95,9 +107,9 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 			return null;
 		}
 		Map<String, Object> json = new LinkedHashMap<>();
-		json.put("operator", range.operator().name());
-		json.put("primary", text(range.primary()));
-		json.put("secondary", text(range.secondary()));
+		json.put(OPERATOR, range.operator().name());
+		json.put(PRIMARY, text(range.primary()));
+		json.put(SECONDARY, text(range.secondary()));
 		return json;
 	}
 
@@ -106,7 +118,7 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 		if (_parser == null || !(json instanceof Map<?, ?> map)) {
 			return null;
 		}
-		Object operatorName = map.get("operator");
+		Object operatorName = map.get(OPERATOR);
 		if (operatorName == null) {
 			return null;
 		}
@@ -116,7 +128,66 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 		} catch (IllegalArgumentException ex) {
 			return null;
 		}
-		return new RangeFilterState<>(operator, parse(map.get("primary")), parse(map.get("secondary")));
+		return new RangeFilterState<>(operator, parse(map.get(PRIMARY)), parse(map.get(SECONDARY)));
+	}
+
+	/**
+	 * A {@link ComparisonOperator#BETWEEN} range from a two-element collection, or an
+	 * {@link ComparisonOperator#EQ equality} comparison with a single value.
+	 *
+	 * <p>
+	 * A collection of two elements bounds the range by its first element (lower, inclusive) and its
+	 * second one (upper, inclusive), in that order; a single value - given as such or as a
+	 * one-element collection - is compared for equality. A collection of any other size is
+	 * rejected, and so is a value this filter's {@link Comparator} cannot compare.
+	 * </p>
+	 */
+	@Override
+	public FilterState stateFor(Object value) {
+		if (value instanceof Collection<?> values) {
+			List<?> bounds = new ArrayList<>(values);
+			switch (bounds.size()) {
+				case 1:
+					return equality(bounds.get(0));
+				case 2:
+					return range(bounds.get(0), bounds.get(1));
+				default:
+					return null;
+			}
+		}
+		return equality(value);
+	}
+
+	private FilterState equality(Object value) {
+		V bound = comparable(value);
+		return bound == null ? null : RangeFilterState.of(ComparisonOperator.EQ, bound);
+	}
+
+	private FilterState range(Object lower, Object upper) {
+		V lowerBound = comparable(lower);
+		V upperBound = comparable(upper);
+		if (lowerBound == null || upperBound == null) {
+			return null;
+		}
+		return RangeFilterState.between(lowerBound, upperBound);
+	}
+
+	/**
+	 * The given value as a bound of this filter, or {@code null} if it is none: no value at all, or
+	 * one this filter's {@link Comparator} cannot compare.
+	 */
+	private V comparable(Object value) {
+		if (value == null) {
+			return null;
+		}
+		@SuppressWarnings("unchecked")
+		V bound = (V) value;
+		try {
+			_comparator.compare(bound, bound);
+		} catch (ClassCastException ex) {
+			return null;
+		}
+		return bound;
 	}
 
 	private static String text(Object value) {

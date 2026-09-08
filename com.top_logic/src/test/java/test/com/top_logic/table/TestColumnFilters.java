@@ -11,9 +11,11 @@ import java.util.function.Predicate;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.Option;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BooleanFilterState;
 import com.top_logic.table.filter.ComparableColumnFilter;
@@ -21,6 +23,7 @@ import com.top_logic.table.filter.ComparisonOperator;
 import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.OptionsFilterState;
 import com.top_logic.table.filter.RangeFilterState;
+import com.top_logic.table.filter.RegexpOptionsFilter;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
 
@@ -28,6 +31,11 @@ import com.top_logic.table.filter.TextFilterState;
  * Test for the concrete {@link com.top_logic.table.ColumnFilter} library.
  */
 public class TestColumnFilters extends TestCase {
+
+	/** A reference-like cell value: a business object identified by value equality. */
+	private record Department(String key) {
+		// Test fixture.
+	}
 
 	public void testTextContainsCaseInsensitive() {
 		Predicate<String> p = TextColumnFilter.forStrings().predicate(TextFilterState.contains("AL"));
@@ -153,6 +161,178 @@ public class TestColumnFilters extends TestCase {
 		assertTrue(ComparableColumnFilter.integers().supportsInversion());
 		assertTrue(new OptionsColumnFilter<>(List.of()).supportsInversion());
 		assertFalse(BooleanColumnFilter.INSTANCE.supportsInversion());
+	}
+
+	public void testStateForText() {
+		TextColumnFilter<String> filter = TextColumnFilter.forStrings();
+		FilterState state = filter.stateFor("li");
+		assertEquals(TextFilterState.contains("li"), state);
+		assertTrue(filter.predicate(state).test("Charlie"));
+		assertFalse(filter.predicate(state).test("Bob"));
+
+		// A number reaches the filter as its text.
+		assertEquals(TextFilterState.contains("30"), filter.stateFor(Integer.valueOf(30)));
+	}
+
+	public void testStateForTextRejectsAlternatives() {
+		TextColumnFilter<String> filter = TextColumnFilter.forStrings();
+		assertNull("A text pattern matches one text, not a set of them.", filter.stateFor(List.of("a", "b")));
+		assertNull(filter.stateFor(null));
+	}
+
+	public void testStateForOptionsSingleValue() {
+		OptionsColumnFilter<String> filter = colorFilter();
+		FilterState state = filter.stateFor("red");
+		assertEquals(new OptionsFilterState(Set.of("red")), state);
+
+		Predicate<String> p = filter.predicate(state);
+		assertTrue(p.test("red"));
+		assertFalse(p.test("blue"));
+	}
+
+	public void testStateForOptionsCollection() {
+		OptionsColumnFilter<String> filter = colorFilter();
+		FilterState state = filter.stateFor(List.of("red", "green"));
+		assertEquals(new OptionsFilterState(Set.of("red", "green")), state);
+
+		Predicate<String> p = filter.predicate(state);
+		assertTrue(p.test("red"));
+		assertTrue(p.test("green"));
+		assertFalse(p.test("blue"));
+	}
+
+	public void testStateForOptionsBusinessObject() {
+		Department dev = new Department("dev");
+		Department ops = new Department("ops");
+		OptionsColumnFilter<Department> filter = new OptionsColumnFilter<>(List.of(
+			new Option(dev, ResKey.text("Development")),
+			new Option(ops, ResKey.text("Operations"))));
+
+		// The declared value is the business object itself - an equal one names the same option, so
+		// no identifier handling is involved.
+		FilterState state = filter.stateFor(new Department("dev"));
+		assertEquals(new OptionsFilterState(Set.of(dev)), state);
+
+		Predicate<Department> p = filter.predicate(state);
+		assertTrue(p.test(dev));
+		assertFalse(p.test(ops));
+	}
+
+	public void testStateForOptionsRejectsUnknownValue() {
+		OptionsColumnFilter<String> filter = colorFilter();
+		assertNull("A value that names no option is no selection.", filter.stateFor("black"));
+		assertNull("Neither is it as one of several values.", filter.stateFor(List.of("red", "black")));
+		assertNull(filter.stateFor(List.of()));
+		assertNull(filter.stateFor(null));
+	}
+
+	private static OptionsColumnFilter<String> colorFilter() {
+		return new OptionsColumnFilter<>(List.of(
+			new Option("red", ResKey.text("Red")),
+			new Option("green", ResKey.text("Green")),
+			new Option("blue", ResKey.text("Blue"))));
+	}
+
+	public void testStateForBoolean() {
+		FilterState onlyTrue = BooleanColumnFilter.INSTANCE.stateFor(Boolean.TRUE);
+		assertEquals(new BooleanFilterState(true, false, false), onlyTrue);
+		assertTrue(BooleanColumnFilter.INSTANCE.predicate(onlyTrue).test(Boolean.TRUE));
+		assertFalse(BooleanColumnFilter.INSTANCE.predicate(onlyTrue).test(Boolean.FALSE));
+
+		assertEquals(new BooleanFilterState(false, true, false), BooleanColumnFilter.INSTANCE.stateFor(Boolean.FALSE));
+	}
+
+	public void testStateForBooleanNoValue() {
+		FilterState empty = BooleanColumnFilter.INSTANCE.stateFor(null);
+		assertEquals(new BooleanFilterState(false, false, true), empty);
+		assertTrue(BooleanColumnFilter.INSTANCE.predicate(empty).test(null));
+		assertFalse(BooleanColumnFilter.INSTANCE.predicate(empty).test(Boolean.TRUE));
+
+		BooleanColumnFilter twoValued =
+			new BooleanColumnFilter(ResKey.text("Yes"), ResKey.text("No"), false);
+		assertNull("A column whose cells always hold a value has no no-value option.", twoValued.stateFor(null));
+	}
+
+	public void testStateForBooleanRejectsOtherValues() {
+		assertNull(BooleanColumnFilter.INSTANCE.stateFor("true"));
+		assertNull(BooleanColumnFilter.INSTANCE.stateFor(List.of(Boolean.TRUE)));
+	}
+
+	public void testStateForComparableRange() {
+		ComparableColumnFilter<Integer> filter = ComparableColumnFilter.integers();
+		FilterState state = filter.stateFor(List.of(Integer.valueOf(5), Integer.valueOf(10)));
+		assertEquals(RangeFilterState.between(Integer.valueOf(5), Integer.valueOf(10)), state);
+
+		Predicate<Integer> p = filter.predicate(state);
+		assertTrue(p.test(5));
+		assertTrue(p.test(10));
+		assertFalse(p.test(4));
+		assertFalse(p.test(11));
+	}
+
+	public void testStateForComparableSingleValue() {
+		ComparableColumnFilter<Integer> filter = ComparableColumnFilter.integers();
+		FilterState state = filter.stateFor(Integer.valueOf(7));
+		assertEquals(RangeFilterState.of(ComparisonOperator.EQ, Integer.valueOf(7)), state);
+
+		Predicate<Integer> p = filter.predicate(state);
+		assertTrue(p.test(7));
+		assertFalse(p.test(8));
+
+		assertEquals("A single bound is a single bound, given as a collection or not.", state,
+			filter.stateFor(List.of(Integer.valueOf(7))));
+	}
+
+	public void testStateForComparableRejectsOtherValues() {
+		ComparableColumnFilter<Integer> filter = ComparableColumnFilter.integers();
+		assertNull("A range has two bounds, not three.",
+			filter.stateFor(List.of(Integer.valueOf(1), Integer.valueOf(2), Integer.valueOf(3))));
+		assertNull(filter.stateFor(List.of()));
+		assertNull(filter.stateFor(null));
+		assertNull("A value the ordering cannot compare is no bound.", filter.stateFor(new Object()));
+	}
+
+	public void testStateForRegexpFacets() {
+		RegexpOptionsFilter filter = regexpFilter();
+		FilterState state = filter.stateFor("^Part");
+		assertEquals(new OptionsFilterState(Set.of("^Part")), state);
+
+		Predicate<String> p = filter.predicate(state);
+		assertTrue(p.test("Part 4711"));
+		assertFalse(p.test("Tool 4711"));
+
+		// Several facets are selected at once, and a row matching any of them is displayed.
+		Predicate<String> both = filter.predicate(filter.stateFor(List.of("^Part", "^Tool")));
+		assertTrue(both.test("Part 4711"));
+		assertTrue(both.test("Tool 4711"));
+		assertFalse(both.test("Usage 4711"));
+	}
+
+	public void testStateForRegexpRejectsUndeclaredFacet() {
+		assertNull("A facet is named by its declared regular expression.", regexpFilter().stateFor("^Usage"));
+	}
+
+	private static RegexpOptionsFilter regexpFilter() {
+		return new RegexpOptionsFilter(List.of(
+			new Option("^Part", ResKey.text("Parts")),
+			new Option("^Tool", ResKey.text("Tools"))));
+	}
+
+	public void testStateForDefaultsToNotExpressible() {
+		// A filter that does not implement the translation reports every value as not expressible, so
+		// that a declared criterion for its column can be recognized as an error.
+		ColumnFilter<String> filter = new ColumnFilter<>() {
+			@Override
+			public FilterInput input() {
+				return new FilterInput.Text();
+			}
+
+			@Override
+			public Predicate<String> predicate(FilterState state) {
+				return value -> true;
+			}
+		};
+		assertNull(filter.stateFor("anything"));
 	}
 
 }

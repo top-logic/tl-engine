@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
@@ -24,6 +26,8 @@ import com.top_logic.table.FilterState;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.MatchCounts;
+import com.top_logic.table.NamedFilter;
+import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowSource;
@@ -51,6 +55,12 @@ import com.top_logic.table.filter.TextFilterState;
  */
 public class DefaultTableView<R> implements TableView<R> {
 
+	/** JSON key of a column's inner {@link FilterState}, see {@link #filterCodec()}. */
+	private static final String STATE = "state";
+
+	/** JSON key marking a column's filter as {@link NegatedFilterState inverted}. */
+	private static final String INVERTED = "inverted";
+
 	private final Map<String, Column<R, ?>> _columns = new LinkedHashMap<>();
 
 	private final RowSource<R> _source;
@@ -67,6 +77,12 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	/** @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection) */
 	private final Set<String> _hiddenByDefault;
+
+	private final List<NamedFilter> _declaredFilters;
+
+	private final NamedFilterStore _filterStore;
+
+	private final List<NamedFilter> _savedFilters = new ArrayList<>();
 
 	/**
 	 * Creates a {@link DefaultTableView} without personalization persistence.
@@ -113,6 +129,25 @@ public class DefaultTableView<R> implements TableView<R> {
 	 */
 	public DefaultTableView(List<Column<R, ?>> columns, RowSource<R> source, TableViewState state,
 			ViewStateStore store, TableId id, Collection<String> hiddenByDefault) {
+		this(columns, source, state, store, id, hiddenByDefault, List.of(), null);
+	}
+
+	/**
+	 * Creates a {@link DefaultTableView} offering named filters.
+	 *
+	 * @param declaredFilters
+	 *        The criteria this table offers under a name as part of its definition -
+	 *        {@link com.top_logic.table.NamedFilter.Origin#DECLARED} filters, which the user
+	 *        cannot delete.
+	 * @param filterStore
+	 *        Where the filters the user {@link #saveNamedFilter(String) saves} themselves are
+	 *        persisted, or {@code null} to offer only the declared ones (then saving and deleting
+	 *        are unavailable).
+	 * @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection)
+	 */
+	public DefaultTableView(List<Column<R, ?>> columns, RowSource<R> source, TableViewState state,
+			ViewStateStore store, TableId id, Collection<String> hiddenByDefault,
+			List<NamedFilter> declaredFilters, NamedFilterStore filterStore) {
 		for (Column<R, ?> column : columns) {
 			_columns.put(column.name(), column);
 		}
@@ -122,9 +157,14 @@ public class DefaultTableView<R> implements TableView<R> {
 		_id = id;
 		_hiddenByDefault = new LinkedHashSet<>(hiddenByDefault);
 		_hiddenByDefault.retainAll(_columns.keySet());
+		_declaredFilters = List.copyOf(declaredFilters);
+		_filterStore = filterStore;
 		_source.addListener(_sourceListener);
 		if (_store != null && _id != null) {
 			restore();
+		}
+		if (_filterStore != null && _id != null) {
+			_savedFilters.addAll(_filterStore.load(_id, filterCodec()));
 		}
 		// Whatever the order ends up being - the initial default or the user's persisted choice -
 		// the row source has to be told about it.
@@ -197,8 +237,22 @@ public class DefaultTableView<R> implements TableView<R> {
 	 */
 	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
 			ViewStateStore store, TableId id, SortSpec defaultSort, Collection<String> hiddenByDefault) {
+		return create(columns, source, store, id, defaultSort, hiddenByDefault, List.of(), null);
+	}
+
+	/**
+	 * Creates a {@link DefaultTableView} offering named filters, whose initial state displays all
+	 * columns but the ones hidden by default, in declaration order, sorted by the given order.
+	 *
+	 * @see #create(List, RowSource, ViewStateStore, TableId, SortSpec, Collection)
+	 * @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection,
+	 *      List, NamedFilterStore)
+	 */
+	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
+			ViewStateStore store, TableId id, SortSpec defaultSort, Collection<String> hiddenByDefault,
+			List<NamedFilter> declaredFilters, NamedFilterStore filterStore) {
 		return new DefaultTableView<>(columns, source, initialState(columns, defaultSort, hiddenByDefault),
-			store, id, hiddenByDefault);
+			store, id, hiddenByDefault, declaredFilters, filterStore);
 	}
 
 	/**
@@ -424,6 +478,100 @@ public class DefaultTableView<R> implements TableView<R> {
 		if (_state.getSearch() != null) {
 			applyFilter();
 		}
+	}
+
+	// ---- named filters ----
+
+	@Override
+	public List<NamedFilter> namedFilters() {
+		List<NamedFilter> result = new ArrayList<>(_declaredFilters.size() + _savedFilters.size());
+		result.addAll(_declaredFilters);
+		result.addAll(_savedFilters);
+		return result;
+	}
+
+	@Override
+	public NamedFilter activeNamedFilter() {
+		for (NamedFilter filter : namedFilters()) {
+			if (filter.matches(_state.getFilters(), _state.getSearch())) {
+				return filter;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public void applyNamedFilter(String id) {
+		NamedFilter filter = namedFilter(id);
+		if (filter == null) {
+			return;
+		}
+		Map<String, FilterState> filters = _state.getFilters();
+		filters.clear();
+		for (Map.Entry<String, FilterState> entry : filter.filters().entrySet()) {
+			// The same guard the restore of a persisted filter applies: a criterion is only kept for
+			// a column that exists and can be filtered by.
+			Column<R, ?> column = _columns.get(entry.getKey());
+			if (column != null && column.filter().isPresent()) {
+				filters.put(entry.getKey(), entry.getValue());
+			}
+		}
+		_state.setSearch(filter.search());
+		applyFilter();
+		persist();
+		fireColumnsChanged();
+	}
+
+	@Override
+	public NamedFilter saveNamedFilter(String name) {
+		if (_filterStore == null || _id == null) {
+			return null;
+		}
+		NamedFilter previous = savedFilterNamed(name);
+		String id = previous != null ? previous.id() : StringServices.randomUUID();
+		NamedFilter filter =
+			NamedFilter.saved(id, name, new LinkedHashMap<>(_state.getFilters()), _state.getSearch());
+		if (previous != null) {
+			_savedFilters.set(_savedFilters.indexOf(previous), filter);
+		} else {
+			_savedFilters.add(filter);
+		}
+		_filterStore.save(_id, _savedFilters, filterCodec());
+		fireColumnsChanged();
+		return filter;
+	}
+
+	@Override
+	public void deleteNamedFilter(String id) {
+		if (_filterStore == null || _id == null) {
+			return;
+		}
+		// Only the user's own filters are held here, so a declared one is not found and stays.
+		if (!_savedFilters.removeIf(filter -> filter.id().equals(id))) {
+			return;
+		}
+		_filterStore.save(_id, _savedFilters, filterCodec());
+		fireColumnsChanged();
+	}
+
+	private NamedFilter namedFilter(String id) {
+		for (NamedFilter filter : namedFilters()) {
+			if (filter.id().equals(id)) {
+				return filter;
+			}
+		}
+		return null;
+	}
+
+	/** The user's saved filter carrying the given name, or {@code null} if there is none. */
+	private NamedFilter savedFilterNamed(String name) {
+		ResKey label = ResKey.text(name);
+		for (NamedFilter filter : _savedFilters) {
+			if (label.equals(filter.label())) {
+				return filter;
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -743,9 +891,9 @@ public class DefaultTableView<R> implements TableView<R> {
 					return null;
 				}
 				Map<String, Object> result = new LinkedHashMap<>();
-				result.put("state", innerJson);
+				result.put(STATE, innerJson);
 				if (inverted) {
-					result.put("inverted", Boolean.TRUE);
+					result.put(INVERTED, Boolean.TRUE);
 				}
 				return result;
 			}
@@ -756,11 +904,11 @@ public class DefaultTableView<R> implements TableView<R> {
 				if (filter == null || !(json instanceof Map<?, ?> map)) {
 					return null;
 				}
-				FilterState inner = filter.fromJson(map.get("state"));
+				FilterState inner = filter.fromJson(map.get(STATE));
 				if (inner == null) {
 					return null;
 				}
-				return Boolean.TRUE.equals(map.get("inverted")) ? new NegatedFilterState(inner) : inner;
+				return Boolean.TRUE.equals(map.get(INVERTED)) ? new NegatedFilterState(inner) : inner;
 			}
 		};
 	}

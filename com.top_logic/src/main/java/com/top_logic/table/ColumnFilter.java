@@ -93,6 +93,35 @@ public interface ColumnFilter<V> {
 	}
 
 	/**
+	 * Translates a value declared as a filter criterion into the {@link FilterState} of this
+	 * filter, or {@code null} if this filter cannot express that value.
+	 *
+	 * <p>
+	 * This is how a {@link NamedFilter} whose criteria are declared (rather than picked in a filter
+	 * editor) reaches the filter of a column: the declaring tier evaluates the criterion to a
+	 * value - a text, a business object, a boolean, a collection of those - and each column filter
+	 * turns it into its own state. The value is the domain value itself, so a filter over a
+	 * reference-valued column receives the referenced object and needs no identifier handling.
+	 * </p>
+	 *
+	 * <p>
+	 * Returning {@code null} means "not expressible by this filter", the same contract as
+	 * {@link #toJson(FilterState)}, and is the case a caller reports as a declaration error: which
+	 * value shapes a filter accepts is part of its own contract, so a rejected value cannot be
+	 * distinguished from an accepted one anywhere but here. The default implementation accepts
+	 * nothing.
+	 * </p>
+	 *
+	 * @param value
+	 *        The evaluated criterion value.
+	 * @return The state selecting the given value, or {@code null} if this filter cannot express
+	 *         it.
+	 */
+	default FilterState stateFor(Object value) {
+		return null;
+	}
+
+	/**
 	 * The facet buckets a single cell value contributes to, used to compute {@link MatchCounts}.
 	 *
 	 * <p>

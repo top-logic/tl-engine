@@ -10,9 +10,9 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.UriPattern;
 import com.top_logic.ai.mcp.server.util.JsonResponseBuilder;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -113,7 +113,7 @@ public class EnumerationClassifiersResource {
 	 * Handles requests to read an enumeration's classifiers resource.
 	 *
 	 * <p>
-	 * Sets up TopLogic thread context and delegates to
+	 * Establishes the calling account's TopLogic context and delegates to
 	 * {@link #readEnumerationClassifiers(McpSchema.ReadResourceRequest)}.
 	 * </p>
 	 *
@@ -127,10 +127,9 @@ public class EnumerationClassifiersResource {
 			McpSyncServerExchange exchange,
 			McpSchema.ReadResourceRequest request) {
 
-		// Wrap database access in system interaction context
-		return ThreadContextManager.inSystemInteraction(
-			EnumerationClassifiersResource.class,
-			() -> readEnumerationClassifiers(request));
+		// Read as the account this request was authenticated as, so that model access rights
+		// apply. The system interaction this used to open is the engine's super-user bypass.
+		return McpCallerContext.inCallerContext(() -> readEnumerationClassifiers(request));
 	}
 
 	/**

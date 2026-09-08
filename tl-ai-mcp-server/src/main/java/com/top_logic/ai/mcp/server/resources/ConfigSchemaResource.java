@@ -8,6 +8,7 @@ package com.top_logic.ai.mcp.server.resources;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.UriPattern;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -17,7 +18,6 @@ import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
 import com.top_logic.basic.config.json.JsonConfigSchemaBuilder.SchemaResolver;
 import com.top_logic.basic.json.schema.JsonSchemaWriter;
 import com.top_logic.basic.json.schema.model.Schema;
-import com.top_logic.basic.thread.ThreadContextManager;
 
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
@@ -110,7 +110,7 @@ public class ConfigSchemaResource {
 	 * Handles requests to read a configuration schema resource.
 	 *
 	 * <p>
-	 * Sets up TopLogic thread context and delegates to {@link #readConfigSchema(McpSchema.ReadResourceRequest)}.
+	 * Establishes the calling account's TopLogic context and delegates to {@link #readConfigSchema(McpSchema.ReadResourceRequest)}.
 	 * </p>
 	 *
 	 * @param exchange
@@ -123,8 +123,8 @@ public class ConfigSchemaResource {
 			McpSyncServerExchange exchange,
 			McpSchema.ReadResourceRequest request) {
 
-		// Wrap in system interaction context
-		return ThreadContextManager.inSystemInteraction(ConfigSchemaResource.class, () -> readConfigSchema(request));
+		// Read as the account this request was authenticated as, not in system context.
+		return McpCallerContext.inCallerContext(() -> readConfigSchema(request));
 	}
 
 	/**

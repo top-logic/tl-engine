@@ -5,6 +5,20 @@
 	version="3.1">
 	<name>tl-ai-mcp-server</name>
 
+	<!-- Authenticates every request to /mcp/* and opens the TLContext of the account it resolved.
+	     Both are required: the protocol handlers read the KnowledgeBase, and what they may return is
+	     decided against that account's model access rights. -->
+	<filter>
+		<filter-name>mcpAuthenticationFilter</filter-name>
+		<filter-class>com.top_logic.ai.mcp.server.authentication.McpAuthenticationFilter</filter-class>
+		<async-supported>true</async-supported>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>mcpAuthenticationFilter</filter-name>
+		<url-pattern>/mcp/*</url-pattern>
+	</filter-mapping>
+
 	<servlet>
 		<servlet-name>MCPTransportServlet</servlet-name>
 		<servlet-class>com.top_logic.ai.mcp.server.MCPTransportServlet</servlet-class>

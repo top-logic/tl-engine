@@ -15,6 +15,7 @@ import java.util.Map;
 import jakarta.activation.MimeType;
 import jakarta.activation.MimeTypeParseException;
 
+import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.UriPattern;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -22,7 +23,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.json.JSON;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -122,7 +122,7 @@ public class ConfigurableResourceTemplate extends AbstractConfiguredInstance<Res
 	 * Handles requests to read this resource.
 	 *
 	 * <p>
-	 * Sets up TopLogic thread context and delegates to {@link #readResource(McpSchema.ReadResourceRequest)}.
+	 * Establishes the calling account's TopLogic context and delegates to {@link #readResource(McpSchema.ReadResourceRequest)}.
 	 * </p>
 	 *
 	 * @param exchange
@@ -135,9 +135,9 @@ public class ConfigurableResourceTemplate extends AbstractConfiguredInstance<Res
 			McpSyncServerExchange exchange,
 			McpSchema.ReadResourceRequest request) {
 
-		// Wrap in system interaction context to access TopLogic services
-		return ThreadContextManager.inSystemInteraction(ConfigurableResourceTemplate.class,
-			() -> readResource(request));
+		// Evaluate as the account this request was authenticated as, not in system context: the
+		// expression reaches TopLogic services and whatever they can read.
+		return McpCallerContext.inCallerContext(() -> readResource(request));
 	}
 
 	/**
@@ -165,8 +165,15 @@ public class ConfigurableResourceTemplate extends AbstractConfiguredInstance<Res
 			arguments[i] = parameters.get(paramName);
 		}
 
-		// Execute compiled function with parameters as arguments
-		Object result = _compiledFunction.execute(arguments);
+		// Execute compiled function with parameters as arguments, and remove from its result
+		// whatever the calling account may not read. The expression is administrator-authored, so it
+		// may reach anything at all; ReadFilter.visible is structure-preserving, so a filtered
+		// result renders exactly like an unfiltered one, minus what has to go.
+		//
+		// This covers identities, labels and attribute values. It does not cover an aggregate the
+		// expression computed itself - all(`X`).size() is a number by the time it arrives here - see
+		// ReadFilter and issue #291.
+		Object result = McpCallerContext.readFilter().visible(_compiledFunction.execute(arguments));
 
 		// Handle different result types
 		List<McpSchema.ResourceContents> contentsList = createResourceContentsList(uri, result);

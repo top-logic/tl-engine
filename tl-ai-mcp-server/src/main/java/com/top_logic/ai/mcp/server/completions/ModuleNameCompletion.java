@@ -8,8 +8,8 @@ package com.top_logic.ai.mcp.server.completions;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.resources.ModuleTypesResource;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.util.model.ModelService;
@@ -64,7 +64,7 @@ public class ModuleNameCompletion {
 	 * Handles completion requests for module names.
 	 *
 	 * <p>
-	 * Sets up TopLogic thread context and delegates to {@link #getModuleCompletions(String)}.
+	 * Establishes the calling account's TopLogic context and delegates to {@link #getModuleCompletions(String)}.
 	 * </p>
 	 *
 	 * @param exchange
@@ -77,7 +77,7 @@ public class ModuleNameCompletion {
 			McpSyncServerExchange exchange,
 			McpSchema.CompleteRequest request) {
 
-		return ThreadContextManager.inSystemInteraction(ModuleNameCompletion.class, () -> {
+		return McpCallerContext.inCallerContext(() -> {
 			// Extract the partial value being typed (if any)
 			String partialValue = request.argument() != null ? request.argument().value() : "";
 

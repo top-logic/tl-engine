@@ -8,11 +8,12 @@ package com.top_logic.ai.mcp.server.resources;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Map;
 
+import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.util.JsonResponseBuilder;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.TLID;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -23,9 +24,9 @@ import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.visit.LabelVisitor;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.util.Resources;
 
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -94,7 +95,7 @@ public class InstanceResource {
 	 * Handles requests to read the instance resource.
 	 *
 	 * <p>
-	 * Sets up TopLogic thread context and delegates to {@link #readInstance(String, McpSchema.ReadResourceRequest)}.
+	 * Establishes the calling account's TopLogic context and delegates to {@link #readInstance(String, McpSchema.ReadResourceRequest)}.
 	 * </p>
 	 *
 	 * @param exchange
@@ -114,8 +115,9 @@ public class InstanceResource {
 			return createErrorResult(request.uri(), "Invalid instance URI: missing TID parameter");
 		}
 
-		// Wrap database access in system interaction context
-		return ThreadContextManager.inSystemInteraction(InstanceResource.class, () -> readInstance(tid, request));
+		// Read as the account this request was authenticated as, so that model access rights
+		// apply. The system interaction this used to open is the engine's super-user bypass.
+		return McpCallerContext.inCallerContext(() -> readInstance(tid, request));
 	}
 
 	/**
@@ -166,9 +168,17 @@ public class InstanceResource {
 			// Wrap it as a TLObject
 			TLObject tlObject = WrapperFactory.getWrapper(ko);
 
+			ReadFilter readFilter = McpCallerContext.readFilter();
+			if (!readFilter.canRead(tlObject)) {
+				// Deliberately the same answer as a TID that resolves to nothing. Saying "you may
+				// not read this one" would confirm that an object with this TID exists, which is
+				// itself a disclosure - the same rule ReadFilter follows for a collection, where an
+				// unreadable element is omitted rather than replaced by a placeholder.
+				return createErrorResult(request.uri(), "Object with TID '" + tid + "' not found");
+			}
 
-			// Build JSON response with all object information
-			String json = buildInstanceJson(tlObject, tid);
+			// Build JSON response with the attributes the calling account may read
+			String json = buildInstanceJson(readFilter, tlObject, tid);
 
 			McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(
 				request.uri(),
@@ -184,13 +194,15 @@ public class InstanceResource {
 	}
 
 	/**
-	 * Builds a JSON representation of the instance including all its attributes.
+	 * Builds a JSON representation of the instance including the attributes the calling account may
+	 * read.
 	 *
+	 * @param readFilter The read filter of the calling account
 	 * @param obj The TLObject to serialize
 	 * @param tid The original TID as string
 	 * @return JSON string with all instance information
 	 */
-	private static String buildInstanceJson(TLObject obj, String tid) {
+	private static String buildInstanceJson(ReadFilter readFilter, TLObject obj, String tid) {
 		StringWriter buffer = new StringWriter();
 		try (JsonWriter json = JsonResponseBuilder.createWriter(buffer)) {
 			json.beginObject();
@@ -205,28 +217,23 @@ public class InstanceResource {
 				writeTypeInfo(json, type);
 			}
 
-			// Attributes
+			// Attributes. ReadFilter is the one place a TLObject becomes something a client gets to
+			// see: it leaves out an attribute the account may not read, and it filters the value
+			// itself recursively, so a reference to an object the account may not read is dropped
+			// rather than disclosed as an identity.
 			json.name("attributes");
-			json.beginObject();
-
-			if (type != null) {
-				// Get all parts (attributes) of this type
-				for (TLStructuredTypePart part : type.getAllParts()) {
-					String partName = part.getName();
-					Object value = obj.tValue(part);
-
-					// Write attribute value
-					writeAttributeValue(json, partName, value);
-				}
-			}
-
-			json.endObject(); // attributes
+			writeJsonData(json, readFilter.attributesOf(obj));
 
 			// Additional metadata
 			json.name("metadata");
 			json.beginObject();
-			json.name("container").value(obj.tContainer() != null ? obj.tContainer().tId().toString() : null);
-			json.name("containerReference").value(obj.tContainerReference() != null ? obj.tContainerReference().getName() : null);
+			// The container is another object's identity, so it is disclosed only when that object is
+			// readable - and the reference it is held by goes with it, because naming the attribute
+			// while withholding the value says that there is a container the account may not see.
+			TLObject container = (TLObject) readFilter.visible(obj.tContainer());
+			json.name("container").value(container == null ? null : container.tId().toString());
+			json.name("containerReference").value(container == null || obj.tContainerReference() == null
+				? null : obj.tContainerReference().getName());
 			json.name("transient").value(obj.tTransient());
 			json.endObject(); // metadata
 
@@ -278,30 +285,36 @@ public class InstanceResource {
 	}
 
 	/**
-	 * Writes an attribute value to JSON output with proper type handling.
+	 * Writes the JSON-compatible data {@link ReadFilter} produced.
+	 *
+	 * <p>
+	 * The filter has already decided what may be disclosed and in what shape - primitives, lists,
+	 * string-keyed maps, and a readable object reduced to its identity - so this method makes no
+	 * decision of its own and only serialises.
+	 * </p>
 	 */
-	private static void writeAttributeValue(JsonWriter json, String name, Object value) throws IOException {
-		json.name(name);
-
-		if (value == null) {
+	private static void writeJsonData(JsonWriter json, Object data) throws IOException {
+		if (data == null) {
 			json.nullValue();
-		} else if (value instanceof TLObject) {
-			// For reference to another TLObject, use the utility method
-			JsonResponseBuilder.writeTLObjectReference(json, (TLObject) value);
-		} else if (value instanceof Iterable) {
-			// For collections, write as JSON array
+		} else if (data instanceof Map<?, ?> map) {
+			json.beginObject();
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
+				json.name(String.valueOf(entry.getKey()));
+				writeJsonData(json, entry.getValue());
+			}
+			json.endObject();
+		} else if (data instanceof Iterable<?> items) {
 			json.beginArray();
-			for (Object item : (Iterable<?>) value) {
-				if (item instanceof TLObject) {
-					JsonResponseBuilder.writeTLObjectReference(json, (TLObject) item);
-				} else {
-					json.value(item != null ? item.toString() : null);
-				}
+			for (Object item : items) {
+				writeJsonData(json, item);
 			}
 			json.endArray();
+		} else if (data instanceof Boolean value) {
+			json.value(value.booleanValue());
+		} else if (data instanceof Number value) {
+			json.value(value);
 		} else {
-			// For primitive values, write as string
-			json.value(value.toString());
+			json.value(String.valueOf(data));
 		}
 	}
 

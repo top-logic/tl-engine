@@ -38,11 +38,19 @@ public class MCPTransportServlet extends HttpServlet {
 	 * administrator who did not mean to disable the endpoint learns what to turn on, instead of
 	 * debugging a bare 503.
 	 * </p>
+	 *
+	 * <p>
+	 * It also names the second step, because turning the module on is not enough: the endpoint serves
+	 * no request it cannot attribute to an account, so an application also has to configure an
+	 * authentication for it (issue #261, {@code doc/security/mcp-endpoint.md}).
+	 * </p>
 	 */
 	static final String SERVICE_DISABLED_MESSAGE =
 		"MCP server not available: MCPServerService is not started. This endpoint is off by default,"
-			+ " because it authenticates nobody (issue #261); enable the module"
-			+ " com.top_logic.ai.mcp.server.MCPServerService$Module to switch it on.";
+			+ " because publishing it is a deployment decision; enable the module"
+			+ " com.top_logic.ai.mcp.server.MCPServerService$Module to switch it on, and configure an"
+			+ " authentication for it - it serves no request it cannot attribute to an account. See"
+			+ " doc/security/mcp-endpoint.md and issue #261.";
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {

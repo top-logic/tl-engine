@@ -71,11 +71,12 @@ import com.top_logic.tl.ai.core.tools.util.UntrustedEnvelope;
  * preserved verbatim. An agent's standing instructions travel in
  * {@link ProviderRequest#systemPrompt()}, never in the message list, and no provider
  * request builder renders a mid-conversation {@link SystemMessage} into a request at all
- * (Anthropic and Bedrock skip it explicitly; the OpenAI and chat-completions builders
- * have no branch for it). A {@link SystemMessage} in the history is therefore purely our
- * own bookkeeping - in practice a sub-agent result injected between turns - that costs
- * estimated tokens without reaching the model. Re-emitting that region verbatim, as this
- * strategy used to, let it grow without bound and made compaction unable to converge.</p>
+ * (Anthropic and Bedrock skip it explicitly; the <code>OpenAI</code> and chat-completions
+ * builders have no branch for it). A {@link SystemMessage} in the history is therefore
+ * purely our own bookkeeping - in practice a sub-agent result injected between turns -
+ * that costs estimated tokens without reaching the model. Re-emitting that region
+ * verbatim, as this strategy used to, let it grow without bound and made compaction
+ * unable to converge.</p>
  *
  * <p>Falls back to {@link TruncatingStrategy} if the LLM call fails, and when a pass
  * would spend a summarizer call on nothing but the output of an earlier pass (see

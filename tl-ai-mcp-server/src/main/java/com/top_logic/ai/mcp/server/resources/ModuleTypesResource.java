@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.mcp.server.UriPattern;
 import com.top_logic.ai.mcp.server.util.JsonResponseBuilder;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
@@ -109,7 +109,7 @@ public class ModuleTypesResource {
 	 * Handles requests to read a module's types resource.
 	 *
 	 * <p>
-	 * Sets up TopLogic thread context and delegates to {@link #readModuleTypes(McpSchema.ReadResourceRequest)}.
+	 * Establishes the calling account's TopLogic context and delegates to {@link #readModuleTypes(McpSchema.ReadResourceRequest)}.
 	 * </p>
 	 *
 	 * @param exchange
@@ -122,8 +122,9 @@ public class ModuleTypesResource {
 			McpSyncServerExchange exchange,
 			McpSchema.ReadResourceRequest request) {
 
-		// Wrap database access in system interaction context
-		return ThreadContextManager.inSystemInteraction(ModuleTypesResource.class, () -> readModuleTypes(request));
+		// Read as the account this request was authenticated as, so that model access rights
+		// apply. The system interaction this used to open is the engine's super-user bypass.
+		return McpCallerContext.inCallerContext(() -> readModuleTypes(request));
 	}
 
 	/**

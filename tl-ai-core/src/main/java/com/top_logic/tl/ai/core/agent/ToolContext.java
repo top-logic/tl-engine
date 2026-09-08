@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.agent;
 import java.util.Objects;
 import java.util.Set;
 
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
@@ -71,6 +72,41 @@ public class ToolContext implements ToolExecutionContext {
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
 			TopLogicSecurityContext.forRun(TLContext.currentUser(), false),
+			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
+	}
+
+	/**
+	 * Creates a context for an unattended run that acts as the given account.
+	 *
+	 * <p>
+	 * For an entry point that has an authenticated account but <b>no human on the other end</b> - the
+	 * MCP endpoint is the case this was written for: a request arrives with a credential, so the run
+	 * has a principal, but nobody is watching who could answer an approval prompt.
+	 * </p>
+	 *
+	 * <p>
+	 * The run is therefore a {@link SecurityContext#isBackgroundRun() background run}: its tool
+	 * ceiling is the intersection of the account's grants and the policy's
+	 * {@code <background-allowlist>}, which is the configured substitute for the prompt it cannot
+	 * show. Such a run confirms its own tool calls - hence {@link ApprovalCallback#AUTO_APPROVE} -
+	 * and the allowlist is what bounds it.
+	 * </p>
+	 *
+	 * <p>
+	 * Gets a live {@link TransactionScope}, so a write-classified tool the allowlist admits can
+	 * actually be committed by whoever drives the call.
+	 * </p>
+	 *
+	 * @param principal
+	 *        The authenticated account the run acts as. Never <code>null</code>.
+	 * @throws IllegalStateException
+	 *         If {@code principal} is <code>null</code> - see
+	 *         {@link TopLogicSecurityContext#forRun(Person, boolean)}.
+	 */
+	public static ToolContext forBackgroundRun(Person principal) {
+		CancellationToken cancellationToken = new CancellationToken();
+		return new ToolContext(
+			TopLogicSecurityContext.forRun(principal, true),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 

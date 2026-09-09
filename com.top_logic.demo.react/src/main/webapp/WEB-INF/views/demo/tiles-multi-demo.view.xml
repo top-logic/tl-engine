@@ -3,16 +3,17 @@
 <!--
 	Multi-tab tile drill-down demo.
 	
-	Two tabs, each hosting its own independent tile-stack with its own navPath channel and its
-	own breadcrumb. Only one tab's content is mounted at a time, so only one breadcrumb is in
-	the slot registry at a time; the app bar's <slot name="appbar-content"/> shows the active tab's
-	breadcrumb. Switching tabs implicitly switches the visible breadcrumb - no app-level
-	multiplexer needed.
+	Two tabs, each hosting its own independent tile-stack and its own breadcrumb. Only one tab's
+	content is mounted at a time, so only one breadcrumb is in the slot registry at a time; the app
+	bar's <slot name="appbar-content"/> shows the active tab's breadcrumb. Switching tabs implicitly
+	switches the visible breadcrumb - no app-level multiplexer needed.
 	
-	The two tabs use the same overview / detail views, but their navigation state is
-	independent: drilling into one tab does not affect the other. Each stack binds its path into
-	its frames under the name navPath, so the shared frame views derive their depth from the stack
-	they are mounted in and their "Back" command pops that stack.
+	Tab content shares the channels of the enclosing view, so the two stacks hold their paths on
+	channels of different names (navPathA, navPathB) - a nested <view> declaring a channel that
+	already exists in its context takes the existing one. The two tabs use the same overview /
+	detail views, and their navigation state is independent: drilling into one tab does not affect
+	the other. Each stack binds its path into its frames under the common name navPath, so the
+	shared frame views derive their depth from the stack they are mounted in.
 -->
 <view>
 	<tab-bar active-tab="left">
@@ -24,12 +25,12 @@
 				</label>
 				<view>
 					<channels>
-						<channel name="navPath"/>
+						<channel name="navPathA"/>
 					</channels>
 
 					<stack>
 						<slot-content to="appbar-content">
-							<tile-breadcrumb path="navPath">
+							<tile-breadcrumb path="navPathA">
 								<home-label>
 									<en>Workspace A – Accounts</en>
 									<de>Arbeitsbereich A – Konten</de>
@@ -40,7 +41,7 @@
 						<tile-stack
 							bind-path-to="navPath"
 							initial="demo/tiles-demo/overview.view.xml"
-							path="navPath"
+							path="navPathA"
 						/>
 					</stack>
 				</view>
@@ -52,12 +53,12 @@
 				</label>
 				<view>
 					<channels>
-						<channel name="navPath"/>
+						<channel name="navPathB"/>
 					</channels>
 
 					<stack>
 						<slot-content to="appbar-content">
-							<tile-breadcrumb path="navPath">
+							<tile-breadcrumb path="navPathB">
 								<home-label>
 									<en>Workspace B – Accounts</en>
 									<de>Arbeitsbereich B – Konten</de>
@@ -68,7 +69,7 @@
 						<tile-stack
 							bind-path-to="navPath"
 							initial="demo/tiles-demo/overview.view.xml"
-							path="navPath"
+							path="navPathB"
 						/>
 					</stack>
 				</view>

@@ -118,7 +118,7 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		String routePath = extractRoutePath(pathInfo, windowName);
+		String routePath = extractRoutePath(rawPathInfo(request), windowName);
 		if (PendingSessionAction.consumeSessionSwapped(session)) {
 			// A login or logout has just replaced the session, and the redirect it sent still names
 			// the page the previous user had navigated to. Whoever takes the session over begins
@@ -129,6 +129,14 @@ public class ViewServlet extends TopLogicServlet {
 			// Entered without naming a page, so the user's own choice of where to begin applies.
 			// A URL that does carry a route asks for that page and is never overridden.
 			routePath = StartPage.get();
+		} else {
+			String query = request.getQueryString();
+			if (query != null && !query.isEmpty()) {
+				// The query belongs to the route: it carries the values that refine what the named page
+				// shows - a filter term, a sorting - and the display takes them up together with the
+				// path. Raw, because a query travels percent-encoded and the routing decodes it.
+				routePath = routePath + '?' + query;
+			}
 		}
 
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
@@ -237,8 +245,8 @@ public class ViewServlet extends TopLogicServlet {
 	 * </p>
 	 *
 	 * @param routePath
-	 *        The route requested by the URL, applied when it differs from the one the tree currently
-	 *        shows (a deep link entered in an existing tab).
+	 *        The route requested by the URL, adopted by the tree while it is rendered (a deep link
+	 *        entered in an existing tab).
 	 */
 	private void renderAgain(HttpServletRequest request, HttpServletResponse response,
 			ReactControl rootControl, SSEUpdateQueue sseQueue, String routePath) throws IOException {
@@ -247,12 +255,6 @@ public class ViewServlet extends TopLogicServlet {
 		sseQueue.discardPendingEvents();
 		sseQueue.setRootControl(rootControl);
 		wireRouteManager(context, sseQueue, routePath);
-
-		RouteManager routeManager = context.getRouteManager();
-		if (routeManager != null && routePath != null && !routePath.isEmpty()
-				&& !routePath.equals(routeManager.currentUrl())) {
-			routeManager.navigateToRoute(routePath);
-		}
 
 		renderPage(request, response, rootControl, context);
 	}
@@ -416,6 +418,11 @@ public class ViewServlet extends TopLogicServlet {
 	 * (i.e. does not end with {@code .view.xml}).
 	 * </p>
 	 *
+	 * @param pathInfo
+	 *        The path below the servlet, with its segments percent-encoded - see
+	 *        {@link #rawPathInfo(HttpServletRequest)}.
+	 * @param windowName
+	 *        The window name occupying the first segment.
 	 * @return The route path without leading slash, or {@code null} if no route is present.
 	 */
 	private String extractRoutePath(String pathInfo, String windowName) {
@@ -441,13 +448,44 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * The path below the servlet in the form the browser requested it, with the percent-encoding of
+	 * its segments intact.
+	 *
+	 * <p>
+	 * A route carries values whose characters have a meaning in a URL, a slash above all, so the
+	 * route is read in encoded form: the segments of the request URI are the ones the route pattern
+	 * matches, and only the value a parameter captures is decoded.
+	 * {@link HttpServletRequest#getPathInfo()} delivers the path already decoded by the servlet
+	 * container, where such a value is indistinguishable from the segments around it - and where the
+	 * URL a back navigation sends as a {@code navigateToRoute} command, which is the encoded one,
+	 * would resolve differently than the same URL entered into the address bar.
+	 * </p>
+	 *
+	 * @param request
+	 *        The request being served.
+	 * @return The path below the context and servlet path, starting with a slash, or {@code null}
+	 *         for a request that names none.
+	 */
+	private static String rawPathInfo(HttpServletRequest request) {
+		String uri = request.getRequestURI();
+		String servletUrl = request.getContextPath() + request.getServletPath();
+		if (!uri.startsWith(servletUrl)) {
+			// The context or servlet path itself is encoded in the URI, so the path below it cannot
+			// be cut off by length. Such an application has no place to put an encoded route.
+			return request.getPathInfo();
+		}
+		String pathInfo = uri.substring(servletUrl.length());
+		return pathInfo.isEmpty() ? null : pathInfo;
+	}
+
+	/**
 	 * Wires the {@link RouteManager} from the given context to the SSE queue.
 	 *
 	 * <p>
-	 * Sets the pending URL on the route manager (for deep-link resolution) and installs a URL
-	 * change handler that pushes {@link RouteChangeEvent}s via SSE. Also stores the route manager
-	 * on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet} can look it
-	 * up for handling {@code navigateToRoute} commands.
+	 * Hands the route manager the URL the loaded page displays (for deep-link resolution) and
+	 * installs a URL change handler that pushes {@link RouteChangeEvent}s via SSE. Also stores the
+	 * route manager on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet}
+	 * can look it up for handling {@code navigateToRoute} commands.
 	 * </p>
 	 */
 	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String routePath) {
@@ -456,9 +494,10 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		if (routePath != null && !routePath.isEmpty()) {
-			routeManager.setPendingUrl(routePath);
-		}
+		// Unconditionally, an empty route included: a freshly loaded page displays what its URL says,
+		// which for a bare view is nothing - and the address bar has to be completed from the display
+		// rather than left describing less than it shows.
+		routeManager.adoptUrl(routePath == null ? "" : routePath);
 
 		routeManager.setUrlChangeHandler((url, replace) -> {
 			RouteChangeEvent event = RouteChangeEvent.create()
@@ -578,6 +617,14 @@ public class ViewServlet extends TopLogicServlet {
 			ReactControl rootControl, ReactContext context) throws IOException {
 		rootControl.attach();
 
+		// The display exists now, so the URL the request carries can be adopted: a page rendered into
+		// a control tree it already has registers no participants while attaching, and nothing else
+		// would hand them the requested route.
+		RouteManager routeManager = context.getRouteManager();
+		if (routeManager != null) {
+			routeManager.resolvePending();
+		}
+
 		response.setContentType("text/html");
 		response.setCharacterEncoding("UTF-8");
 
@@ -632,6 +679,11 @@ public class ViewServlet extends TopLogicServlet {
 		out.endTag(HTMLConstants.HTML);
 
 		out.flushBuffer();
+
+		// The display is complete now: whatever the requested URL still names is not part of it.
+		if (routeManager != null) {
+			routeManager.finishAdoption();
+		}
 	}
 
 	@Override

@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.routing;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controls that contribute URL segments implement this interface.
@@ -33,6 +34,69 @@ public interface RoutingParticipant {
      * item is active.
      */
     RouteSegment activeRouteSegment();
+
+	/**
+	 * Takes up the query parameters of the URL being adopted.
+	 *
+	 * <p>
+	 * Offered to every participant of the display, with the whole query of the URL: a participant
+	 * reads the parameters it declares and ignores the rest, because a query parameter names its
+	 * meaning itself instead of being placed by its position, and one URL carries the parameters of
+	 * everything the display shows. A parameter the URL does not carry says nothing about the value
+	 * behind it, which therefore stays what the view establishes.
+	 * </p>
+	 *
+	 * <p>
+	 * The default takes up nothing, which is what a participant does whose state is a path segment.
+	 * </p>
+	 *
+	 * @param query
+	 *        The query parameters of the URL, decoded, never empty.
+	 */
+	default void activateQuery(Map<String, String> query) {
+		// Nothing to take up: the state of this participant is named by the path.
+	}
+
+	/**
+	 * Whether the URL being adopted can name one route of this participant after another.
+	 *
+	 * <p>
+	 * A participant that displays one thing at a time takes up one route: the item a sidebar
+	 * selects, the value a channel holds, and whatever the URL names after it is named for someone
+	 * else. A participant that displays a chain of them - the frames of a drill-down path, one route
+	 * per frame - takes up as many routes as the URL names in sequence, and is therefore offered the
+	 * rest of the URL again after each one it took up.
+	 * </p>
+	 */
+	default boolean acceptsRouteSequence() {
+		return false;
+	}
+
+	/**
+	 * Returns to the state that has no route, because the URL being adopted names none for this
+	 * participant.
+	 *
+	 * <p>
+	 * Called by {@link RouteManager#finishAdoption()} on a participant which the display contains,
+	 * whose {@link #activeRouteSegment()} is not empty, and which the adopted URL neither activated
+	 * nor brought into the display by one of its activations: it shows a state the URL does not
+	 * describe, and a back navigation to a shorter URL would otherwise leave that state standing. A
+	 * participant an activation of the URL brought into the display is never reset - its segment is
+	 * what the URL left unspecified, a default selection for instance. Merely registering while a URL
+	 * is adopted is not that: a page loaded into the control tree its window still holds attaches
+	 * that tree, and what it re-registers displays what the previous page left.
+	 * </p>
+	 *
+	 * <p>
+	 * The default keeps the state, which is what a participant does that always displays something: a
+	 * sidebar shows one of its items whatever the URL says, and a value the URL does not name is the
+	 * one the view establishes itself. Implement this where the participant has a state without a
+	 * route to return to - an empty drill-down path, for instance.
+	 * </p>
+	 */
+	default void resetRoute() {
+		// The state stands: what the URL does not name is what the view establishes itself.
+	}
 
     /**
      * Registers a {@link RouteChangeListener} to be notified when this participant's active route

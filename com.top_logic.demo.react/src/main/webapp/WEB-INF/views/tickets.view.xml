@@ -1,10 +1,46 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!--
+	Object list demo, and the demo of a model object carried in the URL:
+	the ticketId channel maps the selected ticket onto its identifier and back, and
+	<param-bindings> puts that identifier into the address bar below the sidebar item, behind
+	the static prefix segment naming what it identifies, so selecting a ticket yields
+	/view/tickets/ticket/<id>, opening such a link selects the ticket, and browser
+	back/forward walks the selection history. The identifier is percent-encoded, so its
+	characters cannot break the path. An identifier of a ticket that no longer exists resolves
+	to no object, and the prefix and the segment leave the address bar again.
+	
+	The filter above the list demonstrates the other half of the address bar: <query-bindings>
+	binds the filter channel to the query parameter q, so a filtered list is the link
+	/view/tickets/ticket/<id>?q=<term>, and typing in the filter refines the page instead of
+	navigating to a new one - the address bar follows along, but the back button leaves the
+	page rather than walking the terms typed on it. A link without q says nothing about the
+	filter and shows the list unfiltered.
+-->
 <view>
 	<channels>
 		<channel name="model"/>
 		<channel name="ticket"/>
+		<channel name="filter"/>
+		<derived-channel name="ticketId"
+			expr="t -> objectId($t)"
+			inputs="ticket"
+			reverse="id -> objectResolve(`demo.tickets:Ticket`, $id)"
+		/>
 	</channels>
+	<param-bindings>
+		<bind
+			channel="ticketId"
+			prefix="ticket"
+			route-param="ticket"
+		/>
+	</param-bindings>
+	<query-bindings>
+		<bind
+			channel="filter"
+			query-param="q"
+		/>
+	</query-bindings>
 	<split-panel
 		orientation="horizontal"
 		resizable="true"
@@ -58,15 +94,24 @@
 							<write-channel name="ticket"/>
 						</generic-command>
 					</commands>
+					<text-input value="filter">
+						<label>
+							<en>Filter</en>
+							<de>Filter</de>
+						</label>
+					</text-input>
 					<table
 						observed-types="demo.tickets:Ticket"
 						selection="ticket"
 						types="demo.tickets:Ticket"
 					>
+						<inputs>
+							<input channel="filter"/>
+						</inputs>
 						<columns>
 							<column attribute="name"/>
 						</columns>
-						<rows>all(`demo.tickets:Ticket`)</rows>
+						<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
 					</table>
 				</panel>
 			</pane>

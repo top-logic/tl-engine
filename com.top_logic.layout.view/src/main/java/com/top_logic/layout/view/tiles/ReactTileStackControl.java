@@ -14,6 +14,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ScriptingControl;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.ViewContext;
@@ -32,10 +33,10 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * Subscribes to the path channel and holds one frame per position: the {@code initial} view at
  * index 0, followed by the frames of the path, each rendering the view its {@link TileFrame}
  * references with the frame's {@link TileFrame#getParams() params} pre-registered as channels in
- * its child context. The frame at the end of the path is the active one; the client displays it and
- * keeps the frames below it, so that returning to one - by a {@link TileBreadcrumbElement
- * breadcrumb} click or a {@link NavigatePopCommand pop} - shows it as the user left it rather than
- * building it anew.
+ * its child context - and, where the stack names one, the path channel itself. The frame at the end
+ * of the path is the active one; the client displays it and keeps the frames below it, so that
+ * returning to one - by a {@link TileBreadcrumbElement breadcrumb} click or a
+ * {@link NavigatePopCommand pop} - shows it as the user left it rather than building it anew.
  * </p>
  *
  * <p>
@@ -46,7 +47,10 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  *
  * <p>
  * Each frame is wrapped in a {@link ReloadableControl} so that view-file edits in the designer
- * propagate to it.
+ * propagate to it. Where the stack declares {@link TileStackElement.Config#getFrames() frame
+ * routes}, the stack carries a {@link TileFrameRouteParticipant} which writes the path into the URL
+ * and restores it from one. Only the active frame is {@link #visibleChildren() visible}: a covered
+ * frame is rendered, but what it contains neither names anything in the URL nor takes up a route.
  * </p>
  */
 public class ReactTileStackControl extends ReactControl {
@@ -67,6 +71,8 @@ public class ReactTileStackControl extends ReactControl {
 	private final TileStackScope _scope;
 
 	private final String _initialViewPath;
+
+	private final String _bindPathTo;
 
 	private final ChannelListener _pathListener;
 
@@ -94,22 +100,46 @@ public class ReactTileStackControl extends ReactControl {
 	 * @param initialViewRef
 	 *        View path (relative to {@code /WEB-INF/views/}) of the frame shown when the path is
 	 *        empty.
+	 * @param bindPathTo
+	 *        Channel name under which each frame sees {@code pathChannel}, or {@code null} to keep
+	 *        the path out of the frames' channel namespace.
 	 */
 	public ReactTileStackControl(ViewContext parent, ViewChannel pathChannel, TileStackScope scope,
-			String initialViewRef) {
+			String initialViewRef, String bindPathTo) {
 		super(parent, null, REACT_MODULE);
 		_parentContext = parent;
 		_pathChannel = pathChannel;
 		_scope = scope;
 		_initialViewPath = ViewLoader.VIEW_BASE_PATH + initialViewRef;
+		_bindPathTo = bindPathTo;
 
-		_pathListener = (sender, oldValue, newValue) -> updateFrames();
+		_pathListener = (sender, oldValue, newValue) -> exchangeFrames();
 		_pathChannel.addListener(_pathListener);
 		addCleanupAction(() -> _pathChannel.removeListener(_pathListener));
+
+		installRouteParticipant();
 
 		_frameControls.add(buildFrame(_initialViewPath, Map.of()));
 		publishFrames();
 		updateFrames();
+	}
+
+	/**
+	 * Brings the frames in line with a path that has changed.
+	 *
+	 * <p>
+	 * Applied as a navigation where the URL follows the display: drilling down and coming back out
+	 * are steps the user takes and returns from with the back button, and they are one step each
+	 * however many participants the frames built and dropped bring and take with them.
+	 * </p>
+	 */
+	private void exchangeFrames() {
+		RouteManager routeManager = getReactContext().getRouteManager();
+		if (routeManager != null) {
+			routeManager.navigate(this::updateFrames);
+		} else {
+			updateFrames();
+		}
 	}
 
 	/**
@@ -139,6 +169,13 @@ public class ReactTileStackControl extends ReactControl {
 			}
 			_frames.add(frame);
 			_frameControls.add(control);
+
+			// Attached now rather than when it is rendered, because a URL being taken up is resolved by
+			// the participants the display registers, and the display it registers them from is built
+			// now: the frame a route restores must be able to take up the next route itself.
+			if (isAttached()) {
+				control.attach();
+			}
 		}
 
 		publishFrames();
@@ -195,6 +232,10 @@ public class ReactTileStackControl extends ReactControl {
 		}
 		frameContext = frameContext.withScope(TileStackScope.class, _scope);
 
+		if (_bindPathTo != null) {
+			// The stack's own channel, so the frame sees the path it sits on change.
+			frameContext.registerChannel(_bindPathTo, _pathChannel);
+		}
 		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			DefaultViewChannel paramChannel = new DefaultViewChannel(entry.getKey());
 			paramChannel.set(entry.getValue());
@@ -203,6 +244,45 @@ public class ReactTileStackControl extends ReactControl {
 
 		return new ReloadableControl(viewPath, frameContext,
 			(ReactControl) frameView.createControl(frameContext));
+	}
+
+	/**
+	 * Anchors the {@link TileFrameRouteParticipant} of this stack at its control.
+	 *
+	 * <p>
+	 * The participant describes the path of the stack, not a frame view: it enters the URL where the
+	 * stack sits in the display, before whatever the active frame contributes. Registration follows
+	 * the stack's attach and detach, so that a stack inside a tab contributes to the address exactly
+	 * while its tab is shown.
+	 * </p>
+	 */
+	private void installRouteParticipant() {
+		if (_scope.frameRoutes().isEmpty()) {
+			// The stack declares no addressable frame: its path is display state only.
+			return;
+		}
+		RouteManager routeManager = getReactContext().getRouteManager();
+		if (routeManager == null) {
+			return;
+		}
+
+		TileFrameRouteParticipant participant = new TileFrameRouteParticipant(_scope, routeManager);
+		addRouteParticipant(participant);
+		addAttachListener(() -> routeManager.register(participant));
+		addDetachListener(() -> routeManager.unregister(participant));
+		addCleanupAction(participant::dispose);
+	}
+
+	/**
+	 * The active frame alone: a covered frame is rendered so that it keeps its state, but the user
+	 * does not see it, so nothing in it names a segment of the URL or takes up one.
+	 */
+	@Override
+	public List<ReactControl> visibleChildren() {
+		if (_frameControls.isEmpty()) {
+			return List.of();
+		}
+		return List.of(_frameControls.get(_frameControls.size() - 1));
 	}
 
 	/**

@@ -606,9 +606,9 @@ function kg() {
   const i = window.location.pathname, c = i.indexOf("/view/");
   if (c < 0) return;
   const o = i.substring(c + 6), f = o.indexOf("/");
-  if (f > 0 && o.substring(0, f).match(/^v[0-9a-f]+$/i)) {
-    const m = i.substring(0, c + 6) + o.substring(f + 1);
-    history.replaceState(null, "", m + window.location.search);
+  if ((f >= 0 ? o.substring(0, f) : o).match(/^v[0-9a-f]+$/i)) {
+    const m = f >= 0 ? o.substring(f + 1) : "", v = i.substring(0, c + 6) + m;
+    history.replaceState(null, "", v + window.location.search);
   }
 }
 function Fg() {

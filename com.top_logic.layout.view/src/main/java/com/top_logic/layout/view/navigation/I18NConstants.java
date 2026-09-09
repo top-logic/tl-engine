@@ -57,6 +57,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_UNKNOWN_CHANNEL__CHANNEL_VIEW;
 
+	/**
+	 * @en The object cannot be displayed.
+	 */
+	public static ResKey ERROR_CANNOT_SHOW_OBJECT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

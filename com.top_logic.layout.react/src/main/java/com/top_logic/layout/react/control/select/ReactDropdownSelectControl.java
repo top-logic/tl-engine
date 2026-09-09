@@ -34,6 +34,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -54,6 +55,12 @@ import com.top_logic.util.Resources;
  * Extends {@link ReactFormFieldControl} to automatically observe model changes (value, editability,
  * mandatory, visibility, errors) and push incremental patches to the client via SSE.
  * </p>
+ *
+ * <p>
+ * A field that only displays its value offers each selected object as a link to the place the
+ * application displays it at, so a reference read in a form or a table cell leads to what it refers
+ * to.
+ * </p>
  */
 public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
@@ -73,10 +80,26 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	private static final String OPT_IMAGE = "image";
 
+	/**
+	 * Descriptor field marking an option that leads to the place the application displays it at.
+	 *
+	 * <p>
+	 * Only carried by the options a read-only field displays: while the field is editable, its
+	 * chips are the handle for changing the value, not a way out of the form.
+	 * </p>
+	 */
+	private static final String OPT_LINK = "link";
+
 	// Command names.
 	private static final String CMD_LOAD_OPTIONS = "loadOptions";
 
 	private static final String CMD_SELECT_BY_KEY = "selectByKey";
+
+	/** Command sent when the user follows the link of a displayed option. */
+	private static final String CMD_GOTO = "goto";
+
+	/** Argument of {@link #CMD_GOTO}: the {@link #OPT_VALUE} of the option to display. */
+	private static final String ARG_OPTION = "option";
 
 	private final SelectFieldModel _selectModel;
 
@@ -386,15 +409,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			index.put(id, option);
 			reverse.put(option, id);
 
-			Map<String, Object> descriptor = new HashMap<>();
-			descriptor.put(OPT_VALUE, id);
-			descriptor.put(OPT_LABEL, _labelProvider.getLabel(option));
-
-			if (resourceProvider != null) {
-				putImage(descriptor, resourceProvider.getImage(option, Flavor.DEFAULT));
-			}
-
-			descriptors.add(descriptor);
+			descriptors.add(describe(id, option, resourceProvider));
 		}
 		return descriptors;
 	}
@@ -403,10 +418,16 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * Converts a list of selected options to descriptors. Uses the existing
 	 * {@link #_optionIdByObject} map for IDs when available (after {@code loadOptions}), falling
 	 * back to freshly allocated IDs for the initial render.
+	 *
+	 * <p>
+	 * These are the options the field displays as its value, so they are the ones that carry
+	 * {@link #OPT_LINK}.
+	 * </p>
 	 */
 	private List<Map<String, Object>> toOptionDescriptors(List<?> options) {
 		List<Map<String, Object>> descriptors = new ArrayList<>(options.size());
 		ResourceProvider resourceProvider = toResourceProvider(_labelProvider);
+		ObjectNavigator navigator = _selectModel.isEditable() ? null : navigator();
 
 		for (Object option : options) {
 			String id = _optionIdByObject.get(option);
@@ -416,17 +437,47 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 				_optionIdByObject.put(option, id);
 			}
 
-			Map<String, Object> descriptor = new HashMap<>();
-			descriptor.put(OPT_VALUE, id);
-			descriptor.put(OPT_LABEL, _labelProvider.getLabel(option));
-
-			if (resourceProvider != null) {
-				putImage(descriptor, resourceProvider.getImage(option, Flavor.DEFAULT));
+			Map<String, Object> descriptor = describe(id, option, resourceProvider);
+			if (navigator != null && navigator.canShow(option)) {
+				descriptor.put(OPT_LINK, Boolean.TRUE);
 			}
-
 			descriptors.add(descriptor);
 		}
 		return descriptors;
+	}
+
+	/**
+	 * The descriptor telling the client what one option looks like.
+	 */
+	private Map<String, Object> describe(String id, Object option, ResourceProvider resourceProvider) {
+		Map<String, Object> descriptor = new HashMap<>();
+		descriptor.put(OPT_VALUE, id);
+		descriptor.put(OPT_LABEL, _labelProvider.getLabel(option));
+
+		if (resourceProvider != null) {
+			putImage(descriptor, resourceProvider.getImage(option, Flavor.DEFAULT));
+		}
+		return descriptor;
+	}
+
+	private ObjectNavigator navigator() {
+		ReactContext context = getReactContext();
+		return context == null ? null : context.getObjectNavigator();
+	}
+
+	/**
+	 * Displays the option the user followed the link of, where the application displays objects of
+	 * its type.
+	 */
+	@ReactCommandHandler(value = CMD_GOTO, params = @ReactParam(name = ARG_OPTION, required = true,
+		description = "Id of the displayed option to lead to (from the value descriptors)."))
+	HandlerResult handleGoto(ReactContext context, Map<String, Object> arguments) {
+		Object option = _optionIndex.get(arguments.get(ARG_OPTION));
+		ObjectNavigator navigator = navigator();
+		if (option != null && navigator != null && navigator.canShow(option)) {
+			navigator.show(context, option);
+		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

@@ -20,6 +20,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.navigation.DisplayTargetNavigator;
 import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.slot.SlotPath;
 import com.top_logic.layout.view.slot.SlotRegistry;
@@ -284,6 +285,20 @@ public class DefaultViewContext implements ViewContext {
 	@Override
 	public com.top_logic.layout.react.routing.RouteManager getRouteManager() {
 		return _reactContext.getRouteManager();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Answered here rather than delegated: a view displays the application's business objects, so
+	 * every context derived from a view context leads to them, whatever plain
+	 * {@link ReactContext} it was built on.
+	 * </p>
+	 */
+	@Override
+	public com.top_logic.layout.react.navigation.ObjectNavigator getObjectNavigator() {
+		return DisplayTargetNavigator.INSTANCE;
 	}
 
 	@Override

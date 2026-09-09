@@ -58,12 +58,19 @@ public class ShowObjectAction extends InterruptibleViewAction {
 	}
 
 	/**
+	 * Creates a {@link ShowObjectAction}.
+	 */
+	public ShowObjectAction() {
+		// Where an object is displayed is declared by the application's display targets, so this
+		// action has nothing to configure.
+	}
+
+	/**
 	 * Creates a new {@link ShowObjectAction} from configuration.
 	 */
 	@CalledByReflection
 	public ShowObjectAction(InstantiationContext context, Config config) {
-		// Where an object is displayed is declared by the application's display targets, so this
-		// action has nothing to configure.
+		this();
 	}
 
 	@Override

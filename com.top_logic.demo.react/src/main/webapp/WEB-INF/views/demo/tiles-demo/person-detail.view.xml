@@ -5,6 +5,10 @@
 	Person on the pre-registered "person" channel (no <bind> needed - the
 	tile-stack registers the captured param value before this view's controls
 	are created). Derives the Person's contact for the form below.
+	
+	The second tab pushes yet another detail frame, which makes the state a covered
+	frame keeps observable: coming back to this frame shows the tab that was
+	selected, the row that was selected in it and the values being edited.
 -->
 <view>
 	<channels>
@@ -13,18 +17,68 @@
 			expr="p -> if($p != null, $p.get(`tl.accounts:Person#contact`), null)"
 			inputs="person"
 		/>
+		<channel name="otherPerson"/>
 	</channels>
 
-	<panel>
-		<title>
-			<en>Person Detail</en>
-			<de>Personendetails</de>
-		</title>
-		<form input="contact">
-			<field attribute="firstname"/>
-			<field attribute="name"/>
-			<field attribute="phone"/>
-			<field attribute="email"/>
-		</form>
-	</panel>
+	<tab-bar active-tab="contact">
+		<tabs>
+			<tab id="contact"
+				icon="css:bi bi-person-vcard"
+			>
+				<label>
+					<en>Contact</en>
+					<de>Kontakt</de>
+				</label>
+				<panel>
+					<title>
+						<en>Person Detail</en>
+						<de>Personendetails</de>
+					</title>
+					<form input="contact">
+						<field attribute="firstname"/>
+						<field attribute="name"/>
+						<field attribute="phone"/>
+						<field attribute="email"/>
+					</form>
+				</panel>
+			</tab>
+			<tab id="accounts"
+				icon="css:bi bi-people"
+			>
+				<label>
+					<en>Other accounts</en>
+					<de>Weitere Konten</de>
+				</label>
+				<panel fill="true">
+					<title>
+						<en>Other accounts</en>
+						<de>Weitere Konten</de>
+					</title>
+					<commands>
+						<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+							bind-input-to="person"
+							input="otherPerson"
+							placement="TOOLBAR"
+							view="demo/tiles-demo/person-detail.view.xml"
+						>
+							<label>
+								<en>Open</en>
+								<de>Öffnen</de>
+							</label>
+							<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+								expr="p -> $p.get(`tl.accounts:Person#name`)"
+								inputs="otherPerson"
+							/>
+						</command>
+					</commands>
+					<table
+						selection="otherPerson"
+						types="tl.accounts:Person"
+					>
+						<rows>all(`tl.accounts:Person`)</rows>
+					</table>
+				</panel>
+			</tab>
+		</tabs>
+	</tab-bar>
 </view>

@@ -32,9 +32,10 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * </p>
  *
  * <p>
- * Only the top frame is rendered. When the path is empty, the
- * {@link Config#getInitial() initial} view is shown. Each mounted frame gets its own isolated
- * channel namespace and a {@link TileStackScope} reachable for descendants so that nested
+ * The frame at the end of the path is the one displayed; when the path is empty, that is the
+ * {@link Config#getInitial() initial} view. The frames it covers stay as the user left them, so
+ * navigating back to one displays it again instead of building it anew. Each frame gets its own
+ * isolated channel namespace and a {@link TileStackScope} reachable for descendants so that nested
  * commands can push further frames without explicit configuration.
  * </p>
  *

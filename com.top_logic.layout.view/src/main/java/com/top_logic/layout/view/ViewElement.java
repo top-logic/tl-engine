@@ -201,7 +201,7 @@ public class ViewElement implements UIElement {
 		for (ParamBindingConfig binding : _paramBindings) {
 			ViewChannel channel = context.resolveChannel(new ChannelRef(binding.getChannel()));
 			ParamBindingParticipant participant = new ParamBindingParticipant(
-				binding.getRouteParam(), channel);
+				binding.getPrefix(), binding.getRouteParam(), channel);
 			result.add(participant);
 		}
 		return result;

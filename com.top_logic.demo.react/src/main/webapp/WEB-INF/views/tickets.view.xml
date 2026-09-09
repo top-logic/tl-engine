@@ -3,11 +3,12 @@
 <!--
 	Object list demo, and the demo of a model object carried in the URL:
 	the ticketId channel maps the selected ticket onto its identifier and back, and
-	<param-bindings> puts that identifier into the address bar as a path segment below the
-	sidebar item, so selecting a ticket yields /view/tickets/<id>, opening such a link
-	selects the ticket, and browser back/forward walks the selection history. An identifier
-	of a ticket that no longer exists resolves to no object, and the segment leaves the
-	address bar again.
+	<param-bindings> puts that identifier into the address bar below the sidebar item, behind
+	the static prefix segment naming what it identifies, so selecting a ticket yields
+	/view/tickets/ticket/<id>, opening such a link selects the ticket, and browser
+	back/forward walks the selection history. The identifier is percent-encoded, so its
+	characters cannot break the path. An identifier of a ticket that no longer exists resolves
+	to no object, and the prefix and the segment leave the address bar again.
 -->
 <view>
 	<channels>
@@ -22,6 +23,7 @@
 	<param-bindings>
 		<bind
 			channel="ticketId"
+			prefix="ticket"
 			route-param="ticket"
 		/>
 	</param-bindings>

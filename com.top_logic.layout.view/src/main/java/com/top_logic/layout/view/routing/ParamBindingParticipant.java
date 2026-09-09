@@ -7,6 +7,7 @@ package com.top_logic.layout.view.routing;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.layout.react.routing.RouteChangeListener;
 import com.top_logic.layout.react.routing.RouteMatch;
@@ -24,6 +25,13 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * configured. The participant listens to the bound channel for forward propagation (selection to
  * URL) and accepts route activation for backward propagation (deep-link to selection).
  * </p>
+ *
+ * <p>
+ * The route the binding occupies is a single value segment, optionally preceded by the static
+ * segments of a prefix. The segment is produced by the same {@link RoutePattern} that matches it, so
+ * the value is percent-encoded on its way into the URL and decoded on its way back, and the prefix
+ * appears exactly when there is a value to introduce.
+ * </p>
  */
 public class ParamBindingParticipant implements RoutingParticipant {
 
@@ -36,7 +44,7 @@ public class ParamBindingParticipant implements RoutingParticipant {
 	private final List<RouteChangeListener> _listeners = new ArrayList<>();
 
 	/**
-	 * Creates a new {@link ParamBindingParticipant}.
+	 * Creates a new {@link ParamBindingParticipant} whose route is the value segment alone.
 	 *
 	 * @param routeParamName
 	 *        The route parameter name (e.g., "companyId").
@@ -44,9 +52,24 @@ public class ParamBindingParticipant implements RoutingParticipant {
 	 *        The view channel bound to this parameter.
 	 */
 	public ParamBindingParticipant(String routeParamName, ViewChannel channel) {
+		this(null, routeParamName, channel);
+	}
+
+	/**
+	 * Creates a new {@link ParamBindingParticipant}.
+	 *
+	 * @param prefix
+	 *        Static path segments placed in front of the value, or {@code null} for a route that is
+	 *        the value segment alone.
+	 * @param routeParamName
+	 *        The route parameter name (e.g., "companyId").
+	 * @param channel
+	 *        The view channel bound to this parameter.
+	 */
+	public ParamBindingParticipant(String prefix, String routeParamName, ViewChannel channel) {
 		_routeParamName = routeParamName;
 		_channel = channel;
-		_pattern = RoutePattern.compile(":" + routeParamName, routeParamName);
+		_pattern = RoutePattern.compile(pattern(prefix, routeParamName), routeParamName);
 
 		// Listen to channel changes (forward: selection -> URL). A cleared channel is reported as
 		// well, so that the segment leaves the address bar with the value it described.
@@ -98,12 +121,23 @@ public class ParamBindingParticipant implements RoutingParticipant {
 	/**
 	 * The segment describing the given channel value, or {@code null} if the value contributes none.
 	 */
-	private static RouteSegment segment(Object value) {
+	private RouteSegment segment(Object value) {
 		if (value == null) {
 			return null;
 		}
 		String path = value.toString();
-		return path.isEmpty() ? null : new RouteSegment(path);
+		if (path.isEmpty()) {
+			return null;
+		}
+		return new RouteSegment(_pattern.produce(Map.of(_routeParamName, path)));
+	}
+
+	/**
+	 * The pattern string for the given prefix and parameter name.
+	 */
+	private static String pattern(String prefix, String routeParamName) {
+		String param = RoutePattern.PARAM_PREFIX + routeParamName;
+		return prefix == null || prefix.isEmpty() ? param : prefix + '/' + param;
 	}
 
 	@Override

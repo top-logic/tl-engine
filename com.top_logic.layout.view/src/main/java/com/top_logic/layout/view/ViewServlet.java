@@ -118,7 +118,7 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		String routePath = extractRoutePath(pathInfo, windowName);
+		String routePath = extractRoutePath(rawPathInfo(request), windowName);
 		if (PendingSessionAction.consumeSessionSwapped(session)) {
 			// A login or logout has just replaced the session, and the redirect it sent still names
 			// the page the previous user had navigated to. Whoever takes the session over begins
@@ -410,6 +410,11 @@ public class ViewServlet extends TopLogicServlet {
 	 * (i.e. does not end with {@code .view.xml}).
 	 * </p>
 	 *
+	 * @param pathInfo
+	 *        The path below the servlet, with its segments percent-encoded - see
+	 *        {@link #rawPathInfo(HttpServletRequest)}.
+	 * @param windowName
+	 *        The window name occupying the first segment.
 	 * @return The route path without leading slash, or {@code null} if no route is present.
 	 */
 	private String extractRoutePath(String pathInfo, String windowName) {
@@ -432,6 +437,37 @@ public class ViewServlet extends TopLogicServlet {
 			return null;
 		}
 		return afterWindow;
+	}
+
+	/**
+	 * The path below the servlet in the form the browser requested it, with the percent-encoding of
+	 * its segments intact.
+	 *
+	 * <p>
+	 * A route carries values whose characters have a meaning in a URL, a slash above all, so the
+	 * route is read in encoded form: the segments of the request URI are the ones the route pattern
+	 * matches, and only the value a parameter captures is decoded.
+	 * {@link HttpServletRequest#getPathInfo()} delivers the path already decoded by the servlet
+	 * container, where such a value is indistinguishable from the segments around it - and where the
+	 * URL a back navigation sends as a {@code navigateToRoute} command, which is the encoded one,
+	 * would resolve differently than the same URL entered into the address bar.
+	 * </p>
+	 *
+	 * @param request
+	 *        The request being served.
+	 * @return The path below the context and servlet path, starting with a slash, or {@code null}
+	 *         for a request that names none.
+	 */
+	private static String rawPathInfo(HttpServletRequest request) {
+		String uri = request.getRequestURI();
+		String servletUrl = request.getContextPath() + request.getServletPath();
+		if (!uri.startsWith(servletUrl)) {
+			// The context or servlet path itself is encoded in the URI, so the path below it cannot
+			// be cut off by length. Such an application has no place to put an encoded route.
+			return request.getPathInfo();
+		}
+		String pathInfo = uri.substring(servletUrl.length());
+		return pathInfo.isEmpty() ? null : pathInfo;
 	}
 
 	/**

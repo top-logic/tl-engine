@@ -8,7 +8,6 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -40,6 +39,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ObservableTreeModel;
+import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
@@ -319,7 +319,7 @@ public class TreeElement implements UIElement {
 		}
 
 		// 7. Create ObservableTreeModel to forward model changes to the tree control.
-		Set<TLStructuredType> observedTypes = resolveObservedTypes();
+		Set<TLStructuredType> observedTypes = ObservedTypes.resolve(_config.getObservedTypes());
 		QueryExecutor rootExec = _rootExecutor;
 		ObservableTreeModel observableModel = new ObservableTreeModel(
 			treeControl,
@@ -395,22 +395,6 @@ public class TreeElement implements UIElement {
 			return Collections.emptyList();
 		}
 		return Collections.singletonList(result);
-	}
-
-	private Set<TLStructuredType> resolveObservedTypes() {
-		List<TLModelPartRef> refs = _config.getObservedTypes();
-		if (refs == null || refs.isEmpty()) {
-			return Set.of();
-		}
-		Set<TLStructuredType> types = new HashSet<>();
-		for (TLModelPartRef ref : refs) {
-			TLStructuredType type = (TLStructuredType) ref.resolveType();
-			if (type == null) {
-				throw new RuntimeException("Failed to resolve observed type: " + ref.qualifiedName());
-			}
-			types.add(type);
-		}
-		return types;
 	}
 
 }

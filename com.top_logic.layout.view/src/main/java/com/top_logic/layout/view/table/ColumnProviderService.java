@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.CalledByReflection;
@@ -178,9 +179,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 */
 	public Column<Object, ?> createColumn(String attribute, ResKey label, TLStructuredTypePart part,
 			ColumnFilter<String> customFilter) {
-		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
-			.label(label)
-			.renderer(value -> displayContent(part, value))
+		return valueColumn(attribute, label, part, row -> attributeValue(row, attribute))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(byLabel(customFilter))
 			.build();
@@ -333,9 +332,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 */
 	private static <V> Column<Object, V> typedColumn(String attribute, ResKey label, TLStructuredTypePart part,
 			Class<V> valueType, Comparator<V> comparator, ColumnFilter<V> filter) {
-		return DefaultColumn.<Object, V> builder(attribute, row -> typedValue(row, attribute, valueType))
-			.label(label)
-			.renderer(value -> displayContent(part, value))
+		return valueColumn(attribute, label, part, row -> typedValue(row, attribute, valueType))
 			.sort(() -> comparator)
 			.filter(filter)
 			.build();
@@ -356,9 +353,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		for (TLClassifier classifier : enumeration.getClassifiers()) {
 			options.add(new Option(classifier, TLModelNamingConvention.resourceKey(classifier)));
 		}
-		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
-			.label(label)
-			.renderer(value -> displayContent(part, value))
+		return valueColumn(attribute, label, part, row -> attributeValue(row, attribute))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(new OptionsColumnFilter<>(options))
 			.build();
@@ -368,12 +363,33 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * The fallback column: sorts and text-filters by the cell's display label.
 	 */
 	private static Column<Object, Object> labelColumn(String attribute, ResKey label, TLStructuredTypePart part) {
-		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
-			.label(label)
-			.renderer(value -> displayContent(part, value))
+		return valueColumn(attribute, label, part, row -> attributeValue(row, attribute))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(new TextColumnFilter<>(ColumnProviderService::label))
 			.build();
+	}
+
+	/**
+	 * A column over an attribute value, displayed and searched consistently: the cell shows the
+	 * attribute's {@link #displayContent(TLStructuredTypePart, Object) form display}, and the
+	 * free-text search examines the {@link #label(Object) display label} of the same value.
+	 *
+	 * <p>
+	 * The two belong together: a form display is a control, which carries no text of its own, so a
+	 * column built from it takes part in a search only through the label. Every column this service
+	 * builds goes through here, so that showing a value and finding it never come apart.
+	 * </p>
+	 *
+	 * @param value
+	 *        Reads the cell value from a row.
+	 * @return The builder, for the caller to add the column's sort and filter capabilities.
+	 */
+	private static <V> DefaultColumn.Builder<Object, V> valueColumn(String attribute, ResKey label,
+			TLStructuredTypePart part, Function<Object, V> value) {
+		return DefaultColumn.<Object, V> builder(attribute, value)
+			.label(label)
+			.renderer(cellValue -> displayContent(part, cellValue))
+			.searchText(ColumnProviderService::label);
 	}
 
 	/**

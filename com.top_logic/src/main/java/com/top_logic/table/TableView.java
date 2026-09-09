@@ -127,6 +127,18 @@ public interface TableView<R> {
 	void applyNamedFilter(String id);
 
 	/**
+	 * Whether this table keeps {@link NamedFilter}s of the user's own, so that
+	 * {@link #saveNamedFilter(String)} saves one and {@link #deleteNamedFilter(String)} deletes
+	 * one.
+	 *
+	 * <p>
+	 * A UI asks this before offering to save a filter: a table without a place to keep them offers
+	 * only the {@link NamedFilter.Origin#DECLARED declared} ones.
+	 * </p>
+	 */
+	boolean savesNamedFilters();
+
+	/**
 	 * Saves the current column filters and search term as a {@link NamedFilter} of the user's own,
 	 * under the given name.
 	 *

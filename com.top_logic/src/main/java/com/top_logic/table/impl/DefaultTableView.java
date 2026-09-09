@@ -523,8 +523,13 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	@Override
+	public boolean savesNamedFilters() {
+		return _filterStore != null && _id != null;
+	}
+
+	@Override
 	public NamedFilter saveNamedFilter(String name) {
-		if (_filterStore == null || _id == null) {
+		if (!savesNamedFilters()) {
 			return null;
 		}
 		NamedFilter previous = savedFilterNamed(name);
@@ -543,7 +548,7 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	@Override
 	public void deleteNamedFilter(String id) {
-		if (_filterStore == null || _id == null) {
+		if (!savesNamedFilters()) {
 			return;
 		}
 		// Only the user's own filters are held here, so a declared one is not found and stays.

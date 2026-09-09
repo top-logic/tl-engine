@@ -42,7 +42,20 @@ const I18N_KEYS = {
   'js.table.freezeSplitter': 'Drag to choose the columns that stay in place while scrolling',
   'js.table.filter': 'Filter',
   'js.table.columns': 'Columns',
+  'js.table.search': 'Search',
+  'js.table.searchHint': 'Search the displayed columns',
+  'js.table.clearFilter': 'Show all rows again',
+  'js.table.saveFilter': 'Save this filter',
+  'js.table.filterName': 'Filter name',
+  'js.table.deleteFilter': 'Delete this filter',
+  'js.table.cancelSave': 'Do not save',
 };
+
+/**
+ * Debounce for sending a typed search term: long enough to coalesce a burst of keystrokes into one
+ * round-trip, short enough that the rows follow the typing. Enter sends the term at once.
+ */
+const SEARCH_DEBOUNCE_MS = 300;
 
 interface ColumnState {
   name: string;
@@ -53,6 +66,13 @@ interface ColumnState {
   sortPriority?: number;
   filterable?: boolean;
   filterActive?: boolean;
+}
+
+/** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
+interface NamedFilterState {
+  id: string;
+  label: string;
+  deletable: boolean;
 }
 
 interface RowState {
@@ -180,6 +200,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
   const columnSelect = (state.columnSelect as boolean) ?? false;
+  const filterBar = (state.filterBar as boolean) ?? false;
+  const namedFilters = (state.namedFilters as NamedFilterState[]) ?? [];
+  const activeNamedFilter = (state.activeNamedFilter as string) ?? '';
+  const serverSearch = (state.search as string) ?? '';
+  const filterSaving = (state.filterSaving as boolean) ?? false;
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -693,6 +718,90 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('openColumnSelect', {});
   }, [sendCommand]);
 
+  // -- Filter bar: named filters, the cross-column search, saving the current criteria. --
+
+  // The typed term is held locally while a send is pending: the input stays responsive between
+  // round-trips, and the echoed server state cannot move the caret while the user is still typing.
+  const [searchDraft, setSearchDraft] = React.useState(serverSearch);
+  const searchPendingRef = React.useRef(false);
+  const searchTimeoutRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    if (!searchPendingRef.current) {
+      setSearchDraft(serverSearch);
+    }
+  }, [serverSearch]);
+
+  React.useEffect(() => () => {
+    if (searchTimeoutRef.current !== null) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+  }, []);
+
+  const sendSearch = React.useCallback((term: string) => {
+    if (searchTimeoutRef.current !== null) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+    searchPendingRef.current = false;
+    sendCommand('search', { term });
+  }, [sendCommand]);
+
+  const handleSearchChange = React.useCallback((term: string) => {
+    setSearchDraft(term);
+    searchPendingRef.current = true;
+    if (searchTimeoutRef.current !== null) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = window.setTimeout(() => sendSearch(term), SEARCH_DEBOUNCE_MS);
+  }, [sendSearch]);
+
+  const handleSearchKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      // Sends the term without waiting out the pause; the scope default must not also fire.
+      event.preventDefault();
+      sendSearch(event.currentTarget.value);
+    }
+  }, [sendSearch]);
+
+  // Clicking a chip applies its criteria; clicking the active one withdraws them, so the chip
+  // reads as a switch rather than as a command that can only be undone elsewhere.
+  const handleNamedFilter = React.useCallback((id: string) => {
+    if (id === activeNamedFilter) {
+      sendCommand('clearFilter', {});
+    } else {
+      sendCommand('applyNamedFilter', { id });
+    }
+  }, [activeNamedFilter, sendCommand]);
+
+  const handleDeleteNamedFilter = React.useCallback((id: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    sendCommand('deleteNamedFilter', { id });
+  }, [sendCommand]);
+
+  // The name being typed for a filter to save; null while the save affordance is a plain button.
+  const [saveName, setSaveName] = React.useState<string | null>(null);
+
+  const handleSaveSubmit = React.useCallback(() => {
+    const name = (saveName ?? '').trim();
+    if (!name) {
+      return;
+    }
+    sendCommand('saveNamedFilter', { filterName: name });
+    setSaveName(null);
+  }, [saveName, sendCommand]);
+
+  const handleSaveKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleSaveSubmit();
+    } else if (event.key === 'Escape') {
+      // Stops the enclosing dialog/window from reading the Escape as "close me".
+      event.preventDefault();
+      setSaveName(null);
+    }
+  }, [handleSaveSubmit]);
+
   // -- Computed values --
   const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
     + (isMulti ? checkboxWidth : 0);
@@ -745,6 +854,105 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       }}
       onDrop={handleDrop}
     >
+      {/* Filter bar above the headings: the named criteria as chips, the cross-column search, and
+          saving the current criteria under a name. Outside both scrollers, so it neither scrolls
+          with the columns nor takes part in the header/body width alignment. */}
+      {filterBar && (
+        <div className="tlTableView__filterBar">
+          {namedFilters.length > 0 && (
+            <div className="tlTableView__filterChips">
+              {namedFilters.map((named) => {
+                const isActive = named.id === activeNamedFilter;
+                return (
+                  <span
+                    key={named.id}
+                    className={'tlTableView__chip' + (isActive ? ' tlTableView__chip--active' : '')}
+                  >
+                    <button
+                      type="button"
+                      className="tlTableView__chipLabel"
+                      aria-pressed={isActive}
+                      title={isActive ? i18n['js.table.clearFilter'] : named.label}
+                      onClick={() => handleNamedFilter(named.id)}
+                    >
+                      {named.label}
+                    </button>
+                    {/* Only a filter of the user's own can be deleted; a declared one is part of
+                        the table and offers no remove affordance. */}
+                    {named.deletable && (
+                      <button
+                        type="button"
+                        className="tlTableView__chipRemove"
+                        title={i18n['js.table.deleteFilter']}
+                        aria-label={i18n['js.table.deleteFilter']}
+                        onClick={(e) => handleDeleteNamedFilter(named.id, e)}
+                      >
+                        &times;
+                      </button>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          <div className="tlTableView__search" title={i18n['js.table.searchHint']}>
+            <i className="bi bi-search" aria-hidden="true" />
+            <input
+              type="search"
+              className="tlTableView__searchInput"
+              placeholder={i18n['js.table.search']}
+              aria-label={i18n['js.table.searchHint']}
+              value={searchDraft}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+            />
+          </div>
+          {filterSaving && (saveName === null ? (
+            <button
+              type="button"
+              className="tlTableView__barButton"
+              title={i18n['js.table.saveFilter']}
+              aria-label={i18n['js.table.saveFilter']}
+              onClick={() => setSaveName('')}
+            >
+              <i className="bi bi-bookmark-plus" />
+            </button>
+          ) : (
+            <div className="tlTableView__saveForm">
+              <input
+                type="text"
+                className="tlTableView__saveInput"
+                autoFocus
+                placeholder={i18n['js.table.filterName']}
+                aria-label={i18n['js.table.filterName']}
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                onKeyDown={handleSaveKeyDown}
+              />
+              <button
+                type="button"
+                className="tlTableView__barButton"
+                title={i18n['js.table.saveFilter']}
+                aria-label={i18n['js.table.saveFilter']}
+                disabled={!saveName.trim()}
+                onClick={handleSaveSubmit}
+              >
+                <i className="bi bi-check-lg" />
+              </button>
+              <button
+                type="button"
+                className="tlTableView__barButton"
+                title={i18n['js.table.cancelSave']}
+                aria-label={i18n['js.table.cancelSave']}
+                onClick={() => setSaveName(null)}
+              >
+                <i className="bi bi-x-lg" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Header, plus the column selection sitting above the body's vertical scrollbar */}
       <div className="tlTableView__headerArea" ref={headerAreaRef}>
       <div className="tlTableView__header" ref={headerRef}>

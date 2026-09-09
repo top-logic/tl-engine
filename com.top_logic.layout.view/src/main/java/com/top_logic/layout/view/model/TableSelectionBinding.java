@@ -10,6 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.react.control.table.TableViewControl.SelectionListener;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.table.Row;
 
@@ -52,6 +53,8 @@ public class TableSelectionBinding {
 
 	private final ViewChannel.ChannelListener _channelListener;
 
+	private final SelectionListener _selectionListener = this::handleSelectionChanged;
+
 	/** Whether a channel value is currently being applied, so the table's echo is not written back. */
 	private boolean _applyingFromChannel;
 
@@ -70,7 +73,7 @@ public class TableSelectionBinding {
 		_table = table;
 		_channel = channel;
 
-		table.setSelectionListener(this::handleSelectionChanged);
+		table.addSelectionListener(_selectionListener);
 		_channelListener = (sender, oldValue, newValue) -> applyChannelValue();
 		channel.addListener(_channelListener);
 
@@ -113,7 +116,7 @@ public class TableSelectionBinding {
 	 */
 	public void dispose() {
 		_channel.removeListener(_channelListener);
-		_table.setSelectionListener(null);
+		_table.removeSelectionListener(_selectionListener);
 	}
 
 	/**

@@ -451,7 +451,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Set panel child to the table.
 		putState("child", _tableControl);
 
-		_tableControl.setSelectionListener(this::handleSelectionChanged);
+		_tableControl.addSelectionListener(this::handleSelectionChanged);
 		reapplySelectionFromChannel();
 
 		// Let each column contribute any per-session UI (e.g. a custom filter dialog).

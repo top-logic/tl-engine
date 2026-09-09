@@ -390,7 +390,7 @@ public class TableElement implements UIElement {
 			// as the table's selection. The guard breaks the notification cycle between the two
 			// directions.
 			boolean[] applyingFromChannel = {false};
-			control.setSelectionListener(selectedKeys -> {
+			control.addSelectionListener(selectedKeys -> {
 				if (applyingFromChannel[0]) {
 					return;
 				}

@@ -138,7 +138,7 @@ public class RecordedStepsTable implements UIElement {
 		}
 		ViewChannel selection = context.resolveChannel(_selectionRef);
 		boolean[] updating = { false };
-		control.setSelectionListener(selectedKeys -> {
+		control.addSelectionListener(selectedKeys -> {
 			if (updating[0]) {
 				return;
 			}

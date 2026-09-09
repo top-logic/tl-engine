@@ -27,6 +27,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DirtyChannel;
@@ -180,6 +181,13 @@ public class TabBarElement implements UIElement {
 	private static String label(TabEntry entry) {
 		String label = Resources.getInstance().getString(entry._label, null);
 		return StringServices.isEmpty(label) ? entry._id : label;
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return _tabs.stream()
+			.map(tab -> ChildGroup.keyed(tab._id(), tab._children()))
+			.collect(Collectors.toList());
 	}
 
 	@Override

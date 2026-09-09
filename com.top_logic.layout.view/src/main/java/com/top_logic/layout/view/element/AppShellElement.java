@@ -24,6 +24,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.nav.ReactAppShellControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CommandScope;
@@ -122,6 +123,15 @@ public class AppShellElement implements UIElement {
 		if (_content.isEmpty()) {
 			context.error("AppShell element must have a content element.");
 		}
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(
+			ChildGroup.elements(_header),
+			ChildGroup.elements(_notices),
+			ChildGroup.elements(_content),
+			ChildGroup.elements(_footer));
 	}
 
 	@Override

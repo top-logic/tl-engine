@@ -34,6 +34,7 @@ import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirectio
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl.AppBarVariant;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -202,6 +203,14 @@ public class AppBarElement implements UIElement {
 		for (PolymorphicConfiguration<? extends UIElement> trailingConfig : config.getTrailing()) {
 			_trailing.add(context.getInstance(trailingConfig));
 		}
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(
+			ChildGroup.elements(_leading),
+			ChildGroup.elements(_children),
+			ChildGroup.elements(_trailing));
 	}
 
 	@Override

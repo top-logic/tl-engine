@@ -1,0 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+/**
+ * Locating the views of an application within its root view.
+ *
+ * <p>
+ * {@link com.top_logic.layout.view.navigation.ViewMounts} scans the configuration reachable from a
+ * root view and answers, for each view file, the
+ * {@link com.top_logic.layout.view.navigation.MountPath places} it is displayed at. A place is a
+ * sequence of {@link com.top_logic.layout.view.navigation.MountStep steps}, each naming a container
+ * that chooses between its content groups (a sidebar, a tab bar, a master-detail element, a tile
+ * stack) and the key of the group to display.
+ * </p>
+ *
+ * <p>
+ * The scan reads the shared element tree through
+ * {@link com.top_logic.layout.view.UIElement#getChildGroups()}, so it also covers the containers
+ * that create their content only when it is first displayed and whose mounts are consequently
+ * absent from a session's control tree.
+ * </p>
+ */
+package com.top_logic.layout.view.navigation;

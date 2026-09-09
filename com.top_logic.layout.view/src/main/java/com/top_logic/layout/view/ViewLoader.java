@@ -45,6 +45,35 @@ public class ViewLoader {
 	/** Base path for view XML files within the webapp. */
 	public static final String VIEW_BASE_PATH = "/WEB-INF/views/";
 
+	/**
+	 * The full path of a view file referenced from configuration.
+	 *
+	 * @param viewRef
+	 *        Path of the view file relative to {@link #VIEW_BASE_PATH}, as written in configuration
+	 *        (e.g. {@code customers/detail.view.xml}).
+	 * @return The path to load the file with (e.g. {@code /WEB-INF/views/customers/detail.view.xml}).
+	 */
+	public static String fullPath(String viewRef) {
+		return viewRef.startsWith(VIEW_BASE_PATH) ? viewRef : VIEW_BASE_PATH + stripLeadingSlash(viewRef);
+	}
+
+	/**
+	 * The path a view file is referenced by from configuration.
+	 *
+	 * @param viewPath
+	 *        Path of the view file, either full or already relative to {@link #VIEW_BASE_PATH}.
+	 * @return The path relative to {@link #VIEW_BASE_PATH} (e.g. {@code customers/detail.view.xml}).
+	 */
+	public static String viewRef(String viewPath) {
+		return viewPath.startsWith(VIEW_BASE_PATH)
+			? viewPath.substring(VIEW_BASE_PATH.length())
+			: stripLeadingSlash(viewPath);
+	}
+
+	private static String stripLeadingSlash(String path) {
+		return path.startsWith("/") ? path.substring(1) : path;
+	}
+
 	private static final ConcurrentHashMap<String, CachedConfig> CONFIG_CACHE = new ConcurrentHashMap<>();
 
 	private static final ConcurrentHashMap<String, CachedView> CACHE = new ConcurrentHashMap<>();
@@ -65,7 +94,7 @@ public class ViewLoader {
 	 *         if the file cannot be found or parsed.
 	 */
 	public static ViewElement.Config getOrLoadConfig(String viewPath) throws ConfigurationException {
-		long currentModified = currentModified(viewPath);
+		long currentModified = modificationSignature(viewPath);
 
 		CachedConfig cached = CONFIG_CACHE.get(viewPath);
 		if (cached != null && cached._lastModified == currentModified) {
@@ -92,7 +121,7 @@ public class ViewLoader {
 	 *         if the file cannot be found or parsed.
 	 */
 	public static ViewElement getOrLoadView(String viewPath) throws ConfigurationException {
-		long currentModified = currentModified(viewPath);
+		long currentModified = modificationSignature(viewPath);
 
 		CachedView cached = CACHE.get(viewPath);
 		if (cached != null && cached._lastModified == currentModified) {
@@ -257,9 +286,18 @@ public class ViewLoader {
 
 	/**
 	 * A change signature over <em>all</em> module copies of the view path, so an edit to any overlay
-	 * (not just the top one) invalidates the cache.
+	 * (not just the top one) invalidates a cached result.
+	 *
+	 * <p>
+	 * A cache that derives from view files compares this signature to decide whether its entry is
+	 * still valid.
+	 * </p>
+	 *
+	 * @param viewPath
+	 *        Full path to the view file, as {@link #fullPath(String)} produces it.
+	 * @return The signature, changing whenever any copy of the file is written.
 	 */
-	private static long currentModified(String viewPath) {
+	public static long modificationSignature(String viewPath) {
 		String name = viewPath.startsWith("/") ? viewPath.substring(1) : viewPath;
 		long signature = 1L;
 		for (File root : FileManager.getInstance().getIDEPaths()) {

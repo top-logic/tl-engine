@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,7 @@ import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.table.ConfigKey;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.util.Resources;
@@ -152,6 +154,13 @@ public class WindowElement extends CommandScopeElement {
 		_actions = config.getActions().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		List<ChildGroup> result = new ArrayList<>(super.getChildGroups());
+		result.add(ChildGroup.elements(_actions));
+		return result;
 	}
 
 	@Override

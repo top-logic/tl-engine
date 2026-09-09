@@ -24,6 +24,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -179,6 +180,16 @@ public class SwitchElement implements UIElement {
 		_default = config.getDefault().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		List<ChildGroup> result = new ArrayList<>();
+		for (SwitchCase switchCase : _cases) {
+			result.add(ChildGroup.elements(switchCase._content()));
+		}
+		result.add(ChildGroup.elements(_default));
+		return result;
 	}
 
 	@Override

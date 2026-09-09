@@ -6,8 +6,10 @@
 package com.top_logic.layout.view;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -133,6 +135,24 @@ public class ViewElement implements UIElement {
 		} else {
 			_content = context.getInstance(contentConfig);
 		}
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_content));
+	}
+
+	/**
+	 * The names of the channels this view declares, in declaration order.
+	 *
+	 * <p>
+	 * These are the names a {@code <view-ref>} to this view can bind to.
+	 * </p>
+	 */
+	public Set<String> getChannelNames() {
+		return _channelEntries.stream()
+			.map(Map.Entry::getKey)
+			.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	@Override

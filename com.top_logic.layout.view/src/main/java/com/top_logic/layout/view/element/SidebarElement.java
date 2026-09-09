@@ -28,6 +28,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.util.Resources;
 import com.top_logic.layout.react.control.sidebar.DrawerToggleControl;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
@@ -134,6 +135,18 @@ public class SidebarElement implements UIElement {
 		 *         denied for the current user).
 		 */
 		SidebarItem createSidebarItem(ViewContext context);
+
+		/**
+		 * The content this item displays, keyed by the item's
+		 * {@link SidebarItemConfig#getId() id}.
+		 *
+		 * @return The group, or {@code null} for an item that displays no content of its own.
+		 *
+		 * @see UIElement#getChildGroups()
+		 */
+		default ChildGroup getChildGroup() {
+			return null;
+		}
 	}
 
 	/**
@@ -258,6 +271,11 @@ public class SidebarElement implements UIElement {
 		}
 
 		@Override
+		public ChildGroup getChildGroup() {
+			return ChildGroup.keyed(_id, _children);
+		}
+
+		@Override
 		public SidebarItem createSidebarItem(ViewContext context) {
 			if (!AccessChecks.isAccessible(_accessControl)) {
 				// Access denied for the current user: omit the navigation item entirely.
@@ -363,6 +381,18 @@ public class SidebarElement implements UIElement {
 		_activeItem = config.getActiveItem();
 		_collapsed = config.getCollapsed();
 		_drawerOpenSlotName = config.getDrawerOpenSlotName();
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		List<ChildGroup> result = new ArrayList<>();
+		for (SidebarItemElement item : _items) {
+			ChildGroup group = item.getChildGroup();
+			if (group != null) {
+				result.add(group);
+			}
+		}
+		return result;
 	}
 
 	@Override

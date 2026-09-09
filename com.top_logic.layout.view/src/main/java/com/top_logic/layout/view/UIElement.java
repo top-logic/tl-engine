@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view;
 
+import java.util.List;
+
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.layout.react.control.IReactControl;
 
@@ -55,4 +57,23 @@ public interface UIElement {
 	 *         {@link com.top_logic.layout.react.control.ReactControl}.
 	 */
 	IReactControl createControl(ViewContext context);
+
+	/**
+	 * The content this element holds according to its configuration, grouped as its container
+	 * addresses it.
+	 *
+	 * <p>
+	 * Answered without a session, so that the element tree of a view can be walked before any
+	 * control exists. Content a container only learns at runtime (a frame pushed onto a tile stack,
+	 * a row rendered per object) is not part of the answer.
+	 * </p>
+	 *
+	 * @return The groups, in configuration order. Empty for an element that holds no content of its
+	 *         own.
+	 *
+	 * @see ChildGroup
+	 */
+	default List<ChildGroup> getChildGroups() {
+		return List.of();
+	}
 }

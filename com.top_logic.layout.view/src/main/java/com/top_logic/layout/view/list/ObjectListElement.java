@@ -28,6 +28,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -266,6 +267,13 @@ public class ObjectListElement implements UIElement {
 		return content.stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(
+			ChildGroup.elements(_itemContent),
+			ChildGroup.elements(_newElementContent));
 	}
 
 	@Override

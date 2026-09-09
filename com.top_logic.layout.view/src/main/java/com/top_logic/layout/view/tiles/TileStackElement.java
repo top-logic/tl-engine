@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.tiles;
 
+import java.util.List;
+
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -14,6 +16,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -101,6 +104,11 @@ public class TileStackElement implements UIElement {
 	public TileStackElement(InstantiationContext context, Config config) {
 		_pathRef = config.getPath();
 		_initialViewRef = config.getInitial();
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.view(Config.INITIAL, _initialViewRef));
 	}
 
 	@Override

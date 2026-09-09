@@ -5,31 +5,20 @@
  */
 package test.com.top_logic.layout.view.navigation;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
-import com.top_logic.basic.config.ConfigurationDescriptor;
-import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfigurationReader;
-import com.top_logic.basic.config.DefaultInstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
-import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.AdaptiveDetailElement;
 import com.top_logic.layout.view.element.SidebarElement;
 import com.top_logic.layout.view.element.TabBarElement;
 import com.top_logic.layout.view.navigation.MountPath;
 import com.top_logic.layout.view.navigation.MountStep;
 import com.top_logic.layout.view.navigation.ViewMounts;
-import com.top_logic.layout.view.navigation.ViewResolver;
 import com.top_logic.layout.view.tiles.TileStackElement;
 
 /**
@@ -49,46 +38,13 @@ public class TestViewMounts extends TestCase {
 
 	private static final String CYCLE_B = "mounts-cycle-b.view.xml";
 
-	/**
-	 * Reads the fixture views from resources next to this test, keeping one element tree per view -
-	 * as the application's loader does, so that a view referenced twice is the same element tree in
-	 * both places.
-	 */
-	private static final class FixtureResolver implements ViewResolver {
-
-		private final Map<String, ViewElement> _views = new HashMap<>();
-
-		@Override
-		public ViewElement getView(String viewRef) throws ConfigurationException {
-			ViewElement cached = _views.get(viewRef);
-			if (cached != null) {
-				return cached;
-			}
-
-			Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
-				"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
-
-			DefaultInstantiationContext context = new DefaultInstantiationContext(TestViewMounts.class);
-			ConfigurationReader reader = new ConfigurationReader(context, descriptors);
-			reader.setSource(new ClassRelativeBinaryContent(TestViewMounts.class, viewRef));
-			ViewElement.Config config = (ViewElement.Config) reader.read();
-			context.checkErrors();
-
-			ViewElement view = (ViewElement) context.getInstance(config);
-			context.checkErrors();
-
-			_views.put(viewRef, view);
-			return view;
-		}
-	}
-
 	private ViewMounts _mounts;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		_mounts = ViewMounts.scan(ROOT, new FixtureResolver());
+		_mounts = ViewMounts.scan(ROOT, new FixtureViews());
 	}
 
 	/**
@@ -170,7 +126,7 @@ public class TestViewMounts extends TestCase {
 	 * A view reaching itself is mounted where its references put it, and the scan terminates.
 	 */
 	public void testReferenceCycle() {
-		ViewMounts cyclic = ViewMounts.scan(CYCLE_A, new FixtureResolver());
+		ViewMounts cyclic = ViewMounts.scan(CYCLE_A, new FixtureViews());
 
 		assertEquals(List.of(CYCLE_A, CYCLE_B), List.copyOf(cyclic.getMountedViews()));
 		assertEquals("Mounted as the root, and again below the view it references.",

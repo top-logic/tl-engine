@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<config xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<targets>
+		<target type="test.navigation:Special"
+			default="true"
+		>
+			<show view="mounts-shared.view.xml">
+				<bind channel="item"/>
+			</show>
+			<show view="mounts-orphan.view.xml"
+				dialog="true"
+			>
+				<label>
+					<en>Detail</en>
+				</label>
+				<bind channel="value"
+					expr="x -> $x"
+				/>
+			</show>
+		</target>
+	</targets>
+</config>

@@ -21,5 +21,14 @@
  * that create their content only when it is first displayed and whose mounts are consequently
  * absent from a session's control tree.
  * </p>
+ *
+ * <p>
+ * {@link com.top_logic.layout.view.navigation.DisplayTargetService} holds the counterpart: the
+ * {@link com.top_logic.layout.view.navigation.DisplayTarget}s declaring, per model type, which
+ * views display an object of that type and which values their channels receive. Asking
+ * {@link com.top_logic.layout.view.navigation.DisplayTargets} for a type answers the targets in
+ * preference order - the most special type first, and among equal types the one displayed nearest
+ * to where the object is offered.
+ * </p>
  */
 package com.top_logic.layout.view.navigation;

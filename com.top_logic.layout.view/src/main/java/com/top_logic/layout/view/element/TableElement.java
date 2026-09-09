@@ -49,6 +49,7 @@ import com.top_logic.layout.view.form.RowEditPolicy;
 import com.top_logic.layout.view.form.RowSetBinding;
 import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLClass;
@@ -377,62 +378,19 @@ public class TableElement implements UIElement {
 			setup.binding().installUI(setup, control);
 		}
 
-		// Reflects the selection channel's current value as the table's selection (highlighted and
-		// scrolled into view). Set when a selection channel is configured; reused after data refreshes
-		// so a row that appears only on refresh (e.g. the just-created object) still gets selected.
-		Runnable[] reapplySelection = {null};
-
 		ChannelRef selectionRef = _config.getSelection();
-		if (selectionRef != null) {
-			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			// Two-way binding: the table writes its selection to the channel, and a value written to
-			// the channel from elsewhere (e.g. a create command selecting the new object) is reflected
-			// as the table's selection. The guard breaks the notification cycle between the two
-			// directions.
-			boolean[] applyingFromChannel = {false};
-			control.setSelectionListener(selectedKeys -> {
-				if (applyingFromChannel[0]) {
-					return;
-				}
-				if (selectedKeys.size() == 1) {
-					selectionChannel.set(selectedKeys.iterator().next());
-				} else if (selectedKeys.isEmpty()) {
-					selectionChannel.set(null);
-				} else {
-					selectionChannel.set(selectedKeys);
-				}
-			});
-			reapplySelection[0] = () -> {
-				Object value = selectionChannel.get();
-				applyingFromChannel[0] = true;
-				try {
-					control.selectRow(value instanceof Collection ? null : value);
-				} finally {
-					applyingFromChannel[0] = false;
-				}
-				// The row the channel names is no longer among the rows - deleted, or filtered away
-				// by a changed input. The table has dropped it from its own selection either way
-				// (TableViewControl#refreshData), and the channel has to follow: left alone it would
-				// go on naming a row nobody can see, and everything bound to it - a detail panel, a
-				// command's executability - would go on acting on it. Written outside the guard,
-				// which is there to keep the table's own echo of this very write from bouncing back.
-				if (value != null && control.getSelectedKeys().isEmpty()) {
-					selectionChannel.set(null);
-				}
-			};
-			ViewChannel.ChannelListener channelListener = (sender, oldValue, newValue) -> reapplySelection[0].run();
-			selectionChannel.addListener(channelListener);
-			control.addCleanupAction(() -> selectionChannel.removeListener(channelListener));
+		TableSelectionBinding selectionBinding =
+			selectionRef != null ? new TableSelectionBinding(control, context.resolveChannel(selectionRef)) : null;
+		if (selectionBinding != null) {
+			control.addCleanupAction(selectionBinding::dispose);
 		}
 
-		// Refresh the rows when observed objects change or an input channel changes. After a refresh,
-		// re-apply the selection so a newly appeared row (e.g. the just-created object the selection
-		// channel already points to) is selected and scrolled into view.
+		// Refresh the rows when observed objects change or an input channel changes.
 		QueryExecutor rowsExecutor = _rowsExecutor;
 		Runnable refresh = () -> {
 			control.refreshData();
-			if (reapplySelection[0] != null) {
-				reapplySelection[0].run();
+			if (selectionBinding != null) {
+				selectionBinding.rowsRefreshed();
 			}
 		};
 		RowSourceObserver<Object> observer = new RowSourceObserver<>(

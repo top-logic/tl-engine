@@ -15,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.Logger;
@@ -229,7 +230,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/** The keyboard focus/lead row index; {@code -1} when no row has keyboard focus. */
 	private int _cursorIndex = -1;
 
-	private SelectionListener _selectionListener;
+	private final List<SelectionListener> _selectionListeners = new CopyOnWriteArrayList<>();
 
 	/** Cell controls for currently buffered rows, keyed by row key then column name. */
 	private final Map<Object, Map<String, ReactControl>> _cellCache = new LinkedHashMap<>();
@@ -265,10 +266,31 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	/**
-	 * Sets the listener notified on selection changes, or {@code null} to remove it.
+	 * Registers a listener notified on selection changes.
+	 *
+	 * <p>
+	 * All registered listeners are notified in registration order. A listener may register or
+	 * unregister listeners while being notified; such a change takes effect for subsequent
+	 * notifications.
+	 * </p>
+	 *
+	 * @param listener
+	 *        The listener to notify.
+	 *
+	 * @see #removeSelectionListener(SelectionListener)
 	 */
-	public void setSelectionListener(SelectionListener listener) {
-		_selectionListener = listener;
+	public void addSelectionListener(SelectionListener listener) {
+		_selectionListeners.add(listener);
+	}
+
+	/**
+	 * Unregisters a listener added through {@link #addSelectionListener(SelectionListener)}.
+	 *
+	 * @param listener
+	 *        The listener to stop notifying.
+	 */
+	public void removeSelectionListener(SelectionListener listener) {
+		_selectionListeners.remove(listener);
 	}
 
 	/**
@@ -315,8 +337,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Selects exactly the row with the given {@link Row#key() row key} (clearing any other selection),
 	 * or clears the selection when {@code key} is {@code null} or matches no current row. Pushes the
-	 * change to the client, scrolls the row into view and notifies the {@link #setSelectionListener
-	 * selection listener}.
+	 * change to the client, scrolls the row into view and notifies the
+	 * {@link #addSelectionListener(SelectionListener) selection listeners}.
 	 *
 	 * @param key
 	 *        The row key to select, or {@code null} to clear.
@@ -1094,8 +1116,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		_view.select(new Selection(
 			MODE_MULTI.equals(_selectionMode) ? SelectionMode.MULTI : SelectionMode.SINGLE,
 			new LinkedHashSet<>(_selectedKeys)));
-		if (_selectionListener != null) {
-			_selectionListener.selectionChanged(new LinkedHashSet<>(_selectedKeys));
+		for (SelectionListener listener : _selectionListeners) {
+			listener.selectionChanged(new LinkedHashSet<>(_selectedKeys));
 		}
 	}
 

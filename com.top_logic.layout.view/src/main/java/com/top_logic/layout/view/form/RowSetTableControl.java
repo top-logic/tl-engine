@@ -38,6 +38,7 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLClass;
@@ -147,9 +148,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** @see #setFixedColumns(int) */
 	private int _fixedColumns;
 
+	/** @see #setSelectionChannel(ViewChannel) */
 	private ViewChannel _selectionChannel;
 
-	private ViewChannel.ChannelListener _selectionChannelListener;
+	/** Binds {@link #_selectionChannel} to the current {@link #_tableControl}. */
+	private TableSelectionBinding _selectionBinding;
 
 	private Function<Object[], Collection<?>> _rowFunction;
 
@@ -162,9 +165,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private ListRowSource<TLObject> _rowSource;
 
 	private RowSourceObserver<TLObject> _observer;
-
-	/** Guard breaking the notification cycle between selection channel and table selection. */
-	private boolean _applyingFromChannel;
 
 	private final Set<Object> _selectedKeys = new java.util.LinkedHashSet<>();
 
@@ -300,17 +300,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
-	 * Binds the table's selection two-way to the given channel.
+	 * Binds the table's selection two-way to the given channel through a
+	 * {@link TableSelectionBinding}.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the binding is established for each
+	 * {@link TableViewControl} this control builds.
+	 * </p>
 	 */
 	public void setSelectionChannel(ViewChannel selectionChannel) {
-		if (_selectionChannel != null && _selectionChannelListener != null) {
-			_selectionChannel.removeListener(_selectionChannelListener);
-		}
 		_selectionChannel = selectionChannel;
-		if (_selectionChannel != null) {
-			_selectionChannelListener = (sender, oldValue, newValue) -> reapplySelectionFromChannel();
-			_selectionChannel.addListener(_selectionChannelListener);
-		}
 	}
 
 	/**
@@ -442,6 +441,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
 			_store != null ? _tableId : null, _hiddenByDefault);
 
+		disposeSelectionBinding();
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();
 		}
@@ -451,8 +451,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Set panel child to the table.
 		putState("child", _tableControl);
 
-		_tableControl.setSelectionListener(this::handleSelectionChanged);
-		reapplySelectionFromChannel();
+		_tableControl.addSelectionListener(this::handleSelectionChanged);
+		if (_selectionChannel != null) {
+			_selectionBinding = new TableSelectionBinding(_tableControl, _selectionChannel);
+		}
 
 		// Let each column contribute any per-session UI (e.g. a custom filter dialog).
 		for (ColumnSetup setup : setups) {
@@ -467,7 +469,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			_observer = new RowSourceObserver<>(_rowSource, _rowFunction, _observedTypes, _inputChannels,
 				() -> {
 					table.refreshData();
-					reapplySelectionFromChannel();
+					if (_selectionBinding != null) {
+						_selectionBinding.rowsRefreshed();
+					}
 				});
 			if (isAttached()) {
 				attachObserver();
@@ -544,28 +548,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			&& !flipped.isEmpty()) {
 			_tableControl.invalidateRowCells(flipped);
 		}
-
-		if (_selectionChannel != null && !_applyingFromChannel) {
-			if (selectedKeys.size() == 1) {
-				_selectionChannel.set(selectedKeys.iterator().next());
-			} else if (selectedKeys.isEmpty()) {
-				_selectionChannel.set(null);
-			} else {
-				_selectionChannel.set(selectedKeys);
-			}
-		}
 	}
 
-	private void reapplySelectionFromChannel() {
-		if (_selectionChannel == null || _tableControl == null) {
-			return;
-		}
-		Object value = _selectionChannel.get();
-		_applyingFromChannel = true;
-		try {
-			_tableControl.selectRow(value instanceof Collection ? null : value);
-		} finally {
-			_applyingFromChannel = false;
+	/**
+	 * Detaches the {@link TableSelectionBinding} from the table it was created for.
+	 */
+	private void disposeSelectionBinding() {
+		if (_selectionBinding != null) {
+			_selectionBinding.dispose();
+			_selectionBinding = null;
 		}
 	}
 
@@ -704,10 +695,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	@Override
 	protected void onCleanup() {
 		detachObserver();
-		if (_selectionChannel != null && _selectionChannelListener != null) {
-			_selectionChannel.removeListener(_selectionChannelListener);
-			_selectionChannelListener = null;
-		}
+		disposeSelectionBinding();
 		// The toolbar and the table itself are part of the state and are disposed with it; only the
 		// references are dropped here, so a trailing event cannot reach a torn-down control.
 		_toolbar = null;

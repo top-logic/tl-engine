@@ -24,6 +24,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.layout.view.channel.ChannelFactory;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -31,6 +32,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.routing.ParamBindingConfig;
 import com.top_logic.layout.view.routing.ParamBindingParticipant;
 import com.top_logic.layout.view.routing.QueryBindingConfig;
+import com.top_logic.layout.view.routing.QueryBindingParticipant;
 
 /**
  * The mandatory root element of every {@code .view.xml} file.
@@ -105,6 +107,9 @@ public class ViewElement implements UIElement {
 		 *
 		 * <p>
 		 * Query parameters are values from the query string (e.g., {@code ?type=foo&sort=name}).
+		 * Unlike a {@link #getParamBindings() route parameter}, a query parameter occupies no path
+		 * segment: its name identifies it, so it appears and disappears without moving anything else
+		 * in the URL, and changing it alone is no history entry.
 		 * </p>
 		 */
 		@Name(QUERY_BINDINGS)
@@ -114,6 +119,8 @@ public class ViewElement implements UIElement {
 	private final List<Map.Entry<String, ChannelFactory>> _channelEntries;
 
 	private final List<ParamBindingConfig> _paramBindings;
+
+	private final List<QueryBindingConfig> _queryBindings;
 
 	private final UIElement _content;
 
@@ -126,6 +133,7 @@ public class ViewElement implements UIElement {
 			.map(cc -> Map.entry(cc.getName(), context.getInstance(cc)))
 			.collect(Collectors.toList());
 		_paramBindings = config.getParamBindings();
+		_queryBindings = config.getQueryBindings();
 		PolymorphicConfiguration<? extends UIElement> contentConfig = config.getContent();
 		if (contentConfig == null) {
 			context.error("View element must have a content element.");
@@ -148,8 +156,8 @@ public class ViewElement implements UIElement {
 			context.registerChannel(name, factory.createChannel(context));
 		}
 
-		// Phase 2b: Create param-binding participants (registered on attach, not here).
-		List<ParamBindingParticipant> participants = createParamBindingParticipants(context);
+		// Phase 2b: Create the routing participants of the bindings (registered on attach, not here).
+		List<RoutingParticipant> participants = createBindingParticipants(context);
 
 		// Phase 3: Create the content control.
 		IReactControl rootControl = _content != null
@@ -161,17 +169,17 @@ public class ViewElement implements UIElement {
 		if (!participants.isEmpty() && rootControl instanceof ReactControl rc) {
 			RouteManager rm = context.getRouteManager();
 			if (rm != null) {
-				for (ParamBindingParticipant p : participants) {
-					rc.addRouteParticipant(p);
+				for (RoutingParticipant participant : participants) {
+					rc.addRouteParticipant(participant);
 				}
 				rc.addAttachListener(() -> {
-					for (ParamBindingParticipant p : participants) {
-						rm.register(p);
+					for (RoutingParticipant participant : participants) {
+						rm.register(participant);
 					}
 				});
 				rc.addDetachListener(() -> {
-					for (ParamBindingParticipant p : participants) {
-						rm.unregister(p);
+					for (RoutingParticipant participant : participants) {
+						rm.unregister(participant);
 					}
 				});
 			}
@@ -181,14 +189,20 @@ public class ViewElement implements UIElement {
 	}
 
 	/**
-	 * Creates {@link ParamBindingParticipant}s for each configured {@code <param-bindings>} entry.
-	 * The participants are NOT registered with the RouteManager here — registration is handled
-	 * by the attach/detach listeners in Phase 4 to support cached view re-attachment.
+	 * Creates the {@link RoutingParticipant} of every configured {@code <param-bindings>} and
+	 * {@code <query-bindings>} entry.
 	 *
-	 * @return The list of participants (empty if none configured or no RouteManager).
+	 * <p>
+	 * The participants are not registered with the {@link RouteManager} here — registration is
+	 * handled by the attach/detach listeners, so that a view whose control tree is attached again
+	 * takes part in the routing again.
+	 * </p>
+	 *
+	 * @return The participants of this view, empty where it declares no binding or where the display
+	 *         has no {@link RouteManager}.
 	 */
-	private List<ParamBindingParticipant> createParamBindingParticipants(ViewContext context) {
-		if (_paramBindings.isEmpty()) {
+	private List<RoutingParticipant> createBindingParticipants(ViewContext context) {
+		if (_paramBindings.isEmpty() && _queryBindings.isEmpty()) {
 			return List.of();
 		}
 
@@ -197,13 +211,22 @@ public class ViewElement implements UIElement {
 			return List.of();
 		}
 
-		List<ParamBindingParticipant> result = new ArrayList<>();
+		List<RoutingParticipant> result = new ArrayList<>();
 		for (ParamBindingConfig binding : _paramBindings) {
-			ViewChannel channel = context.resolveChannel(new ChannelRef(binding.getChannel()));
-			ParamBindingParticipant participant = new ParamBindingParticipant(
-				binding.getPrefix(), binding.getRouteParam(), channel);
-			result.add(participant);
+			result.add(new ParamBindingParticipant(binding.getPrefix(), binding.getRouteParam(),
+				channel(context, binding.getChannel())));
+		}
+		for (QueryBindingConfig binding : _queryBindings) {
+			result.add(new QueryBindingParticipant(binding.getQueryParam(),
+				channel(context, binding.getChannel())));
 		}
 		return result;
+	}
+
+	/**
+	 * The channel of the given name in the given context.
+	 */
+	private static ViewChannel channel(ViewContext context, String name) {
+		return context.resolveChannel(new ChannelRef(name));
 	}
 }

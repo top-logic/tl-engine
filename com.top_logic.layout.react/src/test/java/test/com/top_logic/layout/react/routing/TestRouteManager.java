@@ -68,8 +68,12 @@ public class TestRouteManager extends TestCase {
 			RoutePattern pattern = _routes.stream()
 				.filter(r -> r.itemId().equals(itemId)).findFirst().orElseThrow();
 			_activeSegment = new RouteSegment(pattern.produce(params));
+			notifyRouteChange(_activeSegment);
+		}
+
+		void notifyRouteChange(RouteSegment segment) {
 			for (RouteChangeListener l : new ArrayList<>(_listeners)) {
-				l.onRouteChange(this, _activeSegment);
+				l.onRouteChange(this, segment);
 			}
 		}
 
@@ -428,8 +432,9 @@ public class TestRouteManager extends TestCase {
 	}
 
 	/**
-	 * Tests that a display change applied while a URL is adopted is no history entry: it is the
-	 * display settling into the URL the client already shows, not a navigation away from it.
+	 * Tests that a display change applied while a URL is adopted reports nothing: it is the display
+	 * settling into the URL the client already shows, not a navigation away from it, and the end of
+	 * the adoption reports what the display composes then - here the URL the client shows already.
 	 */
 	public void testDisplayChangeWhileAdoptingIsNoHistoryEntry() {
 		RouteManager rm = new RouteManager();
@@ -446,8 +451,8 @@ public class TestRouteManager extends TestCase {
 		rm.finishAdoption();
 
 		assertEquals("listings", rm.currentUrl());
-		assertFalse("The display materializing into the adopted URL must not push a history entry.",
-			replaceFlags.contains(Boolean.FALSE));
+		assertEquals("The display materializing into the adopted URL reports nothing of its own.",
+			List.of(), replaceFlags);
 	}
 
 	/**
@@ -686,6 +691,202 @@ public class TestRouteManager extends TestCase {
 	}
 
 	/**
+	 * Tests that the query parameters of the displayed participants form the query string of the
+	 * composed URL, behind its path.
+	 */
+	public void testQueryComposition() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/listings", "listings")));
+		QueryParticipant filter = new QueryParticipant("q");
+		QueryParticipant sort = new QueryParticipant("sort");
+		rm.register(sidebar);
+		sidebar.simulateNavigation("listings", Map.of());
+		rm.register(filter);
+		rm.register(sort);
+
+		assertEquals("A participant with nothing to say contributes no parameter.", "listings",
+			rm.currentUrl());
+
+		filter.setValue("a b");
+		sort.setValue("name");
+		assertEquals("listings?q=a+b&sort=name", rm.currentUrl());
+
+		filter.setValue(null);
+		assertEquals("listings?sort=name", rm.currentUrl());
+	}
+
+	/**
+	 * Tests that the query of an adopted URL is offered to the participants, decoded, without
+	 * changing how its path is resolved.
+	 */
+	public void testAdoptedQueryReachesParticipants() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/a/:id", "detail")));
+		QueryParticipant filter = new QueryParticipant("q");
+		rm.register(sidebar);
+		rm.register(filter);
+
+		rm.adoptUrl("a/b?q=x%20y");
+		rm.resolvePending();
+		rm.finishAdoption();
+
+		assertEquals("The query is no part of the path.", "b", sidebar.lastActivation().params().get("id"));
+		assertEquals(Map.of("q", "x y"), filter.activatedQuery());
+		assertEquals("a/b?q=x+y", rm.currentUrl());
+	}
+
+	/**
+	 * Tests that a participant appearing while a URL is adopted is offered the query of that URL,
+	 * because a parameter belongs to whichever participant declares it, wherever in the display that
+	 * is.
+	 */
+	public void testAdoptedQueryReachesLateParticipant() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/a", "a")));
+		rm.register(sidebar);
+
+		rm.adoptUrl("a?q=late");
+		rm.resolvePending();
+
+		// The view the URL named materializes and brings its filter into the display.
+		QueryParticipant filter = new QueryParticipant("q");
+		rm.register(filter);
+		rm.finishAdoption();
+
+		assertEquals(Map.of("q", "late"), filter.activatedQuery());
+		assertEquals("a?q=late", rm.currentUrl());
+	}
+
+	/**
+	 * Tests that a URL without the parameter says nothing about the value: what the view establishes
+	 * stands, and the address bar is completed with it as a replacement.
+	 */
+	public void testUrlWithoutParameterKeepsValue() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/a", "a")));
+		QueryParticipant filter = new QueryParticipant("q");
+		rm.register(sidebar);
+		rm.register(filter);
+		filter.setValue("established");
+
+		List<Boolean> replaceFlags = new ArrayList<>();
+		rm.setUrlChangeHandler((url, replace) -> replaceFlags.add(replace));
+
+		rm.adoptUrl("a");
+		rm.resolvePending();
+		rm.finishAdoption();
+
+		assertNull("A URL without the parameter activates nothing.", filter.activatedQuery());
+		assertEquals("a?q=established", rm.currentUrl());
+		assertEquals(List.of(Boolean.TRUE), replaceFlags);
+	}
+
+	/**
+	 * Tests that a change of the query alone is no history entry, although the participant reported it
+	 * as a navigation: refining what the page shows stays on that page.
+	 */
+	public void testQueryChangeIsNoHistoryEntry() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/a", "a"),
+			RoutePattern.compile("/b", "b")));
+		QueryParticipant filter = new QueryParticipant("q");
+		rm.register(sidebar);
+		sidebar.simulateNavigation("a", Map.of());
+		rm.register(filter);
+
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		rm.setUrlChangeHandler((url, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+
+		filter.setValue("x");
+		filter.setValue("xy");
+		assertEquals(List.of("a?q=x", "a?q=xy"), urls);
+		assertEquals("A filter the user narrows is not a page to come back from.",
+			List.of(Boolean.TRUE, Boolean.TRUE), replaceFlags);
+
+		// A change of the path is a navigation, whatever the query does.
+		sidebar.simulateNavigation("b", Map.of());
+		assertEquals("b?q=xy", urls.get(urls.size() - 1));
+		assertEquals(Boolean.FALSE, replaceFlags.get(replaceFlags.size() - 1));
+	}
+
+	/**
+	 * Tests that the display being built up for an adopted URL reports nothing while it exchanges what
+	 * it contains, and that the URL it arrives at is reported once.
+	 */
+	public void testDisplayRebuildWhileAdoptingReportsOnce() {
+		RouteManager rm = new RouteManager();
+		MockParticipant leaving = new MockParticipant(List.of(
+			RoutePattern.compile("/a", "a")));
+		MockParticipant entering = new MockParticipant(List.of(
+			RoutePattern.compile("/b", "b")));
+		rm.register(leaving);
+		leaving.simulateNavigation("a", Map.of());
+
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		rm.setUrlChangeHandler((url, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+
+		// The page the client shows is loaded into the control tree the window still holds: attaching
+		// that tree unregisters what leaves the display and registers what enters it, and neither is
+		// an address of its own.
+		rm.adoptUrl("b");
+		rm.unregister(leaving);
+		entering.simulateNavigation("b", Map.of());
+		rm.register(entering);
+		assertEquals("Nothing is reported while the display is being built up.", List.of(), urls);
+
+		rm.finishAdoption();
+
+		assertEquals("b", rm.currentUrl());
+		assertEquals("The URL the display arrives at is the one the client already shows.", List.of(),
+			urls);
+	}
+
+	/**
+	 * Tests that the one URL an adoption reports is the one the display arrives at, where that differs
+	 * from the URL the client shows.
+	 */
+	public void testCorrectedUrlOfRebuiltDisplayIsReportedOnce() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = new MockParticipant(List.of(
+			RoutePattern.compile("/a", "a")));
+		MockParticipant tabs = new MockParticipant(List.of(
+			RoutePattern.compile("/featured", "featured")));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("a", Map.of());
+
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		rm.setUrlChangeHandler((url, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+
+		// A URL naming only the view, whose display then re-registers a tab of its own.
+		rm.adoptUrl("a");
+		rm.unregister(tabs);
+		tabs.simulateNavigation("featured", Map.of());
+		rm.register(tabs);
+		rm.resolvePending();
+		rm.finishAdoption();
+
+		assertEquals(List.of("a/featured"), urls);
+		assertEquals(List.of(Boolean.TRUE), replaceFlags);
+	}
+
+	/**
 	 * A participant whose activation brings another one into the display, as materializing the view a
 	 * sidebar item names does.
 	 */
@@ -705,6 +906,53 @@ public class TestRouteManager extends TestCase {
 		public void activateRoute(RouteMatch match) {
 			super.activateRoute(match);
 			_manager.register(_mounted);
+		}
+	}
+
+	/**
+	 * A participant whose state travels in a query parameter, as a filter term does.
+	 */
+	static class QueryParticipant extends MockParticipant {
+
+		private final String _name;
+
+		private String _value;
+
+		private Map<String, String> _activatedQuery;
+
+		QueryParticipant(String name) {
+			super(List.of());
+			_name = name;
+		}
+
+		@Override
+		public void activateQuery(Map<String, String> query) {
+			_activatedQuery = query;
+			String value = query.get(_name);
+			if (value != null) {
+				setValue(value);
+			}
+		}
+
+		@Override
+		public RouteSegment activeRouteSegment() {
+			return _value == null ? null : new RouteSegment("", Map.of(_name, _value));
+		}
+
+		/**
+		 * The query this participant was offered, or {@code null} while it was offered none.
+		 */
+		Map<String, String> activatedQuery() {
+			return _activatedQuery;
+		}
+
+		/**
+		 * Sets the value the participant contributes and reports the change.
+		 */
+		void setValue(String value) {
+			_value = value;
+			RouteSegment segment = activeRouteSegment();
+			notifyRouteChange(segment != null ? segment : new RouteSegment(""));
 		}
 	}
 

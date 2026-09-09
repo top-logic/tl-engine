@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.routing;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controls that contribute URL segments implement this interface.
@@ -33,6 +34,28 @@ public interface RoutingParticipant {
      * item is active.
      */
     RouteSegment activeRouteSegment();
+
+	/**
+	 * Takes up the query parameters of the URL being adopted.
+	 *
+	 * <p>
+	 * Offered to every participant of the display, with the whole query of the URL: a participant
+	 * reads the parameters it declares and ignores the rest, because a query parameter names its
+	 * meaning itself instead of being placed by its position, and one URL carries the parameters of
+	 * everything the display shows. A parameter the URL does not carry says nothing about the value
+	 * behind it, which therefore stays what the view establishes.
+	 * </p>
+	 *
+	 * <p>
+	 * The default takes up nothing, which is what a participant does whose state is a path segment.
+	 * </p>
+	 *
+	 * @param query
+	 *        The query parameters of the URL, decoded, never empty.
+	 */
+	default void activateQuery(Map<String, String> query) {
+		// Nothing to take up: the state of this participant is named by the path.
+	}
 
 	/**
 	 * Whether the URL being adopted can name one route of this participant after another.

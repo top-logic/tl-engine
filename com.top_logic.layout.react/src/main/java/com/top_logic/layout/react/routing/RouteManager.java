@@ -5,10 +5,15 @@
  */
 package com.top_logic.layout.react.routing;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -19,6 +24,15 @@ import java.util.function.Supplier;
  * Manages the set of registered {@link RoutingParticipant}s, composes the current URL from their
  * active segments, and resolves pending (deep-link) URLs by matching segments against participant
  * route declarations.
+ * </p>
+ *
+ * <p>
+ * A segment contributes a path, query parameters, or both. The path is positional - it is consumed
+ * by the participants in the order the display contains them - while a query parameter names its
+ * meaning itself and is therefore offered to every participant, which is what
+ * {@link RoutingParticipant#activateQuery(Map)} does. A change that leaves the path as it is and
+ * alters only the query is reported as a replacement: refining what a view shows is not a page the
+ * user navigated to.
  * </p>
  *
  * <p>
@@ -34,11 +48,22 @@ import java.util.function.Supplier;
  */
 public final class RouteManager {
 
+	/** Separates the query string from the path of a URL. */
+	private static final char QUERY_START = '?';
+
+	/** Separates the parameters of a query string from each other. */
+	private static final char PARAM_SEPARATOR = '&';
+
+	/** Separates the name of a query parameter from its value. */
+	private static final char VALUE_SEPARATOR = '=';
+
 	private final List<RoutingParticipant> _participants = new ArrayList<>();
 
 	private final RouteChangeListener _internalListener = this::onParticipantRouteChange;
 
 	private String _pendingUrl;
+
+	private Map<String, String> _pendingQuery = Map.of();
 
 	private RouteUrlChangeHandler _urlChangeHandler;
 
@@ -93,18 +118,26 @@ public final class RouteManager {
 			_registeredWhileAdopting.add(participant);
 		}
 
+		// The query of the URL being adopted reaches a participant appearing while it is adopted, too:
+		// what the display materializes into is the state the URL describes as a whole, and a query
+		// parameter belongs to whichever participant declares it, wherever in the display that is.
+		offerPendingQuery(participant);
+
 		if (_pendingUrl != null && !_pendingUrl.isEmpty()) {
 			// Nothing is reported here: the display is still materializing into the URL, and what it
 			// composes in the middle of that describes neither the state the client asked for nor one
 			// it should be told about. The URL the display arrives at is reported once, by
 			// finishAdoption().
 			tryResolvePending(participant);
-		} else {
+		} else if (!_adopting) {
 			// A participant with a route of its own where no URL is being adopted - the item a sidebar
 			// selects by default. The address bar is completed with it as a replacement rather than a
 			// history entry, because nobody navigated there.
-			RouteSegment segment = participant.activeRouteSegment();
-			if (segment != null && !segment.path().isEmpty()) {
+			//
+			// While a URL is adopted, nothing is reported: the display is still being built, and what
+			// it composes halfway through describes neither the state the client asked for nor one it
+			// should be told about. The URL the display arrives at is reported by finishAdoption().
+			if (contributes(participant.activeRouteSegment())) {
 				notifyUrlChange(true);
 			}
 		}
@@ -120,6 +153,15 @@ public final class RouteManager {
 		participant.removeRouteChangeListener(_internalListener);
 
 		_participants.remove(participant);
+
+		if (_adopting) {
+			// A display being built up for the URL the client shows exchanges what it displays -
+			// a page loaded into an existing control tree re-attaches it, an activated route
+			// replaces the content beside it - and the URL such a display composes halfway through
+			// is nobody's address: while the tree is not walkable yet, it is not even the one the
+			// client shows. The URL the display arrives at is reported by finishAdoption().
+			return;
+		}
 
 		// The participant may have contributed a segment that is gone with it: a tab bar shown for
 		// one case of a <switch>, for instance, leaves the display when another case is selected.
@@ -168,11 +210,20 @@ public final class RouteManager {
 	 * from being one.
 	 * </p>
 	 *
+	 * <p>
+	 * A query string is split off the URL and belongs to the adoption as a whole rather than to one
+	 * participant: it is offered to every participant that is registered when the pending URL is
+	 * resolved and to every one that registers while the adoption runs.
+	 * </p>
+	 *
 	 * @param url
-	 *        The URL the client displays (without leading slash), empty for none.
+	 *        The URL the client displays (without leading slash, with its query string), empty for
+	 *        none.
 	 */
 	public void adoptUrl(String url) {
-		_pendingUrl = url;
+		int queryStart = url == null ? -1 : url.indexOf(QUERY_START);
+		_pendingUrl = queryStart < 0 ? url : url.substring(0, queryStart);
+		_pendingQuery = queryStart < 0 ? Map.of() : parseQuery(url.substring(queryStart + 1));
 		_lastNotifiedUrl = url;
 		_adopting = true;
 		_adoptionId++;
@@ -207,10 +258,15 @@ public final class RouteManager {
 	 * </p>
 	 */
 	public void resolvePending() {
+		for (RoutingParticipant participant : new ArrayList<>(_participants)) {
+			offerPendingQuery(participant);
+		}
+
 		if (_pendingUrl == null || _pendingUrl.isEmpty()) {
 			return;
 		}
 
+		boolean before = _suppressNotifications;
 		_suppressNotifications = true;
 		try {
 			for (RoutingParticipant participant : new ArrayList<>(_participants)) {
@@ -220,7 +276,29 @@ public final class RouteManager {
 				tryResolvePending(participant);
 			}
 		} finally {
-			_suppressNotifications = false;
+			_suppressNotifications = before;
+		}
+	}
+
+	/**
+	 * Hands the query parameters of the URL being adopted to the given participant.
+	 *
+	 * <p>
+	 * Nothing is reported over it: the value a parameter delivers is part of the state the client
+	 * already shows, and the URL the display arrives at is reported once, at the end of the
+	 * adoption.
+	 * </p>
+	 */
+	private void offerPendingQuery(RoutingParticipant participant) {
+		if (_pendingQuery.isEmpty()) {
+			return;
+		}
+		boolean before = _suppressNotifications;
+		_suppressNotifications = true;
+		try {
+			participant.activateQuery(_pendingQuery);
+		} finally {
+			_suppressNotifications = before;
 		}
 	}
 
@@ -259,8 +337,8 @@ public final class RouteManager {
 	 * <p>
 	 * A change applied while a URL is being adopted is no navigation of its own: it is the display
 	 * settling into the URL the client already shows - a drill-down path materializing into the frames
-	 * a deep link names - and is reported as a replacement, so that pressing back once leaves the page
-	 * rather than undoing the way it was built.
+	 * a deep link names - and reports nothing, because the display is not complete before the adoption
+	 * ends, and {@link #finishAdoption()} reports what it composes then.
 	 * </p>
 	 *
 	 * @param displayChange
@@ -274,7 +352,10 @@ public final class RouteManager {
 		} finally {
 			_suppressNotifications = before;
 		}
-		notifyUrlChange(_adopting);
+		if (_adopting) {
+			return;
+		}
+		notifyUrlChange(false);
 	}
 
 	/**
@@ -298,6 +379,7 @@ public final class RouteManager {
 	 */
 	public void finishAdoption() {
 		_pendingUrl = null;
+		_pendingQuery = Map.of();
 		resetUnnamedRoutes();
 		notifyUrlChange(true);
 		_adopting = false;
@@ -325,6 +407,7 @@ public final class RouteManager {
 	 */
 	public void cancelAdoption() {
 		_pendingUrl = null;
+		_pendingQuery = Map.of();
 		_adopting = false;
 		_activatedWhileAdopting.clear();
 		_registeredWhileAdopting.clear();
@@ -368,22 +451,107 @@ public final class RouteManager {
 	/**
 	 * Composes the current URL from the active segments of the participants the display contains.
 	 *
-	 * @return The composed URL (without leading slash), or empty string if no segments are active.
+	 * <p>
+	 * The paths of the segments form the path of the URL, in display order, and the query parameters
+	 * of the segments form its query string, in the same order. A parameter several participants
+	 * contribute is carried by the last of them, because one URL has one value for a name.
+	 * </p>
+	 *
+	 * @return The composed URL (without leading slash, with its query string), or empty string if no
+	 *         segments are active.
 	 *
 	 * @see #setDisplayedParticipants(Supplier)
 	 */
 	public String currentUrl() {
 		StringBuilder sb = new StringBuilder();
+		Map<String, String> query = new LinkedHashMap<>();
 		for (RoutingParticipant participant : composingParticipants()) {
 			RouteSegment segment = participant.activeRouteSegment();
-			if (segment != null && !segment.path().isEmpty()) {
+			if (segment == null) {
+				continue;
+			}
+			if (!segment.path().isEmpty()) {
 				if (sb.length() > 0) {
 					sb.append('/');
 				}
 				sb.append(segment.path());
 			}
+			query.putAll(segment.queryParams());
 		}
+		appendQuery(sb, query);
 		return sb.toString();
+	}
+
+	/**
+	 * Whether the given segment describes anything the URL carries.
+	 */
+	private static boolean contributes(RouteSegment segment) {
+		return segment != null && (!segment.path().isEmpty() || !segment.queryParams().isEmpty());
+	}
+
+	/**
+	 * Appends the given query parameters to the given URL, percent-encoded.
+	 */
+	private static void appendQuery(StringBuilder url, Map<String, String> query) {
+		char separator = QUERY_START;
+		for (Map.Entry<String, String> parameter : query.entrySet()) {
+			url.append(separator);
+			url.append(encodeQuery(parameter.getKey()));
+			url.append(VALUE_SEPARATOR);
+			url.append(encodeQuery(parameter.getValue()));
+			separator = PARAM_SEPARATOR;
+		}
+	}
+
+	/**
+	 * The parameters of the given query string, decoded.
+	 *
+	 * <p>
+	 * A parameter whose escapes name no character - a query string typed by hand - keeps the form it
+	 * was written in, so that a URL is taken up as far as it can be understood instead of failing as
+	 * a whole.
+	 * </p>
+	 */
+	private static Map<String, String> parseQuery(String query) {
+		Map<String, String> result = new LinkedHashMap<>();
+		int length = query.length();
+		int start = 0;
+		while (start < length) {
+			int end = query.indexOf(PARAM_SEPARATOR, start);
+			if (end < 0) {
+				end = length;
+			}
+			String parameter = query.substring(start, end);
+			start = end + 1;
+			if (parameter.isEmpty()) {
+				continue;
+			}
+			int assignment = parameter.indexOf(VALUE_SEPARATOR);
+			String name = assignment < 0 ? parameter : parameter.substring(0, assignment);
+			String value = assignment < 0 ? "" : parameter.substring(assignment + 1);
+			result.put(decodeQuery(name), decodeQuery(value));
+		}
+		return result;
+	}
+
+	private static String encodeQuery(String value) {
+		return URLEncoder.encode(value, StandardCharsets.UTF_8);
+	}
+
+	private static String decodeQuery(String value) {
+		try {
+			return URLDecoder.decode(value, StandardCharsets.UTF_8);
+		} catch (IllegalArgumentException ex) {
+			return value;
+		}
+	}
+
+	/**
+	 * The path portion of the given URL, without its query string.
+	 */
+	private static String pathOf(String url) {
+		int queryStart = url.indexOf(QUERY_START);
+		return queryStart < 0 ? url : url.substring(0, queryStart);
 	}
 
 	/**
@@ -489,9 +657,14 @@ public final class RouteManager {
 			// or repeat a replacement that changes nothing.
 			return;
 		}
+		// A change of the query alone refines what the page shows - a filter the user narrows, a
+		// sorting they pick - and stays on that page: the address bar has to name what is shown, but
+		// the back button belongs to the page the user came from, not to the term they typed before
+		// the current one.
+		boolean queryOnly = _lastNotifiedUrl != null && pathOf(url).equals(pathOf(_lastNotifiedUrl));
 		_lastNotifiedUrl = url;
 		if (_urlChangeHandler != null) {
-			_urlChangeHandler.onUrlChange(url, replace);
+			_urlChangeHandler.onUrlChange(url, replace || queryOnly);
 		}
 	}
 }

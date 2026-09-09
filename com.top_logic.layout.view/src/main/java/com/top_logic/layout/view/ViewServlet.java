@@ -129,6 +129,14 @@ public class ViewServlet extends TopLogicServlet {
 			// Entered without naming a page, so the user's own choice of where to begin applies.
 			// A URL that does carry a route asks for that page and is never overridden.
 			routePath = StartPage.get();
+		} else {
+			String query = request.getQueryString();
+			if (query != null && !query.isEmpty()) {
+				// The query belongs to the route: it carries the values that refine what the named page
+				// shows - a filter term, a sorting - and the display takes them up together with the
+				// path. Raw, because a query travels percent-encoded and the routing decodes it.
+				routePath = routePath + '?' + query;
+			}
 		}
 
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);

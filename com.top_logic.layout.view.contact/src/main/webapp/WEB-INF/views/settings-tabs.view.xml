@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the profile tab into the settings dialog of tl-layout-view
+	(WEB-INF/views/settings-tabs.view.xml). This is a same-path overlay: the ViewLoader merges it
+	onto the base in dependency order, and the tab is appended to the base's tab bar purely through
+	the typed-configuration list merge.
+
+	A tab of its own rather than fields added to the account tab, because the data lives on another
+	object: an account's name, language and timezone are its own, while the name a person is called
+	by and how to reach them belong to their contact (Contacts:PersonContact, reached through
+	tl.accounts:Person#contact). One form edits one object.
+
+	The base view knows nothing of this module, and the Contacts model reaches the settings dialog
+	only in an application that has it.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<!-- The contact of the session's own account. -->
+		<derived-channel name="contact"
+			config:operation="add"
+			config:position="end"
+			expr="currentUser().get(`tl.accounts:Person#contact`)"
+		/>
+	</channels>
+	<tab-bar>
+		<tabs>
+			<tab id="profile"
+				config:operation="add"
+				config:position="end"
+				icon="css:bi bi-person-vcard"
+			>
+				<label>
+					<en>Profile</en>
+					<de>Profil</de>
+				</label>
+				<!-- Save reaches the dialog's single button bar while this tab is displayed; see the base view. -->
+				<form
+					initial-edit-mode="true"
+					input="contact"
+					mode-switch="false"
+				>
+					<field attribute="title"/>
+					<field attribute="firstname"/>
+					<field attribute="name"/>
+					<field attribute="company"/>
+					<field attribute="email"/>
+					<field attribute="phone"/>
+					<field attribute="phone_mobile"/>
+					<commands>
+						<generic-command image="css:bi bi-check-lg"
+							placement="BUTTON_BAR"
+						>
+							<label>
+								<en>Save</en>
+								<de>Speichern</de>
+							</label>
+							<with-transaction>
+								<store-form-state/>
+							</with-transaction>
+						</generic-command>
+					</commands>
+				</form>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

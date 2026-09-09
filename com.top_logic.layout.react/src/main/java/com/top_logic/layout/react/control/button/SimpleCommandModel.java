@@ -38,6 +38,8 @@ public final class SimpleCommandModel implements CommandModel {
 
 	private String _clique;
 
+	private String _cssClasses;
+
 	private CommandPlacement _placement = CommandPlacement.NONE;
 
 	private BooleanSupplier _executable = () -> true;
@@ -95,6 +97,16 @@ public final class SimpleCommandModel implements CommandModel {
 	 */
 	public SimpleCommandModel setClique(String clique) {
 		_clique = clique;
+		return this;
+	}
+
+	/**
+	 * Sets the {@link #getCssClasses() CSS classes}.
+	 *
+	 * @return This model for call chaining.
+	 */
+	public SimpleCommandModel setCssClasses(String cssClasses) {
+		_cssClasses = cssClasses;
 		return this;
 	}
 
@@ -161,6 +173,11 @@ public final class SimpleCommandModel implements CommandModel {
 	@Override
 	public String getClique() {
 		return _clique;
+	}
+
+	@Override
+	public String getCssClasses() {
+		return _cssClasses;
 	}
 
 	@Override

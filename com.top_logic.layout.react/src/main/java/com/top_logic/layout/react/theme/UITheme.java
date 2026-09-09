@@ -12,7 +12,9 @@ import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 
 /**
  * A resolved UI theme: an identified, labeled set of design-token values.
@@ -35,6 +37,9 @@ public final class UITheme {
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
 
+		/** Configuration name for {@link #getIcon()}. */
+		String ICON = "icon";
+
 		/**
 		 * Id of the parent theme whose tokens this theme inherits, or empty for a root theme.
 		 */
@@ -46,6 +51,13 @@ public final class UITheme {
 		 */
 		@Name(LABEL)
 		ResKey getLabel();
+
+		/**
+		 * Icon representing the theme, e.g. for a theme picker offering this theme as an entry.
+		 */
+		@Name(ICON)
+		@Nullable
+		ThemeImage getIcon();
 
 		/**
 		 * This theme's tokens, overriding the inherited ones, keyed by token name.
@@ -60,6 +72,8 @@ public final class UITheme {
 
 	private final ResKey _label;
 
+	private final ThemeImage _icon;
+
 	private final Map<String, String> _tokens;
 
 	/**
@@ -69,12 +83,15 @@ public final class UITheme {
 	 *        The theme id.
 	 * @param label
 	 *        The display label.
+	 * @param icon
+	 *        The icon representing the theme, or {@code null}.
 	 * @param tokens
 	 *        The fully resolved token values (name without {@code --} to CSS value).
 	 */
-	public UITheme(String id, ResKey label, Map<String, String> tokens) {
+	public UITheme(String id, ResKey label, ThemeImage icon, Map<String, String> tokens) {
 		_id = id;
 		_label = label;
+		_icon = icon;
 		_tokens = tokens;
 	}
 
@@ -90,6 +107,13 @@ public final class UITheme {
 	 */
 	public ResKey getLabel() {
 		return _label;
+	}
+
+	/**
+	 * The icon representing this theme, or {@code null} if it declares none.
+	 */
+	public ThemeImage getIcon() {
+		return _icon;
 	}
 
 	/**

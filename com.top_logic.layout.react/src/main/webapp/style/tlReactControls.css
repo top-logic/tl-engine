@@ -337,6 +337,24 @@ button.tlCounter__button:focus {
    <padding> so its border has room. No enforcement - build views per the
    documented convention.
    =========================================================================== */
+
+/* ===========================================================================
+   Overlay surfaces.
+
+   A popup floating above the page - a menu, a toolbar drop-down, a sidebar
+   group flyout, a field's option list - reads as elevated through three
+   themed tokens, never through literal colours:
+
+     - background: --layer-02, the elevated surface. It equals --layer-01 on a
+       light theme and is the lighter of the two on a dark one, where a popup
+       painted in the page's own colour disappears into it.
+     - border: --border-strong, so the edge stays visible where surface and
+       page are close in luminance.
+     - box-shadow: --shadow-menu, the theme's own popup shadow.
+
+   A field's option list keeps --field as its background instead, staying the
+   colour of the input it belongs to.
+   =========================================================================== */
 :root {
 	--page-inset: var(--spacing-04);
 }
@@ -1480,10 +1498,10 @@ button.tlSidebar__collapseBtn:focus-visible {
 	position: fixed;
 	z-index: 1000;
 	min-width: 12rem;
-	background: var(--layer-01, #fff);
-	border: 1px solid var(--border-subtle);
+	background: var(--layer-02, #fff);
+	border: 1px solid var(--border-strong);
 	border-radius: var(--border-radius-02, 4px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	box-shadow: var(--shadow-menu);
 	padding: var(--spacing-02) 0;
 	overflow-y: auto;
 	max-height: 20rem;
@@ -1772,14 +1790,40 @@ button.tlDrawerToggle:focus-visible {
 	margin-left: auto;
 }
 
-/* --- Controls placed on the primary (accent) app bar -------------------- */
-/* The primary app bar has a dark accent background; its title and slot text
-   inherit the on-accent (white) color. Buttons and the user-name text bring
-   their own foreground (accent-blue / primary-text), which is nearly
-   unreadable on the accent background. Re-map them to on-accent colors. */
+.tlAppBar__trailing {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex-shrink: 0;
+	margin-left: auto;
+}
 
-.tlAppBar--primary .tlAppBarUser {
+/* An actions area ahead of the trailing one has already claimed the free space; a second automatic
+   margin would split it between the two and strand the actions mid-bar. */
+.tlAppBar__actions + .tlAppBar__trailing {
+	margin-left: 0;
+}
+
+/* --- Controls placed on the primary (accent) app bar -------------------- */
+/* The primary app bar has a dark accent background; its title inherits the
+   on-accent (white) color. Text elements and buttons bring their own
+   foreground (primary-text / accent-blue), which is nearly unreadable on the
+   accent background - the account name beside the avatar above all. Re-map
+   them to on-accent colors. */
+
+.tlAppBar--primary .tlText {
 	color: var(--layer-accent-text);
+}
+
+/* A click region hovers with the generic layer-hover, which is a light surface - under the
+   on-accent text above it that leaves nothing to read. On the accent bar it hovers and opens in the
+   accent's own darker shades instead. */
+.tlAppBar--primary .tlMenuRegion--click:hover {
+	background: var(--layer-accent-hover);
+}
+
+.tlAppBar--primary .tlMenuRegion--click[aria-expanded="true"] {
+	background: var(--layer-accent-active, var(--layer-accent-hover));
 }
 
 .tlAppBar--primary .tlReactButton {
@@ -2479,10 +2523,10 @@ button.tlDrawer__closeBtn:focus-visible {
 	   viewport and scrolls instead of being cut off. */
 	max-height: 70vh;
 	overflow-y: auto;
-	background: var(--layer-01, #fff);
-	border: 1px solid var(--border-subtle);
+	background: var(--layer-02, #fff);
+	border: 1px solid var(--border-strong);
 	border-radius: var(--border-radius-02, 4px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	box-shadow: var(--shadow-menu);
 	padding: var(--spacing-02) 0;
 	font-family: var(--font-family);
 	outline: none;
@@ -2541,6 +2585,52 @@ button.tlMenu__item--disabled:hover {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+/* --- TLMenuRegion ---------------------------------------------------------- */
+
+/* A right-click region is pure pass-through: it adds no box of its own, so the content it wraps
+   lays out exactly as it would without the region. */
+.tlMenuRegion {
+	display: contents;
+}
+
+/* A click region is the visible trigger of a drop-down, so it does become a box: an inline row
+   carrying the affordances of a control. */
+.tlMenuRegion--click {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	padding: var(--spacing-02) var(--spacing-03);
+	border-radius: var(--border-radius-02, 4px);
+	cursor: pointer;
+	user-select: none;
+}
+
+.tlMenuRegion--click:hover {
+	background: var(--layer-hover);
+}
+
+.tlMenuRegion--click:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* --- User menu ------------------------------------------------------------- */
+
+/* The account name beside the avatar. It yields before the work area does: at narrow widths the
+   avatar alone identifies the session. */
+.tlUserMenu__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 12rem;
+}
+
+@media (max-width: 640px) {
+	.tlUserMenu__name {
+		display: none;
+	}
 }
 
 /* --- TLTableView ----------------------------------------------------------- */
@@ -3332,6 +3422,13 @@ button.tlMenu__item--disabled:hover {
 	font-weight: 600;
 	letter-spacing: 0.02em;
 	user-select: none;
+}
+
+/* An avatar without a name - an anonymous session, or an empty channel. It keeps its circle and
+   fills it faintly, so that an avatar used as a menu trigger stays visible and clickable. */
+.tlAvatar--empty {
+	background: var(--layer-accent, #e5e7eb);
+	border: 1px solid var(--border-subtle);
 }
 
 /* --- TLRelativeTime ---------------------------------------------------- */
@@ -4174,9 +4271,9 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlDropdownSelect__dropdown {
 	position: fixed;
 	background-color: var(--field, #fff);
-	border: 1px solid var(--border-subtle, #e0e0e0);
+	border: 1px solid var(--border-strong);
 	border-radius: var(--border-radius-02, 4px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	box-shadow: var(--shadow-menu);
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -5184,10 +5281,10 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	right: 0;
 	z-index: 10000;
 	min-width: 10rem;
-	background: var(--layer-01, #fff);
-	border: 1px solid var(--border-subtle);
+	background: var(--layer-02, #fff);
+	border: 1px solid var(--border-strong);
 	border-radius: var(--border-radius-02, 4px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	box-shadow: var(--shadow-menu);
 	padding: var(--spacing-02) 0;
 }
 

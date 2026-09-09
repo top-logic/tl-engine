@@ -27,7 +27,12 @@
 					<de>Scannen Sie diesen QR-Code mit Ihrer Authenticator-App und geben Sie zur Best&#228;tigung den erzeugten Code ein.</de>
 				</label>
 			</text>
-			<image input="qr"/>
+			<image input="qr">
+				<alt>
+					<en>QR code enrolling this account in your authenticator app</en>
+					<de>QR-Code, der dieses Konto in Ihrer Authenticator-App einrichtet</de>
+				</alt>
+			</image>
 			<field attribute="code"/>
 			<commands>
 				<generic-command placement="BUTTON_BAR" image="css:bi bi-check-lg">

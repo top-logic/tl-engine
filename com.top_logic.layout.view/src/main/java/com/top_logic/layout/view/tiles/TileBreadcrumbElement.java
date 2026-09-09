@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.tiles;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
@@ -35,6 +36,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * sidebar, dedicated view linked via {@code <bind>}).
  * </p>
  */
+@InApp
 public class TileBreadcrumbElement implements UIElement {
 
 	/**

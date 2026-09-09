@@ -45,8 +45,14 @@ public class ReactMenuControl extends ReactControl {
 	/** @see #updateItems(List) */
 	private static final String ITEMS = "items";
 
-	/** Entry type discriminator ({@code "item"} or {@code "separator"}). */
+	/** Entry type discriminator, either {@link #ENTRY_TYPE_ITEM} or {@link #ENTRY_TYPE_SEPARATOR}. */
 	private static final String ENTRY_TYPE = "type";
+
+	/** {@link #ENTRY_TYPE} of a selectable entry. */
+	private static final String ENTRY_TYPE_ITEM = "item";
+
+	/** {@link #ENTRY_TYPE} of a divider between groups of entries. */
+	private static final String ENTRY_TYPE_SEPARATOR = "separator";
 
 	/** Entry identifier within the menu. */
 	private static final String ENTRY_ID = "id";
@@ -59,6 +65,9 @@ public class ReactMenuControl extends ReactControl {
 
 	/** Whether the entry is disabled. */
 	private static final String ENTRY_DISABLED = "disabled";
+
+	/** Additional CSS classes for the entry. */
+	private static final String ENTRY_CSS_CLASSES = "cssClasses";
 
 	/** The {@link ReactCommandHandler} that selects a menu item. */
 	public static final String SELECT_ITEM_COMMAND = "selectItem";
@@ -100,7 +109,7 @@ public class ReactMenuControl extends ReactControl {
 		for (MenuEntry entry : items) {
 			Map<String, Object> map = new HashMap<>();
 			map.put(ENTRY_TYPE, entry.type());
-			if ("item".equals(entry.type())) {
+			if (ENTRY_TYPE_ITEM.equals(entry.type())) {
 				map.put(ENTRY_ID, entry.id());
 				map.put(ENTRY_LABEL, entry.label());
 				if (entry.icon() != null) {
@@ -108,6 +117,9 @@ public class ReactMenuControl extends ReactControl {
 				}
 				if (entry.disabled()) {
 					map.put(ENTRY_DISABLED, true);
+				}
+				if (entry.cssClasses() != null) {
+					map.put(ENTRY_CSS_CLASSES, entry.cssClasses());
 				}
 			}
 			itemList.add(map);
@@ -168,7 +180,7 @@ public class ReactMenuControl extends ReactControl {
 	 * A single entry in the popup menu.
 	 *
 	 * @param type
-	 *        The entry type: {@code "item"} or {@code "separator"}.
+	 *        The entry type, either {@link #ENTRY_TYPE_ITEM} or {@link #ENTRY_TYPE_SEPARATOR}.
 	 * @param id
 	 *        The item identifier (may be {@code null} for separators).
 	 * @param label
@@ -177,35 +189,46 @@ public class ReactMenuControl extends ReactControl {
 	 *        An optional CSS icon class, or {@code null}.
 	 * @param disabled
 	 *        Whether the item is disabled.
+	 * @param cssClasses
+	 *        Additional CSS classes for the entry, separated by spaces, or {@code null}.
 	 */
-	public record MenuEntry(String type, String id, String label, String icon, boolean disabled) {
+	public record MenuEntry(String type, String id, String label, String icon, boolean disabled,
+			String cssClasses) {
 
 		/**
 		 * Creates a simple menu item.
 		 */
 		public static MenuEntry item(String id, String label) {
-			return new MenuEntry("item", id, label, null, false);
+			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, null, false, null);
 		}
 
 		/**
 		 * Creates a menu item with an icon.
 		 */
 		public static MenuEntry item(String id, String label, String icon) {
-			return new MenuEntry("item", id, label, icon, false);
+			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, icon, false, null);
 		}
 
 		/**
 		 * Creates a menu item with an icon and an explicit disabled state.
 		 */
 		public static MenuEntry item(String id, String label, String icon, boolean disabled) {
-			return new MenuEntry("item", id, label, icon, disabled);
+			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, icon, disabled, null);
+		}
+
+		/**
+		 * Creates a menu item carrying additional CSS classes.
+		 */
+		public static MenuEntry item(String id, String label, String icon, boolean disabled,
+				String cssClasses) {
+			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, icon, disabled, cssClasses);
 		}
 
 		/**
 		 * Creates a separator.
 		 */
 		public static MenuEntry separator() {
-			return new MenuEntry("separator", null, null, null, false);
+			return new MenuEntry(ENTRY_TYPE_SEPARATOR, null, null, null, false, null);
 		}
 	}
 

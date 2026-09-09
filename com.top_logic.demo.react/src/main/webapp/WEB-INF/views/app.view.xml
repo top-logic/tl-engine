@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <view>
-	<channels>
-		<!-- The currently active session user, for display in the app bar. -->
-		<derived-channel name="currentPerson"
-			expr="currentUser()"
-		/>
-	</channels>
 	<app-shell>
 		<!--
 			System-wide notices, shown between app bar and content. Each element decides for itself
@@ -149,6 +143,15 @@
 							<de>Switch-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="calendar"
+						icon="css:bi bi-calendar3"
+					>
+						<view-ref view="demo/calendar.view.xml"/>
+						<label>
+							<en>Calendar</en>
+							<de>Kalender</de>
+						</label>
+					</nav-item>
 					<separator/>
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"
@@ -231,40 +234,6 @@
 						</executability>
 						<open-dialog dialog-view="agent-access.view.xml"/>
 					</generic-command>
-
-					<!-- Login: shown only for the anonymous user; opens the login dialog. -->
-					<generic-command
-						image="css:bi bi-box-arrow-in-right"
-						placement="TOOLBAR"
-					>
-						<label>
-							<en>Login</en>
-							<de>Anmeldung</de>
-						</label>
-						<executability>
-							<anonymous-only/>
-						</executability>
-						<execute-script function="x -> new(`tl.login:Credentials`, transient: true)"/>
-						<open-dialog
-							bind-input-to="model"
-							close-on-backdrop="false"
-							dialog-view="login.view.xml"
-						/>
-					</generic-command>
-
-					<!-- Logout: shown only for an authenticated user. -->
-					<logout-command
-						image="css:bi bi-box-arrow-right"
-						placement="TOOLBAR"
-					>
-						<label>
-							<en>Logout</en>
-							<de>Abmeldung</de>
-						</label>
-						<executability>
-							<authenticated-only/>
-						</executability>
-					</logout-command>
 				</commands>
 				<title>
 					<en>TopLogic React Demo</en>
@@ -287,13 +256,16 @@
 						The tiles demos use it to raise their drill-down breadcrumb to the app bar.
 					-->
 					<slot name="appbar-content"/>
-
-					<text
-						css-class="tlAppBarUser"
-						input="currentPerson"
-						overflow="ellipsis"
-					/>
 				</children>
+				<trailing>
+					<!--
+						The account area: who is logged in, plus login, logout and the theme
+						entries. Provided by tl-layout-view, which also declares the channel
+						feeding it, so nothing here wires it. It closes the bar, right of the
+						command buttons, where an application's account area is looked for.
+					-->
+					<view-ref view="user-menu.view.xml"/>
+				</trailing>
 			</app-bar>
 		</header>
 	</app-shell>

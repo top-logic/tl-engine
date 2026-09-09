@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.button;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.I18NConstants;
@@ -44,6 +45,9 @@ public class ReactButtonControl extends ReactControl {
 
 	/** State key for the button display mode (see {@link ButtonDisplayMode}). */
 	private static final String DISPLAY_MODE = "displayMode";
+
+	/** State key for additional CSS classes appended to the button's class list. */
+	private static final String CSS_CLASSES = "cssClasses";
 
 	/** State key for the {@link ButtonAppearance appearance}. */
 	private static final String APPEARANCE = "appearance";
@@ -113,7 +117,57 @@ public class ReactButtonControl extends ReactControl {
 		setImage(model.getImage());
 		setTooltip(model.getTooltip());
 		setKeyGesture(model.getKeyGesture());
+		setDisplayMode(offered(model, model.getDisplayMode(), true));
+		setCssClasses(model.getCssClasses());
 		model.addStateChangeListener(_modelChangeHandler);
+	}
+
+	/**
+	 * Applies the display mode the rendering container suggests, unless the command asks for one of
+	 * its own.
+	 *
+	 * <p>
+	 * A command's {@link CommandModel#getDisplayMode()} is already in effect from construction, so a
+	 * container contributes only the presentation of the commands that request none - e.g. a toolbar
+	 * showing icon-only buttons throughout.
+	 * </p>
+	 *
+	 * @param containerDefault
+	 *        The mode for a command requesting none; {@code null} leaves it as it is.
+	 */
+	public void setDefaultDisplayMode(ButtonDisplayMode containerDefault) {
+		if (containerDefault == null || _model == null || _model.getDisplayMode() != null) {
+			return;
+		}
+		setDisplayMode(offered(_model, containerDefault, false));
+	}
+
+	/**
+	 * The given display mode, corrected to one the button can actually render.
+	 *
+	 * <p>
+	 * {@link ButtonDisplayMode#ICON_ONLY} is refused for a command without an image, because such a
+	 * button would render nothing at all; a command that carries an image and requests nothing shows
+	 * both icon and label.
+	 * </p>
+	 *
+	 * @param requested
+	 *        Whether the mode is what the command itself asked for, and a correction therefore worth
+	 *        reporting. A container default that does not fit a particular command is normal.
+	 */
+	private static ButtonDisplayMode offered(CommandModel model, ButtonDisplayMode display,
+			boolean requested) {
+		if (display == ButtonDisplayMode.ICON_ONLY && model.getImage() == null) {
+			if (requested) {
+				Logger.warn("Command '" + model.getLabel() + "' requests icon-only display but has no image.",
+					ReactButtonControl.class);
+			}
+			display = null;
+		}
+		if (display == null && model.getImage() != null) {
+			display = ButtonDisplayMode.ICON_LABEL;
+		}
+		return display;
 	}
 
 	/**
@@ -187,6 +241,14 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/**
+	 * Sets additional CSS classes appended to the button's class list, separated by spaces.
+	 * {@code null} or empty removes them.
+	 */
+	public void setCssClasses(String cssClasses) {
+		putState(CSS_CLASSES, (cssClasses == null || cssClasses.isEmpty()) ? null : cssClasses);
+	}
+
+	/**
 	 * Sets the button {@link ButtonAppearance appearance} (e.g. {@link ButtonAppearance#LINK} to
 	 * render the button as an inline text link).
 	 */
@@ -226,12 +288,24 @@ public class ReactButtonControl extends ReactControl {
 	 *
 	 * <p>
 	 * A button that is not offered — hidden or disabled — is not pressed, whatever the client
-	 * sends. The {@link CommandModel} behind the button decides; a model that grants execution
+	 * sends. That holds for every button, not only for one backed by a {@link CommandModel}: a
+	 * hidden control keeps its React component tree (it is merely styled away), so it stays
+	 * mounted and its {@code click} command stays addressable by anything that can talk to the
+	 * server. A button built from a plain {@link ButtonAction} — the languages button of an
+	 * internationalized field, hidden exactly while the field may not be edited, is the case in
+	 * point — would otherwise still run its action from a view-only form.
+	 * </p>
+	 *
+	 * <p>
+	 * Where there is a {@link CommandModel}, it decides as well; a model that grants execution
 	 * unconditionally keeps its behavior.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_CLICK)
 	HandlerResult handleClick(ReactContext context) {
+		if (isHidden() || Boolean.TRUE.equals(getState(DISABLED))) {
+			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
+		}
 		if (_model != null && (!_model.isVisible() || !_model.isExecutable())) {
 			return HandlerResult.error(I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE);
 		}
@@ -272,6 +346,6 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of("appearance", "size", "keyGesture", "image");
+		return java.util.Set.of(APPEARANCE, SIZE, KEY_GESTURE, IMAGE, DISPLAY_MODE, CSS_CLASSES);
 	}
 }

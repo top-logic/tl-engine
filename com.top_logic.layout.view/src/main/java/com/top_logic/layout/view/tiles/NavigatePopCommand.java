@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.tiles;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
@@ -26,6 +27,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * @implNote Resolves the target stack via {@link ViewContext#getScope(Class)}.
  */
+@InApp
 public class NavigatePopCommand implements ViewCommand {
 
 	/**

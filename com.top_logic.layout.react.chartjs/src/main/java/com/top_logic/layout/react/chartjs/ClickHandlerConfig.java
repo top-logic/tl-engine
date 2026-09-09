@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.react.chartjs;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -40,5 +42,6 @@ public interface ClickHandlerConfig extends ConfigurationItem {
 	 */
 	@Mandatory
 	@Name(ACTION)
+	@Options(fun = AllInAppImplementations.class)
 	PolymorphicConfiguration<? extends ViewCommand> getAction();
 }

@@ -42,6 +42,14 @@ public class ReactFormFieldControl extends ReactControl {
 	/** State key telling the client to send {@link #COMMIT_COMMAND} when the field loses focus. */
 	protected static final String COMMIT_ON_BLUR = "commitOnBlur";
 
+	/**
+	 * State key telling the client to hold a typed value back until the field loses focus, instead
+	 * of sending it while the user is still typing.
+	 *
+	 * @see #setSendValueOnBlur(boolean)
+	 */
+	protected static final String SEND_VALUE_ON_BLUR = "sendValueOnBlur";
+
 	/** State key for the field value. */
 	protected static final String VALUE = "value";
 
@@ -254,6 +262,31 @@ public class ReactFormFieldControl extends ReactControl {
 	public void setMultiline(int rows) {
 		putState(MULTILINE, Boolean.TRUE);
 		putState(ROWS, Integer.valueOf(rows));
+	}
+
+	/**
+	 * Holds a typed value back until the field loses focus, instead of sending it while the user is
+	 * still typing.
+	 *
+	 * <p>
+	 * For a field whose {@link com.top_logic.layout.form.model.FieldModel} rewrites the text it is
+	 * given rather than storing it verbatim - a value parsed and re-formatted through a format, say.
+	 * Such a field cannot be round-tripped mid-edit at all: the round-trip re-renders it from the
+	 * normalized value, which throws away what was being typed. A comma separated list shows it
+	 * plainly - pausing after {@code "red, "} would send that text, which parses to one element and
+	 * formats back to {@code "red"}, taking the comma and the space out from under the cursor.
+	 * </p>
+	 *
+	 * <p>
+	 * Nothing typed is lost: the held value is sent when the field loses focus, before any action
+	 * command the user triggers meanwhile, and if the field is unmounted mid-edit. What it does cost
+	 * is server-side feedback while typing - an error from the model shows up when the field is
+	 * left, not during. That is the trade this is for; a field whose model stores what it is given
+	 * should keep the default debounce instead.
+	 * </p>
+	 */
+	public void setSendValueOnBlur(boolean sendOnBlur) {
+		putState(SEND_VALUE_ON_BLUR, sendOnBlur);
 	}
 
 	/**

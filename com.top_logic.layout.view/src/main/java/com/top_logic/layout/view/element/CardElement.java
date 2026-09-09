@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
@@ -31,6 +32,7 @@ import com.top_logic.util.Resources;
  * Renders a lightweight content container with optional title and visual variant.
  * </p>
  */
+@InApp
 public class CardElement extends ContainerElement {
 
 	/**

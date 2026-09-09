@@ -5,7 +5,9 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
@@ -22,6 +24,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.util.Resources;
 
 /**
  * {@link UIElement} that displays a {@link BinaryData} image via the {@link ReactPhotoViewerControl}
@@ -33,6 +36,7 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * with that channel: when the channel value changes, the displayed image is updated.
  * </p>
  */
+@InApp
 public class ImageElement implements UIElement {
 
 	/**
@@ -43,6 +47,9 @@ public class ImageElement implements UIElement {
 
 		/** Configuration name for {@link #getInput()}. */
 		String INPUT = "input";
+
+		/** Configuration name for {@link #getAlt()}. */
+		String ALT = "alt";
 
 		@Override
 		@ClassDefault(ImageElement.class)
@@ -55,9 +62,24 @@ public class ImageElement implements UIElement {
 		@Nullable
 		@Format(ChannelRefFormat.class)
 		ChannelRef getInput();
+
+		/**
+		 * What the image shows, for a reader who cannot see it.
+		 *
+		 * <p>
+		 * Worth saying wherever the image carries information rather than decoration - a QR code
+		 * enrolling an authenticator, a chart, a scan. Left unset, the image is announced as a
+		 * photograph, which is what this element displays by default.
+		 * </p>
+		 */
+		@Name(ALT)
+		@Nullable
+		ResKey getAlt();
 	}
 
 	private final ChannelRef _inputRef;
+
+	private final ResKey _alt;
 
 	/**
 	 * Creates a new {@link ImageElement} from configuration.
@@ -65,12 +87,16 @@ public class ImageElement implements UIElement {
 	@CalledByReflection
 	public ImageElement(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
+		_alt = config.getAlt();
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		SimpleBinaryDataValue model = new SimpleBinaryDataValue(image(null));
 		ReactPhotoViewerControl control = new ReactPhotoViewerControl(context, model);
+		if (_alt != null) {
+			control.setAlt(Resources.getInstance().getString(_alt));
+		}
 		if (_inputRef != null) {
 			ViewChannel channel = context.resolveChannel(_inputRef);
 			model.setData(image(channel.get()));

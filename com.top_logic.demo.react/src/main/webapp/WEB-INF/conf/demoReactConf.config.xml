@@ -20,6 +20,7 @@
 					<bundle name="model.test.flowchart.messages"/>
 					<bundle name="model.tl.demo.projectManagement.messages"/>
 					<bundle name="model.demo.filter.messages"/>
+					<bundle name="model.demo.calendar.messages"/>
 				</bundles>
 			</instance>
 		</config>
@@ -33,6 +34,7 @@
 					<declaration file="/WEB-INF/model/test.flowchart.model.xml"/>
 					<declaration file="/WEB-INF/model/tl.demo.projectManagement.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.filter.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.calendar.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

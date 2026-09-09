@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -36,6 +39,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * {@link ViewCommandModel} to bridge the command to the UI.
  * </p>
  */
+@InApp
 public class ButtonElement implements UIElement {
 
 	/**
@@ -66,6 +70,7 @@ public class ButtonElement implements UIElement {
 		 */
 		@Name(ACTION)
 		@Nullable
+		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends ViewCommand> getAction();
 
 		/**

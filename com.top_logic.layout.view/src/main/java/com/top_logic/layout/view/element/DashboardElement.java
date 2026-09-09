@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -38,6 +39,7 @@ import com.top_logic.layout.view.command.CommandScope;
  * order.
  * </p>
  */
+@InApp
 public class DashboardElement implements UIElement {
 
 	private static final String PC_KEY_PREFIX = "dashboard.tileOrder.";

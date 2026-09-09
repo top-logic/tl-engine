@@ -13,6 +13,7 @@
 			<annotations>
 				<table name="GenericObject"/>
 				<instance-presentation icon="css:bi bi-check-circle"/>
+				<id-column value="name"/>
 			</annotations>
 			<attributes>
 				<!-- The object's name: mandatory, and used as its label -->
@@ -21,24 +22,13 @@
 					type="tl.core:String"
 				/>
 
-				<!-- Identity-aware constraint: the check excludes the edited object from the objects it compares against, so editing an object without changing this value must stay valid -->
+				<!-- Globally unique value: the check excludes the edited object from the objects it compares against, so editing an object without changing this value stays valid -->
 				<property name="uniqueName"
 					type="tl.core:String"
 				>
 					<annotations>
 						<constraints>
-							<constraint-by-expression>
-								<check><![CDATA[value -> obj -> {
-	if ($value == null,
-		null,
-		if (all(`test.constraints:ConstraintTestType`)
-				.filter(other -> $other != $obj
-					and $other.get(`test.constraints:ConstraintTestType#uniqueName`) == $value)
-				.size() == 0,
-			null,
-			#("The name is already used by another object."@en, "Der Name wird bereits von einem anderen Objekt verwendet."@de)))
-}]]></check>
-							</constraint-by-expression>
+							<unique/>
 						</constraints>
 					</annotations>
 				</property>
@@ -166,6 +156,22 @@
 				<property name="freeText"
 					type="tl.core:String"
 				/>
+
+				<!-- Scope for the unique code below -->
+				<property name="category"
+					type="tl.core:String"
+				/>
+
+				<!-- Unique among all objects with the same category -->
+				<property name="codeInCategory"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<unique additional-attributes="category"/>
+						</constraints>
+					</annotations>
+				</property>
 
 				<!-- Composition reference: items owned by this object -->
 				<reference name="items"

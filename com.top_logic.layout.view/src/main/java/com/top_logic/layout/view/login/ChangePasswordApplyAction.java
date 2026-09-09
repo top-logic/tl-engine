@@ -7,6 +7,7 @@ package com.top_logic.layout.view.login;
 
 import java.util.Arrays;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -20,31 +21,35 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLObject;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ViewAction} that applies the new password chosen in the forced change-password step that
- * follows a login with an expired password, then completes the deferred login.
+ * {@link ViewAction} that applies a newly chosen password to an account.
+ *
+ * <p>
+ * Serves both ways a password is changed. A login with an expired password forces the change before
+ * the session exists: {@link LoginAction} opens the dialog with the authenticated account on its
+ * {@link LoginAction#ACCOUNT_CHANNEL} channel, and the deferred login continues once the new
+ * password is stored. A user changing their password voluntarily has a session already; no such
+ * channel is in scope, the current account is the one changed, and nothing continues afterwards.
+ * </p>
  *
  * <p>
  * Expects its input to be the transient {@link LoginAction#PASSWORD_CHANGE_TYPE} model (carrying
- * {@code newPassword} and {@code newPasswordConfirm}), e.g. after {@code <store-form-state/>}. The
- * account to change is read from the dialog's {@link LoginAction#ACCOUNT_CHANNEL} channel (populated
- * by {@link LoginAction} when it opened the dialog).
- * </p>
- *
- * <p>
+ * {@code newPassword} and {@code newPasswordConfirm}), e.g. after {@code <store-form-state/>}.
  * Password policy validation and the actual change are delegated to the
- * {@link AuthenticationDevice} (which also clears the expiry flag and maintains the password
- * history), reusing the same headless logic as the legacy change-password component. On success the
- * deferred session swap is triggered; on a policy violation or mismatch a {@link TopLogicException}
- * is raised so the form shows the error.
+ * {@link AuthenticationDevice}, which also clears the expiry flag and maintains the password
+ * history. On a policy violation or mismatch a {@link TopLogicException} is raised so the form shows
+ * the error.
  * </p>
  *
- * @implNote The change is performed via {@link AuthenticationDevice#setPassword(Person, char[])} and,
- *           on success, the flow continues through {@link LoginAction#proceedAfterPassword} (which
- *           runs any required MFA step before completing the login).
+ * @implNote The change is performed via {@link AuthenticationDevice#setPassword(Person, char[])}.
+ *           Only a pending login continues through {@link LoginAction#proceedAfterPassword} (which
+ *           runs any required MFA step before completing the login); that is decided by where the
+ *           account came from, see {@link #pendingLogin(ReactContext)}.
  */
+@InApp
 public class ChangePasswordApplyAction implements ViewAction {
 
 	/**
@@ -71,7 +76,10 @@ public class ChangePasswordApplyAction implements ViewAction {
 		if (!(input instanceof TLObject)) {
 			return input;
 		}
-		Person account = resolveAccount(context);
+		// A pending login names the account it authenticated; otherwise the session's own account is
+		// the one whose password is changed.
+		Person pending = pendingLogin(context);
+		Person account = pending != null ? pending : TLContext.currentUser();
 		if (account == null) {
 			throw new TopLogicException(I18NConstants.LOGIN_FAILED);
 		}
@@ -101,11 +109,22 @@ public class ChangePasswordApplyAction implements ViewAction {
 			Arrays.fill(password, (char) 0);
 		}
 
-		LoginAction.proceedAfterPassword(context, account);
+		if (pending != null) {
+			LoginAction.proceedAfterPassword(context, pending);
+		}
 		return input;
 	}
 
-	private static Person resolveAccount(ReactContext context) {
+	/**
+	 * The account of a login waiting for this password change, or {@code null} when the password is
+	 * being changed from an established session.
+	 *
+	 * <p>
+	 * The distinguishing mark is {@link LoginAction#ACCOUNT_CHANNEL}, which only
+	 * {@link LoginAction} puts in scope.
+	 * </p>
+	 */
+	private static Person pendingLogin(ReactContext context) {
 		if (!(context instanceof ViewContext)) {
 			return null;
 		}

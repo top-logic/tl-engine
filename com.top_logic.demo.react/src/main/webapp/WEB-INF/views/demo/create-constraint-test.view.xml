@@ -26,6 +26,8 @@
 			<field attribute="uppercaseStart"/>
 			<field attribute="warningField"/>
 			<field attribute="freeText"/>
+			<field attribute="category"/>
+			<field attribute="codeInCategory"/>
 			<composition-table attribute="items">
 				<columns>
 					<column attribute="name"/>

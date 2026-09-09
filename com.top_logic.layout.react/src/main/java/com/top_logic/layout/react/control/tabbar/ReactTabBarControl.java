@@ -102,7 +102,7 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		}
 		putState(TABS, tabList);
 		putState(ACTIVE_TAB_ID, _activeTabId);
-		// activeContent is null until the first render creates it.
+		// activeContent is null until this tab bar is attached (or written) - see onAttach().
 	}
 
 	/**
@@ -113,14 +113,35 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	}
 
 	@Override
+	protected void onAttach() {
+		super.onAttach();
+		// The active tab's content comes into existence here rather than at the first write, because
+		// what it contributes to its surroundings has to be in place before those surroundings are
+		// rendered: a form puts its Save into the enclosing button bar as it attaches, and a bar
+		// built and written before the form exists shows without it. Putting the content into the
+		// state now also lets the attach propagation that follows this hook reach it.
+		materializeActiveContent();
+	}
+
+	@Override
 	protected void onBeforeWrite() {
 		super.onBeforeWrite();
-		if (getState(ACTIVE_CONTENT) == null) {
-			ReactControl activeContent = getOrCreateContent(_activeTabId);
-			putState(ACTIVE_CONTENT, activeContent);
-			if (isAttached()) {
-				activeContent.attach();
-			}
+		// Covers a tab bar written without being attached; an attached one materialized its content
+		// in onAttach().
+		materializeActiveContent();
+	}
+
+	/**
+	 * Creates the active tab's content unless it already exists, and displays it.
+	 */
+	private void materializeActiveContent() {
+		if (getState(ACTIVE_CONTENT) != null) {
+			return;
+		}
+		ReactControl activeContent = getOrCreateContent(_activeTabId);
+		putState(ACTIVE_CONTENT, activeContent);
+		if (isAttached()) {
+			activeContent.attach();
 		}
 	}
 

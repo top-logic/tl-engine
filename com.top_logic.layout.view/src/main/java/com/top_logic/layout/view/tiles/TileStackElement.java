@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.tiles;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
@@ -48,6 +49,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * &lt;/view&gt;
  * </pre>
  */
+@InApp
 public class TileStackElement implements UIElement {
 
 	/**

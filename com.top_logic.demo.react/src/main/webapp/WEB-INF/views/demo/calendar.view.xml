@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="appointment"/>
+		<!--
+			The calendar publishes its displayed interval here; the object query reads it back to load
+			only the visible window's appointments.
+		-->
+		<channel name="from"/>
+		<channel name="to"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				size="72"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Calendar</en>
+						<de>Kalender</de>
+					</title>
+					<calendar
+						day-end-hour="18"
+						day-start-hour="8"
+						granularity="WEEK"
+						observed-types="demo.calendar:Appointment"
+						range-end="to"
+						range-start="from"
+						selection="appointment"
+					>
+						<inputs>
+							<input channel="from"/>
+							<input channel="to"/>
+						</inputs>
+						<objects>from -&gt; to -&gt; if($from == null || $to == null, list(), all(`demo.calendar:Appointment`).filter(a -&gt; { s = $a.get(`demo.calendar:Appointment#start`); e = $a.get(`demo.calendar:Appointment#end`); $s != null &amp;&amp; $s &lt; $to &amp;&amp; if($e == null, $s, $e) &gt; $from; }))</objects>
+						<event>
+							<start>x -&gt; $x.get(`demo.calendar:Appointment#start`)</start>
+							<end>x -&gt; $x.get(`demo.calendar:Appointment#end`)</end>
+							<all-day>x -&gt; $x.get(`demo.calendar:Appointment#allDay`)</all-day>
+							<title>x -&gt; $x.get(`demo.calendar:Appointment#name`)</title>
+							<category>x -&gt; $x.get(`demo.calendar:Appointment#category`).get(`demo.calendar:AppointmentCategory#name`)</category>
+							<color>x -&gt; $x.get(`demo.calendar:Appointment#category`).get(`demo.calendar:AppointmentCategory#color`)</color>
+						</event>
+						<on-move>obj -&gt; start -&gt; end -&gt; { $obj.set(`demo.calendar:Appointment#start`, $start); $obj.set(`demo.calendar:Appointment#end`, $end); }</on-move>
+						<on-resize>obj -&gt; end -&gt; $obj.set(`demo.calendar:Appointment#end`, $end)</on-resize>
+						<on-create>start -&gt; end -&gt; allDay -&gt; title -&gt; { appt = new(`demo.calendar:Appointment`); $appt.set(`demo.calendar:Appointment#name`, if($title == null || $title == "", "New appointment", $title)); $appt.set(`demo.calendar:Appointment#start`, $start); $appt.set(`demo.calendar:Appointment#end`, $end); $appt.set(`demo.calendar:Appointment#allDay`, $allDay); $appt; }</on-create>
+					</calendar>
+				</panel>
+			</pane>
+			<pane
+				min-size="260"
+				size="28"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Appointment</en>
+						<de>Termin</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-trash"
+							input="appointment"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+							</with-transaction>
+							<write-channel name="appointment"/>
+						</generic-command>
+					</commands>
+					<inset>
+						<form input="appointment">
+							<field attribute="name"/>
+							<field attribute="start"/>
+							<field attribute="end"/>
+							<field attribute="allDay"/>
+							<field attribute="category"/>
+						</form>
+					</inset>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

@@ -11,6 +11,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.annotate.DefaultStrategy;
 import com.top_logic.model.annotate.DefaultStrategy.Strategy;

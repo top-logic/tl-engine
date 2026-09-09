@@ -8,6 +8,8 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
@@ -58,6 +60,7 @@ public abstract class CommandCarrierElement extends ContainerElement {
 		@Name(COMMANDS)
 		@EntryTag("command")
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 	}
 
@@ -89,10 +92,24 @@ public abstract class CommandCarrierElement extends ContainerElement {
 	 * channels, executability rules and confirmations.
 	 */
 	protected List<ViewCommandModel> buildCommandModels(ViewContext context) {
+		return buildCommandModels(context, _commands, _commandConfigs);
+	}
+
+	/**
+	 * Builds {@link ViewCommandModel}s for the given commands, resolving per-command input
+	 * channels, executability rules and confirmations.
+	 *
+	 * @param commands
+	 *        The instantiated commands.
+	 * @param commandConfigs
+	 *        Their configurations, in the same order.
+	 */
+	protected static List<ViewCommandModel> buildCommandModels(ViewContext context,
+			List<ViewCommand> commands, List<ViewCommand.Config> commandConfigs) {
 		List<ViewCommandModel> models = new ArrayList<>();
-		for (int i = 0; i < _commands.size() && i < _commandConfigs.size(); i++) {
-			ViewCommand cmd = _commands.get(i);
-			ViewCommand.Config cmdConfig = _commandConfigs.get(i);
+		for (int i = 0; i < commands.size() && i < commandConfigs.size(); i++) {
+			ViewCommand cmd = commands.get(i);
+			ViewCommand.Config cmdConfig = commandConfigs.get(i);
 
 			ChannelRef inputRef = cmdConfig.getInput();
 			ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;

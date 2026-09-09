@@ -6,6 +6,7 @@
 package com.top_logic.layout.view;
 
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -40,6 +41,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey FORM_NO_MODEL;
 
 	/**
+	 * @en No configuration to edit.
+	 */
+	public static ResKey CONFIG_FORM_NO_MODEL;
+
+	/**
 	 * @en Detail
 	 */
 	public static ResKey COMPOSITION_TABLE_DETAIL;
@@ -68,6 +74,47 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Failed to save view "{0}".
 	 */
 	public static ResKey1 ERROR_SAVE_VIEW_FAILED__PATH;
+
+	/**
+	 * @en View "{0}" was not saved, because it could not be loaded again afterwards. Correct the
+	 *     reported settings and save again. {1}
+	 */
+	public static ResKey2 ERROR_SAVE_VIEW_NOT_LOADABLE__PATH_DETAILS;
+
+	/**
+	 * @en This view could not be loaded.
+	 */
+	public static ResKey ERROR_VIEW_NOT_LOADED;
+
+	/**
+	 * @en Add element...
+	 */
+	public static ResKey DESIGNER_ADD_CHILD;
+
+	/**
+	 * @en Remove
+	 */
+	public static ResKey DESIGNER_REMOVE;
+
+	/**
+	 * @en Move up
+	 */
+	public static ResKey DESIGNER_MOVE_UP;
+
+	/**
+	 * @en Move down
+	 */
+	public static ResKey DESIGNER_MOVE_DOWN;
+
+	/**
+	 * @en Add element
+	 */
+	public static ResKey DESIGNER_ADD_DIALOG_TITLE;
+
+	/**
+	 * @en Element type
+	 */
+	public static ResKey DESIGNER_ADD_DIALOG_TYPE;
 
 	/**
 	 * @en Edit Layout

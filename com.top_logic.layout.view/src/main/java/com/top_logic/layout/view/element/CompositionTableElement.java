@@ -8,6 +8,7 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -50,6 +51,7 @@ import com.top_logic.layout.view.table.ColumnBinding;
  * &lt;/composition-table&gt;
  * </pre>
  */
+@InApp
 public class CompositionTableElement implements UIElement {
 
 	/**

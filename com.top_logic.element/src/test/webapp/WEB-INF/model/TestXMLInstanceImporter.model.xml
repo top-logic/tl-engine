@@ -60,6 +60,34 @@
 					</attributes>
 				</class>
 				
+				<!-- Uniqueness constraint declared at the definition of an attribute that a subtype overrides. -->
+				<class name="UniqueBase">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<property name="code" type="tl.core:String">
+							<annotations>
+								<constraints>
+									<unique/>
+								</constraints>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+				
+				<class name="UniqueSub">
+					<generalizations>
+						<generalization type="UniqueBase"/>
+					</generalizations>
+					<attributes>
+						<property name="code"
+							override="true"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+				
 				<enum name="MyEnum">
 					<classifiers>
 						<classifier name="A"/>

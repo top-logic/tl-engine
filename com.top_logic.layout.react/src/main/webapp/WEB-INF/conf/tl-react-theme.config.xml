@@ -17,7 +17,13 @@
 				default-theme="default"
 			>
 				<themes>
-					<theme name="default" label="Default">
+					<theme name="default"
+						icon="css:bi bi-sun"
+					>
+						<label>
+							<en>Light</en>
+							<de>Hell</de>
+						</label>
 					<color name="background" value="#FFFFFF"/>
 					<color name="background-inverse" value="#393C40"/>
 					<color name="background-selected" value="#F0F1F2"/>
@@ -97,8 +103,12 @@
 					</theme>
 					<theme name="dark"
 						extends="default"
-						label="Dark"
+						icon="css:bi bi-moon-stars"
 					>
+						<label>
+							<en>Dark</en>
+							<de>Dunkel</de>
+						</label>
 					<color name="background" value="#1A1C1E"/>
 					<color name="background-inverse" value="#F0F1F2"/>
 					<color name="background-selected" value="#2A2D30"/>

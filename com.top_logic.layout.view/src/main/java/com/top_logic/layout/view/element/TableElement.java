@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -80,6 +81,7 @@ import com.top_logic.table.impl.PersonalConfigViewStateStore;
  * no dependency on the legacy {@code TableModel}.
  * </p>
  */
+@InApp
 public class TableElement implements UIElement {
 
 	/**
@@ -407,6 +409,15 @@ public class TableElement implements UIElement {
 					control.selectRow(value instanceof Collection ? null : value);
 				} finally {
 					applyingFromChannel[0] = false;
+				}
+				// The row the channel names is no longer among the rows - deleted, or filtered away
+				// by a changed input. The table has dropped it from its own selection either way
+				// (TableViewControl#refreshData), and the channel has to follow: left alone it would
+				// go on naming a row nobody can see, and everything bound to it - a detail panel, a
+				// command's executability - would go on acting on it. Written outside the guard,
+				// which is there to keep the table's own echo of this very write from bouncing back.
+				if (value != null && control.getSelectedKeys().isEmpty()) {
+					selectionChannel.set(null);
 				}
 			};
 			ViewChannel.ChannelListener channelListener = (sender, oldValue, newValue) -> reapplySelection[0].run();

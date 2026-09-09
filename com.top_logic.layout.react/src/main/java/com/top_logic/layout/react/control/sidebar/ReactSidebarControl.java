@@ -267,6 +267,16 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			return;
 		}
 		ReactControl previousContent = _contentCache.get(_activeItemId);
+
+		// The page being left goes first, before this sidebar reports the new item. Everything the
+		// old page contributed to its surroundings - a routing participant naming the tab it showed,
+		// above all - is contributed for the page it belongs to. Left in place while the sidebar
+		// already names the new one, it is read as belonging to that: the composed URL then carries a
+		// segment of a page no longer displayed, and the address bar is written with it.
+		if (previousContent != null) {
+			previousContent.detach();
+		}
+
 		_activeItemId = itemId;
 
 		if (!isSSEAttached()) {
@@ -310,9 +320,6 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		closeDrawerIfOpen();
 		commitUpdate(tx);
 
-		if (previousContent != null) {
-			previousContent.detach();
-		}
 		if (isAttached()) {
 			content.attach();
 		}

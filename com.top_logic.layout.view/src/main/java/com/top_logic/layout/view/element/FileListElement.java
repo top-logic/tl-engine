@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -39,6 +40,7 @@ import com.top_logic.model.annotate.LabelPosition;
  * &lt;file-list attribute="attachments"/&gt;
  * </pre>
  */
+@InApp
 public class FileListElement implements UIElement {
 
 	/**

@@ -1,3 +1,44 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.layout.configedit.ConfigControlService$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.configedit.ConfigControlService">
+			<instance class="com.top_logic.layout.configedit.ConfigControlService">
+				<providers>
+					<!--
+						Contribute additional value-type-to-provider mappings here - e.g. from a
+						module above this one, such as the TL-Script editor in tl-model-search-react.
+					-->
+					<provider type="com.top_logic.layout.basic.ThemeImage">
+						<impl class="com.top_logic.layout.configedit.IconSelectConfigProvider"/>
+					</provider>
+				</providers>
+				<formats>
+					<!--
+						Value-provider-to-provider mappings: a Date property formatted as a time of
+						day gets the time picker instead of the generic format text field. Looked up
+						by the property's value provider class, walking up its superclasses -
+						contribute further mappings here, from this module or from one above it.
+					-->
+					<format provider="com.top_logic.basic.time.TimeOfDayAsDateValueProvider">
+						<impl class="com.top_logic.layout.configedit.DatePickerFormatProvider"
+							kind="TIME"
+						/>
+					</format>
+					<format provider="com.top_logic.basic.util.ResKey$ValueFormat">
+						<impl class="com.top_logic.layout.configedit.I18NStringFormatProvider"/>
+					</format>
+				</formats>
+			</instance>
+		</config>
+	</services>
 </application>

@@ -7,6 +7,8 @@ package com.top_logic.layout.view;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
+import java.util.function.Consumer;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,6 +41,9 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
+import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
+import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.protocol.RouteChangeEvent;
@@ -48,6 +53,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.view.login.PendingSessionAction;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
@@ -113,6 +119,17 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		String routePath = extractRoutePath(pathInfo, windowName);
+		if (PendingSessionAction.consumeSessionSwapped(session)) {
+			// A login or logout has just replaced the session, and the redirect it sent still names
+			// the page the previous user had navigated to. Whoever takes the session over begins
+			// where they begin, so that page is not theirs to inherit.
+			routePath = null;
+		}
+		if (routePath == null) {
+			// Entered without naming a page, so the user's own choice of where to begin applies.
+			// A URL that does carry a route asks for that page and is never overridden.
+			routePath = StartPage.get();
+		}
 
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
 		// Rendering the page restarts the session's inactivity timeout. A reload renders the tree the
@@ -147,10 +164,14 @@ public class ViewServlet extends TopLogicServlet {
 				request.getContextPath(), windowName, sseQueue, windowRegistry);
 			wireRouteManager(baseContext, sseQueue, routePath);
 			ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
-			ReactContext displayContext = withWindowErrorSink(baseContext, snackbar);
+			ReactMenuControl menu = createWindowMenu(baseContext);
+			ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
+			ReactContext displayContext = withWindowContextMenu(
+				withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
 			ReactControl content = controlProvider.createControl(
 				displayContext, windowEntry.getModel());
-			ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar));
+			ReactControl rootControl =
+				new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 			windowEntry.setRootControl(rootControl);
 			sseQueue.setRootControl(rootControl);
 			renderPage(request, response, rootControl, displayContext);
@@ -169,15 +190,17 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		// Reuse is correct only for the same view.
+		// Reuse is correct only for the same view in the same language.
+		Locale locale = Resources.getCurrentLocale();
 		RenderedView rendered = RenderedView.lookup(subSession);
-		if (displayed != null && rendered != null && rendered.matches(viewPath, view)) {
+		if (displayed != null && rendered != null && rendered.matches(viewPath, view, locale)) {
 			renderAgain(request, response, displayed, sseQueue, routePath);
 			return;
 		}
 		if (displayed != null) {
-			// Another view, or a view file edited in the meantime: the old tree is never rendered
-			// again, so release the model listeners its controls hold.
+			// Another view, a view file edited in the meantime, or a language the tree was not built
+			// in: the old tree is never rendered again, so release the model listeners its controls
+			// hold.
 			displayed.detach();
 			displayed.cleanupTree();
 		}
@@ -186,16 +209,20 @@ public class ViewServlet extends TopLogicServlet {
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
 		wireRouteManager(baseContext, sseQueue, routePath);
 		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
-		ReactContext displayContext = withWindowErrorSink(baseContext, snackbar);
+		ReactMenuControl menu = createWindowMenu(baseContext);
+		ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
+		ReactContext displayContext = withWindowContextMenu(
+			withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
 		ViewContext viewContext = new DefaultViewContext(displayContext);
 
 		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
 			(ReactControl) view.createControl(viewContext));
 		content.setViewSource(viewPath);
-		ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar));
+		ReactControl rootControl =
+			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);
 		windowEntry.setRootControl(rootControl);
-		RenderedView.store(subSession, new RenderedView(viewPath, view));
+		RenderedView.store(subSession, new RenderedView(viewPath, view, locale));
 
 		renderPage(request, response, rootControl, displayContext);
 	}
@@ -246,6 +273,62 @@ public class ViewServlet extends TopLogicServlet {
 				return errorSink;
 			}
 		};
+	}
+
+	/**
+	 * Creates the context menu overlay of the browser window, serving every view it displays.
+	 *
+	 * <p>
+	 * A {@link ReactMenuControl} positions itself at viewport coordinates, so exactly one overlay per
+	 * browser window is required. The control must be part of the window's root control tree to be
+	 * rendered; see {@link #withWindowContextMenu(ReactContext, ContextMenuOpener)} for publishing the
+	 * matching {@link ContextMenuOpener} to the view.
+	 * </p>
+	 */
+	private static ReactMenuControl createWindowMenu(ReactContext context) {
+		return new ReactMenuControl(context, null, List.of(),
+			itemId -> {
+				// The select handler is installed per open() by the ContextMenuOpener.
+			},
+			() -> {
+				// The close handler is installed per open() by the ContextMenuOpener.
+			});
+	}
+
+	/**
+	 * Creates the {@link ContextMenuOpener} rendering into the given window menu overlay.
+	 */
+	private static ContextMenuOpener createWindowMenuOpener(ReactMenuControl menu) {
+		return new ContextMenuOpener(new ContextMenuOpener.MenuRenderer() {
+			@Override
+			public void show(int x, int y, List<ReactMenuControl.MenuEntry> items,
+					Consumer<String> selectHandler, Runnable closeHandler) {
+				menu.updateItems(items);
+				menu.setSelectHandler(selectHandler);
+				menu.setCloseHandler(closeHandler);
+				menu.open(x, y);
+			}
+
+			@Override
+			public void hide() {
+				menu.close();
+			}
+		});
+	}
+
+	/**
+	 * Derives a context whose {@link ReactContext#getContextMenuOpener()} is the window-level opener,
+	 * so any view the window displays can open a context menu.
+	 */
+	private static ReactContext withWindowContextMenu(ReactContext context, ContextMenuOpener opener) {
+		ReactContext result = new ForwardingReactContext(context) {
+			@Override
+			public ContextMenuOpener getContextMenuOpener() {
+				return opener;
+			}
+		};
+		opener.bindReactContext(() -> result);
+		return result;
 	}
 
 	/**
@@ -509,7 +592,9 @@ public class ViewServlet extends TopLogicServlet {
 
 		out.writeContent(HTMLConstants.DOCTYPE_HTML);
 		out.beginBeginTag(HTMLConstants.HTML);
-		out.writeAttribute("lang", "en");
+		// The language the page is actually rendered in, so that assistive technology and the
+		// browser's own text handling follow the user's choice.
+		out.writeAttribute("lang", Resources.getCurrentLocale().getLanguage());
 		out.writeAttribute("data-theme", themes.getActiveThemeId());
 		out.endBeginTag();
 

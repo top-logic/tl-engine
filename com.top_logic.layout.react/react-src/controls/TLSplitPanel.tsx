@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
@@ -19,10 +19,15 @@ interface ChildDescriptor {
  * - orientation: "horizontal" | "vertical"
  * - resizable: boolean
  * - children: ChildDescriptor[]
+ *
+ * Always fills its container: the panes are sized proportionally and the splitter between them
+ * has to span the available extent. Each pane scrolls what does not fit into it, which ends the
+ * fill chain there.
  */
 const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const fillClass = useFill(true);
 
   const orientation = state.orientation as string;
   const resizable = state.resizable === true;
@@ -194,7 +199,7 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
     <div
       ref={containerRef}
       id={controlId}
-      className={`tlSplitPanel tlSplitPanel--${orientation}${allCollapsed ? ' tlSplitPanel--allCollapsed' : ''}`}
+      className={`tlSplitPanel tlSplitPanel--${orientation}${allCollapsed ? ' tlSplitPanel--allCollapsed' : ''} ${fillClass}`}
       style={{
         display: 'flex',
         flexDirection: effectiveHorizontal ? 'row' : 'column',

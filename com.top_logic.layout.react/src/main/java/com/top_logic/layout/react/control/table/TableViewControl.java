@@ -87,8 +87,10 @@ import com.top_logic.util.Resources;
  * control expands to its full natural height and the <em>surrounding</em> scroller (e.g. the tab
  * content) scrolls instead - showing a large scrollbar while the table never pages in new rows.
  * Inside the {@code com.top_logic.layout.view} layer, place it in a {@code <split-panel>}/
- * {@code <pane>} or a fill panel ({@code <panel fill="true">}); standalone (e.g. in a JSP-rendered
- * component) wrap it in a fixed- or flex-bounded container as the React-table demo does.
+ * {@code <pane>} or a fill panel ({@code <panel fill="true">}) - the containers between such a
+ * filling control and the next bounded box grow with it, so the chain holds however deeply it is
+ * nested; standalone (e.g. in a JSP-rendered component) wrap it in a fixed- or flex-bounded
+ * container as the React-table demo does.
  * </p>
  *
  * @param <R>

@@ -7,6 +7,7 @@ package test.com.top_logic.layout.react.control;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.Format;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Map;
@@ -19,6 +20,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.form.model.AbstractFieldModel;
+import com.top_logic.layout.form.format.DurationFormat;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -38,6 +40,9 @@ public class TestReactNumberInputControl extends TestCase {
 	private static final NumberFormat ENGLISH = NumberFormat.getInstance(Locale.UK);
 
 	private static final NumberFormat GERMAN_INTEGER = NumberFormat.getIntegerInstance(Locale.GERMANY);
+
+	/** Half an hour and an hour, in milliseconds. */
+	private static final long NINETY_MINUTES = 5400000L;
 
 	/**
 	 * A value is written in the field's format, so the same number reads differently for a German
@@ -168,11 +173,38 @@ public class TestReactNumberInputControl extends TestCase {
 		assertEquals("12,5", field.state());
 	}
 
+	/**
+	 * A format that writes words rather than digits governs the field just the same: a duration is a
+	 * number of milliseconds, displayed and entered as the text its format reads.
+	 */
+	public void testFormatWritingWords() {
+		NumberControl field = control(DurationFormat.INSTANCE, Long.valueOf(NINETY_MINUTES));
+		assertEquals("1h 30min", field.state());
+
+		field.type("45min");
+		assertEquals(Long.valueOf(2700000L), field.getFieldModel().getValue());
+		assertFalse(model(field).hasError());
+
+		field.type("abc");
+		assertTrue("Text the format does not read is not a value.", model(field).hasError());
+		assertEquals(Long.valueOf(2700000L), field.getFieldModel().getValue());
+	}
+
+	/**
+	 * The on-screen keyboard the client asks for follows the field's format.
+	 */
+	public void testInputMode() {
+		assertEquals(ReactNumberInputControl.INPUT_MODE_DECIMAL, control(GERMAN, null).inputMode());
+		assertEquals(ReactNumberInputControl.INPUT_MODE_NUMERIC, control(GERMAN_INTEGER, null).inputMode());
+		assertEquals("A duration is typed as words, so the full keyboard is needed.",
+			ReactNumberInputControl.INPUT_MODE_TEXT, control(DurationFormat.INSTANCE, null).inputMode());
+	}
+
 	private static AbstractFieldModel model(NumberControl field) {
 		return (AbstractFieldModel) field.getFieldModel();
 	}
 
-	private static NumberControl control(NumberFormat format, Object value) {
+	private static NumberControl control(Format format, Object value) {
 		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
 		return new NumberControl(context, new AbstractFieldModel(value), format);
 	}
@@ -182,12 +214,16 @@ public class TestReactNumberInputControl extends TestCase {
 	 */
 	private static final class NumberControl extends ReactNumberInputControl {
 
-		NumberControl(ReactContext context, FieldModel model, NumberFormat format) {
+		NumberControl(ReactContext context, FieldModel model, Format format) {
 			super(context, model, format);
 		}
 
 		Object state() {
 			return getState(VALUE);
+		}
+
+		Object inputMode() {
+			return getState(INPUT_MODE);
 		}
 
 		void type(String text) {

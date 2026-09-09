@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.view.form;
 
-import java.text.NumberFormat;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Collection;
@@ -278,10 +278,15 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * by, and the bounds of that column's filter.
 	 * </p>
 	 *
+	 * <p>
+	 * The annotated format need not write digits: a duration is a number of milliseconds written as
+	 * {@code 1h 30min}, and the attribute is displayed, entered and filtered in that text.
+	 * </p>
+	 *
 	 * @param part
 	 *        The model attribute, or {@code null} for an unresolved one.
 	 */
-	public static NumberFormat numberFormat(TLStructuredTypePart part) {
+	public static Format numberFormat(TLStructuredTypePart part) {
 		if (part == null || part.isMultiple()) {
 			return null;
 		}
@@ -299,29 +304,23 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * The annotated format of the given attribute, or the default format for its kind of number.
 	 *
 	 * <p>
-	 * An attribute whose annotated format does not describe a number is displayed in the default
-	 * format instead, so that a misconfigured attribute still shows its value.
+	 * An attribute whose format declaration cannot be resolved is displayed in the default format
+	 * instead, so that a misconfigured attribute still shows its value.
 	 * </p>
 	 */
-	private static NumberFormat numberFormat(TLStructuredTypePart part, boolean fractional) {
+	private static Format numberFormat(TLStructuredTypePart part, boolean fractional) {
 		try {
-			java.text.Format annotated =
-				fractional ? DisplayAnnotations.getFloatFormat(part) : DisplayAnnotations.getLongFormat(part);
-			if (annotated instanceof NumberFormat numberFormat) {
-				return numberFormat;
-			}
-			Logger.error("Format of '" + part + "' does not format numbers: " + annotated,
-				FieldControlService.class);
+			return fractional ? DisplayAnnotations.getFloatFormat(part) : DisplayAnnotations.getLongFormat(part);
 		} catch (ConfigurationException ex) {
 			Logger.error("Invalid attribute definition for '" + part + "'.", ex, FieldControlService.class);
+			return defaultNumberFormat(fractional);
 		}
-		return defaultNumberFormat(fractional);
 	}
 
 	/**
 	 * The user's default format for whole respectively fractional numbers.
 	 */
-	private static NumberFormat defaultNumberFormat(boolean fractional) {
+	private static Format defaultNumberFormat(boolean fractional) {
 		Formatter formatter = HTMLFormatter.getInstance();
 		return fractional ? formatter.getDoubleFormat() : formatter.getLongFormat();
 	}

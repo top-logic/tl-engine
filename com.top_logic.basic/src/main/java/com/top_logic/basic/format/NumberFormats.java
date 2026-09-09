@@ -5,6 +5,7 @@
  */
 package com.top_logic.basic.format;
 
+import java.text.Format;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
 
@@ -12,10 +13,16 @@ import java.text.ParsePosition;
  * Reading a number a user typed, in the format the same number is displayed in.
  *
  * <p>
- * A number reaches the user as text formatted in the user's locale, and comes back as the text the
- * user typed. Both directions go through one {@link NumberFormat}, so that a value shown as
- * {@code 12,5} is also entered as {@code 12,5} - in an input field, and as the bound of a table
- * filter.
+ * A number reaches the user as text written by a {@link Format}, and comes back as the text the user
+ * typed. Both directions go through that one format, so that a value shown as {@code 12,5} is also
+ * entered as {@code 12,5} - in an input field, and as the bound of a table filter.
+ * </p>
+ *
+ * <p>
+ * A {@link NumberFormat} is the usual case: the digits and separators of the user's locale. It is
+ * not the only one - a duration is a number of milliseconds written as {@code 1h 30min} - so the
+ * format a number is written in is a {@link Format}, and its text is whatever that format reads and
+ * writes.
  * </p>
  */
 public class NumberFormats {
@@ -27,7 +34,8 @@ public class NumberFormats {
 	 * <p>
 	 * The whole text must be consumed: trailing characters the format stops at mean the text is not
 	 * a number, rather than a number followed by something to ignore. Surrounding whitespace is not
-	 * part of the number and is dropped.
+	 * part of the number and is dropped. Text a format reads as something other than a number is
+	 * not a number either.
 	 * </p>
 	 *
 	 * <p>
@@ -41,7 +49,7 @@ public class NumberFormats {
 	 * @param text
 	 *        The text to read.
 	 */
-	public static Number parse(NumberFormat format, String text) {
+	public static Number parse(Format format, String text) {
 		if (text == null) {
 			return null;
 		}
@@ -50,11 +58,11 @@ public class NumberFormats {
 			return null;
 		}
 		ParsePosition position = new ParsePosition(0);
-		Number result = format.parse(trimmed, position);
-		if (result == null || position.getIndex() < trimmed.length()) {
+		Object result = format.parseObject(trimmed, position);
+		if (position.getErrorIndex() >= 0 || position.getIndex() < trimmed.length()) {
 			return null;
 		}
-		return result;
+		return result instanceof Number number ? number : null;
 	}
 
 	/**
@@ -63,13 +71,18 @@ public class NumberFormats {
 	 * @param format
 	 *        The format the number is written in.
 	 */
-	public static boolean isFractional(NumberFormat format) {
-		return format.getMaximumFractionDigits() > 0;
+	public static boolean isFractional(Format format) {
+		return format instanceof NumberFormat numberFormat && numberFormat.getMaximumFractionDigits() > 0;
 	}
 
 	/**
-	 * The given number in the value type the given format works in: a {@link Double} for a format
-	 * that {@link #isFractional(NumberFormat) carries a fraction}, a {@link Long} otherwise.
+	 * The given number in the value type the given format works in.
+	 *
+	 * <p>
+	 * A {@link NumberFormat} works in a {@link Double} where it
+	 * {@link #isFractional(Format) carries a fraction} and in a {@link Long} otherwise. Any other
+	 * format defines its own value type, and the number is left as it is.
+	 * </p>
 	 *
 	 * <p>
 	 * For a number that has passed through a representation which does not keep its type - a
@@ -82,9 +95,9 @@ public class NumberFormats {
 	 * @param value
 	 *        The number to normalize, may be {@code null}.
 	 */
-	public static Number normalize(NumberFormat format, Number value) {
-		if (value == null) {
-			return null;
+	public static Number normalize(Format format, Number value) {
+		if (value == null || !(format instanceof NumberFormat)) {
+			return value;
 		}
 		if (isFractional(format)) {
 			return Double.valueOf(value.doubleValue());

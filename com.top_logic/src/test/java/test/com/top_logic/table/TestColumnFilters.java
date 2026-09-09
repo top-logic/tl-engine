@@ -18,6 +18,7 @@ import java.util.function.Predicate;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.format.DurationFormat;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
@@ -230,6 +231,21 @@ public class TestColumnFilters extends TestCase {
 		Date moment = codec.parse("01.02.2026 14:30:15.123");
 		assertNotNull(moment);
 		assertEquals(moment, codec.fromJson(codec.toJson(moment)));
+	}
+
+	/**
+	 * A bound of a numeric column whose format writes words - a duration - is read and written in
+	 * that text, and stored as the number it is.
+	 */
+	public void testNumericBoundsInAFormatOfWords() {
+		BoundCodec<Number> codec = BoundCodec.numbers(DurationFormat.INSTANCE);
+		Long ninetyMinutes = Long.valueOf(5400000L);
+
+		assertEquals("1h 30min", codec.format(ninetyMinutes));
+		assertEquals(ninetyMinutes, codec.parse("1h 30min"));
+		assertEquals("A stored bound is the number itself.", ninetyMinutes, codec.toJson(ninetyMinutes));
+		assertEquals(ninetyMinutes, codec.fromJson(codec.toJson(ninetyMinutes)));
+		assertNull("Text the format does not read is not a bound.", codec.parse("kein Wert"));
 	}
 
 	private static ComparableColumnFilter<Number> germanNumberFilter() {

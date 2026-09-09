@@ -5,8 +5,8 @@
  */
 package com.top_logic.layout.react.control.form;
 
+import java.text.Format;
 import java.text.NumberFormat;
-import java.util.Map;
 
 import com.top_logic.basic.format.NumberFormats;
 import com.top_logic.layout.form.model.AbstractFieldModel;
@@ -18,11 +18,14 @@ import com.top_logic.layout.react.ReactContext;
  * A {@link ReactFormFieldControl} for number input fields.
  *
  * <p>
- * The field's {@link NumberFormat} decides how the value is written and how a typed one is read, so
- * a number is shown and entered in the user's locale and with the number of digits the attribute or
- * property asks for: a German user sees and types {@code 12,5} where an English user sees and types
- * {@code 12.5}. The client is handed the formatted text in {@link #VALUE} and sends back the text as
- * typed; it does no number conversion of its own.
+ * The field's {@link Format} decides how the value is written and how a typed one is read. For the
+ * usual {@link NumberFormat} that means the digits and separators of the user's locale and the
+ * number of digits the attribute or property asks for: a German user sees and types {@code 12,5}
+ * where an English user sees and types {@code 12.5}. A format of its own kind writes its own text -
+ * a duration in milliseconds reads as {@code 1h 30min} - and the field follows it. The client is
+ * handed the formatted text in {@link #VALUE} and sends back the text as typed; it does no
+ * conversion of its own, and asks for the on-screen keyboard the format's {@link #INPUT_MODE}
+ * names.
  * </p>
  *
  * <p>
@@ -35,16 +38,22 @@ import com.top_logic.layout.react.ReactContext;
  */
 public class ReactNumberInputControl extends ReactFormFieldControl {
 
-	/** State key holding the client-side configuration of the input. */
-	private static final String CONFIG = "config";
-
 	/**
-	 * Key within {@link #CONFIG} telling the client that the value carries a fraction, which
-	 * decides the on-screen keyboard the input asks for.
+	 * State key naming the on-screen keyboard the input asks for, one of
+	 * {@link #INPUT_MODE_NUMERIC}, {@link #INPUT_MODE_DECIMAL} and {@link #INPUT_MODE_TEXT}.
 	 */
-	private static final String DECIMAL = "decimal";
+	public static final String INPUT_MODE = "inputMode";
 
-	private final NumberFormat _format;
+	/** {@link #INPUT_MODE} of a whole number: digits and a sign. */
+	public static final String INPUT_MODE_NUMERIC = "numeric";
+
+	/** {@link #INPUT_MODE} of a number with a fraction: digits, a sign and a decimal separator. */
+	public static final String INPUT_MODE_DECIMAL = "decimal";
+
+	/** {@link #INPUT_MODE} of a number whose format writes words, a duration for instance. */
+	public static final String INPUT_MODE_TEXT = "text";
+
+	private final Format _format;
 
 	/**
 	 * Creates a new {@link ReactNumberInputControl}.
@@ -56,10 +65,10 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	 * @param format
 	 *        The format the value is displayed in and entered in.
 	 */
-	public ReactNumberInputControl(ReactContext context, FieldModel model, NumberFormat format) {
+	public ReactNumberInputControl(ReactContext context, FieldModel model, Format format) {
 		super(context, model, "TLNumberInput");
 		_format = format;
-		putState(CONFIG, Map.of(DECIMAL, Boolean.valueOf(NumberFormats.isFractional(format))));
+		putState(INPUT_MODE, inputMode(format));
 		// The base constructor seeded the raw number into the value state; re-emit it as the text
 		// the user reads and edits.
 		putState(VALUE, format(model.getValue()));
@@ -69,8 +78,23 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	/**
 	 * The format the value is displayed in and entered in.
 	 */
-	public NumberFormat getFormat() {
+	public Format getFormat() {
 		return _format;
+	}
+
+	/**
+	 * The on-screen keyboard a value in the given format is typed on.
+	 *
+	 * <p>
+	 * A number the format writes as digits is typed on the numeric keyboard, with the decimal
+	 * separator where the format has a fraction. A format that writes words needs the full keyboard.
+	 * </p>
+	 */
+	private static String inputMode(Format format) {
+		if (!(format instanceof NumberFormat)) {
+			return INPUT_MODE_TEXT;
+		}
+		return NumberFormats.isFractional(format) ? INPUT_MODE_DECIMAL : INPUT_MODE_NUMERIC;
 	}
 
 	@Override

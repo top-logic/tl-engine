@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.react.field;
 
-import java.text.NumberFormat;
+import java.text.Format;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -163,8 +163,8 @@ public class FieldControlRegistry {
 	 * @param field
 	 *        The field to be edited.
 	 */
-	public static NumberFormat numberFormat(FieldSpec field) {
-		NumberFormat format = field.getNumberFormat();
+	public static Format numberFormat(FieldSpec field) {
+		Format format = field.getNumberFormat();
 		if (format != null) {
 			return format;
 		}

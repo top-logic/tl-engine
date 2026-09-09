@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.view.table;
 
-import java.text.NumberFormat;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -282,7 +282,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 						if (Number.class.isAssignableFrom(applicationType)) {
 							// A bound is typed the way the column writes its values, so a German
 							// user enters a decimal fraction with a comma.
-							NumberFormat numberFormat = FieldControlService.numberFormat(part);
+							Format numberFormat = FieldControlService.numberFormat(part);
 							return typedColumn(attribute, label, part, Number.class,
 								Comparator.comparingDouble(Number::doubleValue),
 								new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
@@ -402,12 +402,12 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * <p>
 	 * A numeric attribute is written by its {@link FieldControlService#numberFormat(TLStructuredTypePart)
 	 * number format}, the same one the cell's display control writes it with - so a search matches
-	 * against the digits and separators the user reads. Every other value is searched by its display
-	 * label.
+	 * against the text the user reads, be that the digits and separators of a locale or the words of
+	 * a duration. Every other value is searched by its display label.
 	 * </p>
 	 */
 	private static Function<Object, String> searchText(TLStructuredTypePart part) {
-		NumberFormat numberFormat = FieldControlService.numberFormat(part);
+		Format numberFormat = FieldControlService.numberFormat(part);
 		if (numberFormat == null) {
 			return ColumnProviderService::label;
 		}

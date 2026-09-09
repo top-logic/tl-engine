@@ -6,7 +6,7 @@
 package com.top_logic.table.filter;
 
 import java.text.DateFormat;
-import java.text.NumberFormat;
+import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -82,7 +82,7 @@ public interface BoundCodec<V> {
 	 * Correct only where {@link Object#toString()} is independent of the language and is what the
 	 * parser reads - a whole number, an identifier. A value whose text depends on the reader (a
 	 * decimal fraction, a point in time) needs a codec that keeps the two halves apart, see
-	 * {@link #numbers(NumberFormat)} and {@link #dates(List, List)}.
+	 * {@link #numbers(Format)} and {@link #dates(List, List)}.
 	 * </p>
 	 *
 	 * @param parser
@@ -134,14 +134,16 @@ public interface BoundCodec<V> {
 	 * </p>
 	 *
 	 * <p>
-	 * Bounds are {@link NumberFormats#normalize(NumberFormat, Number) normalized} to the value type
-	 * the format works in, so that a bound written and read again equals the one that was written.
+	 * Bounds are {@link NumberFormats#normalize(Format, Number) normalized} to the value type the
+	 * format works in, so that a bound written and read again equals the one that was written.
 	 * </p>
 	 *
 	 * @param numberFormat
-	 *        The format the numbers of the column are written in.
+	 *        The format the numbers of the column are written in. Need not write digits: a duration
+	 *        is a number of milliseconds written as {@code 1h 30min}, and its bounds are entered in
+	 *        that text.
 	 */
-	static BoundCodec<Number> numbers(NumberFormat numberFormat) {
+	static BoundCodec<Number> numbers(Format numberFormat) {
 		return new BoundCodec<>() {
 			@Override
 			public String format(Number value) {

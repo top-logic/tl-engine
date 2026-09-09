@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+<view>
 	<channels>
 		<channel name="navPath"/>
-		<derived-channel name="depth" inputs="navPath" expr="p -> $p.size()"/>
+		<derived-channel name="depth"
+			expr="p -> $p.size()"
+			inputs="navPath"
+		/>
 	</channels>
 	<panel title="Navigate Actions Test">
 		<commands>
-			<generic-command name="back" input="depth">
+			<generic-command name="back"
+				input="depth"
+			>
 				<executability>
 					<visible-if expr="d -> $d > 0"/>
 				</executability>
@@ -16,8 +22,14 @@
 				<navigate-pop-to depth="1"/>
 			</generic-command>
 			<navigate-pop name="popCommand"/>
-			<navigate-pop-to name="popToCommand" depth="2"/>
+			<navigate-pop-to name="popToCommand"
+				depth="2"
+			/>
 		</commands>
-		<tile-stack path="navPath" initial="tiles/overview.view.xml" bind-path-to="navPath"/>
+		<tile-stack
+			bind-path-to="navPath"
+			initial="tiles/overview.view.xml"
+			path="navPath"
+		/>
 	</panel>
 </view>

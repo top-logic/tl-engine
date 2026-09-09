@@ -5,8 +5,7 @@
  */
 package com.top_logic.layout.view.table;
 
-import java.text.DateFormat;
-import java.text.ParseException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -52,6 +51,7 @@ import com.top_logic.table.FilterPushdown;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
+import com.top_logic.table.filter.BoundCodec;
 import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
@@ -280,10 +280,13 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 					case INT:
 					case FLOAT:
 						if (Number.class.isAssignableFrom(applicationType)) {
+							// A bound is typed the way the column writes its values, so a German
+							// user enters a decimal fraction with a comma.
+							NumberFormat numberFormat = FieldControlService.numberFormat(part);
 							return typedColumn(attribute, label, part, Number.class,
 								Comparator.comparingDouble(Number::doubleValue),
 								new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
-									Double::valueOf));
+									BoundCodec.numbers(numberFormat)));
 						}
 						break;
 					case DATE:
@@ -294,7 +297,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 							return typedColumn(attribute, label, part, Date.class,
 								Comparator.<Date> naturalOrder(),
 								new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
-									text -> parseTemporal(temporalKind, text)));
+									BoundCodec.dates(temporalKind.inputFormats(), temporalKind.parsePatterns())));
 						}
 						break;
 					case STRING:
@@ -372,12 +375,13 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	/**
 	 * A column over an attribute value, displayed and searched consistently: the cell shows the
 	 * attribute's {@link #displayContent(TLStructuredTypePart, Object) form display}, and the
-	 * free-text search examines the {@link #label(Object) display label} of the same value.
+	 * free-text search examines the text that display shows.
 	 *
 	 * <p>
 	 * The two belong together: a form display is a control, which carries no text of its own, so a
-	 * column built from it takes part in a search only through the label. Every column this service
-	 * builds goes through here, so that showing a value and finding it never come apart.
+	 * column built from it takes part in a search only through a text derived from the value. Every
+	 * column this service builds goes through here, so that showing a value and finding it never
+	 * come apart.
 	 * </p>
 	 *
 	 * @param value
@@ -389,7 +393,25 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		return DefaultColumn.<Object, V> builder(attribute, value)
 			.label(label)
 			.renderer(cellValue -> displayContent(part, cellValue))
-			.searchText(ColumnProviderService::label);
+			.searchText(searchText(part));
+	}
+
+	/**
+	 * The text a cell of the given attribute is searched by: the text its display shows.
+	 *
+	 * <p>
+	 * A numeric attribute is written by its {@link FieldControlService#numberFormat(TLStructuredTypePart)
+	 * number format}, the same one the cell's display control writes it with - so a search matches
+	 * against the digits and separators the user reads. Every other value is searched by its display
+	 * label.
+	 * </p>
+	 */
+	private static Function<Object, String> searchText(TLStructuredTypePart part) {
+		NumberFormat numberFormat = FieldControlService.numberFormat(part);
+		if (numberFormat == null) {
+			return ColumnProviderService::label;
+		}
+		return value -> value instanceof Number ? numberFormat.format(value) : label(value);
 	}
 
 	/**
@@ -423,22 +445,6 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 */
 	public static String label(Object value) {
 		return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
-	}
-
-	/**
-	 * Parses a filter bound of a temporal column in the formats belonging to its kind: a time of day
-	 * is entered as a time, not as a date.
-	 */
-	private static Date parseTemporal(ReactDatePickerControl.Kind kind, String text) {
-		String trimmed = text.trim();
-		for (DateFormat format : kind.inputFormats()) {
-			try {
-				return format.parse(trimmed);
-			} catch (ParseException ex) {
-				// Try the next accepted format; an unparsable bound leaves the filter unbounded.
-			}
-		}
-		return null;
 	}
 
 	/**

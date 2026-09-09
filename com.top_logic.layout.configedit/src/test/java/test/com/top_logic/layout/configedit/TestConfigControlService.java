@@ -35,6 +35,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.reflect.TypeIndex;
@@ -1483,6 +1484,6 @@ public class TestConfigControlService extends TestCase {
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestConfigControlService.class,
-				TypeIndex.Module.INSTANCE, ConfigControlService.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, FormatterService.Module.INSTANCE, ConfigControlService.Module.INSTANCE));
 	}
 }

@@ -5,7 +5,13 @@
  */
 package test.com.top_logic.table;
 
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -18,6 +24,7 @@ import com.top_logic.table.FilterState;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BooleanFilterState;
+import com.top_logic.table.filter.BoundCodec;
 import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.ComparisonOperator;
 import com.top_logic.table.filter.OptionsColumnFilter;
@@ -138,6 +145,96 @@ public class TestColumnFilters extends TestCase {
 
 		// A parser-less filter cannot restore typed bounds and so declines persistence.
 		assertNull(ComparableColumnFilter.<Integer> natural().toJson(RangeFilterState.of(ComparisonOperator.EQ, 1)));
+	}
+
+	/**
+	 * A numeric bound is stored as the number it is, not as the text one language writes it in - so
+	 * a filter saved by a German user is the same filter when an English one opens it.
+	 */
+	public void testNumericBoundsAreStoredLanguageIndependently() {
+		ComparableColumnFilter<Number> filter = germanNumberFilter();
+		RangeFilterState<Number> original = RangeFilterState.of(ComparisonOperator.GE, Double.valueOf(37.5));
+
+		Map<?, ?> json = (Map<?, ?>) filter.toJson(original);
+		assertEquals("A stored bound is a number.",
+			Double.valueOf(37.5), json.get(ComparableColumnFilter.PRIMARY));
+		assertEquals(original, filter.fromJson(json));
+	}
+
+	/**
+	 * A bound stored as text by an earlier version is read in the language-independent form it was
+	 * written in, rather than in the reader's - where a dot groups the digits and would turn 37.5
+	 * into 375.
+	 */
+	public void testNumericBoundStoredAsText() {
+		ComparableColumnFilter<Number> filter = germanNumberFilter();
+
+		FilterState restored =
+			filter.fromJson(Map.of(ComparableColumnFilter.OPERATOR, ComparisonOperator.GE.name(),
+				ComparableColumnFilter.PRIMARY, "37.5"));
+
+		assertEquals(RangeFilterState.of(ComparisonOperator.GE, Double.valueOf(37.5)), restored);
+	}
+
+	/**
+	 * A bound is typed in the reader's language, and written back the same way.
+	 */
+	public void testNumericBoundsInTheReadersLanguage() {
+		BoundCodec<Number> codec = BoundCodec.numbers(NumberFormat.getInstance(Locale.GERMANY));
+
+		assertEquals(Double.valueOf(37.5), codec.parse("37,5"));
+		assertEquals("37,5", codec.format(Double.valueOf(37.5)));
+		assertNull("Text that is not a number is not a bound.", codec.parse("kein Wert"));
+		assertNull(codec.parse(""));
+		assertNull(codec.format(null));
+		assertNull(codec.toJson(null));
+		assertNull(codec.fromJson(null));
+	}
+
+	/**
+	 * A whole-number format keeps its bounds whole.
+	 */
+	public void testWholeNumberBounds() {
+		BoundCodec<Number> codec = BoundCodec.numbers(NumberFormat.getIntegerInstance(Locale.GERMANY));
+
+		assertEquals(Long.valueOf(1234), codec.parse("1.234"));
+		assertEquals(Long.valueOf(37), codec.fromJson(Double.valueOf(37.0)));
+	}
+
+	/**
+	 * A bound that is a point in time is stored in ISO-8601 form, which reads back as the moment it
+	 * was written - unlike the text {@link Date#toString()} produces.
+	 */
+	public void testTemporalBoundsAreStoredAsIso() {
+		BoundCodec<Date> codec = BoundCodec.dates(
+			List.of(new SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY)), List.of("yyyy-MM-dd"));
+
+		Date bound = codec.parse("01.02.2026");
+		assertNotNull(bound);
+		assertEquals("01.02.2026", codec.format(bound));
+		assertEquals("2026-02-01", codec.toJson(bound));
+		assertEquals(bound, codec.fromJson(codec.toJson(bound)));
+		assertNull("Text that is not a date is not a bound.", codec.parse("kein Datum"));
+		assertNull("The text of Date.toString() is not a stored bound, which is why ISO-8601 is stored.",
+			codec.fromJson(bound.toString()));
+	}
+
+	/**
+	 * A point in time is stored as precisely as its patterns write it.
+	 */
+	public void testTemporalBoundsKeepTheirPrecision() {
+		BoundCodec<Date> codec = BoundCodec.dates(
+			List.of(new SimpleDateFormat("dd.MM.yyyy HH:mm:ss.SSS", Locale.GERMANY)),
+			List.of("yyyy-MM-dd'T'HH:mm:ss.SSS"));
+
+		Date moment = codec.parse("01.02.2026 14:30:15.123");
+		assertNotNull(moment);
+		assertEquals(moment, codec.fromJson(codec.toJson(moment)));
+	}
+
+	private static ComparableColumnFilter<Number> germanNumberFilter() {
+		return new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
+			BoundCodec.numbers(NumberFormat.getInstance(Locale.GERMANY)));
 	}
 
 	public void testOptionsSerializationByIndex() {

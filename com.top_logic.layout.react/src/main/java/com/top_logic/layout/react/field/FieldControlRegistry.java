@@ -5,10 +5,12 @@
  */
 package com.top_logic.layout.react.field;
 
+import java.text.NumberFormat;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.top_logic.basic.format.configured.Formatter;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.FieldModel;
@@ -21,6 +23,7 @@ import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 
 /**
@@ -66,7 +69,7 @@ public class FieldControlRegistry {
 		register(String.class, TEXT);
 		register(Boolean.class, FieldControlRegistry::createBooleanControl);
 		register(Number.class,
-			(context, field, model) -> new ReactNumberInputControl(context, model, decimals(field)));
+			(context, field, model) -> new ReactNumberInputControl(context, model, numberFormat(field)));
 		register(Date.class,
 			(context, field, model) -> new ReactDatePickerControl(context, model, field.getDateKind()));
 		register(BinaryData.class, (context, field, model) -> new ReactBinaryFieldControl(context, model));
@@ -149,11 +152,25 @@ public class FieldControlRegistry {
 	}
 
 	/**
-	 * The number of decimals to display for a numeric value.
+	 * The format a numeric value is displayed in and entered in.
+	 *
+	 * <p>
+	 * The {@link FieldSpec#getNumberFormat() format the field asks for}, or the default format for
+	 * its value type: two decimal places for a fractional value, none for a whole number - both in
+	 * the user's locale.
+	 * </p>
+	 *
+	 * @param field
+	 *        The field to be edited.
 	 */
-	private static int decimals(FieldSpec field) {
+	public static NumberFormat numberFormat(FieldSpec field) {
+		NumberFormat format = field.getNumberFormat();
+		if (format != null) {
+			return format;
+		}
 		Class<?> type = wrapperType(field.getValueType());
-		return type == Double.class || type == Float.class ? 2 : 0;
+		Formatter formatter = HTMLFormatter.getInstance();
+		return type == Double.class || type == Float.class ? formatter.getDoubleFormat() : formatter.getLongFormat();
 	}
 
 	/**

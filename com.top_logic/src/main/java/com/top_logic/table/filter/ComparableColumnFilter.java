@@ -38,28 +38,44 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 
 	private final Comparator<? super V> _comparator;
 
-	private final Function<String, ? extends V> _parser;
+	private final BoundCodec<V> _codec;
 
 	/**
 	 * Creates a {@link ComparableColumnFilter} with the given comparator and no editor
 	 * support.
 	 */
 	public ComparableColumnFilter(Comparator<? super V> comparator) {
-		this(comparator, null);
+		this(comparator, (BoundCodec<V>) null);
 	}
 
 	/**
-	 * Creates a {@link ComparableColumnFilter} that can build a filter editor.
+	 * Creates a {@link ComparableColumnFilter} whose bounds are written with
+	 * {@link Object#toString()} and read with the given parser.
 	 *
 	 * @param comparator
 	 *        The value ordering.
 	 * @param parser
-	 *        Parses user input into a bound value (enables a filter editor), or
-	 *        {@code null}.
+	 *        Parses user input into a bound value (enables a filter editor), or {@code null}.
+	 *
+	 * @see BoundCodec#text(Function) The values this is correct for.
 	 */
 	public ComparableColumnFilter(Comparator<? super V> comparator, Function<String, ? extends V> parser) {
+		this(comparator, parser == null ? null : BoundCodec.text(parser));
+	}
+
+	/**
+	 * Creates a {@link ComparableColumnFilter} that can build a filter editor and persist its
+	 * bounds.
+	 *
+	 * @param comparator
+	 *        The value ordering.
+	 * @param codec
+	 *        Writes and reads a bound, or {@code null} for a filter that is neither edited nor
+	 *        persisted.
+	 */
+	public ComparableColumnFilter(Comparator<? super V> comparator, BoundCodec<V> codec) {
 		_comparator = comparator;
-		_parser = parser;
+		_codec = codec;
 	}
 
 	/**
@@ -77,10 +93,11 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 	}
 
 	/**
-	 * Parses user input into a bound value, or {@code null} if no editor is supported.
+	 * Writes and reads the bounds of this filter, or {@code null} if it is neither edited nor
+	 * persisted.
 	 */
-	public Function<String, ? extends V> parser() {
-		return _parser;
+	public BoundCodec<V> codec() {
+		return _codec;
 	}
 
 	@Override
@@ -94,28 +111,29 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 	}
 
 	/**
-	 * Serializes the range as the operator name plus the textual form of the bounds. Only filters
-	 * with a {@link #parser() parser} can be restored, so a parser-less filter declines persistence.
+	 * Serializes the range as the operator name plus the stored form of the bounds. Only filters
+	 * with a {@link #codec() codec} can be restored, so a codec-less filter declines persistence.
 	 */
 	@Override
 	public Object toJson(FilterState state) {
-		if (_parser == null) {
+		if (_codec == null) {
 			return null;
 		}
-		RangeFilterState<?> range = (RangeFilterState<?>) state;
+		@SuppressWarnings("unchecked")
+		RangeFilterState<V> range = (RangeFilterState<V>) state;
 		if (range.operator() == null) {
 			return null;
 		}
 		Map<String, Object> json = new LinkedHashMap<>();
 		json.put(OPERATOR, range.operator().name());
-		json.put(PRIMARY, text(range.primary()));
-		json.put(SECONDARY, text(range.secondary()));
+		json.put(PRIMARY, _codec.toJson(range.primary()));
+		json.put(SECONDARY, _codec.toJson(range.secondary()));
 		return json;
 	}
 
 	@Override
 	public FilterState fromJson(Object json) {
-		if (_parser == null || !(json instanceof Map<?, ?> map)) {
+		if (_codec == null || !(json instanceof Map<?, ?> map)) {
 			return null;
 		}
 		Object operatorName = map.get(OPERATOR);
@@ -128,7 +146,8 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 		} catch (IllegalArgumentException ex) {
 			return null;
 		}
-		return new RangeFilterState<>(operator, parse(map.get(PRIMARY)), parse(map.get(SECONDARY)));
+		return new RangeFilterState<>(operator,
+			_codec.fromJson(map.get(PRIMARY)), _codec.fromJson(map.get(SECONDARY)));
 	}
 
 	/**
@@ -188,25 +207,6 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 			return null;
 		}
 		return bound;
-	}
-
-	private static String text(Object value) {
-		return value == null ? null : String.valueOf(value);
-	}
-
-	private V parse(Object value) {
-		if (value == null) {
-			return null;
-		}
-		String text = String.valueOf(value).trim();
-		if (text.isEmpty()) {
-			return null;
-		}
-		try {
-			return _parser.apply(text);
-		} catch (RuntimeException ex) {
-			return null;
-		}
 	}
 
 	@Override

@@ -1,21 +1,48 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Initial frame of the tile drill-down demo. Lists all Person accounts and
-	offers an "Open" button that pushes a detail frame onto the enclosing
-	tile-stack with the selected Person as parameter.
+	Initial frame of the tile drill-down demo. Lists all Person accounts and offers an "Open"
+	button that pushes a detail frame onto the enclosing tile-stack with the selected Person as
+	parameter. The pushed frame carries no label of its own - the stack names every frame of the
+	detail view in its <frame> declaration, which is also what puts the frame into the address bar.
+	The navPath channel is the stack's path (bound by the stack's bind-path-to), so the
+	derived depth channel tells this frame how deep it sits: at depth 0 the "Back" command is
+	hidden, which is why the initial frame shows no way out.
+	
+	The panel fills, so the table inside the frame bounds its scroll viewport (and
+	virtualizes) instead of growing with its rows: the frame takes part in the fill
+	contract, so the stack and the containers above it grow with the panel.
 -->
 <view>
 	<channels>
 		<channel name="selectedPerson"/>
+		<channel name="navPath"/>
+		<derived-channel name="depth"
+			expr="p -> $p.size()"
+			inputs="navPath"
+		/>
 	</channels>
 
-	<panel>
+	<panel fill="true">
 		<title>
 			<en>Accounts</en>
 			<de>Konten</de>
 		</title>
 		<commands>
+			<generic-command
+				image="css:bi bi-arrow-left"
+				input="depth"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Back</en>
+					<de>Zurück</de>
+				</label>
+				<executability>
+					<visible-if expr="d -> $d > 0"/>
+				</executability>
+				<navigate-pop/>
+			</generic-command>
 			<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="person"
 				input="selectedPerson"
@@ -26,10 +53,6 @@
 					<en>Open</en>
 					<de>Öffnen</de>
 				</label>
-				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="p -> $p.get(`tl.accounts:Person#name`)"
-					inputs="selectedPerson"
-				/>
 			</command>
 		</commands>
 		<table

@@ -424,10 +424,19 @@ public class AgentServlet extends TopLogicServlet {
 			String message = null;
 			try {
 				routeManager.navigateToRoute(url);
+
+				// The display has taken the URL as far as it can: a segment it cannot reproduce is
+				// dropped and a display showing what the URL does not name returns, which is the state
+				// the observation below reports.
+				routeManager.finishAdoption();
 			} catch (Exception ex) {
 				// e.g. a dirty-form veto refuses navigation.
 				ok = false;
 				message = ex.getMessage();
+
+				// The URL is not reached, so its adoption ends here, leaving the display as the veto
+				// keeps it.
+				routeManager.cancelAdoption();
 			}
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 			String reachedUrl = routeManager.currentUrl();

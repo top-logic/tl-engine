@@ -29,6 +29,14 @@ import java.util.Map;
  * {@link RouteMatch#remainingPath()}.
  * </p>
  *
+ * <p>
+ * Paths are matched and produced in the form they travel in the URL, with their segments
+ * percent-encoded: a parameter value is encoded when it is produced and decoded when it is
+ * captured, so a value containing {@code /} occupies the single segment it was written into. Static
+ * segments of a pattern are used as they are written, by whoever writes the pattern.
+ * </p>
+ *
+ * @see RouteEncoding
  * @see #compile(String, String)
  * @see #match(String)
  * @see #produce(Map)
@@ -37,7 +45,11 @@ public final class RoutePattern {
 
 	private static final String WILDCARD = "*";
 
-	private static final char PARAM_PREFIX = ':';
+	/**
+	 * Character that marks a pattern segment as a parameter placeholder, followed by the parameter
+	 * name.
+	 */
+	public static final char PARAM_PREFIX = ':';
 
 	private final String _patternString;
 
@@ -91,8 +103,15 @@ public final class RoutePattern {
 	 * extra segments are captured in {@link RouteMatch#remainingPath()}.
 	 * </p>
 	 *
+	 * <p>
+	 * The path is split into segments before its escapes are resolved, so an encoded slash belongs
+	 * to the value it was encoded into instead of separating two segments. The values of
+	 * {@link RouteMatch#params()} are the decoded ones, while {@link RouteMatch#remainingPath()}
+	 * stays encoded, for the pattern that matches it next.
+	 * </p>
+	 *
 	 * @param path
-	 *        The URL path to match (without leading slash).
+	 *        The URL path to match (without leading slash), with its segments percent-encoded.
 	 * @return A {@link RouteMatch} if the path matches, or {@code null} if it does not.
 	 */
 	public RouteMatch match(String path) {
@@ -118,7 +137,7 @@ public final class RoutePattern {
 
 			if (patternSeg.charAt(0) == PARAM_PREFIX) {
 				String paramName = patternSeg.substring(1);
-				params.put(paramName, pathSeg);
+				params.put(paramName, RouteEncoding.decodeSegment(pathSeg));
 			} else {
 				if (!patternSeg.equals(pathSeg)) {
 					return null;
@@ -133,9 +152,14 @@ public final class RoutePattern {
 	/**
 	 * Produces a concrete path string by filling in parameter placeholders with the given values.
 	 *
+	 * <p>
+	 * Each value is percent-encoded as a path segment, so that a value containing a character with
+	 * a meaning in a URL - a slash, a question mark, a hash - keeps the single segment it fills.
+	 * </p>
+	 *
 	 * @param params
 	 *        Parameter name to value mapping.
-	 * @return The produced path string (without leading slash).
+	 * @return The produced path string (without leading slash), with its segments percent-encoded.
 	 * @throws IllegalArgumentException
 	 *         If a required parameter is missing from the map.
 	 */
@@ -156,7 +180,7 @@ public final class RoutePattern {
 				if (value == null) {
 					throw new IllegalArgumentException("Missing parameter: " + paramName);
 				}
-				sb.append(value);
+				sb.append(RouteEncoding.encodeSegment(value));
 			} else {
 				sb.append(segment);
 			}

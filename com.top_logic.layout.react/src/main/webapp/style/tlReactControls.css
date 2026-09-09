@@ -26,6 +26,20 @@ html, body {
 	height: 100%;
 }
 
+/* --- Fill contract ------------------------------------------------------ */
+
+/* A control that fills takes the height its flex container offers instead of growing with its
+   content, so a virtualized child (e.g. a TableViewControl) bounds its scroll viewport and
+   scrolls internally rather than overflowing an outer scroller. Which controls carry the class is
+   decided in the control tree (see useFill / useFillHost of the React bridge): a container
+   hosting a filling child fills in turn, so the request reaches up to the first box that is
+   bounded anyway - the viewport-high mount point above, a tab-content region, a scrolling panel
+   body. */
+.tlFill {
+	flex: 1;
+	min-height: 0;
+}
+
 /* --- React mount point ------------------------------------------------- */
 
 [data-react-module] {
@@ -266,15 +280,12 @@ button.tlCounter__button:focus {
 
 /* --- TLTabBar ---------------------------------------------------------- */
 
+/* A tab bar always fills its container, so the tab strip stays pinned and only the tab content
+   scrolls (see its fill declaration). */
 .tlReactTabBar {
 	display: flex;
 	flex-direction: column;
 	font-family: var(--font-family);
-	/* Fill the available slot instead of growing with the content, so the tab
-	   strip stays pinned and only the tab content scrolls (min-height: 0 lets
-	   this shrink below its content height inside a flex parent). */
-	flex: 1;
-	min-height: 0;
 }
 
 .tlReactTabBar__tabs {
@@ -1173,27 +1184,6 @@ button.tlPanel__actionButton:focus-visible {
 	grid-column: 1 / -1;
 }
 
-/* A fill panel fills the bounded height of its container instead of growing with
-   its content, so a virtualized child (e.g. a TableViewControl) bounds its
-   viewport and scrolls internally rather than overflowing an outer scroller.
-   This is the opt-in counterpart to the flex-column tab content above: the panel
-   already lays itself out at height:100%, and the :has() rule lets the wrapping
-   view-content stack fill too, so the chain down to the table is height-bounded. */
-.tlPanel--fill {
-	flex: 1;
-	min-height: 0;
-}
-
-/* The view-content stack fills its container when it hosts a fill panel or a split
-   panel, so the panel/split-panel height:100% resolves against a definite height.
-   A split panel always fills (its panes are sized proportionally and its divider
-   must span the available height); a plain panel only fills when it opts in. */
-.tlStack:has(> .tlPanel--fill),
-.tlStack:has(> .tlSplitPanel) {
-	flex: 1;
-	min-height: 0;
-}
-
 .tlPanel--maximized {
 	background: var(--background);
 }
@@ -1671,6 +1661,33 @@ button.tlDrawerToggle:focus-visible {
 /* First child fills the remaining main-axis space (input-with-adornment row). */
 .tlStack--grow-first.tlStack--row > *:first-child { flex: 1 1 auto; min-width: 0; }
 .tlStack--grow-first.tlStack--column > *:first-child { flex: 1 1 auto; min-height: 0; }
+
+/* --- TLTileStack ----------------------------------------------------------- */
+
+/* Positioning context for the covered frames below. */
+.tlTileStack {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+/* One frame of the drill-down stack, as a bounded flex column so that a filling frame content
+   resolves its height against it. */
+.tlTileStack__frame {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+/* A frame that another frame covers keeps its layout box - taken out of the flow at the size of
+   the stack - so that it survives being covered as the user left it, scroll offsets of its tables
+   and forms included. Invisible and, being invisible, neither clickable nor focusable. */
+.tlTileStack__frame--covered {
+	position: absolute;
+	inset: 0;
+	visibility: hidden;
+}
 
 /* --- TLGrid ---------------------------------------------------------------- */
 
@@ -2380,18 +2397,14 @@ button.tlDrawer__closeBtn:focus-visible {
 	height: 100%;
 }
 
-/* The view-content stack hosting the app shell fills its container, so the shell's
-   height:100% resolves against the viewport-high mount chain: the app bar stays put
-   and overflowing content scrolls inside the shell's content region, not the page. */
-.tlStack:has(> .tlAppShell) {
-	flex: 1;
-	min-height: 0;
-}
-
+/* Bounded flex column: the content control resolves its height against this region, so a filling
+   one spans it and scrolls internally while the app bar stays put. */
 .tlAppShell__content {
 	flex: 1;
 	min-height: 0;
 	overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }
 
 /* Notice area between header and content. Carries neither padding nor border of its own, so it

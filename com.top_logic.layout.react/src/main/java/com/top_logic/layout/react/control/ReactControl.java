@@ -90,6 +90,14 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	private SSEUpdateQueue _sseQueue;
 
 	/**
+	 * The {@link RoutingParticipant}s contributing a URL segment for this control, beyond the control
+	 * itself, or {@code null} while there are none.
+	 *
+	 * @see #addRouteParticipant(RoutingParticipant)
+	 */
+	private List<RoutingParticipant> _routeParticipants;
+
+	/**
 	 * The source {@code .view.xml} path of the view whose root this control is, or {@code null}.
 	 *
 	 * @see #setViewSource(String)
@@ -324,21 +332,48 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		return null;
 	}
 
+	@Override
+	public List<ReactControl> scriptingChildren() {
+		return displayedChildren();
+	}
+
 	/**
-	 * {@inheritDoc}
+	 * The {@link #childControls() children this control renders}, in an order that is stable across
+	 * calls.
+	 *
+	 * <p>
+	 * Every projection of the display that has to be reproducible builds on this order: the
+	 * {@link #scriptingChildren() scripting projection} of a control tree, and the composition of the
+	 * URL from the {@link com.top_logic.layout.react.routing.RoutingParticipant participants} the
+	 * display contains.
+	 * </p>
 	 *
 	 * @implNote Walks the state map the same way {@link #writeJsonValue} serializes it, but stops at
 	 *           each embedded control rather than descending into it. Entries are visited in
-	 *           state-key order (the backing map is unordered) so the child order is stable across
-	 *           calls.
+	 *           state-key order, because the backing map is unordered.
 	 */
-	@Override
-	public List<ReactControl> scriptingChildren() {
+	public final List<ReactControl> displayedChildren() {
 		List<ReactControl> result = new ArrayList<>();
 		_reactState.entrySet().stream()
 			.sorted(Map.Entry.comparingByKey())
 			.forEach(entry -> collectChildControls(entry.getValue(), result));
 		return result;
+	}
+
+	/**
+	 * The {@link #displayedChildren() displayed children} the user sees.
+	 *
+	 * <p>
+	 * By default all of them: a control renders what it shows. A container that renders children it
+	 * hides - a tile stack keeping the frames the active one covers, so that they keep their state -
+	 * narrows this to the ones shown, because what the user does not see is not part of the address
+	 * of the page: the URL is composed from the
+	 * {@link com.top_logic.layout.react.routing.RoutingParticipant participants} below the visible
+	 * children only, and only those take up a route of a URL that is adopted.
+	 * </p>
+	 */
+	public List<ReactControl> visibleChildren() {
+		return displayedChildren();
 	}
 
 	/**
@@ -1066,6 +1101,45 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		for (Runnable l : _detachListeners) {
 			l.run();
 		}
+	}
+
+	/**
+	 * Anchors a {@link RoutingParticipant} at this control, so that it contributes its URL segment
+	 * wherever this control is displayed.
+	 *
+	 * <p>
+	 * A control that is a {@link RoutingParticipant} itself needs no anchor. Anchoring is for a
+	 * participant that is not a control - a channel bound to a route parameter, for instance -
+	 * and names the control whose position in the display the participant's segment follows.
+	 * </p>
+	 *
+	 * @param participant
+	 *        The participant to anchor at this control.
+	 */
+	public final void addRouteParticipant(RoutingParticipant participant) {
+		if (_routeParticipants == null) {
+			_routeParticipants = new ArrayList<>();
+		}
+		_routeParticipants.add(participant);
+	}
+
+	/**
+	 * Removes a participant added by {@link #addRouteParticipant(RoutingParticipant)}.
+	 *
+	 * @param participant
+	 *        The participant to remove.
+	 */
+	public final void removeRouteParticipant(RoutingParticipant participant) {
+		if (_routeParticipants != null) {
+			_routeParticipants.remove(participant);
+		}
+	}
+
+	/**
+	 * The participants {@link #addRouteParticipant(RoutingParticipant) anchored} at this control.
+	 */
+	public final List<RoutingParticipant> routeParticipants() {
+		return _routeParticipants == null ? List.of() : _routeParticipants;
 	}
 
 	/**

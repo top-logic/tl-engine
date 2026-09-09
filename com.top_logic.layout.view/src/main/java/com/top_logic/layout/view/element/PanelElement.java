@@ -120,6 +120,12 @@ public class PanelElement extends CommandScopeElement {
 		 * (non-filling) panel grows with its content, so a large table would overflow and scroll the
 		 * surrounding tab rather than itself.
 		 * </p>
+		 *
+		 * <p>
+		 * The containers between a filling panel and the next bounded box grow with it, so the panel
+		 * fills the available height wherever it sits - nested in stacks, in a tab or in the frame of
+		 * a drill-down stack.
+		 * </p>
 		 */
 		@Name(FILL)
 		boolean getFill();

@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useFillHost, FillProvider } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -8,14 +8,24 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - activeIndex: number
  * - activeChild: ChildDescriptor | null
  * - childCount: number
+ *
+ * Takes part in the fill contract as a container: a deck pane showing a filling child fills its
+ * own container.
  */
 const TLDeckPane: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
+  const [fillClass, fillHost] = useFillHost();
 
   return (
-    <div id={controlId} className="tlDeckPane" style={{ width: '100%', height: '100%' }}>
-      {state.activeChild && <TLChild control={state.activeChild} />}
-    </div>
+    <FillProvider host={fillHost}>
+      <div
+        id={controlId}
+        className={fillClass ? 'tlDeckPane ' + fillClass : 'tlDeckPane'}
+        style={{ width: '100%', height: '100%' }}
+      >
+        {state.activeChild && <TLChild control={state.activeChild} />}
+      </div>
+    </FillProvider>
   );
 };
 

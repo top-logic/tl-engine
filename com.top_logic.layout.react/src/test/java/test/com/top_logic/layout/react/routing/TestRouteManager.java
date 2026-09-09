@@ -226,6 +226,50 @@ public class TestRouteManager extends TestCase {
 	}
 
 	/**
+	 * Tests that a registered participant the display does not contain is passed over when a pending
+	 * URL is resolved, and that a participant the display shows only after an earlier activation
+	 * takes its turn: the frames of a tile stack each carry a tab bar declaring the same routes, and
+	 * the segment following the stack's route belongs to the tab bar of the frame that route puts on
+	 * top, not to the one of a frame it covers.
+	 */
+	public void testPendingUrlIsResolvedByDisplayedParticipantsOnly() {
+		RouteManager rm = new RouteManager();
+		List<RoutePattern> tabRoutes = List.of(
+			RoutePattern.compile("/contact", "contact"),
+			RoutePattern.compile("/accounts", "accounts"));
+		MockParticipant lowerTabs = new MockParticipant(tabRoutes);
+		MockParticipant upperTabs = new MockParticipant(tabRoutes);
+		List<MockParticipant> displayed = new ArrayList<>();
+		MockParticipant stack = new MockParticipant(List.of(
+			RoutePattern.compile("/person/:person", "person"))) {
+			@Override
+			public void activateRoute(RouteMatch match) {
+				super.activateRoute(match);
+				// The route puts the upper frame on top, which uncovers nothing and covers the lower one.
+				displayed.clear();
+				displayed.addAll(List.of(this, upperTabs));
+			}
+		};
+		// Registration order: the stack, then the tab bars frame by frame - the tab bar of the covered
+		// frame registered before the one of the frame on top.
+		rm.register(stack);
+		rm.register(lowerTabs);
+		rm.register(upperTabs);
+		displayed.addAll(List.of(stack, lowerTabs));
+		rm.setDisplayedParticipants(() -> new ArrayList<>(displayed));
+
+		rm.adoptUrl("person/1/accounts");
+		rm.resolvePending();
+		rm.finishAdoption();
+
+		assertNotNull(stack.lastActivation());
+		assertNull("Tab bar of a covered frame must not take up the route.", lowerTabs.lastActivation());
+		assertNotNull("Tab bar of the frame on top takes up the route.", upperTabs.lastActivation());
+		assertEquals("accounts", upperTabs.lastActivation().pattern().itemId());
+		assertEquals("person/1/accounts", rm.currentUrl());
+	}
+
+	/**
 	 * Tests that a participant that has left the display contributes no segment, even while it is
 	 * still registered.
 	 */

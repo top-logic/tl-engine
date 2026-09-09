@@ -256,6 +256,14 @@ public final class RouteManager {
 	 * nothing appears to consume it. This pass hands the pending segments to those participants,
 	 * whose activation in turn materializes the display below them.
 	 * </p>
+	 *
+	 * <p>
+	 * A registered participant the display does not contain at the moment it is reached - one below a
+	 * frame a tile stack keeps covered - is passed over: the URL describes what the user sees, so a
+	 * route it names belongs to a participant that is shown. Checked when the participant is reached
+	 * rather than once for the pass, because an activation changes the display, and a participant
+	 * covered before it may be the one shown afterwards.
+	 * </p>
 	 */
 	public void resolvePending() {
 		for (RoutingParticipant participant : new ArrayList<>(_participants)) {
@@ -272,6 +280,10 @@ public final class RouteManager {
 			for (RoutingParticipant participant : new ArrayList<>(_participants)) {
 				if (_pendingUrl == null || _pendingUrl.isEmpty()) {
 					break;
+				}
+				if (!_participants.contains(participant) || !isDisplayed(participant)) {
+					// Gone from the display over an earlier activation, or not shown by it.
+					continue;
 				}
 				tryResolvePending(participant);
 			}
@@ -645,6 +657,15 @@ public final class RouteManager {
 	private List<RoutingParticipant> composingParticipants() {
 		Supplier<List<RoutingParticipant>> source = _displayedParticipants;
 		return source == null ? _participants : source.get();
+	}
+
+	/**
+	 * Whether the display contains the given participant, as far as the display is known - see
+	 * {@link #setDisplayedParticipants(Supplier)}.
+	 */
+	private boolean isDisplayed(RoutingParticipant participant) {
+		Supplier<List<RoutingParticipant>> source = _displayedParticipants;
+		return source == null || source.get().contains(participant);
 	}
 
 	private void notifyUrlChange(boolean replace) {

@@ -8,6 +8,10 @@
 	The navPath channel is the stack's path (bound by the stack's bind-path-to), so the
 	derived depth channel tells this frame how deep it sits: at depth 0 the "Back" command is
 	hidden, which is why the initial frame shows no way out.
+	
+	The panel fills, so the table inside the frame bounds its scroll viewport (and
+	virtualizes) instead of growing with its rows: the frame takes part in the fill
+	contract, so the stack and the containers above it grow with the panel.
 -->
 <view>
 	<channels>
@@ -19,7 +23,7 @@
 		/>
 	</channels>
 
-	<panel>
+	<panel fill="true">
 		<title>
 			<en>Accounts</en>
 			<de>Konten</de>

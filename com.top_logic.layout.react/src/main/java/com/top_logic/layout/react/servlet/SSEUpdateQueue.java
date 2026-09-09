@@ -165,6 +165,11 @@ public class SSEUpdateQueue {
 	/**
 	 * The {@link RoutingParticipant}s the displayed control tree contains, in display order.
 	 *
+	 * <p>
+	 * The walk follows the {@link ReactControl#visibleChildren() visible children}, so a control that
+	 * is rendered but hidden - a covered frame of a tile stack - contributes nothing.
+	 * </p>
+	 *
 	 * @see RouteManager#setDisplayedParticipants(java.util.function.Supplier)
 	 */
 	private List<RoutingParticipant> displayedParticipants() {
@@ -181,7 +186,7 @@ public class SSEUpdateQueue {
 			result.add(participant);
 		}
 		result.addAll(control.routeParticipants());
-		for (ReactControl child : control.displayedChildren()) {
+		for (ReactControl child : control.visibleChildren()) {
 			collectParticipants(child, result);
 		}
 	}

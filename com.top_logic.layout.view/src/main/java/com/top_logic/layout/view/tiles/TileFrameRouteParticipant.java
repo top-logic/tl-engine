@@ -24,11 +24,10 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * writes the drill-down path into the URL and restores it from a URL that is opened.
  *
  * <p>
- * One participant exists per mounted frame, created by {@link ReactTileStackControl} and anchored at
- * the control of that frame, so that the path appears in the URL exactly where the stack appears in
- * the display. Only the top frame is displayed, and its participant speaks for the whole path: the
- * segment it contributes is the {@link FrameRoute route} of every frame on the path, one after the
- * other.
+ * One participant exists per stack, created by {@link ReactTileStackControl} and anchored at the
+ * control of the stack, so that the path appears in the URL exactly where the stack appears in the
+ * display. It speaks for the whole path: the segment it contributes is the {@link FrameRoute route}
+ * of every frame on the path, one after the other.
  * </p>
  *
  * <p>

@@ -24,6 +24,8 @@ export { CMD_VALUE_CHANGED } from './bridge/command-channel';
 export type { TLCellProps } from './bridge/types';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
+export { FILL_CLASS, useFill, useFillHost, FillProvider, FillBarrier } from './bridge/fill';
+export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
 export type { ChildDescriptor } from './bridge/TLChild';
 

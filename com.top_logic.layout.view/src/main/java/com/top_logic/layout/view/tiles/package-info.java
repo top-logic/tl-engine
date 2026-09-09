@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 /**
- * Tile-stack drill-down navigation of the view layer.
+ * Tile-stack drill-down navigation for the view layer.
  *
  * <p>
  * A {@link com.top_logic.layout.view.tiles.TileStackElement &lt;tile-stack&gt;} holds a path of
- * {@link com.top_logic.layout.view.tiles.TileFrame frames} and renders only the top frame. The
+ * {@link com.top_logic.layout.view.tiles.TileFrame frames} and displays the top one, keeping the
+ * frames it covers as they were left. The
  * {@link com.top_logic.layout.view.tiles.NavigatePushCommand &lt;navigate-push&gt;} command (used
  * in any command slot inside a frame) pushes a new frame;
  * {@link com.top_logic.layout.view.tiles.NavigatePopCommand &lt;navigate-pop&gt;} and

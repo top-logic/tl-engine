@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, useFill, FillBarrier } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import FontIcon from './FontIcon';
 
@@ -58,7 +58,9 @@ const IconPopOut = () => (
  * - showMinimize: boolean
  * - showMaximize: boolean
  * - showPopOut: boolean
- * - fill: boolean (fill the container's bounded height instead of growing with content)
+ * - fill: boolean (fill the container's bounded height instead of growing with content; a filling
+ *     panel takes part in the fill contract, so its container grows with it, while its own body
+ *     bounds and scrolls what it contains)
  * - hoverActions: boolean (hide toolbar buttons until the panel is hovered or a button is focused)
  * - appearance: "default" | "card" (card renders a bordered, rounded panel with compact insets)
  * - toolbar: ChildDescriptor (a TLToolbar control, may be absent)
@@ -104,6 +106,9 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('popOut');
   }, [sendCommand]);
 
+  // A hidden panel occupies no space, so it asks its container for none either.
+  const fillClass = useFill(fill && !isHidden);
+
   if (isHidden) {
     return null;
   }
@@ -123,7 +128,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fill ? ' tlPanel--fill' : ''}${hoverActions ? ' tlPanel--hoverActions' : ''}${card ? ' tlPanel--card' : ''}`}
+      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fillClass ? ' ' + fillClass : ''}${hoverActions ? ' tlPanel--hoverActions' : ''}${card ? ' tlPanel--card' : ''}`}
       style={panelStyle}
     >
       {hasHeader && (
@@ -171,7 +176,9 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       {!isMinimized && (
         <div className="tlPanel__content">
-          <TLChild control={state.child} />
+          <FillBarrier>
+            <TLChild control={state.child} />
+          </FillBarrier>
         </div>
       )}
       {!isMinimized && errorMessage && (

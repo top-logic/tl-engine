@@ -361,6 +361,22 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
+	 * The {@link #displayedChildren() displayed children} the user sees.
+	 *
+	 * <p>
+	 * By default all of them: a control renders what it shows. A container that renders children it
+	 * hides - a tile stack keeping the frames the active one covers, so that they keep their state -
+	 * narrows this to the ones shown, because what the user does not see is not part of the address
+	 * of the page: the URL is composed from the
+	 * {@link com.top_logic.layout.react.routing.RoutingParticipant participants} below the visible
+	 * children only, and only those take up a route of a URL that is adopted.
+	 * </p>
+	 */
+	public List<ReactControl> visibleChildren() {
+		return displayedChildren();
+	}
+
+	/**
 	 * The controls this control renders, i.e. the ones embedded in its state.
 	 *
 	 * <p>

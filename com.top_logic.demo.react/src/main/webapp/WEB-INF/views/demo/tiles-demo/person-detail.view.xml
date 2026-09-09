@@ -7,6 +7,11 @@
 	below. The navPath channel is the stack's path (bound by the stack's bind-path-to), so the
 	derived depth channel is at least 1 here and the "Back" command shows, popping this frame off
 	the stack.
+	
+	The second tab pushes yet another detail frame, which makes the state a covered
+	frame keeps observable: coming back to this frame shows the tab that was
+	selected, the row that was selected in it and the values being edited. The pushed
+	frame carries no label of its own, the stack names it through its <frame> declaration.
 -->
 <view>
 	<channels>
@@ -20,34 +25,94 @@
 			expr="p -> $p.size()"
 			inputs="navPath"
 		/>
+		<channel name="otherPerson"/>
 	</channels>
 
-	<panel>
-		<title>
-			<en>Person Detail</en>
-			<de>Personendetails</de>
-		</title>
-		<commands>
-			<generic-command
-				image="css:bi bi-arrow-left"
-				input="depth"
-				placement="TOOLBAR"
+	<tab-bar active-tab="contact">
+		<tabs>
+			<tab id="contact"
+				icon="css:bi bi-person-vcard"
 			>
 				<label>
-					<en>Back</en>
-					<de>Zurück</de>
+					<en>Contact</en>
+					<de>Kontakt</de>
 				</label>
-				<executability>
-					<visible-if expr="d -> $d > 0"/>
-				</executability>
-				<navigate-pop/>
-			</generic-command>
-		</commands>
-		<form input="contact">
-			<field attribute="firstname"/>
-			<field attribute="name"/>
-			<field attribute="phone"/>
-			<field attribute="email"/>
-		</form>
-	</panel>
+				<panel>
+					<title>
+						<en>Person Detail</en>
+						<de>Personendetails</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-arrow-left"
+							input="depth"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Back</en>
+								<de>Zurück</de>
+							</label>
+							<executability>
+								<visible-if expr="d -> $d > 0"/>
+							</executability>
+							<navigate-pop/>
+						</generic-command>
+					</commands>
+					<form input="contact">
+						<field attribute="firstname"/>
+						<field attribute="name"/>
+						<field attribute="phone"/>
+						<field attribute="email"/>
+					</form>
+				</panel>
+			</tab>
+			<tab id="accounts"
+				icon="css:bi bi-people"
+			>
+				<label>
+					<en>Other accounts</en>
+					<de>Weitere Konten</de>
+				</label>
+				<panel fill="true">
+					<title>
+						<en>Other accounts</en>
+						<de>Weitere Konten</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-arrow-left"
+							input="depth"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Back</en>
+								<de>Zurück</de>
+							</label>
+							<executability>
+								<visible-if expr="d -> $d > 0"/>
+							</executability>
+							<navigate-pop/>
+						</generic-command>
+						<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+							bind-input-to="person"
+							input="otherPerson"
+							placement="TOOLBAR"
+							view="demo/tiles-demo/person-detail.view.xml"
+						>
+							<label>
+								<en>Open</en>
+								<de>Öffnen</de>
+							</label>
+						</command>
+					</commands>
+					<table
+						selection="otherPerson"
+						types="tl.accounts:Person"
+					>
+						<rows>all(`tl.accounts:Person`)</rows>
+					</table>
+				</panel>
+			</tab>
+		</tabs>
+	</tab-bar>
 </view>

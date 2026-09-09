@@ -1,4 +1,6 @@
-import { React, useTLState, useTLCommand, TLChild, KeyboardScopeProvider, useKeyboardBinding } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, TLChild, KeyboardScopeProvider, useKeyboardBinding, FillBarrier,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
@@ -56,7 +58,9 @@ const TLDialog: React.FC<TLCellProps> = ({ controlId }) => {
         ref={backdropRef}
         tabIndex={-1}
       >
-        <TLChild control={child} />
+        <FillBarrier>
+          <TLChild control={child} />
+        </FillBarrier>
       </div>
     </KeyboardScopeProvider>
   );

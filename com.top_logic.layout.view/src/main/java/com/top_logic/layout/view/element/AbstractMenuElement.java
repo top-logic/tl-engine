@@ -221,7 +221,7 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		// element like the ungrouped ones, so their models follow the same lifecycle.
 		List<ViewCommandModel> allModels = new ArrayList<>(commandModels);
 		allModels.addAll(groupModels);
-		registerLifecycle(allModels, region);
+		registerLifecycle(context, allModels, region);
 
 		return region;
 	}

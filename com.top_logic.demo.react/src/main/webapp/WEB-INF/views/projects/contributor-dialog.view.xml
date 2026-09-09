@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Where the application displays a contributor: a dialog on top of whatever the user is looking
+	at, because a contributor has no place of its own in the drill-down.
+-->
+<view>
+	<channels>
+		<channel name="contributor"/>
+	</channels>
+
+	<window width="480px">
+		<title>
+			<en>Contributor</en>
+			<de>Mitarbeiter</de>
+		</title>
+		<form
+			input="contributor"
+			mode-switch="false"
+		>
+			<field attribute="name"/>
+			<field attribute="email"/>
+			<field attribute="assignedTickets"/>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

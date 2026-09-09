@@ -263,7 +263,7 @@ public class TestObjectNavigation extends TestCase {
 	 */
 	private DisplayTarget showing(String viewRef) {
 		return new DisplayTarget(_type, false,
-			List.of(new ShowStep(viewRef, false, null, List.of(new Binding(ITEM_CHANNEL, null)))));
+			List.of(new ShowStep(viewRef, false, null, null, List.of(new Binding(ITEM_CHANNEL, null)))));
 	}
 
 	private TLObject newObject() {

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Initial frame of the project drill-down: all projects. Opening one pushes its milestones,
+	announced with the project's name.
+-->
+<view>
+	<channels>
+		<channel name="project"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Projects</en>
+			<de>Projekte</de>
+		</title>
+		<commands>
+			<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="project"
+				image="css:bi bi-box-arrow-in-right"
+				input="project"
+				placement="TOOLBAR"
+				view="projects/milestones.view.xml"
+			>
+				<label>
+					<en>Open</en>
+					<de>Öffnen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="p -> $p.get(`tl.demo.projectManagement:ProjectScope#name`)"
+					inputs="project"
+				/>
+			</command>
+		</commands>
+		<table
+			observed-types="tl.demo.projectManagement:ProjectScope"
+			selection="project"
+			types="tl.demo.projectManagement:ProjectScope"
+		>
+			<columns>
+				<column attribute="name"/>
+				<column attribute="description"/>
+			</columns>
+			<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
+		</table>
+	</panel>
+</view>

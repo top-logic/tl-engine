@@ -68,9 +68,30 @@ public class DefaultViewContext implements ViewContext {
 	 *        infrastructure.
 	 */
 	public DefaultViewContext(ReactContext reactContext) {
+		this(reactContext, (String) null);
+	}
+
+	/**
+	 * Creates the root {@link DefaultViewContext} of a window displaying the given view file.
+	 *
+	 * @param reactContext
+	 *        The view display context providing ID allocation, SSE queue and other rendering
+	 *        infrastructure.
+	 * @param rootView
+	 *        Path of the view file the window displays, either relative to
+	 *        {@link ViewLoader#VIEW_BASE_PATH} or full. Names what the window shows, so that
+	 *        displaying an object knows which places are reachable from here.
+	 *
+	 * @implNote Only a context that opens a window of its own carries a root view: a context
+	 *           created within a window shares the window's
+	 *           {@link #getRevealRegistry() reveal registry} and leaves the name it already holds
+	 *           untouched.
+	 */
+	public DefaultViewContext(ReactContext reactContext, String rootView) {
 		this(reactContext, "view", new HashMap<>(), null, null, null,
 			resolveReloadListeners(reactContext), null,
-			SlotPath.ROOT, resolveSlotRegistry(reactContext), resolveRevealRegistry(reactContext), Map.of());
+			SlotPath.ROOT, resolveSlotRegistry(reactContext), resolveRevealRegistry(reactContext, rootView),
+			Map.of());
 	}
 
 	private static List<ViewReloadListener> resolveReloadListeners(ReactContext reactContext) {
@@ -87,11 +108,11 @@ public class DefaultViewContext implements ViewContext {
 		return new SlotRegistry();
 	}
 
-	private static RevealRegistry resolveRevealRegistry(ReactContext reactContext) {
+	private static RevealRegistry resolveRevealRegistry(ReactContext reactContext, String rootView) {
 		if (reactContext instanceof DefaultViewContext dvc) {
 			return dvc._revealRegistry;
 		}
-		return new RevealRegistry();
+		return new RevealRegistry(rootView == null ? null : ViewLoader.viewRef(rootView));
 	}
 
 	private DefaultViewContext(ReactContext reactContext, String personalizationPath,

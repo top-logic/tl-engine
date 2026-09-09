@@ -423,6 +423,12 @@ public class TableElement implements UIElement {
 			ViewChannel.ChannelListener channelListener = (sender, oldValue, newValue) -> reapplySelection[0].run();
 			selectionChannel.addListener(channelListener);
 			control.addCleanupAction(() -> selectionChannel.removeListener(channelListener));
+
+			// The channel may already name a row: a drilled-down frame receives its selection as a
+			// parameter, and an object displayed at this table hands it over, both before the table
+			// exists. Only changes arrive at the listener, so the table starts out showing what the
+			// channel says.
+			reapplySelection[0].run();
 		}
 
 		// Refresh the rows when observed objects change or an input channel changes. After a refresh,

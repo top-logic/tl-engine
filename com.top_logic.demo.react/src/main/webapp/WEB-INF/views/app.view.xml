@@ -35,6 +35,15 @@
 							<de>Objektliste</de>
 						</label>
 					</nav-item>
+					<nav-item id="projects"
+						icon="css:bi bi-kanban"
+					>
+						<view-ref view="projects.view.xml"/>
+						<label>
+							<en>Projects</en>
+							<de>Projekte</de>
+						</label>
+					</nav-item>
 					<nav-item id="charts"
 						icon="css:bi bi-bar-chart-line"
 					>

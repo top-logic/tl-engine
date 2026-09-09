@@ -23,6 +23,25 @@
 				<file-list attribute="attachments"/>
 				<commands>
 					<generic-command
+						image="css:bi bi-link-45deg"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Reference ticket...</en>
+							<de>Ticket referenzieren...</de>
+						</label>
+						<store-form-state/>
+						<open-dialog
+							bind-input-to="draft"
+							dialog-view="tickets/reference-ticket.view.xml"
+						>
+							<bind
+								channel="result"
+								to="comment"
+							/>
+						</open-dialog>
+					</generic-command>
+					<generic-command
 						image="css:bi bi-send"
 						placement="TOOLBAR"
 					>

@@ -4,7 +4,9 @@
 		<target type="test.navigation:Special"
 			default="true"
 		>
-			<show view="mounts-shared.view.xml">
+			<show view="mounts-shared.view.xml"
+				label-expr="x -> $x"
+			>
 				<bind channel="item"/>
 			</show>
 			<show view="mounts-orphan.view.xml"

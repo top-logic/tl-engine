@@ -173,6 +173,9 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
 
+		/** Configuration name for {@link #getLabelExpr()}. */
+		String LABEL_EXPR = "label-expr";
+
 		/** Configuration name for {@link #getBindings()}. */
 		String BINDINGS = "bindings";
 
@@ -205,6 +208,19 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		@Name(LABEL)
 		@Nullable
 		ResKey getLabel();
+
+		/**
+		 * Function computing the label of the displayed view from the object being displayed.
+		 *
+		 * <p>
+		 * Takes precedence over the fixed label. A view that the user reaches by drilling down is
+		 * announced with the name of the object it shows, so a target leading to the same place
+		 * must compute the same label to arrive at the drill-down the user already has.
+		 * </p>
+		 */
+		@Name(LABEL_EXPR)
+		@Nullable
+		Expr getLabelExpr();
 
 		/**
 		 * The values the channels of the displayed view receive.
@@ -298,7 +314,8 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 			for (BindConfig binding : show.getBindings()) {
 				bindings.add(new Binding(binding.getChannel(), QueryExecutor.compileOptional(binding.getExpr())));
 			}
-			shows.add(new ShowStep(ViewLoader.viewRef(show.getView()), show.isDialog(), show.getLabel(), bindings));
+			shows.add(new ShowStep(ViewLoader.viewRef(show.getView()), show.isDialog(), show.getLabel(),
+				QueryExecutor.compileOptional(show.getLabelExpr()), bindings));
 		}
 		return new DisplayTarget(type, config.isDefault(), shows);
 	}

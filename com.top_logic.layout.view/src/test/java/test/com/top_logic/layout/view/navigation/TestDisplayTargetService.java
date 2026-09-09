@@ -24,6 +24,7 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.navigation.Binding;
 import com.top_logic.layout.view.navigation.DisplayTarget;
 import com.top_logic.layout.view.navigation.DisplayTargetService;
@@ -103,7 +104,7 @@ public class TestDisplayTargetService extends TestCase {
 		DisplayTarget viaTile = target(_special, false, TILE);
 		DisplayTarget viaOrphan = target(_special, false, ORPHAN);
 		DisplayTarget viaDialog = new DisplayTarget(_special, false,
-			List.of(new ShowStep(ORPHAN, true, null, List.of())));
+			List.of(new ShowStep(ORPHAN, true, null, null, List.of())));
 		DisplayTargets targets = targets(viaRoot, viaTile, viaOrphan, viaDialog);
 
 		MountPath fromShared = mount(SHARED, 0);
@@ -130,9 +131,9 @@ public class TestDisplayTargetService extends TestCase {
 	 */
 	public void testDeclarationOrderDecidesLast() {
 		DisplayTarget first = new DisplayTarget(_special, false,
-			List.of(new ShowStep(SHARED, false, null, List.of(new Binding("item", null)))));
+			List.of(new ShowStep(SHARED, false, null, null, List.of(new Binding("item", null)))));
 		DisplayTarget second = new DisplayTarget(_special, false,
-			List.of(new ShowStep(SHARED, false, null, List.of(new Binding("filter", null)))));
+			List.of(new ShowStep(SHARED, false, null, null, List.of(new Binding("filter", null)))));
 		DisplayTargets targets = targets(first, second);
 
 		assertEquals(List.of(first, second), targets.resolve(_special, null));
@@ -174,11 +175,25 @@ public class TestDisplayTargetService extends TestCase {
 	}
 
 	/**
+	 * A label expression names the view after the object being displayed, a fixed label always the
+	 * same.
+	 */
+	public void testLabelIsComputedFromTheShownObject() {
+		QueryExecutor identity = QueryExecutor.interpret(null, _model, lambda("x", var("x")));
+		ResKey fixed = ResKey.text("Fixed");
+
+		assertEquals(fixed, new ShowStep(SHARED, false, fixed, null, List.of()).labelFor("Shown"));
+		assertEquals(ResKey.text("Shown"),
+			new ShowStep(SHARED, false, fixed, identity, List.of()).labelFor("Shown"));
+		assertNull(new ShowStep(SHARED, false, null, null, List.of()).labelFor("Shown"));
+	}
+
+	/**
 	 * A binding addressing a channel the displayed view does not declare is reported.
 	 */
 	public void testMissingChannelIsReported() {
 		DisplayTargets targets = targets(new DisplayTarget(_special, false,
-			List.of(new ShowStep(SHARED, false, null,
+			List.of(new ShowStep(SHARED, false, null, null,
 				List.of(new Binding("item", null), new Binding("noSuchChannel", null))))));
 
 		BufferingProtocol log = new BufferingProtocol();
@@ -197,7 +212,7 @@ public class TestDisplayTargetService extends TestCase {
 	 */
 	public void testUnreadableViewIsNotChecked() {
 		DisplayTargets targets = targets(new DisplayTarget(_special, false,
-			List.of(new ShowStep("does-not-exist.view.xml", false, null, List.of(new Binding("item", null))))));
+			List.of(new ShowStep("does-not-exist.view.xml", false, null, null, List.of(new Binding("item", null))))));
 
 		BufferingProtocol log = new BufferingProtocol();
 		targets.checkBindings(log, viewRef -> null);
@@ -229,6 +244,7 @@ public class TestDisplayTargetService extends TestCase {
 		assertEquals(SHARED, outer.getView());
 		assertFalse(outer.isDialog());
 		assertNull(outer.getLabel());
+		assertNotNull("The view is named after the object it displays.", outer.getLabelExpr());
 		assertEquals(1, outer.getBindings().size());
 		assertEquals("item", outer.getBindings().get(0).getChannel());
 		assertNull("Without an expression, the displayed object is the value.",
@@ -238,6 +254,7 @@ public class TestDisplayTargetService extends TestCase {
 		assertEquals(ORPHAN, inner.getView());
 		assertTrue(inner.isDialog());
 		assertNotNull(inner.getLabel());
+		assertNull("A fixed label needs no expression.", inner.getLabelExpr());
 		assertNotNull(inner.getBindings().get(0).getExpr());
 	}
 
@@ -245,7 +262,7 @@ public class TestDisplayTargetService extends TestCase {
 	 * A target displaying the given view, with no bindings.
 	 */
 	private static DisplayTarget target(TLType type, boolean isDefault, String viewRef) {
-		return new DisplayTarget(type, isDefault, List.of(new ShowStep(viewRef, false, null, List.of())));
+		return new DisplayTarget(type, isDefault, List.of(new ShowStep(viewRef, false, null, null, List.of())));
 	}
 
 	private DisplayTargets targets(DisplayTarget... targets) {

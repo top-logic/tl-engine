@@ -10,6 +10,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.ObjectNotFound;
 
 /**
@@ -18,7 +19,7 @@ import com.top_logic.tool.boundsec.ObjectNotFound;
  *
  * <p>
  * Such a link names its target object in its {@code href}, as
- * {@link TLObjectLinkUtil#getLinkDestination(Wrapper, String)} wrote it. Following the link resolves
+ * {@link TLObjectLinkUtil#getLinkDestination(TLObject, String)} wrote it. Following the link resolves
  * that description back to the object and hands it to the {@link ObjectNavigator} of the context,
  * which leads to the place the application displays it at. Whatever stands in the way - a link to
  * an object that is gone, an object with no place of its own - is told to the user.
@@ -37,7 +38,7 @@ public final class ObjectLinks {
 	 *        Where the click came from; decides which of several places is the nearest one.
 	 * @param href
 	 *        The {@code href} of the followed link, as
-	 *        {@link TLObjectLinkUtil#getLinkDestination(Wrapper, String)} wrote it.
+	 *        {@link TLObjectLinkUtil#getLinkDestination(TLObject, String)} wrote it.
 	 */
 	public static void follow(ReactContext context, String href) {
 		Wrapper target;

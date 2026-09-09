@@ -37,6 +37,20 @@ public final class RevealRegistry {
 
 	private final Map<ContainerKey, List<ChildRevealer>> _containers = new LinkedHashMap<>();
 
+	private final String _rootView;
+
+	/**
+	 * Creates the registry of a window displaying the given view file.
+	 *
+	 * @param rootView
+	 *        Path of the view file the window's root display shows, relative to
+	 *        {@link com.top_logic.layout.view.ViewLoader#VIEW_BASE_PATH}, or {@code null} while
+	 *        nothing says what the window displays.
+	 */
+	public RevealRegistry(String rootView) {
+		_rootView = rootView;
+	}
+
 	/**
 	 * Registers a view instance as displayed at the given place.
 	 *
@@ -99,11 +113,16 @@ public final class RevealRegistry {
 	/**
 	 * The view file the window's root display shows.
 	 *
-	 * @return The view registered at {@link RevealPath#ROOT}, or {@code null} while the window
-	 *         displays nothing.
+	 * @return The view the window was opened with, or {@code null} if nothing said what the window
+	 *         displays.
+	 *
+	 * @implNote Answered from what the window was opened with rather than from the registrations:
+	 *           a view embedded in the root display without a container choosing it - the account
+	 *           area of an app bar, say - is registered at {@link RevealPath#ROOT} just as the root
+	 *           view itself is, so the registrations do not tell the two apart.
 	 */
 	public String getRootView() {
-		return viewAt(RevealPath.ROOT);
+		return _rootView;
 	}
 
 	/**

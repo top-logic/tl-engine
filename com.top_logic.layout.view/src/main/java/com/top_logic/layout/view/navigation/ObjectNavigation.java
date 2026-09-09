@@ -257,7 +257,7 @@ public final class ObjectNavigation {
 			for (Binding binding : show.bindings()) {
 				params.put(binding.channel(), binding.evaluate(_object));
 			}
-			_frames.add(new TileFrame(show.viewRef(), show.label(), params));
+			_frames.add(new TileFrame(show.viewRef(), show.labelFor(_object), params));
 
 			List<TileFrame> current = stack.getPath();
 			if (current.size() >= _frames.size() && current.subList(0, _frames.size()).equals(_frames)) {

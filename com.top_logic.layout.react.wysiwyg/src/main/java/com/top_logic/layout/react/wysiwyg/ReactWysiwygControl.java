@@ -28,8 +28,11 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
+import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
@@ -52,6 +55,17 @@ import com.top_logic.util.error.TopLogicException;
 public class ReactWysiwygControl extends ReactFormFieldControl implements UploadHandler, DataProvider {
 
 	private static final String TOOLBAR = "toolbar";
+
+	/**
+	 * Command sent when the user follows an {@link TLObjectLinkUtil#TL_OBJECT object link} in
+	 * displayed content.
+	 */
+	private static final String CMD_SHOW_OBJECT_LINK = "showObjectLink";
+
+	/**
+	 * The {@link #CMD_SHOW_OBJECT_LINK} argument naming the object to display.
+	 */
+	private static final String ARG_HREF = "href";
 
 	private static final String IMAGE_URL = "imageUrl";
 
@@ -219,6 +233,17 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			return "";
 		}
 		return text.getSourceCode();
+	}
+
+	/**
+	 * Displays the object an {@link TLObjectLinkUtil#TL_OBJECT object link} in the shown content
+	 * points at.
+	 */
+	@ReactCommandHandler(value = CMD_SHOW_OBJECT_LINK,
+		params = @ReactParam(name = ARG_HREF, required = true,
+			description = "The link destination naming the object to display."))
+	void handleShowObjectLink(ReactContext context, Map<String, Object> arguments) {
+		ObjectLinks.follow(context, (String) arguments.get(ARG_HREF));
 	}
 
 	private String uniqueImageKey(String name) {

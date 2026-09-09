@@ -105,6 +105,12 @@
   margin-bottom: 0;
 }
 
+.tlWysiwygEditor__immutableContent a {
+  color: var(--tl-primary-color, #2563eb);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* ===================================================================
    Toolbar
    =================================================================== */

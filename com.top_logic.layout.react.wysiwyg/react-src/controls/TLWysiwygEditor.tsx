@@ -14,6 +14,15 @@ import TextStyle from '@tiptap/extension-text-style';
 import WysiwygToolbar from './WysiwygToolbar';
 import './TLWysiwygEditor.css';
 
+/** Command sent when the user follows an object link in displayed content. */
+const CMD_SHOW_OBJECT_LINK = 'showObjectLink';
+
+/** The CMD_SHOW_OBJECT_LINK argument naming the object to display. */
+const ARG_HREF = 'href';
+
+/** CSS class marking an anchor as a link to an application object. */
+const TL_OBJECT = 'tlObject';
+
 const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
@@ -104,6 +113,17 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     e.target.value = '';
   }, [uploadFile]);
 
+  // Object links in displayed content lead to the object they name; every other anchor keeps
+  // its normal behavior.
+  const handleContentClick = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const anchor = (e.target as HTMLElement | null)?.closest('a');
+    if (!anchor || !e.currentTarget.contains(anchor) || !anchor.classList.contains(TL_OBJECT)) {
+      return;
+    }
+    e.preventDefault();
+    sendCommand(CMD_SHOW_OBJECT_LINK, { [ARG_HREF]: anchor.getAttribute('href') || '' });
+  }, [sendCommand]);
+
   // Cleanup debounce on unmount.
   React.useEffect(() => {
     return () => {
@@ -118,6 +138,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       <div className="tlWysiwygEditor tlWysiwygEditor--immutable">
         <div
           className="tlWysiwygEditor__immutableContent ProseMirror"
+          onClick={handleContentClick}
           dangerouslySetInnerHTML={{ __html: value }}
         />
       </div>

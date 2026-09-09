@@ -55,6 +55,8 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.Sort;
+import com.top_logic.table.NamedFilter;
+import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
 import com.top_logic.table.TableViewState;
@@ -139,6 +141,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private ViewStateStore _store;
 
 	private TableId _tableId;
+
+	/** @see #setNamedFilters(Function, NamedFilterStore) */
+	private Function<List<? extends Column<?, ?>>, List<NamedFilter>> _declaredFilters;
+
+	/** @see #setNamedFilters(Function, NamedFilterStore) */
+	private NamedFilterStore _filterStore;
+
+	/** @see #setFilterBar(boolean) */
+	private boolean _filterBar;
 
 	private SortSpec _defaultSort = SortSpec.NONE;
 
@@ -267,6 +278,33 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	public void setPersonalization(ViewStateStore store, TableId tableId) {
 		_store = store;
 		_tableId = tableId;
+	}
+
+	/**
+	 * Offers named filters: the criteria the table declares, materialized over its columns by the
+	 * given function, plus the ones the user saves themselves.
+	 *
+	 * @param declaredFilters
+	 *        Materializes the declared filters over the table's columns, called whenever the columns
+	 *        are rebuilt and whenever the rows are refreshed - the criteria a table declares can
+	 *        depend on the inputs it is refreshed for.
+	 * @param filterStore
+	 *        Where the filters the user saves under a name are persisted, or {@code null} to offer
+	 *        only the declared ones.
+	 */
+	public void setNamedFilters(Function<List<? extends Column<?, ?>>, List<NamedFilter>> declaredFilters,
+			NamedFilterStore filterStore) {
+		_declaredFilters = declaredFilters;
+		_filterStore = filterStore;
+	}
+
+	/**
+	 * Whether the table displays its filter bar.
+	 *
+	 * @see TableViewControl#setFilterBar(boolean)
+	 */
+	public void setFilterBar(boolean filterBar) {
+		_filterBar = filterBar;
 	}
 
 	/**
@@ -438,14 +476,17 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			}
 			initialState.setFrozenCount(Math.min(_fixedColumns + leadingActions, columns.size()));
 		}
+		List<NamedFilter> declaredFilters =
+			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns);
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
-			_store != null ? _tableId : null, _hiddenByDefault);
+			_tableId, _hiddenByDefault, declaredFilters, _filterStore);
 
 		disposeSelectionBinding();
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();
 		}
 		_tableControl = new TableViewControl<>(_context, view, false);
+		_tableControl.setFilterBar(_filterBar);
 		registerChildControl(_tableControl);
 
 		// Set panel child to the table.
@@ -468,6 +509,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			TableViewControl<TLObject> table = _tableControl;
 			_observer = new RowSourceObserver<>(_rowSource, _rowFunction, _observedTypes, _inputChannels,
 				() -> {
+					// The criteria a table declares can depend on the inputs it is refreshed for, so
+					// they are resolved again for their new values.
+					if (_declaredFilters != null) {
+						view.setDeclaredFilters(_declaredFilters.apply(columns));
+					}
 					table.refreshData();
 					if (_selectionBinding != null) {
 						_selectionBinding.rowsRefreshed();

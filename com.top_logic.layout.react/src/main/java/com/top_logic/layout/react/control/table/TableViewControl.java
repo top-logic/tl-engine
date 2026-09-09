@@ -56,6 +56,7 @@ import com.top_logic.table.FilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.MatchCounts;
+import com.top_logic.table.NamedFilter;
 import com.top_logic.table.Selection;
 import com.top_logic.table.SelectionMode;
 import com.top_logic.table.SortColumn;
@@ -65,6 +66,7 @@ import com.top_logic.table.TableView;
 import com.top_logic.table.filter.FilterEditor;
 import com.top_logic.table.filter.FilterEditors;
 import com.top_logic.table.filter.FilterField;
+import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -153,6 +155,36 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/** State key telling the client whether to offer the column selection. */
 	private static final String COLUMN_SELECT = "columnSelect";
 
+	/** State key telling the client whether to display the filter bar. */
+	private static final String FILTER_BAR = "filterBar";
+
+	/** State key holding the filters the table offers under a name, one map per filter. */
+	private static final String NAMED_FILTERS = "namedFilters";
+
+	/** Entry key of a {@link #NAMED_FILTERS} filter's {@link NamedFilter#id() identifier}. */
+	private static final String NAMED_FILTER_ID = "id";
+
+	/** Entry key of a {@link #NAMED_FILTERS} filter's displayed name. */
+	private static final String NAMED_FILTER_LABEL = "label";
+
+	/** Entry key telling whether a {@link #NAMED_FILTERS} filter may be deleted. */
+	private static final String NAMED_FILTER_DELETABLE = "deletable";
+
+	/**
+	 * State key holding the {@link NamedFilter#id() identifier} of the filter the table currently
+	 * matches, empty when it matches none of them.
+	 */
+	private static final String ACTIVE_NAMED_FILTER = "activeNamedFilter";
+
+	/** State key holding the text the table searches its displayed columns for. */
+	private static final String SEARCH = "search";
+
+	/** State key telling the client whether the table keeps filters the user saves. */
+	private static final String FILTER_SAVING = "filterSaving";
+
+	/** Value of {@link #ACTIVE_NAMED_FILTER} and {@link #SEARCH} for "none". */
+	private static final String NOTHING = "";
+
 	// Command names.
 	private static final String CMD_OPEN_FILTER = "openFilter";
 
@@ -177,6 +209,16 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	private static final String CMD_EXPAND = "expand";
 
 	private static final String CMD_SET_FROZEN_COLUMN_COUNT = "setFrozenColumnCount";
+
+	private static final String CMD_APPLY_NAMED_FILTER = "applyNamedFilter";
+
+	private static final String CMD_CLEAR_FILTER = "clearFilter";
+
+	private static final String CMD_SEARCH = "search";
+
+	private static final String CMD_SAVE_NAMED_FILTER = "saveNamedFilter";
+
+	private static final String CMD_DELETE_NAMED_FILTER = "deleteNamedFilter";
 
 	// Command argument names (shared with the typed SelectRowArguments so dispatch, recording and
 	// projection agree on the wire keys).
@@ -241,6 +283,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/** Whether the user may choose which columns are displayed, and in which order. */
 	private boolean _columnSelect = true;
 
+	/** Whether the named filters, the search field and saving a filter are displayed. */
+	private boolean _filterBar;
+
 	/**
 	 * Creates a {@link TableViewControl}.
 	 *
@@ -262,6 +307,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		putState(SELECTION_MODE, _selectionMode);
 		putState(TREE_MODE, Boolean.valueOf(_treeMode));
 		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
+		putState(FILTER_BAR, Boolean.valueOf(_filterBar));
 		buildFullState();
 	}
 
@@ -304,6 +350,22 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	public void setColumnSelect(boolean columnSelect) {
 		_columnSelect = columnSelect;
 		putState(COLUMN_SELECT, Boolean.valueOf(columnSelect));
+	}
+
+	/**
+	 * Whether the table displays its filter bar: the {@link TableView#namedFilters() named filters}
+	 * it offers, the free-text search over its displayed columns, and saving the current filter
+	 * under a name.
+	 */
+	public void setFilterBar(boolean filterBar) {
+		Object update = beginUpdate();
+		try {
+			_filterBar = filterBar;
+			putState(FILTER_BAR, Boolean.valueOf(filterBar));
+			refreshFilterBar();
+		} finally {
+			commitUpdate(update);
+		}
 	}
 
 	/**
@@ -380,6 +442,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private void buildFullState() {
 		refreshColumns();
+		refreshFilterBar();
 		putState(TOTAL_ROW_COUNT, Integer.valueOf(_view.rowCount()));
 		updateViewport(_viewportStart, _viewportCount);
 	}
@@ -409,6 +472,46 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	private boolean isFilterActive(String column) {
 		FilterState state = _view.state().getFilters().get(column);
 		return state != null && !state.isEmpty();
+	}
+
+	/**
+	 * Pushes what the filter bar displays: the offered {@link NamedFilter}s, which of them the
+	 * table's criteria currently are, the search term, and whether saving a filter is offered.
+	 *
+	 * <p>
+	 * Called from {@link #buildFullState()}, so every command that changes the rows refreshes the
+	 * bar as well: which named filter is active is derived from the live criteria, hence a column
+	 * filter set in the per-column dialog ends the match just like applying another named filter
+	 * does.
+	 * </p>
+	 */
+	private void refreshFilterBar() {
+		if (!_filterBar) {
+			return;
+		}
+		Object update = beginUpdate();
+		try {
+			Resources resources = Resources.getInstance();
+			List<Map<String, Object>> filters = new ArrayList<>();
+			for (NamedFilter filter : _view.namedFilters()) {
+				Map<String, Object> filterState = new LinkedHashMap<>();
+				filterState.put(NAMED_FILTER_ID, filter.id());
+				filterState.put(NAMED_FILTER_LABEL, label(resources, filter.label()));
+				filterState.put(NAMED_FILTER_DELETABLE,
+					Boolean.valueOf(filter.origin() == NamedFilter.Origin.SAVED));
+				filters.add(filterState);
+			}
+			putState(NAMED_FILTERS, filters);
+
+			NamedFilter active = _view.activeNamedFilter();
+			putState(ACTIVE_NAMED_FILTER, active == null ? NOTHING : active.id());
+
+			TextFilterState search = _view.state().getSearch();
+			putState(SEARCH, search == null ? NOTHING : search.pattern());
+			putState(FILTER_SAVING, Boolean.valueOf(_view.savesNamedFilters()));
+		} finally {
+			commitUpdate(update);
+		}
 	}
 
 	private static String label(Resources resources, ResKey key) {
@@ -1052,6 +1155,80 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		}
 		_view.setExpanded(keyAt(rowIndex), expanded);
 		rebuildAfterRowChange();
+	}
+
+	/**
+	 * Filters the table by the criteria of one of the {@link TableView#namedFilters() named
+	 * filters} the bar offers.
+	 *
+	 * <p>
+	 * The named filter replaces the whole filter, so what the bar displays as active is what the
+	 * table is filtered by - a column the filter does not mention ends up unfiltered.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_APPLY_NAMED_FILTER)
+	void handleApplyNamedFilter(ApplyNamedFilterArguments args) {
+		_view.applyNamedFilter(args.getId());
+		rebuildAfterRowChange();
+	}
+
+	/**
+	 * Unfilters the table: clears every column filter and the search term.
+	 *
+	 * <p>
+	 * This is what clicking the active chip in the filter bar does. While a chip is active, the
+	 * table's criteria are exactly that chip's own, so clearing them all clears exactly what the
+	 * chip applied - the chip acts as a toggle, and a second click leaves the table showing every
+	 * row again.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_CLEAR_FILTER)
+	void handleClearFilter() {
+		for (String column : new ArrayList<>(_view.state().getFilters().keySet())) {
+			_view.filter(column, null);
+		}
+		_view.search(null);
+		rebuildAfterRowChange();
+	}
+
+	/**
+	 * Searches the table's displayed columns for a text, or clears the search when the term is
+	 * empty.
+	 *
+	 * <p>
+	 * The bar searches for a plain {@link TextFilterState#contains(String) case-insensitive
+	 * substring}; the matching flags of a column's own text filter stay that column's business.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_SEARCH)
+	void handleSearch(SearchArguments args) {
+		String term = args.getTerm();
+		_view.search(term == null || term.isEmpty() ? null : TextFilterState.contains(term));
+		rebuildAfterRowChange();
+	}
+
+	/**
+	 * Keeps the table's current criteria as a {@link NamedFilter} of the user's own, under the name
+	 * they typed.
+	 */
+	@ReactCommandHandler(CMD_SAVE_NAMED_FILTER)
+	void handleSaveNamedFilter(SaveNamedFilterArguments args) {
+		String name = args.getFilterName().trim();
+		if (name.isEmpty()) {
+			return;
+		}
+		_view.saveNamedFilter(name);
+		refreshFilterBar();
+	}
+
+	/**
+	 * Deletes one of the filters the user saved. The rows stay as they are: the deleted filter's
+	 * criteria are not withdrawn, only its name.
+	 */
+	@ReactCommandHandler(CMD_DELETE_NAMED_FILTER)
+	void handleDeleteNamedFilter(DeleteNamedFilterArguments args) {
+		_view.deleteNamedFilter(args.getId());
+		refreshFilterBar();
 	}
 
 	/**

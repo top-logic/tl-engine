@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
@@ -24,10 +26,13 @@ import com.top_logic.table.FilterState;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.MatchCounts;
+import com.top_logic.table.NamedFilter;
+import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
+import com.top_logic.table.SearchSpec;
 import com.top_logic.table.Selection;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
@@ -37,6 +42,7 @@ import com.top_logic.table.TableView;
 import com.top_logic.table.TableViewListener;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.ViewStateStore;
+import com.top_logic.table.filter.TextFilterState;
 
 /**
  * Default {@link TableView}: composes a column model, a {@link RowSource} and a
@@ -48,6 +54,12 @@ import com.top_logic.table.ViewStateStore;
  *        The row business object type.
  */
 public class DefaultTableView<R> implements TableView<R> {
+
+	/** JSON key of a column's inner {@link FilterState}, see {@link #filterCodec()}. */
+	private static final String STATE = "state";
+
+	/** JSON key marking a column's filter as {@link NegatedFilterState inverted}. */
+	private static final String INVERTED = "inverted";
 
 	private final Map<String, Column<R, ?>> _columns = new LinkedHashMap<>();
 
@@ -65,6 +77,12 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	/** @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection) */
 	private final Set<String> _hiddenByDefault;
+
+	private List<NamedFilter> _declaredFilters;
+
+	private final NamedFilterStore _filterStore;
+
+	private final List<NamedFilter> _savedFilters = new ArrayList<>();
 
 	/**
 	 * Creates a {@link DefaultTableView} without personalization persistence.
@@ -111,6 +129,25 @@ public class DefaultTableView<R> implements TableView<R> {
 	 */
 	public DefaultTableView(List<Column<R, ?>> columns, RowSource<R> source, TableViewState state,
 			ViewStateStore store, TableId id, Collection<String> hiddenByDefault) {
+		this(columns, source, state, store, id, hiddenByDefault, List.of(), null);
+	}
+
+	/**
+	 * Creates a {@link DefaultTableView} offering named filters.
+	 *
+	 * @param declaredFilters
+	 *        The criteria this table offers under a name as part of its definition -
+	 *        {@link com.top_logic.table.NamedFilter.Origin#DECLARED} filters, which the user
+	 *        cannot delete.
+	 * @param filterStore
+	 *        Where the filters the user {@link #saveNamedFilter(String) saves} themselves are
+	 *        persisted, or {@code null} to offer only the declared ones (then saving and deleting
+	 *        are unavailable).
+	 * @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection)
+	 */
+	public DefaultTableView(List<Column<R, ?>> columns, RowSource<R> source, TableViewState state,
+			ViewStateStore store, TableId id, Collection<String> hiddenByDefault,
+			List<NamedFilter> declaredFilters, NamedFilterStore filterStore) {
 		for (Column<R, ?> column : columns) {
 			_columns.put(column.name(), column);
 		}
@@ -120,9 +157,14 @@ public class DefaultTableView<R> implements TableView<R> {
 		_id = id;
 		_hiddenByDefault = new LinkedHashSet<>(hiddenByDefault);
 		_hiddenByDefault.retainAll(_columns.keySet());
+		_declaredFilters = List.copyOf(declaredFilters);
+		_filterStore = filterStore;
 		_source.addListener(_sourceListener);
 		if (_store != null && _id != null) {
 			restore();
+		}
+		if (_filterStore != null && _id != null) {
+			_savedFilters.addAll(_filterStore.load(_id, filterCodec()));
 		}
 		// Whatever the order ends up being - the initial default or the user's persisted choice -
 		// the row source has to be told about it.
@@ -195,8 +237,22 @@ public class DefaultTableView<R> implements TableView<R> {
 	 */
 	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
 			ViewStateStore store, TableId id, SortSpec defaultSort, Collection<String> hiddenByDefault) {
+		return create(columns, source, store, id, defaultSort, hiddenByDefault, List.of(), null);
+	}
+
+	/**
+	 * Creates a {@link DefaultTableView} offering named filters, whose initial state displays all
+	 * columns but the ones hidden by default, in declaration order, sorted by the given order.
+	 *
+	 * @see #create(List, RowSource, ViewStateStore, TableId, SortSpec, Collection)
+	 * @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection,
+	 *      List, NamedFilterStore)
+	 */
+	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
+			ViewStateStore store, TableId id, SortSpec defaultSort, Collection<String> hiddenByDefault,
+			List<NamedFilter> declaredFilters, NamedFilterStore filterStore) {
 		return new DefaultTableView<>(columns, source, initialState(columns, defaultSort, hiddenByDefault),
-			store, id, hiddenByDefault);
+			store, id, hiddenByDefault, declaredFilters, filterStore);
 	}
 
 	/**
@@ -386,9 +442,168 @@ public class DefaultTableView<R> implements TableView<R> {
 		} else {
 			_state.getFilters().put(column, state);
 		}
-		_source.withFilter(new FilterSpec(_state.getFilters()));
+		applyFilter();
 		persist();
 		fireColumnsChanged();
+	}
+
+	@Override
+	public void search(TextFilterState term) {
+		_state.setSearch(term == null || term.isEmpty() ? null : term);
+		applyFilter();
+		persist();
+		fireColumnsChanged();
+	}
+
+	/**
+	 * Pushes the complete filter - the column filters and the search - into the row source.
+	 *
+	 * <p>
+	 * The single place the {@link FilterSpec} is built, so that changing one of its parts cannot
+	 * drop the other. The searched columns are derived here from
+	 * {@link TableViewState#getColumnOrder()}, the columns currently displayed, so the search
+	 * always examines what the user sees.
+	 * </p>
+	 */
+	private void applyFilter() {
+		_source.withFilter(new FilterSpec(_state.getFilters(),
+			new SearchSpec(_state.getSearch(), _state.getColumnOrder())));
+	}
+
+	/**
+	 * Re-applies the filter after a change to the displayed columns, which are the columns an
+	 * active search examines: a column the user hides is no longer searched, one they show is.
+	 */
+	private void searchScopeChanged() {
+		if (_state.getSearch() != null) {
+			applyFilter();
+		}
+	}
+
+	// ---- named filters ----
+
+	@Override
+	public List<NamedFilter> namedFilters() {
+		List<NamedFilter> result = new ArrayList<>(_declaredFilters.size() + _savedFilters.size());
+		result.addAll(_declaredFilters);
+		result.addAll(_savedFilters);
+		return result;
+	}
+
+	/**
+	 * Replaces the filters this table declares.
+	 *
+	 * <p>
+	 * The criteria a table declares can depend on what is displayed elsewhere, so they are computed
+	 * again whenever that changes. A declared filter the user has applied goes on being the active
+	 * one and filters by what it now means; a declared filter that is no longer offered leaves the
+	 * table filtering by the criteria it last applied, which then match no named filter.
+	 * </p>
+	 *
+	 * @param declaredFilters
+	 *        The criteria this table offers under a name, replacing the ones it offered so far. The
+	 *        filters the user saved themselves are untouched.
+	 */
+	public void setDeclaredFilters(List<NamedFilter> declaredFilters) {
+		NamedFilter active = activeNamedFilter();
+		String activeId =
+			active != null && active.origin() == NamedFilter.Origin.DECLARED ? active.id() : null;
+		_declaredFilters = List.copyOf(declaredFilters);
+		if (activeId != null && namedFilter(activeId) != null) {
+			// Re-applies the criteria the chip now stands for, and tells the view about it.
+			applyNamedFilter(activeId);
+		} else {
+			fireColumnsChanged();
+		}
+	}
+
+	@Override
+	public NamedFilter activeNamedFilter() {
+		for (NamedFilter filter : namedFilters()) {
+			if (filter.matches(_state.getFilters(), _state.getSearch())) {
+				return filter;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public void applyNamedFilter(String id) {
+		NamedFilter filter = namedFilter(id);
+		if (filter == null) {
+			return;
+		}
+		Map<String, FilterState> filters = _state.getFilters();
+		filters.clear();
+		for (Map.Entry<String, FilterState> entry : filter.filters().entrySet()) {
+			// The same guard the restore of a persisted filter applies: a criterion is only kept for
+			// a column that exists and can be filtered by.
+			Column<R, ?> column = _columns.get(entry.getKey());
+			if (column != null && column.filter().isPresent()) {
+				filters.put(entry.getKey(), entry.getValue());
+			}
+		}
+		_state.setSearch(filter.search());
+		applyFilter();
+		persist();
+		fireColumnsChanged();
+	}
+
+	@Override
+	public boolean savesNamedFilters() {
+		return _filterStore != null && _id != null;
+	}
+
+	@Override
+	public NamedFilter saveNamedFilter(String name) {
+		if (!savesNamedFilters()) {
+			return null;
+		}
+		NamedFilter previous = savedFilterNamed(name);
+		String id = previous != null ? previous.id() : StringServices.randomUUID();
+		NamedFilter filter =
+			NamedFilter.saved(id, name, new LinkedHashMap<>(_state.getFilters()), _state.getSearch());
+		if (previous != null) {
+			_savedFilters.set(_savedFilters.indexOf(previous), filter);
+		} else {
+			_savedFilters.add(filter);
+		}
+		_filterStore.save(_id, _savedFilters, filterCodec());
+		fireColumnsChanged();
+		return filter;
+	}
+
+	@Override
+	public void deleteNamedFilter(String id) {
+		if (!savesNamedFilters()) {
+			return;
+		}
+		// Only the user's own filters are held here, so a declared one is not found and stays.
+		if (!_savedFilters.removeIf(filter -> filter.id().equals(id))) {
+			return;
+		}
+		_filterStore.save(_id, _savedFilters, filterCodec());
+		fireColumnsChanged();
+	}
+
+	private NamedFilter namedFilter(String id) {
+		for (NamedFilter filter : namedFilters()) {
+			if (filter.id().equals(id)) {
+				return filter;
+			}
+		}
+		return null;
+	}
+
+	/** The user's saved filter carrying the given name, or {@code null} if there is none. */
+	private NamedFilter savedFilterNamed(String name) {
+		ResKey label = ResKey.text(name);
+		for (NamedFilter filter : _savedFilters) {
+			if (label.equals(filter.label())) {
+				return filter;
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -441,6 +656,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		// A column that was frozen may have been hidden or moved out of the frozen range; the
 		// frozen prefix can never reach beyond the columns that are left.
 		_state.setFrozenCount(Math.min(_state.getFrozenCount(), order.size()));
+		searchScopeChanged();
 		persist();
 		fireColumnsChanged();
 	}
@@ -511,6 +727,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		} else {
 			return;
 		}
+		searchScopeChanged();
 		persist();
 		fireColumnsChanged();
 	}
@@ -589,7 +806,8 @@ public class DefaultTableView<R> implements TableView<R> {
 	/**
 	 * Loads persisted personalization and merges it onto the current state: column order, widths
 	 * and sort are reconciled against the columns that actually exist (stale columns dropped, new
-	 * columns appended), and the persisted sort/grouping are re-applied to the row source.
+	 * columns appended), and the persisted sort, grouping, filters and search are re-applied to the
+	 * row source.
 	 */
 	private void restore() {
 		TableViewState persisted = _store.load(_id, filterCodec());
@@ -665,8 +883,14 @@ public class DefaultTableView<R> implements TableView<R> {
 				_state.getFilters().put(entry.getKey(), entry.getValue());
 			}
 		}
-		if (!_state.getFilters().isEmpty()) {
-			_source.withFilter(new FilterSpec(_state.getFilters()));
+
+		TextFilterState search = persisted.getSearch();
+		if (search != null && !search.isEmpty()) {
+			_state.setSearch(search);
+		}
+
+		if (!_state.getFilters().isEmpty() || _state.getSearch() != null) {
+			applyFilter();
 		}
 	}
 
@@ -699,9 +923,9 @@ public class DefaultTableView<R> implements TableView<R> {
 					return null;
 				}
 				Map<String, Object> result = new LinkedHashMap<>();
-				result.put("state", innerJson);
+				result.put(STATE, innerJson);
 				if (inverted) {
-					result.put("inverted", Boolean.TRUE);
+					result.put(INVERTED, Boolean.TRUE);
 				}
 				return result;
 			}
@@ -712,11 +936,11 @@ public class DefaultTableView<R> implements TableView<R> {
 				if (filter == null || !(json instanceof Map<?, ?> map)) {
 					return null;
 				}
-				FilterState inner = filter.fromJson(map.get("state"));
+				FilterState inner = filter.fromJson(map.get(STATE));
 				if (inner == null) {
 					return null;
 				}
-				return Boolean.TRUE.equals(map.get("inverted")) ? new NegatedFilterState(inner) : inner;
+				return Boolean.TRUE.equals(map.get(INVERTED)) ? new NegatedFilterState(inner) : inner;
 			}
 		};
 	}

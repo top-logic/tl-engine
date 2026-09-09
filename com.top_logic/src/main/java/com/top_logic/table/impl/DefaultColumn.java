@@ -42,6 +42,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final CellRenderer<V> _renderer;
 
+	private final Function<? super V, String> _searchText;
+
 	private final Sort<V> _sort;
 
 	private final ColumnFilter<V> _filter;
@@ -64,6 +66,7 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		_value = builder._value;
 		_renderer = builder._renderer != null ? builder._renderer
 			: value -> CellContent.text(String.valueOf(value));
+		_searchText = builder._searchText;
 		_sort = builder._sort;
 		_filter = builder._filter;
 		_aggregate = builder._aggregate;
@@ -92,6 +95,15 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	@Override
 	public CellRenderer<V> renderer() {
 		return _renderer;
+	}
+
+	/**
+	 * The text of the cell value as {@link Builder#searchText(Function) configured}, or the text of
+	 * the rendered cell content when this column configures none.
+	 */
+	@Override
+	public String searchText(R row) {
+		return _searchText != null ? _searchText.apply(value(row)) : Column.super.searchText(row);
 	}
 
 	@Override
@@ -164,6 +176,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 		CellRenderer<V> _renderer;
 
+		Function<? super V, String> _searchText;
+
 		Sort<V> _sort;
 
 		ColumnFilter<V> _filter;
@@ -198,6 +212,22 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 */
 		public Builder<R, V> renderer(CellRenderer<V> renderer) {
 			_renderer = renderer;
+			return this;
+		}
+
+		/**
+		 * Sets the text of a cell value the free-text {@link com.top_logic.table.SearchSpec search}
+		 * examines.
+		 *
+		 * <p>
+		 * A column whose {@link #renderer(CellRenderer) renderer} produces a control instead of
+		 * text ({@link CellContent.Raw}) takes part in a search only through this text: the
+		 * rendered content carries none. Set it to the same text the column displays, so that the
+		 * search finds what the user reads.
+		 * </p>
+		 */
+		public Builder<R, V> searchText(Function<? super V, String> searchText) {
+			_searchText = searchText;
 			return this;
 		}
 

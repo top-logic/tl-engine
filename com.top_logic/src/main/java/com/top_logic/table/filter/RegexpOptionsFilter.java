@@ -98,12 +98,31 @@ public class RegexpOptionsFilter implements ColumnFilter<String> {
 			String regexp = patternConfig.getRegexp();
 			ResKey label = patternConfig.getLabel() != null ? patternConfig.getLabel() : ResKey.text(regexp);
 			try {
-				_patterns.put(regexp, Pattern.compile(regexp));
-				_options.add(new Option(regexp, label));
+				addFacet(regexp, label);
 			} catch (PatternSyntaxException ex) {
 				context.error("Invalid regular expression '" + regexp + "' in column filter.", ex);
 			}
 		}
+	}
+
+	/**
+	 * Creates a {@link RegexpOptionsFilter} offering the given facets.
+	 *
+	 * @param facets
+	 *        The offered patterns in display order, each holding its regular expression as
+	 *        {@link Option#value()} and its checkbox label as {@link Option#label()}.
+	 * @throws PatternSyntaxException
+	 *         If one of the given regular expressions does not compile.
+	 */
+	public RegexpOptionsFilter(List<Option> facets) {
+		for (Option facet : facets) {
+			addFacet(String.valueOf(facet.value()), facet.label());
+		}
+	}
+
+	private void addFacet(String regexp, ResKey label) {
+		_patterns.put(regexp, Pattern.compile(regexp));
+		_options.add(new Option(regexp, label));
 	}
 
 	@Override
@@ -132,6 +151,22 @@ public class RegexpOptionsFilter implements ColumnFilter<String> {
 			}
 			return false;
 		};
+	}
+
+	/**
+	 * The selection of the pattern facets the given value names.
+	 *
+	 * <p>
+	 * A facet is named by its {@link PatternConfig#getRegexp() regular expression}, which is this
+	 * filter's option value; the value is either one such regular expression or a collection of
+	 * them.
+	 * </p>
+	 *
+	 * @see OptionsFilterState#select(Object, Collection)
+	 */
+	@Override
+	public FilterState stateFor(Object value) {
+		return OptionsFilterState.select(value, _patterns.keySet());
 	}
 
 	@Override

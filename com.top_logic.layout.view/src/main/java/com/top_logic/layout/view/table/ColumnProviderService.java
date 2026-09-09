@@ -5,8 +5,7 @@
  */
 package com.top_logic.layout.view.table;
 
-import java.text.DateFormat;
-import java.text.ParseException;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -15,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.CalledByReflection;
@@ -51,6 +51,7 @@ import com.top_logic.table.FilterPushdown;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
+import com.top_logic.table.filter.BoundCodec;
 import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
@@ -178,9 +179,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 */
 	public Column<Object, ?> createColumn(String attribute, ResKey label, TLStructuredTypePart part,
 			ColumnFilter<String> customFilter) {
-		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
-			.label(label)
-			.renderer(value -> displayContent(part, value))
+		return valueColumn(attribute, label, part, row -> attributeValue(row, attribute))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(byLabel(customFilter))
 			.build();
@@ -189,6 +188,11 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	/**
 	 * Adapts a filter over the cell's display text to a column holding raw attribute values: the
 	 * predicate and facet keys see the value's display label, everything else delegates unchanged.
+	 *
+	 * <p>
+	 * A declared criterion value is passed on untouched: which value shapes a filter accepts is
+	 * part of its own contract, and a facet key or an option value is not a display label.
+	 * </p>
 	 */
 	private static ColumnFilter<Object> byLabel(ColumnFilter<String> filter) {
 		return new ColumnFilter<>() {
@@ -226,6 +230,11 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			@Override
 			public FilterState fromJson(Object json) {
 				return filter.fromJson(json);
+			}
+
+			@Override
+			public FilterState stateFor(Object value) {
+				return filter.stateFor(value);
 			}
 
 			@Override
@@ -271,10 +280,13 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 					case INT:
 					case FLOAT:
 						if (Number.class.isAssignableFrom(applicationType)) {
+							// A bound is typed the way the column writes its values, so a German
+							// user enters a decimal fraction with a comma.
+							Format numberFormat = FieldControlService.numberFormat(part);
 							return typedColumn(attribute, label, part, Number.class,
 								Comparator.comparingDouble(Number::doubleValue),
 								new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
-									Double::valueOf));
+									BoundCodec.numbers(numberFormat)));
 						}
 						break;
 					case DATE:
@@ -285,7 +297,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 							return typedColumn(attribute, label, part, Date.class,
 								Comparator.<Date> naturalOrder(),
 								new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
-									text -> parseTemporal(temporalKind, text)));
+									BoundCodec.dates(temporalKind.inputFormats(), temporalKind.parsePatterns())));
 						}
 						break;
 					case STRING:
@@ -323,9 +335,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 */
 	private static <V> Column<Object, V> typedColumn(String attribute, ResKey label, TLStructuredTypePart part,
 			Class<V> valueType, Comparator<V> comparator, ColumnFilter<V> filter) {
-		return DefaultColumn.<Object, V> builder(attribute, row -> typedValue(row, attribute, valueType))
-			.label(label)
-			.renderer(value -> displayContent(part, value))
+		return valueColumn(attribute, label, part, row -> typedValue(row, attribute, valueType))
 			.sort(() -> comparator)
 			.filter(filter)
 			.build();
@@ -346,9 +356,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		for (TLClassifier classifier : enumeration.getClassifiers()) {
 			options.add(new Option(classifier, TLModelNamingConvention.resourceKey(classifier)));
 		}
-		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
-			.label(label)
-			.renderer(value -> displayContent(part, value))
+		return valueColumn(attribute, label, part, row -> attributeValue(row, attribute))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(new OptionsColumnFilter<>(options))
 			.build();
@@ -358,12 +366,52 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * The fallback column: sorts and text-filters by the cell's display label.
 	 */
 	private static Column<Object, Object> labelColumn(String attribute, ResKey label, TLStructuredTypePart part) {
-		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
-			.label(label)
-			.renderer(value -> displayContent(part, value))
+		return valueColumn(attribute, label, part, row -> attributeValue(row, attribute))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(new TextColumnFilter<>(ColumnProviderService::label))
 			.build();
+	}
+
+	/**
+	 * A column over an attribute value, displayed and searched consistently: the cell shows the
+	 * attribute's {@link #displayContent(TLStructuredTypePart, Object) form display}, and the
+	 * free-text search examines the text that display shows.
+	 *
+	 * <p>
+	 * The two belong together: a form display is a control, which carries no text of its own, so a
+	 * column built from it takes part in a search only through a text derived from the value. Every
+	 * column this service builds goes through here, so that showing a value and finding it never
+	 * come apart.
+	 * </p>
+	 *
+	 * @param value
+	 *        Reads the cell value from a row.
+	 * @return The builder, for the caller to add the column's sort and filter capabilities.
+	 */
+	private static <V> DefaultColumn.Builder<Object, V> valueColumn(String attribute, ResKey label,
+			TLStructuredTypePart part, Function<Object, V> value) {
+		return DefaultColumn.<Object, V> builder(attribute, value)
+			.label(label)
+			.renderer(cellValue -> displayContent(part, cellValue))
+			.searchText(searchText(part));
+	}
+
+	/**
+	 * The text a cell of the given attribute is searched by: the text its display shows.
+	 *
+	 * <p>
+	 * A numeric attribute is written by its {@link FieldControlService#numberFormat(TLStructuredTypePart)
+	 * number format}, the same one the cell's display control writes it with - so a search matches
+	 * against the text the user reads, be that the digits and separators of a locale or the words of
+	 * a duration. Every other value is searched by its display label.
+	 * </p>
+	 */
+	private static Function<Object, String> searchText(TLStructuredTypePart part) {
+		Format numberFormat = FieldControlService.numberFormat(part);
+		if (numberFormat == null) {
+			return ColumnProviderService::label;
+		}
+		return value -> value instanceof Number ? numberFormat.format(value) : label(value);
 	}
 
 	/**
@@ -397,22 +445,6 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 */
 	public static String label(Object value) {
 		return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
-	}
-
-	/**
-	 * Parses a filter bound of a temporal column in the formats belonging to its kind: a time of day
-	 * is entered as a time, not as a date.
-	 */
-	private static Date parseTemporal(ReactDatePickerControl.Kind kind, String text) {
-		String trimmed = text.trim();
-		for (DateFormat format : kind.inputFormats()) {
-			try {
-				return format.parse(trimmed);
-			} catch (ParseException ex) {
-				// Try the next accepted format; an unparsable bound leaves the filter unbounded.
-			}
-		}
-		return null;
 	}
 
 	/**

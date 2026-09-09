@@ -81,7 +81,7 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 		}
 
 		/** The ISO pattern the value is written in. */
-		String isoPattern() {
+		public String isoPattern() {
 			return _patterns.get(0);
 		}
 
@@ -93,7 +93,7 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 		 * not zero, and it is the same value either way.
 		 * </p>
 		 */
-		List<String> parsePatterns() {
+		public List<String> parsePatterns() {
 			return _patterns;
 		}
 

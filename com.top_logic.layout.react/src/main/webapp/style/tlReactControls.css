@@ -2659,6 +2659,160 @@ button.tlMenu__item--disabled:hover {
 	overflow: hidden;
 }
 
+/* The filter bar above the column headings: the criteria the table offers under a name as chips on
+   the left, the search over the displayed columns and saving the current criteria on the right. It
+   sits outside both scrollers, so it takes no part in the header/body column alignment; its own
+   height is fixed by its content, so the headings do not move when a chip is added or removed. */
+.tlTableView__filterBar {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-03, 0.5rem);
+	padding: var(--spacing-03, 0.5rem);
+	background: var(--layer-01, #fff);
+	border-bottom: 1px solid var(--border-subtle, #e0e0e0);
+	box-sizing: border-box;
+}
+
+.tlTableView__filterChips {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-02, 0.25rem);
+	min-width: 0;
+}
+
+.tlTableView__chip {
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
+	height: 1.75rem;
+	padding-right: var(--spacing-02, 0.25rem);
+	border: 1px solid var(--border-subtle, #e0e0e0);
+	border-radius: 0.875rem;
+	background: var(--layer-02, #f4f4f4);
+	color: var(--text-primary, #161616);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	box-sizing: border-box;
+}
+
+.tlTableView__chip:hover {
+	background: var(--layer-hover, #e8e8e8);
+}
+
+/* The criteria the table is filtered by right now. Clicking it again withdraws them. */
+.tlTableView__chip--active,
+.tlTableView__chip--active:hover {
+	border-color: var(--interactive, #0f62fe);
+	background: var(--interactive, #0f62fe);
+	color: var(--text-on-color, #fff);
+}
+
+.tlTableView__chipLabel {
+	height: 100%;
+	padding: 0 var(--spacing-03, 0.5rem);
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+
+.tlTableView__chipRemove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 2px;
+	border: none;
+	background: none;
+	color: inherit;
+	font-size: 0.875rem;
+	line-height: 1;
+	opacity: 0.7;
+	cursor: pointer;
+}
+
+.tlTableView__chipRemove:hover {
+	opacity: 1;
+}
+
+/* Search and saving keep to the right end of the bar, whatever number of chips precedes them. */
+.tlTableView__search {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02, 0.25rem);
+	flex: 0 1 16rem;
+	min-width: 8rem;
+	margin-left: auto;
+	padding: 0 var(--spacing-03, 0.5rem);
+	border: 1px solid var(--border-strong, #8d8d8d);
+	background: var(--field-01, #f4f4f4);
+	color: var(--text-secondary, #525252);
+	box-sizing: border-box;
+}
+
+.tlTableView__searchInput,
+.tlTableView__saveInput {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 2rem;
+	border: none;
+	background: transparent;
+	color: var(--text-primary, #161616);
+	font-family: inherit;
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+}
+
+.tlTableView__searchInput:focus,
+.tlTableView__saveInput:focus {
+	outline: none;
+}
+
+/* Naming a filter to save happens in place of the save button, so the bar keeps its height. */
+.tlTableView__saveForm {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex-shrink: 0;
+}
+
+.tlTableView__saveInput {
+	width: 10rem;
+	padding: 0 var(--spacing-03, 0.5rem);
+	border: 1px solid var(--border-strong, #8d8d8d);
+	background: var(--field-01, #f4f4f4);
+	box-sizing: border-box;
+}
+
+.tlTableView__barButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--text-secondary, #525252);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+	cursor: pointer;
+}
+
+.tlTableView__barButton:hover:not(:disabled) {
+	background: var(--layer-hover, #e8e8e8);
+	color: var(--text-primary, #161616);
+}
+
+.tlTableView__barButton:disabled {
+	color: var(--text-disabled, #c6c6c6);
+	cursor: default;
+}
+
 /* The header row with the column selection button over its right edge, above the body's vertical
    scrollbar. The button must not take width from the header: a header narrower than the body keeps
    its last 2rem permanently out of view, so the last column's heading stays cut off however far the

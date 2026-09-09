@@ -1,14 +1,62 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-  <channels>
-    <channel name="testInput" />
-    <channel name="selectedRow" />
-  </channels>
 
-  <table selection="selectedRow">
-    <inputs>
-      <input channel="testInput" />
-    </inputs>
-    <rows>input -> list($input)</rows>
-  </table>
+<view>
+	<channels>
+		<channel name="testInput"/>
+		<channel name="selectedRow"/>
+	</channels>
+
+	<table
+		filter-bar="true"
+		personalization-key="test-table"
+		selection="selectedRow"
+		types="demo.test:Row"
+	>
+		<inputs>
+			<input channel="testInput"/>
+		</inputs>
+		<presets>
+			<preset name="mine">
+				<label>
+					<en>My rows</en>
+					<de>Meine Zeilen</de>
+				</label>
+				<criterion
+					column="owner"
+					expr="currentUser()"
+				/>
+				<criterion
+					column="active"
+					expr="true"
+				/>
+			</preset>
+			<preset name="all-active">
+				<criterion
+					column="active"
+					expr="true"
+				/>
+			</preset>
+			<preset name="typed">
+				<criterion column="name">
+					<text
+						case-sensitive="true"
+						pattern="'Alice'"
+						whole-field="true"
+					/>
+				</criterion>
+				<criterion
+					column="active"
+					inverted="true"
+				>
+					<boolean accept="true"/>
+				</criterion>
+			</preset>
+		</presets>
+		<columns>
+			<column attribute="name"/>
+			<column attribute="active"/>
+			<column attribute="owner"/>
+		</columns>
+		<rows>input -&gt; list($input)</rows>
+	</table>
 </view>

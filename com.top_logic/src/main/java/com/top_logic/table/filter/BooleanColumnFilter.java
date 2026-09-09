@@ -38,6 +38,15 @@ public class BooleanColumnFilter implements ColumnFilter<Boolean> {
 	public static final BooleanColumnFilter INSTANCE =
 		new BooleanColumnFilter(I18NConstants.VALUE_TRUE, I18NConstants.VALUE_FALSE);
 
+	/** JSON key of {@link BooleanFilterState#acceptTrue()}. */
+	public static final String ACCEPT_TRUE = "acceptTrue";
+
+	/** JSON key of {@link BooleanFilterState#acceptFalse()}. */
+	public static final String ACCEPT_FALSE = "acceptFalse";
+
+	/** JSON key of {@link BooleanFilterState#acceptNull()}. */
+	public static final String ACCEPT_NULL = "acceptNull";
+
 	private final ResKey _trueLabel;
 
 	private final ResKey _falseLabel;
@@ -99,9 +108,9 @@ public class BooleanColumnFilter implements ColumnFilter<Boolean> {
 	public Object toJson(FilterState state) {
 		BooleanFilterState bool = (BooleanFilterState) state;
 		Map<String, Object> json = new LinkedHashMap<>();
-		json.put("acceptTrue", Boolean.valueOf(bool.acceptTrue()));
-		json.put("acceptFalse", Boolean.valueOf(bool.acceptFalse()));
-		json.put("acceptNull", Boolean.valueOf(bool.acceptNull()));
+		json.put(ACCEPT_TRUE, Boolean.valueOf(bool.acceptTrue()));
+		json.put(ACCEPT_FALSE, Boolean.valueOf(bool.acceptFalse()));
+		json.put(ACCEPT_NULL, Boolean.valueOf(bool.acceptNull()));
 		return json;
 	}
 
@@ -110,8 +119,31 @@ public class BooleanColumnFilter implements ColumnFilter<Boolean> {
 		if (!(json instanceof Map<?, ?> map)) {
 			return null;
 		}
-		return new BooleanFilterState(bool(map.get("acceptTrue")), bool(map.get("acceptFalse")),
-			bool(map.get("acceptNull")));
+		return new BooleanFilterState(bool(map.get(ACCEPT_TRUE)), bool(map.get(ACCEPT_FALSE)),
+			bool(map.get(ACCEPT_NULL)));
+	}
+
+	/**
+	 * The selection of the single logical value the given value names.
+	 *
+	 * <p>
+	 * Accepts {@link Boolean#TRUE} and {@link Boolean#FALSE}, and - for a filter that offers the
+	 * no-value option, see {@link #BooleanColumnFilter(ResKey, ResKey, boolean)} - {@code null} for
+	 * the cells without a value. Anything else is rejected: a two-valued column has no no-value
+	 * option to select, and a boolean cell holds nothing but the two values.
+	 * </p>
+	 */
+	@Override
+	public FilterState stateFor(Object value) {
+		if (value == null) {
+			return _nullable ? new BooleanFilterState(false, false, true) : null;
+		}
+		if (!(value instanceof Boolean bool)) {
+			return null;
+		}
+		return bool.booleanValue()
+			? new BooleanFilterState(true, false, false)
+			: new BooleanFilterState(false, true, false);
 	}
 
 	private static boolean bool(Object value) {

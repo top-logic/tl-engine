@@ -499,6 +499,48 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLUMN_SEARCH;
 
 	/**
+	 * @en Search
+	 */
+	@CustomKey("js.table.search")
+	public static ResKey JS_TABLE_SEARCH;
+
+	/**
+	 * @en Search the displayed columns
+	 */
+	@CustomKey("js.table.searchHint")
+	public static ResKey JS_TABLE_SEARCH_HINT;
+
+	/**
+	 * @en Show all rows again
+	 */
+	@CustomKey("js.table.clearFilter")
+	public static ResKey JS_TABLE_CLEAR_FILTER;
+
+	/**
+	 * @en Save this filter
+	 */
+	@CustomKey("js.table.saveFilter")
+	public static ResKey JS_TABLE_SAVE_FILTER;
+
+	/**
+	 * @en Filter name
+	 */
+	@CustomKey("js.table.filterName")
+	public static ResKey JS_TABLE_FILTER_NAME;
+
+	/**
+	 * @en Delete this filter
+	 */
+	@CustomKey("js.table.deleteFilter")
+	public static ResKey JS_TABLE_DELETE_FILTER;
+
+	/**
+	 * @en Do not save
+	 */
+	@CustomKey("js.table.cancelSave")
+	public static ResKey JS_TABLE_CANCEL_SAVE;
+
+	/**
 	 * @en Restore default
 	 */
 	public static ResKey TABLE_COLUMNS_RESET;

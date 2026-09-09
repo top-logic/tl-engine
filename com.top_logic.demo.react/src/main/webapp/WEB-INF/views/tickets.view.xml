@@ -16,6 +16,11 @@
 	navigating to a new one - the address bar follows along, but the back button leaves the
 	page rather than walking the terms typed on it. A link without q says nothing about the
 	filter and shows the list unfiltered.
+	
+	The two lists split the tickets by whether they carry comments, and share the one ticket
+	channel: the selected ticket is shown in whichever list holds it, and a ticket that moves
+	between the lists - the first comment is written, the last one deleted - leaves the
+	selection empty, because the list that showed it as selected no longer has it.
 -->
 <view>
 	<channels>
@@ -100,19 +105,44 @@
 							<de>Filter</de>
 						</label>
 					</text-input>
-					<table
-						observed-types="demo.tickets:Ticket"
-						selection="ticket"
-						types="demo.tickets:Ticket"
-					>
-						<inputs>
-							<input channel="filter"/>
-						</inputs>
-						<columns>
-							<column attribute="name"/>
-						</columns>
-						<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
-					</table>
+					<panel>
+						<title>
+							<en>Without comments</en>
+							<de>Ohne Kommentare</de>
+						</title>
+						<table
+							observed-types="demo.tickets:Ticket"
+							selection="ticket"
+							types="demo.tickets:Ticket"
+						>
+							<inputs>
+								<input channel="filter"/>
+							</inputs>
+							<columns>
+								<column attribute="name"/>
+							</columns>
+							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).isEmpty()); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
+						</table>
+					</panel>
+					<panel>
+						<title>
+							<en>With comments</en>
+							<de>Mit Kommentaren</de>
+						</title>
+						<table
+							observed-types="demo.tickets:Ticket"
+							selection="ticket"
+							types="demo.tickets:Ticket"
+						>
+							<inputs>
+								<input channel="filter"/>
+							</inputs>
+							<columns>
+								<column attribute="name"/>
+							</columns>
+							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; !$t.get(`demo.tickets:Ticket#comments`).isEmpty()); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
+						</table>
+					</panel>
 				</panel>
 			</pane>
 			<pane

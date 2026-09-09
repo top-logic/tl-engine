@@ -630,6 +630,12 @@ public class ReactServlet extends TopLogicServlet {
 		} catch (Exception ex) {
 			Logger.info("Route navigation vetoed for url '" + url + "': " + ex.getMessage(),
 				ReactServlet.class);
+
+			// The URL is not reached, so its adoption ends here: the display stays as the veto keeps
+			// it, and the address the client is restored to below is the one it shows from now on -
+			// without which the user's next navigation would be reported as a replacement of it.
+			routeManager.cancelAdoption();
+
 			RouteVetoEvent veto = RouteVetoEvent.create()
 				.setCurrentUrl(routeManager.currentUrl());
 			queue.enqueue(veto);

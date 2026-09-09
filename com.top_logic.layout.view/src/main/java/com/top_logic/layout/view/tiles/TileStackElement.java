@@ -5,9 +5,13 @@
  */
 package com.top_logic.layout.view.tiles;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -41,13 +45,25 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * </p>
  *
  * <p>
+ * The drill-down path is part of the address of the page, for every frame view the stack declares a
+ * {@link FrameRouteConfig &lt;frame&gt;} route for: the URL names the frames of the path one route
+ * each, and opening that URL again restores exactly those frames.
+ * </p>
+ *
+ * <p>
  * Example:
  * </p>
  *
  * <pre>
  * &lt;view&gt;
  *   &lt;channels&gt;&lt;channel name="navPath"/&gt;&lt;/channels&gt;
- *   &lt;tile-stack path="navPath" initial="products/overview.view.xml"/&gt;
+ *   &lt;tile-stack path="navPath" initial="products/overview.view.xml"&gt;
+ *     &lt;frame route="product/:product" view="products/detail.view.xml"&gt;
+ *       &lt;param name="product"
+ *         expr="p -&gt; objectId($p)"
+ *         reverse="id -&gt; objectResolve(`my:Product`, $id)"/&gt;
+ *     &lt;/frame&gt;
+ *   &lt;/tile-stack&gt;
  * &lt;/view&gt;
  * </pre>
  */
@@ -72,6 +88,9 @@ public class TileStackElement implements UIElement {
 
 		/** Configuration name for {@link #getBindPathTo()}. */
 		String BIND_PATH_TO = "bind-path-to";
+
+		/** Configuration name for {@link #getFrames()}. */
+		String FRAMES = "frames";
 
 		/**
 		 * Reference to the channel holding the {@code List<TileFrame>} path.
@@ -113,6 +132,19 @@ public class TileStackElement implements UIElement {
 		@Name(BIND_PATH_TO)
 		@Nullable
 		String getBindPathTo();
+
+		/**
+		 * The routes in the URL that the frames of this stack occupy.
+		 *
+		 * <p>
+		 * One entry per frame view whose frames are part of the address of the page. A path of such
+		 * frames is written into the URL, and opening that URL again restores the path frame by
+		 * frame; a frame view without an entry is displayed like any other but has no address.
+		 * </p>
+		 */
+		@Name(FRAMES)
+		@DefaultContainer
+		List<FrameRouteConfig> getFrames();
 	}
 
 	private final ChannelRef _pathRef;
@@ -120,6 +152,8 @@ public class TileStackElement implements UIElement {
 	private final String _initialViewRef;
 
 	private final String _bindPathTo;
+
+	private final List<FrameRoute> _frameRoutes;
 
 	/**
 	 * Creates a new {@link TileStackElement} from configuration.
@@ -129,12 +163,15 @@ public class TileStackElement implements UIElement {
 		_pathRef = config.getPath();
 		_initialViewRef = config.getInitial();
 		_bindPathTo = config.getBindPathTo();
+		_frameRoutes = config.getFrames().stream()
+			.map(frame -> FrameRoute.create(context, frame))
+			.collect(Collectors.toList());
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel pathChannel = context.resolveChannel(_pathRef);
-		TileStackScope scope = new TileStackScope(pathChannel);
+		TileStackScope scope = new TileStackScope(pathChannel, _frameRoutes);
 		return new ReactTileStackControl(context, pathChannel, scope, _initialViewRef, _bindPathTo);
 	}
 }

@@ -12,6 +12,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.ViewContext;
@@ -35,7 +36,9 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  *
  * <p>
  * Each frame is wrapped in a {@link ReloadableControl} so that view-file edits in the designer
- * propagate to the active frame.
+ * propagate to the active frame. Where the stack declares
+ * {@link TileStackElement.Config#getFrames() frame routes}, that control also carries the
+ * {@link TileFrameRouteParticipant} which writes the path into the URL and restores it from one.
  * </p>
  */
 public class ReactTileStackControl extends ReactControl {
@@ -83,12 +86,30 @@ public class ReactTileStackControl extends ReactControl {
 		_initialViewPath = ViewLoader.VIEW_BASE_PATH + initialViewRef;
 		_bindPathTo = bindPathTo;
 
-		_pathListener = (sender, oldValue, newValue) -> rebuildChild();
+		_pathListener = (sender, oldValue, newValue) -> exchangeFrame();
 		_pathChannel.addListener(_pathListener);
 		addCleanupAction(() -> _pathChannel.removeListener(_pathListener));
 
 		_currentChild = buildChild();
 		putState(FRAME, _currentChild);
+	}
+
+	/**
+	 * Exchanges the displayed frame for the one the path now names.
+	 *
+	 * <p>
+	 * Applied as a navigation where the URL follows the display: drilling down and coming back out
+	 * are steps the user takes and returns from with the back button, and they are one step each
+	 * however many participants the exchanged frames bring and take with them.
+	 * </p>
+	 */
+	private void exchangeFrame() {
+		RouteManager routeManager = getReactContext().getRouteManager();
+		if (routeManager != null) {
+			routeManager.navigate(this::rebuildChild);
+		} else {
+			rebuildChild();
+		}
 	}
 
 	private void rebuildChild() {
@@ -104,6 +125,16 @@ public class ReactTileStackControl extends ReactControl {
 		putState(FRAME, built);
 		if (old != null) {
 			old.cleanupTree();
+		}
+
+		// The frame that is gone goes first, then the one that takes its place: what the leaving frame
+		// contributed to its surroundings - the participant naming the path it displayed, above all -
+		// belongs to that frame, and left in place beside the arriving one it is read as belonging to
+		// it. Attached here rather than left to be attached when it is rendered, because a URL being
+		// taken up is resolved by the participants the display registers, and the display it registers
+		// them from is built now.
+		if (isAttached()) {
+			built.attach();
 		}
 	}
 
@@ -148,8 +179,37 @@ public class ReactTileStackControl extends ReactControl {
 			frameContext.registerChannel(entry.getKey(), paramChannel);
 		}
 
-		return new ReloadableControl(viewPath, frameContext,
+		ReloadableControl frame = new ReloadableControl(viewPath, frameContext,
 			(ReactControl) frameView.createControl(frameContext));
+		installRouteParticipant(frame);
+		return frame;
+	}
+
+	/**
+	 * Anchors the {@link TileFrameRouteParticipant} of the given frame at its control.
+	 *
+	 * <p>
+	 * Anchored rather than implemented by the frame's control, because the participant describes the
+	 * path of the stack, not the frame view: it enters the URL where the stack sits in the display
+	 * and leaves it with the frame that carries it. Registration follows the frame's attach and
+	 * detach, so that a stack inside a tab contributes to the address exactly while its tab is shown.
+	 * </p>
+	 */
+	private void installRouteParticipant(ReactControl frame) {
+		if (_scope.frameRoutes().isEmpty()) {
+			// The stack declares no addressable frame: its path is display state only.
+			return;
+		}
+		RouteManager routeManager = getReactContext().getRouteManager();
+		if (routeManager == null) {
+			return;
+		}
+
+		TileFrameRouteParticipant participant = new TileFrameRouteParticipant(_scope, routeManager);
+		frame.addRouteParticipant(participant);
+		frame.addAttachListener(() -> routeManager.register(participant));
+		frame.addDetachListener(() -> routeManager.unregister(participant));
+		frame.addCleanupAction(participant::dispose);
 	}
 
 }

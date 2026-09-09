@@ -6,7 +6,10 @@
 package com.top_logic.layout.react.routing;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -47,6 +50,16 @@ public final class RouteManager {
 
 	private boolean _adopting;
 
+	private long _adoptionId;
+
+	private int _activationDepth;
+
+	private final Set<RoutingParticipant> _activatedWhileAdopting =
+		Collections.newSetFromMap(new IdentityHashMap<>());
+
+	private final Set<RoutingParticipant> _registeredWhileAdopting =
+		Collections.newSetFromMap(new IdentityHashMap<>());
+
 	/**
 	 * Creates a new {@link RouteManager}.
 	 */
@@ -70,14 +83,26 @@ public final class RouteManager {
 		_participants.add(participant);
 		participant.addRouteChangeListener(_internalListener);
 
+		if (_activationDepth > 0) {
+			// Brought into the display by an activation of the URL being adopted: it is part of the
+			// display the URL asked for, even where the URL says nothing about it, and must therefore
+			// not be reset in finishAdoption(). A participant that merely registers while a URL is
+			// adopted is not: a page loaded into the control tree its window still holds attaches that
+			// tree, and everything it re-registers displays what the previous page left, not what this
+			// URL asked for.
+			_registeredWhileAdopting.add(participant);
+		}
+
 		if (_pendingUrl != null && !_pendingUrl.isEmpty()) {
+			// Nothing is reported here: the display is still materializing into the URL, and what it
+			// composes in the middle of that describes neither the state the client asked for nor one
+			// it should be told about. The URL the display arrives at is reported once, by
+			// finishAdoption().
 			tryResolvePending(participant);
-			notifyAdoptionComplete();
 		} else {
-			// No pending deep-link: check if the new participant already has an
-			// active route segment (e.g., default sidebar item). If so, send the
-			// initial URL as a replaceState (not pushState) so the address bar
-			// reflects the current state without creating a history entry.
+			// A participant with a route of its own where no URL is being adopted - the item a sidebar
+			// selects by default. The address bar is completed with it as a replacement rather than a
+			// history entry, because nobody navigated there.
 			RouteSegment segment = participant.activeRouteSegment();
 			if (segment != null && !segment.path().isEmpty()) {
 				notifyUrlChange(true);
@@ -135,6 +160,14 @@ public final class RouteManager {
 	 * the address bar is then completed from the display, in {@link #finishAdoption()}.
 	 * </p>
 	 *
+	 * <p>
+	 * Every adoption ends, either with {@link #finishAdoption()} once the display is complete, or
+	 * with {@link #cancelAdoption()} where the URL was refused. Until it ends, the display change it
+	 * causes is reported as a replacement rather than a history entry, and the URL the display
+	 * composes is reported once, at the end - an adoption left open would keep the next navigation
+	 * from being one.
+	 * </p>
+	 *
 	 * @param url
 	 *        The URL the client displays (without leading slash), empty for none.
 	 */
@@ -142,6 +175,24 @@ public final class RouteManager {
 		_pendingUrl = url;
 		_lastNotifiedUrl = url;
 		_adopting = true;
+		_adoptionId++;
+		_activatedWhileAdopting.clear();
+		_registeredWhileAdopting.clear();
+	}
+
+	/**
+	 * Identifies the adoption of a URL that is in progress.
+	 *
+	 * <p>
+	 * A participant that restores a display of several levels from one URL - the frames of a
+	 * drill-down path, for instance, one per level - tells the levels of one adoption from those of
+	 * the next by this value: the levels of a URL adopted now replace the ones an earlier URL
+	 * established rather than extending them. The value changes with every URL taken up and is
+	 * therefore stable exactly for the duration of one adoption.
+	 * </p>
+	 */
+	public long adoptionId() {
+		return _adoptionId;
 	}
 
 	/**
@@ -171,13 +222,16 @@ public final class RouteManager {
 		} finally {
 			_suppressNotifications = false;
 		}
-
-		notifyAdoptionComplete();
 	}
 
 	/**
 	 * Navigates to the given URL by setting it as pending and attempting resolution on all currently
 	 * registered participants.
+	 *
+	 * <p>
+	 * Begins an adoption, which the caller ends with {@link #finishAdoption()} or, where the display
+	 * refused the URL, with {@link #cancelAdoption()}.
+	 * </p>
 	 *
 	 * @param url
 	 *        The target URL (without leading slash).
@@ -202,6 +256,13 @@ public final class RouteManager {
 	 * with an address bar that already shows its target and thus nothing left to report.
 	 * </p>
 	 *
+	 * <p>
+	 * A change applied while a URL is being adopted is no navigation of its own: it is the display
+	 * settling into the URL the client already shows - a drill-down path materializing into the frames
+	 * a deep link names - and is reported as a replacement, so that pressing back once leaves the page
+	 * rather than undoing the way it was built.
+	 * </p>
+	 *
 	 * @param displayChange
 	 *        The change to apply.
 	 */
@@ -213,7 +274,7 @@ public final class RouteManager {
 		} finally {
 			_suppressNotifications = before;
 		}
-		notifyUrlChange(false);
+		notifyUrlChange(_adopting);
 	}
 
 	/**
@@ -226,11 +287,82 @@ public final class RouteManager {
 	 * composes, because a URL kept beyond the state it describes would be silently lost on the next
 	 * reload, or appended to by the next navigation.
 	 * </p>
+	 *
+	 * <p>
+	 * Conversely, a participant of the display that shows a route the URL neither activated nor
+	 * brought into the display by one of its activations is asked to
+	 * {@link RoutingParticipant#resetRoute() return to the state without a route}: a URL naming fewer
+	 * segments than the display shows - the way back from a drilled-down path to the view it started
+	 * in - activates nothing, and what it leaves out is what the user navigated away from.
+	 * </p>
 	 */
 	public void finishAdoption() {
 		_pendingUrl = null;
+		resetUnnamedRoutes();
 		notifyUrlChange(true);
 		_adopting = false;
+		_activatedWhileAdopting.clear();
+		_registeredWhileAdopting.clear();
+	}
+
+	/**
+	 * Ends the adoption of a URL that was refused, leaving the display as it is.
+	 *
+	 * <p>
+	 * A URL the display declines to take up - a form with unsaved input vetoes leaving it - describes
+	 * a state that is not reached, so nothing of it is applied: the segments still pending are
+	 * dropped and no participant is asked to
+	 * {@link RoutingParticipant#resetRoute() return to the state without a route}, because what the
+	 * display shows is what the refusal keeps. Nothing is reported either - the caller tells the
+	 * client which URL it is left with, together with the refusal - but that URL is recorded as the
+	 * one the client shows, so that reaching it again later is a navigation the client is told about.
+	 * </p>
+	 *
+	 * <p>
+	 * Ending the adoption is what makes the user's next navigation a history entry again rather than
+	 * a replacement of the address the refusal restored.
+	 * </p>
+	 */
+	public void cancelAdoption() {
+		_pendingUrl = null;
+		_adopting = false;
+		_activatedWhileAdopting.clear();
+		_registeredWhileAdopting.clear();
+		_lastNotifiedUrl = currentUrl();
+	}
+
+	/**
+	 * Resets the participants of the display whose route the adopted URL did not name.
+	 *
+	 * <p>
+	 * Reported as one change, once the resets are through: the intermediate states a reset passes
+	 * through - a path shortened frame by frame - are steps of the same adoption, not addresses of
+	 * their own.
+	 * </p>
+	 */
+	private void resetUnnamedRoutes() {
+		List<RoutingParticipant> displayed = new ArrayList<>(composingParticipants());
+		boolean before = _suppressNotifications;
+		_suppressNotifications = true;
+		try {
+			for (RoutingParticipant participant : displayed) {
+				if (_activatedWhileAdopting.contains(participant)
+					|| _registeredWhileAdopting.contains(participant)) {
+					continue;
+				}
+				if (!_participants.contains(participant)) {
+					// Gone from the display while an earlier reset was applied.
+					continue;
+				}
+				RouteSegment segment = participant.activeRouteSegment();
+				if (segment == null || segment.path().isEmpty()) {
+					continue;
+				}
+				participant.resetRoute();
+			}
+		} finally {
+			_suppressNotifications = before;
+		}
 	}
 
 	/**
@@ -265,27 +397,62 @@ public final class RouteManager {
 		_urlChangeHandler = handler;
 	}
 
+	/**
+	 * Hands the pending URL to the given participant, as far as the participant takes it up.
+	 *
+	 * <p>
+	 * One route for most participants, and route after route for a participant that
+	 * {@link RoutingParticipant#acceptsRouteSequence() displays a chain of them}: what such a
+	 * participant took up leaves the pending URL, and the rest is offered to it again. The offering
+	 * stops where nothing matches any more, or where the participant is gone from the display over
+	 * the route it took up - what the URL names beyond that belongs to whatever appeared instead.
+	 * </p>
+	 */
 	private void tryResolvePending(RoutingParticipant participant) {
-		if (_pendingUrl == null || _pendingUrl.isEmpty()) {
-			return;
-		}
+		while (true) {
+			String segmentToResolve = computeUnresolvedSegment();
+			if (segmentToResolve.isEmpty()) {
+				return;
+			}
 
-		String segmentToResolve = computeUnresolvedSegment();
-		if (segmentToResolve.isEmpty()) {
-			return;
-		}
+			RouteMatch match = firstMatch(participant, segmentToResolve);
+			if (match == null) {
+				return;
+			}
 
-		for (RoutePattern pattern : participant.declaredRoutes()) {
-			RouteMatch match = pattern.match(segmentToResolve);
-			if (match != null) {
-				_pendingUrl = match.remainingPath();
-				if (_pendingUrl.isEmpty()) {
-					_pendingUrl = null;
-				}
+			_pendingUrl = match.remainingPath();
+			if (_pendingUrl.isEmpty()) {
+				_pendingUrl = null;
+			}
+			_activatedWhileAdopting.add(participant);
+			// Counted, so that a participant registering from inside the activation is recognized as
+			// brought into the display by the URL - as opposed to one that registers because the
+			// display it belongs to is attached again.
+			_activationDepth++;
+			try {
 				participant.activateRoute(match);
+			} finally {
+				_activationDepth--;
+			}
+
+			if (!participant.acceptsRouteSequence() || !_participants.contains(participant)) {
 				return;
 			}
 		}
+	}
+
+	/**
+	 * The first route of the given participant that matches the given path, or {@code null} if none
+	 * does.
+	 */
+	private static RouteMatch firstMatch(RoutingParticipant participant, String path) {
+		for (RoutePattern pattern : participant.declaredRoutes()) {
+			RouteMatch match = pattern.match(path);
+			if (match != null) {
+				return match;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -305,23 +472,6 @@ public final class RouteManager {
 		// value it has - the default a table selects, for instance - and the address bar gains that
 		// value without an entry the user would have to press back twice to leave.
 		notifyUrlChange(_adopting);
-	}
-
-	/**
-	 * Reports the composed URL once every segment of the URL being adopted has been consumed.
-	 *
-	 * <p>
-	 * Reporting while segments are still unresolved would send a URL that describes a display only
-	 * half materialized, and the client would take it for the state it asked for. A URL the display
-	 * cannot reproduce at all - an unresolvable segment, or one naming something that is not shown -
-	 * is corrected here, as a replacement rather than a history entry: adopting a URL is not a
-	 * navigation the user should have to undo.
-	 * </p>
-	 */
-	private void notifyAdoptionComplete() {
-		if (_pendingUrl == null || _pendingUrl.isEmpty()) {
-			notifyUrlChange(true);
-		}
 	}
 
 	private List<RoutingParticipant> composingParticipants() {

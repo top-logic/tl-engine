@@ -3,7 +3,9 @@
 <!--
 	Initial frame of the tile drill-down demo. Lists all Person accounts and offers an "Open"
 	button that pushes a detail frame onto the enclosing tile-stack with the selected Person as
-	parameter. The navPath channel is the stack's path (bound by the stack's bind-path-to), so the
+	parameter. The pushed frame carries no label of its own - the stack names every frame of the
+	detail view in its <frame> declaration, which is also what puts the frame into the address bar.
+	The navPath channel is the stack's path (bound by the stack's bind-path-to), so the
 	derived depth channel tells this frame how deep it sits: at depth 0 the "Back" command is
 	hidden, which is why the initial frame shows no way out.
 -->
@@ -47,10 +49,6 @@
 					<en>Open</en>
 					<de>Öffnen</de>
 				</label>
-				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="p -> $p.get(`tl.accounts:Person#name`)"
-					inputs="selectedPerson"
-				/>
 			</command>
 		</commands>
 		<table

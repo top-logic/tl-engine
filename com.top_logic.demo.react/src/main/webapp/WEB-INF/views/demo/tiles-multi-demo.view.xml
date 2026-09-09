@@ -14,6 +14,10 @@
 	detail views, and their navigation state is independent: drilling into one tab does not affect
 	the other. Each stack binds its path into its frames under the common name navPath, so the
 	shared frame views derive their depth from the stack they are mounted in.
+	
+	Both stacks declare the same <frame> route, so both put their drill-down into the address bar -
+	behind the segment of the tab they sit in, which is what keeps the two paths apart in the URL.
+	Only the active tab is mounted, so only its path is part of the address.
 -->
 <view>
 	<tab-bar active-tab="left">
@@ -42,7 +46,21 @@
 							bind-path-to="navPath"
 							initial="demo/tiles-demo/overview.view.xml"
 							path="navPathA"
-						/>
+						>
+							<frame
+								route="person/:person"
+								view="demo/tiles-demo/person-detail.view.xml"
+							>
+								<param name="person"
+									expr="p -> objectId($p)"
+									reverse="id -> objectResolve(`tl.accounts:Person`, $id)"
+								/>
+								<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+									expr="p -> $p.get(`tl.accounts:Person#name`)"
+									inputs="person"
+								/>
+							</frame>
+						</tile-stack>
 					</stack>
 				</view>
 			</tab>
@@ -70,7 +88,21 @@
 							bind-path-to="navPath"
 							initial="demo/tiles-demo/overview.view.xml"
 							path="navPathB"
-						/>
+						>
+							<frame
+								route="person/:person"
+								view="demo/tiles-demo/person-detail.view.xml"
+							>
+								<param name="person"
+									expr="p -> objectId($p)"
+									reverse="id -> objectResolve(`tl.accounts:Person`, $id)"
+								/>
+								<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+									expr="p -> $p.get(`tl.accounts:Person#name`)"
+									inputs="person"
+								/>
+							</frame>
+						</tile-stack>
 					</stack>
 				</view>
 			</tab>

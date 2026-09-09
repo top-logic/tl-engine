@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.DisplayContext;
@@ -69,12 +70,13 @@ public class SSEServlet extends HttpServlet {
 		SSEUpdateQueue queue = registry.getOrCreateQueue(windowName);
 		Logger.info("SSEServlet: queue@" + System.identityHashCode(queue) + " for windowName='" + windowName + "'",
 			SSEServlet.class);
-		TLSessionContext sessionContext = TLContextManager.getSession();
+		TLSessionContext sessionContext = SessionService.getInstance().getSession(session);
 
 		// Establishing the connection sends the state of the whole tree, and rendering a control
 		// attaches it: a control catching up with its model as it attaches - a table re-reading its
-		// rows - works on the knowledge base, which requires the interaction and the window's
-		// subsession that every other request touching the tree has.
+		// rows - works on the knowledge base, and a control resolving its labels needs the user's
+		// locale. Both need the interaction with the window's subsession that every other request
+		// touching the tree has.
 		TLContextManager.inInteraction(sessionContext, getServletContext(), request, response, () -> {
 			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 			ReactWindowReplay.installSubSession(displayContext, windowName);

@@ -16,7 +16,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.util.TLContextManager;
 
@@ -65,8 +69,18 @@ public class SSEServlet extends HttpServlet {
 		SSEUpdateQueue queue = registry.getOrCreateQueue(windowName);
 		Logger.info("SSEServlet: queue@" + System.identityHashCode(queue) + " for windowName='" + windowName + "'",
 			SSEServlet.class);
-		queue.setConnection(asyncContext);
-		queue.setWindowContext(windowName, TLContextManager.getSession(), registry);
+		TLSessionContext sessionContext = TLContextManager.getSession();
+
+		// Establishing the connection sends the state of the whole tree, and rendering a control
+		// attaches it: a control catching up with its model as it attaches - a table re-reading its
+		// rows - works on the knowledge base, which requires the interaction and the window's
+		// subsession that every other request touching the tree has.
+		TLContextManager.inInteraction(sessionContext, getServletContext(), request, response, () -> {
+			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+			ReactWindowReplay.installSubSession(displayContext, windowName);
+			queue.setConnection(asyncContext);
+		});
+		queue.setWindowContext(windowName, sessionContext, registry);
 
 		asyncContext.addListener(new AsyncListener() {
 			@Override

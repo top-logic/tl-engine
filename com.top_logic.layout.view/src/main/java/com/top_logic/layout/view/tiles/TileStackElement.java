@@ -115,6 +115,6 @@ public class TileStackElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel pathChannel = context.resolveChannel(_pathRef);
 		TileStackScope scope = new TileStackScope(pathChannel);
-		return new ReactTileStackControl(context, pathChannel, scope, _initialViewRef);
+		return new ReactTileStackControl(context, this, pathChannel, scope, _initialViewRef);
 	}
 }

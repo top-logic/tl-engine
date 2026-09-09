@@ -89,6 +89,15 @@ public final class DisplayTargets {
 	}
 
 	/**
+	 * The places the views are displayed at, as the ranking of the targets sees them.
+	 *
+	 * @return The scan, or {@code null} if nothing says where the views are displayed.
+	 */
+	public ViewMounts getMounts() {
+		return _mounts.get();
+	}
+
+	/**
 	 * Whether an object of the given type can be displayed.
 	 *
 	 * @param type

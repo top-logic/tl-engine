@@ -31,6 +31,8 @@ import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DirtyChannel;
+import com.top_logic.layout.view.navigation.RevealPath;
+import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
 import com.top_logic.layout.view.security.SecurityScope;
@@ -192,6 +194,7 @@ public class TabBarElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
+		RevealPath here = RevealPath.of(context);
 		List<TabDefinition> tabDefs = new ArrayList<>();
 		for (TabEntry entry : _tabs) {
 			if (!AccessChecks.isAccessible(entry._accessControl)) {
@@ -199,8 +202,11 @@ public class TabBarElement implements UIElement {
 				continue;
 			}
 			DirtyChannel dirtyChannel = new DirtyChannel();
+			// The content of a tab is created only when the tab is first activated, so the tab's
+			// context must already say where that content will sit.
+			ViewContext tabContext = context.withScope(RevealPath.class, here.append(this, entry._id));
 			TabDefinition tabDef = new TabDefinition(entry._id, label(entry),
-				() -> createContent(entry, context, dirtyChannel), dirtyChannel);
+				() -> createContent(entry, tabContext, dirtyChannel), dirtyChannel);
 			if (entry._icon != null && !entry._icon.isEmpty()) {
 				tabDef.withIcon(entry._icon);
 			}
@@ -211,7 +217,14 @@ public class TabBarElement implements UIElement {
 			tabDefs.add(tabDef);
 		}
 		String activeTab = _activeTab != null && !_activeTab.isEmpty() ? _activeTab : null;
-		return new ReactTabBarControl(context, null, tabDefs, activeTab);
+		ReactTabBarControl tabBar = new ReactTabBarControl(context, null, tabDefs, activeTab);
+
+		RevealRegistry registry = context.getRevealRegistry();
+		if (registry != null) {
+			tabBar.addCleanupAction(registry.registerContainer(this, here, tabBar));
+		}
+
+		return tabBar;
 	}
 
 	private static ReactControl createContent(TabEntry entry, ViewContext context,

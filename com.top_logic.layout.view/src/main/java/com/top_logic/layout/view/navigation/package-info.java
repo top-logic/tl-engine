@@ -30,5 +30,18 @@
  * preference order - the most special type first, and among equal types the one displayed nearest
  * to where the object is offered.
  * </p>
+ *
+ * <p>
+ * {@link com.top_logic.layout.view.navigation.ObjectNavigation} carries a request out. Everything a
+ * window displays announces itself in the window's
+ * {@link com.top_logic.layout.view.navigation.RevealRegistry} under the
+ * {@link com.top_logic.layout.view.navigation.RevealPath place} it is displayed at, so the request
+ * can walk from the root display down to the mount of the target's view - asking each container on
+ * the way to reveal the child leading further down - and write the object into the channels of the
+ * instance it finds there. A view no mount reaches is displayed anew: as a frame drilled down to on
+ * a stack, or as a dialog. The
+ * {@link com.top_logic.layout.view.navigation.ShowObjectAction &lt;show-object&gt;} action offers
+ * all of this to a configured command.
+ * </p>
  */
 package com.top_logic.layout.view.navigation;

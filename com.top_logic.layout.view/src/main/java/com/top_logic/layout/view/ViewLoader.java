@@ -129,7 +129,7 @@ public class ViewLoader {
 		}
 
 		ViewElement.Config config = getOrLoadConfig(viewPath);
-		ViewElement view = instantiateView(config);
+		ViewElement view = instantiateView(config, viewPath);
 		CACHE.put(viewPath, new CachedView(view, currentModified));
 		return view;
 	}
@@ -201,13 +201,15 @@ public class ViewLoader {
 	 */
 	public static ViewElement loadView(String viewPath) throws ConfigurationException {
 		ViewElement.Config config = loadConfig(viewPath);
-		return instantiateView(config);
+		return instantiateView(config, viewPath);
 	}
 
 	/**
-	 * Instantiates a {@link ViewElement} from the given configuration.
+	 * Instantiates a {@link ViewElement} from the given configuration, naming the file it was read
+	 * from.
 	 */
-	private static ViewElement instantiateView(ViewElement.Config config) throws ConfigurationException {
+	private static ViewElement instantiateView(ViewElement.Config config, String viewPath)
+			throws ConfigurationException {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(ViewLoader.class);
 		UIElement uiElement = context.getInstance(config);
 		context.checkErrors();
@@ -216,7 +218,9 @@ public class ViewLoader {
 			throw new ConfigurationException(
 				"Expected ViewElement but got: " + uiElement.getClass().getName());
 		}
-		return (ViewElement) uiElement;
+		ViewElement result = (ViewElement) uiElement;
+		result.initViewRef(viewRef(viewPath));
+		return result;
 	}
 
 	/**

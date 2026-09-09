@@ -20,6 +20,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.slot.SlotPath;
 import com.top_logic.layout.view.slot.SlotRegistry;
 
@@ -54,6 +55,8 @@ public class DefaultViewContext implements ViewContext {
 
 	private final SlotRegistry _slotRegistry;
 
+	private final RevealRegistry _revealRegistry;
+
 	private final Map<Class<?>, Object> _scopes;
 
 	/**
@@ -66,7 +69,7 @@ public class DefaultViewContext implements ViewContext {
 	public DefaultViewContext(ReactContext reactContext) {
 		this(reactContext, "view", new HashMap<>(), null, null, null,
 			resolveReloadListeners(reactContext), null,
-			SlotPath.ROOT, resolveSlotRegistry(reactContext), Map.of());
+			SlotPath.ROOT, resolveSlotRegistry(reactContext), resolveRevealRegistry(reactContext), Map.of());
 	}
 
 	private static List<ViewReloadListener> resolveReloadListeners(ReactContext reactContext) {
@@ -83,11 +86,18 @@ public class DefaultViewContext implements ViewContext {
 		return new SlotRegistry();
 	}
 
+	private static RevealRegistry resolveRevealRegistry(ReactContext reactContext) {
+		if (reactContext instanceof DefaultViewContext dvc) {
+			return dvc._revealRegistry;
+		}
+		return new RevealRegistry();
+	}
+
 	private DefaultViewContext(ReactContext reactContext, String personalizationPath,
 			Map<String, ViewChannel> channels, FormModel formModel, ErrorSink errorSink,
 			DirtyChannel dirtyChannel, List<ViewReloadListener> reloadListeners,
 			ContextMenuOpener contextMenuOpener, SlotPath slotPath, SlotRegistry slotRegistry,
-			Map<Class<?>, Object> scopes) {
+			RevealRegistry revealRegistry, Map<Class<?>, Object> scopes) {
 		_reactContext = reactContext;
 		_personalizationPath = personalizationPath;
 		_channels = channels;
@@ -98,6 +108,7 @@ public class DefaultViewContext implements ViewContext {
 		_contextMenuOpener = contextMenuOpener;
 		_slotPath = slotPath;
 		_slotRegistry = slotRegistry;
+		_revealRegistry = revealRegistry;
 		_scopes = scopes;
 	}
 
@@ -105,7 +116,7 @@ public class DefaultViewContext implements ViewContext {
 	public ViewContext childContext(String segment) {
 		return new DefaultViewContext(_reactContext, _personalizationPath + "." + segment, _channels,
 			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
-			_slotPath, _slotRegistry, _scopes);
+			_slotPath, _slotRegistry, _revealRegistry, _scopes);
 	}
 
 	@Override
@@ -119,10 +130,15 @@ public class DefaultViewContext implements ViewContext {
 	}
 
 	@Override
+	public RevealRegistry getRevealRegistry() {
+		return _revealRegistry;
+	}
+
+	@Override
 	public ViewContext withChildSlotPath(String segment) {
 		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
 			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
-			_slotPath.append(segment), _slotRegistry, _scopes);
+			_slotPath.append(segment), _slotRegistry, _revealRegistry, _scopes);
 	}
 
 	@Override
@@ -154,7 +170,7 @@ public class DefaultViewContext implements ViewContext {
 	public ViewContext withErrorSink(ErrorSink errorSink) {
 		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
 			_formModel, errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
-			_slotPath, _slotRegistry, _scopes);
+			_slotPath, _slotRegistry, _revealRegistry, _scopes);
 	}
 
 	@Override
@@ -169,7 +185,7 @@ public class DefaultViewContext implements ViewContext {
 	public ViewContext withContextMenuOpener(ContextMenuOpener opener) {
 		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
 			_formModel, _errorSink, _dirtyChannel, _reloadListeners, opener,
-			_slotPath, _slotRegistry, _scopes);
+			_slotPath, _slotRegistry, _revealRegistry, _scopes);
 	}
 
 	@Override
@@ -200,14 +216,14 @@ public class DefaultViewContext implements ViewContext {
 		channels.put(name, channel);
 		return new DefaultViewContext(_reactContext, _personalizationPath, channels,
 			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
-			_slotPath, _slotRegistry, _scopes);
+			_slotPath, _slotRegistry, _revealRegistry, _scopes);
 	}
 
 	@Override
 	public ViewContext withIsolatedChannels() {
 		return new DefaultViewContext(_reactContext, _personalizationPath, new HashMap<>(),
 			null, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
-			_slotPath, _slotRegistry, _scopes);
+			_slotPath, _slotRegistry, _revealRegistry, _scopes);
 	}
 
 	@Override
@@ -216,7 +232,7 @@ public class DefaultViewContext implements ViewContext {
 		scopes.put(type, scope);
 		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
 			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
-			_slotPath, _slotRegistry, scopes);
+			_slotPath, _slotRegistry, _revealRegistry, scopes);
 	}
 
 	@Override

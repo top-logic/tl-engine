@@ -12,6 +12,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.ViewContext;
@@ -21,6 +22,8 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.layout.view.navigation.RevealPath;
+import com.top_logic.layout.view.navigation.RevealRegistry;
 
 /**
  * Server-side control of {@link TileStackElement}.
@@ -38,13 +41,24 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * propagate to the active frame.
  * </p>
  */
-public class ReactTileStackControl extends ReactControl {
+public class ReactTileStackControl extends ReactControl implements ChildRevealer {
 
 	private static final String REACT_MODULE = "TLTileStack";
 
 	private static final String FRAME = "frame";
 
+	/**
+	 * Prefix of the key addressing a pushed frame, followed by the frame's position in the path.
+	 *
+	 * @see #frameKey(int)
+	 */
+	public static final String FRAME_KEY_PREFIX = "frame";
+
 	private final ViewContext _parentContext;
+
+	private final TileStackElement _element;
+
+	private final RevealPath _here;
 
 	private final ViewChannel _pathChannel;
 
@@ -62,6 +76,9 @@ public class ReactTileStackControl extends ReactControl {
 	 * @param parent
 	 *        The {@link ViewContext} in which the {@code <tile-stack>} is embedded. Used to
 	 *        inherit ambient services (error sink, dirty channel) into each frame's child context.
+	 * @param element
+	 *        The configured element this control displays, addressed when one of its frames is to
+	 *        be brought into view.
 	 * @param pathChannel
 	 *        The channel holding the {@code List<TileFrame>} path.
 	 * @param scope
@@ -69,10 +86,12 @@ public class ReactTileStackControl extends ReactControl {
 	 * @param initialViewRef
 	 *        View path (relative to {@code /WEB-INF/views/}) shown when the path is empty.
 	 */
-	public ReactTileStackControl(ViewContext parent, ViewChannel pathChannel, TileStackScope scope,
-			String initialViewRef) {
+	public ReactTileStackControl(ViewContext parent, TileStackElement element, ViewChannel pathChannel,
+			TileStackScope scope, String initialViewRef) {
 		super(parent, null, REACT_MODULE);
 		_parentContext = parent;
+		_element = element;
+		_here = RevealPath.of(parent);
 		_pathChannel = pathChannel;
 		_scope = scope;
 		_initialViewPath = ViewLoader.VIEW_BASE_PATH + initialViewRef;
@@ -81,8 +100,54 @@ public class ReactTileStackControl extends ReactControl {
 		_pathChannel.addListener(_pathListener);
 		addCleanupAction(() -> _pathChannel.removeListener(_pathListener));
 
+		RevealRegistry registry = parent.getRevealRegistry();
+		if (registry != null) {
+			addCleanupAction(registry.registerContainer(element, _here, this));
+		}
+
 		_currentChild = buildChild();
 		putState(FRAME, _currentChild);
+	}
+
+	/**
+	 * The key addressing the frame at the given position of the path.
+	 *
+	 * @param index
+	 *        Position of the frame in the path, counted from the frame pushed first.
+	 * @return The key, as {@link #revealChild(String)} takes it.
+	 */
+	public static String frameKey(int index) {
+		return FRAME_KEY_PREFIX + index;
+	}
+
+	/**
+	 * Returns to the initial view or to a frame the path already holds, by dropping everything
+	 * drilled down beyond it.
+	 *
+	 * @param key
+	 *        {@link TileStackElement.Config#INITIAL} for the view the stack starts with, otherwise
+	 *        a {@link #frameKey(int) frame key}.
+	 */
+	@Override
+	public void revealChild(String key) {
+		_scope.popTo(framePosition(key) + 1);
+	}
+
+	/**
+	 * The position the given key addresses in the path, {@code -1} for the initial view.
+	 */
+	private static int framePosition(String key) {
+		if (TileStackElement.Config.INITIAL.equals(key)) {
+			return -1;
+		}
+		if (key.startsWith(FRAME_KEY_PREFIX)) {
+			try {
+				return Integer.parseInt(key.substring(FRAME_KEY_PREFIX.length()));
+			} catch (NumberFormatException ex) {
+				throw new IllegalArgumentException("A stack of drilled-down views has no frame '" + key + "'.", ex);
+			}
+		}
+		throw new IllegalArgumentException("A stack of drilled-down views has no child '" + key + "'.");
 	}
 
 	private void rebuildChild() {
@@ -105,13 +170,16 @@ public class ReactTileStackControl extends ReactControl {
 		List<TileFrame> path = _scope.getPath();
 		String viewPath;
 		Map<String, Object> params;
+		String key;
 		if (path.isEmpty()) {
 			viewPath = _initialViewPath;
 			params = Map.of();
+			key = TileStackElement.Config.INITIAL;
 		} else {
 			TileFrame top = path.get(path.size() - 1);
 			viewPath = ViewLoader.VIEW_BASE_PATH + top.getViewRef();
 			params = top.getParams();
+			key = frameKey(path.size() - 1);
 		}
 
 		ViewElement frameView;
@@ -130,7 +198,8 @@ public class ReactTileStackControl extends ReactControl {
 		if (parentDirty != null) {
 			frameContext.setDirtyChannel(parentDirty);
 		}
-		frameContext = frameContext.withScope(TileStackScope.class, _scope);
+		frameContext = frameContext.withScope(TileStackScope.class, _scope)
+			.withScope(RevealPath.class, _here.append(_element, key));
 
 		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			DefaultViewChannel paramChannel = new DefaultViewChannel(entry.getKey());

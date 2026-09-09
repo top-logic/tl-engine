@@ -38,6 +38,8 @@ import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.navigation.RevealPath;
+import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
 import com.top_logic.layout.view.security.SecurityScope;
@@ -402,9 +404,15 @@ public class SidebarElement implements UIElement {
 		boolean collapsed = PersonalizingExpandable.loadCollapsed(key + ".collapsed", _collapsed);
 		Map<String, Boolean> groupStates = loadGroupStates(key);
 
+		RevealPath here = RevealPath.of(context);
 		List<SidebarItem> sidebarItems = new ArrayList<>();
 		for (SidebarItemElement itemElement : _items) {
-			SidebarItem item = itemElement.createSidebarItem(context);
+			// The content of an item is created only when the item is first selected, so the item's
+			// context must already say where that content will sit.
+			ChildGroup group = itemElement.getChildGroup();
+			ViewContext itemContext = group == null ? context
+				: context.withScope(RevealPath.class, here.append(this, group.key()));
+			SidebarItem item = itemElement.createSidebarItem(itemContext);
 			if (item != null) {
 				sidebarItems.add(item);
 			}
@@ -425,6 +433,11 @@ public class SidebarElement implements UIElement {
 			SlotContentControl drawerToggleSlot = new SlotContentControl(context, _drawerOpenSlotName,
 				context.getSlotPath(), context.getSlotRegistry(), List.of(toggleButton));
 			sidebar.setDrawerToggleContribution(drawerToggleSlot);
+		}
+
+		RevealRegistry registry = context.getRevealRegistry();
+		if (registry != null) {
+			sidebar.addCleanupAction(registry.registerContainer(this, here, sidebar));
 		}
 
 		return sidebar;

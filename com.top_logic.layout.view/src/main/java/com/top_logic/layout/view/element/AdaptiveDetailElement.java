@@ -211,7 +211,7 @@ public class AdaptiveDetailElement implements UIElement {
 			homeLabel = null;
 		}
 
-		return new ReactAdaptiveDetailControl(context, _selector, _detail, selectionChannel, resetOn,
+		return new ReactAdaptiveDetailControl(context, this, _selector, _detail, selectionChannel, resetOn,
 			coordinator, chain, homeLabel);
 	}
 

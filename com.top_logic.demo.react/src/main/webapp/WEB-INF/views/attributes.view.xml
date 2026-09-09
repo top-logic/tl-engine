@@ -100,6 +100,9 @@
 						selection="selected"
 						types="demo.react:Demo"
 					>
+						<inputs>
+							<input channel="selected"/>
+						</inputs>
 						<presets>
 							<preset name="mine">
 								<label>
@@ -130,6 +133,51 @@
 									column="amount"
 									expr="list(0, 50)"
 								/>
+							</preset>
+							<preset name="odd-values">
+								<label>
+									<en>Odd values (case-sensitive)</en>
+									<de>Ungerade Werte (Groß-/Kleinschreibung)</de>
+								</label>
+								<!-- Written in the form of the column's text filter, which a single value cannot say. -->
+								<criterion column="string">
+									<text
+										case-sensitive="true"
+										pattern="'^Value [135]$'"
+										regexp="true"
+										whole-field="true"
+									/>
+								</criterion>
+							</preset>
+							<preset name="large-amount">
+								<label>
+									<en>Amount over 50</en>
+									<de>Betrag über 50</de>
+								</label>
+								<!-- The inversion of the range the "small amount" preset selects. -->
+								<criterion
+									column="amount"
+									inverted="true"
+								>
+									<range
+										operator="BETWEEN"
+										primary="0"
+										secondary="50"
+									/>
+								</criterion>
+							</preset>
+							<preset name="same-priority">
+								<label>
+									<en>Same priority as the selection</en>
+									<de>Gleiche Priorität wie die Auswahl</de>
+								</label>
+								<!--
+									Selects by an input: the priority of the selected row. The preset is
+									offered while a row is selected, and follows the selection.
+								-->
+								<criterion column="priority">
+									<options selected="sel -> $sel.get(`demo.react:Demo#priority`)"/>
+								</criterion>
 							</preset>
 						</presets>
 						<columns>

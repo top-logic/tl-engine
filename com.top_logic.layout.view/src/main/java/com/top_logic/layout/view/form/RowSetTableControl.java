@@ -285,8 +285,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * given function, plus the ones the user saves themselves.
 	 *
 	 * @param declaredFilters
-	 *        Materializes the declared filters over the table's columns, called whenever the
-	 *        columns are rebuilt.
+	 *        Materializes the declared filters over the table's columns, called whenever the columns
+	 *        are rebuilt and whenever the rows are refreshed - the criteria a table declares can
+	 *        depend on the inputs it is refreshed for.
 	 * @param filterStore
 	 *        Where the filters the user saves under a name are persisted, or {@code null} to offer
 	 *        only the declared ones.
@@ -506,6 +507,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			TableViewControl<TLObject> table = _tableControl;
 			_observer = new RowSourceObserver<>(_rowSource, _rowFunction, _observedTypes, _inputChannels,
 				() -> {
+					// The criteria a table declares can depend on the inputs it is refreshed for, so
+					// they are resolved again for their new values.
+					if (_declaredFilters != null) {
+						view.setDeclaredFilters(_declaredFilters.apply(columns));
+					}
 					table.refreshData();
 					reapplySelectionFromChannel();
 				});

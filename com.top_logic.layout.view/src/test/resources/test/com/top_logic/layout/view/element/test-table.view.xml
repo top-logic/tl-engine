@@ -36,6 +36,21 @@
 					expr="true"
 				/>
 			</preset>
+			<preset name="typed">
+				<criterion column="name">
+					<text
+						case-sensitive="true"
+						pattern="'Alice'"
+						whole-field="true"
+					/>
+				</criterion>
+				<criterion
+					column="active"
+					inverted="true"
+				>
+					<boolean accept="true"/>
+				</criterion>
+			</preset>
 		</presets>
 		<columns>
 			<column attribute="name"/>

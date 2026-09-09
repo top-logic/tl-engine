@@ -78,7 +78,7 @@ public class DefaultTableView<R> implements TableView<R> {
 	/** @see #DefaultTableView(List, RowSource, TableViewState, ViewStateStore, TableId, Collection) */
 	private final Set<String> _hiddenByDefault;
 
-	private final List<NamedFilter> _declaredFilters;
+	private List<NamedFilter> _declaredFilters;
 
 	private final NamedFilterStore _filterStore;
 
@@ -488,6 +488,33 @@ public class DefaultTableView<R> implements TableView<R> {
 		result.addAll(_declaredFilters);
 		result.addAll(_savedFilters);
 		return result;
+	}
+
+	/**
+	 * Replaces the filters this table declares.
+	 *
+	 * <p>
+	 * The criteria a table declares can depend on what is displayed elsewhere, so they are computed
+	 * again whenever that changes. A declared filter the user has applied goes on being the active
+	 * one and filters by what it now means; a declared filter that is no longer offered leaves the
+	 * table filtering by the criteria it last applied, which then match no named filter.
+	 * </p>
+	 *
+	 * @param declaredFilters
+	 *        The criteria this table offers under a name, replacing the ones it offered so far. The
+	 *        filters the user saved themselves are untouched.
+	 */
+	public void setDeclaredFilters(List<NamedFilter> declaredFilters) {
+		NamedFilter active = activeNamedFilter();
+		String activeId =
+			active != null && active.origin() == NamedFilter.Origin.DECLARED ? active.id() : null;
+		_declaredFilters = List.copyOf(declaredFilters);
+		if (activeId != null && namedFilter(activeId) != null) {
+			// Re-applies the criteria the chip now stands for, and tells the view about it.
+			applyNamedFilter(activeId);
+		} else {
+			fireColumnsChanged();
+		}
 	}
 
 	@Override

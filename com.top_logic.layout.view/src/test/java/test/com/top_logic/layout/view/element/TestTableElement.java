@@ -15,6 +15,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -29,6 +30,8 @@ import com.top_logic.layout.view.element.TableElement;
 import com.top_logic.layout.view.element.TableElement.CriterionConfig;
 import com.top_logic.layout.view.element.TableElement.PresetConfig;
 import com.top_logic.layout.view.element.TableElement.PresetsConfig;
+import com.top_logic.layout.view.table.FilterStateConfig;
+import com.top_logic.model.search.expr.config.dom.Expr;
 
 /**
  * Tests parsing and instantiation of {@link TableElement}.
@@ -85,7 +88,7 @@ public class TestTableElement extends TestCase {
 		PresetsConfig presetsConfig = tableConfig.getPresets();
 		assertNotNull("Presets should be parsed", presetsConfig);
 		List<PresetConfig> presets = presetsConfig.getPresets();
-		assertEquals("Should have two presets", 2, presets.size());
+		assertEquals("Should have three presets", 3, presets.size());
 
 		PresetConfig mine = presets.get(0);
 		assertEquals("mine", mine.getName());
@@ -103,6 +106,76 @@ public class TestTableElement extends TestCase {
 		assertEquals("all-active", allActive.getName());
 		assertNull("A preset without a label declares none", allActive.getLabel());
 		assertEquals("Should have one criterion", 1, allActive.getCriteria().size());
+	}
+
+	/**
+	 * Tests that a criterion written in the form of the column's filter is parsed with its matching
+	 * options, and that a criterion inverting its column is marked as such.
+	 */
+	public void testParseTypedCriteria() throws Exception {
+		PresetConfig typed = readTableConfig().getPresets().getPresets().get(2);
+		assertEquals("typed", typed.getName());
+
+		CriterionConfig name = typed.getCriteria().get(0);
+		assertEquals("name", name.getColumn());
+		assertNull("A criterion declaring a form declares no value.", name.getExpr());
+		assertFalse("A criterion is not inverted unless it says so.", name.getInverted());
+		assertEquals("Should declare one criterion form", 1, name.getStates().size());
+		FilterStateConfig.TextConfig text = (FilterStateConfig.TextConfig) name.getStates().get(0);
+		assertNotNull("Pattern expression should be set", text.getPattern());
+		assertTrue(text.getCaseSensitive());
+		assertTrue(text.getWholeField());
+		assertFalse(text.getRegexp());
+
+		CriterionConfig active = typed.getCriteria().get(1);
+		assertEquals("active", active.getColumn());
+		assertTrue("The criterion inverts its column.", active.getInverted());
+		FilterStateConfig.BooleanConfig accepted =
+			(FilterStateConfig.BooleanConfig) active.getStates().get(0);
+		assertNotNull("Accept expression should be set", accepted.getAccept());
+	}
+
+	/**
+	 * Tests that a criterion declaring both a value and the form of the column's filter is reported,
+	 * and its preset is not offered.
+	 */
+	public void testCriterionWithValueAndFormReported() throws Exception {
+		TableElement.Config tableConfig = TypedConfiguration.copy(readTableConfig());
+		CriterionConfig criterion = tableConfig.getPresets().getPresets().get(2).getCriteria().get(0);
+		criterion.update(criterion.descriptor().getProperty(CriterionConfig.EXPR),
+			TypedConfiguration.newConfigItem(Expr.True.class));
+
+		assertContains("declares both", errors(tableConfig));
+	}
+
+	/**
+	 * Tests that a criterion declaring neither a value nor the form of the column's filter is
+	 * reported, and its preset is not offered.
+	 */
+	public void testCriterionWithoutValueReported() throws Exception {
+		TableElement.Config tableConfig = TypedConfiguration.copy(readTableConfig());
+		CriterionConfig criterion = tableConfig.getPresets().getPresets().get(0).getCriteria().get(0);
+		criterion.update(criterion.descriptor().getProperty(CriterionConfig.EXPR), null);
+
+		assertContains("declares neither", errors(tableConfig));
+	}
+
+	/**
+	 * The problems reported while instantiating the given configuration.
+	 */
+	private static List<String> errors(TableElement.Config tableConfig) {
+		BufferingProtocol log = new BufferingProtocol();
+		new DefaultInstantiationContext(log).getInstance(tableConfig);
+		return log.getErrors();
+	}
+
+	private static void assertContains(String expected, List<String> errors) {
+		for (String error : errors) {
+			if (error.contains(expected)) {
+				return;
+			}
+		}
+		fail("Expected '" + expected + "' to be named in one of: " + errors);
 	}
 
 	/**

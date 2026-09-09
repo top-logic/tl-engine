@@ -711,6 +711,73 @@ public class TestDefaultTableView extends TestCase {
 		assertNull("Editing the search leaves no named filter active either.", view.activeNamedFilter());
 	}
 
+	/**
+	 * A {@link DefaultTableView} offering the declared filters, over the columns whose filters
+	 * serialize.
+	 */
+	private DefaultTableView<Person> newDeclaredFilterView() {
+		List<Column<Person, ?>> columns = filterableColumns();
+		return DefaultTableView.create(columns, new ListRowSource<>(people(), columns), null, null, SortSpec.NONE,
+			List.of(), declaredFilters(), null);
+	}
+
+	/** The declared filter selecting the rows older than 39, under the {@link #OLDER} identifier. */
+	private static NamedFilter olderThan39() {
+		return NamedFilter.declared(OLDER, ResKey.text("Older than 39"),
+			Map.of("age", RangeFilterState.between(Integer.valueOf(39), Integer.valueOf(50))), null);
+	}
+
+	public void testSetDeclaredFiltersReplacesTheOffer() {
+		DefaultTableView<Person> view = newDeclaredFilterView();
+		int[] columnsChanged = {0};
+		view.addListener(new TableViewListener() {
+			@Override
+			public void columnsChanged() {
+				columnsChanged[0]++;
+			}
+		});
+
+		view.setDeclaredFilters(List.of(olderThan39()));
+
+		assertEquals(List.of(OLDER), ids(view.namedFilters()));
+		assertEquals(ResKey.text("Older than 39"), view.namedFilters().get(0).label());
+		assertTrue("The view is told that the offer changed.", columnsChanged[0] >= 1);
+	}
+
+	public void testSetDeclaredFiltersReappliesTheActiveOne() {
+		DefaultTableView<Person> view = newDeclaredFilterView();
+		view.applyNamedFilter(OLDER);
+		assertEquals(List.of("Charlie", "Bob"), names(view));
+
+		view.setDeclaredFilters(List.of(olderThan39()));
+
+		assertEquals("The chip the user applied filters by what it now means.", List.of("Bob"), names(view));
+		assertEquals(OLDER, view.activeNamedFilter().id());
+	}
+
+	public void testSetDeclaredFiltersKeepsTheCriteriaOfAFilterNoLongerOffered() {
+		DefaultTableView<Person> view = newDeclaredFilterView();
+		view.applyNamedFilter(OLDER);
+
+		view.setDeclaredFilters(List.of());
+
+		assertEquals("The table goes on filtering by the criteria it applied.", List.of("Charlie", "Bob"),
+			names(view));
+		assertNull("None of the offered filters is active - there are none.", view.activeNamedFilter());
+	}
+
+	public void testSetDeclaredFiltersLeavesTheSavedOnesAlone() {
+		DefaultTableView<Person> view = DefaultTableView.create(filterableColumns(),
+			new ListRowSource<>(people(), filterableColumns()), null, new TableId("t1"), SortSpec.NONE, List.of(),
+			declaredFilters(), new MapNamedFilterStore());
+		view.filter("name", TextFilterState.contains("li"));
+		NamedFilter saved = view.saveNamedFilter("Mine");
+
+		view.setDeclaredFilters(List.of(olderThan39()));
+
+		assertEquals(List.of(OLDER, saved.id()), ids(view.namedFilters()));
+	}
+
 	public void testActiveNamedFilterDetectedForHandSetCriteria() {
 		TableView<Person> view = newFilterBarView(null, null);
 		view.filter("age", RangeFilterState.between(Integer.valueOf(26), Integer.valueOf(50)));

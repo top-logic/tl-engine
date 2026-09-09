@@ -25,6 +25,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -55,6 +56,8 @@ import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.DeclaredFilters;
+import com.top_logic.layout.view.table.FilterStateConfig;
+import com.top_logic.layout.view.table.FilterStateTemplate;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -317,7 +320,7 @@ public class TableElement implements UIElement {
 		ResKey getLabel();
 
 		/**
-		 * What this preset filters by: one value per column.
+		 * What this preset filters by: one criterion per column.
 		 *
 		 * <p>
 		 * A column not mentioned here is not filtered by this preset.
@@ -329,7 +332,12 @@ public class TableElement implements UIElement {
 	}
 
 	/**
-	 * The value a {@link PresetConfig} selects in one column.
+	 * What a {@link PresetConfig} selects in one column.
+	 *
+	 * <p>
+	 * A criterion says what it selects in one of two ways: as a value the column's own filter
+	 * translates, or in the form of that filter itself. Exactly one of the two is declared.
+	 * </p>
 	 */
 	@TagName("criterion")
 	public interface CriterionConfig extends ConfigurationItem {
@@ -339,6 +347,12 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getExpr()}. */
 		String EXPR = "expr";
+
+		/** Configuration name for {@link #getInverted()}. */
+		String INVERTED = "inverted";
+
+		/** Configuration name for {@link #getStates()}. */
+		String STATES = "states";
 
 		/**
 		 * The attribute of the column this criterion filters.
@@ -355,20 +369,53 @@ public class TableElement implements UIElement {
 		 * TL-Script expression computing the value the column is filtered by.
 		 *
 		 * <p>
-		 * It is evaluated once per user, when the table is built, so an expression like
-		 * {@code currentUser()} yields a preset that means something different to every user. Which
-		 * value the expression may yield depends on the filter of the column: a text filter accepts
-		 * any single value and matches its text, a selection filter accepts one of the values to
-		 * select or a list of them, a boolean filter accepts {@code true} or {@code false}, and a
-		 * range filter accepts a single value to match exactly or a list of two values as the
-		 * inclusive bounds of a range. A value the column's filter cannot express is reported as a
-		 * configuration error, and the preset is then not offered.
+		 * It is evaluated when the table is built and whenever one of its
+		 * {@link Config#getInputs() inputs} changes, with the input values as its arguments - so an
+		 * expression like {@code currentUser()} yields a preset that means something different to
+		 * every user, and one over an input yields a preset that follows what is displayed
+		 * elsewhere. Which value the expression may yield depends on the filter of the column: a
+		 * text filter accepts any single value and matches its text, a selection filter accepts one
+		 * of the values to select or a list of them, a boolean filter accepts {@code true} or
+		 * {@code false}, and a range filter accepts a single value to match exactly or a list of two
+		 * values as the inclusive bounds of a range. A value the column's filter cannot express is
+		 * reported as a configuration error, and the preset is then not offered.
+		 * </p>
+		 *
+		 * <p>
+		 * Alternatively the criterion is written in the form of the column's filter, see
+		 * {@link #getStates()}; a criterion declares one of the two, not both.
 		 * </p>
 		 */
 		@Name(EXPR)
-		@Mandatory
-		@NonNullable
 		Expr getExpr();
+
+		/**
+		 * The criterion written in the form of the column's filter, as an alternative to the value
+		 * of {@link #getExpr()}: a text pattern with its matching options, a comparison, a
+		 * selection, or the accepted truth values.
+		 *
+		 * <p>
+		 * This is the form for everything a single value cannot say - a case-sensitive pattern, a
+		 * one-sided comparison, several accepted truth values at once. At most one criterion form is
+		 * declared, and a criterion declaring none is a configuration error, just as one declaring
+		 * both a form and a value is.
+		 * </p>
+		 */
+		@Name(STATES)
+		@Label("Criterion form")
+		@DefaultContainer
+		List<FilterStateConfig> getStates();
+
+		/**
+		 * Whether the column accepts exactly the rows this criterion does <em>not</em> select.
+		 *
+		 * <p>
+		 * Only a filter that offers the user to invert it can be inverted here, too; inverting one
+		 * that does not is a configuration error.
+		 * </p>
+		 */
+		@Name(INVERTED)
+		boolean getInverted();
 	}
 
 	/**
@@ -477,15 +524,24 @@ public class TableElement implements UIElement {
 	}
 
 	/**
-	 * The named filters this table declares, materialized over the given columns.
+	 * The named filters this table declares, materialized over the given columns for the given
+	 * input values.
 	 *
 	 * <p>
-	 * The criterion expressions are evaluated here, once per built table, so a preset over
-	 * {@code currentUser()} means something different to every user, and the criteria of a chip the
-	 * user clicks are already computed.
+	 * The criterion expressions are evaluated here - when the table is built, and again whenever one
+	 * of its inputs changes - so a preset over {@code currentUser()} means something different to
+	 * every user, a preset over an input follows what is displayed elsewhere, and the criteria of a
+	 * chip the user clicks are already computed.
 	 * </p>
+	 *
+	 * @param columns
+	 *        All columns of the table, whose filters translate the criteria.
+	 * @param arguments
+	 *        The values of the {@link Config#getInputs() input channels}, in declaration order -
+	 *        the arguments of every criterion expression, as they are the arguments of
+	 *        {@link Config#getRows()}.
 	 */
-	private List<NamedFilter> declaredFilters(List<? extends Column<?, ?>> columns) {
+	private List<NamedFilter> declaredFilters(List<? extends Column<?, ?>> columns, Object[] arguments) {
 		if (_presets.isEmpty()) {
 			return List.of();
 		}
@@ -493,7 +549,7 @@ public class TableElement implements UIElement {
 		for (CompiledPreset preset : _presets) {
 			List<DeclaredFilters.Criterion> criteria = new ArrayList<>(preset.criteria().size());
 			for (CompiledCriterion criterion : preset.criteria()) {
-				criteria.add(new DeclaredFilters.Criterion(criterion.column(), criterion.value().execute()));
+				criteria.add(criterion.evaluate(arguments));
 			}
 			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria));
 		}
@@ -543,15 +599,31 @@ public class TableElement implements UIElement {
 	}
 
 	/**
-	 * A {@link CriterionConfig} with its expression compiled.
+	 * A {@link CriterionConfig} with its expressions compiled.
 	 *
 	 * @param column
 	 *        The attribute of the column to filter.
 	 * @param value
-	 *        Computes the value the column is filtered by.
+	 *        Computes the value the column is filtered by, or {@code null} if the criterion is
+	 *        declared as a {@link #state()}.
+	 * @param state
+	 *        Computes the criterion in the form of the column's filter, or {@code null} if the
+	 *        criterion is declared as a {@link #value()}.
+	 * @param inverted
+	 *        Whether the column accepts exactly the rows the criterion does not select.
 	 */
-	private record CompiledCriterion(String column, QueryExecutor value) {
-		// Pure data carrier.
+	private record CompiledCriterion(String column, QueryExecutor value, FilterStateTemplate state,
+			boolean inverted) {
+
+		/**
+		 * The criterion selected by the given input values.
+		 */
+		DeclaredFilters.Criterion evaluate(Object[] arguments) {
+			if (state != null) {
+				return new DeclaredFilters.Criterion.State(column, state.evaluate(arguments), inverted);
+			}
+			return new DeclaredFilters.Criterion.Value(column, value.execute(arguments), inverted);
+		}
 	}
 
 	/**
@@ -570,29 +642,72 @@ public class TableElement implements UIElement {
 			}
 		}
 
-		_presets = compilePresets(config.getPresets());
+		_presets = compilePresets(context, config.getPresets());
 	}
 
 	/**
 	 * Compiles the criterion expressions of the configured presets, so that building the table only
 	 * has to evaluate them.
 	 */
-	private static List<CompiledPreset> compilePresets(PresetsConfig presetsConfig) {
+	private static List<CompiledPreset> compilePresets(Log log, PresetsConfig presetsConfig) {
 		if (presetsConfig == null) {
 			return List.of();
 		}
 		List<CompiledPreset> result = new ArrayList<>(presetsConfig.getPresets().size());
 		for (PresetConfig presetConfig : presetsConfig.getPresets()) {
 			List<CompiledCriterion> criteria = new ArrayList<>(presetConfig.getCriteria().size());
+			boolean complete = true;
 			for (CriterionConfig criterionConfig : presetConfig.getCriteria()) {
-				criteria.add(new CompiledCriterion(criterionConfig.getColumn(),
-					QueryExecutor.compile(criterionConfig.getExpr())));
+				CompiledCriterion criterion = compileCriterion(log, presetConfig, criterionConfig);
+				if (criterion == null) {
+					complete = false;
+					break;
+				}
+				criteria.add(criterion);
+			}
+			if (!complete) {
+				// A preset is offered with all of its criteria or not at all: one filtering by less
+				// than it declares would show other rows than its name says.
+				continue;
 			}
 			ResKey label = presetConfig.getLabel();
 			result.add(new CompiledPreset(presetConfig.getName(),
 				label != null ? label : ResKey.text(presetConfig.getName()), criteria));
 		}
 		return result;
+	}
+
+	/**
+	 * Compiles one criterion: either the value expression, or the declared form of the column's
+	 * filter - exactly one of the two, so a criterion declaring both or neither is reported and
+	 * dropped.
+	 */
+	private static CompiledCriterion compileCriterion(Log log, PresetConfig presetConfig,
+			CriterionConfig criterionConfig) {
+		Expr expr = criterionConfig.getExpr();
+		List<FilterStateConfig> states = criterionConfig.getStates();
+		if (states.size() > 1) {
+			log.error(criterion(presetConfig, criterionConfig) + " declares " + states.size()
+				+ " criterion forms, but a column is filtered by one.");
+			return null;
+		}
+		FilterStateConfig state = states.isEmpty() ? null : states.get(0);
+		if ((expr == null) == (state == null)) {
+			log.error(criterion(presetConfig, criterionConfig) + " must declare either a '"
+				+ CriterionConfig.EXPR + "' or the form of the column's filter, but "
+				+ (expr == null ? "declares neither" : "declares both") + ".");
+			return null;
+		}
+		return new CompiledCriterion(criterionConfig.getColumn(),
+			expr == null ? null : QueryExecutor.compile(expr),
+			state == null ? null : FilterStateTemplate.compile(state),
+			criterionConfig.getInverted());
+	}
+
+	/** How a criterion of a preset is named in a configuration error. */
+	private static String criterion(PresetConfig presetConfig, CriterionConfig criterionConfig) {
+		return "The criterion for the column '" + criterionConfig.getColumn() + "' of the preset '"
+			+ presetConfig.getName() + "'";
 	}
 
 	/**
@@ -619,7 +734,8 @@ public class TableElement implements UIElement {
 		for (ChannelRef ref : _config.getInputs()) {
 			inputChannels.add(context.resolveChannel(ref));
 		}
-		Collection<?> rows = executeRowsQuery(_rowsExecutor, readChannelValues(inputChannels));
+		Object[] inputValues = readChannelValues(inputChannels);
+		Collection<?> rows = executeRowsQuery(_rowsExecutor, inputValues);
 
 		if (_config.getRowEdit() != RowEditPolicy.NONE) {
 			return createEditableControl(context, inputChannels, rows);
@@ -635,8 +751,8 @@ public class TableElement implements UIElement {
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
 		initialState.setFrozenCount(_config.getFixedColumns());
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
-			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault, declaredFilters(columns),
-			filterStore());
+			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault,
+			declaredFilters(columns, inputValues), filterStore());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 		control.setFilterBar(filterBar());
@@ -699,6 +815,12 @@ public class TableElement implements UIElement {
 		// channel already points to) is selected and scrolled into view.
 		QueryExecutor rowsExecutor = _rowsExecutor;
 		Runnable refresh = () -> {
+			if (!_presets.isEmpty()) {
+				// The criteria of the presets are computed from the inputs, so a changed input means
+				// other criteria: they are resolved again, and a chip the user has applied goes on
+				// filtering by what it now means.
+				view.setDeclaredFilters(declaredFilters(columns, readChannelValues(inputChannels)));
+			}
 			control.refreshData();
 			if (reapplySelection[0] != null) {
 				reapplySelection[0].run();
@@ -748,7 +870,8 @@ public class TableElement implements UIElement {
 			new RowSetTableControl(context, formControl, binding, editColumns, _config.getRowEdit());
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId());
-		control.setNamedFilters(this::declaredFilters, filterStore());
+		control.setNamedFilters(columns -> declaredFilters(columns, readChannelValues(inputChannels)),
+			filterStore());
 		control.setFilterBar(filterBar());
 		control.setHiddenByDefault(
 			hiddenByDefault(editColumns.stream().map(RowSetTableControl.TableColumn::attribute).toList()));

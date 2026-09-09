@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Initial frame of the tile drill-down demo. Lists all Person accounts and
-	offers an "Open" button that pushes a detail frame onto the enclosing
-	tile-stack with the selected Person as parameter.
+	Initial frame of the tile drill-down demo. Lists all Person accounts and offers an "Open"
+	button that pushes a detail frame onto the enclosing tile-stack with the selected Person as
+	parameter. The navPath channel is the stack's path (bound by the stack's bind-path-to), so the
+	derived depth channel tells this frame how deep it sits: at depth 0 the "Back" command is
+	hidden, which is why the initial frame shows no way out.
 -->
 <view>
 	<channels>
 		<channel name="selectedPerson"/>
+		<channel name="navPath"/>
+		<derived-channel name="depth"
+			expr="p -> $p.size()"
+			inputs="navPath"
+		/>
 	</channels>
 
 	<panel>
@@ -16,6 +23,20 @@
 			<de>Konten</de>
 		</title>
 		<commands>
+			<generic-command
+				image="css:bi bi-arrow-left"
+				input="depth"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Back</en>
+					<de>Zurück</de>
+				</label>
+				<executability>
+					<visible-if expr="d -> $d > 0"/>
+				</executability>
+				<navigate-pop/>
+			</generic-command>
 			<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="person"
 				input="selectedPerson"

@@ -30,7 +30,7 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * to the client as the {@code frame} child in the React state. Empty path → renders the
  * {@code initial} view; non-empty path → renders the view referenced by the top frame, with the
  * frame's {@link TileFrame#getParams() params} pre-registered as channels in the frame's child
- * context.
+ * context - and, where the stack names one, the path channel itself.
  * </p>
  *
  * <p>
@@ -52,6 +52,8 @@ public class ReactTileStackControl extends ReactControl {
 
 	private final String _initialViewPath;
 
+	private final String _bindPathTo;
+
 	private final ChannelListener _pathListener;
 
 	private ReactControl _currentChild;
@@ -68,14 +70,18 @@ public class ReactTileStackControl extends ReactControl {
 	 *        The {@link TileStackScope} installed into each frame so that nested commands can push.
 	 * @param initialViewRef
 	 *        View path (relative to {@code /WEB-INF/views/}) shown when the path is empty.
+	 * @param bindPathTo
+	 *        Channel name under which each frame sees {@code pathChannel}, or {@code null} to keep
+	 *        the path out of the frames' channel namespace.
 	 */
 	public ReactTileStackControl(ViewContext parent, ViewChannel pathChannel, TileStackScope scope,
-			String initialViewRef) {
+			String initialViewRef, String bindPathTo) {
 		super(parent, null, REACT_MODULE);
 		_parentContext = parent;
 		_pathChannel = pathChannel;
 		_scope = scope;
 		_initialViewPath = ViewLoader.VIEW_BASE_PATH + initialViewRef;
+		_bindPathTo = bindPathTo;
 
 		_pathListener = (sender, oldValue, newValue) -> rebuildChild();
 		_pathChannel.addListener(_pathListener);
@@ -132,6 +138,10 @@ public class ReactTileStackControl extends ReactControl {
 		}
 		frameContext = frameContext.withScope(TileStackScope.class, _scope);
 
+		if (_bindPathTo != null) {
+			// The stack's own channel, so the frame sees the path it sits on change.
+			frameContext.registerChannel(_bindPathTo, _pathChannel);
+		}
 		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			DefaultViewChannel paramChannel = new DefaultViewChannel(entry.getKey());
 			paramChannel.set(entry.getValue());

@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
 
 /**
@@ -18,9 +20,11 @@ import com.top_logic.layout.view.channel.ViewChannel;
  *
  * <p>
  * Installed by the stack into its frame's child {@link com.top_logic.layout.view.ViewContext} via
- * {@link com.top_logic.layout.view.ViewContext#withScope(Class, Object)}. Commands
- * inside a frame (such as {@link NavigatePushCommand &lt;navigate-push&gt;}) look it up via
- * {@link com.top_logic.layout.view.ViewContext#getScope(Class)} and call
+ * {@link com.top_logic.layout.view.ViewContext#withScope(Class, Object)}. Commands and actions
+ * inside a frame ({@link NavigatePushCommand &lt;navigate-push&gt;},
+ * {@link NavigatePopCommand &lt;navigate-pop&gt;} / {@link NavigatePopAction the same as a chain
+ * action}, {@link NavigatePopToCommand &lt;navigate-pop-to&gt;} / {@link NavigatePopToAction the
+ * same as a chain action}) look it up via {@link #lookup(ReactContext, String)} and call
  * {@link #push(String, ResKey, Map)} / {@link #pop()} / {@link #popTo(int)} on it.
  * </p>
  *
@@ -31,6 +35,30 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * </p>
  */
 public class TileStackScope {
+
+	/**
+	 * The {@link TileStackScope} enclosing the given context.
+	 *
+	 * @param context
+	 *        The context in which the requesting command or action executes.
+	 * @param tag
+	 *        Configuration tag of the requesting command or action, quoted in the failure message.
+	 * @return The scope of the innermost enclosing {@link TileStackElement &lt;tile-stack&gt;}.
+	 * @throws IllegalStateException
+	 *         if the context is no {@link ViewContext}, or no tile stack encloses it.
+	 */
+	public static TileStackScope lookup(ReactContext context, String tag) {
+		if (!(context instanceof ViewContext viewContext)) {
+			throw new IllegalStateException(
+				"<" + tag + "> requires a ViewContext, got " + context.getClass().getName());
+		}
+		TileStackScope scope = viewContext.getScope(TileStackScope.class);
+		if (scope == null) {
+			throw new IllegalStateException(
+				"<" + tag + "> executed outside of any enclosing <tile-stack>.");
+		}
+		return scope;
+	}
 
 	private final ViewChannel _pathChannel;
 

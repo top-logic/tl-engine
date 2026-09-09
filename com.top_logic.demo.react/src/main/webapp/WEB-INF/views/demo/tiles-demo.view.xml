@@ -9,6 +9,8 @@
 	truncates the path back to that depth.
 	- The initial frame is a table of accounts; selecting one and clicking "Open" pushes a
 	detail frame onto the stack.
+	- bind-path-to makes the path channel visible inside every frame, so a frame view derives its
+	own depth from it and shows a "Back" command only where there is a frame to leave.
 -->
 <view>
 	<channels>
@@ -26,6 +28,7 @@
 		</slot-content>
 
 		<tile-stack
+			bind-path-to="navPath"
 			initial="demo/tiles-demo/overview.view.xml"
 			path="navPath"
 		/>

@@ -10,7 +10,9 @@
 	multiplexer needed.
 	
 	The two tabs use the same overview / detail views, but their navigation state is
-	independent: drilling into one tab does not affect the other.
+	independent: drilling into one tab does not affect the other. Each stack binds its path into
+	its frames under the name navPath, so the shared frame views derive their depth from the stack
+	they are mounted in and their "Back" command pops that stack.
 -->
 <view>
 	<tab-bar active-tab="left">
@@ -36,6 +38,7 @@
 						</slot-content>
 
 						<tile-stack
+							bind-path-to="navPath"
 							initial="demo/tiles-demo/overview.view.xml"
 							path="navPath"
 						/>
@@ -63,6 +66,7 @@
 						</slot-content>
 
 						<tile-stack
+							bind-path-to="navPath"
 							initial="demo/tiles-demo/overview.view.xml"
 							path="navPath"
 						/>

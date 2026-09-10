@@ -529,6 +529,10 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   // -- Editable rendering --
 
   const showClearButton = !mandatory && value.length > 0 && !disabled;
+  // A chip of a multi-select removes that one option, which the clear button beside the arrow
+  // cannot do. In a single select both would empty the field, so only the clear button is offered
+  // and the chip carries no remove button of its own.
+  const chipsRemovable = !disabled && multiSelect;
 
   const dropdownContent = isOpen ? (
     <div
@@ -636,7 +640,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
                 <Chip
                   key={v.value}
                   option={v}
-                  removable={!disabled && (multiSelect || !mandatory)}
+                  removable={chipsRemovable}
                   onRemove={removeOption}
                   removeLabel={removeChipLabel(v.label)}
                   draggable={dragEnabled}

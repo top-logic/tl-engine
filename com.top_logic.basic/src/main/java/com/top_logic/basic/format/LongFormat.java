@@ -17,7 +17,7 @@ import java.text.ParsePosition;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public final class LongFormat extends NumberFormat {
+public final class LongFormat extends NumberFormatDecorator {
 
 	/**
 	 * Creates a {@link LongFormat} wrapped around the given implementation {@link Format}.
@@ -30,6 +30,11 @@ public final class LongFormat extends NumberFormat {
 
 	private LongFormat(NumberFormat impl) {
 		_impl = impl;
+	}
+
+	@Override
+	protected NumberFormat impl() {
+		return _impl;
 	}
 
 	@Override

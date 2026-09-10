@@ -134,7 +134,7 @@ public class LoggerLevelTable implements UIElement {
 
 		ViewChannel selection = _selectionRef != null ? context.resolveChannel(_selectionRef) : null;
 		if (selection != null) {
-			control.setSelectionListener(keys -> {
+			control.addSelectionListener(keys -> {
 				Object key = keys.size() == 1 ? keys.iterator().next() : null;
 				selection.set(key instanceof Map.Entry<?, ?> entry ? entry.getKey() : null);
 			});

@@ -62,6 +62,31 @@ public interface Column<R, V> {
 	}
 
 	/**
+	 * The text of this row's cell examined by the free-text {@link SearchSpec search}, or
+	 * {@code null} if this column holds no searchable text.
+	 *
+	 * <p>
+	 * The default implementation takes the text from the {@link #renderCell(Object) rendered
+	 * cell content}, so the search finds what the user sees: the
+	 * {@link CellContent.Text} and {@link CellContent.Labeled} variants carry text, while
+	 * {@link CellContent.Editable}, {@link CellContent.Raw} and {@link CellContent.Empty}
+	 * carry none - a column rendering those never matches a search. A column that can produce
+	 * its text more cheaply than by rendering, or that renders a bespoke control over a
+	 * textual value, overrides this method.
+	 * </p>
+	 */
+	default String searchText(R row) {
+		CellContent content = renderCell(row);
+		if (content instanceof CellContent.Text text) {
+			return text.text();
+		}
+		if (content instanceof CellContent.Labeled labeled) {
+			return labeled.text();
+		}
+		return null;
+	}
+
+	/**
 	 * The sort capability, or empty if the column is not sortable.
 	 */
 	default Optional<Sort<V>> sort() {

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Collection;
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -22,9 +25,11 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.format.configured.Formatter;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.SimpleEditContext;
@@ -39,10 +44,12 @@ import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.form.AttributeSelectFieldModel.OptionSource;
+import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
@@ -256,7 +263,66 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setMultilineRows(multilineRows(part))
 			.setBooleanPresentation(booleanPresentation(part))
 			.setTriState(isTriState(part))
-			.setDateKind(DatePickerControlProvider.kind(part));
+			.setDateKind(DatePickerControlProvider.kind(part))
+			.setNumberFormat(numberFormat(part));
+	}
+
+	/**
+	 * The format a numeric attribute is displayed in and entered in, or {@code null} if the attribute
+	 * does not hold a single number.
+	 *
+	 * <p>
+	 * The attribute's {@code format} annotation where it has one, the user's default format for
+	 * whole respectively fractional numbers otherwise. One format serves every place the value
+	 * appears: the form field editing it, the table cell showing it, the text that cell is searched
+	 * by, and the bounds of that column's filter.
+	 * </p>
+	 *
+	 * <p>
+	 * The annotated format need not write digits: a duration is a number of milliseconds written as
+	 * {@code 1h 30min}, and the attribute is displayed, entered and filtered in that text.
+	 * </p>
+	 *
+	 * @param part
+	 *        The model attribute, or {@code null} for an unresolved one.
+	 */
+	public static Format numberFormat(TLStructuredTypePart part) {
+		if (part == null || part.isMultiple()) {
+			return null;
+		}
+		Class<?> valueType = PrimitiveTypeUtil.asNonPrimitive(valueType(part));
+		if (!Number.class.isAssignableFrom(valueType)) {
+			return null;
+		}
+		TLType type = part.getType();
+		boolean fractional = valueType == Double.class || valueType == Float.class
+			|| (type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.FLOAT);
+		return numberFormat(part, fractional);
+	}
+
+	/**
+	 * The annotated format of the given attribute, or the default format for its kind of number.
+	 *
+	 * <p>
+	 * An attribute whose format declaration cannot be resolved is displayed in the default format
+	 * instead, so that a misconfigured attribute still shows its value.
+	 * </p>
+	 */
+	private static Format numberFormat(TLStructuredTypePart part, boolean fractional) {
+		try {
+			return fractional ? DisplayAnnotations.getFloatFormat(part) : DisplayAnnotations.getLongFormat(part);
+		} catch (ConfigurationException ex) {
+			Logger.error("Invalid attribute definition for '" + part + "'.", ex, FieldControlService.class);
+			return defaultNumberFormat(fractional);
+		}
+	}
+
+	/**
+	 * The user's default format for whole respectively fractional numbers.
+	 */
+	private static Format defaultNumberFormat(boolean fractional) {
+		Formatter formatter = HTMLFormatter.getInstance();
+		return fractional ? formatter.getDoubleFormat() : formatter.getLongFormat();
 	}
 
 	/**

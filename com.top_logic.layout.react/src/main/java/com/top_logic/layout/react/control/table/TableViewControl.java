@@ -78,7 +78,7 @@ import com.top_logic.util.Resources;
  * This is the React tier's binding to the green-field table model: it reads column
  * descriptors, the row count and row windows from a {@link TableView}, renders each cell
  * via {@link CellContentReactAdapter}, and maps the client commands (scroll, sort, select,
- * resize, reorder, expand, freeze) back onto {@link TableView} commands. It depends only on
+ * activate, resize, reorder, expand, freeze) back onto {@link TableView} commands. It depends only on
  * the green-field model, not on the legacy {@code TableModel}.
  * </p>
  *
@@ -111,6 +111,26 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		 * keys}.
 		 */
 		void selectionChanged(Set<Object> selectedKeys);
+	}
+
+	/**
+	 * Notified when a row is activated: opened by a double-click, or by {@code Enter} while it
+	 * carries the keyboard cursor.
+	 *
+	 * @param <T>
+	 *        The row business object type.
+	 */
+	@FunctionalInterface
+	public interface ActivationHandler<T> {
+
+		/**
+		 * Called after the activated row became the table's selection.
+		 *
+		 * @param row
+		 *        The business object of the activated row.
+		 * @return The outcome reported to the client (and to a scripted replay).
+		 */
+		HandlerResult rowActivated(T row);
 	}
 
 	private static final String COLUMNS = "columns";
@@ -198,6 +218,16 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String CMD_SELECT_BY_KEY = "selectByKey";
 
+	/**
+	 * The command the client sends when the user opens a row: a double-click, or {@code Enter} on
+	 * the row carrying the keyboard cursor.
+	 *
+	 * @see ActivateRowArguments
+	 */
+	public static final String CMD_ACTIVATE = "activate";
+
+	private static final String CMD_ACTIVATE_BY_KEY = "activateByKey";
+
 	private static final String CMD_MOVE_SELECTION = "moveSelection";
 
 	private static final String CMD_SELECT_ALL = "selectAll";
@@ -274,6 +304,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private final List<SelectionListener> _selectionListeners = new CopyOnWriteArrayList<>();
 
+	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
+	private ActivationHandler<R> _activationHandler;
+
 	/** Cell controls for currently buffered rows, keyed by row key then column name. */
 	private final Map<Object, Map<String, ReactControl>> _cellCache = new LinkedHashMap<>();
 
@@ -337,6 +370,22 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 */
 	public void removeSelectionListener(SelectionListener listener) {
 		_selectionListeners.remove(listener);
+	}
+
+	/**
+	 * Sets what a row activation runs, replacing any handler set before.
+	 *
+	 * <p>
+	 * The handler is called with the activated row's business object, after that row became the
+	 * table's selection. Without one, a double-click and {@code Enter} select the row and do
+	 * nothing further.
+	 * </p>
+	 *
+	 * @param handler
+	 *        The handler to call, {@code null} to make the rows unopenable again.
+	 */
+	public void setActivationHandler(ActivationHandler<R> handler) {
+		_activationHandler = handler;
 	}
 
 	/**
@@ -958,36 +1007,107 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	@ReactCommandHandler(CMD_SELECT_BY_KEY)
 	HandlerResult handleSelectByKey(SelectByKeyArguments args) {
 		ModelName name = args.getKey();
+		int rowIndex = rowIndexOf(name);
+		if (rowIndex < 0) {
+			// Drift contract: a recorded row key that no longer designates a present row is an
+			// explicit failure (replay reports success:false), never a silent no-op selection.
+			return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
+		}
+		selectOnly(rowIndex);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Activates a row: the row becomes the selection, and what
+	 * {@link #setActivationHandler(ActivationHandler)} registered runs with the row's business
+	 * object.
+	 *
+	 * <p>
+	 * This is what a double-click on the row and {@code Enter} on the cursor row send. An index
+	 * outside the current rows activates nothing.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_ACTIVATE)
+	HandlerResult handleActivate(ActivateRowArguments args) {
+		return activateRow(args.getRowIndex());
+	}
+
+	/**
+	 * Activates the row whose business object is named by the given {@link ScriptingModelKey key} —
+	 * the replay-stable counterpart of {@link #handleActivate} by {@link #ARG_ROW_INDEX}, which a
+	 * recorded activation is captured as so it survives sorting, filtering and a fresh session.
+	 *
+	 * @param args
+	 *        Carries a {@link ActivateByKeyArguments#getKey() key} with a row business identity (the
+	 *        same key the agent projection puts on each row).
+	 */
+	@ReactCommandHandler(CMD_ACTIVATE_BY_KEY)
+	HandlerResult handleActivateByKey(ActivateByKeyArguments args) {
+		ModelName name = args.getKey();
+		int rowIndex = rowIndexOf(name);
+		if (rowIndex < 0) {
+			return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
+		}
+		return activateRow(rowIndex);
+	}
+
+	private HandlerResult activateRow(int rowIndex) {
+		Row<R> row = rowAt(rowIndex);
+		if (row == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		selectOnly(rowIndex);
+		ActivationHandler<R> handler = _activationHandler;
+		if (handler == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return handler.rowActivated(row.data());
+	}
+
+	/**
+	 * Makes the row at the given index the sole selection, the cursor and the range anchor, and
+	 * pushes the change to the client.
+	 */
+	private void selectOnly(int rowIndex) {
+		Object key = keyAt(rowIndex);
+		if (key == null) {
+			return;
+		}
+		_selectedKeys.clear();
+		_selectedKeys.add(key);
+		_cursorIndex = rowIndex;
+		_selectionAnchor = rowIndex;
+		pushSelection();
+		updateViewport(_viewportStart, _viewportCount);
+	}
+
+	/**
+	 * The index of the row whose business object the given {@link ScriptingModelKey key} names, or
+	 * {@code -1} when the key resolves to no object or no row displays it.
+	 */
+	private int rowIndexOf(ModelName name) {
+		if (name == null) {
+			return -1;
+		}
 		Object target = null;
-		if (name != null) {
-			try {
-				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-				ActionContext actionContext =
-					new ReactActionContext(displayContext, displayContext.asRequest().getSession());
-				target = ModelResolver.locateModel(actionContext, null, name);
-			} catch (RuntimeException ex) {
-				Logger.warn("Cannot resolve row for key: " + name, ex, this);
+		try {
+			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+			ActionContext actionContext =
+				new ReactActionContext(displayContext, displayContext.asRequest().getSession());
+			target = ModelResolver.locateModel(actionContext, null, name);
+		} catch (RuntimeException ex) {
+			Logger.warn("Cannot resolve row for key: " + name, ex, this);
+		}
+		if (target == null) {
+			return -1;
+		}
+		List<Row<R>> rows = _view.rows(0, _view.rowCount());
+		for (int i = 0; i < rows.size(); i++) {
+			if (target.equals(rows.get(i).data())) {
+				return i;
 			}
 		}
-		if (target != null) {
-			int total = _view.rowCount();
-			List<Row<R>> rows = _view.rows(0, total);
-			for (int i = 0; i < rows.size(); i++) {
-				Row<R> row = rows.get(i);
-				if (target.equals(row.data())) {
-					_selectedKeys.clear();
-					_selectedKeys.add(row.key());
-					_cursorIndex = i;
-					_selectionAnchor = i;
-					pushSelection();
-					updateViewport(_viewportStart, _viewportCount);
-					return HandlerResult.DEFAULT_RESULT;
-				}
-			}
-		}
-		// Drift contract: a recorded row key that no longer designates a present row is an explicit
-		// failure (replay reports success:false), never a silent no-op selection.
-		return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
+		return -1;
 	}
 
 	/**
@@ -1006,9 +1126,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	/**
-	 * Records a plain (unmodified) row selection in replay-stable form: a {@link #CMD_SELECT} by
-	 * {@link #ARG_ROW_INDEX} becomes a {@link #CMD_SELECT_BY_KEY} of the row's business identity, so
-	 * the recording survives sorting and a fresh session. Modifier selections (ctrl/shift
+	 * Records a plain (unmodified) row selection and a row activation in replay-stable form: a
+	 * {@link #CMD_SELECT} by {@link #ARG_ROW_INDEX} becomes a {@link #CMD_SELECT_BY_KEY} of the
+	 * row's business identity, a {@link #CMD_ACTIVATE} becomes a {@link #CMD_ACTIVATE_BY_KEY} of the
+	 * same, so the recording survives sorting and a fresh session. Modifier selections (ctrl/shift
 	 * range/toggle) are recorded verbatim — their semantics are index/anchor based.
 	 */
 	@Override
@@ -1017,18 +1138,31 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				&& arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex
 				&& !Boolean.TRUE.equals(arguments.get(ARG_CTRL_KEY))
 				&& !Boolean.TRUE.equals(arguments.get(ARG_SHIFT_KEY))) {
-			List<Row<R>> single = _view.rows(rowIndex.intValue(), rowIndex.intValue() + 1);
-			if (!single.isEmpty()) {
-				ModelName key = ScriptingModelKey.name(null, single.get(0).data());
-				if (key != null) {
-					SelectByKeyArguments recorded = TypedConfiguration.newConfigItem(SelectByKeyArguments.class);
-					recorded.setName(CMD_SELECT_BY_KEY);
-					recorded.setKey(key);
-					return new RecordedCommand(recorded);
-				}
+			ModelName key = rowKeyAt(rowIndex.intValue());
+			if (key != null) {
+				SelectByKeyArguments recorded = TypedConfiguration.newConfigItem(SelectByKeyArguments.class);
+				recorded.setName(CMD_SELECT_BY_KEY);
+				recorded.setKey(key);
+				return new RecordedCommand(recorded);
+			}
+		}
+		if (CMD_ACTIVATE.equals(command) && arguments != null
+				&& arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex) {
+			ModelName key = rowKeyAt(rowIndex.intValue());
+			if (key != null) {
+				ActivateByKeyArguments recorded = TypedConfiguration.newConfigItem(ActivateByKeyArguments.class);
+				recorded.setName(CMD_ACTIVATE_BY_KEY);
+				recorded.setKey(key);
+				return new RecordedCommand(recorded);
 			}
 		}
 		return super.recordCommand(command, arguments);
+	}
+
+	/** The business identity of the row at the given index, {@code null} when there is none. */
+	private ModelName rowKeyAt(int rowIndex) {
+		Row<R> row = rowAt(rowIndex);
+		return row == null ? null : ScriptingModelKey.name(null, row.data());
 	}
 
 	/**
@@ -1242,8 +1376,17 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	private Object keyAt(int rowIndex) {
+		Row<R> row = rowAt(rowIndex);
+		return row == null ? null : row.key();
+	}
+
+	/** The row at the given index, or {@code null} when the index is outside the current rows. */
+	private Row<R> rowAt(int rowIndex) {
+		if (rowIndex < 0 || rowIndex >= _view.rowCount()) {
+			return null;
+		}
 		List<Row<R>> single = _view.rows(rowIndex, rowIndex + 1);
-		return single.isEmpty() ? null : single.get(0).key();
+		return single.isEmpty() ? null : single.get(0);
 	}
 
 	/**

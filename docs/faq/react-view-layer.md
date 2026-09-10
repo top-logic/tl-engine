@@ -18,6 +18,27 @@
 - **`TLPanel` renders a single `toolbar` child control (a `ReactToolbarControl`), not a `toolbarButtons` list.** Push a panel toolbar via `putState("toolbar", new ReactToolbarControl(ctx))` + `addGroup(name, ToolbarGroupDisplay.INLINE, …, List.of(button))`.
 - Mutable rows: `ListRowSource.setElements(list)` then `TableViewControl.refreshData()`. `DefaultTableView.create(columns, source[, ViewStateStore, TableId])` — the 2-arg form skips personalization; pass a stable `TableId` to persist column width / order.
 
+## Row activation
+
+A `<table>` and a `<tree>` open a row / node on a **double-click**, and on **Enter** while the row carries the keyboard cursor (a tree node: while it carries the keyboard focus). The gesture is one command, `activate`, carrying the row index (the node id):
+
+```xml
+<table selection="selected" types="demo.react:Demo">
+	<columns>…</columns>
+	<rows>all(`demo.react:Demo`)</rows>
+	<on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
+		<open-dialog bind-input-to="model" dialog-view="attributes-detail.view.xml"/>
+	</on-activate>
+</table>
+```
+
+- `<on-activate>` holds an ordinary `ViewCommand` configuration — the same thing `<button><action>` holds, hence the `class=` form. The server selects the activated row first (so the table's `selection` channel holds it), then runs the command **with that row as its input**; the command's own `<executability>` rules decide over the row, so a row the rules reject activates nothing.
+- The element instantiates the configured command in its constructor (with the element's `InstantiationContext`, so a bad configuration is reported at load time) and keeps command plus config, exactly as `ButtonElement` does. `ViewCommandModel.forCommand(context, command, config)` then builds the model for it — resolve the input channel, build the executability rule, pick the matching model — and is the single construction path shared by `ButtonElement`, `TableElement`, `TreeElement`, `CommandCarrierElement` (panels, menus) and `AppBarElement`. `ViewCommandModel.execute(context, input)` runs the command with an input the caller supplies instead of the channel value; that is the one path for "run this configured command with this value".
+- The control-level seam is `TableViewControl.setActivationHandler(…)` / `ReactTreeControl.setActivationHandler(…)` — one handler, called with the row business object (the tree node) after the row became the selection, returning the `HandlerResult` the gesture reports. Without a handler, activating a row only selects it.
+- An activation is recorded for scripted tests the way a selection is: the index-based `activate` becomes an `activateByKey` naming the row's business object, so the step survives sorting, filtering and a fresh session.
+- A double-click inside an interactive cell element (a text input of an editable cell) belongs to that element and opens nothing; Enter is likewise declined while the focus sits in a cell input or action button.
+- Demos in `com.top_logic.demo.react`: the *Attributes* table opens the object's detail dialog, and *Tree Demo* (`demo/tree-demo.view.xml`) writes the activated node to a channel displayed next to the selected one.
+
 ## Drill-down navigation with `<tile-stack>`
 
 `com.top_logic.layout.view.tiles` provides drill-down navigation. A `<tile-stack path="navPath" initial="products/overview.view.xml"/>` displays the last frame of a path of `TileFrame`s, the `initial` view when the path is empty, and keeps the frames the displayed one covers (see below). The path itself lives on a normal channel of the enclosing view (`List<TileFrame>`), which is the single source of truth: every navigation is a write to that channel.

@@ -36,13 +36,9 @@ import com.top_logic.layout.react.control.nav.ReactAppBarControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl.AppBarVariant;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
-import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.util.Resources;
 
 /**
@@ -301,12 +297,7 @@ public class AppBarElement implements UIElement {
 			ViewCommand cmd = _commands.get(i);
 			ViewCommand.Config cmdConfig = _commandConfigs.get(i);
 
-			ChannelRef inputRef = cmdConfig.getInput();
-			ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
-
-			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
-
-			ViewCommandModel model = ViewCommandModel.create(cmd, cmdConfig, inputChannel, rule);
+			ViewCommandModel model = ViewCommandModel.forCommand(context, cmd, cmdConfig);
 			model.attach(context.getModelScope());
 			models.add(model);
 		}

@@ -234,6 +234,13 @@
 							<column attribute="owner"/>
 						</columns>
 						<rows>all(`demo.react:Demo`)</rows>
+						<on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
+							<open-dialog
+								bind-input-to="model"
+								close-on-backdrop="true"
+								dialog-view="attributes-detail.view.xml"
+							/>
+						</on-activate>
 					</table>
 				</panel>
 			</tab>

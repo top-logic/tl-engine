@@ -17,6 +17,8 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
@@ -26,7 +28,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * Runtime bridge between a stateless {@link ViewCommand} and its UI button.
+ * Runtime bridge between a stateless {@link ViewCommand} and the UI running it - its button, or a
+ * gesture like a table row activation that supplies the input itself
+ * ({@link #execute(ReactContext, Object)}).
  *
  * <p>
  * Created by the panel at setup time, one per command. While
@@ -92,6 +96,35 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 				rule);
 		}
 		return new ViewCommandModel(command, config, inputChannel, rule);
+	}
+
+	/**
+	 * Creates the {@link ViewCommandModel} for a command an element has instantiated from its
+	 * configuration: resolves the command's {@link ViewCommand.Config#getInput() input channel} in
+	 * the given context, builds its executability rule there, and picks the matching model.
+	 *
+	 * <p>
+	 * This is the one construction path for a configured command, shared by every element that
+	 * hosts commands. An element that has to interfere with the rule - the form, which additionally
+	 * disables the commands its validation would reject - builds the model from
+	 * {@link #create(ViewCommand, ViewCommand.Config, ViewChannel, ViewExecutabilityRule)} with the
+	 * rule it composed.
+	 * </p>
+	 *
+	 * @param context
+	 *        The build-time context of the hosting element, resolving the input channel and binding
+	 *        the rules.
+	 * @param command
+	 *        The instantiated command.
+	 * @param config
+	 *        The configuration the command was instantiated from.
+	 */
+	public static ViewCommandModel forCommand(ViewContext context, ViewCommand command,
+			ViewCommand.Config config) {
+		ChannelRef inputRef = config.getInput();
+		ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
+		ViewExecutabilityRule rule = ViewExecutabilityRules.build(config.getExecutability(), context);
+		return create(command, config, inputChannel, rule);
 	}
 
 	/**
@@ -184,8 +217,26 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 
 	@Override
 	public HandlerResult executeCommand(ReactContext context) {
-		Object input = resolveInput();
+		return execute(context, resolveInput());
+	}
 
+	/**
+	 * Executes the command with an input the caller supplies instead of the
+	 * {@link #resolveInput() channel value} - the row a table activation opens, say.
+	 *
+	 * <p>
+	 * The command's executability rules decide over that same input, so a rule that rejects it
+	 * makes the call a no-op.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context the command executes in.
+	 * @param input
+	 *        The command's input value.
+	 * @return The command's result, {@link HandlerResult#DEFAULT_RESULT} when the rules reject the
+	 *         input.
+	 */
+	public HandlerResult execute(ReactContext context, Object input) {
 		ExecutableState state = _rule.isExecutable(input);
 		if (!state.isExecutable()) {
 			return HandlerResult.DEFAULT_RESULT;

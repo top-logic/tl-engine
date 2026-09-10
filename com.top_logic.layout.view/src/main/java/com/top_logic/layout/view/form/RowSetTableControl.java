@@ -173,6 +173,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private TableViewControl<TLObject> _tableControl;
 
+	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
+	private TableViewControl.ActivationHandler<TLObject> _activationHandler;
+
 	private ListRowSource<TLObject> _rowSource;
 
 	private RowSourceObserver<TLObject> _observer;
@@ -369,6 +372,21 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Sets what a row activation runs - a double-click on the row, or {@code Enter} while the row
+	 * carries the keyboard cursor.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the handler is installed on each
+	 * {@link TableViewControl} this control builds.
+	 * </p>
+	 *
+	 * @see TableViewControl#setActivationHandler(TableViewControl.ActivationHandler)
+	 */
+	public void setActivationHandler(TableViewControl.ActivationHandler<TLObject> handler) {
+		_activationHandler = handler;
+	}
+
+	/**
 	 * The inner {@link TableViewControl}, or {@code null} if not yet initialized.
 	 */
 	public TableViewControl<TLObject> getTableControl() {
@@ -487,6 +505,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 		_tableControl = new TableViewControl<>(_context, view, false);
 		_tableControl.setFilterBar(_filterBar);
+		_tableControl.setActivationHandler(_activationHandler);
 		registerChildControl(_tableControl);
 
 		// Set panel child to the table.

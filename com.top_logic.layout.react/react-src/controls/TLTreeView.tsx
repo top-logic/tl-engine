@@ -67,6 +67,12 @@ const TLTreeView: React.FC<TLCellProps> = () => {
     });
   }, [sendCommand]);
 
+  // A double-click opens the node: the server selects it and runs what the view configured for an
+  // activation.
+  const handleActivate = React.useCallback((nodeId: string) => {
+    sendCommand('activate', { nodeId });
+  }, [sendCommand]);
+
   const handleContextMenu = React.useCallback((nodeId: string, e: React.MouseEvent) => {
     e.preventDefault();
     sendCommand('contextMenu', { nodeId, x: e.clientX, y: e.clientY });
@@ -171,11 +177,17 @@ const TLTreeView: React.FC<TLCellProps> = () => {
       case 'Enter':
         e.preventDefault();
         if (focusIndex >= 0 && focusIndex < nodes.length) {
-          sendCommand('select', {
-            nodeId: nodes[focusIndex].id,
-            ctrlKey: e.ctrlKey || e.metaKey,
-            shiftKey: e.shiftKey,
-          });
+          if (e.ctrlKey || e.metaKey || e.shiftKey) {
+            // A modifier makes the gesture a toggle / range selection, not an activation.
+            sendCommand('select', {
+              nodeId: nodes[focusIndex].id,
+              ctrlKey: e.ctrlKey || e.metaKey,
+              shiftKey: e.shiftKey,
+            });
+          } else {
+            // Plain Enter opens the focused node; the server selects it on the way.
+            handleActivate(nodes[focusIndex].id);
+          }
         }
         return;
       case ' ':
@@ -203,7 +215,7 @@ const TLTreeView: React.FC<TLCellProps> = () => {
     if (newIndex !== focusIndex) {
       setFocusIndex(newIndex);
     }
-  }, [focusIndex, nodes, sendCommand, selectionMode]);
+  }, [focusIndex, nodes, sendCommand, selectionMode, handleActivate]);
 
   return (
     <ul
@@ -239,6 +251,7 @@ const TLTreeView: React.FC<TLCellProps> = () => {
             }
           }}
           onClick={(e) => handleSelect(node.id, e)}
+          onDoubleClick={() => handleActivate(node.id)}
           onContextMenu={(e) => handleContextMenu(node.id, e)}
           onDragStart={(e) => handleDragStart(node.id, e)}
           onDragOver={dropEnabled ? (e) => handleDragOver(node.id, e) : undefined}

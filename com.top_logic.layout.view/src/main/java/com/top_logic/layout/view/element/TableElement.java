@@ -36,6 +36,8 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
@@ -44,6 +46,8 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
@@ -141,6 +145,9 @@ public class TableElement implements UIElement {
 		/** Configuration name for {@link #getObservedTypes()}. */
 		String OBSERVED_TYPES = "observed-types";
 
+		/** Configuration name for {@link #getOnActivate()}. */
+		String ON_ACTIVATE = "on-activate";
+
 		/** Configuration name for {@link #getRowEdit()}. */
 		String ROW_EDIT = "row-edit";
 
@@ -206,6 +213,25 @@ public class TableElement implements UIElement {
 		@Name(SELECTION)
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelection();
+
+		/**
+		 * The command a row activation runs - a double-click on the row, or {@code Enter} while the
+		 * row carries the keyboard cursor.
+		 *
+		 * <p>
+		 * The activated row becomes the table's selection first, then the command runs with that row
+		 * as its input. The command's own executability rules decide over the row, so a row the
+		 * rules reject activates nothing. Without a command, activating a row only selects it.
+		 * </p>
+		 *
+		 * <p>
+		 * Configured as {@code <on-activate class="..." .../>} inside the {@code <table>} element.
+		 * </p>
+		 */
+		@Name(ON_ACTIVATE)
+		@Nullable
+		@Options(fun = AllInAppImplementations.class)
+		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
 
 		/**
 		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
@@ -586,6 +612,12 @@ public class TableElement implements UIElement {
 	 */
 	private final Log _log;
 
+	/** The instantiated {@link Config#getOnActivate()} command, {@code null} without one. */
+	private final ViewCommand _onActivate;
+
+	/** The configuration {@link #_onActivate} was instantiated from, {@code null} without one. */
+	private final ViewCommand.Config _onActivateConfig;
+
 	/**
 	 * A {@link PresetConfig} with its criterion expressions compiled.
 	 *
@@ -645,6 +677,10 @@ public class TableElement implements UIElement {
 		}
 
 		_presets = compilePresets(context, config.getPresets());
+
+		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
+		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
+		_onActivate = context.getInstance(onActivate);
 	}
 
 	/**
@@ -771,6 +807,8 @@ public class TableElement implements UIElement {
 			control.addCleanupAction(selectionBinding::dispose);
 		}
 
+		control.setActivationHandler(activationHandler(context));
+
 		// Refresh the rows when observed objects change or an input channel changes.
 		QueryExecutor rowsExecutor = _rowsExecutor;
 		Runnable refresh = () -> {
@@ -797,6 +835,18 @@ public class TableElement implements UIElement {
 		control.addDetachListener(observer::detach);
 
 		return control;
+	}
+
+	/**
+	 * The handler running the {@link Config#getOnActivate() configured activation command} with the
+	 * activated row, {@code null} when the table configures none.
+	 */
+	private <R> TableViewControl.ActivationHandler<R> activationHandler(ViewContext context) {
+		if (_onActivate == null || _onActivateConfig == null) {
+			return null;
+		}
+		ViewCommandModel activation = ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig);
+		return row -> activation.execute(context, row);
 	}
 
 	/**
@@ -838,6 +888,7 @@ public class TableElement implements UIElement {
 		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
 		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
+		control.setActivationHandler(activationHandler(context));
 		control.init();
 
 		contributeAddRowCommand(context, formControl, binding, control);

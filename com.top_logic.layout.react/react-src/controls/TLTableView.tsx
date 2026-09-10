@@ -13,7 +13,8 @@ const TableKeyBindings: React.FC<{
   onMove: (direction: string, extend: boolean, move: boolean) => void;
   onToggle: () => void;
   onSelectAll: () => void;
-}> = ({ isMulti, cursorIndex, onMove, onToggle, onSelectAll }) => {
+  onActivate: () => boolean;
+}> = ({ isMulti, cursorIndex, onMove, onToggle, onSelectAll, onActivate }) => {
   useKeyboardBinding('ArrowUp', () => { onMove('up', false, false); return true; });
   useKeyboardBinding('ArrowDown', () => { onMove('down', false, false); return true; });
   useKeyboardBinding('Home', () => { onMove('home', false, false); return true; });
@@ -33,6 +34,9 @@ const TableKeyBindings: React.FC<{
   // Space toggles the cursor row; Ctrl+A selects all (multi only).
   useKeyboardBinding('Space', () => { if (cursorIndex < 0) { return false; } onToggle(); return true; });
   useKeyboardBinding('Ctrl+A', () => { if (!isMulti) { return false; } onSelectAll(); return true; });
+  // Enter opens the cursor row; it declines when there is nothing to open, so the gesture falls
+  // through to an enclosing scope (a dialog's default button).
+  useKeyboardBinding('Enter', () => onActivate());
   return null;
 };
 
@@ -495,6 +499,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     });
   }, [sendCommand, rows]);
 
+  // A double-click opens the row: the server selects it and runs what the view configured for an
+  // activation. A double-click inside an interactive cell element belongs to that element
+  // (selecting a word in a text input), so it opens nothing.
+  const handleRowActivate = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
+    if (isInteractiveTarget(event)) {
+      return;
+    }
+    sendCommand('activate', { rowIndex });
+  }, [sendCommand]);
+
   // -- Keyboard navigation (server-resolved; see moveSelection) --
   const handleMove = React.useCallback((direction: string, extend: boolean, move: boolean) => {
     sendCommand('moveSelection', { direction, extend, move });
@@ -510,6 +524,20 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const handleSelectAllRows = React.useCallback(() => {
     sendCommand('selectAll', { selected: true });
   }, [sendCommand]);
+
+  // Enter opens the row carrying the keyboard cursor. Declined (false) when no row does, or when
+  // the focus sits in a cell element that answers Enter itself (a text input, an action button).
+  const handleActivateCursor = React.useCallback(() => {
+    if (cursorIndex < 0) {
+      return false;
+    }
+    const active = document.activeElement as Element | null;
+    if (active?.closest?.(FOCUSABLE_SELECTOR)) {
+      return false;
+    }
+    sendCommand('activate', { rowIndex: cursorIndex });
+    return true;
+  }, [sendCommand, cursorIndex]);
 
   // Predicate for the focus-gated table scope: active only while focus is within this table.
   const isTableFocused = React.useCallback(
@@ -833,6 +861,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onMove={handleMove}
       onToggle={handleToggleCursor}
       onSelectAll={handleSelectAllRows}
+      onActivate={handleActivateCursor}
     />
     <div ref={rootRef} id={controlId} className="tlTableView" data-tooltip="dynamic"
       onDragOver={(e) => {
@@ -1124,6 +1153,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 }
               }}
               onClick={(e) => handleRowClick(row.index, e)}
+              onDoubleClick={(e) => handleRowActivate(row.index, e)}
             >
               {isMulti && (
                 <div className={'tlTableView__cell tlTableView__checkboxCell'

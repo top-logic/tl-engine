@@ -139,6 +139,11 @@
 						css-class="ticketState"
 						input="ticketState"
 					/>
+					<progress
+						done="x -&gt; all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size()"
+						observed-types="demo.tickets:Ticket"
+						total="x -&gt; all(`demo.tickets:Ticket`).size()"
+					/>
 					<text-input value="filter">
 						<label>
 							<en>Filter</en>

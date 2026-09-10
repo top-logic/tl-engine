@@ -34,6 +34,19 @@ The sites that fill the field:
 - **`ReactResourceCellControl`** — resource cells and tree nodes, beside the type icon.
 - **`ReactTextControl`** / `<text>` (`TextElement`) — a channel value rendered through `MetaLabelProvider`; `setText(text, cssColor)` updates both in one patch.
 
+## Progress
+
+A fraction between 0 and 1 is displayed as a bar with an optional label beside it. `ReactProgressControl` (`TLProgress`) holds the two state entries `FRACTION` and `LABEL` and nothing else - what the fraction counts is the caller's business. A number outside the range is drawn at the end it exceeds, so two counts that disagree give a full or an empty bar rather than one running past its track; `setProgress(fraction, label)` updates both in one patch.
+
+`<progress>` (`ProgressElement`) states the bar one of two ways, never both:
+
+- `<progress input="ch" fraction="x -> …"/>` — the filled part directly. Such a bar carries no label unless `label="x -> …"` gives it one.
+- `<progress input="ch" done="x -> …" total="x -> …"/>` — the two counts the fraction is the ratio of, which are also the label (`3 / 7`) unless `label=` replaces it. A total of zero leaves the bar empty.
+
+Every expression is called with the current value of the `input` channel, which is optional: a bar counting the model as a whole needs none. The bar recomputes on a new channel value, on a change of the object the channel holds, and on a create / change / delete of an `observed-types` type — the last is what a bar counting all objects of a type needs, since no channel value changes when one is added. The observation is the shared `ChannelObjectObserver`, attached and detached with the control.
+
+A table cell needs nothing new: a `CellRenderer` yields `new CellContent.Raw((CellControlFactory) ctx -> new ReactProgressControl(ctx, fraction, label))`, the escape hatch `CellContentReactAdapter` already resolves.
+
 ## Drill-down navigation with `<tile-stack>`
 
 `com.top_logic.layout.view.tiles` provides drill-down navigation. A `<tile-stack path="navPath" initial="products/overview.view.xml"/>` displays the last frame of a path of `TileFrame`s, the `initial` view when the path is empty, and keeps the frames the displayed one covers (see below). The path itself lives on a normal channel of the enclosing view (`List<TileFrame>`), which is the single source of truth: every navigation is a write to that channel.

@@ -3069,6 +3069,41 @@ button.tlMenu__item--disabled:hover {
 	}
 }
 
+/* A fraction displayed as a bar with an optional label beside it. The track carries the theme's
+   layer color, the filled part the interactive color, so the bar reads on a light and a dark
+   theme from the same declaration. */
+.tlProgress {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02, 0.5rem);
+	min-width: 0;
+}
+
+.tlProgress__track {
+	flex: 1 1 auto;
+	min-width: 2rem;
+	height: 0.5rem;
+	overflow: hidden;
+	border-radius: 999px;
+	background-color: var(--layer-active, #c4c7cc);
+}
+
+.tlProgress__fill {
+	display: block;
+	height: 100%;
+	border-radius: inherit;
+	background-color: var(--interactive, #2968c8);
+	transition: width 0.2s ease-out;
+}
+
+.tlProgress__label {
+	flex: 0 0 auto;
+	color: var(--text-secondary, #676b72);
+	font-size: var(--label-01-font-size, 0.75rem);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
 .tlTableView__checkboxCell {
 	justify-content: center;
 	flex-shrink: 0;

@@ -11,15 +11,18 @@ import java.util.function.Function;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * {@link ChannelFactory} for derived (computed, read-only) channels.
  *
  * <p>
- * Compiles the TL-Script expression once at configuration parse time. Per-session, resolves input
- * channel references and creates a {@link DerivedViewChannel} that recomputes on input changes.
+ * Compiles the TL-Script expression once at configuration parse time. Per-session, resolves the
+ * input channel references and the observed types, and creates a {@link DerivedViewChannel} that
+ * recomputes on input changes and, while displayed, on changes of the observed objects.
  * </p>
  */
 public class DerivedChannelFactory implements ChannelFactory {
@@ -31,6 +34,8 @@ public class DerivedChannelFactory implements ChannelFactory {
 	private final QueryExecutor _executor;
 
 	private final QueryExecutor _reverseExecutor;
+
+	private final List<TLModelPartRef> _observedTypeRefs;
 
 	/**
 	 * Creates a {@link DerivedChannelFactory} from configuration.
@@ -46,6 +51,7 @@ public class DerivedChannelFactory implements ChannelFactory {
 		_executor = QueryExecutor.compile(config.getExpr());
 		Expr reverseExpr = config.getReverse();
 		_reverseExecutor = reverseExpr != null ? QueryExecutor.compile(reverseExpr) : null;
+		_observedTypeRefs = config.getObservedTypes();
 	}
 
 	@Override
@@ -56,7 +62,7 @@ public class DerivedChannelFactory implements ChannelFactory {
 			.toList();
 		Function<Object, Object> reverse =
 			_reverseExecutor != null ? value -> _reverseExecutor.execute(value) : null;
-		channel.bind(inputs, _executor::execute, reverse);
+		channel.bind(inputs, _executor::execute, reverse, ObservedTypes.resolve(_observedTypeRefs));
 		return channel;
 	}
 }

@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.view.element;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -17,10 +15,9 @@ import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.element.SwitchElement.SwitchCase;
+import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.listen.ModelChangeEvent;
-import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
 
 /**
@@ -31,8 +28,8 @@ import com.top_logic.model.listen.ModelScope;
  * <p>
  * Re-evaluation is triggered by a new input channel value, and by a change of the input object
  * itself: a predicate typically decides by one of its attributes, which can be edited while the
- * channel keeps pointing to the same object. The input object is therefore observed in the
- * {@link ModelScope}, along with the optionally configured
+ * channel keeps pointing to the same object. A {@link ChannelObjectObserver} therefore observes the
+ * input object in the {@link ModelScope}, along with the optionally configured
  * {@link SwitchElement.Config#getObservedTypes() observed types}.
  * </p>
  *
@@ -48,7 +45,7 @@ import com.top_logic.model.listen.ModelScope;
  * The React component {@code TLDeckPane} renders the single {@code activeChild}.
  * </p>
  */
-public class ReactSwitchControl extends ReactControl implements ModelListener {
+public class ReactSwitchControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLDeckPane";
 
@@ -62,14 +59,9 @@ public class ReactSwitchControl extends ReactControl implements ModelListener {
 
 	private final List<UIElement> _default;
 
-	private final Set<TLStructuredType> _observedTypes;
-
 	private final ChannelListener _inputListener;
 
-	private ModelScope _scope;
-
-	/** The input objects currently observed for changes, see {@link #observeInput()}. */
-	private Set<TLObject> _observedObjects = Set.of();
+	private final ChannelObjectObserver _inputObserver;
 
 	private ReactControl _current;
 
@@ -99,102 +91,15 @@ public class ReactSwitchControl extends ReactControl implements ModelListener {
 		_input = input;
 		_cases = cases;
 		_default = defaultContent;
-		_observedTypes = observedTypes;
+		_inputObserver = new ChannelObjectObserver(List.of(input), observedTypes, this::renderActive);
 
-		_inputListener = (sender, oldValue, newValue) -> {
-			observeInput();
-			renderActive();
-		};
+		_inputListener = (sender, oldValue, newValue) -> renderActive();
 		_input.addListener(_inputListener);
 		addCleanupAction(() -> _input.removeListener(_inputListener));
 
-		addAttachListener(this::attachModelListeners);
-		addDetachListener(this::detachModelListeners);
+		addAttachListener(() -> _inputObserver.attach(_context.getModelScope()));
+		addDetachListener(_inputObserver::detach);
 
-		renderActive();
-	}
-
-	/**
-	 * Starts observing the {@link SwitchElement.Config#getObservedTypes() observed types} and the
-	 * current input object.
-	 */
-	private void attachModelListeners() {
-		if (_scope != null) {
-			return;
-		}
-		_scope = _context.getModelScope();
-		for (TLStructuredType type : _observedTypes) {
-			_scope.addModelListener(type, this);
-		}
-		observeInput();
-	}
-
-	private void detachModelListeners() {
-		if (_scope == null) {
-			return;
-		}
-		for (TLStructuredType type : _observedTypes) {
-			_scope.removeModelListener(type, this);
-		}
-		removeObjectListeners();
-		_scope = null;
-	}
-
-	/**
-	 * Points the object listeners at the current input value, so that editing an attribute the case
-	 * tests re-evaluates the switch although the channel value stays the same.
-	 */
-	private void observeInput() {
-		if (_scope == null) {
-			// Not rendered yet; the listeners are registered on the first write.
-			return;
-		}
-
-		Set<TLObject> objects = inputObjects();
-		if (objects.equals(_observedObjects)) {
-			return;
-		}
-
-		removeObjectListeners();
-		_observedObjects = objects;
-		for (TLObject object : objects) {
-			_scope.addModelListener(object, this);
-		}
-	}
-
-	private void removeObjectListeners() {
-		for (TLObject object : _observedObjects) {
-			_scope.removeModelListener(object, this);
-		}
-		_observedObjects = Set.of();
-	}
-
-	/**
-	 * The {@link TLObject}s in the current input channel value, which may hold a single object or -
-	 * for a multi-selection - a collection of them.
-	 *
-	 * @return The objects to observe as a set: their order carries no meaning for observation, and a
-	 *         value listing the same object twice must not be registered (or removed) twice.
-	 */
-	private Set<TLObject> inputObjects() {
-		Object value = _input.get();
-		if (value instanceof TLObject object) {
-			return Set.of(object);
-		}
-		if (value instanceof Collection<?> values) {
-			Set<TLObject> result = new HashSet<>();
-			for (Object element : values) {
-				if (element instanceof TLObject object) {
-					result.add(object);
-				}
-			}
-			return result;
-		}
-		return Set.of();
-	}
-
-	@Override
-	public void notifyChange(ModelChangeEvent event) {
 		renderActive();
 	}
 
@@ -236,7 +141,7 @@ public class ReactSwitchControl extends ReactControl implements ModelListener {
 	}
 
 	private boolean hasDeletedInput() {
-		for (TLObject object : inputObjects()) {
+		for (TLObject object : ChannelObjectObserver.objects(_input.get())) {
 			if (!object.tValid()) {
 				return true;
 			}

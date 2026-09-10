@@ -14,6 +14,7 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.AnnotationLookup;
 
 /**
  * {@link ReactFieldControlProvider} for attributes holding a point in time.
@@ -49,7 +50,20 @@ public class DatePickerControlProvider implements ReactFieldControlProvider {
 	 * </p>
 	 */
 	public static ReactDatePickerControl.Kind kind(TLStructuredTypePart part) {
-		switch (configType(part)) {
+		return part == null ? ReactDatePickerControl.Kind.DATE : kind(part, part.getType());
+	}
+
+	/**
+	 * Which part of a point in time a value holds.
+	 *
+	 * @param annotations
+	 *        Where the {@link ConfigType} annotation is read from: the attribute holding the value,
+	 *        or the type itself where no attribute holds it.
+	 * @param type
+	 *        The model type of the value.
+	 */
+	public static ReactDatePickerControl.Kind kind(AnnotationLookup annotations, TLType type) {
+		switch (configType(annotations, type)) {
 			case CONFIG_TYPE_TIME:
 				return ReactDatePickerControl.Kind.TIME;
 			case CONFIG_TYPE_DATE_TIME:
@@ -60,7 +74,7 @@ public class DatePickerControlProvider implements ReactFieldControlProvider {
 	}
 
 	/**
-	 * The {@link ConfigType} of the given attribute, or the empty string if it has none.
+	 * The {@link ConfigType} of the given value, or the empty string if it has none.
 	 *
 	 * <p>
 	 * An annotation at the attribute wins over the one of its type, as the annotation's redefine
@@ -68,14 +82,10 @@ public class DatePickerControlProvider implements ReactFieldControlProvider {
 	 * type says nothing.
 	 * </p>
 	 */
-	private static String configType(TLStructuredTypePart part) {
-		if (part == null) {
-			return "";
-		}
-		ConfigType annotation = part.getAnnotation(ConfigType.class);
-		if (annotation == null) {
-			TLType type = part.getType();
-			annotation = type == null ? null : type.getAnnotation(ConfigType.class);
+	private static String configType(AnnotationLookup annotations, TLType type) {
+		ConfigType annotation = annotations == null ? null : annotations.getAnnotation(ConfigType.class);
+		if (annotation == null && type != null && type != annotations) {
+			annotation = type.getAnnotation(ConfigType.class);
 		}
 		return annotation == null || annotation.getValue() == null ? "" : annotation.getValue();
 	}

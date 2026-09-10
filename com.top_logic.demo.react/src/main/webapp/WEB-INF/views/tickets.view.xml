@@ -17,6 +17,11 @@
 	page rather than walking the terms typed on it. A link without q says nothing about the
 	filter and shows the list unfiltered.
 	
+	The two inputs above the lists show that an input is bound to a channel for a value of any
+	type: the filter term is a tl.core:String and is written in a text field, while the status is
+	an enumeration and is chosen from a dropdown of its classifiers. Either list reads both
+	channels through its <inputs>, so the two inputs narrow both lists together.
+	
 	The two lists split the tickets by whether they carry comments, and share the one ticket
 	channel: the selected ticket is shown in whichever list holds it, and a ticket that moves
 	between the lists - the first comment is written, the last one deleted - leaves the
@@ -27,6 +32,7 @@
 		<channel name="model"/>
 		<channel name="ticket"/>
 		<channel name="filter"/>
+		<channel name="status"/>
 		<derived-channel name="ticketId"
 			expr="t -> objectId($t)"
 			inputs="ticket"
@@ -139,12 +145,24 @@
 						css-class="ticketState"
 						input="ticketState"
 					/>
-					<text-input value="filter">
+					<value-input
+						type="tl.core:String"
+						value="filter"
+					>
 						<label>
 							<en>Filter</en>
 							<de>Filter</de>
 						</label>
-					</text-input>
+					</value-input>
+					<value-input
+						type="demo.tickets:TicketStatus"
+						value="status"
+					>
+						<label>
+							<en>Status</en>
+							<de>Status</de>
+						</label>
+					</value-input>
 					<panel>
 						<title>
 							<en>Without comments</en>
@@ -157,11 +175,12 @@
 						>
 							<inputs>
 								<input channel="filter"/>
+								<input channel="status"/>
 							</inputs>
 							<columns>
 								<column attribute="name"/>
 							</columns>
-							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).isEmpty()); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
+							<rows>term -&gt; state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).isEmpty()); named = if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); if($state == null, $named, $named.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
 						</table>
 					</panel>
 					<panel>
@@ -176,11 +195,12 @@
 						>
 							<inputs>
 								<input channel="filter"/>
+								<input channel="status"/>
 							</inputs>
 							<columns>
 								<column attribute="name"/>
 							</columns>
-							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; !$t.get(`demo.tickets:Ticket#comments`).isEmpty()); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
+							<rows>term -&gt; state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; !$t.get(`demo.tickets:Ticket#comments`).isEmpty()); named = if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); if($state == null, $named, $named.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
 						</table>
 					</panel>
 				</panel>

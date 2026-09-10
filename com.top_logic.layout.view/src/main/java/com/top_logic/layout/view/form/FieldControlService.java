@@ -49,6 +49,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
@@ -236,18 +237,43 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			return provider.createControl(context, field, model);
 		}
 
-		// 2. Option-based attributes use a select control.
+		return createFieldControl(context, part.getType(), field, model);
+	}
+
+	/**
+	 * Resolves and creates the input control for a value of the given model type.
+	 *
+	 * <p>
+	 * The entry point for a value that no attribute holds - a value belonging to the view itself.
+	 * The attribute-based resolution adds only the lookup of an attribute's own control annotation
+	 * and continues here, so both are edited by the same control.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param type
+	 *        The model type of the edited value.
+	 * @param field
+	 *        The description of what is edited, see
+	 *        {@link #fieldSpec(TLType, AnnotationLookup, String, boolean, FieldModel)}.
+	 * @param model
+	 *        The field model providing value, editability, and change notifications. A
+	 *        {@link SelectFieldModel} makes the value one chosen from its options.
+	 * @return A React control for the field input widget.
+	 */
+	public ReactControl createFieldControl(ReactContext context, TLType type, FieldSpec field, FieldModel model) {
+		// 1. Option-based values use a select control.
 		if (model instanceof SelectFieldModel) {
 			return _selectProvider.createControl(context, field, model);
 		}
 
-		// 3. Configured control by type.
-		ReactFieldControlProvider mapped = byType(part.getType());
+		// 2. Configured control by type.
+		ReactFieldControlProvider mapped = byType(type);
 		if (mapped != null) {
 			return mapped.createControl(context, field, model);
 		}
 
-		// 4. The control registered for the kind of value the attribute holds. The same registry
+		// 3. The control registered for the kind of value the type holds. The same registry
 		// serves configuration properties, so both are edited alike.
 		return FieldControlRegistry.getInstance().createControl(context, field, model);
 	}
@@ -255,16 +281,38 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	/**
 	 * Describes the given attribute for the control that edits it.
 	 */
-	private FieldSpec fieldSpec(TLStructuredTypePart part, FieldModel model) {
-		return FieldSpec.of(valueType(part), MetaLabelProvider.INSTANCE.getLabel(part))
-			.setMultiple(part.isMultiple())
+	private static FieldSpec fieldSpec(TLStructuredTypePart part, FieldModel model) {
+		return fieldSpec(part.getType(), part, MetaLabelProvider.INSTANCE.getLabel(part), part.isMultiple(), model);
+	}
+
+	/**
+	 * Describes a value for the control that edits it.
+	 *
+	 * @param type
+	 *        The model type of the value, deciding which control edits it.
+	 * @param annotations
+	 *        Where the display annotations are read from: the attribute holding the value, or the
+	 *        type itself where no attribute holds it. An annotation missing there is looked up at
+	 *        the type.
+	 * @param label
+	 *        The label of the edited field, or {@code null} if it has none.
+	 * @param multiple
+	 *        Whether the value is a collection of values rather than a single one.
+	 * @param model
+	 *        The field model holding the value.
+	 * @return The description to pass to {@link ReactFieldControlProvider#createControl}.
+	 */
+	public static FieldSpec fieldSpec(TLType type, AnnotationLookup annotations, String label, boolean multiple,
+			FieldModel model) {
+		return FieldSpec.of(valueType(type), label)
+			.setMultiple(multiple)
 			.setMandatory(model.isMandatory())
 			.setEditable(model.isEditable())
-			.setMultilineRows(multilineRows(part))
-			.setBooleanPresentation(booleanPresentation(part))
-			.setTriState(isTriState(part))
-			.setDateKind(DatePickerControlProvider.kind(part))
-			.setNumberFormat(numberFormat(part));
+			.setMultilineRows(multilineRows(annotations))
+			.setBooleanPresentation(booleanPresentation(annotations, type))
+			.setTriState(isTriState(type))
+			.setDateKind(DatePickerControlProvider.kind(annotations, type))
+			.setNumberFormat(numberFormat(annotations, type, multiple));
 	}
 
 	/**
@@ -287,32 +335,50 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        The model attribute, or {@code null} for an unresolved one.
 	 */
 	public static Format numberFormat(TLStructuredTypePart part) {
-		if (part == null || part.isMultiple()) {
+		if (part == null) {
 			return null;
 		}
-		Class<?> valueType = PrimitiveTypeUtil.asNonPrimitive(valueType(part));
-		if (!Number.class.isAssignableFrom(valueType)) {
-			return null;
-		}
-		TLType type = part.getType();
-		boolean fractional = valueType == Double.class || valueType == Float.class
-			|| (type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.FLOAT);
-		return numberFormat(part, fractional);
+		return numberFormat(part, part.getType(), part.isMultiple());
 	}
 
 	/**
-	 * The annotated format of the given attribute, or the default format for its kind of number.
+	 * The format a numeric value is displayed in and entered in, or {@code null} if the value is no
+	 * single number.
+	 *
+	 * @param annotations
+	 *        Where the {@code format} annotation is read from.
+	 * @param type
+	 *        The model type of the value.
+	 * @param multiple
+	 *        Whether the value is a collection of numbers rather than a single one.
+	 */
+	private static Format numberFormat(AnnotationLookup annotations, TLType type, boolean multiple) {
+		if (multiple) {
+			return null;
+		}
+		Class<?> valueType = PrimitiveTypeUtil.asNonPrimitive(valueType(type));
+		if (!Number.class.isAssignableFrom(valueType)) {
+			return null;
+		}
+		boolean fractional = valueType == Double.class || valueType == Float.class
+			|| (type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.FLOAT);
+		return numberFormat(annotations, fractional);
+	}
+
+	/**
+	 * The annotated format of the given value, or the default format for its kind of number.
 	 *
 	 * <p>
-	 * An attribute whose format declaration cannot be resolved is displayed in the default format
+	 * A value whose format declaration cannot be resolved is displayed in the default format
 	 * instead, so that a misconfigured attribute still shows its value.
 	 * </p>
 	 */
-	private static Format numberFormat(TLStructuredTypePart part, boolean fractional) {
+	private static Format numberFormat(AnnotationLookup annotations, boolean fractional) {
 		try {
-			return fractional ? DisplayAnnotations.getFloatFormat(part) : DisplayAnnotations.getLongFormat(part);
+			return fractional ? DisplayAnnotations.getFloatFormat(annotations)
+				: DisplayAnnotations.getLongFormat(annotations);
 		} catch (ConfigurationException ex) {
-			Logger.error("Invalid attribute definition for '" + part + "'.", ex, FieldControlService.class);
+			Logger.error("Invalid format definition at '" + annotations + "'.", ex, FieldControlService.class);
 			return defaultNumberFormat(fractional);
 		}
 	}
@@ -326,14 +392,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
-	 * The Java type of the values the given attribute holds, which decides the control editing it.
-	 */
-	private static Class<?> valueType(TLStructuredTypePart part) {
-		return valueType(part.getType());
-	}
-
-	/**
-	 * The Java type of the values of the given model type.
+	 * The Java type of the values of the given model type, which decides the control editing them.
 	 */
 	private static Class<?> valueType(TLType type) {
 		if (type instanceof TLPrimitive primitive) {
@@ -359,19 +418,18 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
-	 * How the given attribute asks to be displayed, {@link BooleanPresentation#CHECKBOX} when it
-	 * says nothing.
+	 * How a boolean value asks to be displayed, {@link BooleanPresentation#CHECKBOX} when it says
+	 * nothing.
 	 *
 	 * <p>
 	 * An annotation at the attribute wins over the one of its type, which is what lets a single
 	 * attribute deviate from how its type is displayed everywhere else.
 	 * </p>
 	 */
-	private static BooleanPresentation booleanPresentation(TLStructuredTypePart part) {
-		BooleanDisplay annotation = part.getAnnotation(BooleanDisplay.class);
-		if (annotation == null) {
-			TLType type = part.getType();
-			annotation = type == null ? null : type.getAnnotation(BooleanDisplay.class);
+	private static BooleanPresentation booleanPresentation(AnnotationLookup annotations, TLType type) {
+		BooleanDisplay annotation = annotations == null ? null : annotations.getAnnotation(BooleanDisplay.class);
+		if (annotation == null && type != null && type != annotations) {
+			annotation = type.getAnnotation(BooleanDisplay.class);
 		}
 		if (annotation == null || annotation.getPresentation() == null) {
 			return BooleanPresentation.CHECKBOX;
@@ -380,18 +438,17 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
-	 * Whether the given attribute keeps a state of its own for "no value".
+	 * Whether a value of the given type keeps a state of its own for "no value".
 	 */
-	private static boolean isTriState(TLStructuredTypePart part) {
-		TLType type = part.getType();
+	private static boolean isTriState(TLType type) {
 		return type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.TRISTATE;
 	}
 
 	/**
-	 * The number of text rows the given attribute is displayed with, or {@code 0} for a single line.
+	 * The number of text rows the value is displayed with, or {@code 0} for a single line.
 	 */
-	private static int multilineRows(TLStructuredTypePart part) {
-		MultiLine annotation = part.getAnnotation(MultiLine.class);
+	private static int multilineRows(AnnotationLookup annotations) {
+		MultiLine annotation = annotations == null ? null : annotations.getAnnotation(MultiLine.class);
 		return annotation != null && annotation.getValue() ? annotation.getRows() : 0;
 	}
 

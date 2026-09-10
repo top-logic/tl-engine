@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="term"/>
+		<channel name="flag"/>
+		<channel name="date"/>
+		<channel name="state"/>
+		<channel name="owners"/>
+		<channel name="project"/>
+	</channels>
+
+	<panel>
+		<children>
+			<value-input value="term"/>
+			<value-input
+				type="tl.core:Boolean"
+				value="flag"
+			/>
+			<value-input
+				type="tl.core:Date"
+				value="date"
+			/>
+			<value-input
+				label-position="above-value"
+				readonly="true"
+				type="test.input:Status"
+				value="state"
+			>
+				<label>
+					<en>Status</en>
+				</label>
+			</value-input>
+			<value-input
+				multiple="true"
+				options="p -> all(`tl.accounts:Person`)"
+				type="tl.accounts:Person"
+				value="owners"
+			>
+				<inputs>
+					<input channel="project"/>
+				</inputs>
+			</value-input>
+		</children>
+	</panel>
+</view>

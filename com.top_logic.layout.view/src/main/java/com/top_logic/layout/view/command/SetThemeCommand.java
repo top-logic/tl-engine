@@ -76,7 +76,7 @@ public class SetThemeCommand implements ViewCommand {
 	 * @return The result of the activation.
 	 */
 	public static HandlerResult applyTheme(ReactContext context, String themeId) {
-		UIThemeService.getInstance().setActiveThemeId(themeId);
+		UIThemeService.getInstance().setSelectedThemeId(themeId);
 
 		SSEUpdateQueue queue = context.getSSEQueue();
 		if (queue != null) {

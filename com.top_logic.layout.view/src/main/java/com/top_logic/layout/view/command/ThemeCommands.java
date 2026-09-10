@@ -27,9 +27,9 @@ import com.top_logic.util.Resources;
  * <p>
  * The set follows {@link UIThemeService}, so an application offers its own themes by configuring
  * them and needs no view change; the label and icon of an entry are the ones the theme declares.
- * The entry for the theme currently in effect is offered as disabled, which is both what it means -
- * switching to the active theme does nothing - and how the menu shows which one that is. An
- * application with a single configured theme has nothing to switch to and gets no entries at all.
+ * The entry for the theme the user has selected is offered as disabled, which is both what it means
+ * - selecting it again does nothing - and how the menu shows which one that is. An application with
+ * a single configured theme has nothing to switch to and gets no entries at all.
  * </p>
  *
  * <p>
@@ -76,8 +76,8 @@ public class ThemeCommands implements ViewCommandSource {
 					ctx -> SetThemeCommand.applyTheme(ctx, id))
 				.setImage(theme.getIcon())
 				// Read on every display: the models outlive a switch, since the menu is built once
-				// per rendering of the element carrying it, while the active theme changes under it.
-				.setExecutable(() -> !id.equals(UIThemeService.getInstance().getActiveThemeId())));
+				// per rendering of the element carrying it, while the selection changes under it.
+				.setExecutable(() -> !id.equals(UIThemeService.getInstance().getSelectedThemeId())));
 		}
 		return result;
 	}

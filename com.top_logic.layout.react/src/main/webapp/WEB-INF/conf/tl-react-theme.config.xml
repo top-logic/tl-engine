@@ -102,8 +102,10 @@
 					<color name="text-secondary" value="#676B72"/>
 					</theme>
 					<theme name="dark"
+						color-scheme="dark"
 						extends="default"
 						icon="css:bi bi-moon-stars"
+						system-default="true"
 					>
 						<label>
 							<en>Dark</en>

@@ -29,6 +29,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_LINKED_OBJECT_NOT_DISPLAYED;
 
+	/**
+	 * @en Insert object link
+	 */
+	public static ResKey INSERT_OBJECT_LINK;
+
+	/**
+	 * @en The object selection cannot be opened.
+	 */
+	public static ResKey ERROR_OBJECT_SELECTION_UNAVAILABLE;
+
 	/** @en Bold */
 	@CustomKey("js.wysiwyg.bold")
 	public static ResKey JS_WYSIWYG_BOLD;

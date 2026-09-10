@@ -3,6 +3,10 @@
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<modules>
 		<module name="demo.tickets">
+			<enum name="TicketStatus">
+				<classifier name="open"/>
+				<classifier name="closed"/>
+			</enum>
 			<class name="Ticket">
 				<annotations>
 					<main-properties properties="name"/>
@@ -12,6 +16,16 @@
 						mandatory="true"
 						type="tl.core:String"
 					/>
+					<reference name="status"
+						kind="forwards"
+						type="TicketStatus"
+					>
+						<annotations>
+							<default-value>
+								<classifier value="open"/>
+							</default-value>
+						</annotations>
+					</reference>
 					<reference name="comments"
 						composite="true"
 						kind="forwards"

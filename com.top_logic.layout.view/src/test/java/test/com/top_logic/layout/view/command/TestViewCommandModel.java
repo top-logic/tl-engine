@@ -34,7 +34,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> HandlerResult.DEFAULT_RESULT,
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
-		model.attach();
+		model.attach(null);
 
 		// Initially null input -> disabled
 		assertFalse("Should be disabled with null input",
@@ -60,7 +60,7 @@ public class TestViewCommandModel extends TestCase {
 			(context, input) -> HandlerResult.DEFAULT_RESULT,
 			createMinimalConfig(), null,
 			ViewExecutabilityRule.ALWAYS_EXECUTABLE);
-		model.attach();
+		model.attach(null);
 
 		assertNull("Should resolve null without channel", model.resolveInput());
 		assertTrue("Should be executable", model.getExecutableState().isExecutable());
@@ -77,7 +77,7 @@ public class TestViewCommandModel extends TestCase {
 			(context, input) -> HandlerResult.DEFAULT_RESULT,
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.addStateChangeListener(() -> callCount[0]++);
-		model.attach();
+		model.attach(null);
 
 		// Initial attach fires listener because initial state was EXECUTABLE, but after
 		// evaluation with null input it changes to NO_EXEC_NO_MODEL
@@ -104,7 +104,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> HandlerResult.DEFAULT_RESULT,
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
-		model.attach();
+		model.attach(null);
 
 		// Set value -> enabled
 		channel.set("value");
@@ -132,7 +132,7 @@ public class TestViewCommandModel extends TestCase {
 				return HandlerResult.DEFAULT_RESULT;
 			},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
-		model.attach();
+		model.attach(null);
 
 		// Channel is null -> not executable -> command should not be called
 		HandlerResult result = model.executeCommand(null);
@@ -154,7 +154,7 @@ public class TestViewCommandModel extends TestCase {
 				return HandlerResult.DEFAULT_RESULT;
 			},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
-		model.attach();
+		model.attach(null);
 
 		// Channel has value -> executable -> command should be called
 		HandlerResult result = model.executeCommand(null);

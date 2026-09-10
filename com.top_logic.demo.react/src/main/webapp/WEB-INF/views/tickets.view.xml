@@ -32,6 +32,10 @@
 			inputs="ticket"
 			reverse="id -> objectResolve(`demo.tickets:Ticket`, $id)"
 		/>
+		<derived-channel name="ticketState"
+			expr="t -> if($t == null, '', if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"
+			inputs="ticket"
+		/>
 	</channels>
 	<param-bindings>
 		<bind
@@ -98,7 +102,43 @@
 							</with-transaction>
 							<write-channel name="ticket"/>
 						</generic-command>
+						<generic-command name="closeTicket"
+							image="css:bi bi-check2-circle"
+							input="ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Close</en>
+								<de>Schließen</de>
+							</label>
+							<executability>
+								<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`"/>
+							</executability>
+							<with-transaction>
+								<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+							</with-transaction>
+						</generic-command>
+						<generic-command name="reopenTicket"
+							image="css:bi bi-arrow-counterclockwise"
+							input="ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Reopen</en>
+								<de>Wiedereröffnen</de>
+							</label>
+							<executability>
+								<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`"/>
+							</executability>
+							<with-transaction>
+								<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
+							</with-transaction>
+						</generic-command>
 					</commands>
+					<text
+						css-class="ticketState"
+						input="ticketState"
+					/>
 					<text-input value="filter">
 						<label>
 							<en>Filter</en>

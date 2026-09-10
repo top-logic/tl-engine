@@ -6,9 +6,7 @@
 package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -30,7 +28,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.model.TLStructuredType;
+import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
@@ -195,22 +193,7 @@ public class SwitchElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel input = context.resolveChannel(_inputRef);
-		return new ReactSwitchControl(context, input, _cases, _default, resolveObservedTypes());
-	}
-
-	private Set<TLStructuredType> resolveObservedTypes() {
-		if (_observedTypeRefs.isEmpty()) {
-			return Set.of();
-		}
-		Set<TLStructuredType> types = new HashSet<>();
-		for (TLModelPartRef ref : _observedTypeRefs) {
-			TLStructuredType type = (TLStructuredType) ref.resolveType();
-			if (type == null) {
-				throw new RuntimeException("Failed to resolve observed type: " + ref.qualifiedName());
-			}
-			types.add(type);
-		}
-		return types;
+		return new ReactSwitchControl(context, input, _cases, _default, ObservedTypes.resolve(_observedTypeRefs));
 	}
 
 	/**

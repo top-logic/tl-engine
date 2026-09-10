@@ -123,13 +123,17 @@ public abstract class CommandCarrierElement extends ContainerElement {
 	}
 
 	/**
-	 * Registers attach/detach hooks for the given command models so they re-evaluate executability
-	 * when input channels change.
+	 * Registers attach/detach hooks for the given command models, so that they follow their input -
+	 * the channel value and the object it holds - while the host is displayed.
+	 *
+	 * @param context
+	 *        The context whose {@link ViewContext#getModelScope() model scope} carries the object
+	 *        observation; read when the host attaches.
 	 */
-	protected void registerLifecycle(List<ViewCommandModel> models, ReactControl host) {
+	protected void registerLifecycle(ViewContext context, List<ViewCommandModel> models, ReactControl host) {
 		host.addAttachListener(() -> {
 			for (ViewCommandModel model : models) {
-				model.attach();
+				model.attach(context.getModelScope());
 			}
 		});
 		host.addDetachListener(() -> {
@@ -142,8 +146,8 @@ public abstract class CommandCarrierElement extends ContainerElement {
 	/**
 	 * Convenience overload for {@link ToolbarControl}s (which are {@link ReactControl}s).
 	 */
-	protected void registerLifecycle(List<ViewCommandModel> models, ToolbarControl host) {
-		registerLifecycle(models, (ReactControl) host);
+	protected void registerLifecycle(ViewContext context, List<ViewCommandModel> models, ToolbarControl host) {
+		registerLifecycle(context, models, (ReactControl) host);
 	}
 
 	/**

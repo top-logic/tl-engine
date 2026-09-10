@@ -39,6 +39,17 @@ A `<table>` and a `<tree>` open a row / node on a **double-click**, and on **Ent
 - A double-click inside an interactive cell element (a text input of an editable cell) belongs to that element and opens nothing; Enter is likewise declined while the focus sits in a cell input or action button.
 - Demos in `com.top_logic.demo.react`: the *Attributes* table opens the object's detail dialog, and *Tree Demo* (`demo/tree-demo.view.xml`) writes the activated node to a channel displayed next to the selected one.
 
+## Grouping
+
+A `<table>` buckets its rows by the value of one column: one collapsible header row per value, showing that value, how many rows it holds, and what every other column aggregates over them. `<table group-by="status">` is the grouping a table *starts* with; the user regroups it from a column header's context menu ("Group by this column" / "Remove grouping") or from the column selection (the group icon on each row of the dialog, applied together with the columns), and that choice is kept under the table's personalization key exactly like the sort order.
+
+- **The model does the grouping** (`com.top_logic.table`): `TableView.group(GroupSpec)` sets `TableViewState.getGrouping()`, persists it and hands it to `RowSource.withGrouping`. `ListRowSource` filters, then sorts, then buckets — so a filter decides what a group holds and the sort decides the order *within* it — and emits a `GroupRow` (`RowKind.GROUP_HEADER`, `expandable()`, `depth() == 0`, keyed by its `GroupKey`) followed by its members at `depth() == 1`. `DefaultTableView.cell(row, column)` renders the group value in the first column and the column's `Aggregator` result in the others.
+- **The UI follows that representation**: `TableViewControl` pushes the group rows through the same `treeMode` / `treeDepth` / `expandable` / `expanded` state the tree table already uses, plus a `groupCount` present exactly on a group header, so collapsing a group *is* collapsing a node (`expand` command) and needs no second mechanism. A table becomes `treeMode` while it is grouped, whatever it was built as.
+- **A group header stands for no object**: the gesture that would select it (a click, or `Enter`) collapses or expands it instead, the selection channel never receives a group, and range selection, select-all and keyboard navigation only ever collect `RowKind.DATA` rows. Changing the grouping clears the selection, since the rows it named are gone.
+- **One column at a time** — `ListRowSource` rejects a multi-column `GroupSpec`, and the UI offers a single column accordingly.
+- Grouping is offered for the columns the user may choose at all (the `columnOptions()`, i.e. the selectable ones): an action column carries the row itself and would yield one group per row.
+- Demo: *Object list* (`tickets.view.xml`) groups its first ticket list by status and leaves the second flat; *Attributes → Table* starts ungrouped and is grouped from the header menu.
+
 ## Drill-down navigation with `<tile-stack>`
 
 `com.top_logic.layout.view.tiles` provides drill-down navigation. A `<tile-stack path="navPath" initial="products/overview.view.xml"/>` displays the last frame of a path of `TileFrame`s, the `initial` view when the path is empty, and keeps the frames the displayed one covers (see below). The path itself lives on a normal channel of the enclosing view (`List<TileFrame>`), which is the single source of truth: every navigation is a write to that channel.

@@ -8,6 +8,7 @@
 
 	<table
 		filter-bar="true"
+		group-by="owner"
 		personalization-key="test-table"
 		selection="selectedRow"
 		types="demo.test:Row"

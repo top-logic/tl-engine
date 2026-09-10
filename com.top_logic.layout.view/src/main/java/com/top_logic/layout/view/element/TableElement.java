@@ -75,6 +75,7 @@ import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
@@ -147,6 +148,9 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getOnActivate()}. */
 		String ON_ACTIVATE = "on-activate";
+
+		/** Configuration name for {@link #getGroupBy()}. */
+		String GROUP_BY = "group-by";
 
 		/** Configuration name for {@link #getRowEdit()}. */
 		String ROW_EDIT = "row-edit";
@@ -232,6 +236,22 @@ public class TableElement implements UIElement {
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
+
+		/**
+		 * The name of the column whose value the rows are initially grouped by: one collapsible
+		 * header row per value, showing that value, how many rows it holds and what the other
+		 * columns aggregate over them.
+		 *
+		 * <p>
+		 * The user regroups the table from a column header or from the column selection, and that
+		 * choice is kept under the table's personalization key, so this is the grouping a table
+		 * starts with until a personalization of its own exists. Unset (default) starts ungrouped.
+		 * Rows are grouped by one column at a time.
+		 * </p>
+		 */
+		@Name(GROUP_BY)
+		@Nullable
+		String getGroupBy();
 
 		/**
 		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
@@ -539,6 +559,20 @@ public class TableElement implements UIElement {
 	 * Switched on explicitly, or implied by declaring presets - which are offered in that very bar.
 	 * </p>
 	 */
+	/**
+	 * The {@link Config#getGroupBy() configured} initial grouping, {@link GroupSpec#NONE} when the
+	 * table starts ungrouped.
+	 *
+	 * <p>
+	 * This is what the table's initial state carries, so a grouping the user chose - which is
+	 * persisted under the table's identity - wins over it.
+	 * </p>
+	 */
+	public GroupSpec initialGrouping() {
+		String column = _config.getGroupBy();
+		return StringServices.isEmpty(column) ? GroupSpec.NONE : new GroupSpec(List.of(column));
+	}
+
 	private boolean filterBar() {
 		return _config.getFilterBar() || !_presets.isEmpty();
 	}
@@ -788,6 +822,7 @@ public class TableElement implements UIElement {
 		Set<String> hiddenByDefault = hiddenByDefault(setups.stream().map(ColumnSetup::attribute).toList());
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
 		initialState.setFrozenCount(_config.getFixedColumns());
+		initialState.setGrouping(initialGrouping());
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
 			PersonalConfigViewStateStore.INSTANCE, tableId(), hiddenByDefault,
 			declaredFilters(columns, inputValues), filterStore());
@@ -885,6 +920,7 @@ public class TableElement implements UIElement {
 		control.setHiddenByDefault(
 			hiddenByDefault(editColumns.stream().map(RowSetTableControl.TableColumn::attribute).toList()));
 		control.setDefaultSort(defaultSort());
+		control.setGrouping(initialGrouping());
 		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
 		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);

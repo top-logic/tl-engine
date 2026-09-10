@@ -166,10 +166,13 @@ public class DefaultTableView<R> implements TableView<R> {
 		if (_filterStore != null && _id != null) {
 			_savedFilters.addAll(_filterStore.load(_id, filterCodec()));
 		}
-		// Whatever the order ends up being - the initial default or the user's persisted choice -
-		// the row source has to be told about it.
+		// Whatever the order and the grouping end up being - the initial default or the user's
+		// persisted choice - the row source has to be told about them.
 		if (!_state.getSort().isEmpty()) {
 			_source.withOrder(new SortSpec(_state.getSort()));
+		}
+		if (!_state.getGrouping().columns().isEmpty()) {
+			_source.withGrouping(_state.getGrouping());
 		}
 	}
 
@@ -806,8 +809,7 @@ public class DefaultTableView<R> implements TableView<R> {
 	/**
 	 * Loads persisted personalization and merges it onto the current state: column order, widths
 	 * and sort are reconciled against the columns that actually exist (stale columns dropped, new
-	 * columns appended), and the persisted sort, grouping, filters and search are re-applied to the
-	 * row source.
+	 * columns appended), and the persisted filters and search are applied to the row source.
 	 */
 	private void restore() {
 		TableViewState persisted = _store.load(_id, filterCodec());
@@ -871,10 +873,10 @@ public class DefaultTableView<R> implements TableView<R> {
 				groupColumns.add(name);
 			}
 		}
+		// An empty persisted grouping means the user never grouped this table, so the configured
+		// initial grouping stays in effect. The constructor tells the source about the outcome.
 		if (!groupColumns.isEmpty()) {
-			GroupSpec grouping = new GroupSpec(groupColumns);
-			_state.setGrouping(grouping);
-			_source.withGrouping(grouping);
+			_state.setGrouping(new GroupSpec(groupColumns));
 		}
 
 		for (Map.Entry<String, FilterState> entry : persisted.getFilters().entrySet()) {

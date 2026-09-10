@@ -19,6 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -51,8 +52,10 @@ import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.MatchCounts;
@@ -154,6 +157,12 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String TREE_MODE = "treeMode";
 
+	/**
+	 * State key holding the name of the column the rows are grouped by, {@link #NOTHING} when they
+	 * are not grouped.
+	 */
+	private static final String GROUPING = "grouping";
+
 	private static final String ROW_ID = "id";
 
 	private static final String ROW_INDEX = "index";
@@ -168,12 +177,21 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String TREE_EXPANDED = "expanded";
 
+	/**
+	 * Per-row state key holding the number of rows in a group, present exactly on the group header
+	 * rows a {@link #GROUPING} introduces.
+	 */
+	private static final String ROW_GROUP_COUNT = "groupCount";
+
 	private static final int PREFETCH_ROWS = 20;
 
 	private static final int MIN_WIDTH = 50;
 
 	/** State key telling the client whether to offer the column selection. */
 	private static final String COLUMN_SELECT = "columnSelect";
+
+	/** Per-column state key telling whether the rows can be grouped by that column. */
+	private static final String COLUMN_GROUPABLE = "groupable";
 
 	/** State key telling the client whether to display the filter bar. */
 	private static final String FILTER_BAR = "filterBar";
@@ -212,9 +230,18 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String CMD_SCROLL = "scroll";
 
-	private static final String CMD_SORT = "sort";
+	/** The command the client sends to sort by a column. */
+	public static final String CMD_SORT = "sort";
 
-	private static final String CMD_SELECT = "select";
+	/**
+	 * The command the client sends to group the rows by a column, or to show them ungrouped.
+	 *
+	 * @see GroupArguments
+	 */
+	public static final String CMD_GROUP = "group";
+
+	/** The command the client sends when the user clicks a row. */
+	public static final String CMD_SELECT = "select";
 
 	private static final String CMD_SELECT_BY_KEY = "selectByKey";
 
@@ -236,7 +263,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String CMD_COLUMN_REORDER = "columnReorder";
 
-	private static final String CMD_EXPAND = "expand";
+	/** The command the client sends to expand or collapse a tree node or a group header. */
+	public static final String CMD_EXPAND = "expand";
 
 	private static final String CMD_SET_FROZEN_COLUMN_COUNT = "setFrozenColumnCount";
 
@@ -244,7 +272,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String CMD_CLEAR_FILTER = "clearFilter";
 
-	private static final String CMD_SEARCH = "search";
+	/** The command the client sends to search the displayed columns for a text. */
+	public static final String CMD_SEARCH = "search";
 
 	private static final String CMD_SAVE_NAMED_FILTER = "saveNamedFilter";
 
@@ -338,9 +367,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 		putState(ROW_HEIGHT, Integer.valueOf(36));
 		putState(SELECTION_MODE, _selectionMode);
-		putState(TREE_MODE, Boolean.valueOf(_treeMode));
 		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
 		putState(FILTER_BAR, Boolean.valueOf(_filterBar));
+		pushGrouping();
 		buildFullState();
 	}
 
@@ -498,6 +527,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private void refreshColumns() {
 		Resources resources = Resources.getInstance();
+		// Grouping buckets rows by a column's value, which is meaningful for the columns the user
+		// may choose at all - an action column carries the row itself, and would yield one group
+		// per row.
+		Set<String> groupable = new HashSet<>();
+		for (ColumnOption option : _view.columnOptions()) {
+			groupable.add(option.name());
+		}
 		List<Map<String, Object>> columns = new ArrayList<>();
 		for (ColumnView column : _view.columns()) {
 			ColumnDef def = new ColumnDef(column.name(), label(resources, column.label()));
@@ -512,6 +548,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			Map<String, Object> columnState = def.toStateMap();
 			columnState.put("filterable", Boolean.valueOf(column.filterable()));
 			columnState.put("filterActive", Boolean.valueOf(isFilterActive(column.name())));
+			columnState.put(COLUMN_GROUPABLE, Boolean.valueOf(groupable.contains(column.name())));
 			columns.add(columnState);
 		}
 		putState(COLUMNS, columns);
@@ -597,12 +634,15 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			rowState.put(ROW_ID, "row_" + index);
 			rowState.put(ROW_INDEX, Integer.valueOf(index));
 			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
-			if (_treeMode) {
+			if (treeMode()) {
 				rowState.put(TREE_DEPTH, Integer.valueOf(row.depth()));
 				rowState.put(TREE_EXPANDABLE, Boolean.valueOf(row.expandable()));
 				if (row.expandable()) {
 					rowState.put(TREE_EXPANDED, Boolean.valueOf(row.expanded()));
 				}
+			}
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				rowState.put(ROW_GROUP_COUNT, Integer.valueOf(row.group().size()));
 			}
 			rowState.put(ROW_CELLS, cells);
 			rowStates.add(rowState);
@@ -652,9 +692,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			rowState.put(ARG_ROW_INDEX, Integer.valueOf(index));
 			rowState.put("selected", Boolean.valueOf(_selectedKeys.contains(row.key())));
-			Object key = ScriptingModelKey.toKey(null, row.data());
-			if (key != null) {
-				rowState.put(ARG_KEY, key);
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				rowState.put(ROW_GROUP_COUNT, Integer.valueOf(row.group().size()));
+			} else {
+				Object key = ScriptingModelKey.toKey(null, row.data());
+				if (key != null) {
+					rowState.put(ARG_KEY, key);
+				}
 			}
 			Map<String, Object> cells = new LinkedHashMap<>();
 			for (ColumnView column : _view.columns()) {
@@ -801,7 +845,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	// -- Column selection dialog --
 
 	/**
-	 * Opens the column selection: which columns the table displays, and in which order.
+	 * Opens the column selection: which columns the table displays, in which order, and which of
+	 * them the rows are grouped by.
 	 *
 	 * <p>
 	 * The dialog edits a working copy in a {@link ReactColumnSelectControl} and applies it in one
@@ -821,13 +866,15 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		}
 		Resources resources = Resources.getInstance();
 
-		ReactColumnSelectControl selection = new ReactColumnSelectControl(context, _view.columnOptions());
+		ReactColumnSelectControl selection =
+			new ReactColumnSelectControl(context, _view.columnOptions(), getGroupedColumn());
 		// Wider than the filter dialog: three actions, one of them a spelled-out "show all columns".
 		ReactWindowControl window = new ReactWindowControl(context,
 			resources.getString(I18NConstants.JS_TABLE_COLUMNS), DisplayDimension.px(460),
 			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
 		window.setChild(selection);
 		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
+			setGroupedColumn(selection.groupedColumn());
 			applyColumns(selection.visibleColumns());
 			dialogs.closeTopDialog(DialogResult.ok(null));
 			return HandlerResult.DEFAULT_RESULT;
@@ -835,6 +882,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		applyButton.markAsDefault();
 		window.setActions(List.of(
 			new ReactButtonControl(context, resources.getString(I18NConstants.TABLE_COLUMNS_RESET), ctx -> {
+				// Resetting restores the table as it is defined, which includes showing its rows
+				// ungrouped again.
+				setGroupedColumn(null);
 				applyColumns(_view.defaultColumnOrder());
 				dialogs.closeTopDialog(DialogResult.ok(null));
 				return HandlerResult.DEFAULT_RESULT;
@@ -952,6 +1002,71 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	/**
+	 * Groups the rows by one column, or shows them ungrouped again.
+	 *
+	 * <p>
+	 * The grouping is part of what the user personalizes about the table, so it is persisted under
+	 * the table's identity exactly like the sort order is.
+	 * </p>
+	 *
+	 * @param args
+	 *        The {@link GroupArguments#getColumn() column} to group by, empty for no grouping.
+	 */
+	@ReactCommandHandler(CMD_GROUP)
+	void handleGroup(GroupArguments args) {
+		setGroupedColumn(args.getColumn());
+	}
+
+	/**
+	 * Groups the rows by the given column, or shows them ungrouped when it is {@code null} or
+	 * empty.
+	 *
+	 * @param column
+	 *        The name of the column to group by.
+	 */
+	public void setGroupedColumn(String column) {
+		GroupSpec grouping = StringServices.isEmpty(column) ? GroupSpec.NONE : new GroupSpec(List.of(column));
+		if (grouping.columns().equals(_view.state().getGrouping().columns())) {
+			return;
+		}
+		// The keys of the rows a grouping introduces are group keys, and those of the rows it
+		// removes are gone: nothing that was selected under the previous grouping is still there.
+		_selectedKeys.clear();
+		_cursorIndex = -1;
+		_selectionAnchor = -1;
+		_view.group(grouping);
+		Object update = beginUpdate();
+		try {
+			pushGrouping();
+			pushSelection();
+			rebuildAfterRowChange();
+		} finally {
+			commitUpdate(update);
+		}
+	}
+
+	/** The name of the column the rows are grouped by, {@code null} when they are not grouped. */
+	public String getGroupedColumn() {
+		List<String> columns = _view.state().getGrouping().columns();
+		return columns.isEmpty() ? null : columns.get(0);
+	}
+
+	/**
+	 * Whether the client renders the tree/group affordances: the indent of the first column and the
+	 * expansion toggles. A grouped table needs them for its group headers, whatever it was built
+	 * as.
+	 */
+	private boolean treeMode() {
+		return _treeMode || getGroupedColumn() != null;
+	}
+
+	private void pushGrouping() {
+		String grouped = getGroupedColumn();
+		putState(GROUPING, grouped == null ? NOTHING : grouped);
+		putState(TREE_MODE, Boolean.valueOf(treeMode()));
+	}
+
+	/**
 	 * Handles a row selection (single / ctrl-toggle / shift-range).
 	 */
 	@ReactCommandHandler(CMD_SELECT)
@@ -963,6 +1078,14 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		}
 		boolean ctrlKey = args.isCtrlKey();
 		boolean shiftKey = args.isShiftKey();
+		Row<R> clicked = rowAt(rowIndex);
+		if (clicked != null && clicked.kind() != RowKind.DATA) {
+			// A group header stands for no object: the gesture that would select it collapses or
+			// expands the group instead, and the selection stays what it was.
+			_cursorIndex = rowIndex;
+			toggleExpansion(clicked);
+			return;
+		}
 		Object key = keyAt(rowIndex);
 		_cursorIndex = rowIndex;
 
@@ -971,7 +1094,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				int from = Math.min(_selectionAnchor, rowIndex);
 				int to = Math.max(_selectionAnchor, rowIndex);
 				for (Row<R> row : _view.rows(from, to + 1)) {
-					_selectedKeys.add(row.key());
+					if (row.kind() == RowKind.DATA) {
+						_selectedKeys.add(row.key());
+					}
 				}
 			} else if (ctrlKey) {
 				if (!_selectedKeys.remove(key)) {
@@ -1056,6 +1181,12 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		if (row == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
+		if (row.kind() != RowKind.DATA) {
+			// A group header has nothing to open: activating it collapses or expands the group.
+			_cursorIndex = rowIndex;
+			toggleExpansion(row);
+			return HandlerResult.DEFAULT_RESULT;
+		}
 		selectOnly(rowIndex);
 		ActivationHandler<R> handler = _activationHandler;
 		if (handler == null) {
@@ -1069,16 +1200,28 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * pushes the change to the client.
 	 */
 	private void selectOnly(int rowIndex) {
-		Object key = keyAt(rowIndex);
-		if (key == null) {
+		Row<R> row = rowAt(rowIndex);
+		if (row == null || row.kind() != RowKind.DATA) {
 			return;
 		}
+		Object key = row.key();
 		_selectedKeys.clear();
 		_selectedKeys.add(key);
 		_cursorIndex = rowIndex;
 		_selectionAnchor = rowIndex;
 		pushSelection();
 		updateViewport(_viewportStart, _viewportCount);
+	}
+
+	/**
+	 * Collapses an expanded row and expands a collapsed one, and re-renders what that changed.
+	 */
+	private void toggleExpansion(Row<R> row) {
+		if (!row.expandable()) {
+			return;
+		}
+		_view.setExpanded(row.key(), !row.expanded());
+		rebuildAfterRowChange();
 	}
 
 	/**
@@ -1225,9 +1368,11 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				}
 			}
 		} else {
-			// Plain move (and the single-selection case): selection follows the cursor.
+			// Plain move (and the single-selection case): selection follows the cursor - onto a
+			// group header, which stands for no object, it follows as an empty selection.
 			_selectedKeys.clear();
-			if (key != null) {
+			Row<R> row = rowAt(target);
+			if (key != null && row != null && row.kind() == RowKind.DATA) {
 				_selectedKeys.add(key);
 			}
 			_selectionAnchor = target;

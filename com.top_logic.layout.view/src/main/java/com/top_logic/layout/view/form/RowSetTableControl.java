@@ -54,6 +54,7 @@ import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
+import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Sort;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
@@ -175,6 +176,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
 	private TableViewControl.ActivationHandler<TLObject> _activationHandler;
+
+	/** The grouping the table starts with, until a personalization of its own exists. */
+	private GroupSpec _grouping = GroupSpec.NONE;
 
 	private ListRowSource<TLObject> _rowSource;
 
@@ -372,6 +376,20 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Sets the grouping the table starts with: one collapsible header row per value of the grouped
+	 * column, aggregating the other columns over its rows.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the grouping is part of the initial state of each
+	 * {@link TableViewControl} this control builds, so a grouping the user chose (and which is
+	 * persisted under the table's identity) wins over it.
+	 * </p>
+	 */
+	public void setGrouping(GroupSpec grouping) {
+		_grouping = grouping;
+	}
+
+	/**
 	 * Sets what a row activation runs - a double-click on the row, or {@code Enter} while the row
 	 * carries the keyboard cursor.
 	 *
@@ -481,6 +499,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
 		TableViewState initialState =
 			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
+		initialState.setGrouping(_grouping);
 		if (_fixedColumns > 0) {
 			// The configured number counts data columns; a leading action column has to be added on
 			// top of it, or freezing "the first two columns" would freeze the detail button and one

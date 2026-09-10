@@ -43,6 +43,9 @@ const TableKeyBindings: React.FC<{
 const I18N_KEYS = {
   'js.table.freezeUpTo': 'Freeze up to here',
   'js.table.unfreezeAll': 'Unfreeze all',
+  'js.table.groupBy': 'Group by this column',
+  'js.table.ungroup': 'Remove grouping',
+  'js.table.grouped': 'The rows are grouped by this column',
   'js.table.freezeSplitter': 'Drag to choose the columns that stay in place while scrolling',
   'js.table.filter': 'Filter',
   'js.table.columns': 'Columns',
@@ -70,6 +73,7 @@ interface ColumnState {
   sortPriority?: number;
   filterable?: boolean;
   filterActive?: boolean;
+  groupable?: boolean;
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -87,6 +91,8 @@ interface RowState {
   treeDepth?: number;
   expandable?: boolean;
   expanded?: boolean;
+  /** Present exactly on a group header row: how many rows the group holds. */
+  groupCount?: number;
 }
 
 const MIN_COL_WIDTH = 50;
@@ -203,6 +209,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const cursorIndex = (state.cursorIndex as number) ?? -1;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
+  /** The column the rows are grouped by, empty when they are not grouped. */
+  const grouping = (state.grouping as string) ?? '';
   const columnSelect = (state.columnSelect as boolean) ?? false;
   const filterBar = (state.filterBar as boolean) ?? false;
   const namedFilters = (state.namedFilters as NamedFilterState[]) ?? [];
@@ -506,8 +514,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (isInteractiveTarget(event)) {
       return;
     }
+    // The click that preceded this double-click already toggled the group, and a group row has
+    // nothing to open beyond that.
+    if (rows.find((r) => r.index === rowIndex)?.groupCount != null) {
+      return;
+    }
     sendCommand('activate', { rowIndex });
-  }, [sendCommand]);
+  }, [sendCommand, rows]);
 
   // -- Keyboard navigation (server-resolved; see moveSelection) --
   const handleMove = React.useCallback((direction: string, extend: boolean, move: boolean) => {
@@ -678,6 +691,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleUnfreezeAll = React.useCallback(() => {
     sendCommand('setFrozenColumnCount', { count: 0 });
+    setContextMenu(null);
+  }, [sendCommand]);
+
+  const handleGroupBy = React.useCallback((column: string) => {
+    sendCommand('group', { column });
+    setContextMenu(null);
+  }, [sendCommand]);
+
+  const handleUngroup = React.useCallback(() => {
+    sendCommand('group', { column: '' });
     setContextMenu(null);
   }, [sendCommand]);
 
@@ -1043,6 +1066,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 onDragEnd={handleDragEnd}
               >
                 <span className="tlTableView__headerLabel">{col.label}</span>
+                {col.name === grouping && (
+                  <i className="tlTableView__groupMark bi bi-collection"
+                    title={i18n['js.table.grouped']} aria-hidden="true" />
+                )}
                 {col.filterable && (
                   <button
                     type="button"
@@ -1130,7 +1157,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               className={
                 'tlTableView__row' +
                 (row.selected ? ' tlTableView__row--selected' : '') +
-                (row.index === cursorIndex ? ' tlTableView__row--cursor' : '')
+                (row.index === cursorIndex ? ' tlTableView__row--cursor' : '') +
+                (row.groupCount != null ? ' tlTableView__row--group' : '')
               }
               style={{
                 position: 'absolute',
@@ -1163,14 +1191,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     ...(frozenColumnCount > 0 ? { position: 'sticky' as const, left: 0, zIndex: 2 } : {}),
                   }}
                   onClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    className="tlTableView__checkbox"
-                    checked={row.selected}
-                    onChange={() => {/* handled by onClick */}}
-                    onClick={(e) => handleCheckboxClick(row.index, e)}
-                    tabIndex={-1}
-                  />
+                  {row.groupCount == null && (
+                    <input
+                      type="checkbox"
+                      className="tlTableView__checkbox"
+                      checked={row.selected}
+                      onChange={() => {/* handled by onClick */}}
+                      onClick={(e) => handleCheckboxClick(row.index, e)}
+                      tabIndex={-1}
+                    />
+                  )}
                 </div>
               )}
               {columns.map((col, colIdx) => {
@@ -1211,6 +1241,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                         {/* A row that predates the current columns has no control for a newly shown
                             column yet \u2014 leave that cell empty rather than tearing down the table. */}
                         {row.cells[col.name] && <TLChild control={row.cells[col.name]} />}
+                        {row.groupCount != null && (
+                          <span className="tlTableView__groupCount">({row.groupCount})</span>
+                        )}
                       </div>
                     ) : (
                       row.cells[col.name] && <TLChild control={row.cells[col.name]} />
@@ -1245,6 +1278,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {frozenColumnCount > 0 && (
             <button type="button" className="tlMenu__item" role="menuitem" onClick={handleUnfreezeAll}>
               <span className="tlMenu__label">{i18n['js.table.unfreezeAll']}</span>
+            </button>
+          )}
+          {columns[contextMenu.colIdx]?.groupable
+              && columns[contextMenu.colIdx].name !== grouping && (
+            <button type="button" className="tlMenu__item" role="menuitem"
+              onClick={() => handleGroupBy(columns[contextMenu.colIdx].name)}>
+              <span className="tlMenu__label">{i18n['js.table.groupBy']}</span>
+            </button>
+          )}
+          {grouping !== '' && (
+            <button type="button" className="tlMenu__item" role="menuitem" onClick={handleUngroup}>
+              <span className="tlMenu__label">{i18n['js.table.ungroup']}</span>
             </button>
           )}
         </div>

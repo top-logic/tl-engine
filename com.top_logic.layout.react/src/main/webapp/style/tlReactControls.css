@@ -3183,12 +3183,52 @@ button.tlMenu__item--disabled:hover {
 	flex-shrink: 0;
 }
 
+/* A group header row: the group value, its size, and the columns' aggregates. */
+.tlTableView__row--group {
+	background-color: var(--layer-accent-01, #e0e0e0);
+	font-weight: 600;
+}
+
+.tlTableView__groupCount {
+	margin-left: var(--spacing-03, 0.5rem);
+	font-weight: 400;
+	color: var(--text-secondary, #525252);
+}
+
+/* Marks the column header the rows are grouped by. */
+.tlTableView__groupMark {
+	margin-left: var(--spacing-02, 0.25rem);
+	color: var(--text-secondary, #525252);
+}
+
 /* --- TLColumnSelect ---------------------------------------------------- */
 
 .tlColumnSelect {
 	display: flex;
 	flex-direction: column;
 	padding: var(--spacing-03, 0.5rem) 0;
+}
+
+.tlColumnSelect__groupBy {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+	border: none;
+	border-radius: var(--border-radius-sm, 2px);
+	background: none;
+	cursor: pointer;
+	color: var(--text-secondary, #525252);
+}
+
+.tlColumnSelect__groupBy:hover {
+	background-color: var(--layer-hover, rgba(0, 0, 0, 0.08));
+}
+
+.tlColumnSelect__groupBy--active {
+	color: var(--link-primary, #0f62fe);
 }
 
 .tlColumnSelect__search {

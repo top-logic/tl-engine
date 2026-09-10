@@ -391,10 +391,10 @@ public class DefaultTableView<R> implements TableView<R> {
 			case DATA:
 				return definition.renderCell(row.data());
 			case GROUP_HEADER:
-				// The header doubles as the subtotal row: label in the first column,
+				// The header doubles as the subtotal row: the group's value in the first column,
 				// per-column aggregates in the rest.
 				return isFirstColumn(column)
-					? CellContent.label(groupLabel(row.group()))
+					? groupValue(row.group())
 					: aggregate(definition, row.group());
 			case AGGREGATE:
 				return aggregate(definition, row.group());
@@ -407,9 +407,36 @@ public class DefaultTableView<R> implements TableView<R> {
 		return column.aggregate().map(aggregator -> aggregator.over(group)).orElse(CellContent.empty());
 	}
 
-	private String groupLabel(Group<R> group) {
+	/**
+	 * The content displaying what a group stands for: its value, rendered by the column the rows
+	 * are grouped by, so that the header shows the value exactly as that column's cells show it -
+	 * a classifier by its label, a date by its format.
+	 */
+	private CellContent groupValue(Group<R> group) {
 		List<Object> values = group.key().values();
-		return values.isEmpty() ? "" : String.valueOf(values.get(values.size() - 1));
+		if (values.isEmpty()) {
+			return CellContent.empty();
+		}
+		// A nested group is identified by the whole tuple of the values above it; the value it adds
+		// belongs to the grouping column of its own level.
+		int level = values.size() - 1;
+		List<String> grouping = _state.getGrouping().columns();
+		Column<R, ?> groupColumn = level < grouping.size() ? _columns.get(grouping.get(level)) : null;
+		if (groupColumn == null) {
+			return CellContent.empty();
+		}
+		return renderValue(groupColumn, values.get(level));
+	}
+
+	/**
+	 * Renders a value of the given column's value type through that column's renderer.
+	 *
+	 * @implNote The value comes from {@link Column#value(Object)} of this very column, hence it is
+	 *           of the column's value type.
+	 */
+	@SuppressWarnings("unchecked")
+	private static <R, V> CellContent renderValue(Column<R, V> column, Object value) {
+		return column.renderer().render((V) value);
 	}
 
 	@Override

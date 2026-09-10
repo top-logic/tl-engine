@@ -63,6 +63,9 @@ public class TestTableGrouping extends TestCase {
 	/** Per-row state key of whether an expandable row is expanded. */
 	private static final String EXPANDED = "expanded";
 
+	/** Per-row state key of whether the row is selected. */
+	private static final String SELECTED = "selected";
+
 	/** Per-row state key of a group's size. */
 	private static final String GROUP_COUNT = "groupCount";
 
@@ -75,6 +78,15 @@ public class TestTableGrouping extends TestCase {
 	private static final String OPEN = "open";
 
 	private static final String CLOSED = "closed";
+
+	/** What the status column displays for {@link #OPEN} - not the value itself. */
+	private static final String OPEN_LABEL = "Offen";
+
+	/** What the status column displays for {@link #CLOSED} - not the value itself. */
+	private static final String CLOSED_LABEL = "Geschlossen";
+
+	/** State key of the keyboard cursor row index. */
+	private static final String CURSOR_INDEX = "cursorIndex";
 
 	/** A row that is {@link #OPEN}. */
 	private static final Item A = new Item("a", OPEN, 1);
@@ -158,14 +170,21 @@ public class TestTableGrouping extends TestCase {
 	/**
 	 * Tests that a group header shows the group's value in the first column and, in the others,
 	 * what the column aggregates over the group's rows.
+	 *
+	 * <p>
+	 * The value is shown the way the grouped column shows it in its cells - by its label, its
+	 * format - not as the raw value it groups by.
+	 * </p>
 	 */
 	public void testGroupHeaderShowsValueAndAggregate() {
 		group(COLUMN_STATUS);
 
 		List<Map<String, Object>> rows = agentRows();
-		assertEquals(OPEN, cell(rows.get(0), COLUMN_NAME));
+		assertEquals("The header shows what a member's cell of the grouped column shows.",
+			cell(rows.get(1), COLUMN_STATUS), cell(rows.get(0), COLUMN_NAME));
+		assertEquals(OPEN_LABEL, cell(rows.get(0), COLUMN_NAME));
 		assertEquals("1 + 4 over the two open rows.", "5", cell(rows.get(0), COLUMN_AMOUNT));
-		assertEquals(CLOSED, cell(rows.get(3), COLUMN_NAME));
+		assertEquals(CLOSED_LABEL, cell(rows.get(3), COLUMN_NAME));
 		assertEquals("2", cell(rows.get(3), COLUMN_AMOUNT));
 		assertEquals("A data row shows its own value.", "1", cell(rows.get(1), COLUMN_AMOUNT));
 	}
@@ -195,7 +214,7 @@ public class TestTableGrouping extends TestCase {
 		List<Map<String, Object>> rows = clientRows();
 		assertEquals("One group with its single remaining row.", 2, rows.size());
 		assertEquals(Integer.valueOf(1), rows.get(0).get(GROUP_COUNT));
-		assertEquals(OPEN, cell(agentRows().get(0), COLUMN_NAME));
+		assertEquals(OPEN_LABEL, cell(agentRows().get(0), COLUMN_NAME));
 	}
 
 	/**
@@ -239,6 +258,32 @@ public class TestTableGrouping extends TestCase {
 
 		assertEquals(Set.of(A), _table.getSelectedKeys());
 		assertEquals("And expanded again.", 5, clientRows().size());
+	}
+
+	/**
+	 * Tests that grouping and ungrouping keep the selection: a grouping rearranges the rows, it
+	 * does not replace them, so a selected row stays selected - at its new position, which the
+	 * keyboard cursor follows.
+	 */
+	public void testSelectionSurvivesGroupingAndUngrouping() {
+		select(1);
+		assertEquals(Set.of(B), _table.getSelectedKeys());
+
+		group(COLUMN_STATUS);
+
+		assertEquals("The selected row is the same object under the same key.",
+			Set.of(B), _table.getSelectedKeys());
+		List<Map<String, Object>> grouped = clientRows();
+		assertEquals("It is the last row now: the second group's single member.",
+			Boolean.TRUE, grouped.get(4).get(SELECTED));
+		assertEquals("The cursor found it again.", Integer.valueOf(4), _table.clientState(CURSOR_INDEX));
+
+		group("");
+
+		assertEquals(Set.of(B), _table.getSelectedKeys());
+		List<Map<String, Object>> flat = clientRows();
+		assertEquals(Boolean.TRUE, flat.get(1).get(SELECTED));
+		assertEquals(Integer.valueOf(1), _table.clientState(CURSOR_INDEX));
 	}
 
 	/**
@@ -333,13 +378,23 @@ public class TestTableGrouping extends TestCase {
 		return names;
 	}
 
+	/** What the status column displays for a status value. */
+	private static String statusLabel(String status) {
+		if (OPEN.equals(status)) {
+			return OPEN_LABEL;
+		}
+		return CLOSED.equals(status) ? CLOSED_LABEL : "";
+	}
+
 	/** The three columns: the label, the grouped value, and a summed number. */
 	private static List<Column<Item, ?>> columns() {
 		return List.of(
 			DefaultColumn.<Item, String> builder(COLUMN_NAME, Item::name)
 				.sort(() -> String::compareTo)
 				.build(),
-			DefaultColumn.<Item, String> builder(COLUMN_STATUS, Item::status).build(),
+			DefaultColumn.<Item, String> builder(COLUMN_STATUS, Item::status)
+				.renderer(value -> CellContent.text(statusLabel(value)))
+				.build(),
 			DefaultColumn.<Item, Integer> builder(COLUMN_AMOUNT, Item::amount)
 				.aggregate(group -> {
 					int sum = 0;

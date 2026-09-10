@@ -28,7 +28,8 @@ const TLTreeView: React.FC<TLCellProps> = () => {
   const dropIndicatorNodeId = (state.dropIndicatorNodeId as string) ?? null;
   const dropIndicatorPosition = (state.dropIndicatorPosition as string) ?? null;
 
-  // Focus tracking (client-side only).
+  // The node carrying the keyboard cursor, tracked on the client: set by a click and by the arrow
+  // keys, read by the keys that act on it (Enter, Space, the expand/collapse arrows).
   const [focusIndex, setFocusIndex] = React.useState(-1);
   const listRef = React.useRef<HTMLUListElement>(null);
 
@@ -60,18 +61,22 @@ const TLTreeView: React.FC<TLCellProps> = () => {
     // Give the tree keyboard focus even when the mousedown default (which would
     // focus it natively) was suppressed for a modifier click.
     listRef.current?.focus({ preventScroll: true });
+    // The clicked node carries the keyboard cursor from now on, so the arrow keys step from it and
+    // Enter opens it - the keyboard continues where the mouse left off.
+    setFocusIndex(nodes.findIndex((n) => n.id === nodeId));
     sendCommand('select', {
       nodeId,
       ctrlKey: e.ctrlKey || e.metaKey,
       shiftKey: e.shiftKey,
     });
-  }, [sendCommand]);
+  }, [sendCommand, nodes]);
 
   // A double-click opens the node: the server selects it and runs what the view configured for an
   // activation.
   const handleActivate = React.useCallback((nodeId: string) => {
+    setFocusIndex(nodes.findIndex((n) => n.id === nodeId));
     sendCommand('activate', { nodeId });
-  }, [sendCommand]);
+  }, [sendCommand, nodes]);
 
   const handleContextMenu = React.useCallback((nodeId: string, e: React.MouseEvent) => {
     e.preventDefault();

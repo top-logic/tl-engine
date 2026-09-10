@@ -1029,20 +1029,53 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		if (grouping.columns().equals(_view.state().getGrouping().columns())) {
 			return;
 		}
-		// The keys of the rows a grouping introduces are group keys, and those of the rows it
-		// removes are gone: nothing that was selected under the previous grouping is still there.
-		_selectedKeys.clear();
-		_cursorIndex = -1;
-		_selectionAnchor = -1;
 		_view.group(grouping);
 		Object update = beginUpdate();
 		try {
+			// A grouping rearranges the rows, it does not replace them: the selected rows are the
+			// same objects under the same keys, at other positions. Only the cursor and the range
+			// anchor, which are positions, have to be found again.
+			relocateSelection();
 			pushGrouping();
 			pushSelection();
 			rebuildAfterRowChange();
 		} finally {
 			commitUpdate(update);
 		}
+	}
+
+	/**
+	 * Re-derives the cursor and the range anchor from the selected rows after the rows were
+	 * rearranged, and gives up the selection of a row that is no longer among them.
+	 *
+	 * <p>
+	 * A value the table can still display stays selected - it is the selection whoever wrote it
+	 * made, and a rearrangement is no reason to drop it. To be called after a rearrangement that
+	 * leaves every row displayed (a change of the grouping), where a key that is not among the rows
+	 * is one the table cannot display any more.
+	 * </p>
+	 */
+	private void relocateSelection() {
+		if (_selectedKeys.isEmpty()) {
+			_cursorIndex = -1;
+			_selectionAnchor = -1;
+			return;
+		}
+		Set<Object> displayed = new LinkedHashSet<>();
+		int cursor = -1;
+		List<Row<R>> rows = _view.rows(0, _view.rowCount());
+		for (int n = 0; n < rows.size(); n++) {
+			Row<R> row = rows.get(n);
+			if (row.kind() == RowKind.DATA && _selectedKeys.contains(row.key())) {
+				displayed.add(row.key());
+				if (cursor < 0) {
+					cursor = n;
+				}
+			}
+		}
+		_selectedKeys.retainAll(displayed);
+		_cursorIndex = cursor;
+		_selectionAnchor = cursor;
 	}
 
 	/** The name of the column the rows are grouped by, {@code null} when they are not grouped. */

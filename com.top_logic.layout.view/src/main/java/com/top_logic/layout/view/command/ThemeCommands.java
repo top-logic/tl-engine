@@ -22,14 +22,21 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.util.Resources;
 
 /**
- * One command per configured UI theme, each switching the current user to that theme.
+ * The commands offering the user a UI theme to switch to: one per configured theme, headed by an
+ * entry following the appearance preference of the operating system.
  *
  * <p>
  * The set follows {@link UIThemeService}, so an application offers its own themes by configuring
- * them and needs no view change; the label and icon of an entry are the ones the theme declares.
- * The entry for the theme the user has selected is offered as disabled, which is both what it means
- * - selecting it again does nothing - and how the menu shows which one that is. An application with
- * a single configured theme has nothing to switch to and gets no entries at all.
+ * them and needs no view change; the label and icon of a theme entry are the ones the theme
+ * declares. The head entry appears wherever the light and the dark preference of the operating
+ * system are answered by different themes, and selects none of the themes: it drops the user's
+ * stored choice, leaving the appearance to the operating system.
+ * </p>
+ *
+ * <p>
+ * The entry describing what the user sees is offered as disabled, which is both what it means -
+ * selecting it again does nothing - and how the menu shows the current appearance. An application
+ * with a single configured theme has nothing to switch to and gets no entries at all.
  * </p>
  *
  * <p>
@@ -39,6 +46,9 @@ import com.top_logic.util.Resources;
  */
 @InApp
 public class ThemeCommands implements ViewCommandSource {
+
+	/** Name of the command following the appearance preference of the operating system. */
+	private static final String SYSTEM_COMMAND = "system";
 
 	/**
 	 * Configuration for {@link ThemeCommands}.
@@ -69,6 +79,13 @@ public class ThemeCommands implements ViewCommandSource {
 		}
 
 		List<CommandModel> result = new ArrayList<>();
+		if (themes.offersSystemThemes()) {
+			result.add(SimpleCommandModel
+				.create(SYSTEM_COMMAND, Resources.getInstance().getString(I18NConstants.THEME_FOLLOW_SYSTEM),
+					ctx -> SetThemeCommand.applyTheme(ctx, null))
+				.setImage(Icons.THEME_FOLLOW_SYSTEM)
+				.setExecutable(() -> UIThemeService.getInstance().getSelectedThemeId() != null));
+		}
 		for (UITheme theme : configured) {
 			String id = theme.getId();
 			result.add(SimpleCommandModel

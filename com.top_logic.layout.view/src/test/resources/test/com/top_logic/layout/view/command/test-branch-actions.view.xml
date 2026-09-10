@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="ticket"/>
+		<channel name="branchInput"/>
+	</channels>
+	<panel title="Branch Actions Test">
+		<commands>
+			<generic-command name="decide"
+				input="ticket"
+			>
+				<if test="context -> ticket -> $ticket != null">
+					<inputs>
+						<input channel="branchInput"/>
+					</inputs>
+					<then>
+						<execute-script function="t -> $t"/>
+					</then>
+					<else>
+						<write-channel name="ticket"/>
+					</else>
+				</if>
+				<execute-script function="t -> $t"/>
+			</generic-command>
+			<generic-command name="select"
+				input="ticket"
+			>
+				<switch test="t -> $t">
+					<case value="demo.tickets:TicketStatus#closed">
+						<execute-script function="t -> $t"/>
+					</case>
+					<case value="open">
+						<execute-script function="t -> $t"/>
+					</case>
+					<default>
+						<write-channel name="ticket"/>
+					</default>
+				</switch>
+			</generic-command>
+		</commands>
+	</panel>
+</view>

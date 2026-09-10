@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
@@ -37,6 +38,7 @@ import com.top_logic.layout.view.command.MenuTrigger;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewCommandSource;
+import com.top_logic.util.Resources;
 
 /**
  * Base for {@link UIElement}s that offer their commands as entries of a popup menu instead of
@@ -88,13 +90,14 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		String GROUPS = "groups";
 
 		/**
-		 * Further groups of entries, each set off from the one before it by a separator.
+		 * Further groups of entries, each set off from the one before it by a separator and headed
+		 * by its label where it has one.
 		 *
 		 * <p>
 		 * The entries declared in {@link #getCommands()} are the first group; these follow it, and
 		 * the {@link #getCommandSources() sources} follow them. A group none of whose entries are
-		 * currently available is left out together with its separator, so a menu never opens on a
-		 * dividing line with nothing beneath it.
+		 * currently available is left out together with its separator and heading, so a menu never
+		 * opens on a dividing line with nothing beneath it.
 		 * </p>
 		 */
 		@Name(GROUPS)
@@ -106,8 +109,18 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		 */
 		interface CommandGroup extends ConfigurationItem {
 
+			/** Configuration name for {@link #getLabel()}. */
+			String LABEL = "label";
+
 			/** Configuration name for {@link #getCommands()}. */
 			String COMMANDS = "commands";
+
+			/**
+			 * The heading shown above the group's entries; none when unset.
+			 */
+			@Name(LABEL)
+			@Nullable
+			ResKey getLabel();
 
 			/**
 			 * The commands offered as this group's entries.
@@ -152,7 +165,7 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		_config = config;
 		_groups = new ArrayList<>(config.getGroups().size());
 		for (Config.CommandGroup groupConfig : config.getGroups()) {
-			_groups.add(new Group(context, groupConfig.getCommands()));
+			_groups.add(new Group(context, groupConfig.getLabel(), groupConfig.getCommands()));
 		}
 
 		_commandSources = new ArrayList<>(config.getCommandSources().size());
@@ -196,9 +209,10 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		Supplier<Object> targetSupplier = () -> targetChannel.get();
 
 		// One contribution per group of entries, because the opener draws a separator between
-		// contributions: the commands written in the view are one group, each configured group is
-		// another, and so is each source. A group that currently offers nothing is skipped along
-		// with its separator.
+		// contributions and heads each labelled one: the commands written in the view are one
+		// group, each configured group is another, and so is each source. A group that currently
+		// offers nothing is skipped along with its separator and heading. Headings are resolved
+		// here, per rendering, in the language of the session being served.
 		List<ContextMenuContribution> contributions =
 			new ArrayList<>(1 + _groups.size() + _commandSources.size());
 		contributions.add(new ContextMenuContribution(setter, menuCommands(commandModels)));
@@ -207,11 +221,12 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		for (Group group : _groups) {
 			List<ViewCommandModel> models = group.buildModels(context);
 			groupModels.addAll(models);
-			contributions.add(new ContextMenuContribution(setter, menuCommands(models)));
+			contributions.add(new ContextMenuContribution(setter, menuCommands(models), heading(group._label)));
 		}
 
 		for (ViewCommandSource source : _commandSources) {
-			contributions.add(new ContextMenuContribution(setter, source.getCommands(context)));
+			contributions.add(
+				new ContextMenuContribution(setter, source.getCommands(context), heading(source.getLabel())));
 		}
 
 		MenuRegionControl region = new MenuRegionControl(context, content, contributions, targetSupplier,
@@ -227,16 +242,28 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 	}
 
 	/**
+	 * The heading text for the given key in the language of the current session, or {@code null}
+	 * for no key.
+	 */
+	private static String heading(ResKey label) {
+		return label == null ? null : Resources.getInstance().getString(label);
+	}
+
+	/**
 	 * The commands of one configured group, kept beside their configurations so that their models
 	 * can be built per rendering.
 	 */
 	private static class Group {
 
+		final ResKey _label;
+
 		private final List<ViewCommand> _commands = new ArrayList<>();
 
 		private final List<ViewCommand.Config> _configs = new ArrayList<>();
 
-		Group(InstantiationContext context, List<PolymorphicConfiguration<? extends ViewCommand>> configs) {
+		Group(InstantiationContext context, ResKey label,
+				List<PolymorphicConfiguration<? extends ViewCommand>> configs) {
+			_label = label;
 			for (PolymorphicConfiguration<? extends ViewCommand> cmdConfig : configs) {
 				ViewCommand cmd = context.getInstance(cmdConfig);
 				if (cmd != null) {

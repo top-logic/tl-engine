@@ -2587,6 +2587,18 @@ button.tlMenu__item--disabled:hover {
 	margin: var(--spacing-02) var(--spacing-04);
 }
 
+/* A caption above a group of entries: set in the secondary text colour and a smaller size so it
+   reads as a heading of the entries rather than as one of them. */
+.tlMenu__header {
+	padding: var(--spacing-02) var(--spacing-04) var(--spacing-01);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	color: var(--text-secondary);
+	white-space: nowrap;
+	cursor: default;
+	user-select: none;
+}
+
 .tlMenu__icon {
 	flex-shrink: 0;
 	width: 1rem;

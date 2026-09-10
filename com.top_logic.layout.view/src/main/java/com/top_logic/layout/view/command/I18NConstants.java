@@ -20,6 +20,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CONFIRM_TITLE;
 
 	/**
+	 * @en Language
+	 */
+	public static ResKey LANGUAGE_GROUP;
+
+	/**
+	 * @en Theme
+	 */
+	public static ResKey THEME_GROUP;
+
+	/**
 	 * @en Changed language of "{0}".
 	 */
 	public static ResKey1 CHANGED_LANGUAGE__USER;

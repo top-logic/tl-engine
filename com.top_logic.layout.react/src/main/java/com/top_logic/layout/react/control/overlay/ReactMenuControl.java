@@ -45,7 +45,10 @@ public class ReactMenuControl extends ReactControl {
 	/** @see #updateItems(List) */
 	private static final String ITEMS = "items";
 
-	/** Entry type discriminator, either {@link #ENTRY_TYPE_ITEM} or {@link #ENTRY_TYPE_SEPARATOR}. */
+	/**
+	 * Entry type discriminator, one of {@link #ENTRY_TYPE_ITEM}, {@link #ENTRY_TYPE_SEPARATOR} and
+	 * {@link #ENTRY_TYPE_HEADER}.
+	 */
 	private static final String ENTRY_TYPE = "type";
 
 	/** {@link #ENTRY_TYPE} of a selectable entry. */
@@ -53,6 +56,9 @@ public class ReactMenuControl extends ReactControl {
 
 	/** {@link #ENTRY_TYPE} of a divider between groups of entries. */
 	private static final String ENTRY_TYPE_SEPARATOR = "separator";
+
+	/** {@link #ENTRY_TYPE} of a caption naming the group of entries beneath it; not selectable. */
+	private static final String ENTRY_TYPE_HEADER = "header";
 
 	/** Entry identifier within the menu. */
 	private static final String ENTRY_ID = "id";
@@ -109,7 +115,9 @@ public class ReactMenuControl extends ReactControl {
 		for (MenuEntry entry : items) {
 			Map<String, Object> map = new HashMap<>();
 			map.put(ENTRY_TYPE, entry.type());
-			if (ENTRY_TYPE_ITEM.equals(entry.type())) {
+			if (ENTRY_TYPE_HEADER.equals(entry.type())) {
+				map.put(ENTRY_LABEL, entry.label());
+			} else if (ENTRY_TYPE_ITEM.equals(entry.type())) {
 				map.put(ENTRY_ID, entry.id());
 				map.put(ENTRY_LABEL, entry.label());
 				if (entry.icon() != null) {
@@ -180,11 +188,12 @@ public class ReactMenuControl extends ReactControl {
 	 * A single entry in the popup menu.
 	 *
 	 * @param type
-	 *        The entry type, either {@link #ENTRY_TYPE_ITEM} or {@link #ENTRY_TYPE_SEPARATOR}.
+	 *        The entry type, one of {@link #ENTRY_TYPE_ITEM}, {@link #ENTRY_TYPE_SEPARATOR} and
+	 *        {@link #ENTRY_TYPE_HEADER}.
 	 * @param id
-	 *        The item identifier (may be {@code null} for separators).
+	 *        The item identifier ({@code null} for separators and headers).
 	 * @param label
-	 *        The display label (may be {@code null} for separators).
+	 *        The display label ({@code null} for separators).
 	 * @param icon
 	 *        An optional CSS icon class, or {@code null}.
 	 * @param disabled
@@ -229,6 +238,14 @@ public class ReactMenuControl extends ReactControl {
 		 */
 		public static MenuEntry separator() {
 			return new MenuEntry(ENTRY_TYPE_SEPARATOR, null, null, null, false, null);
+		}
+
+		/**
+		 * Creates a header: a caption naming the entries that follow it, which cannot be selected
+		 * or focused.
+		 */
+		public static MenuEntry header(String label) {
+			return new MenuEntry(ENTRY_TYPE_HEADER, null, label, null, false, null);
 		}
 	}
 

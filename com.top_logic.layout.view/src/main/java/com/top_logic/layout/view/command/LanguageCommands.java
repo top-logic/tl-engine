@@ -13,6 +13,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.service.Transaction;
@@ -63,12 +64,20 @@ public class LanguageCommands implements ViewCommandSource {
 		Class<? extends LanguageCommands> getImplementationClass();
 	}
 
+	private final ResKey _label;
+
 	/**
 	 * Creates a new {@link LanguageCommands} from configuration.
 	 */
 	@CalledByReflection
 	public LanguageCommands(InstantiationContext context, Config config) {
-		// No configuration needed: the languages come from the resources module.
+		ResKey label = config.getLabel();
+		_label = label == null ? I18NConstants.LANGUAGE_GROUP : label;
+	}
+
+	@Override
+	public ResKey getLabel() {
+		return _label;
 	}
 
 	@Override

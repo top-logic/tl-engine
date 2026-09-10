@@ -12,7 +12,8 @@ interface MenuItem {
   disabled?: boolean;
   /** Additional CSS classes declared on the command this entry renders. */
   cssClasses?: string;
-  type: 'item' | 'separator';
+  /** A header is a caption naming the entries beneath it; it is neither focusable nor selectable. */
+  type: 'item' | 'separator' | 'header';
 }
 
 /**
@@ -120,6 +121,14 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
   // Trap focus within the menu while open and restore it to the trigger when it closes.
   useFocusTrap(open, menuRef);
 
+  // Keep the focused entry in view: a menu taller than the viewport scrolls, and the roving focus
+  // must not leave its entry below or above the visible part.
+  useEffect(() => {
+    if (!open) return;
+    const focused = menuRef.current?.querySelector('.tlMenu__item--focused');
+    focused?.scrollIntoView({ block: 'nearest' });
+  }, [open, focusedIndex]);
+
   if (!open) return null;
 
   return (
@@ -135,6 +144,13 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
       {items.map((item, index) => {
         if (item.type === 'separator') {
           return <hr key={index} className="tlMenu__separator" />;
+        }
+        if (item.type === 'header') {
+          return (
+            <div key={index} className="tlMenu__header" role="presentation">
+              {item.label}
+            </div>
+          );
         }
         const focusIdx = focusableItems.indexOf(item);
         const isFocused = focusIdx === focusedIndex;

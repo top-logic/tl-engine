@@ -13,6 +13,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.SimpleCommandModel;
@@ -51,12 +52,20 @@ public class ThemeCommands implements ViewCommandSource {
 		Class<? extends ThemeCommands> getImplementationClass();
 	}
 
+	private final ResKey _label;
+
 	/**
 	 * Creates a new {@link ThemeCommands} from configuration.
 	 */
 	@CalledByReflection
 	public ThemeCommands(InstantiationContext context, Config config) {
-		// No configuration needed: the themes come from the service.
+		ResKey label = config.getLabel();
+		_label = label == null ? I18NConstants.THEME_GROUP : label;
+	}
+
+	@Override
+	public ResKey getLabel() {
+		return _label;
 	}
 
 	@Override

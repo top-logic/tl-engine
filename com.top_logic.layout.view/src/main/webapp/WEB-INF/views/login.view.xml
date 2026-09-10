@@ -31,7 +31,7 @@
 				<generic-command placement="BUTTON_BAR" image="css:bi bi-box-arrow-in-right">
 					<label>
 						<en>Login</en>
-						<de>Anmeldung</de>
+						<de>Anmelden</de>
 					</label>
 					<store-form-state/>
 					<login/>

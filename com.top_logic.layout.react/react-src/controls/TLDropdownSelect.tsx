@@ -2,6 +2,7 @@ import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, CMD_VAL
 import { createPortal } from 'react-dom';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
+import { TLPill } from './pill/TLPill';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
 
@@ -11,9 +12,24 @@ interface OptionDescriptor {
   value: string;
   label: string;
   image?: string;
+  /** The CSS color the value carries in the model, if any. */
+  color?: string;
 }
 
 // -- Sub-components --
+
+/**
+ * Wraps a value's presentation in a pill when the model gives that value a color.
+ *
+ * <p>
+ * Used for every presentation of an option - the rows of the open dropdown, the chips of the
+ * selection while editing, and the read-only display - so a colored value looks the same wherever
+ * the control shows it.
+ * </p>
+ */
+function withPill(color: string | undefined, content: React.ReactNode) {
+  return color ? <TLPill color={color}>{content}</TLPill> : content;
+}
 
 /** Renders an option's image, whatever encoded form it arrives in. */
 function OptionImage({ image }: { image?: string }) {
@@ -68,8 +84,12 @@ function Chip({
       {draggable && (
         <span className="tlDropdownSelect__dragHandle" aria-hidden="true">&#8942;&#8942;</span>
       )}
-      <OptionImage image={option.image} />
-      <span className="tlDropdownSelect__chipLabel">{option.label}</span>
+      {withPill(option.color, (
+        <>
+          <OptionImage image={option.image} />
+          <span className="tlDropdownSelect__chipLabel">{option.label}</span>
+        </>
+      ))}
       {removable && (
         <button
           type="button"
@@ -127,8 +147,12 @@ function OptionRow({
       onClick={handleClick}
       onMouseEnter={onMouseEnter}
     >
-      <OptionImage image={option.image} />
-      <span className="tlDropdownSelect__optionLabel">{labelContent}</span>
+      {withPill(option.color, (
+        <>
+          <OptionImage image={option.image} />
+          <span className="tlDropdownSelect__optionLabel">{labelContent}</span>
+        </>
+      ))}
     </div>
   );
 }
@@ -518,8 +542,12 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       <div id={controlId} className="tlDropdownSelect tlDropdownSelect--immutable">
         {value.map((v) => (
           <span key={v.value} className="tlDropdownSelect__readonlyValue">
-            <OptionImage image={v.image} />
-            <span>{v.label}</span>
+            {withPill(v.color, (
+              <>
+                <OptionImage image={v.image} />
+                <span>{v.label}</span>
+              </>
+            ))}
           </span>
         ))}
       </div>

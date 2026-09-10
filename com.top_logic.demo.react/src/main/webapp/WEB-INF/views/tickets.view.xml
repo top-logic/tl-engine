@@ -160,6 +160,7 @@
 							</inputs>
 							<columns>
 								<column attribute="name"/>
+								<column attribute="status"/>
 							</columns>
 							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).isEmpty()); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
 						</table>
@@ -179,6 +180,7 @@
 							</inputs>
 							<columns>
 								<column attribute="name"/>
+								<column attribute="status"/>
 							</columns>
 							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; !$t.get(`demo.tickets:Ticket#comments`).isEmpty()); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
 						</table>
@@ -194,6 +196,9 @@
 						<en>Conversation</en>
 						<de>Verlauf</de>
 					</title>
+					<form input="ticket">
+						<field attribute="status"/>
+					</form>
 					<inset>
 						<object-list
 							element-channel="comment"

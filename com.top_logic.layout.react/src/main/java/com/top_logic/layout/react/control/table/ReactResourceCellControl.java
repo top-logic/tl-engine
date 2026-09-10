@@ -13,6 +13,7 @@ import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -20,7 +21,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * Resolves label, icon, CSS class, tooltip, and link availability from the provider and sends them
- * as flat state to the {@code TLResourceCell} React component.
+ * as flat state to the {@code TLResourceCell} React component, together with the
+ * {@link ReactValueColor#COLOR color} the displayed value carries in the model.
  * </p>
  *
  * <p>
@@ -146,6 +148,8 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 		if (_useImage && value != null) {
 			resolveIcon(value);
 		}
+
+		putState(ReactValueColor.COLOR, ReactValueColor.cssColorOf(value));
 
 		if (value != null) {
 			String cssClass = _provider.getCssClass(value);

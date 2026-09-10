@@ -9,6 +9,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ReactValueColor;
 
 /**
  * A simple read-only control that displays a text value as a {@code <span>}.
@@ -73,6 +74,39 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	}
 
 	/**
+	 * Updates the displayed text and the color it is displayed with, in one patch.
+	 *
+	 * @param text
+	 *        The text to display, or {@code null}.
+	 * @param cssColor
+	 *        The CSS the color is applied with, or {@code null} for text without a color.
+	 *
+	 * @see ReactValueColor#cssColorOf(Object)
+	 */
+	public void setText(String text, String cssColor) {
+		Object tx = beginUpdate();
+		setText(text);
+		setColor(cssColor);
+		commitUpdate(tx);
+	}
+
+	/**
+	 * Updates the color the text is displayed with.
+	 *
+	 * <p>
+	 * Text with a color is displayed as a pill in that color, text without one as plain text.
+	 * </p>
+	 *
+	 * @param cssColor
+	 *        The CSS the color is applied with, or {@code null} for text without a color.
+	 *
+	 * @see ReactValueColor#cssColorOf(Object)
+	 */
+	public void setColor(String cssColor) {
+		putState(ReactValueColor.COLOR, cssColor);
+	}
+
+	/**
 	 * Updates the additional CSS class.
 	 *
 	 * @param cssClass
@@ -129,6 +163,6 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	 */
 	@Override
 	protected java.util.Set<String> scriptingPresentationKeys() {
-		return java.util.Set.of("cssClass");
+		return java.util.Set.of(CSS_CLASS, ReactValueColor.COLOR);
 	}
 }

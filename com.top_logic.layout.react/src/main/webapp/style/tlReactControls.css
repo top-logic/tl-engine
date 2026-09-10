@@ -3037,6 +3037,38 @@ button.tlMenu__item--disabled:hover {
 	font-weight: 600;
 }
 
+/* A value the model gives a color, drawn as a pill in that color. The color arrives from the
+   server as the custom property --tlPill-color - a color value, or a var(--token) reference to a
+   design token - so background, border and text are all composed from the one color and follow a
+   theme switch. There is no class per color. */
+.tlPill {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-01, 0.25rem);
+	max-width: 100%;
+	overflow: hidden;
+	padding: 0 var(--spacing-02, 0.5rem);
+	border: 1px solid var(--tlPill-color);
+	border-radius: 999px;
+	background-color: transparent;
+	color: var(--tlPill-color);
+	font-size: var(--label-01-font-size, 0.75rem);
+	line-height: 1.5;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* The tint that makes the pill legible: the color mixed into the surface behind it for the
+   background and the border, and mixed into the text color for the label - which darkens it on a
+   light theme and lightens it on a dark one, from the same declaration. */
+@supports (color: color-mix(in srgb, red 10%, white)) {
+	.tlPill {
+		border-color: color-mix(in srgb, var(--tlPill-color) 40%, var(--color-surface, #fff));
+		background-color: color-mix(in srgb, var(--tlPill-color) 16%, var(--color-surface, #fff));
+		color: color-mix(in srgb, var(--tlPill-color) 72%, var(--text-primary, #101113));
+	}
+}
+
 .tlTableView__checkboxCell {
 	justify-content: center;
 	flex-shrink: 0;

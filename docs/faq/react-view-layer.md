@@ -26,6 +26,14 @@ A value's color is part of the model: two annotations say where it comes from, a
 - **`<color-attribute name="…"/>`** on a type (`TLColorAttribute`) names the attribute holding the color of its instances. That attribute holds either a color value or an enumeration literal, whose own `<color>` then decides — the annotation is meant for classifier-like types such as a status or label type whose instances carry their color as data. Specializations inherit the annotation.
 - **`AnnotationValueColorProvider.INSTANCE`** (a `ValueColorProvider`) answers both: `colorOf(value)` returns the `ValueColor` of a classifier or an object, the color a color value itself is, and `null` for everything the model gives no color to. `ValueColor.cssValue()` is the CSS to apply it with — the fixed color, or `var(--<token>)` against the custom properties `UIThemeService` emits per theme.
 
+A colored value is displayed as a **pill** in its color, an uncolored one as plain text. The color travels as the single state / descriptor field `ReactValueColor.COLOR`, filled by `ReactValueColor.putColor(descriptor, value)` / `cssColorOf(value)`, and the client hands it to the stylesheet as the inline custom property `--tlPill-color` — there is no class per color. One shared presentational component `TLPill` (`react-src/controls/pill/TLPill.tsx`, `.tlPill` in `tlReactControls.css`) draws it everywhere; the tint is composed with `color-mix()` from the color and the `color-surface` / `text-primary` tokens, so one declaration stays legible on a light and a dark theme.
+
+The sites that fill the field:
+
+- **`ReactDropdownSelectControl`** — every option and every selected value passes through its one descriptor factory, so the pill appears in the read-only display of a reference or enumeration attribute (a `<table>` cell, a view-mode `<form>` field), on the chips of the selection while editing, and on the rows of the open dropdown.
+- **`ReactResourceCellControl`** — resource cells and tree nodes, beside the type icon.
+- **`ReactTextControl`** / `<text>` (`TextElement`) — a channel value rendered through `MetaLabelProvider`; `setText(text, cssColor)` updates both in one patch.
+
 ## Drill-down navigation with `<tile-stack>`
 
 `com.top_logic.layout.view.tiles` provides drill-down navigation. A `<tile-stack path="navPath" initial="products/overview.view.xml"/>` displays the last frame of a path of `TileFrame`s, the `initial` view when the path is empty, and keeps the frames the displayed one covers (see below). The path itself lives on a normal channel of the enclosing view (`List<TileFrame>`), which is the single source of truth: every navigation is a write to that channel.

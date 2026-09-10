@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -32,6 +33,11 @@ import com.top_logic.util.Resources;
  * Either a static {@link Config#getLabel() label} or the value of an {@link Config#getInput() input
  * channel} (rendered through {@link MetaLabelProvider}, updating reactively when the channel
  * changes).
+ * </p>
+ *
+ * <p>
+ * A channel value the model gives a color - an enumeration literal, an object whose type names a
+ * color attribute - is displayed as a pill in that color.
  * </p>
  */
 @InApp
@@ -119,8 +125,12 @@ public class TextElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		if (_inputRef != null) {
 			ViewChannel channel = context.resolveChannel(_inputRef);
-			ReactTextControl control = new ReactTextControl(context, label(channel.get()), _cssClass);
-			ChannelListener listener = (sender, oldValue, newValue) -> control.setText(label(newValue));
+			Object value = channel.get();
+			ReactTextControl control = new ReactTextControl(context, label(value), _cssClass);
+			control.setColor(ReactValueColor.cssColorOf(value));
+			ChannelListener listener =
+				(sender, oldValue, newValue) -> control.setText(label(newValue),
+					ReactValueColor.cssColorOf(newValue));
 			channel.addListener(listener);
 			control.addCleanupAction(() -> channel.removeListener(listener));
 			return control;

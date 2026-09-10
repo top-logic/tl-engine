@@ -5,7 +5,8 @@
  */
 package com.top_logic.layout.view.element;
 
-import java.util.Objects;
+import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
@@ -24,11 +25,10 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelChangeEvent.ChangeType;
-import com.top_logic.model.listen.ModelListener;
-import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -106,19 +106,27 @@ public class ScrollLinkElement implements UIElement {
 
 		ScrollLinkControl control = new ScrollLinkControl(context, target, label(target));
 
-		TargetObserver observer = new TargetObserver(control, context.getModelScope());
-		observer.observe(target);
-
-		ChannelListener listener = (sender, oldValue, newValue) -> {
-			observer.observe(newValue);
-			control.setValue(newValue, label(newValue));
-		};
+		ChannelListener listener = (sender, oldValue, newValue) -> control.setValue(newValue, label(newValue));
 		channel.addListener(listener);
-		control.addCleanupAction(() -> {
-			channel.removeListener(listener);
-			observer.observe(null);
-		});
+		control.addCleanupAction(() -> channel.removeListener(listener));
+
+		ChannelObjectObserver observer =
+			new ChannelObjectObserver(List.of(channel), Set.of(), event -> hideDeletedTarget(control, channel, event));
+		control.addAttachListener(() -> observer.attach(context.getModelScope()));
+		control.addDetachListener(observer::detach);
 		return control;
+	}
+
+	/**
+	 * Hides the link when its target object is deleted: the anchor to scroll to is then no longer
+	 * rendered, so the link would go nowhere.
+	 */
+	private static void hideDeletedTarget(ScrollLinkControl control, ViewChannel channel, ModelChangeEvent event) {
+		for (TLObject target : ChannelObjectObserver.objects(channel.get())) {
+			if (event.getChange(target) == ChangeType.DELETED) {
+				control.setValue(null, "");
+			}
+		}
 	}
 
 	private String label(Object target) {
@@ -130,56 +138,6 @@ public class ScrollLinkElement implements UIElement {
 			return result == null ? "" : result.toString();
 		}
 		return MetaLabelProvider.INSTANCE.getLabel(target);
-	}
-
-	/**
-	 * Observes the link's current target object and hides the link when that object is deleted.
-	 *
-	 * <p>
-	 * Follows the target across input changes: {@link #observe(Object)} re-registers on the new
-	 * target and drops the listener from the previous one.
-	 * </p>
-	 */
-	private static final class TargetObserver implements ModelListener {
-
-		private final ScrollLinkControl _control;
-
-		private final ModelScope _scope;
-
-		private TLObject _observed;
-
-		TargetObserver(ScrollLinkControl control, ModelScope scope) {
-			_control = control;
-			_scope = scope;
-		}
-
-		/**
-		 * Observes the given target for deletion, replacing any previously observed target.
-		 *
-		 * @param target
-		 *        The current link target; a non-persistent or {@code null} value observes nothing.
-		 */
-		void observe(Object target) {
-			TLObject next = target instanceof TLObject object && !object.tTransient() ? object : null;
-			if (Objects.equals(_observed, next)) {
-				return;
-			}
-			if (_scope != null && _observed != null) {
-				_scope.removeModelListener(_observed, this);
-			}
-			_observed = next;
-			if (_scope != null && _observed != null) {
-				_scope.addModelListener(_observed, this);
-			}
-		}
-
-		@Override
-		public void notifyChange(ModelChangeEvent event) {
-			if (_observed != null && event.getChange(_observed) == ChangeType.DELETED) {
-				_control.setValue(null, "");
-				observe(null);
-			}
-		}
 	}
 
 }

@@ -8,9 +8,7 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -33,8 +31,8 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.ExpressionCalendarModel.EventExprs;
+import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
@@ -390,7 +388,7 @@ public class CalendarElement implements UIElement {
 		RowSourceObserver<Object> observer = new RowSourceObserver<>(
 			new ArrayList<>(objects),
 			args -> new ArrayList<>(executeObjectsQuery(objectsExecutor, args)),
-			resolveObservedTypes(),
+			ObservedTypes.resolve(_config.getObservedTypes()),
 			inputChannels,
 			elements -> {
 				model.setObjects(elements);
@@ -419,22 +417,6 @@ public class CalendarElement implements UIElement {
 		}
 
 		return control;
-	}
-
-	private Set<TLStructuredType> resolveObservedTypes() {
-		List<TLModelPartRef> refs = _config.getObservedTypes();
-		if (refs == null || refs.isEmpty()) {
-			return Set.of();
-		}
-		Set<TLStructuredType> types = new HashSet<>();
-		for (TLModelPartRef ref : refs) {
-			TLStructuredType type = (TLStructuredType) ref.resolveType();
-			if (type == null) {
-				throw new RuntimeException("Failed to resolve observed type: " + ref.qualifiedName());
-			}
-			types.add(type);
-		}
-		return types;
 	}
 
 	private static Object[] readChannelValues(List<ViewChannel> channels) {

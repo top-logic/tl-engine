@@ -52,6 +52,7 @@ import com.top_logic.layout.view.form.QueryRowSetBinding;
 import com.top_logic.layout.view.form.RowEditPolicy;
 import com.top_logic.layout.view.form.RowSetBinding;
 import com.top_logic.layout.view.form.RowSetTableControl;
+import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnBinding;
@@ -787,7 +788,7 @@ public class TableElement implements UIElement {
 		RowSourceObserver<Object> observer = new RowSourceObserver<>(
 			source,
 			args -> new ArrayList<>(executeRowsQuery(rowsExecutor, args)),
-			resolveObservedTypes(),
+			ObservedTypes.resolve(_config.getObservedTypes()),
 			inputChannels,
 			refresh);
 		// Observe the model only while the table is displayed: a table that is not attached - the
@@ -836,7 +837,7 @@ public class TableElement implements UIElement {
 		control.setDefaultSort(defaultSort());
 		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
-		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), resolveObservedTypes(), inputChannels);
+		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
 		control.init();
 
 		contributeAddRowCommand(context, formControl, binding, control);
@@ -932,22 +933,6 @@ public class TableElement implements UIElement {
 			}
 		}
 		return result;
-	}
-
-	private Set<TLStructuredType> resolveObservedTypes() {
-		List<TLModelPartRef> refs = _config.getObservedTypes();
-		if (refs == null || refs.isEmpty()) {
-			return Set.of();
-		}
-		Set<TLStructuredType> types = new HashSet<>();
-		for (TLModelPartRef ref : refs) {
-			TLStructuredType type = (TLStructuredType) ref.resolveType();
-			if (type == null) {
-				throw new RuntimeException("Failed to resolve observed type: " + ref.qualifiedName());
-			}
-			types.add(type);
-		}
-		return types;
 	}
 
 	/**

@@ -4,6 +4,7 @@
     <channel name="selectedItem" />
     <derived-channel name="hasSelection"
         inputs="selectedItem"
+        observed-types="test.types:B,test.types:C"
         expr="item -> $item != null" />
   </channels>
 

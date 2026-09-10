@@ -489,7 +489,7 @@ public class FormElement extends ContainerElement {
 		formControl.addAttachListener(() -> {
 			for (CommandModel model : models) {
 				if (model instanceof FormScopedCommandModel) {
-					((FormScopedCommandModel) model).getInner().attach();
+					((FormScopedCommandModel) model).getInner().attach(formContext.getModelScope());
 				}
 			}
 			formControl.addFormModelListener(validityListener);

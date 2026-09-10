@@ -8,10 +8,11 @@ package com.top_logic.layout.view.command;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -19,11 +20,12 @@ import com.top_logic.layout.react.theme.UIThemeService;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * A {@link ViewCommand} that switches the active UI theme.
+ * A {@link ViewCommand} that puts a UI theme into effect.
  *
  * <p>
- * Persists the selected theme as the user's preference and instantly applies it on the client by
- * setting the {@code data-theme} attribute on the document element - no page reload.
+ * Stores the theme as the user's preference and applies it on the client instantly, without a page
+ * reload. A command naming no theme drops the preference, which leaves the user's pages following
+ * the appearance preference of the operating system.
  * </p>
  */
 @InApp
@@ -44,9 +46,14 @@ public class SetThemeCommand implements ViewCommand {
 
 		/**
 		 * Id of the theme to activate.
+		 *
+		 * <p>
+		 * Without a theme, the command drops the theme the user has selected, so that the user's
+		 * pages follow the appearance preference of the operating system.
+		 * </p>
 		 */
 		@Name(THEME)
-		@Mandatory
+		@Nullable
 		String getTheme();
 
 	}
@@ -67,23 +74,40 @@ public class SetThemeCommand implements ViewCommand {
 	}
 
 	/**
-	 * Persists the given theme as the current user's preference and applies it on the client.
+	 * Stores the given theme as the current user's preference and applies it on the client.
 	 *
 	 * @param context
 	 *        The context whose update queue carries the change to the browser.
 	 * @param themeId
-	 *        Id of the theme to activate.
+	 *        Id of the theme to activate, or {@code null} to drop the user's preference and follow
+	 *        the appearance preference of the operating system.
 	 * @return The result of the activation.
 	 */
 	public static HandlerResult applyTheme(ReactContext context, String themeId) {
-		UIThemeService.getInstance().setActiveThemeId(themeId);
+		UIThemeService.getInstance().setSelectedThemeId(themeId);
 
 		SSEUpdateQueue queue = context.getSSEQueue();
 		if (queue != null) {
-			queue.enqueue(JSSnipplet.create()
-				.setCode("document.documentElement.setAttribute('data-theme', '" + themeId + "');"));
+			queue.enqueue(JSSnipplet.create().setCode(applyCode(themeId)));
 		}
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private static String applyCode(String themeId) {
+		StringBuilder code = new StringBuilder();
+		code.append("window.");
+		code.append(UIThemeService.CLIENT_API);
+		code.append(".");
+		if (themeId == null) {
+			code.append(UIThemeService.FOLLOW_SYSTEM_FUNCTION);
+			code.append("();");
+		} else {
+			code.append(UIThemeService.SELECT_FUNCTION);
+			code.append("(");
+			TagUtil.writeJsString(code, themeId);
+			code.append(");");
+		}
+		return code.toString();
 	}
 
 }

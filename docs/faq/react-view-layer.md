@@ -18,6 +18,40 @@
 - **`TLPanel` renders a single `toolbar` child control (a `ReactToolbarControl`), not a `toolbarButtons` list.** Push a panel toolbar via `putState("toolbar", new ReactToolbarControl(ctx))` + `addGroup(name, ToolbarGroupDisplay.INLINE, …, List.of(button))`.
 - Mutable rows: `ListRowSource.setElements(list)` then `TableViewControl.refreshData()`. `DefaultTableView.create(columns, source[, ViewStateStore, TableId])` — the 2-arg form skips personalization; pass a stable `TableId` to persist column width / order.
 
+## Drag and drop of table rows
+
+A `<table>` declares that its rows may be dragged, and what it accepts a drop of. Both are declarations of the table, so a drag between two tables needs no code on either side:
+
+```xml
+<table rows="…" selection="ticket" types="demo.tickets:Ticket">
+    <drag/>
+    <drop accept="demo.tickets:Ticket">
+        <with-transaction>
+            <execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`))"/>
+        </with-transaction>
+    </drop>
+</table>
+<table rows="all(`tl.accounts:Person`)" types="tl.accounts:Person">
+    <drop accept="demo.tickets:Ticket" target="row" target-channel="dropPerson">
+        <with-transaction>
+            <execute-script function="person -> tickets -> …">
+                <inputs><input channel="dropPerson"/></inputs>
+            </execute-script>
+        </with-transaction>
+    </drop>
+</table>
+```
+
+- **`<drag/>`** makes the rows draggable. Dragging a selected row drags the whole selection, an unselected row drags itself — and the selection is read on the server, so a selection reaching beyond the rendered row window is dragged completely. The rows are announced under a type tag: `type` when the drag declares one, otherwise the table's first `types` entry. A table declaring neither is a configuration error — nothing would say what its rows are.
+- **`<drop>`** is a list, so a table can accept several kinds of object, and accept one kind on its rows and another as a whole. `accept` names the types (a subtype of an accepted type is accepted as well); `target` is `table` (default) or `row`; `target-channel` is written with the row dropped on — `null` for a table drop — *before* the actions run, which is how the chain reads what was dropped on. The element content is the action chain, declared exactly as a `<generic-command>` declares its actions, and its first action receives the **list of dropped objects** as its input. Nothing about a drop is implicit: a drop that changes persistent state wraps its script in `<with-transaction>`, as any other command does.
+- **Which drop applies**: the first declared one that accepts the drag. A drop made on a row is offered to the `row` drops first and falls back to a `table` drop when none of them accepts it, so a table whose rows are targets for one kind of object still accepts another kind wherever the pointer was.
+
+**Acceptance is decided twice, on purpose.** The server expands each accepted type to its own qualified name plus those of all its subtypes and sends that set of tags to the client. While a drag moves, the client compares the drag's tag against those tags alone — no round trip — and highlights the table, or the row under the pointer for a table whose rows are targets. When the drop arrives, the server matches it again, per declared drop, and the receiving table refuses a drop of a tag it never offered: the client-side check narrows the gesture for the user, it does not decide it. The dragged objects are resolved by the control the drag started in, from its own row keys, so no wire value can designate an object neither table displays.
+
+**Recording**: a drop is recorded as a `dropObjects` step naming the dragged objects and the target row by their business identity, so it replays after sorting, filtering and in a fresh session. A replayed drop names no source control — it names the objects instead — and is matched by their type.
+
+`<drag>` and `<drop>` apply to the read-only table. A table in edit mode (`row-edit`) renders through `RowSetTableControl`, a control of its own that carries no drag-and-drop seam, so declaring either there is reported as a configuration error.
+
 ## Drill-down navigation with `<tile-stack>`
 
 `com.top_logic.layout.view.tiles` provides drill-down navigation. A `<tile-stack path="navPath" initial="products/overview.view.xml"/>` displays the last frame of a path of `TileFrame`s, the `initial` view when the path is empty, and keeps the frames the displayed one covers (see below). The path itself lives on a normal channel of the enclosing view (`List<TileFrame>`), which is the single source of truth: every navigation is a write to that channel.

@@ -28,8 +28,10 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.TableElement;
 import com.top_logic.layout.view.element.TableElement.CriterionConfig;
+import com.top_logic.layout.view.element.TableElement.DropConfig;
 import com.top_logic.layout.view.element.TableElement.PresetConfig;
 import com.top_logic.layout.view.element.TableElement.PresetsConfig;
+import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
 
@@ -133,6 +135,48 @@ public class TestTableElement extends TestCase {
 		FilterStateConfig.BooleanConfig accepted =
 			(FilterStateConfig.BooleanConfig) active.getStates().get(0);
 		assertNotNull("Accept expression should be set", accepted.getAccept());
+	}
+
+	/**
+	 * Tests that the {@code <drag>} of a {@code <table>} is parsed, and that a table declaring no row
+	 * type at all is reported: nothing would then say what its rows are.
+	 */
+	public void testParseDrag() throws Exception {
+		TableElement.Config tableConfig = readTableConfig();
+
+		assertNotNull("The table declares its rows draggable.", tableConfig.getDrag());
+		assertNull("The drag takes the table's row type, so it declares none of its own.",
+			tableConfig.getDrag().getType());
+
+		TableElement.Config withoutType = TypedConfiguration.copy(tableConfig);
+		withoutType.update(withoutType.descriptor().getProperty(TableElement.Config.TYPES), List.of());
+
+		assertContains("must say what they are", errors(withoutType));
+	}
+
+	/**
+	 * Tests that the {@code <drop>}s of a {@code <table>} are parsed with the types they accept, what
+	 * they target, and the action chain applying them.
+	 */
+	public void testParseDrops() throws Exception {
+		List<DropConfig> drops = readTableConfig().getDrops();
+		assertEquals("Should have two drops", 2, drops.size());
+
+		DropConfig onTable = drops.get(0);
+		assertEquals(List.of("demo.test:Row"),
+			onTable.getAccept().stream().map(ref -> ref.qualifiedName()).toList());
+		assertEquals("A drop targets the table unless it says otherwise.",
+			DropTargetMode.TABLE, onTable.getTarget());
+		assertNull("A table drop has no target row to publish.", onTable.getTargetChannel());
+		assertEquals("Should declare one action", 1, onTable.getActions().size());
+
+		DropConfig onRow = drops.get(1);
+		assertEquals(List.of("demo.test:Row", "demo.test:Other"),
+			onRow.getAccept().stream().map(ref -> ref.qualifiedName()).toList());
+		assertEquals(DropTargetMode.ROW, onRow.getTarget());
+		assertNotNull("The row drop publishes the row dropped on.", onRow.getTargetChannel());
+		assertEquals("dropTarget", onRow.getTargetChannel().getChannelName());
+		assertEquals("Should declare one action", 1, onRow.getActions().size());
 	}
 
 	/**

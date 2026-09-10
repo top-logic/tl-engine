@@ -36,7 +36,10 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -44,6 +47,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
@@ -58,12 +62,15 @@ import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.DeclaredFilters;
+import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.layout.view.table.FilterStateTemplate;
+import com.top_logic.layout.view.table.TableDropBinding;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -155,6 +162,12 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getPresets()}. */
 		String PRESETS = "presets";
+
+		/** Configuration name for {@link #getDrag()}. */
+		String DRAG = "drag";
+
+		/** Configuration name for {@link #getDrops()}. */
+		String DROPS = "drops";
 
 		/**
 		 * Optional qualified TL type name(s) of the row objects, used to resolve column
@@ -272,6 +285,117 @@ public class TableElement implements UIElement {
 		 */
 		@Name(PRESETS)
 		PresetsConfig getPresets();
+
+		/**
+		 * Makes the rows of this table draggable, so they can be dropped on a display that accepts
+		 * their type.
+		 *
+		 * <p>
+		 * Dragging a selected row drags the whole selection, an unselected row drags itself. Unset
+		 * (default) leaves the rows undraggable.
+		 * </p>
+		 */
+		@Name(DRAG)
+		DragConfig getDrag();
+
+		/**
+		 * What this table accepts a drop of, and what it does with the dropped objects.
+		 *
+		 * <p>
+		 * A drop is applied by the first declared entry that accepts it, so a table can accept
+		 * several kinds of object - and accept one of them on its rows and another as a whole.
+		 * Empty (default) leaves the table accepting no drop.
+		 * </p>
+		 */
+		@Name(DROPS)
+		@DefaultContainer
+		List<DropConfig> getDrops();
+	}
+
+	/**
+	 * Configuration of the {@code <drag>} of a {@link TableElement}: that its rows may be dragged,
+	 * and what they are announced as.
+	 */
+	public interface DragConfig extends ConfigurationItem {
+
+		/** Configuration name for {@link #getType()}. */
+		String TYPE = "type";
+
+		/**
+		 * The type the dragged rows are announced as, which a {@link DropConfig#getAccept() drop}
+		 * accepts them by.
+		 *
+		 * <p>
+		 * Defaults to the first of the table's {@link Config#getTypes() declared row types}. A table
+		 * declaring neither is a configuration error: nothing would say what its rows are.
+		 * </p>
+		 */
+		@Name(TYPE)
+		TLModelPartRef getType();
+	}
+
+	/**
+	 * Configuration of one {@code <drop>} of a {@link TableElement}: what it accepts, what it
+	 * targets, and what it does.
+	 */
+	@TagName("drop")
+	public interface DropConfig extends ConfigurationItem {
+
+		/** Configuration name for {@link #getAccept()}. */
+		String ACCEPT = "accept";
+
+		/** Configuration name for {@link #getTarget()}. */
+		String TARGET = "target";
+
+		/** Configuration name for {@link #getTargetChannel()}. */
+		String TARGET_CHANNEL = "target-channel";
+
+		/** Configuration name for {@link #getActions()}. */
+		String ACTIONS = "actions";
+
+		/**
+		 * The types of the objects this drop accepts.
+		 *
+		 * <p>
+		 * A subtype of an accepted type is accepted as well. Acceptance is decided over the model
+		 * on the server; the client is told the resulting set of type names, so a drag it cannot be
+		 * applied to is not offered in the first place.
+		 * </p>
+		 */
+		@Name(ACCEPT)
+		@Mandatory
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getAccept();
+
+		/**
+		 * Whether the table as a whole or a single row is the target of this drop.
+		 */
+		@Name(TARGET)
+		DropTargetMode getTarget();
+
+		/**
+		 * A {@link ViewChannel} the target row is written to before the {@link #getActions()
+		 * actions} run, so they can read what was dropped on.
+		 *
+		 * <p>
+		 * Unset (default) leaves the target unpublished, which is what a
+		 * {@link DropTargetMode#TABLE} drop needs - it has no target row, and writes {@code null}
+		 * where a channel is declared anyway.
+		 * </p>
+		 */
+		@Name(TARGET_CHANNEL)
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getTargetChannel();
+
+		/**
+		 * The chain of actions applying the drop, receiving the dropped objects as the input of its
+		 * first action.
+		 */
+		@Name(ACTIONS)
+		@DefaultContainer
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends ViewAction>> getActions();
 	}
 
 	/**
@@ -578,6 +702,15 @@ public class TableElement implements UIElement {
 	private final List<CompiledPreset> _presets;
 
 	/**
+	 * The type tag the rows are dragged under, or {@code null} while the table declares no
+	 * {@link Config#getDrag() drag}.
+	 */
+	private final String _dragType;
+
+	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
+	private final List<CompiledDrop> _drops;
+
+	/**
 	 * Where a preset that cannot be applied to this table's columns is reported.
 	 *
 	 * @implNote The criterion values are evaluated per session (see {@link CriterionConfig#getExpr()}),
@@ -629,6 +762,18 @@ public class TableElement implements UIElement {
 	}
 
 	/**
+	 * A {@link DropConfig} with its action chain instantiated.
+	 *
+	 * @param config
+	 *        What the drop accepts and targets.
+	 * @param actions
+	 *        The instantiated action chain applying it.
+	 */
+	private record CompiledDrop(DropConfig config, List<ViewAction> actions) {
+		// Pure data carrier.
+	}
+
+	/**
 	 * Creates a {@link TableElement} from configuration.
 	 */
 	@CalledByReflection
@@ -636,6 +781,14 @@ public class TableElement implements UIElement {
 		_config = config;
 		_log = context;
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
+		_dragType = dragType(context, config);
+		_drops = compileDrops(context, config.getDrops());
+		if (config.getRowEdit() != RowEditPolicy.NONE && (_dragType != null || !_drops.isEmpty())) {
+			// The editable table is a control of its own, which carries no drag-and-drop seam; a
+			// declaration there would apply to nothing.
+			context.error("A <table> with '" + Config.ROW_EDIT + "' offers neither <" + Config.DRAG
+				+ "> nor <drop>.");
+		}
 
 		ColumnsConfig columnsConfig = config.getColumns();
 		if (columnsConfig != null) {
@@ -645,6 +798,76 @@ public class TableElement implements UIElement {
 		}
 
 		_presets = compilePresets(context, config.getPresets());
+	}
+
+	/**
+	 * The type tag the rows of a table declaring a {@link Config#getDrag() drag} are dragged under:
+	 * the declared {@link DragConfig#getType() type}, or the first of the table's
+	 * {@link Config#getTypes() row types}. {@code null} for a table whose rows are not draggable,
+	 * and for one that says nothing about what its rows are - which is reported as a configuration
+	 * error.
+	 */
+	private static String dragType(Log log, Config config) {
+		DragConfig drag = config.getDrag();
+		if (drag == null) {
+			return null;
+		}
+		TLModelPartRef declared = drag.getType();
+		if (declared != null) {
+			return declared.qualifiedName();
+		}
+		List<TLModelPartRef> types = config.getTypes();
+		if (types == null || types.isEmpty()) {
+			log.error("A <table> whose rows are dragged must say what they are: either '"
+				+ DragConfig.TYPE + "' on its <" + Config.DRAG + ">, or '" + Config.TYPES
+				+ "' on the table itself.");
+			return null;
+		}
+		return types.get(0).qualifiedName();
+	}
+
+	/**
+	 * Instantiates the action chains of the declared drops, so that applying one only has to run
+	 * them.
+	 */
+	private static List<CompiledDrop> compileDrops(InstantiationContext context, List<DropConfig> dropConfigs) {
+		if (dropConfigs.isEmpty()) {
+			return List.of();
+		}
+		List<CompiledDrop> result = new ArrayList<>(dropConfigs.size());
+		for (DropConfig dropConfig : dropConfigs) {
+			List<ViewAction> actions = dropConfig.getActions().stream()
+				.<ViewAction> map(actionConfig -> context.getInstance(actionConfig))
+				.filter(action -> action != null)
+				.toList();
+			result.add(new CompiledDrop(dropConfig, actions));
+		}
+		return result;
+	}
+
+	/**
+	 * The drop target of this table's declared drops, resolved for the given session: the accepted
+	 * types against the application model, the target channels against the view.
+	 */
+	private DropTarget dropBinding(ViewContext context) {
+		List<TableDropBinding.Drop> drops = new ArrayList<>(_drops.size());
+		for (CompiledDrop compiled : _drops) {
+			DropConfig dropConfig = compiled.config();
+			List<TLType> accepted = new ArrayList<>(dropConfig.getAccept().size());
+			for (TLModelPartRef ref : dropConfig.getAccept()) {
+				TLType type = ref.resolveType();
+				if (type == null) {
+					throw new RuntimeException(
+						"A <table> accepts a drop of an unknown type: " + ref.qualifiedName());
+				}
+				accepted.add(type);
+			}
+			ChannelRef targetChannelRef = dropConfig.getTargetChannel();
+			drops.add(new TableDropBinding.Drop(TableDropBinding.tagsOf(accepted), dropConfig.getTarget(),
+				targetChannelRef == null ? null : context.resolveChannel(targetChannelRef),
+				compiled.actions()));
+		}
+		return new TableDropBinding(context, drops);
 	}
 
 	/**
@@ -758,6 +981,12 @@ public class TableElement implements UIElement {
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 		control.setFilterBar(filterBar());
+		if (_dragType != null) {
+			control.setDragSource(_dragType);
+		}
+		if (!_drops.isEmpty()) {
+			control.setDropTarget(dropBinding(context));
+		}
 
 		// Let each column contribute any per-session UI (e.g. a custom filter dialog).
 		for (ColumnSetup setup : setups) {

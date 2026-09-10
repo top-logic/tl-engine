@@ -18,6 +18,14 @@
 - **`TLPanel` renders a single `toolbar` child control (a `ReactToolbarControl`), not a `toolbarButtons` list.** Push a panel toolbar via `putState("toolbar", new ReactToolbarControl(ctx))` + `addGroup(name, ToolbarGroupDisplay.INLINE, …, List.of(button))`.
 - Mutable rows: `ListRowSource.setElements(list)` then `TableViewControl.refreshData()`. `DefaultTableView.create(columns, source[, ViewStateStore, TableId])` — the 2-arg form skips personalization; pass a stable `TableId` to persist column width / order.
 
+## Colored values
+
+A value's color is part of the model: two annotations say where it comes from, and one seam answers it.
+
+- **`<color>`** on an enumeration literal (`TLColor`) gives that literal its color, stated either as a fixed color (`<color value="#04a38d"/>`) or as the name of a UI-theme design token (`<color token="support-success"/>`), which follows the theme the user has active. A literal without the annotation has no color.
+- **`<color-attribute name="…"/>`** on a type (`TLColorAttribute`) names the attribute holding the color of its instances. That attribute holds either a color value or an enumeration literal, whose own `<color>` then decides — the annotation is meant for classifier-like types such as a status or label type whose instances carry their color as data. Specializations inherit the annotation.
+- **`AnnotationValueColorProvider.INSTANCE`** (a `ValueColorProvider`) answers both: `colorOf(value)` returns the `ValueColor` of a classifier or an object, the color a color value itself is, and `null` for everything the model gives no color to. `ValueColor.cssValue()` is the CSS to apply it with — the fixed color, or `var(--<token>)` against the custom properties `UIThemeService` emits per theme.
+
 ## Drill-down navigation with `<tile-stack>`
 
 `com.top_logic.layout.view.tiles` provides drill-down navigation. A `<tile-stack path="navPath" initial="products/overview.view.xml"/>` displays the last frame of a path of `TileFrame`s, the `initial` view when the path is empty, and keeps the frames the displayed one covers (see below). The path itself lives on a normal channel of the enclosing view (`List<TileFrame>`), which is the single source of truth: every navigation is a write to that channel.

@@ -4,8 +4,16 @@
 	<modules>
 		<module name="demo.tickets">
 			<enum name="TicketStatus">
-				<classifier name="open"/>
-				<classifier name="closed"/>
+				<classifier name="open">
+					<annotations>
+						<color token="support-warning"/>
+					</annotations>
+				</classifier>
+				<classifier name="closed">
+					<annotations>
+						<color token="support-success"/>
+					</annotations>
+				</classifier>
 			</enum>
 			<class name="Ticket">
 				<annotations>

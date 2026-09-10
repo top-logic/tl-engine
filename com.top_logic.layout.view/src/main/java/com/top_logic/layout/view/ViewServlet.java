@@ -639,7 +639,12 @@ public class ViewServlet extends TopLogicServlet {
 		// The language the page is actually rendered in, so that assistive technology and the
 		// browser's own text handling follow the user's choice.
 		out.writeAttribute("lang", Resources.getCurrentLocale().getLanguage());
-		out.writeAttribute("data-theme", themes.getActiveThemeId());
+		// The theme the user has selected. Left out while there is no selection, which is what makes
+		// the page follow the operating system's appearance preference.
+		String selectedTheme = themes.getSelectedThemeId();
+		if (selectedTheme != null) {
+			out.writeAttribute(UIThemeService.THEME_ATTRIBUTE, selectedTheme);
+		}
 		out.endBeginTag();
 
 		out.beginBeginTag(HTMLConstants.HEAD);
@@ -647,6 +652,9 @@ public class ViewServlet extends TopLogicServlet {
 		out.beginBeginTag(HTMLConstants.META);
 		out.writeAttribute("charset", "UTF-8");
 		out.endEmptyTag();
+		// The theme switch, put into effect before the first paint: a page carrying no theme yet
+		// follows the operating system's appearance preference.
+		themes.writeThemeScript(out);
 		out.beginBeginTag(HTMLConstants.META);
 		out.writeAttribute("name", "viewport");
 		out.writeAttribute("content", "width=device-width, initial-scale=1.0");
@@ -658,8 +666,8 @@ public class ViewServlet extends TopLogicServlet {
 		ClientResources clientResources = ClientResources.getInstance();
 		// Emit the registered client scripts: classic scripts, the import map, then ES module scripts.
 		clientResources.writeScriptRefs(out, contextPath);
-		// Emit the design tokens of every registered theme as data-theme scoped CSS custom
-		// properties. The active theme is selected via the data-theme attribute on <html>.
+		// Emit the design tokens of every registered theme as CSS custom properties, each scoped by
+		// the theme attribute of <html> naming the theme in effect.
 		themes.writeThemeStyles(out);
 		// Append the React stylesheets (fonts, icons, component CSS).
 		clientResources.writeStyleRefs(out, contextPath);

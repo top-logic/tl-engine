@@ -790,6 +790,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_ROW_KEY_UNRESOLVED__KEY;
 
 	/**
+	 * @en Cannot drop here: this table does not accept the dragged objects.
+	 */
+	public static ResKey ERROR_DROP_NOT_ACCEPTED;
+
+	/**
+	 * @en Cannot drop: the dragged objects or the target row are no longer present: {0}
+	 */
+	public static ResKey1 ERROR_DROP_UNRESOLVED__OBJECTS;
+
+	/**
 	 * @en Assertion at ''{0}'' failed: mismatching state keys {1}
 	 */
 	public static ResKey2 ERROR_ASSERTION_FAILED__ADDRESS_KEYS;

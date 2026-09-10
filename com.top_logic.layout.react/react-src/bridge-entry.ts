@@ -21,6 +21,8 @@ export {
 } from './bridge/tl-react-bridge';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps } from './bridge/focus-trap';
 export { CMD_VALUE_CHANGED } from './bridge/command-channel';
+export { writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
+export type { TLDragPayload, TLDropPosition } from './bridge/drag-drop';
 export type { TLCellProps } from './bridge/types';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';

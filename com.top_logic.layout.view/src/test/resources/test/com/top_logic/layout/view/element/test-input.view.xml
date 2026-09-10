@@ -12,7 +12,12 @@
 
 	<panel>
 		<children>
-			<value-input value="term"/>
+			<value-input value="term">
+				<on-submit>
+					<execute-script function="entered -> $entered"/>
+					<write-channel name="state"/>
+				</on-submit>
+			</value-input>
 			<value-input
 				type="tl.core:Boolean"
 				value="flag"

@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -31,6 +32,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
@@ -40,6 +42,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.element.ValueInputElement;
 import com.top_logic.layout.view.element.PanelElement;
 import com.top_logic.layout.view.form.AttributeOptions;
@@ -73,6 +76,12 @@ import com.top_logic.util.model.CompatibilityService;
  * </p>
  *
  * <p>
+ * Third, the submit hook: which controls report a submit of their own, that the submit a client
+ * sends both stores the value and reports it, and that only a value the user produced counts as
+ * committed.
+ * </p>
+ *
+ * <p>
  * The model is transient, so the test needs neither a knowledge base nor the application model.
  * </p>
  */
@@ -83,6 +92,15 @@ public class TestValueInputElement extends TestCase {
 
 	/** Label passed to both sides of a comparison, since the label decides no control. */
 	private static final String LABEL = "Value";
+
+	/**
+	 * State key by which the client learns to submit on Enter.
+	 *
+	 * @implNote Restated here because
+	 *           {@link com.top_logic.layout.react.control.form.ReactFormFieldControl} keeps it
+	 *           protected for its subclasses.
+	 */
+	private static final String SUBMIT_ON_ENTER = "submitOnEnter";
 
 	private TLModelImpl _model;
 
@@ -128,6 +146,10 @@ public class TestValueInputElement extends TestCase {
 		assertFalse(text.getReadonly());
 		assertNull(text.getOptions());
 		assertEquals(Collections.emptyList(), text.getInputs());
+		assertTrue("Without a command named, the submit hook is a generic command: " + text.getOnSubmit(),
+			text.getOnSubmit() instanceof GenericViewCommand.Config);
+		assertEquals("The actions to run on the submitted value stand inside the element.",
+			2, ((GenericViewCommand.Config) text.getOnSubmit()).getActions().size());
 
 		assertEquals("tl.core:Boolean", config(inputs, 1).getType().qualifiedName());
 		assertEquals("tl.core:Date", config(inputs, 2).getType().qualifiedName());
@@ -137,6 +159,8 @@ public class TestValueInputElement extends TestCase {
 		assertTrue("The state is displayed but not entered here.", state.getReadonly());
 		assertNotNull("A stated label must reach the configuration.", state.getLabel());
 		assertNotNull("A stated label position must reach the configuration.", state.getLabelPosition());
+
+		assertNull("An input without the hook submits nothing.", config(inputs, 1).getOnSubmit());
 
 		ValueInputElement.Config owners = config(inputs, 4);
 		assertTrue("Several owners are chosen at once.", owners.getMultiple());
@@ -257,6 +281,87 @@ public class TestValueInputElement extends TestCase {
 
 		channel.set(List.of("b"));
 		assertEquals(List.of("b"), field.getValue());
+	}
+
+	/**
+	 * A field the user types in is finished by a gesture of the user, so it reports submits; in a
+	 * text area Enter is part of the text, and there is no gesture left to submit with.
+	 */
+	public void testTypedTextHasASubmitGesture() {
+		ReactTextInputControl singleLine = new ReactTextInputControl(_context, new AbstractFieldModel(null));
+		assertTrue("A single-line text is submitted by the user.", singleLine.hasSubmitGesture());
+
+		ReactTextInputControl area = new ReactTextInputControl(_context, new AbstractFieldModel(null));
+		area.setMultiline(3);
+		assertFalse("Enter belongs to the text of a text area.", area.hasSubmitGesture());
+	}
+
+	/** A field that is picked from has no submit gesture: every choice is already finished. */
+	public void testPickedValueHasNoSubmitGesture() {
+		ReactCheckboxControl checkbox = new ReactCheckboxControl(_context, new AbstractFieldModel(null), false);
+		assertFalse(checkbox.hasSubmitGesture());
+	}
+
+	/**
+	 * The submit a client sends stores the value in the field and reports exactly that value.
+	 */
+	public void testSubmitStoresAndReportsTheValue() {
+		AbstractFieldModel field = new AbstractFieldModel(null);
+		ReactTextInputControl control = new ReactTextInputControl(_context, field);
+		AtomicReference<Object> submitted = new AtomicReference<>();
+		control.setSubmitListener(submitted::set);
+
+		assertEquals("The client is told to submit on Enter.",
+			Boolean.TRUE, control.scriptingScalarState().get(SUBMIT_ON_ENTER));
+
+		control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", "DEMO-1"));
+
+		assertEquals("The submitted value reaches the field.", "DEMO-1", field.getValue());
+		assertEquals("...and is reported as submitted.", "DEMO-1", submitted.get());
+	}
+
+	/** Without a listener nothing is reported, and the client is not asked to submit at all. */
+	public void testWithoutASubmitListenerNothingIsReported() {
+		AbstractFieldModel field = new AbstractFieldModel(null);
+		ReactTextInputControl control = new ReactTextInputControl(_context, field);
+
+		assertNull("An input without the hook must not send submits.",
+			control.scriptingScalarState().get(SUBMIT_ON_ENTER));
+
+		control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", "DEMO-1"));
+
+		assertEquals("The value is still stored.", "DEMO-1", field.getValue());
+	}
+
+	/**
+	 * A value the user picks is reported once it has reached the channel, since a choice is
+	 * finished in itself.
+	 */
+	public void testPickedValueIsReportedOnCommit() {
+		ViewChannel channel = new DefaultViewChannel("value");
+		SimpleSelectFieldModel field = new SimpleSelectFieldModel(null, List.of("a", "b"), false);
+		ChannelFieldBinding binding = ChannelFieldBinding.bind(channel, field, true, false);
+		AtomicReference<Object> committed = new AtomicReference<>();
+		binding.setCommitListener(committed::set);
+
+		field.setValue(List.of("b"));
+
+		assertEquals("The choice reaches the channel.", "b", channel.get());
+		assertEquals("...and is reported as committed.", "b", committed.get());
+	}
+
+	/** A value the channel receives from elsewhere is nothing the user committed. */
+	public void testChannelValueIsNoCommit() {
+		ViewChannel channel = new DefaultViewChannel("value");
+		AbstractFieldModel field = new AbstractFieldModel(null);
+		ChannelFieldBinding binding = ChannelFieldBinding.bind(channel, field, false, false);
+		AtomicReference<Object> committed = new AtomicReference<>();
+		binding.setCommitListener(committed::set);
+
+		channel.set("written elsewhere");
+
+		assertEquals("The input follows the channel.", "written elsewhere", field.getValue());
+		assertNull("Nothing the user did, so nothing to run a command on.", committed.get());
 	}
 
 	/**

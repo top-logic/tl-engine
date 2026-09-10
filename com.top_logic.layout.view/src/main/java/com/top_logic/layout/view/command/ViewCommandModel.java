@@ -17,6 +17,8 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
@@ -92,6 +94,48 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 				rule);
 		}
 		return new ViewCommandModel(command, config, inputChannel, rule);
+	}
+
+	/**
+	 * Creates the {@link ViewCommandModel} for a command configured at a UI element, resolving the
+	 * command's input channel and executability rule against the given view.
+	 *
+	 * @param context
+	 *        The view the command belongs to.
+	 * @param command
+	 *        The stateless command handler.
+	 * @param config
+	 *        The command configuration.
+	 */
+	public static ViewCommandModel forCommand(ViewContext context, ViewCommand command, ViewCommand.Config config) {
+		ChannelRef inputRef = config.getInput();
+		ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
+		ViewExecutabilityRule rule = ViewExecutabilityRules.build(config.getExecutability(), context);
+		return create(command, config, inputChannel, rule);
+	}
+
+	/**
+	 * Runs the command on the given input, if the executability rule admits that input.
+	 *
+	 * <p>
+	 * The input need not be the value of the {@link ViewCommand.Config#getInput() input channel}: a
+	 * control reporting what the user has just entered passes that value, so the command acts on it
+	 * without a channel in between.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context the command runs in.
+	 * @param input
+	 *        The value the command is executed on.
+	 * @return The result of the command, or {@link HandlerResult#DEFAULT_RESULT} if the rule refuses
+	 *         the input.
+	 */
+	public HandlerResult execute(ReactContext context, Object input) {
+		ExecutableState state = _rule.isExecutable(input);
+		if (!state.isExecutable()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return _command.execute(context, input);
 	}
 
 	/**
@@ -184,19 +228,12 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 
 	@Override
 	public HandlerResult executeCommand(ReactContext context) {
-		Object input = resolveInput();
-
-		ExecutableState state = _rule.isExecutable(input);
-		if (!state.isExecutable()) {
-			return HandlerResult.DEFAULT_RESULT;
-		}
-
 		// TODO: dirty check (DirtyCheckScope from config)
 
 		// Confirmation is a chain concern: place a <confirm> guard in the command's action chain
 		// (see ConfirmAction), which can suspend/resume the chain and inspect already-stored form
 		// state - rather than gating the whole command here.
-		return _command.execute(context, input);
+		return execute(context, resolveInput());
 	}
 
 	/**

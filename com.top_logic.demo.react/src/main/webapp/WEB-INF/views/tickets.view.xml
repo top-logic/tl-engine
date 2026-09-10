@@ -17,10 +17,16 @@
 	page rather than walking the terms typed on it. A link without q says nothing about the
 	filter and shows the list unfiltered.
 	
-	The two inputs above the lists show that an input is bound to a channel for a value of any
-	type: the filter term is a tl.core:String and is written in a text field, while the status is
-	an enumeration and is chosen from a dropdown of its classifiers. Either list reads both
-	channels through its <inputs>, so the two inputs narrow both lists together.
+	The inputs above the lists show that an input is bound to a channel for a value of any type:
+	the filter term is a tl.core:String and is written in a text field, while the status is an
+	enumeration and is chosen from a dropdown of its classifiers. Either list reads both channels
+	through its <inputs>, so the two inputs narrow both lists together.
+	
+	The third input demonstrates the submit hook: pressing Enter in "Jump to ticket" writes the
+	entered text to the jump channel and then runs the <on-submit> command over it, which resolves
+	the ticket of that name and writes it to the ticket channel - so the list shows it selected. A
+	text is submitted by Enter; the status dropdown beside it would run such a command on every
+	choice, since a choice is already finished.
 	
 	The two lists split the tickets by whether they carry comments, and share the one ticket
 	channel: the selected ticket is shown in whichever list holds it, and a ticket that moves
@@ -33,6 +39,7 @@
 		<channel name="ticket"/>
 		<channel name="filter"/>
 		<channel name="status"/>
+		<channel name="jump"/>
 		<derived-channel name="ticketId"
 			expr="t -> objectId($t)"
 			inputs="ticket"
@@ -162,6 +169,16 @@
 							<en>Status</en>
 							<de>Status</de>
 						</label>
+					</value-input>
+					<value-input value="jump">
+						<label>
+							<en>Jump to ticket</en>
+							<de>Zu Ticket springen</de>
+						</label>
+						<on-submit>
+							<execute-script function="name -> if($name == null || $name == &quot;&quot;, null, all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement())"/>
+							<write-channel name="ticket"/>
+						</on-submit>
 					</value-input>
 					<panel>
 						<title>

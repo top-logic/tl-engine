@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
@@ -43,6 +44,8 @@ public class ChannelFieldBinding {
 	private final boolean _multiple;
 
 	private boolean _transferring;
+
+	private Consumer<Object> _commitListener;
 
 	private final ChannelListener _channelListener = (sender, oldValue, newValue) -> toField(newValue);
 
@@ -108,6 +111,24 @@ public class ChannelFieldBinding {
 	}
 
 	/**
+	 * Registers the listener reporting a value the user entered, after it has been written to the
+	 * channel.
+	 *
+	 * <p>
+	 * Only a value the user produced is reported: a value the channel receives from elsewhere
+	 * reaches the field through this binding and is not a commit. The listener therefore sees each
+	 * choice the user makes in a field that is clicked or picked from - a checkbox, a dropdown, a
+	 * date picker - which is where every value change is already the finished value.
+	 * </p>
+	 *
+	 * @param listener
+	 *        Receives the committed channel value, or {@code null} to stop reporting commits.
+	 */
+	public void setCommitListener(Consumer<Object> listener) {
+		_commitListener = listener;
+	}
+
+	/**
 	 * Detaches this binding from the channel and the field.
 	 */
 	public void dispose() {
@@ -137,11 +158,16 @@ public class ChannelFieldBinding {
 		if (_transferring) {
 			return;
 		}
+		Object value = channelValue(fieldValue);
 		_transferring = true;
 		try {
-			_channel.set(channelValue(fieldValue));
+			_channel.set(value);
 		} finally {
 			_transferring = false;
+		}
+		Consumer<Object> listener = _commitListener;
+		if (listener != null) {
+			listener.accept(value);
 		}
 	}
 

@@ -11,6 +11,7 @@ import java.util.List;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -19,12 +20,16 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.UIElement;
@@ -33,6 +38,9 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.layout.view.command.GenericViewCommand;
+import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.ChannelFieldBinding;
@@ -69,6 +77,12 @@ import com.top_logic.util.Resources;
  * instances of the type, or whatever the {@link Config#getOptions() options expression} computes.
  * With {@link Config#getMultiple() multiple} set, the channel holds a collection of such values
  * instead of a single one.
+ * </p>
+ *
+ * <p>
+ * A {@link Config#getOnSubmit() submit command} turns the input into an action: the value the user
+ * finishes entering is written to the channel and then run through the command, which is what a
+ * search field or a jump-to box is - one input and one command over what was entered.
  * </p>
  */
 @InApp
@@ -112,6 +126,9 @@ public class ValueInputElement implements UIElement {
 
 		/** Configuration name for {@link #getLabelPosition()}. */
 		String LABEL_POSITION = "label-position";
+
+		/** Configuration name for {@link #getOnSubmit()}. */
+		String ON_SUBMIT = "on-submit";
 
 		/**
 		 * The channel carrying the value the user enters.
@@ -200,6 +217,27 @@ public class ValueInputElement implements UIElement {
 		@Name(LABEL_POSITION)
 		@Nullable
 		LabelPosition getLabelPosition();
+
+		/**
+		 * The command run on the value the user submits.
+		 *
+		 * <p>
+		 * A value the user finishes entering is written to the value channel and then handed to
+		 * this command as its input. In a field the user types in - a text, a number - the value is
+		 * finished by pressing Enter; in a field that is picked from - a dropdown, a date, a
+		 * checkbox - every choice finishes it.
+		 * </p>
+		 *
+		 * <p>
+		 * A {@link GenericViewCommand} unless another command is named, so the actions to run on
+		 * the value stand directly inside this element.
+		 * </p>
+		 */
+		@Name(ON_SUBMIT)
+		@Nullable
+		@ImplementationClassDefault(GenericViewCommand.class)
+		@Options(fun = AllInAppImplementations.class)
+		PolymorphicConfiguration<? extends ViewCommand> getOnSubmit();
 	}
 
 	private final ChannelRef _valueRef;
@@ -218,6 +256,10 @@ public class ValueInputElement implements UIElement {
 
 	private final LabelPosition _labelPosition;
 
+	private final ViewCommand _submitCommand;
+
+	private final ViewCommand.Config _submitCommandConfig;
+
 	/**
 	 * Creates a new {@link ValueInputElement} from configuration.
 	 */
@@ -231,6 +273,10 @@ public class ValueInputElement implements UIElement {
 		_label = config.getLabel();
 		_readonly = config.getReadonly();
 		_labelPosition = config.getLabelPosition();
+
+		PolymorphicConfiguration<? extends ViewCommand> submitConfig = config.getOnSubmit();
+		_submitCommandConfig = submitConfig instanceof ViewCommand.Config commandConfig ? commandConfig : null;
+		_submitCommand = _submitCommandConfig == null ? null : context.getInstance(submitConfig);
 	}
 
 	@Override
@@ -262,11 +308,35 @@ public class ValueInputElement implements UIElement {
 			followOptions(type, optionInputs, (SelectFieldModel) field, input);
 		}
 
+		if (_submitCommand != null) {
+			followSubmit(context, input, binding);
+		}
+
 		if (_label == null && _labelPosition == null) {
 			return input;
 		}
 		return new ReactFormFieldChromeControl(context, label, field.isMandatory(), false, null, null,
 			AttributeFieldControl.wirePosition(_labelPosition, !_readonly), false, true, input);
+	}
+
+	/**
+	 * Runs the {@link Config#getOnSubmit() submit command} on each value the user finishes
+	 * entering.
+	 *
+	 * <p>
+	 * Where the control has a submit gesture of its own, the submit is that gesture; otherwise
+	 * every value the user produces is a finished one, and the binding reports it once it has
+	 * reached the channel. The command's executability rule decides per value, so the model needs
+	 * no attachment to a channel.
+	 * </p>
+	 */
+	private void followSubmit(ViewContext context, ReactControl input, ChannelFieldBinding binding) {
+		ViewCommandModel model = ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig);
+		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.hasSubmitGesture()) {
+			fieldControl.setSubmitListener(value -> model.execute(context, value));
+		} else {
+			binding.setCommitListener(value -> model.execute(context, value));
+		}
 	}
 
 	/**

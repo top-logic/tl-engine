@@ -433,10 +433,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, []);
 
   const handleDrop = React.useCallback((event: React.DragEvent) => {
+    const draggedName = dragColumnRef.current;
+    if (!draggedName) {
+      // Without a column drag of this table the drop is none of this handler's business. Leaving
+      // the event untouched lets it bubble to the table root, where a row drop landing on the
+      // header counts as a drop on the table as a whole.
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
-    const draggedName = dragColumnRef.current;
-    if (!draggedName || !dragOver) {
+    if (!dragOver) {
       dragColumnRef.current = null;
       setDragOver(null);
       return;

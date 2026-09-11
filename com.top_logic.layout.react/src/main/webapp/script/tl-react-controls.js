@@ -2267,9 +2267,10 @@ const yr = ({ controlId: l }) => {
     const O = S.currentTarget.getBoundingClientRect(), Q = S.clientX < O.left + O.width / 2 ? "left" : "right";
     z({ column: g, side: Q });
   }, []), st = e.useCallback((g) => {
-    g.preventDefault(), g.stopPropagation();
     const S = p.current;
-    if (!S || !L) {
+    if (!S)
+      return;
+    if (g.preventDefault(), g.stopPropagation(), !L) {
       p.current = null, z(null);
       return;
     }

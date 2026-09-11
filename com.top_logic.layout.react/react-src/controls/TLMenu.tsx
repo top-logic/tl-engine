@@ -10,6 +10,8 @@ interface MenuItem {
   /** Encoded theme image, rendered through {@link ThemeIcon}. */
   icon?: string;
   disabled?: boolean;
+  /** Whether the effect of the command this entry renders is currently in force. */
+  active?: boolean;
   /** Additional CSS classes declared on the command this entry renders. */
   cssClasses?: string;
   /** A header is a caption naming the entries beneath it; it is neither focusable nor selectable. */
@@ -160,8 +162,10 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
             type="button"
             className={'tlMenu__item' + (isFocused ? ' tlMenu__item--focused' : '') +
               (item.disabled ? ' tlMenu__item--disabled' : '') +
+              (item.active ? ' tlMenu__item--active' : '') +
               (item.cssClasses ? ' ' + item.cssClasses : '')}
             role="menuitem"
+            aria-current={item.active ? 'true' : undefined}
             disabled={item.disabled}
             tabIndex={isFocused ? 0 : -1}
             onClick={() => handleSelect(item.id)}

@@ -58,6 +58,24 @@ public interface CommandModel {
 	boolean isExecutable();
 
 	/**
+	 * Whether the command's effect is currently in force.
+	 *
+	 * <p>
+	 * The alternative currently chosen among a set - the active UI theme, the selected language -
+	 * or a toggle that is currently pressed. An active command is rendered as a marked button or
+	 * menu entry, so that the choice in force is visible next to the alternatives still on offer.
+	 * </p>
+	 *
+	 * <p>
+	 * Independent of {@link #isExecutable()} and of {@link #isVisible()}: choosing the alternative
+	 * that is already in force stays executable, and the user sees which one that is.
+	 * </p>
+	 */
+	default boolean isActive() {
+		return false;
+	}
+
+	/**
 	 * Whether the command button should be visible.
 	 *
 	 * <p>

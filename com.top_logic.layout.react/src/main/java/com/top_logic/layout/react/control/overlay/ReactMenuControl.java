@@ -72,6 +72,9 @@ public class ReactMenuControl extends ReactControl {
 	/** Whether the entry is disabled. */
 	private static final String ENTRY_DISABLED = "disabled";
 
+	/** Whether the entry renders a command whose effect is in force, see {@link MenuEntry#active()}. */
+	private static final String ENTRY_ACTIVE = "active";
+
 	/** Additional CSS classes for the entry. */
 	private static final String ENTRY_CSS_CLASSES = "cssClasses";
 
@@ -125,6 +128,9 @@ public class ReactMenuControl extends ReactControl {
 				}
 				if (entry.disabled()) {
 					map.put(ENTRY_DISABLED, true);
+				}
+				if (entry.active()) {
+					map.put(ENTRY_ACTIVE, true);
 				}
 				if (entry.cssClasses() != null) {
 					map.put(ENTRY_CSS_CLASSES, entry.cssClasses());
@@ -200,44 +206,48 @@ public class ReactMenuControl extends ReactControl {
 	 *        Whether the item is disabled.
 	 * @param cssClasses
 	 *        Additional CSS classes for the entry, separated by spaces, or {@code null}.
+	 * @param active
+	 *        Whether the effect of the command this entry renders is currently in force, so that
+	 *        the entry is marked as the chosen one among its alternatives.
 	 */
 	public record MenuEntry(String type, String id, String label, String icon, boolean disabled,
-			String cssClasses) {
+			String cssClasses, boolean active) {
 
 		/**
 		 * Creates a simple menu item.
 		 */
 		public static MenuEntry item(String id, String label) {
-			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, null, false, null);
+			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, null, false, null, false);
 		}
 
 		/**
 		 * Creates a menu item with an icon.
 		 */
 		public static MenuEntry item(String id, String label, String icon) {
-			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, icon, false, null);
+			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, icon, false, null, false);
 		}
 
 		/**
 		 * Creates a menu item with an icon and an explicit disabled state.
 		 */
 		public static MenuEntry item(String id, String label, String icon, boolean disabled) {
-			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, icon, disabled, null);
+			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, icon, disabled, null, false);
 		}
 
 		/**
-		 * Creates a menu item carrying additional CSS classes.
+		 * Creates a menu item carrying additional CSS classes, marked as
+		 * {@link MenuEntry#active() active} when its command is the one in force.
 		 */
 		public static MenuEntry item(String id, String label, String icon, boolean disabled,
-				String cssClasses) {
-			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, icon, disabled, cssClasses);
+				String cssClasses, boolean active) {
+			return new MenuEntry(ENTRY_TYPE_ITEM, id, label, icon, disabled, cssClasses, active);
 		}
 
 		/**
 		 * Creates a separator.
 		 */
 		public static MenuEntry separator() {
-			return new MenuEntry(ENTRY_TYPE_SEPARATOR, null, null, null, false, null);
+			return new MenuEntry(ENTRY_TYPE_SEPARATOR, null, null, null, false, null, false);
 		}
 
 		/**
@@ -245,7 +255,7 @@ public class ReactMenuControl extends ReactControl {
 		 * or focused.
 		 */
 		public static MenuEntry header(String label) {
-			return new MenuEntry(ENTRY_TYPE_HEADER, null, label, null, false, null);
+			return new MenuEntry(ENTRY_TYPE_HEADER, null, label, null, false, null, false);
 		}
 	}
 

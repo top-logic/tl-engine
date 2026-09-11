@@ -19,9 +19,10 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * For commands created programmatically, where the label and executability are known to the creating
- * code and no dedicated model class is warranted. Executability and visibility are evaluated on every
- * read through the configured {@link BooleanSupplier}s, so a model may be built once and reused while
- * the state it depends on changes.
+ * code and no dedicated model class is warranted. Executability, visibility, and the
+ * {@link #isActive() active} state are evaluated on every read through the configured
+ * {@link BooleanSupplier}s, so a model may be built once and reused while the state it depends on
+ * changes.
  * </p>
  */
 public final class SimpleCommandModel implements CommandModel {
@@ -45,6 +46,8 @@ public final class SimpleCommandModel implements CommandModel {
 	private BooleanSupplier _executable = () -> true;
 
 	private BooleanSupplier _visible = () -> true;
+
+	private BooleanSupplier _active = () -> false;
 
 	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
 
@@ -141,8 +144,18 @@ public final class SimpleCommandModel implements CommandModel {
 	}
 
 	/**
-	 * Notifies the registered state change listeners that label, executability, or visibility may
-	 * have changed.
+	 * Sets the predicate deciding whether the command is {@link #isActive() active}.
+	 *
+	 * @return This model for call chaining.
+	 */
+	public SimpleCommandModel setActive(BooleanSupplier active) {
+		_active = active;
+		return this;
+	}
+
+	/**
+	 * Notifies the registered state change listeners that label, executability, visibility, or the
+	 * {@link #isActive() active} state may have changed.
 	 */
 	public void fireStateChanged() {
 		for (Runnable listener : new ArrayList<>(_stateChangeListeners)) {
@@ -188,6 +201,11 @@ public final class SimpleCommandModel implements CommandModel {
 	@Override
 	public boolean isVisible() {
 		return _visible.getAsBoolean();
+	}
+
+	@Override
+	public boolean isActive() {
+		return _active.getAsBoolean();
 	}
 
 	@Override

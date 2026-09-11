@@ -187,36 +187,36 @@ button.tlReactButton--icon:disabled {
 /* The panel-toolbar buttons inherit the default (secondary) button styling:
    the panel header is now a light surface, so no on-accent inversion is needed. */
 
-/* --- TLToggleButton (active state) -------------------------------------- */
+/* --- Active button: a pressed toggle, or the chosen alternative --------- */
 
-.tlReactButton.tlReactButtonActive {
+.tlReactButton.tlReactButton--active {
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:hover {
+button.tlReactButton.tlReactButton--active:hover {
 	background: var(--button-primary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:focus {
+button.tlReactButton.tlReactButton--active:focus {
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:focus-visible {
+button.tlReactButton.tlReactButton--active:focus-visible {
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary), 0 0 0 2px var(--focus-inset);
 	outline: 2px solid var(--focus);
 	outline-offset: 2px;
 }
 
-button.tlReactButton.tlReactButtonActive:active {
+button.tlReactButton.tlReactButton--active:active {
 	background: var(--button-primary-active);
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:disabled {
+button.tlReactButton.tlReactButton--active:disabled {
 	background: var(--button-disabled);
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 	color: var(--text-on-color-disabled);
@@ -2579,6 +2579,11 @@ button.tlMenu__item:focus-visible {
 button.tlMenu__item--disabled:hover {
 	background: transparent;
 	color: var(--text-disabled);
+}
+
+/* The entry whose command is in force, e.g. the current theme among the offered ones. */
+.tlMenu__item--active {
+	font-weight: 600;
 }
 
 .tlMenu__separator {

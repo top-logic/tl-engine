@@ -27,7 +27,9 @@ import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
  * separated by a {@link MenuEntry#separator() separator} between contributions and between cliques
  * within a contribution; a contribution carrying a {@link ContextMenuContribution#label() label}
  * opens with a {@link MenuEntry#header(String) header} naming its entries. Wire item IDs are
- * {@code "<contributionIndex>:<commandName>"} so names may collide across contributions.
+ * {@code "<contributionIndex>:<commandName>"} so names may collide across contributions. A command
+ * that is {@link CommandModel#isActive() active} yields an entry marked as the alternative in
+ * force.
  * </p>
  *
  * <p>
@@ -149,7 +151,8 @@ public class ContextMenuOpener {
 				cmd.getLabel(),
 				encodeIcon(cmd.getImage()),
 				!cmd.isExecutable(),
-				cmd.getCssClasses()));
+				cmd.getCssClasses(),
+				cmd.isActive()));
 			currentClique = clique;
 			first = false;
 		}

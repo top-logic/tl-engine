@@ -27,8 +27,10 @@ public final class ContextMenuContribution {
 
 	private final List<CommandModel> _commands;
 
+	private final String _label;
+
 	/**
-	 * Creates a {@link ContextMenuContribution}.
+	 * Creates a {@link ContextMenuContribution} without a heading.
 	 *
 	 * @param setTarget
 	 *        Sink that publishes the target object for the contributed commands.
@@ -36,8 +38,25 @@ public final class ContextMenuContribution {
 	 *        The commands to contribute. Copied defensively.
 	 */
 	public ContextMenuContribution(Consumer<Object> setTarget, Collection<? extends CommandModel> commands) {
+		this(setTarget, commands, null);
+	}
+
+	/**
+	 * Creates a {@link ContextMenuContribution}.
+	 *
+	 * @param setTarget
+	 *        Sink that publishes the target object for the contributed commands.
+	 * @param commands
+	 *        The commands to contribute. Copied defensively.
+	 * @param label
+	 *        The heading the menu shows above this contribution's entries, or {@code null} for
+	 *        none. Already resolved for the session the menu is built for.
+	 */
+	public ContextMenuContribution(Consumer<Object> setTarget, Collection<? extends CommandModel> commands,
+			String label) {
 		_setTarget = setTarget;
 		_commands = Collections.unmodifiableList(new ArrayList<>(commands));
+		_label = label;
 	}
 
 	/**
@@ -45,6 +64,18 @@ public final class ContextMenuContribution {
 	 */
 	public Consumer<Object> setTarget() {
 		return _setTarget;
+	}
+
+	/**
+	 * The heading shown above this contribution's entries, or {@code null} for none.
+	 *
+	 * <p>
+	 * Shown only while the contribution has {@link #visibleCommands() visible commands}: a heading
+	 * names the entries beneath it, so without them it is dropped along with the separator.
+	 * </p>
+	 */
+	public String label() {
+		return _label;
 	}
 
 	/**

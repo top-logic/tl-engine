@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Initial frame of the tile drill-down demo. Lists all Person accounts and offers an "Open"
-	button that pushes a detail frame onto the enclosing tile-stack with the selected Person as
-	parameter. The pushed frame carries no label of its own - the stack names every frame of the
-	detail view in its <frame> declaration, which is also what puts the frame into the address bar.
-	The navPath channel is the stack's path (bound by the stack's bind-path-to), so the
-	derived depth channel tells this frame how deep it sits: at depth 0 the "Back" command is
-	hidden, which is why the initial frame shows no way out.
+	Initial frame of the tile drill-down demo. Lists all Person accounts and opens one on
+	activation - a double-click, Enter on the row carrying the keyboard cursor, or the chevron
+	button of the pinned trailing column - pushing a detail frame onto the enclosing tile-stack
+	with the activated Person as parameter. The pushed frame carries no label of its own - the
+	stack names every frame of the detail view in its <frame> declaration, which is also what
+	puts the frame into the address bar. The navPath channel is the stack's path (bound by the
+	stack's bind-path-to), so the derived depth channel tells this frame how deep it sits: at
+	depth 0 the "Back" command is hidden, which is why the initial frame shows no way out.
 	
 	The panel fills, so the table inside the frame bounds its scroll viewport (and
 	virtualizes) instead of growing with its rows: the frame takes part in the fill
@@ -15,7 +16,6 @@
 -->
 <view>
 	<channels>
-		<channel name="selectedPerson"/>
 		<channel name="navPath"/>
 		<derived-channel name="depth"
 			expr="p -> $p.size()"
@@ -43,23 +43,13 @@
 				</executability>
 				<navigate-pop/>
 			</generic-command>
-			<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
-				bind-input-to="person"
-				input="selectedPerson"
-				placement="TOOLBAR"
-				view="demo/tiles-demo/person-detail.view.xml"
-			>
-				<label>
-					<en>Open</en>
-					<de>Öffnen</de>
-				</label>
-			</command>
 		</commands>
-		<table
-			selection="selectedPerson"
-			types="tl.accounts:Person"
-		>
+		<table types="tl.accounts:Person">
 			<rows>all(`tl.accounts:Person`)</rows>
+			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="person"
+				view="demo/tiles-demo/person-detail.view.xml"
+			/>
 		</table>
 	</panel>
 </view>

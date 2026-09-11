@@ -339,7 +339,6 @@ Commit messages in this project must follow a specific format:
 
 - **Format**: `Ticket #<number>: <description>`
 - **Example**: `Ticket #28934: Add data URI SVG support to SVGReplacedElementFactory.`
-- **Important**: Do NOT include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-generation attribution lines
 - **Never amend commits** unless explicitly asked to do so. Always create new commits.
 - Keep the message plain and focused on describing the change.
 - **Commit completed work at the end of each turn** without waiting to be asked, so every step of

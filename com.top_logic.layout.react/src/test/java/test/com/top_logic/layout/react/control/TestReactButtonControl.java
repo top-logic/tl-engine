@@ -13,14 +13,16 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.button.SimpleCommandModel;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Tests that a {@link ReactButtonControl} the user was never offered refuses the {@code click}
- * command, whether or not it was built from a
- * {@link com.top_logic.layout.react.control.button.CommandModel}.
+ * Tests for {@link ReactButtonControl}: that a button the user was never offered refuses the
+ * {@code click} command, whether or not it was built from a
+ * {@link com.top_logic.layout.react.control.button.CommandModel}, and that a button reflects the
+ * state of the model behind it.
  *
  * <p>
  * A hidden control keeps its React component tree - it is only styled away - so it stays mounted,
@@ -135,6 +137,31 @@ public class TestReactButtonControl extends TestCase {
 
 		assertTrue(result.isSuccess());
 		assertTrue("The action must run again once the field accepts input.", trace._executed);
+	}
+
+	/**
+	 * A button backed by a {@link SimpleCommandModel} follows the model's
+	 * {@link com.top_logic.layout.react.control.button.CommandModel#isActive() active} state, so
+	 * that the alternative in force (e.g. the current theme) is marked wherever it is offered.
+	 */
+	public void testTheActiveStateFollowsTheModel() {
+		boolean[] active = { false };
+		SimpleCommandModel model = SimpleCommandModel
+			.create("theme", "Dark", ctx -> HandlerResult.DEFAULT_RESULT)
+			.setActive(() -> active[0]);
+		ReactButtonControl button = new ReactButtonControl(createTestContext(), model);
+
+		assertFalse("A command that is not in force is not marked.", button.isActive());
+
+		active[0] = true;
+		model.fireStateChanged();
+
+		assertTrue("The command now in force must be marked.", button.isActive());
+
+		active[0] = false;
+		model.fireStateChanged();
+
+		assertFalse("Choosing another alternative unmarks this one.", button.isActive());
 	}
 
 }

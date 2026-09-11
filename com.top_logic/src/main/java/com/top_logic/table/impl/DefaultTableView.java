@@ -163,13 +163,18 @@ public class DefaultTableView<R> implements TableView<R> {
 		if (_store != null && _id != null) {
 			restore();
 		}
+		pinColumns();
+		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
 		if (_filterStore != null && _id != null) {
 			_savedFilters.addAll(_filterStore.load(_id, filterCodec()));
 		}
-		// Whatever the order ends up being - the initial default or the user's persisted choice -
-		// the row source has to be told about it.
+		// Whatever the order and the grouping end up being - the initial default or the user's
+		// persisted choice - the row source has to be told about them.
 		if (!_state.getSort().isEmpty()) {
 			_source.withOrder(new SortSpec(_state.getSort()));
+		}
+		if (!_state.getGrouping().columns().isEmpty()) {
+			_source.withGrouping(_state.getGrouping());
 		}
 	}
 
@@ -307,9 +312,56 @@ public class DefaultTableView<R> implements TableView<R> {
 				column.sort().isPresent(),
 				column.filter().isPresent(),
 				frozen,
+				column.pinnedEnd(),
+				column.cssClass(),
 				sortDirection(name),
 				sortPriority(name)));
 			index++;
+		}
+		return result;
+	}
+
+	/**
+	 * Puts the columns {@link Column#pinnedEnd() pinned} to the end of the table behind all others,
+	 * keeping the order of the rest.
+	 *
+	 * <p>
+	 * Called whenever the column order is set from outside - by the caller, by a restored
+	 * personalization, by a column selection - so that the displayed order it establishes holds for
+	 * every consumer: {@link #columns()} lists a pinned column last, and the
+	 * {@link #frozenColumnCount() frozen prefix} counts none of them. A pinned column is always
+	 * displayed; a state hiding it shows it again.
+	 * </p>
+	 */
+	private void pinColumns() {
+		List<String> pinned = new ArrayList<>();
+		for (Map.Entry<String, Column<R, ?>> entry : _columns.entrySet()) {
+			if (entry.getValue().pinnedEnd()) {
+				pinned.add(entry.getKey());
+			}
+		}
+		if (pinned.isEmpty()) {
+			return;
+		}
+		List<String> order = _state.getColumnOrder();
+		order.removeAll(pinned);
+		_state.getHiddenColumns().removeAll(pinned);
+		order.addAll(pinned);
+	}
+
+	/** Whether the column with the given name keeps its place at the end of the table. */
+	private boolean isPinnedEnd(String column) {
+		Column<R, ?> definition = _columns.get(column);
+		return definition != null && definition.pinnedEnd();
+	}
+
+	/** The number of displayed columns that are not pinned to the end of the table. */
+	private int unpinnedCount() {
+		int result = 0;
+		for (String name : _state.getColumnOrder()) {
+			if (!isPinnedEnd(name)) {
+				result++;
+			}
 		}
 		return result;
 	}
@@ -388,10 +440,10 @@ public class DefaultTableView<R> implements TableView<R> {
 			case DATA:
 				return definition.renderCell(row.data());
 			case GROUP_HEADER:
-				// The header doubles as the subtotal row: label in the first column,
+				// The header doubles as the subtotal row: the group's value in the first column,
 				// per-column aggregates in the rest.
 				return isFirstColumn(column)
-					? CellContent.label(groupLabel(row.group()))
+					? groupValue(row.group())
 					: aggregate(definition, row.group());
 			case AGGREGATE:
 				return aggregate(definition, row.group());
@@ -404,9 +456,36 @@ public class DefaultTableView<R> implements TableView<R> {
 		return column.aggregate().map(aggregator -> aggregator.over(group)).orElse(CellContent.empty());
 	}
 
-	private String groupLabel(Group<R> group) {
+	/**
+	 * The content displaying what a group stands for: its value, rendered by the column the rows
+	 * are grouped by, so that the header shows the value exactly as that column's cells show it -
+	 * a classifier by its label, a date by its format.
+	 */
+	private CellContent groupValue(Group<R> group) {
 		List<Object> values = group.key().values();
-		return values.isEmpty() ? "" : String.valueOf(values.get(values.size() - 1));
+		if (values.isEmpty()) {
+			return CellContent.empty();
+		}
+		// A nested group is identified by the whole tuple of the values above it; the value it adds
+		// belongs to the grouping column of its own level.
+		int level = values.size() - 1;
+		List<String> grouping = _state.getGrouping().columns();
+		Column<R, ?> groupColumn = level < grouping.size() ? _columns.get(grouping.get(level)) : null;
+		if (groupColumn == null) {
+			return CellContent.empty();
+		}
+		return renderValue(groupColumn, values.get(level));
+	}
+
+	/**
+	 * Renders a value of the given column's value type through that column's renderer.
+	 *
+	 * @implNote The value comes from {@link Column#value(Object)} of this very column, hence it is
+	 *           of the column's value type.
+	 */
+	@SuppressWarnings("unchecked")
+	private static <R, V> CellContent renderValue(Column<R, V> column, Object value) {
+		return column.renderer().render((V) value);
 	}
 
 	@Override
@@ -608,6 +687,12 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	@Override
 	public void group(GroupSpec spec) {
+		for (String name : spec.columns()) {
+			if (isPinnedEnd(name)) {
+				// A pinned column carries what acts on a row, not a value the rows are bucketed by.
+				return;
+			}
+		}
 		_state.setGrouping(spec);
 		_source.withGrouping(spec);
 		persist();
@@ -618,11 +703,13 @@ public class DefaultTableView<R> implements TableView<R> {
 	public void moveColumn(String column, int toIndex) {
 		List<String> order = _state.getColumnOrder();
 		int from = order.indexOf(column);
-		if (from < 0) {
+		if (from < 0 || isPinnedEnd(column)) {
 			return;
 		}
 		order.remove(from);
-		order.add(Math.min(toIndex, order.size()), column);
+		// The columns pinned to the end trail the order, and a column moved to the very right lands
+		// in front of them.
+		order.add(Math.min(toIndex, unpinnedCount()), column);
 		persist();
 		fireColumnsChanged();
 	}
@@ -653,9 +740,10 @@ public class DefaultTableView<R> implements TableView<R> {
 			}
 		}
 		_state.setHiddenColumns(hidden);
+		pinColumns();
 		// A column that was frozen may have been hidden or moved out of the frozen range; the
 		// frozen prefix can never reach beyond the columns that are left.
-		_state.setFrozenCount(Math.min(_state.getFrozenCount(), order.size()));
+		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
 		searchScopeChanged();
 		persist();
 		fireColumnsChanged();
@@ -709,6 +797,9 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	@Override
 	public void resizeColumn(String column, int width) {
+		if (isPinnedEnd(column)) {
+			return;
+		}
 		_state.getWidths().put(column, width);
 		persist();
 		fireColumnsChanged();
@@ -716,10 +807,14 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	@Override
 	public void setColumnVisible(String column, boolean visible) {
+		if (isPinnedEnd(column)) {
+			return;
+		}
 		List<String> order = _state.getColumnOrder();
 		boolean present = order.contains(column);
 		if (visible && !present) {
-			order.add(column);
+			// In front of the columns pinned to the end, which trail the order.
+			order.add(unpinnedCount(), column);
 			_state.getHiddenColumns().remove(column);
 		} else if (!visible && present) {
 			order.remove(column);
@@ -806,8 +901,7 @@ public class DefaultTableView<R> implements TableView<R> {
 	/**
 	 * Loads persisted personalization and merges it onto the current state: column order, widths
 	 * and sort are reconciled against the columns that actually exist (stale columns dropped, new
-	 * columns appended), and the persisted sort, grouping, filters and search are re-applied to the
-	 * row source.
+	 * columns appended), and the persisted filters and search are applied to the row source.
 	 */
 	private void restore() {
 		TableViewState persisted = _store.load(_id, filterCodec());
@@ -871,10 +965,10 @@ public class DefaultTableView<R> implements TableView<R> {
 				groupColumns.add(name);
 			}
 		}
+		// An empty persisted grouping means the user never grouped this table, so the configured
+		// initial grouping stays in effect. The constructor tells the source about the outcome.
 		if (!groupColumns.isEmpty()) {
-			GroupSpec grouping = new GroupSpec(groupColumns);
-			_state.setGrouping(grouping);
-			_source.withGrouping(grouping);
+			_state.setGrouping(new GroupSpec(groupColumns));
 		}
 
 		for (Map.Entry<String, FilterState> entry : persisted.getFilters().entrySet()) {

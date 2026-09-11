@@ -116,9 +116,14 @@ public interface Column<R, V> {
 
 	/**
 	 * Whether this column may be frozen (fixed) by the user.
+	 *
+	 * <p>
+	 * A column {@link #pinnedEnd() pinned} to the end of the table is never frozen: it already
+	 * stays visible, at the other edge.
+	 * </p>
 	 */
 	default boolean frozenEligible() {
-		return true;
+		return !pinnedEnd();
 	}
 
 	/**
@@ -133,11 +138,47 @@ public interface Column<R, V> {
 	 * </p>
 	 */
 	default boolean selectable() {
-		return true;
+		return !pinnedEnd();
+	}
+
+	/**
+	 * Whether this column keeps its place at the end of the table.
+	 *
+	 * <p>
+	 * Such a column is rendered after every other column and stays visible while the table scrolls
+	 * horizontally, so that what it holds is at hand wherever the table is scrolled to - the buttons
+	 * acting on a row, for instance. It is the table's own, not part of the arrangement the user
+	 * makes: it can neither be moved, hidden, frozen nor resized, and the rows cannot be grouped by
+	 * it.
+	 * </p>
+	 *
+	 * <p>
+	 * A pinned column is therefore neither {@link #frozenEligible() frozen} nor
+	 * {@link #selectable() selectable}.
+	 * </p>
+	 */
+	default boolean pinnedEnd() {
+		return false;
+	}
+
+	/**
+	 * Optional CSS class put on every cell of this column, its heading included, or {@code null}
+	 * for none.
+	 *
+	 * <p>
+	 * Describes how the column presents its cells, independently of the rows: a column holding a
+	 * button instead of text, for instance, drops the padding a text cell needs and centers its
+	 * content. What one cell looks like depending on the row it is in is {@link #cssClass(Object)}.
+	 * </p>
+	 */
+	default String cssClass() {
+		return null;
 	}
 
 	/**
 	 * Optional CSS class for a cell in the given row, or {@code null} for none.
+	 *
+	 * @see #cssClass() The class the whole column carries.
 	 */
 	default String cssClass(R row) {
 		return null;

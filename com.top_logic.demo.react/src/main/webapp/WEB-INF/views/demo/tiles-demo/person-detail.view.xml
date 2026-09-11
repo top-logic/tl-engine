@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Detail frame pushed by the overview's "Open" command. Receives the selected Person on the
-	pre-registered "person" channel (no <bind> needed - the tile-stack registers the captured param
-	value before this view's controls are created) and derives the Person's contact for the form
-	below. The navPath channel is the stack's path (bound by the stack's bind-path-to), so the
-	derived depth channel is at least 1 here and the "Back" command shows, popping this frame off
-	the stack.
+	Detail frame pushed when a row of the overview's account table is activated. Receives the
+	activated Person on the pre-registered "person" channel (no <bind> needed - the tile-stack
+	registers the captured param value before this view's controls are created) and derives the
+	Person's contact for the form below. The navPath channel is the stack's path (bound by the
+	stack's bind-path-to), so the derived depth channel is at least 1 here and the "Back" command
+	shows, popping this frame off the stack.
 	
-	The second tab pushes yet another detail frame, which makes the state a covered
-	frame keeps observable: coming back to this frame shows the tab that was
-	selected, the row that was selected in it and the values being edited. The pushed
-	frame carries no label of its own, the stack names it through its <frame> declaration.
+	The second tab lists the accounts again and pushes yet another detail frame on activation,
+	which makes the state a covered frame keeps observable: coming back to this frame shows the
+	tab that was selected, the row that was selected in it and the values being edited. The
+	pushed frame carries no label of its own, the stack names it through its <frame> declaration.
 -->
 <view>
 	<channels>
@@ -25,7 +25,6 @@
 			expr="p -> $p.size()"
 			inputs="navPath"
 		/>
-		<channel name="otherPerson"/>
 	</channels>
 
 	<tab-bar active-tab="contact">
@@ -93,23 +92,13 @@
 							</executability>
 							<navigate-pop/>
 						</generic-command>
-						<command class="com.top_logic.layout.view.tiles.NavigatePushCommand"
-							bind-input-to="person"
-							input="otherPerson"
-							placement="TOOLBAR"
-							view="demo/tiles-demo/person-detail.view.xml"
-						>
-							<label>
-								<en>Open</en>
-								<de>Öffnen</de>
-							</label>
-						</command>
 					</commands>
-					<table
-						selection="otherPerson"
-						types="tl.accounts:Person"
-					>
+					<table types="tl.accounts:Person">
 						<rows>all(`tl.accounts:Person`)</rows>
+						<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+							bind-input-to="person"
+							view="demo/tiles-demo/person-detail.view.xml"
+						/>
 					</table>
 				</panel>
 			</tab>

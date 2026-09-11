@@ -25,6 +25,8 @@ import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.ConfigurationSchemaConstants;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.xml.XMLStreamUtil;
@@ -138,6 +140,12 @@ public class ViewLoader {
 	 * rather than restating the individual constraints.
 	 * </p>
 	 *
+	 * <p>
+	 * The parsed configuration is checked against the {@link Constraint}s its properties declare,
+	 * so a rule such as "exactly one of these two attributes" fails the load with the location of
+	 * the offending element.
+	 * </p>
+	 *
 	 * @param sources
 	 *        The view content to read: a single source, or a base view followed by its overlays.
 	 * @return The parsed {@link ViewElement.Config}.
@@ -157,6 +165,9 @@ public class ViewLoader {
 		reader.setSources(new ArrayList<>(sources));
 
 		ViewElement.Config config = (ViewElement.Config) reader.read();
+		// The constraints declared on the configuration are the rules the form editor shows at the
+		// field; checking them here reports them with the location of the offending element.
+		new ConstraintChecker().check(context, config);
 		context.checkErrors();
 		return config;
 	}

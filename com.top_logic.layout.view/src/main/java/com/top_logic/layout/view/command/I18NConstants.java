@@ -56,6 +56,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_UNKNOWN_COMMAND_REF__NAME;
 
 	/**
+	 * @en System
+	 */
+	public static ResKey THEME_FOLLOW_SYSTEM;
+
+	/**
 	 * @en No command configured for this button.
 	 */
 	public static ResKey ERROR_NO_COMMAND_CONFIGURED;

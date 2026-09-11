@@ -9,3 +9,5 @@
 /**/*~
 /node
 /node_modules
+/src/main/webapp/script/tl-react-bridge.js
+/src/main/webapp/script/tl-react-controls.js

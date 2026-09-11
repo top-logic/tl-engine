@@ -47,9 +47,9 @@ state; the component only renders what the control publishes and sends back gest
 | `pom.xml` | `frontend-maven-plugin` runs that build |
 | `src/main/webapp/WEB-INF/conf/myAppConf.config.xml` | announces the bundle (and its stylesheet) as a client resource |
 | `src/main/webapp/WEB-INF/conf/metaConf.txt` | lists that config file — only for a **new** module |
-| `src/main/webapp/script/tl-my-app-controls.js` | the built bundle; **is committed** |
+| `src/main/webapp/script/tl-my-app-controls.js` | the built bundle; a build product, **not tracked** |
 | `src/main/webapp/style/myWidget.css` | styles of the component (optional) |
-| `.gitignore` | ignores `/node/` and `/node_modules/` |
+| `.gitignore` | ignores `/node/`, `/node_modules/` and the built bundle |
 
 ## 1. The element
 
@@ -291,9 +291,11 @@ rest of the [new module checklist](new-module-checklist.md).
 
 ### 3.6 Git
 
-Ignore `/node/` and `/node_modules/`, and **commit the built bundle**
-(`src/main/webapp/script/tl-my-app-controls.js`) — every React module in this repository does, so an
-application can be run without a JS toolchain.
+Ignore `/node/`, `/node_modules/` and the **built bundle**
+(`src/main/webapp/script/tl-my-app-controls.js`). The bundle is a build product: `mvn compile` writes
+it in the `generate-resources` phase, and in Eclipse the m2e lifecycle mapping shipped with the
+`frontend-maven-plugin` runs the same `npm` build on a project build. Tracking it would make every two
+pull requests touching the module's client code conflict on one minified line.
 
 ## 4. The view and its entry point
 
@@ -409,7 +411,7 @@ my.app.module/
         ├── WEB-INF/views/my-view.view.xml                     uses <my-element …/>
         ├── WEB-INF/views/app.view.xml                         navigation entry
         ├── WEB-INF/conf/myAppConf.config.xml                  ClientResources: bundle + stylesheet
-        ├── script/tl-my-app-controls.js                       built bundle (committed)
+        ├── script/tl-my-app-controls.js                       built bundle (ignored by git)
         └── style/myWidget.css                                 styles of the component
 ```
 

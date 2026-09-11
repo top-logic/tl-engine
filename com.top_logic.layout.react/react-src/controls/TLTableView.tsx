@@ -45,6 +45,7 @@ const I18N_KEYS = {
   'js.table.unfreezeAll': 'Unfreeze all',
   'js.table.groupBy': 'Group by this column',
   'js.table.ungroup': 'Remove grouping',
+  'js.table.fitColumn': 'Fit width to content',
   'js.table.grouped': 'The rows are grouped by this column',
   'js.table.freezeSplitter': 'Drag to choose the columns that stay in place while scrolling',
   'js.table.filter': 'Filter',
@@ -107,6 +108,57 @@ interface RowState {
 }
 
 const MIN_COL_WIDTH = 50;
+
+/**
+ * The width the column needs for the content it shows right now: its heading and the cells of the
+ * rows currently rendered, whichever is widest.
+ *
+ * The cells on screen are clipped to the column width and their text wraps inside it, so neither
+ * their layout width nor their scroll width tells how much room the content wants. Each cell is
+ * therefore measured as a copy sized to its content, in a container that is part of the table and
+ * hence inherits its fonts. The copies keep the cells' classes and inline styles, so the padding
+ * and the border they are measured with are the ones on screen, and a single layout pass covers
+ * the whole column.
+ *
+ * @param root The table's root element.
+ * @param columnName Name of the column to measure.
+ * @returns The width in whole pixels, or 0 when the column renders nothing.
+ */
+const measureColumnContentWidth = (root: HTMLElement, columnName: string): number => {
+  const cells = Array.from(
+    root.querySelectorAll<HTMLElement>('.tlTableView__headerCell, .tlTableView__cell'))
+    .filter((cell) => cell.dataset.col === columnName);
+  if (cells.length === 0) {
+    return 0;
+  }
+
+  const box = document.createElement('div');
+  box.style.cssText =
+    'position:absolute;top:0;left:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none';
+  root.appendChild(box);
+  try {
+    const copies = cells.map((cell) => {
+      const copy = cell.cloneNode(true) as HTMLElement;
+      // The handle sits at the cell border and is no content; the ids would be duplicates while
+      // the copy is in the document.
+      copy.querySelectorAll('.tlTableView__resizeHandle').forEach((handle) => handle.remove());
+      copy.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
+      copy.style.position = 'static';
+      copy.style.flex = 'none';
+      copy.style.width = 'max-content';
+      copy.style.minWidth = '0';
+      copy.style.maxWidth = 'none';
+      box.appendChild(copy);
+      return copy;
+    });
+    // No copy is the last child of the box: the last cell of a row goes without its right border,
+    // and a copy measured as one would come out that border short.
+    box.appendChild(document.createElement('div'));
+    return Math.ceil(copies.reduce((widest, copy) => Math.max(widest, copy.getBoundingClientRect().width), 0));
+  } finally {
+    box.remove();
+  }
+};
 
 /**
  * React table component with virtual scrolling, server-driven cell controls,
@@ -377,6 +429,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const handleResizeStart = React.useCallback((columnName: string, colWidth: number, event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    if (event.detail > 1) {
+      // The second click of a double click fits the column to its content. A drag started here
+      // would end on the same mouse up and report the width the fit is about to replace.
+      return;
+    }
     // The rendered width, not the configured one: the last column grows into the space the others
     // leave over, and starting from its configured width would snap it back the moment the drag
     // begins. The handle sits in the heading whose width is wanted.
@@ -444,6 +501,19 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
+  }, [sendCommand]);
+
+  // Give the column the width its content needs, from the header context menu and from a double
+  // click on the resize handle. Applied like the end of a resize drag: the override shows the new
+  // width at once, the command keeps it.
+  const fitColumnToContent = React.useCallback((columnName: string) => {
+    const root = rootRef.current;
+    if (!root) {
+      return;
+    }
+    const width = Math.max(MIN_COL_WIDTH, measureColumnContentWidth(root, columnName));
+    setColumnWidthOverrides((prev) => ({ ...prev, [columnName]: width }));
+    sendCommand('columnResize', { column: columnName, width });
   }, [sendCommand]);
 
   // -- Scroll handler --
@@ -1132,6 +1202,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <div
                 key={col.name}
                 className={cellClass}
+                data-col={col.name}
                 data-col-idx={colIdx}
                 style={{
                   // The last column the user arranges takes the space left over, in the heading
@@ -1197,6 +1268,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   <div
                     className="tlTableView__resizeHandle"
                     onMouseDown={(e) => handleResizeStart(col.name, w, e)}
+                    onClick={(e) => e.stopPropagation()}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      fitColumnToContent(col.name);
+                    }}
                   />
                 )}
               </div>
@@ -1390,6 +1466,15 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {frozenColumnCount > 0 && (
             <button type="button" className="tlMenu__item" role="menuitem" onClick={handleUnfreezeAll}>
               <span className="tlMenu__label">{i18n['js.table.unfreezeAll']}</span>
+            </button>
+          )}
+          {!columns[contextMenu.colIdx]?.pinnedEnd && (
+            <button type="button" className="tlMenu__item" role="menuitem"
+              onClick={() => {
+                fitColumnToContent(columns[contextMenu.colIdx].name);
+                setContextMenu(null);
+              }}>
+              <span className="tlMenu__label">{i18n['js.table.fitColumn']}</span>
             </button>
           )}
           {columns[contextMenu.colIdx]?.groupable

@@ -517,6 +517,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_GROUPED;
 
 	/**
+	 * @en Fit width to content
+	 */
+	@CustomKey("js.table.fitColumn")
+	public static ResKey JS_TABLE_FIT_COLUMN;
+
+	/**
 	 * @en Search
 	 */
 	@CustomKey("js.table.search")

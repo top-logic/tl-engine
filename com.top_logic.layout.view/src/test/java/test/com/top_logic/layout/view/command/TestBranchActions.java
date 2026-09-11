@@ -18,18 +18,22 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.command.ActionScript;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.ExecuteScriptAction;
@@ -37,7 +41,6 @@ import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.IfAction;
 import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.SwitchAction;
-import com.top_logic.layout.view.command.SwitchAction.CaseConfig;
 import com.top_logic.layout.view.command.SwitchAction.SwitchCase;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
@@ -46,7 +49,6 @@ import com.top_logic.layout.view.element.PanelElement;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -254,45 +256,63 @@ public class TestBranchActions extends TestCase {
 	}
 
 	/**
-	 * Tests that a case configuring neither a value nor a predicate is reported as a configuration
-	 * error.
+	 * Tests that a case configuring neither a value nor a predicate is rejected when the view is
+	 * loaded.
 	 */
-	public void testSwitchCaseWithoutCondition() throws Exception {
-		assertCaseError(newCase(null, null));
+	public void testSwitchCaseWithoutCondition() {
+		assertCaseRejected("<case/>");
 	}
 
 	/**
-	 * Tests that a case configuring both a value and a predicate is reported as a configuration
-	 * error.
+	 * Tests that a case configuring both a value and a predicate is rejected when the view is
+	 * loaded.
 	 */
-	public void testSwitchCaseWithBothConditions() throws Exception {
-		assertCaseError(newCase(expr("'open'"), expr("s -> $s == 'open'")));
+	public void testSwitchCaseWithBothConditions() {
+		assertCaseRejected("<case match=\"'open'\" test=\"s -> $s == 'open'\"/>");
 	}
 
-	private void assertCaseError(CaseConfig caseConfig) {
-		SwitchAction.Config config = TypedConfiguration.newConfigItem(SwitchAction.Config.class);
-		config.update(config.descriptor().getProperty(SwitchAction.Config.CASES), List.of(caseConfig));
-
-		DefaultInstantiationContext context = new DefaultInstantiationContext(TestBranchActions.class);
-		context.getInstance(config);
-
-		assertTrue("The case is rejected at instantiation.", context.hasErrors());
+	/**
+	 * Tests that the view whose switches are configured correctly loads.
+	 */
+	public void testValidSwitchLoads() throws Exception {
+		assertNotNull(ViewLoader.parseConfig(List.of(new ClassRelativeBinaryContent(TestBranchActions.class, VIEW))));
 	}
 
-	private static CaseConfig newCase(Expr match, Expr test) {
-		CaseConfig result = TypedConfiguration.newConfigItem(CaseConfig.class);
-		ConfigurationDescriptor descriptor = result.descriptor();
-		if (match != null) {
-			result.update(descriptor.getProperty(CaseConfig.MATCH), match);
+	private void assertCaseRejected(String caseXml) {
+		String view = """
+				<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+					<channels>
+						<channel name="ticket"/>
+					</channels>
+					<panel>
+						<commands>
+							<generic-command name="select" input="ticket">
+								<switch>
+									%s
+								</switch>
+							</generic-command>
+						</commands>
+					</panel>
+				</view>
+				""".formatted(caseXml);
+
+		try {
+			ViewLoader.parseConfig(List.of(CharacterContents.newContent(view, VIEW)));
+			fail("The case violates the constraint that exactly one of the two conditions is given.");
+		} catch (ConfigurationException | AbortExecutionException ex) {
+			String reported = messages(ex);
+			assertTrue("The failure names the property: " + reported,
+				reported.contains(SwitchAction.CaseConfig.MATCH));
 		}
-		if (test != null) {
-			result.update(descriptor.getProperty(CaseConfig.TEST), test);
-		}
-		return result;
 	}
 
-	private static Expr expr(String source) throws Exception {
-		return ExprFormat.INSTANCE.getValue(TestBranchActions.class.getSimpleName(), source);
+	/** The messages along the cause chain of the given failure. */
+	private static String messages(Throwable failure) {
+		StringBuilder result = new StringBuilder();
+		for (Throwable current = failure; current != null; current = current.getCause()) {
+			result.append(current.getMessage()).append('\n');
+		}
+		return result.toString();
 	}
 
 	/** Matcher of a case selected by a switch value equal to the given one. */

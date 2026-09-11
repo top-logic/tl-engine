@@ -16,8 +16,12 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.MandatoryIfUnset;
+import com.top_logic.basic.config.constraint.impl.OnlySetIfUnset;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.ReactContext;
@@ -173,6 +177,8 @@ public class SwitchAction extends InterruptibleViewAction {
 		 * </p>
 		 */
 		@Name(MATCH)
+		@Constraint(value = OnlySetIfUnset.class, args = @Ref(TEST))
+		@Constraint(value = MandatoryIfUnset.class, args = @Ref(TEST))
 		Expr getMatch();
 
 		/**
@@ -187,6 +193,7 @@ public class SwitchAction extends InterruptibleViewAction {
 		 * </p>
 		 */
 		@Name(TEST)
+		@Constraint(value = OnlySetIfUnset.class, args = @Ref(MATCH))
 		Expr getTest();
 
 		/**
@@ -243,20 +250,11 @@ public class SwitchAction extends InterruptibleViewAction {
 		List<SwitchCase> result = new ArrayList<>();
 		for (CaseConfig caseConfig : configs) {
 			Expr match = caseConfig.getMatch();
-			Expr test = caseConfig.getTest();
 			List<ViewAction> actions = ViewActions.instantiate(context, caseConfig.getActions());
 			if (match != null) {
-				if (test != null) {
-					context.error("A case of a switch must not configure both '" + CaseConfig.MATCH + "' and '"
-						+ CaseConfig.TEST + "'.");
-					continue;
-				}
 				result.add(SwitchCase.matching(QueryExecutor.compile(match), actions));
-			} else if (test != null) {
-				result.add(SwitchCase.testing(QueryExecutor.compile(test), actions));
 			} else {
-				context.error("A case of a switch must configure either '" + CaseConfig.MATCH + "' or '"
-					+ CaseConfig.TEST + "'.");
+				result.add(SwitchCase.testing(QueryExecutor.compile(caseConfig.getTest()), actions));
 			}
 		}
 		return result;

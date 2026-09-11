@@ -92,11 +92,22 @@ public class ConstraintChecker {
 		}
 	}
 
+	/**
+	 * Reports the failure to a plain {@link Log}, which carries text only.
+	 *
+	 * <p>
+	 * The text is the translated {@link ConstraintFailure#getMessage() message}, which names the
+	 * violated constraint together with the property and the location of the item it was found on.
+	 * A caller that only sees the log - a configuration reader, a build step - can therefore point
+	 * at the place to fix.
+	 * </p>
+	 */
 	private void handleFailure(Log log, ConstraintFailure failure) {
+		String message = ResKeyUtil.getTranslation(failure.getMessage(), ResourcesModule.getLogLocale());
 		if (failure.isWarning()) {
-			log.info(ResKeyUtil.getTranslation(failure.getMessage(), ResourcesModule.getLogLocale()), Protocol.WARN);
+			log.info(message, Protocol.WARN);
 		} else {
-			log.error("Constraint violation.", new ConfigurationError(failure.getMessage()));
+			log.error(message, new ConfigurationError(failure.getMessage()));
 		}
 	}
 

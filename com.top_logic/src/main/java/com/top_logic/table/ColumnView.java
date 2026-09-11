@@ -24,6 +24,12 @@ import com.top_logic.basic.util.ResKey;
  *        Whether the user can filter this column.
  * @param frozen
  *        Whether this column is currently frozen (fixed).
+ * @param pinnedEnd
+ *        Whether this column {@link Column#pinnedEnd() keeps its place} at the end of the
+ *        table.
+ * @param cssClass
+ *        The {@link Column#cssClass() CSS class} every cell of this column carries, or
+ *        {@code null} for none.
  * @param sortDirection
  *        The current sort direction, or {@code null} if this column is not part of the
  *        sort order.
@@ -38,6 +44,8 @@ public record ColumnView(
 		boolean sortable,
 		boolean filterable,
 		boolean frozen,
+		boolean pinnedEnd,
+		String cssClass,
 		SortDirection sortDirection,
 		int sortPriority) {
 	// Pure value type.

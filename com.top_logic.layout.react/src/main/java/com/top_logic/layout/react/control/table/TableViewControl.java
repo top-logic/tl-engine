@@ -19,6 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -51,8 +52,10 @@ import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.MatchCounts;
@@ -78,7 +81,7 @@ import com.top_logic.util.Resources;
  * This is the React tier's binding to the green-field table model: it reads column
  * descriptors, the row count and row windows from a {@link TableView}, renders each cell
  * via {@link CellContentReactAdapter}, and maps the client commands (scroll, sort, select,
- * resize, reorder, expand, freeze) back onto {@link TableView} commands. It depends only on
+ * activate, resize, reorder, expand, freeze) back onto {@link TableView} commands. It depends only on
  * the green-field model, not on the legacy {@code TableModel}.
  * </p>
  *
@@ -113,6 +116,26 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		void selectionChanged(Set<Object> selectedKeys);
 	}
 
+	/**
+	 * Notified when a row is activated: opened by a double-click, or by {@code Enter} while it
+	 * carries the keyboard cursor.
+	 *
+	 * @param <T>
+	 *        The row business object type.
+	 */
+	@FunctionalInterface
+	public interface ActivationHandler<T> {
+
+		/**
+		 * Called after the activated row became the table's selection.
+		 *
+		 * @param row
+		 *        The business object of the activated row.
+		 * @return The outcome reported to the client (and to a scripted replay).
+		 */
+		HandlerResult rowActivated(T row);
+	}
+
 	private static final String COLUMNS = "columns";
 
 	private static final String TOTAL_ROW_COUNT = "totalRowCount";
@@ -134,6 +157,12 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String TREE_MODE = "treeMode";
 
+	/**
+	 * State key holding the name of the column the rows are grouped by, {@link #NOTHING} when they
+	 * are not grouped.
+	 */
+	private static final String GROUPING = "grouping";
+
 	private static final String ROW_ID = "id";
 
 	private static final String ROW_INDEX = "index";
@@ -148,12 +177,39 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String TREE_EXPANDED = "expanded";
 
+	/**
+	 * Per-row state key holding the number of rows in a group, present exactly on the group header
+	 * rows a {@link #GROUPING} introduces.
+	 */
+	private static final String ROW_GROUP_COUNT = "groupCount";
+
 	private static final int PREFETCH_ROWS = 20;
 
 	private static final int MIN_WIDTH = 50;
 
 	/** State key telling the client whether to offer the column selection. */
 	private static final String COLUMN_SELECT = "columnSelect";
+
+	/** Per-column state key telling whether the rows can be grouped by that column. */
+	private static final String COLUMN_GROUPABLE = "groupable";
+
+	/** Per-column state key telling whether the column can be filtered. */
+	private static final String COLUMN_FILTERABLE = "filterable";
+
+	/** Per-column state key telling whether a {@link #COLUMN_FILTERABLE} column filters right now. */
+	private static final String COLUMN_FILTER_ACTIVE = "filterActive";
+
+	/**
+	 * Per-column state key telling whether the column {@link ColumnView#pinnedEnd() keeps its place}
+	 * at the end of the table, where the client renders it fixed to the right edge.
+	 */
+	private static final String COLUMN_PINNED_END = "pinnedEnd";
+
+	/**
+	 * Per-column state key holding the {@link ColumnView#cssClass() CSS class} the client puts on
+	 * every cell of that column, its heading included. Absent for a column declaring none.
+	 */
+	private static final String COLUMN_CSS_CLASS = "cssClass";
 
 	/** State key telling the client whether to display the filter bar. */
 	private static final String FILTER_BAR = "filterBar";
@@ -192,29 +248,61 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String CMD_SCROLL = "scroll";
 
-	private static final String CMD_SORT = "sort";
+	/** The command the client sends to sort by a column. */
+	public static final String CMD_SORT = "sort";
 
-	private static final String CMD_SELECT = "select";
+	/**
+	 * The command the client sends to group the rows by a column, or to show them ungrouped.
+	 *
+	 * @see GroupArguments
+	 */
+	public static final String CMD_GROUP = "group";
+
+	/** The command the client sends when the user clicks a row. */
+	public static final String CMD_SELECT = "select";
 
 	private static final String CMD_SELECT_BY_KEY = "selectByKey";
+
+	/**
+	 * The command the client sends when the user opens a row: a double-click, or {@code Enter} on
+	 * the row carrying the keyboard cursor.
+	 *
+	 * @see ActivateRowArguments
+	 */
+	public static final String CMD_ACTIVATE = "activate";
+
+	private static final String CMD_ACTIVATE_BY_KEY = "activateByKey";
 
 	private static final String CMD_MOVE_SELECTION = "moveSelection";
 
 	private static final String CMD_SELECT_ALL = "selectAll";
 
-	private static final String CMD_COLUMN_RESIZE = "columnResize";
+	/**
+	 * The command the client sends to change the width of a column.
+	 *
+	 * @see ColumnResizeArguments
+	 */
+	public static final String CMD_COLUMN_RESIZE = "columnResize";
 
 	private static final String CMD_COLUMN_REORDER = "columnReorder";
 
-	private static final String CMD_EXPAND = "expand";
+	/** The command the client sends to expand or collapse a tree node or a group header. */
+	public static final String CMD_EXPAND = "expand";
 
-	private static final String CMD_SET_FROZEN_COLUMN_COUNT = "setFrozenColumnCount";
+	/**
+	 * The command the client sends to fix a number of leading columns while the table scrolls
+	 * horizontally.
+	 *
+	 * @see SetFrozenColumnCountArguments
+	 */
+	public static final String CMD_SET_FROZEN_COLUMN_COUNT = "setFrozenColumnCount";
 
 	private static final String CMD_APPLY_NAMED_FILTER = "applyNamedFilter";
 
 	private static final String CMD_CLEAR_FILTER = "clearFilter";
 
-	private static final String CMD_SEARCH = "search";
+	/** The command the client sends to search the displayed columns for a text. */
+	public static final String CMD_SEARCH = "search";
 
 	private static final String CMD_SAVE_NAMED_FILTER = "saveNamedFilter";
 
@@ -274,6 +362,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private final List<SelectionListener> _selectionListeners = new CopyOnWriteArrayList<>();
 
+	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
+	private ActivationHandler<R> _activationHandler;
+
 	/** Cell controls for currently buffered rows, keyed by row key then column name. */
 	private final Map<Object, Map<String, ReactControl>> _cellCache = new LinkedHashMap<>();
 
@@ -305,9 +396,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 		putState(ROW_HEIGHT, Integer.valueOf(36));
 		putState(SELECTION_MODE, _selectionMode);
-		putState(TREE_MODE, Boolean.valueOf(_treeMode));
 		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
 		putState(FILTER_BAR, Boolean.valueOf(_filterBar));
+		pushGrouping();
 		buildFullState();
 	}
 
@@ -337,6 +428,22 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 */
 	public void removeSelectionListener(SelectionListener listener) {
 		_selectionListeners.remove(listener);
+	}
+
+	/**
+	 * Sets what a row activation runs, replacing any handler set before.
+	 *
+	 * <p>
+	 * The handler is called with the activated row's business object, after that row became the
+	 * table's selection. Without one, a double-click and {@code Enter} select the row and do
+	 * nothing further.
+	 * </p>
+	 *
+	 * @param handler
+	 *        The handler to call, {@code null} to make the rows unopenable again.
+	 */
+	public void setActivationHandler(ActivationHandler<R> handler) {
+		_activationHandler = handler;
 	}
 
 	/**
@@ -449,6 +556,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private void refreshColumns() {
 		Resources resources = Resources.getInstance();
+		// Grouping buckets rows by a column's value, which is meaningful for the columns the user
+		// may choose at all - an action column carries the row itself, and would yield one group
+		// per row.
+		Set<String> groupable = new HashSet<>();
+		for (ColumnOption option : _view.columnOptions()) {
+			groupable.add(option.name());
+		}
 		List<Map<String, Object>> columns = new ArrayList<>();
 		for (ColumnView column : _view.columns()) {
 			ColumnDef def = new ColumnDef(column.name(), label(resources, column.label()));
@@ -461,8 +575,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			}
 			def.setSortPriority(column.sortPriority());
 			Map<String, Object> columnState = def.toStateMap();
-			columnState.put("filterable", Boolean.valueOf(column.filterable()));
-			columnState.put("filterActive", Boolean.valueOf(isFilterActive(column.name())));
+			columnState.put(COLUMN_FILTERABLE, Boolean.valueOf(column.filterable()));
+			columnState.put(COLUMN_FILTER_ACTIVE, Boolean.valueOf(isFilterActive(column.name())));
+			columnState.put(COLUMN_GROUPABLE, Boolean.valueOf(groupable.contains(column.name())));
+			columnState.put(COLUMN_PINNED_END, Boolean.valueOf(column.pinnedEnd()));
+			if (column.cssClass() != null) {
+				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
+			}
 			columns.add(columnState);
 		}
 		putState(COLUMNS, columns);
@@ -548,12 +667,15 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			rowState.put(ROW_ID, "row_" + index);
 			rowState.put(ROW_INDEX, Integer.valueOf(index));
 			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
-			if (_treeMode) {
+			if (treeMode()) {
 				rowState.put(TREE_DEPTH, Integer.valueOf(row.depth()));
 				rowState.put(TREE_EXPANDABLE, Boolean.valueOf(row.expandable()));
 				if (row.expandable()) {
 					rowState.put(TREE_EXPANDED, Boolean.valueOf(row.expanded()));
 				}
+			}
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				rowState.put(ROW_GROUP_COUNT, Integer.valueOf(row.group().size()));
 			}
 			rowState.put(ROW_CELLS, cells);
 			rowStates.add(rowState);
@@ -603,9 +725,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			rowState.put(ARG_ROW_INDEX, Integer.valueOf(index));
 			rowState.put("selected", Boolean.valueOf(_selectedKeys.contains(row.key())));
-			Object key = ScriptingModelKey.toKey(null, row.data());
-			if (key != null) {
-				rowState.put(ARG_KEY, key);
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				rowState.put(ROW_GROUP_COUNT, Integer.valueOf(row.group().size()));
+			} else {
+				Object key = ScriptingModelKey.toKey(null, row.data());
+				if (key != null) {
+					rowState.put(ARG_KEY, key);
+				}
 			}
 			Map<String, Object> cells = new LinkedHashMap<>();
 			for (ColumnView column : _view.columns()) {
@@ -752,7 +878,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	// -- Column selection dialog --
 
 	/**
-	 * Opens the column selection: which columns the table displays, and in which order.
+	 * Opens the column selection: which columns the table displays, in which order, and which of
+	 * them the rows are grouped by.
 	 *
 	 * <p>
 	 * The dialog edits a working copy in a {@link ReactColumnSelectControl} and applies it in one
@@ -772,13 +899,15 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		}
 		Resources resources = Resources.getInstance();
 
-		ReactColumnSelectControl selection = new ReactColumnSelectControl(context, _view.columnOptions());
+		ReactColumnSelectControl selection =
+			new ReactColumnSelectControl(context, _view.columnOptions(), getGroupedColumn());
 		// Wider than the filter dialog: three actions, one of them a spelled-out "show all columns".
 		ReactWindowControl window = new ReactWindowControl(context,
 			resources.getString(I18NConstants.JS_TABLE_COLUMNS), DisplayDimension.px(460),
 			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
 		window.setChild(selection);
 		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
+			setGroupedColumn(selection.groupedColumn());
 			applyColumns(selection.visibleColumns());
 			dialogs.closeTopDialog(DialogResult.ok(null));
 			return HandlerResult.DEFAULT_RESULT;
@@ -786,6 +915,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		applyButton.markAsDefault();
 		window.setActions(List.of(
 			new ReactButtonControl(context, resources.getString(I18NConstants.TABLE_COLUMNS_RESET), ctx -> {
+				// Resetting restores the table as it is defined, which includes showing its rows
+				// ungrouped again.
+				setGroupedColumn(null);
 				applyColumns(_view.defaultColumnOrder());
 				dialogs.closeTopDialog(DialogResult.ok(null));
 				return HandlerResult.DEFAULT_RESULT;
@@ -903,6 +1035,104 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	/**
+	 * Groups the rows by one column, or shows them ungrouped again.
+	 *
+	 * <p>
+	 * The grouping is part of what the user personalizes about the table, so it is persisted under
+	 * the table's identity exactly like the sort order is.
+	 * </p>
+	 *
+	 * @param args
+	 *        The {@link GroupArguments#getColumn() column} to group by, empty for no grouping.
+	 */
+	@ReactCommandHandler(CMD_GROUP)
+	void handleGroup(GroupArguments args) {
+		setGroupedColumn(args.getColumn());
+	}
+
+	/**
+	 * Groups the rows by the given column, or shows them ungrouped when it is {@code null} or
+	 * empty.
+	 *
+	 * @param column
+	 *        The name of the column to group by.
+	 */
+	public void setGroupedColumn(String column) {
+		GroupSpec grouping = StringServices.isEmpty(column) ? GroupSpec.NONE : new GroupSpec(List.of(column));
+		if (grouping.columns().equals(_view.state().getGrouping().columns())) {
+			return;
+		}
+		_view.group(grouping);
+		Object update = beginUpdate();
+		try {
+			// A grouping rearranges the rows, it does not replace them: the selected rows are the
+			// same objects under the same keys, at other positions. Only the cursor and the range
+			// anchor, which are positions, have to be found again.
+			relocateSelection();
+			pushGrouping();
+			pushSelection();
+			rebuildAfterRowChange();
+		} finally {
+			commitUpdate(update);
+		}
+	}
+
+	/**
+	 * Re-derives the cursor and the range anchor from the selected rows after the rows were
+	 * rearranged, and gives up the selection of a row that is no longer among them.
+	 *
+	 * <p>
+	 * A value the table can still display stays selected - it is the selection whoever wrote it
+	 * made, and a rearrangement is no reason to drop it. To be called after a rearrangement that
+	 * leaves every row displayed (a change of the grouping), where a key that is not among the rows
+	 * is one the table cannot display any more.
+	 * </p>
+	 */
+	private void relocateSelection() {
+		if (_selectedKeys.isEmpty()) {
+			_cursorIndex = -1;
+			_selectionAnchor = -1;
+			return;
+		}
+		Set<Object> displayed = new LinkedHashSet<>();
+		int cursor = -1;
+		List<Row<R>> rows = _view.rows(0, _view.rowCount());
+		for (int n = 0; n < rows.size(); n++) {
+			Row<R> row = rows.get(n);
+			if (row.kind() == RowKind.DATA && _selectedKeys.contains(row.key())) {
+				displayed.add(row.key());
+				if (cursor < 0) {
+					cursor = n;
+				}
+			}
+		}
+		_selectedKeys.retainAll(displayed);
+		_cursorIndex = cursor;
+		_selectionAnchor = cursor;
+	}
+
+	/** The name of the column the rows are grouped by, {@code null} when they are not grouped. */
+	public String getGroupedColumn() {
+		List<String> columns = _view.state().getGrouping().columns();
+		return columns.isEmpty() ? null : columns.get(0);
+	}
+
+	/**
+	 * Whether the client renders the tree/group affordances: the indent of the first column and the
+	 * expansion toggles. A grouped table needs them for its group headers, whatever it was built
+	 * as.
+	 */
+	private boolean treeMode() {
+		return _treeMode || getGroupedColumn() != null;
+	}
+
+	private void pushGrouping() {
+		String grouped = getGroupedColumn();
+		putState(GROUPING, grouped == null ? NOTHING : grouped);
+		putState(TREE_MODE, Boolean.valueOf(treeMode()));
+	}
+
+	/**
 	 * Handles a row selection (single / ctrl-toggle / shift-range).
 	 */
 	@ReactCommandHandler(CMD_SELECT)
@@ -914,6 +1144,14 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		}
 		boolean ctrlKey = args.isCtrlKey();
 		boolean shiftKey = args.isShiftKey();
+		Row<R> clicked = rowAt(rowIndex);
+		if (clicked != null && clicked.kind() != RowKind.DATA) {
+			// A group header stands for no object: the gesture that would select it collapses or
+			// expands the group instead, and the selection stays what it was.
+			_cursorIndex = rowIndex;
+			toggleExpansion(clicked);
+			return;
+		}
 		Object key = keyAt(rowIndex);
 		_cursorIndex = rowIndex;
 
@@ -922,7 +1160,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				int from = Math.min(_selectionAnchor, rowIndex);
 				int to = Math.max(_selectionAnchor, rowIndex);
 				for (Row<R> row : _view.rows(from, to + 1)) {
-					_selectedKeys.add(row.key());
+					if (row.kind() == RowKind.DATA) {
+						_selectedKeys.add(row.key());
+					}
 				}
 			} else if (ctrlKey) {
 				if (!_selectedKeys.remove(key)) {
@@ -958,36 +1198,125 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	@ReactCommandHandler(CMD_SELECT_BY_KEY)
 	HandlerResult handleSelectByKey(SelectByKeyArguments args) {
 		ModelName name = args.getKey();
+		int rowIndex = rowIndexOf(name);
+		if (rowIndex < 0) {
+			// Drift contract: a recorded row key that no longer designates a present row is an
+			// explicit failure (replay reports success:false), never a silent no-op selection.
+			return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
+		}
+		selectOnly(rowIndex);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Activates a row: the row becomes the selection, and what
+	 * {@link #setActivationHandler(ActivationHandler)} registered runs with the row's business
+	 * object.
+	 *
+	 * <p>
+	 * This is what a double-click on the row and {@code Enter} on the cursor row send. An index
+	 * outside the current rows activates nothing.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_ACTIVATE)
+	HandlerResult handleActivate(ActivateRowArguments args) {
+		return activateRow(args.getRowIndex());
+	}
+
+	/**
+	 * Activates the row whose business object is named by the given {@link ScriptingModelKey key} —
+	 * the replay-stable counterpart of {@link #handleActivate} by {@link #ARG_ROW_INDEX}, which a
+	 * recorded activation is captured as so it survives sorting, filtering and a fresh session.
+	 *
+	 * @param args
+	 *        Carries a {@link ActivateByKeyArguments#getKey() key} with a row business identity (the
+	 *        same key the agent projection puts on each row).
+	 */
+	@ReactCommandHandler(CMD_ACTIVATE_BY_KEY)
+	HandlerResult handleActivateByKey(ActivateByKeyArguments args) {
+		ModelName name = args.getKey();
+		int rowIndex = rowIndexOf(name);
+		if (rowIndex < 0) {
+			return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
+		}
+		return activateRow(rowIndex);
+	}
+
+	private HandlerResult activateRow(int rowIndex) {
+		Row<R> row = rowAt(rowIndex);
+		if (row == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		if (row.kind() != RowKind.DATA) {
+			// A group header has nothing to open: activating it collapses or expands the group.
+			_cursorIndex = rowIndex;
+			toggleExpansion(row);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		selectOnly(rowIndex);
+		ActivationHandler<R> handler = _activationHandler;
+		if (handler == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return handler.rowActivated(row.data());
+	}
+
+	/**
+	 * Makes the row at the given index the sole selection, the cursor and the range anchor, and
+	 * pushes the change to the client.
+	 */
+	private void selectOnly(int rowIndex) {
+		Row<R> row = rowAt(rowIndex);
+		if (row == null || row.kind() != RowKind.DATA) {
+			return;
+		}
+		Object key = row.key();
+		_selectedKeys.clear();
+		_selectedKeys.add(key);
+		_cursorIndex = rowIndex;
+		_selectionAnchor = rowIndex;
+		pushSelection();
+		updateViewport(_viewportStart, _viewportCount);
+	}
+
+	/**
+	 * Collapses an expanded row and expands a collapsed one, and re-renders what that changed.
+	 */
+	private void toggleExpansion(Row<R> row) {
+		if (!row.expandable()) {
+			return;
+		}
+		_view.setExpanded(row.key(), !row.expanded());
+		rebuildAfterRowChange();
+	}
+
+	/**
+	 * The index of the row whose business object the given {@link ScriptingModelKey key} names, or
+	 * {@code -1} when the key resolves to no object or no row displays it.
+	 */
+	private int rowIndexOf(ModelName name) {
+		if (name == null) {
+			return -1;
+		}
 		Object target = null;
-		if (name != null) {
-			try {
-				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-				ActionContext actionContext =
-					new ReactActionContext(displayContext, displayContext.asRequest().getSession());
-				target = ModelResolver.locateModel(actionContext, null, name);
-			} catch (RuntimeException ex) {
-				Logger.warn("Cannot resolve row for key: " + name, ex, this);
+		try {
+			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+			ActionContext actionContext =
+				new ReactActionContext(displayContext, displayContext.asRequest().getSession());
+			target = ModelResolver.locateModel(actionContext, null, name);
+		} catch (RuntimeException ex) {
+			Logger.warn("Cannot resolve row for key: " + name, ex, this);
+		}
+		if (target == null) {
+			return -1;
+		}
+		List<Row<R>> rows = _view.rows(0, _view.rowCount());
+		for (int i = 0; i < rows.size(); i++) {
+			if (target.equals(rows.get(i).data())) {
+				return i;
 			}
 		}
-		if (target != null) {
-			int total = _view.rowCount();
-			List<Row<R>> rows = _view.rows(0, total);
-			for (int i = 0; i < rows.size(); i++) {
-				Row<R> row = rows.get(i);
-				if (target.equals(row.data())) {
-					_selectedKeys.clear();
-					_selectedKeys.add(row.key());
-					_cursorIndex = i;
-					_selectionAnchor = i;
-					pushSelection();
-					updateViewport(_viewportStart, _viewportCount);
-					return HandlerResult.DEFAULT_RESULT;
-				}
-			}
-		}
-		// Drift contract: a recorded row key that no longer designates a present row is an explicit
-		// failure (replay reports success:false), never a silent no-op selection.
-		return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
+		return -1;
 	}
 
 	/**
@@ -1006,9 +1335,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	/**
-	 * Records a plain (unmodified) row selection in replay-stable form: a {@link #CMD_SELECT} by
-	 * {@link #ARG_ROW_INDEX} becomes a {@link #CMD_SELECT_BY_KEY} of the row's business identity, so
-	 * the recording survives sorting and a fresh session. Modifier selections (ctrl/shift
+	 * Records a plain (unmodified) row selection and a row activation in replay-stable form: a
+	 * {@link #CMD_SELECT} by {@link #ARG_ROW_INDEX} becomes a {@link #CMD_SELECT_BY_KEY} of the
+	 * row's business identity, a {@link #CMD_ACTIVATE} becomes a {@link #CMD_ACTIVATE_BY_KEY} of the
+	 * same, so the recording survives sorting and a fresh session. Modifier selections (ctrl/shift
 	 * range/toggle) are recorded verbatim — their semantics are index/anchor based.
 	 */
 	@Override
@@ -1017,18 +1347,31 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				&& arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex
 				&& !Boolean.TRUE.equals(arguments.get(ARG_CTRL_KEY))
 				&& !Boolean.TRUE.equals(arguments.get(ARG_SHIFT_KEY))) {
-			List<Row<R>> single = _view.rows(rowIndex.intValue(), rowIndex.intValue() + 1);
-			if (!single.isEmpty()) {
-				ModelName key = ScriptingModelKey.name(null, single.get(0).data());
-				if (key != null) {
-					SelectByKeyArguments recorded = TypedConfiguration.newConfigItem(SelectByKeyArguments.class);
-					recorded.setName(CMD_SELECT_BY_KEY);
-					recorded.setKey(key);
-					return new RecordedCommand(recorded);
-				}
+			ModelName key = rowKeyAt(rowIndex.intValue());
+			if (key != null) {
+				SelectByKeyArguments recorded = TypedConfiguration.newConfigItem(SelectByKeyArguments.class);
+				recorded.setName(CMD_SELECT_BY_KEY);
+				recorded.setKey(key);
+				return new RecordedCommand(recorded);
+			}
+		}
+		if (CMD_ACTIVATE.equals(command) && arguments != null
+				&& arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex) {
+			ModelName key = rowKeyAt(rowIndex.intValue());
+			if (key != null) {
+				ActivateByKeyArguments recorded = TypedConfiguration.newConfigItem(ActivateByKeyArguments.class);
+				recorded.setName(CMD_ACTIVATE_BY_KEY);
+				recorded.setKey(key);
+				return new RecordedCommand(recorded);
 			}
 		}
 		return super.recordCommand(command, arguments);
+	}
+
+	/** The business identity of the row at the given index, {@code null} when there is none. */
+	private ModelName rowKeyAt(int rowIndex) {
+		Row<R> row = rowAt(rowIndex);
+		return row == null ? null : ScriptingModelKey.name(null, row.data());
 	}
 
 	/**
@@ -1091,9 +1434,11 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				}
 			}
 		} else {
-			// Plain move (and the single-selection case): selection follows the cursor.
+			// Plain move (and the single-selection case): selection follows the cursor - onto a
+			// group header, which stands for no object, it follows as an empty selection.
 			_selectedKeys.clear();
-			if (key != null) {
+			Row<R> row = rowAt(target);
+			if (key != null && row != null && row.kind() == RowKind.DATA) {
 				_selectedKeys.add(key);
 			}
 			_selectionAnchor = target;
@@ -1242,8 +1587,17 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	private Object keyAt(int rowIndex) {
+		Row<R> row = rowAt(rowIndex);
+		return row == null ? null : row.key();
+	}
+
+	/** The row at the given index, or {@code null} when the index is outside the current rows. */
+	private Row<R> rowAt(int rowIndex) {
+		if (rowIndex < 0 || rowIndex >= _view.rowCount()) {
+			return null;
+		}
 		List<Row<R>> single = _view.rows(rowIndex, rowIndex + 1);
-		return single.isEmpty() ? null : single.get(0).key();
+		return single.isEmpty() ? null : single.get(0);
 	}
 
 	/**

@@ -15,6 +15,7 @@ import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.TableView;
+import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
@@ -74,13 +75,16 @@ public class TestGrouping extends TestCase {
 	}
 
 	public void testSubtotalRenderedOnHeader() {
-		TableView<Sale> view = new DefaultTableView<>(columns(), grouped(), defaultState());
+		// The view owns the grouping: the state's grouping is pushed to the source by the constructor.
+		TableView<Sale> view =
+			new DefaultTableView<>(columns(), new ListRowSource<>(sales(), columns()), groupedState());
 		Row<Sale> northHeader = view.rows(0, 1).get(0);
 
-		// First column of the header shows the group label.
+		// First column of the header shows the group value, rendered by the grouped column's own
+		// renderer - here the default text renderer.
 		CellContent label = view.cell(northHeader, "region");
-		assertTrue(label instanceof CellContent.Labeled);
-		assertEquals("North", ((CellContent.Labeled) label).text());
+		assertTrue(label instanceof CellContent.Text);
+		assertEquals("North", ((CellContent.Text) label).text());
 
 		// Amount column shows the aggregate (10 + 5 + 2 = 17).
 		CellContent subtotal = view.cell(northHeader, "amount");
@@ -102,9 +106,10 @@ public class TestGrouping extends TestCase {
 		assertTrue(source.window(0, 1).get(0).expanded());
 	}
 
-	private com.top_logic.table.TableViewState defaultState() {
-		com.top_logic.table.TableViewState state = new com.top_logic.table.TableViewState();
+	private TableViewState groupedState() {
+		TableViewState state = new TableViewState();
 		state.setColumnOrder(List.of("region", "amount"));
+		state.setGrouping(new GroupSpec(List.of("region")));
 		return state;
 	}
 

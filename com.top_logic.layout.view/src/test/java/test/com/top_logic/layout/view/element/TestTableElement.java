@@ -32,6 +32,7 @@ import com.top_logic.layout.view.element.TableElement.PresetConfig;
 import com.top_logic.layout.view.element.TableElement.PresetsConfig;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.table.GroupSpec;
 
 /**
  * Tests parsing and instantiation of {@link TableElement}.
@@ -76,6 +77,38 @@ public class TestTableElement extends TestCase {
 		// Verify the table identity and the filter bar switch.
 		assertEquals("Configured personalization key", "test-table", tableConfig.getPersonalizationKey());
 		assertTrue("Filter bar should be switched on", tableConfig.getFilterBar());
+		assertEquals("Configured initial grouping", "owner", tableConfig.getGroupBy());
+	}
+
+	/**
+	 * Tests that a table offers its activation command on every row unless it opts out.
+	 */
+	public void testActivationButton() throws Exception {
+		assertTrue("A table shows the button running its activation command.",
+			TypedConfiguration.newConfigItem(TableElement.Config.class).getActivationButton());
+
+		assertFalse("The table opts out of the button.", readTableConfig().getActivationButton());
+	}
+
+	/**
+	 * Tests that the configured {@code group-by} column becomes the grouping the table starts with,
+	 * and that a table without one starts ungrouped.
+	 */
+	public void testInitialGrouping() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTableElement.class);
+		TableElement element = (TableElement) context.getInstance(readTableConfig());
+		context.checkErrors();
+
+		assertEquals("The rows are grouped by the configured column, and by it alone.",
+			List.of("owner"), element.initialGrouping().columns());
+
+		TableElement.Config ungrouped = TypedConfiguration.copy(readTableConfig());
+		ungrouped.update(ungrouped.descriptor().getProperty(TableElement.Config.GROUP_BY), null);
+		TableElement withoutGrouping = (TableElement) new DefaultInstantiationContext(
+			TestTableElement.class).getInstance(ungrouped);
+
+		assertEquals("A table that configures no grouping starts ungrouped.",
+			GroupSpec.NONE, withoutGrouping.initialGrouping());
 	}
 
 	/**

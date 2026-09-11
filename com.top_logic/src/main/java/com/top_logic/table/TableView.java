@@ -30,6 +30,12 @@ public interface TableView<R> {
 
 	/**
 	 * The visible columns, in display order.
+	 *
+	 * <p>
+	 * The columns {@link Column#pinnedEnd() pinned} to the end of the table trail that order,
+	 * whatever arrangement is made of the others, and the {@link #frozenColumnCount() frozen
+	 * prefix} counts none of them.
+	 * </p>
 	 */
 	List<ColumnView> columns();
 

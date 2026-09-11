@@ -7,8 +7,8 @@
 	app shell hosts the matching <slot name="appbar-content"/>, so the breadcrumb appears at the
 	app-bar level rather than inside the tab. It reads the same channel; clicking a crumb
 	truncates the path back to that depth.
-	- The initial frame is a table of accounts; selecting one and clicking "Open" pushes a
-	detail frame onto the stack.
+	- The initial frame is a table of accounts; activating a row - by double-click, by Enter, or
+	through the row's chevron button - pushes a detail frame onto the stack.
 	- bind-path-to makes the path channel visible inside every frame, so a frame view derives its
 	own depth from it and shows a "Back" command only where there is a frame to leave.
 	- The <frame> declaration puts the drill-down path into the address bar: a person frame is

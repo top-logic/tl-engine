@@ -17,6 +17,9 @@
 			</enum>
 			<class name="Ticket">
 				<annotations>
+					<dynamic-color>
+						<color-by-expression color="t -> $t.get(`demo.tickets:Ticket#status`)"/>
+					</dynamic-color>
 					<main-properties properties="name"/>
 				</annotations>
 				<attributes>

@@ -20,7 +20,7 @@ import com.top_logic.model.annotate.TLClassifierAnnotation;
  * </p>
  *
  * @see ColorSpec
- * @see TLColorAttribute
+ * @see TLDynamicColor
  *
  * @implNote {@link ValueColorProvider#colorOf(Object)} answers this annotation for a
  *           {@link TLClassifier}.

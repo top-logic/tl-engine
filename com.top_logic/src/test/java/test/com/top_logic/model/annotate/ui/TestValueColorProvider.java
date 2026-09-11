@@ -30,13 +30,11 @@ import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLPrimitive;
-import com.top_logic.model.TLPrimitive.Kind;
-import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.ui.AnnotationValueColorProvider;
 import com.top_logic.model.annotate.ui.TLColor;
-import com.top_logic.model.annotate.ui.TLColorAttribute;
+import com.top_logic.model.annotate.ui.TLDynamicColor;
 import com.top_logic.model.annotate.ui.ValueColor;
+import com.top_logic.model.annotate.ui.ValueColorProvider;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.config.EnumConfig.ClassifierConfig;
 import com.top_logic.model.impl.TLModelImpl;
@@ -54,9 +52,7 @@ public class TestValueColorProvider extends BasicTestCase {
 
 	private static final String TOKEN = "support-success";
 
-	private static final String COLOR_ATTRIBUTE = "color";
-
-	private static final String STATUS_ATTRIBUTE = "status";
+	static final String STATUS_ATTRIBUTE = "status";
 
 	private TLModule _module;
 
@@ -68,8 +64,6 @@ public class TestValueColorProvider extends BasicTestCase {
 
 	private TLEnumeration _status;
 
-	private TLPrimitive _colorType;
-
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -78,8 +72,6 @@ public class TestValueColorProvider extends BasicTestCase {
 		model.addCoreModule();
 
 		_module = TLModelUtil.addModule(model, "test");
-		_colorType = TLModelUtil.addDatatype(_module, _module, "Color", Kind.CUSTOM);
-
 		_status = TLModelUtil.addEnumeration(_module, "Status");
 		_open = TLModelUtil.addClassifier(_status, "open");
 		_open.setAnnotation(literalColor(LITERAL));
@@ -102,30 +94,30 @@ public class TestValueColorProvider extends BasicTestCase {
 		assertNull(colorOf(_unknown));
 	}
 
-	public void testColorAttributeHoldingAColor() {
-		TLClass ticket = colorAttributeClass("Ticket", COLOR_ATTRIBUTE, _colorType);
-
-		TLObject ticket1 = newObject(ticket);
-		ticket1.tUpdateByName(COLOR_ATTRIBUTE, LITERAL);
-		assertEquals(ValueColor.color(LITERAL), colorOf(ticket1));
-
-		assertNull("An object whose color attribute has no value has no color.", colorOf(newObject(ticket)));
-	}
-
-	public void testColorAttributeHoldingAClassifier() {
-		TLClass ticket = colorAttributeClass("Ticket", STATUS_ATTRIBUTE, _status);
+	public void testDynamicColorOfObject() throws ConfigurationException {
+		TLClass ticket = coloredClass("Ticket", StatusColor.class);
 
 		TLObject ticket1 = newObject(ticket);
 		ticket1.tUpdateByName(STATUS_ATTRIBUTE, _closed);
 		assertEquals(ValueColor.themeToken(TOKEN), colorOf(ticket1));
 
 		TLObject ticket2 = newObject(ticket);
-		ticket2.tUpdateByName(STATUS_ATTRIBUTE, _unknown);
-		assertNull("An uncolored classifier gives the object no color.", colorOf(ticket2));
+		ticket2.tUpdateByName(STATUS_ATTRIBUTE, _open);
+		assertEquals(ValueColor.color(LITERAL), colorOf(ticket2));
 	}
 
-	public void testSpecializationInheritsColorAttribute() {
-		TLClass ticket = colorAttributeClass("Ticket", STATUS_ATTRIBUTE, _status);
+	public void testProviderAnsweringNoColor() throws ConfigurationException {
+		TLClass ticket = coloredClass("Ticket", StatusColor.class);
+
+		TLObject ticket1 = newObject(ticket);
+		ticket1.tUpdateByName(STATUS_ATTRIBUTE, _unknown);
+		assertNull("An uncolored classifier gives the object no color.", colorOf(ticket1));
+
+		assertNull("An object the provider answers no color for has no color.", colorOf(newObject(ticket)));
+	}
+
+	public void testSpecializationInheritsDynamicColor() throws ConfigurationException {
+		TLClass ticket = coloredClass("Ticket", StatusColor.class);
 		TLClass bug = TLModelUtil.addClass(_module, "Bug");
 		bug.getGeneralizations().add(ticket);
 
@@ -134,12 +126,12 @@ public class TestValueColorProvider extends BasicTestCase {
 		assertEquals(ValueColor.color(LITERAL), colorOf(bug1));
 	}
 
-	public void testTypeWithoutColorAttribute() {
+	public void testTypeWithoutDynamicColor() {
 		TLClass plain = TLModelUtil.addClass(_module, "Plain");
-		TLModelUtil.addProperty(plain, COLOR_ATTRIBUTE, _colorType);
+		TLModelUtil.addProperty(plain, STATUS_ATTRIBUTE, _status);
 
 		TLObject plain1 = newObject(plain);
-		plain1.tUpdateByName(COLOR_ATTRIBUTE, LITERAL);
+		plain1.tUpdateByName(STATUS_ATTRIBUTE, _open);
 		assertNull(colorOf(plain1));
 	}
 
@@ -166,10 +158,11 @@ public class TestValueColorProvider extends BasicTestCase {
 		assertNull(colorOf("open"));
 	}
 
-	private TLClass colorAttributeClass(String className, String attributeName, TLType type) {
+	private TLClass coloredClass(String className, Class<? extends ValueColorProvider> providerClass)
+			throws ConfigurationException {
 		TLClass result = TLModelUtil.addClass(_module, className);
-		TLModelUtil.addProperty(result, attributeName, type);
-		result.setAnnotation(colorAttribute(attributeName));
+		TLModelUtil.addProperty(result, STATUS_ATTRIBUTE, _status);
+		result.setAnnotation(dynamicColor(providerClass));
 		return result;
 	}
 
@@ -205,10 +198,22 @@ public class TestValueColorProvider extends BasicTestCase {
 		return result;
 	}
 
-	private static TLColorAttribute colorAttribute(String attributeName) {
-		TLColorAttribute result = TypedConfiguration.newConfigItem(TLColorAttribute.class);
-		result.setName(attributeName);
+	private static TLDynamicColor dynamicColor(Class<? extends ValueColorProvider> providerClass)
+			throws ConfigurationException {
+		TLDynamicColor result = TypedConfiguration.newConfigItem(TLDynamicColor.class);
+		result.setColorProvider(TypedConfiguration.createConfigItemForImplementationClass(providerClass));
 		return result;
+	}
+
+	/**
+	 * {@link ValueColorProvider} taking the color of an object from its status.
+	 */
+	public static class StatusColor implements ValueColorProvider {
+		@Override
+		public ValueColor colorOf(Object value) {
+			Object status = ((TLObject) value).tValueByName(STATUS_ATTRIBUTE);
+			return AnnotationValueColorProvider.INSTANCE.colorOf(status);
+		}
 	}
 
 	/**

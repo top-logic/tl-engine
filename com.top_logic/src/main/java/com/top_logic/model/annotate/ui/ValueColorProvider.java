@@ -18,6 +18,11 @@ package com.top_logic.model.annotate.ui;
 public interface ValueColorProvider {
 
 	/**
+	 * {@link ValueColorProvider} answering no color for every value.
+	 */
+	ValueColorProvider NONE = value -> null;
+
+	/**
 	 * The color the given value is displayed with.
 	 *
 	 * @param value

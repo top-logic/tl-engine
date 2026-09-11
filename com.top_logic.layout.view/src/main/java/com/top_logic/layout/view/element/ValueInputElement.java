@@ -61,7 +61,8 @@ import com.top_logic.util.Resources;
  * user enters becomes the value of the channel, and a value the channel receives from elsewhere
  * appears in the input. It is the counterpart of a {@code <field>} for a value that belongs to the
  * view rather than to a model object - the term a table filters by, the state a list is narrowed to
- * - and needs no form and no object to hold it.
+ * - and needs no form and no object to hold it. Standing outside a form, it is placed in a
+ * {@link FieldsElement} for the grid a form gives its fields.
  * </p>
  *
  * <p>

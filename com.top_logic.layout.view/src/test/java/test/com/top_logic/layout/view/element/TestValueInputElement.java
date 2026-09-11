@@ -63,12 +63,12 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.CompatibilityService;
 
 /**
- * Tests for {@link ValueInputElement} - the {@code <input>} element binding a channel to an input
+ * Tests for {@link ValueInputElement} - the {@code <value-input>} element binding a channel to an input
  * control.
  *
  * <p>
  * Two properties are under test. First, the control: a value of a given type is entered the same
- * way whether an {@code <input>} carries it on a channel or a {@code <field>} carries it in an
+ * way whether a {@code <value-input>} carries it on a channel or a {@code <field>} carries it in an
  * attribute, because both describe the value with a {@link FieldSpec} built by
  * {@link FieldControlService} - from the type alone respectively from the attribute - and both
  * resolve the control from it. Second, the binding: what the channel receives reaches the field
@@ -131,7 +131,7 @@ public class TestValueInputElement extends TestCase {
 	}
 
 	/**
-	 * The configuration of an {@code <input>}: the channel, the type, and the properties describing
+	 * The configuration of an {@code <value-input>}: the channel, the type, and the properties describing
 	 * how the value is entered.
 	 */
 	public void testParseInputs() throws Exception {
@@ -443,7 +443,7 @@ public class TestValueInputElement extends TestCase {
 		};
 	}
 
-	/** The {@code <input>} configurations of the test view. */
+	/** The {@code <value-input>} configurations of the test view. */
 	private List<PolymorphicConfiguration<? extends UIElement>> parseInputs() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestValueInputElement.class);
 
@@ -461,7 +461,7 @@ public class TestValueInputElement extends TestCase {
 		return ((PanelElement.Config) config.getContent()).getChildren();
 	}
 
-	/** The {@code <input>} configuration at the given position. */
+	/** The {@code <value-input>} configuration at the given position. */
 	private static ValueInputElement.Config config(List<PolymorphicConfiguration<? extends UIElement>> inputs, int index) {
 		PolymorphicConfiguration<? extends UIElement> entry = inputs.get(index);
 		assertTrue("Entry " + index + " must be an input, but is " + entry, entry instanceof ValueInputElement.Config);

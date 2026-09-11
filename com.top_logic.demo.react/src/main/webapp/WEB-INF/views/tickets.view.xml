@@ -152,34 +152,36 @@
 						css-class="ticketState"
 						input="ticketState"
 					/>
-					<value-input
-						type="tl.core:String"
-						value="filter"
-					>
-						<label>
-							<en>Filter</en>
-							<de>Filter</de>
-						</label>
-					</value-input>
-					<value-input
-						type="demo.tickets:TicketStatus"
-						value="status"
-					>
-						<label>
-							<en>Status</en>
-							<de>Status</de>
-						</label>
-					</value-input>
-					<value-input value="jump">
-						<label>
-							<en>Jump to ticket</en>
-							<de>Zu Ticket springen</de>
-						</label>
-						<on-submit>
-							<execute-script function="name -> if($name == null || $name == &quot;&quot;, null, all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement())"/>
-							<write-channel name="ticket"/>
-						</on-submit>
-					</value-input>
+					<fields>
+						<value-input
+							type="tl.core:String"
+							value="filter"
+						>
+							<label>
+								<en>Filter</en>
+								<de>Filter</de>
+							</label>
+						</value-input>
+						<value-input
+							type="demo.tickets:TicketStatus"
+							value="status"
+						>
+							<label>
+								<en>Status</en>
+								<de>Status</de>
+							</label>
+						</value-input>
+						<value-input value="jump">
+							<label>
+								<en>Jump to ticket</en>
+								<de>Zu Ticket springen</de>
+							</label>
+							<on-submit>
+								<execute-script function="name -> if($name == null || $name == &quot;&quot;, null, all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement())"/>
+								<write-channel name="ticket"/>
+							</on-submit>
+						</value-input>
+					</fields>
 					<panel>
 						<title>
 							<en>Without comments</en>

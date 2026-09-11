@@ -7,7 +7,6 @@ package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -214,43 +213,6 @@ public class OpenDialogAction extends InterruptibleViewAction {
 	 */
 	public static DialogHandle openDialog(ReactContext context, String dialogViewPath, boolean closeOnBackdrop,
 			Map<String, ?> channelValues, List<ChannelBindingConfig> bindings) {
-		Map<String, ViewChannel> channels = new LinkedHashMap<>();
-		for (Map.Entry<String, ?> entry : channelValues.entrySet()) {
-			DefaultViewChannel channel = new DefaultViewChannel(entry.getKey());
-			channel.set(entry.getValue());
-			channels.put(entry.getKey(), channel);
-		}
-		return openDialogWithChannels(context, dialogViewPath, closeOnBackdrop, channels, bindings);
-	}
-
-	/**
-	 * Opens a modal dialog loading the given view on the given channels and the live bindings
-	 * inherited from the parent context.
-	 *
-	 * <p>
-	 * The variant for an opener that keeps hold of the channels it hands over - one observing a
-	 * channel the dialog writes its result to, say. A caller that only seeds values passes them to
-	 * {@link #openDialog(ReactContext, String, boolean, Map, List)} instead, which builds the
-	 * channels carrying them.
-	 * </p>
-	 *
-	 * @param context
-	 *        The current context; must provide a {@link DialogManager} (otherwise this is a
-	 *        no-op).
-	 * @param dialogViewPath
-	 *        The full view path (including {@link ViewLoader#VIEW_BASE_PATH}).
-	 * @param closeOnBackdrop
-	 *        Whether clicking the backdrop closes the dialog.
-	 * @param channels
-	 *        Channel name to channel; each entry is registered under its name on the dialog
-	 *        context, so that both the dialog and the opener see the same channel.
-	 * @param bindings
-	 *        Live bindings inherited from the parent context (may be empty).
-	 * @return Handle closing the opened dialog, or {@code null} if no dialog could be opened.
-	 */
-	public static DialogHandle openDialogWithChannels(ReactContext context, String dialogViewPath,
-			boolean closeOnBackdrop, Map<String, ? extends ViewChannel> channels,
-			List<ChannelBindingConfig> bindings) {
 		DialogManager mgr = context.getDialogManager();
 		if (mgr == null) {
 			return null;
@@ -290,9 +252,11 @@ public class OpenDialogAction extends InterruptibleViewAction {
 			}
 		}
 
-		// Hand the requested channels to the dialog.
-		for (Map.Entry<String, ? extends ViewChannel> entry : channels.entrySet()) {
-			dialogContext.registerChannel(entry.getKey(), entry.getValue());
+		// Seed the dialog with the requested channel values.
+		for (Map.Entry<String, ?> entry : channelValues.entrySet()) {
+			DefaultViewChannel channel = new DefaultViewChannel(entry.getKey());
+			channel.set(entry.getValue());
+			dialogContext.registerChannel(entry.getKey(), channel);
 		}
 
 		ReactControl dialogControl = new ReloadableControl(dialogViewPath, dialogContext,

@@ -21,12 +21,9 @@ import com.top_logic.layout.react.control.ToolbarControl;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
-import com.top_logic.layout.view.command.ViewExecutabilityRule;
-import com.top_logic.layout.view.command.ViewExecutabilityRules;
+import com.top_logic.layout.view.command.ViewCommands;
 
 /**
  * Abstract base for {@link UIElement}s that carry {@link ViewCommand} configurations.
@@ -106,20 +103,7 @@ public abstract class CommandCarrierElement extends ContainerElement {
 	 */
 	protected static List<ViewCommandModel> buildCommandModels(ViewContext context,
 			List<ViewCommand> commands, List<ViewCommand.Config> commandConfigs) {
-		List<ViewCommandModel> models = new ArrayList<>();
-		for (int i = 0; i < commands.size() && i < commandConfigs.size(); i++) {
-			ViewCommand cmd = commands.get(i);
-			ViewCommand.Config cmdConfig = commandConfigs.get(i);
-
-			ChannelRef inputRef = cmdConfig.getInput();
-			ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
-
-			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
-
-			ViewCommandModel model = ViewCommandModel.create(cmd, cmdConfig, inputChannel, rule);
-			models.add(model);
-		}
-		return models;
+		return ViewCommands.buildCommandModels(context, commands, commandConfigs);
 	}
 
 	/**
@@ -131,16 +115,7 @@ public abstract class CommandCarrierElement extends ContainerElement {
 	 *        observation; read when the host attaches.
 	 */
 	protected void registerLifecycle(ViewContext context, List<ViewCommandModel> models, ReactControl host) {
-		host.addAttachListener(() -> {
-			for (ViewCommandModel model : models) {
-				model.attach(context.getModelScope());
-			}
-		});
-		host.addDetachListener(() -> {
-			for (ViewCommandModel model : models) {
-				model.detach();
-			}
-		});
+		ViewCommands.registerLifecycle(context, models, host);
 	}
 
 	/**

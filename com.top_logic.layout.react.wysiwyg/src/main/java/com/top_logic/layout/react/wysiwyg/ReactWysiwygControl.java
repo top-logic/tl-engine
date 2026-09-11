@@ -26,25 +26,26 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.FieldModel;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
-import com.top_logic.layout.react.control.overlay.DialogHandle;
-import com.top_logic.layout.react.control.overlay.DialogResult;
-import com.top_logic.layout.view.ViewLoader;
-import com.top_logic.layout.view.ViewMessages;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.OpenDialogAction;
+import com.top_logic.layout.view.command.CliqueRegistry;
+import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ToolbarBuilder;
+import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
-import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -57,10 +58,10 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * Where an {@link ObjectLinkConfig} says which dialog the object is picked in, the editor offers
- * a button inserting a link to an application object. The picked object arrives on that
- * configuration's {@link ObjectLinkConfig#getResultChannel() result channel}, and the link
- * leading to it is inserted at the cursor.
+ * Beside its formatting buttons, the editor's toolbar carries the commands it was created with.
+ * They run in a context of their own, derived from the one the editor is displayed in: they see
+ * the channels of that view, plus the editor's insertion channel where one is named. Text written
+ * to that channel is inserted at the cursor.
  * </p>
  *
  * <p>
@@ -84,35 +85,15 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	private static final String ARG_HREF = "href";
 
 	/**
-	 * Command sent when the user asks for a link to an application object.
+	 * State holding the toolbar of configured commands, a child control the client renders beside
+	 * the editor's formatting buttons.
 	 *
 	 * <p>
-	 * Takes no arguments: what is picked and where is decided by the {@link ObjectLinkConfig} the
-	 * editor was created with, and the picked object arrives on that configuration's
-	 * {@link ObjectLinkConfig#getResultChannel() result channel}, not through the command.
+	 * Absent while the editor has no command placed in a toolbar, which is how the client knows
+	 * to render its own buttons alone.
 	 * </p>
 	 */
-	private static final String CMD_INSERT_OBJECT_LINK = "insertObjectLink";
-
-	/**
-	 * State offering the button that sends {@link #CMD_INSERT_OBJECT_LINK}, an object holding
-	 * {@link #BUTTON_LABEL} and {@link #BUTTON_ICON}.
-	 *
-	 * <p>
-	 * Absent while the editor has no {@link ObjectLinkConfig}, which is how the client knows not
-	 * to offer the button at all.
-	 * </p>
-	 */
-	private static final String OBJECT_LINK = "objectLink";
-
-	/** Field of {@link #OBJECT_LINK} holding the text of the button. */
-	private static final String BUTTON_LABEL = "label";
-
-	/** Field of {@link #OBJECT_LINK} holding the icon class of the button. */
-	private static final String BUTTON_ICON = "icon";
-
-	/** The icon of the {@link #OBJECT_LINK} button. */
-	private static final String OBJECT_LINK_ICON = "ri-links-line";
+	private static final String TOOLBAR = "toolbar";
 
 	/**
 	 * State asking the client to insert markup at the cursor, an object holding {@link #INSERT_SEQ}
@@ -143,28 +124,16 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	private StructuredText _shadowCopy;
 
 	/**
-	 * Where the object a link is inserted for is picked, or {@code null} if this editor inserts no
-	 * object links.
+	 * The channel whose text is inserted at the cursor, or {@code null} where the configuration
+	 * named none.
 	 */
-	private final ObjectLinkConfig _objectLink;
-
-	/**
-	 * The channel the object selection publishes the picked object on, or {@code null} if this
-	 * editor inserts no object links.
-	 */
-	private final DefaultViewChannel _objectLinkResult;
-
-	/**
-	 * The open object selection, or {@code null} while none is open or the dialog closed itself
-	 * already.
-	 */
-	private DialogHandle _objectLinkDialog;
+	private final DefaultViewChannel _insertChannel;
 
 	/** Number of insertions requested so far, the value of {@link #INSERT_SEQ}. */
 	private int _insertions;
 
 	/**
-	 * Creates a {@link ReactWysiwygControl} that formats text and inserts no object links.
+	 * Creates a {@link ReactWysiwygControl} that formats text and offers no commands of its own.
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
@@ -172,7 +141,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 *        The field model holding the {@link StructuredText} value.
 	 */
 	public ReactWysiwygControl(ReactContext context, FieldModel model) {
-		this(context, model, null);
+		this(context, model, List.of(), List.of(), null);
 	}
 
 	/**
@@ -182,11 +151,17 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 *        The React context for ID allocation and SSE registration.
 	 * @param model
 	 *        The field model holding the {@link StructuredText} value.
-	 * @param objectLink
-	 *        Where the object a link is inserted for is picked, or {@code null} to offer no such
-	 *        button.
+	 * @param commands
+	 *        The commands the toolbar offers beside the formatting buttons; those placed in a
+	 *        toolbar are rendered.
+	 * @param commandConfigs
+	 *        The configurations the commands were created from, in the same order.
+	 * @param insertChannel
+	 *        Name of the channel whose text is inserted at the cursor, or {@code null} for an
+	 *        editor whose commands write no text.
 	 */
-	public ReactWysiwygControl(ReactContext context, FieldModel model, ObjectLinkConfig objectLink) {
+	public ReactWysiwygControl(ReactContext context, FieldModel model, List<ViewCommand> commands,
+			List<ViewCommand.Config> commandConfigs, String insertChannel) {
 		super(context, model, "TLWysiwygEditor");
 
 		_imageUrlPrefix = context.getContextPath() + "/react-api/data?controlId=" + getID()
@@ -195,38 +170,73 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		initShadowCopy();
 		putState(VALUE, rewriteImageUrls(extractHtml(_shadowCopy)));
 
-		_objectLink = objectLink;
-		if (objectLink == null) {
-			_objectLinkResult = null;
-		} else {
-			_objectLinkResult = new DefaultViewChannel(objectLink.getResultChannel());
-			_objectLinkResult.addListener((sender, oldValue, newValue) -> objectPicked(newValue));
-			putState(OBJECT_LINK, buttonState());
+		_insertChannel = insertChannel == null ? null : new DefaultViewChannel(insertChannel);
+		if (_insertChannel != null) {
+			_insertChannel.addListener((sender, oldValue, newValue) -> textWritten(newValue));
 		}
+
+		if (commands.isEmpty()) {
+			return;
+		}
+		if (!(context instanceof ViewContext viewContext)) {
+			// The commands name the channels they work on, and outside a view there are none to
+			// name. Nothing can be built that would run.
+			Logger.warn("Editor commands are configured outside a view and are therefore not offered.",
+				ReactWysiwygControl.class);
+			return;
+		}
+
+		createToolbar(_insertChannel == null ? viewContext
+			: viewContext.withLocalChannel(insertChannel, _insertChannel), commands, commandConfigs);
 	}
 
 	/**
-	 * The channel the object selection publishes the picked object on, {@code null} if this editor
-	 * inserts no object links.
+	 * Offers the given commands in the editor's own toolbar, as far as they are placed in one.
+	 */
+	private void createToolbar(ViewContext context, List<ViewCommand> commands,
+			List<ViewCommand.Config> commandConfigs) {
+		List<ViewCommandModel> models = ViewCommands.buildCommandModels(context, commands, commandConfigs);
+		ReactToolbarControl toolbar = ToolbarBuilder.build(context, new CommandScope(models),
+			CommandPlacement.TOOLBAR, new CliqueRegistry(), null);
+		if (toolbar == null) {
+			return;
+		}
+		putState(TOOLBAR, toolbar);
+		ViewCommands.registerLifecycle(context, models, this);
+	}
+
+	/**
+	 * The channel whose text the editor inserts at the cursor, {@code null} where the
+	 * configuration named none.
 	 *
 	 * <p>
-	 * The editor hands this channel to the dialog it opens, under the name the
-	 * {@link ObjectLinkConfig#getResultChannel()} gives it, and inserts a link to whatever object
-	 * appears on it. Writing an object here is therefore the same as picking it in the dialog.
+	 * The editor registers it beside the channels of the view its commands see, so that writing
+	 * markup there is the same as a command of the editor producing it.
 	 * </p>
 	 */
-	public ViewChannel getObjectLinkResult() {
-		return _objectLinkResult;
+	public ViewChannel getInsertChannel() {
+		return _insertChannel;
 	}
 
 	/**
-	 * The {@link #OBJECT_LINK} state describing the button inserting an object link.
+	 * Inserts the text a command wrote to the {@link #getInsertChannel() insertion channel}.
+	 *
+	 * <p>
+	 * The channel is cleared afterwards, so that writing the same markup again is another
+	 * insertion rather than a value the channel already holds.
+	 * </p>
 	 */
-	private static Map<String, Object> buttonState() {
-		Map<String, Object> button = new LinkedHashMap<>();
-		button.put(BUTTON_LABEL, Resources.getInstance().getString(I18NConstants.INSERT_OBJECT_LINK));
-		button.put(BUTTON_ICON, OBJECT_LINK_ICON);
-		return button;
+	private void textWritten(Object written) {
+		if (written == null) {
+			return;
+		}
+		if (!(written instanceof String html)) {
+			Logger.warn("Insertion channel was written " + written.getClass().getName()
+				+ ", which is no markup to insert.", ReactWysiwygControl.class);
+			return;
+		}
+		insertAtCursor(html);
+		_insertChannel.set(null);
 	}
 
 	private void initShadowCopy() {
@@ -368,70 +378,6 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	}
 
 	/**
-	 * Opens the selection the object a link is inserted for is picked in.
-	 *
-	 * <p>
-	 * The link is not inserted here: the selection takes as long as the user needs and publishes
-	 * the picked object on the {@link #getObjectLinkResult() result channel}, which is where the
-	 * insertion follows from.
-	 * </p>
-	 *
-	 * <p>
-	 * An editor that offers no such button - one without an {@link ObjectLinkConfig} - and a
-	 * context that displays no dialogs both leave the command with nowhere to go; the user is told
-	 * so instead of the click doing nothing.
-	 * </p>
-	 */
-	@ReactCommandHandler(CMD_INSERT_OBJECT_LINK)
-	void handleInsertObjectLink(ReactContext context) {
-		if (_objectLink == null) {
-			Logger.warn("Asked for an object link, but the editor is configured with no selection.",
-				ReactWysiwygControl.class);
-			ViewMessages.error(context, I18NConstants.ERROR_OBJECT_SELECTION_UNAVAILABLE);
-			return;
-		}
-
-		// The object picked last time is still on the channel, and a channel reports a change
-		// only. Without clearing it, picking the same object twice would insert it once.
-		_objectLinkResult.set(null);
-
-		DialogHandle dialog = OpenDialogAction.openDialogWithChannels(context,
-			ViewLoader.fullPath(_objectLink.getDialogView()),
-			OpenDialogAction.Config.CLOSE_ON_BACKDROP_DEFAULT,
-			Map.of(_objectLink.getResultChannel(), _objectLinkResult), List.of());
-		if (dialog == null) {
-			Logger.warn("Asked for an object link outside a window that displays dialogs.",
-				ReactWysiwygControl.class);
-			ViewMessages.error(context, I18NConstants.ERROR_OBJECT_SELECTION_UNAVAILABLE);
-			return;
-		}
-		_objectLinkDialog = dialog;
-	}
-
-	/**
-	 * Inserts a link to what the object selection published, ignoring a channel that was merely
-	 * cleared.
-	 */
-	private void objectPicked(Object picked) {
-		if (picked == null) {
-			return;
-		}
-		if (!(picked instanceof TLObject object)) {
-			Logger.warn("Object selection published " + picked.getClass().getName()
-				+ ", which no link can lead to.", ReactWysiwygControl.class);
-			return;
-		}
-		insertObjectLink(object);
-	}
-
-	/**
-	 * Asks the client to insert a link to the given object at the cursor.
-	 */
-	private void insertObjectLink(TLObject object) {
-		insertAtCursor(TLObjectLinkUtil.getLink(object, MetaLabelProvider.INSTANCE.getLabel(object), null));
-	}
-
-	/**
 	 * Asks the client to insert the given markup at the cursor of the editor.
 	 *
 	 * <p>
@@ -454,16 +400,10 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * Applies the text the client sends and takes back what was asked of it.
 	 *
 	 * <p>
-	 * The text is the answer to a pending {@link #INSERT} request: the link is part of the content
-	 * now, so the request is dropped - a client mounting the editor anew would otherwise carry it
-	 * out a second time. The selection it came from has served its purpose and is closed, unless
-	 * it closed itself already.
+	 * The text is the answer to a pending {@link #INSERT} request: the markup is part of the
+	 * content now, so the request is dropped - a client mounting the editor anew would otherwise
+	 * carry it out a second time.
 	 * </p>
-	 *
-	 * @implNote The selection is closed here rather than when the object arrives on the channel:
-	 *           closing it while its own publishing command is still running would take it out
-	 *           from under the {@code close-dialog} that usually follows, and that one closes
-	 *           whichever dialog is topmost - by then the one underneath.
 	 */
 	@Override
 	protected void applyRawClientValue(Object rawValue) {
@@ -473,12 +413,6 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			return;
 		}
 		putState(INSERT, null);
-
-		DialogHandle dialog = _objectLinkDialog;
-		_objectLinkDialog = null;
-		if (dialog != null) {
-			dialog.close(DialogResult.ok(null));
-		}
 	}
 
 	private String uniqueImageKey(String name) {

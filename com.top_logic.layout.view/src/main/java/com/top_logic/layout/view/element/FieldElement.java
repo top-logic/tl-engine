@@ -8,19 +8,24 @@ package com.top_logic.layout.view.element;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.TLInputControl;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.LabelPositionAnnotation;
 
@@ -60,6 +65,9 @@ public class FieldElement implements UIElement {
 
 		/** Configuration name for {@link #getFullLine()}. */
 		String FULL_LINE = "full-line";
+
+		/** Configuration name for {@link #getInputControl()}. */
+		String INPUT_CONTROL = "input-control";
 
 		/**
 		 * The name of the model attribute to display.
@@ -117,6 +125,27 @@ public class FieldElement implements UIElement {
 		@Name(FULL_LINE)
 		@Nullable
 		Boolean getFullLine();
+
+		/**
+		 * The control editing the attribute here, overriding the one the model implies.
+		 *
+		 * <p>
+		 * The same choice as the {@link TLInputControl} annotation of a model attribute offers,
+		 * made where the field is displayed instead of where the attribute is defined. A control
+		 * that belongs to one place in the user interface - an editor whose toolbar opens a
+		 * dialog of this view, say - is chosen here, so that the model keeps saying what the
+		 * attribute is and the view says how it is presented.
+		 * </p>
+		 *
+		 * <p>
+		 * Left unset, the control is the one the attribute's own annotation, its type or the kind
+		 * of value it holds leads to.
+		 * </p>
+		 */
+		@Name(INPUT_CONTROL)
+		@Nullable
+		@Options(fun = AllInAppImplementations.class)
+		PolymorphicConfiguration<? extends ReactFieldControlProvider> getInputControl();
 	}
 
 	private final Config _config;
@@ -145,7 +174,7 @@ public class FieldElement implements UIElement {
 		AttributeFieldControl fieldControl =
 			new AttributeFieldControl(context, formModel, formControl, _config.getAttribute(),
 				_config.getLabel(), _config.getReadonly(), _config.getLabelPosition(),
-				_config.getFullLine());
+				_config.getFullLine(), _config.getInputControl());
 
 		// 3. Create the chrome-wrapped control.
 		ReactFormFieldChromeControl chrome = fieldControl.createChromeControl();

@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.top_logic.basic.col.Sink;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.knowledge.service.Transaction;
@@ -21,6 +22,7 @@ import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -63,6 +65,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private final LabelPosition _labelPositionOverride;
 
 	private final Boolean _fullLineOverride;
+
+	private final PolymorphicConfiguration<? extends ReactFieldControlProvider> _inputControl;
 
 	private AttributeFieldModel _model;
 
@@ -119,6 +123,25 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
 			String attributeName, ResKey labelOverride, boolean forceReadonly,
 			LabelPosition labelPositionOverride, Boolean fullLineOverride) {
+		this(context, formModel, formControl, attributeName, labelOverride, forceReadonly,
+			labelPositionOverride, fullLineOverride, null);
+	}
+
+	/**
+	 * Creates an {@link AttributeFieldControl} whose input is the control the display asks for
+	 * rather than the one the model attribute implies.
+	 *
+	 * @param inputControl
+	 *        The control editing the attribute here, or {@code null} to let the model decide.
+	 *
+	 * @implNote The control is resolved through
+	 *           {@link FieldControlService#createFieldControl(ReactContext, com.top_logic.model.TLStructuredTypePart, com.top_logic.layout.form.model.FieldModel, PolymorphicConfiguration)}.
+	 */
+	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
+			String attributeName, ResKey labelOverride, boolean forceReadonly,
+			LabelPosition labelPositionOverride, Boolean fullLineOverride,
+			PolymorphicConfiguration<? extends ReactFieldControlProvider> inputControl) {
+		_inputControl = inputControl;
 		_fullLineOverride = fullLineOverride;
 		_context = context;
 		_formModel = formModel;
@@ -171,7 +194,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		addModelListener();
 
-		_innerControl = FieldControlService.getInstance().createFieldControl(_context, part, _model);
+		_innerControl =
+			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
 
 		String label = resolveLabel();
 		String helpText = resolveHelpText(part);
@@ -224,7 +248,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 			addModelListener();
 
-			_innerControl = FieldControlService.getInstance().createFieldControl(_context, part, _model);
+			_innerControl =
+			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
 
 			_chrome.setLabel(resolveLabel());
 			_chrome.setHelpText(resolveHelpText(part));

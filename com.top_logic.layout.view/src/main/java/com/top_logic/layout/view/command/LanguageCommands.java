@@ -37,7 +37,8 @@ import com.top_logic.util.TLContext;
  * The set follows the supported locales of {@link ResourcesModule}, and an entry is labelled with
  * the language's own name in that language - "Deutsch", "English" - which is what a reader looking
  * for their language recognises, and needs no translation of its own. The entry for the language
- * currently in effect is offered as disabled, the way {@link ThemeCommands} marks the active theme.
+ * currently in effect is marked as the active one, the way {@link ThemeCommands} marks the theme in
+ * force; it stays executable and selecting it does nothing.
  * </p>
  *
  * <p>
@@ -97,7 +98,7 @@ public class LanguageCommands implements ViewCommandSource {
 					ctx -> applyLanguage(ctx, locale))
 				.setImage(LanguageFlags.getInstance().getFlag(locale))
 				// Read on every display, since the models outlive a switch.
-				.setExecutable(() -> !isActive(locale)));
+				.setActive(() -> isActive(locale)));
 		}
 		return result;
 	}
@@ -115,6 +116,11 @@ public class LanguageCommands implements ViewCommandSource {
 	 * Stores the given language as the current user's preference, applies it to the running session
 	 * and reloads the page in it.
 	 *
+	 * <p>
+	 * Activating the language the account already has does nothing: the preference is stored, so
+	 * there is neither a change to write nor a page whose labels would come back different.
+	 * </p>
+	 *
 	 * @param context
 	 *        The context whose update queue carries the reload to the browser.
 	 * @param locale
@@ -124,6 +130,9 @@ public class LanguageCommands implements ViewCommandSource {
 	public static HandlerResult applyLanguage(ReactContext context, Locale locale) {
 		Person account = TLContext.currentUser();
 		if (account == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		if (isActive(locale)) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 

@@ -116,10 +116,11 @@
 				<!--
 					The one-decision preferences, an entry each rather than a form field: one entry
 					per language the application supports, and one per theme configured in
-					UIThemeService, labelled and iconed by the theme itself. Both mark the active
-					choice by offering it as disabled, both head their group with a label naming the
-					choice, and both contribute nothing when there is only one of them - so an
-					application with a single theme and a single language sees none of this.
+					UIThemeService, labelled and iconed by the theme itself. Both mark the choice in
+					force as active, which the menu shows in bold, both head their group with a
+					label naming the choice, and both contribute nothing when there is only one of
+					them - so an application with a single theme and a single language sees none of
+					this.
 				-->
 				<command-sources>
 					<language-commands/>

@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.configedit;
 
+import java.awt.Color;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -50,12 +51,14 @@ import com.top_logic.layout.configedit.ConfigPropertyOptions;
 import com.top_logic.layout.configedit.ConfigSelectFieldModel;
 import com.top_logic.layout.configedit.DatePickerFormatProvider;
 import com.top_logic.layout.configedit.I18NStringFormatProvider;
+import com.top_logic.layout.form.format.ColorConfigFormat;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
+import com.top_logic.layout.react.control.form.ReactColorInputControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
@@ -451,6 +454,12 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getIcon()}. */
 		String ICON = "icon";
 
+		/** Property name for {@link #getColorValue()}. */
+		String COLOR_VALUE = "colorValue";
+
+		/** Property name for {@link #getAnnotatedColorValue()}. */
+		String ANNOTATED_COLOR_VALUE = "annotatedColorValue";
+
 		/** Property name for {@link #getCount()}. */
 		String COUNT = "count";
 
@@ -566,6 +575,25 @@ public class TestConfigControlService extends TestCase {
 		/** An icon, the same value an icon-typed model attribute holds. */
 		@Name(ICON)
 		ThemeImage getIcon();
+
+		/**
+		 * A color, in the shape a color annotation of the model has it: a {@link Color} with a
+		 * {@code @Format} of its own, since typed configuration has no built-in format for a
+		 * color.
+		 */
+		@Name(COLOR_VALUE)
+		@Format(ColorConfigFormat.class)
+		Color getColorValue();
+
+		/**
+		 * A color whose control is named by {@link ConfigControl} - the annotation (step 2) is
+		 * resolved before the value-type map (step 4) that claims every other {@link Color}
+		 * property.
+		 */
+		@Name(ANNOTATED_COLOR_VALUE)
+		@Format(ColorConfigFormat.class)
+		@ConfigControl(FixedCheckboxProvider.class)
+		Color getAnnotatedColorValue();
 
 		/** A whole number. */
 		@Name(COUNT)
@@ -851,6 +879,52 @@ public class TestConfigControlService extends TestCase {
 
 		assertEquals("The property must hold the icon.", icon, _config.getIcon());
 		assertEquals(icon, model.getValue());
+	}
+
+	/**
+	 * A color property is chosen from the color chooser's palette, as a color model attribute is.
+	 *
+	 * <p>
+	 * Exercises the {@link Color} mapping as the module's own configuration registers it: the
+	 * service under test is the singleton started from the application configuration.
+	 * </p>
+	 */
+	public void testColorIsPicked() {
+		assertTrue("A color must be chosen, not typed as hex text.",
+			control(TestConfig.COLOR_VALUE) instanceof ReactColorInputControl);
+	}
+
+	/**
+	 * The color control is handed the color itself, not its hex text.
+	 *
+	 * <p>
+	 * The claim decides this too: a property with a value provider would otherwise get the format
+	 * model over the hex string, and the control reads and writes a {@link Color}.
+	 * </p>
+	 */
+	public void testColorModelCarriesTheColorItself() {
+		ConfigFieldModel model = model(TestConfig.COLOR_VALUE);
+
+		assertFalse("The hex text is not what the color control edits.",
+			model instanceof ConfigFormatFieldModel);
+
+		Color color = new Color(0x04, 0xA3, 0x8D);
+		model.setValue(color);
+
+		assertEquals("The property must hold the color.", color, _config.getColorValue());
+		assertEquals(color, model.getValue());
+	}
+
+	/**
+	 * A control named by {@link ConfigControl} on a {@link Color} property wins over the mapping
+	 * registered for that value type - the annotation is step 2 of the resolution chain, the
+	 * value-type map step 4.
+	 */
+	public void testAnnotatedControlWinsOverTheColorMapping() {
+		assertTrue("The named control must win over the mapping for the property's value type.",
+			control(TestConfig.ANNOTATED_COLOR_VALUE) instanceof ReactCheckboxControl);
+		assertFalse("The color input must not be reachable once the property names its control.",
+			control(TestConfig.ANNOTATED_COLOR_VALUE) instanceof ReactColorInputControl);
 	}
 
 	/** A boolean property keeps the checkbox. */

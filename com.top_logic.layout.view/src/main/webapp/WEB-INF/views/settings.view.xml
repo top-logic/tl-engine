@@ -10,6 +10,11 @@
 	admin/admin.view.xml. See tl-layout-view-contact for the module contributing the profile tab.
 -->
 <view>
+	<!--
+		Save is contributed by the active tab's form and closes the dialog; Cancel is the window's
+		own button, so the two read as the pair of a form dialog. On a tab holding actions rather
+		than fields, Cancel merely closes.
+	-->
 	<window resizable="false"
 		width="560px"
 	>
@@ -24,8 +29,8 @@
 					image="css:bi bi-x-lg"
 				>
 					<label>
-						<en>Close</en>
-						<de>Schließen</de>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
 					</label>
 				</action>
 			</button>

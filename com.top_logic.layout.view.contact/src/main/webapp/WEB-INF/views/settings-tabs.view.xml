@@ -34,7 +34,7 @@
 					<en>Profile</en>
 					<de>Profil</de>
 				</label>
-				<!-- Save reaches the dialog's single button bar while this tab is displayed; see the base view. -->
+				<!-- Save reaches the dialog's single button bar while this tab is displayed, and closes the dialog; see the base view. -->
 				<form
 					initial-edit-mode="true"
 					input="contact"
@@ -42,7 +42,13 @@
 				>
 					<field attribute="title"/>
 					<field attribute="firstname"/>
-					<field attribute="name"/>
+					<!-- The person's name, which the shared contact attribute cannot call anything more specific than a name. -->
+					<field attribute="name">
+						<label>
+							<en>Last name</en>
+							<de>Nachname</de>
+						</label>
+					</field>
 					<field attribute="company"/>
 					<field attribute="email"/>
 					<field attribute="phone"/>
@@ -58,6 +64,7 @@
 							<with-transaction>
 								<store-form-state/>
 							</with-transaction>
+							<close-dialog/>
 						</generic-command>
 					</commands>
 				</form>

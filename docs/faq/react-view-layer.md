@@ -10,6 +10,45 @@
 - **Standalone form-field controls bind to a `FieldModel`.** For a standalone field control (e.g. a checkbox cell), use the concrete `com.top_logic.layout.form.model.AbstractFieldModel` + `FieldModelListener` — not `FormContext` / `FormField` / `FormFieldAdapter`, which are legacy-compat shims. `AbstractFieldModel` is editable by default, needs no `FormContext` parent, and triggers no label resource lookup in `ReactFormFieldControl`.
 - Modifying persistent state from a control's value listener needs a transaction; the listener has no ambient one, so open `beginTransaction()` there (or buffer changes and apply them under one transaction on save).
 
+## A command is a chain of actions, and the chain can branch
+
+`<generic-command>` (`GenericViewCommand`) runs the `<execute-script>`, `<store-form-state>`, `<confirm>`, `<with-transaction>`, `<open-dialog>`, `<write-channel>`, … actions written inside it as one chain (`ViewActionChain`): each action's result is the next action's input, the first action gets the command's input. An action that has to wait — `<confirm>`, which opens a dialog — suspends the chain and resumes it from the dialog's answer, or aborts it on cancel; an abort skips the remaining actions and runs the compensations the executed actions registered, newest first, as does a failure. A script over the chain's value takes further arguments from channels: `<inputs><input channel="context"/></inputs>` puts those channel values in front of the chain's value (`ActionScript`, shared by every action that takes a script).
+
+Two actions branch the chain by a TL-Script function over its current value. `<if>` decides between two chains; `<switch>` computes a switch value with its `value` function (the chain's own value when no `value` is configured) and gives it to the `<case>`s, each of which either names the value it stands for with `match` or decides with a `test` predicate:
+
+```xml
+<if test="ticket -> $ticket != null">
+  <then>
+    <write-channel name="ticket"/>
+  </then>
+  <else>
+    <execute-script function="x -> new(`demo.tickets:Ticket`, transient: true)"/>
+    <open-dialog bind-input-to="model" dialog-view="tickets-create.view.xml"/>
+  </else>
+</if>
+
+<switch value="t -> $t.get(`demo.tickets:Ticket#status`)">
+  <case match="`demo.tickets:TicketStatus#closed`">
+    <with-transaction>
+      <execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
+    </with-transaction>
+  </case>
+  <case test="s -> $s == null">
+    <confirm expr="x -> #('The ticket has no status.'@en)"/>
+  </case>
+  <default>
+    <with-transaction>
+      <execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+    </with-transaction>
+  </default>
+</switch>
+```
+
+- The chosen branch runs as a *nested* chain (`ViewActionChain.nest`): it starts with the chain's current value, and the result of its last action becomes the value the enclosing chain continues with. A branch that is not configured — a missing `<else>`, a `<switch>` without a matching case and without a `<default>` — passes the value through unchanged, so a branch never breaks the chain.
+- An abort inside a branch aborts the whole command, and a compensation registered inside a branch takes its place in the enclosing chain's unwind: it runs whenever the command is later aborted or fails, before the compensations of the actions preceding the branch. A `<confirm>` therefore works inside a branch exactly as beside it, including the suspension: the branch may resume long after the command returned.
+- `<if>` reads its condition in the fuzzy sense of TL-Script, so an object stands for a true condition and nothing (`null`, an empty list, an empty text) for a false one. A `<case match="…">` holds a TL-Script expression without parameters and matches when the switch value equals its value under the TL-Script comparison (`==`), so a classifier is written as `` `module:Enumeration#literal` ``, a text as `'text'` and a number as the number it is. A `<case test="…">` holds a predicate that is called with the switch value and read in the same fuzzy sense as an `<if>` condition; a case configures exactly one of the two. Without a `value` function the switch value is the chain's own value, so `<switch><case test="t -> $t == null">` decides on what the chain carries.
+- A command whose chain applies the entered form values is disabled while the form has errors — a branch reports that for the actions of *all* its branches, taken or not, because the button's state cannot depend on the decision.
+
 ## `TableViewControl` is the sole React table control
 
 `TableViewControl` / `com.top_logic.table.TableView` (#29108) is the only React table control. Everything renders through this stack: the `<table>` element (`TableElement`; sort, per-column `<filter>`, type-derived default columns, width personalization, shared `ColumnsConfig` / `ColumnConfig`), the access-control permission matrix (`SecurityMatrixElement`), the in-form `<composition-table>` (`CompositionTableControl`), and the technical React-table demo (`DemoReactTableComponent`: flat `ListRowSource` + `TreeRowSource` tree).

@@ -4367,7 +4367,22 @@ button.tlToolbar__menuTrigger:focus-visible {
 	color: var(--text-secondary);
 }
 
-/* Individual chip */
+/* The value of a single select: shown plainly, the way the read-only display shows it. */
+.tlDropdownSelect__value {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	min-width: 0;
+	max-width: 100%;
+}
+
+.tlDropdownSelect__valueLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Individual chip of a multi-select */
 .tlDropdownSelect__chip {
 	display: inline-flex;
 	align-items: center;

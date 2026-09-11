@@ -28,6 +28,12 @@
 	tickets close in one gesture. The Involve list below them is a row target instead: a
 	ticket dropped onto one of its rows gets a comment by that person, and the person dropped
 	on arrives on the dropPerson channel that the drop's script reads.
+	
+	The first list groups its tickets by status, the second one shows them flat, so both
+	presentations of the same rows are on screen at once. A group header is a collapsible row
+	standing for no ticket: clicking it collapses the group and leaves the selection alone. The
+	column header menu of either list regroups it by another column or removes the grouping, and
+	that choice is kept per user.
 -->
 <view>
 	<channels>
@@ -184,6 +190,7 @@
 							<de>Offen</de>
 						</title>
 						<table
+							group-by="status"
 							observed-types="demo.tickets:Ticket"
 							selection="ticket"
 							types="demo.tickets:Ticket"
@@ -199,6 +206,7 @@
 							</inputs>
 							<columns>
 								<column attribute="name"/>
+								<column attribute="status"/>
 							</columns>
 							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
 						</table>

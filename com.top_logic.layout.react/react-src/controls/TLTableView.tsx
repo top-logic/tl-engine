@@ -13,7 +13,8 @@ const TableKeyBindings: React.FC<{
   onMove: (direction: string, extend: boolean, move: boolean) => void;
   onToggle: () => void;
   onSelectAll: () => void;
-}> = ({ isMulti, cursorIndex, onMove, onToggle, onSelectAll }) => {
+  onActivate: () => boolean;
+}> = ({ isMulti, cursorIndex, onMove, onToggle, onSelectAll, onActivate }) => {
   useKeyboardBinding('ArrowUp', () => { onMove('up', false, false); return true; });
   useKeyboardBinding('ArrowDown', () => { onMove('down', false, false); return true; });
   useKeyboardBinding('Home', () => { onMove('home', false, false); return true; });
@@ -33,12 +34,19 @@ const TableKeyBindings: React.FC<{
   // Space toggles the cursor row; Ctrl+A selects all (multi only).
   useKeyboardBinding('Space', () => { if (cursorIndex < 0) { return false; } onToggle(); return true; });
   useKeyboardBinding('Ctrl+A', () => { if (!isMulti) { return false; } onSelectAll(); return true; });
+  // Enter opens the cursor row; it declines when there is nothing to open, so the gesture falls
+  // through to an enclosing scope (a dialog's default button).
+  useKeyboardBinding('Enter', () => onActivate());
   return null;
 };
 
 const I18N_KEYS = {
   'js.table.freezeUpTo': 'Freeze up to here',
   'js.table.unfreezeAll': 'Unfreeze all',
+  'js.table.groupBy': 'Group by this column',
+  'js.table.ungroup': 'Remove grouping',
+  'js.table.fitColumn': 'Fit width to content',
+  'js.table.grouped': 'The rows are grouped by this column',
   'js.table.freezeSplitter': 'Drag to choose the columns that stay in place while scrolling',
   'js.table.filter': 'Filter',
   'js.table.columns': 'Columns',
@@ -66,6 +74,18 @@ interface ColumnState {
   sortPriority?: number;
   filterable?: boolean;
   filterActive?: boolean;
+  groupable?: boolean;
+  /**
+   * Whether the column keeps its place at the end of the table: rendered behind all others, fixed
+   * to the right edge while the table scrolls, and beyond the user's arrangement - it can neither
+   * be moved, hidden, frozen nor resized.
+   */
+  pinnedEnd?: boolean;
+  /**
+   * CSS class put on every cell of the column, its heading included: how the column presents its
+   * cells, e.g. a column holding a button instead of text.
+   */
+  cssClass?: string;
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -83,9 +103,62 @@ interface RowState {
   treeDepth?: number;
   expandable?: boolean;
   expanded?: boolean;
+  /** Present exactly on a group header row: how many rows the group holds. */
+  groupCount?: number;
 }
 
 const MIN_COL_WIDTH = 50;
+
+/**
+ * The width the column needs for the content it shows right now: its heading and the cells of the
+ * rows currently rendered, whichever is widest.
+ *
+ * The cells on screen are clipped to the column width and their text wraps inside it, so neither
+ * their layout width nor their scroll width tells how much room the content wants. Each cell is
+ * therefore measured as a copy sized to its content, in a container that is part of the table and
+ * hence inherits its fonts. The copies keep the cells' classes and inline styles, so the padding
+ * and the border they are measured with are the ones on screen, and a single layout pass covers
+ * the whole column.
+ *
+ * @param root The table's root element.
+ * @param columnName Name of the column to measure.
+ * @returns The width in whole pixels, or 0 when the column renders nothing.
+ */
+const measureColumnContentWidth = (root: HTMLElement, columnName: string): number => {
+  const cells = Array.from(
+    root.querySelectorAll<HTMLElement>('.tlTableView__headerCell, .tlTableView__cell'))
+    .filter((cell) => cell.dataset.col === columnName);
+  if (cells.length === 0) {
+    return 0;
+  }
+
+  const box = document.createElement('div');
+  box.style.cssText =
+    'position:absolute;top:0;left:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none';
+  root.appendChild(box);
+  try {
+    const copies = cells.map((cell) => {
+      const copy = cell.cloneNode(true) as HTMLElement;
+      // The handle sits at the cell border and is no content; the ids would be duplicates while
+      // the copy is in the document.
+      copy.querySelectorAll('.tlTableView__resizeHandle').forEach((handle) => handle.remove());
+      copy.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
+      copy.style.position = 'static';
+      copy.style.flex = 'none';
+      copy.style.width = 'max-content';
+      copy.style.minWidth = '0';
+      copy.style.maxWidth = 'none';
+      box.appendChild(copy);
+      return copy;
+    });
+    // No copy is the last child of the box: the last cell of a row goes without its right border,
+    // and a copy measured as one would come out that border short.
+    box.appendChild(document.createElement('div'));
+    return Math.ceil(copies.reduce((widest, copy) => Math.max(widest, copy.getBoundingClientRect().width), 0));
+  } finally {
+    box.remove();
+  }
+};
 
 /**
  * React table component with virtual scrolling, server-driven cell controls,
@@ -159,6 +232,30 @@ function editableInRow(
   return null;
 }
 
+/**
+ * Opens the column selection. Rendered either over the right edge of the header, where it needs a
+ * strip of the header kept clear of the columns, or inside the heading of the rightmost pinned
+ * column — that heading carries no label, so the button takes no room from the columns there.
+ */
+const ColumnsButton: React.FC<{
+  title: string;
+  inCell?: boolean;
+  onClick: (event: React.MouseEvent) => void;
+}> = ({ title, inCell, onClick }) => (
+  <button
+    type="button"
+    className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')}
+    title={title}
+    aria-label={title}
+    // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
+    // button's business.
+    onMouseDown={(e) => e.stopPropagation()}
+    onClick={onClick}
+  >
+    <i className="bi bi-gear" />
+  </button>
+);
+
 const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
@@ -199,6 +296,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const cursorIndex = (state.cursorIndex as number) ?? -1;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
+  /** The column the rows are grouped by, empty when they are not grouped. */
+  const grouping = (state.grouping as string) ?? '';
   const columnSelect = (state.columnSelect as boolean) ?? false;
   const filterBar = (state.filterBar as boolean) ?? false;
   const namedFilters = (state.namedFilters as NamedFilterState[]) ?? [];
@@ -295,6 +394,28 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     return offsets;
   }, [columns, frozenColumnCount, isMulti, checkboxWidth, getColWidth]);
 
+  // The index of the last column the user arranges - the one that grows into the space left over,
+  // since the pinned columns keep their width. -1 while every column is pinned.
+  const lastUnpinnedIdx = React.useMemo(
+    () => columns.reduce((last, col, i) => (col.pinnedEnd ? last : i), -1),
+    [columns]);
+
+  // How far the right edge of a pinned cell stays from the right edge of the table: the widths of
+  // the pinned columns behind it. The reserve the row ends with is added where the cells are
+  // rendered - it differs between the header and the body.
+  const pinnedOffsets = React.useMemo(() => {
+    const offsets = columns.map(() => 0);
+    let right = 0;
+    for (let i = columns.length - 1; i >= 0; i--) {
+      if (!columns[i].pinnedEnd) {
+        continue;
+      }
+      offsets[i] = right;
+      right += getColWidth(columns[i]);
+    }
+    return offsets;
+  }, [columns, getColWidth]);
+
   // Where the frozen area ends, measured from the left edge of the table: the frozen cells stick to
   // that edge, so this is a fixed position independent of the horizontal scroll offset.
   const frozenWidth = React.useMemo(() => {
@@ -316,7 +437,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const handleResizeStart = React.useCallback((columnName: string, colWidth: number, event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    resizeRef.current = { column: columnName, startX: event.clientX, startWidth: colWidth };
+    if (event.detail > 1) {
+      // The second click of a double click fits the column to its content. A drag started here
+      // would end on the same mouse up and report the width the fit is about to replace.
+      return;
+    }
+    // The rendered width, not the configured one: the last column grows into the space the others
+    // leave over, and starting from its configured width would snap it back the moment the drag
+    // begins. The handle sits in the heading whose width is wanted.
+    const heading = (event.currentTarget as HTMLElement).parentElement;
+    const startWidth = heading ? Math.round(heading.getBoundingClientRect().width) : colWidth;
+    resizeRef.current = { column: columnName, startX: event.clientX, startWidth };
 
     // Track latest mouse position and cumulative auto-scroll offset.
     let lastClientX = event.clientX;
@@ -380,6 +511,19 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     document.addEventListener('mouseup', onMouseUp);
   }, [sendCommand]);
 
+  // Give the column the width its content needs, from the header context menu and from a double
+  // click on the resize handle. Applied like the end of a resize drag: the override shows the new
+  // width at once, the command keeps it.
+  const fitColumnToContent = React.useCallback((columnName: string) => {
+    const root = rootRef.current;
+    if (!root) {
+      return;
+    }
+    const width = Math.max(MIN_COL_WIDTH, measureColumnContentWidth(root, columnName));
+    setColumnWidthOverrides((prev) => ({ ...prev, [columnName]: width }));
+    sendCommand('columnResize', { column: columnName, width });
+  }, [sendCommand]);
+
   // -- Scroll handler --
   const handleScroll = React.useCallback(() => {
     // Sync header horizontal scroll immediately.
@@ -421,7 +565,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, []);
 
   const handleDragOver = React.useCallback((columnName: string, event: React.DragEvent) => {
-    if (!dragColumnRef.current || dragColumnRef.current === columnName) {
+    if (!dragColumnRef.current || dragColumnRef.current === columnName
+        || columns.find((c) => c.name === columnName)?.pinnedEnd) {
       setDragOver(null);
       return;
     }
@@ -430,7 +575,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
     const side = (event.clientX < rect.left + rect.width / 2) ? 'left' : 'right';
     setDragOver({ column: columnName, side });
-  }, []);
+  }, [columns]);
 
   const handleDrop = React.useCallback((event: React.DragEvent) => {
     const draggedName = dragColumnRef.current;
@@ -611,6 +756,21 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     });
   }, [sendCommand, rows]);
 
+  // A double-click opens the row: the server selects it and runs what the view configured for an
+  // activation. A double-click inside an interactive cell element belongs to that element
+  // (selecting a word in a text input), so it opens nothing.
+  const handleRowActivate = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
+    if (isInteractiveTarget(event)) {
+      return;
+    }
+    // The click that preceded this double-click already toggled the group, and a group row has
+    // nothing to open beyond that.
+    if (rows.find((r) => r.index === rowIndex)?.groupCount != null) {
+      return;
+    }
+    sendCommand('activate', { rowIndex });
+  }, [sendCommand, rows]);
+
   // -- Keyboard navigation (server-resolved; see moveSelection) --
   const handleMove = React.useCallback((direction: string, extend: boolean, move: boolean) => {
     sendCommand('moveSelection', { direction, extend, move });
@@ -626,6 +786,20 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const handleSelectAllRows = React.useCallback(() => {
     sendCommand('selectAll', { selected: true });
   }, [sendCommand]);
+
+  // Enter opens the row carrying the keyboard cursor. Declined (false) when no row does, or when
+  // the focus sits in a cell element that answers Enter itself (a text input, an action button).
+  const handleActivateCursor = React.useCallback(() => {
+    if (cursorIndex < 0) {
+      return false;
+    }
+    const active = document.activeElement as Element | null;
+    if (active?.closest?.(FOCUSABLE_SELECTOR)) {
+      return false;
+    }
+    sendCommand('activate', { rowIndex: cursorIndex });
+    return true;
+  }, [sendCommand, cursorIndex]);
 
   // Predicate for the focus-gated table scope: active only while focus is within this table.
   const isTableFocused = React.useCallback(
@@ -769,6 +943,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     setContextMenu(null);
   }, [sendCommand]);
 
+  const handleGroupBy = React.useCallback((column: string) => {
+    sendCommand('group', { column });
+    setContextMenu(null);
+  }, [sendCommand]);
+
+  const handleUngroup = React.useCallback(() => {
+    sendCommand('group', { column: '' });
+    setContextMenu(null);
+  }, [sendCommand]);
+
   // -- Frozen column splitter: drag the boundary of the frozen area onto another column border. --
   const handleFrozenSplitStart = React.useCallback((event: React.MouseEvent) => {
     event.preventDefault();
@@ -786,9 +970,14 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     const areaWidth = area.clientWidth;
     const options: { x: number; count: number }[] = [{ x: 0, count: 0 }];
     header.querySelectorAll<HTMLElement>('[data-col-idx]').forEach((cell) => {
+      const colIdx = Number(cell.dataset.colIdx);
+      if (columns[colIdx]?.pinnedEnd) {
+        // A pinned column is fixed to the other edge: the frozen area never reaches it.
+        return;
+      }
       const x = cell.getBoundingClientRect().right - area.getBoundingClientRect().left;
       if (x > 0 && x <= areaWidth) {
-        options.push({ x, count: Number(cell.dataset.colIdx) + 1 });
+        options.push({ x, count: colIdx + 1 });
       }
     });
 
@@ -809,7 +998,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     };
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
-  }, [frozenWidth, frozenColumnCount, sendCommand]);
+  }, [columns, frozenWidth, frozenColumnCount, sendCommand]);
 
   // Close context menu on outside click; Escape is handled by the shared keyboard dispatcher.
   React.useEffect(() => {
@@ -922,15 +1111,20 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
     + (isMulti ? checkboxWidth : 0);
 
-  // Both the header row and the body end this much behind the last column, keeping the column
-  // button clear of it: otherwise the button covers the last column's funnel as soon as the columns
-  // fill the available width, and that filter cannot be opened at all. Matches the button's CSS
-  // width (2rem), and applies to the body as well so that scrolling to the right end frees the
-  // funnel there, too.
-  // Kept as padding rather than width: the last body cell grows into the remaining space, so adding
-  // the reserve to the width would make that cell wider than its header cell. Padding widens the
-  // scroll range without offering the cells any space to grow into.
-  const buttonReserve = columnSelect ? 32 : 0;
+  // A table ending in a pinned column has a heading without a label there, so the column button
+  // goes into that heading: it then needs no room of its own, and the pinned column reaches the
+  // right edge of the table.
+  const cogInHeaderCell = columnSelect && columns.length > 0 && !!columns[columns.length - 1].pinnedEnd;
+
+  // Without such a heading, both the header row and the body end this much behind the last column,
+  // keeping the column button clear of it: otherwise the button covers the last column's funnel as
+  // soon as the columns fill the available width, and that filter cannot be opened at all. Matches
+  // the button's CSS width (2rem), and applies to the body as well so that scrolling to the right
+  // end frees the funnel there, too.
+  // Kept as padding rather than width: the cells live in the content box, so the reserve widens the
+  // scroll range without offering the last cell space to grow into and without a sticky cell -
+  // confined to the content box - ever reaching underneath the button.
+  const buttonReserve = columnSelect && !cogInHeaderCell ? 32 : 0;
 
   const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
   const someSelected = selectedCount > 0 && selectedCount < totalRowCount;
@@ -949,6 +1143,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onMove={handleMove}
       onToggle={handleToggleCursor}
       onSelectAll={handleSelectAllRows}
+      onActivate={handleActivateCursor}
     />
     <div ref={rootRef} id={controlId}
       className={'tlTableView' + (dropState && dropState.row === null ? ' tlTableView--dragover' : '')}
@@ -1059,8 +1254,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       {/* Header, plus the column selection sitting above the body's vertical scrollbar */}
       <div className="tlTableView__headerArea" ref={headerAreaRef}>
       <div className="tlTableView__header" ref={headerRef}>
+        {/* Fills the header even when the columns are narrower: a cell sticking to the right edge
+            cannot leave its row, so a row ending with the last column would hold the pinned cells
+            back from that edge. The reserve is padding, which a sticky cell never enters. */}
         <div className="tlTableView__headerRow"
-          style={{ width: tableWidth, paddingRight: buttonReserve + scrollbarWidth }}>
+          style={{ minWidth: tableWidth, paddingRight: buttonReserve + scrollbarWidth }}>
           {isMulti && (
             <div className={'tlTableView__headerCell tlTableView__checkboxCell'
                 + (frozenColumnCount > 0 ? ' tlTableView__headerCell--frozen' : '')}
@@ -1088,7 +1286,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           )}
           {columns.map((col, colIdx) => {
             const w = getColWidth(col);
-            const isLast = colIdx === columns.length - 1;
             let cellClass = 'tlTableView__headerCell';
             if (col.sortable) cellClass += ' tlTableView__headerCell--sortable';
             if (dragOver && dragOver.column === col.name) {
@@ -1098,17 +1295,43 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             const isFrozenLast = colIdx === frozenColumnCount - 1;
             if (isFrozen) cellClass += ' tlTableView__headerCell--frozen';
             if (isFrozenLast) cellClass += ' tlTableView__headerCell--frozenLast';
+            const isPinned = !!col.pinnedEnd;
+            if (isPinned) cellClass += ' tlTableView__headerCell--pinnedEnd';
+            if (isPinned && colIdx === lastUnpinnedIdx + 1) {
+              cellClass += ' tlTableView__headerCell--pinnedEndFirst';
+            }
+            if (col.cssClass) cellClass += ' ' + col.cssClass;
             return (
               <div
                 key={col.name}
                 className={cellClass}
+                data-col={col.name}
                 data-col-idx={colIdx}
                 style={{
-                  width: w, minWidth: w,
-                  position: isFrozen ? 'sticky' as const : 'relative' as const,
+                  // The last column the user arranges takes the space left over, in the heading
+                  // exactly as in the rows - otherwise the two drift apart as soon as the columns
+                  // no longer fill the table. The configured width is the flex basis, so the cell
+                  // is that wide whatever its content measures: a heading whose label, funnel and
+                  // sort mark need more room than the user gave the column keeps the column's
+                  // width and clips the label instead of pushing its own tail - the resize handle
+                  // included - under the column behind it.
+                  ...(colIdx === lastUnpinnedIdx && !isFrozen
+                    ? { flex: `1 0 ${w}px`, minWidth: w }
+                    : { width: w, minWidth: w }),
+                  position: isFrozen || isPinned ? 'sticky' as const : 'relative' as const,
                   ...(isFrozen ? { left: frozenOffsets[colIdx], zIndex: 2 } : {}),
+                  // The header ends with the reserve the body's scrollbar and, where it is not in a
+                  // heading, the column button take; its cells therefore stick that much further
+                  // from the right edge than the body's - which is what puts a heading above its
+                  // column at every scroll position.
+                  ...(isPinned
+                    ? {
+                      right: pinnedOffsets[colIdx] + buttonReserve + scrollbarWidth,
+                      zIndex: 2,
+                    }
+                    : {}),
                 }}
-                draggable={true}
+                draggable={!isPinned}
                 onClick={col.sortable ? (e) => handleSort(col.name, col.sortDirection, e) : undefined}
                 onContextMenu={(e) => handleColumnContextMenu(colIdx, e)}
                 onDragStart={(e) => handleDragStart(col.name, e)}
@@ -1117,6 +1340,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 onDragEnd={handleDragEnd}
               >
                 <span className="tlTableView__headerLabel">{col.label}</span>
+                {col.name === grouping && (
+                  <i className="tlTableView__groupMark bi bi-collection"
+                    title={i18n['js.table.grouped']} aria-hidden="true" />
+                )}
                 {col.filterable && (
                   <button
                     type="button"
@@ -1141,10 +1368,20 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     )}
                   </span>
                 )}
-                <div
-                  className="tlTableView__resizeHandle"
-                  onMouseDown={(e) => handleResizeStart(col.name, w, e)}
-                />
+                {cogInHeaderCell && colIdx === columns.length - 1 && (
+                  <ColumnsButton title={i18n['js.table.columns']} inCell onClick={handleOpenColumnSelect} />
+                )}
+                {!isPinned && (
+                  <div
+                    className="tlTableView__resizeHandle"
+                    onMouseDown={(e) => handleResizeStart(col.name, w, e)}
+                    onClick={(e) => e.stopPropagation()}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      fitColumnToContent(col.name);
+                    }}
+                  />
+                )}
               </div>
             );
           })}
@@ -1153,8 +1390,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             style={{ flex: '0 0 0', minHeight: '100%' }}
             onDragOver={(e) => {
               if (!dragColumnRef.current) return;
-              if (columns.length > 0) {
-                const lastCol = columns[columns.length - 1];
+              if (lastUnpinnedIdx >= 0) {
+                const lastCol = columns[lastUnpinnedIdx];
                 if (lastCol.name !== dragColumnRef.current) {
                   e.preventDefault();
                   e.dataTransfer.dropEffect = 'move';
@@ -1175,16 +1412,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           title={i18n['js.table.freezeSplitter']}
           onMouseDown={handleFrozenSplitStart}
         />
-        {columnSelect && (
-          <button
-            type="button"
-            className="tlTableView__columnsButton"
-            title={i18n['js.table.columns']}
-            aria-label={i18n['js.table.columns']}
-            onClick={handleOpenColumnSelect}
-          >
-            <i className="bi bi-gear" />
-          </button>
+        {columnSelect && !cogInHeaderCell && (
+          <ColumnsButton title={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
         )}
       </div>
 
@@ -1196,8 +1425,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         onKeyDown={handleBodyKeyDown}
         tabIndex={0}
       >
-        {/* Spacer for virtual scrolling */}
-        <div style={{ height: totalHeight, position: 'relative', width: tableWidth, paddingRight: buttonReserve }}>
+        {/* Spacer for virtual scrolling. Fills the body when the columns are narrower than it, so
+            the rows reach the right edge and a cell pinned there lands on it; the reserve is
+            padding, so it widens the scroll range without taking any cell along. */}
+        <div style={{
+          height: totalHeight, position: 'relative', minWidth: tableWidth, paddingRight: buttonReserve,
+        }}>
           {rows.map((row) => (
             <div
               key={row.id}
@@ -1209,17 +1442,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 (row.index === cursorIndex ? ' tlTableView__row--cursor' : '') +
                 (dropState && dropState.row === row.id
                   ? ' tlTableView__row--dragOver-' + dropState.position
-                  : '')
+                  : '') +
+                (row.groupCount != null ? ' tlTableView__row--group' : '')
               }
               style={{
                 position: 'absolute',
                 top: row.index * rowHeight,
                 height: rowHeight,
-                width: tableWidth,
+                // Spans the spacer, hence the body, so a pinned cell reaches its right edge. The
+                // cells stop in front of the reserve, exactly as the header's do.
+                left: 0,
+                right: 0,
                 paddingRight: buttonReserve,
-                ...(row.index === cursorIndex
-                  ? { outline: '2px solid var(--color-primary, #1a73e8)', outlineOffset: '-2px' }
-                  : {}),
               }}
               onMouseDown={(e) => {
                 // Suppress the text selection the browser would start as a side
@@ -1234,6 +1468,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               onClick={(e) => handleRowClick(row.index, e)}
               onDragStart={dragEnabled ? (e) => handleRowDragStart(row, e) : undefined}
               onDragEnd={dragEnabled ? () => setDropState(null) : undefined}
+              onDoubleClick={(e) => handleRowActivate(row.index, e)}
             >
               {isMulti && (
                 <div className={'tlTableView__cell tlTableView__checkboxCell'
@@ -1243,24 +1478,31 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     ...(frozenColumnCount > 0 ? { position: 'sticky' as const, left: 0, zIndex: 2 } : {}),
                   }}
                   onClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    className="tlTableView__checkbox"
-                    checked={row.selected}
-                    onChange={() => {/* handled by onClick */}}
-                    onClick={(e) => handleCheckboxClick(row.index, e)}
-                    tabIndex={-1}
-                  />
+                  {row.groupCount == null && (
+                    <input
+                      type="checkbox"
+                      className="tlTableView__checkbox"
+                      checked={row.selected}
+                      onChange={() => {/* handled by onClick */}}
+                      onClick={(e) => handleCheckboxClick(row.index, e)}
+                      tabIndex={-1}
+                    />
+                  )}
                 </div>
               )}
               {columns.map((col, colIdx) => {
                 const w = getColWidth(col);
-                const isLast = colIdx === columns.length - 1;
                 const isFrozen = colIdx < frozenColumnCount;
                 const isFrozenLast = colIdx === frozenColumnCount - 1;
                 let cellClass = 'tlTableView__cell';
                 if (isFrozen) cellClass += ' tlTableView__cell--frozen';
                 if (isFrozenLast) cellClass += ' tlTableView__cell--frozenLast';
+                const isPinned = !!col.pinnedEnd;
+                if (isPinned) cellClass += ' tlTableView__cell--pinnedEnd';
+                if (isPinned && colIdx === lastUnpinnedIdx + 1) {
+                  cellClass += ' tlTableView__cell--pinnedEndFirst';
+                }
+                if (col.cssClass) cellClass += ' ' + col.cssClass;
                 const isTreeColumn = treeMode && colIdx === 0;
                 const treeDepth = row.treeDepth ?? 0;
                 return (
@@ -1270,10 +1512,21 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     data-row={row.id}
                     data-col={col.name}
                     style={{
-                      ...(isLast && !isFrozen
-                        ? { flex: '1 0 auto', minWidth: w }
+                      // The last column the user arranges takes the space left over; a pinned
+                      // column keeps its width, so the space stays in front of it. The configured
+                      // width is the flex basis, as in the heading, so that cell and heading are
+                      // the same width whatever either of them holds.
+                      ...(colIdx === lastUnpinnedIdx && !isFrozen
+                        ? { flex: `1 0 ${w}px`, minWidth: w }
                         : { width: w, minWidth: w }),
                       ...(isFrozen ? { position: 'sticky' as const, left: frozenOffsets[colIdx], zIndex: 2 } : {}),
+                      ...(isPinned
+                        ? {
+                          position: 'sticky' as const,
+                          right: pinnedOffsets[colIdx] + buttonReserve,
+                          zIndex: 2,
+                        }
+                        : {}),
                     }}
                   >
                     {isTreeColumn ? (
@@ -1291,6 +1544,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                         {/* A row that predates the current columns has no control for a newly shown
                             column yet \u2014 leave that cell empty rather than tearing down the table. */}
                         {row.cells[col.name] && <TLChild control={row.cells[col.name]} />}
+                        {row.groupCount != null && (
+                          <span className="tlTableView__groupCount">({row.groupCount})</span>
+                        )}
                       </div>
                     ) : (
                       row.cells[col.name] && <TLChild control={row.cells[col.name]} />
@@ -1317,7 +1573,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           style={{ position: 'fixed', top: contextMenu.y, left: contextMenu.x, zIndex: 10000 }}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          {contextMenu.colIdx + 1 !== frozenColumnCount && (
+          {contextMenu.colIdx + 1 !== frozenColumnCount
+              && !columns[contextMenu.colIdx]?.pinnedEnd && (
             <button type="button" className="tlMenu__item" role="menuitem" onClick={handleFreezeUpTo}>
               <span className="tlMenu__label">{i18n['js.table.freezeUpTo']}</span>
             </button>
@@ -1325,6 +1582,27 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {frozenColumnCount > 0 && (
             <button type="button" className="tlMenu__item" role="menuitem" onClick={handleUnfreezeAll}>
               <span className="tlMenu__label">{i18n['js.table.unfreezeAll']}</span>
+            </button>
+          )}
+          {!columns[contextMenu.colIdx]?.pinnedEnd && (
+            <button type="button" className="tlMenu__item" role="menuitem"
+              onClick={() => {
+                fitColumnToContent(columns[contextMenu.colIdx].name);
+                setContextMenu(null);
+              }}>
+              <span className="tlMenu__label">{i18n['js.table.fitColumn']}</span>
+            </button>
+          )}
+          {columns[contextMenu.colIdx]?.groupable
+              && columns[contextMenu.colIdx].name !== grouping && (
+            <button type="button" className="tlMenu__item" role="menuitem"
+              onClick={() => handleGroupBy(columns[contextMenu.colIdx].name)}>
+              <span className="tlMenu__label">{i18n['js.table.groupBy']}</span>
+            </button>
+          )}
+          {grouping !== '' && (
+            <button type="button" className="tlMenu__item" role="menuitem" onClick={handleUngroup}>
+              <span className="tlMenu__label">{i18n['js.table.ungroup']}</span>
             </button>
           )}
         </div>

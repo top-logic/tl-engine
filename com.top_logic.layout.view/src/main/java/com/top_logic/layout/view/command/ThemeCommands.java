@@ -13,6 +13,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.SimpleCommandModel;
@@ -34,15 +35,19 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * The entry describing what the user sees is offered as disabled, which is both what it means -
- * selecting it again does nothing - and how the menu shows the current appearance. An application
- * with a single configured theme has nothing to switch to and gets no entries at all.
+ * The entry describing what the user sees is marked as the active one, so the menu shows the
+ * current appearance among the alternatives on offer. It stays executable: applying the appearance
+ * already in force is a no-op the user cannot get wrong. An application with a single configured
+ * theme has nothing to switch to and gets no entries at all.
  * </p>
  *
  * <p>
  * This is what a single {@link SetThemeCommand} cannot do: that command names one static theme id,
  * so a view using it has to spell out every theme it knows and can never tell which is active.
  * </p>
+ *
+ * @implNote The appearance in force is marked through {@link CommandModel#isActive()}, which the
+ *           menu renders bold and a button renders pressed.
  */
 @InApp
 public class ThemeCommands implements ViewCommandSource {
@@ -61,12 +66,20 @@ public class ThemeCommands implements ViewCommandSource {
 		Class<? extends ThemeCommands> getImplementationClass();
 	}
 
+	private final ResKey _label;
+
 	/**
 	 * Creates a new {@link ThemeCommands} from configuration.
 	 */
 	@CalledByReflection
 	public ThemeCommands(InstantiationContext context, Config config) {
-		// No configuration needed: the themes come from the service.
+		ResKey label = config.getLabel();
+		_label = label == null ? I18NConstants.THEME_GROUP : label;
+	}
+
+	@Override
+	public ResKey getLabel() {
+		return _label;
 	}
 
 	@Override
@@ -84,7 +97,7 @@ public class ThemeCommands implements ViewCommandSource {
 				.create(SYSTEM_COMMAND, Resources.getInstance().getString(I18NConstants.THEME_FOLLOW_SYSTEM),
 					ctx -> SetThemeCommand.applyTheme(ctx, null))
 				.setImage(Icons.THEME_FOLLOW_SYSTEM)
-				.setExecutable(() -> UIThemeService.getInstance().getSelectedThemeId() != null));
+				.setActive(() -> UIThemeService.getInstance().getSelectedThemeId() == null));
 		}
 		for (UITheme theme : configured) {
 			String id = theme.getId();
@@ -94,7 +107,7 @@ public class ThemeCommands implements ViewCommandSource {
 				.setImage(theme.getIcon())
 				// Read on every display: the models outlive a switch, since the menu is built once
 				// per rendering of the element carrying it, while the selection changes under it.
-				.setExecutable(() -> !id.equals(UIThemeService.getInstance().getSelectedThemeId())));
+				.setActive(() -> id.equals(UIThemeService.getInstance().getSelectedThemeId())));
 		}
 		return result;
 	}

@@ -19,6 +19,7 @@ import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Server-side React control that renders a tree with lazy-loaded children.
@@ -26,7 +27,7 @@ import com.top_logic.mig.html.SelectionModel;
  * <p>
  * The tree is flattened into a list of visible nodes, each annotated with its depth. Node content
  * is delegated to child {@link ReactControl}s created by a {@link ReactControlProvider}. Expansion,
- * collapse, and selection are handled server-side via commands.
+ * collapse, selection and activation are handled server-side via commands.
  * </p>
  */
 public class ReactTreeControl extends ReactControl {
@@ -41,6 +42,9 @@ public class ReactTreeControl extends ReactControl {
 
 	/** @see #handleSelect(SelectNodeArguments) */
 	private static final String SELECT_COMMAND = "select";
+
+	/** @see #handleActivate(ActivateNodeArguments) */
+	private static final String ACTIVATE_COMMAND = "activate";
 
 	/** @see #handleContextMenu(ContextMenuArguments) */
 	private static final String CONTEXT_MENU_COMMAND = "contextMenu";
@@ -119,6 +123,23 @@ public class ReactTreeControl extends ReactControl {
 		void openContextMenu(ReactTreeControl tree, Object node, int x, int y);
 	}
 
+	/**
+	 * Notified when a node is activated: opened by a double-click, or by {@code Enter} while it
+	 * carries the keyboard focus.
+	 */
+	@FunctionalInterface
+	public interface ActivationHandler {
+
+		/**
+		 * Called after the activated node became the tree's selection.
+		 *
+		 * @param node
+		 *        The activated node, as the tree model holds it.
+		 * @return The outcome reported to the client (and to a scripted replay).
+		 */
+		HandlerResult nodeActivated(Object node);
+	}
+
 	// -- Fields --
 
 	private TreeUIModel<Object> _treeModel;
@@ -135,6 +156,9 @@ public class ReactTreeControl extends ReactControl {
 	private boolean _dropEnabled;
 
 	private ContextMenuProvider _contextMenuProvider;
+
+	/** What a node activation runs, {@code null} for a tree whose nodes cannot be opened. */
+	private ActivationHandler _activationHandler;
 
 	private List<TreeDropTarget> _dropTargets = new ArrayList<>();
 
@@ -233,6 +257,21 @@ public class ReactTreeControl extends ReactControl {
 	 */
 	public void setContextMenuProvider(ContextMenuProvider provider) {
 		_contextMenuProvider = provider;
+	}
+
+	/**
+	 * Sets what a node activation runs, replacing any handler set before.
+	 *
+	 * <p>
+	 * The handler is called with the activated node, after that node became the tree's selection.
+	 * Without one, a double-click and {@code Enter} select the node and do nothing further.
+	 * </p>
+	 *
+	 * @param handler
+	 *        The handler to call, {@code null} to make the nodes unopenable again.
+	 */
+	public void setActivationHandler(ActivationHandler handler) {
+		_activationHandler = handler;
 	}
 
 	/**
@@ -539,19 +578,51 @@ public class ReactTreeControl extends ReactControl {
 				_selectionAnchor = visibleNodes.indexOf(node);
 			} else {
 				// Single click in multi mode: replace selection.
-				_selectionModel.clear();
-				_selectionModel.setSelected(node, true);
-				_anchorAdded = true;
-				List<Object> visibleNodes = collectVisibleNodes();
-				_selectionAnchor = visibleNodes.indexOf(node);
+				selectOnly(node);
 			}
 		} else {
 			// Single select mode.
-			_selectionModel.clear();
-			_selectionModel.setSelected(node, true);
+			selectOnly(node);
 		}
 
 		buildFullState();
+	}
+
+	/**
+	 * Activates a tree node: the node becomes the selection, and what
+	 * {@link #setActivationHandler(ActivationHandler)} registered runs with it.
+	 *
+	 * <p>
+	 * This is what a double-click on the node and {@code Enter} on the focused node send. An id
+	 * naming no displayed node activates nothing.
+	 * </p>
+	 */
+	@SuppressWarnings("unchecked")
+	@ReactCommandHandler(ACTIVATE_COMMAND)
+	HandlerResult handleActivate(ActivateNodeArguments args) {
+		Object node = findNodeById(args.getNodeId());
+		if (node == null || !_selectionModel.isSelectable(node)) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		selectOnly(node);
+		buildFullState();
+
+		ActivationHandler handler = _activationHandler;
+		if (handler == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return handler.nodeActivated(node);
+	}
+
+	/**
+	 * Makes the given node the sole selection and the range anchor.
+	 */
+	@SuppressWarnings("unchecked")
+	private void selectOnly(Object node) {
+		_selectionModel.clear();
+		_selectionModel.setSelected(node, true);
+		_anchorAdded = true;
+		_selectionAnchor = collectVisibleNodes().indexOf(node);
 	}
 
 	/**

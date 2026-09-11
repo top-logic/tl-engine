@@ -22,21 +22,18 @@ import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
-import com.top_logic.layout.view.command.ViewExecutabilityRule;
-import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link UIElement} that renders a button executing a {@link ViewCommand}.
  *
  * <p>
- * The command is configured inline within the {@code <button>} element. The button resolves input
- * channels, executability rules, and confirmation from the command configuration and creates a
- * {@link ViewCommandModel} to bridge the command to the UI.
+ * The command is configured inline within the {@code <button>} element. The
+ * {@link ViewCommandModel} bridging it to the UI - with the command's input channel resolved and
+ * its executability rules built - comes from the construction path every command-hosting element
+ * shares.
  * </p>
  */
 @InApp
@@ -114,15 +111,8 @@ public class ButtonElement implements UIElement {
 			return new ReactButtonControl(context, "", ctx -> HandlerResult.DEFAULT_RESULT);
 		}
 
-		// Resolve input channel.
-		ChannelRef inputRef = _commandConfig.getInput();
-		ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
-
-		// Build executability rule.
-		ViewExecutabilityRule rule = ViewExecutabilityRules.build(_commandConfig.getExecutability(), context);
-
 		// Create model and button. The button reads label/disabled from the model internally.
-		ViewCommandModel model = ViewCommandModel.create(_command, _commandConfig, inputChannel, rule);
+		ViewCommandModel model = ViewCommandModel.forCommand(context, _command, _commandConfig);
 
 		ReactButtonControl control = new ReactButtonControl(context, model);
 		if (_commandConfig.getImage() != null) {

@@ -24,9 +24,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  *
  * <p>
- * When constructed with a {@link CommandModel}, the button automatically reads the label and
- * disabled state from the model, listens for state changes, and removes its listener during
- * cleanup.
+ * When constructed with a {@link CommandModel}, the button automatically reads the label, the
+ * disabled state, and the {@link CommandModel#isActive() active} state from the model, listens for
+ * state changes, and removes its listener during cleanup.
  * </p>
  */
 public class ReactButtonControl extends ReactControl {
@@ -36,6 +36,9 @@ public class ReactButtonControl extends ReactControl {
 
 	/** State key for the disabled flag. */
 	private static final String DISABLED = "disabled";
+
+	/** State key for the {@link CommandModel#isActive() active} flag. */
+	private static final String ACTIVE = "active";
 
 	/** State key for the ThemeImage encoded form (e.g. "css:fas fa-edit", "/icons/foo.png"). */
 	private static final String IMAGE = "image";
@@ -113,6 +116,7 @@ public class ReactButtonControl extends ReactControl {
 
 		setLabel(model.getLabel());
 		setDisabled(!model.isExecutable());
+		setActive(model.isActive());
 		setHidden(!model.isVisible());
 		setImage(model.getImage());
 		setTooltip(model.getTooltip());
@@ -188,6 +192,25 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setDisabled(boolean disabled) {
 		putState(DISABLED, disabled);
+	}
+
+	/**
+	 * Marks the button as the alternative currently in force, or as a pressed toggle.
+	 *
+	 * @param active
+	 *        Whether the effect of the button's command is currently in force.
+	 *
+	 * @see CommandModel#isActive()
+	 */
+	public void setActive(boolean active) {
+		putState(ACTIVE, active ? Boolean.TRUE : null);
+	}
+
+	/**
+	 * Whether the button is currently marked as {@link #setActive(boolean) active}.
+	 */
+	public boolean isActive() {
+		return Boolean.TRUE.equals(getState(ACTIVE));
 	}
 
 	/**
@@ -336,6 +359,7 @@ public class ReactButtonControl extends ReactControl {
 	private void handleModelChange() {
 		setLabel(_model.getLabel());
 		setDisabled(!_model.isExecutable());
+		setActive(_model.isActive());
 		setHidden(!_model.isVisible());
 		setTooltip(_model.getTooltip());
 	}

@@ -35,6 +35,15 @@
 							<de>Objektliste</de>
 						</label>
 					</nav-item>
+					<nav-item id="tree-demo"
+						icon="css:bi bi-diagram-2"
+					>
+						<view-ref view="demo/tree-demo.view.xml"/>
+						<label>
+							<en>Tree Demo</en>
+							<de>Baum-Demo</de>
+						</label>
+					</nav-item>
 					<nav-item id="charts"
 						icon="css:bi bi-bar-chart-line"
 					>

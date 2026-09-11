@@ -270,6 +270,7 @@
 					</annotations>
 				</property>
 				<property name="timezone"
+					mandatory="true"
 					type="tl.util:TimeZone"
 				>
 					<annotations>

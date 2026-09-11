@@ -6,12 +6,12 @@
 	Referenced rather than copied - an application places it with
 
 		<app-bar>
-			<children>
+			<trailing>
 				<view-ref view="user-menu.view.xml"/>
-			</children>
+			</trailing>
 		</app-bar>
 
-	and wires nothing, because the channel feeding the trigger is declared here.
+	and wires nothing, because the channel feeding the area is declared here.
 
 	A depending module or the application adds entries with a same-path overlay
 	(WEB-INF/views/user-menu.view.xml of its own module); the ViewLoader merges all copies in
@@ -20,117 +20,113 @@
 -->
 <view>
 	<channels>
-		<!-- Feeds the trigger; read-only, recomputed per session. -->
+		<!-- Feeds the area; read-only, recomputed per session. -->
 		<derived-channel name="currentUser"
 			expr="currentUser()"
 		/>
 	</channels>
 
 	<!--
-		The children are the trigger, the commands are the entries. currentUser() yields the
-		anonymous account rather than nothing while the session is anonymous, so the trigger names
-		that account and stays clickable - which is the state in which Login is the only entry
-		offered.
-
-		Entering and leaving the session are the first group, everything about the account that
-		stays logged in follows after a separator. The two are one group rather than two, because
-		exactly one of them is ever offered: the state of the session decides which.
+		An anonymous session has one thing to do here, and it is offered in plain sight: a Login
+		button where the account area is, with no avatar and no menu in front of it. Everything an
+		account carries - and the preferences stored on it - waits until somebody is logged in.
 	-->
-	<menu>
-		<avatar input="currentUser"/>
-		<text css-class="tlUserMenu__name"
-			input="currentUser"
-			overflow="ellipsis"
-		/>
-
-		<commands>
-			<!--
-				Leaving comes first. It is the one entry a user looks for rather than browses to,
-				and the only one whose position should never depend on what a module contributed
-				below it.
-			-->
-			<logout-command image="css:bi bi-box-arrow-right">
-				<label>
-					<en>Logout</en>
-					<de>Abmeldung</de>
-				</label>
-				<executability>
-					<authenticated-only/>
-				</executability>
-			</logout-command>
-
-			<!-- Shown only for the anonymous user; opens the login dialog over a transient credentials object. -->
-			<generic-command image="css:bi bi-box-arrow-in-right">
-				<label>
-					<en>Login</en>
-					<de>Anmeldung</de>
-				</label>
-				<executability>
-					<anonymous-only/>
-				</executability>
-				<execute-script function="x -> new(`tl.login:Credentials`, transient: true)"/>
-				<open-dialog
-					bind-input-to="model"
-					close-on-backdrop="false"
-					dialog-view="login.view.xml"
-				/>
-			</generic-command>
-		</commands>
-
-		<groups>
-			<group>
-				<!-- What describes the account, and what secures it. -->
-				<generic-command image="css:bi bi-sliders">
+	<switch input="currentUser">
+		<case test="account -> $account.accountIsAnonymous()">
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-box-arrow-in-right"
+				>
 					<label>
-						<en>Settings</en>
-						<de>Einstellungen</de>
+						<en>Login</en>
+						<de>Anmelden</de>
 					</label>
-					<executability>
-						<authenticated-only/>
-					</executability>
-					<open-dialog dialog-view="settings.view.xml"/>
-				</generic-command>
+					<execute-script function="x -> new(`tl.login:Credentials`, transient: true)"/>
+					<open-dialog
+						bind-input-to="model"
+						close-on-backdrop="false"
+						dialog-view="login.view.xml"
+					/>
+				</action>
+			</button>
+		</case>
+		<default>
+			<!--
+				The children are the trigger, the commands are the entries.
+
+				Leaving the session is the first group, everything about the account that stays
+				logged in follows after a separator.
+			-->
+			<menu>
+				<avatar input="currentUser"/>
+				<text css-class="tlUserMenu__name"
+					input="currentUser"
+					overflow="ellipsis"
+				/>
+
+				<commands>
+					<!--
+						Leaving comes first. It is the one entry a user looks for rather than browses
+						to, and the only one whose position should never depend on what a module
+						contributed below it.
+					-->
+					<logout-command image="css:bi bi-box-arrow-right">
+						<label>
+							<en>Logout</en>
+							<de>Abmelden</de>
+						</label>
+					</logout-command>
+				</commands>
+
+				<groups>
+					<group>
+						<!-- What describes the account, and what secures it. -->
+						<generic-command image="css:bi bi-sliders">
+							<label>
+								<en>Settings</en>
+								<de>Einstellungen</de>
+							</label>
+							<open-dialog dialog-view="settings.view.xml"/>
+						</generic-command>
+
+						<!--
+							Where the user begins. One entry for both directions: invoked on the page
+							that is already the start page it clears the choice.
+						-->
+						<generic-command image="css:bi bi-pin-angle">
+							<label>
+								<en>Start on this page</en>
+								<de>Auf dieser Seite beginnen</de>
+							</label>
+							<remember-start-page/>
+						</generic-command>
+
+						<!-- Puts the presentation back the way it looks to somebody who has never used the application. -->
+						<generic-command image="css:bi bi-arrow-counterclockwise">
+							<label>
+								<en>Reset personal settings</en>
+								<de>Persönliche Einstellungen zurücksetzen</de>
+							</label>
+							<confirm expr="x -> #('Discard the theme, column widths and everything else you have adjusted?'@en, 'Das Theme, die Spaltenbreiten und alles weitere Angepasste verwerfen?'@de)"/>
+							<reset-personal-configuration/>
+						</generic-command>
+					</group>
+				</groups>
 
 				<!--
-					Where the user begins. One entry for both directions: invoked on the page that is
-					already the start page it clears the choice.
+					The one-decision preferences, an entry each rather than a form field: one entry
+					per language the application supports, and one per theme configured in
+					UIThemeService, labelled and iconed by the theme itself. Both mark the choice in
+					force as active, which the menu shows in bold, both head their group with a
+					label naming the choice, and both contribute nothing when there is only one of
+					them - so an application with a single theme and a single language sees none of
+					this.
 				-->
-				<generic-command image="css:bi bi-pin-angle">
-					<label>
-						<en>Start on this page</en>
-						<de>Auf dieser Seite beginnen</de>
-					</label>
-					<executability>
-						<authenticated-only/>
-					</executability>
-					<remember-start-page/>
-				</generic-command>
-
-				<!-- Puts the presentation back the way it looks to somebody who has never used the application. -->
-				<generic-command image="css:bi bi-arrow-counterclockwise">
-					<label>
-						<en>Reset personal settings</en>
-						<de>Persönliche Einstellungen zurücksetzen</de>
-					</label>
-					<executability>
-						<authenticated-only/>
-					</executability>
-					<confirm expr="x -> #('Discard the theme, column widths and everything else you have adjusted?'@en, 'Das Theme, die Spaltenbreiten und alles weitere Angepasste verwerfen?'@de)"/>
-					<reset-personal-configuration/>
-				</generic-command>
-			</group>
-		</groups>
-
-		<!--
-			The one-decision preferences, an entry each rather than a form field: one entry per
-			language the application supports, and one per theme configured in UIThemeService,
-			labelled and iconed by the theme itself. Both mark the active choice by offering it as
-			disabled, and both contribute nothing when there is only one of them - so an application
-			with a single theme and a single language sees none of this.
-		-->
-		<command-sources>
-			<language-commands/>
-			<theme-commands/>
-		</command-sources>
-	</menu>
+				<command-sources>
+					<language-commands/>
+					<theme-commands/>
+				</command-sources>
+			</menu>
+		</default>
+	</switch>
 </view>

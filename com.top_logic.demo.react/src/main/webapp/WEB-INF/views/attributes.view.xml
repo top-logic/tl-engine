@@ -234,7 +234,13 @@
 							<column attribute="owner"/>
 						</columns>
 						<rows>all(`demo.react:Demo`)</rows>
-						<on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
+						<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
+							image="css:bi bi-pencil"
+						>
+							<label>
+								<en>Edit</en>
+								<de>Bearbeiten</de>
+							</label>
 							<open-dialog
 								bind-input-to="model"
 								close-on-backdrop="true"

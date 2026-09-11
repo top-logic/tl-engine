@@ -2899,10 +2899,18 @@ button.tlMenu__item--disabled:hover {
 	background: var(--layer-hover, #e8e8e8);
 }
 
+/* The only part of a heading that gives way when the column is narrower than its content: the
+   label ends in an ellipsis, so the funnel, the sort mark and the resize handle stay reachable. */
 .tlTableView__headerLabel {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	min-width: 0;
+}
+
+/* Opens the column's filter. Keeps its room next to a label that is running out of it. */
+.tlTableView__filterButton {
+	flex-shrink: 0;
 }
 
 .tlTableView__sortIndicator {
@@ -3106,6 +3114,12 @@ button.tlMenu__item--disabled:hover {
 	z-index: 1;
 }
 
+/* The heading in front of the first pinned one keeps its handle inside the cell: the pinned
+   heading sticks above it (z-index 2) and would swallow the 2px reaching across the border. */
+.tlTableView__headerCell:has(+ .tlTableView__headerCell--pinnedEndFirst) .tlTableView__resizeHandle {
+	right: 0;
+}
+
 .tlTableView__resizeHandle:hover,
 .tlTableView__resizeHandle:active {
 	background: var(--interactive, #0f62fe);
@@ -3303,6 +3317,7 @@ button.tlMenu__item--disabled:hover {
 .tlTableView__groupMark {
 	margin-left: var(--spacing-02, 0.25rem);
 	color: var(--text-secondary, #525252);
+	flex-shrink: 0;
 }
 
 /* --- TLColumnSelect ---------------------------------------------------- */

@@ -1207,9 +1207,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 style={{
                   // The last column the user arranges takes the space left over, in the heading
                   // exactly as in the rows - otherwise the two drift apart as soon as the columns
-                  // no longer fill the table.
+                  // no longer fill the table. The configured width is the flex basis, so the cell
+                  // is that wide whatever its content measures: a heading whose label, funnel and
+                  // sort mark need more room than the user gave the column keeps the column's
+                  // width and clips the label instead of pushing its own tail - the resize handle
+                  // included - under the column behind it.
                   ...(colIdx === lastUnpinnedIdx && !isFrozen
-                    ? { flex: '1 0 auto', minWidth: w }
+                    ? { flex: `1 0 ${w}px`, minWidth: w }
                     : { width: w, minWidth: w }),
                   position: isFrozen || isPinned ? 'sticky' as const : 'relative' as const,
                   ...(isFrozen ? { left: frozenOffsets[colIdx], zIndex: 2 } : {}),
@@ -1399,9 +1403,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     data-col={col.name}
                     style={{
                       // The last column the user arranges takes the space left over; a pinned
-                      // column keeps its width, so the space stays in front of it.
+                      // column keeps its width, so the space stays in front of it. The configured
+                      // width is the flex basis, as in the heading, so that cell and heading are
+                      // the same width whatever either of them holds.
                       ...(colIdx === lastUnpinnedIdx && !isFrozen
-                        ? { flex: '1 0 auto', minWidth: w }
+                        ? { flex: `1 0 ${w}px`, minWidth: w }
                         : { width: w, minWidth: w }),
                       ...(isFrozen ? { position: 'sticky' as const, left: frozenOffsets[colIdx], zIndex: 2 } : {}),
                       ...(isPinned

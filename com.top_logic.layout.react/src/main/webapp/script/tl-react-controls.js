@@ -2649,8 +2649,12 @@ const _n = ({ title: l, inCell: t, onClick: n }) => /* @__PURE__ */ e.createElem
             style: {
               // The last column the user arranges takes the space left over, in the heading
               // exactly as in the rows - otherwise the two drift apart as soon as the columns
-              // no longer fill the table.
-              ...N === ne && !J ? { flex: "1 0 auto", minWidth: F } : { width: F, minWidth: F },
+              // no longer fill the table. The configured width is the flex basis, so the cell
+              // is that wide whatever its content measures: a heading whose label, funnel and
+              // sort mark need more room than the user gave the column keeps the column's
+              // width and clips the label instead of pushing its own tail - the resize handle
+              // included - under the column behind it.
+              ...N === ne && !J ? { flex: `1 0 ${F}px`, minWidth: F } : { width: F, minWidth: F },
               position: J || se ? "sticky" : "relative",
               ...J ? { left: ce[N], zIndex: 2 } : {},
               // The header ends with the reserve the body's scrollbar and, where it is not in a
@@ -2809,8 +2813,10 @@ const _n = ({ title: l, inCell: t, onClick: n }) => /* @__PURE__ */ e.createElem
               "data-col": N.name,
               style: {
                 // The last column the user arranges takes the space left over; a pinned
-                // column keeps its width, so the space stays in front of it.
-                ...F === ne && !J ? { flex: "1 0 auto", minWidth: Z } : { width: Z, minWidth: Z },
+                // column keeps its width, so the space stays in front of it. The configured
+                // width is the flex basis, as in the heading, so that cell and heading are
+                // the same width whatever either of them holds.
+                ...F === ne && !J ? { flex: `1 0 ${Z}px`, minWidth: Z } : { width: Z, minWidth: Z },
                 ...J ? { position: "sticky", left: ce[F], zIndex: 2 } : {},
                 ...le ? {
                   position: "sticky",

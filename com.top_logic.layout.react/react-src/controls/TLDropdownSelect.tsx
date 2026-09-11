@@ -650,6 +650,14 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         <div className="tlDropdownSelect__chips">
           {value.length === 0 ? (
             <span className="tlDropdownSelect__placeholder">{emptyOptionLabel}</span>
+          ) : !multiSelect ? (
+            // A single value is shown as it is. A chip sets one entry off from the next and
+            // carries the button removing just that one; with a single value there is nothing to
+            // set it off from, and removing it is what the clear button beside the arrow does.
+            <span className="tlDropdownSelect__value">
+              <OptionImage image={value[0].image} />
+              <span className="tlDropdownSelect__valueLabel">{value[0].label}</span>
+            </span>
           ) : (
             value.map((v, idx) => {
               let dragClass = '';
@@ -664,7 +672,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
                 <Chip
                   key={v.value}
                   option={v}
-                  removable={!disabled && (multiSelect || !mandatory)}
+                  removable={!disabled}
                   onRemove={removeOption}
                   removeLabel={removeChipLabel(v.label)}
                   draggable={dragEnabled}

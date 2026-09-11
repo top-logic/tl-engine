@@ -134,6 +134,31 @@
 								<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
 							</with-transaction>
 						</generic-command>
+						<generic-command name="toggleTicket"
+							image="css:bi bi-toggles"
+							input="ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Toggle</en>
+								<de>Umschalten</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<switch value="t -> $t.get(`demo.tickets:Ticket#status`)">
+								<case match="`demo.tickets:TicketStatus#closed`">
+									<with-transaction>
+										<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
+									</with-transaction>
+								</case>
+								<default>
+									<with-transaction>
+										<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+									</with-transaction>
+								</default>
+							</switch>
+						</generic-command>
 					</commands>
 					<text input="ticket"/>
 					<text

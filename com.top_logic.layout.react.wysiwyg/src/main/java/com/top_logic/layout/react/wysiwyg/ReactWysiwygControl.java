@@ -31,6 +31,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
@@ -192,12 +193,18 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 
 	/**
 	 * Offers the given commands in the editor's own toolbar, as far as they are placed in one.
+	 *
+	 * <p>
+	 * The buttons show their icon alone and their label as tooltip, the presentation of the
+	 * formatting buttons they stand beside. A command asking for a presentation of its own keeps
+	 * it.
+	 * </p>
 	 */
 	private void createToolbar(ViewContext context, List<ViewCommand> commands,
 			List<ViewCommand.Config> commandConfigs) {
 		List<ViewCommandModel> models = ViewCommands.buildCommandModels(context, commands, commandConfigs);
 		ReactToolbarControl toolbar = ToolbarBuilder.build(context, new CommandScope(models),
-			CommandPlacement.TOOLBAR, new CliqueRegistry(), null);
+			CommandPlacement.TOOLBAR, new CliqueRegistry(), ButtonDisplayMode.ICON_ONLY);
 		if (toolbar == null) {
 			return;
 		}

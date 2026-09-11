@@ -222,6 +222,10 @@
 										channel="comment"
 										to="newComment"
 									/>
+									<bind
+										channel="ticket"
+										to="ticket"
+									/>
 								</view-ref>
 							</new-element>
 							<empty-text>

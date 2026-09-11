@@ -13,7 +13,6 @@ import TableHeader from '@tiptap/extension-table-header';
 import Color from '@tiptap/extension-color';
 import TextStyle from '@tiptap/extension-text-style';
 import WysiwygToolbar from './WysiwygToolbar';
-import type { ObjectLinkButton } from './WysiwygToolbar';
 import './TLWysiwygEditor.css';
 
 /** Command sent when the user follows an object link in displayed content. */
@@ -22,17 +21,14 @@ const CMD_SHOW_OBJECT_LINK = 'showObjectLink';
 /** The CMD_SHOW_OBJECT_LINK argument naming the object to display. */
 const ARG_HREF = 'href';
 
-/** Command sent when the user asks for a link to an application object. */
-const CMD_INSERT_OBJECT_LINK = 'insertObjectLink';
-
 /** Command sent when the text of the editor changed. */
 const CMD_VALUE_CHANGED = 'valueChanged';
 
 /** The CMD_VALUE_CHANGED argument holding the text. */
 const ARG_VALUE = 'value';
 
-/** State describing the button that sends CMD_INSERT_OBJECT_LINK. */
-const STATE_OBJECT_LINK = 'objectLink';
+/** State holding the toolbar of the commands the editor was configured with. */
+const STATE_TOOLBAR = 'toolbar';
 
 /** State asking for markup to be inserted at the cursor. */
 const STATE_INSERT = 'insert';
@@ -60,7 +56,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const hasError: boolean = !!state.hasError;
   const imageUrl: string | null = (state.imageUrl as string) || null;
   const commitOnBlur: boolean = state.commitOnBlur === true;
-  const objectLink: ObjectLinkButton | null = (state[STATE_OBJECT_LINK] as ObjectLinkButton) || null;
+  const toolbar: unknown = state[STATE_TOOLBAR] || null;
   const insertRequest: InsertRequest | null = (state[STATE_INSERT] as InsertRequest) || null;
 
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -147,10 +143,6 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     flushValue(editor);
   }, [insertRequest, editor, flushValue]);
 
-  const handleInsertObjectLink = React.useCallback(() => {
-    sendCommand(CMD_INSERT_OBJECT_LINK);
-  }, [sendCommand]);
-
   const handleImageUpload = React.useCallback(() => {
     fileInputRef.current?.click();
   }, []);
@@ -205,8 +197,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       <WysiwygToolbar
         editor={editor}
         onImageUpload={handleImageUpload}
-        objectLink={objectLink}
-        onInsertObjectLink={handleInsertObjectLink}
+        toolbar={toolbar}
       />
       <div className="tlWysiwygEditor__content">
         <EditorContent editor={editor} />

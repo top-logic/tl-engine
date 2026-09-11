@@ -137,6 +137,14 @@
 
 /* ---- Buttons ---- */
 
+/* The buttons of the configured commands stand beside the formatting buttons and take
+   their size. */
+.tlWysiwygToolbar .tlReactButton--iconOnly {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+}
+
 .tlWysiwygToolbar__btn {
   display: inline-flex;
   align-items: center;

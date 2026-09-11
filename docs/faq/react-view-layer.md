@@ -4,7 +4,7 @@
 
 `com.top_logic.layout.view` is declarative: a `.view.xml` assembles existing React controls (`TLPanel`, `TLWindow`, `TLForm` / `TLFormField`, `TLTextInput`, `TLButton`, `TLText`, `TLDialog`, …) through `UIElement` configs (each a `@TagName`) and view commands / actions. To build a feature (a login dialog, a user menu, …), compose these via XML plus small Java `ViewCommand` / `ViewAction` / `ViewExecutabilityRule` / `UIElement` classes that reuse existing controls. Do **not** hand-roll bespoke monolithic React components. A new React control is justified only for a genuinely new generic widget (e.g. a `type=password` input), not for assembling forms / buttons that already exist.
 
-- **Forms** bind to a model object: `<form input="ch"><field attribute="x"/>`. For ad-hoc input, create a small transient model type (`new(\`mod:Type\`, transient: true)`); a field's control is chosen by a `<input-control><impl class="…Provider"/></input-control>` annotation. A single value that belongs to the view rather than to an object - a filter term, a search text - needs no form and no object at all: `<text-input value="ch"/>` (`TextInputElement`) binds the input to the channel in both directions.
+- **Forms** bind to a model object: `<form input="ch"><field attribute="x"/>`. For ad-hoc input, create a small transient model type (`new(\`mod:Type\`, transient: true)`); a field's control is chosen by a `<input-control><impl class="…Provider"/></input-control>` annotation on the attribute, or — where the choice belongs to one place in the user interface rather than to the model — by `<field attribute="x"><input-control class="…Provider" …/></field>` in the view itself (`FieldElement.Config.getInputControl()`), whose `class=` names the same `ReactFieldControlProvider` and carries its configuration. A single value that belongs to the view rather than to an object - a filter term, a search text - needs no form and no object at all: `<text-input value="ch"/>` (`TextInputElement`) binds the input to the channel in both directions.
 - **Dialogs** open a `.view.xml` via `<open-dialog dialog-view="…">`; close via `CancelDialogCommand` / `DialogManager.closeTopDialog`. `currentUser()` is a TL-Script function usable in `<derived-channel expr="…">`.
 - **Referencing a `UIElement` impl by `class=` in view content.** View content lists resolve entries by `@TagName`, so an app-specific element that should not claim a global tag is placed via the content property's *entry tag* plus `class=`. The `children` content property (`ContainerElement.Config`) is `@EntryTag("child")`, so write `<child class="fq.MyElement"/>` inside a `<panel>` / container. If a cell provider is reusable, make it public rather than justifying a separate element; justify a separate element by genuinely different data / behavior.
 - **Standalone form-field controls bind to a `FieldModel`.** For a standalone field control (e.g. a checkbox cell), use the concrete `com.top_logic.layout.form.model.AbstractFieldModel` + `FieldModelListener` — not `FormContext` / `FormField` / `FormFieldAdapter`, which are legacy-compat shims. `AbstractFieldModel` is editable by default, needs no `FormContext` parent, and triggers no label resource lookup in `ReactFormFieldControl`.
@@ -103,16 +103,27 @@ Every control that shows one of several children implements `com.top_logic.layou
 - **`<show-object/>`** (`ShowObjectAction`) in a `<generic-command>` chain shows the chain's input object and passes it on; no input passes through unchanged; a selection of exactly one object shows that object. `<generic-command input="selection"><show-object/></generic-command>` is the whole configuration of a "go to" button. Java code calls `ObjectNavigation.show(context, object, continuation)`.
 - **`ReactContext.getObjectNavigator()`** (`com.top_logic.layout.react.navigation.ObjectNavigator`: `canShow(value)`, `show(context, value)`) is the seam for controls in `com.top_logic.layout.react`, which cannot depend on the view layer; the view layer answers it with `DisplayTargetNavigator`. Through it, **object values displayed read-only are links automatically** wherever a target exists for their type: `ReactResourceCellControl` (tree nodes via `MetaResourceControlProvider`, and any cell built with `useLink`), the read-only values of `ReactDropdownSelectControl` (which is what reference attributes in `<table>` cells and view-mode `<form>` fields render as), and `tlObject` anchors in read-only structured text (`ReactWysiwygControl`, command `showObjectLink`, resolved with `TLObjectLinkUtil` like the classic `OpenTLObjectLink`). The TL-Script functions `htmlObjectLink(object, label)`, `htmlSource(content)` and `htmlText(source)` (`HtmlFunctions` in `com.top_logic.layout.wysiwyg`) write such an anchor and read or write the HTML source of a structured-text attribute, e.g. to append an object reference to a comment.
 
-- **The WYSIWYG editor inserts a link to an object picked in a dialog.** A `tl.model.wysiwyg:Html` attribute annotated with
+- **The WYSIWYG editor carries configured commands and inserts what they write.** The editor is chosen for a field by `<input-control class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">`, which takes `<commands>` — ordinary view commands (`ViewCommand.Config`, e.g. `<generic-command>`) — and an optional `insert-channel`. The commands run in a child `ViewContext` of the field's view context: they see the channels of the surrounding view, so they take their input from it and hand it on to the dialogs they open, and beside those channels they see the insertion channel the editor declares. Markup written to that channel is inserted at the cursor of the editor (`ReactWysiwygControl.insertAtCursor`, state `insert` = `{seq, html}`; the client inserts it once per `seq`, reports the resulting text, and the request is taken back). Commands placed in a toolbar — the default placement — are rendered as a `ReactToolbarControl` in state `toolbar`, which the client renders beside the formatting buttons.
 
   ```xml
-  <input-control>
-    <impl class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">
-      <object-link dialog-view="tickets/reference-ticket.view.xml"/>
-    </impl>
-  </input-control>
+  <field attribute="content">
+    <input-control class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider"
+      insert-channel="insert"
+    >
+      <commands>
+        <generic-command image="css:ri-links-line" input="ticket">
+          <label><en>Reference ticket...</en></label>
+          <executability><null-input-disabled/></executability>
+          <open-dialog dialog-view="tickets/reference-ticket.view.xml">
+            <bind channel="context" to="ticket"/>
+            <bind channel="result" to="insert"/>
+          </open-dialog>
+        </generic-command>
+      </commands>
+    </input-control>
+  </field>
   ```
 
-  gets a toolbar button next to the URL link button. Clicking it opens `dialog-view` (a path relative to `/WEB-INF/views/`, like `<open-dialog dialog-view=…>`) as a dialog, with the editor's own channel bound to the name `result-channel` gives — `result` unless configured otherwise. The dialog picks whatever it likes in whatever way it likes (a table, a search, a tree) and publishes the chosen object on that channel: `<generic-command input="ticket"><write-channel name="result"/><close-dialog/></generic-command>` is the whole contract. As soon as an object appears there, `ReactWysiwygControl` writes the `tlObject` anchor `TLObjectLinkUtil` produces and the client inserts it at the cursor; the editor then reports the resulting markup, which closes the dialog if it has not closed itself. Without the `object-link` option the editor has no such button.
+  The dialog picks whatever it likes in whatever way it likes (a table, a search, a tree) and publishes the markup on its result channel: `<generic-command input="ticket"><execute-script function="t -> htmlObjectLink($t)"/><write-channel name="result"/><close-dialog/></generic-command>` is the whole contract, and `context` gives it the object the text is written for. Nothing about the editor knows what an object link is: it inserts the markup it is handed.
 
-The demo (`com.top_logic.demo.react`): the *Projects* drill-down (project → milestone → ticket → detail) with targets for its types in `demoReactConf.config.xml`, the contributor dialog target, `tl.accounts:Person` shown in the tiles demo, and the object-list comments, whose editor references a project ticket through `tickets/reference-ticket.view.xml`.
+The demo (`com.top_logic.demo.react`): the *Projects* drill-down (project → milestone → ticket → detail) with targets for its types in `demoReactConf.config.xml`, the contributor dialog target, `tl.accounts:Person` shown in the tiles demo, and the object-list comments, whose editor offers a "Reference ticket…" command opening `tickets/reference-ticket.view.xml`.

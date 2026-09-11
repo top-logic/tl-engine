@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Picks the project ticket a comment refers to and publishes it on the result channel. The
-	editor the dialog was opened from inserts a link to that ticket at the cursor of the comment
-	being written.
+	Picks the project ticket a comment refers to and publishes the link markup for it on the
+	result channel. The editor the dialog was opened from inserts that markup at the cursor of
+	the comment being written.
+	
+	The context channel carries the ticket the comment belongs to, as the command opening the
+	dialog binds it, and the line above the table names it.
 -->
 <view>
 	<channels>
+		<channel name="context"/>
 		<channel name="ticket"/>
 		<channel name="result"/>
+		<derived-channel name="contextLabel"
+			expr="t -> if($t == null, &quot;&quot;, #(&quot;Referenz im Kommentar zu {0}&quot;@de, &quot;Reference in the comment on {0}&quot;@en).fill(label($t)))"
+			inputs="context"
+		/>
 	</channels>
 
 	<window width="720px">
@@ -16,6 +24,7 @@
 			<en>Reference ticket</en>
 			<de>Ticket referenzieren</de>
 		</title>
+		<text input="contextLabel"/>
 		<table
 			observed-types="tl.demo.projectManagement:Ticket"
 			selection="ticket"
@@ -40,6 +49,7 @@
 					<executability>
 						<null-input-disabled/>
 					</executability>
+					<execute-script function="t -> htmlObjectLink($t)"/>
 					<write-channel name="result"/>
 					<close-dialog/>
 				</action>

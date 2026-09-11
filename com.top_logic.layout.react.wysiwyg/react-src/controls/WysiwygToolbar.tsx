@@ -1,4 +1,4 @@
-import { React, useI18N } from 'tl-react-bridge';
+import { React, useI18N, TLChild } from 'tl-react-bridge';
 import type { Editor } from '@tiptap/react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Popover from '@radix-ui/react-popover';
@@ -9,24 +9,15 @@ import * as Separator from '@radix-ui/react-separator';
 // Types
 // ---------------------------------------------------------------------------
 
-/** The button inserting a link to an application object, as the server describes it. */
-export interface ObjectLinkButton {
-  /** The text of the button. */
-  label: string;
-
-  /** The icon class of the button. */
-  icon: string;
-}
-
 interface ToolbarProps {
   editor: Editor | null;
   onImageUpload: () => void;
 
-  /** How to offer inserting an object link, or null where the editor inserts none. */
-  objectLink: ObjectLinkButton | null;
-
-  /** Asks for the object a link is inserted for. */
-  onInsertObjectLink: () => void;
+  /**
+   * The toolbar of the commands the editor is configured with, as the server describes it, or
+   * null where the editor carries none.
+   */
+  toolbar: unknown;
 }
 
 // ---------------------------------------------------------------------------
@@ -345,7 +336,7 @@ const LinkPopover: React.FC<{ editor: Editor; labels: Record<string, string> }> 
 // Main Toolbar
 // ---------------------------------------------------------------------------
 
-const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, objectLink, onInsertObjectLink }) => {
+const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar }) => {
   const labels = useI18N(ALL_I18N_KEYS);
 
   if (!editor) return null;
@@ -407,13 +398,6 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, objectL
 
         {/* Link, Image, Table */}
         <LinkPopover editor={editor} labels={labels} />
-        {objectLink && (
-          <ToolbarButton
-            icon={objectLink.icon}
-            tooltip={objectLink.label}
-            onClick={onInsertObjectLink}
-          />
-        )}
         <ToolbarButton
           icon="ri-image-line"
           tooltip={t(labels, 'image')}
@@ -424,6 +408,14 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, objectL
           tooltip={t(labels, 'table')}
           onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
         />
+
+        {/* The commands the editor is configured with, in a toolbar of their own. */}
+        {toolbar != null && (
+          <>
+            <Separator.Root className="tlWysiwygToolbar__sep" orientation="vertical" decorative />
+            <TLChild control={toolbar} />
+          </>
+        )}
 
         <Separator.Root className="tlWysiwygToolbar__sep" orientation="vertical" decorative />
 

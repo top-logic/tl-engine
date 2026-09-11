@@ -81,6 +81,16 @@ public class TestTableElement extends TestCase {
 	}
 
 	/**
+	 * Tests that a table offers its activation command on every row unless it opts out.
+	 */
+	public void testActivationButton() throws Exception {
+		assertTrue("A table shows the button running its activation command.",
+			TypedConfiguration.newConfigItem(TableElement.Config.class).getActivationButton());
+
+		assertFalse("The table opts out of the button.", readTableConfig().getActivationButton());
+	}
+
+	/**
 	 * Tests that the configured {@code group-by} column becomes the grouping the table starts with,
 	 * and that a table without one starts ungrouped.
 	 */

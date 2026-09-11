@@ -180,6 +180,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** The grouping the table starts with, until a personalization of its own exists. */
 	private GroupSpec _grouping = GroupSpec.NONE;
 
+	/** Columns appended behind the data and action columns, see {@link #setTrailingColumns(List)}. */
+	private List<? extends Column<TLObject, ?>> _trailingColumns = List.of();
+
 	private ListRowSource<TLObject> _rowSource;
 
 	private RowSourceObserver<TLObject> _observer;
@@ -405,6 +408,26 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Sets columns to append behind the ones this control builds itself.
+	 *
+	 * <p>
+	 * The hook for what a caller offers on every row - the per-row buttons of a
+	 * {@link com.top_logic.layout.view.table.RowCommandColumn}, say. The columns are appended
+	 * whenever the table is (re-)built, so they survive the switch between view and edit mode.
+	 * </p>
+	 *
+	 * <p>
+	 * To be called before {@link #init()}.
+	 * </p>
+	 *
+	 * @param columns
+	 *        The columns to append, in display order.
+	 */
+	public void setTrailingColumns(List<? extends Column<TLObject, ?>> columns) {
+		_trailingColumns = columns;
+	}
+
+	/**
 	 * The inner {@link TableViewControl}, or {@code null} if not yet initialized.
 	 */
 	public TableViewControl<TLObject> getTableControl() {
@@ -493,6 +516,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				.selectable(false)
 				.build());
 		}
+
+		columns.addAll(_trailingColumns);
 
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).

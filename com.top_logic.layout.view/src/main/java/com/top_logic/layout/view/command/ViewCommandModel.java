@@ -221,6 +221,24 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	}
 
 	/**
+	 * The command's executability for an input the caller supplies instead of the
+	 * {@link #resolveInput() channel value} - a single row of a table, say.
+	 *
+	 * <p>
+	 * This is what {@link #execute(ReactContext, Object)} decides by, offered separately for a UI
+	 * that shows the state before the command runs: the button a table puts on every row reads it
+	 * per row, and is disabled or omitted accordingly.
+	 * </p>
+	 *
+	 * @param input
+	 *        The command's input value.
+	 * @return The state the command's rules assign to that input.
+	 */
+	public ExecutableState executability(Object input) {
+		return _rule.isExecutable(input);
+	}
+
+	/**
 	 * Executes the command with an input the caller supplies instead of the
 	 * {@link #resolveInput() channel value} - the row a table activation opens, say.
 	 *
@@ -237,7 +255,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 *         input.
 	 */
 	public HandlerResult execute(ReactContext context, Object input) {
-		ExecutableState state = _rule.isExecutable(input);
+		ExecutableState state = executability(input);
 		if (!state.isExecutable()) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
@@ -301,7 +319,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 
 	private void updateExecutableState() {
 		Object input = resolveInput();
-		ExecutableState newState = _rule.isExecutable(input);
+		ExecutableState newState = executability(input);
 		if (newState.visibility() != _executableState.visibility()) {
 			_executableState = newState;
 			fireStateChanged();

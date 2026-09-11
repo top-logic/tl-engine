@@ -32,6 +32,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -51,7 +52,6 @@ import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
-import com.top_logic.layout.view.form.Icons;
 import com.top_logic.layout.view.form.QueryRowSetBinding;
 import com.top_logic.layout.view.form.RowEditPolicy;
 import com.top_logic.layout.view.form.RowSetBinding;
@@ -64,6 +64,7 @@ import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.DeclaredFilters;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.layout.view.table.FilterStateTemplate;
+import com.top_logic.layout.view.table.RowCommandColumn;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -148,6 +149,9 @@ public class TableElement implements UIElement {
 
 		/** Configuration name for {@link #getOnActivate()}. */
 		String ON_ACTIVATE = "on-activate";
+
+		/** Configuration name for {@link #getActivationButton()}. */
+		String ACTIVATION_BUTTON = "activation-button";
 
 		/** Configuration name for {@link #getGroupBy()}. */
 		String GROUP_BY = "group-by";
@@ -236,6 +240,28 @@ public class TableElement implements UIElement {
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
+
+		/**
+		 * Whether every row shows a button running the {@link #getOnActivate() activation command}
+		 * for it.
+		 *
+		 * <p>
+		 * The button sits in a column of its own at the right edge of the table, which stays there
+		 * while the table is scrolled. It offers the row activation where the gestures running it -
+		 * a double-click, {@code Enter} on the cursor row - are neither visible nor available: a
+		 * touch device has neither. Each button follows the command's executability for its own
+		 * row, so a row the rules reject shows a disabled button and a row they hide shows none.
+		 * </p>
+		 *
+		 * <p>
+		 * Switch it off for a table whose rows are opened another way - a link in a cell, a command
+		 * of the surrounding toolbar. A table without an activation command shows no button in any
+		 * case.
+		 * </p>
+		 */
+		@Name(ACTIVATION_BUTTON)
+		@BooleanDefault(true)
+		boolean getActivationButton();
 
 		/**
 		 * The name of the column whose value the rows are initially grouped by: one collapsible
@@ -813,11 +839,14 @@ public class TableElement implements UIElement {
 			return createEditableControl(context, inputChannels, rows);
 		}
 
+		ViewCommandModel activation = activationModel(context);
+
 		List<ColumnSetup> setups = columnSetups(resolveRowType(rows), context);
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
 			columns.add(setup.binding().createColumn(setup));
 		}
+		columns.addAll(this.<Object> rowCommandColumns(context, activation));
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
 		Set<String> hiddenByDefault = hiddenByDefault(setups.stream().map(ColumnSetup::attribute).toList());
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
@@ -842,7 +871,7 @@ public class TableElement implements UIElement {
 			control.addCleanupAction(selectionBinding::dispose);
 		}
 
-		control.setActivationHandler(activationHandler(context));
+		control.setActivationHandler(activationHandler(context, activation));
 
 		// Refresh the rows when observed objects change or an input channel changes.
 		QueryExecutor rowsExecutor = _rowsExecutor;
@@ -873,15 +902,47 @@ public class TableElement implements UIElement {
 	}
 
 	/**
-	 * The handler running the {@link Config#getOnActivate() configured activation command} with the
-	 * activated row, {@code null} when the table configures none.
+	 * The model of the {@link Config#getOnActivate() configured activation command}, {@code null}
+	 * when the table configures none.
+	 *
+	 * <p>
+	 * One model serves both ways of running the command - the activation gesture and the button the
+	 * rows carry - so both decide by the same rules.
+	 * </p>
 	 */
-	private <R> TableViewControl.ActivationHandler<R> activationHandler(ViewContext context) {
+	private ViewCommandModel activationModel(ViewContext context) {
 		if (_onActivate == null || _onActivateConfig == null) {
 			return null;
 		}
-		ViewCommandModel activation = ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig);
+		return ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig);
+	}
+
+	/**
+	 * The handler running the activation command with the activated row, {@code null} when the
+	 * table configures none.
+	 */
+	private static <R> TableViewControl.ActivationHandler<R> activationHandler(ViewContext context,
+			ViewCommandModel activation) {
+		if (activation == null) {
+			return null;
+		}
 		return row -> activation.execute(context, row);
+	}
+
+	/**
+	 * The trailing columns holding a button per row, empty when the table offers no command per
+	 * row.
+	 *
+	 * @param activation
+	 *        The model of the activation command, {@code null} when the table configures none.
+	 */
+	private <R> List<Column<R, R>> rowCommandColumns(ViewContext context, ViewCommandModel activation) {
+		if (activation == null || !_config.getActivationButton()) {
+			return List.of();
+		}
+		return RowCommandColumn.columns(context, List.of(
+			new RowCommandColumn.RowCommand(activation, Icons.TABLE_ACTIVATE_ROW,
+				I18NConstants.TABLE_ACTIVATE_ROW)));
 	}
 
 	/**
@@ -909,6 +970,8 @@ public class TableElement implements UIElement {
 		ChannelRef selectionRef = _config.getSelection();
 		ViewChannel selectionChannel = selectionRef != null ? context.resolveChannel(selectionRef) : null;
 
+		ViewCommandModel activation = activationModel(context);
+
 		List<RowSetTableControl.TableColumn> editColumns = editColumns(rowType);
 		RowSetTableControl control =
 			new RowSetTableControl(context, formControl, binding, editColumns, _config.getRowEdit());
@@ -924,7 +987,8 @@ public class TableElement implements UIElement {
 		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
 		control.setRowRefresh(args -> executeRowsQuery(rowsExecutor, args), ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
-		control.setActivationHandler(activationHandler(context));
+		control.setActivationHandler(activationHandler(context, activation));
+		control.setTrailingColumns(this.<TLObject> rowCommandColumns(context, activation));
 		control.init();
 
 		contributeAddRowCommand(context, formControl, binding, control);
@@ -985,7 +1049,8 @@ public class TableElement implements UIElement {
 		}
 
 		FormCommandModel addCommand = FormCommandModel.editModeCommand(COMMAND_ADD_ROW,
-			com.top_logic.layout.view.I18NConstants.COMPOSITION_TABLE_ADD, Icons.COMPOSITION_TABLE_ADD,
+			com.top_logic.layout.view.I18NConstants.COMPOSITION_TABLE_ADD,
+			com.top_logic.layout.view.form.Icons.COMPOSITION_TABLE_ADD,
 			formControl, ctx -> control.addRow());
 		scope.addCommand(addCommand);
 		formControl.addAttachListener(addCommand::attach);

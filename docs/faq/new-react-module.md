@@ -266,6 +266,11 @@ mvn install -DskipTests=true -pl my.new.module
 
 Never `cd` into the module. Never run `npx vite build` directly.
 
+The bundle the build writes to `src/main/webapp/script/` is a build product and is listed in the
+module's `.gitignore`, so it is absent from a fresh checkout and stale after a branch switch until the
+module is built again: run `mvn compile` on the React modules, or let Eclipse do it — the
+`frontend-maven-plugin` ships an m2e lifecycle mapping that runs the `npm` build on a project build.
+
 **After changing `react-src/*.ts(x)` in `com.top_logic.layout.react`, rebuild the *app* module too** (e.g. `mvn install -pl com.top_logic.demo.react`), not just `layout.react`. The running app serves `script/tl-react-bridge.js` from the app's exploded overlay (`target/<app>-app/script/`), which stays a stale copy until the app module is rebuilt — Java jars, by contrast, resolve fresh from the local m2 repo on restart. Symptom: server-side changes take effect but client-side changes silently don't. Verify with `grep -rl "<new string>" com.top_logic.demo.react/target`.
 
 ## Common errors

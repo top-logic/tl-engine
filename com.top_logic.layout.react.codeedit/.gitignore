@@ -4,3 +4,4 @@
 /node_modules/
 /.apt_generated/
 /.apt_generated_tests/
+/src/main/webapp/script/tl-code-editor.js

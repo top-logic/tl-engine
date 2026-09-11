@@ -47,6 +47,8 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewActionChain;
+import com.top_logic.layout.view.command.ViewActions;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
 import com.top_logic.layout.view.command.FormValid;
@@ -306,20 +308,8 @@ public class FormElement extends ContainerElement {
 			}
 		}
 
-		_saveActions = instantiateActions(context, config.getSaveActions());
-		_cancelActions = instantiateActions(context, config.getCancelActions());
-	}
-
-	private List<ViewAction> instantiateActions(InstantiationContext context,
-			List<PolymorphicConfiguration<? extends ViewAction>> configs) {
-		List<ViewAction> result = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends ViewAction> actionConfig : configs) {
-			ViewAction action = context.getInstance(actionConfig);
-			if (action != null) {
-				result.add(action);
-			}
-		}
-		return result;
+		_saveActions = ViewActions.instantiate(context, config.getSaveActions());
+		_cancelActions = ViewActions.instantiate(context, config.getCancelActions());
 	}
 
 	private LockHandler createLockHandler(InstantiationContext context, Config config) {
@@ -668,24 +658,17 @@ public class FormElement extends ContainerElement {
 	}
 
 	/**
-	 * Creates a {@link Consumer} that chains the given {@link ViewAction}s, executing them
-	 * sequentially with each action's output becoming the next action's input.
+	 * Creates a {@link Consumer} that runs the given {@link ViewAction}s as a
+	 * {@link ViewActionChain}, each action's output becoming the next action's input.
 	 *
 	 * <p>
 	 * The actions execute in the form's {@link ViewContext} so that they can access the
-	 * {@link com.top_logic.layout.view.form.FormModel FormModel}.
+	 * {@link com.top_logic.layout.view.form.FormModel FormModel}, whatever context the toolbar
+	 * button passes.
 	 * </p>
 	 */
 	private Consumer<ReactContext> createActionChain(ViewContext formContext,
 			List<ViewAction> actions) {
-		return ctx -> {
-			// Use the form context so that actions like StoreFormStateAction can access
-			// the FormModel, regardless of the context passed by the toolbar button.
-			ReactContext effectiveContext = formContext;
-			Object current = null;
-			for (ViewAction action : actions) {
-				current = action.execute(effectiveContext, current);
-			}
-		};
+		return ctx -> ViewActionChain.run(formContext, actions, null, null);
 	}
 }

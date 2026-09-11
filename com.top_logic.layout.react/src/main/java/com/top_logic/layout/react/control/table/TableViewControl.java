@@ -193,6 +193,18 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/** Per-column state key telling whether the rows can be grouped by that column. */
 	private static final String COLUMN_GROUPABLE = "groupable";
 
+	/** Per-column state key telling whether the column can be filtered. */
+	private static final String COLUMN_FILTERABLE = "filterable";
+
+	/** Per-column state key telling whether a {@link #COLUMN_FILTERABLE} column filters right now. */
+	private static final String COLUMN_FILTER_ACTIVE = "filterActive";
+
+	/**
+	 * Per-column state key telling whether the column {@link ColumnView#pinnedEnd() keeps its place}
+	 * at the end of the table, where the client renders it fixed to the right edge.
+	 */
+	private static final String COLUMN_PINNED_END = "pinnedEnd";
+
 	/** State key telling the client whether to display the filter bar. */
 	private static final String FILTER_BAR = "filterBar";
 
@@ -259,14 +271,25 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String CMD_SELECT_ALL = "selectAll";
 
-	private static final String CMD_COLUMN_RESIZE = "columnResize";
+	/**
+	 * The command the client sends to change the width of a column.
+	 *
+	 * @see ColumnResizeArguments
+	 */
+	public static final String CMD_COLUMN_RESIZE = "columnResize";
 
 	private static final String CMD_COLUMN_REORDER = "columnReorder";
 
 	/** The command the client sends to expand or collapse a tree node or a group header. */
 	public static final String CMD_EXPAND = "expand";
 
-	private static final String CMD_SET_FROZEN_COLUMN_COUNT = "setFrozenColumnCount";
+	/**
+	 * The command the client sends to fix a number of leading columns while the table scrolls
+	 * horizontally.
+	 *
+	 * @see SetFrozenColumnCountArguments
+	 */
+	public static final String CMD_SET_FROZEN_COLUMN_COUNT = "setFrozenColumnCount";
 
 	private static final String CMD_APPLY_NAMED_FILTER = "applyNamedFilter";
 
@@ -546,9 +569,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			}
 			def.setSortPriority(column.sortPriority());
 			Map<String, Object> columnState = def.toStateMap();
-			columnState.put("filterable", Boolean.valueOf(column.filterable()));
-			columnState.put("filterActive", Boolean.valueOf(isFilterActive(column.name())));
+			columnState.put(COLUMN_FILTERABLE, Boolean.valueOf(column.filterable()));
+			columnState.put(COLUMN_FILTER_ACTIVE, Boolean.valueOf(isFilterActive(column.name())));
 			columnState.put(COLUMN_GROUPABLE, Boolean.valueOf(groupable.contains(column.name())));
+			columnState.put(COLUMN_PINNED_END, Boolean.valueOf(column.pinnedEnd()));
 			columns.add(columnState);
 		}
 		putState(COLUMNS, columns);

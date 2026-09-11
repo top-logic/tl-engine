@@ -163,6 +163,8 @@ public class DefaultTableView<R> implements TableView<R> {
 		if (_store != null && _id != null) {
 			restore();
 		}
+		pinColumns();
+		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
 		if (_filterStore != null && _id != null) {
 			_savedFilters.addAll(_filterStore.load(_id, filterCodec()));
 		}
@@ -310,9 +312,55 @@ public class DefaultTableView<R> implements TableView<R> {
 				column.sort().isPresent(),
 				column.filter().isPresent(),
 				frozen,
+				column.pinnedEnd(),
 				sortDirection(name),
 				sortPriority(name)));
 			index++;
+		}
+		return result;
+	}
+
+	/**
+	 * Puts the columns {@link Column#pinnedEnd() pinned} to the end of the table behind all others,
+	 * keeping the order of the rest.
+	 *
+	 * <p>
+	 * Called whenever the column order is set from outside - by the caller, by a restored
+	 * personalization, by a column selection - so that the displayed order it establishes holds for
+	 * every consumer: {@link #columns()} lists a pinned column last, and the
+	 * {@link #frozenColumnCount() frozen prefix} counts none of them. A pinned column is always
+	 * displayed; a state hiding it shows it again.
+	 * </p>
+	 */
+	private void pinColumns() {
+		List<String> pinned = new ArrayList<>();
+		for (Map.Entry<String, Column<R, ?>> entry : _columns.entrySet()) {
+			if (entry.getValue().pinnedEnd()) {
+				pinned.add(entry.getKey());
+			}
+		}
+		if (pinned.isEmpty()) {
+			return;
+		}
+		List<String> order = _state.getColumnOrder();
+		order.removeAll(pinned);
+		_state.getHiddenColumns().removeAll(pinned);
+		order.addAll(pinned);
+	}
+
+	/** Whether the column with the given name keeps its place at the end of the table. */
+	private boolean isPinnedEnd(String column) {
+		Column<R, ?> definition = _columns.get(column);
+		return definition != null && definition.pinnedEnd();
+	}
+
+	/** The number of displayed columns that are not pinned to the end of the table. */
+	private int unpinnedCount() {
+		int result = 0;
+		for (String name : _state.getColumnOrder()) {
+			if (!isPinnedEnd(name)) {
+				result++;
+			}
 		}
 		return result;
 	}
@@ -638,6 +686,12 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	@Override
 	public void group(GroupSpec spec) {
+		for (String name : spec.columns()) {
+			if (isPinnedEnd(name)) {
+				// A pinned column carries what acts on a row, not a value the rows are bucketed by.
+				return;
+			}
+		}
 		_state.setGrouping(spec);
 		_source.withGrouping(spec);
 		persist();
@@ -648,11 +702,13 @@ public class DefaultTableView<R> implements TableView<R> {
 	public void moveColumn(String column, int toIndex) {
 		List<String> order = _state.getColumnOrder();
 		int from = order.indexOf(column);
-		if (from < 0) {
+		if (from < 0 || isPinnedEnd(column)) {
 			return;
 		}
 		order.remove(from);
-		order.add(Math.min(toIndex, order.size()), column);
+		// The columns pinned to the end trail the order, and a column moved to the very right lands
+		// in front of them.
+		order.add(Math.min(toIndex, unpinnedCount()), column);
 		persist();
 		fireColumnsChanged();
 	}
@@ -683,9 +739,10 @@ public class DefaultTableView<R> implements TableView<R> {
 			}
 		}
 		_state.setHiddenColumns(hidden);
+		pinColumns();
 		// A column that was frozen may have been hidden or moved out of the frozen range; the
 		// frozen prefix can never reach beyond the columns that are left.
-		_state.setFrozenCount(Math.min(_state.getFrozenCount(), order.size()));
+		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
 		searchScopeChanged();
 		persist();
 		fireColumnsChanged();
@@ -739,6 +796,9 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	@Override
 	public void resizeColumn(String column, int width) {
+		if (isPinnedEnd(column)) {
+			return;
+		}
 		_state.getWidths().put(column, width);
 		persist();
 		fireColumnsChanged();
@@ -746,10 +806,14 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	@Override
 	public void setColumnVisible(String column, boolean visible) {
+		if (isPinnedEnd(column)) {
+			return;
+		}
 		List<String> order = _state.getColumnOrder();
 		boolean present = order.contains(column);
 		if (visible && !present) {
-			order.add(column);
+			// In front of the columns pinned to the end, which trail the order.
+			order.add(unpinnedCount(), column);
 			_state.getHiddenColumns().remove(column);
 		} else if (!visible && present) {
 			order.remove(column);

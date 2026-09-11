@@ -74,6 +74,12 @@ interface ColumnState {
   filterable?: boolean;
   filterActive?: boolean;
   groupable?: boolean;
+  /**
+   * Whether the column keeps its place at the end of the table: rendered behind all others, fixed
+   * to the right edge while the table scrolls, and beyond the user's arrangement - it can neither
+   * be moved, hidden, frozen nor resized.
+   */
+  pinnedEnd?: boolean;
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -299,6 +305,28 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     return offsets;
   }, [columns, frozenColumnCount, isMulti, checkboxWidth, getColWidth]);
 
+  // The index of the last column the user arranges - the one that grows into the space left over,
+  // since the pinned columns keep their width. -1 while every column is pinned.
+  const lastUnpinnedIdx = React.useMemo(
+    () => columns.reduce((last, col, i) => (col.pinnedEnd ? last : i), -1),
+    [columns]);
+
+  // How far the right edge of a pinned cell stays from the right edge of the table: the widths of
+  // the pinned columns behind it. The reserve the row ends with is added where the cells are
+  // rendered - it differs between the header and the body.
+  const pinnedOffsets = React.useMemo(() => {
+    const offsets = columns.map(() => 0);
+    let right = 0;
+    for (let i = columns.length - 1; i >= 0; i--) {
+      if (!columns[i].pinnedEnd) {
+        continue;
+      }
+      offsets[i] = right;
+      right += getColWidth(columns[i]);
+    }
+    return offsets;
+  }, [columns, getColWidth]);
+
   // Where the frozen area ends, measured from the left edge of the table: the frozen cells stick to
   // that edge, so this is a fixed position independent of the horizontal scroll offset.
   const frozenWidth = React.useMemo(() => {
@@ -425,7 +453,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, []);
 
   const handleDragOver = React.useCallback((columnName: string, event: React.DragEvent) => {
-    if (!dragColumnRef.current || dragColumnRef.current === columnName) {
+    if (!dragColumnRef.current || dragColumnRef.current === columnName
+        || columns.find((c) => c.name === columnName)?.pinnedEnd) {
       setDragOver(null);
       return;
     }
@@ -434,7 +463,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
     const side = (event.clientX < rect.left + rect.width / 2) ? 'left' : 'right';
     setDragOver({ column: columnName, side });
-  }, []);
+  }, [columns]);
 
   const handleDrop = React.useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -721,9 +750,14 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     const areaWidth = area.clientWidth;
     const options: { x: number; count: number }[] = [{ x: 0, count: 0 }];
     header.querySelectorAll<HTMLElement>('[data-col-idx]').forEach((cell) => {
+      const colIdx = Number(cell.dataset.colIdx);
+      if (columns[colIdx]?.pinnedEnd) {
+        // A pinned column is fixed to the other edge: the frozen area never reaches it.
+        return;
+      }
       const x = cell.getBoundingClientRect().right - area.getBoundingClientRect().left;
       if (x > 0 && x <= areaWidth) {
-        options.push({ x, count: Number(cell.dataset.colIdx) + 1 });
+        options.push({ x, count: colIdx + 1 });
       }
     });
 
@@ -744,7 +778,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     };
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
-  }, [frozenWidth, frozenColumnCount, sendCommand]);
+  }, [columns, frozenWidth, frozenColumnCount, sendCommand]);
 
   // Close context menu on outside click; Escape is handled by the shared keyboard dispatcher.
   React.useEffect(() => {
@@ -1037,7 +1071,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           )}
           {columns.map((col, colIdx) => {
             const w = getColWidth(col);
-            const isLast = colIdx === columns.length - 1;
             let cellClass = 'tlTableView__headerCell';
             if (col.sortable) cellClass += ' tlTableView__headerCell--sortable';
             if (dragOver && dragOver.column === col.name) {
@@ -1047,6 +1080,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             const isFrozenLast = colIdx === frozenColumnCount - 1;
             if (isFrozen) cellClass += ' tlTableView__headerCell--frozen';
             if (isFrozenLast) cellClass += ' tlTableView__headerCell--frozenLast';
+            const isPinned = !!col.pinnedEnd;
+            if (isPinned) cellClass += ' tlTableView__headerCell--pinnedEnd';
+            if (isPinned && colIdx === lastUnpinnedIdx + 1) {
+              cellClass += ' tlTableView__headerCell--pinnedEndFirst';
+            }
             return (
               <div
                 key={col.name}
@@ -1054,10 +1092,19 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 data-col-idx={colIdx}
                 style={{
                   width: w, minWidth: w,
-                  position: isFrozen ? 'sticky' as const : 'relative' as const,
+                  position: isFrozen || isPinned ? 'sticky' as const : 'relative' as const,
                   ...(isFrozen ? { left: frozenOffsets[colIdx], zIndex: 2 } : {}),
+                  // The header ends with the reserve the body's scrollbar and the column button
+                  // take, so its cells stick that much further from the right edge than the body's
+                  // - which is what puts a heading above its column at every scroll position.
+                  ...(isPinned
+                    ? {
+                      right: pinnedOffsets[colIdx] + buttonReserve + scrollbarWidth,
+                      zIndex: 2,
+                    }
+                    : {}),
                 }}
-                draggable={true}
+                draggable={!isPinned}
                 onClick={col.sortable ? (e) => handleSort(col.name, col.sortDirection, e) : undefined}
                 onContextMenu={(e) => handleColumnContextMenu(colIdx, e)}
                 onDragStart={(e) => handleDragStart(col.name, e)}
@@ -1094,10 +1141,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     )}
                   </span>
                 )}
-                <div
-                  className="tlTableView__resizeHandle"
-                  onMouseDown={(e) => handleResizeStart(col.name, w, e)}
-                />
+                {!isPinned && (
+                  <div
+                    className="tlTableView__resizeHandle"
+                    onMouseDown={(e) => handleResizeStart(col.name, w, e)}
+                  />
+                )}
               </div>
             );
           })}
@@ -1106,8 +1155,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             style={{ flex: '0 0 0', minHeight: '100%' }}
             onDragOver={(e) => {
               if (!dragColumnRef.current) return;
-              if (columns.length > 0) {
-                const lastCol = columns[columns.length - 1];
+              if (lastUnpinnedIdx >= 0) {
+                const lastCol = columns[lastUnpinnedIdx];
                 if (lastCol.name !== dragColumnRef.current) {
                   e.preventDefault();
                   e.dataTransfer.dropEffect = 'move';
@@ -1205,12 +1254,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               )}
               {columns.map((col, colIdx) => {
                 const w = getColWidth(col);
-                const isLast = colIdx === columns.length - 1;
                 const isFrozen = colIdx < frozenColumnCount;
                 const isFrozenLast = colIdx === frozenColumnCount - 1;
                 let cellClass = 'tlTableView__cell';
                 if (isFrozen) cellClass += ' tlTableView__cell--frozen';
                 if (isFrozenLast) cellClass += ' tlTableView__cell--frozenLast';
+                const isPinned = !!col.pinnedEnd;
+                if (isPinned) cellClass += ' tlTableView__cell--pinnedEnd';
+                if (isPinned && colIdx === lastUnpinnedIdx + 1) {
+                  cellClass += ' tlTableView__cell--pinnedEndFirst';
+                }
                 const isTreeColumn = treeMode && colIdx === 0;
                 const treeDepth = row.treeDepth ?? 0;
                 return (
@@ -1220,10 +1273,19 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     data-row={row.id}
                     data-col={col.name}
                     style={{
-                      ...(isLast && !isFrozen
+                      // The last column the user arranges takes the space left over; a pinned
+                      // column keeps its width, so the space stays in front of it.
+                      ...(colIdx === lastUnpinnedIdx && !isFrozen
                         ? { flex: '1 0 auto', minWidth: w }
                         : { width: w, minWidth: w }),
                       ...(isFrozen ? { position: 'sticky' as const, left: frozenOffsets[colIdx], zIndex: 2 } : {}),
+                      ...(isPinned
+                        ? {
+                          position: 'sticky' as const,
+                          right: pinnedOffsets[colIdx] + buttonReserve,
+                          zIndex: 2,
+                        }
+                        : {}),
                     }}
                   >
                     {isTreeColumn ? (
@@ -1270,7 +1332,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           style={{ position: 'fixed', top: contextMenu.y, left: contextMenu.x, zIndex: 10000 }}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          {contextMenu.colIdx + 1 !== frozenColumnCount && (
+          {contextMenu.colIdx + 1 !== frozenColumnCount
+              && !columns[contextMenu.colIdx]?.pinnedEnd && (
             <button type="button" className="tlMenu__item" role="menuitem" onClick={handleFreezeUpTo}>
               <span className="tlMenu__label">{i18n['js.table.freezeUpTo']}</span>
             </button>

@@ -51,6 +51,14 @@ A `<table>` buckets its rows by the value of one column: one collapsible header 
 - Grouping is offered for the columns the user may choose at all (the `columnOptions()`, i.e. the selectable ones): an action column carries the row itself and would yield one group per row.
 - Demo: *Object list* (`tickets.view.xml`) groups its first ticket list by status and leaves the second flat; *Attributes → Table* starts ungrouped and is grouped from the header menu.
 
+## Pinned columns
+
+`Column.pinnedEnd()` keeps a column at the end of the table: it is rendered behind every other column and stays fixed to the right edge while the table scrolls horizontally — the place for what acts on a row (the per-row buttons) rather than for what the row *is*. `DefaultColumn.builder(name, value).pinnedEnd(true)` is how a column author asks for it; there is no `.view.xml` attribute.
+
+- A pinned column is the table's own, not part of the arrangement the user makes: it is neither `frozenEligible()` nor `selectable()` (`DefaultColumn` enforces both, whatever they are set to), so the column selection does not offer it, `setColumnOrder` / `moveColumn` leave it where it is, `resizeColumn` and `setColumnVisible` decline it, the frozen prefix counts only the columns in front of it, and the rows cannot be grouped by it.
+- `DefaultTableView` normalizes the column order whenever it is set — by the caller, by a restored personalization, by a column selection — so the pinned columns trail it. Every consumer sees that one order: `columns()` lists them last with `ColumnView.pinnedEnd()` set, and `frozenColumnCount()` never reaches into them.
+- `TableViewControl` pushes the flag as the per-column `pinnedEnd` state. The client (`TLTableView.tsx`) renders such a cell `position: sticky` with a `right` offset of the widths of the pinned columns behind it plus the reserve the row ends with — the column button's width in the body, that plus the measured scrollbar width in the header, which has no vertical scrollbar of its own. The last *unpinned* column is the one growing into space left over; a pinned cell keeps its width, offers no resize handle and no drag, and the header menu offers it neither the freeze boundary nor a grouping.
+
 ## Drill-down navigation with `<tile-stack>`
 
 `com.top_logic.layout.view.tiles` provides drill-down navigation. A `<tile-stack path="navPath" initial="products/overview.view.xml"/>` displays the last frame of a path of `TileFrame`s, the `initial` view when the path is empty, and keeps the frames the displayed one covers (see below). The path itself lives on a normal channel of the enclosing view (`List<TileFrame>`), which is the single source of truth: every navigation is a write to that channel.

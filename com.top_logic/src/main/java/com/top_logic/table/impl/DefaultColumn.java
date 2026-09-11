@@ -56,6 +56,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final boolean _selectable;
 
+	private final boolean _pinnedEnd;
+
 	private final Function<? super R, String> _css;
 
 	private final CellExistence<R> _existence;
@@ -71,8 +73,11 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		_filter = builder._filter;
 		_aggregate = builder._aggregate;
 		_width = builder._width;
-		_frozenEligible = builder._frozenEligible;
-		_selectable = builder._selectable;
+		_pinnedEnd = builder._pinnedEnd;
+		// A pinned column is the table's own: it sits at the end whatever the user arranges, and it
+		// is visible there at every scroll position already.
+		_frozenEligible = builder._frozenEligible && !_pinnedEnd;
+		_selectable = builder._selectable && !_pinnedEnd;
 		_css = builder._css;
 		_existence = builder._existence;
 	}
@@ -137,6 +142,11 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public boolean pinnedEnd() {
+		return _pinnedEnd;
+	}
+
+	@Override
 	public String cssClass(R row) {
 		return _css == null ? null : _css.apply(row);
 	}
@@ -189,6 +199,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		boolean _frozenEligible = true;
 
 		boolean _selectable = true;
+
+		boolean _pinnedEnd;
 
 		Function<? super R, String> _css;
 
@@ -278,6 +290,21 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 */
 		public Builder<R, V> selectable(boolean selectable) {
 			_selectable = selectable;
+			return this;
+		}
+
+		/**
+		 * Sets whether the column keeps its place at the end of the table.
+		 *
+		 * <p>
+		 * A pinned column is neither {@link #frozenEligible(boolean) frozen} nor
+		 * {@link #selectable(boolean) selectable}, whatever those are set to.
+		 * </p>
+		 *
+		 * @see Column#pinnedEnd()
+		 */
+		public Builder<R, V> pinnedEnd(boolean pinnedEnd) {
+			_pinnedEnd = pinnedEnd;
 			return this;
 		}
 

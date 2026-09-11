@@ -3106,6 +3106,34 @@ button.tlMenu__item--disabled:hover {
 	clip-path: inset(0 -4px 0 0);
 }
 
+/* -- Columns pinned to the end of the table --
+   They stick to the right edge while the columns in front of them scroll past underneath, so their
+   background is opaque, exactly like a frozen column's. */
+
+.tlTableView__headerCell--pinnedEnd,
+.tlTableView__cell--pinnedEnd {
+	background: var(--layer-01, #fff);
+}
+
+.tlTableView__row:hover .tlTableView__cell--pinnedEnd {
+	background: var(--layer-hover, #e8e8e8);
+}
+
+.tlTableView__row--selected .tlTableView__cell--pinnedEnd {
+	background: var(--layer-selected);
+}
+
+.tlTableView__row--selected:hover .tlTableView__cell--pinnedEnd {
+	background: var(--layer-selected-hover);
+}
+
+/* The leftmost of the pinned cells carries the shadow marking the edge the columns pass under. */
+.tlTableView__headerCell--pinnedEndFirst,
+.tlTableView__cell--pinnedEndFirst {
+	box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+	clip-path: inset(0 0 0 -4px);
+}
+
 /* Grip to drag the boundary of the frozen area to another column. Sits above the sticky header cells
    (z-index 2) and stops at the header's bottom border, so the line below it stays unbroken. When no
    column is frozen, the grip waits at the left edge of the table, where it can pull a frozen area

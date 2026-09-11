@@ -8,8 +8,10 @@ package test.com.top_logic.basic.config.constraint;
 import static test.com.top_logic.basic.BasicTestCase.*;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
@@ -20,6 +22,7 @@ import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.Name;
@@ -34,7 +37,9 @@ import com.top_logic.basic.config.constraint.annotation.I18NConstants;
 import com.top_logic.basic.config.constraint.annotation.OverrideConstraints;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.config.constraint.check.ConstraintFailure;
+import com.top_logic.basic.config.constraint.impl.MandatoryIfUnset;
 import com.top_logic.basic.config.constraint.impl.Negative;
+import com.top_logic.basic.config.constraint.impl.OnlySetIfUnset;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.util.ResKey;
 
@@ -143,6 +148,27 @@ public class TestConstraintChecker extends AbstractTypedConfigurationTestCase {
 		void setValue(int newValue);
 	}
 
+	public interface Alternatives extends ConfigurationItem {
+
+		String FIRST = "first";
+
+		String SECOND = "second";
+
+		@Name(FIRST)
+		@Constraint(value = OnlySetIfUnset.class, args = @Ref(SECOND))
+		@Constraint(value = MandatoryIfUnset.class, args = @Ref(SECOND))
+		String getFirst();
+
+		void setFirst(String value);
+
+		@Name(SECOND)
+		@Constraint(value = OnlySetIfUnset.class, args = @Ref(FIRST))
+		String getSecond();
+
+		void setSecond(String value);
+
+	}
+
 	public void testComparison() throws ConfigurationException {
 		A a1 = TypedConfiguration.newConfigItem(A.class);
 		a1.setX(0);
@@ -208,6 +234,57 @@ public class TestConstraintChecker extends AbstractTypedConfigurationTestCase {
 				false,
 				TypedConfiguration.getConfigurationDescriptor(C.class).getProperty(C.Y), com.top_logic.basic.config.constraint.impl.I18NConstants.NEGATIVE_VALUE_EXPECTED)),
 			checker.getFailures());
+	}
+
+	public void testMandatoryIfUnset() throws ConfigurationException {
+		Alternatives none = TypedConfiguration.newConfigItem(Alternatives.class);
+
+		assertEquals("Neither alternative is given.",
+			list(new ConstraintFailure(none, false, property(Alternatives.FIRST),
+				com.top_logic.basic.config.constraint.impl.I18NConstants.MUST_BE_SET_IF_OTHERS_ARE_UNSET__OTHERS
+					.fill(list(ResKey.text(Alternatives.SECOND))))),
+			failures(none));
+
+		Alternatives first = TypedConfiguration.newConfigItem(Alternatives.class);
+		first.setFirst("x");
+		assertEquals("The annotated property itself is given.", list(), failures(first));
+
+		Alternatives second = TypedConfiguration.newConfigItem(Alternatives.class);
+		second.setSecond("y");
+		assertEquals("The referenced alternative is given.", list(), failures(second));
+	}
+
+	public void testOnlyOneOfTwoAlternatives() throws ConfigurationException {
+		Alternatives both = TypedConfiguration.newConfigItem(Alternatives.class);
+		both.setFirst("x");
+		both.setSecond("y");
+
+		List<ConstraintFailure> failures = failures(both);
+
+		assertEquals("Each alternative reports the other one.", 2, failures.size());
+		assertEquals(set(Alternatives.FIRST, Alternatives.SECOND),
+			failures.stream().map(failure -> failure.getContextProperty().getPropertyName())
+				.collect(Collectors.toSet()));
+		for (ConstraintFailure failure : failures) {
+			assertEquals(
+				com.top_logic.basic.config.constraint.impl.I18NConstants.MUST_ONLY_BE_SET_IF_OTHER_IS_UNSET__OTHER
+					.fill(ResKey.text(other(failure.getContextProperty().getPropertyName()))),
+				failure.getConstraintName());
+		}
+	}
+
+	private static String other(String propertyName) {
+		return Alternatives.FIRST.equals(propertyName) ? Alternatives.SECOND : Alternatives.FIRST;
+	}
+
+	private static PropertyDescriptor property(String name) {
+		return TypedConfiguration.getConfigurationDescriptor(Alternatives.class).getProperty(name);
+	}
+
+	private static List<ConstraintFailure> failures(ConfigurationItem item) throws ConfigurationException {
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(item);
+		return checker.getFailures();
 	}
 
 	public void testInstanceFormat() throws ConfigurationException {

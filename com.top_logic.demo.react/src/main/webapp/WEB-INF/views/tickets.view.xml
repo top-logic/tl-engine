@@ -146,8 +146,8 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
-							<switch test="t -> $t.get(`demo.tickets:Ticket#status`)">
-								<case value="demo.tickets:TicketStatus#closed">
+							<switch value="t -> $t.get(`demo.tickets:Ticket#status`)">
+								<case match="`demo.tickets:TicketStatus#closed`">
 									<with-transaction>
 										<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
 									</with-transaction>

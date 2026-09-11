@@ -61,7 +61,7 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 			// onComplete advances to the next file once this file's chain settles (success or
 			// abort), so a suspended <confirm> dialog resolves before the next file is processed.
 			ViewActionChain.run(context, _uploadCommand.getActions(), file,
-				() -> processFile(context, files, index + 1));
+				result -> processFile(context, files, index + 1));
 		} catch (RuntimeException ex) {
 			Logger.error("Upload failed for file '" + file.getName() + "'.", ex, ViewUploadCommandModel.class);
 			processFile(context, files, index + 1);

@@ -47,7 +47,15 @@
 					<property name="content"
 						mandatory="true"
 						type="tl.model.wysiwyg:Html"
-					/>
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">
+									<object-link dialog-view="tickets/reference-ticket.view.xml"/>
+								</impl>
+							</input-control>
+						</annotations>
+					</property>
 					<reference name="author"
 						kind="forwards"
 						type="tl.accounts:Person"

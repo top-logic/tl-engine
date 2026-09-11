@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Picks the project ticket a comment refers to. Inserting appends a link to that ticket to the
-	comment being written: the draft is replaced by one whose content ends with the link, so the
-	composer's form shows the new content. The link is written exactly as displayed structured
-	text expects it, so the posted comment offers it as a link to the ticket.
+	Picks the project ticket a comment refers to and publishes it on the result channel. The
+	editor the dialog was opened from inserts a link to that ticket at the cursor of the comment
+	being written.
 -->
 <view>
 	<channels>
-		<channel name="draft"/>
 		<channel name="ticket"/>
 		<channel name="result"/>
 	</channels>
@@ -42,11 +40,6 @@
 					<executability>
 						<null-input-disabled/>
 					</executability>
-					<execute-script function="draft -> ticket -> { next = $draft.copy(transient: true); $next.set(`demo.tickets:Comment#content`, htmlText(htmlSource($draft.get(`demo.tickets:Comment#content`)) + &quot;&lt;p>&quot; + htmlObjectLink($ticket) + &quot;&lt;/p>&quot;)); $next; }">
-						<inputs>
-							<input channel="draft"/>
-						</inputs>
-					</execute-script>
 					<write-channel name="result"/>
 					<close-dialog/>
 				</action>

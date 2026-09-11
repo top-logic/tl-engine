@@ -9,9 +9,24 @@ import * as Separator from '@radix-ui/react-separator';
 // Types
 // ---------------------------------------------------------------------------
 
+/** The button inserting a link to an application object, as the server describes it. */
+export interface ObjectLinkButton {
+  /** The text of the button. */
+  label: string;
+
+  /** The icon class of the button. */
+  icon: string;
+}
+
 interface ToolbarProps {
   editor: Editor | null;
   onImageUpload: () => void;
+
+  /** How to offer inserting an object link, or null where the editor inserts none. */
+  objectLink: ObjectLinkButton | null;
+
+  /** Asks for the object a link is inserted for. */
+  onInsertObjectLink: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -330,7 +345,7 @@ const LinkPopover: React.FC<{ editor: Editor; labels: Record<string, string> }> 
 // Main Toolbar
 // ---------------------------------------------------------------------------
 
-const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload }) => {
+const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, objectLink, onInsertObjectLink }) => {
   const labels = useI18N(ALL_I18N_KEYS);
 
   if (!editor) return null;
@@ -392,6 +407,13 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload }) => {
 
         {/* Link, Image, Table */}
         <LinkPopover editor={editor} labels={labels} />
+        {objectLink && (
+          <ToolbarButton
+            icon={objectLink.icon}
+            tooltip={objectLink.label}
+            onClick={onInsertObjectLink}
+          />
+        )}
         <ToolbarButton
           icon="ri-image-line"
           tooltip={t(labels, 'image')}

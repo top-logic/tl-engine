@@ -103,4 +103,16 @@ Every control that shows one of several children implements `com.top_logic.layou
 - **`<show-object/>`** (`ShowObjectAction`) in a `<generic-command>` chain shows the chain's input object and passes it on; no input passes through unchanged; a selection of exactly one object shows that object. `<generic-command input="selection"><show-object/></generic-command>` is the whole configuration of a "go to" button. Java code calls `ObjectNavigation.show(context, object, continuation)`.
 - **`ReactContext.getObjectNavigator()`** (`com.top_logic.layout.react.navigation.ObjectNavigator`: `canShow(value)`, `show(context, value)`) is the seam for controls in `com.top_logic.layout.react`, which cannot depend on the view layer; the view layer answers it with `DisplayTargetNavigator`. Through it, **object values displayed read-only are links automatically** wherever a target exists for their type: `ReactResourceCellControl` (tree nodes via `MetaResourceControlProvider`, and any cell built with `useLink`), the read-only values of `ReactDropdownSelectControl` (which is what reference attributes in `<table>` cells and view-mode `<form>` fields render as), and `tlObject` anchors in read-only structured text (`ReactWysiwygControl`, command `showObjectLink`, resolved with `TLObjectLinkUtil` like the classic `OpenTLObjectLink`). The TL-Script functions `htmlObjectLink(object, label)`, `htmlSource(content)` and `htmlText(source)` (`HtmlFunctions` in `com.top_logic.layout.wysiwyg`) write such an anchor and read or write the HTML source of a structured-text attribute, e.g. to append an object reference to a comment.
 
-The demo (`com.top_logic.demo.react`): the *Projects* drill-down (project → milestone → ticket → detail) with targets for its types in `demoReactConf.config.xml`, the contributor dialog target, `tl.accounts:Person` shown in the tiles demo, and the object-list comments' "Reference ticket…" command inserting an object link.
+- **The WYSIWYG editor inserts a link to an object picked in a dialog.** A `tl.model.wysiwyg:Html` attribute annotated with
+
+  ```xml
+  <input-control>
+    <impl class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">
+      <object-link dialog-view="tickets/reference-ticket.view.xml"/>
+    </impl>
+  </input-control>
+  ```
+
+  gets a toolbar button next to the URL link button. Clicking it opens `dialog-view` (a path relative to `/WEB-INF/views/`, like `<open-dialog dialog-view=…>`) as a dialog, with the editor's own channel bound to the name `result-channel` gives — `result` unless configured otherwise. The dialog picks whatever it likes in whatever way it likes (a table, a search, a tree) and publishes the chosen object on that channel: `<generic-command input="ticket"><write-channel name="result"/><close-dialog/></generic-command>` is the whole contract. As soon as an object appears there, `ReactWysiwygControl` writes the `tlObject` anchor `TLObjectLinkUtil` produces and the client inserts it at the cursor; the editor then reports the resulting markup, which closes the dialog if it has not closed itself. Without the `object-link` option the editor has no such button.
+
+The demo (`com.top_logic.demo.react`): the *Projects* drill-down (project → milestone → ticket → detail) with targets for its types in `demoReactConf.config.xml`, the contributor dialog target, `tl.accounts:Person` shown in the tiles demo, and the object-list comments, whose editor references a project ticket through `tickets/reference-ticket.view.xml`.

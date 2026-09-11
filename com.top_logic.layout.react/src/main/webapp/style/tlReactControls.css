@@ -187,36 +187,36 @@ button.tlReactButton--icon:disabled {
 /* The panel-toolbar buttons inherit the default (secondary) button styling:
    the panel header is now a light surface, so no on-accent inversion is needed. */
 
-/* --- TLToggleButton (active state) -------------------------------------- */
+/* --- Active button: a pressed toggle, or the chosen alternative --------- */
 
-.tlReactButton.tlReactButtonActive {
+.tlReactButton.tlReactButton--active {
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:hover {
+button.tlReactButton.tlReactButton--active:hover {
 	background: var(--button-primary-hover);
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:focus {
+button.tlReactButton.tlReactButton--active:focus {
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:focus-visible {
+button.tlReactButton.tlReactButton--active:focus-visible {
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary), 0 0 0 2px var(--focus-inset);
 	outline: 2px solid var(--focus);
 	outline-offset: 2px;
 }
 
-button.tlReactButton.tlReactButtonActive:active {
+button.tlReactButton.tlReactButton--active:active {
 	background: var(--button-primary-active);
 	color: var(--text-on-color);
 }
 
-button.tlReactButton.tlReactButtonActive:disabled {
+button.tlReactButton.tlReactButton--active:disabled {
 	background: var(--button-disabled);
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 	color: var(--text-on-color-disabled);
@@ -2581,10 +2581,27 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-disabled);
 }
 
+/* The entry whose command is in force, e.g. the current theme among the offered ones. */
+.tlMenu__item--active {
+	font-weight: 600;
+}
+
 .tlMenu__separator {
 	border: none;
 	border-top: 1px solid var(--border-subtle);
 	margin: var(--spacing-02) var(--spacing-04);
+}
+
+/* A caption above a group of entries: set in the secondary text colour and a smaller size so it
+   reads as a heading of the entries rather than as one of them. */
+.tlMenu__header {
+	padding: var(--spacing-02) var(--spacing-04) var(--spacing-01);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	color: var(--text-secondary);
+	white-space: nowrap;
+	cursor: default;
+	user-select: none;
 }
 
 .tlMenu__icon {
@@ -2813,11 +2830,12 @@ button.tlMenu__item--disabled:hover {
 	cursor: default;
 }
 
-/* The header row with the column selection button over its right edge, above the body's vertical
-   scrollbar. The button must not take width from the header: a header narrower than the body keeps
-   its last 2rem permanently out of view, so the last column's heading stays cut off however far the
-   user scrolls. Overlaying instead keeps every heading complete; only while the table is scrolled
-   fully right does the button cover the tail of the last column - which is why it is opaque. */
+/* The header row, with the column selection button over its right edge above the body's vertical
+   scrollbar wherever no pinned column offers it a heading of its own. The button must not take
+   width from the header: a header narrower than the body keeps its last 2rem permanently out of
+   view, so the last column's heading stays cut off however far the user scrolls. Overlaying instead
+   keeps every heading complete; only while the table is scrolled fully right does the button cover
+   the tail of the last column - which is why it is opaque. */
 .tlTableView__headerArea {
 	position: relative;
 	display: flex;
@@ -2857,6 +2875,16 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-primary, #161616);
 }
 
+/* In the heading of the rightmost pinned column the button is part of that cell: it takes the
+   cell's own background (which follows hover and selection) and centers in the column's width,
+   leaving the columns the full table width. */
+.tlTableView__columnsButton--inCell {
+	position: static;
+	margin: 0 auto;
+	height: 2rem;
+	background: transparent;
+}
+
 .tlTableView__headerRow {
 	display: flex;
 }
@@ -2888,10 +2916,18 @@ button.tlMenu__item--disabled:hover {
 	background: var(--layer-hover, #e8e8e8);
 }
 
+/* The only part of a heading that gives way when the column is narrower than its content: the
+   label ends in an ellipsis, so the funnel, the sort mark and the resize handle stay reachable. */
 .tlTableView__headerLabel {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	min-width: 0;
+}
+
+/* Opens the column's filter. Keeps its room next to a label that is running out of it. */
+.tlTableView__filterButton {
+	flex-shrink: 0;
 }
 
 .tlTableView__sortIndicator {
@@ -2944,6 +2980,42 @@ button.tlMenu__item--disabled:hover {
 
 .tlTableView__row--selected:hover {
 	background: var(--layer-selected-hover);
+}
+
+/* The row the keyboard cursor is on. The ring is drawn on the cells rather than on the row itself:
+   the frozen and the pinned cells are sticky and opaque, so they would paint over a ring belonging
+   to the row, leaving it visible only in the part that scrolls. Every cell carries the top and the
+   bottom edge, the first and the last cell of the row close it at the sides. Inset shadows keep the
+   cells' size, so no row moves as the cursor passes. */
+.tlTableView__row--cursor .tlTableView__cell {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus);
+}
+
+.tlTableView__row--cursor .tlTableView__cell:first-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset 2px 0 0 var(--focus);
+}
+
+.tlTableView__row--cursor .tlTableView__cell:last-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset -2px 0 0 var(--focus);
+}
+
+/* The cells marking the edge of the frozen and of the pinned area keep the shadow that marks it. */
+.tlTableView__row--cursor .tlTableView__cell--frozenLast {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), 2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.tlTableView__row--cursor .tlTableView__cell--frozenLast:first-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset 2px 0 0 var(--focus),
+		2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.tlTableView__row--cursor .tlTableView__cell--pinnedEndFirst {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), -2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.tlTableView__row--cursor .tlTableView__cell--pinnedEndFirst:last-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset -2px 0 0 var(--focus),
+		-2px 0 4px rgba(0, 0, 0, 0.1);
 }
 
 .tlTableView__cell {
@@ -3059,6 +3131,12 @@ button.tlMenu__item--disabled:hover {
 	z-index: 1;
 }
 
+/* The heading in front of the first pinned one keeps its handle inside the cell: the pinned
+   heading sticks above it (z-index 2) and would swallow the 2px reaching across the border. */
+.tlTableView__headerCell:has(+ .tlTableView__headerCell--pinnedEndFirst) .tlTableView__resizeHandle {
+	right: 0;
+}
+
 .tlTableView__resizeHandle:hover,
 .tlTableView__resizeHandle:active {
 	background: var(--interactive, #0f62fe);
@@ -3104,6 +3182,63 @@ button.tlMenu__item--disabled:hover {
 .tlTableView__cell--frozenLast {
 	box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
 	clip-path: inset(0 -4px 0 0);
+}
+
+/* -- Columns pinned to the end of the table --
+   They stick to the right edge while the columns in front of them scroll past underneath, so their
+   background is opaque, exactly like a frozen column's. */
+
+.tlTableView__headerCell--pinnedEnd,
+.tlTableView__cell--pinnedEnd {
+	background: var(--layer-01, #fff);
+}
+
+.tlTableView__row:hover .tlTableView__cell--pinnedEnd {
+	background: var(--layer-hover, #e8e8e8);
+}
+
+.tlTableView__row--selected .tlTableView__cell--pinnedEnd {
+	background: var(--layer-selected);
+}
+
+.tlTableView__row--selected:hover .tlTableView__cell--pinnedEnd {
+	background: var(--layer-selected-hover);
+}
+
+/* The leftmost of the pinned cells carries the shadow marking the edge the columns pass under. */
+.tlTableView__headerCell--pinnedEndFirst,
+.tlTableView__cell--pinnedEndFirst {
+	box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+	clip-path: inset(0 0 0 -4px);
+}
+
+/* -- A column offering a command on every row --
+   Its cells hold a button instead of text, so they drop the padding a text cell needs and center
+   the button in the column's width. The button goes without its frame - a column of framed buttons
+   would read as a second table beside the rows - and takes it up under the pointer and the keyboard
+   focus, where it marks what a click hits. */
+
+.tlTableView__cell.tlRowCommandCell,
+.tlTableView__headerCell.tlRowCommandCell {
+	padding: 0;
+	justify-content: center;
+}
+
+.tlTableView__cell.tlRowCommandCell .tlReactButton {
+	box-shadow: none;
+	background: transparent;
+	color: var(--icon-primary, #161616);
+}
+
+.tlTableView__cell.tlRowCommandCell button.tlReactButton:not(:disabled):hover {
+	background: var(--layer-hover, #e8e8e8);
+	box-shadow: inset 0 0 0 2px var(--button-secondary);
+}
+
+.tlTableView__cell.tlRowCommandCell button.tlReactButton:disabled {
+	background: transparent;
+	box-shadow: none;
+	color: var(--icon-disabled, var(--text-disabled, #c6c6c6));
 }
 
 /* Grip to drag the boundary of the frozen area to another column. Sits above the sticky header cells
@@ -3183,12 +3318,53 @@ button.tlMenu__item--disabled:hover {
 	flex-shrink: 0;
 }
 
+/* A group header row: the group value, its size, and the columns' aggregates. */
+.tlTableView__row--group {
+	background-color: var(--layer-accent-01, #e0e0e0);
+	font-weight: 600;
+}
+
+.tlTableView__groupCount {
+	margin-left: var(--spacing-03, 0.5rem);
+	font-weight: 400;
+	color: var(--text-secondary, #525252);
+}
+
+/* Marks the column header the rows are grouped by. */
+.tlTableView__groupMark {
+	margin-left: var(--spacing-02, 0.25rem);
+	color: var(--text-secondary, #525252);
+	flex-shrink: 0;
+}
+
 /* --- TLColumnSelect ---------------------------------------------------- */
 
 .tlColumnSelect {
 	display: flex;
 	flex-direction: column;
 	padding: var(--spacing-03, 0.5rem) 0;
+}
+
+.tlColumnSelect__groupBy {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+	border: none;
+	border-radius: var(--border-radius-sm, 2px);
+	background: none;
+	cursor: pointer;
+	color: var(--text-secondary, #525252);
+}
+
+.tlColumnSelect__groupBy:hover {
+	background-color: var(--layer-hover, rgba(0, 0, 0, 0.08));
+}
+
+.tlColumnSelect__groupBy--active {
+	color: var(--link-primary, #0f62fe);
 }
 
 .tlColumnSelect__search {

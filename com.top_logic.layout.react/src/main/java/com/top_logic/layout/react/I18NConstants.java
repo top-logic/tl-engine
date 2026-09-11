@@ -499,6 +499,30 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLUMN_SEARCH;
 
 	/**
+	 * @en Group by this column
+	 */
+	@CustomKey("js.table.groupBy")
+	public static ResKey JS_TABLE_GROUP_BY;
+
+	/**
+	 * @en Remove grouping
+	 */
+	@CustomKey("js.table.ungroup")
+	public static ResKey JS_TABLE_UNGROUP;
+
+	/**
+	 * @en The rows are grouped by this column
+	 */
+	@CustomKey("js.table.grouped")
+	public static ResKey JS_TABLE_GROUPED;
+
+	/**
+	 * @en Fit width to content
+	 */
+	@CustomKey("js.table.fitColumn")
+	public static ResKey JS_TABLE_FIT_COLUMN;
+
+	/**
 	 * @en Search
 	 */
 	@CustomKey("js.table.search")

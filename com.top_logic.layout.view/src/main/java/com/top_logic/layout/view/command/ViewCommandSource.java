@@ -5,6 +5,10 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.util.ResKey;
+
 import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -29,8 +33,30 @@ public interface ViewCommandSource {
 	 * Configuration for {@link ViewCommandSource}.
 	 */
 	interface Config<I extends ViewCommandSource> extends PolymorphicConfiguration<I> {
-		// Pure marker: an implementation declares its own properties.
+
+		/** Configuration name for {@link #getLabel()}. */
+		String LABEL = "label";
+
+		/**
+		 * The heading a menu shows above this source's entries.
+		 *
+		 * <p>
+		 * Unset, the source's own heading applies - the one naming the kind of choice it offers.
+		 * </p>
+		 */
+		@Name(LABEL)
+		@Nullable
+		ResKey getLabel();
 	}
+
+	/**
+	 * The heading a menu shows above this source's entries, or {@code null} for none.
+	 *
+	 * <p>
+	 * The configured {@link Config#getLabel() label} where there is one, else the source's own.
+	 * </p>
+	 */
+	ResKey getLabel();
 
 	/**
 	 * The commands to offer, in the order they are to appear.

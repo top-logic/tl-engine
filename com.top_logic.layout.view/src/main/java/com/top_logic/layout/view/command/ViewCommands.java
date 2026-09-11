@@ -11,8 +11,6 @@ import java.util.List;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ViewChannel;
 
 /**
  * Turns configured {@link ViewCommand}s into the {@link ViewCommandModel}s a display builds its
@@ -47,13 +45,7 @@ public class ViewCommands {
 			ViewCommand cmd = commands.get(i);
 			ViewCommand.Config cmdConfig = commandConfigs.get(i);
 
-			ChannelRef inputRef = cmdConfig.getInput();
-			ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
-
-			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
-
-			ViewCommandModel model = ViewCommandModel.create(cmd, cmdConfig, inputChannel, rule);
-			models.add(model);
+			models.add(ViewCommandModel.forCommand(context, cmd, cmdConfig));
 		}
 		return models;
 	}

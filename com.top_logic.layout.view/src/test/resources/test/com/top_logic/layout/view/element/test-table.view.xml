@@ -7,7 +7,9 @@
 	</channels>
 
 	<table
+		activation-button="false"
 		filter-bar="true"
+		group-by="owner"
 		personalization-key="test-table"
 		selection="selectedRow"
 		types="demo.test:Row"

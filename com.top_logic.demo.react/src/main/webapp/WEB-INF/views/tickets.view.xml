@@ -21,6 +21,12 @@
 	channel: the selected ticket is shown in whichever list holds it, and a ticket that moves
 	between the lists - the first comment is written, the last one deleted - leaves the
 	selection empty, because the list that showed it as selected no longer has it.
+	
+	The first list groups its tickets by status, the second one shows them flat, so both
+	presentations of the same rows are on screen at once. A group header is a collapsible row
+	standing for no ticket: clicking it collapses the group and leaves the selection alone. The
+	column header menu of either list regroups it by another column or removes the grouping, and
+	that choice is kept per user.
 -->
 <view>
 	<channels>
@@ -182,6 +188,7 @@
 							<de>Ohne Kommentare</de>
 						</title>
 						<table
+							group-by="status"
 							observed-types="demo.tickets:Ticket"
 							selection="ticket"
 							types="demo.tickets:Ticket"

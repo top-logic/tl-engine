@@ -32,9 +32,10 @@
 					<de>Konto</de>
 				</label>
 				<!--
-					Save reaches the dialog's own button bar, beside Close, because a form puts its
+					Save reaches the dialog's own button bar, beside Cancel, because a form puts its
 					commands into the enclosing scope for as long as it is displayed - and a tab
 					that is not the active one is not. The other tabs therefore do not offer it.
+					Saving closes the dialog: what was to be done here is done.
 				-->
 				<form
 					initial-edit-mode="true"
@@ -54,6 +55,7 @@
 							<with-transaction>
 								<store-form-state/>
 							</with-transaction>
+							<close-dialog/>
 						</generic-command>
 					</commands>
 				</form>
@@ -80,6 +82,30 @@
 						direction="column"
 						gap="compact"
 					>
+						<!--
+							The state of the second factor, stated rather than left to be inferred
+							from which of the two buttons below is offered. Having a second factor is
+							having a secret stored, the same condition the buttons are offered by.
+						-->
+						<switch input="account">
+							<case test="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null">
+								<text>
+									<label>
+										<en>Two-factor authentication: active</en>
+										<de>Zwei-Faktor-Authentifizierung: aktiv</de>
+									</label>
+								</text>
+							</case>
+							<default>
+								<text>
+									<label>
+										<en>Two-factor authentication: not active</en>
+										<de>Zwei-Faktor-Authentifizierung: nicht aktiv</de>
+									</label>
+								</text>
+							</default>
+						</switch>
+
 						<button>
 							<action class="com.top_logic.layout.view.command.GenericViewCommand"
 								image="css:bi bi-key"

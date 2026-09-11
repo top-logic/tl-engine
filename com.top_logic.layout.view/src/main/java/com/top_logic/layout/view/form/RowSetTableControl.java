@@ -54,6 +54,7 @@ import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
+import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Sort;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
@@ -172,6 +173,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private List<ViewChannel> _inputChannels = List.of();
 
 	private TableViewControl<TLObject> _tableControl;
+
+	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
+	private TableViewControl.ActivationHandler<TLObject> _activationHandler;
+
+	/** The grouping the table starts with, until a personalization of its own exists. */
+	private GroupSpec _grouping = GroupSpec.NONE;
+
+	/** Columns appended behind the data and action columns, see {@link #setTrailingColumns(List)}. */
+	private List<? extends Column<TLObject, ?>> _trailingColumns = List.of();
 
 	private ListRowSource<TLObject> _rowSource;
 
@@ -369,6 +379,55 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Sets the grouping the table starts with: one collapsible header row per value of the grouped
+	 * column, aggregating the other columns over its rows.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the grouping is part of the initial state of each
+	 * {@link TableViewControl} this control builds, so a grouping the user chose (and which is
+	 * persisted under the table's identity) wins over it.
+	 * </p>
+	 */
+	public void setGrouping(GroupSpec grouping) {
+		_grouping = grouping;
+	}
+
+	/**
+	 * Sets what a row activation runs - a double-click on the row, or {@code Enter} while the row
+	 * carries the keyboard cursor.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the handler is installed on each
+	 * {@link TableViewControl} this control builds.
+	 * </p>
+	 *
+	 * @see TableViewControl#setActivationHandler(TableViewControl.ActivationHandler)
+	 */
+	public void setActivationHandler(TableViewControl.ActivationHandler<TLObject> handler) {
+		_activationHandler = handler;
+	}
+
+	/**
+	 * Sets columns to append behind the ones this control builds itself.
+	 *
+	 * <p>
+	 * The hook for what a caller offers on every row - the per-row buttons of a
+	 * {@link com.top_logic.layout.view.table.RowCommandColumn}, say. The columns are appended
+	 * whenever the table is (re-)built, so they survive the switch between view and edit mode.
+	 * </p>
+	 *
+	 * <p>
+	 * To be called before {@link #init()}.
+	 * </p>
+	 *
+	 * @param columns
+	 *        The columns to append, in display order.
+	 */
+	public void setTrailingColumns(List<? extends Column<TLObject, ?>> columns) {
+		_trailingColumns = columns;
+	}
+
+	/**
 	 * The inner {@link TableViewControl}, or {@code null} if not yet initialized.
 	 */
 	public TableViewControl<TLObject> getTableControl() {
@@ -458,11 +517,14 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				.build());
 		}
 
+		columns.addAll(_trailingColumns);
+
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
 		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
 		TableViewState initialState =
 			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
+		initialState.setGrouping(_grouping);
 		if (_fixedColumns > 0) {
 			// The configured number counts data columns; a leading action column has to be added on
 			// top of it, or freezing "the first two columns" would freeze the detail button and one
@@ -487,6 +549,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 		_tableControl = new TableViewControl<>(_context, view, false);
 		_tableControl.setFilterBar(_filterBar);
+		_tableControl.setActivationHandler(_activationHandler);
 		registerChildControl(_tableControl);
 
 		// Set panel child to the table.

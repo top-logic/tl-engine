@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Tree demo: the two gestures a tree node answers, kept apart.
+	
+	A single click selects a node and writes it to the "selected" channel. A double-click - or
+	Enter on the node carrying the keyboard cursor - activates it: the node becomes the selection
+	and the tree's <on-activate> command runs with it, here writing it to the "activated" channel.
+	Both channels are displayed below the tree, so selecting and opening a node are visibly
+	different things.
+	
+	The same holds for the keyboard: the selection follows the cursor. This tree selects one node
+	at a time, so the up and down arrows, Home and End select the node they move the cursor onto,
+	while the right and left arrows expand and collapse it and step to its first child and back to
+	its parent. In a tree selecting several nodes, the plain arrows move the cursor alone, Shift
+	and an arrow grows the selected range and Space adds the cursor node to the selection or takes
+	it out again.
+	
+	The tree is rooted at the ProjectScope type and shows its instances, their milestones and the
+	tickets of each milestone.
+-->
+<view>
+	<channels>
+		<channel name="selected"/>
+		<channel name="activated"/>
+	</channels>
+	<panel>
+		<title>
+			<en>Tree Demo</en>
+			<de>Baum-Demo</de>
+		</title>
+		<tree selection="selected">
+			<root>`tl.demo.projectManagement:ProjectScope`</root>
+			<children>node -&gt; if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), list())))</children>
+			<on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
+				<write-channel name="activated"/>
+			</on-activate>
+		</tree>
+		<text>
+			<label>
+				<en>Selected node</en>
+				<de>Ausgewählter Knoten</de>
+			</label>
+		</text>
+		<text input="selected"/>
+		<text>
+			<label>
+				<en>Activated node</en>
+				<de>Aktivierter Knoten</de>
+			</label>
+		</text>
+		<text input="activated"/>
+	</panel>
+</view>

@@ -52,6 +52,9 @@ public class TestPinnedColumns extends TestCase {
 	/** The width the pinned column is defined with. */
 	private static final int ACTIONS_WIDTH = 80;
 
+	/** The CSS class the pinned column is defined with. */
+	private static final String ACTIONS_CSS_CLASS = "actionCell";
+
 	/** State key of the client's column list. */
 	private static final String COLUMNS = "columns";
 
@@ -66,6 +69,9 @@ public class TestPinnedColumns extends TestCase {
 
 	/** Per-column state key telling that the column keeps its place at the end of the table. */
 	private static final String PINNED_END = "pinnedEnd";
+
+	/** Per-column state key holding the CSS class every cell of the column carries. */
+	private static final String CSS_CLASS = "cssClass";
 
 	/**
 	 * A row business object.
@@ -171,6 +177,18 @@ public class TestPinnedColumns extends TestCase {
 	}
 
 	/**
+	 * Tests that the client is told the CSS class a column declares, and that a column declaring
+	 * none is sent without the key: the cells then carry the table's own classes only.
+	 */
+	public void testClientIsToldTheColumnCssClass() {
+		TestTable table = control();
+
+		assertEquals(ACTIONS_CSS_CLASS, columnState(table, COLUMN_ACTIONS).get(CSS_CLASS));
+		assertFalse("A column without a CSS class sends none.",
+			columnState(table, COLUMN_NAME).containsKey(CSS_CLASS));
+	}
+
+	/**
 	 * Tests that the command freezing the columns up to the pinned one freezes the ones in front of
 	 * it instead of it.
 	 */
@@ -250,6 +268,7 @@ public class TestPinnedColumns extends TestCase {
 				.build(),
 			DefaultColumn.<Item, Item> builder(COLUMN_ACTIONS, item -> item)
 				.width(ACTIONS_WIDTH)
+				.cssClass(ACTIONS_CSS_CLASS)
 				.pinnedEnd(true)
 				.build());
 	}

@@ -162,7 +162,23 @@ public interface Column<R, V> {
 	}
 
 	/**
+	 * Optional CSS class put on every cell of this column, its heading included, or {@code null}
+	 * for none.
+	 *
+	 * <p>
+	 * Describes how the column presents its cells, independently of the rows: a column holding a
+	 * button instead of text, for instance, drops the padding a text cell needs and centers its
+	 * content. What one cell looks like depending on the row it is in is {@link #cssClass(Object)}.
+	 * </p>
+	 */
+	default String cssClass() {
+		return null;
+	}
+
+	/**
 	 * Optional CSS class for a cell in the given row, or {@code null} for none.
+	 *
+	 * @see #cssClass() The class the whole column carries.
 	 */
 	default String cssClass(R row) {
 		return null;

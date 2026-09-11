@@ -58,6 +58,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final boolean _pinnedEnd;
 
+	private final String _cssClass;
+
 	private final Function<? super R, String> _css;
 
 	private final CellExistence<R> _existence;
@@ -78,6 +80,7 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		// is visible there at every scroll position already.
 		_frozenEligible = builder._frozenEligible && !_pinnedEnd;
 		_selectable = builder._selectable && !_pinnedEnd;
+		_cssClass = builder._cssClass;
 		_css = builder._css;
 		_existence = builder._existence;
 	}
@@ -147,6 +150,11 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public String cssClass() {
+		return _cssClass;
+	}
+
+	@Override
 	public String cssClass(R row) {
 		return _css == null ? null : _css.apply(row);
 	}
@@ -195,6 +203,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		Aggregator<R, V> _aggregate;
 
 		int _width = 150;
+
+		String _cssClass;
 
 		boolean _frozenEligible = true;
 
@@ -309,7 +319,19 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		}
 
 		/**
+		 * Sets the CSS class every cell of the column carries.
+		 *
+		 * @see Column#cssClass()
+		 */
+		public Builder<R, V> cssClass(String cssClass) {
+			_cssClass = cssClass;
+			return this;
+		}
+
+		/**
 		 * Sets a per-row CSS class provider.
+		 *
+		 * @see Column#cssClass(Object)
 		 */
 		public Builder<R, V> css(Function<? super R, String> css) {
 			_css = css;

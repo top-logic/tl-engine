@@ -205,6 +205,12 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 */
 	private static final String COLUMN_PINNED_END = "pinnedEnd";
 
+	/**
+	 * Per-column state key holding the {@link ColumnView#cssClass() CSS class} the client puts on
+	 * every cell of that column, its heading included. Absent for a column declaring none.
+	 */
+	private static final String COLUMN_CSS_CLASS = "cssClass";
+
 	/** State key telling the client whether to display the filter bar. */
 	private static final String FILTER_BAR = "filterBar";
 
@@ -573,6 +579,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			columnState.put(COLUMN_FILTER_ACTIVE, Boolean.valueOf(isFilterActive(column.name())));
 			columnState.put(COLUMN_GROUPABLE, Boolean.valueOf(groupable.contains(column.name())));
 			columnState.put(COLUMN_PINNED_END, Boolean.valueOf(column.pinnedEnd()));
+			if (column.cssClass() != null) {
+				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
+			}
 			columns.add(columnState);
 		}
 		putState(COLUMNS, columns);

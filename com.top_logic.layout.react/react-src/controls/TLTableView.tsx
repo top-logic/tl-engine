@@ -80,6 +80,11 @@ interface ColumnState {
    * be moved, hidden, frozen nor resized.
    */
   pinnedEnd?: boolean;
+  /**
+   * CSS class put on every cell of the column, its heading included: how the column presents its
+   * cells, e.g. a column holding a button instead of text.
+   */
+  cssClass?: string;
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -174,6 +179,30 @@ function editableInRow(
   }
   return null;
 }
+
+/**
+ * Opens the column selection. Rendered either over the right edge of the header, where it needs a
+ * strip of the header kept clear of the columns, or inside the heading of the rightmost pinned
+ * column — that heading carries no label, so the button takes no room from the columns there.
+ */
+const ColumnsButton: React.FC<{
+  title: string;
+  inCell?: boolean;
+  onClick: (event: React.MouseEvent) => void;
+}> = ({ title, inCell, onClick }) => (
+  <button
+    type="button"
+    className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')}
+    title={title}
+    aria-label={title}
+    // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
+    // button's business.
+    onMouseDown={(e) => e.stopPropagation()}
+    onClick={onClick}
+  >
+    <i className="bi bi-gear" />
+  </button>
+);
 
 const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -348,7 +377,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const handleResizeStart = React.useCallback((columnName: string, colWidth: number, event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    resizeRef.current = { column: columnName, startX: event.clientX, startWidth: colWidth };
+    // The rendered width, not the configured one: the last column grows into the space the others
+    // leave over, and starting from its configured width would snap it back the moment the drag
+    // begins. The handle sits in the heading whose width is wanted.
+    const heading = (event.currentTarget as HTMLElement).parentElement;
+    const startWidth = heading ? Math.round(heading.getBoundingClientRect().width) : colWidth;
+    resizeRef.current = { column: columnName, startX: event.clientX, startWidth };
 
     // Track latest mouse position and cumulative auto-scroll offset.
     let lastClientX = event.clientX;
@@ -891,15 +925,20 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
     + (isMulti ? checkboxWidth : 0);
 
-  // Both the header row and the body end this much behind the last column, keeping the column
-  // button clear of it: otherwise the button covers the last column's funnel as soon as the columns
-  // fill the available width, and that filter cannot be opened at all. Matches the button's CSS
-  // width (2rem), and applies to the body as well so that scrolling to the right end frees the
-  // funnel there, too.
-  // Kept as padding rather than width: the last body cell grows into the remaining space, so adding
-  // the reserve to the width would make that cell wider than its header cell. Padding widens the
-  // scroll range without offering the cells any space to grow into.
-  const buttonReserve = columnSelect ? 32 : 0;
+  // A table ending in a pinned column has a heading without a label there, so the column button
+  // goes into that heading: it then needs no room of its own, and the pinned column reaches the
+  // right edge of the table.
+  const cogInHeaderCell = columnSelect && columns.length > 0 && !!columns[columns.length - 1].pinnedEnd;
+
+  // Without such a heading, both the header row and the body end this much behind the last column,
+  // keeping the column button clear of it: otherwise the button covers the last column's funnel as
+  // soon as the columns fill the available width, and that filter cannot be opened at all. Matches
+  // the button's CSS width (2rem), and applies to the body as well so that scrolling to the right
+  // end frees the funnel there, too.
+  // Kept as padding rather than width: the cells live in the content box, so the reserve widens the
+  // scroll range without offering the last cell space to grow into and without a sticky cell -
+  // confined to the content box - ever reaching underneath the button.
+  const buttonReserve = columnSelect && !cogInHeaderCell ? 32 : 0;
 
   const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
   const someSelected = selectedCount > 0 && selectedCount < totalRowCount;
@@ -1042,8 +1081,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       {/* Header, plus the column selection sitting above the body's vertical scrollbar */}
       <div className="tlTableView__headerArea" ref={headerAreaRef}>
       <div className="tlTableView__header" ref={headerRef}>
+        {/* Fills the header even when the columns are narrower: a cell sticking to the right edge
+            cannot leave its row, so a row ending with the last column would hold the pinned cells
+            back from that edge. The reserve is padding, which a sticky cell never enters. */}
         <div className="tlTableView__headerRow"
-          style={{ width: tableWidth, paddingRight: buttonReserve + scrollbarWidth }}>
+          style={{ minWidth: tableWidth, paddingRight: buttonReserve + scrollbarWidth }}>
           {isMulti && (
             <div className={'tlTableView__headerCell tlTableView__checkboxCell'
                 + (frozenColumnCount > 0 ? ' tlTableView__headerCell--frozen' : '')}
@@ -1085,18 +1127,25 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             if (isPinned && colIdx === lastUnpinnedIdx + 1) {
               cellClass += ' tlTableView__headerCell--pinnedEndFirst';
             }
+            if (col.cssClass) cellClass += ' ' + col.cssClass;
             return (
               <div
                 key={col.name}
                 className={cellClass}
                 data-col-idx={colIdx}
                 style={{
-                  width: w, minWidth: w,
+                  // The last column the user arranges takes the space left over, in the heading
+                  // exactly as in the rows - otherwise the two drift apart as soon as the columns
+                  // no longer fill the table.
+                  ...(colIdx === lastUnpinnedIdx && !isFrozen
+                    ? { flex: '1 0 auto', minWidth: w }
+                    : { width: w, minWidth: w }),
                   position: isFrozen || isPinned ? 'sticky' as const : 'relative' as const,
                   ...(isFrozen ? { left: frozenOffsets[colIdx], zIndex: 2 } : {}),
-                  // The header ends with the reserve the body's scrollbar and the column button
-                  // take, so its cells stick that much further from the right edge than the body's
-                  // - which is what puts a heading above its column at every scroll position.
+                  // The header ends with the reserve the body's scrollbar and, where it is not in a
+                  // heading, the column button take; its cells therefore stick that much further
+                  // from the right edge than the body's - which is what puts a heading above its
+                  // column at every scroll position.
                   ...(isPinned
                     ? {
                       right: pinnedOffsets[colIdx] + buttonReserve + scrollbarWidth,
@@ -1141,6 +1190,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     )}
                   </span>
                 )}
+                {cogInHeaderCell && colIdx === columns.length - 1 && (
+                  <ColumnsButton title={i18n['js.table.columns']} inCell onClick={handleOpenColumnSelect} />
+                )}
                 {!isPinned && (
                   <div
                     className="tlTableView__resizeHandle"
@@ -1177,16 +1229,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           title={i18n['js.table.freezeSplitter']}
           onMouseDown={handleFrozenSplitStart}
         />
-        {columnSelect && (
-          <button
-            type="button"
-            className="tlTableView__columnsButton"
-            title={i18n['js.table.columns']}
-            aria-label={i18n['js.table.columns']}
-            onClick={handleOpenColumnSelect}
-          >
-            <i className="bi bi-gear" />
-          </button>
+        {columnSelect && !cogInHeaderCell && (
+          <ColumnsButton title={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
         )}
       </div>
 
@@ -1198,8 +1242,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         onKeyDown={handleBodyKeyDown}
         tabIndex={0}
       >
-        {/* Spacer for virtual scrolling */}
-        <div style={{ height: totalHeight, position: 'relative', width: tableWidth, paddingRight: buttonReserve }}>
+        {/* Spacer for virtual scrolling. Fills the body when the columns are narrower than it, so
+            the rows reach the right edge and a cell pinned there lands on it; the reserve is
+            padding, so it widens the scroll range without taking any cell along. */}
+        <div style={{
+          height: totalHeight, position: 'relative', minWidth: tableWidth, paddingRight: buttonReserve,
+        }}>
           {rows.map((row) => (
             <div
               key={row.id}
@@ -1213,11 +1261,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 position: 'absolute',
                 top: row.index * rowHeight,
                 height: rowHeight,
-                width: tableWidth,
+                // Spans the spacer, hence the body, so a pinned cell reaches its right edge. The
+                // cells stop in front of the reserve, exactly as the header's do.
+                left: 0,
+                right: 0,
                 paddingRight: buttonReserve,
-                ...(row.index === cursorIndex
-                  ? { outline: '2px solid var(--color-primary, #1a73e8)', outlineOffset: '-2px' }
-                  : {}),
               }}
               onMouseDown={(e) => {
                 // Suppress the text selection the browser would start as a side
@@ -1264,6 +1312,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 if (isPinned && colIdx === lastUnpinnedIdx + 1) {
                   cellClass += ' tlTableView__cell--pinnedEndFirst';
                 }
+                if (col.cssClass) cellClass += ' ' + col.cssClass;
                 const isTreeColumn = treeMode && colIdx === 0;
                 const treeDepth = row.treeDepth ?? 0;
                 return (

@@ -56,6 +56,16 @@ public class RowCommandColumn {
 	public static final int WIDTH = 48;
 
 	/**
+	 * The {@link Column#cssClass() CSS class} of a command column.
+	 *
+	 * <p>
+	 * A cell of such a column holds a button rather than text: it drops the padding a text cell
+	 * needs and centers the button in the width the column has.
+	 * </p>
+	 */
+	public static final String CSS_CLASS = "tlRowCommandCell";
+
+	/**
 	 * A command offered on every row of a table.
 	 *
 	 * @param model
@@ -112,6 +122,7 @@ public class RowCommandColumn {
 			.label(ResKey.text(""))
 			.renderer(row -> renderCell(context, command, row))
 			.width(WIDTH)
+			.cssClass(CSS_CLASS)
 			.pinnedEnd(true)
 			.build();
 	}

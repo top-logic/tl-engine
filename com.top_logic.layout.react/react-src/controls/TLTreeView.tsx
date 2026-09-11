@@ -14,6 +14,22 @@ interface NodeState {
 
 const INDENT_PX = 20;
 
+// The commands of the server-side tree control.
+const EXPAND_COMMAND = 'expand';
+const COLLAPSE_COMMAND = 'collapse';
+const SELECT_COMMAND = 'select';
+const ACTIVATE_COMMAND = 'activate';
+const CONTEXT_MENU_COMMAND = 'contextMenu';
+const DRAG_OVER_COMMAND = 'dragOver';
+const DROP_COMMAND = 'drop';
+const DRAG_END_COMMAND = 'dragEnd';
+
+/** The selection mode in which one node at a time is selected. */
+const SINGLE_SELECTION = 'single';
+
+/** The selection mode in which several nodes can be selected at once. */
+const MULTI_SELECTION = 'multi';
+
 /**
  * React tree component with lazy-loaded children, selection, and keyboard navigation.
  */
@@ -22,16 +38,28 @@ const TLTreeView: React.FC<TLCellProps> = () => {
   const sendCommand = useTLCommand();
 
   const nodes = (state.nodes as NodeState[]) ?? [];
-  const selectionMode = (state.selectionMode as string) ?? 'single';
+  const selectionMode = (state.selectionMode as string) ?? SINGLE_SELECTION;
   const dragEnabled = (state.dragEnabled as boolean) ?? false;
   const dropEnabled = (state.dropEnabled as boolean) ?? false;
   const dropIndicatorNodeId = (state.dropIndicatorNodeId as string) ?? null;
   const dropIndicatorPosition = (state.dropIndicatorPosition as string) ?? null;
 
-  // The node carrying the keyboard cursor, tracked on the client: set by a click and by the arrow
-  // keys, read by the keys that act on it (Enter, Space, the expand/collapse arrows).
-  const [focusIndex, setFocusIndex] = React.useState(-1);
+  const isMulti = selectionMode === MULTI_SELECTION;
+
+  // The node carrying the keyboard cursor, tracked on the client: set by a click and by the
+  // navigation keys, read by the keys that act on it (Enter, Space, the expand/collapse arrows).
+  // Held as a node id rather than as a position, so it keeps naming its node when the flat list of
+  // visible nodes changes underneath it (a node is expanded, the model pushes other nodes).
+  const [cursorNodeId, setCursorNodeId] = React.useState<string | null>(null);
   const listRef = React.useRef<HTMLUListElement>(null);
+
+  // Where the keyboard navigation continues. Without a cursor of its own it continues at the
+  // selected node, so that the keys take up a selection made elsewhere (a click on another view
+  // writing the tree's selection channel).
+  const cursorIndex = React.useMemo(() => {
+    const index = cursorNodeId == null ? -1 : nodes.findIndex((n) => n.id === cursorNodeId);
+    return index >= 0 ? index : nodes.findIndex((n) => n.selected);
+  }, [nodes, cursorNodeId]);
 
   // Scroll the selected node into view when the selection changes (e.g. set externally by the
   // "select view" picker). block:'nearest' scrolls minimally, so it is a no-op when the node is
@@ -47,8 +75,17 @@ const TLTreeView: React.FC<TLCellProps> = () => {
     }
   }, [selectedNodeId]);
 
+  // Keep the node carrying the keyboard cursor visible as the navigation keys move it.
+  // block:'nearest' scrolls minimally, so it is a no-op for a node that is on screen anyway.
+  React.useEffect(() => {
+    if (cursorNodeId == null) {
+      return;
+    }
+    listRef.current?.querySelector('.tlTreeView__node--focused')?.scrollIntoView({ block: 'nearest' });
+  }, [cursorNodeId]);
+
   const handleToggle = React.useCallback((nodeId: string, expanded: boolean) => {
-    sendCommand(expanded ? 'collapse' : 'expand', { nodeId });
+    sendCommand(expanded ? COLLAPSE_COMMAND : EXPAND_COMMAND, { nodeId });
   }, [sendCommand]);
 
   const handleSelect = React.useCallback((nodeId: string, e: React.MouseEvent) => {
@@ -63,24 +100,24 @@ const TLTreeView: React.FC<TLCellProps> = () => {
     listRef.current?.focus({ preventScroll: true });
     // The clicked node carries the keyboard cursor from now on, so the arrow keys step from it and
     // Enter opens it - the keyboard continues where the mouse left off.
-    setFocusIndex(nodes.findIndex((n) => n.id === nodeId));
-    sendCommand('select', {
+    setCursorNodeId(nodeId);
+    sendCommand(SELECT_COMMAND, {
       nodeId,
       ctrlKey: e.ctrlKey || e.metaKey,
       shiftKey: e.shiftKey,
     });
-  }, [sendCommand, nodes]);
+  }, [sendCommand]);
 
   // A double-click opens the node: the server selects it and runs what the view configured for an
   // activation.
   const handleActivate = React.useCallback((nodeId: string) => {
-    setFocusIndex(nodes.findIndex((n) => n.id === nodeId));
-    sendCommand('activate', { nodeId });
-  }, [sendCommand, nodes]);
+    setCursorNodeId(nodeId);
+    sendCommand(ACTIVATE_COMMAND, { nodeId });
+  }, [sendCommand]);
 
   const handleContextMenu = React.useCallback((nodeId: string, e: React.MouseEvent) => {
     e.preventDefault();
-    sendCommand('contextMenu', { nodeId, x: e.clientX, y: e.clientY });
+    sendCommand(CONTEXT_MENU_COMMAND, { nodeId, x: e.clientX, y: e.clientY });
   }, [sendCommand]);
 
   // -- Drag-and-drop handlers --
@@ -110,7 +147,7 @@ const TLTreeView: React.FC<TLCellProps> = () => {
       window.clearTimeout(dragOverTimerRef.current);
     }
     dragOverTimerRef.current = window.setTimeout(() => {
-      sendCommand('dragOver', { nodeId, position });
+      sendCommand(DRAG_OVER_COMMAND, { nodeId, position });
       dragOverTimerRef.current = null;
     }, 50);
   }, [sendCommand, computeDropPosition]);
@@ -122,7 +159,7 @@ const TLTreeView: React.FC<TLCellProps> = () => {
       dragOverTimerRef.current = null;
     }
     const position = computeDropPosition(e, e.currentTarget as HTMLElement);
-    sendCommand('drop', { nodeId, position });
+    sendCommand(DROP_COMMAND, { nodeId, position });
   }, [sendCommand, computeDropPosition]);
 
   const handleDragEnd = React.useCallback(() => {
@@ -130,81 +167,72 @@ const TLTreeView: React.FC<TLCellProps> = () => {
       window.clearTimeout(dragOverTimerRef.current);
       dragOverTimerRef.current = null;
     }
-    sendCommand('dragEnd');
+    sendCommand(DRAG_END_COMMAND);
   }, [sendCommand]);
 
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-    if (nodes.length === 0) return;
+  // Moves the keyboard cursor onto the node at the given index, with the selection following it:
+  // in single selection the node the cursor lands on becomes the selection, in multi selection a
+  // plain move leaves the selection untouched and Shift grows the range from its anchor.
+  const moveCursor = React.useCallback((index: number, extend: boolean) => {
+    const node = nodes[index];
+    if (node == null) {
+      return;
+    }
+    setCursorNodeId(node.id);
+    if (!isMulti) {
+      sendCommand(SELECT_COMMAND, { nodeId: node.id, ctrlKey: false, shiftKey: false });
+    } else if (extend) {
+      sendCommand(SELECT_COMMAND, { nodeId: node.id, ctrlKey: false, shiftKey: true });
+    }
+  }, [nodes, isMulti, sendCommand]);
 
-    let newIndex = focusIndex;
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    if (nodes.length === 0) {
+      return;
+    }
+    const cursorNode = cursorIndex >= 0 ? nodes[cursorIndex] : null;
+    let newIndex = cursorIndex;
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        newIndex = Math.min(focusIndex + 1, nodes.length - 1);
+        newIndex = Math.min(cursorIndex + 1, nodes.length - 1);
         break;
       case 'ArrowUp':
         e.preventDefault();
-        newIndex = Math.max(focusIndex - 1, 0);
+        newIndex = Math.max(cursorIndex - 1, 0);
         break;
       case 'ArrowRight':
         e.preventDefault();
-        if (focusIndex >= 0 && focusIndex < nodes.length) {
-          const node = nodes[focusIndex];
-          if (node.expandable && !node.expanded) {
-            sendCommand('expand', { nodeId: node.id });
-            return;
-          } else if (node.expanded) {
-            // Move to first child.
-            newIndex = focusIndex + 1;
-          }
+        if (cursorNode == null) {
+          break;
+        }
+        if (cursorNode.expandable && !cursorNode.expanded) {
+          sendCommand(EXPAND_COMMAND, { nodeId: cursorNode.id });
+          return;
+        }
+        if (cursorNode.expanded) {
+          // The first child of an expanded node is the node following it.
+          newIndex = cursorIndex + 1;
         }
         break;
       case 'ArrowLeft':
         e.preventDefault();
-        if (focusIndex >= 0 && focusIndex < nodes.length) {
-          const node = nodes[focusIndex];
-          if (node.expanded) {
-            sendCommand('collapse', { nodeId: node.id });
-            return;
-          } else {
-            // Move to parent: find previous node with lower depth.
-            const currentDepth = node.depth;
-            for (let i = focusIndex - 1; i >= 0; i--) {
-              if (nodes[i].depth < currentDepth) {
-                newIndex = i;
-                break;
-              }
-            }
+        if (cursorNode == null) {
+          break;
+        }
+        if (cursorNode.expanded) {
+          sendCommand(COLLAPSE_COMMAND, { nodeId: cursorNode.id });
+          return;
+        }
+        // Up to the parent: the closest node above the cursor at a smaller depth.
+        for (let i = cursorIndex - 1; i >= 0; i--) {
+          if (nodes[i].depth < cursorNode.depth) {
+            newIndex = i;
+            break;
           }
         }
         break;
-      case 'Enter':
-        e.preventDefault();
-        if (focusIndex >= 0 && focusIndex < nodes.length) {
-          if (e.ctrlKey || e.metaKey || e.shiftKey) {
-            // A modifier makes the gesture a toggle / range selection, not an activation.
-            sendCommand('select', {
-              nodeId: nodes[focusIndex].id,
-              ctrlKey: e.ctrlKey || e.metaKey,
-              shiftKey: e.shiftKey,
-            });
-          } else {
-            // Plain Enter opens the focused node; the server selects it on the way.
-            handleActivate(nodes[focusIndex].id);
-          }
-        }
-        return;
-      case ' ':
-        e.preventDefault();
-        if (selectionMode === 'multi' && focusIndex >= 0 && focusIndex < nodes.length) {
-          sendCommand('select', {
-            nodeId: nodes[focusIndex].id,
-            ctrlKey: true,
-            shiftKey: false,
-          });
-        }
-        return;
       case 'Home':
         e.preventDefault();
         newIndex = 0;
@@ -213,14 +241,28 @@ const TLTreeView: React.FC<TLCellProps> = () => {
         e.preventDefault();
         newIndex = nodes.length - 1;
         break;
+      case 'Enter':
+        // Enter opens the cursor node.
+        e.preventDefault();
+        if (cursorNode != null) {
+          handleActivate(cursorNode.id);
+        }
+        return;
+      case ' ':
+        // Space selects the cursor node, adding it to a multiple selection or taking it out again.
+        e.preventDefault();
+        if (cursorNode != null) {
+          sendCommand(SELECT_COMMAND, { nodeId: cursorNode.id, ctrlKey: isMulti, shiftKey: false });
+        }
+        return;
       default:
         return;
     }
 
-    if (newIndex !== focusIndex) {
-      setFocusIndex(newIndex);
+    if (newIndex !== cursorIndex) {
+      moveCursor(newIndex, e.shiftKey);
     }
-  }, [focusIndex, nodes, sendCommand, selectionMode, handleActivate]);
+  }, [cursorIndex, nodes, sendCommand, isMulti, handleActivate, moveCursor]);
 
   return (
     <ul
@@ -240,7 +282,7 @@ const TLTreeView: React.FC<TLCellProps> = () => {
           className={[
             'tlTreeView__node',
             node.selected ? 'tlTreeView__node--selected' : '',
-            index === focusIndex ? 'tlTreeView__node--focused' : '',
+            index === cursorIndex ? 'tlTreeView__node--focused' : '',
             dropIndicatorNodeId === node.id && dropIndicatorPosition === 'above' ? 'tlTreeView__node--drop-above' : '',
             dropIndicatorNodeId === node.id && dropIndicatorPosition === 'within' ? 'tlTreeView__node--drop-within' : '',
             dropIndicatorNodeId === node.id && dropIndicatorPosition === 'below' ? 'tlTreeView__node--drop-below' : '',

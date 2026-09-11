@@ -20,7 +20,7 @@
 
 ## Row activation
 
-A `<table>` and a `<tree>` open a row / node on a **double-click**, and on **Enter** while the row carries the keyboard cursor (a tree node: while it carries the keyboard focus). The gesture is one command, `activate`, carrying the row index (the node id):
+A `<table>` and a `<tree>` open a row / node on a **double-click**, and on **Enter** while the row or node carries the keyboard cursor. The gesture is one command, `activate`, carrying the row index (the node id):
 
 ```xml
 <table selection="selected" types="demo.react:Demo">
@@ -37,6 +37,7 @@ A `<table>` and a `<tree>` open a row / node on a **double-click**, and on **Ent
 - The control-level seam is `TableViewControl.setActivationHandler(…)` / `ReactTreeControl.setActivationHandler(…)` — one handler, called with the row business object (the tree node) after the row became the selection, returning the `HandlerResult` the gesture reports. Without a handler, activating a row only selects it.
 - An activation is recorded for scripted tests the way a selection is: the index-based `activate` becomes an `activateByKey` naming the row's business object, so the step survives sorting, filtering and a fresh session.
 - A double-click inside an interactive cell element (a text input of an editable cell) belongs to that element and opens nothing; Enter is likewise declined while the focus sits in a cell input or action button.
+- **In a `<tree>` the selection follows the keyboard cursor.** A single-selection tree selects the node that the up/down arrows, `Home` and `End` move the cursor onto; a multi-selection tree moves the cursor alone, grows the selected range from its anchor with `Shift` and an arrow, and adds the cursor node to the selection or takes it out again with `Space`. The right and left arrows expand and collapse the cursor node, stepping to its first child and back to its parent where there is nothing to open or close, and `Enter` activates it in either mode.
 - Demos in `com.top_logic.demo.react`: the *Attributes* table opens the object's detail dialog, and *Tree Demo* (`demo/tree-demo.view.xml`) writes the activated node to a channel displayed next to the selected one.
 
 ## Grouping

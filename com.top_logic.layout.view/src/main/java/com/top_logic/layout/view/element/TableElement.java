@@ -36,6 +36,8 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -644,6 +646,9 @@ public class TableElement implements UIElement {
 		/** Configuration name for {@link #getSort()}. */
 		String SORT = "sort";
 
+		/** Configuration name for {@link #getWidth()}. */
+		String WIDTH = "width";
+
 		/**
 		 * The name of the attribute (column) to display.
 		 */
@@ -679,6 +684,19 @@ public class TableElement implements UIElement {
 		@Nullable
 		@NullDefault
 		SortDirection getSort();
+
+		/**
+		 * The column's default display width in pixels.
+		 *
+		 * <p>
+		 * This is the width the user sees until they resize the column themselves; from then on
+		 * their own width is remembered. {@code 0} - the default - keeps the width the column's
+		 * type derives.
+		 * </p>
+		 */
+		@Name(WIDTH)
+		@Constraint(NonNegative.class)
+		int getWidth();
 	}
 
 	/**
@@ -1065,7 +1083,7 @@ public class TableElement implements UIElement {
 		List<ColumnSetup> setups = columnSetups(resolveRowType(rows), context);
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
-			columns.add(setup.binding().createColumn(setup));
+			columns.add(setup.buildColumn());
 		}
 		columns.addAll(this.<Object> rowCommandColumns(context, activation));
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
@@ -1236,13 +1254,13 @@ public class TableElement implements UIElement {
 			for (ColumnConfig columnConfig : columnsConfig.getColumns()) {
 				String attribute = columnConfig.getAttribute();
 				columns.add(new RowSetTableControl.TableColumn(attribute, columnConfig.getReadonly(),
-					_bindings.get(attribute)));
+					_bindings.get(attribute), columnConfig.getWidth()));
 			}
 			for (TLStructuredTypePart part : offeredParts(configuredAttributes())) {
 				// An offered column has no <column> to declare a read-only flag, so it is editable
 				// exactly as a form field for that attribute would be.
 				columns.add(new RowSetTableControl.TableColumn(part.getName(),
-					!DisplayAnnotations.isEditable(part), ColumnBinding.TYPE_DERIVED));
+					!DisplayAnnotations.isEditable(part), ColumnBinding.TYPE_DERIVED, 0));
 			}
 		} else if (rowType != null) {
 			for (TLStructuredTypePart part : rowType.getAllParts()) {
@@ -1250,7 +1268,7 @@ public class TableElement implements UIElement {
 					continue;
 				}
 				columns.add(
-					new RowSetTableControl.TableColumn(part.getName(), false, ColumnBinding.TYPE_DERIVED));
+					new RowSetTableControl.TableColumn(part.getName(), false, ColumnBinding.TYPE_DERIVED, 0));
 			}
 		}
 		if (columns.isEmpty()) {
@@ -1363,12 +1381,12 @@ public class TableElement implements UIElement {
 				String attribute = columnConfig.getAttribute();
 				TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
 				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
-					_bindings.get(attribute)));
+					_bindings.get(attribute), columnConfig.getWidth()));
 			}
 			for (TLStructuredTypePart part : offeredParts(configuredAttributes())) {
 				String attribute = part.getName();
 				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
-					ColumnBinding.TYPE_DERIVED));
+					ColumnBinding.TYPE_DERIVED, 0));
 			}
 		} else if (rowType != null) {
 			// No explicit columns configured: derive a default set from the row type's
@@ -1379,7 +1397,7 @@ public class TableElement implements UIElement {
 				}
 				String attribute = part.getName();
 				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
-					ColumnBinding.TYPE_DERIVED));
+					ColumnBinding.TYPE_DERIVED, 0));
 			}
 		}
 		if (setups.isEmpty()) {

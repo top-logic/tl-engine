@@ -17,6 +17,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -165,6 +167,9 @@ public class CompositionTableElement implements UIElement {
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
 
+		/** Configuration name for {@link #getWidth()}. */
+		String WIDTH = "width";
+
 		/**
 		 * The name of the model attribute to display in this column.
 		 */
@@ -177,6 +182,19 @@ public class CompositionTableElement implements UIElement {
 		 */
 		@Name(READONLY)
 		boolean getReadonly();
+
+		/**
+		 * The column's default display width in pixels.
+		 *
+		 * <p>
+		 * This is the width the user sees until they resize the column themselves; from then on
+		 * their own width is remembered. {@code 0} - the default - keeps the width the column's
+		 * type derives.
+		 * </p>
+		 */
+		@Name(WIDTH)
+		@Constraint(NonNegative.class)
+		int getWidth();
 	}
 
 	private final Config _config;
@@ -204,7 +222,7 @@ public class CompositionTableElement implements UIElement {
 		if (_config.getColumns() != null) {
 			for (ColumnConfig col : _config.getColumns().getColumns()) {
 				columns.add(new RowSetTableControl.TableColumn(
-					col.getAttribute(), col.getReadonly(), ColumnBinding.TYPE_DERIVED));
+					col.getAttribute(), col.getReadonly(), ColumnBinding.TYPE_DERIVED, col.getWidth()));
 			}
 		}
 

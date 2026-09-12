@@ -223,12 +223,13 @@
 							<named-member name="contentContainer"/>
 							<named-member name="content"/>
 							<labeled-member label="Beschreibung"/>
+							<named-member name="description"/>
 							<labeled-member label="Deutsch"/>
 						</path>
 					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="deutsche Beschreibung"
-					/>
+					<value config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
+						<value><![CDATA[deutsche Beschreibung]]></value>
+					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
@@ -265,12 +266,13 @@
 							<named-member name="contentContainer"/>
 							<named-member name="content"/>
 							<labeled-member label="Beschreibung"/>
+							<named-member name="description"/>
 							<labeled-member label="Englisch"/>
 						</path>
 					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="english description"
-					/>
+					<value config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
+						<value><![CDATA[english description]]></value>
+					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"

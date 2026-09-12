@@ -37,6 +37,7 @@ import com.top_logic.basic.func.Not;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.TypedPartAspect;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.ResourceRenderer;
@@ -447,7 +448,7 @@ public class TLStructuredTypePartFormBuilder extends
 
 		ResKey key = TLModelI18N.getI18NKey(part);
 		partModel.setLabel(key);
-		partModel.setDescription(key.tooltip());
+		partModel.setDescription(new DefaultHtmlResKey(key.tooltip()));
 
 		for (TLAnnotation annotation : part.getAnnotations()) {
 			TLAttributeAnnotation attributeAnnotation = (TLAttributeAnnotation) annotation;

@@ -17,4 +17,20 @@ public interface FormModelListener {
 	 *        The form model that changed.
 	 */
 	void onFormStateChanged(FormModel source);
+
+	/**
+	 * Called when the set of validation errors the user can see has changed, without the form
+	 * state itself changing.
+	 *
+	 * <p>
+	 * Happens when a constraint check produces a different result for an edited value, and when
+	 * so-far hidden errors are revealed by a save attempt.
+	 * </p>
+	 *
+	 * @param source
+	 *        The form model whose visible errors changed.
+	 */
+	default void onValidityChanged(FormModel source) {
+		// Most listeners care about form state only.
+	}
 }

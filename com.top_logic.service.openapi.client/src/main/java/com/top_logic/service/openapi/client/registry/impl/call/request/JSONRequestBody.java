@@ -112,7 +112,11 @@ public class JSONRequestBody extends AbstractConfiguredInstance<JSONRequestBody.
 				@Override
 				protected String jsonBody(ClassicHttpRequest request, Call call) {
 					Object[] args = createCallArguments(call, method);
-					Object value = json.execute(args);
+					// A call of an OpenAPI client method is performed during the evaluation of the calling
+					// script (see RPCMethod), so this value is an intermediate result of that script and
+					// must not be filtered for read access - the script's own execution secures its final
+					// result.
+					Object value = json.executeIntermediate(args);
 					return JSON.toString(value);
 				}
 			};

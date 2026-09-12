@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -17,12 +20,14 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.TileWidth;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
 import com.top_logic.layout.view.security.SecurityScope;
 import com.top_logic.layout.view.security.WithAccessControl;
+import java.util.List;
 
 /**
  * A single tile in a {@link DashboardElement dashboard}.
@@ -34,6 +39,7 @@ import com.top_logic.layout.view.security.WithAccessControl;
  * fraction and an optional {@link Config#getRowSpan() row span}.
  * </p>
  */
+@InApp
 public class TileElement implements UIElement {
 
 	/**
@@ -85,6 +91,7 @@ public class TileElement implements UIElement {
 		 */
 		@Name(CONTENT)
 		@DefaultContainer
+		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends UIElement> getContent();
 	}
 
@@ -141,9 +148,14 @@ public class TileElement implements UIElement {
 	 */
 	public ReactControl createContentControl(ViewContext context) {
 		SecurityScope scope = AccessChecks.resolveScope(_accessControl);
-		ViewContext contentContext = scope != null ? context.withSecurityScope(scope) : context;
+		ViewContext contentContext = scope != null ? context.withScope(SecurityScope.class, scope) : context;
 		IReactControl inner = _content.createControl(contentContext);
 		return (ReactControl) inner;
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_content));
 	}
 
 	@Override

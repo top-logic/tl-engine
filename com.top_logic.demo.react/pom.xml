@@ -25,6 +25,16 @@
 
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view-agent</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view-contact</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-model-wysiwyg</artifactId>
     </dependency>
 
@@ -41,6 +51,21 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-model-search-react</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react-chartjs</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-react-flow-server</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-configedit</artifactId>
     </dependency>
 
     <dependency>

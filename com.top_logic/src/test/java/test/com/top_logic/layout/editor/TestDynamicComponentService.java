@@ -31,6 +31,12 @@ public class TestDynamicComponentService extends BasicTestCase {
 
 	private static final String TEMPLATE_FILENAME = "simpleComponent.template.xml";
 
+	/**
+	 * Maximum time to wait for an asynchronous {@link java.nio.file.WatchService} event to be
+	 * delivered and processed before failing.
+	 */
+	private static final long UPDATE_TIMEOUT = 10_000;
+
 	private DynamicComponentService _templateService;
 
 	@Override
@@ -51,15 +57,9 @@ public class TestDynamicComponentService extends BasicTestCase {
 
 			file = createTemplateFile();
 
-			// Give the file system a chance to record the creation.
-			Thread.sleep(10);
-
 			assertHasTemplate(TEMPLATE_FILENAME);
 
 			file.delete();
-
-			// Give the file system a chance to record the deletion.
-			Thread.sleep(10);
 
 			assertMissingTemplate(TEMPLATE_FILENAME);
 		} finally {
@@ -78,11 +78,17 @@ public class TestDynamicComponentService extends BasicTestCase {
 	}
 
 	private void assertMissingTemplate(String templateName) throws InterruptedException {
-		assertNull(_templateService.getComponentDefinition(templateName));
+		// The file-system watch event is delivered asynchronously with unbounded latency; poll
+		// until the deletion has been processed instead of relying on a fixed sleep.
+		assertTrue("Template '" + templateName + "' still registered after deletion.",
+			awaitUntil(UPDATE_TIMEOUT, () -> _templateService.getComponentDefinition(templateName) == null));
 	}
 
 	private void assertHasTemplate(String templateName) throws InterruptedException {
-		assertNotNull(_templateService.getComponentDefinition(templateName));
+		// The file-system watch event is delivered asynchronously with unbounded latency; poll
+		// until the creation has been processed instead of relying on a fixed sleep.
+		assertTrue("Template '" + templateName + "' not registered after creation.",
+			awaitUntil(UPDATE_TIMEOUT, () -> _templateService.getComponentDefinition(templateName) != null));
 	}
 
 	/**

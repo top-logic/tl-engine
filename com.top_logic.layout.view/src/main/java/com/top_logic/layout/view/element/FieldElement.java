@@ -5,20 +5,29 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.TLInputControl;
+import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.annotate.LabelPositionAnnotation;
 
 /**
  * Declarative {@link UIElement} that creates an {@link AttributeFieldControl} for a single model
@@ -29,6 +38,7 @@ import com.top_logic.layout.view.form.FormModel;
  * {@link ViewContext} and creates a chrome-wrapped field control for the configured attribute.
  * </p>
  */
+@InApp
 public class FieldElement implements UIElement {
 
 	/**
@@ -49,6 +59,15 @@ public class FieldElement implements UIElement {
 
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
+
+		/** Configuration name for {@link #getLabelPosition()}. */
+		String LABEL_POSITION = "label-position";
+
+		/** Configuration name for {@link #getFullLine()}. */
+		String FULL_LINE = "full-line";
+
+		/** Configuration name for {@link #getInputControl()}. */
+		String INPUT_CONTROL = "input-control";
 
 		/**
 		 * The name of the model attribute to display.
@@ -72,6 +91,61 @@ public class FieldElement implements UIElement {
 		 */
 		@Name(READONLY)
 		boolean getReadonly();
+
+		/**
+		 * Where the field renders its label relative to the input, e.g. {@code hide-label} for a
+		 * label-less field.
+		 *
+		 * <p>
+		 * If not set, the position falls back to a {@link LabelPositionAnnotation} on the model
+		 * attribute, and without one to the responsive default of the enclosing form layout.
+		 * </p>
+		 */
+		@Name(LABEL_POSITION)
+		@Nullable
+		LabelPosition getLabelPosition();
+
+		/**
+		 * Whether the field takes a row of the form grid to itself instead of sharing one with the
+		 * fields around it.
+		 *
+		 * <p>
+		 * For a field whose input is not a single line - a collection of configurations, a text
+		 * area, a table - a column of the grid is too narrow to read, and the fields beside it are
+		 * dragged to its height.
+		 * </p>
+		 *
+		 * <p>
+		 * Three-valued on purpose: left unset, a
+		 * {@link com.top_logic.model.annotate.RenderWholeLineAnnotation} on the model attribute
+		 * still decides, so a view says something here only where it wants to depart from what the
+		 * model already says.
+		 * </p>
+		 */
+		@Name(FULL_LINE)
+		@Nullable
+		Boolean getFullLine();
+
+		/**
+		 * The control editing the attribute here, overriding the one the model implies.
+		 *
+		 * <p>
+		 * The same choice as the {@link TLInputControl} annotation of a model attribute offers,
+		 * made where the field is displayed instead of where the attribute is defined. A control
+		 * that belongs to one place in the user interface - an editor whose toolbar opens a
+		 * dialog of this view, say - is chosen here, so that the model keeps saying what the
+		 * attribute is and the view says how it is presented.
+		 * </p>
+		 *
+		 * <p>
+		 * Left unset, the control is the one the attribute's own annotation, its type or the kind
+		 * of value it holds leads to.
+		 * </p>
+		 */
+		@Name(INPUT_CONTROL)
+		@Nullable
+		@Options(fun = AllInAppImplementations.class)
+		PolymorphicConfiguration<? extends ReactFieldControlProvider> getInputControl();
 	}
 
 	private final Config _config;
@@ -99,7 +173,8 @@ public class FieldElement implements UIElement {
 		// 2. Create AttributeFieldControl (self-registers as FormModelListener).
 		AttributeFieldControl fieldControl =
 			new AttributeFieldControl(context, formModel, formControl, _config.getAttribute(),
-				_config.getLabel(), _config.getReadonly());
+				_config.getLabel(), _config.getReadonly(), _config.getLabelPosition(),
+				_config.getFullLine(), _config.getInputControl());
 
 		// 3. Create the chrome-wrapped control.
 		ReactFormFieldChromeControl chrome = fieldControl.createChromeControl();

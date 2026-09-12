@@ -1,0 +1,17 @@
+<objects>
+	<!-- b0.long = 2^53-1 (MAX_SAFE_INTEGER): still exactly representable as double. -->
+	<object id="b0" type="TestSearchExpression:WithDatabaseColumns">
+		<attribute name="name" value="B0"/>
+		<attribute name="long" value="9007199254740991"/>
+	</object>
+	<!-- b1.long = 2^53: exactly representable as double. -->
+	<object id="b1" type="TestSearchExpression:WithDatabaseColumns">
+		<attribute name="name" value="B1"/>
+		<attribute name="long" value="9007199254740992"/>
+	</object>
+	<!-- b2.long = 2^53+1: NOT representable as double (rounds to 2^53). -->
+	<object id="b2" type="TestSearchExpression:WithDatabaseColumns">
+		<attribute name="name" value="B2"/>
+		<attribute name="long" value="9007199254740993"/>
+	</object>
+</objects>

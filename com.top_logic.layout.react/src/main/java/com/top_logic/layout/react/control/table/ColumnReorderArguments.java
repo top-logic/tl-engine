@@ -11,8 +11,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.control.ReactCommand;
 
 /**
- * Typed arguments of the {@link TableViewControl} {@code columnReorder} command: which column to
- * move and the target position.
+ * Typed arguments of the {@code columnReorder} command of the {@link TableViewControl} (dragging a
+ * column header) and of the {@link ReactColumnSelectControl} (dragging a row of the column
+ * selection): which column to move and the target position.
  *
  * <p>
  * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}

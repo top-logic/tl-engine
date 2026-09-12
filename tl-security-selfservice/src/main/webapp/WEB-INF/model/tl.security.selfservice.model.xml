@@ -14,6 +14,7 @@
 			</generalizations>
 			<annotations>
 				<table name="Invitation"/>
+				<id-column value="email"/>
 			</annotations>
 			<attributes>
 				<property name="id"
@@ -34,25 +35,31 @@
 					<annotations>
 						<constraints>
 							<constraint-by-expression>
-								<check><![CDATA[email ->
-  all(`tl.accounts:Person`)
-    .filter(account -> $account.get(`tl.accounts:Person#name`) == $email)
-    .firstElement() != null ?
-  #("Es gibt bereits einen Zugang für die E-Mail-Adresse {0}."@de, "There is already an account for the email address {0}."@en).fill($email) :
-  null]]></check>
+								<check><![CDATA[email -> {
+  lowerCaseMail = $email.toLowerCase();
+  existingAccount = all(`tl.accounts:Person`)
+    .filter(account -> $account.get(`tl.accounts:Person#name`).toLowerCase() == $lowerCaseMail)
+    .firstElement();
+  $existingAccount != null ?
+  #("Es gibt bereits einen Zugang für die E-Mail-Adresse {0}."@de, "There is already an account for the email address {0}."@en).fill($existingAccount.get(`tl.accounts:Person#name`)) :
+  null;
+}]]></check>
 							</constraint-by-expression>
 							<constraint-by-expression>
 								<check><![CDATA[email -> regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$").regexSearch($email).isEmpty() ?  #("''{0}'' ist keine gültige E-Mail-Adresse."@de, "''{0}'' is not a valid email address."@en).fill($email) :
   null]]></check>
 							</constraint-by-expression>
 							<constraint-by-expression>
-								<check><![CDATA[email -> self ->
-  all(`tl.security.selfservice:Invitation`)
+								<check><![CDATA[email -> self -> {
+  lowerCaseMail = $email.toLowerCase();
+  existingInvitation = all(`tl.security.selfservice:Invitation`)
     .filter(invitation -> $invitation != $self)
-    .filter(invitation -> $invitation.get(`tl.security.selfservice:Invitation#email`) == $email)
-    .firstElement() != null ?
-  #("Es gibt bereits eine Einladung für die E-Mail-Adresse {0}."@de, "There is already an invitation for the email address {0}."@en).fill($email) :
-  null]]></check>
+    .filter(invitation -> $invitation.get(`tl.security.selfservice:Invitation#email`).toLowerCase() == $lowerCaseMail)
+    .firstElement();
+  $existingInvitation != null ? 
+  #("Es gibt bereits eine Einladung für die E-Mail-Adresse {0}."@de, "There is already an invitation for the email address {0}."@en).fill($existingInvitation.get(`tl.security.selfservice:Invitation#email`)) :
+  null;
+}]]></check>
 							</constraint-by-expression>
 						</constraints>
 					</annotations>
@@ -67,6 +74,7 @@
 						<storage-algorithm>
 							<query expr="invitation -> person -> null"/>
 						</storage-algorithm>
+						<visibility value="hidden"/>
 					</annotations>
 				</property>
 			</attributes>

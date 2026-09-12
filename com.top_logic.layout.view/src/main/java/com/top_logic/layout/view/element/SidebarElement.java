@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -25,7 +28,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.util.Resources;
 import com.top_logic.layout.react.control.sidebar.DrawerToggleControl;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
@@ -35,6 +38,8 @@ import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.navigation.RevealPath;
+import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
 import com.top_logic.layout.view.security.SecurityScope;
@@ -50,6 +55,7 @@ import com.top_logic.layout.view.slot.control.SlotContentControl;
  * are lazily created when the item is selected. Separators can be added between items.
  * </p>
  */
+@InApp
 public class SidebarElement implements UIElement {
 
 	/**
@@ -131,6 +137,18 @@ public class SidebarElement implements UIElement {
 		 *         denied for the current user).
 		 */
 		SidebarItem createSidebarItem(ViewContext context);
+
+		/**
+		 * The content this item displays, keyed by the item's
+		 * {@link SidebarItemConfig#getId() id}.
+		 *
+		 * @return The group, or {@code null} for an item that displays no content of its own.
+		 *
+		 * @see UIElement#getChildGroups()
+		 */
+		default ChildGroup getChildGroup() {
+			return null;
+		}
 	}
 
 	/**
@@ -207,6 +225,7 @@ public class SidebarElement implements UIElement {
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 
@@ -251,6 +270,11 @@ public class SidebarElement implements UIElement {
 			_children = config.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
+		}
+
+		@Override
+		public ChildGroup getChildGroup() {
+			return ChildGroup.keyed(_id, _children);
 		}
 
 		@Override
@@ -362,15 +386,33 @@ public class SidebarElement implements UIElement {
 	}
 
 	@Override
+	public List<ChildGroup> getChildGroups() {
+		List<ChildGroup> result = new ArrayList<>();
+		for (SidebarItemElement item : _items) {
+			ChildGroup group = item.getChildGroup();
+			if (group != null) {
+				result.add(group);
+			}
+		}
+		return result;
+	}
+
+	@Override
 	public IReactControl createControl(ViewContext context) {
 		String key = resolveKey(context, "sidebar");
 
 		boolean collapsed = PersonalizingExpandable.loadCollapsed(key + ".collapsed", _collapsed);
 		Map<String, Boolean> groupStates = loadGroupStates(key);
 
+		RevealPath here = RevealPath.of(context);
 		List<SidebarItem> sidebarItems = new ArrayList<>();
 		for (SidebarItemElement itemElement : _items) {
-			SidebarItem item = itemElement.createSidebarItem(context);
+			// The content of an item is created only when the item is first selected, so the item's
+			// context must already say where that content will sit.
+			ChildGroup group = itemElement.getChildGroup();
+			ViewContext itemContext = group == null ? context
+				: context.withScope(RevealPath.class, here.append(this, group.key()));
+			SidebarItem item = itemElement.createSidebarItem(itemContext);
 			if (item != null) {
 				sidebarItems.add(item);
 			}
@@ -391,6 +433,11 @@ public class SidebarElement implements UIElement {
 			SlotContentControl drawerToggleSlot = new SlotContentControl(context, _drawerOpenSlotName,
 				context.getSlotPath(), context.getSlotRegistry(), List.of(toggleButton));
 			sidebar.setDrawerToggleContribution(drawerToggleSlot);
+		}
+
+		RevealRegistry registry = context.getRevealRegistry();
+		if (registry != null) {
+			sidebar.addCleanupAction(registry.registerContainer(this, here, sidebar));
 		}
 
 		return sidebar;
@@ -441,15 +488,9 @@ public class SidebarElement implements UIElement {
 			DirtyChannel dirtyChannel, SecurityScope scope) {
 		ViewContext baseContext = context.childContext("sidebar-item");
 		// Establish the nav-item's security scope so command rules in its content default to it.
-		ViewContext itemContext = scope != null ? baseContext.withSecurityScope(scope) : baseContext;
+		ViewContext itemContext = scope != null ? baseContext.withScope(SecurityScope.class, scope) : baseContext;
 		itemContext.setDirtyChannel(dirtyChannel);
 
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(itemContext);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(itemContext))
-			.collect(Collectors.toList());
-		return new ReactStackControl(itemContext, children);
+		return ContentControls.toControl(elements, itemContext);
 	}
 }

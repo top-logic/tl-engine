@@ -8,20 +8,28 @@ package com.top_logic.layout.view;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.ConfigurationSchemaConstants;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.check.ConstraintChecker;
+import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.xml.XMLStreamUtil;
 
 /**
  * Shared utility for loading and caching parsed {@link ViewElement} instances and their
@@ -38,6 +46,35 @@ public class ViewLoader {
 
 	/** Base path for view XML files within the webapp. */
 	public static final String VIEW_BASE_PATH = "/WEB-INF/views/";
+
+	/**
+	 * The full path of a view file referenced from configuration.
+	 *
+	 * @param viewRef
+	 *        Path of the view file relative to {@link #VIEW_BASE_PATH}, as written in configuration
+	 *        (e.g. {@code customers/detail.view.xml}).
+	 * @return The path to load the file with (e.g. {@code /WEB-INF/views/customers/detail.view.xml}).
+	 */
+	public static String fullPath(String viewRef) {
+		return viewRef.startsWith(VIEW_BASE_PATH) ? viewRef : VIEW_BASE_PATH + stripLeadingSlash(viewRef);
+	}
+
+	/**
+	 * The path a view file is referenced by from configuration.
+	 *
+	 * @param viewPath
+	 *        Path of the view file, either full or already relative to {@link #VIEW_BASE_PATH}.
+	 * @return The path relative to {@link #VIEW_BASE_PATH} (e.g. {@code customers/detail.view.xml}).
+	 */
+	public static String viewRef(String viewPath) {
+		return viewPath.startsWith(VIEW_BASE_PATH)
+			? viewPath.substring(VIEW_BASE_PATH.length())
+			: stripLeadingSlash(viewPath);
+	}
+
+	private static String stripLeadingSlash(String path) {
+		return path.startsWith("/") ? path.substring(1) : path;
+	}
 
 	private static final ConcurrentHashMap<String, CachedConfig> CONFIG_CACHE = new ConcurrentHashMap<>();
 
@@ -59,7 +96,7 @@ public class ViewLoader {
 	 *         if the file cannot be found or parsed.
 	 */
 	public static ViewElement.Config getOrLoadConfig(String viewPath) throws ConfigurationException {
-		long currentModified = currentModified(viewPath);
+		long currentModified = modificationSignature(viewPath);
 
 		CachedConfig cached = CONFIG_CACHE.get(viewPath);
 		if (cached != null && cached._lastModified == currentModified) {
@@ -86,7 +123,7 @@ public class ViewLoader {
 	 *         if the file cannot be found or parsed.
 	 */
 	public static ViewElement getOrLoadView(String viewPath) throws ConfigurationException {
-		long currentModified = currentModified(viewPath);
+		long currentModified = modificationSignature(viewPath);
 
 		CachedView cached = CACHE.get(viewPath);
 		if (cached != null && cached._lastModified == currentModified) {
@@ -94,7 +131,7 @@ public class ViewLoader {
 		}
 
 		ViewElement.Config config = getOrLoadConfig(viewPath);
-		ViewElement view = instantiateView(config);
+		ViewElement view = instantiateView(config, viewPath);
 		CACHE.put(viewPath, new CachedView(view, currentModified));
 		return view;
 	}
@@ -109,28 +146,58 @@ public class ViewLoader {
 	 *         if the file cannot be found or parsed.
 	 */
 	public static ViewElement.Config loadConfig(String viewPath) throws ConfigurationException {
-		List<BinaryData> overlays = resolveOverlays(viewPath);
-
-		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
-			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
-
-		DefaultInstantiationContext context = new DefaultInstantiationContext(ViewLoader.class);
-		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
 		// All same-path copies across modules, in dependency (build) order: the first is the base
 		// view, the rest are overlays that a depending module contributes (add/position/override
 		// tabs, items, ...). The typed-configuration merge folds them into one view configuration.
-		reader.setSources(overlays);
+		List<BinaryData> overlays = resolveOverlays(viewPath);
 
-		ViewElement.Config config;
 		try {
-			config = (ViewElement.Config) reader.read();
-			context.checkErrors();
+			return parseConfig(overlays);
 		} catch (ConfigurationException ex) {
 			// Name the view being merged, so a dangling config:reference (e.g. a base tab a
 			// contributor positions against was renamed or removed) is not a cryptic failure.
 			throw new ConfigurationException("Failed to merge overlays for view '" + viewPath + "'.", ex);
 		}
+	}
 
+	/**
+	 * Parses view sources into a {@link ViewElement.Config}, applying every constraint the view
+	 * system enforces when loading a view.
+	 *
+	 * <p>
+	 * Callers that produce view content use this to check that what they produced can be loaded,
+	 * rather than restating the individual constraints.
+	 * </p>
+	 *
+	 * <p>
+	 * The parsed configuration is checked against the {@link Constraint}s its properties declare,
+	 * so a rule such as "exactly one of these two attributes" fails the load with the location of
+	 * the offending element.
+	 * </p>
+	 *
+	 * @param sources
+	 *        The view content to read: a single source, or a base view followed by its overlays.
+	 * @return The parsed {@link ViewElement.Config}.
+	 * @throws ConfigurationException
+	 *         If the content cannot be parsed, e.g. because a mandatory property is unset or two
+	 *         entries of a keyed list share a key.
+	 */
+	public static ViewElement.Config parseConfig(List<? extends Content> sources)
+			throws ConfigurationException {
+		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
+			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
+
+		DefaultInstantiationContext context = new DefaultInstantiationContext(ViewLoader.class);
+		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
+		// A copy, because the reader probes the list for null entries, which an immutable list
+		// rejects with an exception instead of answering.
+		reader.setSources(new ArrayList<>(sources));
+
+		ViewElement.Config config = (ViewElement.Config) reader.read();
+		// The constraints declared on the configuration are the rules the form editor shows at the
+		// field; checking them here reports them with the location of the offending element.
+		new ConstraintChecker().check(context, config);
+		context.checkErrors();
 		return config;
 	}
 
@@ -145,13 +212,15 @@ public class ViewLoader {
 	 */
 	public static ViewElement loadView(String viewPath) throws ConfigurationException {
 		ViewElement.Config config = loadConfig(viewPath);
-		return instantiateView(config);
+		return instantiateView(config, viewPath);
 	}
 
 	/**
-	 * Instantiates a {@link ViewElement} from the given configuration.
+	 * Instantiates a {@link ViewElement} from the given configuration, naming the file it was read
+	 * from.
 	 */
-	private static ViewElement instantiateView(ViewElement.Config config) throws ConfigurationException {
+	private static ViewElement instantiateView(ViewElement.Config config, String viewPath)
+			throws ConfigurationException {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(ViewLoader.class);
 		UIElement uiElement = context.getInstance(config);
 		context.checkErrors();
@@ -160,7 +229,9 @@ public class ViewLoader {
 			throw new ConfigurationException(
 				"Expected ViewElement but got: " + uiElement.getClass().getName());
 		}
-		return (ViewElement) uiElement;
+		ViewElement result = (ViewElement) uiElement;
+		result.initViewRef(viewRef(viewPath));
+		return result;
 	}
 
 	/**
@@ -197,23 +268,51 @@ public class ViewLoader {
 	}
 
 	/**
-	 * Whether the given view source is an overlay fragment (uses {@code config:operation} to
-	 * add/update/remove into a base) rather than a self-contained base view.
+	 * Whether the given view source is an overlay fragment - one that merges into a base through a
+	 * {@link ConfigurationSchemaConstants#LIST_OPERATION operation} attribute - rather than a
+	 * self-contained base view.
+	 *
+	 * <p>
+	 * Decided from the parsed document, so that only an actual attribute counts. A base view is
+	 * free to name the attribute in a comment, which is how a view documents the overlay it expects
+	 * contributors to write.
+	 * </p>
 	 */
 	private static boolean isOverlayFragment(BinaryData source) {
 		try (InputStream in = source.getStream()) {
-			// A base view never carries list-merge operations; an overlay always does.
-			return new String(in.readAllBytes(), StandardCharsets.UTF_8).contains("config:operation");
-		} catch (IOException ex) {
+			XMLStreamReader reader = XMLStreamUtil.getDefaultInputFactory().createXMLStreamReader(in);
+			try {
+				while (reader.hasNext()) {
+					if (reader.next() == XMLStreamConstants.START_ELEMENT
+						&& reader.getAttributeValue(ConfigurationSchemaConstants.CONFIG_NS,
+							ConfigurationSchemaConstants.LIST_OPERATION) != null) {
+						return true;
+					}
+				}
+			} finally {
+				reader.close();
+			}
+			return false;
+		} catch (IOException | XMLStreamException ex) {
+			// Not readable as XML: the reader reports the defect where the view is actually parsed.
 			return false;
 		}
 	}
 
 	/**
 	 * A change signature over <em>all</em> module copies of the view path, so an edit to any overlay
-	 * (not just the top one) invalidates the cache.
+	 * (not just the top one) invalidates a cached result.
+	 *
+	 * <p>
+	 * A cache that derives from view files compares this signature to decide whether its entry is
+	 * still valid.
+	 * </p>
+	 *
+	 * @param viewPath
+	 *        Full path to the view file, as {@link #fullPath(String)} produces it.
+	 * @return The signature, changing whenever any copy of the file is written.
 	 */
-	private static long currentModified(String viewPath) {
+	public static long modificationSignature(String viewPath) {
 		String name = viewPath.startsWith("/") ? viewPath.substring(1) : viewPath;
 		long signature = 1L;
 		for (File root : FileManager.getInstance().getIDEPaths()) {

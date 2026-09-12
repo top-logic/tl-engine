@@ -8,6 +8,9 @@ package com.top_logic.layout.view.slot;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -19,6 +22,7 @@ import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.slot.control.SlotContentControl;
@@ -32,6 +36,7 @@ import com.top_logic.layout.view.slot.control.SlotContentControl;
  * view's {@link ViewContext}, so their channel references resolve locally.
  * </p>
  */
+@InApp
 public class SlotContentElement implements UIElement {
 
 	/**
@@ -69,6 +74,7 @@ public class SlotContentElement implements UIElement {
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 
@@ -86,6 +92,11 @@ public class SlotContentElement implements UIElement {
 		for (PolymorphicConfiguration<? extends UIElement> childConfig : config.getChildren()) {
 			_children.add(context.getInstance(childConfig));
 		}
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_children));
 	}
 
 	@Override

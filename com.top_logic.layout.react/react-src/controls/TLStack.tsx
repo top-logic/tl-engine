@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useFillHost, FillProvider } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -10,7 +10,11 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - align: "start" | "center" | "end" | "stretch"  (default: "stretch")
  * - wrap: boolean  (default: false)
  * - growFirst: boolean  (default: false) — first child fills the main axis
+ * - cssClass: string - optional additional CSS class appended to the layout classes
  * - children: ChildDescriptor[]
+ *
+ * Takes part in the fill contract as a container: a stack hosting a filling child fills its own
+ * container, so that the child's height resolves against a definite one.
  */
 const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -22,6 +26,8 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
   const growFirst = state.growFirst === true;
   const children = (state.children as unknown[]) ?? [];
 
+  const [fillClass, fillHost] = useFillHost();
+
   const className = [
     'tlStack',
     `tlStack--${direction}`,
@@ -29,14 +35,18 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
     `tlStack--align-${align}`,
     wrap ? 'tlStack--wrap' : '',
     growFirst ? 'tlStack--grow-first' : '',
+    fillClass,
+    (state.cssClass as string) ?? '',
   ].filter(Boolean).join(' ');
 
   return (
-    <div id={controlId} className={className}>
-      {children.map((child, i) => (
-        <TLChild key={i} control={child} />
-      ))}
-    </div>
+    <FillProvider host={fillHost}>
+      <div id={controlId} className={className}>
+        {children.map((child, i) => (
+          <TLChild key={i} control={child} />
+        ))}
+      </div>
+    </FillProvider>
   );
 };
 

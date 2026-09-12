@@ -8,33 +8,25 @@ package com.top_logic.layout.view.form;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.field.FieldControlRegistry;
+import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
-import com.top_logic.model.TLPrimitive;
-import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.TLType;
 
 /**
  * {@link ReactFieldControlProvider} for integer and floating-point attributes.
  *
  * <p>
- * Inspects the attribute's {@link com.top_logic.model.TLPrimitive.Kind} to determine the number of
- * decimal places: {@link com.top_logic.model.TLPrimitive.Kind#INT} uses 0,
- * {@link com.top_logic.model.TLPrimitive.Kind#FLOAT} uses 2.
+ * The value is displayed in and entered in the {@link FieldSpec#getNumberFormat() format the field
+ * asks for} - the attribute's format annotation, where it has one - so a German user reads and types
+ * {@code 12,5} where an English user reads and types {@code 12.5}.
  * </p>
  */
 public class NumberInputControlProvider implements ReactFieldControlProvider {
 
 	@Override
-	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
-		int decimalPlaces = 2;
-		TLType type = part.getType();
-		if (type instanceof TLPrimitive) {
-			TLPrimitive primitive = (TLPrimitive) type;
-			if (primitive.getKind() == TLPrimitive.Kind.INT) {
-				decimalPlaces = 0;
-			}
-		}
-		return new ReactNumberInputControl(context, model, decimalPlaces);
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+		return new ReactNumberInputControl(context, model, FieldControlRegistry.numberFormat(field));
 	}
 
 }

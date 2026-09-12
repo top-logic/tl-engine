@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="navPath"/>
+	</channels>
+	<panel title="Frame Routes Test">
+		<tile-stack
+			initial="tiles/overview.view.xml"
+			path="navPath"
+		>
+			<frame
+				route="person/:person"
+				view="tiles/person-detail.view.xml"
+			>
+				<param name="person"
+					expr="p -> objectId($p)"
+					reverse="id -> objectResolve(`tl.accounts:Person`, $id)"
+				/>
+				<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="p -> $p.get(`tl.accounts:Person#name`)"
+					inputs="person"
+				/>
+			</frame>
+			<frame
+				route="note"
+				view="tiles/note.view.xml"
+			/>
+		</tile-stack>
+	</panel>
+</view>

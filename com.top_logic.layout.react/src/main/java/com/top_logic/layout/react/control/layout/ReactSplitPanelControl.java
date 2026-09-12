@@ -179,6 +179,11 @@ public class ReactSplitPanelControl extends ReactControl {
 		if (child instanceof ReactSplitPanelControl) {
 			((ReactSplitPanelControl) child).setParentSplitPanel(this, _children.size() - 1);
 		}
+
+		if (isAttached()) {
+			// Added into an already displayed split panel.
+			child.attach();
+		}
 	}
 
 	/**
@@ -190,6 +195,9 @@ public class ReactSplitPanelControl extends ReactControl {
 	public void removeChild(int index) {
 		ChildEntry removed = _children.remove(index);
 		_childDescriptors.remove(index);
+
+		// No longer displayed, so its contributions to the surroundings are withdrawn before disposal.
+		removed._control.detach();
 
 		// Unregister removed child and its subtree from SSE.
 		removed._control.cleanupTree();
@@ -305,13 +313,6 @@ public class ReactSplitPanelControl extends ReactControl {
 	void setParentSplitPanel(ReactSplitPanelControl parent, int indexInParent) {
 		_parentSplitPanel = parent;
 		_indexInParent = indexInParent;
-	}
-
-	@Override
-	protected void cleanupChildren() {
-		for (ChildEntry entry : _children) {
-			entry._control.cleanupTree();
-		}
 	}
 
 	private void patchChildren() {
@@ -456,11 +457,11 @@ public class ReactSplitPanelControl extends ReactControl {
 	}
 
 	/**
-	 * Structural: a split-pane layout container, elided from the headless agent projection (its panels
+	 * Structural: a split-pane layout container, elided from the headless projection (its panels
 	 * remain as addressable nodes).
 	 */
 	@Override
-	public boolean agentTransparent() {
+	public boolean scriptingTransparent() {
 		return true;
 	}
 }

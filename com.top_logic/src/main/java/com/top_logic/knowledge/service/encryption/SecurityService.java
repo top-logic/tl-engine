@@ -14,17 +14,19 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
- * Service for the application security by, among other things, registering security providers.
- * 
+ * Registers the cryptographic security providers used by the application.
+ *
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 @InApp(value = false)
+@Label("Security providers")
 public class SecurityService extends ConfiguredManagedClass<SecurityService.Config> {
 
 	/**

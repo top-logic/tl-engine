@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
@@ -14,6 +14,13 @@
 				</supported-locales>
 				<bundles>
 					<bundle name="model.demo.react.messages"/>
+					<bundle name="model.demo.tickets.messages"/>
+					<bundle name="model.demo.charts.messages"/>
+					<bundle name="model.test.constraints.messages"/>
+					<bundle name="model.test.flowchart.messages"/>
+					<bundle name="model.tl.demo.projectManagement.messages"/>
+					<bundle name="model.demo.filter.messages"/>
+					<bundle name="model.demo.calendar.messages"/>
 				</bundles>
 			</instance>
 		</config>
@@ -21,7 +28,108 @@
 			<instance>
 				<declarations>
 					<declaration file="/WEB-INF/model/demo.react.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.tickets.model.xml"/>
+					<declaration file="/WEB-INF/model/DemoCharts.model.xml"/>
+					<declaration file="/WEB-INF/model/test.constraints.model.xml"/>
+					<declaration file="/WEB-INF/model/test.flowchart.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.demo.projectManagement.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.filter.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.calendar.model.xml"/>
 				</declarations>
+			</instance>
+		</config>
+		<!--
+			Where this application displays its business objects. A read-only value whose type is
+			listed here is offered as a link; following it reveals the views below in order and
+			hands each of them the values its bindings compute.
+			
+			The frames a target pushes carry the same channel values and the same labels as the
+			frames the user's own drill-down pushes, so a target leading into a drill-down the user
+			already has leaves it untouched.
+		-->
+		<config service-class="com.top_logic.layout.view.navigation.DisplayTargetService">
+			<instance>
+				<targets>
+					<target type="tl.demo.projectManagement:ProjectScope">
+						<show view="projects/overview.view.xml">
+							<bind channel="project"/>
+						</show>
+					</target>
+					<target type="tl.demo.projectManagement:Milestone">
+						<show view="projects/overview.view.xml">
+							<bind
+								channel="project"
+								expr="m -> $m.container()"
+							/>
+						</show>
+						<show
+							label-expr="m -> $m.container().get(`tl.demo.projectManagement:ProjectScope#name`)"
+							view="projects/milestones.view.xml"
+						>
+							<bind
+								channel="project"
+								expr="m -> $m.container()"
+							/>
+							<bind channel="milestone"/>
+						</show>
+					</target>
+					<target type="tl.demo.projectManagement:Ticket">
+						<show view="projects/overview.view.xml">
+							<bind
+								channel="project"
+								expr="t -> $t.container()"
+							/>
+						</show>
+						<show
+							label-expr="t -> $t.container().get(`tl.demo.projectManagement:ProjectScope#name`)"
+							view="projects/milestones.view.xml"
+						>
+							<bind
+								channel="project"
+								expr="t -> $t.container()"
+							/>
+						</show>
+						<show
+							label-expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`).get(`tl.demo.projectManagement:Milestone#name`)"
+							view="projects/tickets.view.xml"
+						>
+							<bind
+								channel="milestone"
+								expr="t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`)"
+							/>
+						</show>
+						<show
+							label-expr="t -> $t.get(`tl.demo.projectManagement:Ticket#title`)"
+							view="projects/ticket-detail.view.xml"
+						>
+							<bind channel="ticket"/>
+						</show>
+					</target>
+					<target type="tl.demo.projectManagement:Contributor">
+						<show
+							dialog="true"
+							view="projects/contributor-dialog.view.xml"
+						>
+							<bind channel="contributor"/>
+						</show>
+					</target>
+					<target type="tl.accounts:Person">
+						<show view="demo/tiles-demo/overview.view.xml">
+							<bind channel="selectedPerson"/>
+						</show>
+						<show
+							label-expr="p -> $p.get(`tl.accounts:Person#name`)"
+							view="demo/tiles-demo/person-detail.view.xml"
+						>
+							<bind channel="person"/>
+						</show>
+					</target>
+					<target type="demo.tickets:Ticket">
+						<show view="tickets.view.xml">
+							<bind channel="ticket"/>
+						</show>
+					</target>
+				</targets>
 			</instance>
 		</config>
 	</services>

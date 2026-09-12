@@ -18,6 +18,7 @@ import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -26,10 +27,10 @@ import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.dsa.DataAccessService;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 
-/** This class manages all Knowledgebases availeable in a TopLogic System.
+/** Manages all knowledge bases available in the application.
  *<p>
  * It uses an entry from XMLProperties for every Knowledgebase.
- * When required it uses this entry to create a new Insatnce of a 
+ * When required it uses this entry to create a new Insatnce of a
  * Knowledgebase, Knowledgebases are created on demand.
  *</p>
  *
@@ -41,6 +42,7 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 	ClusterManager.Module.class,
 	FlexDataManagerFactory.Module.class,
 	SchedulerService.Module.class })
+@Label("Knowledge base factory")
 public class KnowledgeBaseFactory extends ManagedClass {
 
 	/** The configurations of all {@link KnowledgeBase}s indexed by name. */

@@ -48,11 +48,14 @@ public class ToolbarBuilder {
 	 *        The target placement to filter commands for.
 	 * @param registry
 	 *        The clique registry (with any local cliques applied).
+	 * @param defaultDisplay
+	 *        The {@link ButtonDisplayMode} for buttons whose command requests none, or
+	 *        {@code null} for the standard presentation (icon and label side by side).
 	 * @return A toolbar control (never {@code null}).
 	 */
 	public static ReactToolbarControl buildOrEmpty(ReactContext context, CommandScope scope,
-			CommandPlacement placement, CliqueRegistry registry) {
-		ReactToolbarControl result = build(context, scope, placement, registry);
+			CommandPlacement placement, CliqueRegistry registry, ButtonDisplayMode defaultDisplay) {
+		ReactToolbarControl result = build(context, scope, placement, registry, defaultDisplay);
 		return result != null ? result : new ReactToolbarControl(context);
 	}
 
@@ -67,10 +70,13 @@ public class ToolbarBuilder {
 	 *        The target placement to filter commands for.
 	 * @param registry
 	 *        The clique registry (with any local cliques applied).
+	 * @param defaultDisplay
+	 *        The {@link ButtonDisplayMode} for buttons whose command requests none, or
+	 *        {@code null} for the standard presentation (icon and label side by side).
 	 * @return A toolbar control, or {@code null} if no commands match the placement.
 	 */
 	public static ReactToolbarControl build(ReactContext context, CommandScope scope,
-			CommandPlacement placement, CliqueRegistry registry) {
+			CommandPlacement placement, CliqueRegistry registry, ButtonDisplayMode defaultDisplay) {
 		// Filter by placement.
 		List<CommandModel> filtered = new ArrayList<>();
 		for (CommandModel model : scope.getAllCommands()) {
@@ -120,7 +126,8 @@ public class ToolbarBuilder {
 
 			List<ReactControl> controls = new ArrayList<>();
 			for (CommandModel model : models) {
-				controls.add(createButton(context, model, model == enterDefault ? KeyStroke.ENTER : null));
+				controls.add(createButton(context, model, model == enterDefault ? KeyStroke.ENTER : null,
+					defaultDisplay));
 			}
 
 			toolbar.addGroup(cliqueName, info.display(), info.label(), info.icon(), controls);
@@ -130,15 +137,14 @@ public class ToolbarBuilder {
 	}
 
 	private static ReactButtonControl createButton(ReactContext context, CommandModel model,
-			KeyStroke defaultGesture) {
-		// The CommandModel constructor wires label, executability, image, tooltip, the model's own
-		// key gesture and the state change listener.
+			KeyStroke defaultGesture, ButtonDisplayMode defaultDisplay) {
+		// The CommandModel constructor wires label, executability, image, tooltip, display mode, CSS
+		// classes, the model's own key gesture and the state change listener.
 		ReactButtonControl button = model instanceof UploadCommandModel
 			? new ReactUploadButtonControl(context, (UploadCommandModel) model)
 			: new ReactButtonControl(context, model);
-		if (model.getImage() != null) {
-			button.setDisplayMode(ButtonDisplayMode.ICON_LABEL);
-		}
+		// A toolbar contributes only its own default, for a command that requests no display mode.
+		button.setDefaultDisplayMode(defaultDisplay);
 		// The button's effective gesture is its own explicit one, else the conventional default.
 		KeyStroke gesture = model.getKeyGesture() != null ? model.getKeyGesture() : defaultGesture;
 		if (KeyStroke.ENTER.equals(gesture)) {

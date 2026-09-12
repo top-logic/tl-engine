@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29512_mandatory_model_attributes"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29088_Add_PersistentView"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- The name of a model part is stored in a mandatory column of all tables holding model parts. -->
+		<update-property name="tl.model:TLNamedPart#name"
+			mandatory="true"
+		/>
+
+		<!-- A model part always belongs to a model: "TLModule.model" is a mandatory column, all other implementations are derived from it. -->
+		<update-reference name="tl.model:TLModel#model"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLModule#model"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLType#model"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLTypePart#model"
+			mandatory="true"
+		/>
+
+		<!-- The module and the scope of a type are stored in mandatory columns of the table "TLType". -->
+		<update-reference name="tl.model:TLType#module"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLEnumeration#scope"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLPrimitive#scope"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLAssociation#scope"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLClass#scope"
+			mandatory="true"
+		/>
+
+		<!-- The owner of a type part is stored in a mandatory column of the tables "MetaAttribute" and "FastListElt". -->
+		<update-reference name="tl.model:TLStructuredTypePart#owner"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLClassifier#owner"
+			mandatory="true"
+		/>
+
+		<!--
+			The type of a type part is always set. Move the "mandatory" declaration from the abstract
+			"TLTypePart#type" to the concrete overrides, where it takes effect.
+		-->
+		<update-reference name="tl.model:TLTypePart#type"
+			mandatory="false"
+		/>
+		<update-reference name="tl.model:TLStructuredTypePart#type"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLReference#type"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLClassifier#type"
+			mandatory="true"
+		/>
+
+		<!-- The index of a classifier is stored in the mandatory column "FastListElt.order". -->
+		<update-property name="tl.model:TLClassifier#index"
+			mandatory="true"
+		/>
+
+		<!-- All columns of the table "TLModule_singletons" are mandatory. -->
+		<update-property name="tl.model:TLModuleSingletons#name"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLModuleSingletons#module"
+			mandatory="true"
+		/>
+		<update-reference name="tl.model:TLModuleSingletons#singleton"
+			mandatory="true"
+		/>
+	</processors>
+</migration>

@@ -6,10 +6,14 @@
 package com.top_logic.layout.view;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -22,20 +26,26 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.layout.view.channel.ChannelFactory;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ObservingChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.navigation.RevealPath;
+import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.routing.ParamBindingConfig;
 import com.top_logic.layout.view.routing.ParamBindingParticipant;
 import com.top_logic.layout.view.routing.QueryBindingConfig;
+import com.top_logic.layout.view.routing.QueryBindingParticipant;
+import com.top_logic.model.listen.ModelScope;
 
 /**
  * The mandatory root element of every {@code .view.xml} file.
  *
  * <p>
- * Establishes the scope boundary for a view. In the future, this is where channel declarations
- * and view-level configuration will be defined.
+ * Establishes the scope boundary for a view: its channel declarations, the bindings of URL
+ * parameters to those channels, and the content displayed within them.
  * </p>
  */
 public class ViewElement implements UIElement {
@@ -78,6 +88,7 @@ public class ViewElement implements UIElement {
 		@Name(CONTENT)
 		@DefaultContainer
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends UIElement> getContent();
 
 		/** Configuration name for {@link #getParamBindings()}. */
@@ -102,6 +113,9 @@ public class ViewElement implements UIElement {
 		 *
 		 * <p>
 		 * Query parameters are values from the query string (e.g., {@code ?type=foo&sort=name}).
+		 * Unlike a {@link #getParamBindings() route parameter}, a query parameter occupies no path
+		 * segment: its name identifies it, so it appears and disappears without moving anything else
+		 * in the URL, and changing it alone is no history entry.
 		 * </p>
 		 */
 		@Name(QUERY_BINDINGS)
@@ -112,7 +126,11 @@ public class ViewElement implements UIElement {
 
 	private final List<ParamBindingConfig> _paramBindings;
 
+	private final List<QueryBindingConfig> _queryBindings;
+
 	private final UIElement _content;
+
+	private String _viewRef;
 
 	/**
 	 * Creates a new {@link ViewElement} from configuration.
@@ -123,6 +141,7 @@ public class ViewElement implements UIElement {
 			.map(cc -> Map.entry(cc.getName(), context.getInstance(cc)))
 			.collect(Collectors.toList());
 		_paramBindings = config.getParamBindings();
+		_queryBindings = config.getQueryBindings();
 		PolymorphicConfiguration<? extends UIElement> contentConfig = config.getContent();
 		if (contentConfig == null) {
 			context.error("View element must have a content element.");
@@ -133,8 +152,51 @@ public class ViewElement implements UIElement {
 	}
 
 	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_content));
+	}
+
+	/**
+	 * Path of the view file this element was read from, relative to
+	 * {@link ViewLoader#VIEW_BASE_PATH}.
+	 *
+	 * @return The path, or {@code null} for a view built from a configuration that no file backs.
+	 */
+	public String getViewRef() {
+		return _viewRef;
+	}
+
+	/**
+	 * Names the view file this element was read from.
+	 *
+	 * @param viewRef
+	 *        See {@link #getViewRef()}.
+	 *
+	 * @implNote Called by {@link ViewLoader} right after instantiation: the element is built from a
+	 *           configuration, which does not carry the path it was read from, while every instance
+	 *           the loader hands out has one.
+	 */
+	public void initViewRef(String viewRef) {
+		_viewRef = viewRef;
+	}
+
+	/**
+	 * The names of the channels this view declares, in declaration order.
+	 *
+	 * <p>
+	 * These are the names a {@code <view-ref>} to this view can bind to.
+	 * </p>
+	 */
+	public Set<String> getChannelNames() {
+		return _channelEntries.stream()
+			.map(Map.Entry::getKey)
+			.collect(Collectors.toCollection(LinkedHashSet::new));
+	}
+
+	@Override
 	public IReactControl createControl(ViewContext context) {
 		// Phase 2a: Create and register channels via factories.
+		List<ObservingChannel> observingChannels = new ArrayList<>();
 		for (Map.Entry<String, ChannelFactory> entry : _channelEntries) {
 			String name = entry.getKey();
 			if (context.hasChannel(name)) {
@@ -142,29 +204,56 @@ public class ViewElement implements UIElement {
 				continue;
 			}
 			ChannelFactory factory = entry.getValue();
-			context.registerChannel(name, factory.createChannel(context));
+			ViewChannel channel = factory.createChannel(context);
+			context.registerChannel(name, channel);
+			if (channel instanceof ObservingChannel observing) {
+				observingChannels.add(observing);
+			}
 		}
 
-		// Phase 2b: Create param-binding participants (registered on attach, not here).
-		List<ParamBindingParticipant> participants = createParamBindingParticipants(context);
+		// Phase 2b: Create the routing participants of the bindings (registered on attach, not here).
+		List<RoutingParticipant> participants = createBindingParticipants(context);
 
 		// Phase 3: Create the content control.
 		IReactControl rootControl = _content != null
 			? _content.createControl(context)
 			: new ReactStackControl(context, List.of());
 
-		// Phase 4: Wire attach/detach — register/unregister participants with RouteManager.
-		if (!participants.isEmpty() && rootControl instanceof ReactControl rc) {
+		// Phase 3b: Announce this instance as what is displayed at its place, so that displaying an
+		// object here finds the channels to write. Cached content (a sidebar item, a tab visited
+		// earlier) stays announced while it lives, hence cleanup rather than detach.
+		registerDisplay(context, rootControl);
+
+		// Phase 4: Anchor the participants and the observing channels in the display and wire
+		// attach/detach — the participants register/unregister with the RouteManager, the channels
+		// observe the objects their inputs hold only while the view is on screen.
+		if (rootControl instanceof ReactControl rc) {
 			RouteManager rm = context.getRouteManager();
-			if (rm != null) {
+			if (!participants.isEmpty() && rm != null) {
+				for (RoutingParticipant participant : participants) {
+					rc.addRouteParticipant(participant);
+				}
 				rc.addAttachListener(() -> {
-					for (ParamBindingParticipant p : participants) {
-						rm.register(p);
+					for (RoutingParticipant participant : participants) {
+						rm.register(participant);
 					}
 				});
 				rc.addDetachListener(() -> {
-					for (ParamBindingParticipant p : participants) {
-						rm.unregister(p);
+					for (RoutingParticipant participant : participants) {
+						rm.unregister(participant);
+					}
+				});
+			}
+			if (!observingChannels.isEmpty()) {
+				rc.addAttachListener(() -> {
+					ModelScope scope = context.getModelScope();
+					for (ObservingChannel channel : observingChannels) {
+						channel.attach(scope);
+					}
+				});
+				rc.addDetachListener(() -> {
+					for (ObservingChannel channel : observingChannels) {
+						channel.detach();
 					}
 				});
 			}
@@ -174,14 +263,35 @@ public class ViewElement implements UIElement {
 	}
 
 	/**
-	 * Creates {@link ParamBindingParticipant}s for each configured {@code <param-bindings>} entry.
-	 * The participants are NOT registered with the RouteManager here — registration is handled
-	 * by the attach/detach listeners in Phase 4 to support cached view re-attachment.
-	 *
-	 * @return The list of participants (empty if none configured or no RouteManager).
+	 * Announces this instance in the window's {@link RevealRegistry} for as long as its control
+	 * lives.
 	 */
-	private List<ParamBindingParticipant> createParamBindingParticipants(ViewContext context) {
-		if (_paramBindings.isEmpty()) {
+	private void registerDisplay(ViewContext context, IReactControl rootControl) {
+		if (_viewRef == null || !(rootControl instanceof ReactControl control)) {
+			return;
+		}
+		RevealRegistry registry = context.getRevealRegistry();
+		if (registry == null) {
+			return;
+		}
+		control.addCleanupAction(registry.registerView(_viewRef, RevealPath.of(context), context));
+	}
+
+	/**
+	 * Creates the {@link RoutingParticipant} of every configured {@code <param-bindings>} and
+	 * {@code <query-bindings>} entry.
+	 *
+	 * <p>
+	 * The participants are not registered with the {@link RouteManager} here — registration is
+	 * handled by the attach/detach listeners, so that a view whose control tree is attached again
+	 * takes part in the routing again.
+	 * </p>
+	 *
+	 * @return The participants of this view, empty where it declares no binding or where the display
+	 *         has no {@link RouteManager}.
+	 */
+	private List<RoutingParticipant> createBindingParticipants(ViewContext context) {
+		if (_paramBindings.isEmpty() && _queryBindings.isEmpty()) {
 			return List.of();
 		}
 
@@ -190,13 +300,22 @@ public class ViewElement implements UIElement {
 			return List.of();
 		}
 
-		List<ParamBindingParticipant> result = new ArrayList<>();
+		List<RoutingParticipant> result = new ArrayList<>();
 		for (ParamBindingConfig binding : _paramBindings) {
-			ViewChannel channel = context.resolveChannel(new ChannelRef(binding.getChannel()));
-			ParamBindingParticipant participant = new ParamBindingParticipant(
-				binding.getRouteParam(), channel);
-			result.add(participant);
+			result.add(new ParamBindingParticipant(binding.getPrefix(), binding.getRouteParam(),
+				channel(context, binding.getChannel())));
+		}
+		for (QueryBindingConfig binding : _queryBindings) {
+			result.add(new QueryBindingParticipant(binding.getQueryParam(),
+				channel(context, binding.getChannel())));
 		}
 		return result;
+	}
+
+	/**
+	 * The channel of the given name in the given context.
+	 */
+	private static ViewChannel channel(ViewContext context, String name) {
+		return context.resolveChannel(new ChannelRef(name));
 	}
 }

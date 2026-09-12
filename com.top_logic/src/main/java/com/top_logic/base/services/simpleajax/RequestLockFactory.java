@@ -7,12 +7,14 @@ package com.top_logic.base.services.simpleajax;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
  * Factory creating {@link RequestLock} instances during user logins / subsession creations.
  */
+@Label("Request lock factory")
 public abstract class RequestLockFactory extends ManagedClass {
 
 	/**

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments helpID="ID_73b2169d_90d8_44d0_83f6_9de91631bddc">
+		<title>
+			<title key="dynamic.65ab8f58-1c01-480b-80be-c34dd95bc40c">
+				<en>Open invitations</en>
+				<de>Offene Einladungen</de>
+			</title>
+		</title>
+		<open-handler id="ID_da468fbb_c8c2_4bf3_857e_4b8c872db0b1"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			clique="additional"
+			image="css:bi bi-envelope-open"
+			targetComponent="admin/security/accounts/existingInvitations/invitationsGrid.layout.xml#Grid"
+		>
+			<target class="com.top_logic.layout.channel.linking.impl.NullLinking"/>
+			<resourceKey key="dynamic.65ab8f58-1c01-480b-80be-c34dd95bc40c">
+				<en>Open invitations</en>
+				<de>Offene Einladungen</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="admin/security/accounts/existingInvitations/innerLayout.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<titleProvider class="com.top_logic.layout.provider.label.NoLabelProvider"/>
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

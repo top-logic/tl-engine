@@ -57,7 +57,7 @@ public interface ReactCommand extends ConfigurationItem {
 	 * addressed.
 	 *
 	 * @implNote The address is in the form accepted by
-	 *           {@link com.top_logic.layout.react.headless.AgentSession#resolve(String)}.
+	 *           {@link com.top_logic.layout.react.scripting.ScriptingSession#resolve(String)}.
 	 */
 	@Name(ADDRESS)
 	@Nullable

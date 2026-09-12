@@ -57,6 +57,8 @@ import com.top_logic.model.search.expr.Union;
 import com.top_logic.model.search.expr.Var;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.visit.DefaultDescendingVisitor;
 import com.top_logic.model.search.expr.visit.GenericDescendingVisitor;
@@ -290,7 +292,7 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 			EvalContext evalContext = null;
 			for (TLObject obj : objects) {
 				if (evalContext == null) {
-					evalContext = new EvalContext(false, obj.tKnowledgeBase(), obj.tType().getModel(), null, null);
+					evalContext = newEvalContext();
 				}
 				if (SearchExpression.isTrue(filterLambda.eval(evalContext, obj))) {
 					result.add(obj);
@@ -743,7 +745,7 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	}
 
 	/** The compiled expression used by {@link #getValues(TLObject)} for forward navigation. */
-	private QueryExecutor _expression;
+	private SearchExpression _expression;
 
 	/**
 	 * All {@link TLStructuredTypePart}s referenced anywhere in {@link #_expression}. Returned by
@@ -770,14 +772,11 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	 */
 	public PathByExpression(InstantiationContext context, Config config) {
 		super(context, config);
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		TLModel model = ModelService.getApplicationModel();
-		_expression = QueryExecutor.compile(kb, model, config.getExpression());
+		_expression = compileAndResolve(config.getExpression());
 
-		/* Do not use QueryExecutor#getSearch(), because access to attributes may have been removed
-		 * to create KBQuery expressions. */
-		SearchExpression search = SearchBuilder.toSearchExpression(model, config.getExpression());
-		search = QueryExecutor.resolve(model, search);
+		/* Do not use _expression, because access to attributes may have been removed to create
+		 * KBQuery expressions during compilation. */
+		SearchExpression search = resolve(config.getExpression());
 		_relevantParts = extractPartsAddOverrides(search);
 		for (TLStructuredTypePart part : _relevantParts) {
 			if (part.isDerived()) {
@@ -788,6 +787,24 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 			}
 		}
 		_chain = extractChain(search);
+	}
+
+	private static SearchExpression resolve(Expr expression) {
+		TLModel model = ModelService.getApplicationModel();
+		SearchExpression search = SearchBuilder.toSearchExpression(model, expression);
+		SearchExpression resolved = QueryExecutor.resolve(model, search);
+		UpdateSecurityVisitor.disableSecurity(resolved);
+		return resolved;
+	}
+
+	private static SearchExpression compileAndResolve(Expr expression) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		TLModel model = ModelService.getApplicationModel();
+		SearchExpression search = SearchBuilder.toSearchExpression(model, expression);
+		QueryExecutor.compileExpr(kb, model, search);
+		SearchExpression resolved = QueryExecutor.resolve(model, search);
+		UpdateSecurityVisitor.disableSecurity(resolved);
+		return resolved;
 	}
 
 	private static boolean hasParts(SearchExpression expression) {
@@ -838,12 +855,18 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	 * @return the steps in application order (first applied first), or {@code null}
 	 */
 	private static List<Step> extractChain(SearchExpression expression) {
-		if (!(expression instanceof Lambda lambda)) {
-			/* In this case getValues() does not depend on the input. When any attribute value
-			 * changes, it is necessary to re-compute this path for all objects. */
-			return null;
+		if (expression instanceof Lambda lambda) {
+			return extractSubChain(lambda.getBody(), lambda.getKey(), new HashMap<>());
 		}
-		return extractSubChain(lambda.getBody(), lambda.getKey(), new HashMap<>());
+		/* A non-lambda expression does not depend on the base object. When it is a constant
+		 * expression (e.g. a singleton literal such as `module:Module#ROOT`, which compiles to a
+		 * Literal holding the singleton, or an all(Type) source), it can still be decomposed into an
+		 * invertible chain (a ConstantBranchStep or AllStep). This yields precise getSources /
+		 * getPathBase instead of the "recompute all" fallback -- matching the precision of a
+		 * dedicated constant path element. A fresh, never-matching parameter key ensures the
+		 * decomposition terminates only at a constant / all root, never at a lambda variable; a
+		 * non-decomposable expression still returns null (recompute all). */
+		return extractSubChain(expression, new NamedConstant("<no-parameter>"), new HashMap<>());
 	}
 
 	/**
@@ -1243,7 +1266,15 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 
 	@Override
 	public Collection<? extends TLObject> getValues(TLObject base) {
-		return asObjects(_expression.execute(base));
+		Args args = Args.some(SearchExpression.normalizeValue(base));
+		EvalContext evalContext = newEvalContext();
+		return asObjects(_expression.evalWith(evalContext, args));
+	}
+
+	private static EvalContext newEvalContext() {
+		return new EvalContext(false,
+			PersistencyLayer.getKnowledgeBase(),
+			ModelService.getApplicationModel(), null, null);
 	}
 
 	@Override
@@ -1313,9 +1344,8 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	}
 
 	private StringBuilder searchAsString() {
-		SearchExpression search = _expression.getSearch();
 		StringBuilder builder = new StringBuilder();
-		search.visit(ToString.INSTANCE, builder);
+		_expression.visit(ToString.INSTANCE, builder);
 		return builder;
 	}
 

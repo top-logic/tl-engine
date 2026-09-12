@@ -40,6 +40,9 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey ERROR_MAXIMUM_USERS_REACHED;
 
+	/** @en The command cannot be executed for the anonymous account. */
+	public static ResKey ERROR_NOT_EXECUTABLE_FOR_ANONYMOUS_ACCOUNT;
+
 	public static ResKey2 PASSWORD_FIELD_TOOLTIP;
 
 	@CustomKey("admin.person.edit.noSelfDelete")

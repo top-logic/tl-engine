@@ -109,7 +109,7 @@ public class SelectorComponent extends AbstractSelectorComponent {
 		/**
 		 * Algorithm selecting some option, if {@link #getDefaultSelection()} is enabled and the
 		 * user has not yet chosen an option.
-		 * 
+		 *
 		 * <p>
 		 * If {@link #getDefaultSelection()} is enabled but no value is given here, the first option
 		 * from the list is chosen by default.

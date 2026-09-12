@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -20,6 +23,7 @@ import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -48,6 +52,7 @@ import com.top_logic.util.Resources;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@InApp
 public class AdaptiveDetailElement implements UIElement {
 
 	/**
@@ -90,6 +95,7 @@ public class AdaptiveDetailElement implements UIElement {
 		 */
 		@Name(SELECTOR)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getSelector();
 
 		/**
@@ -97,6 +103,7 @@ public class AdaptiveDetailElement implements UIElement {
 		 */
 		@Name(DETAIL)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getDetail();
 
 		/**
@@ -179,6 +186,13 @@ public class AdaptiveDetailElement implements UIElement {
 	}
 
 	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(
+			ChildGroup.keyed(Config.SELECTOR, _selector),
+			ChildGroup.keyed(Config.DETAIL, _detail));
+	}
+
+	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel selectionChannel = context.resolveChannel(_selectionRef);
 		List<ViewChannel> resetOn = _resetOnRefs.stream().map(context::resolveChannel).collect(Collectors.toList());
@@ -197,7 +211,7 @@ public class AdaptiveDetailElement implements UIElement {
 			homeLabel = null;
 		}
 
-		return new ReactAdaptiveDetailControl(context, _selector, _detail, selectionChannel, resetOn,
+		return new ReactAdaptiveDetailControl(context, this, _selector, _detail, selectionChannel, resetOn,
 			coordinator, chain, homeLabel);
 	}
 

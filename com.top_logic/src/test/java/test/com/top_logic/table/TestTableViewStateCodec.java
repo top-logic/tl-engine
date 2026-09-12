@@ -6,6 +6,7 @@
 package test.com.top_logic.table;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +43,26 @@ public class TestTableViewStateCodec extends TestCase {
 		assertEquals(2, restored.getFrozenCount());
 		assertEquals(List.of(new SortColumn("salary", false), new SortColumn("name", true)), restored.getSort());
 		assertEquals(List.of("department"), restored.getGrouping().columns());
+	}
+
+	public void testHiddenColumnsRoundTrip() {
+		TableViewState original = new TableViewState();
+		original.setColumnOrder(List.of("name"));
+		original.setHiddenColumns(new LinkedHashSet<>(List.of("salary", "active")));
+
+		TableViewState restored = new TableViewState();
+		TableViewStateCodec.readInto(restored, TableViewStateCodec.toJson(original));
+
+		assertEquals(List.of("name"), restored.getColumnOrder());
+		assertEquals(new LinkedHashSet<>(List.of("salary", "active")), restored.getHiddenColumns());
+	}
+
+	public void testNoHiddenColumnsWritesNoEntry() {
+		TableViewState original = new TableViewState();
+		original.setColumnOrder(List.of("name"));
+
+		assertFalse("A table with all columns displayed must not persist an empty exclusion list.",
+			TableViewStateCodec.toJson(original).containsKey("hiddenColumns"));
 	}
 
 	/**
@@ -82,6 +103,54 @@ public class TestTableViewStateCodec extends TestCase {
 		TableViewState restored = new TableViewState();
 		TableViewStateCodec.readInto(restored, TableViewStateCodec.toJson(original));
 		assertTrue(restored.getFilters().isEmpty());
+	}
+
+	/** The search term round-trips with all of its matching flags. */
+	public void testSearchRoundTrip() {
+		TableViewState original = new TableViewState();
+		original.setSearch(new TextFilterState("ab.*c", true, true, true));
+
+		TableViewState restored = new TableViewState();
+		TableViewStateCodec.readInto(restored, TableViewStateCodec.toJson(original));
+
+		assertEquals(new TextFilterState("ab.*c", true, true, true), restored.getSearch());
+	}
+
+	public void testNoSearchWritesNoEntry() {
+		TableViewState original = new TableViewState();
+		original.setColumnOrder(List.of("name"));
+
+		assertFalse("A table without a search must not persist a search entry.",
+			TableViewStateCodec.toJson(original).containsKey("search"));
+
+		original.setSearch(TextFilterState.contains(""));
+		assertFalse("An empty term is no search.", TableViewStateCodec.toJson(original).containsKey("search"));
+	}
+
+	/** A stored state holding no search entry loads with no search in effect. */
+	public void testStateWithoutSearchEntryLoads() {
+		Map<String, Object> json = new LinkedHashMap<>();
+		json.put("columnOrder", List.of("name", "salary"));
+
+		TableViewState restored = new TableViewState();
+		TableViewStateCodec.readInto(restored, json);
+
+		assertEquals(List.of("name", "salary"), restored.getColumnOrder());
+		assertNull(restored.getSearch());
+	}
+
+	/** A search entry that is no serialized term is ignored instead of failing the load. */
+	public void testMalformedSearchIgnored() {
+		Map<String, Object> notAMap = new LinkedHashMap<>();
+		notAMap.put("search", "oops");
+		TableViewState restored = new TableViewState();
+		TableViewStateCodec.readInto(restored, notAMap);
+		assertNull(restored.getSearch());
+
+		Map<String, Object> withoutPattern = new LinkedHashMap<>();
+		withoutPattern.put("search", Map.of("caseSensitive", Boolean.TRUE));
+		TableViewStateCodec.readInto(restored, withoutPattern);
+		assertNull(restored.getSearch());
 	}
 
 	/** With a {@link FilterCodec}, filters round-trip through the JSON model. */

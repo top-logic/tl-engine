@@ -12,14 +12,17 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.KeyStrokeFormat;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -56,6 +59,9 @@ public interface ViewCommand {
 		/** Configuration name for {@link #getPlacement()}. */
 		String PLACEMENT = "placement";
 
+		/** Configuration name for {@link #getDisplay()}. */
+		String DISPLAY = "display";
+
 		/** Configuration name for {@link #getClique()}. */
 		String CLIQUE = "clique";
 
@@ -64,6 +70,9 @@ public interface ViewCommand {
 
 		/** Configuration name for {@link #getExecutability()}. */
 		String EXECUTABILITY = "executability";
+
+		/** Configuration name for {@link #getObservedTypes()}. */
+		String OBSERVED_TYPES = "observed-types";
 
 		/** Configuration name for {@link #getCheckDirty()}. */
 		String CHECK_DIRTY = "check-dirty";
@@ -118,6 +127,20 @@ public interface ViewCommand {
 		CommandPlacement getPlacement();
 
 		/**
+		 * How this command's button displays icon and label, e.g. {@code icon-only} for a compact
+		 * icon button whose label becomes the tooltip.
+		 *
+		 * <p>
+		 * If not set, the default of the enclosing command scope applies, and without one the
+		 * button shows the icon (when configured) together with the label.
+		 * </p>
+		 */
+		@Name(DISPLAY)
+		@Nullable
+		@NullDefault
+		ButtonDisplayMode getDisplay();
+
+		/**
 		 * The clique name for grouping related commands.
 		 *
 		 * @see CommandCliques
@@ -140,6 +163,21 @@ public interface ViewCommand {
 		@Name(EXECUTABILITY)
 		@EntryTag("rule")
 		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getExecutability();
+
+		/**
+		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
+		 * {@link #getExecutability() executability}, in addition to the {@link #getInput() input}
+		 * object, which is always observed.
+		 *
+		 * <p>
+		 * Configure this only for a rule that navigates beyond the input object, e.g. one deciding
+		 * by an attribute of the input's container: a change of that other object is invisible to
+		 * the input's own observation. Empty (default) observes just the input object.
+		 * </p>
+		 */
+		@Name(OBSERVED_TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getObservedTypes();
 
 		/**
 		 * Scope of the dirty check to perform before executing this command.
@@ -175,4 +213,18 @@ public interface ViewCommand {
 	 * @return The result of the command execution.
 	 */
 	HandlerResult execute(ReactContext context, Object input);
+
+	/**
+	 * Whether executing this command applies the values entered into the enclosing form.
+	 *
+	 * <p>
+	 * Such a command is disabled while the form displays validation errors, since the form would
+	 * reject it.
+	 * </p>
+	 *
+	 * @see FormValid
+	 */
+	default boolean appliesFormState() {
+		return false;
+	}
 }

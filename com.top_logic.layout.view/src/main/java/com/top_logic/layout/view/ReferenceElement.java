@@ -7,7 +7,9 @@ package com.top_logic.layout.view;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -15,7 +17,6 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
@@ -47,6 +48,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * &lt;/view-ref&gt;
  * </pre>
  */
+@InApp
 public class ReferenceElement implements UIElement {
 
 	/**
@@ -100,6 +102,11 @@ public class ReferenceElement implements UIElement {
 	}
 
 	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.view(_viewPath));
+	}
+
+	@Override
 	public IReactControl createControl(ViewContext parentContext) {
 		String fullPath = ViewLoader.VIEW_BASE_PATH + _viewPath;
 
@@ -107,32 +114,21 @@ public class ReferenceElement implements UIElement {
 		try {
 			referencedView = ViewLoader.getOrLoadView(fullPath);
 		} catch (ConfigurationException ex) {
-			throw new RuntimeException("Failed to load referenced view: " + fullPath, ex);
+			// A defective view replaces only itself: the enclosing application keeps rendering, so its
+			// navigation and app bar stay usable and the View Designer can still be opened to repair
+			// the view.
+			Logger.error("Rendering a placeholder for the view that could not be loaded: " + fullPath, ex,
+				ReferenceElement.class);
+			return ViewLoadError.createControl(parentContext, fullPath, ex);
 		}
 
-		// Create isolated child context (fresh channel namespace, but inherits error sink,
-		// dirty channel and command scope from parent). The command scope is shared so
-		// that commands contributed by the referenced view (e.g. a dashboard's edit
-		// command) bubble up to the enclosing app bar.
-		ViewContext childContext = new DefaultViewContext(parentContext);
-		ErrorSink parentErrorSink = parentContext.getErrorSink();
-		if (parentErrorSink != null) {
-			childContext = childContext.withErrorSink(parentErrorSink);
-		}
-		com.top_logic.layout.view.command.CommandScope parentScope = parentContext.getCommandScope();
-		if (parentScope != null) {
-			childContext = childContext.withCommandScope(parentScope);
-		}
-		// Inherit the enclosing security scope so that command security rules in the referenced view
-		// default to the scope of the removable unit that hosts the reference.
-		com.top_logic.layout.view.security.SecurityScope parentSecurityScope = parentContext.getSecurityScope();
-		if (parentSecurityScope != null) {
-			childContext = childContext.withSecurityScope(parentSecurityScope);
-		}
-		com.top_logic.layout.view.channel.DirtyChannel parentDirtyChannel = parentContext.getDirtyChannel();
-		if (parentDirtyChannel != null) {
-			childContext.setDirtyChannel(parentDirtyChannel);
-		}
+		// Isolated child context: a fresh channel namespace, all ambient scopes inherited. The
+		// command scope is shared so that commands contributed by the referenced view (e.g. a
+		// dashboard's edit command) bubble up to the enclosing app bar; the security scope so that
+		// command security rules in the referenced view default to the enclosing removable unit; the
+		// object list scope so that a <view-ref> used as an <object-list> row keeps <link-element> /
+		// <remove-element> working.
+		ViewContext childContext = parentContext.withIsolatedChannels();
 
 		// Pre-bind parent channels into the child context.
 		for (ChannelBindingConfig binding : _bindings) {

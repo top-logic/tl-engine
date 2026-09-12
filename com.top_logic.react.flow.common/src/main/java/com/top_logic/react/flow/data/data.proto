@@ -453,8 +453,8 @@ message Text extends Box {
 	@Nullable
 	string fontWeight;
 
-	/** The font size in pixels. */
-	double fontSize = 14;
+	/** The font size in pixels, or <code>0</code> to use the font size of the render context. */
+	double fontSize;
 
 	/** The SVG <code>font-family</code> style. */
 	@Nullable

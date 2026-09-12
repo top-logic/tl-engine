@@ -85,7 +85,7 @@
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="Create Demo A for the user 'Jan Stolzenburg'."
+							comment="Create Demo A for the user 'Fred Clever'."
 						>
 							<actions>
 								<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
@@ -107,9 +107,11 @@
 								>
 									<arguments/>
 								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op">
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
 									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-										label="account"
+										label="Verantwortlicher Zugang für Teilbaum"
 									>
 										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
@@ -160,7 +162,7 @@
 								</action>
 								<action class="com.top_logic.layout.scripting.action.FormInput$Op">
 									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-										label="account"
+										label="Verantwortlicher Zugang für Teilbaum"
 									>
 										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
@@ -211,7 +213,7 @@
 								</action>
 								<action class="com.top_logic.layout.scripting.action.FormInput$Op">
 									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-										label="account"
+										label="Verantwortlicher Zugang für Teilbaum"
 									>
 										<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 											name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
@@ -297,7 +299,7 @@
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 								<values>
 									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="account"
+										label="Verantwortlicher Zugang für Teilbaum"
 									/>
 								</values>
 							</value>

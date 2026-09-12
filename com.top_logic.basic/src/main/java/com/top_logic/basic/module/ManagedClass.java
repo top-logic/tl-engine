@@ -6,11 +6,7 @@
 package com.top_logic.basic.module;
 
 import java.util.Map;
-import java.util.Properties;
 
-import com.top_logic.basic.Configuration;
-import com.top_logic.basic.Configuration.IterableConfiguration;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
@@ -48,19 +44,6 @@ public abstract class ManagedClass {
 	private boolean _started;
 
 	/**
-	 * Create a managed class
-	 * 
-	 * @param config
-	 *        the configuration of this {@link ManagedClass}, i.e. if
-	 *        <code>A extends ManagedClass</code> then the given configuration
-	 *        is derived by {@link Configuration#getConfiguration(Class)} with
-	 *        <code>A.class</code> as argument.
-	 */
-	protected ManagedClass(IterableConfiguration config) {
-		// Constructor template.
-	}
-
-	/**
 	 * Creates a managed class.
 	 * 
 	 * @since 5.7.3
@@ -74,24 +57,12 @@ public abstract class ManagedClass {
 		// Constructor template.
 	}
 	
-	/**
-	 * Creates a {@link ManagedClass}.
-	 * 
-	 * @param config
-	 *        The configuration of this {@link ManagedClass}.
-	 * @throws ConfigurationException
-	 *         If the given configuration is invalid.
-	 */
-	protected ManagedClass(Properties config) throws ConfigurationException {
-		// Constructor template.
-	}
-	
 	protected ManagedClass() {
 		// Constructor template.
 	}
 
 	/**
-	 * Stops this {@link RuntimeModule}.
+	 * Stops this {@link ManagedClass}.
 	 */
 	protected void shutDown() {
 		// nothing to do here

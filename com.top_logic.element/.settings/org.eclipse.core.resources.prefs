@@ -10,6 +10,8 @@ encoding//src/main/webapp/WEB-INF/conf/resources/model.SecurityStructure.message
 encoding//src/main/webapp/WEB-INF/conf/resources/model.SecurityStructure.messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.Tag.messages_de.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.Tag.messages_en.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.mandatorStructure.messages_de.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.mandatorStructure.messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.accounts.messages_de.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.accounts.messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.changelog.messages_de.properties=UTF-8

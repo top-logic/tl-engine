@@ -23,6 +23,12 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 ERROR_NOT_A_CALENDAR__VAL_EXPR;
 
+	/**
+	 * @en The value "{0}" is not a time zone, use a time zone id string (e.g. "Asia/Tokyo") or the
+	 *     time zone of a calendar in expression: {1}
+	 */
+	public static ResKey2 ERROR_NOT_A_TIME_ZONE__VAL_EXPR;
+
 	public static ResKey2 ERROR_NOT_A_TL_OBJECT__VAL_EXPR;
 
 	/**
@@ -87,6 +93,26 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Operation not allowed in interactive context for non-admin users: {0}
 	 */
 	public static ResKey1 PERMISSION_DENIED__NAME;
+
+	/**
+	 * @en The user is not allowed to modify attribute {1} of object {0}.
+	 */
+	public static ResKey2 WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE;
+
+	/**
+	 * @en The user is not allowed to create elements of type {0}.
+	 */
+	public static ResKey1 CREATE_PERMISSION_DENIED__TYPE;
+
+	/**
+	 * @en The user is not allowed to delete object {0}.
+	 */
+	public static ResKey1 DELETE_PERMISSION_DENIED__OBJECT;
+
+	/**
+	 * @en Invalid log level ''{0}'', expected one of: {1}
+	 */
+	public static ResKey2 ERROR_INVALID_LOG_LEVEL__VALUE_OPTIONS;
 
 	static {
 		initConstants(I18NConstants.class);

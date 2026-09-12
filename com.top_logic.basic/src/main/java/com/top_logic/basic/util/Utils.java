@@ -325,6 +325,8 @@ public class Utils {
 			return ((Map<?, ?>) value).isEmpty();
 		} else if (value.getClass().isArray()) {
 			return Array.getLength(value) == 0;
+		} else if (value instanceof WithEmptiness emptiness) {
+			return emptiness.isEmpty();
 		} else {
 			return false;
 		}

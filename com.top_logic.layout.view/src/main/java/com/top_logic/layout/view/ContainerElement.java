@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -44,6 +46,7 @@ public abstract class ContainerElement implements UIElement {
 		@DefaultContainer
 		@EntryTag("child")
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 
@@ -64,6 +67,11 @@ public abstract class ContainerElement implements UIElement {
 	 */
 	protected List<UIElement> getChildren() {
 		return _children;
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_children));
 	}
 
 	/**

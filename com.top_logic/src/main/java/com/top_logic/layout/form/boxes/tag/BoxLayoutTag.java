@@ -21,6 +21,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
@@ -41,6 +42,7 @@ public class BoxLayoutTag extends AbstractBoxStructureTag {
 	 * 
 	 * @see #getLayout(String)
 	 */
+	@Label("Box layout configurations")
 	public static final class ConfigService extends ManagedClass {
 		
 		private final Map<String, Provider<BoxLayout>> _layoutFactoryByName;

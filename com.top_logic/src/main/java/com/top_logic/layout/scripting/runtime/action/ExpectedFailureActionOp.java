@@ -7,6 +7,8 @@ package com.top_logic.layout.scripting.runtime.action;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -42,7 +44,16 @@ public class ExpectedFailureActionOp
 		void setFailureAction(ApplicationAction value);
 
 		/**
-		 * A part of the failure message when the {@link #getFailureAction()} fails.
+		 * The message that must occur in the failure message when the {@link #getFailureAction()}
+		 * fails.
+		 *
+		 * <p>
+		 * By default, the value is matched as a literal substring of the failure message. If
+		 * {@link #isRegexpMode()} is set, the value is instead interpreted as a regular expression
+		 * that must be {@link java.util.regex.Matcher#find() found} somewhere in the failure message;
+		 * in that case regex metacharacters (e.g. <code>. ( ) [ ] { } * + ? \ ^ $ |</code>) must be
+		 * escaped to match literally. When empty, any failure is accepted.
+		 * </p>
 		 */
 		String getExpectedFailureMessage();
 
@@ -51,9 +62,28 @@ public class ExpectedFailureActionOp
 		 */
 		void setExpectedFailureMessage(String value);
 
+		/**
+		 * Whether {@link #getExpectedFailureMessage()} is interpreted as a regular expression.
+		 *
+		 * <p>
+		 * If not set (the default), {@link #getExpectedFailureMessage()} is matched as a literal
+		 * substring of the failure message. If set, it is interpreted as a regular expression.
+		 * </p>
+		 */
+		boolean isRegexpMode();
+
+		/**
+		 * @see #isRegexpMode()
+		 */
+		void setRegexpMode(boolean value);
+
 	}
 
 	private final ApplicationActionOp<?> _failureAction;
+
+	private final String _expectedFailureMessage;
+
+	private final Pattern _expectedFailurePattern;
 
 	/**
 	 * Ceates a new {@link ExpectedFailureActionOp}.
@@ -61,11 +91,23 @@ public class ExpectedFailureActionOp
 	public ExpectedFailureActionOp(InstantiationContext context, ExpectedFailureAction config) {
 		super(context, config);
 		_failureAction = context.getInstance(config.getFailureAction());
+		_expectedFailureMessage = config.getExpectedFailureMessage() == null ? "" : config.getExpectedFailureMessage();
+		_expectedFailurePattern = config.isRegexpMode() ? compilePattern(context, _expectedFailureMessage) : null;
+	}
+
+	private static Pattern compilePattern(InstantiationContext context, String regex) {
+		try {
+			return Pattern.compile(regex);
+		} catch (PatternSyntaxException ex) {
+			context.error("Invalid regular expression '" + regex + "' for 'expected-failure-message'.", ex);
+			// Degrade to a literal match so that the action stays usable if the (already reported)
+			// configuration error is ignored.
+			return Pattern.compile(Pattern.quote(regex));
+		}
 	}
 
 	@Override
 	protected Object processInternal(ActionContext context, Object argument) throws Throwable {
-		String expectedFailureMsg = getConfig().getExpectedFailureMessage();
 		try {
 			_failureAction.process(context, argument);
 		} catch (ApplicationAssertion ex) {
@@ -75,25 +117,38 @@ public class ExpectedFailureActionOp
 				if (problem instanceof I18NFailure) {
 					ResKey errorKey = ((I18NFailure) problem).getErrorKey();
 					String i18nFailure = context.getDisplayContext().getResources().getString(errorKey);
-					if (i18nFailure.contains(expectedFailureMsg)) {
+					if (matches(i18nFailure)) {
 						return argument;
 					}
 					allMessages.add(i18nFailure);
 				}
 				String failureMsg = problem.getMessage();
-				if (failureMsg.contains(expectedFailureMsg)) {
+				if (matches(failureMsg)) {
 					return argument;
 				}
-				allMessages.add(failureMsg);
+				if (failureMsg != null) {
+					allMessages.add(failureMsg);
+				}
 				problem = problem.getCause();
 			}
 
 			ApplicationAssertions.fail(getConfig(),
-				"Expected failure contains '" + expectedFailureMsg + "', but was: " + String.join(" ", allMessages));
+				"Expected failure matching '" + _expectedFailureMessage + "', but was: "
+					+ String.join(" ", allMessages));
 		}
 		ApplicationAssertions.fail(getConfig(),
-			"Expected failure containing '" + expectedFailureMsg + "', but action was successful.");
+			"Expected failure matching '" + _expectedFailureMessage + "', but action was successful.");
 		return argument;
+	}
+
+	private boolean matches(String message) {
+		if (message == null) {
+			return false;
+		}
+		if (_expectedFailurePattern != null) {
+			return _expectedFailurePattern.matcher(message).find();
+		}
+		return message.contains(_expectedFailureMessage);
 	}
 
 }

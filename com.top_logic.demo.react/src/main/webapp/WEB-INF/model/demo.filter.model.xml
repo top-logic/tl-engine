@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="demo.filter">
+		<!--
+			Parameter type for a model-class-defined, script-evaluated table filter. The form
+			rendered in the filter dialog shows these properties; a transient instance holds the
+			user's input.
+		-->
+		<class name="LongRange">
+			<attributes>
+				<property name="min"
+					type="tl.core:Long"
+				/>
+				<property name="max"
+					type="tl.core:Long"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

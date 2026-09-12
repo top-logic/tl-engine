@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -55,15 +56,19 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * &lt;/button&gt;
  * </pre>
  *
- * @implNote Resolves the target stack via {@link ViewContext#getTileStackScope()}.
+ * @implNote Resolves the target stack via {@link TileStackScope#lookup(ReactContext, String)}.
  */
+@InApp
 public class NavigatePushCommand implements ViewCommand {
 
 	/**
 	 * Configuration for {@link NavigatePushCommand}.
 	 */
-	@TagName("navigate-push")
+	@TagName(Config.TAG_NAME)
 	public interface Config extends ViewCommand.Config {
+
+		/** Configuration tag of a {@link NavigatePushCommand}. */
+		String TAG_NAME = "navigate-push";
 
 		@Override
 		@ClassDefault(NavigatePushCommand.class)
@@ -155,15 +160,9 @@ public class NavigatePushCommand implements ViewCommand {
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		if (!(context instanceof ViewContext viewContext)) {
-			throw new IllegalStateException(
-				"<navigate-push> requires a ViewContext, got " + context.getClass().getName());
-		}
-		TileStackScope scope = viewContext.getTileStackScope();
-		if (scope == null) {
-			throw new IllegalStateException(
-				"<navigate-push> executed outside of any enclosing <tile-stack>.");
-		}
+		TileStackScope scope = TileStackScope.lookup(context, Config.TAG_NAME);
+		// The lookup succeeded, so the context is the ViewContext whose channels the bindings read.
+		ViewContext viewContext = (ViewContext) context;
 
 		Map<String, Object> params = new LinkedHashMap<>();
 		if (_bindInputTo != null && input != null) {

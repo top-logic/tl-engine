@@ -9,7 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -21,12 +25,14 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DirtyChannel;
+import com.top_logic.layout.view.navigation.RevealPath;
+import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
 import com.top_logic.layout.view.security.SecurityScope;
@@ -42,6 +48,7 @@ import com.top_logic.util.Resources;
  * creates the content controls on demand and caches them.
  * </p>
  */
+@InApp
 public class TabBarElement implements UIElement {
 
 	/**
@@ -140,6 +147,7 @@ public class TabBarElement implements UIElement {
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 
@@ -157,16 +165,36 @@ public class TabBarElement implements UIElement {
 			List<UIElement> children = tabConfig.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
-			String label = Resources.getInstance().getString(tabConfig.getLabel());
 			String route = tabConfig.getRoute();
-			_tabs.add(new TabEntry(tabConfig.getId(), label, route, tabConfig.getIcon(),
+			_tabs.add(new TabEntry(tabConfig.getId(), tabConfig.getLabel(), route, tabConfig.getIcon(),
 				tabConfig.getAccessControl(), children));
 		}
 		_activeTab = config.getActiveTab();
 	}
 
+	/**
+	 * The label to display on the tab, in the language of the session being served.
+	 *
+	 * <p>
+	 * Falls back to the tab's {@link TabConfig#getId() ID} while no label is configured, so that a tab
+	 * added to a tab bar is visible and can be selected instead of rendering as a blank one.
+	 * </p>
+	 */
+	private static String label(TabEntry entry) {
+		String label = Resources.getInstance().getString(entry._label, null);
+		return StringServices.isEmpty(label) ? entry._id : label;
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return _tabs.stream()
+			.map(tab -> ChildGroup.keyed(tab._id(), tab._children()))
+			.collect(Collectors.toList());
+	}
+
 	@Override
 	public IReactControl createControl(ViewContext context) {
+		RevealPath here = RevealPath.of(context);
 		List<TabDefinition> tabDefs = new ArrayList<>();
 		for (TabEntry entry : _tabs) {
 			if (!AccessChecks.isAccessible(entry._accessControl)) {
@@ -174,8 +202,11 @@ public class TabBarElement implements UIElement {
 				continue;
 			}
 			DirtyChannel dirtyChannel = new DirtyChannel();
-			TabDefinition tabDef = new TabDefinition(entry._id, entry._label,
-				() -> createContent(entry, context, dirtyChannel), dirtyChannel);
+			// The content of a tab is created only when the tab is first activated, so the tab's
+			// context must already say where that content will sit.
+			ViewContext tabContext = context.withScope(RevealPath.class, here.append(this, entry._id));
+			TabDefinition tabDef = new TabDefinition(entry._id, label(entry),
+				() -> createContent(entry, tabContext, dirtyChannel), dirtyChannel);
 			if (entry._icon != null && !entry._icon.isEmpty()) {
 				tabDef.withIcon(entry._icon);
 			}
@@ -186,7 +217,14 @@ public class TabBarElement implements UIElement {
 			tabDefs.add(tabDef);
 		}
 		String activeTab = _activeTab != null && !_activeTab.isEmpty() ? _activeTab : null;
-		return new ReactTabBarControl(context, null, tabDefs, activeTab);
+		ReactTabBarControl tabBar = new ReactTabBarControl(context, null, tabDefs, activeTab);
+
+		RevealRegistry registry = context.getRevealRegistry();
+		if (registry != null) {
+			tabBar.addCleanupAction(registry.registerContainer(this, here, tabBar));
+		}
+
+		return tabBar;
 	}
 
 	private static ReactControl createContent(TabEntry entry, ViewContext context,
@@ -200,20 +238,23 @@ public class TabBarElement implements UIElement {
 			.withChildSlotPath(entry._id);
 		// Establish the tab's security scope so command rules in its content default to it.
 		SecurityScope scope = AccessChecks.resolveScope(entry._accessControl());
-		ViewContext tabContext = scope != null ? baseContext.withSecurityScope(scope) : baseContext;
+		ViewContext tabContext = scope != null ? baseContext.withScope(SecurityScope.class, scope) : baseContext;
 		tabContext.setDirtyChannel(dirtyChannel);
 
 		List<UIElement> elements = entry._children;
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(tabContext);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(tabContext))
-			.collect(Collectors.toList());
-		return new ReactStackControl(tabContext, children);
+		return ContentControls.toControl(elements, tabContext);
 	}
 
-	private record TabEntry(String _id, String _label, String _route, String _icon,
+	/**
+	 * A configured tab, as far as it is the same for every session.
+	 *
+	 * <p>
+	 * The label stays a {@link ResKey}: an element is parsed once and shared by every session, so a
+	 * text resolved here would be the one language whichever session loaded the view first happened
+	 * to ask in.
+	 * </p>
+	 */
+	private record TabEntry(String _id, ResKey _label, String _route, String _icon,
 			AccessControl _accessControl, List<UIElement> _children) {
 	}
 }

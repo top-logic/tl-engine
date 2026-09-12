@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -20,6 +19,7 @@ import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Server-side React control that renders a tree with lazy-loaded children.
@@ -27,7 +27,7 @@ import com.top_logic.mig.html.SelectionModel;
  * <p>
  * The tree is flattened into a list of visible nodes, each annotated with its depth. Node content
  * is delegated to child {@link ReactControl}s created by a {@link ReactControlProvider}. Expansion,
- * collapse, and selection are handled server-side via commands.
+ * collapse, selection and activation are handled server-side via commands.
  * </p>
  */
 public class ReactTreeControl extends ReactControl {
@@ -43,6 +43,9 @@ public class ReactTreeControl extends ReactControl {
 	/** @see #handleSelect(SelectNodeArguments) */
 	private static final String SELECT_COMMAND = "select";
 
+	/** @see #handleActivate(ActivateNodeArguments) */
+	private static final String ACTIVATE_COMMAND = "activate";
+
 	/** @see #handleContextMenu(ContextMenuArguments) */
 	private static final String CONTEXT_MENU_COMMAND = "contextMenu";
 
@@ -51,9 +54,6 @@ public class ReactTreeControl extends ReactControl {
 
 	/** @see #handleDrop(DropArguments) */
 	private static final String DROP_COMMAND = "drop";
-
-	/** @see #handleContextMenuAction(ContextMenuActionArguments) */
-	private static final String CONTEXT_MENU_ACTION_COMMAND = "contextMenuAction";
 
 	// -- State keys --
 
@@ -74,15 +74,6 @@ public class ReactTreeControl extends ReactControl {
 
 	/** @see #handleDragOver(DragOverArguments) */
 	private static final String DROP_INDICATOR_POSITION = "dropIndicatorPosition";
-
-	/** @see #openContextMenu(List, Consumer, int, int) */
-	private static final String CONTEXT_MENU = "contextMenu";
-
-	/** @see #openContextMenu(List, Consumer, int, int) */
-	private static final String CONTEXT_MENU_X = "contextMenuX";
-
-	/** @see #openContextMenu(List, Consumer, int, int) */
-	private static final String CONTEXT_MENU_Y = "contextMenuY";
 
 	// -- Node state keys (used in {@link #addNodeState}) --
 
@@ -132,6 +123,23 @@ public class ReactTreeControl extends ReactControl {
 		void openContextMenu(ReactTreeControl tree, Object node, int x, int y);
 	}
 
+	/**
+	 * Notified when a node is activated: opened by a double-click, or by {@code Enter} while it
+	 * carries the keyboard focus.
+	 */
+	@FunctionalInterface
+	public interface ActivationHandler {
+
+		/**
+		 * Called after the activated node became the tree's selection.
+		 *
+		 * @param node
+		 *        The activated node, as the tree model holds it.
+		 * @return The outcome reported to the client (and to a scripted replay).
+		 */
+		HandlerResult nodeActivated(Object node);
+	}
+
 	// -- Fields --
 
 	private TreeUIModel<Object> _treeModel;
@@ -149,6 +157,9 @@ public class ReactTreeControl extends ReactControl {
 
 	private ContextMenuProvider _contextMenuProvider;
 
+	/** What a node activation runs, {@code null} for a tree whose nodes cannot be opened. */
+	private ActivationHandler _activationHandler;
+
 	private List<TreeDropTarget> _dropTargets = new ArrayList<>();
 
 	/** The node ID currently showing a drop indicator, or null. */
@@ -156,9 +167,6 @@ public class ReactTreeControl extends ReactControl {
 
 	/** The current drop position indicator. */
 	private String _dropIndicatorPosition;
-
-	/** The handler for the currently open context menu, or {@code null}. */
-	private Consumer<String> _contextMenuActionHandler;
 
 	/** Index into the flat visible node list of the last anchor-setting click, or -1. */
 	private int _selectionAnchor = -1;
@@ -252,38 +260,18 @@ public class ReactTreeControl extends ReactControl {
 	}
 
 	/**
-	 * Opens a coordinate-positioned context menu on the tree.
+	 * Sets what a node activation runs, replacing any handler set before.
 	 *
 	 * <p>
-	 * Pushes the menu items, position, and open flag as state so that the client-side tree
-	 * component renders the context menu. When the user selects an item, the
-	 * {@code contextMenuAction} command is dispatched and the given {@code actionHandler} is
-	 * called with the selected item ID.
+	 * The handler is called with the activated node, after that node became the tree's selection.
+	 * Without one, a double-click and {@code Enter} select the node and do nothing further.
 	 * </p>
 	 *
-	 * @param items
-	 *        The menu items as list of maps. Each map should have at least {@code "id"} and
-	 *        {@code "label"}. Optional keys: {@code "icon"}, {@code "disabled"}.
-	 * @param actionHandler
-	 *        Called with the selected item ID.
-	 * @param x
-	 *        The client X coordinate.
-	 * @param y
-	 *        The client Y coordinate.
+	 * @param handler
+	 *        The handler to call, {@code null} to make the nodes unopenable again.
 	 */
-	public void openContextMenu(List<Map<String, Object>> items, Consumer<String> actionHandler, int x, int y) {
-		_contextMenuActionHandler = actionHandler;
-		putState(CONTEXT_MENU, items);
-		putState(CONTEXT_MENU_X, Integer.valueOf(x));
-		putState(CONTEXT_MENU_Y, Integer.valueOf(y));
-	}
-
-	/**
-	 * Closes the context menu.
-	 */
-	public void closeContextMenu() {
-		_contextMenuActionHandler = null;
-		putState(CONTEXT_MENU, null);
+	public void setActivationHandler(ActivationHandler handler) {
+		_activationHandler = handler;
 	}
 
 	/**
@@ -504,8 +492,13 @@ public class ReactTreeControl extends ReactControl {
 		_nodeControlCache.clear();
 	}
 
+	/**
+	 * Also disposes the controls of nodes that are currently collapsed or scrolled out: only the
+	 * rendered nodes are part of the state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
+		super.cleanupChildren();
 		cleanupNodeControls();
 	}
 
@@ -585,19 +578,51 @@ public class ReactTreeControl extends ReactControl {
 				_selectionAnchor = visibleNodes.indexOf(node);
 			} else {
 				// Single click in multi mode: replace selection.
-				_selectionModel.clear();
-				_selectionModel.setSelected(node, true);
-				_anchorAdded = true;
-				List<Object> visibleNodes = collectVisibleNodes();
-				_selectionAnchor = visibleNodes.indexOf(node);
+				selectOnly(node);
 			}
 		} else {
 			// Single select mode.
-			_selectionModel.clear();
-			_selectionModel.setSelected(node, true);
+			selectOnly(node);
 		}
 
 		buildFullState();
+	}
+
+	/**
+	 * Activates a tree node: the node becomes the selection, and what
+	 * {@link #setActivationHandler(ActivationHandler)} registered runs with it.
+	 *
+	 * <p>
+	 * This is what a double-click on the node and {@code Enter} on the focused node send. An id
+	 * naming no displayed node activates nothing.
+	 * </p>
+	 */
+	@SuppressWarnings("unchecked")
+	@ReactCommandHandler(ACTIVATE_COMMAND)
+	HandlerResult handleActivate(ActivateNodeArguments args) {
+		Object node = findNodeById(args.getNodeId());
+		if (node == null || !_selectionModel.isSelectable(node)) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		selectOnly(node);
+		buildFullState();
+
+		ActivationHandler handler = _activationHandler;
+		if (handler == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return handler.nodeActivated(node);
+	}
+
+	/**
+	 * Makes the given node the sole selection and the range anchor.
+	 */
+	@SuppressWarnings("unchecked")
+	private void selectOnly(Object node) {
+		_selectionModel.clear();
+		_selectionModel.setSelected(node, true);
+		_anchorAdded = true;
+		_selectionAnchor = collectVisibleNodes().indexOf(node);
 	}
 
 	/**
@@ -664,24 +689,4 @@ public class ReactTreeControl extends ReactControl {
 		putState(DROP_INDICATOR_POSITION, null);
 	}
 
-	/**
-	 * Handles the selection of a context menu item.
-	 */
-	@ReactCommandHandler(CONTEXT_MENU_ACTION_COMMAND)
-	void handleContextMenuAction(ContextMenuActionArguments args) {
-		String itemId = args.getItemId();
-		Consumer<String> handler = _contextMenuActionHandler;
-		closeContextMenu();
-		if (handler != null && itemId != null) {
-			handler.accept(itemId);
-		}
-	}
-
-	/**
-	 * Handles the context menu being closed without selection.
-	 */
-	@ReactCommandHandler("contextMenuClose")
-	void handleContextMenuClose() {
-		closeContextMenu();
-	}
 }

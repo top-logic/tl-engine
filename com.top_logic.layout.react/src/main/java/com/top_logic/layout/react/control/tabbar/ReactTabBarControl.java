@@ -12,15 +12,17 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.AgentControl;
+import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
 import com.top_logic.layout.react.routing.RouteChangeListener;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
 import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
+import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 
 
@@ -42,7 +44,7 @@ import com.top_logic.layout.react.routing.RoutingParticipant;
  * {@code null})</li>
  * </ul>
  */
-public class ReactTabBarControl extends ReactControl implements RoutingParticipant {
+public class ReactTabBarControl extends ReactControl implements RoutingParticipant, ChildRevealer {
 
 	private static final String REACT_MODULE = "TLTabBar";
 
@@ -101,7 +103,7 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		}
 		putState(TABS, tabList);
 		putState(ACTIVE_TAB_ID, _activeTabId);
-		// activeContent is null until the first render creates it.
+		// activeContent is null until this tab bar is attached (or written) - see onAttach().
 	}
 
 	/**
@@ -112,51 +114,56 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	}
 
 	@Override
+	protected void onAttach() {
+		super.onAttach();
+		// The active tab's content comes into existence here rather than at the first write, because
+		// what it contributes to its surroundings has to be in place before those surroundings are
+		// rendered: a form puts its Save into the enclosing button bar as it attaches, and a bar
+		// built and written before the form exists shows without it. Putting the content into the
+		// state now also lets the attach propagation that follows this hook reach it.
+		materializeActiveContent();
+	}
+
+	@Override
 	protected void onBeforeWrite() {
 		super.onBeforeWrite();
-		if (getState(ACTIVE_CONTENT) == null) {
-			ReactControl activeContent = getOrCreateContent(_activeTabId);
-			putState(ACTIVE_CONTENT, activeContent);
-			if (isAttached()) {
-				activeContent.attach();
-			}
+		// Covers a tab bar written without being attached; an attached one materialized its content
+		// in onAttach().
+		materializeActiveContent();
+	}
+
+	/**
+	 * Creates the active tab's content unless it already exists, and displays it.
+	 */
+	private void materializeActiveContent() {
+		if (getState(ACTIVE_CONTENT) != null) {
+			return;
+		}
+		ReactControl activeContent = getOrCreateContent(_activeTabId);
+		putState(ACTIVE_CONTENT, activeContent);
+		if (isAttached()) {
+			activeContent.attach();
 		}
 	}
 
-	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_activeTabId != null) {
-			ReactControl content = _contentCache.get(_activeTabId);
-			if (content != null) {
-				content.attach();
-			}
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_activeTabId != null) {
-			ReactControl content = _contentCache.get(_activeTabId);
-			if (content != null) {
-				content.detach();
-			}
-		}
-	}
-
+	/**
+	 * Also disposes the contents of tabs visited earlier: only the active tab's content is part of the
+	 * state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
-		if (_activeTabId != null) {
-			ReactControl active = _contentCache.get(_activeTabId);
-			if (active != null) {
-				active.detach();
-			}
-		}
+		super.cleanupChildren();
 		for (ReactControl cached : _contentCache.values()) {
 			cached.cleanupTree();
 		}
 		_contentCache.clear();
+	}
+
+	/**
+	 * The id of the tab currently displayed.
+	 */
+	public String getActiveTabId() {
+		return _activeTabId;
 	}
 
 	/**
@@ -177,11 +184,37 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		_activeTabId = tabId;
 
 		if (!isSSEAttached()) {
-			// Not yet rendered; just update state for deferred rendering.
+			// Not yet rendered, so the selection is applied by dropping the content of the tab left
+			// behind: onBeforeWrite() then mounts the content of the selected one, instead of writing
+			// the display of the tab that is no longer active.
 			putState(ACTIVE_TAB_ID, _activeTabId);
+			putState(ACTIVE_CONTENT, null);
+			if (previousContent != null) {
+				previousContent.detach();
+			}
 			return;
 		}
 
+		// Exchanging the display is how the navigation is carried out, so it is applied as one: the
+		// address bar gains a history entry for the tab now selected, and not a correction for every
+		// participant that appears or disappears on the way there.
+		RouteManager routeManager = getReactContext().getRouteManager();
+		if (routeManager != null) {
+			routeManager.navigate(() -> displayTab(tabId, previousContent));
+		} else {
+			displayTab(tabId, previousContent);
+		}
+	}
+
+	/**
+	 * Exchanges the displayed content for the content of the given tab.
+	 *
+	 * @param tabId
+	 *        The tab to display.
+	 * @param previousContent
+	 *        The content displayed until now, or {@code null} if there was none.
+	 */
+	private void displayTab(String tabId, ReactControl previousContent) {
 		ReactControl content = getOrCreateContent(tabId);
 
 		Object tx = beginUpdate();
@@ -196,7 +229,13 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 			content.attach();
 		}
 
-		// After successful selection, notify route listeners.
+		notifyRouteListeners(tabId);
+	}
+
+	/**
+	 * Reports the route of the given tab to the {@link RouteChangeListener}s.
+	 */
+	private void notifyRouteListeners(String tabId) {
 		TabDefinition newTab = findTab(tabId);
 		if (newTab.getRoute() != null) {
 			RoutePattern pattern = RoutePattern.compile(newTab.getRoute(), newTab.getId());
@@ -270,20 +309,26 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	// -- Commands --
 
 	/**
+	 * Activates the tab with the given id, letting the tab being left veto the switch while it holds
+	 * unsaved changes.
+	 */
+	@Override
+	public void revealChild(String key) {
+		TabDefinition currentTab = findTab(_activeTabId);
+		DirtyChannel dirtyChannel = currentTab.getDirtyChannel();
+		if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
+			throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectTab(key));
+		}
+
+		selectTab(key);
+	}
+
+	/**
 	 * Handles tab selection from the client.
 	 */
 	@ReactCommandHandler(SELECT_TAB_COMMAND)
 	void handleSelectTab(SelectTabArguments args) {
-		String tabId = args.getTabId();
-
-		// Check for dirty forms in the current tab before switching.
-		TabDefinition currentTab = findTab(_activeTabId);
-		DirtyChannel dirtyChannel = currentTab.getDirtyChannel();
-		if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
-			throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectTab(tabId));
-		}
-
-		selectTab(tabId);
+		revealChild(args.getTabId());
 	}
 
 	/**
@@ -291,9 +336,9 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	 * content addresses encode which tab they belong to.
 	 */
 	@Override
-	public String agentChildSlot(ReactControl child) {
+	public String scriptingChildSlot(ReactControl child) {
 		if (child == getState(ACTIVE_CONTENT)) {
-			return AgentControl.slotSegment("tab", _activeTabId);
+			return ScriptingControl.slotSegment("tab", _activeTabId);
 		}
 		return null;
 	}

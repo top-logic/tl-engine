@@ -7,6 +7,7 @@ package com.top_logic.layout.react;
 
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -73,8 +74,13 @@ public interface ReactContext {
 	ModelScope getModelScope();
 
 	/**
-	 * The {@link com.top_logic.layout.react.control.overlay.ContextMenuOpener} mounted at the
-	 * app-shell level, or {@code null} if none.
+	 * The {@link com.top_logic.layout.react.control.overlay.ContextMenuOpener} rendering into the
+	 * enclosing context-menu overlay, or {@code null} if none.
+	 *
+	 * <p>
+	 * A view embedding an app shell is served by that shell's overlay; any other view is served by
+	 * the window-level overlay of the enclosing browser window.
+	 * </p>
 	 */
 	default com.top_logic.layout.react.control.overlay.ContextMenuOpener getContextMenuOpener() {
 		return null;
@@ -85,6 +91,14 @@ public interface ReactContext {
 	 * routing is not available.
 	 */
 	default RouteManager getRouteManager() {
+		return null;
+	}
+
+	/**
+	 * The {@link ObjectNavigator} leading the user to the place a business object is displayed at,
+	 * or {@code null} if nothing here displays business objects.
+	 */
+	default ObjectNavigator getObjectNavigator() {
 		return null;
 	}
 }

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.tiles;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
@@ -21,17 +22,20 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * Resolves the target stack from the {@link ViewContext} - typically used by a "Back" button inside
  * a pushed frame. For breadcrumb-driven navigation, prefer letting the
- * {@link TileBreadcrumbElement &lt;tile-breadcrumb&gt;} write directly to the path channel.
+ * {@link TileBreadcrumbElement &lt;tile-breadcrumb&gt;} write directly to the path channel. To pop
+ * as one step of a longer command, use {@link NavigatePopAction the action of the same tag} inside
+ * a {@link com.top_logic.layout.view.command.GenericViewCommand &lt;generic-command&gt;}.
  * </p>
  *
- * @implNote Resolves the target stack via {@link ViewContext#getTileStackScope()}.
+ * @implNote Delegates to {@link NavigatePopAction}.
  */
+@InApp
 public class NavigatePopCommand implements ViewCommand {
 
 	/**
 	 * Configuration for {@link NavigatePopCommand}.
 	 */
-	@TagName("navigate-pop")
+	@TagName(NavigatePopAction.Config.TAG_NAME)
 	public interface Config extends ViewCommand.Config {
 
 		@Override
@@ -39,26 +43,19 @@ public class NavigatePopCommand implements ViewCommand {
 		Class<? extends ViewCommand> getImplementationClass();
 	}
 
+	private final NavigatePopAction _action;
+
 	/**
 	 * Creates a new {@link NavigatePopCommand}.
 	 */
 	@CalledByReflection
 	public NavigatePopCommand(InstantiationContext context, Config config) {
-		// No instance configuration.
+		_action = new NavigatePopAction();
 	}
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		if (!(context instanceof ViewContext viewContext)) {
-			throw new IllegalStateException(
-				"<navigate-pop> requires a ViewContext, got " + context.getClass().getName());
-		}
-		TileStackScope scope = viewContext.getTileStackScope();
-		if (scope == null) {
-			throw new IllegalStateException(
-				"<navigate-pop> executed outside of any enclosing <tile-stack>.");
-		}
-		scope.pop();
+		_action.execute(context, input);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 }

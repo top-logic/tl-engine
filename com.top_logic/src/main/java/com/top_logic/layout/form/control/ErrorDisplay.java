@@ -58,7 +58,7 @@ public class ErrorDisplay extends AbstractVisibleControl implements ErrorChanged
 	 * Construct a new {@link ErrorDisplay} observing the given set of
 	 * {@link FormField}s.
 	 */
-	public ErrorDisplay(Set fields, ErrorRenderer view) {
+	public ErrorDisplay(Set<?> fields, ErrorRenderer view) {
 		super(Collections.<String, ControlCommand>emptyMap());
 		
 		assert FilterUtil.filterList(FilterFactory.not(FilterFactory.createClassFilter(FormField.class)), fields).size() == 0 : 

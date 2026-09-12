@@ -25,8 +25,11 @@ import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
  * {@link ContextMenuContribution#setTarget() setter} before reading the resulting
  * {@link ContextMenuContribution#visibleCommands()}. Items are ordered by contribution index,
  * separated by a {@link MenuEntry#separator() separator} between contributions and between cliques
- * within a contribution. Wire item IDs are {@code "<contributionIndex>:<commandName>"} so names may
- * collide across contributions.
+ * within a contribution; a contribution carrying a {@link ContextMenuContribution#label() label}
+ * opens with a {@link MenuEntry#header(String) header} naming its entries. Wire item IDs are
+ * {@code "<contributionIndex>:<commandName>"} so names may collide across contributions. A command
+ * that is {@link CommandModel#isActive() active} yields an entry marked as the alternative in
+ * force.
  * </p>
  *
  * <p>
@@ -105,7 +108,8 @@ public class ContextMenuOpener {
 		List<List<CommandModel>> perContributionCommands = new ArrayList<>();
 		boolean anything = false;
 		for (int i = 0; i < contributions.size(); i++) {
-			List<CommandModel> visible = contributions.get(i).contribution().visibleCommands();
+			ContextMenuContribution contribution = contributions.get(i).contribution();
+			List<CommandModel> visible = contribution.visibleCommands();
 			List<CommandModel> sorted;
 			if (visible.isEmpty()) {
 				sorted = List.of();
@@ -114,6 +118,10 @@ public class ContextMenuOpener {
 				sorted.sort(Comparator.comparing(cmd -> nullSafe(cmd.getClique())));
 				if (anything) {
 					items.add(MenuEntry.separator());
+				}
+				String label = contribution.label();
+				if (label != null && !label.isEmpty()) {
+					items.add(MenuEntry.header(label));
 				}
 				appendCliqued(items, i, sorted);
 				anything = true;
@@ -142,7 +150,9 @@ public class ContextMenuOpener {
 				contributionIndex + ":" + j,
 				cmd.getLabel(),
 				encodeIcon(cmd.getImage()),
-				!cmd.isExecutable()));
+				!cmd.isExecutable(),
+				cmd.getCssClasses(),
+				cmd.isActive()));
 			currentClique = clique;
 			first = false;
 		}
@@ -165,12 +175,17 @@ public class ContextMenuOpener {
 		int commandIdx = Integer.parseInt(itemId.substring(colon + 1));
 		List<CommandModel> commands = _activeCommands.get(contributionIdx);
 		CommandModel cmd = commandIdx < commands.size() ? commands.get(commandIdx) : null;
-		if (cmd != null && cmd.isExecutable()) {
-			cmd.executeCommand(currentReactContext());
-		}
+
+		// Closing the menu is part of dispatching the selection, so it happens before the command
+		// runs. Otherwise a command that itself opens a menu (e.g. to choose among element types)
+		// would have that menu closed again right after opening it.
 		_renderer.hide();
 		_active = List.of();
 		_activeCommands = List.of();
+
+		if (cmd != null && cmd.isExecutable()) {
+			cmd.executeCommand(currentReactContext());
+		}
 	}
 
 	private void handleClose() {

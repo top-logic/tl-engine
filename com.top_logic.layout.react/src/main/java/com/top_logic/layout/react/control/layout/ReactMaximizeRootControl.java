@@ -77,8 +77,4 @@ public class ReactMaximizeRootControl extends ReactControl {
 		return _maximizedPanel;
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		_child.cleanupTree();
-	}
 }

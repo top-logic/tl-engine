@@ -3,5 +3,6 @@
 <arguments>
 	<dialogs>
 		<layout-reference resource="admin/security/accounts/inviteUsers/dialog.layout.xml"/>
+		<layout-reference resource="admin/security/accounts/existingInvitations/dialog.layout.xml"/>
 	</dialogs>
 </arguments>

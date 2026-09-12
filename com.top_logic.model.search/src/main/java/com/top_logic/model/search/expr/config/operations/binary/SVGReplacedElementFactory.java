@@ -18,6 +18,7 @@ import java.util.Base64;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.print.PrintTranscoder;
 import org.w3c.dom.Document;
@@ -75,6 +76,8 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 
 			// Replace href attributes with xlink:href attributes Batik insists to use.
 			int imageCnt = 0;
+			int width = cssWidth;
+			int height = cssHeight;
 			try (InputStream in = svgData.getStream()) {
 				Document svg = DOMUtil.newDocumentBuilderNamespaceAware().parse(in);
 				NodeList images = svg.getElementsByTagNameNS("http://www.w3.org/2000/svg", "image");
@@ -88,6 +91,16 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 					}
 				}
 
+				double[] viewBox = viewBox(svg.getDocumentElement());
+				if (viewBox != null) {
+					if (width < 0) {
+						width = (int) Math.round(viewBox[0]);
+					}
+					if (height < 0) {
+						height = (int) Math.round(viewBox[1]);
+					}
+				}
+
 				if (imageCnt > 0) {
 					// Use transformed SVG.
 					svgData = DOMUtil.toBinaryContent(svg, svgData.getName());
@@ -97,11 +110,41 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 				return null;
 			}
 
-			return new SVGReplacedElement(svgData, cssWidth, cssHeight);
+			return new SVGReplacedElement(svgData, width, height);
 		} else {
 			// Use URI string for file references (can be read multiple times)
 			ImageResource imageResource = uac.getImageResource(sourceAttr);
 			return new SVGReplacedElement(imageResource.getImageUri(), cssWidth, cssHeight);
+		}
+	}
+
+	/**
+	 * The size an SVG document reserves for itself through its {@code viewBox}.
+	 *
+	 * <p>
+	 * A replaced element needs a size in CSS pixels. An {@code img} that gives none leaves the size
+	 * of an SVG to the document itself, which states it as the extent of its {@code viewBox} — a
+	 * relative {@code width} and {@code height} such as {@code 100%} describe how the document
+	 * fills the space it is given, not how much it asks for.
+	 * </p>
+	 *
+	 * @return The width and height of the {@code viewBox}, or <code>null</code> if the given root
+	 *         element declares none.
+	 */
+	private static double[] viewBox(Element svgRoot) {
+		String viewBox = svgRoot.getAttributeNS(null, "viewBox");
+		if (viewBox.isEmpty()) {
+			return null;
+		}
+		String[] values = viewBox.trim().split("[\\s,]+");
+		if (values.length != 4) {
+			return null;
+		}
+		try {
+			return new double[] { Double.parseDouble(values[2]), Double.parseDouble(values[3]) };
+		} catch (NumberFormatException ex) {
+			Logger.warn("Invalid SVG viewBox: " + viewBox, SVGReplacedElementFactory.class);
+			return null;
 		}
 	}
 
@@ -163,6 +206,24 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 	@Override
 	public void setFormSubmissionListener(FormSubmissionListener listener) {
 		// Nothing to do here
+	}
+
+	/**
+	 * {@link PrintTranscoder} that draws text as text.
+	 *
+	 * @implNote Installs {@link SelectableTextPainter} on the {@link BridgeContext} that renders
+	 *           the document. Batik's default painter fills the glyph outlines, which on the
+	 *           {@link Graphics2D} of a {@link PdfTemplate} produces vector contours instead of
+	 *           selectable text.
+	 */
+	private static class TextPreservingTranscoder extends PrintTranscoder {
+
+		@Override
+		protected BridgeContext createBridgeContext(String documentVersion) {
+			BridgeContext result = super.createBridgeContext(documentVersion);
+			result.setTextPainter(SelectableTextPainter.INSTANCE);
+			return result;
+		}
 	}
 
 	/**
@@ -266,7 +327,7 @@ public class SVGReplacedElementFactory implements ReplacedElementFactory {
 
 			PdfTemplate template = cb.createTemplate(width, height);
 			Graphics2D graphics = template.createGraphics(width, height);
-			PrintTranscoder printer = new PrintTranscoder();
+			PrintTranscoder printer = new TextPreservingTranscoder();
 
 
 			// Create a fresh TranscoderInput from stored data (supports multiple paint calls)

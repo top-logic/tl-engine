@@ -24,18 +24,18 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DynamicReferers extends GenericMethod implements WithFlatMapSemantics<TLReference> {
+public class DynamicReferers extends GenericMethodWithSecurity implements WithFlatMapSemantics<TLReference> {
 
 	/**
 	 * Creates a new {@link DynamicReferers}.
 	 */
-	public DynamicReferers(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	public DynamicReferers(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new DynamicReferers(getName(), arguments);
+		return new DynamicReferers(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -67,11 +67,7 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object singletonValue, TLReference reference) {
-		if (!(singletonValue instanceof TLObject)) {
-			return null;
-		}
-		TLObject self = (TLObject) singletonValue;
-		return self.tReferers(reference);
+		return Referers.lookupReferrers(usesSecurity(), singletonValue, reference);
 	}
 
 	/**
@@ -101,7 +97,7 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 		public DynamicReferers build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
-			return new DynamicReferers(getConfig().getName(), args);
+			return new DynamicReferers(getConfig().getName(), args, true);
 		}
 
 	}

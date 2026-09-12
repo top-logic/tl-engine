@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Drill-down tile navigation demo:
+	- Outer view declares the navPath channel that holds the List<TileFrame> drill-down path.
+	- The breadcrumb is contributed to the app bar via <slot-content to="appbar-content">; the
+	app shell hosts the matching <slot name="appbar-content"/>, so the breadcrumb appears at the
+	app-bar level rather than inside the tab. It reads the same channel; clicking a crumb
+	truncates the path back to that depth.
+	- The initial frame is a table of accounts; activating a row - by double-click, by Enter, or
+	through the row's chevron button - pushes a detail frame onto the stack.
+	- bind-path-to makes the path channel visible inside every frame, so a frame view derives its
+	own depth from it and shows a "Back" command only where there is a frame to leave.
+	- The <frame> declaration puts the drill-down path into the address bar: a person frame is
+	/view/tiles-demo/person/<id>, with the id the person's objectId and the crumb the person's
+	name. Opening that address restores the frame, and the back button leaves it again.
+-->
+<view>
+	<channels>
+		<channel name="navPath"/>
+	</channels>
+
+	<stack>
+		<slot-content to="appbar-content">
+			<tile-breadcrumb path="navPath">
+				<home-label>
+					<en>Accounts</en>
+					<de>Konten</de>
+				</home-label>
+			</tile-breadcrumb>
+		</slot-content>
+
+		<tile-stack
+			bind-path-to="navPath"
+			initial="demo/tiles-demo/overview.view.xml"
+			path="navPath"
+		>
+			<frame
+				route="person/:person"
+				view="demo/tiles-demo/person-detail.view.xml"
+			>
+				<param name="person"
+					expr="p -> objectId($p)"
+					reverse="id -> objectResolve(`tl.accounts:Person`, $id)"
+				/>
+				<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="p -> $p.get(`tl.accounts:Person#name`)"
+					inputs="person"
+				/>
+			</frame>
+		</tile-stack>
+	</stack>
+</view>

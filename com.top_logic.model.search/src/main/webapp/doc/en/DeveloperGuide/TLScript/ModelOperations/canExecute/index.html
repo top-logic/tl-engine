@@ -1,0 +1,40 @@
+<h2>Syntax</h2>
+
+<pre><code>$object.canExecute($operation)
+
+canExecute($object, $operation)
+</code></pre>
+
+<h2>Description</h2>
+
+<p>Checks whether the currently logged-in user is allowed to perform a custom business operation on the given object and returns a boolean.</p>
+
+<p>The operation is referenced by its command group id (e.g. <code class="hljs inlineCode">"Approve"</code>). This is the generic check behind custom operations that go beyond read/write/delete. The function never fails (except when the named operation does not exist) and never filters.</p>
+
+<p>The check is evaluated for the currently logged-in user and follows the same rules as the implicit permission enforcement: deny-by-default, role inheritance along the security hierarchy, and full access for administrators or executions in a system context.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Type</th><th>Type Description</th><th>Mandatory</th><th>Default</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>object</td><td>Business object</td><td>The object on which the operation would be performed.</td><td>yes</td><td> </td></tr>
+		<tr><td>operation</td><td>String</td><td>The id of the command group (operation) to check, e.g. a built-in group like <code class="hljs inlineCode">"Delete"</code> or a custom one like <code class="hljs inlineCode">"Approve"</code>.</td><td>yes</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p>
+
+<p><code class="hljs inlineCode">true</code> if the current user may perform the operation on the object, <code class="hljs inlineCode">false</code> otherwise. Fails if no command group with the given id exists.</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1</h3>
+
+<pre><code>$order.canExecute("Approve")</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> Whether the logged-in user may approve the order.</p>

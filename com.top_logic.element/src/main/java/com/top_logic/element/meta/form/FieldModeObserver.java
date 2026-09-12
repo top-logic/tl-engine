@@ -36,10 +36,12 @@ public class FieldModeObserver extends ModeObserver {
 	 *        Model to observe.
 	 * @param attribute
 	 *        The attribute to observe. Maybe <code>null</code>.
+	 * @param editMode
+	 *        Whether the observed form is in edit mode.
 	 */
 	public FieldModeObserver(FormMember member, AttributeUpdateContainer updateContainer, ModeSelector modeSelector,
-			TLObject object, TLStructuredTypePart attribute) {
-		super(updateContainer, modeSelector, object, attribute);
+			TLObject object, TLStructuredTypePart attribute, boolean editMode) {
+		super(updateContainer, modeSelector, object, attribute, editMode);
 
 		_member = member;
 	}

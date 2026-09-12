@@ -12,5 +12,5 @@
     <stringAttribute key="org.eclipse.jdt.junit.TEST_KIND" value="org.eclipse.jdt.junit.loader.junit3"/>
     <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="test.TestAll"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="\${artifactId}"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Declipse.workspace=&quot;${workspace_loc}&quot; &#13;&#10;-Dtl_developerMode=true&#13;&#10;-Xms128m&#13;&#10;-Xmx256M &#13;&#10;-ea"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Declipse.workspace=&quot;${workspace_loc}&quot; &#13;&#10;-Dtl_operation_mode=development&#13;&#10;-Xms128m&#13;&#10;-Xmx256M &#13;&#10;-ea"/>
 </launchConfiguration>

@@ -16,6 +16,8 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.layout.basic.LabelSorter;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
@@ -191,7 +193,7 @@ public class ConfigNode extends SecurityNode {
 		List<LayoutConfigTreeNode> children = filterChildren(bo);
 		List<SecurityNode> result = new ArrayList<>();
 		if (children.isEmpty()) {
-			addChildren(builder, result, getCommandGroups());
+			addSortedCommandGroupChildren(builder, result, getCommandGroups());
 		} else {
 			addCommandsForNonLeafNodes(builder, result, children);
 			addChildren(builder, result, children);
@@ -199,10 +201,18 @@ public class ConfigNode extends SecurityNode {
 		return result;
 	}
 
+	private void addSortedCommandGroupChildren(SecurityTreeTableBuilder builder, List<SecurityNode> result,
+			List<BoundCommandGroup> commandGroups) {
+		/* Sort a copy: The given list may be the cached list of this node, or an immutable list. */
+		List<BoundCommandGroup> sortedGroups = new ArrayList<>(commandGroups);
+		LabelSorter.sortByLabelInline(sortedGroups, MetaLabelProvider.INSTANCE);
+		addChildren(builder, result, sortedGroups);
+	}
+
 	private void addCommandsForNonLeafNodes(SecurityTreeTableBuilder builder, List<SecurityNode> newChildren,
 			Collection<? extends LayoutConfigTreeNode> layoutChildren) {
 		List<BoundCommandGroup> allCommandGroups = getCommandGroups();
-		List<?> filteredGroups;
+		List<BoundCommandGroup> filteredGroups;
 		if (onlyDialogChildren(layoutChildren)) {
 			// Always show all commands
 			filteredGroups = allCommandGroups;
@@ -215,7 +225,7 @@ public class ConfigNode extends SecurityNode {
 				filteredGroups = allCommandGroups;
 			}
 		}
-		addChildren(builder, newChildren, filteredGroups);
+		addSortedCommandGroupChildren(builder, newChildren, filteredGroups);
 	}
 
 	private boolean onlyDialogChildren(Collection<? extends LayoutConfigTreeNode> layoutChildren) {

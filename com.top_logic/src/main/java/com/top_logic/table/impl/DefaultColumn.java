@@ -11,7 +11,6 @@ import java.util.function.Function;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
-import com.top_logic.table.CellEditor;
 import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
@@ -24,8 +23,8 @@ import com.top_logic.table.Sort;
  *
  * <p>
  * Required: a {@link #name()} and a value function. A text renderer and a label derived
- * from the name are used unless overridden. Capabilities (sort, filter, editor, aggregate)
- * are optional and absent unless set.
+ * from the name are used unless overridden. Capabilities (sort, filter, aggregate) are
+ * optional and absent unless set.
  * </p>
  *
  * @param <R>
@@ -43,17 +42,23 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final CellRenderer<V> _renderer;
 
+	private final Function<? super V, String> _searchText;
+
 	private final Sort<V> _sort;
 
 	private final ColumnFilter<V> _filter;
-
-	private final CellEditor<R, V> _editor;
 
 	private final Aggregator<R, V> _aggregate;
 
 	private final int _width;
 
 	private final boolean _frozenEligible;
+
+	private final boolean _selectable;
+
+	private final boolean _pinnedEnd;
+
+	private final String _cssClass;
 
 	private final Function<? super R, String> _css;
 
@@ -65,12 +70,17 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		_value = builder._value;
 		_renderer = builder._renderer != null ? builder._renderer
 			: value -> CellContent.text(String.valueOf(value));
+		_searchText = builder._searchText;
 		_sort = builder._sort;
 		_filter = builder._filter;
-		_editor = builder._editor;
 		_aggregate = builder._aggregate;
 		_width = builder._width;
-		_frozenEligible = builder._frozenEligible;
+		_pinnedEnd = builder._pinnedEnd;
+		// A pinned column is the table's own: it sits at the end whatever the user arranges, and it
+		// is visible there at every scroll position already.
+		_frozenEligible = builder._frozenEligible && !_pinnedEnd;
+		_selectable = builder._selectable && !_pinnedEnd;
+		_cssClass = builder._cssClass;
 		_css = builder._css;
 		_existence = builder._existence;
 	}
@@ -95,6 +105,15 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		return _renderer;
 	}
 
+	/**
+	 * The text of the cell value as {@link Builder#searchText(Function) configured}, or the text of
+	 * the rendered cell content when this column configures none.
+	 */
+	@Override
+	public String searchText(R row) {
+		return _searchText != null ? _searchText.apply(value(row)) : Column.super.searchText(row);
+	}
+
 	@Override
 	public Optional<Sort<V>> sort() {
 		return Optional.ofNullable(_sort);
@@ -103,11 +122,6 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	@Override
 	public Optional<ColumnFilter<V>> filter() {
 		return Optional.ofNullable(_filter);
-	}
-
-	@Override
-	public Optional<CellEditor<R, V>> editor() {
-		return Optional.ofNullable(_editor);
 	}
 
 	@Override
@@ -123,6 +137,21 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	@Override
 	public boolean frozenEligible() {
 		return _frozenEligible;
+	}
+
+	@Override
+	public boolean selectable() {
+		return _selectable;
+	}
+
+	@Override
+	public boolean pinnedEnd() {
+		return _pinnedEnd;
+	}
+
+	@Override
+	public String cssClass() {
+		return _cssClass;
 	}
 
 	@Override
@@ -165,17 +194,23 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 		CellRenderer<V> _renderer;
 
+		Function<? super V, String> _searchText;
+
 		Sort<V> _sort;
 
 		ColumnFilter<V> _filter;
-
-		CellEditor<R, V> _editor;
 
 		Aggregator<R, V> _aggregate;
 
 		int _width = 150;
 
+		String _cssClass;
+
 		boolean _frozenEligible = true;
+
+		boolean _selectable = true;
+
+		boolean _pinnedEnd;
 
 		Function<? super R, String> _css;
 
@@ -203,6 +238,22 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		}
 
 		/**
+		 * Sets the text of a cell value the free-text {@link com.top_logic.table.SearchSpec search}
+		 * examines.
+		 *
+		 * <p>
+		 * A column whose {@link #renderer(CellRenderer) renderer} produces a control instead of
+		 * text ({@link CellContent.Raw}) takes part in a search only through this text: the
+		 * rendered content carries none. Set it to the same text the column displays, so that the
+		 * search finds what the user reads.
+		 * </p>
+		 */
+		public Builder<R, V> searchText(Function<? super V, String> searchText) {
+			_searchText = searchText;
+			return this;
+		}
+
+		/**
 		 * Makes the column sortable with the given sort capability.
 		 */
 		public Builder<R, V> sort(Sort<V> sort) {
@@ -215,14 +266,6 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 */
 		public Builder<R, V> filter(ColumnFilter<V> filter) {
 			_filter = filter;
-			return this;
-		}
-
-		/**
-		 * Makes the column inline-editable with the given editor.
-		 */
-		public Builder<R, V> editor(CellEditor<R, V> editor) {
-			_editor = editor;
 			return this;
 		}
 
@@ -251,7 +294,44 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		}
 
 		/**
+		 * Sets whether the user may show, hide and move the column.
+		 *
+		 * @see Column#selectable()
+		 */
+		public Builder<R, V> selectable(boolean selectable) {
+			_selectable = selectable;
+			return this;
+		}
+
+		/**
+		 * Sets whether the column keeps its place at the end of the table.
+		 *
+		 * <p>
+		 * A pinned column is neither {@link #frozenEligible(boolean) frozen} nor
+		 * {@link #selectable(boolean) selectable}, whatever those are set to.
+		 * </p>
+		 *
+		 * @see Column#pinnedEnd()
+		 */
+		public Builder<R, V> pinnedEnd(boolean pinnedEnd) {
+			_pinnedEnd = pinnedEnd;
+			return this;
+		}
+
+		/**
+		 * Sets the CSS class every cell of the column carries.
+		 *
+		 * @see Column#cssClass()
+		 */
+		public Builder<R, V> cssClass(String cssClass) {
+			_cssClass = cssClass;
+			return this;
+		}
+
+		/**
 		 * Sets a per-row CSS class provider.
+		 *
+		 * @see Column#cssClass(Object)
 		 */
 		public Builder<R, V> css(Function<? super R, String> css) {
 			_css = css;

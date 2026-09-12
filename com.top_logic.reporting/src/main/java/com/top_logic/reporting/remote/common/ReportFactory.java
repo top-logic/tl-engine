@@ -17,6 +17,7 @@ import com.top_logic.base.office.AbstractOffice.ImageReplacerData;
 import com.top_logic.base.office.excel.ExcelImage;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.StreamUtilities;
@@ -28,9 +29,12 @@ import com.top_logic.reporting.remote.ReportDescriptor;
 import com.top_logic.reporting.remote.Reporter;
 
 /**
+ * Generates reports through a configured remote reporter.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 @Deprecated
+@Label("Report factory")
 public final class ReportFactory extends ManagedClass {
 	
 	public static final String FILE_TYPE = "FileType";

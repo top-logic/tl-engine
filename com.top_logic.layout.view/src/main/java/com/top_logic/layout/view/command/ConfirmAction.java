@@ -5,12 +5,10 @@
  */
 package com.top_logic.layout.view.command;
 
-import java.util.List;
-
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -19,12 +17,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.ConfirmDialogControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
-import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.util.Resources;
 
 /**
@@ -47,16 +40,14 @@ import com.top_logic.util.Resources;
  * already-executed actions.
  * </p>
  */
+@InApp
 public class ConfirmAction extends InterruptibleViewAction {
 
 	/**
 	 * Configuration for {@link ConfirmAction}.
 	 */
 	@TagName("confirm")
-	public interface Config extends PolymorphicConfiguration<ConfirmAction> {
-
-		/** Configuration name for {@link #getInputs()}. */
-		String INPUTS = "inputs";
+	public interface Config extends PolymorphicConfiguration<ConfirmAction>, ActionScript.Inputs {
 
 		@Override
 		@ClassDefault(ConfirmAction.class)
@@ -74,14 +65,6 @@ public class ConfirmAction extends InterruptibleViewAction {
 		@Name("expr")
 		@Mandatory
 		Expr getExpr();
-
-		/**
-		 * References to {@link ViewChannel}s whose current values become leading positional arguments
-		 * to {@link #getExpr()} (before the chain's current input value).
-		 */
-		@Name(INPUTS)
-		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-		List<ChannelRef> getInputs();
 
 		/**
 		 * The confirmation dialog title.
@@ -114,9 +97,7 @@ public class ConfirmAction extends InterruptibleViewAction {
 		ResKey getCancelLabel();
 	}
 
-	private final QueryExecutor _expr;
-
-	private final List<ChannelRef> _inputRefs;
+	private final ActionScript _expr;
 
 	private final ResKey _title;
 
@@ -129,8 +110,7 @@ public class ConfirmAction extends InterruptibleViewAction {
 	 */
 	@CalledByReflection
 	public ConfirmAction(InstantiationContext context, Config config) {
-		_expr = QueryExecutor.compile(config.getExpr());
-		_inputRefs = config.getInputs();
+		_expr = ActionScript.compile(config.getExpr(), config.getInputs());
 		_title = config.getTitle();
 		_confirmLabel = config.getConfirmLabel();
 		_cancelLabel = config.getCancelLabel();
@@ -165,21 +145,7 @@ public class ConfirmAction extends InterruptibleViewAction {
 	}
 
 	private ResKey evaluateMessage(ReactContext context, Object input) {
-		Object result;
-		if (_inputRefs.isEmpty()) {
-			result = _expr.execute(input);
-		} else {
-			ViewContext viewContext = (ViewContext) context;
-			Object[] args = new Object[_inputRefs.size() + 1];
-			int i = 0;
-			for (ChannelRef ref : _inputRefs) {
-				ViewChannel channel = viewContext.resolveChannel(ref);
-				args[i++] = channel.get();
-			}
-			args[i] = input;
-			result = _expr.execute(args);
-		}
-
+		Object result = _expr.execute(context, input);
 		if (result == null) {
 			return null;
 		}

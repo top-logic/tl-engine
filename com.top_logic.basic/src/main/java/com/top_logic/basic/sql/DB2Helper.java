@@ -15,6 +15,7 @@ import java.sql.Types;
 import java.text.Format;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 
 /** This class helps using DB2.
@@ -46,6 +47,50 @@ public class DB2Helper extends DBHelper
 	@CalledByReflection
 	public DB2Helper(InstantiationContext context, Config config) {
 		super(context, config);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * DB2 has no per-column collation; case-insensitivity depends on the database's collating
+	 * sequence (see {@link #internalCheck(Statement)}).
+	 * </p>
+	 */
+	@Override
+	public boolean supportsColumnCollation() {
+		return false;
+	}
+
+	/**
+	 * Verifies that the DB2 database uses a case-insensitive collating sequence, since DB2 cannot
+	 * apply a case-insensitive collation per column. Logs an error otherwise.
+	 */
+	@Override
+	protected void internalCheck(Statement statement) throws SQLException {
+		// DB2 has no per-column collation; the database itself must use a case-insensitive
+		// collating sequence, otherwise non-binary string columns are compared case-sensitively.
+		try (ResultSet result =
+			statement.executeQuery("SELECT VALUE FROM SYSIBMADM.DBCFG WHERE NAME = 'coll_seq'")) {
+			String collation = result.next() ? result.getString(1) : null;
+			if (collation == null || !isCaseInsensitiveCollation(collation)) {
+				Logger.error(
+					"DB2 database is not configured with a case-insensitive collating sequence (coll_seq='"
+						+ collation + "'). Non-binary string columns will be compared case-sensitively.",
+					DB2Helper.class);
+			}
+		}
+	}
+
+	private boolean isCaseInsensitiveCollation(String collSeq) {
+		// A locale-sensitive CLDR/UCA collating sequence is case-insensitive at primary or secondary
+		// strength (suffix _S1 / _S2); tertiary or higher (_S3 / _S4) is case-sensitive. Byte-order
+		// sequences (IDENTITY / IDENTITY_16BIT / SYSTEM) are always case-sensitive. This is a
+		// heuristic and must be verified against the actual DB2 catalog values in QA.
+		String value = collSeq.toUpperCase();
+		boolean localeSensitive = value.contains("CLDR") || value.contains("UCA");
+		boolean caseSensitiveStrength = value.endsWith("_S3") || value.endsWith("_S4");
+		return localeSensitive && !caseSensitiveStrength;
 	}
 
     /** We use a Sequence based on the table name.

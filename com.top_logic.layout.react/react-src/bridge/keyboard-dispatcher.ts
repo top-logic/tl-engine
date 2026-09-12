@@ -185,6 +185,11 @@ function handleKeydown(e: KeyboardEvent): void {
   if ((NAV_KEYS.has(e.key) || e.key === ' ') && isTextEntry(active)) {
     return;
   }
+  // Ctrl/Meta+A inside a caret editor selects that editor's text, whatever a scope binds it to
+  // (a table binds it to "select every row").
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A') && isTextEntry(active)) {
+    return;
+  }
 
   const gesture = eventToGesture(e);
   const ordered = _scopes.slice().sort((a, b) => b.id - a.id);

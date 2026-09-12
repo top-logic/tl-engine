@@ -119,7 +119,7 @@ public class LogFileTable implements UIElement {
 
 		ViewChannel selection = _selectionRef != null ? context.resolveChannel(_selectionRef) : null;
 		if (selection != null) {
-			control.setSelectionListener(keys -> {
+			control.addSelectionListener(keys -> {
 				File file = keys.size() == 1 ? (File) keys.iterator().next() : null;
 				selection.set(file);
 			});

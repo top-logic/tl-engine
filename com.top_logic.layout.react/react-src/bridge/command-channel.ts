@@ -16,6 +16,19 @@
 /** Command name for transmitting a form-field value to the server. */
 export const CMD_VALUE_CHANGED = 'valueChanged';
 
+/**
+ * Machine-readable error code from the server: the server-side UI state for this page no longer
+ * exists (the session was replaced underneath the open page by a login or logout, or the server
+ * was restarted). Must match {@code ReactServlet#ERROR_CODE_STALE_UI}.
+ */
+const ERROR_CODE_STALE_UI = 'stale-ui';
+
+/** Session-storage key holding the time of the last stale-UI reload, guarding against loops. */
+const STALE_UI_RELOAD_TIME_KEY = 'tlReactStaleUiReloadTime';
+
+/** Minimum time between two stale-UI reloads. */
+const STALE_UI_RELOAD_GUARD_MS = 10_000;
+
 /** JSON payload of a control command POST. */
 export interface CommandPayload {
   controlId: string;
@@ -45,11 +58,44 @@ async function post(url: string, payload: CommandPayload): Promise<void> {
       body: JSON.stringify(payload),
     });
     if (!resp.ok) {
-      console.error('[TLReact] Command failed:', resp.status, await resp.text());
+      const body = await resp.text();
+      if (isStaleUiError(body)) {
+        reloadOnStaleUi();
+        return;
+      }
+      console.error('[TLReact] Command failed:', resp.status, body);
     }
   } catch (e) {
     console.error('[TLReact] Command error:', e);
   }
+}
+
+/** Whether an error response body carries the {@link ERROR_CODE_STALE_UI} code. */
+function isStaleUiError(body: string): boolean {
+  try {
+    return (JSON.parse(body) as { errorCode?: string }).errorCode === ERROR_CODE_STALE_UI;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Re-bootstraps the page after the server rejected a command because it no longer knows this
+ * page's UI state — e.g. the session was replaced by a login or logout in another tab, or the
+ * server was restarted while the page stayed open. Without the reload, every further interaction
+ * would be rejected and the page would appear frozen.
+ *
+ * <p>Guarded so a stale answer arriving right after a reload does not cause a reload loop.</p>
+ */
+function reloadOnStaleUi(): void {
+  const lastReload = Number(window.sessionStorage.getItem(STALE_UI_RELOAD_TIME_KEY) ?? '0');
+  if (Date.now() - lastReload < STALE_UI_RELOAD_GUARD_MS) {
+    console.error('[TLReact] Server-side UI state still missing right after a reload; not reloading again.');
+    return;
+  }
+  window.sessionStorage.setItem(STALE_UI_RELOAD_TIME_KEY, String(Date.now()));
+  console.warn('[TLReact] Server no longer knows this page (session replaced or window discarded). Reloading.');
+  window.location.reload();
 }
 
 /**

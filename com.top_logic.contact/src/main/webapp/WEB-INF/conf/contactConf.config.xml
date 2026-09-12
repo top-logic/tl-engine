@@ -17,14 +17,12 @@
                 <label-providers>
 					<provider kind="MODEL" type="Contacts:PersonContact" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
 					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.mandatoraware.COSContactResourceProvider" />
-		            <provider kind="CODE" type="com.top_logic.util.Country" implementation="com.top_logic.contact.layout.CountryResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContact" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContactAssignment" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
                 </label-providers>
                 <resource-providers>
 					<provider kind="MODEL" type="Contacts:PersonContact" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
 					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.mandatoraware.COSContactResourceProvider" />
-		            <provider kind="CODE" type="com.top_logic.util.Country" implementation="com.top_logic.contact.layout.CountryResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContact" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContactAssignment" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
                 </resource-providers>
@@ -64,6 +62,29 @@
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
 				<group-mapper class="com.top_logic.contact.boundsec.manager.rule.ContactGroupMapper"/>
+				<security-parents>
+					<rule
+						id="SecRootForCompanyContact"
+						inherit="true"
+						meta-element="Contacts:CompanyContact"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+					<rule
+						id="SecRootForPersonContact"
+						inherit="true"
+						meta-element="Contacts:PersonContact"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+					<rule
+						id="ContactForPerson"
+						inherit="true"
+						meta-element="tl.accounts:Person"
+					>
+						<step attribute="tl.accounts:Person#contact"/>
+					</rule>
+				</security-parents>
 			</instance>
 		</config>
 

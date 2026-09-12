@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="comment"/>
+		<channel name="ticket"/>
+	</channels>
+	<anchor name="composer">
+		<panel appearance="card">
+			<title>
+				<en>New comment</en>
+				<de>Neuer Kommentar</de>
+			</title>
+			<form
+				initial-edit-mode="true"
+				input="comment"
+				mode-switch="false"
+			>
+				<field attribute="cited"/>
+				<field
+					attribute="content"
+					label-position="hide-label"
+				>
+					<input-control class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider"
+						insert-channel="insert"
+					>
+						<commands>
+							<generic-command
+								image="css:ri-links-line"
+								input="ticket"
+							>
+								<label>
+									<en>Reference ticket...</en>
+									<de>Ticket referenzieren...</de>
+								</label>
+								<executability>
+									<null-input-disabled/>
+								</executability>
+								<open-dialog dialog-view="tickets/reference-ticket.view.xml">
+									<bind
+										channel="context"
+										to="ticket"
+									/>
+									<bind
+										channel="result"
+										to="insert"
+									/>
+								</open-dialog>
+							</generic-command>
+						</commands>
+					</input-control>
+				</field>
+				<file-list attribute="attachments"/>
+				<commands>
+					<generic-command
+						image="css:bi bi-send"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Add comment</en>
+							<de>Kommentar hinzufügen</de>
+						</label>
+						<store-form-state/>
+						<link-element/>
+					</generic-command>
+				</commands>
+			</form>
+		</panel>
+	</anchor>
+</view>

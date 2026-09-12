@@ -84,7 +84,7 @@ const TLPhotoViewer: React.FC<TLCellProps> = ({ controlId }) => {
       <img
         className="tlPhotoViewer__image"
         src={imageUrl}
-        alt={t['js.photoViewer.alt']}
+        alt={(state.alt as string | undefined) || t['js.photoViewer.alt']}
       />
     </div>
   );

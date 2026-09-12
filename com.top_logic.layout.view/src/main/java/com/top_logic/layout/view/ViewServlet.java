@@ -7,6 +7,8 @@ package com.top_logic.layout.view;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
+import java.util.function.Consumer;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,6 +41,9 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
+import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
+import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.protocol.RouteChangeEvent;
@@ -48,6 +53,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.view.login.PendingSessionAction;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
@@ -101,7 +107,7 @@ public class ViewServlet extends TopLogicServlet {
 		// fresh SubSession is created. This mirrors the traditional layout system's
 		// ContentHandlersRegistry.startLogin() but without the SubsessionHandler /
 		// MainLayout setup that is specific to the traditional layout engine.
-		ensureSubSession(request, windowName);
+		TLSubSessionContext subSession = ensureSubSession(request, windowName);
 
 		// A login/logout initiated from the React UI swaps the underlying session here, on the
 		// reload request, rather than inside the command pipeline (see PendingSessionAction). This
@@ -112,29 +118,72 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		String routePath = extractRoutePath(pathInfo, windowName);
+		String routePath = extractRoutePath(rawPathInfo(request), windowName);
+		if (PendingSessionAction.consumeSessionSwapped(session)) {
+			// A login or logout has just replaced the session, and the redirect it sent still names
+			// the page the previous user had navigated to. Whoever takes the session over begins
+			// where they begin, so that page is not theirs to inherit.
+			routePath = null;
+		}
+		if (routePath == null) {
+			// Entered without naming a page, so the user's own choice of where to begin applies.
+			// A URL that does carry a route asks for that page and is never overridden.
+			routePath = StartPage.get();
+		} else {
+			String query = request.getQueryString();
+			if (query != null && !query.isEmpty()) {
+				// The query belongs to the route: it carries the values that refine what the named page
+				// shows - a filter term, a sorting - and the display takes them up together with the
+				// path. Raw, because a query travels percent-encoded and the routing decodes it.
+				routePath = routePath + '?' + query;
+			}
+		}
 
-		// Check if this is a programmatically opened window with a control provider.
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
+		// Rendering the page restarts the session's inactivity timeout. A reload renders the tree the
+		// window already holds, so the controls counting down to the end of the session are the ones
+		// created before this request and have to be told.
+		windowRegistry.noteActivity(session);
+		// Collect the windows whose page was unloaded and did not come back within the grace period.
+		windowRegistry.sweepUnloadedWindows();
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
-		WindowEntry windowEntry = windowRegistry.getWindow(windowName);
-		if (windowEntry != null) {
-			windowEntry.markConnected();
-			ReactControlProvider controlProvider = windowEntry.getControlProvider();
-			if (controlProvider != null) {
-				ReactContext baseContext = new DefaultReactContext(
-					request.getContextPath(), windowName, sseQueue, windowRegistry);
-				wireRouteManager(baseContext, sseQueue, routePath);
-				ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
-				ReactContext displayContext = withWindowErrorSink(baseContext, snackbar);
-				ReactControl content = controlProvider.createControl(
-					displayContext, windowEntry.getModel());
-				ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar));
-				windowEntry.setRootControl(rootControl);
-				sseQueue.setRootControl(rootControl);
-				renderPage(request, response, rootControl, displayContext);
+		// Every window is represented by an entry, an ordinary browser tab as well: it holds the tree
+		// the window displays, which the registry detaches when the page is unloaded and disposes when
+		// the window is torn down.
+		WindowEntry windowEntry = windowRegistry.getOrCreateWindow(windowName);
+		windowEntry.markConnected();
+
+		// A reload renders the tree the window still holds instead of replacing it: everything the tree
+		// holds - a table's selection, its scroll position and expansion, the input of a form, the
+		// position of a pager - is state the user produced, and a rebuild throws all of it away.
+		ReactControl displayed = windowEntry.getRootControl();
+
+		// A programmatically opened window brings its own control provider instead of a view file.
+		ReactControlProvider controlProvider = windowEntry.getControlProvider();
+		if (controlProvider != null) {
+			// The provider and the model of a window never change, so a tree it already has always
+			// fits - unlike a view, which has to be the same one.
+			if (displayed != null) {
+				renderAgain(request, response, displayed, sseQueue, routePath);
 				return;
 			}
+
+			ReactContext baseContext = new DefaultReactContext(
+				request.getContextPath(), windowName, sseQueue, windowRegistry);
+			wireRouteManager(baseContext, sseQueue, routePath);
+			ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
+			ReactMenuControl menu = createWindowMenu(baseContext);
+			ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
+			ReactContext displayContext = withWindowContextMenu(
+				withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
+			ReactControl content = controlProvider.createControl(
+				displayContext, windowEntry.getModel());
+			ReactControl rootControl =
+				new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
+			windowEntry.setRootControl(rootControl);
+			sseQueue.setRootControl(rootControl);
+			renderPage(request, response, rootControl, displayContext);
+			return;
 		}
 
 		String viewPath = resolveViewPath(pathInfo);
@@ -149,20 +198,65 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
+		// Reuse is correct only for the same view in the same language.
+		Locale locale = Resources.getCurrentLocale();
+		RenderedView rendered = RenderedView.lookup(subSession);
+		if (displayed != null && rendered != null && rendered.matches(viewPath, view, locale)) {
+			renderAgain(request, response, displayed, sseQueue, routePath);
+			return;
+		}
+		if (displayed != null) {
+			// Another view, a view file edited in the meantime, or a language the tree was not built
+			// in: the old tree is never rendered again, so release the model listeners its controls
+			// hold.
+			displayed.detach();
+			displayed.cleanupTree();
+		}
+
 		ReactContext baseContext = new DefaultReactContext(
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
 		wireRouteManager(baseContext, sseQueue, routePath);
 		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
-		ReactContext displayContext = withWindowErrorSink(baseContext, snackbar);
-		ViewContext viewContext = new DefaultViewContext(displayContext);
+		ReactMenuControl menu = createWindowMenu(baseContext);
+		ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
+		ReactContext displayContext = withWindowContextMenu(
+			withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
+		ViewContext viewContext = new DefaultViewContext(displayContext, viewPath);
 
 		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
 			(ReactControl) view.createControl(viewContext));
 		content.setViewSource(viewPath);
-		ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar));
+		ReactControl rootControl =
+			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);
+		windowEntry.setRootControl(rootControl);
+		RenderedView.store(subSession, new RenderedView(viewPath, view, locale));
 
 		renderPage(request, response, rootControl, displayContext);
+	}
+
+	/**
+	 * Renders a control tree the browser tab already holds into a freshly loaded page.
+	 *
+	 * <p>
+	 * The rendered output carries the full state of every control and reuses their IDs, so the new
+	 * client addresses the same controls as the old one. Events still queued for the previous client
+	 * are dropped: they describe steps towards a state the rendering below already contains.
+	 * </p>
+	 *
+	 * @param routePath
+	 *        The route requested by the URL, adopted by the tree while it is rendered (a deep link
+	 *        entered in an existing tab).
+	 */
+	private void renderAgain(HttpServletRequest request, HttpServletResponse response,
+			ReactControl rootControl, SSEUpdateQueue sseQueue, String routePath) throws IOException {
+		ReactContext context = rootControl.getReactContext();
+
+		sseQueue.discardPendingEvents();
+		sseQueue.setRootControl(rootControl);
+		wireRouteManager(context, sseQueue, routePath);
+
+		renderPage(request, response, rootControl, context);
 	}
 
 	/**
@@ -190,6 +284,62 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * Creates the context menu overlay of the browser window, serving every view it displays.
+	 *
+	 * <p>
+	 * A {@link ReactMenuControl} positions itself at viewport coordinates, so exactly one overlay per
+	 * browser window is required. The control must be part of the window's root control tree to be
+	 * rendered; see {@link #withWindowContextMenu(ReactContext, ContextMenuOpener)} for publishing the
+	 * matching {@link ContextMenuOpener} to the view.
+	 * </p>
+	 */
+	private static ReactMenuControl createWindowMenu(ReactContext context) {
+		return new ReactMenuControl(context, null, List.of(),
+			itemId -> {
+				// The select handler is installed per open() by the ContextMenuOpener.
+			},
+			() -> {
+				// The close handler is installed per open() by the ContextMenuOpener.
+			});
+	}
+
+	/**
+	 * Creates the {@link ContextMenuOpener} rendering into the given window menu overlay.
+	 */
+	private static ContextMenuOpener createWindowMenuOpener(ReactMenuControl menu) {
+		return new ContextMenuOpener(new ContextMenuOpener.MenuRenderer() {
+			@Override
+			public void show(int x, int y, List<ReactMenuControl.MenuEntry> items,
+					Consumer<String> selectHandler, Runnable closeHandler) {
+				menu.updateItems(items);
+				menu.setSelectHandler(selectHandler);
+				menu.setCloseHandler(closeHandler);
+				menu.open(x, y);
+			}
+
+			@Override
+			public void hide() {
+				menu.close();
+			}
+		});
+	}
+
+	/**
+	 * Derives a context whose {@link ReactContext#getContextMenuOpener()} is the window-level opener,
+	 * so any view the window displays can open a context menu.
+	 */
+	private static ReactContext withWindowContextMenu(ReactContext context, ContextMenuOpener opener) {
+		ReactContext result = new ForwardingReactContext(context) {
+			@Override
+			public ContextMenuOpener getContextMenuOpener() {
+				return opener;
+			}
+		};
+		opener.bindReactContext(() -> result);
+		return result;
+	}
+
+	/**
 	 * Creates a new {@link TLSubSessionContext} for the given window name, or reuses the existing
 	 * one (e.g. on page reload).
 	 *
@@ -199,10 +349,10 @@ public class ViewServlet extends TopLogicServlet {
 	 * subsequent commands and uploads.
 	 * </p>
 	 */
-	private void ensureSubSession(HttpServletRequest request, String windowName) {
+	private TLSubSessionContext ensureSubSession(HttpServletRequest request, String windowName) {
 		TLSessionContext sessionContext = TLContextManager.getSession();
 		if (sessionContext == null) {
-			return;
+			return null;
 		}
 
 		TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
@@ -222,6 +372,8 @@ public class ViewServlet extends TopLogicServlet {
 		// view rendering (e.g. for locale resolution).
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		displayContext.installSubSessionContext(subSession);
+
+		return subSession;
 	}
 
 	/**
@@ -266,6 +418,11 @@ public class ViewServlet extends TopLogicServlet {
 	 * (i.e. does not end with {@code .view.xml}).
 	 * </p>
 	 *
+	 * @param pathInfo
+	 *        The path below the servlet, with its segments percent-encoded - see
+	 *        {@link #rawPathInfo(HttpServletRequest)}.
+	 * @param windowName
+	 *        The window name occupying the first segment.
 	 * @return The route path without leading slash, or {@code null} if no route is present.
 	 */
 	private String extractRoutePath(String pathInfo, String windowName) {
@@ -291,13 +448,44 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * The path below the servlet in the form the browser requested it, with the percent-encoding of
+	 * its segments intact.
+	 *
+	 * <p>
+	 * A route carries values whose characters have a meaning in a URL, a slash above all, so the
+	 * route is read in encoded form: the segments of the request URI are the ones the route pattern
+	 * matches, and only the value a parameter captures is decoded.
+	 * {@link HttpServletRequest#getPathInfo()} delivers the path already decoded by the servlet
+	 * container, where such a value is indistinguishable from the segments around it - and where the
+	 * URL a back navigation sends as a {@code navigateToRoute} command, which is the encoded one,
+	 * would resolve differently than the same URL entered into the address bar.
+	 * </p>
+	 *
+	 * @param request
+	 *        The request being served.
+	 * @return The path below the context and servlet path, starting with a slash, or {@code null}
+	 *         for a request that names none.
+	 */
+	private static String rawPathInfo(HttpServletRequest request) {
+		String uri = request.getRequestURI();
+		String servletUrl = request.getContextPath() + request.getServletPath();
+		if (!uri.startsWith(servletUrl)) {
+			// The context or servlet path itself is encoded in the URI, so the path below it cannot
+			// be cut off by length. Such an application has no place to put an encoded route.
+			return request.getPathInfo();
+		}
+		String pathInfo = uri.substring(servletUrl.length());
+		return pathInfo.isEmpty() ? null : pathInfo;
+	}
+
+	/**
 	 * Wires the {@link RouteManager} from the given context to the SSE queue.
 	 *
 	 * <p>
-	 * Sets the pending URL on the route manager (for deep-link resolution) and installs a URL
-	 * change handler that pushes {@link RouteChangeEvent}s via SSE. Also stores the route manager
-	 * on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet} can look it
-	 * up for handling {@code navigateToRoute} commands.
+	 * Hands the route manager the URL the loaded page displays (for deep-link resolution) and
+	 * installs a URL change handler that pushes {@link RouteChangeEvent}s via SSE. Also stores the
+	 * route manager on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet}
+	 * can look it up for handling {@code navigateToRoute} commands.
 	 * </p>
 	 */
 	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String routePath) {
@@ -306,9 +494,10 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		if (routePath != null && !routePath.isEmpty()) {
-			routeManager.setPendingUrl(routePath);
-		}
+		// Unconditionally, an empty route included: a freshly loaded page displays what its URL says,
+		// which for a bare view is nothing - and the address bar has to be completed from the display
+		// rather than left describing less than it shows.
+		routeManager.adoptUrl(routePath == null ? "" : routePath);
 
 		routeManager.setUrlChangeHandler((url, replace) -> {
 			RouteChangeEvent event = RouteChangeEvent.create()
@@ -407,9 +596,35 @@ public class ViewServlet extends TopLogicServlet {
 
 	/**
 	 * Renders the HTML page with the root control using the {@link IReactControl#write} path.
+	 *
+	 * <p>
+	 * The page about to be rendered is the displayed one, so its tree is attached first. Rendering
+	 * alone would attach each control as it is serialized, which is too late for anything that acts on
+	 * a <em>different</em> control when it attaches: a {@code <slot-content>} registers its
+	 * contribution with the slot registry, and the {@code <slot>} placeholder it is routed to may
+	 * already have been written - the contribution would then reach the client as a patch after the
+	 * first paint instead of being part of it.
+	 * </p>
+	 *
+	 * <p>
+	 * Attaching here also makes the display state reliable for views nobody else attaches: only a view
+	 * rooted in an {@code <app-shell>} attaches itself, so in e.g. a {@code <window>}-rooted login view
+	 * everything keyed on being displayed - a form contributing its commands to the enclosing toolbar,
+	 * the registration of routing participants - would silently not happen.
+	 * </p>
 	 */
 	private void renderPage(HttpServletRequest request, HttpServletResponse response,
-			IReactControl rootControl, ReactContext context) throws IOException {
+			ReactControl rootControl, ReactContext context) throws IOException {
+		rootControl.attach();
+
+		// The display exists now, so the URL the request carries can be adopted: a page rendered into
+		// a control tree it already has registers no participants while attaching, and nothing else
+		// would hand them the requested route.
+		RouteManager routeManager = context.getRouteManager();
+		if (routeManager != null) {
+			routeManager.resolvePending();
+		}
+
 		response.setContentType("text/html");
 		response.setCharacterEncoding("UTF-8");
 
@@ -421,8 +636,15 @@ public class ViewServlet extends TopLogicServlet {
 
 		out.writeContent(HTMLConstants.DOCTYPE_HTML);
 		out.beginBeginTag(HTMLConstants.HTML);
-		out.writeAttribute("lang", "en");
-		out.writeAttribute("data-theme", themes.getActiveThemeId());
+		// The language the page is actually rendered in, so that assistive technology and the
+		// browser's own text handling follow the user's choice.
+		out.writeAttribute("lang", Resources.getCurrentLocale().getLanguage());
+		// The theme the user has selected. Left out while there is no selection, which is what makes
+		// the page follow the operating system's appearance preference.
+		String selectedTheme = themes.getSelectedThemeId();
+		if (selectedTheme != null) {
+			out.writeAttribute(UIThemeService.THEME_ATTRIBUTE, selectedTheme);
+		}
 		out.endBeginTag();
 
 		out.beginBeginTag(HTMLConstants.HEAD);
@@ -430,6 +652,9 @@ public class ViewServlet extends TopLogicServlet {
 		out.beginBeginTag(HTMLConstants.META);
 		out.writeAttribute("charset", "UTF-8");
 		out.endEmptyTag();
+		// The theme switch, put into effect before the first paint: a page carrying no theme yet
+		// follows the operating system's appearance preference.
+		themes.writeThemeScript(out);
 		out.beginBeginTag(HTMLConstants.META);
 		out.writeAttribute("name", "viewport");
 		out.writeAttribute("content", "width=device-width, initial-scale=1.0");
@@ -441,8 +666,8 @@ public class ViewServlet extends TopLogicServlet {
 		ClientResources clientResources = ClientResources.getInstance();
 		// Emit the registered client scripts: classic scripts, the import map, then ES module scripts.
 		clientResources.writeScriptRefs(out, contextPath);
-		// Emit the design tokens of every registered theme as data-theme scoped CSS custom
-		// properties. The active theme is selected via the data-theme attribute on <html>.
+		// Emit the design tokens of every registered theme as CSS custom properties, each scoped by
+		// the theme attribute of <html> naming the theme in effect.
 		themes.writeThemeStyles(out);
 		// Append the React stylesheets (fonts, icons, component CSS).
 		clientResources.writeStyleRefs(out, contextPath);
@@ -462,6 +687,11 @@ public class ViewServlet extends TopLogicServlet {
 		out.endTag(HTMLConstants.HTML);
 
 		out.flushBuffer();
+
+		// The display is complete now: whatever the requested URL still names is not part of it.
+		if (routeManager != null) {
+			routeManager.finishAdoption();
+		}
 	}
 
 	@Override

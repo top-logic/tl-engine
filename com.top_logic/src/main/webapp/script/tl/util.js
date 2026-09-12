@@ -608,6 +608,12 @@ function showInfoArea() {
 
 let infoServiceContainerId = "tl-info-service";
 
+/**
+ * Grace period in milliseconds before the info service box starts to fade out again once the mouse
+ * leaves it. Kept short so the box disappears almost immediately after the mouse leaves.
+ */
+let infoServiceFadeoutAfterHoverMs = 250;
+
 function _showInfoArea(infoServiceItems) {
 	if(_hasPendingInfoItems()) {
 		_appendInfoItems(infoServiceItems);
@@ -623,17 +629,25 @@ function _showInfoArea(infoServiceItems) {
 			BAL.DOM.addClass(infoServiceContainer, infoServiceContainerId);
 			
 			infoServiceContainer.removeInfoServiceListener = function() {};
-			
+
 			var pinningFunction = function(event) {
 				_stopInfoServiceFadeOut(infoServiceContainer);
-				BAL.removeEventListener(infoServiceContainer, "mouseenter", pinningFunction);
 				BAL.DOM.addClass(infoServiceContainer, "tl-info-service_pinned");
 				var infoItems = BAL.DOM.getChildElements(infoServiceContainer);
 				infoItems.forEach(function(infoItem) {
 					BAL.DOM.addClass(infoItem, "pinnedInfoServiceItem");
 				});
 			};
+			var unpinningFunction = function(event) {
+				BAL.DOM.removeClass(infoServiceContainer, "tl-info-service_pinned");
+				var infoItems = BAL.DOM.getChildElements(infoServiceContainer);
+				infoItems.forEach(function(infoItem) {
+					BAL.DOM.removeClass(infoItem, "pinnedInfoServiceItem");
+				});
+				_scheduleInfoServiceFadeOut(infoServiceContainer, infoServiceFadeoutAfterHoverMs);
+			};
 			BAL.addEventListener(infoServiceContainer, "mouseenter", pinningFunction);
+			BAL.addEventListener(infoServiceContainer, "mouseleave", unpinningFunction);
 			BAL.getBodyElement(topLevelDocument).appendChild(infoServiceContainer);
 		}
 		_appendInfoItems(infoServiceItems);
@@ -687,7 +701,6 @@ function _getPendingInfoItems() {
 }
 
 function _showInfoServiceBox(infoServiceContainer) {
-	var topLevelDocument = BAL.getTopLevelDocument();
 	BAL.insertAdjacentHTML(infoServiceContainer, "beforeend", _getPendingInfoItems()[0]);
 	var infoItem = BAL.DOM.getLastElementChild(infoServiceContainer);
 	infoItem.style.zIndex = 100000 - BAL.DOM.getChildElementCount(infoServiceContainer);
@@ -706,19 +719,25 @@ function _showInfoServiceBox(infoServiceContainer) {
 		} else {
 			BAL.setScrollTopElementAnimated(infoServiceContainer, BAL.getElementY(infoItem), 500);
 			if(!BAL.DOM.containsClass(infoServiceContainer, "tl-info-service_pinned")) {
-				infoServiceContainer.hideInfoServiceContainerTimerId = BAL.getTopLevelWindow().setTimeout(function() {
-					BAL.DOM.addClass(infoServiceContainer, "tl-info-service-item__hide-info-service_animation");
-					infoServiceContainer.removeInfoServiceListener = function(event) {
-						if(BAL.DOM.containsClass(infoServiceContainer, "tl-info-service-item__hide-info-service_animation")) {
-							BAL.getBodyElement(topLevelDocument).removeChild(infoServiceContainer);
-						}
-					};
-					BAL.addAnimationEndListener(infoServiceContainer, infoServiceContainer.removeInfoServiceListener);
-				}, services.infoServiceFadeoutTimerSeconds * 1000);
+				_scheduleInfoServiceFadeOut(infoServiceContainer, services.infoServiceFadeoutTimerSeconds * 1000);
 			}
 		}
 	};
 	BAL.addAnimationEndListener(infoItem, showNextItemListener);
+}
+
+function _scheduleInfoServiceFadeOut(infoServiceContainer, delayMs) {
+	var topLevelDocument = BAL.getTopLevelDocument();
+	BAL.getTopLevelWindow().clearTimeout(infoServiceContainer.hideInfoServiceContainerTimerId);
+	infoServiceContainer.hideInfoServiceContainerTimerId = BAL.getTopLevelWindow().setTimeout(function() {
+		BAL.DOM.addClass(infoServiceContainer, "tl-info-service-item__hide-info-service_animation");
+		infoServiceContainer.removeInfoServiceListener = function(event) {
+			if(BAL.DOM.containsClass(infoServiceContainer, "tl-info-service-item__hide-info-service_animation")) {
+				BAL.getBodyElement(topLevelDocument).removeChild(infoServiceContainer);
+			}
+		};
+		BAL.addAnimationEndListener(infoServiceContainer, infoServiceContainer.removeInfoServiceListener);
+	}, delayMs);
 }
 
 function _modifyItemAnimation(keyframesName, step, infoItem) {

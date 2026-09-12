@@ -20,6 +20,41 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CONFIRM_TITLE;
 
 	/**
+	 * @en Language
+	 */
+	public static ResKey LANGUAGE_GROUP;
+
+	/**
+	 * @en Theme
+	 */
+	public static ResKey THEME_GROUP;
+
+	/**
+	 * @en Changed language of "{0}".
+	 */
+	public static ResKey1 CHANGED_LANGUAGE__USER;
+
+	/**
+	 * @en Reset the personal configuration of "{0}".
+	 */
+	public static ResKey1 RESET_PERSONAL_CONFIGURATION__USER;
+
+	/**
+	 * @en This page is now the one you start on.
+	 */
+	public static ResKey START_PAGE_REMEMBERED;
+
+	/**
+	 * @en You no longer start on a particular page.
+	 */
+	public static ResKey START_PAGE_FORGOTTEN;
+
+	/**
+	 * @en This page has no address of its own, so it cannot be the one you start on.
+	 */
+	public static ResKey START_PAGE_NOT_ADDRESSABLE;
+
+	/**
 	 * @en Action ''{0}'' may not suspend inside a transaction. Place the guard (e.g. a confirmation)
 	 *     before the surrounding &lt;with-transaction&gt;.
 	 */
@@ -29,6 +64,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Unknown command reference: ''{0}''
 	 */
 	public static ResKey1 ERROR_UNKNOWN_COMMAND_REF__NAME;
+
+	/**
+	 * @en System
+	 */
+	public static ResKey THEME_FOLLOW_SYSTEM;
 
 	/**
 	 * @en No command configured for this button.

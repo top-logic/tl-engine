@@ -471,7 +471,7 @@ public class TLScriptCompletionService implements TLScriptConstants {
 		return modelPart.getAllParts().stream();
 	}
 
-	private static Stream<TLType> getAllTypeNameStream(TLModule module) {
+	private static Stream<? extends TLType> getAllTypeNameStream(TLModule module) {
 		return module.getTypes().stream().filter(type -> !(type instanceof TLAssociation));
 	}
 

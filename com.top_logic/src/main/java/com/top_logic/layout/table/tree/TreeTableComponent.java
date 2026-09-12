@@ -65,6 +65,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.InAppSelectable;
+import com.top_logic.layout.component.DefaultSelectionProvider;
 import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -357,6 +358,8 @@ public class TreeTableComponent extends BoundComponent
 
 	private CommandHandler _onSelectionChange;
 
+	private final DefaultSelectionProvider _defaultSelectionProvider;
+
 	private IFunction2<String, Object, String> _configKeyBuilder;
 
 	/**
@@ -386,6 +389,7 @@ public class TreeTableComponent extends BoundComponent
 			_tableConfigProvider = TableConfigurationFactory.toProvider(context, table);
 		}
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_defaultSelectionProvider = context.getInstance(config.getDefaultSelectionProvider());
 		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
 	}
 
@@ -725,13 +729,7 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private void setDefaultTreeSelection() {
-		AbstractTreeTableNode<?> defaultSelectedNode = getDefaultSelection();
-
-		if (defaultSelectedNode != null) {
-			setSelection(Collections.singleton(defaultSelectedNode));
-		} else {
-			setSelection(Collections.emptySet());
-		}
+		setSelection(defaultSelection());
 	}
 
 	private Set<AbstractTreeTableNode<?>> getNodesForPaths(Collection<? extends List<?>> paths) {
@@ -939,8 +937,13 @@ public class TreeTableComponent extends BoundComponent
 		return Maybe.some(rowOfObject);
 	}
 
-	@Override
-	public boolean revealObject(Object businessObject) {
+	/**
+	 * Resolves the node for the given business object, creating and expanding its ancestors so that
+	 * the node becomes displayed.
+	 *
+	 * @return The node, or <code>null</code> if the object is not part of the tree.
+	 */
+	private AbstractTreeTableNode<?> nodeToReveal(Object businessObject) {
 		List<AbstractTreeTableNode<?>> nodes = findNodes(businessObject);
 		AbstractTreeTableNode<?> node;
 		if (!nodes.isEmpty()) {
@@ -948,12 +951,21 @@ public class TreeTableComponent extends BoundComponent
 		} else {
 			Maybe<AbstractTreeTableNode<?>> displayed = findNodeOfBusinessObject(businessObject);
 			if (!displayed.hasValue()) {
-				return false;
+				return null;
 			}
 			node = displayed.get();
 		}
 		// Expand the ancestors so that the node is displayed.
 		TLTreeModelUtil.expandParents(node);
+		return node;
+	}
+
+	@Override
+	public boolean revealObject(Object businessObject) {
+		AbstractTreeTableNode<?> node = nodeToReveal(businessObject);
+		if (node == null) {
+			return false;
+		}
 
 		TableViewModel viewModel = getTableViewModel();
 		viewModel.validate(DefaultDisplayContext.getDisplayContext());
@@ -1325,10 +1337,7 @@ public class TreeTableComponent extends BoundComponent
 		}
 
 		if (newSelectedNodes.isEmpty()) {
-			AbstractTreeTableNode<?> defaultSelection = getDefaultSelection();
-			if (defaultSelection != null) {
-				newSelectedNodes.add(defaultSelection);
-			}
+			newSelectedNodes.addAll(defaultSelection());
 		}
 
 		setSelection(newSelectedNodes);
@@ -1340,22 +1349,34 @@ public class TreeTableComponent extends BoundComponent
 		SelectionUtil.setSelection(_selectionModel, newSelectedNodes);
 	}
 
-	private AbstractTreeTableNode<?> getDefaultSelection() {
-		if (_hasDefaultSelection) {
-			AbstractTreeTableModel<?> treeModel = getTableData().getTree();
-
-			List<AbstractTreeTableNode<?>> displayedRows = treeModel.getTable().getDisplayedRows();
-
-			if (!displayedRows.isEmpty()) {
-				for (AbstractTreeTableNode<?> displayedRow : displayedRows) {
-					if (isSelectable(displayedRow)) {
-						return displayedRow;
-					}
-				}
-			}
+	private Set<? extends AbstractTreeTableNode<?>> defaultSelection() {
+		if (!_hasDefaultSelection) {
+			return Collections.emptySet();
 		}
 
-		return null;
+		if (_defaultSelectionProvider != null) {
+			return providedDefaultSelection();
+		}
+
+		AbstractTreeTableModel<?> treeModel = getTableData().getTree();
+		List<AbstractTreeTableNode<?>> displayedRows = treeModel.getTable().getDisplayedRows();
+		for (AbstractTreeTableNode<?> displayedRow : displayedRows) {
+			if (isSelectable(displayedRow)) {
+				return Collections.singleton(displayedRow);
+			}
+		}
+		return Collections.emptySet();
+	}
+
+	private Set<AbstractTreeTableNode<?>> providedDefaultSelection() {
+		Set<AbstractTreeTableNode<?>> result = new LinkedHashSet<>();
+		for (Object businessObject : _defaultSelectionProvider.computeDefaultSelection(getModel(), getSelected())) {
+			AbstractTreeTableNode<?> node = nodeToReveal(businessObject);
+			if (node != null && isSelectable(node)) {
+				result.add(node);
+			}
+		}
+		return result;
 	}
 
 	/* The cast is safe, as the tree model has this type parameter. The TableField just "forgets"

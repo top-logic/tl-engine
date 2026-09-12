@@ -359,7 +359,7 @@ public class CreateModelPatch {
 		addSingletonsPatch(right, left.getAnnotation(TLSingletons.class), right.getAnnotation(TLSingletons.class));
 	}
 
-	private Collection<? extends TLType> noAssociations(Collection<TLType> types) {
+	private Collection<? extends TLType> noAssociations(Collection<? extends TLType> types) {
 		return types.stream().filter(t -> t.getModelKind() != ModelKind.ASSOCIATION).toList();
 	}
 

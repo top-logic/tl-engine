@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Personal settings of the logged-in user: the window, whose content is the tabs.
+
+	The tabs are a view of their own so that a module can contribute one. A window's content is an
+	unkeyed list, in which a same-path overlay can only append - a contributed <tab-bar> would
+	become a second tab bar beside this one. At the root of its own view the tab bar is a single
+	property instead, which the ViewLoader merges, the way tl-model-search-react extends
+	admin/admin.view.xml. See tl-layout-view-contact for the module contributing the profile tab.
+-->
+<view>
+	<!--
+		Save is contributed by the active tab's form and closes the dialog; Cancel is the window's
+		own button, so the two read as the pair of a form dialog. On a tab holding actions rather
+		than fields, Cancel merely closes.
+	-->
+	<window resizable="false"
+		width="560px"
+	>
+		<title>
+			<en>Settings</en>
+			<de>Einstellungen</de>
+		</title>
+		<view-ref view="settings-tabs.view.xml"/>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

@@ -15,6 +15,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.tool.boundsec.BoundCommand;
@@ -26,6 +27,7 @@ import com.top_logic.tool.boundsec.CommandGroupType;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Command groups")
 public class CommandGroupRegistry extends ConfiguredManagedClass<CommandGroupRegistry.Config> {
 
 	/**

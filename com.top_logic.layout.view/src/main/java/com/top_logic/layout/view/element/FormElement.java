@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.locking.handler.DefaultLockHandler;
 import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.base.locking.handler.NoTokenHandling;
@@ -18,6 +19,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -45,10 +47,16 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewActionChain;
+import com.top_logic.layout.view.command.ViewActions;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
+import com.top_logic.layout.view.command.FormValid;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.form.FormCommandModel;
+import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.FormModelListener;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -63,6 +71,7 @@ import com.top_logic.util.Resources;
  * via the {@link ViewContext}.
  * </p>
  */
+@InApp
 public class FormElement extends ContainerElement {
 
 	/**
@@ -97,6 +106,9 @@ public class FormElement extends ContainerElement {
 
 		/** Configuration name for {@link #getCommands()}. */
 		String COMMANDS = "commands";
+
+		/** Configuration name for {@link #getEditExecutability()}. */
+		String EDIT_EXECUTABILITY = "edit-executability";
 
 		/** Configuration name for {@link #getSaveActions()}. */
 		String SAVE_ACTIONS = "save-action";
@@ -207,7 +219,29 @@ public class FormElement extends ContainerElement {
 		 */
 		@Name(COMMANDS)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
+
+		/**
+		 * Rules deciding whether this form offers editing its object.
+		 *
+		 * <p>
+		 * Guards the transition into edit mode, wherever it is triggered: the Edit button is
+		 * disabled or hidden according to the rules, and the form refuses the transition when a
+		 * client requests it nonetheless. The remaining lifecycle commands (apply, save, cancel)
+		 * are reachable only from within an edit session and are therefore guarded through it.
+		 * </p>
+		 *
+		 * <p>
+		 * A {@link com.top_logic.layout.view.security.SecurityRule} checks the user's roles for a
+		 * command group on the enclosing security scope; a
+		 * {@link com.top_logic.layout.view.command.VisibleIf} evaluates a script predicate over the
+		 * displayed object. Without a rule, every user who sees the form may edit it.
+		 * </p>
+		 */
+		@Name(EDIT_EXECUTABILITY)
+		@EntryTag("rule")
+		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getEditExecutability();
 
 		/**
 		 * Optional action chain to execute on save instead of the default behavior.
@@ -222,7 +256,8 @@ public class FormElement extends ContainerElement {
 		 */
 		@Name(SAVE_ACTIONS)
 		@TreeProperty
-		List<PolymorphicConfiguration<ViewAction>> getSaveActions();
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends ViewAction>> getSaveActions();
 
 		/**
 		 * Optional action chain to execute on cancel instead of the default behavior.
@@ -236,7 +271,8 @@ public class FormElement extends ContainerElement {
 		 */
 		@Name(CANCEL_ACTIONS)
 		@TreeProperty
-		List<PolymorphicConfiguration<ViewAction>> getCancelActions();
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends ViewAction>> getCancelActions();
 	}
 
 	private final Config _config;
@@ -272,20 +308,8 @@ public class FormElement extends ContainerElement {
 			}
 		}
 
-		_saveActions = instantiateActions(context, config.getSaveActions());
-		_cancelActions = instantiateActions(context, config.getCancelActions());
-	}
-
-	private List<ViewAction> instantiateActions(InstantiationContext context,
-			List<PolymorphicConfiguration<ViewAction>> configs) {
-		List<ViewAction> result = new ArrayList<>();
-		for (PolymorphicConfiguration<ViewAction> actionConfig : configs) {
-			ViewAction action = context.getInstance(actionConfig);
-			if (action != null) {
-				result.add(action);
-			}
-		}
-		return result;
+		_saveActions = ViewActions.instantiate(context, config.getSaveActions());
+		_cancelActions = ViewActions.instantiate(context, config.getCancelActions());
 	}
 
 	private LockHandler createLockHandler(InstantiationContext context, Config config) {
@@ -320,8 +344,9 @@ public class FormElement extends ContainerElement {
 		// 4. Create FormControl with initial object.
 		FormControl formControl = new FormControl(context, initialObject, noModelMessage, _lockHandler);
 
-		// 5. Wire channels.
+		// 5. Wire channels and the edit guard.
 		formControl.setInputChannel(inputChannel);
+		formControl.setEditRule(ViewExecutabilityRules.build(_config.getEditExecutability(), context));
 
 		ChannelRef editModeRef = _config.getEditMode();
 		if (editModeRef != null) {
@@ -374,6 +399,11 @@ public class FormElement extends ContainerElement {
 		if (initialEditMode) {
 			formControl.enterEditMode();
 		}
+		if (editModeChannel == null && _config.getInitialEditMode()) {
+			// Without an edit-mode channel governing the mode, initial-edit-mode means "editable
+			// whenever an object is available" - including objects arriving via the input channel.
+			formControl.setAutoEditMode(true);
+		}
 
 		// 12. Model listener registration is tied to the control's attach/detach lifecycle.
 		formControl.setModelScope(context.getModelScope());
@@ -403,7 +433,7 @@ public class FormElement extends ContainerElement {
 	 */
 	private void contributeFormCommands(ViewContext parentContext, ViewContext formContext,
 			FormControl formControl) {
-		CommandScope scope = parentContext.getCommandScope();
+		CommandScope scope = parentContext.getScope(CommandScope.class);
 		if (scope == null) {
 			return;
 		}
@@ -417,6 +447,10 @@ public class FormElement extends ContainerElement {
 			ViewChannel inputChannel = inputRef != null ? formContext.resolveChannel(inputRef) : null;
 
 			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), formContext);
+			if (cmd.appliesFormState()) {
+				// The form rejects the command while errors are on screen, so do not offer it.
+				rule = CombinedViewExecutabilityRule.combine(List.of(rule, new FormValid(formControl)));
+			}
 
 			ViewCommandModel inner =
 				ViewCommandModel.create(cmd, cmdConfig, inputChannel, rule);
@@ -426,24 +460,50 @@ public class FormElement extends ContainerElement {
 			FormScopedCommandModel wrapped = new FormScopedCommandModel(inner, formContext);
 
 			models.add(wrapped);
-			scope.addCommand(wrapped);
 		}
 
-		formControl.addBeforeWriteAction(() -> {
+		FormModelListener validityListener = new FormModelListener() {
+			@Override
+			public void onFormStateChanged(FormModel source) {
+				revalidate(models);
+			}
+
+			@Override
+			public void onValidityChanged(FormModel source) {
+				revalidate(models);
+			}
+		};
+
+		contributeWhileDisplayed(formControl, scope, models);
+
+		formControl.addAttachListener(() -> {
 			for (CommandModel model : models) {
 				if (model instanceof FormScopedCommandModel) {
-					((FormScopedCommandModel) model).getInner().attach();
+					((FormScopedCommandModel) model).getInner().attach(formContext.getModelScope());
 				}
 			}
+			formControl.addFormModelListener(validityListener);
 		});
-		formControl.addCleanupAction(() -> {
+		formControl.addDetachListener(() -> {
+			formControl.removeFormModelListener(validityListener);
 			for (CommandModel model : models) {
-				scope.removeCommand(model);
 				if (model instanceof FormScopedCommandModel) {
 					((FormScopedCommandModel) model).getInner().detach();
 				}
 			}
 		});
+	}
+
+	/**
+	 * Re-evaluates the executability of the given form commands, e.g. after the form's validation
+	 * errors appeared or were fixed.
+	 */
+	private static void revalidate(List<CommandModel> models) {
+		for (CommandModel model : models) {
+			if (model instanceof FormScopedCommandModel formScoped) {
+				formScoped.getInner().revalidate();
+			}
+		}
 	}
 
 
@@ -521,7 +581,7 @@ public class FormElement extends ContainerElement {
 
 	private void contributeEditCommands(ViewContext parentContext, ViewContext formContext,
 			FormControl formControl) {
-		CommandScope scope = parentContext.getCommandScope();
+		CommandScope scope = parentContext.getScope(CommandScope.class);
 		if (scope == null) {
 			return;
 		}
@@ -543,42 +603,72 @@ public class FormElement extends ContainerElement {
 			models.add(FormCommandModel.cancelCommand(formControl));
 		}
 
-		for (FormCommandModel model : models) {
-			scope.addCommand(model);
-		}
+		contributeWhileDisplayed(formControl, scope, models);
 
-		formControl.addBeforeWriteAction(() -> {
+		formControl.addAttachListener(() -> {
 			for (FormCommandModel model : models) {
 				model.attach();
 			}
 		});
-		formControl.addCleanupAction(() -> {
+		formControl.addDetachListener(() -> {
 			for (FormCommandModel model : models) {
-				scope.removeCommand(model);
 				model.detach();
 			}
 		});
 	}
 
 	/**
-	 * Creates a {@link Consumer} that chains the given {@link ViewAction}s, executing them
-	 * sequentially with each action's output becoming the next action's input.
+	 * Puts the given commands into the scope while the form is displayed, and takes them out again
+	 * while it is not.
+	 *
+	 * <p>
+	 * Bound to the control's attach/detach rather than to its creation/disposal, because content that
+	 * exists but is not displayed - the inactive tab of a {@code <tab-bar>}, the hidden child of any
+	 * one-of-N container - keeps its state and thus its controls. Its commands must not stay in the
+	 * enclosing panel's toolbar meanwhile: the panel would show a second edit button, operating on a
+	 * form the user cannot see.
+	 * </p>
+	 *
+	 * @param formControl
+	 *        The control whose display state decides whether the commands are in the scope.
+	 * @param scope
+	 *        The enclosing scope rendering the commands.
+	 * @param models
+	 *        The commands to contribute.
+	 */
+	private static void contributeWhileDisplayed(FormControl formControl, CommandScope scope,
+			List<? extends CommandModel> models) {
+		formControl.addAttachListener(() -> {
+			for (CommandModel model : models) {
+				scope.addCommand(model);
+			}
+		});
+		formControl.addDetachListener(() -> {
+			for (CommandModel model : models) {
+				scope.removeCommand(model);
+			}
+		});
+		formControl.addCleanupAction(() -> {
+			// Disposal while not displayed: the detach listener did not run (or ran already), so make
+			// sure nothing is left behind.
+			for (CommandModel model : models) {
+				scope.removeCommand(model);
+			}
+		});
+	}
+
+	/**
+	 * Creates a {@link Consumer} that runs the given {@link ViewAction}s as a
+	 * {@link ViewActionChain}, each action's output becoming the next action's input.
 	 *
 	 * <p>
 	 * The actions execute in the form's {@link ViewContext} so that they can access the
-	 * {@link com.top_logic.layout.view.form.FormModel FormModel}.
+	 * {@link com.top_logic.layout.view.form.FormModel FormModel}, whatever context the toolbar
+	 * button passes.
 	 * </p>
 	 */
 	private Consumer<ReactContext> createActionChain(ViewContext formContext,
 			List<ViewAction> actions) {
-		return ctx -> {
-			// Use the form context so that actions like StoreFormStateAction can access
-			// the FormModel, regardless of the context passed by the toolbar button.
-			ReactContext effectiveContext = formContext;
-			Object current = null;
-			for (ViewAction action : actions) {
-				current = action.execute(effectiveContext, current);
-			}
-		};
+		return ctx -> ViewActionChain.run(formContext, actions, null, null);
 	}
 }

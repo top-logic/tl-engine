@@ -14,16 +14,19 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.AgentControl;
+import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
 import com.top_logic.layout.react.routing.RouteChangeListener;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
 import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
+import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -59,7 +62,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * name="appbar-leading"/>} (set via {@link #setDrawerToggleContribution(ReactControl)})</li>
  * </ul>
  */
-public class ReactSidebarControl extends ReactControl implements RoutingParticipant {
+public class ReactSidebarControl extends ReactControl implements RoutingParticipant, ChildRevealer {
 
 	private static final String REACT_MODULE = "TLSidebar";
 
@@ -241,79 +244,17 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		}
 	}
 
-	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		if (_headerContent != null) {
-			_headerContent.attach();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.attach();
-		}
-		if (_footerContent != null) {
-			_footerContent.attach();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.attach();
-		}
-		if (_activeItemId != null) {
-			ReactControl content = _contentCache.get(_activeItemId);
-			if (content != null) {
-				content.attach();
-			}
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		if (_headerContent != null) {
-			_headerContent.detach();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.detach();
-		}
-		if (_footerContent != null) {
-			_footerContent.detach();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.detach();
-		}
-		if (_activeItemId != null) {
-			ReactControl content = _contentCache.get(_activeItemId);
-			if (content != null) {
-				content.detach();
-			}
-		}
-	}
-
+	/**
+	 * Also disposes the contents of items visited earlier: only the active item's content is part of
+	 * the state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
-		if (_activeItemId != null) {
-			ReactControl active = _contentCache.get(_activeItemId);
-			if (active != null) {
-				active.detach();
-			}
-		}
+		super.cleanupChildren();
 		for (ReactControl cached : _contentCache.values()) {
 			cached.cleanupTree();
 		}
 		_contentCache.clear();
-		if (_headerContent != null) {
-			_headerContent.cleanupTree();
-		}
-		if (_headerCollapsedContent != null) {
-			_headerCollapsedContent.cleanupTree();
-		}
-		if (_footerContent != null) {
-			_footerContent.cleanupTree();
-		}
-		if (_footerCollapsedContent != null) {
-			_footerCollapsedContent.cleanupTree();
-		}
-		if (_drawerToggleContribution != null) {
-			_drawerToggleContribution.cleanupTree();
-		}
 	}
 
 	/**
@@ -327,13 +268,51 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			return;
 		}
 		ReactControl previousContent = _contentCache.get(_activeItemId);
+
+		// The page being left goes first, before this sidebar reports the new item. Everything the
+		// old page contributed to its surroundings - a routing participant naming the tab it showed,
+		// above all - is contributed for the page it belongs to. Left in place while the sidebar
+		// already names the new one, it is read as belonging to that: the composed URL then carries a
+		// segment of a page no longer displayed, and the address bar is written with it.
+		if (previousContent != null) {
+			previousContent.detach();
+		}
+
 		_activeItemId = itemId;
 
 		if (!isSSEAttached()) {
 			putState(ACTIVE_ITEM_ID, _activeItemId);
+
+			// Nothing is rendered yet, so the selection is applied by dropping the content of the item
+			// left behind: onBeforeWrite() then mounts the content of the selected one, instead of
+			// writing the display of the item the highlight no longer names.
+			putState(ACTIVE_CONTENT, null);
+			if (previousContent != null) {
+				previousContent.detach();
+			}
 			return;
 		}
 
+		// Exchanging the display is how the navigation is carried out, so it is applied as one: the
+		// address bar gains a history entry for the item now selected, and not a correction for every
+		// participant that appears or disappears on the way there.
+		RouteManager routeManager = getReactContext().getRouteManager();
+		if (routeManager != null) {
+			routeManager.navigate(() -> displayItem(itemId, previousContent));
+		} else {
+			displayItem(itemId, previousContent);
+		}
+	}
+
+	/**
+	 * Exchanges the displayed content for the content of the given item.
+	 *
+	 * @param itemId
+	 *        The item to display.
+	 * @param previousContent
+	 *        The content displayed until now, or {@code null} if there was none.
+	 */
+	private void displayItem(String itemId, ReactControl previousContent) {
 		ReactControl content = getOrCreateContent(itemId);
 
 		Object tx = beginUpdate();
@@ -342,14 +321,17 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		closeDrawerIfOpen();
 		commitUpdate(tx);
 
-		if (previousContent != null) {
-			previousContent.detach();
-		}
 		if (isAttached()) {
 			content.attach();
 		}
 
-		// After successful selection, notify route listeners.
+		notifyRouteListeners();
+	}
+
+	/**
+	 * Reports the route of the selected item to the {@link RouteChangeListener}s.
+	 */
+	private void notifyRouteListeners() {
 		NavigationItem newItem = findNavItem(_activeItemId, _items);
 		if (newItem != null && newItem.getRoute() != null) {
 			RoutePattern pattern = RoutePattern.compile(newItem.getRoute(), newItem.getId());
@@ -527,22 +509,42 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	// -- Commands --
 
 	/**
-	 * Handles navigation item selection from the client.
+	 * Selects the navigation item with the given id, letting the item being left veto the switch
+	 * while it holds unsaved changes.
 	 */
-	@ReactCommandHandler(SELECT_ITEM_COMMAND)
-	void handleSelectItem(SelectItemArguments args) {
-		String itemId = args.getItemId();
-
-		// Check for dirty forms in the current sidebar item before switching.
+	@Override
+	public void revealChild(String key) {
 		NavigationItem currentItem = findNavItem(_activeItemId, _items);
 		if (currentItem != null) {
 			DirtyChannel dirtyChannel = currentItem.getDirtyChannel();
 			if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
-				throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectItem(itemId));
+				throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectItem(key));
 			}
 		}
 
-		selectItem(itemId);
+		selectItem(key);
+	}
+
+	/**
+	 * Handles navigation item selection from the client.
+	 *
+	 * <p>
+	 * Only an item the sidebar actually offers can be navigated to: a {@link NavigationItem#isHidden()
+	 * hidden} item is not displayed, so selecting it is refused instead of switching to a view the
+	 * user interface does not present.
+	 * </p>
+	 */
+	@ReactCommandHandler(SELECT_ITEM_COMMAND)
+	HandlerResult handleSelectItem(SelectItemArguments args) {
+		String itemId = args.getItemId();
+
+		NavigationItem targetItem = findNavItem(itemId, _items);
+		if (targetItem != null && targetItem.isHidden()) {
+			return HandlerResult.error(I18NConstants.ERROR_NAVIGATION_NOT_AVAILABLE);
+		}
+
+		revealChild(itemId);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -640,9 +642,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 * {@code item[administration]}), so content addresses encode which sidebar item they belong to.
 	 */
 	@Override
-	public String agentChildSlot(ReactControl child) {
+	public String scriptingChildSlot(ReactControl child) {
 		if (child == getState(ACTIVE_CONTENT)) {
-			return AgentControl.slotSegment("item", _activeItemId);
+			return ScriptingControl.slotSegment("item", _activeItemId);
 		}
 		return null;
 	}

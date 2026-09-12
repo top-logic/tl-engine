@@ -191,20 +191,21 @@ public abstract class PersistentScope extends DynamicModelPart implements MetaEl
 			 *           {@link PersistentScope#getMetaElements(TLScope)} is used, because
 			 *           metaelements is the union of classes and associations.
 			 */
-			private final Collection<? extends Collection<? extends TLType>> _parts = Arrays.asList(
+			private final Collection<? extends Collection<? extends TLType>> _types = Arrays.asList(
 				getMetaElements(self),
 				getDatatypes(self),
 				getEnumerations(self));
 
 			@Override
 			public Iterator<TLType> iterator() {
-				return ConcatenatedIterable.concat(_parts).iterator();
+				Iterable<TLType> typesIterable = ConcatenatedIterable.concat(_types);
+				return typesIterable.iterator();
 			}
 
 			@Override
 			public int size() {
 				int result = 0;
-				for (Collection<?> part : _parts) {
+				for (Collection<?> part : _types) {
 					result += part.size();
 				}
 				return result;

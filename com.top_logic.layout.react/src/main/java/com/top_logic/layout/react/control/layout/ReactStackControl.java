@@ -31,6 +31,9 @@ public class ReactStackControl extends ReactControl {
 
 	private static final String CHILDREN = "children";
 
+	/** @see #setCssClass(String) */
+	private static final String CSS_CLASS = "cssClass";
+
 	/**
 	 * Flex direction.
 	 */
@@ -147,6 +150,42 @@ public class ReactStackControl extends ReactControl {
 	}
 
 	/**
+	 * Sets an additional CSS class, appended to the layout classes of the stack.
+	 *
+	 * @param cssClass
+	 *        The CSS class, or {@code null} for none.
+	 */
+	public void setCssClass(String cssClass) {
+		putState(CSS_CLASS, cssClass != null ? cssClass : "");
+	}
+
+	/**
+	 * Rendering-only state keys, omitted from the headless projection.
+	 */
+	@Override
+	protected java.util.Set<String> scriptingPresentationKeys() {
+		return java.util.Set.of(CSS_CLASS);
+	}
+
+	/**
+	 * Replaces the displayed children.
+	 *
+	 * <p>
+	 * A dropped child is not cleaned up automatically, since callers may re-add it later (e.g. an
+	 * unchanged item in a refreshed list). Callers that remove a child for good must call
+	 * {@link #cleanupTree()} on it themselves.
+	 * </p>
+	 *
+	 * @param children
+	 *        The new child controls, replacing the current ones.
+	 */
+	public void setChildren(List<? extends ReactControl> children) {
+		_children.clear();
+		_children.addAll(children);
+		putState(CHILDREN, new ArrayList<>(_children));
+	}
+
+	/**
 	 * Lets the first child grow to fill the main axis while trailing children keep their natural
 	 * size.
 	 *
@@ -159,33 +198,11 @@ public class ReactStackControl extends ReactControl {
 		putState(GROW_FIRST, Boolean.valueOf(growFirst));
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		for (ReactControl child : _children) {
-			child.cleanupTree();
-		}
-	}
-
-	@Override
-	protected void propagateAttach() {
-		for (ReactControl child : _children) {
-			child.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		for (ReactControl child : _children) {
-			child.detach();
-		}
-	}
-
-
 	/**
-	 * Structural: this control is a flex layout container and is elided from the headless agent projection.
+	 * Structural: this control is a flex layout container and is elided from the headless projection.
 	 */
 	@Override
-	public boolean agentTransparent() {
+	public boolean scriptingTransparent() {
 		return true;
 	}
 }

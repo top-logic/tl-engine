@@ -19,6 +19,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
@@ -29,10 +30,11 @@ import com.top_logic.element.meta.expr.parser.ParseException;
 import com.top_logic.element.meta.expr.parser.TokenMgrError;
 
 /**
- * Get QueryLocator for Wrapper based MetaAttributed
- * 
+ * Resolves the value locators used to compute attribute values.
+ *
  * @author    <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
+@Label("Attribute value locators")
 public class AttributeValueLocatorFactory extends ManagedClass {
 
 	private final Map<String, Class<? extends AttributeValueLocator>> _classByName;

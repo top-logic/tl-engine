@@ -1,0 +1,33 @@
+<p>The maintenance mode allows the administrator to perform changes in the application without concurrent access to the application and the database by other users.</p>
+<h4>Procedure</h4>
+<p>After pressing the button "Enter maintenance mode...", a dialog is opened where the period of time until the maintenance mode is activated can be entered. Without entering a value, the maintenance mode becomes active immediately.</p>
+<p>In the same dialog, the option "Allow the login during the transition period" decides for each activation individually whether users may still log in until the maintenance mode starts. By default, the option is not set.</p>
+<p>If a period of time is given, the maintenance mode is only announced at first. During this transition period</p>
+<ul>
+ <li>the message "The system will enter the maintenance mode soon." is displayed together with the remaining time,</li>
+ <li>the system otherwise keeps operating normally, so that logged in users can finish their work,</li>
+ <li>the login is denied for users without special rights — unless the option "Allow the login during the transition period" was set upon activation. Since the maintenance mode may be planned hours in advance, the login can be kept open until it actually starts.</li>
+</ul>
+<p>The announcement can be terminated by pressing the button "Abort maintenance mode..." to switch back to the normal system mode.</p>
+<p>While the maintenance mode is active,</p>
+<ul>
+ <li>the message "The system is in maintenance mode at the moment." is displayed,</li>
+ <li>all logged in users without special rights are logged out automatically — including those that logged in during the transition period,</li>
+ <li>users without special rights can no longer log in.</li>
+</ul>
+<p>This state can be terminated by pressing the button "Exit maintenance mode..." to switch back to the normal system mode.</p>
+<p>Special rights in this sense have administrators, members of the configured <code class="hljs inlineCode">allowed-groups</code>, and users that are allowed to terminate the maintenance mode. Those users are not logged out and may log in at any time.</p>
+<p>In cluster mode, the maintenance mode cannot be activated immediately. If it is activated there without giving a period of time, it is announced with the configured minimum waiting time instead.</p>
+<h4>Configuration</h4>
+<p>The maintenance mode is configured through the service <code class="hljs inlineCode">MaintenanceWindowManager</code>:</p>
+<pre><code class="language-xml">&lt;config service-class="com.top_logic.base.administration.MaintenanceWindowManager"&gt;
+   &lt;instance&gt;
+      &lt;allowed-groups&gt;&lt;/allowed-groups&gt;
+      &lt;min-intervall-in-cluster&gt;20000&lt;/min-intervall-in-cluster&gt;
+   &lt;/instance&gt;
+&lt;/config&gt;
+</code></pre>
+<ul>
+ <li><code class="hljs inlineCode">allowed-groups</code>: The groups whose members are allowed to log in while the maintenance mode is active. Such users are not restricted at all during the maintenance mode. If no group is given, only administrators and users that are allowed to terminate the maintenance mode may log in.</li>
+ <li><code class="hljs inlineCode">min-intervall-in-cluster</code>: In cluster mode, the maintenance mode cannot be entered immediately. This is the minimum waiting interval in milliseconds.</li>
+</ul>

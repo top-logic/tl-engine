@@ -9,8 +9,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
@@ -19,8 +21,10 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -28,8 +32,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
@@ -100,11 +106,20 @@ public class SaveDesignCommand implements ViewCommand {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		// Write only dirty files back to disk.
+		// Serialize every dirty view and check that it can be read back again, before writing any of
+		// them. An editor can produce a configuration that serializes but that the view loader
+		// rejects, and writing it would leave the application unable to load the view.
+		Map<String, String> contents = new LinkedHashMap<>();
 		for (Map.Entry<String, ViewElement.Config> entry : fileConfigs.entrySet()) {
-			String viewPath = entry.getKey();
-			ViewElement.Config viewConfig = entry.getValue();
-			writeViewConfig(viewPath, viewConfig);
+			contents.put(entry.getKey(), serialize(entry.getKey(), entry.getValue()));
+		}
+		for (Map.Entry<String, String> entry : contents.entrySet()) {
+			checkLoadable(entry.getKey(), entry.getValue());
+		}
+
+		// Write only dirty files back to disk.
+		for (Map.Entry<String, String> entry : contents.entrySet()) {
+			writeViewFile(entry.getKey(), entry.getValue());
 		}
 
 		// Trigger hot-reload in the main application window.
@@ -130,6 +145,41 @@ public class SaveDesignCommand implements ViewCommand {
 	}
 
 	/**
+	 * Serializes the given view configuration to XML.
+	 */
+	private String serialize(String viewPath, ViewElement.Config viewConfig) {
+		StringWriter buffer = new StringWriter();
+		try (Writer out = buffer) {
+			new ConfigurationWriter(out).write("view", ViewElement.Config.class, viewConfig);
+		} catch (XMLStreamException | IOException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_SAVE_VIEW_FAILED__PATH.fill(viewPath), ex);
+		}
+		return buffer.toString();
+	}
+
+	/**
+	 * Checks that the serialized view can be loaded again.
+	 *
+	 * <p>
+	 * The check reads the content back through {@link ViewLoader#parseConfig(java.util.List)}, the
+	 * parser the view system itself uses, so every constraint it enforces is covered rather than a
+	 * hand-picked selection of them.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the content cannot be loaded. Nothing is written in that case, so the files on disk
+	 *         stay loadable and the reported problem can be corrected in the designer.
+	 */
+	private void checkLoadable(String viewPath, String content) {
+		try {
+			ViewLoader.parseConfig(List.of(CharacterContents.newContent(content, viewPath)));
+		} catch (ConfigurationException ex) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_SAVE_VIEW_NOT_LOADABLE__PATH_DETAILS.fill(viewPath, ex.getMessage()), ex);
+		}
+	}
+
+	/**
 	 * Traverses the design tree and maps each dirty source file to its root
 	 * {@link com.top_logic.layout.view.ViewElement.Config}. Only files containing dirty nodes are
 	 * included. After collection, dirty flags on included nodes are cleared.
@@ -145,9 +195,9 @@ public class SaveDesignCommand implements ViewCommand {
 	}
 
 	/**
-	 * Writes the given {@link com.top_logic.layout.view.ViewElement.Config} to the specified view path.
+	 * Writes the given serialized view to the specified view path.
 	 */
-	private void writeViewConfig(String viewPath, ViewElement.Config viewConfig) {
+	private void writeViewFile(String viewPath, String content) {
 		File file = FileManager.getInstance().getIDEFileOrNull(viewPath);
 		if (file == null) {
 			throw new TopLogicException(
@@ -155,8 +205,8 @@ public class SaveDesignCommand implements ViewCommand {
 		}
 
 		try (Writer out = new OutputStreamWriter(new FileOutputStream(file), StringServices.CHARSET_UTF_8)) {
-			new ConfigurationWriter(out).write("view", ViewElement.Config.class, viewConfig);
-		} catch (XMLStreamException | IOException ex) {
+			out.write(content);
+		} catch (IOException ex) {
 			throw new TopLogicException(
 				com.top_logic.layout.view.I18NConstants.ERROR_SAVE_VIEW_FAILED__PATH.fill(viewPath), ex);
 		}

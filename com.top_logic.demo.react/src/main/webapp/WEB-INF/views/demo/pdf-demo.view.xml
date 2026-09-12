@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<!--
+			Demo PDF source: pdfFile() renders the given HTML to a PDF BinaryData server-side
+			(flying-saucer). An Office viewer would instead convert .docx/.xlsx/.pptx to PDF here.
+		-->
+		<derived-channel name="pdf"
+			expr="pdfFile('&lt;html>&lt;body style=&quot;font-family: sans-serif; padding: 2em;&quot;>&lt;h1>TopLogic PDF Viewer&lt;/h1>&lt;p>This PDF is rendered server-side via the &lt;code>pdfFile()&lt;/code> TL-Script function and displayed inline by the React &lt;code>TLPdfViewer&lt;/code> control.&lt;/p>&lt;p>The same control is the rendering target for an Office-document viewer that converts Word, Excel or PowerPoint files to PDF.&lt;/p>&lt;/body>&lt;/html>')"
+		/>
+	</channels>
+	<panel>
+		<title>
+			<en>PDF Viewer Demo</en>
+			<de>PDF-Viewer-Demo</de>
+		</title>
+		<pdf input="pdf"/>
+	</panel>
+</view>

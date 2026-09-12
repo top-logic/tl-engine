@@ -3,3 +3,4 @@ db-h2.xml
 devel-h2.xml
 modelSearchConf-test.config.xml
 TestScriptPathElement-test.config.xml
+TestTLScriptSecurity-test.config.xml

@@ -7,11 +7,10 @@ package com.top_logic.layout.view.form;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.top_logic.basic.col.Sink;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.knowledge.service.Transaction;
@@ -23,11 +22,14 @@ import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.RenderWholeLineAnnotation;
 import com.top_logic.model.form.ConstraintValidationListener;
@@ -59,6 +61,12 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private final ResKey _labelOverride;
 
 	private final boolean _forceReadonly;
+
+	private final LabelPosition _labelPositionOverride;
+
+	private final Boolean _fullLineOverride;
+
+	private final PolymorphicConfiguration<? extends ReactFieldControlProvider> _inputControl;
 
 	private AttributeFieldModel _model;
 
@@ -93,15 +101,55 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	 *        Optional label override, or {@code null} to derive the label from the model.
 	 * @param forceReadonly
 	 *        Whether the field should always be read-only regardless of form edit mode.
+	 * @param labelPositionOverride
+	 *        The {@link LabelPosition} configured in the view, or {@code null} to fall back to a
+	 *        {@link LabelPositionAnnotation} on the model attribute.
 	 */
 	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
-			String attributeName, ResKey labelOverride, boolean forceReadonly) {
+			String attributeName, ResKey labelOverride, boolean forceReadonly,
+			LabelPosition labelPositionOverride) {
+		this(context, formModel, formControl, attributeName, labelOverride, forceReadonly,
+			labelPositionOverride, null);
+	}
+
+	/**
+	 * Creates an {@link AttributeFieldControl} whose field takes a whole row, or shares one, as the
+	 * view says rather than as the model attribute says.
+	 *
+	 * @param fullLineOverride
+	 *        What the view decided, or {@code null} to leave the decision to the attribute's
+	 *        {@link com.top_logic.model.annotate.RenderWholeLineAnnotation}.
+	 */
+	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
+			String attributeName, ResKey labelOverride, boolean forceReadonly,
+			LabelPosition labelPositionOverride, Boolean fullLineOverride) {
+		this(context, formModel, formControl, attributeName, labelOverride, forceReadonly,
+			labelPositionOverride, fullLineOverride, null);
+	}
+
+	/**
+	 * Creates an {@link AttributeFieldControl} whose input is the control the display asks for
+	 * rather than the one the model attribute implies.
+	 *
+	 * @param inputControl
+	 *        The control editing the attribute here, or {@code null} to let the model decide.
+	 *
+	 * @implNote The control is resolved through
+	 *           {@link FieldControlService#createFieldControl(ReactContext, com.top_logic.model.TLStructuredTypePart, com.top_logic.layout.form.model.FieldModel, PolymorphicConfiguration)}.
+	 */
+	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
+			String attributeName, ResKey labelOverride, boolean forceReadonly,
+			LabelPosition labelPositionOverride, Boolean fullLineOverride,
+			PolymorphicConfiguration<? extends ReactFieldControlProvider> inputControl) {
+		_inputControl = inputControl;
+		_fullLineOverride = fullLineOverride;
 		_context = context;
 		_formModel = formModel;
 		_formControl = formControl;
 		_attributeName = attributeName;
 		_labelOverride = labelOverride;
 		_forceReadonly = forceReadonly;
+		_labelPositionOverride = labelPositionOverride;
 		formModel.addFormModelListener(this);
 	}
 
@@ -117,8 +165,12 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				_context, new AbstractFieldModel(null) {
 					// Placeholder model with default state.
 				});
+			// The view's own decision already applies to the placeholder: a field that will take a
+			// whole row should take it before an object is loaded too, or the form re-flows under
+			// the reader as soon as one is.
 			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
-				false, false, null, null, null, false, true, _innerControl);
+				false, false, null, null, wirePosition(_labelPositionOverride, false),
+				Boolean.TRUE.equals(_fullLineOverride), true, _innerControl);
 			_chrome.setAgentName(_attributeName);
 			return _chrome;
 		}
@@ -131,7 +183,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 					// Placeholder model with default state.
 				});
 			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
-				false, false, null, null, null, false, false, _innerControl);
+				false, false, null, null, wirePosition(_labelPositionOverride, false), false, false,
+				_innerControl);
 			_chrome.setAgentName(_attributeName);
 			return _chrome;
 		}
@@ -141,7 +194,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		addModelListener();
 
-		_innerControl = FieldControlService.getInstance().createFieldControl(_context, part, _model);
+		_innerControl =
+			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
 
 		String label = resolveLabel();
 		String helpText = resolveHelpText(part);
@@ -166,8 +220,10 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		TLObject current = source.getCurrentObject();
 
-		if (current == null) {
-			// Object gone - hide field.
+		if (current == null || !current.tValid()) {
+			// Object gone or deleted - hide field. A deleted object must not be dereferenced: this
+			// fires while the form still holds the old object during exit-edit-mode, e.g. right after the
+			// bound object was deleted and the input channel cleared.
 			_chrome.setVisible(false);
 			clearModel();
 			return;
@@ -192,7 +248,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 			addModelListener();
 
-			_innerControl = FieldControlService.getInstance().createFieldControl(_context, part, _model);
+			_innerControl =
+			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
 
 			_chrome.setLabel(resolveLabel());
 			_chrome.setHelpText(resolveHelpText(part));
@@ -327,7 +384,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			Set<TLStructuredTypePart> dependencies = new HashSet<>();
 			Sink<Pointer> sink = pointer -> dependencies.add(pointer.attribute());
 			OverlayLookup overlays = _formControl.getValidationModel();
-			mode = _modeSelector.getMode(self, part);
+			mode = _modeSelector.getMode(self, part, editMode);
 			_modeSelector.traceDependencies(self, part, sink,
 				overlays != null ? overlays : AttributeOptions.NO_OVERLAYS);
 			_modeDependencies = dependencies;
@@ -360,7 +417,51 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		}
 		_chrome.setVisible(visible);
 		_chrome.setRequired(mandatory);
+		_chrome.setLabelPosition(wirePosition(legacyLabelPosition(part), editMode && !_forceReadonly && editable));
 		_model.setEditable(editMode && !_forceReadonly && editable);
+	}
+
+	/**
+	 * The effective model-level {@link LabelPosition}: the view configuration wins, then an
+	 * explicit {@link LabelPositionAnnotation} on the attribute. {@code null} means "not
+	 * specified" and lets the field inherit the responsive default of the enclosing form layout.
+	 */
+	private LabelPosition legacyLabelPosition(TLStructuredTypePart part) {
+		if (_labelPositionOverride != null) {
+			return _labelPositionOverride;
+		}
+		LabelPositionAnnotation annotation = part.getAnnotation(LabelPositionAnnotation.class);
+		if (annotation != null) {
+			return annotation.getValue();
+		}
+		return null;
+	}
+
+	/**
+	 * Maps a model-level {@link LabelPosition} to the wire-level position understood by the field
+	 * chrome, resolving the edit-mode-dependent {@link LabelPosition#ABOVE_INPUT} against the
+	 * field's current editability.
+	 */
+	public static com.top_logic.layout.react.control.layout.LabelPosition wirePosition(
+			LabelPosition position, boolean editable) {
+		if (position == null) {
+			return null;
+		}
+		switch (position) {
+			case ABOVE:
+				return com.top_logic.layout.react.control.layout.LabelPosition.TOP;
+			case ABOVE_INPUT:
+				return editable ? com.top_logic.layout.react.control.layout.LabelPosition.TOP : null;
+			case INLINE:
+				return com.top_logic.layout.react.control.layout.LabelPosition.SIDE;
+			case AFTER_VALUE:
+				return com.top_logic.layout.react.control.layout.LabelPosition.AFTER;
+			case HIDE_LABEL:
+				return com.top_logic.layout.react.control.layout.LabelPosition.HIDDEN;
+			case DEFAULT:
+			default:
+				return null;
+		}
 	}
 
 	private void onModeDependencyChanged(TLStructuredTypePart changedPart) {
@@ -426,20 +527,13 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				if (_chrome == null) {
 					return;
 				}
-				if (source.hasError()) {
-					_chrome.setError(Resources.getInstance().getString(source.getError()));
-				} else {
-					_chrome.setError(null);
-				}
-				if (source.hasWarnings()) {
-					List<String> msgs = source.getWarnings().stream()
-						.map(key -> Resources.getInstance().getString(key))
-						.collect(Collectors.toList());
-					_chrome.setWarnings(msgs);
-				} else {
-					_chrome.setWarnings(null);
-				}
+				// The error and the warnings are drawn by the chrome itself, which follows its own
+				// field - see ReactFormFieldChromeControl#followField(). Only what the chrome
+				// cannot know is set here.
 				_chrome.setRequired(source.isMandatory());
+
+				// What the user sees changed, so commands gated on visible errors must re-evaluate.
+				_formControl.fireValidityChanged();
 			}
 		};
 		_model.addListener(_modelListener);
@@ -496,6 +590,9 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	}
 
 	private boolean resolveFullLine(TLStructuredTypePart part) {
+		if (_fullLineOverride != null) {
+			return _fullLineOverride.booleanValue();
+		}
 		RenderWholeLineAnnotation annotation = part.getAnnotation(RenderWholeLineAnnotation.class);
 		if (annotation != null) {
 			return annotation.getValue();

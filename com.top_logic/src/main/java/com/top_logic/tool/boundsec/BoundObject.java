@@ -6,6 +6,7 @@
 package com.top_logic.tool.boundsec;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 import com.top_logic.basic.TLID;
@@ -44,6 +45,17 @@ public interface BoundObject extends TLObject {
      */
     public BoundObject getSecurityParent();
     
+	/**
+	 * Get the parent objects for this bound object.
+	 * 
+	 * @return The parent bound objects for this bound object. May be empty when there is no parent
+	 *         (e.g. this is a root element).
+	 */
+	default Collection<? extends BoundObject> getSecurityParents() {
+		BoundObject single = getSecurityParent(); // legacy fallback
+		return single == null ? Collections.emptyList() : Collections.singletonList(single);
+	}
+
     /**
      * Get the {@link com.top_logic.tool.boundsec.BoundRole}s of the given 
      * {@link com.top_logic.knowledge.wrap.person.Person} for this object.

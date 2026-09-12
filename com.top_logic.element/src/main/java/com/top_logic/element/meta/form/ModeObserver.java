@@ -49,9 +49,11 @@ public abstract class ModeObserver implements ValueListener, Sink<Pointer> {
 
 	private TLStructuredTypePart _attribute;
 
+	private final boolean _editMode;
+
 	/**
 	 * Creates a {@link ModeObserver}.
-	 * 
+	 *
 	 * @param updateContainer
 	 *        Container to get the values of.
 	 * @param modeSelector
@@ -60,18 +62,21 @@ public abstract class ModeObserver implements ValueListener, Sink<Pointer> {
 	 *        Model to observe.
 	 * @param attribute
 	 *        The attribute to observe. Maybe <code>null</code>.
+	 * @param editMode
+	 *        Whether the observed form is in edit mode, passed to the {@link ModeSelector}.
 	 */
 	public ModeObserver(AttributeUpdateContainer updateContainer, ModeSelector modeSelector, TLObject object,
-			TLStructuredTypePart attribute) {
+			TLStructuredTypePart attribute, boolean editMode) {
 		_updateContainer = updateContainer;
 		_modeSelector = modeSelector;
 		_object = object;
 		_attribute = attribute;
+		_editMode = editMode;
 	}
 
 	@Override
 	public void valueChanged(FormField changedField, Object oldValue, Object newValue) {
-		FormVisibility mode = _modeSelector.getMode(_object, _attribute);
+		FormVisibility mode = _modeSelector.getMode(_object, _attribute, _editMode);
 		valueChanged(mode);
 
 		removeListeners();

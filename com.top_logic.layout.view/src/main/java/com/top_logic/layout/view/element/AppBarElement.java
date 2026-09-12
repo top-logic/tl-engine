@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -25,17 +28,18 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl.AppBarVariant;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
-import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.util.Resources;
 
 /**
@@ -47,6 +51,7 @@ import com.top_logic.util.Resources;
  * TOOLBAR} placement are automatically rendered as trailing action buttons in the app bar.
  * </p>
  */
+@InApp
 public class AppBarElement implements UIElement {
 
 	/**
@@ -70,6 +75,9 @@ public class AppBarElement implements UIElement {
 
 		/** Configuration name for {@link #getLeading()}. */
 		String LEADING = "leading";
+
+		/** Configuration name for {@link #getTrailing()}. */
+		String TRAILING = "trailing";
 
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
@@ -98,6 +106,7 @@ public class AppBarElement implements UIElement {
 		@Name(COMMANDS)
 		@EntryTag("command")
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 
 		/**
@@ -111,6 +120,7 @@ public class AppBarElement implements UIElement {
 		 */
 		@Name(CHILDREN)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 
 		/**
@@ -124,7 +134,21 @@ public class AppBarElement implements UIElement {
 		 */
 		@Name(LEADING)
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getLeading();
+
+		/**
+		 * Elements closing the bar, right of the actions area (e.g. the account area).
+		 *
+		 * <p>
+		 * This is the right end of the bar, past the buttons of toolbar-placed commands. Several
+		 * elements render side by side in the order given.
+		 * </p>
+		 */
+		@Name(TRAILING)
+		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends UIElement>> getTrailing();
 	}
 
 	private final ResKey _title;
@@ -138,6 +162,8 @@ public class AppBarElement implements UIElement {
 	private final List<UIElement> _children;
 
 	private final List<UIElement> _leading;
+
+	private final List<UIElement> _trailing;
 
 	/**
 	 * Creates a new {@link AppBarElement} from configuration.
@@ -168,6 +194,19 @@ public class AppBarElement implements UIElement {
 		for (PolymorphicConfiguration<? extends UIElement> leadingConfig : config.getLeading()) {
 			_leading.add(context.getInstance(leadingConfig));
 		}
+
+		_trailing = new ArrayList<>(config.getTrailing().size());
+		for (PolymorphicConfiguration<? extends UIElement> trailingConfig : config.getTrailing()) {
+			_trailing.add(context.getInstance(trailingConfig));
+		}
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(
+			ChildGroup.elements(_leading),
+			ChildGroup.elements(_children),
+			ChildGroup.elements(_trailing));
 	}
 
 	@Override
@@ -180,7 +219,7 @@ public class AppBarElement implements UIElement {
 		// Use parent scope when available so that commands contributed by descendants
 		// (e.g. form edit commands, dashboard layout edit) surface in the app bar.
 		// Fall back to a private scope if the app bar is used standalone.
-		CommandScope parentScope = context.getCommandScope();
+		CommandScope parentScope = context.getScope(CommandScope.class);
 		CommandScope scope;
 		ViewContext derivedContext;
 		if (parentScope != null) {
@@ -191,7 +230,7 @@ public class AppBarElement implements UIElement {
 			derivedContext = context;
 		} else {
 			scope = new CommandScope(commandModels);
-			derivedContext = context.withCommandScope(scope);
+			derivedContext = context.withScope(CommandScope.class, scope);
 		}
 
 		// Build inline children (e.g. a <slot> for content projected by descendant views).
@@ -201,27 +240,13 @@ public class AppBarElement implements UIElement {
 			childControls.add((ReactControl) _children.get(i).createControl(childContext));
 		}
 
-		// Build leading control. Typically a single <slot name="appbar-leading"/> placeholder; if
-		// multiple are configured we wrap them so they all render in the leading area.
-		ReactControl leadingControl;
-		if (_leading.isEmpty()) {
-			leadingControl = null;
-		} else if (_leading.size() == 1) {
-			ViewContext leadingContext = derivedContext.withChildSlotPath("leading-0");
-			leadingControl = (ReactControl) _leading.get(0).createControl(leadingContext);
-		} else {
-			List<ReactControl> leadingControls = new ArrayList<>(_leading.size());
-			for (int i = 0; i < _leading.size(); i++) {
-				ViewContext leadingContext = derivedContext.withChildSlotPath("leading-" + i);
-				leadingControls.add((ReactControl) _leading.get(i).createControl(leadingContext));
-			}
-			leadingControl = new com.top_logic.layout.react.control.layout.ReactStackControl(derivedContext,
-				leadingControls);
-		}
+		// Build the two ends of the bar.
+		ReactControl leadingControl = buildBarEnd(derivedContext, _leading, "leading");
+		ReactControl trailingControl = buildBarEnd(derivedContext, _trailing, "trailing");
 
 		// Create the app bar control.
-		ReactAppBarControl appBar =
-			new ReactAppBarControl(derivedContext, title, _variant, leadingControl, List.of(), childControls);
+		ReactAppBarControl appBar = new ReactAppBarControl(derivedContext, title, _variant, leadingControl,
+			List.of(), childControls, trailingControl);
 
 		// Sync toolbar-placed commands as action buttons.
 		Map<CommandModel, ReactButtonControl> actionButtons = new HashMap<>();
@@ -246,19 +271,43 @@ public class AppBarElement implements UIElement {
 		return appBar;
 	}
 
+	/**
+	 * Composes the elements placed at one end of the bar into a single control.
+	 *
+	 * <p>
+	 * An app bar is a horizontal bar, so several elements at one end - a drawer toggle and the
+	 * account area, say - stand side by side and centered on the bar's height, rather than stacked
+	 * the way the generic content combination would arrange them.
+	 * </p>
+	 *
+	 * @param elements
+	 *        The elements configured for that end; empty yields {@code null}, i.e. no area at all.
+	 * @param slot
+	 *        Names the end in the child slot path, keeping the two ends' children distinguishable.
+	 */
+	private static ReactControl buildBarEnd(ViewContext context, List<UIElement> elements, String slot) {
+		if (elements.isEmpty()) {
+			return null;
+		}
+		List<ReactControl> controls = new ArrayList<>(elements.size());
+		for (int i = 0; i < elements.size(); i++) {
+			ViewContext elementContext = context.withChildSlotPath(slot + "-" + i);
+			controls.add((ReactControl) elements.get(i).createControl(elementContext));
+		}
+		return controls.size() == 1
+			? controls.get(0)
+			: new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT, StackAlign.CENTER,
+				false, controls);
+	}
+
 	private List<ViewCommandModel> buildCommandModels(ViewContext context) {
 		List<ViewCommandModel> models = new ArrayList<>();
 		for (int i = 0; i < _commands.size() && i < _commandConfigs.size(); i++) {
 			ViewCommand cmd = _commands.get(i);
 			ViewCommand.Config cmdConfig = _commandConfigs.get(i);
 
-			ChannelRef inputRef = cmdConfig.getInput();
-			ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
-
-			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
-
-			ViewCommandModel model = ViewCommandModel.create(cmd, cmdConfig, inputChannel, rule);
-			model.attach();
+			ViewCommandModel model = ViewCommandModel.forCommand(context, cmd, cmdConfig);
+			model.attach(context.getModelScope());
 			models.add(model);
 		}
 		return models;

@@ -29,6 +29,8 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 
 	private static final String CSS_CLASS = "cssClass";
 
+	private static final String ROLE = "role";
+
 	private static final String HAS_TOOLTIP = "hasTooltip";
 
 	/** Key expected by {@link #getTooltipContent(String)}. */
@@ -81,6 +83,22 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	}
 
 	/**
+	 * Sets the ARIA role of the rendered {@code <span>}.
+	 *
+	 * <p>
+	 * For text that carries meaning beyond being read where it stands - {@code "alert"} for a
+	 * message that appears without the reader having gone looking for it, say, the way the React
+	 * form field and panel mark their own error areas.
+	 * </p>
+	 *
+	 * @param role
+	 *        The ARIA role, or {@code null} for none.
+	 */
+	public void setRole(String role) {
+		putState(ROLE, role);
+	}
+
+	/**
 	 * Sets a rich tooltip shown on hover.
 	 *
 	 * @param html
@@ -107,10 +125,10 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	}
 
 	/**
-	 * Rendering-only state keys, omitted from the headless agent projection.
+	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override
-	protected java.util.Set<String> agentPresentationKeys() {
+	protected java.util.Set<String> scriptingPresentationKeys() {
 		return java.util.Set.of("cssClass");
 	}
 }

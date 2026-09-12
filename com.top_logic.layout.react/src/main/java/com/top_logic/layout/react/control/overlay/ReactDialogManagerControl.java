@@ -62,7 +62,14 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 		_stack.add(entry);
 		patchDialogsState();
 
-		return result -> closeDialog(entry, result);
+		if (isAttached()) {
+			// An opened dialog is displayed right away, so it must not stay detached: its content
+			// contributes to the display (e.g. a form adding its commands to the dialog's button bar)
+			// only while attached.
+			dialog.attach();
+		}
+
+		return entry;
 	}
 
 	@Override
@@ -71,6 +78,20 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 			return;
 		}
 		closeDialog(_stack.get(_stack.size() - 1), result);
+	}
+
+	@Override
+	public void closeDialogsAbove(DialogHandle dialog) {
+		int index = _stack.indexOf(dialog);
+		if (index < 0) {
+			return;
+		}
+		while (_stack.size() > index + 1) {
+			DialogEntry top = _stack.remove(_stack.size() - 1);
+			top.dialog().cleanupTree();
+			top.handler().onResult(DialogResult.cancelled());
+		}
+		patchDialogsState();
 	}
 
 	private void closeDialog(DialogEntry entry, DialogResult<Void> result) {
@@ -102,14 +123,36 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 
 	@Override
 	protected void cleanupChildren() {
-		for (DialogEntry entry : _stack) {
-			entry.dialog().cleanupTree();
-		}
+		super.cleanupChildren();
 		_stack.clear();
 	}
 
-	private record DialogEntry(ReactDialogControl dialog, DialogResultHandler<Void> handler) {
-		// Pure data record.
+	/**
+	 * One open dialog, serving as the {@link DialogHandle} its opener addresses it by.
+	 */
+	private final class DialogEntry implements DialogHandle {
+
+		private final ReactDialogControl _dialog;
+
+		private final DialogResultHandler<Void> _handler;
+
+		DialogEntry(ReactDialogControl dialog, DialogResultHandler<Void> handler) {
+			_dialog = dialog;
+			_handler = handler;
+		}
+
+		ReactDialogControl dialog() {
+			return _dialog;
+		}
+
+		DialogResultHandler<Void> handler() {
+			return _handler;
+		}
+
+		@Override
+		public void close(DialogResult<Void> result) {
+			closeDialog(this, result);
+		}
 	}
 
 }

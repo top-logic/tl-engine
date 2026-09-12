@@ -5,7 +5,6 @@
  */
 package com.top_logic.react.flow.operations.layout;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

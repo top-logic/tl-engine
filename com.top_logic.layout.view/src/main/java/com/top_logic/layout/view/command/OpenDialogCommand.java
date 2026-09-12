@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -46,6 +47,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * &lt;/button&gt;
  * </pre>
  */
+@InApp
 public class OpenDialogCommand implements ViewCommand {
 
 	/**
@@ -133,7 +135,8 @@ public class OpenDialogCommand implements ViewCommand {
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		_action.execute(context, input);
+		// Run through the chain: opening may suspend to ask about unsaved changes first.
+		ViewActionChain.run(context, List.of(_action), input, null);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 }

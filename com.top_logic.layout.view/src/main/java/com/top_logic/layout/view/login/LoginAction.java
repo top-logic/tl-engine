@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.security.util.Password;
@@ -69,6 +70,7 @@ import com.top_logic.util.error.TopLogicException;
  * @implNote The deferred session swap is triggered by {@link #completeLogin}; the per-step MFA
  *           branching is in {@link #proceedAfterPassword}.
  */
+@InApp
 public class LoginAction implements ViewAction {
 
 	/** Name of the transient model type holding the change-password form input. */
@@ -85,6 +87,9 @@ public class LoginAction implements ViewAction {
 
 	/** Dialog view for the MFA-enrollment step (MFA required, no secret set yet). */
 	public static final String MFA_ENROLL_VIEW = "mfa-enroll.view.xml";
+
+	/** Dialog channel carrying the transient model a login-step form edits. */
+	public static final String MODEL_CHANNEL = "model";
 
 	/** Dialog channel carrying the TOTP secret being verified (existing or freshly generated). */
 	public static final String SECRET_CHANNEL = "secret";
@@ -190,7 +195,7 @@ public class LoginAction implements ViewAction {
 	 */
 	private static void openChangePasswordDialog(ReactContext context, Person account) {
 		Map<String, Object> channels = new LinkedHashMap<>();
-		channels.put("model", newTransient(PASSWORD_CHANGE_TYPE));
+		channels.put(MODEL_CHANNEL, newTransient(PASSWORD_CHANGE_TYPE));
 		channels.put(ACCOUNT_CHANNEL, account);
 		replaceDialog(context, CHANGE_PASSWORD_VIEW, channels);
 	}
@@ -201,7 +206,7 @@ public class LoginAction implements ViewAction {
 	 */
 	private static void openOtpDialog(ReactContext context, Person account, Password secret) {
 		Map<String, Object> channels = new LinkedHashMap<>();
-		channels.put("model", newTransient(OTP_ENTRY_TYPE));
+		channels.put(MODEL_CHANNEL, newOtpEntry());
 		channels.put(ACCOUNT_CHANNEL, account);
 		channels.put(SECRET_CHANNEL, secret);
 		replaceDialog(context, OTP_VIEW, channels);
@@ -215,7 +220,7 @@ public class LoginAction implements ViewAction {
 	private static void openMfaEnrollDialog(ReactContext context, Person account) {
 		Password secret = MfaSupport.generateSecret();
 		Map<String, Object> channels = new LinkedHashMap<>();
-		channels.put("model", newTransient(OTP_ENTRY_TYPE));
+		channels.put(MODEL_CHANNEL, newOtpEntry());
 		channels.put(ACCOUNT_CHANNEL, account);
 		channels.put(SECRET_CHANNEL, secret);
 		channels.put(QR_CHANNEL, MfaSupport.createQrCode(account, secret));
@@ -235,6 +240,14 @@ public class LoginAction implements ViewAction {
 		// login flow (change-password / OTP / MFA-enrollment step).
 		OpenDialogAction.openDialog(context, ViewLoader.VIEW_BASE_PATH + view, false, channels,
 			Collections.emptyList());
+	}
+
+	/**
+	 * A fresh transient model for a one-time-code form, whether it verifies an existing secret or
+	 * confirms a newly generated one.
+	 */
+	static TLObject newOtpEntry() {
+		return newTransient(OTP_ENTRY_TYPE);
 	}
 
 	private static TLObject newTransient(String typeName) {

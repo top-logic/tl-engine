@@ -36,14 +36,4 @@
 		<url-pattern>/react-api/events</url-pattern>
 	</servlet-mapping>
 
-	<servlet>
-		<servlet-name>AgentServlet</servlet-name>
-		<servlet-class>com.top_logic.layout.react.headless.AgentServlet</servlet-class>
-	</servlet>
-
-	<servlet-mapping>
-		<servlet-name>AgentServlet</servlet-name>
-		<url-pattern>/agent-api/*</url-pattern>
-	</servlet-mapping>
-
 </web-fragment>

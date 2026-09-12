@@ -13,6 +13,7 @@
 					<property name="rootVisible"/>
 					<property name="showOnlySelectableNodes"/>
 					<property name="defaultSelection"/>
+					<property name="defaultSelectionProvider"/>
 					<property name="expandRoot"/>
 					<property name="expandSelected"/>
 					<property name="revealSelection"/>
@@ -97,6 +98,7 @@
 	<treeView name="Tree"
 		adjustSelectionWhenCollapsing="${adjustSelectionWhenCollapsing}"
 		defaultSelection="${defaultSelection}"
+		defaultSelectionProvider="${defaultSelectionProvider}"
 		dialogs="${dialogs}"
 		dragSource="${dragSource}"
 		dropTargets="${dropTargets}"

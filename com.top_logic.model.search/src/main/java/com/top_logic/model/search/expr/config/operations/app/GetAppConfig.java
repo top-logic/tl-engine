@@ -56,7 +56,7 @@ public class GetAppConfig extends GenericMethod {
 		Object configArg = arguments[1];
 
 		if (serviceArg != null && configArg != null) {
-			throw new TopLogicException(I18NConstants.ERROR_EITHER_SEVICE_OR_CONFIG);
+			throw new TopLogicException(I18NConstants.ERROR_EITHER_SERVICE_OR_CONFIG);
 		}
 
 		if (serviceArg != null) {
@@ -92,7 +92,7 @@ public class GetAppConfig extends GenericMethod {
 			return ApplicationConfig.getInstance().getConfig(configClass);
 		}
 
-		throw new TopLogicException(I18NConstants.ERROR_EITHER_SEVICE_OR_CONFIG);
+		throw new TopLogicException(I18NConstants.ERROR_EITHER_SERVICE_OR_CONFIG);
 	}
 
 	/**

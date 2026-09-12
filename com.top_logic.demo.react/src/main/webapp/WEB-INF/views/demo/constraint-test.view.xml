@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selectedObject"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="30"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Constraint Test Objects</en>
+						<de>Constraint-Test-Objekte</de>
+					</title>
+					<commands>
+						<generic-command placement="TOOLBAR">
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`test.constraints:ConstraintTestType`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="demo/create-constraint-test.view.xml"
+							>
+								<bind
+									channel="selection"
+									to="selectedObject"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-trash"
+							input="selectedObject"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm expr="obj -> if($obj != null, #(&quot;Delete the selected object?&quot;@en, &quot;Das ausgewählte Objekt löschen?&quot;@de), null)"/>
+							<with-transaction>
+								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+							</with-transaction>
+							<write-channel name="selectedObject"/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="test.constraints:ConstraintTestType"
+						selection="selectedObject"
+						types="test.constraints:ConstraintTestType"
+					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<column attribute="uniqueName"/>
+							<column attribute="sizedString"/>
+							<column attribute="mandatorySizedString"/>
+							<column attribute="unboundedSizedString"/>
+							<column attribute="minSizedString"/>
+							<column attribute="rangedInt"/>
+							<column attribute="rangedDouble"/>
+							<column attribute="uppercaseStart"/>
+							<column attribute="freeText"/>
+						</columns>
+						<rows>all(`test.constraints:ConstraintTestType`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="70"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Constraint Test Form</en>
+						<de>Constraint-Test-Formular</de>
+					</title>
+					<form input="selectedObject">
+						<field attribute="name"/>
+						<field attribute="uniqueName"/>
+						<field attribute="sizedString"/>
+						<field attribute="mandatorySizedString"/>
+						<field attribute="unboundedSizedString"/>
+						<field attribute="minSizedString"/>
+						<field attribute="rangedInt"/>
+						<field attribute="rangedDouble"/>
+						<field attribute="uppercaseStart"/>
+						<field attribute="warningField"/>
+						<field attribute="freeText"/>
+						<field attribute="category"/>
+						<field attribute="codeInCategory"/>
+						<composition-table attribute="items">
+							<columns>
+								<column attribute="name"/>
+								<column attribute="quantity"/>
+								<column attribute="unitPrice"/>
+							</columns>
+							<detail-dialog
+								edit-mode-channel="editMode"
+								height="300"
+								input-channel="editedItem"
+								layout="demo/edit-constraint-test-item.view.xml"
+								width="500"
+							/>
+						</composition-table>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

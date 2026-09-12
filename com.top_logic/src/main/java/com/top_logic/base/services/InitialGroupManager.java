@@ -12,6 +12,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -22,17 +23,18 @@ import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.model.ModelService;
 
 /**
- * The {@link InitialGroupManager} installs groups for the application:
- * 
+ * Installs the groups required by the application.
+ *
  * <p>
  * It ensures that for each existing user there is a representative group.
  * </p>
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceDependencies({
 	ModelService.Module.class,
 })
+@Label("Initial groups")
 public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager.Config> {
 
 	/**

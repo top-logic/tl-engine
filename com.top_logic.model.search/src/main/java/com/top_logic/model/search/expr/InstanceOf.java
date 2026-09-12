@@ -36,15 +36,14 @@ public class InstanceOf extends TypeCheck implements BooleanExpression {
 		SearchExpression inputExpr = getValue();
 		Object value = inputExpr.evalWith(definitions, args);
 
-		return isInstanceOf(value, inputExpr, getCheckType());
+		return isInstanceOf(value, getCheckType());
 	}
 
-	static Object isInstanceOf(Object input, SearchExpression inputExpr, TLStructuredType expectedType) {
-		if (!(input instanceof TLObject)) {
+	static Object isInstanceOf(Object input, TLStructuredType expectedType) {
+		if (!(input instanceof TLObject item)) {
 			return false;
 		}
 	
-		TLObject item = asTLObject(inputExpr, input);
 		return TLModelUtil.isCompatibleInstance(expectedType, item);
 	}
 

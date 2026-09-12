@@ -7,7 +7,7 @@ package com.top_logic.table;
 
 import java.util.List;
 
-import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.table.filter.TextFilterState;
 
 /**
  * The single binding object the UI tier talks to: composes a column model, a
@@ -30,6 +30,12 @@ public interface TableView<R> {
 
 	/**
 	 * The visible columns, in display order.
+	 *
+	 * <p>
+	 * The columns {@link Column#pinnedEnd() pinned} to the end of the table trail that order,
+	 * whatever arrangement is made of the others, and the {@link #frozenColumnCount() frozen
+	 * prefix} counts none of them.
+	 * </p>
 	 */
 	List<ColumnView> columns();
 
@@ -37,6 +43,30 @@ public interface TableView<R> {
 	 * The number of leading frozen (fixed) columns.
 	 */
 	int frozenColumnCount();
+
+	/**
+	 * All columns the table can display - the {@link #columns() visible} ones in display order,
+	 * followed by the hidden ones - each flagged whether it is currently displayed.
+	 *
+	 * <p>
+	 * This is what a column selection UI offers; the choice it produces is applied through
+	 * {@link #setColumnOrder(List)}.
+	 * </p>
+	 */
+	List<ColumnOption> columnOptions();
+
+	/**
+	 * The columns as the table was defined: those displayed without any personalization, in
+	 * declaration order.
+	 *
+	 * <p>
+	 * This is the arrangement a column selection UI restores when the user resets their
+	 * personalization, and the state a table starts from before anything is persisted. It does not
+	 * cover columns a table only offers - those stay hidden until the user selects them, exactly as
+	 * on a first visit.
+	 * </p>
+	 */
+	List<String> defaultColumnOrder();
 
 	// ---- data window ----
 
@@ -67,11 +97,79 @@ public interface TableView<R> {
 	 */
 	MatchCounts columnMatchCounts(String column);
 
+	// ---- named filters ----
+
 	/**
-	 * The editable field model for the given cell, or {@code null} if the cell is not
-	 * editable.
+	 * The filter criteria this table offers under a name: the ones its definition
+	 * {@link NamedFilter.Origin#DECLARED declares} first, then the ones the user
+	 * {@link #saveNamedFilter(String) saved}.
 	 */
-	FieldModel editor(Object rowKey, String column);
+	List<NamedFilter> namedFilters();
+
+	/**
+	 * The {@link #namedFilters() named filter} whose criteria the table is filtered by, or
+	 * {@code null} if it is filtered by none of them.
+	 *
+	 * <p>
+	 * The result is derived from the live filter state, not remembered: it is the first named
+	 * filter {@link NamedFilter#matches(java.util.Map, TextFilterState) matching} the current
+	 * column filters and search term, so it is found as well when the user reached those criteria
+	 * through the filter editors, and it is gone as soon as they change any of them.
+	 * </p>
+	 */
+	NamedFilter activeNamedFilter();
+
+	/**
+	 * Filters the table by exactly the criteria of the {@link #namedFilters() named filter} with
+	 * the given {@link NamedFilter#id() identifier}.
+	 *
+	 * <p>
+	 * The named filter replaces the whole filter: a column it does not mention ends up unfiltered,
+	 * and its search term becomes the table's - applying it means what it says instead of narrowing
+	 * whatever was set before. A criterion for a column this table does not have, or does not
+	 * filter by, is dropped. An identifier no named filter has leaves the table as it is.
+	 * </p>
+	 */
+	void applyNamedFilter(String id);
+
+	/**
+	 * Whether this table keeps {@link NamedFilter}s of the user's own, so that
+	 * {@link #saveNamedFilter(String)} saves one and {@link #deleteNamedFilter(String)} deletes
+	 * one.
+	 *
+	 * <p>
+	 * A UI asks this before offering to save a filter: a table without a place to keep them offers
+	 * only the {@link NamedFilter.Origin#DECLARED declared} ones.
+	 * </p>
+	 */
+	boolean savesNamedFilters();
+
+	/**
+	 * Saves the current column filters and search term as a {@link NamedFilter} of the user's own,
+	 * under the given name.
+	 *
+	 * <p>
+	 * Saving under the name of an existing saved filter replaces that filter's criteria, keeping
+	 * its {@link NamedFilter#id() identifier}.
+	 * </p>
+	 *
+	 * @param name
+	 *        The free-text name the user typed.
+	 * @return The saved filter, or {@code null} if this table persists no filters of its own (then
+	 *         it offers only the declared ones).
+	 */
+	NamedFilter saveNamedFilter(String name);
+
+	/**
+	 * Deletes the {@link NamedFilter.Origin#SAVED saved} filter with the given
+	 * {@link NamedFilter#id() identifier}.
+	 *
+	 * <p>
+	 * A declared filter is part of the table definition and cannot be deleted, so an identifier
+	 * naming one - like an identifier naming nothing - leaves the offered filters as they are.
+	 * </p>
+	 */
+	void deleteNamedFilter(String id);
 
 	// ---- commands (UI -> model) ----
 
@@ -87,6 +185,22 @@ public interface TableView<R> {
 	void filter(String column, FilterState state);
 
 	/**
+	 * Applies (or clears, when the term is {@code null} or {@link TextFilterState#isEmpty()
+	 * empty}) the cross-column free-text search.
+	 *
+	 * <p>
+	 * The search examines the columns that are currently displayed, so it finds what the user
+	 * can see: a row is displayed when the term occurs in the
+	 * {@link Column#searchText(Object) searchable text} of at least one of them. It narrows
+	 * the rows in addition to the active column {@link #filter(String, FilterState) filters}.
+	 * </p>
+	 *
+	 * @param term
+	 *        The text pattern together with its matching flags.
+	 */
+	void search(TextFilterState term);
+
+	/**
 	 * Applies a new grouping.
 	 */
 	void group(GroupSpec spec);
@@ -95,6 +209,22 @@ public interface TableView<R> {
 	 * Moves a column to a new visible index.
 	 */
 	void moveColumn(String column, int toIndex);
+
+	/**
+	 * Replaces the displayed columns and their order in one step.
+	 *
+	 * <p>
+	 * This is the bulk form of {@link #moveColumn(String, int)} and
+	 * {@link #setColumnVisible(String, boolean)} for a column selection UI, which decides
+	 * visibility and order together: applying the result column by column would persist and
+	 * report every intermediate arrangement.
+	 * </p>
+	 *
+	 * @param columns
+	 *        The columns to display, in display order. Names that are no columns of this table,
+	 *        and repetitions, are ignored.
+	 */
+	void setColumnOrder(List<String> columns);
 
 	/**
 	 * Sets the display width of a column.
@@ -120,11 +250,6 @@ public interface TableView<R> {
 	 * Replaces the current selection.
 	 */
 	void select(Selection selection);
-
-	/**
-	 * Commits an inline edit of a cell. The implementation owns the transaction.
-	 */
-	void commitEdit(Object rowKey, String column, Object value);
 
 	/**
 	 * Sets the paging window ({@code pageSize == }{@link TableViewState#SHOW_ALL} disables

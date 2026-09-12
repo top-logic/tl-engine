@@ -496,6 +496,25 @@ public class TestFormatter extends BasicTestCase {
 			dateFormatCopy.isLenient());
 	}
 
+	/**
+	 * The formats handed out by the {@link Formatter} answer for the settings of the format they
+	 * apply, so a caller can ask how a number is written before writing it.
+	 */
+	public void testDefaultNumberFormatSettings() {
+		Formatter htmlFormatter = getHTMLFormatterGerman();
+
+		NumberFormat doubleFormat = htmlFormatter.getDoubleFormat();
+		assertEquals("The double format writes two decimal places.", 2, doubleFormat.getMaximumFractionDigits());
+		assertEquals(2, doubleFormat.getMinimumFractionDigits());
+		assertTrue("The double format groups the digits.", doubleFormat.isGroupingUsed());
+		assertEquals("12.345,68", doubleFormat.format(12345.678d));
+
+		NumberFormat longFormat = htmlFormatter.getLongFormat();
+		assertEquals("The long format writes no decimal places.", 0, longFormat.getMaximumFractionDigits());
+		assertTrue("The long format reads whole numbers only.", longFormat.isParseIntegerOnly());
+		assertEquals(NumberFormat.getIntegerInstance(Locale.GERMAN).isGroupingUsed(), longFormat.isGroupingUsed());
+	}
+
 	public void testFailModifyDefaultNumberFormat() {
 		Formatter htmlFormatter = getHTMLFormatterGerman();
 		try {

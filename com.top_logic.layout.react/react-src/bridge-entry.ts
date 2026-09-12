@@ -21,8 +21,13 @@ export {
 } from './bridge/tl-react-bridge';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps } from './bridge/focus-trap';
 export { CMD_VALUE_CHANGED } from './bridge/command-channel';
+export { writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
+export type { TLDragPayload, TLDropPosition } from './bridge/drag-drop';
 export type { TLCellProps } from './bridge/types';
 export { useI18N } from './bridge/i18n';
+export { scrollToAnchor } from './bridge/scroll';
+export { FILL_CLASS, useFill, useFillHost, FillProvider, FillBarrier } from './bridge/fill';
+export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
 export type { ChildDescriptor } from './bridge/TLChild';
 
@@ -44,7 +49,10 @@ export { React, ReactDOM };
 // (e.g. ReactBridge.subscribe()) can call them.
 import { mount, mountField, discoverAndMount } from './bridge/tl-react-bridge';
 import { subscribe as sseSubscribe, unsubscribe as sseUnsubscribe } from './bridge/sse-client';
-(window as any).TLReact = { mount, mountField, discoverAndMount, subscribe: sseSubscribe, unsubscribe: sseUnsubscribe };
+import { scrollToAnchor } from './bridge/scroll';
+(window as any).TLReact = {
+  mount, mountField, discoverAndMount, subscribe: sseSubscribe, unsubscribe: sseUnsubscribe, scrollToAnchor,
+};
 
 // Initialize window self-close notification for multi-window support.
 import { initSelfCloseNotification } from './bridge/window-manager';

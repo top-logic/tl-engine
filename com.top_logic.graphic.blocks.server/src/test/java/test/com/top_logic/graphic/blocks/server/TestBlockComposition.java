@@ -109,7 +109,7 @@ public class TestBlockComposition extends TestCase {
 		blocks.updateDimensions(new AWTContext(TEXT_SIZE), 0.0, 0.0);
 
 		try (TagWriter out = new TagWriter(new OutputStreamWriter(
-			new FileOutputStream(TestBlockComposition.class.getSimpleName() + ".html"), "utf-8"))) {
+			new FileOutputStream("./target/" + TestBlockComposition.class.getSimpleName() + ".html"), "utf-8"))) {
 
 			out.beginTag(HTML);
 			out.beginTag(HEAD);

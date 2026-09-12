@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -17,7 +16,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl.ChildConstraint;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.responsive.DisplayClass;
 import com.top_logic.layout.responsive.DisplayClassModel;
 import com.top_logic.layout.responsive.DisplayClassModel.DisplayClassListener;
@@ -27,6 +26,9 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.element.AdaptiveDetailElement.Config;
+import com.top_logic.layout.view.navigation.RevealPath;
+import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 
 /**
@@ -51,7 +53,7 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ReactAdaptiveDetailControl extends ReactControl {
+public class ReactAdaptiveDetailControl extends ReactControl implements ChildRevealer {
 
 	private static final String REACT_MODULE = "TLAdaptiveDetail";
 
@@ -62,6 +64,10 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	private static final String DEFAULT_HOME_LABEL = "‹";
 
 	private final ViewContext _context;
+
+	private final ViewContext _selectorContext;
+
+	private final ViewContext _detailContext;
 
 	private final List<UIElement> _selector;
 
@@ -92,6 +98,9 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	 *
 	 * @param context
 	 *        The {@link ViewContext} used to build the selector and detail child controls.
+	 * @param element
+	 *        The configured element this control displays, addressed when the selector or the
+	 *        detail is to be brought into view.
 	 * @param selector
 	 *        The master content elements (write the selection channel).
 	 * @param detail
@@ -109,11 +118,15 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	 * @param homeLabel
 	 *        Label of the breadcrumb's home crumb, or {@code null} for a default.
 	 */
-	public ReactAdaptiveDetailControl(ViewContext context, List<UIElement> selector, List<UIElement> detail,
+	public ReactAdaptiveDetailControl(ViewContext context, AdaptiveDetailElement element,
+			List<UIElement> selector, List<UIElement> detail,
 			ViewChannel selectionChannel, List<ViewChannel> resetOn, boolean coordinator, List<ViewChannel> chain,
 			String homeLabel) {
 		super(context, null, REACT_MODULE);
 		_context = context;
+		RevealPath here = RevealPath.of(context);
+		_selectorContext = context.withScope(RevealPath.class, here.append(element, Config.SELECTOR));
+		_detailContext = context.withScope(RevealPath.class, here.append(element, Config.DETAIL));
 		_selector = selector;
 		_detail = detail;
 		_selectionChannel = selectionChannel;
@@ -151,7 +164,32 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 			}
 		}
 
+		RevealRegistry registry = context.getRevealRegistry();
+		if (registry != null) {
+			addCleanupAction(registry.registerContainer(element, here, this));
+		}
+
 		renderPresentation();
+	}
+
+	/**
+	 * Brings the selector or the detail side into view.
+	 *
+	 * <p>
+	 * Side by side on a wide viewport, both are displayed anyway. On a narrow one the selector
+	 * returns by dropping the selection, exactly as the breadcrumb's home crumb does, while the
+	 * detail appears as soon as the selection channel holds the object it displays.
+	 * </p>
+	 */
+	@Override
+	public void revealChild(String key) {
+		if (Config.SELECTOR.equals(key)) {
+			if (_displayModel.getDisplayClass() == DisplayClass.COMPACT) {
+				_selectionChannel.set(null);
+			}
+		} else if (!Config.DETAIL.equals(key)) {
+			throw new IllegalArgumentException("A master-detail element has no side '" + key + "'.");
+		}
 	}
 
 	private void onSelectionChanged() {
@@ -173,9 +211,9 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 
 		ReactControl built;
 		if (compact && hasSelection) {
-			built = buildContent(_detail);
+			built = buildDetail();
 		} else if (compact) {
-			built = buildContent(_selector);
+			built = buildSelector();
 		} else {
 			built = buildRegularSplit();
 		}
@@ -234,19 +272,17 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 
 	private ReactControl buildRegularSplit() {
 		ReactSplitPanelControl split = new ReactSplitPanelControl(_context, Orientation.HORIZONTAL, true);
-		split.addChild(buildContent(_selector), new ChildConstraint(32f, DisplayUnit.PERCENT, 240, Scrolling.AUTO));
-		split.addChild(buildContent(_detail), new ChildConstraint(68f, DisplayUnit.PERCENT, 320, Scrolling.AUTO));
+		split.addChild(buildSelector(), new ChildConstraint(32f, DisplayUnit.PERCENT, 240, Scrolling.AUTO));
+		split.addChild(buildDetail(), new ChildConstraint(68f, DisplayUnit.PERCENT, 320, Scrolling.AUTO));
 		return split;
 	}
 
-	private ReactControl buildContent(List<UIElement> elements) {
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(_context);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(_context))
-			.collect(Collectors.toList());
-		return new ReactStackControl(_context, children);
+	private ReactControl buildSelector() {
+		return ContentControls.toControl(_selector, _selectorContext);
+	}
+
+	private ReactControl buildDetail() {
+		return ContentControls.toControl(_detail, _detailContext);
 	}
 
 	/**
@@ -278,14 +314,6 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	protected void onCleanup() {
 		_disposed = true;
 		super.onCleanup();
-	}
-
-	@Override
-	protected void cleanupChildren() {
-		if (_currentChild != null) {
-			_currentChild.cleanupTree();
-			_currentChild = null;
-		}
 	}
 
 }

@@ -10,6 +10,7 @@ import static com.top_logic.knowledge.search.ExpressionFactory.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.util.Utils;
@@ -40,14 +41,30 @@ public class ItemByNameCache<K> extends SimpleKBCache<Map<K, KnowledgeItem>> {
 
 	private final Class<K> _keyType;
 
+	private final Function<? super K, ? extends K> _keyMapper;
+
 	/**
-	 * Creates a {@link ItemByNameCache}.
+	 * Creates a {@link ItemByNameCache} that caches items by the raw value of the key attribute.
 	 */
 	public ItemByNameCache(DBKnowledgeBase kb, String table, String keyAttribute, Class<K> keyType) {
+		this(kb, table, keyAttribute, keyType, Function.identity());
+	}
+
+	/**
+	 * Creates a {@link ItemByNameCache}.
+	 *
+	 * @param keyMapper
+	 *        Normalization applied to a key attribute value before it is used as cache key (both
+	 *        when filling the cache and when {@link #lookup(Object) looking up} a value). Use
+	 *        {@link Function#identity()} for an exact-match cache.
+	 */
+	public ItemByNameCache(DBKnowledgeBase kb, String table, String keyAttribute, Class<K> keyType,
+			Function<? super K, ? extends K> keyMapper) {
 		_kb = kb;
 		_table = table;
 		_keyAttribute = keyAttribute;
 		_keyType = keyType;
+		_keyMapper = keyMapper;
 	}
 
 	@Override
@@ -97,7 +114,7 @@ public class ItemByNameCache<K> extends SimpleKBCache<Map<K, KnowledgeItem>> {
 				cacheValue = copy(cacheValue);
 				copied = true;
 			}
-			cacheValue.remove(deletion.getValues().get(_keyAttribute));
+			cacheValue.remove(key(deletion.getValues().get(_keyAttribute)));
 		}
 		if (copied) {
 			return cacheValue;
@@ -127,8 +144,8 @@ public class ItemByNameCache<K> extends SimpleKBCache<Map<K, KnowledgeItem>> {
 		if (Utils.equals(oldName, newName)) {
 			return;
 		}
-		cacheValue.remove(oldName);
-		addToCache(cacheValue, cast(newName), item);
+		cacheValue.remove(key(oldName));
+		addToCache(cacheValue, item, newName);
 	}
 
 	@Override
@@ -139,10 +156,10 @@ public class ItemByNameCache<K> extends SimpleKBCache<Map<K, KnowledgeItem>> {
 		}
 		if (_keyAttribute.equals(attributeName)) {
 			if (oldValue != null) {
-				cacheValue.remove(oldValue);
+				cacheValue.remove(key(oldValue));
 			}
 			if (newValue != null) {
-				addToCache(cacheValue, cast(newValue), item);
+				addToCache(cacheValue, item, newValue);
 			}
 		}
 	}
@@ -199,15 +216,15 @@ public class ItemByNameCache<K> extends SimpleKBCache<Map<K, KnowledgeItem>> {
 		addToCache(cache, item, item.getAttributeValue(_keyAttribute));
 	}
 
-	private void addToCache(Map<K, KnowledgeItem> cache, KnowledgeItem item, Object newName) {
-		K keyAttrValue = cast(newName);
-		if (keyAttrValue == null) {
+	private void addToCache(Map<K, KnowledgeItem> cache, KnowledgeItem item, Object attributeValue) {
+		K keyValue = key(attributeValue);
+		if (keyValue == null) {
 			return;
 		}
-		addToCache(cache, keyAttrValue, item);
+		putUnique(cache, keyValue, item);
 	}
 
-	private void addToCache(Map<K, KnowledgeItem> cache, K keyValue, KnowledgeItem item) {
+	private void putUnique(Map<K, KnowledgeItem> cache, K keyValue, KnowledgeItem item) {
 		KnowledgeItem clash = cache.put(keyValue, item);
 		if (clash != null) {
 			throw new IllegalStateException("Multiple items in table '" + _table + "' with the same key attribute '"
@@ -217,5 +234,33 @@ public class ItemByNameCache<K> extends SimpleKBCache<Map<K, KnowledgeItem>> {
 
 	private K cast(Object attributeValue) {
 		return _keyType.cast(attributeValue);
+	}
+
+	/**
+	 * Derives the (normalized) cache key from a raw key attribute value, applying the configured
+	 * key normalization. Returns <code>null</code> for a <code>null</code> value.
+	 */
+	private K key(Object attributeValue) {
+		K value = cast(attributeValue);
+		if (value == null) {
+			return null;
+		}
+		return cast(_keyMapper.apply(value));
+	}
+
+	/**
+	 * Looks up the cached item for the given (raw) key, applying the same key normalization that
+	 * was used to fill the cache.
+	 *
+	 * @param rawKey
+	 *        The key to look for, in its raw (un-normalized) form.
+	 * @return The cached {@link KnowledgeItem}, or <code>null</code> if none is cached for the key.
+	 */
+	public KnowledgeItem lookup(K rawKey) {
+		K key = key(rawKey);
+		if (key == null) {
+			return null;
+		}
+		return getValue().get(key);
 	}
 }

@@ -49,16 +49,23 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 
 		/**
 		 * Function computing the form field mode for an attribute.
-		 * 
+		 *
 		 * <p>
-		 * The function expects the object defining the displayed attribute as single argument:
+		 * The function expects the object defining the displayed attribute as first argument and
+		 * optionally takes whether the form is in edit mode as second argument:
 		 * </p>
-		 * 
-		 * <code>object -> [one of <code>"editable"</code>, <code>"disabled"</code>,
+		 *
+		 * <code>object -> editMode -> [one of <code>"editable"</code>, <code>"disabled"</code>,
 		 * <code>"read-only"</code>, <code>"mandatory"</code>, <code>"hidden"</code> | for
 		 * fieldsets: one of <code>"default"</code>, <code>"hidden"</code> | all other visibilities
 		 * are interpreted as <code>"default"</code>.]</code>
-		 * 
+		 *
+		 * <p>
+		 * The edit mode argument allows mode-dependent visibility, e.g. hiding an attribute
+		 * without value in view mode while keeping it visible for editing:
+		 * <code>object -> editMode -> $editMode || $object.get(`my:Type#attr`) != null</code>
+		 * </p>
+		 *
 		 * @see FormVisibility
 		 */
 		Expr getFunction();
@@ -86,8 +93,8 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 	}
 
 	@Override
-	public FormVisibility getMode(TLObject object, TLStructuredTypePart attribute) {
-		return toFieldMode(_selector.execute(object));
+	public FormVisibility getMode(TLObject object, TLStructuredTypePart attribute, boolean editMode) {
+		return toFieldMode(_selector.execute(object, Boolean.valueOf(editMode)));
 	}
 
 	@Override

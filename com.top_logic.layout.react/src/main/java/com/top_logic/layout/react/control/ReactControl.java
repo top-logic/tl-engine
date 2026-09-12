@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -61,7 +62,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * {@code child.write(context, out)} in traditional controls.
  * </p>
  */
-public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
+public class ReactControl implements HTMLFragment, IReactControl, ScriptingControl {
 
 	/** State key for whether the control is hidden on the client. */
 	private static final String HIDDEN = "hidden";
@@ -78,7 +79,23 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 
 	private Map<String, Object> _reactState;
 
+	/**
+	 * The state properties holding controls this control renders but does not own, or {@code null}
+	 * while it owns everything it renders.
+	 *
+	 * @see #borrowedState(String)
+	 */
+	private Set<String> _borrowedState;
+
 	private SSEUpdateQueue _sseQueue;
+
+	/**
+	 * The {@link RoutingParticipant}s contributing a URL segment for this control, beyond the control
+	 * itself, or {@code null} while there are none.
+	 *
+	 * @see #addRouteParticipant(RoutingParticipant)
+	 */
+	private List<RoutingParticipant> _routeParticipants;
 
 	/**
 	 * The source {@code .view.xml} path of the view whose root this control is, or {@code null}.
@@ -125,7 +142,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 
 	/**
 	 * Whether the currently executing command was dispatched by the browser client (via
-	 * {@link #executeClientCommand(String, Map)}), as opposed to programmatically (headless agent,
+	 * {@link #executeClientCommand(String, Map)}), as opposed to programmatically (headless interface,
 	 * script replay, server-side code).
 	 */
 	private boolean _clientDispatch;
@@ -147,8 +164,6 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	private boolean _silentChanges;
 
 	private List<Runnable> _cleanupActions;
-
-	private List<Runnable> _beforeWriteActions;
 
 	/**
 	 * Creates a new {@link ReactControl}.
@@ -298,40 +313,129 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	@Override
-	public boolean agentTransparent() {
+	public boolean scriptingTransparent() {
 		return false;
 	}
 
 	@Override
-	public String agentName() {
+	public String scriptingName() {
 		return null;
 	}
 
 	@Override
-	public String agentRole() {
+	public String scriptingRole() {
 		return null;
 	}
 
 	@Override
-	public String agentChildSlot(ReactControl child) {
+	public String scriptingChildSlot(ReactControl child) {
 		return null;
+	}
+
+	@Override
+	public List<ReactControl> scriptingChildren() {
+		return displayedChildren();
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * The {@link #childControls() children this control renders}, in an order that is stable across
+	 * calls.
+	 *
+	 * <p>
+	 * Every projection of the display that has to be reproducible builds on this order: the
+	 * {@link #scriptingChildren() scripting projection} of a control tree, and the composition of the
+	 * URL from the {@link com.top_logic.layout.react.routing.RoutingParticipant participants} the
+	 * display contains.
+	 * </p>
 	 *
 	 * @implNote Walks the state map the same way {@link #writeJsonValue} serializes it, but stops at
 	 *           each embedded control rather than descending into it. Entries are visited in
-	 *           state-key order (the backing map is unordered) so the child order is stable across
-	 *           calls.
+	 *           state-key order, because the backing map is unordered.
 	 */
-	@Override
-	public List<ReactControl> agentChildren() {
+	public final List<ReactControl> displayedChildren() {
 		List<ReactControl> result = new ArrayList<>();
 		_reactState.entrySet().stream()
 			.sorted(Map.Entry.comparingByKey())
 			.forEach(entry -> collectChildControls(entry.getValue(), result));
 		return result;
+	}
+
+	/**
+	 * The {@link #displayedChildren() displayed children} the user sees.
+	 *
+	 * <p>
+	 * By default all of them: a control renders what it shows. A container that renders children it
+	 * hides - a tile stack keeping the frames the active one covers, so that they keep their state -
+	 * narrows this to the ones shown, because what the user does not see is not part of the address
+	 * of the page: the URL is composed from the
+	 * {@link com.top_logic.layout.react.routing.RoutingParticipant participants} below the visible
+	 * children only, and only those take up a route of a URL that is adopted.
+	 * </p>
+	 */
+	public List<ReactControl> visibleChildren() {
+		return displayedChildren();
+	}
+
+	/**
+	 * The controls this control renders, i.e. the ones embedded in its state.
+	 *
+	 * <p>
+	 * A control reaches the client only by being serialized as part of some control's state, so the
+	 * controls found here are exactly the children this control displays. This is the notion the
+	 * lifecycle propagation ({@link #propagateAttach()}, {@link #propagateDetach()}) works on, so a
+	 * container does not have to enumerate its children a second time.
+	 * </p>
+	 *
+	 * @implNote Unordered, because attaching and detaching a set of children does not depend on their
+	 *           order. {@link #scriptingChildren()} sorts, because the scripting projection reports a
+	 *           child list that must be stable across calls.
+	 */
+	protected final List<ReactControl> childControls() {
+		List<ReactControl> result = new ArrayList<>();
+		collectChildControls(_reactState, result);
+		return result;
+	}
+
+	/**
+	 * The controls this control owns, i.e. the {@link #childControls() ones it renders} without the
+	 * ones it only {@link #borrowedState(String) borrows}.
+	 *
+	 * <p>
+	 * Rendering a control and owning it are different relations: displaying it is what the
+	 * {@link #propagateAttach() lifecycle} follows, having built it is what
+	 * {@link #cleanupChildren() disposal} follows. They coincide for every container that renders what
+	 * it built, and part ways where a control displays something another one created.
+	 * </p>
+	 */
+	protected final List<ReactControl> ownedChildControls() {
+		List<ReactControl> result = new ArrayList<>();
+		for (Map.Entry<String, Object> entry : _reactState.entrySet()) {
+			if (_borrowedState == null || !_borrowedState.contains(entry.getKey())) {
+				collectChildControls(entry.getValue(), result);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Declares that the given state property holds controls this control renders but does not own.
+	 *
+	 * <p>
+	 * Such a control is displayed here while another one is responsible for creating and disposing it -
+	 * the routed contributions of a {@code <slot>} placeholder are the canonical case. Declaring the
+	 * property keeps it out of {@link #cleanupChildren() disposal} while the
+	 * {@link #propagateAttach() lifecycle} still reaches it, because a borrowed control is displayed
+	 * exactly as long as the borrower displays it.
+	 * </p>
+	 *
+	 * @param name
+	 *        The state property name, as passed to {@link #putState(String, Object)}.
+	 */
+	protected final void borrowedState(String name) {
+		if (_borrowedState == null) {
+			_borrowedState = new HashSet<>();
+		}
+		_borrowedState.add(name);
 	}
 
 	private static void collectChildControls(Object value, List<ReactControl> out) {
@@ -341,16 +445,16 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			for (Object element : map.values()) {
 				collectChildControls(element, out);
 			}
-		} else if (value instanceof List<?> list) {
-			for (Object element : list) {
+		} else if (value instanceof Iterable<?> elements) {
+			for (Object element : elements) {
 				collectChildControls(element, out);
 			}
 		}
 	}
 
 	@Override
-	public Map<String, Object> agentScalarState() {
-		Set<String> presentation = agentPresentationKeys();
+	public Map<String, Object> scriptingScalarState() {
+		Set<String> presentation = scriptingPresentationKeys();
 		Map<String, Object> result = new LinkedHashMap<>();
 		_reactState.entrySet().stream()
 			.sorted(Map.Entry.comparingByKey())
@@ -374,8 +478,8 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	/**
-	 * The names of state keys this control sets for rendering only, which the headless agent
-	 * projection omits from {@link #agentScalarState()}.
+	 * The names of state keys this control sets for rendering only, which the headless interface
+	 * projection omits from {@link #scriptingScalarState()}.
 	 *
 	 * <p>
 	 * Presentation properties (padding, variant, size, css class, …) carry no task-level meaning for
@@ -386,7 +490,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 *
 	 * @return The rendering-only state keys; empty by default.
 	 */
-	protected Set<String> agentPresentationKeys() {
+	protected Set<String> scriptingPresentationKeys() {
 		return Set.of();
 	}
 
@@ -396,13 +500,13 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * projection omits from a node's advertised actions.
 	 *
 	 * <p>
-	 * Like {@link #agentPresentationKeys()}, each control declares its own; the projector subtracts
+	 * Like {@link #scriptingPresentationKeys()}, each control declares its own; the projector subtracts
 	 * these from the {@link #commandNames() command set} without switching on control types.
 	 * </p>
 	 *
 	 * @return The chrome command names; empty by default.
 	 */
-	protected Set<String> agentHiddenCommands() {
+	protected Set<String> scriptingHiddenCommands() {
 		return Set.of();
 	}
 
@@ -411,7 +515,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * (scrolling, column resizing) or chrome, not meaningful user intent worth replaying.
 	 *
 	 * <p>
-	 * Defaults to the {@link #agentHiddenCommands() chrome commands} — what is not advertised to an
+	 * Defaults to the {@link #scriptingHiddenCommands() chrome commands} — what is not advertised to an
 	 * agent is also not recorded. A control with transient view-only commands adds them (typically
 	 * unioning with {@code super.nonRecordableCommands()}).
 	 * </p>
@@ -425,11 +529,11 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	/**
 	 * The commands omitted from the agent action space and never recorded: the union of the
 	 * {@link ReactCommandHandler#technical() technical}-flagged commands (co-located on the handler) and the
-	 * manually declared {@link #agentHiddenCommands() chrome commands}.
+	 * manually declared {@link #scriptingHiddenCommands() chrome commands}.
 	 */
 	private Set<String> effectiveChromeCommands() {
 		Set<String> technical = COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).technicalCommands();
-		Set<String> manual = agentHiddenCommands();
+		Set<String> manual = scriptingHiddenCommands();
 		if (technical.isEmpty()) {
 			return manual;
 		}
@@ -453,7 +557,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	@Override
-	public Set<String> agentCommands() {
+	public Set<String> scriptingCommands() {
 		Set<String> hidden = effectiveChromeCommands();
 		if (hidden.isEmpty()) {
 			return commandNames();
@@ -464,12 +568,12 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	@Override
-	public ReactParam[] agentCommandParams(String command) {
+	public ReactParam[] scriptingCommandParams(String command) {
 		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).paramsFor(command);
 	}
 
 	@Override
-	public ConfigurationDescriptor agentCommandArgsType(String command) {
+	public ConfigurationDescriptor scriptingCommandArgsType(String command) {
 		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).argTypeFor(command);
 	}
 
@@ -518,7 +622,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 
 	/**
 	 * The typed {@link ReactCommand} item representing a dispatch of the given command on this
-	 * control: the arguments bound into the command's {@link #agentCommandArgsType(String) argument
+	 * control: the arguments bound into the command's {@link #scriptingCommandArgsType(String) argument
 	 * interface} (a bare {@link ReactCommand} for argument-less commands), with the {@link
 	 * ReactCommand#getName() command name} set.
 	 *
@@ -530,7 +634,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 *         servlet fills it in).
 	 */
 	public final ReactCommand commandItem(String command, Map<String, Object> arguments) {
-		ConfigurationDescriptor argType = agentCommandArgsType(command);
+		ConfigurationDescriptor argType = scriptingCommandArgsType(command);
 		ReactCommand item;
 		if (argType != null) {
 			try {
@@ -559,8 +663,8 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			}
 			return false;
 		}
-		if (value instanceof List<?> list) {
-			for (Object element : list) {
+		if (value instanceof Iterable<?> elements) {
+			for (Object element : elements) {
 				if (containsControl(element)) {
 					return true;
 				}
@@ -582,6 +686,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 		// onBeforeWrite hook) reaches the client as part of that output — no events for it.
 		_silentUpdates = true;
 		try {
+			attachOnRender();
 			onBeforeWrite();
 			_rendered = true;
 			// The full state is serialized below; nothing is pending on the client side anymore.
@@ -610,18 +715,21 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * Hook called before the control is rendered.
 	 *
 	 * <p>
-	 * Subclasses override to perform initialization that must happen before rendering, such as
-	 * registering model listeners or rebuilding state caches. Scoped resources installed here can be
+	 * Subclasses override to prepare what the rendering needs, e.g. to lazily create the child that
+	 * is about to be serialized or to rebuild a state cache. Scoped resources installed here can be
 	 * cleaned up in {@link #onAfterWrite()}.
+	 * </p>
+	 *
+	 * <p>
+	 * Not the place to register model listeners: rendering happens whenever the client needs the
+	 * state again, while listeners belong to the span in which the control is displayed - see
+	 * {@link #addAttachListener(Runnable)} and {@link #addDetachListener(Runnable)}.
 	 * </p>
 	 *
 	 * @see #onAfterWrite()
 	 */
 	protected void onBeforeWrite() {
-		if (_beforeWriteActions != null) {
-			_beforeWriteActions.forEach(Runnable::run);
-			_beforeWriteActions = null;
-		}
+		// Default: nothing to prepare.
 	}
 
 	/**
@@ -668,25 +776,6 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	/**
-	 * Registers an action to run once before this control is first rendered.
-	 *
-	 * <p>
-	 * Use this to defer resource-intensive setup (e.g. registering model listeners) until the
-	 * control is actually displayed. Actions run during {@link #onBeforeWrite()} and are
-	 * discarded afterwards.
-	 * </p>
-	 *
-	 * @param action
-	 *        The action to run before first render.
-	 */
-	public void addBeforeWriteAction(Runnable action) {
-		if (_beforeWriteActions == null) {
-			_beforeWriteActions = new ArrayList<>();
-		}
-		_beforeWriteActions.add(action);
-	}
-
-	/**
 	 * Writes the control ID as an HTML attribute.
 	 */
 	protected void writeIdAttribute(TagWriter out) throws IOException {
@@ -715,6 +804,20 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 */
 	public void setHidden(boolean hidden) {
 		putState(HIDDEN, Boolean.valueOf(hidden));
+	}
+
+	/**
+	 * Whether this control is currently {@link #setHidden(boolean) hidden} on the client.
+	 *
+	 * <p>
+	 * A hidden control keeps its React component tree - it is only styled away - so it stays
+	 * mounted, stays registered with the update queue, and its commands stay addressable. A
+	 * command handler that must not run on a control the user was never offered therefore has to
+	 * ask this rather than rely on the client not sending anything.
+	 * </p>
+	 */
+	public boolean isHidden() {
+		return Boolean.TRUE.equals(getState(HIDDEN));
 	}
 
 	/**
@@ -761,7 +864,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 *
 	 * <p>
 	 * The client-already-holds assumption is only valid for commands the browser itself
-	 * dispatched. When the same handler runs programmatically (script replay, headless agent), the
+	 * dispatched. When the same handler runs programmatically (script replay, headless interface), the
 	 * framework corrects the omission by resending the control's state after the command — see
 	 * {@link #executeCommand(String, Map)}. Handlers need not distinguish the two cases.
 	 * </p>
@@ -884,6 +987,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 		// onBeforeWrite hook) reaches the client as part of that output — no events for it.
 		_silentUpdates = true;
 		try {
+			attachOnRender();
 			onBeforeWrite();
 			_rendered = true;
 			// The full state is serialized below; nothing is pending on the client side anymore.
@@ -928,11 +1032,43 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	/**
+	 * Attaches this control because it is about to be rendered.
+	 *
+	 * <p>
+	 * Rendering a control is the proof that it is displayed: a control reaches the client only by
+	 * being serialized, either into the page or into an SSE state update, and both go through
+	 * {@link #write(TagWriter)} / {@link #writeAsChild(de.haumacher.msgbuf.json.JsonWriter)}.
+	 * Attaching here therefore establishes "rendered implies attached" for every control, in every
+	 * view - including those whose root nobody attaches explicitly - and makes an
+	 * {@link #addAttachListener(Runnable) attach listener} the reliable place for setup a displayed
+	 * control needs (registering model listeners, attaching command models).
+	 * </p>
+	 *
+	 * <p>
+	 * The reverse does not follow: not rendering a control is not an event, so a control that leaves
+	 * the displayed tree is still detached explicitly by the container that drops it (see
+	 * {@link #propagateDetach()}). Attaching is implicit, detaching stays explicit.
+	 * </p>
+	 *
+	 * <p>
+	 * A control the client has already unmounted is not attached again; a trailing render of a
+	 * disposed control must not resurrect its listeners.
+	 * </p>
+	 */
+	private void attachOnRender() {
+		if (!_disposed) {
+			attach();
+		}
+	}
+
+	/**
 	 * Marks this control as attached (part of the displayed tree) and fires
 	 * {@link #addAttachListener(Runnable) attach listeners}.
 	 *
 	 * <p>
-	 * Idempotent: if already attached, this call is a no-op.
+	 * Idempotent: if already attached, this call is a no-op. Called automatically when the control is
+	 * rendered (see {@link #attachOnRender()}); an explicit call is needed only to attach a control
+	 * that becomes displayed without being rendered again.
 	 * </p>
 	 */
 	public final void attach() {
@@ -965,6 +1101,45 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 		for (Runnable l : _detachListeners) {
 			l.run();
 		}
+	}
+
+	/**
+	 * Anchors a {@link RoutingParticipant} at this control, so that it contributes its URL segment
+	 * wherever this control is displayed.
+	 *
+	 * <p>
+	 * A control that is a {@link RoutingParticipant} itself needs no anchor. Anchoring is for a
+	 * participant that is not a control - a channel bound to a route parameter, for instance -
+	 * and names the control whose position in the display the participant's segment follows.
+	 * </p>
+	 *
+	 * @param participant
+	 *        The participant to anchor at this control.
+	 */
+	public final void addRouteParticipant(RoutingParticipant participant) {
+		if (_routeParticipants == null) {
+			_routeParticipants = new ArrayList<>();
+		}
+		_routeParticipants.add(participant);
+	}
+
+	/**
+	 * Removes a participant added by {@link #addRouteParticipant(RoutingParticipant)}.
+	 *
+	 * @param participant
+	 *        The participant to remove.
+	 */
+	public final void removeRouteParticipant(RoutingParticipant participant) {
+		if (_routeParticipants != null) {
+			_routeParticipants.remove(participant);
+		}
+	}
+
+	/**
+	 * The participants {@link #addRouteParticipant(RoutingParticipant) anchored} at this control.
+	 */
+	public final List<RoutingParticipant> routeParticipants() {
+		return _routeParticipants == null ? List.of() : _routeParticipants;
 	}
 
 	/**
@@ -1040,31 +1215,55 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	/**
-	 * Hook for subclasses to propagate an {@link #attach()} call to their currently displayed
-	 * children. The default does nothing.
-	 */
-	protected void propagateAttach() {
-		// Default: no children to propagate to.
-	}
-
-	/**
-	 * Hook for subclasses to propagate a {@link #detach()} call to their currently displayed
-	 * children. The default does nothing.
-	 */
-	protected void propagateDetach() {
-		// Default: no children to propagate to.
-	}
-
-	/**
-	 * Hook for composite controls to clean up their children during detach.
+	 * Propagates an {@link #attach()} call to the {@link #childControls() children this control
+	 * renders}.
 	 *
 	 * <p>
-	 * Composite controls override this to call {@link #cleanupTree()} on each of their children.
-	 * The default implementation does nothing (leaf controls have no children).
+	 * Deriving the children from the state rather than from a per-container field is what makes the
+	 * lifecycle complete: a container that holds a child in its state cannot forget to pass the call
+	 * on. Overriding is needed only for children this control does not render itself - see
+	 * {@code SlotContentControl}, whose contributed controls are rendered by the matched
+	 * {@code <slot>} placeholder while their lifecycle belongs to the contribution.
+	 * </p>
+	 */
+	protected void propagateAttach() {
+		for (ReactControl child : childControls()) {
+			child.attach();
+		}
+	}
+
+	/**
+	 * Propagates a {@link #detach()} call to the {@link #childControls() children this control
+	 * renders}.
+	 *
+	 * @see #propagateAttach()
+	 */
+	protected void propagateDetach() {
+		for (ReactControl child : childControls()) {
+			child.detach();
+		}
+	}
+
+	/**
+	 * Disposes the children this control owns.
+	 *
+	 * <p>
+	 * By default the {@link #ownedChildControls() children in the state} are disposed, which covers a
+	 * container that displays exactly what it built. Overriding is needed for children the state does
+	 * not show: a container that caches controls it does not display right now (an inactive tab, an
+	 * off-screen table cell) must dispose those as well, since nothing else will.
+	 * </p>
+	 *
+	 * <p>
+	 * A child the control only borrows must not be disposed here. Declare the state property holding
+	 * it with {@link #borrowedState(String)} rather than overriding this method - the declaration also
+	 * documents the borrowing at the place where it happens.
 	 * </p>
 	 */
 	protected void cleanupChildren() {
-		// Leaf controls have no children.
+		for (ReactControl child : ownedChildControls()) {
+			child.cleanupTree();
+		}
 	}
 
 	/**
@@ -1086,8 +1285,17 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * until the notification has unwound (view channels provide
 	 * {@code ChannelNotificationScope.current().afterNotification(old::cleanupTree)} for this).
 	 * </p>
+	 *
+	 * <p>
+	 * Idempotent: disposing an already disposed control is a no-op. A container may therefore dispose
+	 * both the children in its state and the ones it keeps in a cache without having to work out which
+	 * control appears in both.
+	 * </p>
 	 */
 	public final void cleanupTree() {
+		if (_disposed) {
+			return;
+		}
 		_disposed = true;
 		detach();
 		cleanupChildren();
@@ -1178,9 +1386,9 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			writeJsonMap(context, writer, (Map<String, Object>) value);
 		} else if (value instanceof ReactControl) {
 			((ReactControl) value).writeAsChild(writer);
-		} else if (value instanceof List) {
+		} else if (value instanceof Iterable<?> elements) {
 			writer.beginArray();
-			for (Object element : (List<?>) value) {
+			for (Object element : elements) {
 				writeJsonValue(context, writer, element);
 			}
 			writer.endArray();

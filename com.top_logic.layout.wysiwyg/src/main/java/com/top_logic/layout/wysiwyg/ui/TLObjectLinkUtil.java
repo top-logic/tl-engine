@@ -108,7 +108,7 @@ public class TLObjectLinkUtil {
 	 * 
 	 * @return {@link String} with HTML Snippet of the link.
 	 */
-	public static String getLink(Wrapper object, String linkText, String goTo) {
+	public static String getLink(TLObject object, String linkText, String goTo) {
 		String pageName = MetaResourceProvider.INSTANCE.getLabel(object);
 		if (linkText == null) {
 			linkText = pageName;
@@ -135,7 +135,7 @@ public class TLObjectLinkUtil {
 	 * @param linkText
 	 *        The text representing the link.
 	 */
-	private static void writeLink(StringWriter stringWriter, Wrapper targetObject,
+	private static void writeLink(StringWriter stringWriter, TLObject targetObject,
 			String section, final ThemeImage image, String linkText) {
 		try (TagWriter writer = new TagWriter(stringWriter)) {
 			writer.beginBeginTag(ANCHOR);
@@ -163,7 +163,7 @@ public class TLObjectLinkUtil {
 	 *        The parameter containing the section to jump to in the source code. If
 	 *        <code>null</code> the parameter will not be added to the attribute href.
 	 */
-	public static String getLinkDestination(Wrapper targetObject, String section) {
+	public static String getLinkDestination(TLObject targetObject, String section) {
 		StringBuilder urlBuilder = new StringBuilder();
 		BookmarkFactory.appendURLEncodedBookmarkArguments(urlBuilder, targetObject, null);
 		URLUtilities.appendUrlArg(urlBuilder, false, SECTION, section);

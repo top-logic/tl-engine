@@ -8,17 +8,18 @@ package com.top_logic.base.security.util;
 import java.util.Collection;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 
 
 /**
- * Support class for en- and decoding a given message. This class only
- * schedules the access to the real coder.
+ * Encrypts and decrypts messages using the configured message coder.
  *
  * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@Label("Encryption support")
 public class CryptSupport extends ManagedClass {
 
     /** The coder for messages. */

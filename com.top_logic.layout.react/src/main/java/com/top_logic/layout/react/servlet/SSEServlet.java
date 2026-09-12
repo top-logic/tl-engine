@@ -16,7 +16,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.util.TLContextManager;
 
@@ -55,13 +60,29 @@ public class SSEServlet extends HttpServlet {
 		asyncContext.setTimeout(0);
 
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+		// Establishing the connection restarts the session's inactivity timeout just as any other
+		// request does, so a control counting down to the end of the session has to hear about it.
+		// Nothing further arrives through this connection: the heartbeats travel down the one
+		// request opened here and never touch the session again.
+		registry.noteActivity(session);
 		Logger.info("SSEServlet: windowName='" + windowName + "', registry@" + System.identityHashCode(registry),
 			SSEServlet.class);
 		SSEUpdateQueue queue = registry.getOrCreateQueue(windowName);
 		Logger.info("SSEServlet: queue@" + System.identityHashCode(queue) + " for windowName='" + windowName + "'",
 			SSEServlet.class);
-		queue.setConnection(asyncContext);
-		queue.setWindowContext(windowName, TLContextManager.getSession(), registry);
+		TLSessionContext sessionContext = SessionService.getInstance().getSession(session);
+
+		// Establishing the connection sends the state of the whole tree, and rendering a control
+		// attaches it: a control catching up with its model as it attaches - a table re-reading its
+		// rows - works on the knowledge base, and a control resolving its labels needs the user's
+		// locale. Both need the interaction with the window's subsession that every other request
+		// touching the tree has.
+		TLContextManager.inInteraction(sessionContext, getServletContext(), request, response, () -> {
+			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+			ReactWindowReplay.installSubSession(displayContext, windowName);
+			queue.setConnection(asyncContext);
+		});
+		queue.setWindowContext(windowName, sessionContext, registry);
 
 		asyncContext.addListener(new AsyncListener() {
 			@Override

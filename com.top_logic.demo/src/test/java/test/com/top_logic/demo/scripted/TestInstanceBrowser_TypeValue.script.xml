@@ -106,6 +106,20 @@
 				tab-path="Administration > Development > Modell Editor > Instanzen"
 			/>
 		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+			columns="Zeilenselektion,In Formular anzeigen,Typ,name,boolean,string,float,date,booleanMandatory,booleanRadioMandatory,booleanSelectMandatory"
+			label="true"
+			user-id="root"
+		>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+				/>
+				<path>
+					<named-member name="fieldTable"/>
+				</path>
+			</model-name>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.element.layout.instances.CreateInstanceHandler"
 			command-label="Neue Instanz anlegen."

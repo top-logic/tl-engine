@@ -19,6 +19,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
@@ -53,7 +54,20 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	private final FieldModelListener _typeChangeListener;
 
 	/**
-	 * Creates a {@link PolymorphicItemControl}.
+	 * Whether the type selector accepts a change - see {@link ConfigEditorControl#_editable}, which
+	 * this mirrors and which threads it here through {@link ConfigEditorControl#createPolymorphicGroup}.
+	 * The selector is still rendered while {@code false} (via {@link SimpleSelectFieldModel#setEditable(boolean)},
+	 * the same mechanism {@link ReactFormFieldControl} already applies to a plain field), so the
+	 * currently chosen type stays legible to the reader - only picking a different one is refused,
+	 * both by the disabled client control and, since {@link ReactSelectFormFieldControl} extends
+	 * {@link ReactFormFieldControl}, by {@link ReactFormFieldControl#acceptsClientValue()} on the
+	 * server should a stale or forged client message arrive anyway.
+	 */
+	private final boolean _editable;
+
+	/**
+	 * Creates a {@link PolymorphicItemControl}, deciding whether the type selector accepts a
+	 * change.
 	 *
 	 * @param context
 	 *        The React context.
@@ -65,30 +79,34 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	 *        The polymorphic ITEM property descriptor.
 	 * @param editorFactory
 	 *        Factory for creating nested editors (allows test subclass propagation).
+	 * @param editable
+	 *        Whether the type selector accepts a change - see {@link #_editable}.
 	 */
 	public PolymorphicItemControl(ReactContext context, String label, ConfigurationItem parentConfig,
 			PropertyDescriptor property,
-			BiFunction<ReactContext, ConfigurationItem, ConfigEditorControl> editorFactory) {
+			BiFunction<ReactContext, ConfigurationItem, ConfigEditorControl> editorFactory, boolean editable) {
 		super(context, label, true, false, "subtle", true, List.of(), List.of());
 		_context = context;
 		_parentConfig = parentConfig;
 		_property = property;
 		_editorFactory = editorFactory;
+		_editable = editable;
 		_choices = PolymorphicOptions.compute(parentConfig, property);
 
 		ConfigurationItem currentValue = (ConfigurationItem) parentConfig.value(property);
 		List<Object> rawOptions = _choices.options();
 		List<String> keys = new ArrayList<>(rawOptions.size());
-		for (int i = 0; i < rawOptions.size(); i++) {
-			keys.add(PolymorphicOptions.keyFor(i));
+		for (Object option : rawOptions) {
+			keys.add(PolymorphicOptions.keyFor(option));
 		}
 		String currentKey = PolymorphicOptions.keyForItem(rawOptions, _choices.mapping(), currentValue);
 		_typeModel = new SimpleSelectFieldModel(currentKey, keys, false);
 		_typeModel.setMandatory(property.isMandatory());
 		boolean nullable = property.isNullable();
 		_typeModel.setNullable(nullable);
+		_typeModel.setEditable(_editable);
 
-		LabelProvider labelProvider = PolymorphicOptions.indexLabelProvider(rawOptions);
+		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(rawOptions);
 
 		boolean showSelector = _choices.hasOptions() && (_choices.options().size() > 1 || nullable);
 		if (showSelector) {

@@ -24,6 +24,7 @@ import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.dob.IdentifierTypes;
 import com.top_logic.dob.MetaObject;
@@ -68,10 +69,11 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Utility methods for {@link TLStructuredTypePart}s with {@link TLObject}s as values.
- * 
+ * Manages the storage of model attributes whose values are references to other objects.
+ *
  * @author <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
+@Label("Reference attribute storage")
 public class WrapperMetaAttributeUtil extends KBBasedManagedClass<WrapperMetaAttributeUtil.Config> {
 
 	/**

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+  <channels>
+    <channel name="comment"/>
+    <channel name="ticket"/>
+  </channels>
+
+  <form input="comment">
+    <children>
+      <field attribute="content">
+        <input-control class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider"
+          insert-channel="insert"
+        >
+          <commands>
+            <generic-command input="ticket">
+              <label>Reference ticket</label>
+              <write-channel name="insert"/>
+            </generic-command>
+          </commands>
+        </input-control>
+      </field>
+    </children>
+  </form>
+</view>

@@ -9,6 +9,7 @@ import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey5;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.model.TLClass;
@@ -81,6 +82,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Deleted global display description.
 	 */
 	public static ResKey DELETE_GLOBAL_DISPLAY_DESCRIPTION;
+
+	/**
+	 * @en A type part with name ''{0}'' exists already in ''{1}'' (definition in ''{2}'') and
+	 *     ''{3}'' (definition in ''{4}''). It is not possible to have two different attributes with
+	 *     the same name.
+	 */
+	public static ResKey5 ERROR_CONFLICTING_ATTRIBUTE__NAME_TYPE1_DEFINITION1_TYPE2_DEFINITION2;
 
 	static {
 		initConstants(I18NConstants.class);

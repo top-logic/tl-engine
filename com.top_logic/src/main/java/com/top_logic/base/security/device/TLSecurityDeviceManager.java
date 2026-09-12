@@ -21,6 +21,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.encryption.SecureRandomService;
@@ -43,9 +44,18 @@ import com.top_logic.knowledge.wrap.person.Person;
 	SecureRandomService.Module.class,
 	Login.Module.class,
 })
+@Label("Security devices")
 public class TLSecurityDeviceManager extends ManagedClass {
 	
-	private static final String DB_SECURITY = "dbSecurity";
+	/**
+	 * Device ID of the built-in local (database) authentication device.
+	 *
+	 * <p>
+	 * An account bound to this device is managed locally; an account bound to any other device (or to
+	 * no device at all) is managed externally.
+	 * </p>
+	 */
+	public static final String DB_SECURITY = "dbSecurity";
 
 	/**
 	 * Configuration of the {@link TLSecurityDeviceManager}. 
@@ -118,6 +128,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	 *        Configuration for this {@link TLSecurityDeviceManager}.
 	 */
 	public TLSecurityDeviceManager(InstantiationContext context, Config config) {
+		super(context, config);
 		_configuredDevices =
 			TypedConfiguration.<String, SecurityDevice> getInstanceMap(context, config.getSecurityDevices());
 		_dataAccessDevices = getDataAccessDevices(_configuredDevices);

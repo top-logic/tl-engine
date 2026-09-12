@@ -1,6 +1,7 @@
 import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, CMD_VALUE_CHANGED } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import type { TLCellProps } from 'tl-react-bridge';
+import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
 
@@ -10,21 +11,25 @@ interface OptionDescriptor {
   value: string;
   label: string;
   image?: string;
+  /** Whether the option leads to the place the application displays it at. */
+  link?: boolean;
 }
+
+/** Command sent when the user follows the link of a displayed option. */
+const CMD_GOTO = 'goto';
+
+/** Argument of {@link CMD_GOTO}: the value of the option to display. */
+const ARG_OPTION = 'option';
 
 // -- Sub-components --
 
-/** Renders an option's image (URL or CSS class) */
+/** Renders an option's image, whatever encoded form it arrives in. */
 function OptionImage({ image }: { image?: string }) {
   if (!image) return null;
   if (image.startsWith('/')) {
     return <img src={image} alt="" className="tlDropdownSelect__optionImage" />;
   }
-  // Strip "css:" or "colored:" prefix from ThemeImage.toEncodedForm() output.
-  const cssClass = image.startsWith('css:') ? image.substring(4)
-    : image.startsWith('colored:') ? image.substring(8)
-    : image;
-  return <span className={`tlDropdownSelect__optionIcon ${cssClass}`} />;
+  return <ThemeIcon encoded={image} className="tlDropdownSelect__optionIcon" />;
 }
 
 /** Renders a selected value as a chip/tag */
@@ -85,6 +90,44 @@ function Chip({
       )}
     </span>
   );
+}
+
+/**
+ * Renders a selected value of a field that only displays its value.
+ *
+ * <p>A value the application displays somewhere is a link there, and wears the same look as the
+ * linked value of a table cell.</p>
+ */
+function ReadonlyValue({
+  option,
+  onGoto,
+}: {
+  option: OptionDescriptor;
+  onGoto: (value: string) => void;
+}) {
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      onGoto(option.value);
+    },
+    [onGoto, option.value]
+  );
+
+  const content = (
+    <>
+      <OptionImage image={option.image} />
+      <span>{option.label}</span>
+    </>
+  );
+
+  if (option.link) {
+    return (
+      <a className="tlDropdownSelect__readonlyValue tlResourceCell" href="#" onClick={handleClick}>
+        {content}
+      </a>
+    );
+  }
+  return <span className="tlDropdownSelect__readonlyValue">{content}</span>;
 }
 
 /** Renders a single option row in the dropdown, with match highlighting */
@@ -362,6 +405,14 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     setSearchTerm(e.target.value);
   }, []);
 
+  /** Leads to the place the given option is displayed at. */
+  const goto = useCallback(
+    (optionValue: string) => {
+      sendCommand(CMD_GOTO, { [ARG_OPTION]: optionValue });
+    },
+    [sendCommand]
+  );
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (!isOpen) {
@@ -520,10 +571,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     return (
       <div id={controlId} className="tlDropdownSelect tlDropdownSelect--immutable">
         {value.map((v) => (
-          <span key={v.value} className="tlDropdownSelect__readonlyValue">
-            <OptionImage image={v.image} />
-            <span>{v.label}</span>
-          </span>
+          <ReadonlyValue key={v.value} option={v} onGoto={goto} />
         ))}
       </div>
     );
@@ -625,6 +673,14 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         <div className="tlDropdownSelect__chips">
           {value.length === 0 ? (
             <span className="tlDropdownSelect__placeholder">{emptyOptionLabel}</span>
+          ) : !multiSelect ? (
+            // A single value is shown as it is. A chip sets one entry off from the next and
+            // carries the button removing just that one; with a single value there is nothing to
+            // set it off from, and removing it is what the clear button beside the arrow does.
+            <span className="tlDropdownSelect__value">
+              <OptionImage image={value[0].image} />
+              <span className="tlDropdownSelect__valueLabel">{value[0].label}</span>
+            </span>
           ) : (
             value.map((v, idx) => {
               let dragClass = '';
@@ -639,7 +695,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
                 <Chip
                   key={v.value}
                   option={v}
-                  removable={!disabled && (multiSelect || !mandatory)}
+                  removable={!disabled}
                   onRemove={removeOption}
                   removeLabel={removeChipLabel(v.label)}
                   draggable={dragEnabled}

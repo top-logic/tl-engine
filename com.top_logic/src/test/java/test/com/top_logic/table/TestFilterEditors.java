@@ -5,7 +5,10 @@
  */
 package test.com.top_logic.table;
 
+import java.text.NumberFormat;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 import junit.framework.TestCase;
 
@@ -17,6 +20,7 @@ import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BooleanFilterState;
+import com.top_logic.table.filter.BoundCodec;
 import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.ComparisonOperator;
 import com.top_logic.table.filter.FilterEditor;
@@ -67,6 +71,20 @@ public class TestFilterEditors extends TestCase {
 		assertTrue(state.acceptTrue());
 		assertFalse(state.acceptFalse());
 		assertTrue(state.acceptNull());
+	}
+
+	public void testBooleanEditorWithoutNoValueOption() {
+		BooleanColumnFilter filter =
+			new BooleanColumnFilter(ResKey.text("Yes"), ResKey.text("No"), false);
+		FilterEditor editor = FilterEditors.create(filter, null, MatchCounts.NONE);
+		assertEquals("A column without empty cells offers just the two value options.", 2,
+			editor.fields().size());
+
+		field(editor, 0).setValue(Boolean.TRUE);    // accept true
+		BooleanFilterState state = (BooleanFilterState) editor.read();
+		assertTrue(state.acceptTrue());
+		assertFalse(state.acceptFalse());
+		assertFalse(state.acceptNull());
 	}
 
 	public void testOptionsEditorReadBack() {
@@ -122,6 +140,27 @@ public class TestFilterEditors extends TestCase {
 		assertEquals(ComparisonOperator.GE, state.operator());
 		assertEquals(Integer.valueOf(18), state.primary());
 		assertNull(state.secondary());
+	}
+
+	/**
+	 * A bound is shown and read in the reader's language: a German user sees and types the decimal
+	 * fraction with a comma.
+	 */
+	public void testComparableEditorInTheReadersLanguage() {
+		ComparableColumnFilter<Number> filter = new ComparableColumnFilter<>(
+			Comparator.comparingDouble(Number::doubleValue),
+			BoundCodec.numbers(NumberFormat.getInstance(Locale.GERMANY)));
+		FilterEditor editor = FilterEditors.create(filter,
+			RangeFilterState.of(ComparisonOperator.GE, Double.valueOf(37.5)), MatchCounts.NONE);
+
+		assertEquals("37,5", field(editor, 1).getValue());
+
+		field(editor, 1).setValue("12,25");
+		assertEquals(Double.valueOf(12.25), ((RangeFilterState<?>) editor.read()).primary());
+
+		field(editor, 1).setValue("kein Wert");
+		assertNull("Text that is not a number leaves the bound unset.",
+			((RangeFilterState<?>) editor.read()).primary());
 	}
 
 	public void testComparableEditorBetween() {

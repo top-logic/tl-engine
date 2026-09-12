@@ -383,6 +383,36 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
         Logger.info("No database check implemented for '" + this.getClass().getSimpleName() + "'.", this);
     }
 
+	/**
+	 * Prepares the database for the schema about to be created, e.g. by creating custom
+	 * collations.
+	 *
+	 * <p>
+	 * Invoked once before the tables of a schema are created. The default implementation does
+	 * nothing.
+	 * </p>
+	 *
+	 * @param connection
+	 *        The connection to the database to prepare.
+	 */
+	public void prepareDatabase(PooledConnection connection) throws SQLException {
+		// Hook for dialects that need one-time database preparation.
+	}
+
+	/**
+	 * Whether this dialect makes a non-binary string column case-insensitive through the column's
+	 * own collation.
+	 *
+	 * <p>
+	 * Dialects that cannot apply a case-insensitive collation per column (e.g. Oracle and DB2,
+	 * where case-insensitivity depends on the database/session configuration) return
+	 * <code>false</code>.
+	 * </p>
+	 */
+	public boolean supportsColumnCollation() {
+		return true;
+	}
+
 	private final Config _config;
 
 	private final int _maxNumberBatchParameter;
@@ -2115,7 +2145,18 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	public void appendLikeCaseSensitive(Appendable sql) throws IOException {
 		sql.append("LIKE");
 	}
-    
+
+	/**
+	 * Appends a collation to a {@code LIKE} operand when the dialect needs a deterministic
+	 * collation for pattern matching. The default implementation appends nothing.
+	 *
+	 * @param buffer
+	 *        The buffer receiving the collation clause (appended directly after the operand).
+	 */
+	public void appendLikeCollation(Appendable buffer) throws IOException {
+		// Most dialects need no explicit collation for LIKE.
+	}
+
 	/** Dump a given table as INSERT suiteable for the Helpers Database.
 	 * 
 	 * @param out Output will be written here.

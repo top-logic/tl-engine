@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, FillBarrier } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -37,7 +37,9 @@ const TLCard: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
       <div className={`tlCard__body tlCard__body--pad-${padding}`}>
-        <TLChild control={child} />
+        <FillBarrier>
+          <TLChild control={child} />
+        </FillBarrier>
       </div>
     </div>
   );

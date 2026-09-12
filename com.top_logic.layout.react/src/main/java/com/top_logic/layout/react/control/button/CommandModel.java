@@ -58,6 +58,24 @@ public interface CommandModel {
 	boolean isExecutable();
 
 	/**
+	 * Whether the command's effect is currently in force.
+	 *
+	 * <p>
+	 * The alternative currently chosen among a set - the active UI theme, the selected language -
+	 * or a toggle that is currently pressed. An active command is rendered as a marked button or
+	 * menu entry, so that the choice in force is visible next to the alternatives still on offer.
+	 * </p>
+	 *
+	 * <p>
+	 * Independent of {@link #isExecutable()} and of {@link #isVisible()}: choosing the alternative
+	 * that is already in force stays executable, and the user sees which one that is.
+	 * </p>
+	 */
+	default boolean isActive() {
+		return false;
+	}
+
+	/**
 	 * Whether the command button should be visible.
 	 *
 	 * <p>
@@ -98,6 +116,27 @@ public interface CommandModel {
 	 * </p>
 	 */
 	default String getClique() {
+		return null;
+	}
+
+	/**
+	 * The {@link ButtonDisplayMode} explicitly requested for this command's button, or
+	 * {@code null} (the default) to let the rendering container decide.
+	 */
+	default ButtonDisplayMode getDisplayMode() {
+		return null;
+	}
+
+	/**
+	 * Additional CSS classes for the UI element rendering this command, separated by spaces.
+	 *
+	 * <p>
+	 * Appended to the class list of the command's button, and of a menu entry rendering the
+	 * command, so that a single command can be styled (e.g. marked as destructive) wherever it is
+	 * offered. Returns {@code null} by default (no additional classes).
+	 * </p>
+	 */
+	default String getCssClasses() {
 		return null;
 	}
 

@@ -23,18 +23,18 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DynamicSet extends GenericMethod {
+public class DynamicSet extends GenericMethodWithSecurity {
 
 	/**
 	 * Creates a new {@link DynamicSet}.
 	 */
-	public DynamicSet(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	public DynamicSet(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new DynamicSet(getName(), arguments);
+		return new DynamicSet(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -52,6 +52,11 @@ public class DynamicSet extends GenericMethod {
 		TLObject obj = asTLObjectNonNull(arguments[0]);
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 		Object value = arguments[2];
+
+		if (usesSecurity()) {
+			Update.checkWritePermission(obj, part);
+		}
+
 		obj.tUpdate(part, value);
 		return null;
 	}
@@ -83,7 +88,7 @@ public class DynamicSet extends GenericMethod {
 		public DynamicSet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkThreeArgs(expr, args);
-			return new DynamicSet(getConfig().getName(), args);
+			return new DynamicSet(getConfig().getName(), args, true);
 		}
 
 	}

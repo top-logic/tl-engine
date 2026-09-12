@@ -11,6 +11,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -22,13 +23,14 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
 /**
- * The {@link InitialRolesManager} installs roles for the application.
- * 
+ * Installs the roles required by the application.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceDependencies({
 	ModelService.Module.class,
 })
+@Label("Initial roles")
 public class InitialRolesManager extends KBBasedManagedClass<InitialRolesManager.Config> {
 
 	/**

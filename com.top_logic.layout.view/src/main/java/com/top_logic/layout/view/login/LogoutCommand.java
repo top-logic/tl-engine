@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.login;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
@@ -24,6 +25,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * {@link PendingSessionAction}.
  * </p>
  */
+@InApp
 public class LogoutCommand implements ViewCommand {
 
 	/**

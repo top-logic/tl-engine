@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -14,15 +14,19 @@ const COMPACT_MAX_WIDTH = 768;
  *
  * State:
  * - header:   ChildDescriptor | null  (optional, fixed height)
+ * - notices:  ChildDescriptor | null  (optional, system-wide notices between header and content)
  * - content:  ChildDescriptor         (required, flex:1)
  * - footer:   ChildDescriptor | null  (optional, fixed height)
  * - snackbar: ChildDescriptor         (built-in notification service)
- * - dialogManager: ChildDescriptor   (built-in dialog manager)
- * - menuOverlay:  ChildDescriptor   (built-in menu overlay)
+ *
+ * Always fills its container - the shell spans the viewport, so the app bar stays put and
+ * overflowing content scrolls inside the content region rather than moving the page. That region
+ * is bounded by it and ends the fill chain.
  */
 const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const fillClass = useFill(true);
 
   // Report the viewport "display class" to the server once on mount and whenever the
   // responsive breakpoint is crossed, so adaptive controls can switch presentation.
@@ -38,21 +42,27 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   const header = state.header as unknown;
+  const notices = state.notices as unknown;
   const content = state.content as unknown;
   const footer = state.footer as unknown;
   const snackbar = state.snackbar as unknown;
-  const dialogManager = state.dialogManager as unknown;
-  const menuOverlay = state.menuOverlay as unknown;
 
   return (
-    <div id={controlId} className="tlAppShell">
+    <div id={controlId} className={'tlAppShell ' + fillClass}>
       {header && (
         <div className="tlAppShell__header">
           <TLChild control={header} />
         </div>
       )}
+      {notices && (
+        <div className="tlAppShell__notices">
+          <TLChild control={notices} />
+        </div>
+      )}
       <div className="tlAppShell__content">
-        <TLChild control={content} />
+        <FillBarrier>
+          <TLChild control={content} />
+        </FillBarrier>
       </div>
       {footer && (
         <div className="tlAppShell__footer">
@@ -60,8 +70,6 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
       <TLChild control={snackbar} />
-      {dialogManager && <TLChild control={dialogManager} />}
-      {menuOverlay && <TLChild control={menuOverlay} />}
     </div>
   );
 };

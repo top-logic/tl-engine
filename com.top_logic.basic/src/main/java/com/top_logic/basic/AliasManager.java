@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 
 import jakarta.servlet.ServletContext;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.core.workspace.ModuleLayoutConstants;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
@@ -51,6 +52,7 @@ import com.top_logic.basic.vars.VariableExpander;
  *
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@Label("Alias management")
 public abstract class AliasManager extends ManagedClass implements Reloadable {
 
 	/**

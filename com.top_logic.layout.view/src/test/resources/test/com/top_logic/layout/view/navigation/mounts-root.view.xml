@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+  <channels>
+    <channel name="selection" />
+  </channels>
+
+  <app-shell>
+    <content>
+      <sidebar>
+        <nav-item id="home">
+          <tab-bar>
+            <tab id="overview">
+              <view-ref view="mounts-shared.view.xml" />
+            </tab>
+            <tab id="drilldown">
+              <tile-stack path="selection" initial="mounts-tile.view.xml" />
+            </tab>
+          </tab-bar>
+        </nav-item>
+        <separator />
+        <nav-item id="admin">
+          <adaptive-detail selection="selection">
+            <selector>
+              <view-ref view="mounts-shared.view.xml" />
+            </selector>
+            <detail>
+              <panel title="Detail" />
+            </detail>
+          </adaptive-detail>
+        </nav-item>
+      </sidebar>
+    </content>
+  </app-shell>
+</view>

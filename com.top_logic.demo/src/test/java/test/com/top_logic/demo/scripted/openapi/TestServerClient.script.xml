@@ -3695,7 +3695,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-								<value>get_structure_demo_getAs(dateFormat("yyyy-MM-dd:HH").parse("2023-06-02:11"))</value>
+								<value>get_structure_demo_getAs(dateFormat("yyyy-MM-dd:HH").parse("2023-06-02:09"))</value>
 							</value>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -3740,7 +3740,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-								<value>get_structure_demo_getAs(dateFormat("yyyy-MM-dd:HH").parse("2023-06-02:11"), dateFormat("yyyy-MM-dd:HH").parse("2023-06-03:11"))</value>
+								<value>get_structure_demo_getAs(dateFormat("yyyy-MM-dd:HH").parse("2023-06-02:09"), dateFormat("yyyy-MM-dd:HH").parse("2023-06-03:11"))</value>
 							</value>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"

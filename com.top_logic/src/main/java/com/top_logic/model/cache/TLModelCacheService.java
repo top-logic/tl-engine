@@ -12,6 +12,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
@@ -22,13 +23,12 @@ import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.model.TLModel;
 import com.top_logic.util.model.CompatibilityService;
 import com.top_logic.util.model.ModelService;
 
 /**
- * {@link ConfiguredManagedClass} for caching expensive queries about the {@link TLModel}.
- * 
+ * Cache for expensive queries about the application's type model.
+ *
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 @ServiceDependencies({
@@ -36,6 +36,7 @@ import com.top_logic.util.model.ModelService;
 	PersistencyLayer.Module.class
 })
 @ServiceExtensionPoint(ModelService.Module.class)
+@Label("Model cache")
 public class TLModelCacheService extends ConfiguredManagedClass<TLModelCacheService.Config> {
 
 	/** {@link ConfigurationItem} for the {@link TLModelCacheService}. */

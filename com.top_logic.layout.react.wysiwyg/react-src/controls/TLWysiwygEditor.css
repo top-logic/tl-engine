@@ -32,6 +32,9 @@
 
 .tlWysiwygEditor .ProseMirror {
   outline: none;
+}
+
+.tlWysiwygEditor__content .ProseMirror {
   min-height: 120px;
 }
 
@@ -88,8 +91,24 @@
   color: var(--tl-text-secondary, #6b7280);
 }
 
+/* View mode renders the bare content: no reserved editor height and no inner
+   padding, so the text sizes to its content and aligns with other field values. */
 .tlWysiwygEditor__immutableContent {
-  padding: 12px 16px;
+  padding: 0;
+}
+
+.tlWysiwygEditor__immutableContent > :first-child {
+  margin-top: 0;
+}
+
+.tlWysiwygEditor__immutableContent > :last-child {
+  margin-bottom: 0;
+}
+
+.tlWysiwygEditor__immutableContent a {
+  color: var(--tl-primary-color, #2563eb);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* ===================================================================
@@ -117,6 +136,14 @@
 }
 
 /* ---- Buttons ---- */
+
+/* The buttons of the configured commands stand beside the formatting buttons and take
+   their size. */
+.tlWysiwygToolbar .tlReactButton--iconOnly {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+}
 
 .tlWysiwygToolbar__btn {
   display: inline-flex;

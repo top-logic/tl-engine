@@ -551,7 +551,8 @@ public class LDAPAccessService {
 					if (aMemberDO != null) {
 						memberName = (String) aMemberDO.getAttributeValue(UserInterface.USER_NAME);
 					}
-					if (StringServices.isEmpty(memberName) || !memberName.equals(aName)) {
+					// Account names are matched case-insensitively (Ticket #29423).
+					if (StringServices.isEmpty(memberName) || !memberName.equalsIgnoreCase(aName)) {
 						allMembersDNs.remove();
 					}
 				} catch (Exception e) {

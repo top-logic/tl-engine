@@ -18,11 +18,14 @@ import junit.framework.TestCase;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
+import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.data.Align;
 import com.top_logic.react.flow.data.Alignment;
 import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
+import com.top_logic.react.flow.operations.tree.TreeNode;
+import com.top_logic.react.flow.operations.tree.TreeRenderInfo;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.EdgeDecoration;
 import com.top_logic.react.flow.data.Padding;
@@ -81,6 +84,8 @@ public class TestTreeLayout extends TestCase {
 			
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
+				font-family="monospace"
+				font-size="20.0"
 				height="100%"
 				version="1.1"
 				viewBox="0.0 0.0 0.0 0.0"
@@ -90,7 +95,6 @@ public class TestTreeLayout extends TestCase {
 					<g transform="translate(0.0,0.0)">
 						<g>
 							<text
-								font-size="14.0"
 								x="6.0"
 								y="16.0"
 							>Root</text>
@@ -105,7 +109,6 @@ public class TestTreeLayout extends TestCase {
 					<g transform="translate(100.0,0.0)">
 						<g>
 							<text
-								font-size="14.0"
 								x="6.0"
 								y="16.0"
 							>N1</text>
@@ -120,7 +123,6 @@ public class TestTreeLayout extends TestCase {
 					<g transform="translate(100.0,44.0)">
 						<g>
 							<text
-								font-size="14.0"
 								x="6.0"
 								y="16.0"
 							>N2</text>
@@ -135,7 +137,6 @@ public class TestTreeLayout extends TestCase {
 					<g transform="translate(100.0,88.0)">
 						<g>
 							<text
-								font-size="14.0"
 								x="6.0"
 								y="16.0"
 							>N3</text>
@@ -573,13 +574,15 @@ public class TestTreeLayout extends TestCase {
 		double x = Double.parseDouble(translate.group(1));
 		double y = Double.parseDouble(translate.group(2));
 
-		Matcher border = Pattern.compile("d=\"M 0\\.5,0\\.5 L ([0-9.]+),0\\.5 L \\1,([0-9.]+)")
+		Matcher border = Pattern.compile("d=\"M ([0-9.]+),([0-9.]+) L ([0-9.]+),\\2 L \\3,([0-9.]+)")
 			.matcher(svg.substring(labelPos));
 		assertTrue("Border outline of '" + label + "' not found.", border.find());
-		double width = Double.parseDouble(border.group(1)) + 0.5;
-		double height = Double.parseDouble(border.group(2)) + 0.5;
+		double left = Double.parseDouble(border.group(1)) - 0.5;
+		double top = Double.parseDouble(border.group(2)) - 0.5;
+		double right = Double.parseDouble(border.group(3)) + 0.5;
+		double bottom = Double.parseDouble(border.group(4)) + 0.5;
 
-		return new double[] { x, y, x + width, y + height };
+		return new double[] { x + left, y + top, x + right, y + bottom };
 	}
 
 	public void testCompactRowWiseStartColFirstChildZigZag() throws IOException {
@@ -771,15 +774,15 @@ public class TestTreeLayout extends TestCase {
 	}
 
 	public void testRandomTree() throws IOException {
-		Diagram diagramCompfort =
-			Diagram.create().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(false)));
+		TreeLayout comfort = createRandomTree().setCompact(false);
+		Diagram diagramCompfort = Diagram.create().setRoot(Padding.create().setAll(20).setContent(comfort));
 		writeToFile(diagramCompfort, "./target/TestTreeLayout-random-compfort.svg");
+		assertConnectionOrder(comfort);
 
-		Diagram diagramCompact =
-			Diagram.create().setRoot(
-				Padding.create().setAll(20)
-					.setContent(createRandomTree().setCompact(true).setSibblingGapY(15).setSubtreeGapY(30)));
+		TreeLayout compact = createRandomTree().setCompact(true).setSibblingGapY(15).setSubtreeGapY(30);
+		Diagram diagramCompact = Diagram.create().setRoot(Padding.create().setAll(20).setContent(compact));
 		writeToFile(diagramCompact, "./target/TestTreeLayout-random-compact.svg");
+		assertConnectionOrder(compact);
 	}
 
 	private TreeLayout createRandomTree() {
@@ -819,11 +822,14 @@ public class TestTreeLayout extends TestCase {
 	}
 
 	private String writeToFile(Diagram diagram, String fileName) throws IOException {
-		diagram.layout(new TestingRenderContext());
+		RenderContext context = new TestingRenderContext();
+		diagram.layout(context);
 
 		TagWriter out = new TagWriter();
 		SvgWriter svgOut = new SvgTagWriter(out);
-		diagram.draw(svgOut);
+		// Pass the context so the written file declares the font it was measured with. Without it
+		// a viewer falls back to its own default font and the text no longer matches its box.
+		diagram.draw(svgOut, context, null);
 
 		String svg = XMLPrettyPrinter.prettyPrint(out.toString());
 		System.out.println(svg);
@@ -914,4 +920,208 @@ public class TestTreeLayout extends TestCase {
 			.addContent(anchorAligned);
 		return new LabelAnchorNode(box, anchor);
 	}
+	public void testCompactRowWiseStartColFirstChildZigZagRightAligned() throws IOException {
+		// #29420 variant: same scenario as testCompactRowWiseStartColFirstChildZigZag, but the
+		// content of the described nodes C1 and C3 (description and anchor box) is RIGHT-aligned
+		// instead of centered. The anchor box therefore sits at the right edge of the node, next
+		// to the post-grid area where C1's subtree is routed, while the long description of C3
+		// overhangs to the left.
+		TreeLayout tree = TreeLayout.create()
+			.setCompact(true)
+			.setChildSplitThreshold(2)
+			.setRowWise(true)
+			.setSubGridCols(2)
+			.setSubGridStartCol(1);
+
+		Box root = node("Root");
+		tree.addNode(root);
+
+		// Non-zig-zag sibling: a plain chain.
+		Box a = node("A");
+		tree.addNode(a);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(root))
+			.setChild(connector(a)));
+		Box aa = node("Aa");
+		tree.addNode(aa);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(a))
+			.setChild(connector(aa)));
+
+		// Zig-zag node B: three children in a 2x2 sub-grid starting at column 1.
+		Box b = node("B");
+		tree.addNode(b);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(root))
+			.setChild(connector(b)));
+
+		for (int i = 1; i <= 3; i++) {
+			// C1 and C3 carry a description above a smaller anchor box, with the content
+			// RIGHT-aligned. C1 gets a SHORT description, C3 a LONG one.
+			Box cBox;
+			Box cAnchor;
+			if (i == 1) {
+				LabelAnchorNode c1 = describedNode("C1", "C1", Alignment.STOP);
+				cBox = c1.box;
+				cAnchor = c1.anchor;
+			} else if (i == 3) {
+				LabelAnchorNode c3 =
+					describedNode("C3", "C3 with a rather long description shown above its anchor box",
+						Alignment.STOP);
+				cBox = c3.box;
+				cAnchor = c3.anchor;
+			} else {
+				cBox = node("C" + i);
+				cAnchor = cBox;
+			}
+			tree.addNode(cBox);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(b))
+				.setChild(TreeConnector.create().setAnchor(cAnchor).setConnectPosition(0.5)));
+
+			if (i == 1) {
+				// The first sub-grid child (rendered in the right column) has a zig-zag
+				// subtree of its own; its connections start at C1's anchor box.
+				for (int j = 1; j <= 3; j++) {
+					Box d = node("D" + j);
+					tree.addNode(d);
+					tree.addConnection(TreeConnection.create()
+						.setParent(TreeConnector.create().setAnchor(cAnchor).setConnectPosition(0.5))
+						.setChild(connector(d)));
+				}
+			}
+		}
+
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+		String svg = writeToFile(diagram, "./target/TestTreeLayout-compact-rowwise-startcol-nested-right.svg");
+
+		// The nested subtree lives completely in the post-grid area right of the outer
+		// sub-grid, and no bus or stub line crosses any box.
+		assertTrue("C1's subtree must lie right of the outer sub-grid.",
+			boxBounds(svg, "D2")[0] > boxBounds(svg, "C3")[2]);
+		for (String label : new String[] { "C1", "C2", "C3", "D1", "D2", "D3" }) {
+			assertNoLineCrossesBox(svg, label);
+		}
+	}
+
+	public void testCompactRowWiseMixedAnchorAlignments() throws IOException {
+		// #29420: a 3-column row-wise sub-grid whose children are labelled nodes (a description
+		// above a smaller anchor box, the box being the connection anchor) with LEFT / CENTERED /
+		// RIGHT aligned content, spread over more than one row so labelled boxes appear in every
+		// column, not just the rightmost. Two of them (P0 in column 0, P4 in column 1) carry a
+		// subtree so the post-grid routing is exercised. With the anchor-relative sub-grid
+		// geometry the following columns / subtrees advance only by the extent right of each
+		// anchor, so a description overhangs into the whitespace beside its anchor instead of
+		// shoving everything to the right.
+		TreeLayout tree = TreeLayout.create()
+			.setCompact(true)
+			.setChildSplitThreshold(3)
+			.setRowWise(true)
+			.setSubGridCols(3);
+
+		Box root = node("Root");
+		tree.addNode(root);
+		Box b = node("B");
+		tree.addNode(b);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(root))
+			.setChild(connector(b)));
+
+		Alignment[] aligns =
+			{ Alignment.START, Alignment.MIDDLE, Alignment.STOP,
+				Alignment.MIDDLE, Alignment.STOP, Alignment.START };
+		String[] descriptions =
+			{ "left-aligned label", "centered label", "right-aligned label",
+				"centered label", "right-aligned label", "left-aligned label" };
+
+		for (int i = 0; i < 6; i++) {
+			LabelAnchorNode p = describedNode("P" + i, descriptions[i], aligns[i]);
+			tree.addNode(p.box);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(b))
+				.setChild(TreeConnector.create().setAnchor(p.anchor).setConnectPosition(0.5)));
+
+			if (i == 0 || i == 4) {
+				// A small subtree routed into the post-grid area.
+				Box child = node("P" + i + "a");
+				tree.addNode(child);
+				tree.addConnection(TreeConnection.create()
+					.setParent(TreeConnector.create().setAnchor(p.anchor).setConnectPosition(0.5))
+					.setChild(connector(child)));
+			}
+		}
+
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+		String svg = writeToFile(diagram, "./target/TestTreeLayout-compact-rowwise-mixed-anchors.svg");
+
+		// No bus or stub line crosses any anchor box.
+		for (String label : new String[] { "P0", "P1", "P2", "P3", "P4", "P5", "P0a", "P4a" }) {
+			assertNoLineCrossesBox(svg, label);
+		}
+	}
+
+	/**
+	 * A node that stacks a description label on top of a smaller anchor box, with both the
+	 * description and the anchor centered horizontally.
+	 *
+	 * @see #describedNode(String, String, Alignment)
+	 */
+	private LabelAnchorNode describedNode(String name, String description) {
+		return describedNode(name, description, Alignment.MIDDLE);
+	}
+
+	/**
+	 * A node that stacks a description label on top of a smaller anchor box. The anchor box (a
+	 * plain {@link #node(String)}) stays the connection anchor; a long description widens the node
+	 * while the anchor keeps its intrinsic size. Both the description and the anchor are aligned
+	 * within the node according to {@code contentAlign} (e.g. {@link Alignment#MIDDLE} to center
+	 * them, {@link Alignment#STOP} to right-align them).
+	 */
+	private LabelAnchorNode describedNode(String name, String description, Alignment contentAlign) {
+		Box anchor = node(name);
+		Box anchorAligned = Align.create()
+			.setXAlign(contentAlign)
+			.setContent(anchor);
+		Box descriptionAligned = Align.create()
+			.setXAlign(contentAlign)
+			.setContent(Text.create().setValue(description));
+		Box box = VerticalLayout.create()
+			.addContent(descriptionAligned)
+			.addContent(anchorAligned);
+		return new LabelAnchorNode(box, anchor);
+	}
+
+	/**
+	 * Asserts that no child of any node is placed above the child connected before it.
+	 *
+	 * <p>
+	 * #29424: the connections of a node form an ordered list and leave its bus in that order.
+	 * Compact packing slides a subtree into free space beside an earlier sibling, which must not
+	 * carry it above a sibling that is connected earlier.
+	 * </p>
+	 */
+	private void assertConnectionOrder(TreeLayout tree) {
+		TreeRenderInfo info = (TreeRenderInfo) tree.getRenderInfo();
+		for (TreeNode node : info.getNodes()) {
+			TreeNode previous = null;
+			for (TreeNode child : node.getChildren()) {
+				if (previous != null) {
+					assertTrue("Child connected at position " + node.getChildren().indexOf(child)
+						+ " sits above the one connected before it: " + anchorMidY(child)
+						+ " above " + anchorMidY(previous) + ".",
+						anchorMidY(child) >= anchorMidY(previous) - 0.5);
+				}
+				previous = child;
+			}
+		}
+	}
+
+	/**
+	 * Y coordinate of the point where the connection to the given node meets it.
+	 */
+	private static double anchorMidY(TreeNode node) {
+		Box anchor = node.getAnchor();
+		return node.getY() + anchor.getY() + 0.5 * anchor.getHeight();
+	}
+
 }

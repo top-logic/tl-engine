@@ -16,6 +16,7 @@ import java.util.Set;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.annotation.Subtypes.Subtype;
@@ -32,6 +33,7 @@ import com.top_logic.basic.xml.TagWriter;
  * emitted in topological order of their {@link ResourceConfig} dependencies.
  * </p>
  */
+@Label("Client resources")
 public class ClientResources extends ConfiguredManagedClass<ClientResources.Config> {
 
 	/**

@@ -7,6 +7,7 @@ package com.top_logic.layout.view.admin;
 
 import java.util.Arrays;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.CalledByReflection;
@@ -31,6 +32,7 @@ import com.top_logic.util.error.TopLogicException;
  * {@code <with-transaction>}); the updated {@link Person} is returned as the action result.
  * </p>
  */
+@InApp
 public class SetPasswordAction implements ViewAction {
 
 	/**

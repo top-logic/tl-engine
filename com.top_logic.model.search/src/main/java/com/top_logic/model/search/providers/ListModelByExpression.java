@@ -237,6 +237,8 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 
 	@Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
+		// Note: The result contains only elements the current user is allowed to read, the executor
+		// secures it, see QueryExecutor#executeWith(EvalContext, Args).
 		return (Collection<?>) _elements.execute(businessModel);
 	}
 

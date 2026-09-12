@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Object list demo, and the demo of a model object carried in the URL:
+	the ticketId channel maps the selected ticket onto its identifier and back, and
+	<param-bindings> puts that identifier into the address bar below the sidebar item, behind
+	the static prefix segment naming what it identifies, so selecting a ticket yields
+	/view/tickets/ticket/<id>, opening such a link selects the ticket, and browser
+	back/forward walks the selection history. The identifier is percent-encoded, so its
+	characters cannot break the path. An identifier of a ticket that no longer exists resolves
+	to no object, and the prefix and the segment leave the address bar again.
+	
+	The filter above the list demonstrates the other half of the address bar: <query-bindings>
+	binds the filter channel to the query parameter q, so a filtered list is the link
+	/view/tickets/ticket/<id>?q=<term>, and typing in the filter refines the page instead of
+	navigating to a new one - the address bar follows along, but the back button leaves the
+	page rather than walking the terms typed on it. A link without q says nothing about the
+	filter and shows the list unfiltered.
+	
+	The two lists split the tickets by their status and share the one ticket channel: the
+	selected ticket is shown in whichever list holds it, and a ticket that moves between the
+	lists leaves the selection empty, because the list that showed it as selected no longer
+	has it.
+	
+	Both lists are drag sources and drop targets: dragging a ticket from Open to Closed
+	closes it and dragging it back reopens it, which is what each list's <drop> does with the
+	tickets dropped on it. Dragging a selected row drags the whole selection, so several
+	tickets close in one gesture. The Involve list below them is a row target instead: a
+	ticket dropped onto one of its rows gets a comment by that person, and the person dropped
+	on arrives on the dropPerson channel that the drop's script reads.
+	
+	The first list groups its tickets by status, the second one shows them flat, so both
+	presentations of the same rows are on screen at once. A group header is a collapsible row
+	standing for no ticket: clicking it collapses the group and leaves the selection alone. The
+	column header menu of either list regroups it by another column or removes the grouping, and
+	that choice is kept per user.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="ticket"/>
+		<channel name="filter"/>
+		<channel name="dropPerson"/>
+		<derived-channel name="ticketId"
+			expr="t -> objectId($t)"
+			inputs="ticket"
+			reverse="id -> objectResolve(`demo.tickets:Ticket`, $id)"
+		/>
+		<derived-channel name="ticketState"
+			expr="t -> if($t == null, '', if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"
+			inputs="ticket"
+		/>
+	</channels>
+	<param-bindings>
+		<bind
+			channel="ticketId"
+			prefix="ticket"
+			route-param="ticket"
+		/>
+	</param-bindings>
+	<query-bindings>
+		<bind
+			channel="filter"
+			query-param="q"
+		/>
+	</query-bindings>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="220"
+				size="30"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Tickets</en>
+						<de>Tickets</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`demo.tickets:Ticket`, transient: true)"/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="tickets-create.view.xml"
+							>
+								<bind
+									channel="selection"
+									to="ticket"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-trash"
+							input="ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+							</with-transaction>
+							<write-channel name="ticket"/>
+						</generic-command>
+						<generic-command name="closeTicket"
+							image="css:bi bi-check2-circle"
+							input="ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Close</en>
+								<de>Schließen</de>
+							</label>
+							<executability>
+								<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`"/>
+							</executability>
+							<with-transaction>
+								<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+							</with-transaction>
+						</generic-command>
+						<generic-command name="reopenTicket"
+							image="css:bi bi-arrow-counterclockwise"
+							input="ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Reopen</en>
+								<de>Wiedereröffnen</de>
+							</label>
+							<executability>
+								<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`"/>
+							</executability>
+							<with-transaction>
+								<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
+							</with-transaction>
+						</generic-command>
+						<generic-command name="toggleTicket"
+							image="css:bi bi-toggles"
+							input="ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Toggle</en>
+								<de>Umschalten</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<switch value="t -> $t.get(`demo.tickets:Ticket#status`)">
+								<case match="`demo.tickets:TicketStatus#closed`">
+									<with-transaction>
+										<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
+									</with-transaction>
+								</case>
+								<default>
+									<with-transaction>
+										<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+									</with-transaction>
+								</default>
+							</switch>
+						</generic-command>
+					</commands>
+					<text
+						css-class="ticketState"
+						input="ticketState"
+					/>
+					<text-input value="filter">
+						<label>
+							<en>Filter</en>
+							<de>Filter</de>
+						</label>
+					</text-input>
+					<panel>
+						<title>
+							<en>Open</en>
+							<de>Offen</de>
+						</title>
+						<table
+							group-by="status"
+							observed-types="demo.tickets:Ticket"
+							selection="ticket"
+							types="demo.tickets:Ticket"
+						>
+							<drag/>
+							<drop accept="demo.tickets:Ticket">
+								<with-transaction>
+									<execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`))"/>
+								</with-transaction>
+							</drop>
+							<inputs>
+								<input channel="filter"/>
+							</inputs>
+							<columns>
+								<column attribute="name"/>
+								<column attribute="status"/>
+							</columns>
+							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
+						</table>
+					</panel>
+					<panel>
+						<title>
+							<en>Closed</en>
+							<de>Geschlossen</de>
+						</title>
+						<table
+							observed-types="demo.tickets:Ticket"
+							selection="ticket"
+							types="demo.tickets:Ticket"
+						>
+							<drag/>
+							<drop accept="demo.tickets:Ticket">
+								<with-transaction>
+									<execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`))"/>
+								</with-transaction>
+							</drop>
+							<inputs>
+								<input channel="filter"/>
+							</inputs>
+							<columns>
+								<column attribute="name"/>
+							</columns>
+							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
+						</table>
+					</panel>
+					<panel>
+						<title>
+							<en>Involve</en>
+							<de>Beteiligen</de>
+						</title>
+						<table types="tl.accounts:Person">
+							<drop
+								accept="demo.tickets:Ticket"
+								target="row"
+								target-channel="dropPerson"
+							>
+								<with-transaction>
+									<execute-script function="person -> tickets -> $tickets.foreach(t -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#author`, $person); $c.set(`demo.tickets:Comment#content`, &quot;Please have a look.&quot;); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); })">
+										<inputs>
+											<input channel="dropPerson"/>
+										</inputs>
+									</execute-script>
+								</with-transaction>
+							</drop>
+							<columns>
+								<column attribute="name"/>
+							</columns>
+							<rows>all(`tl.accounts:Person`)</rows>
+						</table>
+					</panel>
+				</panel>
+			</pane>
+			<pane
+				size="70"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Conversation</en>
+						<de>Verlauf</de>
+					</title>
+					<inset>
+						<object-list
+							element-channel="comment"
+							element-type="demo.tickets:Comment"
+							input="ticket"
+							items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
+							link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
+							new-element-channel="newComment"
+							remove="ticket -> comment -> $comment.delete()"
+						>
+							<item>
+								<view-ref view="tickets/comment.view.xml">
+									<bind
+										channel="comment"
+										to="comment"
+									/>
+									<bind
+										channel="draft"
+										to="newComment"
+									/>
+								</view-ref>
+							</item>
+							<new-element>
+								<view-ref view="tickets/comment-composer.view.xml">
+									<bind
+										channel="comment"
+										to="newComment"
+									/>
+									<bind
+										channel="ticket"
+										to="ticket"
+									/>
+								</view-ref>
+							</new-element>
+							<empty-text>
+								<en>No comments yet.</en>
+								<de>Noch keine Kommentare.</de>
+							</empty-text>
+						</object-list>
+					</inset>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

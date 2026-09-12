@@ -150,20 +150,11 @@ public class ReactCardControl extends ReactControl {
 		putState(PADDING, padding.getExternalName());
 	}
 
-	@Override
-	protected void cleanupChildren() {
-		_child.cleanupTree();
-		for (ReactControl action : _headerActions) {
-			action.cleanupTree();
-		}
-	}
-
-
 	/**
-	 * Rendering-only state keys, omitted from the headless agent projection.
+	 * Rendering-only state keys, omitted from the headless projection.
 	 */
 	@Override
-	protected java.util.Set<String> agentPresentationKeys() {
+	protected java.util.Set<String> scriptingPresentationKeys() {
 		return java.util.Set.of("padding", "variant");
 	}
 }

@@ -11,6 +11,7 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.ConfigurationItem;
@@ -18,6 +19,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.configedit.ConfigSelectFieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 
@@ -106,9 +108,35 @@ public class TestConfigSelectFieldModel extends TestCase {
 	}
 
 	/**
-	 * Suite requiring TypeIndex for TypedConfiguration.
+	 * {@link ConfigSelectFieldModel#setValue(Object)} forwards a non-{@link String} value
+	 * unchanged to {@link com.top_logic.layout.configedit.ConfigFieldModel#setValue(Object)}, so
+	 * the null-refusal for a technically mandatory property (see
+	 * {@link com.top_logic.layout.configedit.ConfigFieldModel}) already applies here without any
+	 * change of its own: clearing the (non-nullable) enum selection is refused as a field error,
+	 * leaving the configuration untouched.
+	 */
+	public void testSetValueRejectsNullForNonNullableProperty() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setColor(Color.BLUE);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.COLOR);
+
+		List<Color> options = Arrays.asList(Color.values());
+		ConfigSelectFieldModel model = new ConfigSelectFieldModel(config, property, options, false);
+
+		model.setValue(null);
+
+		assertEquals("Clearing a non-nullable selection must not change its value.", Color.BLUE, config.getColor());
+		assertNotNull("Clearing a non-nullable selection must be reported as a field error.",
+			model.getInputError());
+	}
+
+	/**
+	 * Suite requiring {@link TypeIndex} for {@link TypedConfiguration} and
+	 * {@link ThreadContextManager} for the label resolution the rejected-value error message uses.
 	 */
 	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestConfigSelectFieldModel.class, TypeIndex.Module.INSTANCE);
+		return ModuleLicenceTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestConfigSelectFieldModel.class,
+				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE));
 	}
 }

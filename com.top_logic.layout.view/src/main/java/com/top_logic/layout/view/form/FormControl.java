@@ -16,7 +16,10 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.layout.view.channel.DirtyChannel;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
@@ -66,6 +69,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private boolean _editMode;
 
+	private boolean _autoEditMode;
+
 	private final LockHandler _lockHandler;
 
 	private ViewChannel _inputChannel;
@@ -101,6 +106,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	private final String _noModelMessage;
 
 	private ModelScope _modelScope;
+
+	private ViewExecutabilityRule _editRule = ViewExecutabilityRule.ALWAYS_EXECUTABLE;
 
 	/**
 	 * Creates a new {@link FormControl}.
@@ -150,6 +157,35 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	@Override
 	public boolean isEditMode() {
 		return _editMode;
+	}
+
+	/**
+	 * Sets the rule deciding whether this form offers editing its object, evaluated against the
+	 * displayed object.
+	 *
+	 * @param rule
+	 *        The rule, {@link ViewExecutabilityRule#ALWAYS_EXECUTABLE} to offer editing to everyone
+	 *        who sees the form.
+	 *
+	 * @see #editPermission()
+	 */
+	public void setEditRule(ViewExecutabilityRule rule) {
+		_editRule = rule;
+		fireFormStateChanged();
+	}
+
+	/**
+	 * Whether the current user may edit the displayed object here.
+	 *
+	 * <p>
+	 * The permission alone, independent of the form's lifecycle state: a form already in edit mode
+	 * still reports the permission that got it there. The Edit command combines this with its state
+	 * condition, and {@link #handleEdit()} rejects a transition the permission denies — so the same
+	 * decision governs the button and a command a client sends directly.
+	 * </p>
+	 */
+	public ExecutableState editPermission() {
+		return _editRule.isExecutable(getCurrentObject());
 	}
 
 	@Override
@@ -239,6 +275,26 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		for (FormParticipant participant : _participants) {
 			participant.revealAll();
 		}
+		fireValidityChanged();
+	}
+
+	/**
+	 * Whether any participant reports a validation error that is visible to the user.
+	 *
+	 * <p>
+	 * Unlike {@link #hasErrors()}, an error that is still hidden (not yet
+	 * {@link FormParticipant#revealAll() revealed}, because the user has neither touched the field
+	 * nor attempted to save) does not count: a command must stay available as long as the user
+	 * cannot see what is wrong.
+	 * </p>
+	 */
+	public boolean hasVisibleErrors() {
+		for (FormParticipant participant : _participants) {
+			if (!participant.validate()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -383,6 +439,23 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
+	 * Makes the form enter edit mode whenever an object becomes available.
+	 *
+	 * <p>
+	 * Set for forms configured with {@code initial-edit-mode} (and no edit-mode channel): such a
+	 * form is editable not only for its first object, but also after its input channel switches to
+	 * another object (e.g. a new-entry form whose channel is re-filled with a fresh transient
+	 * object after each submit).
+	 * </p>
+	 *
+	 * @param autoEditMode
+	 *        Whether to re-enter edit mode on every object switch.
+	 */
+	public void setAutoEditMode(boolean autoEditMode) {
+		_autoEditMode = autoEditMode;
+	}
+
+	/**
 	 * Enters edit mode by acquiring a lock, creating an overlay, and notifying listeners.
 	 */
 	public void enterEditMode() {
@@ -398,7 +471,19 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		updateEditModeChannel();
 
 		if (_inputChannel != null && _inputVeto == null) {
-			_inputVeto = (sender, oldVal, newVal) -> isDirty() ? this : null;
+			// The form blocks any object switch while it holds unsaved changes, independent of
+			// which object would come next.
+			_inputVeto = new VetoListener() {
+				@Override
+				public StateHandler checkVeto(ViewChannel sender, Object oldValue, Object newValue) {
+					return checkDirty(sender);
+				}
+
+				@Override
+				public StateHandler checkDirty(ViewChannel sender) {
+					return isDirty() ? FormControl.this : null;
+				}
+			};
 			_inputChannel.addVetoListener(_inputVeto);
 		}
 
@@ -492,14 +577,19 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Validates all participants and throws if any are invalid.
 	 *
 	 * <p>
-	 * Reveals all hidden validation errors first (so model-level errors become visible via
-	 * {@code hasError()}), then iterates all participants without short-circuiting.
+	 * Re-runs all constraint checks first, since stored results can be outdated when persistent
+	 * data has changed after the value was entered (e.g. a uniqueness conflict introduced by
+	 * another commit). Then reveals all hidden validation errors (so model-level errors become
+	 * visible via {@code hasError()}) and iterates all participants without short-circuiting.
 	 * </p>
 	 *
 	 * @throws TopLogicException
 	 *         If any participant reports a validation error.
 	 */
 	public void validateOrThrow() {
+		if (_validationModel != null) {
+			_validationModel.revalidateAll();
+		}
 		revealAllValidation();
 
 		boolean valid = true;
@@ -512,6 +602,24 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			throw new TopLogicException(
 				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
 		}
+	}
+
+	/**
+	 * Starts a fresh edit session after overlay edits have been applied to the base object, so the
+	 * form reports a clean state relative to the updated base.
+	 *
+	 * <p>
+	 * Called after {@link #executeStoreState()} when the form stays alive (e.g. a new-entry form
+	 * that is re-used for the next entry): without a fresh session, field models would still
+	 * compare against their original default values and report unsaved changes that are in fact
+	 * already stored.
+	 * </p>
+	 */
+	public void refreshEditSession() {
+		if (!_editMode) {
+			return;
+		}
+		setupEditSession();
 	}
 
 	/**
@@ -528,6 +636,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		_overlay = new TLObjectOverlay(_currentObject);
 
+		// Participants announce a changed validity themselves, once they have applied the new
+		// result to their field models - announcing it from here would report the state as seen
+		// before the participants updated.
 		_validityListener = (overlay, attribute, result) -> {
 			putState(VALID, Boolean.valueOf(_validationModel.isValid()));
 		};
@@ -649,6 +760,24 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		for (FormModelListener listener : _formModelListeners) {
 			listener.onFormStateChanged(this);
 		}
+		// The participants have rebuilt themselves, so what the user sees may differ from before.
+		// The second pass reaches every listener with the settled state, independent of the order
+		// in which the participants were notified above.
+		fireValidityChanged();
+	}
+
+	/**
+	 * Announces that the validation errors visible to the user may have changed.
+	 *
+	 * <p>
+	 * Called by participants whose displayed validation state changed, so that commands gated on
+	 * {@link #hasVisibleErrors()} re-evaluate their executability.
+	 * </p>
+	 */
+	public void fireValidityChanged() {
+		for (FormModelListener listener : new ArrayList<>(_formModelListeners)) {
+			listener.onValidityChanged(this);
+		}
 	}
 
 	private void updateEditModeChannel() {
@@ -693,11 +822,12 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		updateNoModelMessage();
 
 		fireFormStateChanged();
-	}
 
-	@Override
-	protected void cleanupChildren() {
-		// No-op: child controls are managed by the React rendering tree.
+		if (_autoEditMode) {
+			// The form is configured to be editable whenever an object is available, so the
+			// object switch re-enters edit mode for the new object.
+			enterEditMode();
+		}
 	}
 
 	@Override
@@ -719,33 +849,73 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	/**
 	 * Command that enters edit mode.
+	 *
+	 * <p>
+	 * Refused unless the form offers editing, i.e. it displays an object, is not already in edit
+	 * mode, and the user has the {@link #editPermission() permission to edit it} — the condition
+	 * under which {@link FormCommandModel#editCommand(FormControl) the Edit command} is executable.
+	 * The lifecycle commands are dispatched to this control directly, so they repeat the condition
+	 * instead of inheriting it from the toolbar button.
+	 * </p>
 	 */
 	@ReactCommandHandler("formEdit")
-	void handleEdit() {
+	HandlerResult handleEdit() {
+		if (_currentObject == null || _editMode || !editPermission().isExecutable()) {
+			return notExecutable();
+		}
 		enterEditMode();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Command that applies overlay changes without leaving edit mode.
+	 *
+	 * <p>
+	 * Refused outside an edit session, see {@link #handleEdit()}.
+	 * </p>
 	 */
 	@ReactCommandHandler("formApply")
-	void handleApply() {
+	HandlerResult handleApply() {
+		if (!_editMode) {
+			return notExecutable();
+		}
 		executeApply();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Command that saves changes (applies and exits edit mode).
+	 *
+	 * <p>
+	 * Refused outside an edit session, see {@link #handleEdit()}.
+	 * </p>
 	 */
 	@ReactCommandHandler("formSave")
-	void handleSave() {
+	HandlerResult handleSave() {
+		if (!_editMode) {
+			return notExecutable();
+		}
 		executeSave();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Command that cancels editing, discarding changes.
+	 *
+	 * <p>
+	 * Refused outside an edit session, see {@link #handleEdit()}.
+	 * </p>
 	 */
 	@ReactCommandHandler("formCancel")
-	void handleCancel() {
+	HandlerResult handleCancel() {
+		if (!_editMode) {
+			return notExecutable();
+		}
 		executeCancel();
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private static HandlerResult notExecutable() {
+		return HandlerResult.error(I18NConstants.ERROR_FORM_COMMAND_NOT_EXECUTABLE);
 	}
 }

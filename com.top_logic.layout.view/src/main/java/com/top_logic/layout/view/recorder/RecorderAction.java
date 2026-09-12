@@ -14,8 +14,9 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.react.control.ErrorSink;
-import com.top_logic.layout.react.headless.ScriptRecorder;
+import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.util.Resources;
 
@@ -83,31 +84,21 @@ public class RecorderAction implements ViewAction {
 	public Object execute(ReactContext context, Object input) {
 		ScriptRecorder recorder = RecorderAccess.openerRecorder(context);
 		if (recorder == null) {
-			info(context, I18NConstants.ERROR_NO_RECORDER);
+			ViewMessages.info(context, I18NConstants.ERROR_NO_RECORDER);
 			return input;
 		}
 
 		switch (_mode) {
 			case START:
 				recorder.start();
-				info(context, I18NConstants.RECORDER_STARTED);
+				ViewMessages.info(context, I18NConstants.RECORDER_STARTED);
 				break;
 			case STOP:
 				recorder.stop();
-				info(context, I18NConstants.RECORDER_STOPPED__COUNT.fill(Integer.valueOf(recorder.steps().size())));
+				ViewMessages.info(context, I18NConstants.RECORDER_STOPPED__COUNT.fill(Integer.valueOf(recorder.steps().size())));
 				break;
 		}
 		return input;
 	}
 
-	/**
-	 * Shows an informational message in the side-window through the React {@link ErrorSink} (the
-	 * view-layer info channel), a no-op when the context has none.
-	 */
-	private static void info(ReactContext context, ResKey message) {
-		ErrorSink errorSink = context.getErrorSink();
-		if (errorSink != null) {
-			errorSink.showInfo(Fragments.text(Resources.getInstance().getString(message)));
-		}
-	}
 }

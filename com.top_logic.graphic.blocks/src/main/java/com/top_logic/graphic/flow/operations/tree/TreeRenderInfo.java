@@ -200,6 +200,23 @@ public class TreeRenderInfo {
 		}
 
 		/**
+		 * X coordinate of the leftmost bus of this grid.
+		 *
+		 * <p>
+		 * The leftmost extent of the grid's connection lines. A node's own box lies left of this
+		 * bus; when the grid is moved as a whole, keeping this coordinate clear of the node's box
+		 * keeps the connections beside the node rather than on top of it.
+		 * </p>
+		 */
+		double getMinBusX() {
+			double result = Double.POSITIVE_INFINITY;
+			for (double busX : _busX) {
+				result = Math.min(result, busX);
+			}
+			return result;
+		}
+
+		/**
 		 * X coordinate of the bus where the parent's stub for the given child fans out from.
 		 *
 		 * <p>For {@link Kind#COLUMN_WISE}: the bus of the child's sub-column.
@@ -572,21 +589,27 @@ public class TreeRenderInfo {
 			// (root vs. other subtree's descendant, or descendant vs. descendant) and uses
 			// _subtreeGapY.
 			List<SubtreeBoxes> placed = new ArrayList<>();
-			boolean first = true;
+			double prevAnchorMid = Double.NEGATIVE_INFINITY;
 			for (TreeNode child : children) {
 				double dx = childOriginX - subtreeMinX(child);
 				shiftSubtree(child, dx, 0);
 				SubtreeBoxes candidate = collectSubtree(child);
 				double topDy = -subtreeMinY(child);
 				double dy;
-				if (first) {
+				if (prevAnchorMid == Double.NEGATIVE_INFINITY) {
 					dy = topDy;
-					first = false;
 				} else {
-					dy = topmostFitDy(placed, candidate, topDy);
+					// The connections leave the parent's bus in the order they are declared in, so
+					// a child must not be packed above the one before it. Free space beside an
+					// earlier sibling's subtree is only usable as far as that order allows.
+					// Constraining the search rather than its result keeps the position it finds
+					// free of conflicts.
+					dy = topmostFitDy(placed, candidate,
+						Math.max(topDy, prevAnchorMid - anchorMid(child)));
 				}
 				shiftSubtree(child, 0, dy);
 				placed.add(candidate.shifted(dy));
+				prevAnchorMid = anchorMid(child);
 			}
 		} else {
 			// Align every child's outgoing-bus column to a single X derived from the widest
@@ -1309,7 +1332,19 @@ public class TreeRenderInfo {
 					}
 				}
 
+				// Anchoring the descendant block at postGridX positions the block, not the bus
+				// that feeds it. When ch has a sub-grid of its own, its main bus sits left of its
+				// leftmost descendant column (by ch's own parent-stub distance), so anchoring on
+				// the block alone can pull that bus left of postGridX — and, when the block was
+				// already right of postGridX and the shift is negative, left of ch's own right
+				// edge, drawing ch's outgoing bus through ch's box and through the siblings below
+				// it. Keep the nested bus at childBusX in that case; the block then starts right
+				// of postGridX, which is where it has to be anyway to stay clear of the bus.
 				double dxDesc = postGridX - grandMinX;
+				GridInfo chGrid = _gridInfos.get(ch);
+				if (chGrid != null) {
+					dxDesc = Math.max(dxDesc, childBusX - chGrid.getMinBusX());
+				}
 				// Y: the subtree packing already placed ch relative to its children according to
 				// parentAlign/parentOffset (placeParent), and the slot shift above moved that
 				// geometry rigidly — so the preferred Y-shift is zero. Push the block down to

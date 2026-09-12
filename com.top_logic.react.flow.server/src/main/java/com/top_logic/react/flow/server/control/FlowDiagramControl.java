@@ -7,7 +7,6 @@ package com.top_logic.react.flow.server.control;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,10 +103,19 @@ public class FlowDiagramControl extends ReactControl {
 
 	/**
 	 * Sets a new {@link Diagram} to display.
+	 *
+	 * <p>
+	 * The selection channel follows, because a selection belongs to the diagram showing it. A new
+	 * diagram brings its own - normally none at all - and a channel left untouched would go on
+	 * publishing a node of the diagram just replaced: everything bound to it would keep showing an
+	 * element that is no longer displayed anywhere, and no click could correct it, since the node
+	 * that would have to be deselected is gone.
+	 * </p>
 	 */
 	public void setModel(Diagram diagram) {
 		_diagram = diagram;
 		initDiagramState();
+		updateSelectionChannel();
 	}
 
 	/**

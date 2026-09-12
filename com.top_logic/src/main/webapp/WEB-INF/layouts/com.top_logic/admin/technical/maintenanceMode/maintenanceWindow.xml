@@ -29,7 +29,7 @@
 				>
 					<dialogInfo
 						executability="com.top_logic.layout.admin.component.StrictInNormalModeExecutable"
-						height="380"
+						height="420"
 						image="theme:START_SERVICE"
 						openButtonSecComp="enterMaintenanceWindow"
 						openerCommandGroup="Write"

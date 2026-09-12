@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -30,6 +31,7 @@ import com.top_logic.util.error.TopLogicException;
  * <li>Otherwise, applies overlay edits to the base object and returns it.</li>
  * </ol>
  */
+@InApp
 public class StoreFormStateAction implements ViewAction {
 
 	/**
@@ -52,6 +54,11 @@ public class StoreFormStateAction implements ViewAction {
 	}
 
 	@Override
+	public boolean appliesFormState() {
+		return true;
+	}
+
+	@Override
 	public Object execute(ReactContext context, Object input) {
 		if (!(context instanceof ViewContext)) {
 			return input;
@@ -64,6 +71,9 @@ public class StoreFormStateAction implements ViewAction {
 
 		FormControl formControl = (FormControl) formModel;
 		Object result = formControl.executeStoreState();
+		// The stored values live in the base object now - continue with a clean edit session so
+		// the form no longer reports the already-stored values as unsaved changes.
+		formControl.refreshEditSession();
 		return result != null ? result : input;
 	}
 }

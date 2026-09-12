@@ -59,4 +59,18 @@ public interface ViewAction {
 	default void execute(ReactContext context, Object input, Continuation continuation) {
 		continuation.resume(execute(context, input));
 	}
+
+	/**
+	 * Whether this action applies the values entered into the enclosing form.
+	 *
+	 * <p>
+	 * A command containing such an action cannot succeed while the form displays validation
+	 * errors, so it is disabled until they are fixed.
+	 * </p>
+	 *
+	 * @see FormValid
+	 */
+	default boolean appliesFormState() {
+		return false;
+	}
 }

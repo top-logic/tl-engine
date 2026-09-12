@@ -38,7 +38,7 @@ subString("Hello world!", 6, 11)</code></pre>
 
 <h3>Aufruf mit expliziter Verkettung</h3>
 
-<p>Eine Kette aus Funktionsaufrufen wie oben lässt sich nur bilden, wenn die letzte aufgerufene Funktion das passende Ergebnis für den nächsten Aufruf zurückliefert. Insbesondere bei der <a class="tlObject" href="?page=new&amp;uuid=c24d295c-433b-4ac6-9e90-0f8427b399e6">Objekterzeugung</a> und Initialisierung ist das nicht der Fall. So liefert die <code class="hljs inlineCode">set</code> und <code class="hljs inlineCode">add</code> Funktion (siehe <a class="tlObject" href="?page=add&amp;uuid=d43ca331-eea9-4611-ab8a-a4f74813f8d9">In Attributwert einfügen</a>) kein Ergebnis. Mit normalem Funktionsaufruf müsste eine temporäre Variable eingefürt werden, um ein Objekt zu erzeugen, zu initialisieren und anschließend zu einer Referenz hinzuzufügen:</p>
+<p>Eine Kette aus Funktionsaufrufen wie oben lässt sich nur bilden, wenn die letzte aufgerufene Funktion das passende Ergebnis für den nächsten Aufruf zurückliefert. Insbesondere bei der <a class="tlObject" href="?page=new&amp;uuid=c24d295c-433b-4ac6-9e90-0f8427b399e6">Objekterzeugung</a> und Initialisierung ist das nicht der Fall. So liefert die <code class="hljs inlineCode">set</code> und <code class="hljs inlineCode">add</code> Funktion (siehe <a class="tlObject" href="?page=add&amp;uuid=d43ca331-eea9-4611-ab8a-a4f74813f8d9">In Attributwert einfügen</a>) kein Ergebnis. Mit normalem Funktionsaufruf müsste eine temporäre Variable eingeführt werden, um ein Objekt zu erzeugen, zu initialisieren und anschließend zu einer Referenz hinzuzufügen:</p>
 
 <pre>
 <code>{
@@ -61,7 +61,7 @@ subString("Hello world!", 6, 11)</code></pre>
 
 <h3>Aufruf mit benannten Argumenten (ab 7.6.0)</h3>
 
-<p>Manche Funktionen mit vielen Parametern unterstützen den Aufruf mit benannten Argumenten. Problematisch beim normalen Funktionsaufruf ist, dass man am Aufruf nicht mehr gut sehen kann, was das einzelne Argument bedeutet. So ist in <code class="hljs inlineCode">subString("Hello world!", 6, 11)</code> nicht klar, was genau <code class="hljs inlineCode">6</code> und <code class="hljs inlineCode">11</code> für eine Bedeutung haben. Daher kann man die übergebennen Argumente benennen:</p>
+<p>Manche Funktionen mit vielen Parametern unterstützen den Aufruf mit benannten Argumenten. Problematisch beim normalen Funktionsaufruf ist, dass man am Aufruf nicht mehr gut sehen kann, was das einzelne Argument bedeutet. So ist in <code class="hljs inlineCode">subString("Hello world!", 6, 11)</code> nicht klar, was genau <code class="hljs inlineCode">6</code> und <code class="hljs inlineCode">11</code> für eine Bedeutung haben. Daher kann man die übergebenen Argumente benennen:</p>
 
 <pre>
 <code>subString("Hello world!", from: 6, to: 11)</code></pre>

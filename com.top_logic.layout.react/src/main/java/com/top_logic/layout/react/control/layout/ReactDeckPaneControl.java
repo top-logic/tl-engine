@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.AgentControl;
+import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -143,30 +143,13 @@ public class ReactDeckPaneControl extends ReactControl {
 		}
 	}
 
-	@Override
-	protected void propagateAttach() {
-		super.propagateAttach();
-		ReactControl content = _childCache.get(Integer.valueOf(_activeIndex));
-		if (content != null) {
-			content.attach();
-		}
-	}
-
-	@Override
-	protected void propagateDetach() {
-		super.propagateDetach();
-		ReactControl content = _childCache.get(Integer.valueOf(_activeIndex));
-		if (content != null) {
-			content.detach();
-		}
-	}
-
+	/**
+	 * Also disposes the panes built earlier but not displayed right now: only the active one is part
+	 * of the state, the others are only reachable through the cache.
+	 */
 	@Override
 	protected void cleanupChildren() {
-		ReactControl active = _childCache.get(Integer.valueOf(_activeIndex));
-		if (active != null) {
-			active.detach();
-		}
+		super.cleanupChildren();
 		for (ReactControl cached : _childCache.values()) {
 			cached.cleanupTree();
 		}
@@ -199,9 +182,9 @@ public class ReactDeckPaneControl extends ReactControl {
 	 * addresses encode which card they belong to.
 	 */
 	@Override
-	public String agentChildSlot(ReactControl child) {
+	public String scriptingChildSlot(ReactControl child) {
 		if (child == getState(ACTIVE_CHILD)) {
-			return AgentControl.slotSegment("pane", Integer.toString(_activeIndex));
+			return ScriptingControl.slotSegment("pane", Integer.toString(_activeIndex));
 		}
 		return null;
 	}

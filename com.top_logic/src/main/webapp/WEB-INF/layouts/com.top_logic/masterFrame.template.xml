@@ -15,10 +15,8 @@
 		components="${components}"
 		dialogs="${dialogs}"
 		horizontal="false"
-		icon="/images/favicon.png"
 		name="masterFrame"
 		resizable="false"
-		shortcutIcon="/images/favicon.png"
 		titleKey="tl.title"
 	>
 		<component-resolvers>

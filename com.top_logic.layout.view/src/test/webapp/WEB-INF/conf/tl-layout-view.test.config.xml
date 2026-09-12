@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+	</services>
+
+	<configs>
+		<!-- The type system of the knowledge base test scenario, in which the tests of the view
+			model observe object changes. -->
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="TestTypes" class="com.top_logic.knowledge.service.TypeSystemSetup">
+					<declarations>
+						<declaration resource="webinf://kbase/BasicMeta.xml"/>
+					</declarations>
+					<providers>
+						<provider name="basic">
+							<impl class="com.top_logic.knowledge.service.db2.BasicTypeProvider" />
+						</provider>
+					</providers>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

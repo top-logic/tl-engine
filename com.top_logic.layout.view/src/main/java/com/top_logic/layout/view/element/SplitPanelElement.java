@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -27,9 +30,9 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl.ChildConstraint;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 
@@ -41,6 +44,7 @@ import com.top_logic.layout.view.ViewContext;
  * its size, unit, and content elements.
  * </p>
  */
+@InApp
 public class SplitPanelElement implements UIElement {
 
 	/**
@@ -127,6 +131,7 @@ public class SplitPanelElement implements UIElement {
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
+		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 
@@ -151,6 +156,13 @@ public class SplitPanelElement implements UIElement {
 				return new PaneEntry(paneConfig.getSize(), paneConfig.getUnit(),
 					paneConfig.getMinSize(), children);
 			})
+			.collect(Collectors.toList());
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return _panes.stream()
+			.map(pane -> ChildGroup.elements(pane._children()))
 			.collect(Collectors.toList());
 	}
 
@@ -323,13 +335,7 @@ public class SplitPanelElement implements UIElement {
 	}
 
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context) {
-		if (elements.size() == 1) {
-			return (ReactControl) elements.get(0).createControl(context);
-		}
-		List<ReactControl> children = elements.stream()
-			.map(e -> (ReactControl) e.createControl(context))
-			.collect(Collectors.toList());
-		return new ReactStackControl(context, children);
+		return ContentControls.toControl(elements, context);
 	}
 
 	private record PaneEntry(float _size, DisplayUnit _unit, int _minSize, List<UIElement> _children) {

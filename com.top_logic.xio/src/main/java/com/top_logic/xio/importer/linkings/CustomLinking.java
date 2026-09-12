@@ -10,11 +10,9 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.util.model.ModelService;
 import com.top_logic.xio.importer.binding.ImportContext;
+import com.top_logic.xio.importer.binding.ModelBinding;
 import com.top_logic.xio.importer.binding.ObjectLinking;
 import com.top_logic.xio.importer.handlers.ConfiguredImportPart;
 
@@ -43,7 +41,7 @@ public class CustomLinking<C extends CustomLinking.Config<?>> extends AbstractCo
 		Expr getExpr();
 	}
 
-	private QueryExecutor _expr;
+	private final Expr _expr;
 
 	/**
 	 * Creates a {@link CustomLinking} from configuration.
@@ -57,13 +55,18 @@ public class CustomLinking<C extends CustomLinking.Config<?>> extends AbstractCo
 	public CustomLinking(InstantiationContext context, C config) {
 		super(context, config);
 
-		_expr = QueryExecutor.compile(PersistencyLayer.getKnowledgeBase(), ModelService.getApplicationModel(),
-			config.getExpr());
+		_expr = config.getExpr();
 	}
 
+	/**
+	 * @implNote Evaluates through the {@link ModelBinding} of the import (instead of an own
+	 *           {@link com.top_logic.model.search.expr.query.QueryExecutor}), so that the security
+	 *           setting of the import applies to this expression as well, see
+	 *           {@link com.top_logic.xio.importer.binding.AbstractModelBinding#usesSecurity()}.
+	 */
 	@Override
 	public void linkOrElse(ImportContext context, Object scope, Object target, Runnable continuation) {
-		context.deref(scope, s -> context.deref(target, t -> _expr.execute(s, t)));
+		context.deref(scope, s -> context.deref(target, t -> context.eval(_expr, s, t)));
 	}
 
 }

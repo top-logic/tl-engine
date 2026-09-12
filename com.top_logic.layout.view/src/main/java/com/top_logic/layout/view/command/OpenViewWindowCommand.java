@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -38,6 +39,7 @@ import com.top_logic.util.Resources;
  * than open duplicates.
  * </p>
  */
+@InApp
 public class OpenViewWindowCommand implements ViewCommand {
 
 	/**
@@ -163,7 +165,7 @@ public class OpenViewWindowCommand implements ViewCommand {
 		} catch (ConfigurationException ex) {
 			throw new RuntimeException("Failed to load window view: " + _viewPath, ex);
 		}
-		ViewContext viewContext = new DefaultViewContext(windowContext);
+		ViewContext viewContext = new DefaultViewContext(windowContext, _viewPath);
 		return (ReactControl) view.createControl(viewContext);
 	}
 }

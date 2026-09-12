@@ -12,9 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.table.filter.TextFilterState;
+
 /**
- * The serializable, per-user view state of a table: column order, widths, frozen count,
- * sort, filters, grouping, expansion, selection and paging.
+ * The serializable, per-user view state of a table: column order and selection, widths, frozen
+ * count, sort, filters, the free-text search, grouping, expansion, selection and paging.
  *
  * <p>
  * This single value object is both the personalization payload persisted via a
@@ -31,6 +33,8 @@ public class TableViewState {
 
 	private List<String> _columnOrder = new ArrayList<>();
 
+	private Set<String> _hiddenColumns = new LinkedHashSet<>();
+
 	private Map<String, Integer> _widths = new LinkedHashMap<>();
 
 	private int _frozenCount;
@@ -38,6 +42,8 @@ public class TableViewState {
 	private List<SortColumn> _sort = new ArrayList<>();
 
 	private Map<String, FilterState> _filters = new LinkedHashMap<>();
+
+	private TextFilterState _search;
 
 	private GroupSpec _grouping = GroupSpec.NONE;
 
@@ -61,6 +67,27 @@ public class TableViewState {
 	 */
 	public void setColumnOrder(List<String> columnOrder) {
 		_columnOrder = columnOrder;
+	}
+
+	/**
+	 * The columns the user removed from the display, by {@link Column#name() name}.
+	 *
+	 * <p>
+	 * A column missing from {@link #getColumnOrder()} is not enough to tell apart the two ways a
+	 * column can be absent: the user hid it, or it did not yet exist when this state was persisted.
+	 * Only the ones named here stay hidden when the state is restored; anything else the table
+	 * defines is appended as a new column.
+	 * </p>
+	 */
+	public Set<String> getHiddenColumns() {
+		return _hiddenColumns;
+	}
+
+	/**
+	 * @see #getHiddenColumns()
+	 */
+	public void setHiddenColumns(Set<String> hiddenColumns) {
+		_hiddenColumns = hiddenColumns;
 	}
 
 	/**
@@ -117,6 +144,27 @@ public class TableViewState {
 	 */
 	public void setFilters(Map<String, FilterState> filters) {
 		_filters = filters;
+	}
+
+	/**
+	 * The term of the active cross-column free-text search, or {@code null} for no search.
+	 *
+	 * <p>
+	 * Only the term is held here - the pattern together with its matching flags. Which columns
+	 * it examines is derived where the search is applied, from {@link #getColumnOrder()}: the
+	 * search looks into the columns the user currently sees, so showing or hiding a column
+	 * changes what it finds.
+	 * </p>
+	 */
+	public TextFilterState getSearch() {
+		return _search;
+	}
+
+	/**
+	 * @see #getSearch()
+	 */
+	public void setSearch(TextFilterState search) {
+		_search = search;
 	}
 
 	/**

@@ -6,8 +6,8 @@
 	namePrefix="SecuritySearch"
 	searchResultComponent="com.top_logic.demo/security/search/result/securitySearchResult.layout.xml#SecuritySearchAttributedSearchResultTable"
 >
-	<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
-		function="`DemoSecurity#ROOT`"
+	<securityObject class="com.top_logic.tool.boundsec.securityObjectProvider.ModuleSingletonSecurityProvider"
+		module="DemoSecurity"
 	/>
 	<modelBuilder class="com.top_logic.element.layout.meta.search.DefaultConfigurableSearchModelBuilder">
 		<elements>

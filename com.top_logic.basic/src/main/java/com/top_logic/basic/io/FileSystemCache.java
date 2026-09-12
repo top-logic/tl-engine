@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
@@ -17,7 +19,27 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
+@Label("File system cache")
 public abstract class FileSystemCache extends ManagedClass {
+
+	/**
+	 * Typed configuration interface definition for {@link FileSystemCache}.
+	 */
+	public interface Config extends ServiceConfiguration<FileSystemCache> {
+		// configuration interface definition
+	}
+
+	/**
+	 * Create a {@link FileSystemCache}.
+	 * 
+	 * @param context
+	 *        the {@link InstantiationContext} to create the new object in
+	 * @param config
+	 *        the configuration object to be used for instantiation
+	 */
+	public FileSystemCache(InstantiationContext context, Config config) {
+		super(context, config);
+	}
 
 	/**
 	 * Whether this instance does caching at all.

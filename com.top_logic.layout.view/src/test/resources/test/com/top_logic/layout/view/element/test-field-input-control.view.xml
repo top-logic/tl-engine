@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+  <channels>
+    <channel name="selectedItem"/>
+  </channels>
+
+  <form input="selectedItem">
+    <children>
+      <field attribute="secret">
+        <input-control class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+      </field>
+    </children>
+  </form>
+</view>

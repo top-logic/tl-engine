@@ -24,6 +24,7 @@ import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl.Tile;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CommandScope;
@@ -107,6 +108,11 @@ public class DashboardElement implements UIElement {
 				_tiles.add(tile);
 			}
 		}
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(List.<UIElement> copyOf(_tiles)));
 	}
 
 	@Override

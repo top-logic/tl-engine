@@ -15,7 +15,8 @@ import com.top_logic.layout.react.control.table.ReactResourceCellControl;
  *
  * <p>
  * Uses {@link MetaResourceProvider} to resolve label, icon, tooltip, and CSS class, and renders
- * them via {@link ReactResourceCellControl}.
+ * them via {@link ReactResourceCellControl}. The value becomes a link where the application
+ * displays objects of its type.
  * </p>
  */
 public class MetaResourceControlProvider implements ReactControlProvider {
@@ -25,6 +26,6 @@ public class MetaResourceControlProvider implements ReactControlProvider {
 
 	@Override
 	public ReactControl createControl(ReactContext context, Object model) {
-		return new ReactResourceCellControl(context, model, MetaResourceProvider.INSTANCE, true, true, false);
+		return new ReactResourceCellControl(context, model, MetaResourceProvider.INSTANCE, true, true, true);
 	}
 }

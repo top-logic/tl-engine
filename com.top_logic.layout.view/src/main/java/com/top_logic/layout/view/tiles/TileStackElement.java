@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -170,9 +171,14 @@ public class TileStackElement implements UIElement {
 	}
 
 	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.view(Config.INITIAL, _initialViewRef));
+	}
+
+	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel pathChannel = context.resolveChannel(_pathRef);
 		TileStackScope scope = new TileStackScope(pathChannel, _frameRoutes);
-		return new ReactTileStackControl(context, pathChannel, scope, _initialViewRef, _bindPathTo);
+		return new ReactTileStackControl(context, this, pathChannel, scope, _initialViewRef, _bindPathTo);
 	}
 }

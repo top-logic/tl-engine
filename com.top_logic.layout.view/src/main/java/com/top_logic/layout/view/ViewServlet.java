@@ -221,7 +221,7 @@ public class ViewServlet extends TopLogicServlet {
 		ReactDialogManagerControl dialogs = new ReactDialogManagerControl(baseContext);
 		ReactContext displayContext = withWindowContextMenu(
 			withWindowErrorSink(baseContext, snackbar), createWindowMenuOpener(menu));
-		ViewContext viewContext = new DefaultViewContext(displayContext);
+		ViewContext viewContext = new DefaultViewContext(displayContext, viewPath);
 
 		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
 			(ReactControl) view.createControl(viewContext));

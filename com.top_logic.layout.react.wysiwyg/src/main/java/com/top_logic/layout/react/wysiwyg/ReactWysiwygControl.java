@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +21,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.layout.DisplayContext;
@@ -28,8 +29,23 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
+import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CliqueRegistry;
+import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ToolbarBuilder;
+import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
@@ -43,6 +59,13 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
+ * Beside its formatting buttons, the editor's toolbar carries the commands it was created with.
+ * They run in a context of their own, derived from the one the editor is displayed in: they see
+ * the channels of that view, plus the editor's insertion channel where one is named. Text written
+ * to that channel is inserted at the cursor.
+ * </p>
+ *
+ * <p>
  * Image URLs are rewritten when sending HTML to the client: bare filenames in
  * {@code <img src="file.png">} become full download URLs
  * {@code <img src="/react-api/data?controlId=...&key=file.png">}. The reverse transformation is
@@ -51,32 +74,67 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class ReactWysiwygControl extends ReactFormFieldControl implements UploadHandler, DataProvider {
 
+	/**
+	 * Command sent when the user follows an {@link TLObjectLinkUtil#TL_OBJECT object link} in
+	 * displayed content.
+	 */
+	private static final String CMD_SHOW_OBJECT_LINK = "showObjectLink";
+
+	/**
+	 * The {@link #CMD_SHOW_OBJECT_LINK} argument naming the object to display.
+	 */
+	private static final String ARG_HREF = "href";
+
+	/**
+	 * State holding the toolbar of configured commands, a child control the client renders beside
+	 * the editor's formatting buttons.
+	 *
+	 * <p>
+	 * Absent while the editor has no command placed in a toolbar, which is how the client knows
+	 * to render its own buttons alone.
+	 * </p>
+	 */
 	private static final String TOOLBAR = "toolbar";
+
+	/**
+	 * State asking the client to insert markup at the cursor, an object holding {@link #INSERT_SEQ}
+	 * and {@link #INSERT_HTML}.
+	 *
+	 * <p>
+	 * A request, not a value: it is set for one insertion and taken back as soon as the client
+	 * reports the text it produced. See {@link #applyRawClientValue(Object)}.
+	 * </p>
+	 */
+	private static final String INSERT = "insert";
+
+	/**
+	 * Field of {@link #INSERT} counting the insertions, so that inserting the same markup twice is
+	 * two requests and not one.
+	 */
+	private static final String INSERT_SEQ = "seq";
+
+	/** Field of {@link #INSERT} holding the markup to insert at the cursor. */
+	private static final String INSERT_HTML = "html";
 
 	private static final String IMAGE_URL = "imageUrl";
 
 	private static final String KEY_PARAM = "&key=";
-
-	private static final List<String> DEFAULT_TOOLBAR = Arrays.asList(
-		"bold", "italic", "underline", "strike",
-		"|",
-		"heading",
-		"|",
-		"bulletList", "orderedList", "blockquote",
-		"|",
-		"link", "image", "table", "codeBlock",
-		"|",
-		"color",
-		"|",
-		"undo", "redo"
-	);
 
 	private final String _imageUrlPrefix;
 
 	private StructuredText _shadowCopy;
 
 	/**
-	 * Creates a new {@link ReactWysiwygControl}.
+	 * The channel whose text is inserted at the cursor, or {@code null} where the configuration
+	 * named none.
+	 */
+	private final DefaultViewChannel _insertChannel;
+
+	/** Number of insertions requested so far, the value of {@link #INSERT_SEQ}. */
+	private int _insertions;
+
+	/**
+	 * Creates a {@link ReactWysiwygControl} that formats text and offers no commands of its own.
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
@@ -84,6 +142,27 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 *        The field model holding the {@link StructuredText} value.
 	 */
 	public ReactWysiwygControl(ReactContext context, FieldModel model) {
+		this(context, model, List.of(), List.of(), null);
+	}
+
+	/**
+	 * Creates a {@link ReactWysiwygControl}.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param model
+	 *        The field model holding the {@link StructuredText} value.
+	 * @param commands
+	 *        The commands the toolbar offers beside the formatting buttons; those placed in a
+	 *        toolbar are rendered.
+	 * @param commandConfigs
+	 *        The configurations the commands were created from, in the same order.
+	 * @param insertChannel
+	 *        Name of the channel whose text is inserted at the cursor, or {@code null} for an
+	 *        editor whose commands write no text.
+	 */
+	public ReactWysiwygControl(ReactContext context, FieldModel model, List<ViewCommand> commands,
+			List<ViewCommand.Config> commandConfigs, String insertChannel) {
 		super(context, model, "TLWysiwygEditor");
 
 		_imageUrlPrefix = context.getContextPath() + "/react-api/data?controlId=" + getID()
@@ -91,7 +170,80 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 
 		initShadowCopy();
 		putState(VALUE, rewriteImageUrls(extractHtml(_shadowCopy)));
-		putState(TOOLBAR, DEFAULT_TOOLBAR);
+
+		_insertChannel = insertChannel == null ? null : new DefaultViewChannel(insertChannel);
+		if (_insertChannel != null) {
+			_insertChannel.addListener((sender, oldValue, newValue) -> textWritten(newValue));
+		}
+
+		if (commands.isEmpty()) {
+			return;
+		}
+		if (!(context instanceof ViewContext viewContext)) {
+			// The commands name the channels they work on, and outside a view there are none to
+			// name. Nothing can be built that would run.
+			Logger.warn("Editor commands are configured outside a view and are therefore not offered.",
+				ReactWysiwygControl.class);
+			return;
+		}
+
+		createToolbar(_insertChannel == null ? viewContext
+			: viewContext.withLocalChannel(insertChannel, _insertChannel), commands, commandConfigs);
+	}
+
+	/**
+	 * Offers the given commands in the editor's own toolbar, as far as they are placed in one.
+	 *
+	 * <p>
+	 * The buttons show their icon alone and their label as tooltip, the presentation of the
+	 * formatting buttons they stand beside. A command asking for a presentation of its own keeps
+	 * it.
+	 * </p>
+	 */
+	private void createToolbar(ViewContext context, List<ViewCommand> commands,
+			List<ViewCommand.Config> commandConfigs) {
+		List<ViewCommandModel> models = ViewCommands.buildCommandModels(context, commands, commandConfigs);
+		ReactToolbarControl toolbar = ToolbarBuilder.build(context, new CommandScope(models),
+			CommandPlacement.TOOLBAR, new CliqueRegistry(), ButtonDisplayMode.ICON_ONLY);
+		if (toolbar == null) {
+			return;
+		}
+		putState(TOOLBAR, toolbar);
+		ViewCommands.registerLifecycle(context, models, this);
+	}
+
+	/**
+	 * The channel whose text the editor inserts at the cursor, {@code null} where the
+	 * configuration named none.
+	 *
+	 * <p>
+	 * The editor registers it beside the channels of the view its commands see, so that writing
+	 * markup there is the same as a command of the editor producing it.
+	 * </p>
+	 */
+	public ViewChannel getInsertChannel() {
+		return _insertChannel;
+	}
+
+	/**
+	 * Inserts the text a command wrote to the {@link #getInsertChannel() insertion channel}.
+	 *
+	 * <p>
+	 * The channel is cleared afterwards, so that writing the same markup again is another
+	 * insertion rather than a value the channel already holds.
+	 * </p>
+	 */
+	private void textWritten(Object written) {
+		if (written == null) {
+			return;
+		}
+		if (!(written instanceof String html)) {
+			Logger.warn("Insertion channel was written " + written.getClass().getName()
+				+ ", which is no markup to insert.", ReactWysiwygControl.class);
+			return;
+		}
+		insertAtCursor(html);
+		_insertChannel.set(null);
 	}
 
 	private void initShadowCopy() {
@@ -219,6 +371,55 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			return "";
 		}
 		return text.getSourceCode();
+	}
+
+	/**
+	 * Displays the object an {@link TLObjectLinkUtil#TL_OBJECT object link} in the shown content
+	 * points at.
+	 */
+	@ReactCommandHandler(value = CMD_SHOW_OBJECT_LINK,
+		params = @ReactParam(name = ARG_HREF, required = true,
+			description = "The link destination naming the object to display."))
+	void handleShowObjectLink(ReactContext context, Map<String, Object> arguments) {
+		ObjectLinks.follow(context, (String) arguments.get(ARG_HREF));
+	}
+
+	/**
+	 * Asks the client to insert the given markup at the cursor of the editor.
+	 *
+	 * <p>
+	 * The request stands until the client has carried it out and reported the text it produced,
+	 * whereupon it is taken back. Requesting an insertion of markup already inserted is therefore
+	 * a second insertion and not a repetition of the first.
+	 * </p>
+	 *
+	 * @param html
+	 *        The markup to insert.
+	 */
+	public void insertAtCursor(String html) {
+		Map<String, Object> insert = new LinkedHashMap<>();
+		insert.put(INSERT_SEQ, Integer.valueOf(++_insertions));
+		insert.put(INSERT_HTML, html);
+		putState(INSERT, insert);
+	}
+
+	/**
+	 * Applies the text the client sends and takes back what was asked of it.
+	 *
+	 * <p>
+	 * The text is the answer to a pending {@link #INSERT} request: the markup is part of the
+	 * content now, so the request is dropped - a client mounting the editor anew would otherwise
+	 * carry it out a second time.
+	 * </p>
+	 */
+	@Override
+	protected void applyRawClientValue(Object rawValue) {
+		super.applyRawClientValue(rawValue);
+
+		if (getState(INSERT) == null) {
+			return;
+		}
+		putState(INSERT, null);
 	}
 
 	private String uniqueImageKey(String name) {

@@ -23,6 +23,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.command.ViewCommands;
 
 /**
  * Abstract base for {@link UIElement}s that carry {@link ViewCommand} configurations.
@@ -102,14 +103,7 @@ public abstract class CommandCarrierElement extends ContainerElement {
 	 */
 	protected static List<ViewCommandModel> buildCommandModels(ViewContext context,
 			List<ViewCommand> commands, List<ViewCommand.Config> commandConfigs) {
-		List<ViewCommandModel> models = new ArrayList<>();
-		for (int i = 0; i < commands.size() && i < commandConfigs.size(); i++) {
-			ViewCommand cmd = commands.get(i);
-			ViewCommand.Config cmdConfig = commandConfigs.get(i);
-
-			models.add(ViewCommandModel.forCommand(context, cmd, cmdConfig));
-		}
-		return models;
+		return ViewCommands.buildCommandModels(context, commands, commandConfigs);
 	}
 
 	/**
@@ -121,16 +115,7 @@ public abstract class CommandCarrierElement extends ContainerElement {
 	 *        observation; read when the host attaches.
 	 */
 	protected void registerLifecycle(ViewContext context, List<ViewCommandModel> models, ReactControl host) {
-		host.addAttachListener(() -> {
-			for (ViewCommandModel model : models) {
-				model.attach(context.getModelScope());
-			}
-		});
-		host.addDetachListener(() -> {
-			for (ViewCommandModel model : models) {
-				model.detach();
-			}
-		});
+		ViewCommands.registerLifecycle(context, models, host);
 	}
 
 	/**

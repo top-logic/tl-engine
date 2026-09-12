@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+  <tab-bar>
+    <tab id="first">
+      <stack direction="column" />
+    </tab>
+    <tab id="second">
+      <view-ref view="nav-item.view.xml" />
+    </tab>
+    <tab id="third">
+      <view-ref view="nav-item.view.xml" />
+    </tab>
+  </tab-bar>
+</view>

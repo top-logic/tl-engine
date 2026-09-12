@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!--
+	Shows the two document viewers of the React UI - the photo viewer (<image>) and the PDF viewer
+	(<pdf>) - exchanged by a <switch>. The toolbar commands write the kind of document to show into
+	the "document" channel, which drives both sides of the exchange: the <switch> chooses the viewer
+	by it, and the derived "current" channel the viewers display is computed from it. Both therefore
+	change within the same notification - the viewer being replaced sees the new document value.
+	
+	The documents are produced server-side by TL-Script: the picture by binary() from an inline SVG
+	source, the PDF by pdfFile() from an HTML source. An Office viewer would instead convert
+	.docx/.xlsx/.pptx to PDF here.
+-->
 <view>
 	<channels>
-		<!--
-			Demo PDF source: pdfFile() renders the given HTML to a PDF BinaryData server-side
-			(flying-saucer). An Office viewer would instead convert .docx/.xlsx/.pptx to PDF here.
-		-->
-		<derived-channel name="pdf"
-			expr="pdfFile('&lt;html>&lt;body style=&quot;font-family: sans-serif; padding: 2em;&quot;>&lt;h1>TopLogic PDF Viewer&lt;/h1>&lt;p>This PDF is rendered server-side via the &lt;code>pdfFile()&lt;/code> TL-Script function and displayed inline by the React &lt;code>TLPdfViewer&lt;/code> control.&lt;/p>&lt;p>The same control is the rendering target for an Office-document viewer that converts Word, Excel or PowerPoint files to PDF.&lt;/p>&lt;/body>&lt;/html>')"
+		<channel name="document"/>
+		<derived-channel name="current"
+			expr="mode -> switch { $mode == 'image': binary(name: 'sample.svg', data: '&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;320&quot; height=&quot;200&quot; viewBox=&quot;0 0 320 200&quot;>&lt;rect width=&quot;320&quot; height=&quot;200&quot; fill=&quot;#1d4ed8&quot;/>&lt;circle cx=&quot;160&quot; cy=&quot;88&quot; r=&quot;56&quot; fill=&quot;#fbbf24&quot;/>&lt;text x=&quot;160&quot; y=&quot;178&quot; font-family=&quot;sans-serif&quot; font-size=&quot;22&quot; fill=&quot;#ffffff&quot; text-anchor=&quot;middle&quot;>Sample image&lt;/text>&lt;/svg>', contentType: 'image/svg+xml'); $mode == 'pdf': pdfFile('&lt;html>&lt;body style=&quot;font-family: sans-serif; padding: 2em;&quot;>&lt;h1>TopLogic PDF Viewer&lt;/h1>&lt;p>This PDF is rendered server-side via the &lt;code>pdfFile()&lt;/code> TL-Script function and displayed inline by the React &lt;code>TLPdfViewer&lt;/code> control.&lt;/p>&lt;p>The same control is the rendering target for an Office-document viewer that converts Word, Excel or PowerPoint files to PDF.&lt;/p>&lt;/body>&lt;/html>'); default: null; }"
+			inputs="document"
 		/>
 	</channels>
 	<panel>
@@ -15,6 +24,60 @@
 			<en>PDF Viewer Demo</en>
 			<de>PDF-Viewer-Demo</de>
 		</title>
-		<pdf input="pdf"/>
+		<commands>
+			<generic-command
+				image="css:bi bi-image"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Show image</en>
+					<de>Bild anzeigen</de>
+				</label>
+				<execute-script function="x -> 'image'"/>
+				<write-channel name="document"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-file-earmark-pdf"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Show PDF</en>
+					<de>PDF anzeigen</de>
+				</label>
+				<execute-script function="x -> 'pdf'"/>
+				<write-channel name="document"/>
+			</generic-command>
+		</commands>
+		<inset>
+			<text>
+				<label>
+					<en>The toolbar chooses the document: "Show image" displays an SVG picture in the photo viewer, "Show PDF" a generated PDF in the PDF viewer. Each change swaps the whole viewer, since both are cases of one switch.</en>
+					<de>Die Symbolleiste wählt das Dokument: „Bild anzeigen“ zeigt eine SVG-Grafik im Foto-Viewer, „PDF anzeigen“ ein erzeugtes PDF im PDF-Viewer. Jeder Wechsel tauscht den kompletten Viewer aus, da beide Fälle eines Switch sind.</de>
+				</label>
+			</text>
+		</inset>
+		<switch input="document">
+			<case test="d -> $d == 'image'">
+				<image input="current">
+					<alt>
+						<en>A blue square with a yellow circle, captioned "Sample image".</en>
+						<de>Ein blaues Quadrat mit gelbem Kreis, beschriftet mit „Sample image“.</de>
+					</alt>
+				</image>
+			</case>
+			<case test="d -> $d == 'pdf'">
+				<pdf input="current"/>
+			</case>
+			<default>
+				<inset>
+					<text>
+						<label>
+							<en>No document selected. Choose "Show image" or "Show PDF" in the toolbar.</en>
+							<de>Kein Dokument gewählt. Wählen Sie „Bild anzeigen“ oder „PDF anzeigen“ in der Symbolleiste.</de>
+						</label>
+					</text>
+				</inset>
+			</default>
+		</switch>
 	</panel>
 </view>

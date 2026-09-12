@@ -297,8 +297,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 */
 	private void sendCurrentState() {
 		_silentChanges = false;
-		if (_disposed) {
-			// The client has already unmounted this control; drop the trailing update.
+		if (!receivesUpdates()) {
 			return;
 		}
 		StateEvent event = StateEvent.create()
@@ -824,11 +823,18 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * Sets a single value in the React state.
 	 *
 	 * <p>
-	 * If this control is already attached to an SSE queue (i.e. rendered), a {@link PatchEvent} is
-	 * sent to the client. Before rendering, the value simply becomes part of the initial render.
-	 * Within {@link #updateStateSilently(Runnable)} — and during state serialization, where the
-	 * written state reaches the client as part of the rendered output — the change is recorded
-	 * without an event.
+	 * If this control is rendered and displayed, a {@link PatchEvent} is sent to the client. Before
+	 * rendering, the value simply becomes part of the initial render. Within
+	 * {@link #updateStateSilently(Runnable)} — and during state serialization, where the written
+	 * state reaches the client as part of the rendered output — the change is recorded without an
+	 * event.
+	 * </p>
+	 *
+	 * <p>
+	 * A control that is not {@link #isAttached() displayed} records the value without an event as
+	 * well: the client shows no component the event could address, and the value reaches it with the
+	 * full state the control is serialized with when it becomes displayed again. See
+	 * {@link #receivesUpdates()}.
 	 * </p>
 	 *
 	 * @param key
@@ -937,14 +943,36 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	private void sendPatch(Map<String, Object> patch) {
-		if (_disposed) {
-			// The client has already unmounted this control; drop the trailing update.
+		if (!receivesUpdates()) {
 			return;
 		}
 		PatchEvent event = PatchEvent.create()
 			.setControlId(getID())
 			.setPatch(toJsonString(_reactContext, patch));
 		requireSSEQueue().enqueue(event);
+	}
+
+	/**
+	 * Whether a state update of this control reaches the client.
+	 *
+	 * <p>
+	 * Only an {@link #isAttached() attached} control is displayed, and only for a displayed control
+	 * does the client hold a mounted component that an update can address. A container renders its
+	 * active content and {@link #detach() detaches} what it replaces, and a control that becomes
+	 * displayed again is serialized with its full state (see {@link #writeAsChild(JsonWriter)}), so
+	 * an update produced while detached is carried by that serialization. Sending it separately
+	 * would address a control the client has unmounted.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link #cleanupTree() disposed} control is detached as well, which is what lets it tolerate
+	 * the trailing updates a stale reference produces within the running interaction: the very
+	 * handler that triggered the disposal can continue on its own control, and an observer
+	 * notification iterating a listener snapshot may still deliver an event afterwards.
+	 * </p>
+	 */
+	private boolean receivesUpdates() {
+		return _attached;
 	}
 
 	private SSEUpdateQueue requireSSEQueue() {

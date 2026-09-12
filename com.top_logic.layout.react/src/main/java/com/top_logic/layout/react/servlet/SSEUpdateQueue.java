@@ -373,6 +373,20 @@ public class SSEUpdateQueue {
 	}
 
 	/**
+	 * The number of events waiting for a client: enqueued, but not yet written to a connection.
+	 *
+	 * <p>
+	 * An {@link #enqueue(SSEEvent) enqueued} event is removed only once it has been written, so
+	 * without a {@link #setConnection(AsyncContext) connection} this counts everything the queue has
+	 * been handed. That makes it the seam for observing what a control sends: a count that does not
+	 * move across an interaction is the proof that no event was produced.
+	 * </p>
+	 */
+	public int pendingEventCount() {
+		return _pendingEvents.size();
+	}
+
+	/**
 	 * Enqueues an event and immediately flushes it to the connected SSE client.
 	 */
 	public void enqueue(SSEEvent event) {

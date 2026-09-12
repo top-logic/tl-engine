@@ -24,7 +24,6 @@ import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.AdaptiveDetailElement.Config;
 import com.top_logic.layout.view.navigation.RevealPath;
@@ -225,12 +224,7 @@ public class ReactAdaptiveDetailControl extends ReactControl implements ChildRev
 		putState(BREADCRUMB, buildBreadcrumb());
 		commitUpdate(token);
 		if (old != null && old != built) {
-			// A rebuild is typically triggered from inside the selection channel's listener
-			// notification, where the old presentation's controls (a selector table, a detail form)
-			// may still be pending in the channel's listener snapshot. Disposing them synchronously
-			// would let those listeners run on a torn-down control, so disposal is deferred until
-			// the notification has unwound.
-			ChannelNotificationScope.current().afterNotification(old::cleanupTree);
+			ContentControls.retire(old);
 		}
 	}
 

@@ -143,5 +143,15 @@
 		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
 			<startPage>/view/</startPage>
 		</config>
+		<config config:interface="com.top_logic.layout.view.ViewConfig">
+			<!--
+				A second view a URL may load top-level, besides the default view: the PDF demo is
+				self-contained, so it shows the same thing in a browser tab of its own as it does
+				inside the application shell.
+			-->
+			<entry-points>
+				<entry-point view="demo/pdf-demo.view.xml"/>
+			</entry-points>
+		</config>
 	</configs>
 </application>

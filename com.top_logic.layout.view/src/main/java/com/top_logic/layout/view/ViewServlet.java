@@ -72,7 +72,10 @@ import com.top_logic.util.TopLogicServlet;
  * <ul>
  * <li>{@code /view/} - Serves the window-name bootstrap page</li>
  * <li>{@code /view/<windowName>/} - Renders the default view for the given tab</li>
- * <li>{@code /view/<windowName>/some.view.xml} - Renders a specific view for the given tab</li>
+ * <li>{@code /view/<windowName>/some.view.xml} - Renders a specific view for the given tab. Only
+ * the default view and the views the application registers as {@link ViewConfig#getEntryPoints()}
+ * can be named here; any other view file is answered with
+ * {@link HttpServletResponse#SC_NOT_FOUND}.</li>
  * </ul>
  *
  * <p>
@@ -186,7 +189,12 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		String viewPath = resolveViewPath(pathInfo);
+		ViewConfig viewConfig = ApplicationConfig.getInstance().getConfig(ViewConfig.class);
+		String viewPath = resolveViewPath(viewConfig, pathInfo);
+		if (viewPath == null) {
+			response.sendError(HttpServletResponse.SC_NOT_FOUND, "No such entry point.");
+			return;
+		}
 
 		ViewElement view;
 		try {
@@ -513,25 +521,54 @@ public class ViewServlet extends TopLogicServlet {
 	 * Resolves the view file path from the request's path info.
 	 *
 	 * <p>
-	 * Skips the first path segment (window name) and uses the rest as the view file name. When no
-	 * view file is specified, falls back to the default view configured in
-	 * {@link ViewConfig#getDefaultView()}.
+	 * Skips the first path segment (window name) and uses the rest as the view file name. A
+	 * remainder that does not name a view file is a route path handled by the
+	 * {@link RouteManager}, so the default view is loaded and the route resolved inside it.
 	 * </p>
+	 *
+	 * <p>
+	 * A named view is loaded only where the application declares it as an entry point: the
+	 * {@link ViewConfig#getDefaultView()} or one of the {@link ViewConfig#getEntryPoints()}. Every
+	 * other view file is a fragment of a display, which the view enclosing it supplies with the
+	 * channels it reads, and naming it here is refused.
+	 * </p>
+	 *
+	 * @param config
+	 *        The application's view configuration, naming the views a URL may load.
+	 * @param pathInfo
+	 *        The path below the servlet, its first segment the window name.
+	 * @return The path of the view file to load, below {@link ViewLoader#VIEW_BASE_PATH}, or
+	 *         {@code null} if the path names a view that is no entry point.
 	 */
-	private String resolveViewPath(String pathInfo) {
+	public static String resolveViewPath(ViewConfig config, String pathInfo) {
 		// pathInfo is like /v1a2b3c/ or /v1a2b3c/app.view.xml or /v1a2b3c/config-editor
 		String path = pathInfo.substring(1);
 		int slashIdx = path.indexOf('/');
+		String defaultView = config.getDefaultView();
 		if (slashIdx >= 0 && slashIdx < path.length() - 1) {
 			String remainder = path.substring(slashIdx + 1);
 			// Only treat the remainder as a view file name if it ends with .view.xml.
 			// Everything else is a route path handled by the RouteManager.
-			if (!remainder.isEmpty() && remainder.endsWith(".view.xml")) {
+			if (remainder.endsWith(".view.xml")) {
+				if (!remainder.equals(defaultView) && !isEntryPoint(config, remainder)) {
+					return null;
+				}
 				return ViewLoader.VIEW_BASE_PATH + remainder;
 			}
 		}
-		String defaultView = ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView();
 		return ViewLoader.VIEW_BASE_PATH + defaultView;
+	}
+
+	/**
+	 * Whether the given view file is one of the application's registered entry points.
+	 */
+	private static boolean isEntryPoint(ViewConfig config, String view) {
+		for (ViewConfig.EntryPoint entryPoint : config.getEntryPoints()) {
+			if (view.equals(entryPoint.getView())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

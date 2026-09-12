@@ -12,6 +12,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.element.ContentControls;
 
@@ -40,7 +41,7 @@ public class TestContentControls extends TestCase {
 		super.setUp();
 
 		_queue = new SSEUpdateQueue();
-		ReactContext context = new DefaultReactContext("", "test", _queue);
+		ReactContext context = new DefaultReactContext("", "test", _queue, new ReactWindowRegistry("test"));
 		_content = new ReactControl(context, null, "TLPanel");
 		_content.write(new TagWriter());
 		_content.addCleanupAction(() -> _disposed = true);

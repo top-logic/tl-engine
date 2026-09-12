@@ -28,6 +28,7 @@ import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Tests that {@link ReactNumberInputControl} writes and reads its value through the field's number
@@ -205,7 +206,8 @@ public class TestReactNumberInputControl extends TestCase {
 	}
 
 	private static NumberControl control(Format format, Object value) {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue());
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test"));
 		return new NumberControl(context, new AbstractFieldModel(value), format);
 	}
 

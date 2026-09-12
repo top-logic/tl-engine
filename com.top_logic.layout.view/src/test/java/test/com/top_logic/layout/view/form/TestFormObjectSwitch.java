@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.FormControl;
@@ -136,7 +137,8 @@ public class TestFormObjectSwitch extends TestCase {
 	}
 
 	private static FormControl newForm(TLObject initialObject) {
-		return new FormControl(new DefaultReactContext("", "test", new SSEUpdateQueue()), initialObject,
+		return new FormControl(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test")), initialObject,
 			"no model", NoTokenHandling.INSTANCE);
 	}
 

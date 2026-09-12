@@ -20,6 +20,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.photo.ReactPhotoViewerControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -112,7 +113,8 @@ public class TestImageElement extends TestCase {
 		DefaultInstantiationContext instantiationContext = new DefaultInstantiationContext(TestImageElement.class);
 		ImageElement element = (ImageElement) instantiationContext.getInstance(config);
 
-		ViewContext context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue()));
+		ViewContext context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+				new ReactWindowRegistry("test")));
 		context.registerChannel(INPUT, channel);
 
 		return (ReactControl) element.createControl(context);

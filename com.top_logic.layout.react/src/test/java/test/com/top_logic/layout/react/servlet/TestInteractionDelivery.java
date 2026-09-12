@@ -42,7 +42,7 @@ public class TestInteractionDelivery extends TestCase {
 
 		_registry = new ReactWindowRegistry("test");
 		_queue = new SSEUpdateQueue();
-		ReactContext context = new DefaultReactContext("", "test", _queue);
+		ReactContext context = new DefaultReactContext("", "test", _queue, _registry);
 		_control = new ReactControl(context, null, "TLPanel");
 
 		// Rendering is what displays the control, which is the precondition for it being updated.

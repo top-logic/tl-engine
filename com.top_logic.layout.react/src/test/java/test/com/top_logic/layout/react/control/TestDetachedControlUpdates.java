@@ -12,6 +12,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Tests that a {@link ReactControl} sends a state change exactly while it is displayed.
@@ -35,7 +36,7 @@ public class TestDetachedControlUpdates extends TestCase {
 		super.setUp();
 
 		_queue = new SSEUpdateQueue();
-		ReactContext context = new DefaultReactContext("", "test", _queue);
+		ReactContext context = new DefaultReactContext("", "test", _queue, new ReactWindowRegistry("test"));
 		_control = new ReactControl(context, null, "TLPanel");
 	}
 

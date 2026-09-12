@@ -1,4 +1,4 @@
-import { React, useTLFieldValue } from 'tl-react-bridge';
+import { React, useTLFieldValue, useTLSubmitOnEnter } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -23,6 +23,9 @@ const VALUE_DEBOUNCE_MS = 300;
  * Typing updates the local value immediately. Since the server rewrites the text it is given (12,5
  * comes back as 12,50), state.sendValueOnBlur holds the value back until the field is left, so a
  * mid-edit round-trip cannot re-render the input from the normalized text.
+ *
+ * When state.submitOnEnter is set, Enter sends a 'submit' command carrying the text, so the server
+ * can run a command over the number that was entered.
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [value, setValue, flushValue] = useTLFieldValue({
@@ -39,6 +42,8 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   );
 
   const handleBlur = useCallback(() => { void flushValue(); }, [flushValue]);
+
+  const handleSubmitKey = useTLSubmitOnEnter();
 
   const text = value == null ? '' : String(value);
 
@@ -67,6 +72,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         value={text}
         onChange={handleChange}
         onBlur={handleBlur}
+        onKeyDown={handleSubmitKey}
         disabled={state.disabled === true}
         className={cls}
         aria-invalid={hasError || undefined}

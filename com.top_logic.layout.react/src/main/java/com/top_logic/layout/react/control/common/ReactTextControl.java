@@ -66,6 +66,13 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 	}
 
 	/**
+	 * The displayed text.
+	 */
+	public String getText() {
+		return (String) getState(TEXT);
+	}
+
+	/**
 	 * Updates the displayed text.
 	 */
 	public void setText(String text) {

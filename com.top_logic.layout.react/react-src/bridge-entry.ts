@@ -12,6 +12,7 @@ export {
   useTLUpload,
   useTLDataUrl,
   useTLFieldValue,
+  useTLSubmitOnEnter,
   createChildContext,
   TLControlContext,
   KeyboardScopeProvider,
@@ -20,7 +21,7 @@ export {
   useFocusTrap,
 } from './bridge/tl-react-bridge';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps } from './bridge/focus-trap';
-export { CMD_VALUE_CHANGED } from './bridge/command-channel';
+export { CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
 export { writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropPosition } from './bridge/drag-drop';
 export type { TLCellProps } from './bridge/types';

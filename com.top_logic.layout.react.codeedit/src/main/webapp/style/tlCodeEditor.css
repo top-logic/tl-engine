@@ -3,8 +3,8 @@
 	display: flex;
 	flex-direction: column;
 	border: 1px solid var(--border-subtle);
-	border-radius: var(--border-radius, 2px);
-	background: var(--field, #fff);
+	border-radius: var(--corner-radius);
+	background: var(--field);
 }
 
 .tlCodeEditor .cm-editor {
@@ -14,12 +14,12 @@
 }
 
 .tlCodeEditor:focus-within {
-	border-color: var(--focus, #0f62fe);
-	box-shadow: 0 0 0 1px var(--focus, #0f62fe);
+	border-color: var(--focus);
+	box-shadow: 0 0 0 1px var(--focus);
 }
 
 .tlCodeEditor--error {
-	border-color: var(--support-error, #da1e28);
+	border-color: var(--support-error);
 }
 
 .tlCodeEditor .cm-editor.cm-focused {
@@ -31,7 +31,7 @@
 }
 
 .tlCodeEditor .cm-content {
-	font-family: var(--font-family-mono, monospace);
+	font-family: var(--font-family-mono);
 }
 
 /*
@@ -53,24 +53,24 @@
 }
 
 .tlCodeEditor .cm-gutters {
-	background: var(--layer, #f4f4f4);
+	background: var(--layer);
 	border-right: 1px solid var(--border-subtle);
 	color: var(--text-secondary);
 }
 
 .tlCodeEditor .cm-activeLineGutter {
-	background: var(--layer-accent, #e0e0e0);
+	background: var(--layer-accent);
 	color: var(--layer-accent-text);
 }
 
 .tlCodeEditor .cm-activeLine {
-	background: var(--background-selected, rgba(0, 0, 0, 0.04));
+	background: var(--background-selected);
 }
 
 .tlCodeEditor .cm-diagnostic-error {
-	border-left-color: var(--support-error, #da1e28);
+	border-left-color: var(--support-error);
 }
 
 .tlCodeEditor .cm-diagnostic-warning {
-	border-left-color: var(--support-warning, #f1c21b);
+	border-left-color: var(--support-warning);
 }

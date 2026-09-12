@@ -10,12 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 
-import test.com.top_logic.basic.ModuleTestSetup;
-import test.com.top_logic.basic.module.ServiceTestSetup;
-
-import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.react.theme.UITheme;
 import com.top_logic.layout.react.theme.UIThemeService;
 
@@ -25,13 +20,7 @@ import com.top_logic.layout.react.theme.UIThemeService;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class TestReactStylesheetTokens extends TestCase {
-
-	/** The application configuration declaring the themes of the React UI. */
-	private static final String THEME_CONFIG = "/WEB-INF/conf/tl-react-theme.config.xml";
-
-	/** The theme every stylesheet is written against. */
-	private static final String DEFAULT_THEME = "default";
+public class TestReactStylesheetTokens extends AbstractStylesheetTokenTest {
 
 	/** The stylesheets audited. */
 	private static final List<String> STYLESHEETS =
@@ -44,19 +33,14 @@ public class TestReactStylesheetTokens extends TestCase {
 	private static final Set<String> ICON_GLYPHS =
 		Set.of(".tlAudioRecorder__icon--stop", ".tlPhotoCapture__cameraIcon");
 
-	/**
-	 * Every {@code var()} of the shipped stylesheets answers a theme token or a declaration of the
-	 * sheet itself, and every corner rounding reads a radius token.
-	 */
-	public void testStylesheetsKeepTheTokenContract() throws Exception {
-		Set<String> tokens = ThemeTokenAudit.themeTokens(THEME_CONFIG, DEFAULT_THEME).keySet();
+	@Override
+	protected List<String> stylesheets() {
+		return STYLESHEETS;
+	}
 
-		for (String stylesheet : STYLESHEETS) {
-			List<String> problems =
-				ThemeTokenAudit.audit(tokens, ThemeTokenAudit.stylesheet(stylesheet), ICON_GLYPHS);
-
-			assertEquals(stylesheet + ":\n" + String.join("\n", problems), List.of(), problems);
-		}
+	@Override
+	protected Set<String> allowedLiteralSelectors() {
+		return ICON_GLYPHS;
 	}
 
 	/**
@@ -128,13 +112,10 @@ public class TestReactStylesheetTokens extends TestCase {
 	}
 
 	/**
-	 * Test suite reading the shipped configuration and the shipped stylesheets from the web
-	 * application resources, with the {@link TypeIndex} resolving the tag names of the design
-	 * tokens.
+	 * @see AbstractStylesheetTokenTest#suite(Class)
 	 */
 	public static Test suite() {
-		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestReactStylesheetTokens.class, TypeIndex.Module.INSTANCE));
+		return AbstractStylesheetTokenTest.suite(TestReactStylesheetTokens.class);
 	}
 
 }

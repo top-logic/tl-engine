@@ -101,3 +101,37 @@ The audit is written against a theme configuration and a stylesheet handed to it
 web application resources (`ThemeTokenAudit.themeTokens`, `ThemeTokenAudit.stylesheet`), so an
 application module runs it over its own sheets and its own theme through the test-jar of
 `tl-layout-react`.
+
+A module audits its own sheets by subclassing
+`test.com.top_logic.layout.react.theme.AbstractStylesheetTokenTest`, which carries the audit and
+the theme it runs against. The subclass supplies the resource paths its sheets are served under
+(`stylesheets()`), a selector that rounds for a reason of its own (`allowedLiteralSelectors()`,
+empty by default) and a one-line suite:
+
+```java
+public class TestMyStylesheetTokens extends AbstractStylesheetTokenTest {
+
+	private static final List<String> STYLESHEETS = List.of("/style/tlMyControl.css");
+
+	@Override
+	protected List<String> stylesheets() {
+		return STYLESHEETS;
+	}
+
+	public static Test suite() {
+		return AbstractStylesheetTokenTest.suite(TestMyStylesheetTokens.class);
+	}
+}
+```
+
+The module's POM needs the test-jar of `tl-layout-react` (and the one of `tl-basic`, which the
+test setup comes from):
+
+```xml
+<dependency>
+	<groupId>com.top-logic</groupId>
+	<artifactId>tl-layout-react</artifactId>
+	<type>test-jar</type>
+	<scope>test</scope>
+</dependency>
+```

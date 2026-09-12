@@ -23,7 +23,10 @@ import com.top_logic.element.meta.kbbased.storage.mappings.BooleanMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.FloatMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.IntMapping;
+import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.layout.view.table.ScriptedFilter;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
@@ -37,6 +40,7 @@ import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
+import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.filter.TextColumnFilter;
 
 /**
@@ -136,6 +140,38 @@ public class TestColumnProviderService extends TestCase {
 			config().getDateTimeWidth(), customFilterColumn("timestamp").defaultWidth());
 		assertEquals("A reference with a filter of its own is shown in the label width.",
 			config().getLabelWidth(), customFilterColumn("owner").defaultWidth());
+	}
+
+	/**
+	 * A binding building a column of its own - a {@link ScriptedFilter} is one - asks for the width
+	 * the attribute's kind gives, so such a column is as wide as the type-derived one.
+	 */
+	public void testABindingBuildingItsOwnColumnAsksForTheKindWidth() {
+		ColumnProviderService service = ColumnProviderService.getInstance();
+
+		assertEquals("A whole number gives the number width.",
+			config().getNumberWidth(), service.defaultWidth(part("count")));
+		assertEquals("An unresolved attribute gives the label width.",
+			config().getLabelWidth(), service.defaultWidth(null));
+
+		assertEquals("The column such a binding builds is displayed in that width.",
+			config().getNumberWidth(), ownColumn("count", 0).defaultWidth());
+		assertEquals("A width configured at the column still wins.",
+			220, ownColumn("count", 220).defaultWidth());
+	}
+
+	/**
+	 * The column of a binding that builds its own, as {@code <table>} builds it: through the setup,
+	 * which applies a width configured at the column.
+	 */
+	private Column<Object, ?> ownColumn(String attribute, int configuredWidth) {
+		ColumnBinding binding = setup -> DefaultColumn.builder(setup.attribute(),
+			row -> ColumnProviderService.attributeValue(row, setup.attribute()))
+			.label(setup.label())
+			.width(ColumnProviderService.getInstance().defaultWidth(setup.part()))
+			.build();
+		return new ColumnSetup(attribute, ResKey.text(attribute), part(attribute), null, binding, configuredWidth)
+			.buildColumn();
 	}
 
 	/** The widths an application starts out with, before it configures any of its own. */

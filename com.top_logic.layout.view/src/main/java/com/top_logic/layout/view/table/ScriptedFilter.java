@@ -153,6 +153,7 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 		return DefaultColumn.<Object, ScriptedCell> builder(attribute,
 			row -> new ScriptedCell(ColumnProviderService.attributeValue(row, attribute), row))
 			.label(setup.label())
+			.width(ColumnProviderService.getInstance().defaultWidth(setup.part()))
 			.renderer(cell -> CellContent.text(ColumnProviderService.label(cell.value())))
 			.sort(() -> Comparator.comparing((ScriptedCell cell) -> ColumnProviderService.label(cell.value())))
 			.filter(this)

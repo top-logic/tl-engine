@@ -500,10 +500,15 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * than a date, a date with a time of day wider than both.
 	 * </p>
 	 *
+	 * <p>
+	 * This is the one place a kind of attribute maps to a width, so a {@link ColumnBinding}
+	 * building a column of its own asks here for the width that column would have been given.
+	 * </p>
+	 *
 	 * @param part
 	 *        The model attribute, or {@code null} if the row type is unresolved.
 	 */
-	private int defaultWidth(TLStructuredTypePart part) {
+	public int defaultWidth(TLStructuredTypePart part) {
 		Config config = getConfig();
 		switch (columnKind(part)) {
 			case BOOLEAN:

@@ -28,13 +28,13 @@ import com.top_logic.layout.react.control.ReactControl;
 public class ReactPhotoViewerControl extends ReactControl implements DataProvider {
 
 	/** State key indicating whether photo data is available. */
-	private static final String HAS_PHOTO = "hasPhoto";
+	public static final String HAS_PHOTO = "hasPhoto";
 
 	/** State key whose value increments each time photo data is replaced. */
-	private static final String DATA_REVISION = "dataRevision";
+	public static final String DATA_REVISION = "dataRevision";
 
 	/** State key for the image's alternative text. */
-	private static final String ALT = "alt";
+	public static final String ALT = "alt";
 
 	private final BinaryDataValue _model;
 

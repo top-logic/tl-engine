@@ -132,6 +132,30 @@
 				</targets>
 			</instance>
 		</config>
+		<!--
+			A theme without rounding and without elevation, demonstrating that the React controls take
+			their corners and their shadows from the theme alone.
+		-->
+		<config service-class="com.top_logic.layout.react.theme.UIThemeService">
+			<instance>
+				<themes>
+					<theme name="flat"
+						extends="default"
+						icon="css:bi bi-square"
+					>
+						<label>
+							<en>Flat</en>
+							<de>Flach</de>
+						</label>
+						<length name="border-radius-02" value="0"/>
+						<length name="corner-radius" value="0"/>
+						<text name="shadow-dialog" value="none"/>
+						<text name="shadow-menu" value="none"/>
+						<text name="shadow-raised" value="none"/>
+					</theme>
+				</themes>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

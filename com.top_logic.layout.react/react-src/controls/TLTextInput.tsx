@@ -1,4 +1,4 @@
-import { React, useTLFieldValue, useTLCommand } from 'tl-react-bridge';
+import { React, useTLFieldValue, useTLCommand, useTLSubmitOnEnter } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
@@ -20,7 +20,9 @@ const VALUE_DEBOUNCE_MS = 300;
  * field whose model rewrites the text it is given, where any mid-edit round-trip would re-render
  * the field from the normalized value and throw away what was being typed. When state.commitOnBlur
  * is set, losing focus after an actual edit also sends a 'commit' command so the server can run
- * deferred per-field work (e.g. i18n auto-translation) once.
+ * deferred per-field work (e.g. i18n auto-translation) once. When state.submitOnEnter is set,
+ * Enter in the single-line input sends a 'submit' command carrying the text, so the server can run
+ * a command over what was entered; a text area takes no such handler, where Enter is text.
  */
 const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const [value, setValue, flushValue] = useTLFieldValue({
@@ -48,6 +50,8 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       sendCommand('commit');
     }
   }, [flushValue, commitOnBlur, sendCommand]);
+
+  const handleSubmitKey = useTLSubmitOnEnter();
 
   const multiline = state.multiline === true;
 
@@ -97,6 +101,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
           placeholder={(state.placeholder as string) ?? undefined}
           onChange={handleChange}
           onBlur={handleBlur}
+          onKeyDown={handleSubmitKey}
           disabled={state.disabled === true}
           className={cls}
           aria-invalid={hasError || undefined}

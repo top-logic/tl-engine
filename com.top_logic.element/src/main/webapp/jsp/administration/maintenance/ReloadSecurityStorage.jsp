@@ -184,7 +184,7 @@ private static final String RESTART_LINK = "Reload page";
 							<tr>
 								<td>
 									<p>
-										<button class="tlButton cButton cmdButton"
+										<button class="tlButton cButton tl-cmd-button"
 											name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
 											type="submit"
 										>
@@ -205,7 +205,7 @@ private static final String RESTART_LINK = "Reload page";
 						window.setTimeout(function(){self.location.href = "<%=component.getComponentURL(displayContext).getURL()%>"}, 5000);
 					</basic:script>
 					<p>
-						<button class="tlButton cButton cmdButton"
+						<button class="tlButton cButton tl-cmd-button"
 							onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
 						>
 							<h4 class="tlButtonLabel">
@@ -229,7 +229,7 @@ private static final String RESTART_LINK = "Reload page";
 									if (RUN_BUTTON != null) {
 										%>
 										<p>
-											<button class="tlButton cButton cmdButton"
+											<button class="tlButton cButton tl-cmd-button"
 												name="SUBMIT"
 												type="submit"
 											>
@@ -243,7 +243,7 @@ private static final String RESTART_LINK = "Reload page";
 									if (SIMULATE_BUTTON != null) {
 										%>
 										<p>
-											<button class="tlButton cButton cmdButton"
+											<button class="tlButton cButton tl-cmd-button"
 												name="SIMULATE"
 												type="submit"
 											>
@@ -268,7 +268,7 @@ private static final String RESTART_LINK = "Reload page";
 											window.setTimeout(function(){self.location.href = "<%=component.getComponentURL(displayContext).getURL()%>"}, 5000);
 										</basic:script>
 										<p>
-											<button class="tlButton cButton cmdButton"
+											<button class="tlButton cButton tl-cmd-button"
 												onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
 											>
 												<h4 class="tlButtonLabel">

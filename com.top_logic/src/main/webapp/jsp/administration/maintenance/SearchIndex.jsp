@@ -60,7 +60,7 @@
 							type="hidden"
 							value="true"
 						/>
-						<button class="tlButton cButton cmdButton"
+						<button class="tlButton cButton tl-cmd-button"
 							name="startIndexButton"
 							type="submit"
 						>
@@ -74,7 +74,7 @@
 							type="hidden"
 							value="true"
 						/>
-						<button class="tlButton cButton cmdButton"
+						<button class="tlButton cButton tl-cmd-button"
 							name="stopIndexButton"
 							type="submit"
 						>
@@ -96,7 +96,7 @@
 						value="true"
 					/>
 					<p>
-						<button class="tlButton cButton cmdButton"
+						<button class="tlButton cButton tl-cmd-button"
 							name="rebuildIndexButton"
 							type="submit"
 						>
@@ -157,7 +157,7 @@
 						</tr>
 					</table>
 					<p>
-						<button class="tlButton cButton cmdButton"
+						<button class="tlButton cButton tl-cmd-button"
 							name="startIndexing"
 							type="submit"
 						>

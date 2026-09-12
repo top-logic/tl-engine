@@ -72,7 +72,7 @@
 	visibility: hidden;
 }
 
-div.fptPage {
+div.tl-form-page {
     position: absolute;
     top: 0px;
     left: 0px;
@@ -83,58 +83,58 @@ div.fptPage {
     flex-direction: column;
 }
 
-div.fptBody {
+div.tl-form-page__body {
 	margin-top: var(--spacing-02);
 	flex: auto;
 }
 
-div.fptBodyContent {
+div.tl-form-page__body-content {
 	padding: 0 var(--spacing-03);
 	height: 100%;
 }
 
-div.fptTitle {
+div.tl-form-page__title {
 	margin-top: var(--spacing-03);
     background-color: transparent;
 }
 
-div.fptTitleContent, 
-div.fptSubtitleContent {
+div.tl-form-page__title-content, 
+div.tl-form-page__subtitle-content {
     white-space: nowrap;
     color: var(--text-primary);
 }
 
-.fptTitleContent > *,
-.fptSubtitleContent > *,
-.fptTitleText {
+.tl-form-page__title-content > *,
+.tl-form-page__subtitle-content > *,
+.tl-form-page__title-text {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-.fptTitleText {
+.tl-form-page__title-text {
 	width: 100%;
 }
 
-.fptHeader span.can-edit {
+.tl-form-page__header span.can-edit {
 	width: initial;
 }
 
-div.fptTitleContent {
+div.tl-form-page__title-content {
 	display: flex;
 	align-items: center;
 	padding-left: var(--spacing-03);
 	padding-right: var(--spacing-06);
 }
 
-div.fptTitleContent .tlTranslatedI18nField, 
-div.fptTitleContent .cTextInput {
+div.tl-form-page__title-content .tlTranslatedI18nField, 
+div.tl-form-page__title-content .tl-text-input {
 	width: calc(100% - var(--heading-04-font-size) - 6px);
 }
 
-div.fptTitleContent, 
-div.fptTitleContent .cTextInput,
-div.fptTitle input.is-input, 
-div.fptTitle select.is-input {
+div.tl-form-page__title-content, 
+div.tl-form-page__title-content .tl-text-input,
+div.tl-form-page__title input.is-input, 
+div.tl-form-page__title select.is-input {
 	font-family: var(--font-family);
 	font-weight: var(--highlight-weight, bold);
 	font-size: var(--heading-04-font-size);
@@ -142,12 +142,12 @@ div.fptTitle select.is-input {
 	letter-spacing: var(--heading-04-letter-spacing);
 }
 
-div.fptSubtitle {
+div.tl-form-page__subtitle {
     overflow: hidden;
 	margin-top: var(--spacing-03);
 }
 
-div.fptSubtitleContent {
+div.tl-form-page__subtitle-content {
 	display: flex;
     align-items: center;
     width: 100%;
@@ -157,7 +157,7 @@ div.fptSubtitleContent {
     font-weight: bold;
 }
 
-div.fptIconBar > span,
+div.tl-form-page__icon-bar > span,
 .fptIcon, 
 .fptIconWithOverlay {
     position: absolute;
@@ -165,13 +165,13 @@ div.fptIconBar > span,
     right: 20px;
 }
 
-div.fptIconBar > span.fptIcon, 
-div.fptIconBar > span.fptIconWithOverlay,
-div.fptIconBar > span {
+div.tl-form-page__icon-bar > span.fptIcon, 
+div.tl-form-page__icon-bar > span.fptIconWithOverlay,
+div.tl-form-page__icon-bar > span {
     font-size: 32px;
 }
 
-div.fptIconBar > span.fptIconOverlay {
+div.tl-form-page__icon-bar > span.fptIconOverlay {
     font-size: 16px !important;
 }
 
@@ -615,7 +615,7 @@ div.dfListAdd {
 
 .dfEntryTitle .lFixedRight button:not(.lFlexible),
 .dfEntryTitle .lFixedRight a:not(.lFlexible),
-.dfEntryTitle .lFixedRight:not(.timePart) span:not(.lFlexible),
+.dfEntryTitle .lFixedRight:not(.tl-datetime__time-part) span:not(.lFlexible),
 .dfEntryTitle .lFixedRight span span:not(.lFlexible),
 .dfEntryTitle .lFixedRight .fChoose:not(.lFlexible) {
     display: inline-flex;
@@ -798,7 +798,7 @@ div.dfListAdd {
 	display: flex;
 }
 
-.tl-i18n-input > .cTextInput {
+.tl-i18n-input > .tl-text-input {
 	flex-grow: 1;
 }
 
@@ -890,7 +890,7 @@ div.dfListAdd {
 }
 
 .rf_label .cCheckbox,
-.rf_label .cIconSelect {
+.rf_label .tl-icon-select {
 	display: inline-block;
 	width: 20px;
 	vertical-align: middle;
@@ -1544,24 +1544,25 @@ div.cal_zoom_inAnimation {
     }
 }
 
-.cDatetime, 
-.cDateInput, 
-.cTimeInput {
+.tl-datetime, 
+.tl-date-input, 
+.tl-time-input {
 	display: inline-flex;
 	align-items: center;
 }
 
-.cDatetime .timePart {
+.tl-datetime .tl-datetime__time-part {
 	background: transparent;
 }
 
-.cIntegerInput {
+.tl-integer-input {
 	display: inline-flex;
 	align-items: stretch;
+	width: 100%;
 }
 
-.cIntegerInput input,
-.cTextInput.num input,
+.tl-integer-input input,
+.tl-text-input.num input,
 .tl-table__cell.num {
 	text-align: right;
 }
@@ -1580,18 +1581,18 @@ div.cal_zoom_inAnimation {
 	flex-grow: 0;	
 }
 
-.cDecoratedCell,
-.cExpandableTextInput,
-.cBlockTextInput {
+.tl-decorated-cell,
+.tl-expandable-text-input,
+.tl-block-text-input {
 	display: inline-flex;
 }
 
-.cPopupSelect.active {
+.tl-popup-select.active {
 	display: inline-flex;
 	width: 100%;
 }
 
-.cCheckList {
+.tl-checklist {
     display: flex;
     align-items: center;
     gap: var(--spacing-02);
@@ -1601,19 +1602,18 @@ div.cal_zoom_inAnimation {
 	padding-right: var(--spacing-02);
 }
 
-.cBlockTextInput .lFixedRight button:not(.lFlexible),
-.cBlockTextInput .lFixedRight a:not(.lFlexible),
-.cExpandableTextInput .lFixedRight a:not(.lFlexible) {
-	height: inherit;
-}
-
-.input-image.is-action {
+.tl-integer-input .input-image, 
+.tl-date-input .input-image, 
+.tl-time-input .input-image, 
+.tl-popup-select .input-image,
+.tl-block-text-input .fToggle,
+.tl-expandable-text-input .fToggle {
 	background-color: var(--field);
 }
 
-td.tl-table__cell--selected .cDecoratedCell a.input-image,
-td.tl-table__cell--selected .cDecoratedCell a.input-image:hover,
-td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
+td.tl-table__cell--selected .tl-decorated-cell a.input-image,
+td.tl-table__cell--selected .tl-decorated-cell a.input-image:hover,
+td.tl-table__cell--selected .tl-decorated-cell a.input-image:focus {
 	color: var(--highlight-fg, var(--icon-secondary));
 	outline: none !important;
 }
@@ -1624,13 +1624,13 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 	color: var(--button-fg, var(--icon-primary));
 }
 
-.cDownload .lFixedRight {
+.tl-download .lFixedRight {
 	background-color: unset;
 }
 
 .lFixedRight button:not(.lFlexible),
 .lFixedRight a:not(.lFlexible),
-.lFixedRight:not(.timePart) span:not(.lFlexible),
+.lFixedRight:not(.tl-datetime__time-part) span:not(.lFlexible),
 .lFixedRight span span:not(.lFlexible),
 .lFixedRight .fChoose:not(.lFlexible) {
     display: inline-flex;
@@ -1641,11 +1641,11 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
     width: var(--form-line-height);
 }
 
-.lFixedRight .button_minus {
+.lFixedRight .tl-button-minus {
 	position: relative;
 }
 
-.lFixedRight .button_minus::after {
+.lFixedRight .tl-button-minus::after {
 	content: "";
 	position: absolute;
 	top: 0.5;
@@ -1655,14 +1655,18 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 }
 
 .lFixedRight button:hover,
-.lFixedRight a:hover {
+.lFixedRight a:hover,
+.tl-expandable-button a:hover,
+.tl-expandable-button button:hover {
 	background: var(--field-hover);
 	text-decoration: none;
 }
 
 .lFixedRight button:focus-within,
 .lFixedRight a:focus-within,
-.lFixedRight .button_minus:focus-within::after {
+.tl-expandable-button a:focus-within,
+.tl-expandable-button button:focus-within,
+.lFixedRight .tl-button-minus:focus-within::after {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	border-left: none;
 	outline: none !important;
@@ -1670,57 +1674,80 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 
 .lFixedRight button.disabled,
 .lFixedRight a.disabled,
+.tl-expandable-button a.disabled,
+.tl-expandable-button button.disabled,
 .lFixedRight .fChoose.disabled,
 .lFixedRight span.disabled,
 .lFixedRight span span.disabled,
-span.cIconSelect .input-image.cannot-edit i,
+span.tl-icon-select .input-image.cannot-edit i,
 input.is-checkbox[disabled] {
 	color: var(--icon-disabled);
 }
 
 .lFixedRight button.disabled:hover,
-.lFixedRight a.disabled:hover {
-	background: none;
+.lFixedRight a.disabled:hover,
+.tl-expandable-button a.disabled:hover,
+.tl-expandable-button button.disabled:hover {
+	background: var(--field);
 }
 
 .lFixedRight button.disabled:focus,
 .lFixedRight a.disabled:focus,
-.lFixedRight .button_minus:focus::after {
+.tl-expandable-button a.disabled:focus,
+.tl-expandable-button button.disabled:focus,
+.lFixedRight .tl-button-minus:focus::after {
 	box-shadow: none;
 	outline: none !important;
 }
 
-.cTextInput,
-.cDateInput,
-.cDatetime,
-.cTimeInput,
-.cPopupSelect,
-.cCheckList-counts,
-.cBooleanChoice,
+.tl-text-select {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    column-gap: var(--spacing-02);
+}
+
+.tl-text-select .option {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-01);
+}
+
+.tl-text-select__option-clear i {
+    vertical-align: middle;	/* Rule is needed to center the x icon vertically */
+}
+
+.tl-text-input,
+.tl-date-input,
+.tl-datetime,
+.tl-time-input,
+.tl-popup-select,
+.tl-checklist__counts,
+.tl-boolean-choice,
 .ddwttImmutableItem {
 	color: var(--highlight, inherit);
 	font-weight: var(--highlight-weight, normal);
 }
 
-.tl-table__cell .cTextInput,
-.tl-table__cell .cDateInput,
-.tl-table__cell .cDatetime,
-.tl-table__cell .cTimeInput,
-.tl-table__cell .cPopupSelect,
-.tl-table__cell .cCheckList-counts,
-.tl-table__cell .cBooleanChoice,
+.tl-table__cell .tl-text-input,
+.tl-table__cell .tl-date-input,
+.tl-table__cell .tl-datetime,
+.tl-table__cell .tl-time-input,
+.tl-table__cell .tl-popup-select,
+.tl-table__cell .tl-checklist__counts,
+.tl-table__cell .tl-boolean-choice,
 .tl-table__cell .ddwttImmutableItem {
 	color: var(--highlight-fg, inherit);
 }
 
-.cTextInput input,
-.cIntegerInput input,
-.cExpandableTextInput input,
-.cBlockTextInput input,
-.cPopupSelect input,
-.cTextPopup,
-.cDateInput input,
-.cTimeInput input {
+.tl-text-input input,
+.tl-integer-input input,
+.tl-expandable-text-input input,
+.tl-block-text-input input,
+.tl-popup-select input,
+.tl-text-popup,
+.tl-date-input input,
+.tl-time-input input {
 	color: var(--highlight-fg, var(--text-primary));
 	background: var(--highlight-bg, var(--field));
 	border: none;
@@ -1734,46 +1761,46 @@ input.is-checkbox[disabled] {
     letter-spacing: var(--body-02-letter-spacing);
 }
 
-.cTextInput input,
-.cIntegerInput input,
-.cExpandableTextInput input,
-.cBlockTextInput input,
-.cPopupSelect input,
-.cDateInput input,
-.cTimeInput input {
+.tl-text-input input,
+.tl-integer-input input,
+.tl-expandable-text-input input,
+.tl-block-text-input input,
+.tl-popup-select input,
+.tl-date-input input,
+.tl-time-input input {
 	white-space: break-spaces;
 	word-wrap: break-word;
 	word-break: break-word;
 }
 
-.cIntegerInput input,
-.cPopupSelect input,
-.cDateInput input,
-.cTimeInput input {
+.tl-integer-input input,
+.tl-popup-select input,
+.tl-date-input input,
+.tl-time-input input {
 	padding-right: var(--spacing-01);
 }
 	
-.cDatetime .cTimeInput input {
+.tl-datetime .tl-time-input input {
 	padding: 0 var(--spacing-01);
 }
 
-.cDateInput input {
+.tl-date-input input {
     width: 7em;
 }
 
-.cDatetime .cTimeInput input {
+.tl-datetime .tl-time-input input {
     width: 3.5em !important;
 }
 
-.cTextInput.mandatory input,
-.cTextInput.mandatory textarea,
-.cIntegerInput.mandatory input,
-.cExpandableTextInput.mandatory input,
-.cBlockTextInput.mandatory input,
-.cBlockTextInput.mandatory textarea,
-.cPopupSelect.mandatory input,
-.cDateInput.mandatory input,
-.cTimeInput.mandatory input,
+.tl-text-input.mandatory input,
+.tl-text-input.mandatory textarea,
+.tl-integer-input.mandatory input,
+.tl-expandable-text-input.mandatory input,
+.tl-block-text-input.mandatory input,
+.tl-block-text-input.mandatory textarea,
+.tl-popup-select.mandatory input,
+.tl-date-input.mandatory input,
+.tl-time-input.mandatory input,
 .ddwttContainer.mandatory button,
 .mandatory .lFixedRight a,
 .cStructuredText.mandatory .cke {
@@ -1788,9 +1815,9 @@ input.is-checkbox[disabled] {
 	margin-bottom: 2px;
 }
 
-.cTextInput textarea,
-.cExpandableTextInput textarea, 
-.cBlockTextInput textarea {
+.tl-text-input textarea,
+.tl-expandable-text-input textarea, 
+.tl-block-text-input textarea {
 	color: var(--highlight-fg, var(--text-primary));
 	background: var(--highlight-bg, var(--field));
 	border: none;
@@ -1802,35 +1829,35 @@ input.is-checkbox[disabled] {
 	word-break: break-word;
 }
 
-.cTextPopup {
-    display: flex;
+.tl-text-popup {
+    display: inline-flex;
     align-items: center;
     flex-wrap: nowrap;
     gap: var(--spacing-02);
 }
 
-.cTextInput input::placeholder,
-.cTextInput textarea::placeholder,
-.cExpandableTextInput input::placeholder,
-.cExpandableTextInput textarea::placeholder,
-.cBlockTextInput input::placeholder,
-.cBlockTextInput textarea::placeholder,
-.cPopupSelect input::placeholder {
+.tl-text-input input::placeholder,
+.tl-text-input textarea::placeholder,
+.tl-expandable-text-input input::placeholder,
+.tl-expandable-text-input textarea::placeholder,
+.tl-block-text-input input::placeholder,
+.tl-block-text-input textarea::placeholder,
+.tl-popup-select input::placeholder {
 	color: var(--text-placeholder);
 }
 
 /* Display side-by-side if there is an error element next to the text input. */
-.content:has(.cTextInput, .cError) {
+.content:has(.tl-text-input, .cError) {
 	display: flex;
 }
 
 /* If there is an error element, make the text input grow and shrink automatically. */
-.content:has(.cError) .cTextInput {
+.content:has(.cError) .tl-text-input {
 	flex: auto;
 }
 
 /* If the error element is next to a text input, center it automatically (x and y). */
-.content:has(.cTextInput) .cError {
+.content:has(.tl-text-input) .cError {
 	margin: auto;
 }
 
@@ -1854,8 +1881,8 @@ input.is-checkbox[disabled] {
 .error-annotation.active input.is-radio,
 .error.active.cBeacon, /* AND selector --> .error AND .cBeacon */
 .error-annotation.active.cBeacon, /* AND selector --> .error-annotation AND .cBeacon */
-.error.cDataItem iframe, /* AND selector --> .error AND .cDataItem */
-.error-annotation.cDataItem iframe, /* AND selector --> .error-annotation AND .cDataItem */
+.error.tl-data-item iframe, /* AND selector --> .error AND .tl-data-item */
+.error-annotation.tl-data-item iframe, /* AND selector --> .error-annotation AND .tl-data-item */
 .error select.tl-select, 
 .error-annotation select.tl-select, 
 .error textarea,
@@ -1884,8 +1911,8 @@ input.is-checkbox[disabled] {
 .warning-annotation.active input.is-radio,
 .warning.active.cBeacon,
 .warning-annotation.active.cBeacon,
-.warning.cDataItem iframe,
-.warning-annotation.cDataItem iframe,
+.warning.tl-data-item iframe,
+.warning-annotation.tl-data-item iframe,
 .warning select.tl-select, 
 .warning-annotation select.tl-select, 
 .warning textarea,
@@ -1934,11 +1961,11 @@ input.tristate:focus,
 .warning.active.cBeacon:focus,
 .error-annotation.active.cBeacon:focus,
 .warning-annotation.active.cBeacon:focus,
-cDataItem iframe:focus,
-.error.cDataItem iframe:focus,
-.warning.cDataItem iframe:focus,
-.error-annotation.cDataItem iframe:focus,
-.warning-annotation.cDataItem iframe:focus,
+tl-data-item iframe:focus,
+.error.tl-data-item iframe:focus,
+.warning.tl-data-item iframe:focus,
+.error-annotation.tl-data-item iframe:focus,
+.warning-annotation.tl-data-item iframe:focus,
 select.tl-select:focus,
 .error select.tl-select:focus, 
 .warning select.tl-select:focus, 
@@ -1958,35 +1985,35 @@ textarea:focus,
 	outline: none !important;
 }
 
-.cIntegerInput input:focus,
-.cIntegerInput.error input:focus,
-.cIntegerInput.error-annotation input:focus {
+.tl-integer-input input:focus,
+.tl-integer-input.error input:focus,
+.tl-integer-input.error-annotation input:focus {
 	outline: none !important;
 	border: none;
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
-.cTextInput.disabled input,
-.cTextInput.disabled textarea,
-.cIntegerInput.disabled input,
-.cExpandableTextInput.disabled input,
-.cExpandableTextInput.disabled textarea,
-.cBlockTextInput.disabled input,
-.cBlockTextInput.disabled textarea,
-.cPopupSelect.disabled input,
-.cDropdownSelect.disabled select.tl-select,
-.cDateInput.disabled input,
-.cTimeInput.disabled input {
+.tl-text-input.disabled input,
+.tl-text-input.disabled textarea,
+.tl-integer-input.disabled input,
+.tl-expandable-text-input.disabled input,
+.tl-expandable-text-input.disabled textarea,
+.tl-block-text-input.disabled input,
+.tl-block-text-input.disabled textarea,
+.tl-popup-select.disabled input,
+.tl-dropdown-select.disabled select.tl-select,
+.tl-date-input.disabled input,
+.tl-time-input.disabled input {
 	color: var(--text-disabled);
 }
 
-.cTextInput.disabled input::placeholder,
-.cTextInput.disabled textarea::placeholder,
-.cExpandableTextInput.disabled input:placeholder,
-.cExpandableTextInput.disabled textarea::placeholder,
-.cBlockTextInput.disabled input:placeholder,
-.cBlockTextInput.disabled textarea::placeholder,
-.cPopupSelect.disabled input::placeholder {
+.tl-text-input.disabled input::placeholder,
+.tl-text-input.disabled textarea::placeholder,
+.tl-expandable-text-input.disabled input:placeholder,
+.tl-expandable-text-input.disabled textarea::placeholder,
+.tl-block-text-input.disabled input:placeholder,
+.tl-block-text-input.disabled textarea::placeholder,
+.tl-popup-select.disabled input::placeholder {
 	color: var(--text-disabled);
 }
 
@@ -2023,9 +2050,24 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
 }
 
-.cExpandableTextInput .lFlexible,
-.cBlockTextInput .lFlexible {
-	display: inline-flex
+.tl-expandable-text-input .lFlexible,
+.tl-block-text-input .lFlexible {
+	display: inline-flex;
+}
+
+.tl-expandable-text-input .tl-expandable-button,
+.tl-block-text-input .tl-expandable-button {
+	display: inline-flex;
+	align-items: stretch;
+}
+
+.tl-expandable-button a,
+.tl-expandable-button button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--button-fg, var(--icon-primary));
+    width: var(--form-line-height);
 }
 
 input[type="checkbox"] {
@@ -2077,7 +2119,7 @@ input[type="checkbox"]:checked.tl-treeSelect__someChildren::after {
 ****	ChoiceControl, bbc-option styles	****
 ****										****
 */
-.cBooleanChoice,.cChoice {
+.tl-boolean-choice,.cChoice {
     display: inline-flex;
     flex-wrap: wrap;
 	column-gap: var(--spacing-02);
@@ -2088,7 +2130,7 @@ input[type="checkbox"]:checked.tl-treeSelect__someChildren::after {
 	width: 100%;
 }
 
-.tl-table__cell-container :is(.cBooleanChoice,.cChoice) {
+.tl-table__cell-container :is(.tl-boolean-choice,.cChoice) {
     flex-wrap: nowrap;
 }
 
@@ -2170,8 +2212,7 @@ img.type-image {
 a.tristate, 
 input.tristate,
 button.tristate {
-	margin-left: var(--spacing-01);
-	margin-right: var(--spacing-01);
+	margin: 0 var(--spacing-01);
 }
 
 .rf_firstColumn .tBoolean > .type-image,
@@ -2330,20 +2371,20 @@ div.imageContainer {
 /* ==================================== */
 /* ======    Icon Chooser css     ===== */
 /* ==================================== */
-.cIconChooser > .header > .expertTextField input.is-input,
-.cIconChooser > .header > .searchTextField input.is-input {
+.tl-icon-chooser > .header > .expertTextField input.is-input,
+.tl-icon-chooser > .header > .tl-icon-chooser__search input.is-input {
 	height: 22px;
 }
 
-.cIconChooser > .header a {
+.tl-icon-chooser > .header a {
 	border: 0px;
 }
 
-.cIconChooser > .header > .searchTextField .search {
+.tl-icon-chooser > .header > .tl-icon-chooser__search .search {
 	color: var(--icon-secondary);
 }
 
-.cIconChooser .fptBodyContent .displayedIcons {
+.tl-icon-chooser .tl-form-page__body-content .tl-icon-chooser__icon {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -2354,7 +2395,7 @@ div.imageContainer {
 	border: 1px solid var(--border-subtle);
 }
 
-.cIconChooser .fptBodyContent input {
+.tl-icon-chooser .tl-form-page__body-content input {
     position: absolute;
     top: 50%;
     right: 50%;
@@ -2363,26 +2404,26 @@ div.imageContainer {
 	max-height: 30px;
 }
 
-.cIconChooser .fptBodyContent .displayedIcons {
+.tl-icon-chooser .tl-form-page__body-content .tl-icon-chooser__icon {
 	background-color: var(--layer);
 	color: var(--layer-text);
 	--button-fg: var(--layer-icon);
 }
 
-.cIconChooser .fptBodyContent .displayedIcons.selected {
+.tl-icon-chooser .tl-form-page__body-content .tl-icon-chooser__icon.selected {
 	background-color: var(--layer-selected);
 }
 
-.cIconChooser .fptBodyContent .displayedIcons:hover {
+.tl-icon-chooser .tl-form-page__body-content .tl-icon-chooser__icon:hover {
 	background-color: var(--layer-hover);
 }
 
-.cIconChooser i {
+.tl-icon-chooser i {
     font-size: 1rem;
     color: var(--button-fg, var(--icon-primary));
 }
 
-.cIconChooser > .header {
+.tl-icon-chooser > .header {
 	position: absolute;
 	left: 0px; 
 	top: 0px; 
@@ -2397,18 +2438,18 @@ div.imageContainer {
 	justify-content: center;
 }
 
-.cIconChooser > .header > .searchTextField {
+.tl-icon-chooser > .header > .tl-icon-chooser__search {
 	flex-grow: 1;
 	position: relative;
 }
 
-.cIconChooser > .header > .searchTextField i {
+.tl-icon-chooser > .header > .tl-icon-chooser__search i {
 	position: absolute;
 	right: 2px;
 	top: 2px;
 }
 
-.cIconChooser div.fptBody {
+.tl-icon-chooser div.tl-form-page__body {
  	position: absolute; 
 	left: 0px; 
 	right: 0px; 
@@ -2417,23 +2458,23 @@ div.imageContainer {
 	bottom: 0px; 
 }
 
-.cIconChooser div.fptBodyContent {
+.tl-icon-chooser div.tl-form-page__body-content {
 	padding-top: 0px;
 }
 
-.cIconChooser .cannot-edit .is-input, 
-.cIconChooser .disabled .is-input {
+.tl-icon-chooser .cannot-edit .is-input, 
+.tl-icon-chooser .disabled .is-input {
 	display: inline-block;
 }
 
-.cIconChooser .cannot-edit, 
-.cIconChooser .disabled, 
-.cIconSelect .cannot-edit, 
-.cIconSelect .disabled {
+.tl-icon-chooser .cannot-edit, 
+.tl-icon-chooser .disabled, 
+.tl-icon-select .cannot-edit, 
+.tl-icon-select .disabled {
 	pointer-events: none;
 }
 
-.cIconChooser .input-image {
+.tl-icon-chooser .input-image {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -2447,21 +2488,21 @@ div.imageContainer {
 	--button-fg: var(--layer-icon);
 }
 
-.cIconChooser .input-image:hover {
+.tl-icon-chooser .input-image:hover {
 	background-color: var(--layer-hover);
 }
 
-.cIconChooser .input-image.disabled,
-.cIconChooser .input-image.disabled:hover {
+.tl-icon-chooser .input-image.disabled,
+.tl-icon-chooser .input-image.disabled:hover {
 	color: var(--icon-disabled);
 	background-color: none;
 }
 
-.cIconChooser {
+.tl-icon-chooser {
 	display: flex;
 }
 
-.cIconChooser input.is-action {
+.tl-icon-chooser input.is-action {
 	margin: 0px;
 }
 
@@ -2469,23 +2510,23 @@ div.imageContainer {
 /* ======     DataItemControl     ===== */
 /* ==================================== */
 
-.cDataItem input {
+.tl-data-item input {
 	margin-left: 2px;
 }
 
-.cDataItem input.first {
+.tl-data-item input.first {
 	margin-left: 0px;
 }
 
-.cDataItem input {
+.tl-data-item input {
     background-color: var(--background);
 }
 
-.cDataItem input[type="file"] {
+.tl-data-item input[type="file"] {
 	display: none;
 }
 
-.cDataItem label {
+.tl-data-item label {
 	cursor: pointer;
 	color: var(--text-on-color);
 	padding: var(--spacing-02) var(--spacing-03);
@@ -2495,45 +2536,45 @@ div.imageContainer {
 	white-space: nowrap;
 }
 
-.cDataItem label .cmdImg {
+.tl-data-item label .tl-cmd-button__img {
 	padding-right: var(--spacing-02);
 }
 
-.cDataItem label:hover {
+.tl-data-item label:hover {
 	background: var(--button-primary-hover);
 	box-shadow: inset 0px 0px 0px 1px var(--button-primary-hover);
 }
 
-.cDataItem label:focus {
+.tl-data-item label:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	outline: none !important;
 }
 
-.cDataItem label:active {
+.tl-data-item label:active {
 	background: var(--button-primary-active);
 }
 
-.cDataItem label.cmdButtonDisabled {
+.tl-data-item label.tl-cmd-button--disabled {
 	background: var(--button-disabled);
 	box-shadow: inset 0px 0px 0px 1px var(--button-disabled);
 }
 
-.cDataItem label.cmdButtonDisabled .cmdLabel {
+.tl-data-item label.tl-cmd-button--disabled .tl-cmd-button__label {
 	color: var(--text-on-color-disabled);
 }
 
-.cDataItem label.cmdButtonDisabled .cmdImg {
+.tl-data-item label.tl-cmd-button--disabled .tl-cmd-button__img {
 	color: var(--icon-on-color-disabled);
 }
 
 /* Display inline when shown in a table cell. */
-td.tl-table__cell .cDataItem ul,
-td.tl-table__cell .cDataItem li {
+td.tl-table__cell .tl-data-item ul,
+td.tl-table__cell .tl-data-item li {
 	display: inline;
 }
 
 /* Display as table when multiple files are uploaded. */
-.cDataItem ul {
+.tl-data-item ul {
 	margin-top: 0px;
 	margin-bottom: 0px;
 	margin-left: 2px;
@@ -2543,7 +2584,7 @@ td.tl-table__cell .cDataItem li {
 	border-spacing: 0px;
 }
 
-.cDataItem li {
+.tl-data-item li {
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -2551,12 +2592,12 @@ td.tl-table__cell .cDataItem li {
 	display: table-row-group;
 }
 
-.cDataItem li .cDownload {
+.tl-data-item li .tl-download {
 	display: table-row;
 }
 
-.cDataItem li .cDownload .lFlexible,
-.cDataItem li .cDownload .lFixedRight  {
+.tl-data-item li .tl-download .lFlexible,
+.tl-data-item li .tl-download .lFixedRight  {
 	display: table-cell;
 	padding-bottom: 8px;
 	padding-right: 8px;
@@ -2637,11 +2678,11 @@ td.tl-table__cell .cDataItem li {
 	pointer-events: none;
 }
 
-.cImgUpload label .cmdImg {
+.cImgUpload label .tl-cmd-button__img {
 	padding-right: var(--spacing-02);
 }
 
-.cImgUpload label .cmdLabel {
+.cImgUpload label .tl-cmd-button__label {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
@@ -2651,48 +2692,48 @@ td.tl-table__cell .cDataItem li {
 	border-color: var(--button-primary);
 }
 
-.cImgUpload label:hover:not(.cmdButtonDisabled) {
+.cImgUpload label:hover:not(.tl-cmd-button--disabled) {
 	background: var(--field-hover);
 	border-color: var(--border-strong);
 }
 
-.cImgUpload input[type="file"]:focus + label:not(.cmdButtonDisabled) {
+.cImgUpload input[type="file"]:focus + label:not(.tl-cmd-button--disabled) {
 	border-color: var(--focus);
 }
 
-.cImgUpload label:active:not(.cmdButtonDisabled) {
+.cImgUpload label:active:not(.tl-cmd-button--disabled) {
 	background: var(--field-hover);
 	border-color: var(--button-primary);
 	color: var(--button-primary-active);
 }
 
-.cImgUpload label.cmdButtonDisabled {
+.cImgUpload label.tl-cmd-button--disabled {
 	display: inline-flex;
 	background: var(--button-disabled);
 	cursor: default;
 }
 
-.cImgUpload label.cmdButtonDisabled .cmdLabel {
+.cImgUpload label.tl-cmd-button--disabled .tl-cmd-button__label {
 	color: var(--text-on-color-disabled);
 }
 
-.cImgUpload label.cmdButtonDisabled .cmdImg {
+.cImgUpload label.tl-cmd-button--disabled .tl-cmd-button__img {
 	color: var(--text-on-color-disabled);
 }
 
 /* ==================================== */
-/* ======     DownloadControl     ===== */
+/* ======   tl-download--download-mode   ===== */
 /* ==================================== */
 
-.downloadControl input {
+.tl-download--download-mode input {
 	margin-left: 2px;
 }
 
-.downloadControl input.first {
+.tl-download--download-mode input.first {
 	margin-left: 0px;
 }
 
-.downloadControl input {
+.tl-download--download-mode input {
     background-color: var(--background);
 }
 
@@ -2800,13 +2841,13 @@ span.disabled .ddwttDropBtn {
 	outline: none !important;
 }
 
-.fptSubtitleContent .ddwttDropBtn, 
-.fptSubtitleContent input {
+.tl-form-page__subtitle-content .ddwttDropBtn, 
+.tl-form-page__subtitle-content input {
 	height: 1.4rem;
 }
 
 .ddwttDropBtn .ddwttChevron i {
-	color: var(--highlight-fg, var(--icon-on-color-disabled));
+	color: var(--highlight-fg, var(--icon-secondary));
 }
 
 .ddwttDropBtnActive .ddwttChevron i {

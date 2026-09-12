@@ -92,7 +92,13 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cExpandableTextInput";
+		return "tl-expandable-text-input";
+	}
+
+	@Override
+	@TemplateVariable("inputButtonCssClass")
+	public void getInputButtonCssClass(Appendable out) throws IOException {
+		out.append("tl-expandable-button");
 	}
 
 	@Override

@@ -31,22 +31,22 @@ public class ButtonComponentButtonRenderer extends AbstractButtonRenderer<Button
 	/**
 	 * CSS class for an active command button.
 	 */
-	public static final String CSS_CLASS_ENABLED_BUTTON = "cmdButton";
+	public static final String CSS_CLASS_ENABLED_BUTTON = "tl-cmd-button";
 
 	/**
 	 * CSS class for a disabled command button.
 	 */
-	public static final String CSS_CLASS_DISABLED_BUTTON = "cmdButtonDisabled";
+	public static final String CSS_CLASS_DISABLED_BUTTON = "tl-cmd-button--disabled";
 
 	/**
 	 * CSS class for a an image within a command button.
 	 */
-	public static final String CSS_CLASS_IMAGE = "cmdImg";
+	public static final String CSS_CLASS_IMAGE = "tl-cmd-button__img";
 
 	/**
 	 * CSS class for the label of a command button.
 	 */
-	public static final String CSS_CLASS_LABEL = "cmdLabel";
+	public static final String CSS_CLASS_LABEL = "tl-cmd-button__label";
 
 	/**
 	 * Typed configuration interface definition for {@link ButtonComponentButtonRenderer}.

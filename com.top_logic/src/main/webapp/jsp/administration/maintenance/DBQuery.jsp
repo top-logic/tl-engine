@@ -208,7 +208,7 @@ private static final int HISTORY_LENGTH = 256;
 				if (RESTART_LINK != null) {
 					%>
 					<p>
-						<button class="tlButton cButton cmdButton"
+						<button class="tlButton cButton tl-cmd-button"
 							onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
 						>
 							<h4 class="tlButtonLabel">
@@ -251,7 +251,7 @@ private static final int HISTORY_LENGTH = 256;
 							<tr>
 								<td>
 									<p>
-										<button class="tlButton cButton cmdButton"
+										<button class="tlButton cButton tl-cmd-button"
 											name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
 											type="submit"
 										>
@@ -302,7 +302,7 @@ private static final int HISTORY_LENGTH = 256;
 									<%
 									if (QUERY_BUTTON != null) {
 										%>
-										<button class="tlButton cButton cmdButton"
+										<button class="tlButton cButton tl-cmd-button"
 											name="QUERY"
 											type="submit"
 										>
@@ -314,7 +314,7 @@ private static final int HISTORY_LENGTH = 256;
 									}
 									if (RUN_BUTTON != null) {
 										%>
-										<button class="tlButton cButton cmdButton"
+										<button class="tlButton cButton tl-cmd-button"
 											name="SUBMIT"
 											type="submit"
 										>
@@ -326,7 +326,7 @@ private static final int HISTORY_LENGTH = 256;
 									}
 									if (SIMULATE_BUTTON != null) {
 										%>
-										<button class="tlButton cButton cmdButton"
+										<button class="tlButton cButton tl-cmd-button"
 											name="SIMULATE"
 											type="submit"
 										>
@@ -366,7 +366,7 @@ private static final int HISTORY_LENGTH = 256;
 										if (CLEAR_BUTTON != null) {
 											%>
 											<div class="cmdButtons">
-												<button class="tlButton cButton cmdButton"
+												<button class="tlButton cButton tl-cmd-button"
 													name="CLEAR"
 													type="submit"
 												>

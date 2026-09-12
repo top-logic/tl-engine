@@ -27,7 +27,7 @@
 					longer exist in the filesystem.
 				</p>
 				<form method="post">
-					<button class="tlButton cButton cmdButton"
+					<button class="tlButton cButton tl-cmd-button"
 						name="action"
 						type="submit"
 					>

@@ -322,7 +322,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return isImmutable() ? "cTextPopupView" : "cTextPopup";
+		return isImmutable() ? "tl-text-popup-view" : "tl-text-popup";
 	}
 
 	@Override

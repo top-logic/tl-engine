@@ -3377,7 +3377,7 @@ services.form = {
 		
 		controlElement: function(element) {
             while (element != null) {
-            	if (BAL.DOM.containsClass(element, "cPopupSelect")) {
+            	if (BAL.DOM.containsClass(element, "tl-popup-select")) {
             		return element;
             	}
 

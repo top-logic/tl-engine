@@ -13,6 +13,7 @@ import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -24,9 +25,11 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  *
  * <p>
- * Navigation on click is handled by an external {@link GotoListener} set via
- * {@link #setGotoListener(GotoListener)}. This keeps the control decoupled from the component
- * layer.
+ * The cell is a link when something can act on a click: a {@link GotoListener} set via
+ * {@link #setGotoListener(GotoListener)}, or - where the cell is allowed to link at all - the
+ * {@link ObjectNavigator} of the context, which leads to the place the application displays the
+ * value at. The listener takes precedence, so a display that knows where its own values lead keeps
+ * deciding that itself.
  * </p>
  */
 public class ReactResourceCellControl extends ReactControl implements TooltipProvider {
@@ -65,6 +68,11 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 
 	private static final String HAS_LINK = "hasLink";
 
+	// -- Commands --
+
+	/** Command sent when the user follows the link of the displayed value. */
+	private static final String CMD_GOTO = "goto";
+
 	// -- Configuration --
 
 	private static final String CSS_PREFIX = "css:";
@@ -99,7 +107,8 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 	 * @param useLabel
 	 *        Whether to resolve and display the label text.
 	 * @param useLink
-	 *        Whether to enable goto navigation on click.
+	 *        Whether the cell may become a link. A cell that may link does so as soon as something
+	 *        can act on the click.
 	 */
 	public ReactResourceCellControl(ReactContext context, Object value, ResourceProvider provider, boolean useImage, boolean useLabel,
 			boolean useLink) {
@@ -127,6 +136,7 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 	 */
 	public void setGotoListener(GotoListener listener) {
 		_gotoListener = listener;
+		updateLinkState();
 	}
 
 	/**
@@ -160,7 +170,38 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 		}
 		putState(HAS_TOOLTIP, _tooltipHtml != null);
 
-		putState(HAS_LINK, Boolean.valueOf(_useLink && value != null));
+		updateLinkState();
+	}
+
+	/**
+	 * Tells the client whether the displayed value is a link.
+	 */
+	private void updateLinkState() {
+		putState(HAS_LINK, Boolean.valueOf(hasLink()));
+	}
+
+	/**
+	 * Whether a click on the displayed value leads anywhere.
+	 */
+	private boolean hasLink() {
+		Object value = _rowObject;
+		if (value == null) {
+			return false;
+		}
+		if (_gotoListener != null) {
+			return true;
+		}
+		return _useLink && canShow(value);
+	}
+
+	private boolean canShow(Object value) {
+		ObjectNavigator navigator = navigator();
+		return navigator != null && navigator.canShow(value);
+	}
+
+	private ObjectNavigator navigator() {
+		ReactContext context = getReactContext();
+		return context == null ? null : context.getObjectNavigator();
 	}
 
 	@Override
@@ -191,18 +232,24 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 		}
 	}
 
-	// -- Commands --
-
 	/**
-	 * Dispatches the goto click to the configured {@link GotoListener}.
+	 * Follows the link of the displayed value: to where the {@link GotoListener} leads if one is
+	 * set, and otherwise to the place the application displays the value at.
 	 */
-	@ReactCommandHandler("goto")
+	@ReactCommandHandler(CMD_GOTO)
 	HandlerResult handleGoto(ReactContext context) {
 		Object target = _rowObject;
-		GotoListener listener = _gotoListener;
-		if (target == null || listener == null) {
+		if (target == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
-		return listener.handleGoto(context, target);
+		GotoListener listener = _gotoListener;
+		if (listener != null) {
+			return listener.handleGoto(context, target);
+		}
+		ObjectNavigator navigator = navigator();
+		if (navigator != null && navigator.canShow(target)) {
+			navigator.show(context, target);
+		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 }

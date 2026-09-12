@@ -20,12 +20,14 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.TileWidth;
+import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
 import com.top_logic.layout.view.security.SecurityScope;
 import com.top_logic.layout.view.security.WithAccessControl;
+import java.util.List;
 
 /**
  * A single tile in a {@link DashboardElement dashboard}.
@@ -149,6 +151,11 @@ public class TileElement implements UIElement {
 		ViewContext contentContext = scope != null ? context.withScope(SecurityScope.class, scope) : context;
 		IReactControl inner = _content.createControl(contentContext);
 		return (ReactControl) inner;
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_content));
 	}
 
 	@Override

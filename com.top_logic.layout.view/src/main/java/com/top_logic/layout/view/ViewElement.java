@@ -6,8 +6,10 @@
 package com.top_logic.layout.view;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -30,6 +32,8 @@ import com.top_logic.layout.view.channel.ChannelFactory;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ObservingChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.navigation.RevealPath;
+import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.routing.ParamBindingConfig;
 import com.top_logic.layout.view.routing.ParamBindingParticipant;
 import com.top_logic.layout.view.routing.QueryBindingConfig;
@@ -40,8 +44,8 @@ import com.top_logic.model.listen.ModelScope;
  * The mandatory root element of every {@code .view.xml} file.
  *
  * <p>
- * Establishes the scope boundary for a view. In the future, this is where channel declarations
- * and view-level configuration will be defined.
+ * Establishes the scope boundary for a view: its channel declarations, the bindings of URL
+ * parameters to those channels, and the content displayed within them.
  * </p>
  */
 public class ViewElement implements UIElement {
@@ -126,6 +130,8 @@ public class ViewElement implements UIElement {
 
 	private final UIElement _content;
 
+	private String _viewRef;
+
 	/**
 	 * Creates a new {@link ViewElement} from configuration.
 	 */
@@ -143,6 +149,48 @@ public class ViewElement implements UIElement {
 		} else {
 			_content = context.getInstance(contentConfig);
 		}
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(_content));
+	}
+
+	/**
+	 * Path of the view file this element was read from, relative to
+	 * {@link ViewLoader#VIEW_BASE_PATH}.
+	 *
+	 * @return The path, or {@code null} for a view built from a configuration that no file backs.
+	 */
+	public String getViewRef() {
+		return _viewRef;
+	}
+
+	/**
+	 * Names the view file this element was read from.
+	 *
+	 * @param viewRef
+	 *        See {@link #getViewRef()}.
+	 *
+	 * @implNote Called by {@link ViewLoader} right after instantiation: the element is built from a
+	 *           configuration, which does not carry the path it was read from, while every instance
+	 *           the loader hands out has one.
+	 */
+	public void initViewRef(String viewRef) {
+		_viewRef = viewRef;
+	}
+
+	/**
+	 * The names of the channels this view declares, in declaration order.
+	 *
+	 * <p>
+	 * These are the names a {@code <view-ref>} to this view can bind to.
+	 * </p>
+	 */
+	public Set<String> getChannelNames() {
+		return _channelEntries.stream()
+			.map(Map.Entry::getKey)
+			.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	@Override
@@ -170,6 +218,11 @@ public class ViewElement implements UIElement {
 		IReactControl rootControl = _content != null
 			? _content.createControl(context)
 			: new ReactStackControl(context, List.of());
+
+		// Phase 3b: Announce this instance as what is displayed at its place, so that displaying an
+		// object here finds the channels to write. Cached content (a sidebar item, a tab visited
+		// earlier) stays announced while it lives, hence cleanup rather than detach.
+		registerDisplay(context, rootControl);
 
 		// Phase 4: Anchor the participants and the observing channels in the display and wire
 		// attach/detach — the participants register/unregister with the RouteManager, the channels
@@ -207,6 +260,21 @@ public class ViewElement implements UIElement {
 		}
 
 		return rootControl;
+	}
+
+	/**
+	 * Announces this instance in the window's {@link RevealRegistry} for as long as its control
+	 * lives.
+	 */
+	private void registerDisplay(ViewContext context, IReactControl rootControl) {
+		if (_viewRef == null || !(rootControl instanceof ReactControl control)) {
+			return;
+		}
+		RevealRegistry registry = context.getRevealRegistry();
+		if (registry == null) {
+			return;
+		}
+		control.addCleanupAction(registry.registerView(_viewRef, RevealPath.of(context), context));
 	}
 
 	/**

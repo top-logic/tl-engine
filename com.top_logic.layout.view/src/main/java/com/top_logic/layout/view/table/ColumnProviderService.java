@@ -25,6 +25,9 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.type.PrimitiveTypeUtil;
@@ -83,20 +86,137 @@ import com.top_logic.table.impl.DefaultColumn;
  * through {@link Config#getProviders()} - so a new datatype plugs in a column affordance without
  * editing this layer.
  * </p>
+ *
+ * <p>
+ * The same classification decides how wide a column starts out, one configured width per kind of
+ * attribute: a truth value is narrow, a date with a time of day wide. A column configuring a width
+ * of its own is shown in that width instead.
+ * </p>
  */
 @Label("Table columns")
 public class ColumnProviderService extends ConfiguredManagedClass<ColumnProviderService.Config> {
 
 	/**
 	 * Configuration of the {@link ColumnProviderService}.
+	 *
+	 * <p>
+	 * Besides the providers building the columns, the width a column is displayed in is configured
+	 * here, one width per kind of attribute a column shows: a truth value needs far less room than
+	 * a text, a date less than a date with a time of day. A column showing an attribute of that
+	 * kind starts out this wide, unless it configures a width of its own.
+	 * </p>
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<ColumnProviderService> {
+
+		/** Property name of {@link #getBooleanWidth()}. */
+		String BOOLEAN_WIDTH = "boolean-width";
+
+		/** Property name of {@link #getNumberWidth()}. */
+		String NUMBER_WIDTH = "number-width";
+
+		/** Property name of {@link #getDateWidth()}. */
+		String DATE_WIDTH = "date-width";
+
+		/** Property name of {@link #getTimeWidth()}. */
+		String TIME_WIDTH = "time-width";
+
+		/** Property name of {@link #getDateTimeWidth()}. */
+		String DATE_TIME_WIDTH = "date-time-width";
+
+		/** Property name of {@link #getEnumerationWidth()}. */
+		String ENUMERATION_WIDTH = "enumeration-width";
+
+		/** Property name of {@link #getStringWidth()}. */
+		String STRING_WIDTH = "string-width";
+
+		/** Property name of {@link #getLabelWidth()}. */
+		String LABEL_WIDTH = "label-width";
 
 		/**
 		 * Provider mappings keyed by model type reference.
 		 */
 		@Key(ProviderMapping.TYPE)
 		Map<TLModelPartRef, ProviderMapping> getProviders();
+
+		/**
+		 * The width in pixels of a column showing a truth value, used when the column configures
+		 * none.
+		 *
+		 * <p>
+		 * A truth value is displayed as a check mark, so the header label decides how much room the
+		 * column needs.
+		 * </p>
+		 */
+		@Name(BOOLEAN_WIDTH)
+		@IntDefault(80)
+		@Constraint(Positive.class)
+		int getBooleanWidth();
+
+		/**
+		 * The width in pixels of a column showing a number, used when the column configures none.
+		 */
+		@Name(NUMBER_WIDTH)
+		@IntDefault(100)
+		@Constraint(Positive.class)
+		int getNumberWidth();
+
+		/**
+		 * The width in pixels of a column showing a date, used when the column configures none.
+		 */
+		@Name(DATE_WIDTH)
+		@IntDefault(110)
+		@Constraint(Positive.class)
+		int getDateWidth();
+
+		/**
+		 * The width in pixels of a column showing a time of day, used when the column configures
+		 * none.
+		 */
+		@Name(TIME_WIDTH)
+		@IntDefault(90)
+		@Constraint(Positive.class)
+		int getTimeWidth();
+
+		/**
+		 * The width in pixels of a column showing a date with a time of day, used when the column
+		 * configures none.
+		 */
+		@Name(DATE_TIME_WIDTH)
+		@IntDefault(160)
+		@Constraint(Positive.class)
+		int getDateTimeWidth();
+
+		/**
+		 * The width in pixels of a column showing a classifier of an enumeration, used when the
+		 * column configures none.
+		 */
+		@Name(ENUMERATION_WIDTH)
+		@IntDefault(120)
+		@Constraint(Positive.class)
+		int getEnumerationWidth();
+
+		/**
+		 * The width in pixels of a column showing a text, used when the column configures none.
+		 */
+		@Name(STRING_WIDTH)
+		@IntDefault(150)
+		@Constraint(Positive.class)
+		int getStringWidth();
+
+		/**
+		 * The width in pixels of a column showing its values by their display label, used when the
+		 * column configures none.
+		 *
+		 * <p>
+		 * The width of every column not covered by one of the other widths: a reference, a
+		 * multi-valued attribute, an attribute of an application-defined datatype, and one whose
+		 * type could not be resolved.
+		 * </p>
+		 */
+		@Name(LABEL_WIDTH)
+		@IntDefault(150)
+		@Constraint(Positive.class)
+		int getLabelWidth();
 
 	}
 
@@ -179,7 +299,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 */
 	public Column<Object, ?> createColumn(String attribute, ResKey label, TLStructuredTypePart part,
 			ColumnFilter<String> customFilter) {
-		return valueColumn(attribute, label, part, row -> attributeValue(row, attribute))
+		return valueColumn(attribute, label, part, defaultWidth(part), row -> attributeValue(row, attribute))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(byLabel(customFilter))
 			.build();
@@ -245,73 +365,168 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
-	 * The built-in column whose filter and comparator are derived from the attribute's type.
+	 * The built-in column whose filter and comparator are derived from the attribute's type, shown
+	 * in the width configured for that kind of attribute.
 	 */
-	private static Column<Object, ?> defaultColumn(String attribute, ResKey label, TLStructuredTypePart part) {
-		if (part != null && !part.isMultiple()) {
-			TLType type = part.getType();
-			if (type instanceof TLEnumeration enumeration) {
-				return optionsColumn(attribute, label, part, enumeration);
-			}
-			if (type instanceof TLPrimitive primitive) {
-				// The kind describes the storage format; the values seen here are application
-				// values, whose type is defined by the storage mapping. A datatype whose mapping
-				// translates to a different application type (e.g. I18NString: stored as string,
-				// application value ResKey) gets the label-based fallback column instead. A mapping
-				// may declare its application type as a primitive (e.g.
-				// com.top_logic.element.meta.kbbased.storage.mappings.BooleanMapping: boolean), while
-				// the values passing through a column are always boxed - so compare against the
-				// wrapper type.
-				Class<?> applicationType =
-					PrimitiveTypeUtil.asNonPrimitive(primitive.getStorageMapping().getApplicationType());
-				switch (primitive.getKind()) {
-					case BOOLEAN:
-						// A two-valued boolean has no empty cells, so the filter offers just the
-						// two value options.
-						if (Boolean.class.isAssignableFrom(applicationType)) {
-							return booleanColumn(attribute, label, part, false);
-						}
-						break;
-					case TRISTATE:
-						if (Boolean.class.isAssignableFrom(applicationType)) {
-							return booleanColumn(attribute, label, part, true);
-						}
-						break;
-					case INT:
-					case FLOAT:
-						if (Number.class.isAssignableFrom(applicationType)) {
-							// A bound is typed the way the column writes its values, so a German
-							// user enters a decimal fraction with a comma.
-							Format numberFormat = FieldControlService.numberFormat(part);
-							return typedColumn(attribute, label, part, Number.class,
-								Comparator.comparingDouble(Number::doubleValue),
-								new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
-									BoundCodec.numbers(numberFormat)));
-						}
-						break;
-					case DATE:
-						if (Date.class.isAssignableFrom(applicationType)) {
-							// A date, a time of day and a date with a time of day share this kind;
-							// which one it is decides the format a filter bound is entered in.
-							ReactDatePickerControl.Kind temporalKind = DatePickerControlProvider.kind(part);
-							return typedColumn(attribute, label, part, Date.class,
-								Comparator.<Date> naturalOrder(),
-								new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
-									BoundCodec.dates(temporalKind.inputFormats(), temporalKind.parsePatterns())));
-						}
-						break;
-					case STRING:
-						if (String.class.isAssignableFrom(applicationType)) {
-							return typedColumn(attribute, label, part, String.class,
-								Comparator.<String> naturalOrder(), TextColumnFilter.forStrings());
-						}
-						break;
-					default:
-						break;
-				}
+	private Column<Object, ?> defaultColumn(String attribute, ResKey label, TLStructuredTypePart part) {
+		int width = defaultWidth(part);
+		switch (columnKind(part)) {
+			case BOOLEAN:
+				// A two-valued boolean has no empty cells, so the filter offers just the two value
+				// options.
+				return booleanColumn(attribute, label, part, width, false);
+			case TRISTATE:
+				return booleanColumn(attribute, label, part, width, true);
+			case NUMBER:
+				// A bound is typed the way the column writes its values, so a German user enters a
+				// decimal fraction with a comma.
+				Format numberFormat = FieldControlService.numberFormat(part);
+				return typedColumn(attribute, label, part, width, Number.class,
+					Comparator.comparingDouble(Number::doubleValue),
+					new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
+						BoundCodec.numbers(numberFormat)));
+			case DATE:
+				// Which part of a point in time the attribute holds decides the format a filter
+				// bound is entered in.
+				ReactDatePickerControl.Kind temporalKind = DatePickerControlProvider.kind(part);
+				return typedColumn(attribute, label, part, width, Date.class,
+					Comparator.<Date> naturalOrder(),
+					new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
+						BoundCodec.dates(temporalKind.inputFormats(), temporalKind.parsePatterns())));
+			case STRING:
+				return typedColumn(attribute, label, part, width, String.class,
+					Comparator.<String> naturalOrder(), TextColumnFilter.forStrings());
+			case ENUMERATION:
+				return optionsColumn(attribute, label, part, width, (TLEnumeration) part.getType());
+			default:
+				return labelColumn(attribute, label, part, width);
+		}
+	}
+
+	/**
+	 * The kind of column an attribute is shown in, the one classification of its type: it decides
+	 * both the column's filter and comparator and the width it is displayed in.
+	 */
+	private enum ColumnKind {
+
+		/** A truth value that is either true or false. */
+		BOOLEAN,
+
+		/** A truth value that also has a no-value state. */
+		TRISTATE,
+
+		/** A whole or a fractional number. */
+		NUMBER,
+
+		/** A point in time: a date, a time of day, or a date with a time of day. */
+		DATE,
+
+		/** A text. */
+		STRING,
+
+		/** A classifier of an enumeration. */
+		ENUMERATION,
+
+		/** Everything shown by the display label of its values. */
+		LABEL,
+
+	}
+
+	/**
+	 * Which kind of column the given attribute is shown in.
+	 *
+	 * @param part
+	 *        The model attribute, or {@code null} if the row type is unresolved.
+	 */
+	private static ColumnKind columnKind(TLStructuredTypePart part) {
+		if (part == null || part.isMultiple()) {
+			return ColumnKind.LABEL;
+		}
+		TLType type = part.getType();
+		if (type instanceof TLEnumeration) {
+			return ColumnKind.ENUMERATION;
+		}
+		if (type instanceof TLPrimitive primitive) {
+			// The kind describes the storage format; the values seen here are application
+			// values, whose type is defined by the storage mapping. A datatype whose mapping
+			// translates to a different application type (e.g. I18NString: stored as string,
+			// application value ResKey) gets the label-based fallback column instead. A mapping
+			// may declare its application type as a primitive (e.g.
+			// com.top_logic.element.meta.kbbased.storage.mappings.BooleanMapping: boolean), while
+			// the values passing through a column are always boxed - so compare against the
+			// wrapper type.
+			Class<?> applicationType =
+				PrimitiveTypeUtil.asNonPrimitive(primitive.getStorageMapping().getApplicationType());
+			switch (primitive.getKind()) {
+				case BOOLEAN:
+					if (Boolean.class.isAssignableFrom(applicationType)) {
+						return ColumnKind.BOOLEAN;
+					}
+					break;
+				case TRISTATE:
+					if (Boolean.class.isAssignableFrom(applicationType)) {
+						return ColumnKind.TRISTATE;
+					}
+					break;
+				case INT:
+				case FLOAT:
+					if (Number.class.isAssignableFrom(applicationType)) {
+						return ColumnKind.NUMBER;
+					}
+					break;
+				case DATE:
+					if (Date.class.isAssignableFrom(applicationType)) {
+						return ColumnKind.DATE;
+					}
+					break;
+				case STRING:
+					if (String.class.isAssignableFrom(applicationType)) {
+						return ColumnKind.STRING;
+					}
+					break;
+				default:
+					break;
 			}
 		}
-		return labelColumn(attribute, label, part);
+		return ColumnKind.LABEL;
+	}
+
+	/**
+	 * The width in pixels a column over the given attribute is displayed in, as configured for the
+	 * kind of column that attribute is shown in.
+	 *
+	 * <p>
+	 * The width of a point in time depends on how much of it is shown: a time of day is narrower
+	 * than a date, a date with a time of day wider than both.
+	 * </p>
+	 *
+	 * @param part
+	 *        The model attribute, or {@code null} if the row type is unresolved.
+	 */
+	private int defaultWidth(TLStructuredTypePart part) {
+		Config config = getConfig();
+		switch (columnKind(part)) {
+			case BOOLEAN:
+			case TRISTATE:
+				return config.getBooleanWidth();
+			case NUMBER:
+				return config.getNumberWidth();
+			case DATE:
+				switch (DatePickerControlProvider.kind(part)) {
+					case TIME:
+						return config.getTimeWidth();
+					case DATE_TIME:
+						return config.getDateTimeWidth();
+					default:
+						return config.getDateWidth();
+				}
+			case STRING:
+				return config.getStringWidth();
+			case ENUMERATION:
+				return config.getEnumerationWidth();
+			default:
+				return config.getLabelWidth();
+		}
 	}
 
 	/**
@@ -322,8 +537,8 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 *        Whether the attribute has a no-value state (a tri-state boolean).
 	 */
 	private static Column<Object, Boolean> booleanColumn(String attribute, ResKey label, TLStructuredTypePart part,
-			boolean nullable) {
-		return typedColumn(attribute, label, part, Boolean.class, Comparator.<Boolean> naturalOrder(),
+			int width, boolean nullable) {
+		return typedColumn(attribute, label, part, width, Boolean.class, Comparator.<Boolean> naturalOrder(),
 			new BooleanColumnFilter(ResKey.text(label(Boolean.TRUE)), ResKey.text(label(Boolean.FALSE)), nullable));
 	}
 
@@ -334,8 +549,8 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * the whole table render.
 	 */
 	private static <V> Column<Object, V> typedColumn(String attribute, ResKey label, TLStructuredTypePart part,
-			Class<V> valueType, Comparator<V> comparator, ColumnFilter<V> filter) {
-		return valueColumn(attribute, label, part, row -> typedValue(row, attribute, valueType))
+			int width, Class<V> valueType, Comparator<V> comparator, ColumnFilter<V> filter) {
+		return valueColumn(attribute, label, part, width, row -> typedValue(row, attribute, valueType))
 			.sort(() -> comparator)
 			.filter(filter)
 			.build();
@@ -351,12 +566,12 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * classifiers, sorted by their display labels.
 	 */
 	private static Column<Object, Object> optionsColumn(String attribute, ResKey label, TLStructuredTypePart part,
-			TLEnumeration enumeration) {
+			int width, TLEnumeration enumeration) {
 		List<Option> options = new ArrayList<>();
 		for (TLClassifier classifier : enumeration.getClassifiers()) {
 			options.add(new Option(classifier, TLModelNamingConvention.resourceKey(classifier)));
 		}
-		return valueColumn(attribute, label, part, row -> attributeValue(row, attribute))
+		return valueColumn(attribute, label, part, width, row -> attributeValue(row, attribute))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(new OptionsColumnFilter<>(options))
 			.build();
@@ -365,8 +580,9 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	/**
 	 * The fallback column: sorts and text-filters by the cell's display label.
 	 */
-	private static Column<Object, Object> labelColumn(String attribute, ResKey label, TLStructuredTypePart part) {
-		return valueColumn(attribute, label, part, row -> attributeValue(row, attribute))
+	private static Column<Object, Object> labelColumn(String attribute, ResKey label, TLStructuredTypePart part,
+			int width) {
+		return valueColumn(attribute, label, part, width, row -> attributeValue(row, attribute))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(new TextColumnFilter<>(ColumnProviderService::label))
 			.build();
@@ -384,14 +600,17 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * come apart.
 	 * </p>
 	 *
+	 * @param width
+	 *        The width in pixels the column is displayed in.
 	 * @param value
 	 *        Reads the cell value from a row.
 	 * @return The builder, for the caller to add the column's sort and filter capabilities.
 	 */
 	private static <V> DefaultColumn.Builder<Object, V> valueColumn(String attribute, ResKey label,
-			TLStructuredTypePart part, Function<Object, V> value) {
+			TLStructuredTypePart part, int width, Function<Object, V> value) {
 		return DefaultColumn.<Object, V> builder(attribute, value)
 			.label(label)
+			.width(width)
 			.renderer(cellValue -> displayContent(part, cellValue))
 			.searchText(searchText(part));
 	}

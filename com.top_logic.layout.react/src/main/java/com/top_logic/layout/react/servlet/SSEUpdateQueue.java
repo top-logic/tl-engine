@@ -28,6 +28,7 @@ import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
+import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
@@ -387,7 +388,15 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Enqueues an event and immediately flushes it to the connected SSE client.
+	 * Enqueues an event for delivery to the connected SSE client.
+	 *
+	 * <p>
+	 * Outside an interaction the event is flushed immediately: an SSE (re)connection, the model
+	 * events synthesized on the heartbeat and background activity deliver state that nothing is
+	 * about to revise. Within an open {@link DeliveryScope} the event only queues and this queue is
+	 * noted as touched, so that delivery is {@link #settle() settled} once the interaction has
+	 * completed.
+	 * </p>
 	 */
 	public void enqueue(SSEEvent event) {
 		if (_shutdown) {
@@ -396,7 +405,57 @@ public class SSEUpdateQueue {
 			return;
 		}
 		_pendingEvents.add(event);
+		DeliveryScope scope = DeliveryScope.current();
+		if (scope == null) {
+			flush();
+		} else {
+			scope.collect(this);
+		}
+	}
+
+	/**
+	 * Delivers what an interaction produced for this window, dropping the updates that address
+	 * controls the interaction stopped displaying.
+	 *
+	 * <p>
+	 * An interaction both updates controls and decides which of them stay displayed: a control is
+	 * patched by the listener chain of the channel a command wrote, while the container that
+	 * replaces it is notified later in the same chain. An update addressed to a control the client
+	 * is about to unmount would send the browser looking for data the server no longer serves, so it
+	 * is dropped here, where it is known which controls the interaction leaves displayed. Nothing is
+	 * lost: a control that becomes displayed again is serialized with its full state.
+	 * </p>
+	 *
+	 * <p>
+	 * Only the events that address a control - a {@link StateEvent} or a {@link PatchEvent} - can be
+	 * dropped. Everything else is delivered as enqueued.
+	 * </p>
+	 *
+	 * @see DeliveryScope
+	 */
+	void settle() {
+		_pendingEvents.removeIf(this::addressesRetiredControl);
 		flush();
+	}
+
+	/**
+	 * Whether the given event addresses a control that this window no longer displays: one that was
+	 * disposed (and thereby unregistered), or one that a container detached.
+	 */
+	private boolean addressesRetiredControl(SSEEvent event) {
+		String controlId;
+		if (event instanceof StateEvent state) {
+			controlId = state.getControlId();
+		} else if (event instanceof PatchEvent patch) {
+			controlId = patch.getControlId();
+		} else {
+			return false;
+		}
+		ReactCommandTarget target = _controls.get(controlId);
+		if (target == null) {
+			return true;
+		}
+		return target instanceof ReactControl control && !control.isAttached();
 	}
 
 	/**

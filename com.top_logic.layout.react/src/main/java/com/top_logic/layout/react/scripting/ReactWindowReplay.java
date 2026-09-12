@@ -7,7 +7,6 @@ package com.top_logic.layout.react.scripting;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
@@ -22,6 +21,7 @@ import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactCommands;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContextManager;
@@ -34,7 +34,7 @@ import com.top_logic.util.TLContextManager;
  * <p>
  * The target window has its own subsession and {@link SSEUpdateQueue}, so {@link #act} installs the
  * target's subsession, runs the command under the session-wide
- * {@link ReactWindowRegistry#getRequestLock() request lock} and settles derived state, then restores
+ * {@link ReactWindowRegistry#beginInteraction() interaction} and settles derived state, then restores
  * the caller's subsession. The command's control updates enqueue to the target window's queue, which
  * flushes them to that window's SSE connection — the effect appears in the target browser window.
  * </p>
@@ -77,8 +77,8 @@ public final class ReactWindowReplay {
 	}
 
 	/**
-	 * Replays the given recorded step in the given window, in that window's subsession and under the
-	 * session request lock, settling derived state afterwards. An {@link AssertCommand assertion}
+	 * Replays the given recorded step in the given window, in that window's subsession and as one
+	 * {@link Interaction}, settling derived state afterwards. An {@link AssertCommand assertion}
 	 * step is verified against the window's current state; any other step is dispatched to the
 	 * control at the step's address.
 	 *
@@ -99,9 +99,7 @@ public final class ReactWindowReplay {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		TLSubSessionContext callerSubSession = displayContext.getSubSessionContext();
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
-		ReentrantLock requestLock = registry.getRequestLock();
-		requestLock.lock();
-		try {
+		try (Interaction interaction = registry.beginInteraction()) {
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
 				ScriptingSession session = ScriptingSession.forRoot(root);
@@ -119,7 +117,6 @@ public final class ReactWindowReplay {
 				}
 			}
 		} finally {
-			requestLock.unlock();
 			if (callerSubSession != null) {
 				displayContext.installSubSessionContext(callerSubSession);
 			}

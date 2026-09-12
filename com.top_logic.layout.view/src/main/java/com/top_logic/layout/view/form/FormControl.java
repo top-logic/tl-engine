@@ -415,7 +415,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private void onCurrentObjectDeleted() {
 		if (_editMode) {
-			exitEditMode();
+			discardEditSession();
 		}
 		deregisterModelListener();
 		_currentObject = null;
@@ -727,7 +727,34 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		}
 	}
 
+	/**
+	 * Ends the edit session and announces the resulting view-mode state.
+	 *
+	 * <p>
+	 * Used where the form keeps displaying the same object ({@link #executeSave()},
+	 * {@link #executeCancel()}): the fields must drop the overlay values and show the base values
+	 * again, which the notification triggers.
+	 * </p>
+	 */
 	private void exitEditMode() {
+		discardEditSession();
+
+		fireFormStateChanged();
+	}
+
+	/**
+	 * Ends the edit session without notifying the {@link FormModelListener}s.
+	 *
+	 * <p>
+	 * Used where the form stops displaying its current object ({@link #handleInputChanged},
+	 * {@link #onCurrentObjectDeleted()}) or stops displaying anything at all
+	 * ({@link #onCleanup()}). Such a caller switches the object and then fires once, so that no
+	 * field is rebound to the object the form is leaving: rebinding computes field state for that
+	 * object (options, constraints, validation) although the result is thrown away by the
+	 * notification for the new object — and for a deleted object the computation fails.
+	 * </p>
+	 */
+	private void discardEditSession() {
 		if (_inputVeto != null && _inputChannel != null) {
 			_inputChannel.removeVetoListener(_inputVeto);
 			_inputVeto = null;
@@ -740,8 +767,6 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		putState(EDIT_MODE, Boolean.FALSE);
 		updateEditModeChannel();
 		updateDirtyState();
-
-		fireFormStateChanged();
 
 		if (_validationModel != null && _validityListener != null) {
 			_validationModel.removeConstraintValidationListener(_validityListener);
@@ -814,7 +839,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	private void handleInputChanged(ViewChannel sender, Object oldValue, Object newValue) {
 		if (_editMode) {
-			exitEditMode();
+			discardEditSession();
 		}
 		deregisterModelListener();
 		_currentObject = (TLObject) newValue;
@@ -836,7 +861,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			_scopeDirtyChannel.removeHandler(this);
 		}
 		if (_editMode) {
-			exitEditMode();
+			discardEditSession();
 		}
 		deregisterModelListener();
 		if (_inputChannel != null) {

@@ -17,10 +17,17 @@
 	page rather than walking the terms typed on it. A link without q says nothing about the
 	filter and shows the list unfiltered.
 	
-	The two lists split the tickets by whether they carry comments, and share the one ticket
-	channel: the selected ticket is shown in whichever list holds it, and a ticket that moves
-	between the lists - the first comment is written, the last one deleted - leaves the
-	selection empty, because the list that showed it as selected no longer has it.
+	The two lists split the tickets by their status and share the one ticket channel: the
+	selected ticket is shown in whichever list holds it, and a ticket that moves between the
+	lists leaves the selection empty, because the list that showed it as selected no longer
+	has it.
+	
+	Both lists are drag sources and drop targets: dragging a ticket from Open to Closed
+	closes it and dragging it back reopens it, which is what each list's <drop> does with the
+	tickets dropped on it. Dragging a selected row drags the whole selection, so several
+	tickets close in one gesture. The Involve list below them is a row target instead: a
+	ticket dropped onto one of its rows gets a comment by that person, and the person dropped
+	on arrives on the dropPerson channel that the drop's script reads.
 	
 	The first list groups its tickets by status, the second one shows them flat, so both
 	presentations of the same rows are on screen at once. A group header is a collapsible row
@@ -33,6 +40,7 @@
 		<channel name="model"/>
 		<channel name="ticket"/>
 		<channel name="filter"/>
+		<channel name="dropPerson"/>
 		<derived-channel name="ticketId"
 			expr="t -> objectId($t)"
 			inputs="ticket"
@@ -178,8 +186,8 @@
 					</text-input>
 					<panel>
 						<title>
-							<en>Without comments</en>
-							<de>Ohne Kommentare</de>
+							<en>Open</en>
+							<de>Offen</de>
 						</title>
 						<table
 							group-by="status"
@@ -187,6 +195,12 @@
 							selection="ticket"
 							types="demo.tickets:Ticket"
 						>
+							<drag/>
+							<drop accept="demo.tickets:Ticket">
+								<with-transaction>
+									<execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`))"/>
+								</with-transaction>
+							</drop>
 							<inputs>
 								<input channel="filter"/>
 							</inputs>
@@ -194,26 +208,57 @@
 								<column attribute="name"/>
 								<column attribute="status"/>
 							</columns>
-							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).isEmpty()); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
+							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
 						</table>
 					</panel>
 					<panel>
 						<title>
-							<en>With comments</en>
-							<de>Mit Kommentaren</de>
+							<en>Closed</en>
+							<de>Geschlossen</de>
 						</title>
 						<table
 							observed-types="demo.tickets:Ticket"
 							selection="ticket"
 							types="demo.tickets:Ticket"
 						>
+							<drag/>
+							<drop accept="demo.tickets:Ticket">
+								<with-transaction>
+									<execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`))"/>
+								</with-transaction>
+							</drop>
 							<inputs>
 								<input channel="filter"/>
 							</inputs>
 							<columns>
 								<column attribute="name"/>
 							</columns>
-							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; !$t.get(`demo.tickets:Ticket#comments`).isEmpty()); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
+							<rows>term -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); }</rows>
+						</table>
+					</panel>
+					<panel>
+						<title>
+							<en>Involve</en>
+							<de>Beteiligen</de>
+						</title>
+						<table types="tl.accounts:Person">
+							<drop
+								accept="demo.tickets:Ticket"
+								target="row"
+								target-channel="dropPerson"
+							>
+								<with-transaction>
+									<execute-script function="person -> tickets -> $tickets.foreach(t -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#author`, $person); $c.set(`demo.tickets:Comment#content`, &quot;Please have a look.&quot;); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); })">
+										<inputs>
+											<input channel="dropPerson"/>
+										</inputs>
+									</execute-script>
+								</with-transaction>
+							</drop>
+							<columns>
+								<column attribute="name"/>
+							</columns>
+							<rows>all(`tl.accounts:Person`)</rows>
 						</table>
 					</panel>
 				</panel>

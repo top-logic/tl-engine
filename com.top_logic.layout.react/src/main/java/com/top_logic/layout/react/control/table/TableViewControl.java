@@ -36,9 +36,17 @@ import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.dnd.DragSourceControl;
+import com.top_logic.layout.react.control.dnd.DropArguments;
+import com.top_logic.layout.react.control.dnd.DropEvent;
+import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
+import com.top_logic.layout.react.control.dnd.DropPosition;
+import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.scripting.ReactActionContext;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -86,6 +94,14 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * Rows are dragged and dropped through the seam of
+ * {@link com.top_logic.layout.react.control.dnd}: {@link #setDragSource(String)} makes the rows
+ * draggable under a type tag, {@link #setDropTarget(DropTarget)} accepts a drop of such objects and
+ * applies it. A drag names client-side row keys only, and each control resolves the keys it owns, so
+ * the two ends of a drag between two tables need know nothing of each other.
+ * </p>
+ *
+ * <p>
  * <b>Placement requirement:</b> this control virtualizes - it renders only the row window that
  * fits its scroll viewport and scrolls internally - so it must be given a container with a
  * <em>definite (bounded) height</em>. Its root fills its parent ({@code height: 100%}); if every
@@ -102,7 +118,7 @@ import com.top_logic.util.Resources;
  * @param <R>
  *        The row business object type.
  */
-public class TableViewControl<R> extends ReactControl implements TooltipProvider {
+public class TableViewControl<R> extends ReactControl implements TooltipProvider, DragSourceControl {
 
 	/**
 	 * Notified when the set of selected row keys changes.
@@ -164,6 +180,19 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	private static final String GROUPING = "grouping";
 
 	private static final String ROW_ID = "id";
+
+	/**
+	 * Prefix of a row's {@link #ROW_ID id}, followed by the row's {@link #ROW_INDEX index}.
+	 *
+	 * <p>
+	 * This is the identity the client refers to a row by - in a tooltip request, and as the key of a
+	 * dragged or dropped-on row. It designates a row for as long as the client's row window is the
+	 * one the server sent, which is what a gesture on a displayed row rests on anyway.
+	 * </p>
+	 *
+	 * @see #rowIndex(String)
+	 */
+	private static final String ROW_ID_PREFIX = "row_";
 
 	private static final String ROW_INDEX = "index";
 
@@ -241,6 +270,18 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/** Value of {@link #ACTIVE_NAMED_FILTER} and {@link #SEARCH} for "none". */
 	private static final String NOTHING = "";
 
+	/** State key telling the client whether the rows may be dragged. */
+	private static final String DRAG_ENABLED = "dragEnabled";
+
+	/** State key holding the {@link #dragType() type tag} the client tags a drag payload with. */
+	private static final String DRAG_TYPE = "dragType";
+
+	/** State key holding the {@link DropTarget#acceptedTypes() type tags} a drop is accepted of. */
+	private static final String DROP_ACCEPTS = "dropAccepts";
+
+	/** State key telling the client whether a single row is a drop target of its own. */
+	private static final String DROP_ON_ROWS = "dropOnRows";
+
 	// Command names.
 	private static final String CMD_OPEN_FILTER = "openFilter";
 
@@ -307,6 +348,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	private static final String CMD_SAVE_NAMED_FILTER = "saveNamedFilter";
 
 	private static final String CMD_DELETE_NAMED_FILTER = "deleteNamedFilter";
+
+	private static final String CMD_DROP = "drop";
+
+	private static final String CMD_DROP_OBJECTS = "dropObjects";
 
 	// Command argument names (shared with the typed SelectRowArguments so dispatch, recording and
 	// projection agree on the wire keys).
@@ -376,6 +421,12 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	/** Whether the named filters, the search field and saving a filter are displayed. */
 	private boolean _filterBar;
+
+	/** The type tag dragged rows are announced under, or {@code null} while rows are not draggable. */
+	private String _dragType;
+
+	/** What dropped objects are done with, or {@code null} while the table accepts no drop. */
+	private DropTarget _dropTarget;
 
 	/**
 	 * Creates a {@link TableViewControl}.
@@ -470,6 +521,48 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			_filterBar = filterBar;
 			putState(FILTER_BAR, Boolean.valueOf(filterBar));
 			refreshFilterBar();
+		} finally {
+			commitUpdate(update);
+		}
+	}
+
+	/**
+	 * Makes the rows draggable, announcing them under the given type tag.
+	 *
+	 * <p>
+	 * Dragging a selected row drags the whole {@link #getSelectedKeys() selection}, an unselected row
+	 * drags itself. What a receiving {@link DropTarget} gets are the row business objects; the tag is
+	 * what it accepts the drop by.
+	 * </p>
+	 *
+	 * @param dragType
+	 *        The {@link #dragType() type tag}, or {@code null} to make the rows undraggable again.
+	 */
+	public void setDragSource(String dragType) {
+		Object update = beginUpdate();
+		try {
+			_dragType = dragType;
+			putState(DRAG_ENABLED, Boolean.valueOf(dragType != null));
+			putState(DRAG_TYPE, dragType == null ? NOTHING : dragType);
+		} finally {
+			commitUpdate(update);
+		}
+	}
+
+	/**
+	 * Makes the table accept a drop of the objects the given target accepts, and applies such a drop
+	 * through it.
+	 *
+	 * @param dropTarget
+	 *        What dropped objects are done with, or {@code null} to accept no drop again.
+	 */
+	public void setDropTarget(DropTarget dropTarget) {
+		Object update = beginUpdate();
+		try {
+			_dropTarget = dropTarget;
+			putState(DROP_ACCEPTS,
+				dropTarget == null ? List.of() : List.copyOf(dropTarget.acceptedTypes()));
+			putState(DROP_ON_ROWS, Boolean.valueOf(dropTarget != null && dropTarget.dropOnRows()));
 		} finally {
 			commitUpdate(update);
 		}
@@ -664,7 +757,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			Map<String, ReactControl> cells = _cellCache.computeIfAbsent(row.key(), key -> createCells(row));
 
 			Map<String, Object> rowState = new LinkedHashMap<>();
-			rowState.put(ROW_ID, "row_" + index);
+			rowState.put(ROW_ID, ROW_ID_PREFIX + index);
 			rowState.put(ROW_INDEX, Integer.valueOf(index));
 			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
 			if (treeMode()) {
@@ -1295,18 +1388,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * {@code -1} when the key resolves to no object or no row displays it.
 	 */
 	private int rowIndexOf(ModelName name) {
-		if (name == null) {
-			return -1;
-		}
-		Object target = null;
-		try {
-			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-			ActionContext actionContext =
-				new ReactActionContext(displayContext, displayContext.asRequest().getSession());
-			target = ModelResolver.locateModel(actionContext, null, name);
-		} catch (RuntimeException ex) {
-			Logger.warn("Cannot resolve row for key: " + name, ex, this);
-		}
+		Object target = name == null ? null : locate(newActionContext(), name);
 		if (target == null) {
 			return -1;
 		}
@@ -1335,14 +1417,25 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	/**
-	 * Records a plain (unmodified) row selection and a row activation in replay-stable form: a
-	 * {@link #CMD_SELECT} by {@link #ARG_ROW_INDEX} becomes a {@link #CMD_SELECT_BY_KEY} of the
-	 * row's business identity, a {@link #CMD_ACTIVATE} becomes a {@link #CMD_ACTIVATE_BY_KEY} of the
-	 * same, so the recording survives sorting and a fresh session. Modifier selections (ctrl/shift
-	 * range/toggle) are recorded verbatim — their semantics are index/anchor based.
+	 * Records a gesture whose live arguments are session-bound in replay-stable form.
+	 *
+	 * <p>
+	 * A plain (unmodified) row selection — a {@link #CMD_SELECT} by {@link #ARG_ROW_INDEX} — becomes
+	 * a {@link #CMD_SELECT_BY_KEY} of the row's business identity, a {@link #CMD_ACTIVATE} becomes a
+	 * {@link #CMD_ACTIVATE_BY_KEY} of the same, and a {@link #CMD_DROP} becomes a
+	 * {@link #CMD_DROP_OBJECTS} naming the dragged objects and the target row, so the recording
+	 * survives sorting and a fresh session. Modifier selections (ctrl/shift range/toggle) are recorded
+	 * verbatim — their semantics are index/anchor based.
+	 * </p>
 	 */
 	@Override
 	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
+		if (CMD_DROP.equals(command) && arguments != null) {
+			RecordedCommand recorded = recordDrop(arguments);
+			if (recorded != null) {
+				return recorded;
+			}
+		}
 		if (CMD_SELECT.equals(command) && arguments != null
 				&& arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex
 				&& !Boolean.TRUE.equals(arguments.get(ARG_CTRL_KEY))
@@ -1586,6 +1679,226 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		refreshColumns();
 	}
 
+	// -- Drag and drop --
+
+	@Override
+	public String dragType() {
+		return _dragType;
+	}
+
+	@Override
+	public List<?> dragObjects(List<String> keys) {
+		if (keys == null) {
+			return List.of();
+		}
+		List<Object> result = new ArrayList<>(keys.size());
+		for (String key : keys) {
+			Row<R> row = rowById(key);
+			if (row != null && row.kind() == RowKind.DATA && row.data() != null) {
+				result.add(row.data());
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public List<?> dragSelection() {
+		List<Object> result = new ArrayList<>(_selectedKeys.size());
+		for (Row<R> row : _view.rows(0, _view.rowCount())) {
+			if (row.kind() == RowKind.DATA && row.data() != null && _selectedKeys.contains(row.key())) {
+				result.add(row.data());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Applies a drop the client made on this table.
+	 *
+	 * <p>
+	 * The arguments name client-side identities only, so both ends of the gesture are resolved by the
+	 * control that owns them: the dragged objects by the {@link DragSourceControl} the
+	 * {@link DropArguments#getSource() source id} designates, the target by this table. A drop of a
+	 * type the {@link #setDropTarget(DropTarget) drop target} does not accept, from a control that is
+	 * no drag source, or naming a row this table no longer displays is refused - the client-side
+	 * acceptance check that precedes it narrows the gesture for the user, it does not decide it.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_DROP)
+	HandlerResult handleDrop(DropArguments args) {
+		DropTarget dropTarget = _dropTarget;
+		if (dropTarget == null) {
+			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+		}
+		ReactCommandTarget registered = registeredControl(args.getSource());
+		if (!(registered instanceof DragSourceControl source) || !(registered instanceof ReactControl sourceControl)) {
+			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+		}
+		String dragType = source.dragType();
+		if (dragType == null || !dropTarget.acceptedTypes().contains(dragType)) {
+			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+		}
+
+		Row<R> targetRow = null;
+		DropPosition position = DropPosition.NONE;
+		if (dropTarget.dropOnRows()) {
+			position = DropPosition.fromWire(args.getPosition());
+			if (position == null) {
+				return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			}
+			String targetKey = args.getTargetKey();
+			if (targetKey != null && !targetKey.isEmpty()) {
+				targetRow = rowById(targetKey);
+				if (targetRow == null) {
+					return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(targetKey));
+				}
+			}
+		}
+
+		List<?> objects = args.isSelection() ? source.dragSelection() : source.dragObjects(args.getKeys());
+		if (objects.isEmpty()) {
+			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(args.getKeys()));
+		}
+
+		dropTarget.onDrop(
+			new DropEvent(sourceControl, objects, targetRow == null ? null : targetRow.data(), position));
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Applies a drop of the objects named by their {@link ScriptingModelKey business identity} - the
+	 * replay-stable counterpart of {@link #handleDrop} by client-side keys, which a recorded drop is
+	 * captured as so it survives sorting, filtering and a fresh session.
+	 *
+	 * @param args
+	 *        Carries the identities of the dropped objects and of the target row.
+	 */
+	@ReactCommandHandler(CMD_DROP_OBJECTS)
+	HandlerResult handleDropObjects(DropObjectsArguments args) {
+		DropTarget dropTarget = _dropTarget;
+		if (dropTarget == null) {
+			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+		}
+		DropPosition position = DropPosition.fromWire(args.getPosition());
+		if (position == null) {
+			return HandlerResult.error(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+		}
+		ActionContext actionContext = newActionContext();
+
+		List<ModelName> unresolved = new ArrayList<>();
+		List<Object> objects = new ArrayList<>();
+		for (ModelName name : args.getObjects()) {
+			Object object = locate(actionContext, name);
+			if (object == null) {
+				unresolved.add(name);
+			} else {
+				objects.add(object);
+			}
+		}
+		Object target = null;
+		ModelName targetName = args.getTargetObject();
+		if (targetName != null) {
+			Object object = locate(actionContext, targetName);
+			// The target must be a row of this table: a recorded drop that lands somewhere else is a
+			// drift, not a drop.
+			Row<R> targetRow = object == null ? null : rowFor(object);
+			if (targetRow == null) {
+				unresolved.add(targetName);
+			} else {
+				target = targetRow.data();
+			}
+		}
+		// Drift contract: a recorded identity that no longer designates a present object is an
+		// explicit failure (replay reports success:false), never a partially applied drop.
+		if (!unresolved.isEmpty() || objects.isEmpty()) {
+			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
+		}
+
+		dropTarget.onDrop(new DropEvent(null, objects, target,
+			dropTarget.dropOnRows() ? position : DropPosition.NONE));
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Rewrites a client drop into the replay-stable {@link #CMD_DROP_OBJECTS} form: the live
+	 * {@link #CMD_DROP} names the dragged rows by session-bound client keys, the recorded step names
+	 * the business objects themselves. {@code null} when an object cannot be named, so the drop is
+	 * recorded verbatim rather than as an incomplete set.
+	 */
+	private RecordedCommand recordDrop(Map<String, Object> arguments) {
+		if (!(commandItem(CMD_DROP, arguments) instanceof DropArguments args)) {
+			return null;
+		}
+		if (!(registeredControl(args.getSource()) instanceof DragSourceControl source)) {
+			return null;
+		}
+		List<?> objects = args.isSelection() ? source.dragSelection() : source.dragObjects(args.getKeys());
+		if (objects.isEmpty()) {
+			return null;
+		}
+		DropObjectsArguments recorded = TypedConfiguration.newConfigItem(DropObjectsArguments.class);
+		recorded.setName(CMD_DROP_OBJECTS);
+		for (Object object : objects) {
+			ModelName name = ScriptingModelKey.name(null, object);
+			if (name == null) {
+				return null;
+			}
+			recorded.getObjects().add(name);
+		}
+		Row<R> targetRow = rowById(args.getTargetKey());
+		if (targetRow != null) {
+			ModelName targetName = ScriptingModelKey.name(null, targetRow.data());
+			if (targetName == null) {
+				return null;
+			}
+			recorded.setTargetObject(targetName);
+		}
+		recorded.setPosition(args.getPosition());
+		return new RecordedCommand(recorded);
+	}
+
+	/**
+	 * The control registered in this window under the given id, or {@code null} if none is (or the
+	 * id is missing).
+	 */
+	private ReactCommandTarget registeredControl(String controlId) {
+		SSEUpdateQueue queue = getReactContext().getSSEQueue();
+		if (controlId == null || queue == null) {
+			return null;
+		}
+		return queue.getControl(controlId);
+	}
+
+	/**
+	 * An {@link ActionContext} for resolving a {@link ModelName}, or {@code null} if the running
+	 * interaction offers no display context to build one from.
+	 */
+	private ActionContext newActionContext() {
+		try {
+			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+			return new ReactActionContext(displayContext, displayContext.asRequest().getSession());
+		} catch (RuntimeException ex) {
+			Logger.warn("Cannot resolve a business identity outside an interaction.", ex, this);
+			return null;
+		}
+	}
+
+	/**
+	 * The object the given {@link ModelName} designates, or {@code null} if it designates none (or
+	 * there is no {@code context} to resolve it in).
+	 */
+	private Object locate(ActionContext context, ModelName name) {
+		if (context == null || name == null) {
+			return null;
+		}
+		try {
+			return ModelResolver.locateModel(context, null, name);
+		} catch (RuntimeException ex) {
+			Logger.warn("Cannot resolve object for key: " + name, ex, this);
+			return null;
+		}
+	}
+
 	private Object keyAt(int rowIndex) {
 		Row<R> row = rowAt(rowIndex);
 		return row == null ? null : row.key();
@@ -1598,6 +1911,41 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		}
 		List<Row<R>> single = _view.rows(rowIndex, rowIndex + 1);
 		return single.isEmpty() ? null : single.get(0);
+	}
+
+	/**
+	 * The row the given client-side {@link #ROW_ID_PREFIX row id} designates, or {@code null} if it
+	 * designates none.
+	 */
+	private Row<R> rowById(String rowId) {
+		return rowAt(rowIndex(rowId));
+	}
+
+	/**
+	 * The row whose business object is the given one, or {@code null} if the table displays none.
+	 */
+	private Row<R> rowFor(Object data) {
+		for (Row<R> row : _view.rows(0, _view.rowCount())) {
+			if (row.kind() == RowKind.DATA && data.equals(row.data())) {
+				return row;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The {@link #ROW_INDEX index} the given client-side {@link #ROW_ID_PREFIX row id} carries, or
+	 * {@code -1} if the id is malformed.
+	 */
+	private static int rowIndex(String rowId) {
+		if (rowId == null || !rowId.startsWith(ROW_ID_PREFIX)) {
+			return -1;
+		}
+		try {
+			return Integer.parseInt(rowId.substring(ROW_ID_PREFIX.length()));
+		} catch (NumberFormatException ex) {
+			return -1;
+		}
 	}
 
 	/**
@@ -1615,27 +1963,18 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	@Override
 	public TooltipContent getTooltipContent(String key) {
-		if (key == null || !key.startsWith("row_")) {
+		if (key == null) {
 			return null;
 		}
 		int separator = key.indexOf('|');
 		if (separator < 0) {
 			return null;
 		}
-		int rowIndex;
-		try {
-			rowIndex = Integer.parseInt(key.substring(4, separator));
-		} catch (NumberFormatException ex) {
+		Row<R> row = rowById(key.substring(0, separator));
+		if (row == null) {
 			return null;
 		}
-		if (rowIndex < 0 || rowIndex >= _view.rowCount()) {
-			return null;
-		}
-		List<Row<R>> single = _view.rows(rowIndex, rowIndex + 1);
-		if (single.isEmpty()) {
-			return null;
-		}
-		CellContent content = _view.cell(single.get(0), key.substring(separator + 1));
+		CellContent content = _view.cell(row, key.substring(separator + 1));
 		if (content instanceof CellContent.Labeled labeled
 				&& labeled.tooltip() != null && !labeled.tooltip().isEmpty()) {
 			return new TooltipContent(labeled.tooltip(), null);

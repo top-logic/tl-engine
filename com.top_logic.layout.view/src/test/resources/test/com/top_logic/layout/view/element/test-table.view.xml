@@ -4,6 +4,7 @@
 	<channels>
 		<channel name="testInput"/>
 		<channel name="selectedRow"/>
+		<channel name="dropTarget"/>
 	</channels>
 
 	<table
@@ -14,6 +15,17 @@
 		selection="selectedRow"
 		types="demo.test:Row"
 	>
+		<drag/>
+		<drop accept="demo.test:Row">
+			<execute-script function="rows -> $rows"/>
+		</drop>
+		<drop
+			accept="demo.test:Row, demo.test:Other"
+			target="row"
+			target-channel="dropTarget"
+		>
+			<execute-script function="rows -> $rows"/>
+		</drop>
 		<inputs>
 			<input channel="testInput"/>
 		</inputs>

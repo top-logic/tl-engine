@@ -55,6 +55,8 @@
 					<color name="focus" value="#2968C8"/>
 					<color name="focus-inset" value="#FFFFFF"/>
 					<text name="font-family" value="'Inter'"/>
+					<text name="font-family-mono" value="monospace"/>
+					<length name="heading-03-font-size" value="1.25rem"/>
 					<length name="heading-compact-02-font-size" value=".875rem"/>
 					<length name="heading-compact-02-letter-spacing" value=".15px"/>
 					<length name="heading-compact-02-line-height" value="1.125rem"/>
@@ -79,8 +81,11 @@
 					<ref name="link-color" ref="link-primary"/>
 					<color name="link-primary" value="#2968C8"/>
 					<color name="link-primary-hover" value="#245DB2"/>
+					<text name="overlay" value="rgba(0,0,0,0.5)"/>
 					<color name="script-editor-text-highlight" value="#D6E3F7"/>
+					<text name="shadow-dialog" value="0 8px 24px rgba(0,0,0,0.2)"/>
 					<text name="shadow-menu" value="0 2px 6px 0 rgba(0,0,0,0.32)"/>
+					<text name="shadow-raised" value="0 0 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)"/>
 					<length name="spacing-01" value=".25rem"/>
 					<length name="spacing-02" value=".5rem"/>
 					<length name="spacing-03" value="1rem"/>

@@ -227,7 +227,38 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * @return A React control for the field input widget.
 	 */
 	public ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
+		return createFieldControl(context, part, model, null);
+	}
+
+	/**
+	 * Creates the input control for the given attribute, with the display deciding which control
+	 * that is.
+	 *
+	 * <p>
+	 * A display naming a control gets that control, whatever the model says: the attribute's own
+	 * {@link TLInputControl} annotation, the rule that options are selected from a list, and the
+	 * control configured for the attribute's type all step back. Where the display names none, the
+	 * control is resolved as it is for every other field.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param part
+	 *        The model attribute.
+	 * @param model
+	 *        The field model providing value, editability, and change notifications.
+	 * @param control
+	 *        The control the display asks for, or {@code null} to let the model decide.
+	 * @return A React control for the field input widget.
+	 */
+	public ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldModel model,
+			PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
 		FieldSpec field = fieldSpec(part, model);
+
+		// 0. The control the display asks for.
+		if (control != null) {
+			return _context.getInstance(control).createControl(context, field, model);
+		}
 
 		// 1. Annotation on attribute (includes type-level default via VALUE_TYPE strategy).
 		TLInputControl annotation = part.getAnnotation(TLInputControl.class);

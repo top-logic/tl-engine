@@ -1,5 +1,5 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, readDragPayload, dragTypeAccepted, dropPositionAt } from 'tl-react-bridge';
+import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -304,6 +304,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const activeNamedFilter = (state.activeNamedFilter as string) ?? '';
   const serverSearch = (state.search as string) ?? '';
   const filterSaving = (state.filterSaving as boolean) ?? false;
+  const dragEnabled = (state.dragEnabled as boolean) ?? false;
+  const dragType = (state.dragType as string) ?? '';
+  const dropAccepts = (state.dropAccepts as string[]) ?? [];
+  const dropOnRows = (state.dropOnRows as boolean) ?? false;
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -333,6 +337,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // -- Drag reorder state --
   const dragColumnRef = React.useRef<string | null>(null);
   const [dragOver, setDragOver] = React.useState<{ column: string; side: 'left' | 'right' } | null>(null);
+
+  // -- Row drop state: where an accepted drag currently hovers, or null while none does. A null row
+  //    means the drag hovers the table itself rather than one of its rows. --
+  const [dropState, setDropState] = React.useState<{ row: string | null; position: TLDropPosition } | null>(null);
 
   // -- Column context menu state --
   const [contextMenu, setContextMenu] = React.useState<{
@@ -570,10 +578,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [columns]);
 
   const handleDrop = React.useCallback((event: React.DragEvent) => {
+    const draggedName = dragColumnRef.current;
+    if (!draggedName) {
+      // Without a column drag of this table the drop is none of this handler's business. Leaving
+      // the event untouched lets it bubble to the table root, where a row drop landing on the
+      // header counts as a drop on the table as a whole.
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
-    const draggedName = dragColumnRef.current;
-    if (!draggedName || !dragOver) {
+    if (!dragOver) {
       dragColumnRef.current = null;
       setDragOver(null);
       return;
@@ -604,6 +618,108 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     dragColumnRef.current = null;
     setDragOver(null);
   }, []);
+
+  // -- Row drag-and-drop handlers --
+
+  /**
+   * Starts a row drag. The payload names the row by its id and says whether the row was selected -
+   * the server then drags the whole selection, which may reach beyond the rendered row window.
+   */
+  const handleRowDragStart = React.useCallback((row: RowState, event: React.DragEvent) => {
+    if (isInteractiveTarget(event)) {
+      // A drag begun on a cell's input belongs to that input (selecting its text), not to the row.
+      event.preventDefault();
+      return;
+    }
+    writeDragPayload(event.dataTransfer, {
+      source: controlId,
+      keys: [row.id],
+      selection: row.selected,
+      type: dragType,
+    });
+  }, [controlId, dragType]);
+
+  /** Which row an event points at, and where within it, or the table itself. */
+  const dropTargetAt = React.useCallback(
+    (event: React.DragEvent): { row: string | null; position: TLDropPosition } => {
+      if (dropOnRows && event.target instanceof Element) {
+        const rowElement = event.target.closest('.tlTableView__row') as HTMLElement | null;
+        const key = rowElement?.dataset.dropRow;
+        if (rowElement && key) {
+          return { row: key, position: dropPositionAt(event.clientY, rowElement) };
+        }
+      }
+      return { row: null, position: 'none' };
+    }, [dropOnRows]);
+
+  const handleRootDragOver = React.useCallback((event: React.DragEvent) => {
+    if (dragColumnRef.current) {
+      event.preventDefault();
+      // Auto-scroll horizontally during column drag.
+      const body = scrollContainerRef.current;
+      const header = headerRef.current;
+      if (!body) return;
+      const rect = body.getBoundingClientRect();
+      const threshold = 40;
+      const speed = 8;
+      if (event.clientX < rect.left + threshold) {
+        body.scrollLeft = Math.max(0, body.scrollLeft - speed);
+      } else if (event.clientX > rect.right - threshold) {
+        body.scrollLeft += speed;
+      }
+      if (header) header.scrollLeft = body.scrollLeft;
+      return;
+    }
+    // Coarse acceptance from the payload's type tag alone: during a drag the payload itself is
+    // unreadable, and the tag is what the table declares its accepted types against. Whether this
+    // particular drop is possible is the server's answer, given once it arrives.
+    if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    const target = dropTargetAt(event);
+    setDropState((previous) =>
+      previous && previous.row === target.row && previous.position === target.position
+        ? previous
+        : target);
+  }, [dropAccepts, dropTargetAt]);
+
+  const handleRootDragLeave = React.useCallback((event: React.DragEvent) => {
+    // Moving among the table's own descendants fires a leave on each one left behind; only leaving
+    // the table itself ends the highlight.
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      setDropState(null);
+    }
+  }, []);
+
+  const handleRootDrop = React.useCallback((event: React.DragEvent) => {
+    if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
+      // Not a row drag: a dragged column heading ends here.
+      handleDrop(event);
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const payload = readDragPayload(event.dataTransfer);
+    const target = dropTargetAt(event);
+    setDropState(null);
+    if (payload) {
+      const args: Record<string, unknown> = {
+        source: payload.source,
+        // Comma-separated: the command argument is a formatted string list, and a row key holds
+        // no comma.
+        keys: payload.keys.join(','),
+        selection: payload.selection,
+        position: target.position,
+      };
+      if (target.row) {
+        // Named only for a drop on a row; a drop on the table as a whole names none.
+        args.targetKey = target.row;
+      }
+      sendCommand('drop', args);
+    }
+  }, [dropAccepts, dropTargetAt, handleDrop, sendCommand]);
 
   // -- Selection handlers --
   const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
@@ -1029,25 +1145,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onSelectAll={handleSelectAllRows}
       onActivate={handleActivateCursor}
     />
-    <div ref={rootRef} id={controlId} className="tlTableView" data-tooltip="dynamic"
-      onDragOver={(e) => {
-        if (!dragColumnRef.current) return;
-        e.preventDefault();
-        // Auto-scroll horizontally during column drag.
-        const body = scrollContainerRef.current;
-        const header = headerRef.current;
-        if (!body) return;
-        const rect = body.getBoundingClientRect();
-        const threshold = 40;
-        const speed = 8;
-        if (e.clientX < rect.left + threshold) {
-          body.scrollLeft = Math.max(0, body.scrollLeft - speed);
-        } else if (e.clientX > rect.right - threshold) {
-          body.scrollLeft += speed;
-        }
-        if (header) header.scrollLeft = body.scrollLeft;
-      }}
-      onDrop={handleDrop}
+    <div ref={rootRef} id={controlId}
+      className={'tlTableView' + (dropState && dropState.row === null ? ' tlTableView--dragover' : '')}
+      data-tooltip="dynamic"
+      onDragOver={handleRootDragOver}
+      onDragLeave={handleRootDragLeave}
+      onDrop={handleRootDrop}
     >
       {/* Filter bar above the headings: the named criteria as chips, the cross-column search, and
           saving the current criteria under a name. Outside both scrollers, so it neither scrolls
@@ -1331,10 +1434,15 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {rows.map((row) => (
             <div
               key={row.id}
+              data-drop-row={row.id}
+              draggable={dragEnabled}
               className={
                 'tlTableView__row' +
                 (row.selected ? ' tlTableView__row--selected' : '') +
                 (row.index === cursorIndex ? ' tlTableView__row--cursor' : '') +
+                (dropState && dropState.row === row.id
+                  ? ' tlTableView__row--dragOver-' + dropState.position
+                  : '') +
                 (row.groupCount != null ? ' tlTableView__row--group' : '')
               }
               style={{
@@ -1358,6 +1466,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 }
               }}
               onClick={(e) => handleRowClick(row.index, e)}
+              onDragStart={dragEnabled ? (e) => handleRowDragStart(row, e) : undefined}
+              onDragEnd={dragEnabled ? () => setDropState(null) : undefined}
               onDoubleClick={(e) => handleRowActivate(row.index, e)}
             >
               {isMulti && (

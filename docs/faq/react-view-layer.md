@@ -4,7 +4,7 @@
 
 `com.top_logic.layout.view` is declarative: a `.view.xml` assembles existing React controls (`TLPanel`, `TLWindow`, `TLForm` / `TLFormField`, `TLTextInput`, `TLButton`, `TLText`, `TLDialog`, …) through `UIElement` configs (each a `@TagName`) and view commands / actions. To build a feature (a login dialog, a user menu, …), compose these via XML plus small Java `ViewCommand` / `ViewAction` / `ViewExecutabilityRule` / `UIElement` classes that reuse existing controls. Do **not** hand-roll bespoke monolithic React components. A new React control is justified only for a genuinely new generic widget (e.g. a `type=password` input), not for assembling forms / buttons that already exist.
 
-- **Forms** bind to a model object: `<form input="ch"><field attribute="x"/>`. For ad-hoc input, create a small transient model type (`new(\`mod:Type\`, transient: true)`); a field's control is chosen by a `<input-control><impl class="…Provider"/></input-control>` annotation. A single value that belongs to the view rather than to an object - a filter term, a search text - needs no form and no object at all: `<text-input value="ch"/>` (`TextInputElement`) binds the input to the channel in both directions.
+- **Forms** bind to a model object: `<form input="ch"><field attribute="x"/>`. For ad-hoc input, create a small transient model type (`new(\`mod:Type\`, transient: true)`); a field's control is chosen by a `<input-control><impl class="…Provider"/></input-control>` annotation on the attribute, or — where the choice belongs to one place in the user interface rather than to the model — by `<field attribute="x"><input-control class="…Provider" …/></field>` in the view itself (`FieldElement.Config.getInputControl()`), whose `class=` names the same `ReactFieldControlProvider` and carries its configuration. A single value that belongs to the view rather than to an object - a filter term, a search text - needs no form and no object at all: `<text-input value="ch"/>` (`TextInputElement`) binds the input to the channel in both directions.
 - **Dialogs** open a `.view.xml` via `<open-dialog dialog-view="…">`; close via `CancelDialogCommand` / `DialogManager.closeTopDialog`. `currentUser()` is a TL-Script function usable in `<derived-channel expr="…">`.
 - **Referencing a `UIElement` impl by `class=` in view content.** View content lists resolve entries by `@TagName`, so an app-specific element that should not claim a global tag is placed via the content property's *entry tag* plus `class=`. The `children` content property (`ContainerElement.Config`) is `@EntryTag("child")`, so write `<child class="fq.MyElement"/>` inside a `<panel>` / container. If a cell provider is reusable, make it public rather than justifying a separate element; justify a separate element by genuinely different data / behavior.
 - **Standalone form-field controls bind to a `FieldModel`.** For a standalone field control (e.g. a checkbox cell), use the concrete `com.top_logic.layout.form.model.AbstractFieldModel` + `FieldModelListener` — not `FormContext` / `FormField` / `FormFieldAdapter`, which are legacy-compat shims. `AbstractFieldModel` is editable by default, needs no `FormContext` parent, and triggers no label resource lookup in `ReactFormFieldControl`.
@@ -85,6 +85,40 @@ A fraction between 0 and 1 is displayed as a bar with an optional label beside i
 Every expression is called with the current value of the `input` channel, which is optional: a bar counting the model as a whole needs none. The bar recomputes on a new channel value, on a change of the object the channel holds, and on a create / change / delete of an `observed-types` type — the last is what a bar counting all objects of a type needs, since no channel value changes when one is added. The observation is the shared `ChannelObjectObserver`, attached and detached with the control.
 
 A table cell needs nothing new: a `CellRenderer` yields `new CellContent.Raw((CellControlFactory) ctx -> new ReactProgressControl(ctx, fraction, label))`, the escape hatch `CellContentReactAdapter` already resolves.
+
+## Drag and drop of table rows
+
+A `<table>` declares that its rows may be dragged, and what it accepts a drop of. Both are declarations of the table, so a drag between two tables needs no code on either side:
+
+```xml
+<table rows="…" selection="ticket" types="demo.tickets:Ticket">
+    <drag/>
+    <drop accept="demo.tickets:Ticket">
+        <with-transaction>
+            <execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`))"/>
+        </with-transaction>
+    </drop>
+</table>
+<table rows="all(`tl.accounts:Person`)" types="tl.accounts:Person">
+    <drop accept="demo.tickets:Ticket" target="row" target-channel="dropPerson">
+        <with-transaction>
+            <execute-script function="person -> tickets -> …">
+                <inputs><input channel="dropPerson"/></inputs>
+            </execute-script>
+        </with-transaction>
+    </drop>
+</table>
+```
+
+- **`<drag/>`** makes the rows draggable. Dragging a selected row drags the whole selection, an unselected row drags itself — and the selection is read on the server, so a selection reaching beyond the rendered row window is dragged completely. The rows are announced under a type tag: `type` when the drag declares one, otherwise the table's first `types` entry. A table declaring neither is a configuration error — nothing would say what its rows are.
+- **`<drop>`** is a list, so a table can accept several kinds of object, and accept one kind on its rows and another as a whole. `accept` names the types (a subtype of an accepted type is accepted as well); `target` is `table` (default) or `row`; `target-channel` is written with the row dropped on — `null` for a table drop — *before* the actions run, which is how the chain reads what was dropped on. The element content is the action chain, declared exactly as a `<generic-command>` declares its actions, and its first action receives the **list of dropped objects** as its input. Nothing about a drop is implicit: a drop that changes persistent state wraps its script in `<with-transaction>`, as any other command does.
+- **Which drop applies**: the first declared one that accepts the drag. A drop made on a row is offered to the `row` drops first and falls back to a `table` drop when none of them accepts it, so a table whose rows are targets for one kind of object still accepts another kind wherever the pointer was.
+
+**Acceptance is decided twice, on purpose.** The server expands each accepted type to its own qualified name plus those of all its subtypes and sends that set of tags to the client. While a drag moves, the client compares the drag's tag against those tags alone — no round trip — and highlights the table, or the row under the pointer for a table whose rows are targets. When the drop arrives, the server matches it again, per declared drop, and the receiving table refuses a drop of a tag it never offered: the client-side check narrows the gesture for the user, it does not decide it. The dragged objects are resolved by the control the drag started in, from its own row keys, so no wire value can designate an object neither table displays.
+
+**Recording**: a drop is recorded as a `dropObjects` step naming the dragged objects and the target row by their business identity, so it replays after sorting, filtering and in a fresh session. A replayed drop names no source control — it names the objects instead — and is matched by their type.
+
+`<drag>` and `<drop>` apply to the read-only table. A table in edit mode (`row-edit`) renders through `RowSetTableControl`, a control of its own that carries no drag-and-drop seam, so declaring either there is reported as a configuration error.
 ## Row activation
 
 A `<table>` and a `<tree>` open a row / node on a **double-click**, and on **Enter** while the row or node carries the keyboard cursor. The gesture is one command, `activate`, carrying the row index (the node id):
@@ -174,3 +208,68 @@ A container that declares nothing is opaque: a filling control inside it does no
 `<tile-stack>` holds one frame per stack position (`ReactTileStackControl`): the `initial` view, followed by the frames of the path channel. The frame at the end of the path is the displayed one; the frames it covers keep their control tree and their layout box (`.tlTileStack__frame--covered` takes them out of the flow at the size of the stack and makes them invisible). Returning to a frame - a breadcrumb click, a `<navigate-pop>` - therefore shows it as the user left it: the selected tab, the selected table row, the values being edited and the scroll offsets included. A path change keeps the frames of the longest common prefix and disposes the ones it drops, so a path reconstructed from a URL keeps the frames it names (`TileFrame` compares by view, label and params). A covered frame is rendered but not seen, and the stack reports only the active frame as `visibleChildren()`: the URL is composed from the participants below the visible children, and only those take up a route of an adopted URL, so a tab bar inside a covered frame neither names its tab in the address nor is offered the segment meant for the tab bar of the frame on top.
 
 The hiding sits on a wrapper element the stack renders itself: a frame's content renders its own root element, and a style set on that from the outside is overwritten the next time the content re-renders.
+
+## Object navigation: display targets, the reveal protocol, `<show-object>`
+
+"Show this business object where the application displays objects of its type" is the view-layer counterpart of the classic `GotoHandler` / `LayoutComponent.makeVisible()`. It consists of three generic parts in `com.top_logic.layout.view.navigation`; none of them knows sidebars, tab bars or tile stacks in particular.
+
+### Display targets are declared globally, per type
+
+`DisplayTargetService` (a configured service, `<config service-class="com.top_logic.layout.view.navigation.DisplayTargetService">`) holds the application's targets: per model type an **ordered list of views to show**, each with the channel values to set. The application decides which of the places that display a type is *the* place an object of it is shown at; a view file stays reusable and does not know it is a target, and a library module contributes targets for its own types in its configuration fragment.
+
+```xml
+<target type="tl.demo.projectManagement:Ticket">
+  <show view="projects/overview.view.xml"><bind channel="project" expr="t -> $t.get(`…:Ticket#milestone`).container()"/></show>
+  <show view="projects/milestones.view.xml"><bind channel="milestone" expr="t -> $t.get(`…:Ticket#milestone`)"/></show>
+  <show view="projects/ticket-detail.view.xml"><bind channel="ticket"/></show>
+</target>
+<target type="tl.demo.projectManagement:Contributor">
+  <show view="projects/contributor-dialog.view.xml" dialog="true"><bind channel="contributor"/></show>
+</target>
+```
+
+A `<show>` entry is carried out in one of three ways, decided by how its view is reached:
+
+- **Mounted view** (reachable from the root view through sidebar items, tabs, `<view-ref>`, `<adaptive-detail>` panes or the initial view of a `<tile-stack>`): the mount is revealed and the bindings are written to the view's channels in declared order.
+- **Unmounted view**: it is a drill-down frame, pushed onto the tile stack that hosts the previously shown view (the bindings become the frame's channel values, exactly like `<navigate-push bind-input-to=…>`). A chain of such entries rebuilds a drill-down path; frames already on the stack with the same view and values are kept (pop to the longest matching prefix, push the rest), so the frames a target pushes must use the same view refs and channel names as the user's own drill-down.
+- **`dialog="true"`**: the view is opened as a dialog with the bindings as initial channel values (the same seam as `<open-dialog>`). It must be the last entry.
+
+A `<bind expr>` is a TL-Script function of the object being shown and defaults to the object itself. A frame entry carries its breadcrumb label as `<label>` or, computed from the shown object, as `label-expr` — the same expression the drill-down's `<frame-label>` uses, because `TileFrame` equality includes the label. Resolution (`DisplayTargets.resolve`): the most specific type wins (an exact class beats a generalization, following `TLClass.getGeneralizations()`); among targets for the same type, the one whose first view is mounted **nearest** to the view that triggered the navigation (longest common mount prefix), then the one flagged `default="true"`, then the first declared. `hasTarget(type)` is the question "can objects of this type be shown at all?" — it decides whether a value is rendered as a link. At startup the service checks every `<bind channel>` against the channels the view declares and logs a configuration error for a mismatch (a typo in a channel name is found without clicking through the app).
+
+### Where a view is mounted is known statically
+
+Sidebar items and tabs create their content lazily, so the mount of a view cannot be read from the control tree. `UIElement.getChildGroups()` reports an element's content **statically**, as `ChildGroup`s: a keyed group for each child a container addresses by a key of its own (sidebar item id, tab id, `AdaptiveDetailElement.Config.SELECTOR` / `DETAIL`, `TileStackElement.Config.INITIAL`), an unkeyed group for content a container shows unconditionally, and an `EmbeddedView` for a `<view-ref>`. `ViewMounts.forRootView(rootViewRef)` walks these groups over all reachable view files and yields, per view file, its `MountPath`s: the sequence of `MountStep(container element, key)` from the root. The scan is cached per root view and invalidated together with the view files. **A container element that holds child elements must implement `getChildGroups()`** — a container that does not report its children hides every view below it from navigation.
+
+### The reveal protocol
+
+Every control that shows one of several children implements `com.top_logic.layout.react.reveal.ChildRevealer` — `revealChild(key)` makes the child addressed by `key` the displayed one, creating it if needed, and throws `ChannelVetoException` when unsaved changes stand in the way: `ReactSidebarControl` (item id), `ReactTabBarControl` (tab id), `ReactAdaptiveDetailControl` (selector/detail), `ReactTileStackControl` (`initial`, or `frame<n>` via `frameKey(n)` = pop to that frame), and a `DialogRevealer` around a `DialogHandle` (closes the dialogs above it). Every keyed container appends a `RevealStep` to the **`RevealPath`** scope when it derives a child's `ViewContext` (`context.withScope(RevealPath.class, path.append(this, key))`), and every view instance and every revealing control announces itself in the window's **`RevealRegistry`** (`ViewContext.getRevealRegistry()`, one per root context and inherited like the slot registry) under that path, unregistering when its control is cleaned up (cached hidden content stays registered while alive). Revealing a mounted view walks its `MountPath` from the root: at each step the registered container at the current prefix reveals the next key — which creates lazily built content, whose own containers and views register on the way — and the view instance found at the full path finally receives the bindings. Vetoes are handled as `<write-channel>` handles them: the dirty-confirm dialog, then the step is retried; cancelling aborts the chain.
+
+### Entry points
+
+- **`<show-object/>`** (`ShowObjectAction`) in a `<generic-command>` chain shows the chain's input object and passes it on; no input passes through unchanged; a selection of exactly one object shows that object. `<generic-command input="selection"><show-object/></generic-command>` is the whole configuration of a "go to" button. Java code calls `ObjectNavigation.show(context, object, continuation)`.
+- **`ReactContext.getObjectNavigator()`** (`com.top_logic.layout.react.navigation.ObjectNavigator`: `canShow(value)`, `show(context, value)`) is the seam for controls in `com.top_logic.layout.react`, which cannot depend on the view layer; the view layer answers it with `DisplayTargetNavigator`. Through it, **object values displayed read-only are links automatically** wherever a target exists for their type: `ReactResourceCellControl` (tree nodes via `MetaResourceControlProvider`, and any cell built with `useLink`), the read-only values of `ReactDropdownSelectControl` (which is what reference attributes in `<table>` cells and view-mode `<form>` fields render as), and `tlObject` anchors in read-only structured text (`ReactWysiwygControl`, command `showObjectLink`, resolved with `TLObjectLinkUtil` like the classic `OpenTLObjectLink`). The TL-Script functions `htmlObjectLink(object, label)`, `htmlSource(content)` and `htmlText(source)` (`HtmlFunctions` in `com.top_logic.layout.wysiwyg`) write such an anchor and read or write the HTML source of a structured-text attribute, e.g. to append an object reference to a comment.
+
+- **The WYSIWYG editor carries configured commands and inserts what they write.** The editor is chosen for a field by `<input-control class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider">`, which takes `<commands>` — ordinary view commands (`ViewCommand.Config`, e.g. `<generic-command>`) — and an optional `insert-channel`. The commands run in a child `ViewContext` of the field's view context: they see the channels of the surrounding view, so they take their input from it and hand it on to the dialogs they open, and beside those channels they see the insertion channel the editor declares. Markup written to that channel is inserted at the cursor of the editor (`ReactWysiwygControl.insertAtCursor`, state `insert` = `{seq, html}`; the client inserts it once per `seq`, reports the resulting text, and the request is taken back). Commands placed in a toolbar — the default placement — are rendered as a `ReactToolbarControl` in state `toolbar`, which the client renders beside the formatting buttons.
+
+  ```xml
+  <field attribute="content">
+    <input-control class="com.top_logic.layout.react.wysiwyg.WysiwygControlProvider"
+      insert-channel="insert"
+    >
+      <commands>
+        <generic-command image="css:ri-links-line" input="ticket">
+          <label><en>Reference ticket...</en></label>
+          <executability><null-input-disabled/></executability>
+          <open-dialog dialog-view="tickets/reference-ticket.view.xml">
+            <bind channel="context" to="ticket"/>
+            <bind channel="result" to="insert"/>
+          </open-dialog>
+        </generic-command>
+      </commands>
+    </input-control>
+  </field>
+  ```
+
+  The dialog picks whatever it likes in whatever way it likes (a table, a search, a tree) and publishes the markup on its result channel: `<generic-command input="ticket"><execute-script function="t -> htmlObjectLink($t)"/><write-channel name="result"/><close-dialog/></generic-command>` is the whole contract, and `context` gives it the object the text is written for. Nothing about the editor knows what an object link is: it inserts the markup it is handed.
+
+The demo (`com.top_logic.demo.react`): the *Projects* drill-down (project → milestone → ticket → detail) with targets for its types in `demoReactConf.config.xml`, the contributor dialog target, `tl.accounts:Person` shown in the tiles demo, and the object-list comments, whose editor offers a "Reference ticket…" command opening `tickets/reference-ticket.view.xml`.

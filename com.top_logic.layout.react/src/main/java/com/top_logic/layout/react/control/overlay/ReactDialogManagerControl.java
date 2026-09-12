@@ -69,7 +69,7 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 			dialog.attach();
 		}
 
-		return result -> closeDialog(entry, result);
+		return entry;
 	}
 
 	@Override
@@ -78,6 +78,20 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 			return;
 		}
 		closeDialog(_stack.get(_stack.size() - 1), result);
+	}
+
+	@Override
+	public void closeDialogsAbove(DialogHandle dialog) {
+		int index = _stack.indexOf(dialog);
+		if (index < 0) {
+			return;
+		}
+		while (_stack.size() > index + 1) {
+			DialogEntry top = _stack.remove(_stack.size() - 1);
+			top.dialog().cleanupTree();
+			top.handler().onResult(DialogResult.cancelled());
+		}
+		patchDialogsState();
 	}
 
 	private void closeDialog(DialogEntry entry, DialogResult<Void> result) {
@@ -113,8 +127,32 @@ public class ReactDialogManagerControl extends ReactControl implements DialogMan
 		_stack.clear();
 	}
 
-	private record DialogEntry(ReactDialogControl dialog, DialogResultHandler<Void> handler) {
-		// Pure data record.
+	/**
+	 * One open dialog, serving as the {@link DialogHandle} its opener addresses it by.
+	 */
+	private final class DialogEntry implements DialogHandle {
+
+		private final ReactDialogControl _dialog;
+
+		private final DialogResultHandler<Void> _handler;
+
+		DialogEntry(ReactDialogControl dialog, DialogResultHandler<Void> handler) {
+			_dialog = dialog;
+			_handler = handler;
+		}
+
+		ReactDialogControl dialog() {
+			return _dialog;
+		}
+
+		DialogResultHandler<Void> handler() {
+			return _handler;
+		}
+
+		@Override
+		public void close(DialogResult<Void> result) {
+			closeDialog(this, result);
+		}
 	}
 
 }

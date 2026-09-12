@@ -26,6 +26,7 @@ import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
 import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
+import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -61,7 +62,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * name="appbar-leading"/>} (set via {@link #setDrawerToggleContribution(ReactControl)})</li>
  * </ul>
  */
-public class ReactSidebarControl extends ReactControl implements RoutingParticipant {
+public class ReactSidebarControl extends ReactControl implements RoutingParticipant, ChildRevealer {
 
 	private static final String REACT_MODULE = "TLSidebar";
 
@@ -508,6 +509,23 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	// -- Commands --
 
 	/**
+	 * Selects the navigation item with the given id, letting the item being left veto the switch
+	 * while it holds unsaved changes.
+	 */
+	@Override
+	public void revealChild(String key) {
+		NavigationItem currentItem = findNavItem(_activeItemId, _items);
+		if (currentItem != null) {
+			DirtyChannel dirtyChannel = currentItem.getDirtyChannel();
+			if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
+				throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectItem(key));
+			}
+		}
+
+		selectItem(key);
+	}
+
+	/**
 	 * Handles navigation item selection from the client.
 	 *
 	 * <p>
@@ -525,16 +543,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			return HandlerResult.error(I18NConstants.ERROR_NAVIGATION_NOT_AVAILABLE);
 		}
 
-		// Check for dirty forms in the current sidebar item before switching.
-		NavigationItem currentItem = findNavItem(_activeItemId, _items);
-		if (currentItem != null) {
-			DirtyChannel dirtyChannel = currentItem.getDirtyChannel();
-			if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
-				throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectItem(itemId));
-			}
-		}
-
-		selectItem(itemId);
+		revealChild(itemId);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

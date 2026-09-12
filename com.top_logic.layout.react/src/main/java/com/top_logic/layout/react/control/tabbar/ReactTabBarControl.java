@@ -22,6 +22,7 @@ import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
 import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
+import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 
 
@@ -43,7 +44,7 @@ import com.top_logic.layout.react.routing.RoutingParticipant;
  * {@code null})</li>
  * </ul>
  */
-public class ReactTabBarControl extends ReactControl implements RoutingParticipant {
+public class ReactTabBarControl extends ReactControl implements RoutingParticipant, ChildRevealer {
 
 	private static final String REACT_MODULE = "TLTabBar";
 
@@ -156,6 +157,13 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 			cached.cleanupTree();
 		}
 		_contentCache.clear();
+	}
+
+	/**
+	 * The id of the tab currently displayed.
+	 */
+	public String getActiveTabId() {
+		return _activeTabId;
 	}
 
 	/**
@@ -301,20 +309,26 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	// -- Commands --
 
 	/**
+	 * Activates the tab with the given id, letting the tab being left veto the switch while it holds
+	 * unsaved changes.
+	 */
+	@Override
+	public void revealChild(String key) {
+		TabDefinition currentTab = findTab(_activeTabId);
+		DirtyChannel dirtyChannel = currentTab.getDirtyChannel();
+		if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
+			throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectTab(key));
+		}
+
+		selectTab(key);
+	}
+
+	/**
 	 * Handles tab selection from the client.
 	 */
 	@ReactCommandHandler(SELECT_TAB_COMMAND)
 	void handleSelectTab(SelectTabArguments args) {
-		String tabId = args.getTabId();
-
-		// Check for dirty forms in the current tab before switching.
-		TabDefinition currentTab = findTab(_activeTabId);
-		DirtyChannel dirtyChannel = currentTab.getDirtyChannel();
-		if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
-			throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectTab(tabId));
-		}
-
-		selectTab(tabId);
+		revealChild(args.getTabId());
 	}
 
 	/**

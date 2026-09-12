@@ -3226,6 +3226,37 @@ button.tlMenu__item--disabled:hover {
 	border-right: 2px solid var(--interactive, #0f62fe);
 }
 
+/* -- Row drag and drop -- */
+
+.tlTableView__row[draggable="true"] {
+	cursor: grab;
+}
+
+.tlTableView__row[draggable="true"]:active {
+	cursor: grabbing;
+}
+
+/* The table accepts the running drag, which hovers no single row of it. */
+.tlTableView--dragover {
+	outline: 2px dashed var(--focus);
+	outline-offset: -2px;
+	border-radius: var(--corner-radius);
+}
+
+.tlTableView__row--dragOver-onto {
+	background: var(--layer-selected-hover);
+	outline: 2px solid var(--interactive, #0f62fe);
+	outline-offset: -2px;
+}
+
+.tlTableView__row--dragOver-before {
+	box-shadow: inset 0 2px 0 0 var(--interactive, #0f62fe);
+}
+
+.tlTableView__row--dragOver-after {
+	box-shadow: inset 0 -2px 0 0 var(--interactive, #0f62fe);
+}
+
 /* -- Frozen columns -- */
 
 .tlTableView__headerCell--frozen,

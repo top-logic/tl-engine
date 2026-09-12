@@ -2,6 +2,9 @@ import { React, useTLState, useTLCommand } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { TLPill } from './pill/TLPill';
 
+/** Command sent when the user follows the link of the displayed value. */
+const CMD_GOTO = 'goto';
+
 /**
  * Displays a business object with optional icon, label, and goto link.
  *
@@ -44,7 +47,7 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleClick = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    sendCommand('goto', {});
+    sendCommand(CMD_GOTO, {});
   }, [sendCommand]);
 
   const className = ['tlResourceCell', cssClass].filter(Boolean).join(' ');

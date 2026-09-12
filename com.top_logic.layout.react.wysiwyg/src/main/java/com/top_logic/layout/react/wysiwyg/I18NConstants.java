@@ -19,6 +19,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_IMAGE_UPLOAD_FAILED;
 
+	/**
+	 * @en The linked object cannot be found.
+	 */
+	public static ResKey ERROR_LINKED_OBJECT_NOT_FOUND;
+
+	/**
+	 * @en There is no place where the linked object is displayed.
+	 */
+	public static ResKey ERROR_LINKED_OBJECT_NOT_DISPLAYED;
+
 	/** @en Bold */
 	@CustomKey("js.wysiwyg.bold")
 	public static ResKey JS_WYSIWYG_BOLD;

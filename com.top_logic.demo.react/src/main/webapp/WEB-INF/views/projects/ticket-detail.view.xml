@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Last frame of the project drill-down: one ticket. Displayed read-only, so the milestone and
+	the assignee are links leading to where the application displays them.
+-->
+<view>
+	<channels>
+		<channel name="ticket"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Ticket</en>
+			<de>Ticket</de>
+		</title>
+		<form input="ticket">
+			<field attribute="title"/>
+			<field attribute="description"/>
+			<field attribute="milestone"/>
+			<field attribute="assignee"/>
+		</form>
+	</panel>
+</view>

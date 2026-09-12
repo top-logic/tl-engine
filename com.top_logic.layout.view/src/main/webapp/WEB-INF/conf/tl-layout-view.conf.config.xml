@@ -14,6 +14,9 @@
 					<module key="com.top_logic.layout.view.security.SecurityScopeService$Module"
 						value="true"
 					/>
+					<module key="com.top_logic.layout.view.navigation.DisplayTargetService$Module"
+						value="true"
+					/>
 				</modules>
 			</instance>
 		</config>
@@ -82,6 +85,18 @@
 						</label>
 					</scope>
 				</scopes>
+			</instance>
+		</config>
+
+		<!--
+			Where the application displays its business objects: per model type, the views to
+			show and the values their channels receive. An application declares its own targets
+			by extending this service's <targets> list; a type without a target is not offered
+			as a link.
+		-->
+		<config service-class="com.top_logic.layout.view.navigation.DisplayTargetService">
+			<instance class="com.top_logic.layout.view.navigation.DisplayTargetService">
+				<targets/>
 			</instance>
 		</config>
 	</services>

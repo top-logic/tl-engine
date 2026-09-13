@@ -2,6 +2,8 @@ import { React } from 'tl-react-bridge'
 import { cancelPromptImprovement, improvePrompt } from './api'
 import { ACCEPT_ATTRIBUTE, collectAttachments, dragHasFiles } from './attachments'
 import { ContextUsage } from './context-usage'
+import type { bundle } from './i18n'
+import { effortLabel, modelLabel } from './models'
 import { PromptStack } from './prompts'
 import { SubagentActivityPanel } from './subagents'
 import type { ChatAction } from './reducer'
@@ -20,19 +22,31 @@ import type {
 
 const { useEffect, useRef, useState } = React
 
-type MenuPane = 'root' | 'agent' | 'model' | 'mcp' | 'trace'
+type MenuPane = 'root' | 'agent' | 'model' | 'mcp' | 'trace' | 'effort'
 
-const TRACE_OPTIONS: { id: TraceMode; label: string; description: string }[] = [
-  { id: 'none', label: 'None', description: 'Only the answer' },
-  { id: 'overview', label: 'Overview', description: 'One line naming the tools that ran' },
-  { id: 'detailed', label: 'Detailed', description: 'Every step with its arguments and result' },
-]
+type Labels = ReturnType<typeof bundle>
 
-const PANE_TITLES: Record<Exclude<MenuPane, 'root'>, string> = {
-  agent: 'Agent',
-  model: 'Model',
-  mcp: 'MCP servers',
-  trace: 'Trace level',
+function traceOptions(labels: Labels): { id: TraceMode; label: string; description: string }[] {
+  return [
+    { id: 'none', label: labels.traceNone, description: labels.traceNoneHint },
+    { id: 'overview', label: labels.traceOverview, description: labels.traceOverviewHint },
+    { id: 'detailed', label: labels.traceDetailed, description: labels.traceDetailedHint },
+  ]
+}
+
+function paneTitle(pane: Exclude<MenuPane, 'root'>, labels: Labels): string {
+  switch (pane) {
+    case 'agent':
+      return labels.agent
+    case 'model':
+      return labels.model
+    case 'mcp':
+      return labels.mcpServers
+    case 'effort':
+      return labels.effort
+    case 'trace':
+      return labels.traceLevel
+  }
 }
 
 const Icon = {
@@ -67,6 +81,12 @@ const Icon = {
   trace: (
     <svg viewBox="0 0 16 16" aria-hidden="true">
       <path d="M3 4.5h10M3 8h7M3 11.5h4" />
+    </svg>
+  ),
+  effort: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M8 2.5a5.5 5.5 0 0 1 3 10.1V14H5v-1.4A5.5 5.5 0 0 1 8 2.5z" />
+      <path d="M6.5 14h3" />
     </svg>
   ),
   back: (
@@ -105,11 +125,13 @@ const Icon = {
 const SendButton = React.memo(function SendButton({
   disabled,
   busy,
+  labels,
   onSend,
   onStop,
 }: {
   disabled: boolean
   busy: boolean
+  labels: Labels
   onSend: () => void
   onStop: () => void
 }) {
@@ -119,8 +141,8 @@ const SendButton = React.memo(function SendButton({
       className={`send-button${busy ? ' is-busy' : ''}`}
       disabled={!busy && disabled}
       onClick={busy ? onStop : onSend}
-      aria-label={busy ? 'Stop the run' : 'Send'}
-      title={busy ? 'Stop the run' : 'Send'}
+      aria-label={busy ? labels.stopRun : labels.send}
+      title={busy ? labels.stopRun : labels.send}
     >
       {busy ? (
         <span className="send-stop" />
@@ -186,6 +208,10 @@ export const Composer = React.memo(function Composer({
   onToggleMcp,
   traceMode,
   onTraceMode,
+  effort,
+  effortLevels,
+  onEffort,
+  labels,
   autoApprove,
   onToggleAutoApprove,
   pendingApprovals,
@@ -216,6 +242,12 @@ export const Composer = React.memo(function Composer({
   onToggleMcp: (name: string) => void
   traceMode: TraceMode
   onTraceMode: (mode: TraceMode) => void
+  /** Effort level in force, empty when none is chosen or the model offers none. */
+  effort: string
+  /** Levels the selected model offers; empty means the setting is not offered at all. */
+  effortLevels: string[]
+  onEffort: (level: string) => void
+  labels: Labels
   autoApprove: boolean
   onToggleAutoApprove: () => void
   pendingApprovals: ApprovalRequest[]
@@ -240,11 +272,14 @@ export const Composer = React.memo(function Composer({
   const [dropping, setDropping] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [modelMenuOpen, setModelMenuOpen] = useState(false)
+  // The compact dropdown beside the send button: effort and model, one level deep each.
+  const [modelPane, setModelPane] = useState<'root' | 'effort' | 'model'>('root')
   const [pane, setPane] = useState<MenuPane>('root')
   const [query, setQuery] = useState('')
   const [improveVisible, setImproveVisible] = useState(false)
   const [improving, setImproving] = useState(false)
   const [improveError, setImproveError] = useState('')
+  const [improveUnchanged, setImproveUnchanged] = useState(false)
   const [undoDraft, setUndoDraft] = useState<string | null>(null)
   const area = useRef<HTMLTextAreaElement>(null)
   const file = useRef<HTMLInputElement>(null)
@@ -291,12 +326,16 @@ export const Composer = React.memo(function Composer({
         setPane('root')
         setQuery('')
       }
-      if (modelMenuOpen && !modelMenu.current?.contains(target)) setModelMenuOpen(false)
+      if (modelMenuOpen && !modelMenu.current?.contains(target)) {
+        setModelMenuOpen(false)
+        setModelPane('root')
+      }
     }
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
       if (modelMenuOpen) {
-        setModelMenuOpen(false)
+        if (modelPane !== 'root') setModelPane('root')
+        else setModelMenuOpen(false)
         return
       }
       if (pane !== 'root') setPane('root')
@@ -308,7 +347,7 @@ export const Composer = React.memo(function Composer({
       document.removeEventListener('mousedown', onDoc)
       document.removeEventListener('keydown', onKey)
     }
-  }, [menuOpen, modelMenuOpen, pane])
+  }, [menuOpen, modelMenuOpen, modelPane, pane])
 
   const addFiles = async (incoming: File[]) => {
     const result = await collectAttachments(incoming, files)
@@ -376,9 +415,11 @@ export const Composer = React.memo(function Composer({
     (item) => !q || item.id.toLocaleLowerCase().includes(q) || (item.provider ?? '').toLocaleLowerCase().includes(q),
   )
   const mcpHits = mcpServers.filter((item) => !q || item.name.toLocaleLowerCase().includes(q))
-  const traceHits = TRACE_OPTIONS.filter(
+  const traces = traceOptions(labels)
+  const traceHits = traces.filter(
     (item) => !q || item.label.toLocaleLowerCase().includes(q) || item.description.toLocaleLowerCase().includes(q),
   )
+  const effortHits = effortLevels.filter((level) => !q || level.includes(q))
   // With a search term the root pane is a result list across all four sections, as in a command
   // palette: typing "opus" must find the model without first walking into the model pane.
   const searching = q.length > 0
@@ -405,20 +446,30 @@ export const Composer = React.memo(function Composer({
     abort.current = new AbortController()
     setImproving(true)
     setImproveError('')
+    setImproveUnchanged(false)
     try {
       const result = await improvePrompt(windowId, draft, requestId, abort.current.signal)
       if (improveId.current !== requestId) return
-      if (result.status === 'completed' && (result.improvedText || result.text)) {
-        setUndoDraft(draft)
-        setText(result.improvedText || result.text || draft)
-        setImproveVisible(false)
+      const improvedText = result.improvedText || result.text || ''
+      if (result.status === 'completed' && improvedText) {
+        if (improvedText.trim() === draft) {
+          // The server hands the draft back when there is nothing to rewrite - a confirmation, a
+          // single word, a prompt already fine. Saying so beats silently replacing text with itself.
+          setImproveUnchanged(true)
+          setImproveVisible(false)
+          window.setTimeout(() => setImproveUnchanged(false), 4000)
+        } else {
+          setUndoDraft(draft)
+          setText(improvedText)
+          setImproveVisible(false)
+        }
         area.current?.focus()
       } else if (result.status !== 'cancelled' && result.status !== 'stale') {
-        setImproveError('The prompt could not be improved.')
+        setImproveError(labels.improveFailed)
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return
-      setImproveError('The prompt could not be improved.')
+      setImproveError(labels.improveFailed)
     } finally {
       if (improveId.current === requestId) setImproving(false)
     }
@@ -445,7 +496,10 @@ export const Composer = React.memo(function Composer({
     setQuery('')
   }
 
-  const modelLabel = model || 'Model'
+  // The composer says what a turn will actually run with: the model, and the effort when one is set.
+  const modelName = model ? modelLabel(model) : labels.model
+  const triggerLabel = effort ? `${modelName} · ${effortLabel(effort)}` : modelName
+  const defaultEffort = models.find((item) => item.id === model)?.defaultEffort ?? ''
 
   return (
     <footer className={`composer${dropping ? ' is-dropping' : ''}`}>
@@ -454,11 +508,13 @@ export const Composer = React.memo(function Composer({
           approvals={pendingApprovals}
           questions={pendingQuestions}
           windowId={windowId}
+          labels={labels}
           dispatch={dispatch}
         />
         <div className="composer-chips">
           <SubagentActivityPanel
             subagents={subagents}
+            labels={labels}
             onCancel={onCancelSubagent}
             onStopAll={onStopSubagents}
             onLoadTranscript={onLoadSubagentTranscript}
@@ -466,31 +522,36 @@ export const Composer = React.memo(function Composer({
           {connection === 'reconnecting' ? (
             <span className="overlay-chip is-muted" role="status">
               <span className="chip-spinner" aria-hidden="true" />
-              Reconnecting…
+              {labels.reconnecting}
             </span>
           ) : null}
           {promptImprovementEnabled && improving ? (
             <button type="button" className="overlay-chip" onClick={cancelImprove}>
               <span className="chip-spinner" aria-hidden="true" />
-              Improving…
-              <span>Cancel</span>
+              {labels.improving}
+              <span>{labels.cancel}</span>
             </button>
+          ) : null}
+          {promptImprovementEnabled && !improving && improveUnchanged ? (
+            <span className="overlay-chip is-muted" role="status">
+              {labels.improveNoChanges}
+            </span>
           ) : null}
           {promptImprovementEnabled && !improving && undoDraft != null ? (
             <button type="button" className="overlay-chip" onClick={undoImprove}>
               {Icon.undo}
-              Undo improvement
+              {labels.undoImprovement}
             </button>
           ) : null}
-          {promptImprovementEnabled && !improving && undoDraft == null && improveVisible ? (
+          {promptImprovementEnabled && !improving && !improveUnchanged && undoDraft == null && improveVisible ? (
             <button type="button" className="overlay-chip is-accent" onClick={() => void runImprove()}>
               {Icon.spark}
-              Improve prompt
+              {labels.improvePrompt}
             </button>
           ) : null}
           {improveError ? (
             <button type="button" className="overlay-chip is-error" onClick={() => void runImprove()}>
-              {improveError} · Retry
+              {improveError} · {labels.retry}
             </button>
           ) : null}
         </div>
@@ -502,7 +563,7 @@ export const Composer = React.memo(function Composer({
           <button
             type="button"
             className="icon-button tiny"
-            aria-label="Dismiss"
+            aria-label={labels.dismiss}
             onClick={() => {
               onDismissNotice()
               setAttachError('')
@@ -522,7 +583,7 @@ export const Composer = React.memo(function Composer({
                 <span className="attach-name">{item.fileName}</span>
                 <button
                   type="button"
-                  aria-label={`Remove ${item.fileName}`}
+                  aria-label={labels.removeFile(item.fileName)}
                   onClick={() => setFiles((prev) => prev.filter((fileItem) => fileItem !== item))}
                 >
                   {Icon.close}
@@ -553,7 +614,7 @@ export const Composer = React.memo(function Composer({
               className={`plus-trigger${menuOpen ? ' is-open' : ''}`}
               aria-haspopup="menu"
               aria-expanded={menuOpen}
-              aria-label="Attach a file or change the agent, model or trace level"
+              aria-label={labels.plusMenuLabel}
               onClick={() => {
                 setMenuOpen((value) => !value)
                 setPane('root')
@@ -565,11 +626,11 @@ export const Composer = React.memo(function Composer({
             {menuOpen ? (
               <div className="plus-popover" role="menu">
                 <label className="plus-search">
-                  <span className="sr-only">Search agents, models and settings</span>
+                  <span className="sr-only">{labels.searchMenuLabel}</span>
                   <input
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search agents, models, settings…"
+                    placeholder={labels.searchMenu}
                     autoFocus
                   />
                 </label>
@@ -577,7 +638,7 @@ export const Composer = React.memo(function Composer({
                 {pane !== 'root' && !searching ? (
                   <button type="button" className="plus-back" onClick={() => setPane('root')}>
                     {Icon.back}
-                    {PANE_TITLES[pane]}
+                    {paneTitle(pane, labels)}
                   </button>
                 ) : null}
 
@@ -586,43 +647,53 @@ export const Composer = React.memo(function Composer({
                     <div className="plus-section">
                       <MenuRow
                         icon={Icon.paperclip}
-                        label="Upload file"
-                        description="Images or PDF, up to 5 files"
+                        label={labels.uploadFile}
+                        description={labels.uploadFileHint}
                         onClick={() => file.current?.click()}
                       />
                     </div>
                     <div className="plus-section">
                       <MenuRow
                         icon={Icon.agent}
-                        label="Agent"
-                        description="Who answers and which tools it has"
-                        value={agent || 'Default'}
+                        label={labels.agent}
+                        description={labels.agentHint}
+                        value={agent || labels.defaultValue}
                         more
                         onClick={() => setPane('agent')}
                       />
                       <MenuRow
                         icon={Icon.model}
-                        label="Model"
-                        description="The model this chat runs on"
-                        value={modelLabel}
+                        label={labels.model}
+                        description={labels.modelHint}
+                        value={modelName}
                         more
                         onClick={() => setPane('model')}
                       />
+                      {effortLevels.length ? (
+                        <MenuRow
+                          icon={Icon.effort}
+                          label={labels.effort}
+                          description={labels.effortHint}
+                          value={effort ? effortLabel(effort) : labels.defaultValue}
+                          more
+                          onClick={() => setPane('effort')}
+                        />
+                      ) : null}
                     </div>
                     <div className="plus-section">
                       <MenuRow
                         icon={Icon.mcp}
-                        label="MCP servers"
-                        description="External tool servers for this turn"
-                        value={selectedMcp.length ? `${selectedMcp.length} on` : 'None'}
+                        label={labels.mcpServers}
+                        description={labels.mcpHint}
+                        value={selectedMcp.length ? labels.enabledCount(selectedMcp.length) : labels.none}
                         more
                         onClick={() => setPane('mcp')}
                       />
                       <MenuRow
                         icon={Icon.trace}
-                        label="Trace level"
-                        description="How much of the agent's work is shown"
-                        value={TRACE_OPTIONS.find((item) => item.id === traceMode)?.label ?? 'Overview'}
+                        label={labels.traceLevel}
+                        description={labels.traceHint}
+                        value={traces.find((item) => item.id === traceMode)?.label ?? labels.traceOverview}
                         more
                         onClick={() => setPane('trace')}
                       />
@@ -632,7 +703,7 @@ export const Composer = React.memo(function Composer({
 
                 {(pane === 'agent' || searching) && agentHits.length ? (
                   <div className="plus-list">
-                    {searching ? <div className="plus-heading">Agents</div> : null}
+                    {searching ? <div className="plus-heading">{labels.agent}</div> : null}
                     {agentHits.map((item) => (
                       <MenuRow
                         key={item.name}
@@ -650,12 +721,12 @@ export const Composer = React.memo(function Composer({
 
                 {(pane === 'model' || searching) && modelHits.length ? (
                   <div className="plus-list">
-                    {searching ? <div className="plus-heading">Models</div> : null}
+                    {searching ? <div className="plus-heading">{labels.model}</div> : null}
                     {modelHits.map((item) => (
                       <MenuRow
                         key={item.id}
-                        label={item.id}
-                        description={item.provider || undefined}
+                        label={modelLabel(item.id)}
+                        description={item.id}
                         value={item.contextWindow ? `${Math.round(item.contextWindow / 1000)}K` : undefined}
                         selected={item.id === model}
                         onClick={() => {
@@ -667,17 +738,35 @@ export const Composer = React.memo(function Composer({
                   </div>
                 ) : null}
 
+                {(pane === 'effort' || searching) && effortHits.length ? (
+                  <div className="plus-list">
+                    {searching ? <div className="plus-heading">{labels.effort}</div> : null}
+                    {effortHits.map((level) => (
+                      <MenuRow
+                        key={level}
+                        label={effortLabel(level)}
+                        description={level === defaultEffort ? labels.defaultValue : undefined}
+                        selected={level === effort}
+                        onClick={() => {
+                          onEffort(level === effort ? '' : level)
+                          closeMenu()
+                        }}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+
                 {(pane === 'mcp' || searching) && mcpHits.length ? (
                   <div className="plus-list">
-                    {searching ? <div className="plus-heading">MCP servers</div> : null}
+                    {searching ? <div className="plus-heading">{labels.mcpServers}</div> : null}
                     {mcpHits.map((item) => {
                       const on = selectedMcp.includes(item.name)
                       return (
                         <MenuRow
                           key={item.name}
                           label={item.name}
-                          description={item.status === 'connected' ? 'Connected' : 'Not connected'}
-                          value={on ? 'On' : 'Off'}
+                          description={item.status === 'connected' ? labels.connected : labels.notConnected}
+                          value={on ? labels.on : labels.off}
                           selected={on}
                           onClick={() => onToggleMcp(item.name)}
                         />
@@ -688,7 +777,7 @@ export const Composer = React.memo(function Composer({
 
                 {(pane === 'trace' || searching) && traceHits.length ? (
                   <div className="plus-list">
-                    {searching ? <div className="plus-heading">Trace level</div> : null}
+                    {searching ? <div className="plus-heading">{labels.traceLevel}</div> : null}
                     {traceHits.map((item) => (
                       <MenuRow
                         key={item.id}
@@ -704,8 +793,13 @@ export const Composer = React.memo(function Composer({
                   </div>
                 ) : null}
 
-                {searching && !agentHits.length && !modelHits.length && !mcpHits.length && !traceHits.length ? (
-                  <div className="plus-empty">Nothing matches “{query.trim()}”</div>
+                {searching &&
+                !agentHits.length &&
+                !modelHits.length &&
+                !mcpHits.length &&
+                !traceHits.length &&
+                !effortHits.length ? (
+                  <div className="plus-empty">{labels.nothingMatches(query.trim())}</div>
                 ) : null}
               </div>
             ) : null}
@@ -733,7 +827,7 @@ export const Composer = React.memo(function Composer({
                 submit()
               }
             }}
-            placeholder={busy ? 'Type your next message…' : 'Ask anything…'}
+            placeholder={busy ? labels.typeNext : labels.askAnything}
           />
 
           <div className="composer-actions">
@@ -743,35 +837,84 @@ export const Composer = React.memo(function Composer({
                 className={`model-trigger${modelMenuOpen ? ' is-open' : ''}`}
                 aria-haspopup="menu"
                 aria-expanded={modelMenuOpen}
-                title={`Model: ${modelLabel}`}
-                onClick={() => setModelMenuOpen((value) => !value)}
+                title={`${labels.model}: ${triggerLabel}`}
+                onClick={() => {
+                  setModelMenuOpen((value) => !value)
+                  setModelPane('root')
+                }}
               >
-                <span>{modelLabel}</span>
+                <span>{triggerLabel}</span>
                 {Icon.caret}
               </button>
               {modelMenuOpen ? (
                 <div className="model-popover" role="menu">
-                  {models.length === 0 ? <div className="plus-empty">No models configured</div> : null}
-                  {models.map((item) => (
-                    <MenuRow
-                      key={item.id}
-                      label={item.id}
-                      description={item.provider || undefined}
-                      value={item.contextWindow ? `${Math.round(item.contextWindow / 1000)}K` : undefined}
-                      selected={item.id === model}
-                      onClick={() => {
-                        onModel(item.id)
-                        setModelMenuOpen(false)
-                      }}
-                    />
-                  ))}
+                  {modelPane === 'root' ? (
+                    <div className="plus-list">
+                      {/* Offered only where the provider accepts it - see ModelOptionDto.effortLevels. */}
+                      {effortLevels.length ? (
+                        <MenuRow
+                          label={labels.effort}
+                          value={effort ? effortLabel(effort) : labels.defaultValue}
+                          more
+                          onClick={() => setModelPane('effort')}
+                        />
+                      ) : null}
+                      <MenuRow
+                        label={labels.model}
+                        value={modelName}
+                        more
+                        onClick={() => setModelPane('model')}
+                      />
+                    </div>
+                  ) : null}
+                  {modelPane !== 'root' ? (
+                    <button type="button" className="plus-back" onClick={() => setModelPane('root')}>
+                      {Icon.back}
+                      {modelPane === 'effort' ? labels.effort : labels.model}
+                    </button>
+                  ) : null}
+                  {modelPane === 'effort' ? (
+                    <div className="plus-list">
+                      {effortLevels.map((level) => (
+                        <MenuRow
+                          key={level}
+                          label={effortLabel(level)}
+                          description={level === defaultEffort ? labels.defaultValue : undefined}
+                          selected={level === effort}
+                          onClick={() => {
+                            onEffort(level === effort ? '' : level)
+                            setModelMenuOpen(false)
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                  {modelPane === 'model' ? (
+                    <div className="plus-list">
+                      {models.length === 0 ? <div className="plus-empty">{labels.none}</div> : null}
+                      {models.map((item) => (
+                        <MenuRow
+                          key={item.id}
+                          label={modelLabel(item.id)}
+                          description={item.id}
+                          value={item.contextWindow ? `${Math.round(item.contextWindow / 1000)}K` : undefined}
+                          selected={item.id === model}
+                          onClick={() => {
+                            onModel(item.id)
+                            setModelMenuOpen(false)
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>
-            <ContextUsage />
+            <ContextUsage labels={labels} />
             <SendButton
               disabled={!text.trim() && files.length === 0}
               busy={busy}
+              labels={labels}
               onSend={submit}
               onStop={onStop}
             />
@@ -790,14 +933,14 @@ export const Composer = React.memo(function Composer({
           <span className="approve-switch-track" aria-hidden="true">
             <span className="approve-switch-knob" />
           </span>
-          Auto-approve
+          {labels.autoApprove}
         </button>
-        <span className="composer-hint">Enter sends · Shift+Enter adds a line</span>
+        <span className="composer-hint">{labels.enterSends}</span>
       </div>
 
       {dropping ? (
         <div className="drop-veil" aria-hidden="true">
-          <span>Drop images or PDFs to attach</span>
+          <span>{labels.dropHint}</span>
         </div>
       ) : null}
     </footer>

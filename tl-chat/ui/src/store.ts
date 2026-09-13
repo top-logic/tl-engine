@@ -26,11 +26,14 @@ export const EMPTY_RUN: RunSnapshot = {
   estimatedTokens: 0,
   contextWindow: 0,
   model: '',
+  effort: '',
 }
 
 export const runStore = createStore<RunSnapshot>(EMPTY_RUN)
 
 const TRACE_KEY = 'tl-chat-trace'
+
+const EFFORT_KEY = 'tl-chat-effort'
 
 function isTraceMode(value: unknown): value is TraceMode {
   return value === 'none' || value === 'overview' || value === 'detailed'
@@ -55,6 +58,31 @@ export function readTraceMode(): TraceMode | null {
 export function writeTraceMode(mode: TraceMode): void {
   try {
     window.localStorage.setItem(TRACE_KEY, mode)
+  } catch {
+    /* the choice simply does not survive a reload */
+  }
+}
+
+/**
+ * The effort level this user last chose, or `null`.
+ *
+ * A session carries its own level, restored from the server; this is only what a *new* chat starts
+ * with, which is a per-browser convenience rather than session state.
+ */
+export function readEffort(): string | null {
+  try {
+    const stored = window.localStorage.getItem(EFFORT_KEY)
+    return stored && stored.trim() ? stored : null
+  } catch {
+    return null
+  }
+}
+
+/** Remembers the effort level for the next new chat. */
+export function writeEffort(effort: string | null): void {
+  try {
+    if (effort) window.localStorage.setItem(EFFORT_KEY, effort)
+    else window.localStorage.removeItem(EFFORT_KEY)
   } catch {
     /* the choice simply does not survive a reload */
   }

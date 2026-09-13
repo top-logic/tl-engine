@@ -7,6 +7,8 @@ import type {
   InteractionOption,
   SendPayload,
   SessionSummary,
+  MessageFeedback,
+  Rating,
   SubagentActivity,
   TokenUsage,
   ToolCallStatus,
@@ -79,6 +81,9 @@ export interface SessionDetail {
   /** Context window of the model that ran the last turn; zero when that model is unknown here. */
   contextWindow?: number
   lastModel?: string
+  /** Answer ratings recorded in this session, so a reopened chat shows them again. */
+  feedback?: MessageFeedback[]
+  lastEffort?: string
 }
 
 export async function loadSession(windowId: string, id: string): Promise<SessionDetail> {
@@ -122,6 +127,66 @@ export async function sendMessage(windowId: string, payload: SendPayload): Promi
     throw new Error(data.status ?? `send failed (${res.status})`)
   }
   return { taskId: data.taskId, status: data.status ?? 'processing' }
+}
+
+/**
+ * Asks for the last answer again.
+ *
+ * The previous turn is removed server side before the same message is sent once more, so the new
+ * answer takes the old one's place instead of following it.
+ */
+export async function regenerate(
+  windowId: string,
+  payload: { sessionId: string; agent?: string; model?: string; mcpOverride: boolean; mcpServers: string[]; effort?: string },
+): Promise<TruncateResult> {
+  return readJson<TruncateResult>(
+    await fetch(withWindow('/chat/regenerate', windowId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    }),
+  )
+}
+
+/** Drops a turn and everything after it, and hands back the user text of the dropped turn. */
+export async function truncate(
+  windowId: string,
+  sessionId: string,
+  fromTurn: number,
+): Promise<TruncateResult> {
+  return readJson<TruncateResult>(
+    await fetch(withWindow('/chat/truncate', windowId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ sessionId, fromTurn }),
+    }),
+  )
+}
+
+export interface TruncateResult {
+  status: 'ok' | 'busy' | 'error'
+  removedTurns?: number
+  text?: string
+  taskId?: string
+}
+
+/** Records, changes or withdraws what the user thought of one answer. */
+export async function sendFeedback(
+  windowId: string,
+  sessionId: string,
+  turnIndex: number,
+  rating: Rating,
+  note?: string,
+): Promise<void> {
+  const res = await fetch(withWindow('/chat/feedback', windowId), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ sessionId, turnIndex, rating: rating ?? '', note: note ?? '' }),
+  })
+  if (!res.ok) throw new Error(`feedback failed (${res.status})`)
 }
 
 export async function cancelRun(windowId: string): Promise<void> {
@@ -432,7 +497,13 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
   return msgs
 }
 
+/**
+ * The title a new chat gets from its first message.
+ *
+ * Long enough to be recognisable in the thread header, which shows it in full: the rail truncates
+ * with an ellipsis of its own, so a title cut short here was cut short everywhere.
+ */
 export function autoTitle(text: string): string {
   const trimmed = text.trim().replace(/\s+/g, ' ')
-  return trimmed.length > 40 ? `${trimmed.slice(0, 40)}…` : trimmed || 'New chat'
+  return trimmed.length > 72 ? `${trimmed.slice(0, 72)}…` : trimmed || 'New chat'
 }

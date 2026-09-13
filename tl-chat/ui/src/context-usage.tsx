@@ -1,8 +1,12 @@
 import { React } from 'tl-react-bridge'
+import type { bundle } from './i18n'
+import { effortLabel, modelLabel } from './models'
 import { runStore } from './store'
 import { answerTokens, type ContextComposition, type RunSnapshot } from './types'
 
 const { useEffect, useRef, useState, useSyncExternalStore } = React
+
+type Labels = ReturnType<typeof bundle>
 
 export function formatTokens(n: number): string {
   if (!n) return '0'
@@ -27,7 +31,6 @@ function formatPercent(ratio: number): string {
 
 interface Slice {
   key: string
-  label: string
   tokens: number
   /** True when the figure comes from the agent loop's estimator rather than from the provider. */
   estimated: boolean
@@ -90,21 +93,32 @@ function slicesOf(used: number, composition: ContextComposition | undefined, est
   const conversation = Math.max(0, used - system - tools)
   const slices: Slice[] = []
   if (system > 0) {
-    slices.push({ key: 'system', label: 'System prompt', tokens: system, estimated: true })
+    slices.push({ key: 'system', tokens: system, estimated: true })
   }
   if (tools > 0) {
     slices.push({
       key: 'tools',
-      label: 'Tool definitions',
       tokens: tools,
       estimated: true,
-      note: composition.toolCount ? `${composition.toolCount} tools` : undefined,
+      note: composition.toolCount ? String(composition.toolCount) : undefined,
     })
   }
   if (conversation > 0) {
-    slices.push({ key: 'conversation', label: 'Conversation', tokens: conversation, estimated })
+    slices.push({ key: 'conversation', tokens: conversation, estimated })
   }
   return slices
+}
+
+/** The name of a slice, in the reader's language. */
+function sliceLabel(slice: Slice, labels: Labels): string {
+  switch (slice.key) {
+    case 'system':
+      return labels.systemPrompt
+    case 'tools':
+      return labels.toolDefinitions
+    default:
+      return labels.conversation
+  }
 }
 
 const RADIUS = 13
@@ -121,7 +135,7 @@ function arcLength(ratio: number, circumference: number): number {
   return Math.max(circumference * 0.04, circumference * ratio)
 }
 
-export const ContextUsage = React.memo(function ContextUsage() {
+export const ContextUsage = React.memo(function ContextUsage({ labels }: { labels: Labels }) {
   const snapshot = useSyncExternalStore(runStore.subscribe, runStore.get, runStore.get)
   const [open, setOpen] = useState(false)
   const wrap = useRef<HTMLDivElement>(null)
@@ -148,7 +162,7 @@ export const ContextUsage = React.memo(function ContextUsage() {
 
   if (!reading.window) return null
 
-  const label = `${prefix}${formatTokens(reading.used)} of ${formatTokens(reading.window)} tokens used`
+  const label = `${prefix}${formatTokens(reading.used)} / ${formatTokens(reading.window)} ${labels.tokens}`
 
   return (
     <div className="context-wrap" ref={wrap}>
@@ -157,7 +171,7 @@ export const ContextUsage = React.memo(function ContextUsage() {
         className={`context-gauge tone-${tone}${open ? ' is-open' : ''}`}
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label={`Context usage: ${label}`}
+        aria-label={`${labels.contextUsage}: ${label}`}
         title={label}
         onClick={() => setOpen((value) => !value)}
       >
@@ -173,25 +187,39 @@ export const ContextUsage = React.memo(function ContextUsage() {
           />
         </svg>
       </button>
-      {open ? <ContextPopover reading={reading} model={snapshot.model} /> : null}
+      {open ? (
+        <ContextPopover reading={reading} model={snapshot.model} effort={snapshot.effort} labels={labels} />
+      ) : null}
     </div>
   )
 })
 
-function ContextPopover({ reading, model }: { reading: ContextReading; model: string }) {
+function ContextPopover({
+  reading,
+  model,
+  effort,
+  labels,
+}: {
+  reading: ContextReading
+  model: string
+  effort: string
+  labels: Labels
+}) {
   const prefix = reading.estimated ? '~' : ''
+  // What the turn actually ran with: the model, and the effort when one is in force.
+  const modelLine = model ? (effort ? `${modelLabel(model)} · ${effortLabel(effort)}` : modelLabel(model)) : ''
   return (
     <div className="context-popover" role="dialog" aria-label="Context usage">
       <div className="context-popover-head">
-        <strong>Context usage</strong>
+        <strong>{labels.contextUsage}</strong>
         <span>
           {prefix}
-          {formatTokens(reading.used)} / {formatTokens(reading.window)} tokens
+          {formatTokens(reading.used)} / {formatTokens(reading.window)} {labels.tokens}
         </span>
       </div>
       <div className="context-popover-meta">
-        <span>{reading.percent} full</span>
-        {model ? <span className="context-model">{model}</span> : null}
+        <span>{labels.contextFull(reading.percent)}</span>
+        {modelLine ? <span className="context-model" title={model}>{modelLine}</span> : null}
       </div>
       <div className="context-bar" aria-hidden="true">
         {reading.slices.length ? (
@@ -212,7 +240,7 @@ function ContextPopover({ reading, model }: { reading: ContextReading; model: st
             <div key={slice.key}>
               <dt>
                 <span className={`context-key slice-${slice.key}`} aria-hidden="true" />
-                {slice.label}
+                {sliceLabel(slice, labels)}
                 {slice.note ? <em>{slice.note}</em> : null}
               </dt>
               <dd>
@@ -225,14 +253,12 @@ function ContextPopover({ reading, model }: { reading: ContextReading; model: st
       ) : null}
       {reading.answer > 0 ? (
         <div className="context-aside">
-          <span>Last answer</span>
-          <span>{formatTokens(reading.answer)} tokens written</span>
+          <span>{labels.lastAnswer}</span>
+          <span>{labels.tokensWritten(formatTokens(reading.answer))}</span>
         </div>
       ) : null}
       <p className="context-note">
-        {reading.estimated
-          ? 'Estimated until the first answer of this chat; the next turn reports the measured size.'
-          : 'Measured by the provider for the last request. Rows marked ~ are estimates of how that total splits.'}
+        {reading.estimated ? labels.contextEstimated : labels.contextMeasured}
       </p>
     </div>
   )

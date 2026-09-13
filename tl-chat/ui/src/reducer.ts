@@ -18,7 +18,9 @@ function genId(): string {
 }
 
 export type ChatAction =
-  | { type: 'ADD_USER'; text: string }
+  | { type: 'ADD_USER'; id: string; text: string }
+  | { type: 'REMOVE_MESSAGE'; id: string }
+  | { type: 'REMOVE_FROM_USER'; id: string }
   | { type: 'ADD_ASSISTANT'; id: string; text: string; isStreaming: boolean }
   | { type: 'APPEND_TEXT'; id: string; delta: string }
   | { type: 'FINALIZE_TEXT'; id: string }
@@ -56,8 +58,15 @@ export type ChatAction =
 export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMessage[] {
   switch (action.type) {
     case 'ADD_USER': {
-      const msg: UserMessage = { type: 'user', id: genId(), text: action.text, timestamp: Date.now() }
+      const msg: UserMessage = { type: 'user', id: action.id, text: action.text, timestamp: Date.now() }
       return [...messages, msg]
+    }
+    case 'REMOVE_MESSAGE':
+      return messages.filter((m) => m.id !== action.id)
+    case 'REMOVE_FROM_USER': {
+      // Everything after a user message was said in reply to it, so it goes too.
+      const index = messages.findIndex((m) => m.type === 'user' && m.id === action.id)
+      return index < 0 ? messages : messages.slice(0, index)
     }
     case 'ADD_ASSISTANT': {
       const msg: AssistantText = {

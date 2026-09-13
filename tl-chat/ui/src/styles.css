@@ -553,6 +553,12 @@
   vertical-align: text-bottom;
 }
 
+.answer-footer-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
 .answer-footer {
   display: flex;
   align-items: center;
@@ -565,6 +571,68 @@
 .turn-agent:hover .answer-footer,
 .answer-footer:focus-within {
   opacity: 1;
+}
+
+.answer-time {
+  margin-left: 0.375rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.feedback-note {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer);
+}
+
+.feedback-note input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--chat-small);
+  outline: none;
+}
+
+.feedback-note input::placeholder {
+  color: var(--text-placeholder, var(--text-secondary));
+}
+
+/* --- Delete confirmation in the rail ------------------------------------ */
+
+.rail-item.is-confirming {
+  gap: 0.125rem;
+  padding: 0.25rem 0.25rem 0.25rem 0.5rem;
+  border: 1px solid var(--chat-danger);
+  background: var(--chat-danger-soft);
+}
+
+.rail-confirm-text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--chat-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Effort in the trace header ----------------------------------------- */
+
+.trace-effort {
+  flex: 0 0 auto;
+  padding: 0.0625rem 0.375rem;
+  border-radius: var(--r-pill);
+  background: var(--layer-selected);
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 /* --- Markdown ----------------------------------------------------------- */
@@ -1619,7 +1687,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.1875rem;
-  max-width: 11rem;
+  max-width: 13rem;
   height: 2rem;
   padding: 0 0.375rem 0 0.5rem;
   border-radius: var(--r-2);

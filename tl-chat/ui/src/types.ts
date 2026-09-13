@@ -137,6 +137,25 @@ export interface ModelOption {
   provider?: string
   contextWindow?: number
   maxOutput?: number
+  /**
+   * How hard this model may be asked to think, in increasing order; empty when it offers no such
+   * setting. A UI must check this before offering the choice: the providers reject a level their
+   * model does not know.
+   */
+  effortLevels?: string[]
+  /** The level in force when none is chosen. */
+  defaultEffort?: string
+}
+
+/** What the user thought of an answer; `null` means they said nothing. */
+export type Rating = 'up' | 'down' | null
+
+/** One rating, addressed by the turn whose answer it belongs to. */
+export interface MessageFeedback {
+  turnIndex: number
+  rating: 'up' | 'down'
+  note?: string
+  recordedAt?: string
 }
 
 export interface McpServerOption {
@@ -199,6 +218,8 @@ export interface SendPayload {
   mcpOverride: boolean
   mcpServers: string[]
   attachments?: Attachment[]
+  /** How hard the model may think for this turn; omitted keeps the agent's assignment. */
+  effort?: string
 }
 
 export interface TokenUsage {
@@ -249,6 +270,8 @@ export interface RunSnapshot {
   estimatedTokens: number
   contextWindow: number
   model: string
+  /** Effort level in force for this chat, empty when the model offers none or none was chosen. */
+  effort: string
   lastUsage?: TokenUsage
   composition?: ContextComposition
 }

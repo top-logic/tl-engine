@@ -5,6 +5,8 @@
  */
 package com.top_logic.ai.chat.view;
 
+import java.util.Locale;
+
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.view.AgentChatElement.TraceMode;
@@ -39,6 +41,9 @@ public class AgentChatControl extends ReactControl {
 		putState("contextPath", context.getContextPath());
 		putState("userName", valueOr(tracker.getUserName(), "User"));
 		putState("welcomeName", valueOr(tracker.getWelcomeName(), ""));
+		// The chat's own strings follow the user's locale, so the chat and the view layer around it
+		// are never in two languages at once.
+		putState("language", language());
 		putState("traceMode", traceMode.getExternalName());
 		putState("promptImprovementEnabled", configuredImprover != null);
 	}
@@ -71,6 +76,13 @@ public class AgentChatControl extends ReactControl {
 		String trimmed = fullName.trim();
 		int separator = trimmed.indexOf(' ');
 		tracker.setWelcomeName(separator < 0 ? trimmed : trimmed.substring(0, separator));
+	}
+
+	/** The language tag of the current user's locale, e.g. {@code "de"}; English when unknown. */
+	private static String language() {
+		TLContext tlContext = TLContext.getContext();
+		Locale locale = tlContext == null ? null : tlContext.getCurrentLocale();
+		return locale == null ? Locale.ENGLISH.getLanguage() : locale.getLanguage();
 	}
 
 	private static String valueOr(String value, String fallback) {

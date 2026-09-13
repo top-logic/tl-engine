@@ -1,7 +1,10 @@
 import { React } from 'tl-react-bridge'
+import type { bundle } from './i18n'
 import type { ChatMessage, SubagentActivity } from './types'
 
 const { useEffect, useMemo, useState } = React
+
+type Labels = ReturnType<typeof bundle>
 
 function formatDuration(ms: number): string {
   if (ms <= 0) return ''
@@ -15,16 +18,16 @@ function formatTokens(tokens: number): string {
   return `${(tokens / 1000).toFixed(tokens < 10_000 ? 1 : 0)}k tokens`
 }
 
-function transcriptLine(message: ChatMessage): string | null {
+function transcriptLine(message: ChatMessage, labels: Labels): string | null {
   switch (message.type) {
     case 'user':
-      return `You: ${message.text}`
+      return `${labels.you}: ${message.text}`
     case 'assistant_text':
-      return `Agent: ${message.text}`
+      return `${labels.agentLabel}: ${message.text}`
     case 'tool_call':
-      return `Tool: ${message.name}`
+      return `${labels.tool}: ${message.name}`
     case 'error':
-      return `Error: ${message.message}`
+      return `${labels.error}: ${message.message}`
     default:
       return null
   }
@@ -32,11 +35,13 @@ function transcriptLine(message: ChatMessage): string | null {
 
 export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
   subagents,
+  labels,
   onCancel,
   onStopAll,
   onLoadTranscript,
 }: {
   subagents: SubagentActivity[]
+  labels: Labels
   onCancel: (id: string) => Promise<void>
   onStopAll: () => Promise<void>
   onLoadTranscript: (id: string) => Promise<ChatMessage[]>
@@ -90,7 +95,7 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
       setTranscripts((current) => ({ ...current, [id]: messages }))
       setExpanded((current) => new Set(current).add(id))
     } catch {
-      setError('The subagent transcript could not be loaded.')
+      setError(labels.transcriptFailed)
     } finally {
       setLoadingTranscript(null)
     }
@@ -106,18 +111,18 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
         onClick={() => setOpen((value) => !value)}
       >
         <span className={`status-spinner${activeCount ? ' is-active' : ''}`} aria-hidden="true" />
-        {activeCount ? `Working · ${activeCount}` : `Tasks · ${subagents.length}`}
+        {activeCount ? `${labels.working_plural} · ${activeCount}` : `${labels.tasks} · ${subagents.length}`}
         <span aria-hidden="true">{open ? '⌃' : '⌄'}</span>
       </button>
 
       <span className="sr-only" aria-live="polite">
-        {activeCount ? `${activeCount} subagents working` : 'All subagents finished'}
+        {activeCount ? `${activeCount} × ${labels.working_plural}` : ''}
       </span>
 
       {open ? (
-        <section id="subagent-activity-panel" className="activity-panel" aria-label="Subagent activity">
+        <section id="subagent-activity-panel" className="activity-panel" aria-label={labels.tasks}>
           <header className="activity-header">
-            <strong>{activeCount ? 'Working' : 'Tasks'}</strong>
+            <strong>{activeCount ? labels.working_plural : labels.tasks}</strong>
             <div>
               {activeCount ? (
                 <button
@@ -125,13 +130,13 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
                   className="text-button"
                   onClick={() => {
                     setError('')
-                    void onStopAll().catch(() => setError('The subagents could not be stopped.'))
+                    void onStopAll().catch(() => setError(labels.subagentsStopFailed))
                   }}
                 >
-                  Stop all
+                  {labels.stopAll}
                 </button>
               ) : null}
-              <button type="button" className="icon-button" aria-label="Close activity" onClick={() => setOpen(false)}>
+              <button type="button" className="icon-button" aria-label={labels.closeActivity} onClick={() => setOpen(false)}>
                 ×
               </button>
             </div>
@@ -163,16 +168,16 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
                       <button
                         type="button"
                         className="text-button"
-                        onClick={() => void onCancel(item.subagentId).catch(() => setError('The subagent could not be stopped.'))}
+                        onClick={() => void onCancel(item.subagentId).catch(() => setError(labels.subagentStopFailed))}
                       >
-                        Stop
+                        {labels.stop}
                       </button>
                     ) : null}
                   </div>
 
                   {isExpanded ? (
                     <div className="activity-detail">
-                      <p>{item.detail || 'No details available.'}</p>
+                      <p>{item.detail || labels.noDetails}</p>
                       {item.hasTranscript ? (
                         <button
                           type="button"
@@ -180,12 +185,12 @@ export const SubagentActivityPanel = React.memo(function SubagentActivityPanel({
                           disabled={loadingTranscript === item.subagentId}
                           onClick={() => void loadTranscript(item.subagentId)}
                         >
-                          {loadingTranscript === item.subagentId ? 'Loading…' : 'View transcript'}
+                          {loadingTranscript === item.subagentId ? labels.loading : labels.viewTranscript}
                         </button>
                       ) : null}
                       {transcript ? (
                         <div className="activity-transcript">
-                          {transcript.map(transcriptLine).filter(Boolean).map((line, index) => (
+                          {transcript.map((message) => transcriptLine(message, labels)).filter(Boolean).map((line, index) => (
                             <p key={`${item.subagentId}-${index}`}>{line}</p>
                           ))}
                         </div>

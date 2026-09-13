@@ -1,9 +1,12 @@
 import { React } from 'tl-react-bridge'
 import { respond } from './api'
+import type { bundle } from './i18n'
 import type { ChatAction } from './reducer'
 import type { ApprovalRequest, InteractionRequest } from './types'
 
 const { useEffect, useState } = React
+
+type Labels = ReturnType<typeof bundle>
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
@@ -11,21 +14,23 @@ export function PromptStack({
   approvals,
   questions,
   windowId,
+  labels,
   dispatch,
 }: {
   approvals: ApprovalRequest[]
   questions: InteractionRequest[]
   windowId: string
+  labels: Labels
   dispatch: React.Dispatch<ChatAction>
 }) {
   if (approvals.length === 0 && questions.length === 0) return null
   return (
     <div className="prompt-stack">
       {approvals.map((item) => (
-        <ApprovalCard key={item.id} item={item} windowId={windowId} dispatch={dispatch} />
+        <ApprovalCard key={item.id} item={item} windowId={windowId} labels={labels} dispatch={dispatch} />
       ))}
       {questions.map((item) => (
-        <QuestionCard key={item.id} item={item} windowId={windowId} dispatch={dispatch} />
+        <QuestionCard key={item.id} item={item} windowId={windowId} labels={labels} dispatch={dispatch} />
       ))}
     </div>
   )
@@ -45,7 +50,15 @@ function formatCountdown(ms: number): string {
  * clock only measures the time since. Nothing is shown for a request that carries no deadline, and
  * a request whose time has run out says so rather than counting into negative numbers.
  */
-function Countdown({ remainingMs, receivedAt }: { remainingMs?: number; receivedAt?: number }) {
+function Countdown({
+  remainingMs,
+  receivedAt,
+  labels,
+}: {
+  remainingMs?: number
+  receivedAt?: number
+  labels: Labels
+}) {
   const deadline = remainingMs && receivedAt ? receivedAt + remainingMs : 0
   const [left, setLeft] = useState(() => (deadline ? deadline - Date.now() : 0))
 
@@ -59,14 +72,14 @@ function Countdown({ remainingMs, receivedAt }: { remainingMs?: number; received
 
   if (!deadline) return null
   if (left <= 0) {
-    return <span className="prompt-countdown is-over">Time is up</span>
+    return <span className="prompt-countdown is-over">{labels.timeIsUp}</span>
   }
   const urgent = left < 30_000
   return (
     <span className={`prompt-countdown${urgent ? ' is-urgent' : ''}`}>
       <span className="prompt-clock" aria-hidden="true" />
       <time dateTime={`PT${Math.round(left / 1000)}S`}>{formatCountdown(left)}</time>
-      <span className="sr-only"> left to answer</span>
+      <span className="sr-only">{labels.leftToAnswer}</span>
     </span>
   )
 }
@@ -75,12 +88,14 @@ function OverlayCard({
   kind,
   title,
   countdown,
+  labels,
   children,
   footer,
 }: {
   kind: string
   title: string
   countdown: React.ReactNode
+  labels: Labels
   children: React.ReactNode
   footer: React.ReactNode
 }) {
@@ -94,7 +109,7 @@ function OverlayCard({
           type="button"
           className="icon-button tiny"
           aria-expanded={open}
-          aria-label={open ? `Collapse ${kind}` : `Expand ${kind}`}
+          aria-label={open ? labels.collapse(kind) : labels.expand(kind)}
           onClick={() => setOpen((value) => !value)}
         >
           <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -120,10 +135,12 @@ function OverlayCard({
 function ApprovalCard({
   item,
   windowId,
+  labels,
   dispatch,
 }: {
   item: ApprovalRequest
   windowId: string
+  labels: Labels
   dispatch: React.Dispatch<ChatAction>
 }) {
   const send = async (response: 'APPROVED' | 'APPROVED_FOR_SESSION' | 'REJECTED') => {
@@ -137,19 +154,20 @@ function ApprovalCard({
   }
   return (
     <OverlayCard
-      kind="Approval"
+      kind={labels.approval}
       title={item.toolName}
-      countdown={<Countdown remainingMs={item.remainingMs} receivedAt={item.receivedAt} />}
+      labels={labels}
+      countdown={<Countdown remainingMs={item.remainingMs} receivedAt={item.receivedAt} labels={labels} />}
       footer={
         <>
           <button type="button" className="text-button is-danger" onClick={() => void send('REJECTED')}>
-            Deny
+            {labels.deny}
           </button>
           <button type="button" className="text-button" onClick={() => void send('APPROVED_FOR_SESSION')}>
-            Allow this chat
+            {labels.allowThisChat}
           </button>
           <button type="button" className="prompt-continue" onClick={() => void send('APPROVED')}>
-            Allow once
+            {labels.allowOnce}
           </button>
         </>
       }
@@ -162,10 +180,12 @@ function ApprovalCard({
 function QuestionCard({
   item,
   windowId,
+  labels,
   dispatch,
 }: {
   item: InteractionRequest
   windowId: string
+  labels: Labels
   dispatch: React.Dispatch<ChatAction>
 }) {
   const [text, setText] = useState('')
@@ -185,13 +205,14 @@ function QuestionCard({
   const canContinue = item.interactionType === 'choice' ? picked.length > 0 : Boolean(text.trim())
   return (
     <OverlayCard
-      kind="Question"
+      kind={labels.question}
       title={item.header || item.question}
-      countdown={<Countdown remainingMs={item.remainingMs} receivedAt={item.receivedAt} />}
+      labels={labels}
+      countdown={<Countdown remainingMs={item.remainingMs} receivedAt={item.receivedAt} labels={labels} />}
       footer={
         <>
           <button type="button" className="text-button" onClick={() => void submit('skipped')}>
-            Skip
+            {labels.skip}
           </button>
           <button
             type="button"
@@ -199,7 +220,7 @@ function QuestionCard({
             disabled={!canContinue}
             onClick={() => void submit(item.interactionType === 'choice' ? picked.join(', ') : text.trim())}
           >
-            Continue
+            {labels.continueLabel}
           </button>
         </>
       }
@@ -237,7 +258,7 @@ function QuestionCard({
               void submit(text.trim())
             }
           }}
-          placeholder="Your answer"
+          placeholder={labels.yourAnswer}
           autoFocus
         />
       )}

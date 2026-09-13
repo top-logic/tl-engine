@@ -12,16 +12,21 @@ import {
   loadSession,
   loadSubagentTranscript,
   openEventStream,
+  regenerate,
   renameSession,
   respond,
+  sendFeedback,
   sendMessage,
   setApprovalMode,
+  truncate,
   turnsJsonToMessages,
 } from './api'
+import { bundle, toLanguage, type Language } from './i18n'
+import { effortLevelsOf } from './models'
 import { SessionRail } from './chrome'
 import { Composer } from './composer'
 import { chatReducer } from './reducer'
-import { EMPTY_RUN, readTraceMode, runStore, writeTraceMode } from './store'
+import { EMPTY_RUN, readEffort, readTraceMode, runStore, writeEffort, writeTraceMode } from './store'
 import { Thread } from './thread'
 import {
   promptTokens,
@@ -34,6 +39,8 @@ import {
   type ConnectionState,
   type ContextComposition,
   type InteractionRequest,
+  type MessageFeedback,
+  type Rating,
   type SessionSummary,
   type SubagentActivity,
   type SubagentStatus,
@@ -91,6 +98,9 @@ export function App({ controlId }: TLCellProps) {
   const welcomeName = (state.welcomeName as string) || ''
   const configuredTraceMode = parseTraceMode(state.traceMode)
   const promptImprovementEnabled = state.promptImprovementEnabled === true
+  // The chat speaks the language the rest of the application speaks: the user's own locale.
+  const language: Language = toLanguage(state.language)
+  const labels = useMemo(() => bundle(language), [language])
   // The stored choice wins over the configured default: the element's trace-mode is what a new user
   // starts with, not a setting that overrules what this user picked.
   const [traceMode, setTraceModeState] = useState<TraceMode>(() => readTraceMode() ?? configuredTraceMode)
@@ -104,6 +114,9 @@ export function App({ controlId }: TLCellProps) {
   const [model, setModel] = useState('')
   const [mcp, setMcp] = useState<string[]>([])
   const [mcpDirty, setMcpDirty] = useState(false)
+  const [effort, setEffortState] = useState<string>(() => readEffort() ?? '')
+  const [feedback, setFeedback] = useState<MessageFeedback[]>([])
+  const [regenerating, setRegenerating] = useState(false)
   const [busy, setBusy] = useState(false)
   const [railOpen, setRailOpen] = useState(false)
   const [railCollapsed, setRailCollapsed] = useState(false)
@@ -119,6 +132,7 @@ export function App({ controlId }: TLCellProps) {
   const modelRef = useRef(model)
   const mcpRef = useRef(mcp)
   const mcpDirtyRef = useRef(mcpDirty)
+  const effortRef = useRef(effort)
   const autoApproveRef = useRef(false)
   const runIdRef = useRef<string | null>(null)
   sessionIdRef.current = sessionId
@@ -127,6 +141,7 @@ export function App({ controlId }: TLCellProps) {
   modelRef.current = model
   mcpRef.current = mcp
   mcpDirtyRef.current = mcpDirty
+  effortRef.current = effort
   autoApproveRef.current = autoApprove
 
   const setTraceMode = useCallback((mode: TraceMode) => {
@@ -175,7 +190,7 @@ export function App({ controlId }: TLCellProps) {
         else if (nextCaps.models[0]) setModel(nextCaps.models[0].id)
       } catch (err) {
         console.error('[tl-chat-ui] capabilities', err)
-        if (!cancelled) setSessionsError('Chats could not be loaded.')
+        if (!cancelled) setSessionsError(labels.chatsLoadFailed)
       } finally {
         if (!cancelled) setSessionsLoading(false)
       }
@@ -196,6 +211,21 @@ export function App({ controlId }: TLCellProps) {
       contextWindow: known.contextWindow ?? snapshot.contextWindow,
     }))
   }, [caps.models, model])
+
+  // A model that cannot be asked to think harder must not carry a level: the provider would reject
+  // it. Switching to such a model drops the choice; switching back leaves the user to pick again.
+  const effortLevels = useMemo(() => effortLevelsOf(caps.models, model), [caps.models, model])
+  useEffect(() => {
+    setEffortState((current) => (current && !effortLevels.includes(current) ? '' : current))
+  }, [effortLevels])
+  useEffect(() => {
+    runStore.set((snapshot) => ({ ...snapshot, effort }))
+  }, [effort])
+
+  const setEffort = useCallback((level: string) => {
+    setEffortState(level)
+    writeEffort(level || null)
+  }, [])
 
   useEffect(() => {
     let closed = false
@@ -515,7 +545,7 @@ export function App({ controlId }: TLCellProps) {
       on('message_complete', () => finish())
       on('provider_error', (e) => {
         const data = parseJson<{ errorMessage?: string; kind?: string }>(e.data, {})
-        finish(data.errorMessage ?? 'The model returned an error.')
+        finish(data.errorMessage ?? bundle(languageRef.current).providerError)
       })
 
       es.onerror = () => {
@@ -536,14 +566,17 @@ export function App({ controlId }: TLCellProps) {
     }
   }, [windowId])
 
+  const languageRef = useRef(language)
+  languageRef.current = language
+
   const refreshSessions = useCallback(async () => {
     try {
       setSessions(await listSessions(windowId))
       setSessionsError('')
     } catch {
-      setSessionsError('Chats could not be refreshed.')
+      setSessionsError(labels.chatsRefreshFailed)
     }
-  }, [windowId])
+  }, [labels, windowId])
 
   const refreshSubagents = useCallback(async () => {
     try {
@@ -561,6 +594,7 @@ export function App({ controlId }: TLCellProps) {
       setRailOpen(false)
       setSubagents([])
       setNotice('')
+      setFeedback([])
       // The model does not change when the chat does, so its window survives the reset; only what
       // the previous conversation measured is dropped.
       runStore.set((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
@@ -575,6 +609,8 @@ export function App({ controlId }: TLCellProps) {
         lastUsage: detail.lastPromptUsage ?? snapshot.lastUsage,
         measuredTokens: promptTokens(detail.lastPromptUsage),
       }))
+      setFeedback(detail.feedback ?? [])
+      if (detail.lastEffort) setEffortState(detail.lastEffort)
       await refreshSubagents()
     },
     [windowId, refreshSubagents],
@@ -587,6 +623,7 @@ export function App({ controlId }: TLCellProps) {
     setRailOpen(false)
     setSubagents([])
     setNotice('')
+    setFeedback([])
     dispatch({ type: 'RESET' })
     assistantId.current = null
     runIdRef.current = null
@@ -633,6 +670,14 @@ export function App({ controlId }: TLCellProps) {
         }
       }
       setNotice('')
+      // Appended before the request, not after it: the server starts streaming the answer the
+      // moment it accepts the message, and an await here would let the first assistant event
+      // reach the reducer first - on a new chat the answer then appeared above the question.
+      // A refused send takes the message back out again.
+      const messageId = crypto.randomUUID()
+      dispatch({ type: 'ADD_USER', id: messageId, text: text || '(attachment)' })
+      setBusy(true)
+      runStore.set((s) => ({ ...s, busy: true }))
       try {
         await sendMessage(windowId, {
           text,
@@ -642,18 +687,15 @@ export function App({ controlId }: TLCellProps) {
           mcpOverride: mcpDirtyRef.current,
           mcpServers: mcpRef.current,
           attachments,
+          effort: effortRef.current || undefined,
         })
       } catch (err) {
-        setNotice(
-          err instanceof Error && err.message === 'busy'
-            ? 'The agent is still working on the previous message. Your text is kept - send it again when the run has finished.'
-            : 'The message could not be sent.',
-        )
+        dispatch({ type: 'REMOVE_MESSAGE', id: messageId })
+        setBusy(false)
+        runStore.set((s) => ({ ...s, busy: false }))
+        setNotice(err instanceof Error && err.message === 'busy' ? labels.busyHint : labels.sendFailed)
         return false
       }
-      dispatch({ type: 'ADD_USER', text: text || '(attachment)' })
-      setBusy(true)
-      runStore.set((s) => ({ ...s, busy: true }))
       return true
     },
     [windowId, refreshSessions],
@@ -748,21 +790,111 @@ export function App({ controlId }: TLCellProps) {
     [messages],
   )
 
-  /** Puts a user message back into the composer so it can be corrected and sent again. */
   const [resendDraft, setResendDraft] = useState<{ text: string; nonce: number } | null>(null)
-  const onResend = useCallback((text: string) => {
-    setResendDraft({ text, nonce: Date.now() })
-  }, [])
-  const onRetry = useCallback(
-    (text: string) => {
-      void onSend(text, [])
+
+  /**
+   * Edits an earlier message.
+   *
+   * Editing a message means the conversation continues differently from that point, so the turn and
+   * everything after it is dropped - here and on the server - and the text comes back into the
+   * composer for the user to change. Nothing is sent until they send it.
+   */
+  const onEdit = useCallback(
+    async (messageId: string, turnIndex: number, draft: string) => {
+      const active = sessionIdRef.current
+      if (!active) return
+      setNotice('')
+      let removed = 0
+      try {
+        const result = await truncate(windowId, active, turnIndex)
+        if (result.status === 'busy') {
+          setNotice(labels.busyHint)
+          return
+        }
+        removed = result.removedTurns ?? 0
+      } catch {
+        setNotice(labels.sendFailed)
+        return
+      }
+      dispatch({ type: 'REMOVE_FROM_USER', id: messageId })
+      setFeedback((current) => current.filter((entry) => entry.turnIndex < turnIndex))
+      // Removing the last turn is what editing always does; saying so only helps when it took
+      // answers the user could still see.
+      if (removed > 1) setNotice(labels.laterTurnsRemoved(removed - 1))
+      setResendDraft({ text: draft, nonce: Date.now() })
+      runStore.set((snapshot) => ({ ...snapshot, measuredTokens: 0 }))
     },
-    [onSend],
+    [labels, windowId],
+  )
+
+  /**
+   * Answers the last message again.
+   *
+   * The old answer is not kept beside the new one: the user asked for that turn to be done
+   * differently. The server drops it and re-sends the same message; what streams in takes its place.
+   */
+  const onRegenerate = useCallback(
+    async (messageId: string, turnIndex: number) => {
+      const active = sessionIdRef.current
+      if (!active || regenerating) return
+      setNotice('')
+      setRegenerating(true)
+      try {
+        const result = await regenerate(windowId, {
+          sessionId: active,
+          agent: agentRef.current,
+          model: modelRef.current,
+          mcpOverride: mcpDirtyRef.current,
+          mcpServers: mcpRef.current,
+          effort: effortRef.current || undefined,
+        })
+        if (result.status === 'busy') {
+          setNotice(labels.busyHint)
+          return
+        }
+        if (result.status !== 'ok') {
+          setNotice(labels.sendFailed)
+          return
+        }
+        // The turn is gone server side; drop it here too and let the run rebuild it.
+        dispatch({ type: 'REMOVE_FROM_USER', id: messageId })
+        setFeedback((current) => current.filter((entry) => entry.turnIndex !== turnIndex))
+        dispatch({ type: 'ADD_USER', id: crypto.randomUUID(), text: result.text ?? '' })
+        setBusy(true)
+        runStore.set((snapshot) => ({ ...snapshot, busy: true, measuredTokens: 0 }))
+      } catch {
+        setNotice(labels.sendFailed)
+      } finally {
+        setRegenerating(false)
+      }
+    },
+    [labels, regenerating, windowId],
+  )
+
+  /** Records what the user thought of an answer, or withdraws an earlier rating. */
+  const onRate = useCallback(
+    async (turnIndex: number, rating: Rating, note?: string) => {
+      const active = sessionIdRef.current
+      if (!active) return
+      setFeedback((current) => {
+        const others = current.filter((entry) => entry.turnIndex !== turnIndex)
+        return rating ? [...others, { turnIndex, rating, note }] : others
+      })
+      try {
+        await sendFeedback(windowId, active, turnIndex, rating, note)
+      } catch {
+        // The rating is a convenience, not the conversation: a failed write is not worth an error
+        // banner, but it must not look recorded either.
+        setFeedback((current) => current.filter((entry) => entry.turnIndex !== turnIndex))
+      }
+    },
+    [windowId],
   )
 
   return (
     <div id={controlId} className={`tl-cockpit${railCollapsed ? ' is-rail-collapsed' : ''}`}>
       <SessionRail
+        labels={labels}
         sessions={sessions}
         activeId={sessionId}
         open={railOpen}
@@ -781,8 +913,14 @@ export function App({ controlId }: TLCellProps) {
           traceMode={traceMode}
           welcomeName={welcomeName || userName}
           busy={busy}
-          onResend={onResend}
-          onRetry={onRetry}
+          regenerating={regenerating}
+          feedback={feedback}
+          labels={labels}
+          language={language}
+          effort={effort}
+          onEdit={onEdit}
+          onRegenerate={onRegenerate}
+          onRate={onRate}
           onOpenRail={() => setRailOpen(true)}
           railCollapsed={railCollapsed}
           onToggleRail={() => setRailCollapsed((value) => !value)}
@@ -801,6 +939,10 @@ export function App({ controlId }: TLCellProps) {
           onToggleMcp={onToggleMcp}
           traceMode={traceMode}
           onTraceMode={setTraceMode}
+          effort={effort}
+          effortLevels={effortLevels}
+          onEffort={setEffort}
+          labels={labels}
           autoApprove={autoApprove}
           onToggleAutoApprove={() => void onToggleAutoApprove()}
           pendingApprovals={pendingApprovals}

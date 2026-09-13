@@ -21,6 +21,9 @@
 					<provider type="com.top_logic.layout.basic.ThemeImage">
 						<impl class="com.top_logic.layout.configedit.IconSelectConfigProvider"/>
 					</provider>
+					<provider type="java.awt.Color">
+						<impl class="com.top_logic.layout.configedit.ColorInputConfigProvider"/>
+					</provider>
 				</providers>
 				<formats>
 					<!--

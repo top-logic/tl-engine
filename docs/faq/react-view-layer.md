@@ -75,6 +75,35 @@ Two actions branch the chain by a TL-Script function over its current value. `<i
 - **`TLPanel` renders a single `toolbar` child control (a `ReactToolbarControl`), not a `toolbarButtons` list.** Push a panel toolbar via `putState("toolbar", new ReactToolbarControl(ctx))` + `addGroup(name, ToolbarGroupDisplay.INLINE, …, List.of(button))`.
 - Mutable rows: `ListRowSource.setElements(list)` then `TableViewControl.refreshData()`. `DefaultTableView.create(columns, source[, ViewStateStore, TableId])` — the 2-arg form skips personalization; pass a stable `TableId` to persist column width / order.
 
+## Colored values
+
+A value's color is part of the model: two annotations say where it comes from, and one seam answers it.
+
+- **`<color>`** on an enumeration literal (`TLColor`) gives that literal its color, stated either as a fixed color (`<color value="#04a38d"/>`) or as the name of a UI-theme design token (`<color token="support-success"/>`), which follows the theme the user has active. A literal without the annotation has no color.
+- **`<dynamic-color>`** on a type (`TLDynamicColor`) holds the `ValueColorProvider` computing the color of its instances, in the shape `<dynamic-icon>` and `<label>` use for icons and labels. `ColorByExpression` states that algorithm as a TL-Script expression over the object: the demo ticket takes its color from its status, `<dynamic-color><color-by-expression color="t -> $t.get(`demo.tickets:Ticket#status`)"/></dynamic-color>`, so a ticket appears in the color of the status literal it holds. A color value as the result is the color itself, an enumeration literal is colored by its own `<color>`, any other result and `null` leave the object uncolored. Specializations inherit the annotation.
+- **`AnnotationValueColorProvider.INSTANCE`** (a `ValueColorProvider`) answers both: `colorOf(value)` returns the `ValueColor` of a classifier or an object, the color a color value itself is, and `null` for everything the model gives no color to. `ValueColor.cssValue()` is the CSS to apply it with — the fixed color, or `var(--<token>)` against the custom properties `UIThemeService` emits per theme.
+
+A colored value is displayed as a **pill** in its color, an uncolored one as plain text. The color travels as the single state / descriptor field `ReactValueColor.COLOR`, filled by `ReactValueColor.putColor(descriptor, value)` / `cssColorOf(value)`, and the client hands it to the stylesheet as the inline custom property `--tlPill-color` — there is no class per color. One shared presentational component `TLPill` (`react-src/controls/pill/TLPill.tsx`, `.tlPill` in `tlReactControls.css`) draws it everywhere; the tint is composed with `color-mix()` from the color and the `color-surface` / `text-primary` tokens, so one declaration stays legible on a light and a dark theme.
+
+The sites that fill the field:
+
+- **`ReactDropdownSelectControl`** — every option and every selected value passes through its one descriptor factory, so the pill appears in the read-only display of a reference or enumeration attribute (a `<table>` cell, a view-mode `<form>` field), on the chips of the selection while editing, and on the rows of the open dropdown.
+- **`ReactResourceCellControl`** — resource cells and tree nodes, beside the type icon.
+- **`ReactTextControl`** / `<text>` (`TextElement`) — a channel value rendered through `MetaLabelProvider`; `setText(text, cssColor)` updates both in one patch.
+
+## Progress
+
+A fraction between 0 and 1 is displayed as a bar with an optional label beside it. `ReactProgressControl` (`TLProgress`) holds the two state entries `FRACTION` and `LABEL` and nothing else - what the fraction counts is the caller's business. A number outside the range is drawn at the end it exceeds, so two counts that disagree give a full or an empty bar rather than one running past its track; `setProgress(fraction, label)` updates both in one patch.
+
+`<progress>` (`ProgressElement`) states the bar one of two ways, never both:
+
+- `<progress input="ch" fraction="x -> …"/>` — the filled part directly. Such a bar carries no label unless `label="x -> …"` gives it one.
+- `<progress input="ch" done="x -> …" total="x -> …"/>` — the two counts the fraction is the ratio of, which are also the label (`3 / 7`) unless `label=` replaces it. A total of zero leaves the bar empty.
+
+Every expression is called with the current value of the `input` channel, which is optional: a bar counting the model as a whole needs none. The bar recomputes on a new channel value, on a change of the object the channel holds, and on a create / change / delete of an `observed-types` type — the last is what a bar counting all objects of a type needs, since no channel value changes when one is added. The observation is the shared `ChannelObjectObserver`, attached and detached with the control.
+
+A table cell needs nothing new: a `CellRenderer` yields `new CellContent.Raw((CellControlFactory) ctx -> new ReactProgressControl(ctx, fraction, label))`, the escape hatch `CellContentReactAdapter` already resolves.
+
 ## Drag and drop of table rows
 
 A `<table>` declares that its rows may be dragged, and what it accepts a drop of. Both are declarations of the table, so a drag between two tables needs no code on either side:

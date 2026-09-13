@@ -187,9 +187,15 @@
 							</switch>
 						</generic-command>
 					</commands>
+					<text input="ticket"/>
 					<text
 						css-class="ticketState"
 						input="ticketState"
+					/>
+					<progress
+						done="x -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size()"
+						observed-types="demo.tickets:Ticket"
+						total="x -> all(`demo.tickets:Ticket`).size()"
 					/>
 					<fields>
 						<value-input
@@ -271,6 +277,7 @@
 							</inputs>
 							<columns>
 								<column attribute="name"/>
+								<column attribute="status"/>
 							</columns>
 							<rows>term -&gt; state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); named = if($term == null || $term == "", $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#name`).stringContains($term))); if($state == null, $named, $named.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
 						</table>
@@ -311,6 +318,9 @@
 						<en>Conversation</en>
 						<de>Verlauf</de>
 					</title>
+					<form input="ticket">
+						<field attribute="status"/>
+					</form>
 					<inset>
 						<object-list
 							element-channel="comment"

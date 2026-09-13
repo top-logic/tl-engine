@@ -32,6 +32,7 @@ import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
@@ -447,7 +448,23 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * The descriptor telling the client what one option looks like.
+	 * The descriptor telling the client what one option looks like: its id, its label, the image it
+	 * is presented with, and the color it is displayed in.
+	 *
+	 * <p>
+	 * Every option and every selected value reaches the client through here - the option list, the
+	 * chips of the selection while editing, and the read-only display - so the presentation of an
+	 * option is decided in one place.
+	 * </p>
+	 *
+	 * @param id
+	 *        The id the option is addressed by, from {@link #_optionIndex}.
+	 * @param option
+	 *        The option to describe.
+	 * @param resourceProvider
+	 *        The provider answering the option's image, or <code>null</code> if the label provider
+	 *        answers no images.
+	 * @return The descriptor sent to the client.
 	 */
 	private Map<String, Object> describe(String id, Object option, ResourceProvider resourceProvider) {
 		Map<String, Object> descriptor = new HashMap<>();
@@ -457,6 +474,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		if (resourceProvider != null) {
 			putImage(descriptor, resourceProvider.getImage(option, Flavor.DEFAULT));
 		}
+		ReactValueColor.putColor(descriptor, option);
+
 		return descriptor;
 	}
 

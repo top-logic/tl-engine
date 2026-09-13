@@ -8,6 +8,7 @@ import type {
   SendPayload,
   SessionSummary,
   SubagentActivity,
+  TokenUsage,
   ToolCallStatus,
 } from './types'
 
@@ -69,6 +70,15 @@ export interface SessionDetail {
   id: string
   title: string
   turnsJson?: string
+  /**
+   * Provider usage of the last agent-loop iteration the session ran, so re-opening it restores a
+   * measured context figure. Absent for a session that never ran a turn, and for one whose
+   * transcript predates the field.
+   */
+  lastPromptUsage?: TokenUsage
+  /** Context window of the model that ran the last turn; zero when that model is unknown here. */
+  contextWindow?: number
+  lastModel?: string
 }
 
 export async function loadSession(windowId: string, id: string): Promise<SessionDetail> {
@@ -180,7 +190,7 @@ export async function listSubagents(windowId: string): Promise<SubagentActivity[
 
 export async function cancelSubagent(windowId: string, id: string): Promise<void> {
   const res = await fetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}`, windowId), {
-    method: 'POST',
+    method: 'DELETE',
     credentials: 'include',
   })
   if (!res.ok) throw new Error(`cancel subagent failed (${res.status})`)
@@ -298,6 +308,23 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
       .join('\n')
     if (userText) {
       msgs.push({ type: 'user', id: `${turn.id}-u`, text: userText, timestamp: turn.timestamp })
+    }
+    // "Worked for" on a restored turn is measured the same way as on a live one: from when the turn
+    // started to its last recorded part. Turns whose parts carry no later stamp show no duration
+    // rather than a fabricated one.
+    const lastPartAt = (turn.assistantParts ?? []).reduce(
+      (latest, part) => Math.max(latest, part.timestamp ?? 0),
+      0,
+    )
+    if (lastPartAt > turn.timestamp) {
+      msgs.push({
+        type: 'run_meta',
+        id: `${turn.id}-run`,
+        runId: turn.id,
+        startedAt: turn.timestamp,
+        durationMs: lastPartAt - turn.timestamp,
+        timestamp: turn.timestamp,
+      })
     }
     for (const part of turn.assistantParts ?? []) {
       switch (part.type) {

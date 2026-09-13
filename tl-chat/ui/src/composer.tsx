@@ -1,6 +1,7 @@
 import { React } from 'tl-react-bridge'
-import { cancelPromptImprovement, fileToAttachment, improvePrompt } from './api'
-import { runStore } from './store'
+import { cancelPromptImprovement, improvePrompt } from './api'
+import { ACCEPT_ATTRIBUTE, collectAttachments, dragHasFiles } from './attachments'
+import { ContextUsage } from './context-usage'
 import { PromptStack } from './prompts'
 import { SubagentActivityPanel } from './subagents'
 import type { ChatAction } from './reducer'
@@ -9,6 +10,7 @@ import type {
   ApprovalRequest,
   Attachment,
   ChatMessage,
+  ConnectionState,
   InteractionRequest,
   McpServerOption,
   ModelOption,
@@ -16,32 +18,88 @@ import type {
   TraceMode,
 } from './types'
 
-const { useEffect, useRef, useState, useSyncExternalStore } = React
+const { useEffect, useRef, useState } = React
 
 type MenuPane = 'root' | 'agent' | 'model' | 'mcp' | 'trace'
 
-const TRACE_OPTIONS: { id: TraceMode; label: string }[] = [
-  { id: 'none', label: 'None' },
-  { id: 'overview', label: 'Overview' },
-  { id: 'detailed', label: 'Detailed' },
+const TRACE_OPTIONS: { id: TraceMode; label: string; description: string }[] = [
+  { id: 'none', label: 'None', description: 'Only the answer' },
+  { id: 'overview', label: 'Overview', description: 'One line naming the tools that ran' },
+  { id: 'detailed', label: 'Detailed', description: 'Every step with its arguments and result' },
 ]
 
-function formatTokens(n: number): string {
-  if (!n) return '0'
-  if (n < 1000) return String(n)
-  if (n < 100_000) return `${(n / 1000).toFixed(1)}K`
-  return `${Math.round(n / 1000)}K`
+const PANE_TITLES: Record<Exclude<MenuPane, 'root'>, string> = {
+  agent: 'Agent',
+  model: 'Model',
+  mcp: 'MCP servers',
+  trace: 'Trace level',
 }
 
-function usageRows(usage?: { inputTokens?: number; outputTokens?: number; thinkingTokens?: number; cacheReadTokens?: number; cacheWriteTokens?: number }) {
-  if (!usage) return []
-  return [
-    ['Input', usage.inputTokens],
-    ['Output', usage.outputTokens],
-    ['Thinking', usage.thinkingTokens],
-    ['Cache read', usage.cacheReadTokens],
-    ['Cache write', usage.cacheWriteTokens],
-  ].filter((row): row is [string, number] => typeof row[1] === 'number' && row[1] > 0)
+const Icon = {
+  plus: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M8 3.5v9M3.5 8h9" />
+    </svg>
+  ),
+  paperclip: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M12.5 7.5 7.8 12.2a2.9 2.9 0 0 1-4.1-4.1l5-5a1.9 1.9 0 1 1 2.7 2.7l-5 5a.9.9 0 1 1-1.3-1.3l4.6-4.6" />
+    </svg>
+  ),
+  agent: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <rect x="3" y="5.5" width="10" height="7.5" rx="2" />
+      <path d="M8 2.5v3M5.8 9h.01M10.2 9h.01" />
+    </svg>
+  ),
+  model: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M8 2.2 13.4 5.4v5.2L8 13.8 2.6 10.6V5.4z" />
+    </svg>
+  ),
+  mcp: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M6.5 9.5 9.5 6.5" />
+      <path d="M9 4.6 10.4 3.2a2.6 2.6 0 0 1 3.7 3.7L12.7 8.3" />
+      <path d="M7 11.4 5.6 12.8a2.6 2.6 0 0 1-3.7-3.7L3.3 7.7" />
+    </svg>
+  ),
+  trace: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M3 4.5h10M3 8h7M3 11.5h4" />
+    </svg>
+  ),
+  back: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M9.5 3.5 5 8l4.5 4.5" />
+    </svg>
+  ),
+  chevron: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="m6.5 3.5 4.5 4.5-4.5 4.5" />
+    </svg>
+  ),
+  caret: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="m4.5 6.5 3.5 3.5 3.5-3.5" />
+    </svg>
+  ),
+  spark: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M8 2.5 9.3 6 12.8 7.3 9.3 8.6 8 12.1 6.7 8.6 3.2 7.3 6.7 6z" />
+    </svg>
+  ),
+  close: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="m4 4 8 8M12 4l-8 8" />
+    </svg>
+  ),
+  undo: (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M3 8a5 5 0 1 0 1.6-3.7" />
+      <path d="M2.7 2v3h3" />
+    </svg>
+  ),
 }
 
 const SendButton = React.memo(function SendButton({
@@ -61,110 +119,59 @@ const SendButton = React.memo(function SendButton({
       className={`send-button${busy ? ' is-busy' : ''}`}
       disabled={!busy && disabled}
       onClick={busy ? onStop : onSend}
-      aria-label={busy ? 'Stop' : 'Send'}
-      title={busy ? 'Stop' : 'Send'}
+      aria-label={busy ? 'Stop the run' : 'Send'}
+      title={busy ? 'Stop the run' : 'Send'}
     >
-      {busy ? <span className="gauge-stop" /> : <span className="gauge-arrow" />}
+      {busy ? (
+        <span className="send-stop" />
+      ) : (
+        <svg viewBox="0 0 16 16" aria-hidden="true" className="send-arrow">
+          <path d="M8 12.5v-9M4.2 7.3 8 3.5l3.8 3.8" />
+        </svg>
+      )}
     </button>
   )
 })
 
-const ContextUsage = React.memo(function ContextUsage() {
-  const snap = useSyncExternalStore(runStore.subscribe, runStore.get, runStore.get)
-  const [open, setOpen] = useState(false)
-  const wrap = useRef<HTMLDivElement>(null)
-  const windowSize = snap.contextWindow || 0
-  const used = snap.usedTokens || 0
-  const remaining = Math.max(0, windowSize - used)
-  const ratio = windowSize > 0 ? Math.min(1, used / windowSize) : 0
-  const percent = Math.round(ratio * 100)
-  const tone = ratio > 0.9 ? 'ember' : ratio > 0.7 ? 'warn' : 'ok'
-  const r = 14
-  const c = 2 * Math.PI * r
-  const dash = c * ratio
-  const rows = usageRows(snap.lastUsage)
-
-  useEffect(() => {
-    if (!open) return
-    const onDoc = (event: MouseEvent) => {
-      if (!wrap.current?.contains(event.target as Node)) setOpen(false)
-    }
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
-
-  if (!windowSize) return null
-
+function MenuRow({
+  icon,
+  label,
+  description,
+  value,
+  selected,
+  more,
+  onClick,
+}: {
+  icon?: React.ReactNode
+  label: string
+  description?: string
+  value?: string
+  selected?: boolean
+  more?: boolean
+  onClick: () => void
+}) {
   return (
-    <div className="context-wrap" ref={wrap}>
-      <button
-        type="button"
-        className={`context-gauge tone-${tone}${open ? ' is-open' : ''}`}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        aria-label={`Context usage, ${percent} percent full`}
-        title={`${formatTokens(used)} / ${formatTokens(windowSize)} used`}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <svg viewBox="0 0 36 36" aria-hidden="true">
-          <circle className="gauge-track" cx="18" cy="18" r={r} />
-          <circle
-            className="gauge-arc"
-            cx="18"
-            cy="18"
-            r={r}
-            strokeDasharray={`${dash} ${c}`}
-            transform="rotate(-90 18 18)"
-          />
-        </svg>
-      </button>
-      {open ? (
-        <div className="context-popover" role="dialog" aria-label="Context usage">
-          <div className="context-popover-head">
-            <strong>Context Usage</strong>
-            <span>{formatTokens(used)} / {formatTokens(windowSize)} tokens</span>
-          </div>
-          <div className="context-popover-meta">
-            <span>{percent}% Full</span>
-            <span>~{formatTokens(used)} / {formatTokens(windowSize)}</span>
-          </div>
-          <div className="context-bar" aria-hidden="true">
-            <i className={`tone-${tone}`} style={{ width: `${Math.max(2, percent)}%` }} />
-          </div>
-          <dl className="context-rows">
-            <div>
-              <dt>Used</dt>
-              <dd>{formatTokens(used)}</dd>
-            </div>
-            <div>
-              <dt>Remaining</dt>
-              <dd>{formatTokens(remaining)}</dd>
-            </div>
-            {snap.model ? (
-              <div>
-                <dt>Model</dt>
-                <dd>{snap.model}</dd>
-              </div>
-            ) : null}
-            {rows.map(([label, value]) => (
-              <div key={label}>
-                <dt>{label}</dt>
-                <dd>{formatTokens(value)}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+    <button type="button" className={`plus-row${selected ? ' is-selected' : ''}`} onClick={onClick}>
+      {icon ? (
+        <span className="plus-ico" aria-hidden="true">
+          {icon}
+        </span>
+      ) : (
+        <span className="plus-ico" aria-hidden="true" />
+      )}
+      <span className="plus-text">
+        <strong>{label}</strong>
+        {description ? <em>{description}</em> : null}
+      </span>
+      {value ? <span className="plus-value">{value}</span> : null}
+      {more ? (
+        <span className="plus-more" aria-hidden="true">
+          {Icon.chevron}
+        </span>
       ) : null}
-    </div>
+    </button>
   )
-})
+}
 
 export const Composer = React.memo(function Composer({
   windowId,
@@ -190,6 +197,10 @@ export const Composer = React.memo(function Composer({
   onStopSubagents,
   onLoadSubagentTranscript,
   busy,
+  connection,
+  notice,
+  onDismissNotice,
+  resendDraft,
   onSend,
   onStop,
 }: {
@@ -216,20 +227,30 @@ export const Composer = React.memo(function Composer({
   onStopSubagents: () => Promise<void>
   onLoadSubagentTranscript: (id: string) => Promise<ChatMessage[]>
   busy: boolean
-  onSend: (text: string, attachments: Attachment[]) => void
+  connection: ConnectionState
+  notice: string
+  onDismissNotice: () => void
+  resendDraft: { text: string; nonce: number } | null
+  onSend: (text: string, attachments: Attachment[]) => Promise<boolean>
   onStop: () => void
 }) {
   const [text, setText] = useState('')
   const [files, setFiles] = useState<Attachment[]>([])
+  const [attachError, setAttachError] = useState('')
+  const [dropping, setDropping] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [modelMenuOpen, setModelMenuOpen] = useState(false)
   const [pane, setPane] = useState<MenuPane>('root')
   const [query, setQuery] = useState('')
   const [improveVisible, setImproveVisible] = useState(false)
   const [improving, setImproving] = useState(false)
   const [improveError, setImproveError] = useState('')
+  const [undoDraft, setUndoDraft] = useState<string | null>(null)
   const area = useRef<HTMLTextAreaElement>(null)
   const file = useRef<HTMLInputElement>(null)
   const menu = useRef<HTMLDivElement>(null)
+  const modelMenu = useRef<HTMLDivElement>(null)
+  const surface = useRef<HTMLDivElement>(null)
   const improveId = useRef<string | null>(null)
   const abort = useRef<AbortController | null>(null)
 
@@ -240,26 +261,44 @@ export const Composer = React.memo(function Composer({
     el.style.height = `${Math.min(el.scrollHeight, 180)}px`
   }, [text])
 
+  // "Edit and send again" on a user message refills the composer; the nonce lets the same text be
+  // sent back more than once.
   useEffect(() => {
-    if (!promptImprovementEnabled || busy || improving || !text.trim()) {
+    if (!resendDraft) return
+    setText(resendDraft.text)
+    setUndoDraft(null)
+    const el = area.current
+    if (!el) return
+    el.focus()
+    el.setSelectionRange(resendDraft.text.length, resendDraft.text.length)
+  }, [resendDraft])
+
+  useEffect(() => {
+    if (!promptImprovementEnabled || improving || !text.trim()) {
       setImproveVisible(false)
       return
     }
     const timer = window.setTimeout(() => setImproveVisible(true), 700)
     return () => window.clearTimeout(timer)
-  }, [busy, improving, promptImprovementEnabled, text])
+  }, [improving, promptImprovementEnabled, text])
 
   useEffect(() => {
-    if (!menuOpen) return
+    if (!menuOpen && !modelMenuOpen) return
     const onDoc = (event: MouseEvent) => {
-      if (!menu.current?.contains(event.target as Node)) {
+      const target = event.target as Node
+      if (menuOpen && !menu.current?.contains(target)) {
         setMenuOpen(false)
         setPane('root')
         setQuery('')
       }
+      if (modelMenuOpen && !modelMenu.current?.contains(target)) setModelMenuOpen(false)
     }
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
+      if (modelMenuOpen) {
+        setModelMenuOpen(false)
+        return
+      }
       if (pane !== 'root') setPane('root')
       else setMenuOpen(false)
     }
@@ -269,22 +308,92 @@ export const Composer = React.memo(function Composer({
       document.removeEventListener('mousedown', onDoc)
       document.removeEventListener('keydown', onKey)
     }
-  }, [menuOpen, pane])
+  }, [menuOpen, modelMenuOpen, pane])
+
+  const addFiles = async (incoming: File[]) => {
+    const result = await collectAttachments(incoming, files)
+    if (result.attachments.length) {
+      setFiles((prev) => [...prev, ...result.attachments])
+    }
+    setAttachError(result.rejected)
+    if (result.rejected) {
+      window.setTimeout(() => setAttachError(''), 6000)
+    }
+  }
+
+  /**
+   * Files may be dropped anywhere over the chat, not only on the composer.
+   *
+   * The listeners hang on the cockpit element rather than on the composer, so the thread area is a
+   * drop target too - dragging a screenshot onto the conversation is the obvious gesture and
+   * dropping it there must not navigate the browser away from the application.
+   */
+  useEffect(() => {
+    const root = surface.current?.closest('.tl-cockpit') as HTMLElement | null
+    if (!root) return
+    let depth = 0
+    const onEnter = (event: DragEvent) => {
+      if (!dragHasFiles(event.dataTransfer)) return
+      event.preventDefault()
+      depth++
+      setDropping(true)
+    }
+    const onOver = (event: DragEvent) => {
+      if (!dragHasFiles(event.dataTransfer)) return
+      event.preventDefault()
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
+    }
+    const onLeave = (event: DragEvent) => {
+      if (!dragHasFiles(event.dataTransfer)) return
+      depth = Math.max(0, depth - 1)
+      if (depth === 0) setDropping(false)
+    }
+    const onDrop = (event: DragEvent) => {
+      if (!dragHasFiles(event.dataTransfer)) return
+      event.preventDefault()
+      depth = 0
+      setDropping(false)
+      void addFiles(Array.from(event.dataTransfer?.files ?? []))
+      area.current?.focus()
+    }
+    root.addEventListener('dragenter', onEnter)
+    root.addEventListener('dragover', onOver)
+    root.addEventListener('dragleave', onLeave)
+    root.addEventListener('drop', onDrop)
+    return () => {
+      root.removeEventListener('dragenter', onEnter)
+      root.removeEventListener('dragover', onOver)
+      root.removeEventListener('dragleave', onLeave)
+      root.removeEventListener('drop', onDrop)
+    }
+  })
 
   const q = query.trim().toLocaleLowerCase()
-  const agentHits = agents.filter((item) => !q || item.name.toLocaleLowerCase().includes(q))
+  const agentHits = agents.filter(
+    (item) => !q || item.name.toLocaleLowerCase().includes(q) || (item.description ?? '').toLocaleLowerCase().includes(q),
+  )
   const modelHits = models.filter(
     (item) => !q || item.id.toLocaleLowerCase().includes(q) || (item.provider ?? '').toLocaleLowerCase().includes(q),
   )
   const mcpHits = mcpServers.filter((item) => !q || item.name.toLocaleLowerCase().includes(q))
+  const traceHits = TRACE_OPTIONS.filter(
+    (item) => !q || item.label.toLocaleLowerCase().includes(q) || item.description.toLocaleLowerCase().includes(q),
+  )
+  // With a search term the root pane is a result list across all four sections, as in a command
+  // palette: typing "opus" must find the model without first walking into the model pane.
+  const searching = q.length > 0
 
   const submit = () => {
     const trimmed = text.trim()
-    if ((!trimmed && files.length === 0) || busy) return
-    onSend(trimmed, files)
-    setText('')
-    setFiles([])
-    setImproveVisible(false)
+    if (!trimmed && files.length === 0) return
+    const sentFiles = files
+    void onSend(trimmed, sentFiles).then((sent) => {
+      if (!sent) return
+      setText('')
+      setFiles([])
+      setUndoDraft(null)
+      setImproveVisible(false)
+    })
   }
 
   const runImprove = async () => {
@@ -300,6 +409,7 @@ export const Composer = React.memo(function Composer({
       const result = await improvePrompt(windowId, draft, requestId, abort.current.signal)
       if (improveId.current !== requestId) return
       if (result.status === 'completed' && (result.improvedText || result.text)) {
+        setUndoDraft(draft)
         setText(result.improvedText || result.text || draft)
         setImproveVisible(false)
         area.current?.focus()
@@ -322,8 +432,23 @@ export const Composer = React.memo(function Composer({
     area.current?.focus()
   }
 
+  const undoImprove = () => {
+    if (undoDraft == null) return
+    setText(undoDraft)
+    setUndoDraft(null)
+    area.current?.focus()
+  }
+
+  const closeMenu = () => {
+    setMenuOpen(false)
+    setPane('root')
+    setQuery('')
+  }
+
+  const modelLabel = model || 'Model'
+
   return (
-    <footer className="composer">
+    <footer className={`composer${dropping ? ' is-dropping' : ''}`}>
       <div className="composer-overlays">
         <PromptStack
           approvals={pendingApprovals}
@@ -331,79 +456,94 @@ export const Composer = React.memo(function Composer({
           windowId={windowId}
           dispatch={dispatch}
         />
-        <SubagentActivityPanel
-          subagents={subagents}
-          onCancel={onCancelSubagent}
-          onStopAll={onStopSubagents}
-          onLoadTranscript={onLoadSubagentTranscript}
-        />
-        {promptImprovementEnabled && (improveVisible || improving || improveError) ? (
-          <div className="improve-popup">
-            {improving ? (
-              <button type="button" className="overlay-chip" onClick={cancelImprove}>
-                Improving…
-                <span>Cancel</span>
-              </button>
-            ) : (
-              <button type="button" className="overlay-chip" onClick={() => void runImprove()}>
-                ✦ Improve prompt
-              </button>
-            )}
-            {improveError ? (
-              <button type="button" className="overlay-chip is-error" onClick={() => void runImprove()}>
-                {improveError} · Retry
-              </button>
-            ) : null}
-          </div>
-        ) : null}
+        <div className="composer-chips">
+          <SubagentActivityPanel
+            subagents={subagents}
+            onCancel={onCancelSubagent}
+            onStopAll={onStopSubagents}
+            onLoadTranscript={onLoadSubagentTranscript}
+          />
+          {connection === 'reconnecting' ? (
+            <span className="overlay-chip is-muted" role="status">
+              <span className="chip-spinner" aria-hidden="true" />
+              Reconnecting…
+            </span>
+          ) : null}
+          {promptImprovementEnabled && improving ? (
+            <button type="button" className="overlay-chip" onClick={cancelImprove}>
+              <span className="chip-spinner" aria-hidden="true" />
+              Improving…
+              <span>Cancel</span>
+            </button>
+          ) : null}
+          {promptImprovementEnabled && !improving && undoDraft != null ? (
+            <button type="button" className="overlay-chip" onClick={undoImprove}>
+              {Icon.undo}
+              Undo improvement
+            </button>
+          ) : null}
+          {promptImprovementEnabled && !improving && undoDraft == null && improveVisible ? (
+            <button type="button" className="overlay-chip is-accent" onClick={() => void runImprove()}>
+              {Icon.spark}
+              Improve prompt
+            </button>
+          ) : null}
+          {improveError ? (
+            <button type="button" className="overlay-chip is-error" onClick={() => void runImprove()}>
+              {improveError} · Retry
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      <div className="composer-surface">
+      {notice || attachError ? (
+        <div className="composer-notice" role="status">
+          <span>{notice || attachError}</span>
+          <button
+            type="button"
+            className="icon-button tiny"
+            aria-label="Dismiss"
+            onClick={() => {
+              onDismissNotice()
+              setAttachError('')
+            }}
+          >
+            {Icon.close}
+          </button>
+        </div>
+      ) : null}
+
+      <div className={`composer-surface${dropping ? ' is-dropping' : ''}`} ref={surface}>
         {files.length > 0 ? (
           <div className="attach-row">
             {files.map((item) => (
-              <span key={item.fileName} className="attach-chip">
-                {item.fileName}
+              <span key={`${item.fileName}-${item.size}`} className="attach-chip">
+                {Icon.paperclip}
+                <span className="attach-name">{item.fileName}</span>
                 <button
                   type="button"
                   aria-label={`Remove ${item.fileName}`}
                   onClick={() => setFiles((prev) => prev.filter((fileItem) => fileItem !== item))}
                 >
-                  ×
+                  {Icon.close}
                 </button>
               </span>
             ))}
           </div>
         ) : null}
 
-        <textarea
-          ref={area}
-          rows={1}
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-              event.preventDefault()
-              submit()
-            }
-          }}
-          placeholder="Ask Albert…"
-          disabled={busy}
-        />
-
-        <div className="composer-actions">
+        <div className="composer-row">
           <input
             ref={file}
             type="file"
-            accept="image/*,application/pdf"
+            accept={ACCEPT_ATTRIBUTE}
             multiple
             hidden
             onChange={async (event) => {
-              const list = Array.from(event.target.files ?? []).slice(0, 5)
-              const next = await Promise.all(list.map(fileToAttachment))
-              setFiles((prev) => [...prev, ...next].slice(0, 5))
+              const list = Array.from(event.target.files ?? [])
               event.target.value = ''
-              setMenuOpen(false)
+              closeMenu()
+              await addFiles(list)
             }}
           />
 
@@ -413,176 +553,253 @@ export const Composer = React.memo(function Composer({
               className={`plus-trigger${menuOpen ? ' is-open' : ''}`}
               aria-haspopup="menu"
               aria-expanded={menuOpen}
-              aria-label="Add files, change agent, model, or tools"
+              aria-label="Attach a file or change the agent, model or trace level"
               onClick={() => {
                 setMenuOpen((value) => !value)
                 setPane('root')
                 setQuery('')
               }}
             >
-              +
+              {Icon.plus}
             </button>
             {menuOpen ? (
               <div className="plus-popover" role="menu">
                 <label className="plus-search">
-                  <span className="sr-only">Search agents, models, MCPs</span>
+                  <span className="sr-only">Search agents, models and settings</span>
                   <input
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search agents, models, MCPs…"
+                    placeholder="Search agents, models, settings…"
                     autoFocus
                   />
                 </label>
-                {pane !== 'root' ? (
+
+                {pane !== 'root' && !searching ? (
                   <button type="button" className="plus-back" onClick={() => setPane('root')}>
-                    ← Back
+                    {Icon.back}
+                    {PANE_TITLES[pane]}
                   </button>
                 ) : null}
-                {pane === 'root' ? (
+
+                {pane === 'root' && !searching ? (
                   <div className="plus-list">
-                    <button type="button" className="plus-row" onClick={() => file.current?.click()}>
-                      <span className="plus-ico" aria-hidden="true">📎</span>
-                      <span>
-                        <strong>Files</strong>
-                        <em>Add images or PDFs</em>
-                      </span>
-                    </button>
-                    <button type="button" className="plus-row" onClick={() => setPane('agent')}>
-                      <span className="plus-ico" aria-hidden="true">A</span>
-                      <span>
-                        <strong>Agent</strong>
-                        <em>{agent || 'Choose an agent'}</em>
-                      </span>
-                      <span className="plus-more">›</span>
-                    </button>
-                    <button type="button" className="plus-row" onClick={() => setPane('model')}>
-                      <span className="plus-ico" aria-hidden="true">◇</span>
-                      <span>
-                        <strong>Model</strong>
-                        <em>{model || 'Choose a model'}</em>
-                      </span>
-                      <span className="plus-more">›</span>
-                    </button>
-                    <button type="button" className="plus-row" onClick={() => setPane('mcp')}>
-                      <span className="plus-ico" aria-hidden="true">⛓</span>
-                      <span>
-                        <strong>MCP</strong>
-                        <em>{selectedMcp.length ? `${selectedMcp.length} enabled` : 'No tools selected'}</em>
-                      </span>
-                      <span className="plus-more">›</span>
-                    </button>
-                    <button type="button" className="plus-row" onClick={() => setPane('trace')}>
-                      <span className="plus-ico" aria-hidden="true">☰</span>
-                      <span>
-                        <strong>Trace</strong>
-                        <em>{TRACE_OPTIONS.find((item) => item.id === traceMode)?.label ?? 'Overview'}</em>
-                      </span>
-                      <span className="plus-more">›</span>
-                    </button>
+                    <div className="plus-section">
+                      <MenuRow
+                        icon={Icon.paperclip}
+                        label="Upload file"
+                        description="Images or PDF, up to 5 files"
+                        onClick={() => file.current?.click()}
+                      />
+                    </div>
+                    <div className="plus-section">
+                      <MenuRow
+                        icon={Icon.agent}
+                        label="Agent"
+                        description="Who answers and which tools it has"
+                        value={agent || 'Default'}
+                        more
+                        onClick={() => setPane('agent')}
+                      />
+                      <MenuRow
+                        icon={Icon.model}
+                        label="Model"
+                        description="The model this chat runs on"
+                        value={modelLabel}
+                        more
+                        onClick={() => setPane('model')}
+                      />
+                    </div>
+                    <div className="plus-section">
+                      <MenuRow
+                        icon={Icon.mcp}
+                        label="MCP servers"
+                        description="External tool servers for this turn"
+                        value={selectedMcp.length ? `${selectedMcp.length} on` : 'None'}
+                        more
+                        onClick={() => setPane('mcp')}
+                      />
+                      <MenuRow
+                        icon={Icon.trace}
+                        label="Trace level"
+                        description="How much of the agent's work is shown"
+                        value={TRACE_OPTIONS.find((item) => item.id === traceMode)?.label ?? 'Overview'}
+                        more
+                        onClick={() => setPane('trace')}
+                      />
+                    </div>
                   </div>
                 ) : null}
-                {pane === 'agent' ? (
+
+                {(pane === 'agent' || searching) && agentHits.length ? (
                   <div className="plus-list">
+                    {searching ? <div className="plus-heading">Agents</div> : null}
                     {agentHits.map((item) => (
-                      <button
+                      <MenuRow
                         key={item.name}
-                        type="button"
-                        className={`plus-row${item.name === agent ? ' is-selected' : ''}`}
+                        label={item.name}
+                        description={item.description || undefined}
+                        selected={item.name === agent}
                         onClick={() => {
                           onAgent(item.name)
-                          setMenuOpen(false)
+                          closeMenu()
                         }}
-                      >
-                        <span>
-                          <strong>{item.name}</strong>
-                        </span>
-                      </button>
+                      />
                     ))}
-                    {agentHits.length === 0 ? <div className="plus-empty">No matching agents</div> : null}
                   </div>
                 ) : null}
-                {pane === 'model' ? (
+
+                {(pane === 'model' || searching) && modelHits.length ? (
                   <div className="plus-list">
+                    {searching ? <div className="plus-heading">Models</div> : null}
                     {modelHits.map((item) => (
-                      <button
+                      <MenuRow
                         key={item.id}
-                        type="button"
-                        className={`plus-row${item.id === model ? ' is-selected' : ''}`}
+                        label={item.id}
+                        description={item.provider || undefined}
+                        value={item.contextWindow ? `${Math.round(item.contextWindow / 1000)}K` : undefined}
+                        selected={item.id === model}
                         onClick={() => {
                           onModel(item.id)
-                          setMenuOpen(false)
+                          closeMenu()
                         }}
-                      >
-                        <span>
-                          <strong>{item.id}</strong>
-                          {item.provider ? <em>{item.provider}</em> : null}
-                        </span>
-                      </button>
+                      />
                     ))}
-                    {modelHits.length === 0 ? <div className="plus-empty">No matching models</div> : null}
                   </div>
                 ) : null}
-                {pane === 'mcp' ? (
+
+                {(pane === 'mcp' || searching) && mcpHits.length ? (
                   <div className="plus-list">
+                    {searching ? <div className="plus-heading">MCP servers</div> : null}
                     {mcpHits.map((item) => {
                       const on = selectedMcp.includes(item.name)
                       return (
-                        <button
+                        <MenuRow
                           key={item.name}
-                          type="button"
-                          className={`plus-row${on ? ' is-selected' : ''}${item.status === 'disconnected' ? ' is-off' : ''}`}
+                          label={item.name}
+                          description={item.status === 'connected' ? 'Connected' : 'Not connected'}
+                          value={on ? 'On' : 'Off'}
+                          selected={on}
                           onClick={() => onToggleMcp(item.name)}
-                        >
-                          <span>
-                            <strong>{item.name}</strong>
-                            <em>{on ? 'Enabled' : item.status || 'Off'}</em>
-                          </span>
-                        </button>
+                        />
                       )
                     })}
-                    {mcpHits.length === 0 ? <div className="plus-empty">No matching MCP servers</div> : null}
                   </div>
                 ) : null}
-                {pane === 'trace' ? (
+
+                {(pane === 'trace' || searching) && traceHits.length ? (
                   <div className="plus-list">
-                    {TRACE_OPTIONS.map((item) => (
-                      <button
+                    {searching ? <div className="plus-heading">Trace level</div> : null}
+                    {traceHits.map((item) => (
+                      <MenuRow
                         key={item.id}
-                        type="button"
-                        className={`plus-row${item.id === traceMode ? ' is-selected' : ''}`}
+                        label={item.label}
+                        description={item.description}
+                        selected={item.id === traceMode}
                         onClick={() => {
                           onTraceMode(item.id)
-                          setMenuOpen(false)
+                          closeMenu()
                         }}
-                      >
-                        <span>
-                          <strong>{item.label}</strong>
-                        </span>
-                      </button>
+                      />
                     ))}
                   </div>
+                ) : null}
+
+                {searching && !agentHits.length && !modelHits.length && !mcpHits.length && !traceHits.length ? (
+                  <div className="plus-empty">Nothing matches “{query.trim()}”</div>
                 ) : null}
               </div>
             ) : null}
           </div>
 
-          <button
-            type="button"
-            className={`approve-switch${autoApprove ? ' is-on' : ''}`}
-            role="switch"
-            aria-checked={autoApprove}
-            onClick={onToggleAutoApprove}
-          >
-            <span className="approve-switch-track" aria-hidden="true">
-              <span className="approve-switch-knob" />
-            </span>
-            Auto-approve
-          </button>
-          <span className="composer-grow" />
-          <SendButton disabled={!text.trim() && files.length === 0} busy={busy} onSend={submit} onStop={onStop} />
-          <ContextUsage />
+          <textarea
+            ref={area}
+            rows={1}
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            onPaste={(event) => {
+              const pasted = Array.from(event.clipboardData?.files ?? [])
+              if (!pasted.length) return
+              event.preventDefault()
+              void addFiles(pasted)
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape' && improving) {
+                event.preventDefault()
+                cancelImprove()
+                return
+              }
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault()
+                submit()
+              }
+            }}
+            placeholder={busy ? 'Type your next message…' : 'Ask anything…'}
+          />
+
+          <div className="composer-actions">
+            <div className="model-menu" ref={modelMenu}>
+              <button
+                type="button"
+                className={`model-trigger${modelMenuOpen ? ' is-open' : ''}`}
+                aria-haspopup="menu"
+                aria-expanded={modelMenuOpen}
+                title={`Model: ${modelLabel}`}
+                onClick={() => setModelMenuOpen((value) => !value)}
+              >
+                <span>{modelLabel}</span>
+                {Icon.caret}
+              </button>
+              {modelMenuOpen ? (
+                <div className="model-popover" role="menu">
+                  {models.length === 0 ? <div className="plus-empty">No models configured</div> : null}
+                  {models.map((item) => (
+                    <MenuRow
+                      key={item.id}
+                      label={item.id}
+                      description={item.provider || undefined}
+                      value={item.contextWindow ? `${Math.round(item.contextWindow / 1000)}K` : undefined}
+                      selected={item.id === model}
+                      onClick={() => {
+                        onModel(item.id)
+                        setModelMenuOpen(false)
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <ContextUsage />
+            <SendButton
+              disabled={!text.trim() && files.length === 0}
+              busy={busy}
+              onSend={submit}
+              onStop={onStop}
+            />
+          </div>
         </div>
       </div>
+
+      <div className="composer-foot">
+        <button
+          type="button"
+          className={`approve-switch${autoApprove ? ' is-on' : ''}`}
+          role="switch"
+          aria-checked={autoApprove}
+          onClick={onToggleAutoApprove}
+        >
+          <span className="approve-switch-track" aria-hidden="true">
+            <span className="approve-switch-knob" />
+          </span>
+          Auto-approve
+        </button>
+        <span className="composer-hint">Enter sends · Shift+Enter adds a line</span>
+      </div>
+
+      {dropping ? (
+        <div className="drop-veil" aria-hidden="true">
+          <span>Drop images or PDFs to attach</span>
+        </div>
+      ) : null}
     </footer>
   )
 })

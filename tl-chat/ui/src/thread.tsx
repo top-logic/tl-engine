@@ -5,6 +5,7 @@ import type {
   AssistantText,
   ChatMessage,
   InteractionRequest,
+  RunMeta,
   ToolCall,
   ToolResult,
   TraceMode,
@@ -16,14 +17,10 @@ const { useEffect, useMemo, useRef, useState } = React
 function formatDuration(ms?: number): string {
   if (ms == null) return ''
   if (ms < 1000) return `${ms}ms`
-  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`
+  if (ms < 60_000) return `${Math.round(ms / 100) / 10}s`
   const m = Math.floor(ms / 60_000)
   const s = Math.round((ms % 60_000) / 1000)
-  return `${m}m ${s}s`
-}
-
-function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  return s ? `${m}m ${s}s` : `${m}m`
 }
 
 function pretty(value: unknown): string {
@@ -45,10 +42,11 @@ function skillIdFrom(call: ToolCall): string | null {
   if (!/^load[_-]?skill$/i.test(call.name)) return null
   let input: unknown = call.input
   if (typeof input === 'string') {
+    const raw: string = input
     try {
-      input = JSON.parse(input)
+      input = JSON.parse(raw)
     } catch {
-      return input.trim() || null
+      return raw.trim() || null
     }
   }
   if (input && typeof input === 'object') {
@@ -98,67 +96,195 @@ function toolsOf(events: ChatMessage[]): ToolCall[] {
   return events.filter((item): item is ToolCall => item.type === 'tool_call')
 }
 
+function runMetaOf(events: ChatMessage[]): RunMeta | null {
+  for (const item of events) {
+    if (item.type === 'run_meta') return item
+  }
+  return null
+}
+
 function traceEvents(events: ChatMessage[]): ChatMessage[] {
   const answer = lastAnswer(events)
   return events.filter((item) => {
+    if (item.type === 'run_meta') return false
     if (answer && item === answer) return false
     if (item.type === 'assistant_text' && !item.text.trim()) return false
     return true
   })
 }
 
+/**
+ * One line naming what the run actually did.
+ *
+ * The tool names are the ones the agent really called - no invented categories such as "edited" or
+ * "searched", which would need a mapping that is wrong the moment a tool is added. Sorted by how
+ * often each was used, so the line opens with the work that dominated the run.
+ */
 function overviewLine(tools: ToolCall[]): string {
   if (tools.length === 0) return ''
-  const names = tools.map((tool) => tool.name)
-  const skills = tools.map(skillIdFrom).filter((id): id is string => Boolean(id))
-  const uniqueNames = [...new Set(names)]
-  const uniqueSkills = [...new Set(skills)]
-  const used = `Used ${uniqueNames.join(', ')}`
-  return uniqueSkills.length ? `${used} · loaded skill ${uniqueSkills.join(', ')}` : used
+  const counts = new Map<string, number>()
+  for (const tool of tools) {
+    counts.set(tool.name, (counts.get(tool.name) ?? 0) + 1)
+  }
+  const MAX_NAMED = 4
+  const ordered = [...counts.entries()].sort((left, right) => right[1] - left[1])
+  const named = ordered
+    .slice(0, MAX_NAMED)
+    .map(([name, count]) => (count > 1 ? `${name} ×${count}` : name))
+  const rest = ordered.length - named.length
+  if (rest > 0) named.push(`${rest} more`)
+
+  const skills = [...new Set(tools.map(skillIdFrom).filter((id): id is string => Boolean(id)))]
+  const calls = `${tools.length} tool call${tools.length === 1 ? '' : 's'}`
+  const body = `${calls}: ${named.join(', ')}`
+  return skills.length ? `${body} · skill ${skills.join(', ')}` : body
 }
 
-function UserBubble({ text }: { text: string }) {
+function IconButton({
+  label,
+  active,
+  hint,
+  onClick,
+  children,
+}: {
+  label: string
+  active?: boolean
+  hint?: string
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      className={`icon-button tiny${active ? ' is-on' : ''}`}
+      aria-label={label}
+      aria-pressed={active === undefined ? undefined : active}
+      title={hint ?? label}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  )
+}
+
+const CopyIcon = (
+  <svg viewBox="0 0 16 16" aria-hidden="true">
+    <rect x="5.5" y="5.5" width="8" height="9" rx="1.4" />
+    <path d="M10.5 5.5V3.8A1.3 1.3 0 0 0 9.2 2.5H3.8A1.3 1.3 0 0 0 2.5 3.8v8.4A1.3 1.3 0 0 0 3.8 13.5H5.5" />
+  </svg>
+)
+
+const CheckIcon = (
+  <svg viewBox="0 0 16 16" aria-hidden="true">
+    <path d="M3.5 8.6 6.4 11.5 12.5 4.8" />
+  </svg>
+)
+
+const ThumbUpIcon = (
+  <svg viewBox="0 0 16 16" aria-hidden="true">
+    <path d="M5.5 14V7.2l3-4.7a1.2 1.2 0 0 1 2.2.8L10.2 6h2.6a1.2 1.2 0 0 1 1.2 1.4l-.9 5A1.6 1.6 0 0 1 11.6 14z" />
+    <path d="M5.5 7.4H3.2A.7.7 0 0 0 2.5 8v5.3c0 .4.3.7.7.7h2.3" />
+  </svg>
+)
+
+const ThumbDownIcon = (
+  <svg viewBox="0 0 16 16" aria-hidden="true">
+    <path d="M5.5 2v6.8l3 4.7a1.2 1.2 0 0 0 2.2-.8L10.2 10h2.6a1.2 1.2 0 0 0 1.2-1.4l-.9-5A1.6 1.6 0 0 0 11.6 2z" />
+    <path d="M5.5 8.6H3.2a.7.7 0 0 1-.7-.7V2.7c0-.4.3-.7.7-.7h2.3" />
+  </svg>
+)
+
+const RetryIcon = (
+  <svg viewBox="0 0 16 16" aria-hidden="true">
+    <path d="M13 8a5 5 0 1 1-1.6-3.7" />
+    <path d="M13.3 2v3h-3" />
+  </svg>
+)
+
+const EditIcon = (
+  <svg viewBox="0 0 16 16" aria-hidden="true">
+    <path d="M11.2 2.8a1.4 1.4 0 0 1 2 2L6 12l-2.8.8L4 10z" />
+  </svg>
+)
+
+function UserTurn({ text, onResend }: { text: string; onResend?: (text: string) => void }) {
   return (
     <div className="turn turn-user">
-      <div className="bubble bubble-user">
+      <div className="bubble-user">
         <div className="bubble-user-text">{text}</div>
+        {onResend ? (
+          <span className="bubble-user-actions">
+            <IconButton
+              label="Edit and send again"
+              hint="Edit and send again"
+              onClick={() => onResend(text)}
+            >
+              {EditIcon}
+            </IconButton>
+          </span>
+        ) : null}
       </div>
     </div>
   )
 }
 
-function AnswerFooter({ text, timestamp, streaming }: { text: string; timestamp: number; streaming: boolean }) {
+/**
+ * Copy, a rating and a retry under a finished answer.
+ *
+ * The rating has no store behind it yet - there is no feedback endpoint in `ChatServlet` - so it
+ * only records the click for this view and says so on hover. TODO(#390 follow-up): persist it once
+ * the chat API accepts an answer rating.
+ */
+function AnswerFooter({
+  text,
+  onRetry,
+}: {
+  text: string
+  onRetry?: () => void
+}) {
   const [copied, setCopied] = useState(false)
-  if (streaming || !text.trim()) return null
+  const [rating, setRating] = useState<'up' | 'down' | null>(null)
+  if (!text.trim()) return null
   return (
     <div className="answer-footer">
-      <button
-        type="button"
-        className="icon-button copy-button"
-        aria-label={copied ? 'Copied' : 'Copy'}
-        title={copied ? 'Copied' : 'Copy'}
-        onClick={async () => {
-          try {
-            await navigator.clipboard.writeText(text)
-            setCopied(true)
-            window.setTimeout(() => setCopied(false), 1500)
-          } catch {
-            /* clipboard may be blocked */
-          }
+      <IconButton
+        label={copied ? 'Copied' : 'Copy answer'}
+        hint={copied ? 'Copied' : 'Copy answer'}
+        onClick={() => {
+          void navigator.clipboard
+            .writeText(text)
+            .then(() => {
+              setCopied(true)
+              window.setTimeout(() => setCopied(false), 1500)
+            })
+            .catch(() => {
+              /* the clipboard may be blocked */
+            })
         }}
       >
-        {copied ? (
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M3.5 8.5 6.5 11.5 12.5 4.5" />
-          </svg>
-        ) : (
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <rect x="5.5" y="5.5" width="8" height="9" rx="1.2" />
-            <path d="M10.5 5.5V3.8A1.3 1.3 0 0 0 9.2 2.5H3.8A1.3 1.3 0 0 0 2.5 3.8v8.4A1.3 1.3 0 0 0 3.8 13.5H5.5" />
-          </svg>
-        )}
-      </button>
-      <time dateTime={new Date(timestamp).toISOString()}>{formatTime(timestamp)}</time>
+        {copied ? CheckIcon : CopyIcon}
+      </IconButton>
+      <IconButton
+        label="Good answer"
+        hint="Good answer (not stored yet)"
+        active={rating === 'up'}
+        onClick={() => setRating((value) => (value === 'up' ? null : 'up'))}
+      >
+        {ThumbUpIcon}
+      </IconButton>
+      <IconButton
+        label="Bad answer"
+        hint="Bad answer (not stored yet)"
+        active={rating === 'down'}
+        onClick={() => setRating((value) => (value === 'down' ? null : 'down'))}
+      >
+        {ThumbDownIcon}
+      </IconButton>
+      {onRetry ? (
+        <IconButton label="Ask again" hint="Ask again" onClick={onRetry}>
+          {RetryIcon}
+        </IconButton>
+      ) : null}
     </div>
   )
 }
@@ -166,19 +292,19 @@ function AnswerFooter({ text, timestamp, streaming }: { text: string; timestamp:
 function AssistantAnswer({
   text,
   streaming,
-  timestamp,
+  onRetry,
 }: {
   text: string
   streaming: boolean
-  timestamp: number
+  onRetry?: () => void
 }) {
   if (!text && !streaming) return null
   return (
     <div className="turn turn-agent">
-      <div className={`bubble bubble-agent${streaming ? ' is-streaming' : ''}`}>
-        {streaming ? <div className="bubble-stream">{text}</div> : <Markdown text={text} />}
+      <div className={`answer${streaming ? ' is-streaming' : ''}`}>
+        <Markdown text={text} streaming={streaming} />
       </div>
-      <AnswerFooter text={text} timestamp={timestamp} streaming={streaming} />
+      {streaming ? null : <AnswerFooter text={text} onRetry={onRetry} />}
     </div>
   )
 }
@@ -203,9 +329,7 @@ function TraceEntry({
         <span className="trace-name">{title}</span>
         {preview && !open ? <span className="trace-preview">{preview}</span> : null}
         {meta ? <span className="trace-meta">{meta}</span> : null}
-        <span className={`trace-chevron${open ? ' is-open' : ''}`} aria-hidden="true">
-          ▼
-        </span>
+        <span className={`trace-chevron${open ? ' is-open' : ''}`} aria-hidden="true" />
       </button>
       {open ? <div className="trace-entry-body">{children}</div> : null}
     </div>
@@ -296,7 +420,7 @@ function TraceEvent({
     case 'interaction_request':
       return (
         <TraceEntry
-          title="AskUser"
+          title="Question"
           meta={item.answered ? 'answered' : 'waiting'}
           preview={interactionPreview(item)}
         >
@@ -343,9 +467,7 @@ function DetailedTrace({
       <button type="button" className="trace-panel-head" onClick={() => setOpen((value) => !value)}>
         <span>Trace</span>
         <span className="trace-panel-summary">{label}</span>
-        <span className={`trace-chevron${open ? ' is-open' : ''}`} aria-hidden="true">
-          ▼
-        </span>
+        <span className={`trace-chevron${open ? ' is-open' : ''}`} aria-hidden="true" />
       </button>
       {open ? (
         <div className="trace-panel-body">
@@ -358,27 +480,60 @@ function DetailedTrace({
   )
 }
 
+/**
+ * The quiet line between the question and the answer.
+ *
+ * Reserved even while the run is still going, so the answer does not jump down the moment the
+ * duration becomes known.
+ */
+function RunMetaLine({
+  meta,
+  summary,
+  busy,
+}: {
+  meta: RunMeta | null
+  summary: string
+  busy: boolean
+}) {
+  const worked = meta?.durationMs != null ? `Worked for ${formatDuration(meta.durationMs)}` : ''
+  const label = worked || (meta && busy ? 'Working…' : '')
+  if (!label && !summary) return null
+  return (
+    <div className="run-meta">
+      {label ? <span className={busy && !worked ? 'is-live' : undefined}>{label}</span> : null}
+      {label && summary ? <span className="run-meta-dot" aria-hidden="true" /> : null}
+      {summary ? <span className="run-meta-summary">{summary}</span> : null}
+    </div>
+  )
+}
+
 function AgentRun({
   turn,
   results,
   traceMode,
+  busy,
+  onRetry,
 }: {
   turn: RunTurn
   results: Map<string, ToolResult>
   traceMode: TraceMode
+  busy: boolean
+  onRetry?: () => void
 }) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
-  const summary = overviewLine(toolsOf(turn.events))
+  const tools = toolsOf(turn.events)
+  const meta = runMetaOf(turn.events)
+  const summary = traceMode === 'overview' ? overviewLine(tools) : ''
 
   return (
     <div className="agent-run">
-      {traceMode === 'overview' && summary ? <div className="overview-line">{summary}</div> : null}
+      <RunMetaLine meta={meta} summary={summary} busy={busy} />
       {traceMode === 'detailed' && events.length > 0 ? (
         <DetailedTrace events={events} results={results} />
       ) : null}
       {answer ? (
-        <AssistantAnswer text={answer.text} streaming={answer.isStreaming} timestamp={answer.timestamp} />
+        <AssistantAnswer text={answer.text} streaming={answer.isStreaming} onRetry={onRetry} />
       ) : null}
       {traceMode !== 'detailed'
         ? turn.events
@@ -399,18 +554,24 @@ export const Thread = React.memo(function Thread({
   messages,
   traceMode,
   welcomeName,
-  userName,
-  agentName,
   busy,
-  onStarter,
+  onResend,
+  onRetry,
+  onOpenRail,
+  railCollapsed,
+  onToggleRail,
+  title,
 }: {
   messages: ChatMessage[]
   traceMode: TraceMode
   welcomeName: string
-  userName: string
-  agentName?: string
   busy?: boolean
-  onStarter?: (text: string) => void
+  onResend?: (text: string) => void
+  onRetry?: (text: string) => void
+  onOpenRail: () => void
+  railCollapsed: boolean
+  onToggleRail: () => void
+  title: string
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -439,6 +600,24 @@ export const Thread = React.memo(function Thread({
 
   return (
     <div className="thread-shell">
+      <div className="thread-bar">
+        <button
+          type="button"
+          className="icon-button rail-toggle"
+          aria-label={railCollapsed ? 'Show chats' : 'Hide chats'}
+          aria-expanded={!railCollapsed}
+          onClick={() => {
+            onToggleRail()
+            onOpenRail()
+          }}
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <rect x="2" y="3" width="12" height="10" rx="1.6" />
+            <path d="M6.2 3v10" />
+          </svg>
+        </button>
+        <h1>{title || 'New chat'}</h1>
+      </div>
       <div
         className="thread"
         ref={scroller}
@@ -449,36 +628,33 @@ export const Thread = React.memo(function Thread({
           setShowJump(!atBottom)
         }}
       >
-        {messages.length === 0 ? (
-          <div className="welcome">
-            <div className="welcome-mark">{(agentName || 'A').slice(0, 1)}</div>
-            <h2>What can I help you work through?</h2>
-            <p>
-              {welcomeName || userName ? `${welcomeName || userName}, ` : ''}
-              ask a question, attach a document, or choose a tool.
-            </p>
-            {onStarter ? (
-              <div className="welcome-starters">
-                {['Summarize a document', 'Draft a response', 'Explore this application’s model'].map((starter) => (
-                  <button key={starter} type="button" onClick={() => onStarter(starter)}>
-                    {starter}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          turns.map((turn) => (
-            <div key={turn.id} className="run-block">
-              {turn.user ? <UserBubble text={turn.user.text} /> : null}
-              <AgentRun turn={turn} results={results} traceMode={traceMode} />
+        <div className="thread-column">
+          {messages.length === 0 ? (
+            <div className="welcome">
+              <h2>{welcomeName ? `Hello ${welcomeName}.` : 'Hello.'}</h2>
+              <p>What can I help you with?</p>
             </div>
-          ))
-        )}
+          ) : (
+            turns.map((turn) => (
+              <div key={turn.id} className="run-block">
+                {turn.user ? <UserTurn text={turn.user.text} onResend={onResend} /> : null}
+                <AgentRun
+                  turn={turn}
+                  results={results}
+                  traceMode={traceMode}
+                  busy={busy === true}
+                  onRetry={turn.user && onRetry ? () => onRetry(turn.user!.text) : undefined}
+                />
+              </div>
+            ))
+          )}
+        </div>
       </div>
       {showJump ? (
-        <button type="button" className="jump-latest" onClick={jumpToLatest}>
-          ↓ Jump to latest
+        <button type="button" className="jump-latest" onClick={jumpToLatest} aria-label="Jump to latest">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 3v9M4.5 8.5 8 12l3.5-3.5" />
+          </svg>
         </button>
       ) : null}
       <span className="sr-only" aria-live="polite">

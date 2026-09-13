@@ -70,6 +70,12 @@ export interface ApprovalRequest {
   displayReason: string
   outcome: ApprovalOutcome
   timestamp: number
+  /**
+   * Milliseconds the user had left when the event arrived, and the local clock reading at that
+   * moment. Both are needed: the deadline is the server's, the countdown is the browser's.
+   */
+  remainingMs?: number
+  receivedAt?: number
 }
 
 export interface InteractionOption {
@@ -88,6 +94,24 @@ export interface InteractionRequest {
   interactionType?: 'text' | 'choice'
   options?: InteractionOption[]
   multiSelect?: boolean
+  /** @see ApprovalRequest.remainingMs */
+  remainingMs?: number
+  receivedAt?: number
+}
+
+/**
+ * How long one run took, carried in the transcript so the meta line above an answer can say it.
+ *
+ * A marker rather than a field on the answer: a run can produce several answers, or none, and it
+ * has a start before it has any.
+ */
+export interface RunMeta {
+  type: 'run_meta'
+  id: string
+  runId: string
+  startedAt: number
+  durationMs?: number
+  timestamp: number
 }
 
 export type ChatMessage =
@@ -99,6 +123,7 @@ export type ChatMessage =
   | ErrorMessage
   | ApprovalRequest
   | InteractionRequest
+  | RunMeta
 
 export interface AgentOption {
   name: string
@@ -184,10 +209,49 @@ export interface TokenUsage {
   cacheWriteTokens?: number
 }
 
+/**
+ * The prompt size the provider actually billed: everything the model read.
+ *
+ * Cached input is still input - a cache hit changes the price, not the context - so it counts here.
+ */
+export function promptTokens(usage: TokenUsage | undefined): number {
+  if (!usage) return 0
+  return (usage.inputTokens ?? 0) + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0)
+}
+
+/** Tokens the model wrote in the turn: the answer plus any thinking. */
+export function answerTokens(usage: TokenUsage | undefined): number {
+  if (!usage) return 0
+  return (usage.outputTokens ?? 0) + (usage.thinkingTokens ?? 0)
+}
+
+/**
+ * Estimated split of the prompt, from the agent loop's `context_composition` event.
+ *
+ * These are the loop's own estimates - the provider reports a single prompt total and never breaks
+ * it down - so they are labelled as estimates and never replace the measured total.
+ */
+export interface ContextComposition {
+  systemPromptTokens: number
+  toolDefinitionTokens: number
+  messageTokens: number
+  toolCount: number
+}
+
 export interface RunSnapshot {
   busy: boolean
-  usedTokens: number
+  /**
+   * Provider-reported prompt size of the most recent request; zero until a turn has completed.
+   * This is the exact context the model saw, and takes precedence over `estimatedTokens`.
+   */
+  measuredTokens: number
+  /** The agent loop's estimate, used only until the session has a measurement. */
+  estimatedTokens: number
   contextWindow: number
   model: string
   lastUsage?: TokenUsage
+  composition?: ContextComposition
 }
+
+/** Health of the SSE connection, derived from heartbeats and stream errors. */
+export type ConnectionState = 'connecting' | 'live' | 'reconnecting'

@@ -1,4 +1,4 @@
-import type { RunSnapshot } from './types'
+import type { RunSnapshot, TraceMode } from './types'
 
 function createStore<T>(initial: T) {
   let state = initial
@@ -20,11 +20,42 @@ function createStore<T>(initial: T) {
   }
 }
 
-export const runStore = createStore<RunSnapshot>({
+export const EMPTY_RUN: RunSnapshot = {
   busy: false,
-  usedTokens: 0,
+  measuredTokens: 0,
+  estimatedTokens: 0,
   contextWindow: 0,
   model: '',
-})
+}
 
-export const TRACE_KEY = 'tl-chat-trace'
+export const runStore = createStore<RunSnapshot>(EMPTY_RUN)
+
+const TRACE_KEY = 'tl-chat-trace'
+
+function isTraceMode(value: unknown): value is TraceMode {
+  return value === 'none' || value === 'overview' || value === 'detailed'
+}
+
+/**
+ * The trace level the user last chose, or `null` when they never chose one.
+ *
+ * Storage can be unavailable (a private window, blocked site data), and a stored value can be
+ * anything, so both are treated as "no choice" rather than as an error.
+ */
+export function readTraceMode(): TraceMode | null {
+  try {
+    const stored = window.localStorage.getItem(TRACE_KEY)
+    return isTraceMode(stored) ? stored : null
+  } catch {
+    return null
+  }
+}
+
+/** Remembers the user's trace level. Failing to store it must not break the chat. */
+export function writeTraceMode(mode: TraceMode): void {
+  try {
+    window.localStorage.setItem(TRACE_KEY, mode)
+  } catch {
+    /* the choice simply does not survive a reload */
+  }
+}

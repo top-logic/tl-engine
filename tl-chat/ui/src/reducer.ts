@@ -5,6 +5,7 @@ import type {
   ErrorMessage,
   InteractionOption,
   InteractionRequest,
+  RunMeta,
   ThinkingBlock,
   ToolCall,
   ToolCallStatus,
@@ -33,6 +34,7 @@ export type ChatAction =
       toolName: string
       argsJson: string
       displayReason: string
+      remainingMs?: number
     }
   | { type: 'RESOLVE_APPROVAL'; approvalRequestId: string; outcome: ApprovalOutcome }
   | {
@@ -43,8 +45,11 @@ export type ChatAction =
       interactionType?: 'text' | 'choice'
       options?: InteractionOption[]
       multiSelect?: boolean
+      remainingMs?: number
     }
   | { type: 'RESOLVE_INTERACTION'; requestId: string }
+  | { type: 'START_RUN'; runId: string }
+  | { type: 'END_RUN'; runId: string }
   | { type: 'REPLACE'; messages: ChatMessage[] }
   | { type: 'RESET' }
 
@@ -138,6 +143,8 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
           displayReason: action.displayReason,
           outcome: 'pending',
           timestamp: Date.now(),
+          remainingMs: action.remainingMs,
+          receivedAt: Date.now(),
         },
       ]
     case 'RESOLVE_APPROVAL':
@@ -158,12 +165,34 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
         interactionType: action.interactionType,
         options: action.options,
         multiSelect: action.multiSelect,
+        remainingMs: action.remainingMs,
+        receivedAt: Date.now(),
       }
       return [...messages, msg]
     }
     case 'RESOLVE_INTERACTION':
       return messages.map((m) =>
         m.type === 'interaction_request' && m.requestId === action.requestId ? { ...m, answered: true } : m,
+      )
+    case 'START_RUN': {
+      if (messages.some((m) => m.type === 'run_meta' && m.runId === action.runId)) {
+        return messages
+      }
+      const now = Date.now()
+      const msg: RunMeta = {
+        type: 'run_meta',
+        id: `run-meta-${action.runId}`,
+        runId: action.runId,
+        startedAt: now,
+        timestamp: now,
+      }
+      return [...messages, msg]
+    }
+    case 'END_RUN':
+      return messages.map((m) =>
+        m.type === 'run_meta' && m.runId === action.runId && m.durationMs == null
+          ? { ...m, durationMs: Date.now() - m.startedAt }
+          : m,
       )
     case 'REPLACE':
       return action.messages

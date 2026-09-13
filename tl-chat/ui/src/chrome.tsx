@@ -84,7 +84,9 @@ export const SessionRail = React.memo(function SessionRail({
         <div className="rail-header">
           <strong>Chats</strong>
           <button type="button" className="icon-button rail-close" aria-label="Close chats" onClick={onClose}>
-            ×
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="m4 4 8 8M12 4l-8 8" />
+            </svg>
           </button>
           <button
             type="button"
@@ -93,18 +95,25 @@ export const SessionRail = React.memo(function SessionRail({
             aria-expanded={!collapsed}
             onClick={onToggleCollapsed}
           >
-            {collapsed ? '›' : '‹'}
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d={collapsed ? 'm6.5 3.5 4.5 4.5-4.5 4.5' : 'M9.5 3.5 5 8l4.5 4.5'} />
+            </svg>
           </button>
         </div>
 
         <button type="button" className="rail-new" onClick={onNew}>
-          <span aria-hidden="true">＋</span>
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 3.5v9M3.5 8h9" />
+          </svg>
           <span>New chat</span>
         </button>
 
         <label className="rail-search">
           <span className="sr-only">Search chats</span>
-          <span aria-hidden="true">⌕</span>
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <circle cx="7.2" cy="7.2" r="4" />
+            <path d="m10.3 10.3 3 3" />
+          </svg>
           <input
             type="search"
             value={query}
@@ -129,10 +138,7 @@ export const SessionRail = React.memo(function SessionRail({
             <section className="rail-group" key={group.label} aria-labelledby={`chat-group-${group.label}`}>
               <h2 id={`chat-group-${group.label}`}>{group.label}</h2>
               {group.sessions.map((session) => (
-                <div
-                  key={session.id}
-                  className={`rail-item${session.id === activeId ? ' is-active' : ''}`}
-                >
+                <div key={session.id} className={`rail-item${session.id === activeId ? ' is-active' : ''}`}>
                   <button
                     type="button"
                     className="rail-open"
@@ -145,11 +151,14 @@ export const SessionRail = React.memo(function SessionRail({
                   </button>
                   <button
                     type="button"
-                    className="rail-delete"
+                    className="icon-button tiny rail-delete"
                     aria-label={`Delete ${session.title || 'Untitled'}`}
+                    title="Delete chat"
                     onClick={() => onDelete(session.id)}
                   >
-                    ×
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="M3.5 4.5h9M6.5 4.5V3h3v1.5M5 4.5l.6 8h4.8l.6-8" />
+                    </svg>
                   </button>
                 </div>
               ))}
@@ -158,33 +167,5 @@ export const SessionRail = React.memo(function SessionRail({
         </div>
       </aside>
     </>
-  )
-})
-
-export const HeaderBar = React.memo(function HeaderBar({
-  title,
-  onOpenSessions,
-  onNew,
-}: {
-  title: string
-  onOpenSessions: () => void
-  onNew: () => void
-}) {
-  return (
-    <header className="header">
-      <button
-        type="button"
-        className="icon-button header-menu"
-        aria-label="Open chats"
-        aria-controls="chat-session-rail"
-        onClick={onOpenSessions}
-      >
-        ☰
-      </button>
-      <h1>{title || 'New chat'}</h1>
-      <button type="button" className="icon-button header-new" aria-label="New chat" onClick={onNew}>
-        ＋
-      </button>
-    </header>
   )
 })

@@ -3,7 +3,7 @@ import { respond } from './api'
 import type { ChatAction } from './reducer'
 import type { ApprovalRequest, InteractionRequest } from './types'
 
-const { useState } = React
+const { useEffect, useState } = React
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
@@ -31,14 +31,56 @@ export function PromptStack({
   )
 }
 
+function formatCountdown(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000))
+  const minutes = Math.floor(total / 60)
+  const seconds = total % 60
+  return minutes ? `${minutes}:${String(seconds).padStart(2, '0')}` : `${seconds}s`
+}
+
+/**
+ * How long the user still has to answer.
+ *
+ * The deadline is the server's: the event says how much was left when it was written, and the local
+ * clock only measures the time since. Nothing is shown for a request that carries no deadline, and
+ * a request whose time has run out says so rather than counting into negative numbers.
+ */
+function Countdown({ remainingMs, receivedAt }: { remainingMs?: number; receivedAt?: number }) {
+  const deadline = remainingMs && receivedAt ? receivedAt + remainingMs : 0
+  const [left, setLeft] = useState(() => (deadline ? deadline - Date.now() : 0))
+
+  useEffect(() => {
+    if (!deadline) return
+    const tick = () => setLeft(deadline - Date.now())
+    tick()
+    const timer = window.setInterval(tick, 1000)
+    return () => window.clearInterval(timer)
+  }, [deadline])
+
+  if (!deadline) return null
+  if (left <= 0) {
+    return <span className="prompt-countdown is-over">Time is up</span>
+  }
+  const urgent = left < 30_000
+  return (
+    <span className={`prompt-countdown${urgent ? ' is-urgent' : ''}`}>
+      <span className="prompt-clock" aria-hidden="true" />
+      <time dateTime={`PT${Math.round(left / 1000)}S`}>{formatCountdown(left)}</time>
+      <span className="sr-only"> left to answer</span>
+    </span>
+  )
+}
+
 function OverlayCard({
   kind,
   title,
+  countdown,
   children,
   footer,
 }: {
   kind: string
   title: string
+  countdown: React.ReactNode
   children: React.ReactNode
   footer: React.ReactNode
 }) {
@@ -47,14 +89,17 @@ function OverlayCard({
     <section className={`prompt-card${open ? '' : ' is-collapsed'}`}>
       <header className="prompt-card-head">
         <strong>{kind}</strong>
+        {countdown}
         <button
           type="button"
-          className="icon-button"
+          className="icon-button tiny"
           aria-expanded={open}
           aria-label={open ? `Collapse ${kind}` : `Expand ${kind}`}
           onClick={() => setOpen((value) => !value)}
         >
-          {open ? '–' : '+'}
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d={open ? 'M4 9.5 8 5.5l4 4' : 'M4 6.5 8 10.5l4-4'} />
+          </svg>
         </button>
       </header>
       {open ? (
@@ -94,9 +139,10 @@ function ApprovalCard({
     <OverlayCard
       kind="Approval"
       title={item.toolName}
+      countdown={<Countdown remainingMs={item.remainingMs} receivedAt={item.receivedAt} />}
       footer={
         <>
-          <button type="button" className="text-button" onClick={() => void send('REJECTED')}>
+          <button type="button" className="text-button is-danger" onClick={() => void send('REJECTED')}>
             Deny
           </button>
           <button type="button" className="text-button" onClick={() => void send('APPROVED_FOR_SESSION')}>
@@ -141,6 +187,7 @@ function QuestionCard({
     <OverlayCard
       kind="Question"
       title={item.header || item.question}
+      countdown={<Countdown remainingMs={item.remainingMs} receivedAt={item.receivedAt} />}
       footer={
         <>
           <button type="button" className="text-button" onClick={() => void submit('skipped')}>
@@ -184,7 +231,14 @@ function QuestionCard({
           className="prompt-input"
           value={text}
           onChange={(event) => setText(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && text.trim()) {
+              event.preventDefault()
+              void submit(text.trim())
+            }
+          }}
           placeholder="Your answer"
+          autoFocus
         />
       )}
     </OverlayCard>

@@ -92,6 +92,20 @@
 							<arguments>install</arguments>
 						</configuration>
 					</execution>
+					<!--
+						Type errors must fail the build, not reach the browser: the Vite lib build
+						strips types without checking them, so tsc runs as its own step before it.
+					-->
+					<execution>
+						<id>npm-typecheck</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>run typecheck</arguments>
+						</configuration>
+					</execution>
 					<execution>
 						<id>npm-build</id>
 						<phase>generate-resources</phase>

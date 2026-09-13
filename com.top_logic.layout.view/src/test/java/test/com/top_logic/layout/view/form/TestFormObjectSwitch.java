@@ -12,14 +12,17 @@ import java.util.stream.Stream;
 import junit.framework.TestCase;
 
 import com.top_logic.base.locking.handler.NoTokenHandling;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.channel.ChannelVetoException;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.layout.view.form.FormModelListener;
+import com.top_logic.layout.view.form.FormParticipant;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TransientObject;
@@ -136,6 +139,54 @@ public class TestFormObjectSwitch extends TestCase {
 		assertNull("The form displays nothing after its object was deleted.", form.getCurrentObject());
 	}
 
+	/**
+	 * A form holding changes blocks the object switch.
+	 */
+	public void testDirtyFormVetoesSwitch() {
+		MockTLObject object = new MockTLObject();
+		TLObject second = new MockTLObject();
+
+		FormControl form = newForm(object);
+		ViewChannel input = newInput(form, object);
+		form.enterEditMode();
+		form.registerParticipant(new DirtyParticipant());
+
+		assertTrue("The registered participant holds changes.", form.isDirty());
+		try {
+			input.set(second);
+			fail("A form holding changes blocks the object switch.");
+		} catch (ChannelVetoException ex) {
+			// Expected.
+		}
+		assertTrue("The vetoed switch left the edit session running.", form.isEditMode());
+		assertSame("The vetoed switch left the channel at its object.", object, input.get());
+	}
+
+	/**
+	 * A form whose object was deleted holds nothing to protect, so the object switch goes through.
+	 */
+	public void testInvalidObjectVetoesNothing() {
+		MockTLObject object = new MockTLObject();
+		TLObject second = new MockTLObject();
+
+		FormControl form = newForm(object);
+		ViewChannel input = newInput(form, object);
+		form.enterEditMode();
+		form.registerParticipant(new DirtyParticipant());
+
+		object.setValid(false);
+
+		assertFalse("The changes made to a deleted object cannot be kept.", form.isDirty());
+
+		Recorder recorder = record(form);
+		input.set(second);
+
+		assertEquals("An object switch notifies exactly once.", List.of(second), recorder.objects());
+		assertFalse("The edit session of the deleted object has ended.", form.isEditMode());
+		assertSame("The form displays the object its input channel delivered.", second,
+			form.getCurrentObject());
+	}
+
 	private static FormControl newForm(TLObject initialObject) {
 		return new FormControl(new DefaultReactContext("", "test", new SSEUpdateQueue(),
 				new ReactWindowRegistry("test")), initialObject,
@@ -233,10 +284,55 @@ public class TestFormObjectSwitch extends TestCase {
 	}
 
 	/**
+	 * {@link FormParticipant} that reports unsaved changes; nothing else of it is used by these
+	 * tests.
+	 */
+	private static class DirtyParticipant implements FormParticipant {
+
+		@Override
+		public boolean validate() {
+			return true;
+		}
+
+		@Override
+		public void persist(Transaction tx) {
+			// Nothing to persist.
+		}
+
+		@Override
+		public void cancel() {
+			// Nothing to cancel.
+		}
+
+		@Override
+		public void revealAll() {
+			// No hidden errors.
+		}
+
+		@Override
+		public boolean isDirty() {
+			return true;
+		}
+	}
+
+	/**
 	 * Object to display in the form; no attribute of it is read by these tests.
 	 */
 	private static class MockTLObject extends TransientObject {
-		// Inherits the transient no-op implementation.
+
+		private boolean _valid = true;
+
+		@Override
+		public boolean tValid() {
+			return _valid;
+		}
+
+		/**
+		 * Sets whether this object still exists.
+		 */
+		public void setValid(boolean valid) {
+			_valid = valid;
+		}
 	}
 
 }

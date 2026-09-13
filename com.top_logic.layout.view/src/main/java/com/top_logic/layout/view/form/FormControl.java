@@ -659,7 +659,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 */
 	public void updateDirtyState() {
-		boolean dirty = _editMode && _overlay != null && (_overlay.isDirty() || hasParticipantChanges());
+		boolean dirty = hasUnsavedChanges();
 		putState(DIRTY, Boolean.valueOf(dirty));
 		if (_dirtyChannel != null) {
 			_dirtyChannel.set(Boolean.valueOf(dirty));
@@ -673,7 +673,27 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	@Override
 	public boolean isDirty() {
-		return _editMode && _overlay != null && (_overlay.isDirty() || hasParticipantChanges());
+		return hasUnsavedChanges();
+	}
+
+	/**
+	 * Whether the form holds changes that can still be saved.
+	 *
+	 * <p>
+	 * An object that is no longer {@link TLObject#tValid() valid} is gone, and the edits made to it
+	 * cannot be kept. Such a form holds nothing to protect: it reports itself clean, so that it
+	 * neither publishes a dirty state nor blocks the object switch that replaces the object it
+	 * displays.
+	 * </p>
+	 */
+	private boolean hasUnsavedChanges() {
+		if (!_editMode || _overlay == null) {
+			return false;
+		}
+		if (_currentObject != null && !_currentObject.tValid()) {
+			return false;
+		}
+		return _overlay.isDirty() || hasParticipantChanges();
 	}
 
 	@Override

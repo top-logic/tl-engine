@@ -7,11 +7,12 @@
 	from the standard view elements instead of layout templates - a table bound straight to
 	tl.ai.demo.imageclassification:Invoice and a form on the table's selection.
 
-	Creating an invoice from a scan is still done in the classic UI. The create dialog is the one
-	part of this tab that did not carry over: its command chain runs the classification and fills the
-	form, but the copied object does not reach the persistent world, so the new invoice never appears
-	in this list. Rather than ship a create button that silently loses the invoice, the command is
-	left out until that is understood - see the follow-up on issue #390.
+	"New invoice" is what the demo is about: the dialog collects nothing but the scan, and the create
+	handler has the model read the description, the date and the amount out of the image. The prompt
+	and the schema are the legacy create dialog's
+	(WEB-INF/layouts/tl-ai-demo/invoices/createObject/dialog.layout.xml), so both front ends classify
+	the same way - but this one also copes with the two answers that script does not: a JSON reply
+	inside a markdown fence, and the values wrapped in the schema's own "properties" key.
 -->
 <view>
 	<channels>
@@ -32,6 +33,28 @@
 						<de>Belege</de>
 					</title>
 					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New invoice</en>
+								<de>Neuer Beleg</de>
+							</label>
+							<!--
+								A transient object, copied in by the dialog: an abandoned dialog
+								leaves nothing behind.
+							-->
+							<execute-script function="x -> new(`tl.ai.demo.imageclassification:Invoice`, transient: true)"/>
+							<open-dialog close-on-backdrop="false"
+								bind-input-to="model"
+								dialog-view="tl-ai-demo/create-invoice.view.xml"
+							>
+								<bind channel="selection"
+									to="selectedInvoice"
+								/>
+							</open-dialog>
+						</generic-command>
 						<generic-command
 							clique="more"
 							image="css:bi bi-trash"
@@ -77,7 +100,7 @@
 							<column attribute="description"/>
 							<column attribute="amount"/>
 						</columns>
-						<rows>x -> all(`tl.ai.demo.imageclassification:Invoice`)</rows>
+						<rows>all(`tl.ai.demo.imageclassification:Invoice`)</rows>
 					</table>
 				</panel>
 			</pane>

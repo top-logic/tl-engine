@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Create dialog for an invoice, opened from tl-ai-demo/invoices.view.xml.
+
+	The form asks only for the scan. "Create" copies the transient invoice into the persistent world
+	inside a transaction and then has the model read the document: the TLScript below is the one the
+	legacy create dialog runs (WEB-INF/layouts/tl-ai-demo/invoices/createObject/dialog.layout.xml),
+	so a scan filed here and a scan filed there are classified by the same prompt and schema.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+
+	<window width="520px">
+		<title>
+			<en>New invoice</en>
+			<de>Neuer Beleg</de>
+		</title>
+		<form initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<field attribute="data"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<!--
+							Written as a nested <function> element rather than an attribute: the
+							script carries double quotes and line breaks, which an attribute would
+							force into entities and one long line.
+						-->
+						<execute-script>
+							<function><![CDATA[transientInvoice -> {
+    invoice = $transientInvoice.copy(transient: false);
+    data = $invoice.get(`tl.ai.demo.imageclassification:Invoice#data`);
+    result = aiChat(
+        [{
+            "role": "system",
+            "content": "Take the image provided by the user and return a JSON object with the properties 'description', 'date', 'amount' filled with the values from the given invoice. Use image recognition to analyze the document, if no text data is available. Generate text in language {0}.".fill(
+                currentUser().get(`tl.accounts:Person#locale`))
+        },
+        {
+            "role": "user",
+            "content": $data
+        }],
+        responseFormat: {
+            "name": "classification",
+            "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "description": "What has been bought?"
+                    },
+                    "value": {
+                        "type": "number",
+                        "description": "How much was payed?"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "When was the purchase made, use dd.MM.yyyy as date format."
+                    }
+                }
+            }
+        }
+    );
+
+    // The model wraps its JSON in a markdown fence often enough that parseJson() on the raw answer
+    // fails with "Invalid character '`'" - the same script in the legacy create dialog
+    // (WEB-INF/layouts/tl-ai-demo/invoices/createObject/dialog.layout.xml) still does. The fence is
+    // stripped before parsing rather than asked away in the prompt, because a prompt is a request
+    // and this is a parser.
+    json = regexReplace(regex("(?s)^\\s*```(?:json)?\\s*|\\s*```\\s*$"), $result, "");
+    parsed = $json.parseJson();
+
+    // Two shapes come back for the same schema: the values directly, or wrapped in the schema's own
+    // "properties" key. Both are accepted rather than one being demanded in the prompt, because the
+    // wrapping is the model's choice and a classification that reads fine must not be thrown away
+    // over it.
+    values = ifElse(isEmpty($parsed["properties"]), $parsed, $parsed["properties"]);
+
+    $invoice.set(`tl.ai.demo.imageclassification:Invoice#description`, $values["description"]);
+
+    // The prompt asks for "amount", the schema calls the same number "value", and the model answers
+    // with whichever of the two it read last. Both are accepted; fixing the prompt or the schema
+    // alone would still leave the other name reachable.
+    rawAmount = ifElse(isEmpty($values["value"]), $values["amount"], $values["value"]);
+
+    // And it is not always a number: "84,90 EUR" comes back often enough, which the Double mapping
+    // refuses and which then rolls back the whole creation. Currency and grouping are stripped, the
+    // decimal comma is normalised, and the digits are read as the JSON number they now are.
+    amountText = regexReplace(regex(","), regexReplace(regex("[^0-9,.]"), $rawAmount.toString(), ""), ".");
+    $invoice.set(`tl.ai.demo.imageclassification:Invoice#amount`,
+        ifElse(isEmpty($amountText), null, $amountText.parseJson()));
+
+    // The date is the one value that can fail to convert, and a scan whose date the model could not
+    // read is still worth filing - the field stays empty and the user fills it in.
+    day = $values["date"];
+    ifElse(isEmpty($day),
+        null,
+        $invoice.set(`tl.ai.demo.imageclassification:Invoice#date`, dateFormat("dd.MM.yyyy").parse($day)));
+
+    $invoice;
+}]]></function>
+						</execute-script>
+					</with-transaction>
+					<write-channel name="selection"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

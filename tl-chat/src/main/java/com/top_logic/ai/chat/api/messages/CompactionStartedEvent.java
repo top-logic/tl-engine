@@ -21,9 +21,14 @@ public class CompactionStartedEvent extends de.haumacher.msgbuf.data.AbstractDat
 	/** @see #getTrigger() */
 	public static final String TRIGGER__PROP = "trigger";
 
+	/** @see #getContextWindow() */
+	public static final String CONTEXT_WINDOW__PROP = "contextWindow";
+
 	private int _tokensBefore = 0;
 
 	private String _trigger = "";
+
+	private int _contextWindow = 0;
 
 	/**
 	 * Creates a {@link CompactionStartedEvent} instance.
@@ -74,6 +79,26 @@ public class CompactionStartedEvent extends de.haumacher.msgbuf.data.AbstractDat
 		_trigger = value;
 	}
 
+	/**
+	 * Model context window in tokens.
+	 */
+	public final int getContextWindow() {
+		return _contextWindow;
+	}
+
+	/**
+	 * @see #getContextWindow()
+	 */
+	public com.top_logic.ai.chat.api.messages.CompactionStartedEvent setContextWindow(int value) {
+		internalSetContextWindow(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getContextWindow()} without chain call utility. */
+	protected final void internalSetContextWindow(int value) {
+		_contextWindow = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return COMPACTION_STARTED_EVENT__TYPE;
@@ -83,7 +108,8 @@ public class CompactionStartedEvent extends de.haumacher.msgbuf.data.AbstractDat
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			TOKENS_BEFORE__PROP, 
-			TRIGGER__PROP);
+			TRIGGER__PROP, 
+			CONTEXT_WINDOW__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -110,6 +136,7 @@ public class CompactionStartedEvent extends de.haumacher.msgbuf.data.AbstractDat
 		switch (field) {
 			case TOKENS_BEFORE__PROP: return getTokensBefore();
 			case TRIGGER__PROP: return getTrigger();
+			case CONTEXT_WINDOW__PROP: return getContextWindow();
 			default: return null;
 		}
 	}
@@ -119,6 +146,7 @@ public class CompactionStartedEvent extends de.haumacher.msgbuf.data.AbstractDat
 		switch (field) {
 			case TOKENS_BEFORE__PROP: internalSetTokensBefore((int) value); break;
 			case TRIGGER__PROP: internalSetTrigger((String) value); break;
+			case CONTEXT_WINDOW__PROP: internalSetContextWindow((int) value); break;
 		}
 	}
 
@@ -141,6 +169,8 @@ public class CompactionStartedEvent extends de.haumacher.msgbuf.data.AbstractDat
 		out.value(getTokensBefore());
 		out.name(TRIGGER__PROP);
 		out.value(getTrigger());
+		out.name(CONTEXT_WINDOW__PROP);
+		out.value(getContextWindow());
 	}
 
 	@Override
@@ -148,6 +178,7 @@ public class CompactionStartedEvent extends de.haumacher.msgbuf.data.AbstractDat
 		switch (field) {
 			case TOKENS_BEFORE__PROP: setTokensBefore(in.nextInt()); break;
 			case TRIGGER__PROP: setTrigger(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case CONTEXT_WINDOW__PROP: setContextWindow(in.nextInt()); break;
 			default: super.readField(in, field);
 		}
 	}

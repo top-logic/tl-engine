@@ -160,14 +160,30 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	public RunResult runAgent(String name, Conversation conversation,
 			ConversationMemory conversationMemory, ToolContext context,
 			AgentEventListener listener, ToolRegistry sessionRegistry) {
+		return runAgent(name, conversation, conversationMemory, context, listener, sessionRegistry,
+			RunOverrides.NONE);
+	}
+
+	/**
+	 * Runs the named agent, applying optional per-run model and MCP overrides from the chat UI.
+	 */
+	public RunResult runAgent(String name, Conversation conversation,
+			ConversationMemory conversationMemory, ToolContext context,
+			AgentEventListener listener, ToolRegistry sessionRegistry, RunOverrides overrides) {
 		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
 		if (agentDef == null) {
 			throw new RuntimeException(
 				"No agent found with name '" + name + "'.");
 		}
+		if (overrides != null && overrides.mcpServers() != null) {
+			agentDef = agentDef.withMcpServers(overrides.mcpServers());
+		}
 
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+		if (overrides != null && overrides.hasModel()) {
+			assignment = assignment.withModel(overrides.model());
+		}
 
 		AgentCapabilities capabilities = AgentCapabilities.forRun(context.security());
 
@@ -208,6 +224,30 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * @param registry The tool registry used during the run.
 	 */
 	public record RunResult(String response, ToolRegistry registry) {}
+
+	/**
+	 * Optional per-run overrides supplied by the chat UI.
+	 *
+	 * <p>
+	 * {@code mcpServers == null} keeps the agent's configured servers; a non-null list (including
+	 * empty) replaces them for this run only.
+	 * </p>
+	 *
+	 * @param model
+	 *        Model override, or {@code null} to keep the agent's assignment
+	 * @param mcpServers
+	 *        MCP server names for this run, or {@code null} to keep the agent's configured list
+	 */
+	public record RunOverrides(String model, List<String> mcpServers) {
+
+		/** No overrides — use the agent definition as stored. */
+		public static final RunOverrides NONE = new RunOverrides(null, null);
+
+		/** Whether a model override is present. */
+		public boolean hasModel() {
+			return model != null && !model.isBlank();
+		}
+	}
 
 	/**
 	 * Extracts the response text from the last {@link AssistantMessage} appended at or after

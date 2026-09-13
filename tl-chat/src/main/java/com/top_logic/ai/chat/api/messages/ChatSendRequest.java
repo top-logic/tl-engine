@@ -24,11 +24,31 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getAttachments() */
 	public static final String ATTACHMENTS__PROP = "attachments";
 
+	/** @see #getAgent() */
+	public static final String AGENT__PROP = "agent";
+
+	/** @see #getModel() */
+	public static final String MODEL__PROP = "model";
+
+	/** @see #isMcpOverride() */
+	public static final String MCP_OVERRIDE__PROP = "mcpOverride";
+
+	/** @see #getMcpServers() */
+	public static final String MCP_SERVERS__PROP = "mcpServers";
+
 	private String _text = "";
 
 	private String _sessionId = "";
 
 	private final java.util.List<com.top_logic.ai.chat.api.messages.AttachmentDto> _attachments = new java.util.ArrayList<>();
+
+	private String _agent = "";
+
+	private String _model = "";
+
+	private boolean _mcpOverride = false;
+
+	private final java.util.List<String> _mcpServers = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link ChatSendRequest} instance.
@@ -121,6 +141,108 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 		_attachments.remove(value);
 	}
 
+	/**
+	 * Agent to run for this turn. Empty uses the configured chat entry-point agent.
+	 */
+	public final String getAgent() {
+		return _agent;
+	}
+
+	/**
+	 * @see #getAgent()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendRequest setAgent(String value) {
+		internalSetAgent(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getAgent()} without chain call utility. */
+	protected final void internalSetAgent(String value) {
+		_agent = value;
+	}
+
+	/**
+	 * Model override for this turn. Empty keeps the agent's assigned model.
+	 */
+	public final String getModel() {
+		return _model;
+	}
+
+	/**
+	 * @see #getModel()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendRequest setModel(String value) {
+		internalSetModel(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getModel()} without chain call utility. */
+	protected final void internalSetModel(String value) {
+		_model = value;
+	}
+
+	/**
+	 * When true, {@link #getMcpServers()} replaces the agent's configured MCP servers for this turn
+	 * (an empty list means no MCP tools). When false, the agent's defaults are used.
+	 */
+	public final boolean isMcpOverride() {
+		return _mcpOverride;
+	}
+
+	/**
+	 * @see #isMcpOverride()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendRequest setMcpOverride(boolean value) {
+		internalSetMcpOverride(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isMcpOverride()} without chain call utility. */
+	protected final void internalSetMcpOverride(boolean value) {
+		_mcpOverride = value;
+	}
+
+	/**
+	 * MCP servers to attach when {@link #isMcpOverride()} is true.
+	 */
+	public final java.util.List<String> getMcpServers() {
+		return _mcpServers;
+	}
+
+	/**
+	 * @see #getMcpServers()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendRequest setMcpServers(java.util.List<? extends String> value) {
+		internalSetMcpServers(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getMcpServers()} without chain call utility. */
+	protected final void internalSetMcpServers(java.util.List<? extends String> value) {
+		_mcpServers.clear();
+		_mcpServers.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getMcpServers()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendRequest addMcpServer(String value) {
+		internalAddMcpServer(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addMcpServer(String)} without chain call utility. */
+	protected final void internalAddMcpServer(String value) {
+		_mcpServers.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getMcpServers()} list.
+	 */
+	public final void removeMcpServer(String value) {
+		_mcpServers.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SEND_REQUEST__TYPE;
@@ -131,7 +253,11 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 		java.util.List<String> local = java.util.Arrays.asList(
 			TEXT__PROP, 
 			SESSION_ID__PROP, 
-			ATTACHMENTS__PROP);
+			ATTACHMENTS__PROP, 
+			AGENT__PROP, 
+			MODEL__PROP, 
+			MCP_OVERRIDE__PROP, 
+			MCP_SERVERS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -159,6 +285,10 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			case TEXT__PROP: return getText();
 			case SESSION_ID__PROP: return getSessionId();
 			case ATTACHMENTS__PROP: return getAttachments();
+			case AGENT__PROP: return getAgent();
+			case MODEL__PROP: return getModel();
+			case MCP_OVERRIDE__PROP: return isMcpOverride();
+			case MCP_SERVERS__PROP: return getMcpServers();
 			default: return null;
 		}
 	}
@@ -169,6 +299,10 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			case TEXT__PROP: internalSetText((String) value); break;
 			case SESSION_ID__PROP: internalSetSessionId((String) value); break;
 			case ATTACHMENTS__PROP: internalSetAttachments(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.AttachmentDto.class, value)); break;
+			case AGENT__PROP: internalSetAgent((String) value); break;
+			case MODEL__PROP: internalSetModel((String) value); break;
+			case MCP_OVERRIDE__PROP: internalSetMcpOverride((boolean) value); break;
+			case MCP_SERVERS__PROP: internalSetMcpServers(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 		}
 	}
 
@@ -197,6 +331,18 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			x.writeTo(out);
 		}
 		out.endArray();
+		out.name(AGENT__PROP);
+		out.value(getAgent());
+		out.name(MODEL__PROP);
+		out.value(getModel());
+		out.name(MCP_OVERRIDE__PROP);
+		out.value(isMcpOverride());
+		out.name(MCP_SERVERS__PROP);
+		out.beginArray();
+		for (String x : getMcpServers()) {
+			out.value(x);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -212,6 +358,19 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 				}
 				in.endArray();
 				setAttachments(newValue);
+			}
+			break;
+			case AGENT__PROP: setAgent(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case MODEL__PROP: setModel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case MCP_OVERRIDE__PROP: setMcpOverride(in.nextBoolean()); break;
+			case MCP_SERVERS__PROP: {
+				java.util.List<String> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in));
+				}
+				in.endArray();
+				setMcpServers(newValue);
 			}
 			break;
 			default: super.readField(in, field);

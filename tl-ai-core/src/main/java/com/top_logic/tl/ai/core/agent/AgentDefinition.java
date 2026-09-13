@@ -51,4 +51,12 @@ public record AgentDefinition(
 		skills = skills != null ? List.copyOf(skills) : List.of();
 		delegations = delegations != null ? List.copyOf(delegations) : List.of();
 	}
+
+	/**
+	 * Returns a copy of this definition using a different MCP server list.
+	 */
+	public AgentDefinition withMcpServers(List<String> newMcpServers) {
+		return new AgentDefinition(name, description, systemPrompt, tools, newMcpServers, skills, delegations,
+			source);
+	}
 }

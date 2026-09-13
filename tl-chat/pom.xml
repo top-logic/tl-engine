@@ -30,6 +30,11 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
 			<artifactId>tl-element</artifactId>
 		</dependency>
 		<dependency>
@@ -61,10 +66,48 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>com.github.eirslett</groupId>
+				<artifactId>frontend-maven-plugin</artifactId>
+				<version>1.15.4</version>
+				<configuration>
+					<workingDirectory>ui</workingDirectory>
+					<installDirectory>ui</installDirectory>
+				</configuration>
+				<executions>
+					<execution>
+						<id>install-node</id>
+						<goals>
+							<goal>install-node-and-npm</goal>
+						</goals>
+						<configuration>
+							<nodeVersion>v20.10.0</nodeVersion>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-install</id>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>install</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-build</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>run build</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>de.haumacher.msgbuf</groupId>
 				<artifactId>msgbuf-generator-maven-plugin</artifactId>
 				<version>${msgbuf.version}</version>
-				
 				<executions>
 					<execution>
 						<id>generate-protocols</id>
@@ -73,7 +116,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>		
+			</plugin>
 		</plugins>
 	</build>
 </project>

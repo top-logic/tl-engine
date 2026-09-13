@@ -105,6 +105,27 @@ message ChatSendRequest {
 	 * File attachments (images, PDFs). Max 5, each max 10 MB.
 	 */
 	repeated AttachmentDto attachments;
+
+	/**
+	 * Agent to run for this turn. Empty uses the configured chat entry-point agent.
+	 */
+	string agent;
+
+	/**
+	 * Model override for this turn. Empty keeps the agent's assigned model.
+	 */
+	string model;
+
+	/**
+	 * When true, {@link #mcpServers} replaces the agent's configured MCP servers for this turn
+	 * (an empty list means no MCP tools). When false, the agent's defaults are used.
+	 */
+	boolean mcpOverride;
+
+	/**
+	 * MCP servers to attach when {@link #mcpOverride} is true.
+	 */
+	repeated string mcpServers;
 }
 
 /**
@@ -120,6 +141,51 @@ message ChatSendResponse {
 	 * e.g. "processing".
 	 */
 	string status;
+}
+
+/**
+ * Request body for POST /chat/improve-prompt.
+ */
+message ImprovePromptRequest {
+	/**
+	 * Draft text to improve.
+	 */
+	string draft;
+
+	/**
+	 * Browser-generated correlation ID.
+	 */
+	string requestId;
+}
+
+/**
+ * Response body for POST /chat/improve-prompt.
+ */
+message ImprovePromptResponse {
+	/**
+	 * Correlation ID from the request.
+	 */
+	string requestId;
+
+	/**
+	 * Improved draft text. Empty unless {@link #status} is "completed".
+	 */
+	string improvedText;
+
+	/**
+	 * Result status: "completed", "cancelled", or "stale".
+	 */
+	string status;
+}
+
+/**
+ * Request body for POST /chat/improve-prompt/cancel.
+ */
+message CancelPromptImprovementRequest {
+	/**
+	 * Correlation ID of the request to cancel.
+	 */
+	string requestId;
 }
 
 /**
@@ -391,6 +457,12 @@ message RunStartedEvent {
 
 	/** The model being used. */
 	string model;
+
+	/** Estimated tokens already in the conversation. */
+	int usedTokens;
+
+	/** Model context window in tokens. */
+	int contextWindow;
 }
 
 /** SSE event for run completed. */
@@ -409,6 +481,12 @@ message RunCompletedEvent {
 message TurnStartedEvent {
 	/** 1-based turn number. */
 	int turnNumber;
+
+	/** Estimated tokens already in the conversation. */
+	int usedTokens;
+
+	/** Model context window in tokens. */
+	int contextWindow;
 }
 
 /** SSE event for turn completed. */
@@ -586,6 +664,9 @@ message CompactionStartedEvent {
 
 	/** Trigger: reactive or proactive. */
 	string trigger;
+
+	/** Model context window in tokens. */
+	int contextWindow;
 }
 
 /** SSE event for task list update. Carries the full task list snapshot. */
@@ -640,4 +721,58 @@ message SessionMetadata {
 
 	/** Skill IDs loaded in this session, for replay on restore. */
 	repeated string loadedSkills;
+}
+
+/** Catalog of agents, models and MCP servers the chat UI can offer. */
+message ChatCapabilitiesResponse {
+	/** Configured chat entry-point agent name. */
+	string entryPointAgent;
+
+	/** Agents the current user may start a chat with. */
+	repeated AgentOptionDto agents;
+
+	/** Models configured on LLM providers. */
+	repeated ModelOptionDto models;
+
+	/** MCP servers known to the registry. */
+	repeated McpServerOptionDto mcpServers;
+}
+
+/** One selectable agent. */
+message AgentOptionDto {
+	/** Unique agent name. */
+	string name;
+
+	/** Short description. */
+	string description;
+
+	/** MCP servers bound on the agent definition. */
+	repeated string mcpServers;
+
+	/** Resolved default model for this agent. */
+	string model;
+}
+
+/** One selectable model. */
+message ModelOptionDto {
+	/** Model identifier. */
+	string id;
+
+	/** Provider key (anthropic, openai, ...). */
+	string provider;
+
+	/** Context window in tokens. */
+	int contextWindow;
+
+	/** Maximum output tokens. */
+	int maxOutput;
+}
+
+/** One selectable MCP server. */
+message McpServerOptionDto {
+	/** Configured server name. */
+	string name;
+
+	/** "connected" or "disconnected". */
+	string status;
 }

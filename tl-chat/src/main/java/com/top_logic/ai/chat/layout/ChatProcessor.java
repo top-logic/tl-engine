@@ -79,6 +79,32 @@ import com.top_logic.tl.ai.core.tools.task.TaskStore;
  */
 public class ChatProcessor {
 
+	/**
+	 * Per-turn chat UI choices: which agent to run, which model to use, and which MCP servers to
+	 * attach.
+	 *
+	 * @param agent
+	 *        Agent name, or {@code null}/{@code blank} for the configured entry-point.
+	 * @param model
+	 *        Model override, or {@code null}/{@code blank} to keep the agent's assignment.
+	 * @param mcpOverride
+	 *        When {@code true}, {@code mcpServers} replaces the agent's configured MCP list.
+	 * @param mcpServers
+	 *        MCP server names used when {@code mcpOverride} is {@code true}; never {@code null}.
+	 */
+	public record ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers) {
+
+		/** No UI overrides. */
+		public static final ChatRunOptions DEFAULT = new ChatRunOptions(null, null, false, List.of());
+
+		/**
+		 * Canonicalizes null lists so callers never have to null-check {@link #mcpServers()}.
+		 */
+		public ChatRunOptions {
+			mcpServers = mcpServers != null ? List.copyOf(mcpServers) : List.of();
+		}
+	}
+
 	/** Background thread pool for AI operations. */
 	private static final ExecutorService BACKGROUND_EXECUTOR =
 		Executors.newCachedThreadPool(new ThreadFactory() {
@@ -170,8 +196,17 @@ public class ChatProcessor {
 			// listeners in addition to interrupting the agent thread.
 			state.setCancellationToken(cancellationToken);
 
-			// Run the entry point agent via AgentLoop
-			String entryPointAgent = agentFactory.getEntryPointAgentName();
+			// Run the agent chosen in the chat UI, or the configured entry-point.
+			ChatRunOptions options = state.getRunOptions();
+			if (options == null) {
+				options = ChatRunOptions.DEFAULT;
+			}
+			String entryPointAgent = options.agent() != null && !options.agent().isBlank()
+				? options.agent().trim()
+				: agentFactory.getEntryPointAgentName();
+			List<String> mcpOverride = options.mcpOverride() ? options.mcpServers() : null;
+			AgentFactory.RunOverrides runOverrides =
+				new AgentFactory.RunOverrides(options.model(), mcpOverride);
 
 			// Look up SSE handler here (deferred from sendMessage) to avoid race condition:
 			// the JS client reconnects SSE during session creation, and the new connection
@@ -221,7 +256,8 @@ public class ChatProcessor {
 			AgentSession agentSession = resolveAgentSession(state.getSessionId());
 			try (SubagentRegistryBinding.Binding saBind = SubagentRegistryBinding.bind(subagentRegistry)) {
 				AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
-					conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null);
+					conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null,
+					runOverrides);
 				if (ToolRegistryReloadFlag.consume()) {
 					// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool
 					// or ScriptToolAuthoringTool). Discard the cached registry so the next turn
@@ -331,6 +367,14 @@ public class ChatProcessor {
 	 */
 	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
 			String userName, String userMessage, List<AttachmentDto> attachments) {
+		return sendMessage(tracker, userSession, userName, userMessage, attachments, ChatRunOptions.DEFAULT);
+	}
+
+	/**
+	 * Sends a user message with optional agent / model / MCP overrides from the chat UI.
+	 */
+	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
+			String userName, String userMessage, List<AttachmentDto> attachments, ChatRunOptions options) {
 		// Busy is per chat session: a run in another session must not block this one.
 		if (tracker.hasActiveProcessingStateFor(tracker.getActiveSessionId())) {
 			tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
@@ -370,6 +414,7 @@ public class ChatProcessor {
 		String capturedSessionId = tracker.getActiveSessionId();
 		state.setChat(capturedChat);
 		state.setSessionId(capturedSessionId);
+		state.setRunOptions(options != null ? options : ChatRunOptions.DEFAULT);
 
 		// Create ConversationLog Turn before submitting background task
 		String messageText = userMessage != null ? userMessage.trim() : "";
@@ -712,6 +757,8 @@ public class ChatProcessor {
 		private volatile CancellationToken _cancellationToken;
 		private volatile String _lastAgentResponse;
 
+		private volatile ChatRunOptions _runOptions = ChatRunOptions.DEFAULT;
+
 		// Lifecycle management
 		volatile Future<?> _backgroundTask = null;
 
@@ -877,6 +924,16 @@ public class ChatProcessor {
 		 */
 		public void setSseHandler(ChatEventHandler handler) {
 			_sseHandler = handler;
+		}
+
+		/** Per-turn agent / model / MCP choices captured at send time. */
+		public ChatRunOptions getRunOptions() {
+			return _runOptions;
+		}
+
+		/** Captures UI run options before the background task starts. */
+		public void setRunOptions(ChatRunOptions options) {
+			_runOptions = options != null ? options : ChatRunOptions.DEFAULT;
 		}
 
 		/** The thread running the agent; may be null when not executing. */

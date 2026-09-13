@@ -8,3 +8,8 @@
 /.settings/com.gwtplugins.gwt.eclipse.core.prefs
 /**/*~
 /src/main/webapp/style/_*
+/ui/node
+/ui/node_modules
+/src/main/webapp/script/tl-chat-ui.js
+/src/main/webapp/script/tl-chat-ui.css
+/src/main/webapp/script/assets/

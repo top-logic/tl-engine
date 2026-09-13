@@ -49,4 +49,13 @@ public record AgentModelAssignment(
 		Integer timeoutSeconds,
 		Integer maxRetries,
 		Integer maxToolResultChars) {
+
+	/**
+	 * Returns a copy of this assignment using a different model, keeping all tuning parameters.
+	 */
+	public AgentModelAssignment withModel(String newModel) {
+		return new AgentModelAssignment(newModel, provider, maxTokens, contextWindow, maxTurns, temperature, topP,
+			thinkingEffort, topK, reasoningEffort, reasoningSummary, toolChoice, timeoutSeconds, maxRetries,
+			maxToolResultChars);
+	}
 }

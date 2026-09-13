@@ -61,9 +61,28 @@
 		<config service-class="com.top_logic.tl.ai.core.tools.web.BrowserToolsService">
 			<instance allowed-domains="quotes.toscrape.com" />
 		</config>
+
+		<!-- Native React-view implementation of the agentic chat. -->
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<module-script name="tl-react-agent-chat"
+						resource="/script/tl-chat-ui.js"
+						requires="tl-react-bridge"
+					/>
+					<stylesheet name="tl-react-agent-chat-css"
+						resource="/script/tl-chat-ui.css"
+						requires="tl-react-controls-css"
+					/>
+				</resources>
+			</instance>
+		</config>
 	</services>
 
 	<configs>
+		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
+			<startPage>/view/</startPage>
+		</config>
 		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
 			<type-systems>
 				<type-system name="Default">

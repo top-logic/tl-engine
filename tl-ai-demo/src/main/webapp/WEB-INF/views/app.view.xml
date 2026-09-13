@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The tl-ai demo starts in the native React view layer. The custom agent chat control owns the
+	complete page; no LayoutServlet component is embedded or bridged.
+-->
+<view>
+	<channels>
+		<derived-channel name="currentPerson"
+			expr="currentUser()"
+		/>
+	</channels>
+	<app-shell>
+		<content>
+			<agent-chat
+				trace-mode="overview"
+				prompt-improver-agent="TL_PromptImprover"
+			/>
+		</content>
+		<header>
+			<app-bar variant="flat">
+				<title>
+					<en>Albert</en>
+					<de>Albert</de>
+				</title>
+				<children>
+					<text
+						css-class="tlAppBarUser"
+						input="currentPerson"
+						overflow="ellipsis"
+					/>
+				</children>
+				<commands>
+					<generic-command
+						image="css:bi bi-box-arrow-in-right"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Login</en>
+							<de>Anmeldung</de>
+						</label>
+						<executability>
+							<anonymous-only/>
+						</executability>
+						<execute-script function="x -> new(`tl.login:Credentials`, transient: true)"/>
+						<open-dialog
+							bind-input-to="model"
+							close-on-backdrop="false"
+							dialog-view="login.view.xml"
+						/>
+					</generic-command>
+					<logout-command
+						image="css:bi bi-box-arrow-right"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Logout</en>
+							<de>Abmeldung</de>
+						</label>
+						<executability>
+							<authenticated-only/>
+						</executability>
+					</logout-command>
+				</commands>
+			</app-bar>
+		</header>
+	</app-shell>
+</view>

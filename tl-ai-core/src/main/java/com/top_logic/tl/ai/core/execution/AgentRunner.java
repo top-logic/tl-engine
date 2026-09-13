@@ -90,6 +90,17 @@ public final class AgentRunner {
 			ConversationMemory memory, ToolContext context, AgentEventListener listener,
 			ToolRegistry sessionRegistry, ConversationLog log, AgentSession session,
 			AgentExecution parentExecution) {
+		return run(agentName, conversation, memory, context, listener, sessionRegistry, log, session,
+			parentExecution, AgentFactory.RunOverrides.NONE);
+	}
+
+	/**
+	 * Runs the named agent with optional per-run model and MCP overrides.
+	 */
+	public static RecordedRun run(String agentName, Conversation conversation,
+			ConversationMemory memory, ToolContext context, AgentEventListener listener,
+			ToolRegistry sessionRegistry, ConversationLog log, AgentSession session,
+			AgentExecution parentExecution, AgentFactory.RunOverrides overrides) {
 		// Ensure the run's turns land in the log that becomes the transcript. Callers that wire a
 		// ConversationLogListener over this log themselves (e.g. the chat UI) already record into
 		// it; entry points that don't (e.g. the TL-Script functions, which pass a no-op listener)
@@ -116,7 +127,8 @@ public final class AgentRunner {
 		AgentFactory.RunResult runResult;
 		try {
 			runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
-				context, effectiveListener, sessionRegistry);
+				context, effectiveListener, sessionRegistry,
+				overrides != null ? overrides : AgentFactory.RunOverrides.NONE);
 		} catch (RuntimeException ex) {
 			if (recorder != null) {
 				recorder.complete(transcriptOf(log, turnsBefore), ex);

@@ -327,7 +327,9 @@ public class ChatSSEHandler implements ChatEventHandler {
 		if (event instanceof AgentEvent.RunStarted e) {
 			sendEvent("run_started", DtoMapper.toJson(RunStartedEvent.create()
 				.setRunId(e.runId())
-				.setModel(e.model())));
+				.setModel(e.model())
+				.setUsedTokens(usedTokens())
+				.setContextWindow(contextWindow())));
 		} else if (event instanceof AgentEvent.RunCompleted e) {
 			_tracker.addTokenUsage(e.totalUsage());
 			sendEvent("run_completed", DtoMapper.toJson(RunCompletedEvent.create()
@@ -336,7 +338,9 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setTotalUsage(mapTokenUsage(e.totalUsage()))));
 		} else if (event instanceof AgentEvent.TurnStarted e) {
 			sendEvent("turn_started", DtoMapper.toJson(TurnStartedEvent.create()
-				.setTurnNumber(e.turnNumber())));
+				.setTurnNumber(e.turnNumber())
+				.setUsedTokens(usedTokens())
+				.setContextWindow(contextWindow())));
 		} else if (event instanceof AgentEvent.TurnCompleted e) {
 			sendEvent("turn_completed", DtoMapper.toJson(TurnCompletedEvent.create()
 				.setTurnNumber(e.turnNumber())
@@ -401,7 +405,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (event instanceof AgentEvent.CompactionStarted e) {
 			sendEvent("compaction_started", DtoMapper.toJson(CompactionStartedEvent.create()
 				.setTokensBefore(e.tokensBefore())
-				.setTrigger(e.trigger())));
+				.setTrigger(e.trigger())
+				.setContextWindow(contextWindow())));
 		} else if (event instanceof AgentEvent.CompactionCompleted) {
 			// Not surfaced to UI
 		} else if (event instanceof AgentEvent.TaskUpdated e) {
@@ -476,7 +481,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (child instanceof AgentEvent.RunStarted e) {
 			innerType = "run_started";
 			innerData = DtoMapper.toJson(RunStartedEvent.create()
-				.setRunId(e.runId()).setModel(e.model()));
+				.setRunId(e.runId()).setModel(e.model())
+				.setUsedTokens(usedTokens()).setContextWindow(contextWindow()));
 		} else if (child instanceof AgentEvent.RunCompleted e) {
 			innerType = "run_completed";
 			innerData = DtoMapper.toJson(RunCompletedEvent.create()
@@ -485,7 +491,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (child instanceof AgentEvent.TurnStarted e) {
 			innerType = "turn_started";
 			innerData = DtoMapper.toJson(TurnStartedEvent.create()
-				.setTurnNumber(e.turnNumber()));
+				.setTurnNumber(e.turnNumber())
+				.setUsedTokens(usedTokens()).setContextWindow(contextWindow()));
 		} else if (child instanceof AgentEvent.TurnCompleted e) {
 			innerType = "turn_completed";
 			innerData = DtoMapper.toJson(TurnCompletedEvent.create()
@@ -586,6 +593,16 @@ public class ChatSSEHandler implements ChatEventHandler {
 			Logger.error("Failed to write SSE event", e, ChatSSEHandler.class);
 			stop();
 		}
+	}
+
+	private int usedTokens() {
+		com.top_logic.tl.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
+		return memory == null ? 0 : memory.estimateTokens();
+	}
+
+	private int contextWindow() {
+		com.top_logic.tl.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
+		return memory == null ? 0 : memory.contextWindowTokens();
 	}
 
 	private static TokenUsageDto mapTokenUsage(TokenUsage usage) {

@@ -21,9 +21,19 @@ public class RunStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getModel() */
 	public static final String MODEL__PROP = "model";
 
+	/** @see #getUsedTokens() */
+	public static final String USED_TOKENS__PROP = "usedTokens";
+
+	/** @see #getContextWindow() */
+	public static final String CONTEXT_WINDOW__PROP = "contextWindow";
+
 	private String _runId = "";
 
 	private String _model = "";
+
+	private int _usedTokens = 0;
+
+	private int _contextWindow = 0;
 
 	/**
 	 * Creates a {@link RunStartedEvent} instance.
@@ -74,6 +84,46 @@ public class RunStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObject
 		_model = value;
 	}
 
+	/**
+	 * Estimated tokens already in the conversation.
+	 */
+	public final int getUsedTokens() {
+		return _usedTokens;
+	}
+
+	/**
+	 * @see #getUsedTokens()
+	 */
+	public com.top_logic.ai.chat.api.messages.RunStartedEvent setUsedTokens(int value) {
+		internalSetUsedTokens(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getUsedTokens()} without chain call utility. */
+	protected final void internalSetUsedTokens(int value) {
+		_usedTokens = value;
+	}
+
+	/**
+	 * Model context window in tokens.
+	 */
+	public final int getContextWindow() {
+		return _contextWindow;
+	}
+
+	/**
+	 * @see #getContextWindow()
+	 */
+	public com.top_logic.ai.chat.api.messages.RunStartedEvent setContextWindow(int value) {
+		internalSetContextWindow(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getContextWindow()} without chain call utility. */
+	protected final void internalSetContextWindow(int value) {
+		_contextWindow = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return RUN_STARTED_EVENT__TYPE;
@@ -83,7 +133,9 @@ public class RunStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObject
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			RUN_ID__PROP, 
-			MODEL__PROP);
+			MODEL__PROP, 
+			USED_TOKENS__PROP, 
+			CONTEXT_WINDOW__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -110,6 +162,8 @@ public class RunStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObject
 		switch (field) {
 			case RUN_ID__PROP: return getRunId();
 			case MODEL__PROP: return getModel();
+			case USED_TOKENS__PROP: return getUsedTokens();
+			case CONTEXT_WINDOW__PROP: return getContextWindow();
 			default: return null;
 		}
 	}
@@ -119,6 +173,8 @@ public class RunStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObject
 		switch (field) {
 			case RUN_ID__PROP: internalSetRunId((String) value); break;
 			case MODEL__PROP: internalSetModel((String) value); break;
+			case USED_TOKENS__PROP: internalSetUsedTokens((int) value); break;
+			case CONTEXT_WINDOW__PROP: internalSetContextWindow((int) value); break;
 		}
 	}
 
@@ -141,6 +197,10 @@ public class RunStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObject
 		out.value(getRunId());
 		out.name(MODEL__PROP);
 		out.value(getModel());
+		out.name(USED_TOKENS__PROP);
+		out.value(getUsedTokens());
+		out.name(CONTEXT_WINDOW__PROP);
+		out.value(getContextWindow());
 	}
 
 	@Override
@@ -148,6 +208,8 @@ public class RunStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObject
 		switch (field) {
 			case RUN_ID__PROP: setRunId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case MODEL__PROP: setModel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case USED_TOKENS__PROP: setUsedTokens(in.nextInt()); break;
+			case CONTEXT_WINDOW__PROP: setContextWindow(in.nextInt()); break;
 			default: super.readField(in, field);
 		}
 	}

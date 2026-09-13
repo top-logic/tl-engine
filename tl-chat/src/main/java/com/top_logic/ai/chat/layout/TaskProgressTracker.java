@@ -10,11 +10,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
@@ -52,6 +54,12 @@ public class TaskProgressTracker {
 
 	/** User's first name for the welcome screen greeting. */
 	private volatile String _welcomeName = null;
+
+	/** Configured prompt-improver agent name, or {@code null} when the feature is disabled. */
+	private volatile String _promptImproverAgentName = null;
+
+	/** Current prompt-improvement run, independent of the main chat processing states. */
+	private final AtomicReference<PromptImprovementState> _promptImprovementState = new AtomicReference<>();
 
 	/**
 	 * Registry key ({@code windowName}) of the sub-session this tracker's chat UI was rendered in.
@@ -268,6 +276,63 @@ public class TaskProgressTracker {
 	}
 
 	/**
+	 * Returns the administrator-configured prompt-improver agent name, or {@code null} when prompt
+	 * improvement is disabled for this chat.
+	 */
+	public String getPromptImproverAgentName() {
+		return _promptImproverAgentName;
+	}
+
+	/**
+	 * Stores the administrator-configured prompt-improver agent name.
+	 *
+	 * @param agentName
+	 *        The configured agent name, or {@code null} to disable prompt improvement.
+	 */
+	public void setPromptImproverAgentName(String agentName) {
+		_promptImproverAgentName = agentName;
+	}
+
+	/**
+	 * Returns the current prompt-improvement run, or {@code null} if none is active.
+	 */
+	public PromptImprovementState getPromptImprovementState() {
+		return _promptImprovementState.get();
+	}
+
+	/**
+	 * Installs a prompt-improvement run and returns the previously installed run, if any.
+	 */
+	public PromptImprovementState replacePromptImprovementState(PromptImprovementState state) {
+		return _promptImprovementState.getAndSet(state);
+	}
+
+	/**
+	 * Clears the given prompt-improvement run only if it is still current.
+	 *
+	 * @return Whether the run was current and has been cleared.
+	 */
+	public boolean clearPromptImprovementState(PromptImprovementState state) {
+		return _promptImprovementState.compareAndSet(state, null);
+	}
+
+	/**
+	 * Cancels the current prompt-improvement run when its request ID matches.
+	 *
+	 * @param requestId
+	 *        The request ID supplied by the client.
+	 * @return Whether a matching run was found and cancelled.
+	 */
+	public boolean cancelPromptImprovement(String requestId) {
+		PromptImprovementState state = _promptImprovementState.get();
+		if (state == null || requestId == null || !requestId.equals(state.getRequestId())) {
+			return false;
+		}
+		state.getCancellationToken().cancel();
+		return true;
+	}
+
+	/**
 	 * Returns the window id ({@code windowName}) of the sub-session this tracker belongs to, or
 	 * {@code null} if the chat UI has not been rendered yet.
 	 *
@@ -436,5 +501,38 @@ public class TaskProgressTracker {
 	 */
 	public String generateTaskId() {
 		return UUID.randomUUID().toString();
+	}
+
+	/**
+	 * State of one prompt-improvement request.
+	 */
+	public static final class PromptImprovementState {
+
+		private final String _requestId;
+
+		private final CancellationToken _cancellationToken;
+
+		/**
+		 * Creates a prompt-improvement state.
+		 *
+		 * @param requestId
+		 *        Correlation ID of the browser request.
+		 * @param cancellationToken
+		 *        Token that cooperatively cancels this run.
+		 */
+		public PromptImprovementState(String requestId, CancellationToken cancellationToken) {
+			_requestId = requestId;
+			_cancellationToken = cancellationToken;
+		}
+
+		/** Returns the correlation ID of this request. */
+		public String getRequestId() {
+			return _requestId;
+		}
+
+		/** Returns the cancellation token of this run. */
+		public CancellationToken getCancellationToken() {
+			return _cancellationToken;
+		}
 	}
 }

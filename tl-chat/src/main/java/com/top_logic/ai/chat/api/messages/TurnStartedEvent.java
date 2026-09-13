@@ -18,7 +18,17 @@ public class TurnStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getTurnNumber() */
 	public static final String TURN_NUMBER__PROP = "turnNumber";
 
+	/** @see #getUsedTokens() */
+	public static final String USED_TOKENS__PROP = "usedTokens";
+
+	/** @see #getContextWindow() */
+	public static final String CONTEXT_WINDOW__PROP = "contextWindow";
+
 	private int _turnNumber = 0;
+
+	private int _usedTokens = 0;
+
+	private int _contextWindow = 0;
 
 	/**
 	 * Creates a {@link TurnStartedEvent} instance.
@@ -49,6 +59,46 @@ public class TurnStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObjec
 		_turnNumber = value;
 	}
 
+	/**
+	 * Estimated tokens already in the conversation.
+	 */
+	public final int getUsedTokens() {
+		return _usedTokens;
+	}
+
+	/**
+	 * @see #getUsedTokens()
+	 */
+	public com.top_logic.ai.chat.api.messages.TurnStartedEvent setUsedTokens(int value) {
+		internalSetUsedTokens(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getUsedTokens()} without chain call utility. */
+	protected final void internalSetUsedTokens(int value) {
+		_usedTokens = value;
+	}
+
+	/**
+	 * Model context window in tokens.
+	 */
+	public final int getContextWindow() {
+		return _contextWindow;
+	}
+
+	/**
+	 * @see #getContextWindow()
+	 */
+	public com.top_logic.ai.chat.api.messages.TurnStartedEvent setContextWindow(int value) {
+		internalSetContextWindow(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getContextWindow()} without chain call utility. */
+	protected final void internalSetContextWindow(int value) {
+		_contextWindow = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return TURN_STARTED_EVENT__TYPE;
@@ -57,7 +107,9 @@ public class TurnStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObjec
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
-			TURN_NUMBER__PROP);
+			TURN_NUMBER__PROP, 
+			USED_TOKENS__PROP, 
+			CONTEXT_WINDOW__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -83,6 +135,8 @@ public class TurnStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObjec
 	public Object get(String field) {
 		switch (field) {
 			case TURN_NUMBER__PROP: return getTurnNumber();
+			case USED_TOKENS__PROP: return getUsedTokens();
+			case CONTEXT_WINDOW__PROP: return getContextWindow();
 			default: return null;
 		}
 	}
@@ -91,6 +145,8 @@ public class TurnStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObjec
 	public void set(String field, Object value) {
 		switch (field) {
 			case TURN_NUMBER__PROP: internalSetTurnNumber((int) value); break;
+			case USED_TOKENS__PROP: internalSetUsedTokens((int) value); break;
+			case CONTEXT_WINDOW__PROP: internalSetContextWindow((int) value); break;
 		}
 	}
 
@@ -111,12 +167,18 @@ public class TurnStartedEvent extends de.haumacher.msgbuf.data.AbstractDataObjec
 		super.writeFields(out);
 		out.name(TURN_NUMBER__PROP);
 		out.value(getTurnNumber());
+		out.name(USED_TOKENS__PROP);
+		out.value(getUsedTokens());
+		out.name(CONTEXT_WINDOW__PROP);
+		out.value(getContextWindow());
 	}
 
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case TURN_NUMBER__PROP: setTurnNumber(in.nextInt()); break;
+			case USED_TOKENS__PROP: setUsedTokens(in.nextInt()); break;
+			case CONTEXT_WINDOW__PROP: setContextWindow(in.nextInt()); break;
 			default: super.readField(in, field);
 		}
 	}

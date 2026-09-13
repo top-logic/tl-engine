@@ -2186,6 +2186,15 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 							<delegation name="TL_TLScriptAgent"/>
 						</delegations>
 					</agent>
+					<agent name="TL_PromptImprover"
+						description="Rewrite a draft user prompt so it is clearer and ready to send. Returns only the improved prompt text."
+					>
+						<system-prompt><![CDATA[You improve user-written prompts before they are sent to another agent.
+
+Return only the improved prompt. Do not answer the prompt, do not add a preface, and do not wrap the result in quotes or markdown fences.
+
+Keep the original language, intent, constraints, and any names, identifiers, or technical terms. Make the request specific and actionable. If the draft is already clear, return it with only light cleanup.]]></system-prompt>
+					</agent>
 				</agents>
 			</instance>
 		</config>

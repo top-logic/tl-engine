@@ -24,6 +24,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
+import com.top_logic.ai.chat.api.messages.CancelPromptImprovementRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
@@ -31,6 +32,8 @@ import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionListResponse;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
+import com.top_logic.ai.chat.api.messages.ImprovePromptRequest;
+import com.top_logic.ai.chat.api.messages.ImprovePromptResponse;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
@@ -38,6 +41,9 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
+import com.top_logic.ai.chat.layout.PromptImprovementProcessor;
+import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovementException;
+import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Result;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
@@ -95,12 +101,15 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_SEND = "/send";
 	private static final String PATH_RESPOND = "/respond";
 	private static final String PATH_CANCEL = "/cancel";
+	private static final String PATH_IMPROVE_PROMPT = "/improve-prompt";
+	private static final String PATH_CANCEL_PROMPT_IMPROVEMENT = "/improve-prompt/cancel";
 	private static final String PATH_APPROVAL_MODE = "/approval-mode";
 	private static final String PATH_UPDATES = "/updates";
 	private static final String PATH_EVENTS = "/events";
 	private static final String PATH_SESSIONS = "/sessions";
 	private static final String PATH_INTERACTIONS = "/interactions";
 	private static final String PATH_SUBAGENTS = "/subagents";
+	private static final String PATH_CAPABILITIES = "/capabilities";
 	private static final String TRANSCRIPT_SUFFIX = "/transcript";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
@@ -134,6 +143,15 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		if (pathInfo.equals(PATH_CANCEL) || pathInfo.equals(PATH_CANCEL + "/")) {
 			handleCancel(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_IMPROVE_PROMPT) || pathInfo.equals(PATH_IMPROVE_PROMPT + "/")) {
+			handleImprovePrompt(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_CANCEL_PROMPT_IMPROVEMENT)
+				|| pathInfo.equals(PATH_CANCEL_PROMPT_IMPROVEMENT + "/")) {
+			handleCancelPromptImprovement(req, resp);
 			return;
 		}
 		if (pathInfo.equals(PATH_APPROVAL_MODE) || pathInfo.equals(PATH_APPROVAL_MODE + "/")) {
@@ -175,6 +193,10 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		if (pathInfo.equals(PATH_SUBAGENTS) || pathInfo.equals(PATH_SUBAGENTS + "/")) {
 			handleListSubagents(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_CAPABILITIES) || pathInfo.equals(PATH_CAPABILITIES + "/")) {
+			handleCapabilities(resp);
 			return;
 		}
 		if (pathInfo.startsWith(PATH_SESSIONS)) {
@@ -272,8 +294,13 @@ public class ChatServlet extends TopLogicServlet {
 			}
 		}
 		final String userName = storedName != null ? storedName : "Anonymous";
+		ChatProcessor.ChatRunOptions options = new ChatProcessor.ChatRunOptions(
+			blankToNull(body.getAgent()),
+			blankToNull(body.getModel()),
+			body.isMcpOverride(),
+			body.getMcpServers());
 		ChatProcessor.SendResult result =
-			ChatProcessor.sendMessage(tracker, subSession, userName, messageText, attachments);
+			ChatProcessor.sendMessage(tracker, subSession, userName, messageText, attachments, options);
 
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
@@ -288,6 +315,68 @@ public class ChatServlet extends TopLogicServlet {
 			.setTaskId(result.getTaskId())
 			.setStatus("processing");
 		resp.getWriter().write(DtoMapper.toJson(sendResponse));
+	}
+
+	private void handleImprovePrompt(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		ImprovePromptRequest body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = ImprovePromptRequest.readImprovePromptRequest(new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+
+		try {
+			Result result = PromptImprovementProcessor.improve(
+				currentTracker(), body.getRequestId(), body.getDraft());
+			writePromptImprovementResponse(resp, result);
+		} catch (PromptImprovementException ex) {
+			int status = switch (ex.getFailure()) {
+				case INVALID_REQUEST -> HttpServletResponse.SC_BAD_REQUEST;
+				case DISABLED -> HttpServletResponse.SC_FORBIDDEN;
+				case MISSING_AGENT -> HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+			};
+			resp.sendError(status, ex.getMessage());
+		} catch (RuntimeException ex) {
+			Logger.error("Prompt improvement failed: " + ex.getMessage(), ex, ChatServlet.class);
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Prompt improvement failed.");
+		}
+	}
+
+	private void handleCancelPromptImprovement(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
+		CancelPromptImprovementRequest body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = CancelPromptImprovementRequest.readCancelPromptImprovementRequest(
+				new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+
+		String requestId = body.getRequestId();
+		if (requestId == null || requestId.isBlank()) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing or empty 'requestId'.");
+			return;
+		}
+		boolean cancelled = currentTracker().cancelPromptImprovement(requestId.trim());
+		writePromptImprovementResponse(resp, new Result(requestId.trim(), "",
+			cancelled ? PromptImprovementProcessor.STATUS_CANCELLED
+				: PromptImprovementProcessor.STATUS_STALE));
+	}
+
+	private static void writePromptImprovementResponse(HttpServletResponse resp, Result result)
+			throws IOException {
+		ImprovePromptResponse response = ImprovePromptResponse.create()
+			.setRequestId(result.requestId())
+			.setImprovedText(result.improvedText())
+			.setStatus(result.status());
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(DtoMapper.toJson(response));
 	}
 
 	private void handleRespond(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -1070,6 +1159,21 @@ public class ChatServlet extends TopLogicServlet {
 		if (text.length() > 0) {
 			turn.setContentHtml(Converters.markdownToHtmlString(text.toString()));
 		}
+	}
+
+	private void handleCapabilities(HttpServletResponse resp) throws IOException {
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(DtoMapper.toJson(ChatCapabilities.build()));
+	}
+
+	private static String blankToNull(String value) {
+		if (value == null) {
+			return null;
+		}
+		String trimmed = value.trim();
+		return trimmed.isEmpty() ? null : trimmed;
 	}
 
 }

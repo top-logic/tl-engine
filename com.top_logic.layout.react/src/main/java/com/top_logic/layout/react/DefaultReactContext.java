@@ -85,9 +85,13 @@ public class DefaultReactContext implements ReactContext {
 		return _windowRegistry;
 	}
 
+	/**
+	 * The scope of the window this context belongs to, or {@code null} for a context built
+	 * without a {@link ReactWindowRegistry}, which has no window to observe model changes for.
+	 */
 	@Override
 	public ModelScope getModelScope() {
-		return _windowRegistry.getOrCreateModelScope(_windowName);
+		return _windowRegistry == null ? null : _windowRegistry.getOrCreateModelScope(_windowName);
 	}
 
 	@Override

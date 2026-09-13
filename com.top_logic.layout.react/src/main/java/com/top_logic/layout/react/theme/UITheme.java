@@ -24,6 +24,16 @@ import com.top_logic.layout.basic.ThemeImage;
  * The token map is fully resolved, i.e. the values inherited from the {@link Config#getExtends()
  * parent} theme are already merged with this theme's own overrides.
  * </p>
+ *
+ * <p>
+ * A token is named by what it is for, not by what it looks like, and a stylesheet consumes it as
+ * {@code var(--name)} without a fallback. Rounding comes in two tiers, {@code corner-radius} for
+ * controls and {@code border-radius-02} for surfaces; elevation comes in three steps,
+ * {@code shadow-raised} for a surface lifted off the page, {@code shadow-menu} for a popup and
+ * {@code shadow-dialog} for a layer covering it, which dims the page with {@code overlay}. A theme
+ * that squares every corner off and drops every shadow therefore overrides the two radius tokens
+ * and the three shadow tokens and inherits the rest.
+ * </p>
  */
 public final class UITheme {
 

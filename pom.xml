@@ -310,6 +310,13 @@
 				<type>test-jar</type>
 				<scope>test</scope>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-react</artifactId>
+				<version>${tl.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
 
 			<!-- TopLogic -->
 			<dependency>

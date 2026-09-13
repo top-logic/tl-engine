@@ -5,14 +5,14 @@
 .tlWysiwygEditor {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--tl-border-color, #d1d5db);
-  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
   overflow: hidden;
-  background: #fff;
+  background: var(--layer-01);
 }
 
 .tlWysiwygEditor--error {
-  border-color: var(--tl-error-color, #dc2626);
+  border-color: var(--support-error);
 }
 
 .tlWysiwygEditor--immutable {
@@ -49,13 +49,13 @@
 
 .tlWysiwygEditor .ProseMirror td,
 .tlWysiwygEditor .ProseMirror th {
-  border: 1px solid var(--tl-border-color, #d1d5db);
+  border: 1px solid var(--border-subtle);
   padding: 6px 10px;
   min-width: 60px;
 }
 
 .tlWysiwygEditor .ProseMirror th {
-  background: var(--tl-header-bg, #f3f4f6);
+  background: var(--layer);
   font-weight: 600;
 }
 
@@ -66,29 +66,29 @@
 }
 
 .tlWysiwygEditor .ProseMirror img.ProseMirror-selectednode {
-  outline: 2px solid var(--tl-primary-color, #2563eb);
+  outline: 2px solid var(--focus);
 }
 
 .tlWysiwygEditor .ProseMirror code {
-  background: var(--tl-code-bg, #f3f4f6);
+  background: var(--layer);
   padding: 2px 5px;
-  border-radius: 3px;
-  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
+  border-radius: var(--corner-radius);
+  font-family: var(--font-family-mono);
   font-size: 0.9em;
 }
 
 .tlWysiwygEditor .ProseMirror pre {
-  background: var(--tl-code-bg, #f3f4f6);
+  background: var(--layer);
   padding: 12px 16px;
-  border-radius: 6px;
+  border-radius: var(--border-radius-02);
   overflow-x: auto;
 }
 
 .tlWysiwygEditor .ProseMirror blockquote {
-  border-left: 3px solid var(--tl-primary-color, #2563eb);
+  border-left: 3px solid var(--border-interactive);
   padding-left: 14px;
   margin-left: 0;
-  color: var(--tl-text-secondary, #6b7280);
+  color: var(--text-secondary);
 }
 
 /* View mode renders the bare content: no reserved editor height and no inner
@@ -106,7 +106,7 @@
 }
 
 .tlWysiwygEditor__immutableContent a {
-  color: var(--tl-primary-color, #2563eb);
+  color: var(--link-primary);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -121,9 +121,9 @@
   align-items: center;
   gap: 2px;
   padding: 6px 8px;
-  border-bottom: 1px solid var(--tl-border-color, #d1d5db);
+  border-bottom: 1px solid var(--border-subtle);
   overflow-x: auto;
-  background: var(--tl-toolbar-bg, #f9fafb);
+  background: var(--layer);
 }
 
 /* ---- Separator ---- */
@@ -132,7 +132,7 @@
   width: 1px;
   height: 20px;
   margin: 0 6px;
-  background: var(--tl-border-color, #d1d5db);
+  background: var(--border-subtle);
 }
 
 /* ---- Buttons ---- */
@@ -153,30 +153,30 @@
   height: 30px;
   padding: 0 6px;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: var(--corner-radius);
   background: transparent;
   cursor: pointer;
   font-size: 16px;
-  color: var(--tl-text-color, #374151);
+  color: var(--text-primary);
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   outline: none;
 }
 
 .tlWysiwygToolbar__btn:hover {
-  background: var(--tl-hover-bg, #e5e7eb);
+  background: var(--layer-hover);
 }
 
 .tlWysiwygToolbar__btn:focus-visible {
-  box-shadow: 0 0 0 2px var(--tl-primary-color, #2563eb);
+  box-shadow: 0 0 0 2px var(--focus);
 }
 
 .tlWysiwygToolbar__btn--active {
-  background: var(--tl-selected-bg, #dbeafe);
-  color: var(--tl-primary-color, #2563eb);
+  background: var(--layer-selected);
+  color: var(--interactive);
 }
 
 .tlWysiwygToolbar__btn--active:hover {
-  background: var(--tl-selected-hover-bg, #bfdbfe);
+  background: var(--layer-selected-hover);
 }
 
 .tlWysiwygToolbar__btn:disabled {
@@ -207,17 +207,17 @@
   padding: 4px 10px;
   font-size: 12px;
   line-height: 1.4;
-  color: #fff;
-  background: #1f2937;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  color: var(--text-inverse);
+  background: var(--background-inverse);
+  border-radius: var(--border-radius-02);
+  box-shadow: var(--shadow-menu);
   z-index: 10000;
   animation: tlTooltipFadeIn 0.15s ease;
   user-select: none;
 }
 
 .tlWysiwygToolbar__tooltipArrow {
-  fill: #1f2937;
+  fill: var(--background-inverse);
 }
 
 @keyframes tlTooltipFadeIn {
@@ -232,10 +232,10 @@
 .tlWysiwygToolbar__dropdown {
   min-width: 160px;
   padding: 4px;
-  background: #fff;
-  border: 1px solid var(--tl-border-color, #d1d5db);
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: var(--layer-02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-02);
+  box-shadow: var(--shadow-menu);
   z-index: 10000;
   animation: tlDropdownSlideIn 0.12s ease;
 }
@@ -245,9 +245,9 @@
   align-items: center;
   gap: 10px;
   padding: 7px 10px;
-  border-radius: 4px;
+  border-radius: var(--corner-radius);
   font-size: 13px;
-  color: var(--tl-text-color, #374151);
+  color: var(--text-primary);
   cursor: pointer;
   outline: none;
   user-select: none;
@@ -255,11 +255,11 @@
 }
 
 .tlWysiwygToolbar__dropdownItem[data-highlighted] {
-  background: var(--tl-hover-bg, #f3f4f6);
+  background: var(--layer-hover);
 }
 
 .tlWysiwygToolbar__dropdownItem--active {
-  color: var(--tl-primary-color, #2563eb);
+  color: var(--interactive);
   font-weight: 500;
 }
 
@@ -281,16 +281,16 @@
 .tlWysiwygToolbar__linkPopover {
   width: 300px;
   padding: 12px;
-  background: #fff;
-  border: 1px solid var(--tl-border-color, #d1d5db);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: var(--layer-02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-02);
+  box-shadow: var(--shadow-menu);
   z-index: 10000;
   animation: tlPopoverFadeIn 0.15s ease;
 }
 
 .tlWysiwygToolbar__popoverArrow {
-  fill: #fff;
+  fill: var(--layer-02);
 }
 
 .tlWysiwygToolbar__linkForm {
@@ -302,7 +302,7 @@
 .tlWysiwygToolbar__linkLabel {
   font-size: 12px;
   font-weight: 500;
-  color: var(--tl-text-secondary, #6b7280);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -311,18 +311,18 @@
   width: 100%;
   padding: 7px 10px;
   font-size: 13px;
-  border: 1px solid var(--tl-border-color, #d1d5db);
-  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
   outline: none;
-  background: #fff;
-  color: var(--tl-text-color, #374151);
+  background: var(--field);
+  color: var(--text-primary);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   box-sizing: border-box;
 }
 
 .tlWysiwygToolbar__linkInput:focus {
-  border-color: var(--tl-primary-color, #2563eb);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  border-color: var(--focus);
+  box-shadow: 0 0 0 2px var(--focus);
 }
 
 .tlWysiwygToolbar__linkActions {
@@ -337,18 +337,18 @@
   font-size: 12px;
   font-weight: 500;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--corner-radius);
   cursor: pointer;
   transition: background 0.15s ease, opacity 0.15s ease;
 }
 
 .tlWysiwygToolbar__linkApply {
-  background: var(--tl-primary-color, #2563eb);
-  color: #fff;
+  background: var(--button-primary);
+  color: var(--text-on-color);
 }
 
 .tlWysiwygToolbar__linkApply:hover {
-  background: #1d4ed8;
+  background: var(--button-primary-hover);
 }
 
 .tlWysiwygToolbar__linkApply:disabled {
@@ -358,12 +358,12 @@
 
 .tlWysiwygToolbar__linkRemove {
   background: transparent;
-  color: var(--tl-error-color, #dc2626);
-  border: 1px solid var(--tl-error-color, #dc2626);
+  color: var(--support-error);
+  border: 1px solid var(--support-error);
 }
 
 .tlWysiwygToolbar__linkRemove:hover {
-  background: #fef2f2;
+  background: var(--layer-hover);
 }
 
 @keyframes tlPopoverFadeIn {

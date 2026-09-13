@@ -167,6 +167,13 @@
 		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
 			<startPage>/view/</startPage>
 		</config>
+		<!--
+			The demo lowers the upload limit below the framework default so that the refusal of an
+			oversized file can be tried out with a moderately sized file.
+		-->
+		<config config:interface="com.top_logic.layout.react.control.upload.UploadConfig"
+			max-upload-size="10m"
+		/>
 		<config config:interface="com.top_logic.layout.view.ViewConfig">
 			<!--
 				A second view a URL may load top-level, besides the default view: the PDF demo is

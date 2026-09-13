@@ -126,6 +126,13 @@ message ChatSendRequest {
 	 * MCP servers to attach when {@link #mcpOverride} is true.
 	 */
 	repeated string mcpServers;
+
+	/**
+	 * How hard the model may think for this turn, one of the selected model's
+	 * <code>effortLevels</code>. Empty keeps the agent's assignment; a level the model does not
+	 * offer is ignored with a logged warning rather than failing the run.
+	 */
+	string effort;
 }
 
 /**
@@ -186,6 +193,95 @@ message CancelPromptImprovementRequest {
 	 * Correlation ID of the request to cancel.
 	 */
 	string requestId;
+}
+
+/**
+ * Request body for POST /chat/regenerate: answer the same message again.
+ */
+message RegenerateRequest {
+	/** Session whose last turn is to be answered again. */
+	string sessionId;
+
+	/** Agent for the new run; empty keeps the chat entry point. */
+	string agent;
+
+	/** Model for the new run; empty keeps the agent's assignment. */
+	string model;
+
+	/** Whether the named MCP servers replace the agent's configured ones. */
+	boolean mcpOverride;
+
+	/** MCP servers for the new run. */
+	repeated string mcpServers;
+
+	/** How hard the model may think for the new run. */
+	string effort;
+}
+
+/**
+ * Request body for POST /chat/truncate: drop a turn and everything after it.
+ */
+message TruncateRequest {
+	/** Session to truncate. */
+	string sessionId;
+
+	/**
+	 * Zero-based index of the first turn to remove. Everything from it to the end goes with it,
+	 * because a conversation is a sequence: what followed was said in reply to what is being
+	 * removed and cannot stand without it.
+	 */
+	int fromTurn;
+}
+
+/**
+ * Response body for POST /chat/truncate and POST /chat/regenerate.
+ */
+message TruncateResponse {
+	/** "ok", "busy" or "error". */
+	string status;
+
+	/** Number of turns removed. */
+	int removedTurns;
+
+	/** The user text of the first removed turn, so the client can offer it for editing. */
+	string text;
+
+	/** Task ID of the run started by a regenerate; empty for a plain truncate. */
+	string taskId;
+}
+
+/**
+ * One answer the user rated.
+ */
+message MessageFeedbackDto {
+	/** Zero-based index of the turn whose answer was rated. */
+	int turnIndex;
+
+	/** "up" or "down". */
+	string rating;
+
+	/** Free text the user added; empty when they added none. */
+	string note;
+
+	/** ISO-8601 timestamp of when the rating was given. */
+	string recordedAt;
+}
+
+/**
+ * Request body for POST /chat/feedback.
+ */
+message MessageFeedbackRequest {
+	/** Session the rated answer belongs to. */
+	string sessionId;
+
+	/** Zero-based index of the turn whose answer was rated. */
+	int turnIndex;
+
+	/** "up", "down", or empty to withdraw an earlier rating. */
+	string rating;
+
+	/** Free text the user added; optional. */
+	string note;
 }
 
 /**
@@ -387,6 +483,12 @@ message ChatSessionDetailResponse {
 	 * Model that ran the session's last turn, empty when the session has not run one.
 	 */
 	string lastModel;
+
+	/** Answer ratings recorded in this session, so a reopened chat shows them again. */
+	repeated MessageFeedbackDto feedback;
+
+	/** Effort level last used in this session; empty when none was chosen. */
+	string lastEffort;
 }
 
 /**
@@ -773,6 +875,20 @@ message SessionMetadata {
 
 	/** Skill IDs loaded in this session, for replay on restore. */
 	repeated string loadedSkills;
+
+	/**
+	 * Answer ratings the user gave in this session.
+	 *
+	 * <p>
+	 * Kept here rather than in the transcript because a transcript is written per run and a rating
+	 * arrives after it: this bag is the session's own, is rewritten whole, and is therefore also
+	 * where an evaluation reads the ratings back from.
+	 * </p>
+	 */
+	repeated MessageFeedbackDto feedback;
+
+	/** Effort level last chosen in this session. */
+	string lastEffort;
 }
 
 /** Catalog of agents, models and MCP servers the chat UI can offer. */
@@ -818,6 +934,19 @@ message ModelOptionDto {
 
 	/** Maximum output tokens. */
 	int maxOutput;
+
+	/**
+	 * How hard this model may be asked to think, in increasing order.
+	 *
+	 * <p>
+	 * Empty when the model offers no such setting, which is what a UI must check before offering
+	 * one: the providers reject a level their model does not know.
+	 * </p>
+	 */
+	repeated string effortLevels;
+
+	/** The level in force when the caller names none; empty when the model has no levels. */
+	string defaultEffort;
 }
 
 /** One selectable MCP server. */

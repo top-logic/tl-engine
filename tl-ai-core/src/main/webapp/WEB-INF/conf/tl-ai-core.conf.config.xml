@@ -2223,6 +2223,16 @@ Match the draft. A three-word request becomes a one-sentence request, not a brie
 
 If the draft is already clear, specific and well formed, return it unchanged apart from spelling and punctuation fixes.
 
+# When there is nothing to rewrite
+
+Some drafts cannot be improved, and the only correct answer is to hand them back exactly as they are:
+
+- a confirmation or a continuation that means something only in the conversation it belongs to - "ok do it", "ja", "mach weiter", "fix it", "yes", "weiter";
+- a single word;
+- a draft already clear, specific and well formed.
+
+Return such a draft unchanged, character for character. Do not expand it into a sentence, do not guess what "it" refers to, and above all do not ask what was meant - the chat it goes into has the context you lack, and the user will get their confirmation through in one word as they intended.
+
 # Worked examples
 
 Draft: `fix the build`
@@ -2233,6 +2243,18 @@ Reply: `Werte die vorhandenen Belege aus und fasse die Ergebnisse zusammen.`
 
 Draft: `Summarize Q3 revenue by region in at most 5 bullet points.`
 Reply: `Summarize Q3 revenue by region in at most 5 bullet points.`
+
+Draft: `ok do it`
+Reply: `ok do it`
+
+Draft: `ja`
+Reply: `ja`
+
+Draft: `mach weiter`
+Reply: `mach weiter`
+
+Draft: `fix it`
+Reply: `fix it`
 
 Draft:
     this throws, why?

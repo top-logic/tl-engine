@@ -36,6 +36,9 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getMcpServers() */
 	public static final String MCP_SERVERS__PROP = "mcpServers";
 
+	/** @see #getEffort() */
+	public static final String EFFORT__PROP = "effort";
+
 	private String _text = "";
 
 	private String _sessionId = "";
@@ -49,6 +52,8 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 	private boolean _mcpOverride = false;
 
 	private final java.util.List<String> _mcpServers = new java.util.ArrayList<>();
+
+	private String _effort = "";
 
 	/**
 	 * Creates a {@link ChatSendRequest} instance.
@@ -243,6 +248,28 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 		_mcpServers.remove(value);
 	}
 
+	/**
+	 * How hard the model may think for this turn, one of the selected model's
+	 * <code>effortLevels</code>. Empty keeps the agent's assignment; a level the model does not
+	 * offer is ignored with a logged warning rather than failing the run.
+	 */
+	public final String getEffort() {
+		return _effort;
+	}
+
+	/**
+	 * @see #getEffort()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendRequest setEffort(String value) {
+		internalSetEffort(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getEffort()} without chain call utility. */
+	protected final void internalSetEffort(String value) {
+		_effort = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SEND_REQUEST__TYPE;
@@ -257,7 +284,8 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			AGENT__PROP, 
 			MODEL__PROP, 
 			MCP_OVERRIDE__PROP, 
-			MCP_SERVERS__PROP);
+			MCP_SERVERS__PROP, 
+			EFFORT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -289,6 +317,7 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			case MODEL__PROP: return getModel();
 			case MCP_OVERRIDE__PROP: return isMcpOverride();
 			case MCP_SERVERS__PROP: return getMcpServers();
+			case EFFORT__PROP: return getEffort();
 			default: return null;
 		}
 	}
@@ -303,6 +332,7 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			case MODEL__PROP: internalSetModel((String) value); break;
 			case MCP_OVERRIDE__PROP: internalSetMcpOverride((boolean) value); break;
 			case MCP_SERVERS__PROP: internalSetMcpServers(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
+			case EFFORT__PROP: internalSetEffort((String) value); break;
 		}
 	}
 
@@ -343,6 +373,8 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			out.value(x);
 		}
 		out.endArray();
+		out.name(EFFORT__PROP);
+		out.value(getEffort());
 	}
 
 	@Override
@@ -373,6 +405,7 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 				setMcpServers(newValue);
 			}
 			break;
+			case EFFORT__PROP: setEffort(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

@@ -27,6 +27,12 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getMaxOutput() */
 	public static final String MAX_OUTPUT__PROP = "maxOutput";
 
+	/** @see #getEffortLevels() */
+	public static final String EFFORT_LEVELS__PROP = "effortLevels";
+
+	/** @see #getDefaultEffort() */
+	public static final String DEFAULT_EFFORT__PROP = "defaultEffort";
+
 	private String _id = "";
 
 	private String _provider = "";
@@ -34,6 +40,10 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	private int _contextWindow = 0;
 
 	private int _maxOutput = 0;
+
+	private final java.util.List<String> _effortLevels = new java.util.ArrayList<>();
+
+	private String _defaultEffort = "";
 
 	/**
 	 * Creates a {@link ModelOptionDto} instance.
@@ -124,6 +134,72 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_maxOutput = value;
 	}
 
+	/**
+	 * How hard this model may be asked to think, in increasing order.
+	 *
+	 * <p>
+	 * Empty when the model offers no such setting, which is what a UI must check before offering
+	 * one: the providers reject a level their model does not know.
+	 * </p>
+	 */
+	public final java.util.List<String> getEffortLevels() {
+		return _effortLevels;
+	}
+
+	/**
+	 * @see #getEffortLevels()
+	 */
+	public com.top_logic.ai.chat.api.messages.ModelOptionDto setEffortLevels(java.util.List<? extends String> value) {
+		internalSetEffortLevels(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getEffortLevels()} without chain call utility. */
+	protected final void internalSetEffortLevels(java.util.List<? extends String> value) {
+		_effortLevels.clear();
+		_effortLevels.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getEffortLevels()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.ModelOptionDto addEffortLevel(String value) {
+		internalAddEffortLevel(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addEffortLevel(String)} without chain call utility. */
+	protected final void internalAddEffortLevel(String value) {
+		_effortLevels.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getEffortLevels()} list.
+	 */
+	public final void removeEffortLevel(String value) {
+		_effortLevels.remove(value);
+	}
+
+	/**
+	 * The level in force when the caller names none; empty when the model has no levels.
+	 */
+	public final String getDefaultEffort() {
+		return _defaultEffort;
+	}
+
+	/**
+	 * @see #getDefaultEffort()
+	 */
+	public com.top_logic.ai.chat.api.messages.ModelOptionDto setDefaultEffort(String value) {
+		internalSetDefaultEffort(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDefaultEffort()} without chain call utility. */
+	protected final void internalSetDefaultEffort(String value) {
+		_defaultEffort = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return MODEL_OPTION_DTO__TYPE;
@@ -135,7 +211,9 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			ID__PROP, 
 			PROVIDER__PROP, 
 			CONTEXT_WINDOW__PROP, 
-			MAX_OUTPUT__PROP);
+			MAX_OUTPUT__PROP, 
+			EFFORT_LEVELS__PROP, 
+			DEFAULT_EFFORT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -164,6 +242,8 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case PROVIDER__PROP: return getProvider();
 			case CONTEXT_WINDOW__PROP: return getContextWindow();
 			case MAX_OUTPUT__PROP: return getMaxOutput();
+			case EFFORT_LEVELS__PROP: return getEffortLevels();
+			case DEFAULT_EFFORT__PROP: return getDefaultEffort();
 			default: return null;
 		}
 	}
@@ -175,6 +255,8 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case PROVIDER__PROP: internalSetProvider((String) value); break;
 			case CONTEXT_WINDOW__PROP: internalSetContextWindow((int) value); break;
 			case MAX_OUTPUT__PROP: internalSetMaxOutput((int) value); break;
+			case EFFORT_LEVELS__PROP: internalSetEffortLevels(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
+			case DEFAULT_EFFORT__PROP: internalSetDefaultEffort((String) value); break;
 		}
 	}
 
@@ -201,6 +283,14 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 		out.value(getContextWindow());
 		out.name(MAX_OUTPUT__PROP);
 		out.value(getMaxOutput());
+		out.name(EFFORT_LEVELS__PROP);
+		out.beginArray();
+		for (String x : getEffortLevels()) {
+			out.value(x);
+		}
+		out.endArray();
+		out.name(DEFAULT_EFFORT__PROP);
+		out.value(getDefaultEffort());
 	}
 
 	@Override
@@ -210,6 +300,17 @@ public class ModelOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case PROVIDER__PROP: setProvider(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CONTEXT_WINDOW__PROP: setContextWindow(in.nextInt()); break;
 			case MAX_OUTPUT__PROP: setMaxOutput(in.nextInt()); break;
+			case EFFORT_LEVELS__PROP: {
+				java.util.List<String> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in));
+				}
+				in.endArray();
+				setEffortLevels(newValue);
+			}
+			break;
+			case DEFAULT_EFFORT__PROP: setDefaultEffort(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

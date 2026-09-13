@@ -92,16 +92,22 @@ public class ChatProcessor {
 	 * @param mcpServers
 	 *        MCP server names used when {@code mcpOverride} is {@code true}; never {@code null}.
 	 */
-	public record ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers) {
+	public record ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers,
+			String effort) {
 
 		/** No UI overrides. */
-		public static final ChatRunOptions DEFAULT = new ChatRunOptions(null, null, false, List.of());
+		public static final ChatRunOptions DEFAULT = new ChatRunOptions(null, null, false, List.of(), null);
 
 		/**
 		 * Canonicalizes null lists so callers never have to null-check {@link #mcpServers()}.
 		 */
 		public ChatRunOptions {
 			mcpServers = mcpServers != null ? List.copyOf(mcpServers) : List.of();
+		}
+
+		/** Options without an effort level, for callers that do not offer the setting. */
+		public ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers) {
+			this(agent, model, mcpOverride, mcpServers, null);
 		}
 	}
 
@@ -206,7 +212,7 @@ public class ChatProcessor {
 				: agentFactory.getEntryPointAgentName();
 			List<String> mcpOverride = options.mcpOverride() ? options.mcpServers() : null;
 			AgentFactory.RunOverrides runOverrides =
-				new AgentFactory.RunOverrides(options.model(), mcpOverride);
+				new AgentFactory.RunOverrides(options.model(), mcpOverride, options.effort());
 
 			// Look up SSE handler here (deferred from sendMessage) to avoid race condition:
 			// the JS client reconnects SSE during session creation, and the new connection

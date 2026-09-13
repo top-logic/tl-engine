@@ -58,4 +58,37 @@ public record AgentModelAssignment(
 			thinkingEffort, topK, reasoningEffort, reasoningSummary, toolChoice, timeoutSeconds, maxRetries,
 			maxToolResultChars);
 	}
+
+	/**
+	 * Returns a copy of this assignment with a different Anthropic thinking effort.
+	 *
+	 * @param newEffort
+	 *        one of {@link EffortLevels#THINKING}, or {@code null} for the catalog default
+	 */
+	public AgentModelAssignment withThinkingEffort(String newEffort) {
+		return new AgentModelAssignment(model, provider, maxTokens, contextWindow, maxTurns, temperature, topP,
+			newEffort, topK, reasoningEffort, reasoningSummary, toolChoice, timeoutSeconds, maxRetries,
+			maxToolResultChars);
+	}
+
+	/**
+	 * Returns a copy of this assignment with a different {@code OpenAI}/{@code xAI} reasoning effort.
+	 *
+	 * @param newEffort
+	 *        one of {@link EffortLevels#REASONING}, or {@code null} for the catalog default
+	 */
+	public AgentModelAssignment withReasoningEffort(String newEffort) {
+		return new AgentModelAssignment(model, provider, maxTokens, contextWindow, maxTurns, temperature, topP,
+			thinkingEffort, topK, newEffort, reasoningSummary, toolChoice, timeoutSeconds, maxRetries,
+			maxToolResultChars);
+	}
+
+	/**
+	 * The effort actually in force, whichever of the two fields carries it.
+	 *
+	 * @return {@code null} when neither is set
+	 */
+	public String effectiveEffort() {
+		return thinkingEffort != null ? thinkingEffort : reasoningEffort;
+	}
 }

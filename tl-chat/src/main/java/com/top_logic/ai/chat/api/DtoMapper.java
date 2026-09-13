@@ -15,6 +15,7 @@ import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.MessageDto;
+import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.api.messages.SessionMetadata;
 import com.top_logic.ai.chat.api.messages.TokenUsageDto;
 import com.top_logic.ai.chat.api.messages.UserInteractionEvent;
@@ -274,6 +275,13 @@ public final class DtoMapper {
 		for (String skill : tracker.getLoadedSkills()) {
 			meta.addLoadedSkill(skill);
 		}
+		for (MessageFeedbackDto entry : tracker.getFeedback()) {
+			meta.addFeedback(entry);
+		}
+		String effort = tracker.getEffort();
+		if (effort != null) {
+			meta.setLastEffort(effort);
+		}
 		return toJson(meta);
 	}
 
@@ -305,6 +313,8 @@ public final class DtoMapper {
 			if (mode != null && !mode.isEmpty()) {
 				tracker.setApprovalMode(ApprovalMode.valueOf(mode));
 			}
+			tracker.loadFeedback(meta.getFeedback());
+			tracker.setEffort(meta.getLastEffort());
 			List<String> loadedSkills = meta.getLoadedSkills();
 			if (loadedSkills != null && !loadedSkills.isEmpty()) {
 				tracker.loadLoadedSkills(new HashSet<>(loadedSkills));

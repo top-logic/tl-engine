@@ -27,6 +27,11 @@ import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.CancelPromptImprovementRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
+import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
+import com.top_logic.ai.chat.api.messages.MessageFeedbackRequest;
+import com.top_logic.ai.chat.api.messages.RegenerateRequest;
+import com.top_logic.ai.chat.api.messages.TruncateRequest;
+import com.top_logic.ai.chat.api.messages.TruncateResponse;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
 import com.top_logic.ai.chat.api.messages.TokenUsageDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionDto;
@@ -73,6 +78,9 @@ import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.session.ConversationLogReplay;
+import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
@@ -113,6 +121,12 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_INTERACTIONS = "/interactions";
 	private static final String PATH_SUBAGENTS = "/subagents";
 	private static final String PATH_CAPABILITIES = "/capabilities";
+
+	private static final String PATH_REGENERATE = "/regenerate";
+
+	private static final String PATH_TRUNCATE = "/truncate";
+
+	private static final String PATH_FEEDBACK = "/feedback";
 	private static final String TRANSCRIPT_SUFFIX = "/transcript";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
@@ -159,6 +173,18 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		if (pathInfo.equals(PATH_APPROVAL_MODE) || pathInfo.equals(PATH_APPROVAL_MODE + "/")) {
 			handleApprovalMode(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_REGENERATE) || pathInfo.equals(PATH_REGENERATE + "/")) {
+			handleRegenerate(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_TRUNCATE) || pathInfo.equals(PATH_TRUNCATE + "/")) {
+			handleTruncate(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_FEEDBACK) || pathInfo.equals(PATH_FEEDBACK + "/")) {
+			handleFeedback(req, resp);
 			return;
 		}
 		if (pathInfo.equals(PATH_SESSIONS) || pathInfo.equals(PATH_SESSIONS + "/")) {
@@ -297,11 +323,14 @@ public class ChatServlet extends TopLogicServlet {
 			}
 		}
 		final String userName = storedName != null ? storedName : "Anonymous";
+		String effort = blankToNull(body.getEffort());
+		tracker.setEffort(effort);
 		ChatProcessor.ChatRunOptions options = new ChatProcessor.ChatRunOptions(
 			blankToNull(body.getAgent()),
 			blankToNull(body.getModel()),
 			body.isMcpOverride(),
-			body.getMcpServers());
+			body.getMcpServers(),
+			effort);
 		ChatProcessor.SendResult result =
 			ChatProcessor.sendMessage(tracker, subSession, userName, messageText, attachments, options);
 
@@ -318,6 +347,218 @@ public class ChatServlet extends TopLogicServlet {
 			.setTaskId(result.getTaskId())
 			.setStatus("processing");
 		resp.getWriter().write(DtoMapper.toJson(sendResponse));
+	}
+
+	/**
+	 * Answers the last message again.
+	 *
+	 * <p>
+	 * The previous answer is not kept beside the new one: the user asked for that turn to be done
+	 * differently, so the turn is removed - from the session's memory and from its recorded
+	 * transcript - and the same user message is sent once more. What the client then streams is the
+	 * replacement, in the place the old answer occupied.
+	 * </p>
+	 */
+	private void handleRegenerate(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		RegenerateRequest body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = RegenerateRequest.readRegenerateRequest(new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+		TaskProgressTracker tracker = currentTracker();
+		String sessionId = blankToNull(body.getSessionId());
+		if (sessionId != null) {
+			tracker.setActiveSessionId(sessionId);
+		}
+		if (tracker.hasActiveProcessingState()) {
+			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
+			return;
+		}
+
+		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
+		int turnCount = log.turnCount();
+		if (turnCount == 0) {
+			writeTruncateResponse(resp, TruncateResponse.create().setStatus("error"));
+			return;
+		}
+		Removed removed = removeTurnsFrom(tracker, sessionId, turnCount - 1);
+		if (removed.text().isEmpty()) {
+			writeTruncateResponse(resp, TruncateResponse.create().setStatus("error"));
+			return;
+		}
+
+		ChatProcessor.ChatRunOptions options = new ChatProcessor.ChatRunOptions(
+			blankToNull(body.getAgent()), blankToNull(body.getModel()),
+			body.isMcpOverride(), body.getMcpServers(), blankToNull(body.getEffort()));
+		tracker.setEffort(blankToNull(body.getEffort()));
+		String userName = resolveUserName(req, tracker);
+		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker,
+			TLContextManager.getSubSession(), userName, removed.text(), List.of(), options);
+
+		TruncateResponse response = TruncateResponse.create()
+			.setRemovedTurns(removed.turns())
+			.setText(removed.text());
+		if (result.getTaskId() == null) {
+			writeTruncateResponse(resp, response.setStatus(result.isBusy() ? "busy" : "error"));
+			return;
+		}
+		writeTruncateResponse(resp, response.setStatus("ok").setTaskId(result.getTaskId()));
+	}
+
+	/**
+	 * Drops a turn and everything after it, so the user can say it differently.
+	 *
+	 * <p>
+	 * The removed message comes back in the response rather than being re-sent: editing means the
+	 * user wants to change it before it goes again, which only they can do.
+	 * </p>
+	 */
+	private void handleTruncate(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		TruncateRequest body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = TruncateRequest.readTruncateRequest(new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+		TaskProgressTracker tracker = currentTracker();
+		String sessionId = blankToNull(body.getSessionId());
+		if (sessionId != null) {
+			tracker.setActiveSessionId(sessionId);
+		}
+		if (tracker.hasActiveProcessingState()) {
+			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
+			return;
+		}
+		Removed removed = removeTurnsFrom(tracker, sessionId, body.getFromTurn());
+		writeTruncateResponse(resp, TruncateResponse.create()
+			.setStatus("ok")
+			.setRemovedTurns(removed.turns())
+			.setText(removed.text()));
+	}
+
+	/** What a truncation took away. */
+	private record Removed(int turns, String text) {
+		// Pure data.
+	}
+
+	/**
+	 * Removes turn {@code fromTurn} and everything after it from the live session and from what is
+	 * recorded for it.
+	 *
+	 * <p>
+	 * Three things hold a copy of a conversation and all three have to forget it: the conversation
+	 * memory the model is given, the conversation log the UI is rebuilt from, and the per-run
+	 * transcripts in the knowledge base. Ratings of removed turns go too - they describe answers
+	 * that no longer exist.
+	 * </p>
+	 *
+	 * @return how many turns went, and the user text of the first of them
+	 */
+	private static Removed removeTurnsFrom(TaskProgressTracker tracker, String sessionId, int fromTurn) {
+		ConversationLog log = tracker.getSessionManager().getOrCreateConversationLog();
+		List<Turn> turns = log.turns();
+		if (fromTurn < 0 || fromTurn >= turns.size()) {
+			return new Removed(0, "");
+		}
+		String text = userTextOf(turns.get(fromTurn));
+		int removed = log.removeFrom(fromTurn);
+
+		ConversationMemory memory = tracker.getConversationMemory();
+		if (memory != null) {
+			ConversationLogReplay.rebuildMemory(log, memory.conversation());
+		}
+		tracker.dropFeedbackFrom(fromTurn);
+
+		if (sessionId != null) {
+			TLObject session = ChatHistoryService.findSessionById(sessionId);
+			if (session != null) {
+				ChatHistoryService.truncateConversation(session, fromTurn);
+			}
+		}
+		tracker.getSessionManager().persistActiveSession();
+		return new Removed(removed, text);
+	}
+
+	/** The text the user contributed to a turn, joined over its parts. */
+	private static String userTextOf(Turn turn) {
+		StringBuilder text = new StringBuilder();
+		for (Part part : turn.userParts()) {
+			if (part instanceof Part.TextPart textPart) {
+				if (text.length() > 0) {
+					text.append('\n');
+				}
+				text.append(textPart.text());
+			}
+		}
+		return text.toString();
+	}
+
+	/**
+	 * Records what the user thought of one answer.
+	 *
+	 * <p>
+	 * The rating lands in the session's metadata bag (see {@code SessionMetadata.feedback}) rather
+	 * than in the transcript: a transcript is written per run and a rating arrives after it, while
+	 * the metadata is the session's own and is rewritten whole on every persist. That is also where
+	 * an evaluation reads the ratings back from, keyed by the turn they belong to.
+	 * </p>
+	 */
+	private void handleFeedback(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		MessageFeedbackRequest body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = MessageFeedbackRequest.readMessageFeedbackRequest(new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+		TaskProgressTracker tracker = currentTracker();
+		String sessionId = blankToNull(body.getSessionId());
+		if (sessionId != null) {
+			tracker.setActiveSessionId(sessionId);
+		}
+		tracker.setFeedback(body.getTurnIndex(), blankToNull(body.getRating()), body.getNote());
+		tracker.getSessionManager().persistActiveSession();
+
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"status\":\"ok\"}");
+	}
+
+	private static void writeTruncateResponse(HttpServletResponse resp, TruncateResponse response)
+			throws IOException {
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/** The display name of the requesting user, resolved once and remembered on the tracker. */
+	private static String resolveUserName(HttpServletRequest req, TaskProgressTracker tracker) {
+		String stored = tracker.getUserName();
+		if (stored != null) {
+			return stored;
+		}
+		Person person = resolveCurrentPerson(req);
+		if (person == null) {
+			return "Anonymous";
+		}
+		try {
+			String name = person.getName();
+			if (name != null) {
+				tracker.setUserName(name);
+				return name;
+			}
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to resolve person name", ex, ChatServlet.class);
+		}
+		return "Anonymous";
 	}
 
 	private void handleImprovePrompt(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -719,6 +960,18 @@ public class ChatServlet extends TopLogicServlet {
 				}
 				response.setTurnsJson(serializeTurns(conv.getTurns()));
 				describeLastPrompt(response, conv.getTurns());
+			}
+
+			// The ratings and the effort come from the session's metadata bag, which the switch
+			// above has just loaded onto the tracker.
+			if (tracker != null) {
+				for (MessageFeedbackDto entry : tracker.getFeedback()) {
+					response.addFeedback(entry);
+				}
+				String effort = tracker.getEffort();
+				if (effort != null) {
+					response.setLastEffort(effort);
+				}
 			}
 
 			resp.getWriter().write(DtoMapper.toJson(response));

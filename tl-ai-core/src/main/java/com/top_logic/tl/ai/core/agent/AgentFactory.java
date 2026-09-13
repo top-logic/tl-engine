@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -28,6 +29,7 @@ import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
+import com.top_logic.tl.ai.core.provider.EffortLevels;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
@@ -184,6 +186,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		if (overrides != null && overrides.hasModel()) {
 			assignment = assignment.withModel(overrides.model());
 		}
+		if (overrides != null && overrides.hasEffort()) {
+			assignment = applyEffort(assignment, overrides.effort());
+		}
 
 		AgentCapabilities capabilities = AgentCapabilities.forRun(context.security());
 
@@ -237,16 +242,57 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *        Model override, or {@code null} to keep the agent's assignment
 	 * @param mcpServers
 	 *        MCP server names for this run, or {@code null} to keep the agent's configured list
+	 * @param effort
+	 *        How hard the model may think, one of the levels the model offers, or {@code null} to
+	 *        keep the agent's assignment
 	 */
-	public record RunOverrides(String model, List<String> mcpServers) {
+	public record RunOverrides(String model, List<String> mcpServers, String effort) {
 
 		/** No overrides — use the agent definition as stored. */
-		public static final RunOverrides NONE = new RunOverrides(null, null);
+		public static final RunOverrides NONE = new RunOverrides(null, null, null);
+
+		/** Overrides without an effort level, for callers that do not offer the setting. */
+		public RunOverrides(String model, List<String> mcpServers) {
+			this(model, mcpServers, null);
+		}
 
 		/** Whether a model override is present. */
 		public boolean hasModel() {
 			return model != null && !model.isBlank();
 		}
+
+		/** Whether an effort override is present. */
+		public boolean hasEffort() {
+			return effort != null && !effort.isBlank();
+		}
+	}
+
+	/**
+	 * Puts an effort level into whichever field the model's provider reads it from.
+	 *
+	 * <p>
+	 * A level the model does not offer is dropped with a warning rather than passed on: the two
+	 * providers reject an unknown value, and failing the whole run over a UI setting the user can
+	 * see but the model cannot use would be the worse answer.
+	 * </p>
+	 */
+	private static AgentModelAssignment applyEffort(AgentModelAssignment assignment, String effort) {
+		String model = assignment.model();
+		LLMService llm = LLMService.getInstance();
+		String providerId = llm.getProviderId(model, assignment.provider());
+		ModelInfo info = llm.getModel(model);
+		String level = effort.trim().toLowerCase(Locale.ROOT);
+
+		if (!EffortLevels.isValid(providerId, info, level)) {
+			Logger.warn("Ignoring effort '" + effort + "' for model '" + model
+				+ "': it offers " + EffortLevels.forModel(providerId, info) + ".", AgentFactory.class);
+			return assignment;
+		}
+		return switch (EffortLevels.kindOf(providerId, info)) {
+			case THINKING_EFFORT -> assignment.withThinkingEffort(level);
+			case REASONING_EFFORT -> assignment.withReasoningEffort(level);
+			case NONE -> assignment;
+		};
 	}
 
 	/**

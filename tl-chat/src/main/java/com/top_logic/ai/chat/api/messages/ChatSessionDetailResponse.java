@@ -36,6 +36,12 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	/** @see #getLastModel() */
 	public static final String LAST_MODEL__PROP = "lastModel";
 
+	/** @see #getFeedback() */
+	public static final String FEEDBACK__PROP = "feedback";
+
+	/** @see #getLastEffort() */
+	public static final String LAST_EFFORT__PROP = "lastEffort";
+
 	private String _id = "";
 
 	private String _title = "";
@@ -49,6 +55,10 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	private int _contextWindow = 0;
 
 	private String _lastModel = "";
+
+	private final java.util.List<com.top_logic.ai.chat.api.messages.MessageFeedbackDto> _feedback = new java.util.ArrayList<>();
+
+	private String _lastEffort = "";
 
 	/**
 	 * Creates a {@link ChatSessionDetailResponse} instance.
@@ -216,6 +226,68 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		_lastModel = value;
 	}
 
+	/**
+	 * Answer ratings recorded in this session, so a reopened chat shows them again.
+	 */
+	public final java.util.List<com.top_logic.ai.chat.api.messages.MessageFeedbackDto> getFeedback() {
+		return _feedback;
+	}
+
+	/**
+	 * @see #getFeedback()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setFeedback(java.util.List<? extends com.top_logic.ai.chat.api.messages.MessageFeedbackDto> value) {
+		internalSetFeedback(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getFeedback()} without chain call utility. */
+	protected final void internalSetFeedback(java.util.List<? extends com.top_logic.ai.chat.api.messages.MessageFeedbackDto> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'feedback' cannot be null.");
+		_feedback.clear();
+		_feedback.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getFeedback()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse addFeedback(com.top_logic.ai.chat.api.messages.MessageFeedbackDto value) {
+		internalAddFeedback(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addFeedback(com.top_logic.ai.chat.api.messages.MessageFeedbackDto)} without chain call utility. */
+	protected final void internalAddFeedback(com.top_logic.ai.chat.api.messages.MessageFeedbackDto value) {
+		_feedback.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getFeedback()} list.
+	 */
+	public final void removeFeedback(com.top_logic.ai.chat.api.messages.MessageFeedbackDto value) {
+		_feedback.remove(value);
+	}
+
+	/**
+	 * Effort level last used in this session; empty when none was chosen.
+	 */
+	public final String getLastEffort() {
+		return _lastEffort;
+	}
+
+	/**
+	 * @see #getLastEffort()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setLastEffort(String value) {
+		internalSetLastEffort(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getLastEffort()} without chain call utility. */
+	protected final void internalSetLastEffort(String value) {
+		_lastEffort = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SESSION_DETAIL_RESPONSE__TYPE;
@@ -230,7 +302,9 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			TURNS_JSON__PROP, 
 			LAST_PROMPT_USAGE__PROP, 
 			CONTEXT_WINDOW__PROP, 
-			LAST_MODEL__PROP);
+			LAST_MODEL__PROP, 
+			FEEDBACK__PROP, 
+			LAST_EFFORT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -262,6 +336,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_PROMPT_USAGE__PROP: return getLastPromptUsage();
 			case CONTEXT_WINDOW__PROP: return getContextWindow();
 			case LAST_MODEL__PROP: return getLastModel();
+			case FEEDBACK__PROP: return getFeedback();
+			case LAST_EFFORT__PROP: return getLastEffort();
 			default: return null;
 		}
 	}
@@ -276,6 +352,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_PROMPT_USAGE__PROP: internalSetLastPromptUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
 			case CONTEXT_WINDOW__PROP: internalSetContextWindow((int) value); break;
 			case LAST_MODEL__PROP: internalSetLastModel((String) value); break;
+			case FEEDBACK__PROP: internalSetFeedback(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.MessageFeedbackDto.class, value)); break;
+			case LAST_EFFORT__PROP: internalSetLastEffort((String) value); break;
 		}
 	}
 
@@ -310,6 +388,14 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		out.value(getContextWindow());
 		out.name(LAST_MODEL__PROP);
 		out.value(getLastModel());
+		out.name(FEEDBACK__PROP);
+		out.beginArray();
+		for (com.top_logic.ai.chat.api.messages.MessageFeedbackDto x : getFeedback()) {
+			x.writeTo(out);
+		}
+		out.endArray();
+		out.name(LAST_EFFORT__PROP);
+		out.value(getLastEffort());
 	}
 
 	@Override
@@ -322,6 +408,17 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_PROMPT_USAGE__PROP: setLastPromptUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case CONTEXT_WINDOW__PROP: setContextWindow(in.nextInt()); break;
 			case LAST_MODEL__PROP: setLastModel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case FEEDBACK__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.MessageFeedbackDto> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.ai.chat.api.messages.MessageFeedbackDto.readMessageFeedbackDto(in));
+				}
+				in.endArray();
+				setFeedback(newValue);
+			}
+			break;
+			case LAST_EFFORT__PROP: setLastEffort(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

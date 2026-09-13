@@ -95,6 +95,47 @@ public class TestPromptImprovementProcessor extends TestCase {
 		}
 	}
 
+	/** A reply that talks to the user instead of rewriting the draft is refused. */
+	public void testMetaAnswerFallsBackToTheDraft() {
+		assertEquals("ok do it", improved("ok do it",
+			"It looks like your message is a bit brief. Could you please share the draft you want improved?"));
+		assertEquals("belege auswerten", improved("belege auswerten",
+			"Bitte gib an, welche Belege ausgewertet werden sollen."));
+		assertEquals("fix it", improved("fix it", "Here is the improved prompt: Fix the failing build."));
+	}
+
+	/** A question the draft did not ask is a request for clarification, not a prompt. */
+	public void testUnaskedQuestionFallsBackToTheDraft() {
+		assertEquals("ja", improved("ja", "Was genau soll gemacht werden?"));
+		// A draft that asks a question may of course be rewritten as one.
+		assertEquals("Explain why this line throws.",
+			improved("why does this throw?", "Explain why this line throws."));
+	}
+
+	/** Three words do not become a briefing. */
+	public void testShortDraftIsNotInflated() {
+		String essay = "Investigate the failing build in detail, list every failing module, "
+			+ "explain the root cause and propose a fix for each of them.";
+		assertEquals("fix the build", improved("fix the build", essay));
+		// A proportionate rewrite of the same draft is kept.
+		assertEquals("Find out why the build fails and fix it.",
+			improved("fix the build", "Find out why the build fails and fix it."));
+	}
+
+	/** A genuine rewrite of a long draft passes untouched. */
+	public void testLongDraftIsNotGuarded() {
+		String draft = "so i was thinking that maybe we could look into the invoice thing, "
+			+ "the amounts are sometimes wrong, maybe the date parsing";
+		String rewrite = "Investigate why invoice amounts are sometimes wrong; date parsing is a suspect.";
+		assertEquals(rewrite, improved(draft, rewrite));
+	}
+
+	private String improved(String draft, String answer) {
+		return PromptImprovementProcessor
+			.improve(_tracker, "req-guard", draft, name -> AGENT.equals(name), (name, text, token) -> answer)
+			.improvedText();
+	}
+
 	/** Missing configuration is a disabled-feature failure. */
 	public void testDisabledWhenNoAgentConfigured() {
 		_tracker.setPromptImproverAgentName(null);

@@ -139,6 +139,25 @@ public class ChatHistoryService {
 	}
 
 	/**
+	 * Drops the recorded tail of a session's conversation.
+	 *
+	 * @param session
+	 *        the session to truncate
+	 * @param keepTurns
+	 *        how many turns to keep, counted from the start
+	 * @return how many turns were removed
+	 * @see com.top_logic.tl.ai.core.execution.AgentExecutionStore#truncateConversation
+	 */
+	public static int truncateConversation(TLObject session, int keepTurns) {
+		try {
+			return store().truncateConversation((AgentSession) session, keepTurns);
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to truncate chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
+			return 0;
+		}
+	}
+
+	/**
 	 * Loads the session's full conversation as a single {@code PersistedConversationV2} JSON
 	 * blob, merged from the per-execution transcripts in run order.
 	 *

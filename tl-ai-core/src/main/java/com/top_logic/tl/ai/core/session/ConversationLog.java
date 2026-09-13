@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.session;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -107,6 +108,31 @@ public class ConversationLog {
 	}
 
 	/** Registers an observer for turn lifecycle events. */
+	/**
+	 * Removes the turn at the given index and every turn after it.
+	 *
+	 * <p>
+	 * Used when the user regenerates an answer or edits an earlier message. A conversation is a
+	 * sequence, so what followed the removed turn was said in reply to it and goes with it.
+	 * </p>
+	 *
+	 * @param fromIndex
+	 *        zero-based index of the first turn to remove
+	 * @return how many turns were removed
+	 */
+	public int removeFrom(int fromIndex) {
+		if (fromIndex < 0 || fromIndex >= _turns.size()) {
+			return 0;
+		}
+		int removed = _turns.size() - fromIndex;
+		// Rebuilt rather than trimmed in place: a CopyOnWriteArrayList's sublist cannot be cleared.
+		List<Turn> kept = new ArrayList<>(_turns.subList(0, fromIndex));
+		_turns.clear();
+		_turns.addAll(kept);
+		_currentTurn = null;
+		return removed;
+	}
+
 	public void addObserver(Observer observer) {
 		_observers.add(observer);
 	}

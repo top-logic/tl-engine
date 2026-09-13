@@ -7,6 +7,7 @@ package com.top_logic.ai.chat.layout;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,6 +53,45 @@ public final class PromptImprovementProcessor {
 
 	/** How often wrapper removal is retried; a lead-in plus a fence needs two passes. */
 	private static final int MAX_WRAPPER_PASSES = 3;
+
+	/**
+	 * Longest draft still considered "very short", below which a rewrite may not balloon.
+	 */
+	private static final int SHORT_DRAFT_CHARS = 40;
+
+	/** How much longer than a very short draft its rewrite may be. */
+	private static final int MAX_SHORT_GROWTH = 3;
+
+	/**
+	 * Length a rewrite of a very short draft may always reach, whatever the ratio says.
+	 *
+	 * <p>
+	 * Three words turned into one clear sentence is the point of the feature and can easily be five
+	 * times as long; the ratio alone would refuse it. What the ratio is there to catch is an essay,
+	 * and an essay is longer than this either way.
+	 * </p>
+	 */
+	private static final int SHORT_REWRITE_CEILING = 120;
+
+	/**
+	 * Phrases that only occur when the reply is about the prompt instead of being one.
+	 *
+	 * <p>
+	 * English and German, lower case, matched anywhere. A genuine prompt can of course contain
+	 * "your" or "ich" - what it does not contain is these pairings, which belong to an assistant
+	 * addressing its user.
+	 * </p>
+	 */
+	private static final String[] META_PHRASES = {
+		"your message", "your prompt", "your draft", "your request",
+		"could you", "can you provide", "please provide", "please specify", "please share",
+		"i can help", "i'd be happy", "i would be happy", "it looks like", "it seems like",
+		"here is the", "here's the", "improved prompt", "improved version",
+		"deine nachricht", "deine anfrage", "dein prompt", "ihre nachricht", "ihre anfrage",
+		"ihr prompt", "bitte gib an", "bitte geben sie an", "bitte teile mit",
+		"kannst du mir", "k\u00f6nnen sie mir", "ich kann dir", "ich kann ihnen",
+		"verbesserter prompt", "hier ist der",
+	};
 
 	/** Quotation-mark pairs stripped when they enclose the whole answer. */
 	private static final String[] QUOTE_PAIRS = { "\"\"", "\u201c\u201d", "\u00ab\u00bb", "\u201e\u201c", "''" };
@@ -114,7 +154,8 @@ public final class PromptImprovementProcessor {
 				throw new IllegalStateException(
 					"Prompt-improver agent '" + agentName + "' returned only a wrapper.");
 			}
-			return new Result(normalizedRequestId, cleaned, STATUS_COMPLETED);
+			return new Result(normalizedRequestId, keepOrFallBack(normalizedDraft, cleaned),
+				STATUS_COMPLETED);
 		} catch (CancellationException ex) {
 			return cancelledOrStale(tracker, state);
 		} catch (RuntimeException ex) {
@@ -125,6 +166,50 @@ public final class PromptImprovementProcessor {
 		} finally {
 			tracker.clearPromptImprovementState(state);
 		}
+	}
+
+	/**
+	 * Returns the rewrite, or the draft when the rewrite is not one.
+	 *
+	 * <p>
+	 * A prompt improver has exactly one failure mode that matters: instead of rewriting the draft it
+	 * starts talking to the user - asking what they meant, explaining what it would need, offering
+	 * to help. Pasting that into the input box replaces the user's question with a machine's request
+	 * for clarification, which is worse than doing nothing. Three shapes are refused, and refusing
+	 * means handing back the draft unchanged so the UI can say "no changes":
+	 * </p>
+	 *
+	 * <ul>
+	 * <li>a reply that addresses the user - a first- or second-person meta phrase such as "your
+	 * prompt", "could you", "I can";</li>
+	 * <li>a question the draft did not ask, which is what a request for clarification looks like;</li>
+	 * <li>a reply several times longer than a very short draft, which is an essay grown from three
+	 * words rather than a rewrite of them.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * The checks are deliberately blunt. A false refusal costs the user nothing - they keep the
+	 * text they wrote - while a false acceptance costs them their prompt.
+	 * </p>
+	 */
+	static String keepOrFallBack(String draft, String improved) {
+		if (improved.equalsIgnoreCase(draft)) {
+			return draft;
+		}
+		String lower = improved.toLowerCase(Locale.ROOT);
+		for (String phrase : META_PHRASES) {
+			if (lower.contains(phrase)) {
+				return draft;
+			}
+		}
+		if (improved.indexOf('?') >= 0 && draft.indexOf('?') < 0) {
+			return draft;
+		}
+		if (draft.length() <= SHORT_DRAFT_CHARS
+			&& improved.length() > Math.max(draft.length() * MAX_SHORT_GROWTH, SHORT_REWRITE_CEILING)) {
+			return draft;
+		}
+		return improved;
 	}
 
 	/**

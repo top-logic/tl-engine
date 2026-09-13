@@ -33,6 +33,12 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getLoadedSkills() */
 	public static final String LOADED_SKILLS__PROP = "loadedSkills";
 
+	/** @see #getFeedback() */
+	public static final String FEEDBACK__PROP = "feedback";
+
+	/** @see #getLastEffort() */
+	public static final String LAST_EFFORT__PROP = "lastEffort";
+
 	private final java.util.List<String> _approvedTools = new java.util.ArrayList<>();
 
 	private com.top_logic.ai.chat.api.messages.TokenUsageDto _cumulativeUsage = null;
@@ -44,6 +50,10 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 	private String _tasksJson = "";
 
 	private final java.util.List<String> _loadedSkills = new java.util.ArrayList<>();
+
+	private final java.util.List<com.top_logic.ai.chat.api.messages.MessageFeedbackDto> _feedback = new java.util.ArrayList<>();
+
+	private String _lastEffort = "";
 
 	/**
 	 * Creates a {@link SessionMetadata} instance.
@@ -223,6 +233,74 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 		_loadedSkills.remove(value);
 	}
 
+	/**
+	 * Answer ratings the user gave in this session.
+	 *
+	 * <p>
+	 * Kept here rather than in the transcript because a transcript is written per run and a rating
+	 * arrives after it: this bag is the session's own, is rewritten whole, and is therefore also
+	 * where an evaluation reads the ratings back from.
+	 * </p>
+	 */
+	public final java.util.List<com.top_logic.ai.chat.api.messages.MessageFeedbackDto> getFeedback() {
+		return _feedback;
+	}
+
+	/**
+	 * @see #getFeedback()
+	 */
+	public com.top_logic.ai.chat.api.messages.SessionMetadata setFeedback(java.util.List<? extends com.top_logic.ai.chat.api.messages.MessageFeedbackDto> value) {
+		internalSetFeedback(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getFeedback()} without chain call utility. */
+	protected final void internalSetFeedback(java.util.List<? extends com.top_logic.ai.chat.api.messages.MessageFeedbackDto> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'feedback' cannot be null.");
+		_feedback.clear();
+		_feedback.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getFeedback()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.SessionMetadata addFeedback(com.top_logic.ai.chat.api.messages.MessageFeedbackDto value) {
+		internalAddFeedback(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addFeedback(com.top_logic.ai.chat.api.messages.MessageFeedbackDto)} without chain call utility. */
+	protected final void internalAddFeedback(com.top_logic.ai.chat.api.messages.MessageFeedbackDto value) {
+		_feedback.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getFeedback()} list.
+	 */
+	public final void removeFeedback(com.top_logic.ai.chat.api.messages.MessageFeedbackDto value) {
+		_feedback.remove(value);
+	}
+
+	/**
+	 * Effort level last chosen in this session.
+	 */
+	public final String getLastEffort() {
+		return _lastEffort;
+	}
+
+	/**
+	 * @see #getLastEffort()
+	 */
+	public com.top_logic.ai.chat.api.messages.SessionMetadata setLastEffort(String value) {
+		internalSetLastEffort(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getLastEffort()} without chain call utility. */
+	protected final void internalSetLastEffort(String value) {
+		_lastEffort = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return SESSION_METADATA__TYPE;
@@ -236,7 +314,9 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			LAST_MODEL__PROP, 
 			APPROVAL_MODE__PROP, 
 			TASKS_JSON__PROP, 
-			LOADED_SKILLS__PROP);
+			LOADED_SKILLS__PROP, 
+			FEEDBACK__PROP, 
+			LAST_EFFORT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -267,6 +347,8 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			case APPROVAL_MODE__PROP: return getApprovalMode();
 			case TASKS_JSON__PROP: return getTasksJson();
 			case LOADED_SKILLS__PROP: return getLoadedSkills();
+			case FEEDBACK__PROP: return getFeedback();
+			case LAST_EFFORT__PROP: return getLastEffort();
 			default: return null;
 		}
 	}
@@ -280,6 +362,8 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			case APPROVAL_MODE__PROP: internalSetApprovalMode((String) value); break;
 			case TASKS_JSON__PROP: internalSetTasksJson((String) value); break;
 			case LOADED_SKILLS__PROP: internalSetLoadedSkills(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
+			case FEEDBACK__PROP: internalSetFeedback(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.MessageFeedbackDto.class, value)); break;
+			case LAST_EFFORT__PROP: internalSetLastEffort((String) value); break;
 		}
 	}
 
@@ -320,6 +404,14 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			out.value(x);
 		}
 		out.endArray();
+		out.name(FEEDBACK__PROP);
+		out.beginArray();
+		for (com.top_logic.ai.chat.api.messages.MessageFeedbackDto x : getFeedback()) {
+			x.writeTo(out);
+		}
+		out.endArray();
+		out.name(LAST_EFFORT__PROP);
+		out.value(getLastEffort());
 	}
 
 	@Override
@@ -349,6 +441,17 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 				setLoadedSkills(newValue);
 			}
 			break;
+			case FEEDBACK__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.MessageFeedbackDto> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.ai.chat.api.messages.MessageFeedbackDto.readMessageFeedbackDto(in));
+				}
+				in.endArray();
+				setFeedback(newValue);
+			}
+			break;
+			case LAST_EFFORT__PROP: setLastEffort(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

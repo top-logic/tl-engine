@@ -18,6 +18,8 @@ import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
+import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
+import com.top_logic.tl.ai.core.provider.EffortLevels;
 import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 
@@ -52,6 +54,16 @@ final class ChatCapabilities {
 					dto.setContextWindow(info.limits().contextWindow());
 					dto.setMaxOutput(info.limits().maxOutput());
 				}
+				// Empty for a model that cannot reason, or whose provider has no such setting: a
+				// UI must not offer a level the provider would reject.
+				List<String> levels = EffortLevels.forModel(provider, info);
+				dto.getEffortLevels().addAll(levels);
+				if (!levels.isEmpty()) {
+					String assigned = assignedEffort(llm, modelId);
+					dto.setDefaultEffort(assigned != null && levels.contains(assigned)
+						? assigned
+						: levels.get(levels.size() / 2));
+				}
 				response.addModel(dto);
 			}
 		}
@@ -67,6 +79,26 @@ final class ChatCapabilities {
 			}
 		}
 		return response;
+	}
+
+	/**
+	 * The effort the entry-point agent's assignment already carries for this model, if any.
+	 *
+	 * <p>
+	 * Shown as the default so the menu opens on what a turn would actually use, rather than on a
+	 * level the UI invented.
+	 * </p>
+	 */
+	private static String assignedEffort(LLMService llm, String modelId) {
+		try {
+			AgentModelAssignment assignment =
+				llm.resolveModelAssignment(llm.getEntryPointAgentName()).withModel(modelId);
+			return assignment.effectiveEffort();
+		} catch (RuntimeException ex) {
+			Logger.debug("No assignment to read a default effort from for '" + modelId + "'.",
+				ChatCapabilities.class);
+			return null;
+		}
 	}
 
 	private static Collection<AgentDefinition> listAgents() {

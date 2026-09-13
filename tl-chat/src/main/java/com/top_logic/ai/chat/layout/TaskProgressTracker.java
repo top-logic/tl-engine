@@ -5,6 +5,11 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -12,6 +17,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
@@ -79,6 +85,20 @@ public class TaskProgressTracker {
 
 	/** Skills loaded via loadSkill() in this session. */
 	private final Set<String> _loadedSkills = ConcurrentHashMap.newKeySet();
+
+	/**
+	 * Answer ratings of the active session, keyed by the zero-based turn index they belong to.
+	 *
+	 * <p>
+	 * Session state like the approved tools above: it is written into the session metadata on
+	 * persist and read back when the session is re-opened, and it is cleared when the window
+	 * switches to another session.
+	 * </p>
+	 */
+	private final Map<Integer, MessageFeedbackDto> _feedback = new ConcurrentHashMap<>();
+
+	/** Effort level last chosen in the active session; {@code null} when none was. */
+	private volatile String _effort;
 
 	/** Cumulative token usage across all runs in this session. */
 	private volatile TokenUsage _cumulativeUsage = TokenUsage.EMPTY;
@@ -491,7 +511,69 @@ public class TaskProgressTracker {
 	public void resetSessionState() {
 		_sessionApprovedTools.clear();
 		_loadedSkills.clear();
+		_feedback.clear();
+		_effort = null;
 		_cumulativeUsage = TokenUsage.EMPTY;
+	}
+
+	/**
+	 * Records, changes or withdraws the rating of one answer.
+	 *
+	 * @param turnIndex
+	 *        zero-based index of the turn whose answer was rated
+	 * @param rating
+	 *        {@code "up"} or {@code "down"}; anything else withdraws an earlier rating
+	 * @param note
+	 *        free text the user added, or {@code null}
+	 */
+	public void setFeedback(int turnIndex, String rating, String note) {
+		if (!"up".equals(rating) && !"down".equals(rating)) {
+			_feedback.remove(Integer.valueOf(turnIndex));
+			return;
+		}
+		_feedback.put(Integer.valueOf(turnIndex), MessageFeedbackDto.create()
+			.setTurnIndex(turnIndex)
+			.setRating(rating)
+			.setNote(note == null ? "" : note)
+			.setRecordedAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now())));
+	}
+
+	/** Every rating of the active session, in turn order. */
+	public List<MessageFeedbackDto> getFeedback() {
+		List<MessageFeedbackDto> all = new ArrayList<>(_feedback.values());
+		all.sort(Comparator.comparingInt(MessageFeedbackDto::getTurnIndex));
+		return all;
+	}
+
+	/** Replaces the active session's ratings, e.g. when the session is loaded. */
+	public void loadFeedback(List<MessageFeedbackDto> feedback) {
+		_feedback.clear();
+		if (feedback == null) {
+			return;
+		}
+		for (MessageFeedbackDto entry : feedback) {
+			_feedback.put(Integer.valueOf(entry.getTurnIndex()), entry);
+		}
+	}
+
+	/**
+	 * Drops the ratings of turns that no longer exist.
+	 *
+	 * @param turnCount
+	 *        how many turns the session has left; ratings at or after this index are removed
+	 */
+	public void dropFeedbackFrom(int turnCount) {
+		_feedback.keySet().removeIf(index -> index.intValue() >= turnCount);
+	}
+
+	/** Effort level last chosen in the active session, or {@code null}. */
+	public String getEffort() {
+		return _effort;
+	}
+
+	/** Remembers the effort level chosen for the active session. */
+	public void setEffort(String effort) {
+		_effort = effort == null || effort.isBlank() ? null : effort.trim();
 	}
 
 	/**

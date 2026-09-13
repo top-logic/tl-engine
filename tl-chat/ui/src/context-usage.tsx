@@ -8,7 +8,21 @@ export function formatTokens(n: number): string {
   if (!n) return '0'
   if (n < 1000) return String(n)
   if (n < 10_000) return `${(n / 1000).toFixed(1)}K`
-  return `${Math.round(n / 1000)}K`
+  if (n < 1_000_000) return `${Math.round(n / 1000)}K`
+  const millions = n / 1_000_000
+  return `${millions < 10 ? millions.toFixed(1).replace(/\.0$/, '') : Math.round(millions)}M`
+}
+
+/**
+ * How full the window is, in words a reader can act on.
+ *
+ * A million-token window makes the first turns round to zero, and "0% full" reads as a broken
+ * gauge rather than as an empty one, so anything below one percent says so instead.
+ */
+function formatPercent(ratio: number): string {
+  if (ratio <= 0) return '0%'
+  if (ratio < 0.01) return '<1%'
+  return `${Math.round(ratio * 100)}%`
 }
 
 interface Slice {
@@ -27,7 +41,8 @@ export interface ContextReading {
   /** True when `used` is the agent loop's estimate because no turn has completed yet. */
   estimated: boolean
   ratio: number
-  percent: number
+  /** Ready to print, e.g. "78%" or "<1%". */
+  percent: string
   slices: Slice[]
   /** Tokens the model wrote in the last turn - not part of the prompt, so never inside the bar. */
   answer: number
@@ -62,7 +77,7 @@ export function readContext(snapshot: RunSnapshot): ContextReading {
     window: windowSize,
     estimated,
     ratio,
-    percent: Math.round(ratio * 100),
+    percent: formatPercent(ratio),
     slices: slicesOf(used, snapshot.composition, estimated),
     answer: answerTokens(snapshot.lastUsage),
   }
@@ -93,6 +108,18 @@ function slicesOf(used: number, composition: ContextComposition | undefined, est
 }
 
 const RADIUS = 13
+
+/**
+ * Length of the drawn arc.
+ *
+ * A fraction of a percent of a million-token window would be a sub-pixel arc, and a ring with no
+ * arc at all reads as a spinner that never finishes. Any non-zero usage therefore draws a short
+ * visible tick; the exact figure is one hover away.
+ */
+function arcLength(ratio: number, circumference: number): number {
+  if (ratio <= 0) return 0
+  return Math.max(circumference * 0.04, circumference * ratio)
+}
 
 export const ContextUsage = React.memo(function ContextUsage() {
   const snapshot = useSyncExternalStore(runStore.subscribe, runStore.get, runStore.get)
@@ -141,7 +168,7 @@ export const ContextUsage = React.memo(function ContextUsage() {
             cx="16"
             cy="16"
             r={RADIUS}
-            strokeDasharray={`${circumference * reading.ratio} ${circumference}`}
+            strokeDasharray={`${arcLength(reading.ratio, circumference)} ${circumference}`}
             transform="rotate(-90 16 16)"
           />
         </svg>
@@ -163,7 +190,7 @@ function ContextPopover({ reading, model }: { reading: ContextReading; model: st
         </span>
       </div>
       <div className="context-popover-meta">
-        <span>{reading.percent}% full</span>
+        <span>{reading.percent} full</span>
         {model ? <span className="context-model">{model}</span> : null}
       </div>
       <div className="context-bar" aria-hidden="true">
@@ -176,7 +203,7 @@ function ContextPopover({ reading, model }: { reading: ContextReading; model: st
             />
           ))
         ) : (
-          <i className="slice-conversation" style={{ width: `${Math.max(1, reading.percent)}%` }} />
+          <i className="slice-conversation" style={{ width: `${Math.max(1, reading.ratio * 100)}%` }} />
         )}
       </div>
       {reading.slices.length ? (

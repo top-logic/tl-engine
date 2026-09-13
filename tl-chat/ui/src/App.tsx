@@ -561,7 +561,9 @@ export function App({ controlId }: TLCellProps) {
       setRailOpen(false)
       setSubagents([])
       setNotice('')
-      runStore.set({ ...EMPTY_RUN, model: modelRef.current })
+      // The model does not change when the chat does, so its window survives the reset; only what
+      // the previous conversation measured is dropped.
+      runStore.set((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
       const detail = await loadSession(windowId, id)
       setSessionId(id)
       dispatch({ type: 'REPLACE', messages: turnsJsonToMessages(detail.turnsJson) })
@@ -589,7 +591,7 @@ export function App({ controlId }: TLCellProps) {
     assistantId.current = null
     runIdRef.current = null
     setBusy(false)
-    runStore.set({ ...EMPTY_RUN, model: modelRef.current })
+    runStore.set((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
     await refreshSessions()
   }, [windowId, refreshSessions])
 
@@ -600,7 +602,7 @@ export function App({ controlId }: TLCellProps) {
         setSessionId(null)
         setSubagents([])
         dispatch({ type: 'RESET' })
-        runStore.set({ ...EMPTY_RUN, model: modelRef.current })
+        runStore.set((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
       }
       await refreshSessions()
     },

@@ -67,7 +67,13 @@
 
 /* --- Buttons ------------------------------------------------------------ */
 
-.tl-cockpit button {
+/*
+ * Zero specificity on purpose: this only strips the browser's button chrome, and every rule that
+ * gives a button back a background or a border is a plain class selector. Written as
+ * `.tl-cockpit button` it would out-rank all of them and flatten the send button, the primary
+ * actions and the plus trigger.
+ */
+:where(.tl-cockpit button) {
   font: inherit;
   color: inherit;
   background: none;
@@ -76,7 +82,7 @@
   cursor: pointer;
 }
 
-.tl-cockpit button:disabled {
+:where(.tl-cockpit button:disabled) {
   cursor: default;
 }
 
@@ -1038,6 +1044,11 @@
   outline: none;
 }
 
+.composer-surface textarea:focus-visible {
+  /* The surface already shows focus with its border; a second outline inside it reads as an error. */
+  outline: none;
+}
+
 .composer-surface textarea::placeholder {
   color: var(--text-placeholder, var(--text-secondary));
 }
@@ -1122,7 +1133,9 @@
   place-items: center;
   border: 2px dashed var(--button-primary);
   border-radius: var(--r-3);
-  background: var(--color-drop-zone, rgba(41, 104, 200, 0.08));
+  /* Nearly opaque: the composer sits underneath, and its placeholder must not read through the
+     invitation to drop. */
+  background: color-mix(in srgb, var(--layer-01) 94%, var(--button-primary));
   color: var(--button-primary);
   font-weight: 600;
   pointer-events: none;
@@ -1442,6 +1455,14 @@
   padding: 0.375rem 0.375rem 0.5rem;
   font: inherit;
   outline: none;
+}
+
+.plus-search input:focus-visible {
+  /* An underline field: the outline of the shared focus rule would box a borderless input. */
+  outline: none;
+  border-bottom-color: var(--border-interactive, var(--button-primary));
+  border-bottom-width: 2px;
+  padding-bottom: calc(0.5rem - 1px);
 }
 
 .plus-search input::placeholder {
@@ -1788,6 +1809,8 @@
 .context-bar i {
   display: block;
   height: 100%;
+  /* A share that rounds to nothing still shows its colour, so the legend can be read against it. */
+  min-width: 3px;
 }
 
 .slice-system {
@@ -2036,7 +2059,7 @@
   }
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1100px) {
   .rail-scrim {
     display: block;
     position: absolute;

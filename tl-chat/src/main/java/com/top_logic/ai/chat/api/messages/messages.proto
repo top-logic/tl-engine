@@ -364,6 +364,29 @@ message ChatSessionDetailResponse {
 	 * precedence over entries.
 	 */
 	string turnsJson;
+
+	/**
+	 * Token usage of the last agent-loop iteration of the session's last turn.
+	 *
+	 * <p>
+	 * Its prompt size (input + cache read + cache write) is the exact context the model saw when
+	 * the session was last active, so re-opening a session restores the context ring to a measured
+	 * number rather than an estimate. Absent for a session whose transcript predates the field, and
+	 * for a session that has not run a turn yet.
+	 * </p>
+	 */
+	TokenUsageDto lastPromptUsage;
+
+	/**
+	 * Context window in tokens of the model that ran the session's last turn, or zero when that
+	 * model is no longer configured.
+	 */
+	int contextWindow;
+
+	/**
+	 * Model that ran the session's last turn, empty when the session has not run one.
+	 */
+	string lastModel;
 }
 
 /**
@@ -496,6 +519,35 @@ message TurnCompletedEvent {
 
 	/** Token usage for this turn. */
 	TokenUsageDto turnUsage;
+
+	/**
+	 * Model context window in tokens, repeated here so the client can size the context ring from
+	 * the same event that carries the provider-reported prompt size.
+	 */
+	int contextWindow;
+}
+
+/**
+ * SSE event describing what the prompt of the request just sent is made of.
+ *
+ * <p>
+ * Every figure is an estimate produced by the agent loop's token estimator, not a provider count:
+ * the provider reports one prompt total and never splits it. A client showing these next to the
+ * measured total must mark them as estimated.
+ * </p>
+ */
+message ContextCompositionEvent {
+	/** Estimated tokens of the system prompt. */
+	int systemPromptTokens;
+
+	/** Estimated tokens of the tool schemas sent with the request. */
+	int toolDefinitionTokens;
+
+	/** Estimated tokens of the conversation messages. */
+	int messageTokens;
+
+	/** Number of tool schemas sent with the request. */
+	int toolCount;
 }
 
 /** SSE event for tool call started. */

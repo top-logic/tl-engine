@@ -118,6 +118,12 @@ public final class ConversationLogSerializer {
 			if (turnDto.hasUsage()) {
 				turn.addUsage(fromUsageDto(turnDto.getUsage()));
 			}
+			// Overwritten unconditionally, because addUsage above also seeds the last-iteration
+			// figure: a transcript written before the field existed carries the turn's summed usage
+			// there, which is not a prompt size, so it must be dropped rather than shown.
+			turn.setLastIterationUsage(turnDto.hasLastIterationUsage()
+				? fromUsageDto(turnDto.getLastIterationUsage())
+				: TokenUsage.EMPTY);
 			turn.setUserParts(turnDto.getUserParts().stream()
 				.map(ConversationLogSerializer::fromPartDto).toList());
 			for (PersistedPart partDto : turnDto.getAssistantParts()) {
@@ -136,6 +142,7 @@ public final class ConversationLogSerializer {
 		dto.setModel(nullToEmpty(turn.model()));
 		dto.setProvider(nullToEmpty(turn.provider()));
 		dto.setUsage(toUsageDto(turn.cumulativeUsage()));
+		dto.setLastIterationUsage(toUsageDto(turn.lastIterationUsage()));
 		for (Part part : turn.userParts()) {
 			dto.addUserPart(toPartDto(part));
 		}

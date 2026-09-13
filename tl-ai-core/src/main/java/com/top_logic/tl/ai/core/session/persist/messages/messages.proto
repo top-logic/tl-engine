@@ -50,8 +50,21 @@ message PersistedTurn {
 	/** The provider used for this turn. */
 	string provider;
 
-	/** Token usage for this turn. */
+	/** Token usage for this turn, summed over every agent-loop iteration it took. */
 	TokenUsageDto usage;
+
+	/**
+	 * Token usage of the LAST agent-loop iteration of this turn.
+	 *
+	 * <p>
+	 * Its prompt size (input + cache read + cache write) is the exact context the model saw at the
+	 * end of the turn, which is what a context-usage display must show. {@link #getUsage()} cannot
+	 * serve that purpose: every iteration resends the whole conversation, so its summed prompt size
+	 * counts the conversation once per iteration. Absent in transcripts written before this field
+	 * existed.
+	 * </p>
+	 */
+	TokenUsageDto lastIterationUsage;
 
 	/** Parts contributed by the user in this turn. */
 	repeated PersistedPart userParts;

@@ -46,9 +46,12 @@ import com.top_logic.tl.ai.core.binding.BindingSnapshot;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
+import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.memory.TokenEstimator;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
+import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
@@ -145,6 +148,17 @@ public class AgentLoop {
 
 	/** Maximum consecutive times the same tool+args combination may be called before being blocked. */
 	private static final int MAX_DUPLICATE_TOOL_CALLS = AgentTuning.MAX_DUPLICATE_TOOL_CALLS;
+
+	/**
+	 * Estimator behind {@link AgentEvent.ContextComposition}.
+	 *
+	 * <p>
+	 * Stateless, and deliberately the same heuristic {@link ConversationMemory} budgets with, so the
+	 * breakdown a UI shows and the number that decides compaction cannot disagree about what a
+	 * message costs.
+	 * </p>
+	 */
+	private static final TokenEstimator CONTEXT_ESTIMATOR = new ByteBasedTokenEstimator();
 
 	/**
 	 * Creates a new agent loop with default result truncation.
@@ -1321,9 +1335,13 @@ public class AgentLoop {
 				AgentLoop.class);
 		}
 
+		String systemPrompt = systemPrompt();
+		emit(listener, contextComposition(runId, turn, systemPrompt, filteredTools,
+			conversation.messages()));
+
 		ProviderRequest request = new ProviderRequest(
 			_config.model(),
-			systemPrompt(),
+			systemPrompt,
 			conversation.messages(),
 			filteredTools,
 			_config.maxOutputTokens(),
@@ -1346,6 +1364,29 @@ public class AgentLoop {
 			}
 		}
 		return collector.toAssistantMessage();
+	}
+
+	/**
+	 * What the prompt about to be sent is made of, so the chat UI can attribute the context window.
+	 *
+	 * <p>
+	 * Estimated with the same {@link TokenEstimator} the compaction budget uses. A tool schema costs
+	 * its name and description as prose plus its JSON Schema as JSON, which is how the providers
+	 * serialise it.
+	 * </p>
+	 */
+	private static AgentEvent.ContextComposition contextComposition(String runId, int turn,
+			String systemPrompt, List<ToolSchema> tools, List<Message> messages) {
+		TokenEstimator estimator = CONTEXT_ESTIMATOR;
+		int toolTokens = 0;
+		for (ToolSchema tool : tools) {
+			toolTokens += estimator.estimateText(tool.name())
+				+ estimator.estimateText(tool.description())
+				+ estimator.estimateJson(tool.inputSchemaJson());
+		}
+		return new AgentEvent.ContextComposition(runId, turn, now(),
+			estimator.estimateText(systemPrompt), toolTokens,
+			estimator.estimateTokens(messages), tools.size());
 	}
 
 	/**

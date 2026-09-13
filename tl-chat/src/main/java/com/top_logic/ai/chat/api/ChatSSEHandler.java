@@ -25,6 +25,7 @@ import jakarta.servlet.AsyncListener;
 import com.top_logic.ai.chat.api.messages.ApprovalRequiredEvent;
 import com.top_logic.ai.chat.api.messages.ApprovalResolvedEvent;
 import com.top_logic.ai.chat.api.messages.CompactionStartedEvent;
+import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
 import com.top_logic.ai.chat.api.messages.ConnectedEvent;
 import com.top_logic.ai.chat.api.messages.DelegationEventWrapper;
 import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
@@ -344,7 +345,14 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (event instanceof AgentEvent.TurnCompleted e) {
 			sendEvent("turn_completed", DtoMapper.toJson(TurnCompletedEvent.create()
 				.setTurnNumber(e.turnNumber())
-				.setTurnUsage(mapTokenUsage(e.turnUsage()))));
+				.setTurnUsage(mapTokenUsage(e.turnUsage()))
+				.setContextWindow(contextWindow())));
+		} else if (event instanceof AgentEvent.ContextComposition e) {
+			sendEvent("context_composition", DtoMapper.toJson(ContextCompositionEvent.create()
+				.setSystemPromptTokens(e.systemPromptTokens())
+				.setToolDefinitionTokens(e.toolDefinitionTokens())
+				.setMessageTokens(e.messageTokens())
+				.setToolCount(e.toolCount())));
 		} else if (event instanceof AgentEvent.TextDelta e) {
 			sendEvent("text_delta", DtoMapper.toJson(TextDeltaEvent.create()
 				.setText(e.text())));
@@ -496,7 +504,8 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (child instanceof AgentEvent.TurnCompleted e) {
 			innerType = "turn_completed";
 			innerData = DtoMapper.toJson(TurnCompletedEvent.create()
-				.setTurnNumber(e.turnNumber()).setTurnUsage(mapTokenUsage(e.turnUsage())));
+				.setTurnNumber(e.turnNumber()).setTurnUsage(mapTokenUsage(e.turnUsage()))
+				.setContextWindow(contextWindow()));
 		} else if (child instanceof AgentEvent.ToolCallDenied e) {
 			innerType = "tool_denied";
 			innerData = DtoMapper.toJson(ToolDeniedEvent.create()

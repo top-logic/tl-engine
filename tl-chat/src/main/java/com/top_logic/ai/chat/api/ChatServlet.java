@@ -28,6 +28,7 @@ import com.top_logic.ai.chat.api.messages.CancelPromptImprovementRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
+import com.top_logic.ai.chat.api.messages.TokenUsageDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionListResponse;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
@@ -70,6 +71,8 @@ import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
+import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
@@ -715,6 +718,7 @@ public class ChatServlet extends TopLogicServlet {
 					computeContentHtml(turn);
 				}
 				response.setTurnsJson(serializeTurns(conv.getTurns()));
+				describeLastPrompt(response, conv.getTurns());
 			}
 
 			resp.getWriter().write(DtoMapper.toJson(response));
@@ -935,6 +939,56 @@ public class ChatServlet extends TopLogicServlet {
 		Set<String> allowed = new LinkedHashSet<>(ImageContent.ACCEPTED_MEDIA_TYPES);
 		allowed.add("application/pdf");
 		return Collections.unmodifiableSet(allowed);
+	}
+
+	/**
+	 * Restores the context-usage figures of a re-opened session from its transcript.
+	 *
+	 * <p>
+	 * Only the last turn that actually reached the model contributes: its last agent-loop
+	 * iteration's prompt size is the exact context that model saw, and the window is looked up from
+	 * the model that ran it. Turns written before the transcript carried a per-iteration usage
+	 * leave the figures unset, so the client falls back to its own estimate rather than showing a
+	 * summed prompt size as if it were one.
+	 * </p>
+	 */
+	private static void describeLastPrompt(ChatSessionDetailResponse response, List<PersistedTurn> turns) {
+		for (int i = turns.size() - 1; i >= 0; i--) {
+			PersistedTurn turn = turns.get(i);
+			if (!turn.hasLastIterationUsage()) {
+				continue;
+			}
+			com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto usage = turn.getLastIterationUsage();
+			if (promptTokens(usage) <= 0) {
+				continue;
+			}
+			response.setLastPromptUsage(TokenUsageDto.create()
+				.setInputTokens(usage.getInputTokens())
+				.setOutputTokens(usage.getOutputTokens())
+				.setThinkingTokens(usage.getThinkingTokens())
+				.setCacheReadTokens(usage.getCacheReadTokens())
+				.setCacheWriteTokens(usage.getCacheWriteTokens()));
+			String model = turn.getModel();
+			if (model != null && !model.isEmpty()) {
+				response.setLastModel(model);
+				response.setContextWindow(contextWindowOf(model));
+			}
+			return;
+		}
+	}
+
+	private static int promptTokens(
+			com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto usage) {
+		return usage.getInputTokens() + usage.getCacheReadTokens() + usage.getCacheWriteTokens();
+	}
+
+	/** Context window of a configured model, or zero when the model is unknown to this deployment. */
+	private static int contextWindowOf(String model) {
+		if (!LLMService.Module.INSTANCE.isActive()) {
+			return 0;
+		}
+		ModelInfo info = LLMService.getInstance().getModel(model);
+		return info == null || info.limits() == null ? 0 : info.limits().contextWindow();
 	}
 
 	private static String validateAttachments(List<AttachmentDto> attachments) {

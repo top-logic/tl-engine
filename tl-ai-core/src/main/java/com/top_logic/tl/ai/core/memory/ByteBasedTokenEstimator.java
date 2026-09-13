@@ -125,11 +125,13 @@ public class ByteBasedTokenEstimator implements TokenEstimator {
 		throw new IllegalArgumentException("Unknown tool state type: " + state.getClass());
 	}
 
-	private int estimateText(String text) {
-		return text.getBytes(StandardCharsets.UTF_8).length / BYTES_PER_TOKEN;
+	@Override
+	public int estimateText(String text) {
+		return text == null ? 0 : text.getBytes(StandardCharsets.UTF_8).length / BYTES_PER_TOKEN;
 	}
 
-	private int estimateJson(String json) {
-		return json.getBytes(StandardCharsets.UTF_8).length / JSON_BYTES_PER_TOKEN;
+	@Override
+	public int estimateJson(String json) {
+		return json == null ? 0 : json.getBytes(StandardCharsets.UTF_8).length / JSON_BYTES_PER_TOKEN;
 	}
 }

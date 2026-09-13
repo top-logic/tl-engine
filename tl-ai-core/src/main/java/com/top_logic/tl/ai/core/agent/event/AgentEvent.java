@@ -121,6 +121,30 @@ public sealed interface AgentEvent {
 	record TurnCompleted(String runId, int turnNumber, Instant timestamp,
 			TokenUsage turnUsage, List<ContentPart> contentParts) implements AgentEvent {}
 
+	/**
+	 * What the prompt of the request about to be sent is made of.
+	 *
+	 * <p>
+	 * Emitted immediately before every provider call, so a UI can say where the context window
+	 * went. The three figures are estimates from the same {@code TokenEstimator} the compaction
+	 * budget uses, not provider-reported counts: the provider reports one prompt total and never
+	 * breaks it down. Their sum is therefore close to, but not equal to, the
+	 * {@link TurnCompleted#turnUsage()} prompt size that follows - a consumer that shows both must
+	 * mark these as estimated.
+	 * </p>
+	 *
+	 * @param runId agent run identifier
+	 * @param turnNumber 1-based loop iteration
+	 * @param timestamp when the event occurred
+	 * @param systemPromptTokens estimated tokens of the system prompt
+	 * @param toolDefinitionTokens estimated tokens of the tool schemas sent with the request
+	 * @param messageTokens estimated tokens of the conversation messages
+	 * @param toolCount number of tool schemas sent with the request
+	 */
+	record ContextComposition(String runId, int turnNumber, Instant timestamp,
+			int systemPromptTokens, int toolDefinitionTokens, int messageTokens, int toolCount)
+			implements AgentEvent {}
+
 	// ---------- LLM streaming ----------
 
 	/**

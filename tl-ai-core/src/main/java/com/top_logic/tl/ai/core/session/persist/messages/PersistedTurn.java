@@ -33,6 +33,9 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/** @see #getUsage() */
 	public static final String USAGE__PROP = "usage";
 
+	/** @see #getLastIterationUsage() */
+	public static final String LAST_ITERATION_USAGE__PROP = "lastIterationUsage";
+
 	/** @see #getUserParts() */
 	public static final String USER_PARTS__PROP = "userParts";
 
@@ -53,6 +56,8 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	private String _provider = "";
 
 	private com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto _usage = null;
+
+	private com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto _lastIterationUsage = null;
 
 	private final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> _userParts = new java.util.ArrayList<>();
 
@@ -170,7 +175,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	}
 
 	/**
-	 * Token usage for this turn.
+	 * Token usage for this turn, summed over every agent-loop iteration it took.
 	 */
 	public final com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto getUsage() {
 		return _usage;
@@ -194,6 +199,41 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	 */
 	public final boolean hasUsage() {
 		return _usage != null;
+	}
+
+	/**
+	 * Token usage of the LAST agent-loop iteration of this turn.
+	 *
+	 * <p>
+	 * Its prompt size (input + cache read + cache write) is the exact context the model saw at the
+	 * end of the turn, which is what a context-usage display must show. {@link #getUsage()} cannot
+	 * serve that purpose: every iteration resends the whole conversation, so its summed prompt size
+	 * counts the conversation once per iteration. Absent in transcripts written before this field
+	 * existed.
+	 * </p>
+	 */
+	public final com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto getLastIterationUsage() {
+		return _lastIterationUsage;
+	}
+
+	/**
+	 * @see #getLastIterationUsage()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn setLastIterationUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto value) {
+		internalSetLastIterationUsage(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getLastIterationUsage()} without chain call utility. */
+	protected final void internalSetLastIterationUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto value) {
+		_lastIterationUsage = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getLastIterationUsage()} has a value.
+	 */
+	public final boolean hasLastIterationUsage() {
+		return _lastIterationUsage != null;
 	}
 
 	/**
@@ -314,6 +354,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			MODEL__PROP, 
 			PROVIDER__PROP, 
 			USAGE__PROP, 
+			LAST_ITERATION_USAGE__PROP, 
 			USER_PARTS__PROP, 
 			ASSISTANT_PARTS__PROP, 
 			CONTENT_HTML__PROP);
@@ -347,6 +388,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case MODEL__PROP: return getModel();
 			case PROVIDER__PROP: return getProvider();
 			case USAGE__PROP: return getUsage();
+			case LAST_ITERATION_USAGE__PROP: return getLastIterationUsage();
 			case USER_PARTS__PROP: return getUserParts();
 			case ASSISTANT_PARTS__PROP: return getAssistantParts();
 			case CONTENT_HTML__PROP: return getContentHtml();
@@ -363,6 +405,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case MODEL__PROP: internalSetModel((String) value); break;
 			case PROVIDER__PROP: internalSetProvider((String) value); break;
 			case USAGE__PROP: internalSetUsage((com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto) value); break;
+			case LAST_ITERATION_USAGE__PROP: internalSetLastIterationUsage((com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto) value); break;
 			case USER_PARTS__PROP: internalSetUserParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart.class, value)); break;
 			case ASSISTANT_PARTS__PROP: internalSetAssistantParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart.class, value)); break;
 			case CONTENT_HTML__PROP: internalSetContentHtml((String) value); break;
@@ -398,6 +441,10 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			out.name(USAGE__PROP);
 			getUsage().writeTo(out);
 		}
+		if (hasLastIterationUsage()) {
+			out.name(LAST_ITERATION_USAGE__PROP);
+			getLastIterationUsage().writeTo(out);
+		}
 		out.name(USER_PARTS__PROP);
 		out.beginArray();
 		for (com.top_logic.tl.ai.core.session.persist.messages.PersistedPart x : getUserParts()) {
@@ -423,6 +470,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case MODEL__PROP: setModel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case PROVIDER__PROP: setProvider(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case USAGE__PROP: setUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto.readTokenUsageDto(in)); break;
+			case LAST_ITERATION_USAGE__PROP: setLastIterationUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case USER_PARTS__PROP: {
 				java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> newValue = new java.util.ArrayList<>();
 				in.beginArray();

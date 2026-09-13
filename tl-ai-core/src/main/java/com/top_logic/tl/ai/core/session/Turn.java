@@ -53,6 +53,8 @@ public class Turn {
 
 	private volatile TokenUsage _cumulativeUsage = TokenUsage.EMPTY;
 
+	private volatile TokenUsage _lastIterationUsage = TokenUsage.EMPTY;
+
 	/**
 	 * Creates a new turn.
 	 *
@@ -175,9 +177,33 @@ public class Turn {
 	}
 
 	/**
+	 * Token usage of the <em>last</em> {@link com.top_logic.tl.ai.core.agent.AgentLoop} iteration of
+	 * this turn.
+	 *
+	 * <p>
+	 * Its {@link TokenUsage#promptTokens() prompt size} is the exact context the model saw last, and
+	 * therefore the only number from which a UI may state how full the context window is.
+	 * {@link #cumulativeUsage()} cannot be used for that: every iteration resends the whole
+	 * conversation, so summing the iterations' prompt sizes counts the conversation once per
+	 * iteration.
+	 * </p>
+	 */
+	public TokenUsage lastIterationUsage() {
+		return _lastIterationUsage;
+	}
+
+	/** Sets the usage of the last iteration; used when a persisted turn is read back. */
+	public void setLastIterationUsage(TokenUsage usage) {
+		_lastIterationUsage = usage == null ? TokenUsage.EMPTY : usage;
+	}
+
+	/**
 	 * Add token usage from one {@link com.top_logic.tl.ai.core.agent.AgentLoop} iteration.
 	 */
 	public void addUsage(TokenUsage turnUsage) {
 		_cumulativeUsage = _cumulativeUsage.add(turnUsage);
+		if (turnUsage != null && turnUsage.promptTokens() > 0) {
+			_lastIterationUsage = turnUsage;
+		}
 	}
 }

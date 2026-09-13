@@ -9,14 +9,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.servlet.ServletException;
@@ -39,7 +36,6 @@ import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
@@ -52,13 +48,12 @@ import com.top_logic.layout.DynamicText;
 import com.top_logic.layout.UpdateWriter;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.component.ControlSupport;
-import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.react.DataProvider;
-import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.UploadHandler;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
@@ -121,12 +116,6 @@ public class ReactServlet extends TopLogicServlet {
 
 	/** Name of the {@link #CMD_NAVIGATE_TO_ROUTE} argument holding the URL to adopt. */
 	private static final String ARG_URL = "url";
-
-	/**
-	 * CSS class of the summary line of a command-error message, separating it from the detail
-	 * messages listed below it.
-	 */
-	private static final String CSS_SNACKBAR_TITLE = "tlSnackbar__title";
 
 	/**
 	 * This endpoint answers {@code XMLHttpRequest}s, for whose caller the check's redirect to an
@@ -538,7 +527,7 @@ public class ReactServlet extends TopLogicServlet {
 				sendSuccess(response);
 			} else {
 				// Show error in snackbar instead of returning HTTP 500.
-				showCommandError(result, queue, control);
+				CommandErrors.show(errorSink(control), result);
 				sendSuccess(response);
 			}
 		} finally {
@@ -821,7 +810,7 @@ public class ReactServlet extends TopLogicServlet {
 		if (displayContext.isSet(InfoService.INFO_SERVICE_ENTRIES)) {
 			List<HTMLFragment> entries = displayContext.get(InfoService.INFO_SERVICE_ENTRIES);
 			if (!entries.isEmpty()) {
-				ErrorSink errorSink = control instanceof ReactControl rc ? rc.getReactContext().getErrorSink() : null;
+				ErrorSink errorSink = errorSink(control);
 				if (errorSink != null) {
 					forwardToErrorSink(entries, errorSink);
 				} else {
@@ -836,81 +825,11 @@ public class ReactServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Shows a command error in the snackbar via {@link ErrorSink}.
-	 *
-	 * <p>
-	 * Instead of returning HTTP 500, the error message from the {@link HandlerResult} is forwarded
-	 * to the snackbar so the user sees what went wrong. Detail messages chained as exception causes
-	 * (e.g. the individual constraint violations behind a vetoed commit) are listed below the
-	 * summary, so the user learns which value on which object was rejected and where one message
-	 * ends and the next begins.
-	 * </p>
+	 * The {@link ErrorSink} of the window the given command target lives in, or <code>null</code>
+	 * if the target is not a {@link ReactControl}.
 	 */
-	private void showCommandError(HandlerResult result, SSEUpdateQueue queue, ReactCommandTarget control) {
-		ErrorSink errorSink = control instanceof ReactControl rc ? rc.getReactContext().getErrorSink() : null;
-		if (errorSink != null) {
-			ResKey titleKey = result.getErrorTitle();
-			HTMLFragment title = Fragments.div(CSS_SNACKBAR_TITLE,
-				titleKey != null ? Fragments.message(titleKey) : Fragments.message(I18NConstants.ERROR_COMMAND_FAILED));
-
-			errorSink.showError(Fragments.concat(title, Fragments.messageList(errorDetails(result))));
-		} else {
-			Logger.warn("No ErrorSink available to show command error: " + result.getErrorTitle(),
-				ReactServlet.class);
-		}
-	}
-
-	/**
-	 * The detail messages of a failed command, each describing one aspect of the failure.
-	 *
-	 * <p>
-	 * The same message can arrive through several routes at once: title and message both fall back
-	 * to the exception's error key, and the original exception reappears as cause of the wrapper
-	 * created by {@link HandlerResult#error(ResKey, Throwable)}. Each distinct message is therefore
-	 * reported only once, and a message already shown as the summary is dropped.
-	 * </p>
-	 */
-	private static List<ResKey> errorDetails(HandlerResult result) {
-		Resources resources = Resources.getInstance();
-
-		Set<String> seen = new HashSet<>();
-		ResKey titleKey = result.getErrorTitle();
-		if (titleKey != null) {
-			seen.add(resources.getString(titleKey));
-		}
-
-		List<ResKey> details = new ArrayList<>();
-		addDetail(details, seen, resources, result.getErrorMessage());
-		// The list HandlerResult#error(ResKey) fills - the plainest way for a command to fail, and
-		// until this was read, its message reached nobody: the snackbar showed the generic
-		// "command failed" title and no detail at all.
-		for (ResKey error : result.getEncodedErrors()) {
-			addDetail(details, seen, resources, error);
-		}
-		if (result.getException() != null) {
-			for (Throwable cause = result.getException().getCause(); cause != null; cause = cause.getCause()) {
-				if (cause instanceof I18NFailure failure) {
-					addDetail(details, seen, resources, failure.getErrorKey());
-				}
-			}
-		}
-		return details;
-	}
-
-	/**
-	 * Appends the given message unless it is empty or was already reported.
-	 */
-	private static void addDetail(List<ResKey> details, Set<String> seen, Resources resources, ResKey messageKey) {
-		if (messageKey == null) {
-			return;
-		}
-		String message = resources.getString(messageKey);
-		if (message == null || message.isEmpty() || message.equals("null")) {
-			return;
-		}
-		if (seen.add(message)) {
-			details.add(messageKey);
-		}
+	private static ErrorSink errorSink(ReactCommandTarget control) {
+		return control instanceof ReactControl rc ? rc.getReactContext().getErrorSink() : null;
 	}
 
 	private void forwardToErrorSink(List<HTMLFragment> entries, ErrorSink errorSink) {

@@ -137,6 +137,23 @@ A `<table>` declares that its rows may be dragged, and what it accepts a drop of
 **Recording**: a drop is recorded as a `dropObjects` step naming the dragged objects and the target row by their business identity, so it replays after sorting, filtering and in a fresh session. A replayed drop names no source control — it names the objects instead — and is matched by their type.
 
 `<drag>` and `<drop>` apply to the read-only table. A table in edit mode (`row-edit`) renders through `RowSetTableControl`, a control of its own that carries no drag-and-drop seam, so declaring either there is reported as a configuration error.
+
+## Selecting rows and nodes
+
+A `<table>` and a `<tree>` write what the user selects to the channel named by `selection`, and `selection-mode` says how much may be selected at a time — `single` (the default) or `multi`:
+
+```xml
+<table selection="selected" selection-mode="multi" types="demo.react:Demo">…</table>
+<tree selection="selected" selection-mode="multi">…</tree>
+```
+
+- **A `single` table** replaces the selection with every click, and a click with `Ctrl` on the selected row gives it up again. **A `multi` table** puts a checkbox in front of every row and one in the header selecting and deselecting all of them; a click with `Ctrl` adds a row to the selection or takes it out again, a click with `Shift` selects the range from the row selected last, and `Ctrl+A` selects every row.
+- **In a `multi` tree** a plain click still replaces the selection, a click with `Ctrl` adds a node or takes it out again, and a click with `Shift` selects the range from the node the selection started at; the keyboard gestures are described under [Row activation](#row-activation), where the cursor is.
+- **The channel holds the selection, never a wrapper around it**: the selected object while exactly one row or node is selected, the `Set` of the selected objects while there are several, and `null` while there is none. A display or a command bound to the channel therefore works with either mode, and only one that is to show or process several objects at once has to expect a set. A tree writes the *business objects* of the selected nodes, not the nodes (`TreeSelectionBinding`).
+- **A table also reads its channel** (`TableSelectionBinding`), and how it answers a collection depends on its mode: a `multi` table selects the rows it has for those objects, a `single` table cannot display such a value at all and shows no selection. Either way a value the table has no row for is "nothing selected here" and is **left alone** — clearing it would destroy what another writer put there, the row a second table over a different row set selected or the object a create command wrote before this table's rows caught up. **A tree does not read the channel**: the binding writes it.
+- **A command working on one object binds to a derived channel rather than to the selection**, since the selection may be several: `<derived-channel name="selectedSingle" inputs="selected" expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"/>` is the selection while it consists of exactly one object and nothing otherwise — `size()` counts nothing as zero, a single object as one and a set as the number of its elements. With `<null-input-disabled/>` that is the whole of "enabled for one selected object". A command working on the whole selection needs nothing: `delete()` and the other collection-valued script functions accept a single object as well as a set of them.
+- Demos in `com.top_logic.demo.react`: the *Attributes* table (`views/attributes.view.xml`) selects several rows — Delete works on all of them, Edit on the single selection through such a derived channel — and *Tree Demo* (`views/demo/tree-demo.view.xml`) shows the selected nodes and the activated one side by side.
+
 ## Row activation
 
 A `<table>` and a `<tree>` open a row / node on a **double-click**, and on **Enter** while the row or node carries the keyboard cursor. The gesture is one command, `activate`, carrying the row index (the node id):

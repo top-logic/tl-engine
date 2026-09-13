@@ -5,6 +5,16 @@
 		<channel name="model"/>
 		<channel name="selected"/>
 		<channel name="gridSelected"/>
+		<!--
+			The selection while it consists of exactly one object, and nothing while nothing or
+			several objects are selected: size() counts a missing value as zero, a single object as
+			one and a set as the number of its elements. A command or a form that works on one
+			object binds to this channel.
+		-->
+		<derived-channel name="selectedSingle"
+			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			inputs="selected"
+		/>
 		<!-- Anchor object for the editable-table form: the edit session locks on it. -->
 		<derived-channel name="gridAnchor"
 			expr="currentUser()"
@@ -56,9 +66,13 @@
 								/>
 							</open-dialog>
 						</generic-command>
+						<!--
+							The detail dialog shows one object, so the command takes the selection only while
+							it consists of a single one and is disabled otherwise.
+						-->
 						<generic-command
 							image="css:bi bi-pencil"
-							input="selected"
+							input="selectedSingle"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -74,6 +88,7 @@
 								dialog-view="attributes-detail.view.xml"
 							/>
 						</generic-command>
+						<!-- delete() accepts a single object as well as a set of them. -->
 						<generic-command
 							image="css:bi bi-trash"
 							input="selected"
@@ -87,7 +102,7 @@
 								<null-input-disabled/>
 							</executability>
 							<with-transaction>
-								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+								<execute-script function="objs -> { $objs.delete(); null; }"/>
 							</with-transaction>
 							<write-channel name="selected"/>
 						</generic-command>
@@ -98,6 +113,7 @@
 						observed-types="demo.react:Demo"
 						personalization-key="demo-attributes"
 						selection="selected"
+						selection-mode="multi"
 						types="demo.react:Demo"
 					>
 						<inputs>
@@ -172,8 +188,9 @@
 									<de>Gleiche Priorität wie die Auswahl</de>
 								</label>
 								<!--
-									Selects by an input: the priority of the selected row. The preset is
-									offered while a row is selected, and follows the selection.
+									Selects by an input: the priorities of the selected rows. The preset is
+									offered while a row is selected and follows the selection; with several
+									rows selected it offers the priorities of all of them.
 								-->
 								<criterion column="priority">
 									<options selected="sel -> $sel.get(`demo.react:Demo#priority`)"/>
@@ -294,7 +311,7 @@
 									</generic-command>
 									<generic-command
 										image="css:bi bi-trash"
-										input="selected"
+										input="selectedSingle"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -331,7 +348,11 @@
 									<en>Details</en>
 									<de>Details</de>
 								</title>
-								<form input="selected">
+								<!--
+									The form shows one object and the table beside it selects one row at a time, so
+									both work on the single selection.
+								-->
+								<form input="selectedSingle">
 									<field attribute="name"/>
 									<field attribute="string"/>
 									<field attribute="multiLine"/>

@@ -13,6 +13,7 @@
 		group-by="owner"
 		personalization-key="test-table"
 		selection="selectedRow"
+		selection-mode="multi"
 		types="demo.test:Row"
 	>
 		<drag/>

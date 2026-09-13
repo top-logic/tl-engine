@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
+import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServletRequest;
@@ -48,8 +49,10 @@ import com.top_logic.layout.DynamicText;
 import com.top_logic.layout.UpdateWriter;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.component.ControlSupport;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.react.DataProvider;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.UploadHandler;
@@ -59,6 +62,7 @@ import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
@@ -116,6 +120,39 @@ public class ReactServlet extends TopLogicServlet {
 
 	/** Name of the {@link #CMD_NAVIGATE_TO_ROUTE} argument holding the URL to adopt. */
 	private static final String ARG_URL = "url";
+
+	/**
+	 * Name of the global command the client sends when it refused a selected file because it
+	 * exceeds {@link UploadSupport#maxUploadSize()}.
+	 */
+	private static final String CMD_UPLOAD_REJECTED = "uploadRejected";
+
+	/** Name of the {@link #CMD_UPLOAD_REJECTED} argument holding the name of the refused file. */
+	private static final String ARG_FILE_NAME = "fileName";
+
+	/** Name of the {@link #CMD_UPLOAD_REJECTED} argument holding the size of the refused file. */
+	private static final String ARG_SIZE = "size";
+
+	/**
+	 * Request attribute through which Jetty takes the {@link MultipartConfigElement} to apply to
+	 * the body of the current request, mirroring {@code ServletContextRequest.MULTIPART_CONFIG_ELEMENT}
+	 * of Jetty's Servlet integration.
+	 *
+	 * <p>
+	 * Set before the parts are requested, it supersedes the {@code multipart-config} of the servlet
+	 * declaration, so the size limit is taken from the application configuration instead of the
+	 * deployment descriptor. Containers that do not know the attribute ignore it; there, the limit
+	 * is enforced by the explicit checks in {@link #handleUpload}.
+	 * </p>
+	 */
+	private static final String MULTIPART_CONFIG_ATTRIBUTE = "org.eclipse.jetty.multipartConfig";
+
+	/**
+	 * Size in bytes up to which an uploaded part is buffered in memory instead of being written to
+	 * a temporary file. Equals the {@code file-size-threshold} of the servlet's
+	 * {@code multipart-config} declaration.
+	 */
+	private static final int FILE_SIZE_THRESHOLD = 8192;
 
 	/**
 	 * This endpoint answers {@code XMLHttpRequest}s, for whose caller the check's redirect to an
@@ -446,6 +483,10 @@ public class ReactServlet extends TopLogicServlet {
 			handleNavigateToRoute(request, response, session, windowName, arguments);
 			return;
 		}
+		if (CMD_UPLOAD_REJECTED.equals(commandName)) {
+			handleUploadRejected(request, response, session, windowName, controlId, arguments);
+			return;
+		}
 
 		if (controlId == null || commandName == null) {
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing controlId or command.");
@@ -741,6 +782,14 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
+		long limit = UploadSupport.maxUploadSize();
+		if (limit > 0) {
+			// Let the container apply the configured limit while it parses the body, instead of the
+			// fixed one from the deployment descriptor.
+			request.setAttribute(MULTIPART_CONFIG_ATTRIBUTE,
+				new MultipartConfigElement("", limit, limit, FILE_SIZE_THRESHOLD));
+		}
+
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 
 		// Install subsession context and enable command phase.
@@ -749,11 +798,41 @@ public class ReactServlet extends TopLogicServlet {
 		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
 		requestLock.lock();
 		try {
+			if (limit > 0 && request.getContentLengthLong() > limit) {
+				rejectTooLarge(response, control, limit,
+					"request of " + request.getContentLengthLong() + " bytes");
+				return;
+			}
+
 			HandlerResult result;
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
-				Collection<Part> parts = request.getParts();
+				Collection<Part> parts;
+				try {
+					parts = request.getParts();
+				} catch (IllegalStateException ex) {
+					if (limit <= 0) {
+						// Uploads are unlimited, so the container refused the body for another
+						// reason - report it like any other failure of the upload.
+						throw ex;
+					}
+					// The size check of the container tripped while it parsed the body.
+					rejectTooLarge(response, control, limit, ex.getMessage());
+					return;
+				}
+				if (limit > 0) {
+					// A request sent with chunked transfer encoding announces no content length; its
+					// size is only known from the parts the container has parsed.
+					Part oversized = oversizedPart(parts, limit);
+					if (oversized != null) {
+						rejectTooLarge(response, control, limit,
+							"file '" + oversized.getSubmittedFileName() + "' of " + oversized.getSize() + " bytes");
+						return;
+					}
+				}
 				result = ((UploadHandler) control).handleUpload(displayContext, parts);
+			} catch (Throwable ex) {
+				result = CommandErrors.failure(ex, "Upload on " + control.getClass().getName(), ReactServlet.class);
 			} finally {
 				if (rootHandler != null) {
 					rootHandler.enableUpdate(updateBefore);
@@ -768,14 +847,102 @@ public class ReactServlet extends TopLogicServlet {
 			// flushed - otherwise the upload's effect only shows after a later rebuild.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
-			if (result.isSuccess()) {
-				sendSuccess(response);
-			} else {
-				sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Upload handling failed.");
+			if (!result.isSuccess()) {
+				// Show error in snackbar instead of returning HTTP 500.
+				CommandErrors.show(errorSink(control), result);
 			}
+			sendSuccess(response);
 		} finally {
 			requestLock.unlock();
 		}
+	}
+
+	/**
+	 * The first of the given parts whose size exceeds the given limit, <code>null</code> if all of
+	 * them stay within it.
+	 */
+	private static Part oversizedPart(Collection<Part> parts, long limit) {
+		for (Part part : parts) {
+			if (part.getSize() > limit) {
+				return part;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Refuses an upload that exceeds the configured limit: tells the user about the limit and
+	 * answers the request with {@link HttpServletResponse#SC_REQUEST_ENTITY_TOO_LARGE}.
+	 *
+	 * @param control
+	 *        The control the upload was sent for, whose window shows the notice.
+	 * @param limit
+	 *        The limit in bytes that was exceeded.
+	 * @param cause
+	 *        What exceeded the limit, for the log entry.
+	 */
+	private void rejectTooLarge(HttpServletResponse response, ReactCommandTarget control, long limit, String cause)
+			throws IOException {
+		Logger.info("Upload refused, larger than the configured limit of " + limit + " bytes: " + cause,
+			ReactServlet.class);
+		showUploadTooLarge(control, limit);
+		sendError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
+			"Upload exceeds the limit of " + limit + " bytes.");
+	}
+
+	/**
+	 * Shows the notice naming the upload size limit in the window of the given control.
+	 *
+	 * <p>
+	 * A refused upload is not a malfunction, so the notice is shown as the plain message it is,
+	 * rather than as the report of a failed command.
+	 * </p>
+	 *
+	 * @param control
+	 *        The control the refused upload was meant for.
+	 * @param limit
+	 *        The limit in bytes that was exceeded.
+	 */
+	private void showUploadTooLarge(ReactCommandTarget control, long limit) {
+		ResKey message = I18NConstants.ERROR_UPLOAD_TOO_LARGE__LIMIT.fill(UploadSupport.sizeLabel(limit));
+		ErrorSink sink = errorSink(control);
+		if (sink == null) {
+			Logger.warn("No ErrorSink available to show upload notice: " + message, ReactServlet.class);
+			return;
+		}
+		sink.showError(Fragments.message(message));
+	}
+
+	/**
+	 * Handles the {@link #CMD_UPLOAD_REJECTED} global command: the client refused a selected file
+	 * as larger than {@link UploadSupport#maxUploadSize()} and did not transmit it, so the notice
+	 * the user must see is produced here.
+	 */
+	private void handleUploadRejected(HttpServletRequest request, HttpServletResponse response,
+			HttpSession session, String windowName, String controlId, Map<String, Object> arguments)
+			throws IOException {
+		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		if (queue == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
+		ReactCommandTarget control = controlId != null ? queue.getControl(controlId) : null;
+		Object fileName = arguments != null ? arguments.get(ARG_FILE_NAME) : null;
+		Object size = arguments != null ? arguments.get(ARG_SIZE) : null;
+		Logger.info("Upload of '" + fileName + "' (" + size + " bytes) refused by the client, larger than the "
+			+ "configured limit.", ReactServlet.class);
+
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		installSubSession(displayContext, windowName);
+
+		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
+		requestLock.lock();
+		try {
+			showUploadTooLarge(control, UploadSupport.maxUploadSize());
+		} finally {
+			requestLock.unlock();
+		}
+		sendSuccess(response);
 	}
 
 	/**

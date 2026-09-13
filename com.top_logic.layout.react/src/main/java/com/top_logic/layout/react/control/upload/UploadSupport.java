@@ -12,8 +12,11 @@ import java.util.List;
 
 import jakarta.servlet.http.Part;
 
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.layout.provider.label.FileSizeLabelProvider;
 import com.top_logic.layout.react.UploadHandler;
 
 /**
@@ -24,6 +27,35 @@ public class UploadSupport {
 
 	/** The multipart field name used for uploaded files. */
 	public static final String FILE_PART = "file";
+
+	/**
+	 * State key under which an {@link UploadHandler} control publishes {@link #maxUploadSize()} to
+	 * its client component, which refuses a larger selection before transmitting it.
+	 *
+	 * <p>
+	 * A value of <code>0</code> means that there is no limit.
+	 * </p>
+	 */
+	public static final String MAX_UPLOAD_SIZE = "maxUploadSize";
+
+	/**
+	 * The {@link UploadConfig#getMaxUploadSize() configured} maximum size of an upload in bytes,
+	 * <code>0</code> if uploads are unlimited.
+	 */
+	public static long maxUploadSize() {
+		UploadConfig config = ApplicationConfig.getInstance().getConfig(UploadConfig.class);
+		if (config == null) {
+			config = TypedConfiguration.newConfigItem(UploadConfig.class);
+		}
+		return config.getMaxUploadSize();
+	}
+
+	/**
+	 * A human-readable rendering of the given number of bytes, e.g. <code>"50 MB"</code>.
+	 */
+	public static String sizeLabel(long size) {
+		return FileSizeLabelProvider.INSTANCE.getLabel(Long.valueOf(size));
+	}
 
 	/**
 	 * Reads a single uploaded {@link Part} into an in-memory {@link BinaryData}, defaulting the

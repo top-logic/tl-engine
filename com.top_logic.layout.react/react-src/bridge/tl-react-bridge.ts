@@ -7,7 +7,7 @@ import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
-import { CMD_SUBMIT, CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
+import { CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
 
 /**
  * Per-control state store compatible with React's useSyncExternalStore.
@@ -302,10 +302,47 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
 }
 
 /**
+ * State key under which an upload control publishes the maximum upload size in bytes. Must match
+ * {@code UploadSupport#MAX_UPLOAD_SIZE}; a value of 0 means that there is no limit.
+ */
+const STATE_MAX_UPLOAD_SIZE = 'maxUploadSize';
+
+/**
+ * The first file in the given form data that is larger than the given limit, `null` if all of them
+ * stay within it.
+ */
+function oversizedFile(formData: FormData, limit: number): File | null {
+  for (const value of formData.values()) {
+    if (value instanceof File && value.size > limit) {
+      return value;
+    }
+  }
+  return null;
+}
+
+/**
+ * The total size of all files in the given form data.
+ */
+function totalFileSize(formData: FormData): number {
+  let total = 0;
+  for (const value of formData.values()) {
+    if (value instanceof File) {
+      total += value.size;
+    }
+  }
+  return total;
+}
+
+/**
  * Returns a function to upload a FormData to the server for the enclosing control.
  *
  * <p>The control ID and window name are appended automatically. The server dispatches
  * to controls implementing the {@code UploadHandler} interface.</p>
+ *
+ * <p>A selection larger than the control's {@link STATE_MAX_UPLOAD_SIZE} limit - either a single
+ * file or the selection as a whole - is not transmitted at all. Instead, the
+ * {@link CMD_UPLOAD_REJECTED} command tells the server about the refusal, which reports the limit
+ * to the user.</p>
  */
 export function useTLUpload(): (formData: FormData) => Promise<void> {
   const ctx = useContext(TLControlContext);
@@ -314,9 +351,27 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
   }
   const controlId = ctx.controlId;
   const windowName = ctx.windowName;
+  const store = ctx.store;
 
   return useCallback(
     async (formData: FormData) => {
+      const limit = Number(store.getSnapshot()[STATE_MAX_UPLOAD_SIZE] ?? 0);
+      if (limit > 0) {
+        const oversized = oversizedFile(formData, limit);
+        const total = totalFileSize(formData);
+        if (oversized !== null || total > limit) {
+          return enqueueCommand(getApiBase() + 'react-api/command', {
+            controlId,
+            command: CMD_UPLOAD_REJECTED,
+            windowName,
+            arguments: {
+              fileName: oversized !== null ? oversized.name : '',
+              size: oversized !== null ? oversized.size : total,
+            },
+          });
+        }
+      }
+
       formData.append('controlId', controlId);
       formData.append('windowName', windowName);
       try {
@@ -331,7 +386,7 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
         console.error('[TLReact] Upload error:', e);
       }
     },
-    [controlId, windowName]
+    [controlId, windowName, store]
   );
 }
 

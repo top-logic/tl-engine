@@ -37,6 +37,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_COMMAND_FAILED;
 
 	/**
+	 * @en Files up to {0} can be uploaded.
+	 */
+	public static ResKey1 ERROR_UPLOAD_TOO_LARGE__LIMIT;
+
+	/**
 	 * @en React button clicked.
 	 */
 	public static ResKey REACT_BUTTON_CLICK;

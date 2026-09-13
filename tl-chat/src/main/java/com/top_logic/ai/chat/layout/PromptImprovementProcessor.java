@@ -47,6 +47,15 @@ public final class PromptImprovementProcessor {
 	/** A newer prompt-improvement request replaced this request. */
 	public static final String STATUS_STALE = "stale";
 
+	/** Longest first line still treated as a lead-in rather than as part of the prompt. */
+	private static final int MAX_LEAD_IN_CHARS = 80;
+
+	/** How often wrapper removal is retried; a lead-in plus a fence needs two passes. */
+	private static final int MAX_WRAPPER_PASSES = 3;
+
+	/** Quotation-mark pairs stripped when they enclose the whole answer. */
+	private static final String[] QUOTE_PAIRS = { "\"\"", "\u201c\u201d", "\u00ab\u00bb", "\u201e\u201c", "''" };
+
 	private PromptImprovementProcessor() {
 		// Static utility.
 	}
@@ -100,7 +109,12 @@ public final class PromptImprovementProcessor {
 				throw new IllegalStateException(
 					"Prompt-improver agent '" + agentName + "' returned no improved prompt.");
 			}
-			return new Result(normalizedRequestId, improved.strip(), STATUS_COMPLETED);
+			String cleaned = stripWrapper(improved);
+			if (cleaned.isEmpty()) {
+				throw new IllegalStateException(
+					"Prompt-improver agent '" + agentName + "' returned only a wrapper.");
+			}
+			return new Result(normalizedRequestId, cleaned, STATUS_COMPLETED);
 		} catch (CancellationException ex) {
 			return cancelledOrStale(tracker, state);
 		} catch (RuntimeException ex) {
@@ -111,6 +125,125 @@ public final class PromptImprovementProcessor {
 		} finally {
 			tracker.clearPromptImprovementState(state);
 		}
+	}
+
+	/**
+	 * Removes the wrapper a model may add around a rewritten prompt, whatever the system prompt
+	 * forbids.
+	 *
+	 * <p>
+	 * Three shapes are removed, each only where it is unambiguous: a lead-in line that announces the
+	 * result ("Here is the improved prompt:"), a markdown fence around the <em>whole</em> answer, and
+	 * one pair of quotation marks around the whole answer. Every rule is deliberately narrow, because
+	 * a rewritten prompt may legitimately contain a fenced code block, a colon-terminated line, or
+	 * quoted text - only a construct that encloses everything is a wrapper.
+	 * </p>
+	 */
+	static String stripWrapper(String text) {
+		if (text == null) {
+			return "";
+		}
+		String result = text.strip();
+		// Repeated, because a model that adds a lead-in often also fences what follows.
+		for (int pass = 0; pass < MAX_WRAPPER_PASSES; pass++) {
+			String before = result;
+			result = stripLeadIn(result);
+			result = stripFence(result);
+			result = stripQuotes(result);
+			if (result.equals(before)) {
+				break;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Drops a first line that only announces the result.
+	 *
+	 * <p>
+	 * Recognised by shape rather than by wording, so it holds in any language: a short line that ends
+	 * in a colon and is followed by a blank line and further content. A prompt whose own first line
+	 * ends in a colon (a heading the user wrote) is kept, because the rewritten prompt would then
+	 * have no blank line separating it.
+	 * </p>
+	 */
+	private static String stripLeadIn(String text) {
+		int firstBreak = text.indexOf('\n');
+		if (firstBreak < 0) {
+			return text;
+		}
+		String firstLine = text.substring(0, firstBreak).strip();
+		if (firstLine.length() > MAX_LEAD_IN_CHARS || !firstLine.endsWith(":")) {
+			return text;
+		}
+		String rest = text.substring(firstBreak + 1);
+		if (!rest.startsWith("\n") && !rest.startsWith("\r\n")) {
+			return text;
+		}
+		String body = rest.strip();
+		return body.isEmpty() ? text : body;
+	}
+
+	/** Unwraps a markdown fence that encloses the whole answer. */
+	private static String stripFence(String text) {
+		if (!text.startsWith("```") || !text.endsWith("```") || text.length() < 7) {
+			return text;
+		}
+		// A single opening and a single closing fence; anything else is content with its own fences.
+		if (countFenceLines(text) != 2) {
+			return text;
+		}
+		int firstBreak = text.indexOf('\n');
+		if (firstBreak < 0) {
+			return text;
+		}
+		// An empty body is returned as such: the caller rejects an answer that was only a wrapper,
+		// which is better than handing the user back the fence as if it were a prompt.
+		return text.substring(firstBreak + 1, text.lastIndexOf("```")).strip();
+	}
+
+	private static int countFenceLines(String text) {
+		int count = 0;
+		for (String line : text.split("\n", -1)) {
+			if (line.strip().startsWith("```")) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Removes one pair of quotation marks around the whole answer, but only when that pair is the
+	 * only one present - otherwise the quotes belong to the prompt.
+	 */
+	private static String stripQuotes(String text) {
+		for (String pair : QUOTE_PAIRS) {
+			char open = pair.charAt(0);
+			char close = pair.charAt(1);
+			if (text.length() < 2 || text.charAt(0) != open || text.charAt(text.length() - 1) != close) {
+				continue;
+			}
+			// The pair must be the only one in the answer; otherwise the quotes are the prompt's own.
+			// A symmetric pair (") is one character used twice, an asymmetric one two characters once.
+			boolean onlyPair = open == close
+				? count(text, open) == 2
+				: count(text, open) == 1 && count(text, close) == 1;
+			if (!onlyPair) {
+				continue;
+			}
+			return text.substring(1, text.length() - 1).strip();
+		}
+		return text;
+	}
+
+	private static int count(String text, char c) {
+		int count = 0;
+		for (int i = 0; i < text.length(); i++) {
+			if (text.charAt(i) == c) {
+				count++;
+			}
+		}
+		return count;
 	}
 
 	private static Result cancelledOrStale(TaskProgressTracker tracker, PromptImprovementState state) {

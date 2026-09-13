@@ -52,6 +52,49 @@ public class TestPromptImprovementProcessor extends TestCase {
 		assertNull(_tracker.getPromptImprovementState());
 	}
 
+	/** A lead-in line, a fence around the whole answer and outer quotes are all removed. */
+	public void testWrapperIsStripped() {
+		assertEquals("Summarize the invoice table.",
+			PromptImprovementProcessor.stripWrapper("Here is the improved prompt:\n\nSummarize the invoice table."));
+		assertEquals("Summarize the invoice table.",
+			PromptImprovementProcessor.stripWrapper("```\nSummarize the invoice table.\n```"));
+		assertEquals("Summarize the invoice table.",
+			PromptImprovementProcessor.stripWrapper("```text\nSummarize the invoice table.\n```"));
+		assertEquals("Summarize the invoice table.",
+			PromptImprovementProcessor.stripWrapper("\"Summarize the invoice table.\""));
+		assertEquals("Summarize the invoice table.",
+			PromptImprovementProcessor.stripWrapper("\u201cSummarize the invoice table.\u201d"));
+		assertEquals("Fasse die Belegtabelle zusammen.",
+			PromptImprovementProcessor.stripWrapper(
+				"Verbesserter Prompt:\n\n```\nFasse die Belegtabelle zusammen.\n```"));
+	}
+
+	/** Fences, colons and quotes that belong to the prompt itself survive. */
+	public void testPromptContentIsNotMistakenForAWrapper() {
+		String withCode = "Fix this snippet:\n```java\nint x = 1;\n```\nExplain the change.";
+		assertEquals(withCode, PromptImprovementProcessor.stripWrapper(withCode));
+
+		String heading = "Context:\nThe invoice table has three columns.";
+		assertEquals(heading, PromptImprovementProcessor.stripWrapper(heading));
+
+		String quoting = "Replace \"foo\" with \"bar\" in the template.";
+		assertEquals(quoting, PromptImprovementProcessor.stripWrapper(quoting));
+
+		String fencedOnly = "```java\nint x = 1;\n```\n\n```java\nint y = 2;\n```";
+		assertEquals(fencedOnly, PromptImprovementProcessor.stripWrapper(fencedOnly));
+	}
+
+	/** A wrapper around nothing is not a result. */
+	public void testWrapperOnlyAnswerIsRejected() {
+		try {
+			PromptImprovementProcessor.improve(_tracker, "req-wrap", "do it",
+				name -> AGENT.equals(name), (name, draft, token) -> "\"\"");
+			fail("Expected a failure for an answer that is only a wrapper.");
+		} catch (IllegalStateException expected) {
+			// Expected.
+		}
+	}
+
 	/** Missing configuration is a disabled-feature failure. */
 	public void testDisabledWhenNoAgentConfigured() {
 		_tracker.setPromptImproverAgentName(null);

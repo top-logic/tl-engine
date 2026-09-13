@@ -67,7 +67,10 @@
 			</preset>
 		</presets>
 		<columns>
-			<column attribute="name"/>
+			<column
+				attribute="name"
+				width="220"
+			/>
 			<column attribute="active"/>
 			<column attribute="owner"/>
 		</columns>

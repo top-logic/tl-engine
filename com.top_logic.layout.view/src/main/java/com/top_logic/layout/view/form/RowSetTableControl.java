@@ -122,8 +122,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 *        Whether the column stays read-only in edit mode.
 	 * @param binding
 	 *        The strategy turning the attribute into a runtime column (sort, filter, display).
+	 * @param width
+	 *        The configured default display width in pixels, or {@code 0} to keep the width the
+	 *        column brings itself.
 	 */
-	public record TableColumn(String attribute, boolean readonly, ColumnBinding binding) {
+	public record TableColumn(String attribute, boolean readonly, ColumnBinding binding, int width) {
 		// Pure data carrier.
 	}
 
@@ -606,9 +609,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			String attribute = column.attribute();
 			TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
 			ResKey label = part != null ? TLModelNamingConvention.resourceKey(part) : ResKey.text(attribute);
-			ColumnSetup setup = new ColumnSetup(attribute, label, part, _context, column.binding());
+			ColumnSetup setup =
+				new ColumnSetup(attribute, label, part, _context, column.binding(), column.width());
 			setups.add(setup);
-			Column<Object, ?> inner = column.binding().createColumn(setup);
+			Column<Object, ?> inner = setup.buildColumn();
 			columns.add(adapt(inner, part, editMode && !column.readonly()));
 		}
 		return columns;

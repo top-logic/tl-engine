@@ -98,7 +98,12 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	private static final long UNLOAD_GRACE_MILLIS = 30_000;
 
-	private final java.util.Map<String, PendingViewPick> _pendingPicks = new java.util.concurrent.ConcurrentHashMap<>();
+	/**
+	 * The picks started in this session and not yet reported, by correlation token.
+	 *
+	 * @see ElementPicker
+	 */
+	private final ConcurrentHashMap<String, PendingPick> _pendingPicks = new ConcurrentHashMap<>();
 
 	private final ReentrantLock _requestLock = new ReentrantLock();
 
@@ -261,9 +266,11 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
-	 * Registers a pending "select view" pick under the given token.
+	 * Registers a pick waiting for the user's click under the given correlation token.
+	 *
+	 * @see ElementPicker#start(ReactContext, ReactContext, PickKind, java.util.function.Consumer)
 	 */
-	public void registerPick(String token, PendingViewPick pending) {
+	public void registerPick(String token, PendingPick pending) {
 		_pendingPicks.put(token, pending);
 	}
 
@@ -272,7 +279,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 *
 	 * @return The pending pick, or {@code null} if the token is unknown or already consumed.
 	 */
-	public PendingViewPick consumePick(String token) {
+	public PendingPick consumePick(String token) {
 		return _pendingPicks.remove(token);
 	}
 

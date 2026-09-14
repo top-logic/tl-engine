@@ -155,14 +155,21 @@ message WindowCloseEvent extends SSEEvent {
 }
 
 /**
- * Instructs the target (main) window to enter "select view" pick mode.
+ * Instructs the target window to enter pick mode: the user clicks an element there and the client
+ * reports what was hit back to the server.
  */
-message ViewPickEvent extends SSEEvent {
+message PickEvent extends SSEEvent {
 	/** Correlation token identifying the pending pick registration on the server. */
 	string token;
 
-	/** The window ID that should enter pick mode (the designer's opener / main window). */
+	/** The window ID that should enter pick mode. */
 	string targetWindowId;
+
+	/**
+	 * What the click is resolved to, as the external name of a {@code PickKind}: a view source
+	 * ("view") or a mounted control ("control").
+	 */
+	string kind;
 }
 
 /**

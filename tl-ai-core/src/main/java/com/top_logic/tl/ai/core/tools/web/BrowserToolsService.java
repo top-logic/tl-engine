@@ -287,7 +287,16 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		 * Hard cap, in milliseconds, of the post-load <b>settle</b>: after a page-loading operation
 		 * ({@code browserNavigate}, {@code browserBack}, or a {@code browserClick} that navigated) has
 		 * seen the page load, and before the page is captured, the browser waits for the page to calm
-		 * down - and each of the two things it waits for is bounded by this one cap.
+		 * down - and each of the three things it waits for is bounded by this one cap, separately.
+		 *
+		 * <p>
+		 * <b>Commit.</b> Only for a {@code browserClick}, and only where the page navigated itself
+		 * from a script rather than through the link that was clicked: the browser waits for the new
+		 * document to actually replace the old one before it settles anything, because until then the
+		 * page's address and its load state are still the old document's. A navigation that is begun
+		 * and never lands - a {@code 204}, a download, a handler that changes its mind - gives up
+		 * after this cap.
+		 * </p>
 		 *
 		 * <p>
 		 * <b>Network-quiet.</b> A brief chance for client-side rendering that only starts after the
@@ -311,9 +320,13 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		 * </p>
 		 *
 		 * <p>
-		 * The cap is always applied well inside the per-operation deadline, so it can never cause a
-		 * hang. Set to {@code 0} to disable the settle entirely and capture as soon as the page has
-		 * loaded. The settle does <em>not</em> apply to {@code browserSnapshot} (explicit re-capture),
+		 * The three stages do not add up on any ordinary path: a click that does not navigate runs the
+		 * DOM-quiet stage alone, and an ordinary link or form-submit click has already committed by the
+		 * time the commit stage is reached. The cap is always applied well inside the per-operation
+		 * deadline, so it can never cause a hang. Set to {@code 0} to disable the settle entirely and
+		 * capture as soon as the page has loaded; the page that is then captured is still internally
+		 * consistent - address, content and element references are read in one go - it is simply
+		 * captured earlier. The settle does <em>not</em> apply to {@code browserSnapshot} (explicit re-capture),
 		 * to {@code browserType} (same-page edit), or to a {@code browserClick} that started no
 		 * navigation - that one gets the DOM-quiet wait alone, because there is no page load to wait
 		 * for.

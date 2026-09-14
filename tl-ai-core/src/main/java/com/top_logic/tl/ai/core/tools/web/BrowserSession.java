@@ -137,6 +137,27 @@ final class BrowserSession {
 	 * so a control that is genuinely visible - including one inside an open shadow root - is
 	 * unaffected.
 	 * </p>
+	 *
+	 * <h2>One view of one document</h2>
+	 *
+	 * <p>
+	 * The script also returns the page's <b>URL</b> and its <b>serialized HTML</b>, although
+	 * Playwright offers both directly ({@code page.url()}, {@code page.content()}). It does so
+	 * because those are separate round trips to the browser, and a document can commit between any
+	 * two of them: a click whose handler navigates a beat later would then be answered with the URL
+	 * of the page it started on beside the HTML of the page it ended on, and with refs belonging to
+	 * one of the two - a page view that is internally inconsistent, and whose {@code URL:} line is
+	 * simply a wrong fact. No timeout can prevent that, because it is a race between round trips
+	 * rather than a wait that is too short; reading all of it in one synchronous evaluation prevents
+	 * it by construction, and leaves {@link #awaitNavigationCommit()}'s bound as the latency question
+	 * it is meant to be.
+	 * </p>
+	 *
+	 * <p>
+	 * The HTML is assembled as Playwright assembles it, doctype included, so it stays the same string
+	 * {@code page.content()} returned. The {@code data-tl-ref} attributes this script sets are part of
+	 * it, exactly as before - they are written before the serialization, in the same evaluation.
+	 * </p>
 	 */
 	private static final String CAPTURE_SCRIPT =
 		"(gen) => {\n"
@@ -207,7 +228,13 @@ final class BrowserSession {
 			+ "    const type = el.getAttribute('type') || '';\n"
 			+ "    out.push({ref, role, tag, type, name});\n"
 			+ "  }\n"
-			+ "  return {captcha, elements: out};\n"
+			// The URL and the serialized document are read HERE, in the same synchronous evaluation
+			// that minted the refs, so all three describe one document - see the "single view" note
+			// on this constant.
+			+ "  const doctype = document.doctype\n"
+			+ "    ? new XMLSerializer().serializeToString(document.doctype) : '';\n"
+			+ "  const html = doctype + document.documentElement.outerHTML;\n"
+			+ "  return {captcha, elements: out, url: document.location.href, html};\n"
 			+ "}";
 
 	/**
@@ -242,9 +269,12 @@ final class BrowserSession {
 	 * after the DOM-quiet wait. The window is therefore this constant plus however long that wait
 	 * runs: about a second on a page whose DOM goes still at once, and up to this constant plus the
 	 * settle cap (so about two seconds at the default 1500 ms) on a page that keeps mutating - which
-	 * is the page class this whole settle exists for. Inside the window the click's URL, its captured
-	 * content and its page generation all describe the same page, because
-	 * {@link #settleAfterNavigatingClick()} waits for the new document to commit first.
+	 * is the page class this whole settle exists for. Inside the window the click waits for the new
+	 * document to commit ({@link #settleAfterNavigatingClick()}) and then settles it, so what comes
+	 * back is the new page, settled. Should that commit be slower than the wait allows, the capture is
+	 * still self-consistent rather than torn - {@link #CAPTURE_SCRIPT} reads the URL, the HTML and the
+	 * refs in one evaluation - so the worst case is a page view of whichever document was there, never
+	 * one document's URL beside another's content.
 	 * </p>
 	 *
 	 * <p>
@@ -262,8 +292,10 @@ final class BrowserSession {
 	 * <p>
 	 * <b>Known limitations of the flag, all cost-only.</b> A {@code target="_blank"} popup's own
 	 * main-frame request satisfies the observer's test too ({@link #installNavigationObserver} is
-	 * installed on the context, and a popup has no parent frame), so such a click pays a page-load
-	 * settle for a page that did not load. And {@link #beginNavigationAttempt()} clears the flag
+	 * installed on the context, and a popup has no parent frame), so such a click is treated as a
+	 * navigating one: it waits out the whole commit wait - this session's own page never commits
+	 * anything - and then the DOM-quiet stage, about two seconds at the default cap where a same-page
+	 * click would have cost one. And {@link #beginNavigationAttempt()} clears the flag
 	 * without draining the transport queue, so a navigation event left over from the previous
 	 * operation can be attributed to this one - the same one-message seam
 	 * {@link #_offPolicyNavigation} has always had. Both cost a bounded settle and neither can make a
@@ -518,14 +550,23 @@ final class BrowserSession {
 	private final int _actionTimeoutMillis;
 
 	/**
-	 * Hard cap (ms) of the post-load settle: it bounds the network-quiet stage
-	 * ({@link #waitForNetworkQuiet()}) and the DOM-quiet stage ({@link #waitForDomQuiet()}) alike.
-	 * {@code 0} disables the settle, so a loaded page is captured immediately.
+	 * Hard cap (ms) of the post-load settle. It bounds each of the <b>three</b> waits that can follow
+	 * an operation, separately: the commit wait a navigating click runs
+	 * ({@link #awaitNavigationCommit()}), the network-quiet stage ({@link #waitForNetworkQuiet()}) and
+	 * the DOM-quiet stage ({@link #waitForDomQuiet()}). {@code 0} disables all three, so a loaded page
+	 * is captured immediately.
 	 *
 	 * <p>
 	 * That the <em>network</em> stage is bounded by this cap rather than by
 	 * {@link #_navigationTimeoutMillis} is what keeps a page that never goes network-idle from costing
 	 * a page-load timeout on every operation; see {@link #waitForNetworkQuiet()}.
+	 * </p>
+	 *
+	 * <p>
+	 * The three do not add up on any ordinary path: a click that does not navigate runs only the
+	 * DOM-quiet stage, and a navigating click's commit wait is normally already satisfied when it is
+	 * reached. They add up only where a navigation is begun and never lands, which
+	 * {@link #awaitNavigationCommit()} describes and bounds.
 	 * </p>
 	 */
 	private final int _navigationSettleMillis;
@@ -1032,14 +1073,16 @@ final class BrowserSession {
 				throw translateNavigationFailure(url, ex);
 			}
 			settleAfterLoad();
-			String finalUrl = response != null ? response.url() : _page.url();
-			verifyNavigationPolicy(finalUrl);
 			int status = response != null ? response.status() : -1;
 			Map<String, String> headers = response != null ? response.headers() : null;
 			// An explicit navigation always lands on a fresh document: start a new page generation so
 			// refs from the previous page are detected as stale.
 			_pageGeneration++;
-			return capture(finalUrl, status, headers, true);
+			PageView view = capture(status, headers, true);
+			// Judge the document that was actually captured, which is the one about to be handed to the
+			// model, rather than a URL read in a separate round trip a moment earlier.
+			verifyNavigationPolicy(view.finalUrl());
+			return view;
 		}, navigationDeadlineMillis());
 	}
 
@@ -1055,7 +1098,7 @@ final class BrowserSession {
 	 */
 	PageView snapshot() {
 		return callOnThread(() -> {
-			PageView view = capture(_page.url(), -1, null, false);
+			PageView view = capture(-1, null, false);
 			verifyCurrentDocumentPolicy();
 			return view;
 		}, navigationDeadlineMillis());
@@ -1094,19 +1137,19 @@ final class BrowserSession {
 				throw translateActionFailure(ref, "clicked", ex);
 			}
 			settleAfterClick();
-			String finalUrl = _page.url();
-			verifyNavigationPolicy(finalUrl);
 			// What the browser reported, not what the URL happens to say: a reload and a form post to
 			// the same address navigate without changing the URL, so the comparison alone would leave
 			// the page generation behind and keep accepting refs minted on the previous document. The
 			// comparison is kept only as a fallback that can never under-report - a changed top-level
 			// URL is a navigation whether or not the listeners saw it.
-			boolean navigated = _navigationStarted || !finalUrl.equals(urlBefore);
+			boolean navigated = _navigationStarted || !_page.url().equals(urlBefore);
 			if (navigated) {
 				// The click navigated to a different page: refs from the old page are now stale.
 				_pageGeneration++;
 			}
-			return capture(finalUrl, -1, null, navigated);
+			PageView view = capture(-1, null, navigated);
+			verifyNavigationPolicy(view.finalUrl());
+			return view;
 		}, navigationDeadlineMillis());
 	}
 
@@ -1128,7 +1171,7 @@ final class BrowserSession {
 			// Filling a field can submit a form, so the same check the navigating verbs run applies
 			// here: an off-policy hop, or a refusal page the proxy served, must not come back as
 			// ordinary page content. After the capture, for the reason given on snapshot().
-			PageView view = capture(_page.url(), -1, null, false);
+			PageView view = capture(-1, null, false);
 			verifyCurrentDocumentPolicy();
 			return view;
 		}, navigationDeadlineMillis());
@@ -1157,14 +1200,14 @@ final class BrowserSession {
 			}
 			if (response == null) {
 				// No history entry to go back to: the page is unchanged, so keep the generation.
-				return capture(_page.url(), -1, null, false);
+				return capture(-1, null, false);
 			}
 			settleAfterLoad();
-			String finalUrl = response.url();
-			verifyNavigationPolicy(finalUrl);
 			// Going back landed on a different page in history: start a new page generation.
 			_pageGeneration++;
-			return capture(finalUrl, response.status(), response.headers(), true);
+			PageView view = capture(response.status(), response.headers(), true);
+			verifyNavigationPolicy(view.finalUrl());
+			return view;
 		}, navigationDeadlineMillis());
 	}
 
@@ -1257,8 +1300,15 @@ final class BrowserSession {
 	 * </p>
 	 */
 	private void settleAfterNavigatingClick() {
-		awaitNavigationCommit();
-		settleAfterLoad();
+		if (awaitNavigationCommit()) {
+			settleAfterLoad();
+		} else {
+			// The navigation was begun but no document followed it, so there is no new page to let
+			// load and fall quiet - waiting for either would be waiting on the page that is still
+			// here, which reached both long ago. Only the DOM-quiet stage still has something to do:
+			// whatever the handler did instead of navigating may still be rendering.
+			waitForDomQuiet();
+		}
 	}
 
 	/**
@@ -1271,16 +1321,31 @@ final class BrowserSession {
 	 * download, a {@code mailto:} link or a handler that changes its mind all start a main-frame
 	 * request that no new document ever follows, and spending a page load on each of those would
 	 * re-create the toll this whole change removes. On expiry the page is captured as it stands, which
-	 * is the behaviour of every other stage here. A no-op when the cap is {@code 0}, where the operator
-	 * has asked for the loaded page to be captured immediately and there is no settle to protect.
+	 * is the behaviour of every other stage here, and the caller skips the stages that only make sense
+	 * for a document that did arrive - so a click whose navigation never lands ({@code window.stop()},
+	 * a {@code 204}) costs the detection window, this wait and the DOM-quiet stages around it:
+	 * measured at the default cap, 3.2 s on a page that never falls still and 2.2 s on an ordinary
+	 * one, where it used to cost the full page-load timeout (31.5 s).
 	 * </p>
+	 *
+	 * <p>
+	 * A no-op when the cap is {@code 0}: the operator has asked for the loaded page to be captured
+	 * immediately, and nothing is lost by it - {@link #CAPTURE_SCRIPT} reads the URL, the HTML and the
+	 * refs in one go, so a capture that runs across a commit is still internally consistent, it just
+	 * describes whichever of the two documents it caught.
+	 * </p>
+	 *
+	 * @return Whether a new document committed.
 	 */
-	private void awaitNavigationCommit() {
+	private boolean awaitNavigationCommit() {
 		long before = _navigationsAtAttemptStart;
-		if (_mainFrameNavigations > before || _navigationSettleMillis <= 0) {
+		if (_mainFrameNavigations > before) {
 			// Already landed - the ordinary link or form-submit click, where Playwright's own click
 			// call did not return until the new document committed.
-			return;
+			return true;
+		}
+		if (_navigationSettleMillis <= 0) {
+			return false;
 		}
 		try {
 			_page.waitForCondition(() -> _mainFrameNavigations > before,
@@ -1288,6 +1353,7 @@ final class BrowserSession {
 		} catch (RuntimeException neverCommitted) {
 			// The navigation was begun but no document followed; capture what is there.
 		}
+		return _mainFrameNavigations > before;
 	}
 
 	/**
@@ -1641,13 +1707,44 @@ final class BrowserSession {
 			ssrfReason != null ? blockedAddressMessage(ssrfReason) : blockedOriginMessage(uri.toString());
 	}
 
-	private PageView capture(String finalUrl, int status, Map<String, String> responseHeaders,
-			boolean navigated) {
+	/**
+	 * Captures the document the page is showing: its URL, its HTML, its interactive elements and its
+	 * accessibility snapshot.
+	 *
+	 * <p>
+	 * The URL is <b>not</b> passed in and is not read with {@code page.url()}: it comes out of
+	 * {@link #CAPTURE_SCRIPT} together with the HTML and the refs, so the four cannot describe two
+	 * different documents - see that constant's "one view of one document" note for why a timeout
+	 * cannot substitute for this. The only part that is still a round trip of its own is the
+	 * accessibility snapshot, which Playwright generates and no page script can produce; a document
+	 * that commits while it is being read is therefore caught afterwards by re-reading the page once
+	 * (below), rather than being handed back half old and half new.
+	 * </p>
+	 */
+	private PageView capture(int status, Map<String, String> responseHeaders, boolean navigated) {
+		long documentBefore = _mainFrameNavigations;
+		PageView view = captureOnce(status, responseHeaders, navigated);
+		if (_mainFrameNavigations != documentBefore) {
+			// A navigation committed while this capture was being read, so the accessibility snapshot
+			// may belong to a different document than the rest of it. Read the page once more; a
+			// second commit inside the few milliseconds a re-read takes is not worth a loop.
+			view = captureOnce(status, responseHeaders, navigated);
+		}
+		return view;
+	}
+
+	/** One pass of {@link #capture}; see there for why it is sometimes run twice. */
+	private PageView captureOnce(int status, Map<String, String> responseHeaders, boolean navigated) {
 		// Tag every ref minted below with the current page generation (the caller advances it when a
 		// navigation moved to a new page); refs from any earlier generation are stale.
 		long generation = _pageGeneration;
 		CaptchaSignal captcha = new CaptchaSignal(false, null);
 		List<InteractiveElement> elements = new ArrayList<>();
+		// Fallbacks for the case where the evaluation itself fails (a document being replaced right
+		// now, a page that forbids script evaluation): the capture stays best-effort, so fall back to
+		// Playwright's own reads rather than failing the whole call.
+		String finalUrl = null;
+		String html = null;
 		try {
 			// Pass the generation as a String: Playwright's Java arg serializer rejects Long, and JS
 			// string concatenation ('s' + gen + 'e' + i) yields the same s<gen>e<index> ref either way.
@@ -1667,12 +1764,24 @@ final class BrowserSession {
 						}
 					}
 				}
+				if (map.get("url") instanceof String url && !url.isBlank()) {
+					finalUrl = url;
+				}
+				if (map.get("html") instanceof String captured) {
+					html = captured;
+				}
 			}
 		} catch (RuntimeException ex) {
 			// Extraction of refs/captcha is best-effort; never fail the whole call over it.
-			Logger.warn("Browser element extraction failed for " + finalUrl + ".", ex, BrowserSession.class);
+			Logger.warn("Browser element extraction failed for " + _page.url() + ".", ex,
+				BrowserSession.class);
 		}
-		String html = _page.content();
+		if (finalUrl == null) {
+			finalUrl = _page.url();
+		}
+		if (html == null) {
+			html = _page.content();
+		}
 		// Bounded by the action timeout, not the page-load timeout: this reads the already-loaded
 		// document, so a body that is not there now will not appear by waiting a page load for it.
 		String ariaSnapshot = _page.locator("body").ariaSnapshot(
@@ -2044,7 +2153,7 @@ final class BrowserSession {
 		return callOnThread(() -> {
 			_page.setContent(html, new Page.SetContentOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 			_pageGeneration++;
-			return capture(_page.url(), -1, null, true);
+			return capture(-1, null, true);
 		}, navigationDeadlineMillis());
 	}
 
@@ -2061,7 +2170,7 @@ final class BrowserSession {
 			_page.setContent(html, new Page.SetContentOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 			settleAfterLoad();
 			_pageGeneration++;
-			return capture(_page.url(), -1, null, true);
+			return capture(-1, null, true);
 		}, navigationDeadlineMillis());
 	}
 
@@ -2092,7 +2201,7 @@ final class BrowserSession {
 			} catch (PlaywrightException ex) {
 				throw translateActionFailure(ref, "clicked", ex);
 			}
-			return capture(_page.url(), -1, null, false);
+			return capture(-1, null, false);
 		}, navigationDeadlineMillis());
 	}
 

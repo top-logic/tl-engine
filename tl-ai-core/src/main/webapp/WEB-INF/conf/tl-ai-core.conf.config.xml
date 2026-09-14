@@ -166,8 +166,13 @@
 
 			     navigation-settle-millis: hard cap of the post-load SETTLE. After a page-loading
 			     operation (browserNavigate / browserBack / a navigating browserClick) has seen the
-			     page load, and before it is captured, two waits run and THIS cap bounds each of
-			     them. First network-quiet: a brief chance for client-side rendering that starts
+			     page load, and before it is captured, three waits can run and THIS cap bounds each
+			     of them separately. First commit - only for a browserClick, and only where the page
+			     navigated itself from a script rather than through the link that was clicked: wait
+			     for the new document to actually replace the old one, because until it does, the
+			     page's address and its load state are still the old document's. A navigation that
+			     is begun and never lands (a 204, a download, a handler that changes its mind) gives
+			     up after this cap. Then network-quiet: a brief chance for client-side rendering that starts
 			     only after the load event, ending as soon as the page has issued no request for
 			     Playwright's idle window. It is deliberately NOT bounded by
 			     navigation-timeout-seconds - a page that polls, streams or beacons (most SSO login
@@ -179,8 +184,12 @@
 			     re-snapshot, and keeps a banner that is animating AWAY from being reported as
 			     still-clickable. Endlessly repeating animations (spinners, carousels) are ignored,
 			     so they never push a load out to the cap. A still page is delayed by at most the
-			     debounce window; the cap is always applied inside navigation-timeout-seconds, so it
-			     can never hang. 0 disables the settle (capture as soon as the page has loaded).
+			     debounce window. The three stages do not add up on any ordinary path: a click that
+			     does not navigate runs DOM-quiet alone, and an ordinary link click has already
+			     committed by the time the commit stage is reached. The cap is always applied inside
+			     navigation-timeout-seconds, so it can never hang. 0 disables the settle (capture as
+			     soon as the page has loaded); what is captured is still internally consistent -
+			     address, content and element references are read in one go - just captured earlier.
 			     Does not apply to browserSnapshot / browserType (they stay immediate), nor to a
 			     browserClick that started no navigation - that one waits for DOM-quiet only,
 			     because there is no page load to wait for.

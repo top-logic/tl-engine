@@ -50,9 +50,22 @@ import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
  * <b>What is asserted.</b> Wall time, against budgets that are far below the 30 s page-load timeout
  * the defect spent and far above what the fixed code needs, so a slow agent does not make them flap.
  * That the fixture really does keep the network busy is asserted directly, from the poll requests the
- * fixture server recorded - without that the budgets could be met by a page that simply went idle.
+ * fixture server recorded <em>across</em> the operation under test - a count taken before and after,
+ * because a cumulative count would already be satisfied by the navigation that preceded the click.
  * The navigating click additionally has to still capture content injected a beat after the new page
  * loaded, which is what proves the page-load settle still runs where a page really was loaded.
+ * </p>
+ *
+ * <p>
+ * <b>The deferred navigation.</b> The second group of tests covers the case a click-detection window
+ * is easy to get wrong: a handler that starts the hop itself, later than the click
+ * ({@code setTimeout(() => location.href = …)}, the shape {@code fetch(…).then(() => location.href = …)}
+ * has against a backend that takes about a second). Capturing across that hop hands the model a
+ * <em>torn</em> page view - the old page's URL with the new page's HTML, and refs minted on the new
+ * document under the old page generation, so a ref the model still held would be accepted against a
+ * different element on a different page. These tests therefore assert the three things that have to
+ * agree - reported URL, captured content, and an advanced page generation - rather than only a
+ * budget.
  * </p>
  *
  * <p>
@@ -117,6 +130,9 @@ public class TestBrowserSettleBounds extends TestCase {
 	/** The text the same-page button writes, proving the click landed rather than being swallowed. */
 	private static final String CLICK_MARKER = "clicked";
 
+	/** Marks the second fixture page in its own HTML, so a torn capture is visible in the content. */
+	private static final String SECOND_PAGE_MARKER = "second fixture page";
+
 	/** Keeps a page permanently busy on the network, so it never reaches {@code networkidle}. */
 	private static final String POLL_SCRIPT =
 		"<script>setInterval(function() { fetch('" + POLL_PATH + "?' + Date.now())"
@@ -142,7 +158,7 @@ public class TestBrowserSettleBounds extends TestCase {
 	 */
 	private static final String SECOND_PAGE = ""
 		+ "<!doctype html><html><head><title>second</title></head><body>"
-		+ "<h1>second fixture page</h1>"
+		+ "<h1>" + SECOND_PAGE_MARKER + "</h1>"
 		+ "<script>setTimeout(function() {"
 		+ "  var b = document.createElement('button');"
 		+ "  b.id = 'late';"
@@ -151,6 +167,51 @@ public class TestBrowserSettleBounds extends TestCase {
 		+ "}, " + LATE_INJECT_MILLIS + ");</script>"
 		+ POLL_SCRIPT
 		+ "</body></html>";
+
+	/**
+	 * Delays, in milliseconds after the click, at which the deferred-navigation fixture starts its
+	 * hop. All three sit past {@code CLICK_NAVIGATION_DETECTION_MILLIS} (500 ms), so none of them is
+	 * caught by the click's first look at the flag; they are caught by the second one, taken after the
+	 * DOM-quiet wait.
+	 */
+	private static final int[] LATE_NAVIGATION_DELAYS_MILLIS = { 600, 800, 1000 };
+
+	/** The accessible name of the button that navigates a beat after it is clicked. */
+	private static final String LATE_NAVIGATION_BUTTON_NAME = "Navigate in a moment";
+
+	/**
+	 * Keeps a page permanently mutating as well as permanently busy on the network, so its DOM-quiet
+	 * stage runs to the settle cap rather than resolving at the debounce window.
+	 *
+	 * <p>
+	 * This is not stacking the deck, it is the page class under test: the pages that never go
+	 * network-idle - an SSO login page, a single-page application - are the same ones that keep
+	 * repainting. It matters here because the click's navigation-detection window is the 500 ms
+	 * constant <em>plus</em> however long the DOM-quiet wait runs, so on such a page the window is the
+	 * full two seconds and all three delays below sit inside it deterministically.
+	 * </p>
+	 */
+	private static final String RESTLESS_SCRIPT =
+		"<p id=\"tick\">0</p>"
+			+ "<script>var n = 0; setInterval(function() {"
+			+ "  document.getElementById('tick').textContent = String(++n);"
+			+ "}, " + POLL_INTERVAL_MILLIS + ");</script>";
+
+	/**
+	 * A never-idle, never-still page whose button starts a top-level navigation {@code delayMillis}
+	 * after it is clicked - the {@code setTimeout} / {@code fetch().then()} shape - rather than with
+	 * the click.
+	 */
+	private static String lateNavigationPage(int delayMillis) {
+		return "<!doctype html><html><head><title>first</title></head><body>"
+			+ "<h1>first fixture page</h1>"
+			+ "<button id=\"later\" onclick=\"setTimeout(function() {"
+			+ " location.href = 'http://" + SECOND_HOST + "/'; }, " + delayMillis + ");\">"
+			+ LATE_NAVIGATION_BUTTON_NAME + "</button>"
+			+ RESTLESS_SCRIPT
+			+ POLL_SCRIPT
+			+ "</body></html>";
+	}
 
 	/**
 	 * <b>The defect itself.</b> A click that starts no navigation on a page that never goes
@@ -168,13 +229,14 @@ public class TestBrowserSettleBounds extends TestCase {
 				String stay = refWithName(loaded.elements(), STAY_BUTTON_NAME);
 				assertNotNull("the fixture's same-page button was captured", stay);
 
+				long pollsBefore = pollCount(first);
 				long startNanos = System.nanoTime();
 				PageView clicked = session.click(stay);
 				long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
 
 				assertTrue("the click landed (the page edited itself): " + clicked.html(),
 					clicked.html().contains(CLICK_MARKER));
-				assertPollingKeptTheNetworkBusy(first);
+				assertPollingContinued(first, pollsBefore);
 				assertTrue("a click that starts no navigation must not be charged the page-load "
 					+ "timeout: took " + elapsedMillis + " ms, budget " + SAME_PAGE_CLICK_BUDGET_MILLIS
 					+ " ms, page-load timeout " + NAVIGATION_TIMEOUT_MILLIS + " ms",
@@ -202,6 +264,7 @@ public class TestBrowserSettleBounds extends TestCase {
 				String go = refWithName(loaded.elements(), NAVIGATE_LINK_NAME);
 				assertNotNull("the fixture's navigating link was captured", go);
 
+				long pollsBefore = pollCount(second);
 				long startNanos = System.nanoTime();
 				PageView clicked = session.click(go);
 				long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
@@ -211,7 +274,7 @@ public class TestBrowserSettleBounds extends TestCase {
 				assertNotNull("a navigating click still settles, so the button the new page injects "
 					+ LATE_INJECT_MILLIS + " ms after its load is captured",
 					refWithName(clicked.elements(), LATE_BUTTON_NAME));
-				assertPollingKeptTheNetworkBusy(second);
+				assertPollingContinued(second, pollsBefore);
 				assertTrue("a navigating click onto a never-idle page is bounded by the settle cap, "
 					+ "not by the page-load timeout: took " + elapsedMillis + " ms, budget "
 					+ PAGE_LOAD_BUDGET_MILLIS + " ms, page-load timeout " + NAVIGATION_TIMEOUT_MILLIS
@@ -234,13 +297,14 @@ public class TestBrowserSettleBounds extends TestCase {
 				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, resolvingTo(first, second))) {
 			BrowserSession session = openSession("navigate-never-idle", proxy);
 			try {
+				long pollsBefore = pollCount(first);
 				long startNanos = System.nanoTime();
 				PageView loaded = session.navigate("http://" + FIRST_HOST + "/");
 				long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
 
 				assertTrue("the fixture page itself loaded: " + loaded.html(),
 					loaded.html().contains("first fixture page"));
-				assertPollingKeptTheNetworkBusy(first);
+				assertPollingContinued(first, pollsBefore);
 				assertTrue("a navigation onto a never-idle page is bounded by the settle cap, not by "
 					+ "the page-load timeout: took " + elapsedMillis + " ms, budget "
 					+ PAGE_LOAD_BUDGET_MILLIS + " ms, page-load timeout " + NAVIGATION_TIMEOUT_MILLIS
@@ -251,16 +315,94 @@ public class TestBrowserSettleBounds extends TestCase {
 		}
 	}
 
+	/**
+	 * <b>The deferred navigation.</b> A click whose handler starts the hop <em>later</em> than the
+	 * detection window must still be settled as a page load: the returned page view has to report the
+	 * new page's URL, carry the new page's content, say that it navigated, and mint its refs under a
+	 * fresh page generation - all four, because it is their disagreement that makes a torn capture
+	 * dangerous rather than merely wrong.
+	 *
+	 * <p>
+	 * Run for each of {@link #LATE_NAVIGATION_DELAYS_MILLIS}, every one of them past the 500 ms first
+	 * window, on a page that never goes network-idle and never goes DOM-quiet - the shape that used to
+	 * make this go wrong. The URL assertion is the one that carries the commit wait: without it the
+	 * click reports the page it started on while its HTML is already the page it ended on.
+	 * </p>
+	 */
+	public void testANavigationStartedAfterTheDetectionWindowIsStillSettled() {
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve the fixture hosts - no network", resolvable());
+		for (int delayMillis : LATE_NAVIGATION_DELAYS_MILLIS) {
+			assertLateNavigationIsSettled(delayMillis);
+		}
+	}
+
+	/** One case of {@link #testANavigationStartedAfterTheDetectionWindowIsStillSettled()}. */
+	private static void assertLateNavigationIsSettled(int delayMillis) {
+		String when = "navigation started " + delayMillis + " ms after the click: ";
+		try (RecordingServer first = RecordingServer.serving(lateNavigationPage(delayMillis));
+				RecordingServer second = RecordingServer.serving(SECOND_PAGE);
+				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, resolvingTo(first, second))) {
+			BrowserSession session = openSession("click-late-" + delayMillis, proxy);
+			try {
+				PageView loaded = session.navigate("http://" + FIRST_HOST + "/");
+				String later = refWithName(loaded.elements(), LATE_NAVIGATION_BUTTON_NAME);
+				assertNotNull(when + "the fixture's deferred-navigation button was captured", later);
+				long generationBefore = generationOf(later);
+
+				long startNanos = System.nanoTime();
+				PageView clicked = session.click(later);
+				long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
+
+				assertTrue(when + "the reported URL is the page the click ended on, not the one it "
+					+ "started on: " + clicked.finalUrl(), clicked.finalUrl().contains(SECOND_HOST));
+				assertTrue(when + "the captured content is that same page",
+					clicked.html().contains(SECOND_PAGE_MARKER));
+				assertTrue(when + "the hop is reported as a navigation, so the model is not told the "
+					+ "page stayed put", clicked.navigated());
+
+				// The new page injects this button 800 ms after its own load, so finding it proves the
+				// page-load settle ran on the new document rather than the capture racing it.
+				String late = refWithName(clicked.elements(), LATE_BUTTON_NAME);
+				assertNotNull(when + "the new page was settled and captured in full", late);
+				assertTrue(when + "the page generation advanced, so a ref from the old page is refused "
+					+ "instead of resolving against the new document (was " + generationBefore
+					+ ", now " + generationOf(late) + ")", generationOf(late) > generationBefore);
+
+				assertTrue(when + "the whole click is still bounded: took " + elapsedMillis
+					+ " ms, budget " + PAGE_LOAD_BUDGET_MILLIS + " ms, page-load timeout "
+					+ NAVIGATION_TIMEOUT_MILLIS + " ms", elapsedMillis < PAGE_LOAD_BUDGET_MILLIS);
+			} finally {
+				session.close();
+			}
+		}
+	}
+
 	// --- Fixture helpers. ---
 
+	/** How many poll requests this fixture server has answered so far. */
+	private static long pollCount(RecordingServer fixture) {
+		return fixture.requestLines().stream().filter(line -> line.contains(POLL_PATH)).count();
+	}
+
 	/**
-	 * Asserts that the fixture really did keep the network busy, so a met budget means the waits are
-	 * bounded rather than that the page went quiet after all.
+	 * Asserts that the fixture kept the network busy <b>during</b> the operation just measured, so a
+	 * met budget means the waits are bounded rather than that the page went quiet after all.
+	 *
+	 * <p>
+	 * The growth is what carries the argument, not the total: the navigation that precedes a click
+	 * already spends a second or two, so a cumulative count is satisfied long before the click even
+	 * happens and would prove only that the fixture once polled.
+	 * </p>
+	 *
+	 * @param before
+	 *        {@link #pollCount(RecordingServer)} taken immediately before the operation.
 	 */
-	private static void assertPollingKeptTheNetworkBusy(RecordingServer fixture) {
-		long polls = fixture.requestLines().stream().filter(line -> line.contains(POLL_PATH)).count();
-		assertTrue("the fixture page has to poll for this test to mean anything, but the fixture "
-			+ "server saw " + polls + " poll request(s)", polls >= 2);
+	private static void assertPollingContinued(RecordingServer fixture, long before) {
+		long after = pollCount(fixture);
+		assertTrue("the fixture page has to keep polling across the operation for this test to mean "
+			+ "anything, but the fixture server answered " + before + " poll request(s) before it and "
+			+ after + " after it", after > before);
 	}
 
 	/**
@@ -284,6 +426,18 @@ public class TestBrowserSettleBounds extends TestCase {
 		return BrowserSession.open(key, NAVIGATION_TIMEOUT_MILLIS,
 			BrowserSession.DEFAULT_ACTION_TIMEOUT_MILLIS, SETTLE_MILLIS, BOTH_FIXTURE_HOSTS, null, false,
 			false, proxy.serverUrl());
+	}
+
+	/**
+	 * The page generation encoded in a {@code s<generation>e<index>} ref - what
+	 * {@code BrowserSession.requireCurrentRef} compares against, and therefore what decides whether a
+	 * ref the model kept from an earlier snapshot is still accepted.
+	 */
+	private static long generationOf(String ref) {
+		int end = ref.indexOf('e');
+		assertTrue("not a ref of the documented s<generation>e<index> shape: " + ref,
+			ref.startsWith("s") && end > 1);
+		return Long.parseLong(ref.substring(1, end));
 	}
 
 	private static String refWithName(List<InteractiveElement> elements, String name) {

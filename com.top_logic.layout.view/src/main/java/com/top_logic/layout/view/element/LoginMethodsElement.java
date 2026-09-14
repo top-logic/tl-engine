@@ -24,6 +24,7 @@ import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirectio
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -63,7 +64,7 @@ public class LoginMethodsElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		// Context-relative return path: the authentication servlet's redirect-to-start-page prepends
 		// the context path itself, so this must NOT include it (otherwise it would be doubled).
-		String returnTo = "/view/";
+		String returnTo = ViewServlet.ROOT_PATH;
 
 		List<LoginMethod> methods = LoginMethods.all();
 		List<ReactControl> buttons = new ArrayList<>(methods.size());

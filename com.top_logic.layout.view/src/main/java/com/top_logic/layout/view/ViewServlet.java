@@ -88,6 +88,12 @@ import com.top_logic.util.TopLogicServlet;
  */
 public class ViewServlet extends TopLogicServlet {
 
+	/**
+	 * The path of the view application, relative to the context: the URL a browser loads to enter
+	 * it.
+	 */
+	public static final String ROOT_PATH = "/view/";
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -122,12 +128,6 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		String routePath = extractRoutePath(rawPathInfo(request), windowName);
-		if (PendingSessionAction.consumeSessionSwapped(session)) {
-			// A login or logout has just replaced the session, and the redirect it sent still names
-			// the page the previous user had navigated to. Whoever takes the session over begins
-			// where they begin, so that page is not theirs to inherit.
-			routePath = null;
-		}
 		if (routePath == null) {
 			// Entered without naming a page, so the user's own choice of where to begin applies.
 			// A URL that does carry a route asks for that page and is never overridden.
@@ -484,6 +484,41 @@ public class ViewServlet extends TopLogicServlet {
 		}
 		String pathInfo = uri.substring(servletUrl.length());
 		return pathInfo.isEmpty() ? null : pathInfo;
+	}
+
+	@Override
+	protected String getEntryPage(HttpServletRequest request) {
+		return requestedPage(request.getRequestURI(), request.getContextPath());
+	}
+
+	/**
+	 * The page the given request URI names, relative to the context.
+	 *
+	 * <p>
+	 * A request that arrives without a session is answered with a redirect to this page once the
+	 * session exists, so that the URL a user asked for is the one they get. The segments keep the
+	 * percent-encoding the browser sent them with, for the reason
+	 * {@link #rawPathInfo(HttpServletRequest)} describes; the query string is not part of the page
+	 * and is appended by {@link #createRedirectURL(String, HttpServletRequest)}.
+	 * </p>
+	 *
+	 * @param requestURI
+	 *        The URI of the request, as {@link HttpServletRequest#getRequestURI()} reports it:
+	 *        beginning with the context path and encoded.
+	 * @param contextPath
+	 *        The context path of the application, as
+	 *        {@link HttpServletRequest#getContextPath()} reports it: empty for an application
+	 *        deployed at the root.
+	 * @return The requested page, starting with a slash and relative to the context.
+	 */
+	public static String requestedPage(String requestURI, String contextPath) {
+		if (!requestURI.startsWith(contextPath)) {
+			// The context path is encoded in the URI, so the path below it cannot be cut off by
+			// length. Such an application enters its view UI at the root of the servlet.
+			return ROOT_PATH;
+		}
+		String page = requestURI.substring(contextPath.length());
+		return page.isEmpty() ? ROOT_PATH : page;
 	}
 
 	/**

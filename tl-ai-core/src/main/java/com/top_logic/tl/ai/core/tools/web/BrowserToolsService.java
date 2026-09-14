@@ -685,9 +685,9 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		Logger.info("Browser tool started: at most " + getMaxConcurrentSessions()
 			+ " concurrent live browser session(s), page-load timeout " + getNavigationTimeoutSeconds()
 			+ " s, action timeout " + getActionTimeoutSeconds() + " s, settle cap "
-			+ getNavigationSettleMillis() + " ms (bounds the network-quiet and the DOM-quiet wait "
-			+ "after a page load; a click that did not navigate waits only for DOM-quiet), "
-			+ "acquire timeout " + getAcquireTimeoutSeconds()
+			+ getNavigationSettleMillis() + " ms (bounds each of the commit, network-quiet and "
+			+ "DOM-quiet waits after a page load; a click that did not navigate waits only for "
+			+ "DOM-quiet), acquire timeout " + getAcquireTimeoutSeconds()
 			+ " s, idle timeout " + getSessionIdleTimeoutSeconds() + " s. Every browser connection is "
 			+ "filtered through " + proxyServer
 			+ (isApplyAllowlistToAllRequests() ? " (allowlist governs every request)." : ".")
@@ -801,8 +801,9 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	}
 
 	/**
-	 * Post-load settle hard cap in milliseconds - it bounds the network-quiet stage and the DOM-quiet
-	 * stage alike - or {@code 0} when the settle is disabled.
+	 * Post-load settle hard cap in milliseconds - it bounds each of the three waits that can follow an
+	 * operation, separately: the commit wait a navigating click runs, the network-quiet stage and the
+	 * DOM-quiet stage - or {@code 0} when the settle is disabled.
 	 *
 	 * <p>
 	 * A negative configured value is treated as {@code 0} (disabled). A positive value is capped at

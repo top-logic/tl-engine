@@ -1323,9 +1323,12 @@ final class BrowserSession {
 	 * re-create the toll this whole change removes. On expiry the page is captured as it stands, which
 	 * is the behaviour of every other stage here, and the caller skips the stages that only make sense
 	 * for a document that did arrive - so a click whose navigation never lands ({@code window.stop()},
-	 * a {@code 204}) costs the detection window, this wait and the DOM-quiet stages around it:
-	 * measured at the default cap, 3.2 s on a page that never falls still and 2.2 s on an ordinary
-	 * one, where it used to cost the full page-load timeout (31.5 s).
+	 * a {@code 204}) costs the detection window, this wait and the DOM-quiet stages around it. At the
+	 * default cap that is a <em>range</em>, not a figure, because how much of each DOM-quiet stage is
+	 * spent depends on when the page next mutates: measured between 2.2 s (an ordinary page) and 5.0 s
+	 * (a page that never falls still, and so spends every stage in full), with 3.2 s a typical
+	 * restless case. Against the full page-load timeout it used to cost (31.5 s), even the worst of
+	 * that range is a sixth.
 	 * </p>
 	 *
 	 * <p>

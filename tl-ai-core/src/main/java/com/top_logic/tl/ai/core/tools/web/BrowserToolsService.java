@@ -237,12 +237,16 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		String BROWSER_SANDBOX = "browser-sandbox";
 
 		/**
-		 * Timeout for a <b>page load</b> (navigate, back), in seconds.
+		 * Timeout for a <b>page load</b> ({@code browserNavigate}, {@code browserBack}, and a
+		 * {@code browserClick} that started a navigation), in seconds.
 		 *
 		 * <p>
-		 * This bounds waiting for the network: how long the browser may spend reaching
-		 * {@code domcontentloaded} on a slow site. Acting on an <em>element</em> is bounded separately
-		 * and much more tightly by {@link #getActionTimeoutSeconds()}.
+		 * This bounds waiting for the document: how long the browser may spend reaching
+		 * {@code domcontentloaded} and then the {@code load} event on a slow site. It does
+		 * <em>not</em> bound the settle that follows a load - that is capped much more tightly by
+		 * {@link #getNavigationSettleMillis()}, because a page that never falls quiet must not cost a
+		 * page load per operation. Acting on an <em>element</em> is bounded separately and much more
+		 * tightly again by {@link #getActionTimeoutSeconds()}.
 		 * </p>
 		 *
 		 * @see #NAVIGATION_TIMEOUT_SECONDS
@@ -280,25 +284,52 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		int getActionTimeoutSeconds();
 
 		/**
-		 * Hard cap, in milliseconds, of the post-navigation <b>settle</b>: after a page-loading
-		 * operation ({@code browserNavigate} / {@code browserBack}) finishes its network/load wait and
-		 * before the page is captured, the browser waits until the DOM goes quiet (no mutation for a
-		 * short internal debounce window, ~500 ms) or this cap elapses, whichever comes first.
+		 * Hard cap, in milliseconds, of the post-load <b>settle</b>: after a page-loading operation
+		 * ({@code browserNavigate}, {@code browserBack}, or a {@code browserClick} that navigated) has
+		 * seen the page load, and before the page is captured, the browser waits for the page to calm
+		 * down - and each of the three things it waits for is bounded by this one cap, separately.
 		 *
 		 * <p>
-		 * This closes the common gap where a page injects a cookie-consent banner, lazy widget or
-		 * other content a beat <em>after</em> navigation returns: without the settle the snapshot is
-		 * taken too early and misses it, forcing a manual re-snapshot. A still page goes quiet almost
-		 * immediately and is delayed by at most the debounce window, so fast pages are not meaningfully
-		 * slowed; a page that never stops mutating (constant animation/polling) is bounded by this cap.
-		 * The cap is always applied well inside {@link #getNavigationTimeoutSeconds() the per-operation
-		 * deadline}, so it can never cause a hang.
+		 * <b>Commit.</b> Only for a {@code browserClick}, and only where the page navigated itself
+		 * from a script rather than through the link that was clicked: the browser waits for the new
+		 * document to actually replace the old one before it settles anything, because until then the
+		 * page's address and its load state are still the old document's. A navigation that is begun
+		 * and never lands - a {@code 204}, a download, a handler that changes its mind - gives up
+		 * after this cap.
 		 * </p>
 		 *
 		 * <p>
-		 * Set to {@code 0} to disable the settle entirely and restore immediate capture. It does
-		 * <em>not</em> apply to {@code browserSnapshot} (explicit re-capture) or {@code browserType}
-		 * (same-page edit), which stay immediate.
+		 * <b>Network-quiet.</b> A brief chance for client-side rendering that only starts after the
+		 * load event: the wait ends as soon as the page has issued no request for Playwright's idle
+		 * window, or when this cap elapses. It is deliberately <em>not</em> bounded by
+		 * {@link #getNavigationTimeoutSeconds() the page-load timeout}: a page that polls, streams or
+		 * sends beacons - most SSO login pages, most single-page applications - never goes network-idle
+		 * at all, so a page-load-sized budget here bought nothing and cost that whole budget on every
+		 * operation.
+		 * </p>
+		 *
+		 * <p>
+		 * <b>DOM-quiet.</b> The browser then waits until the DOM goes quiet (no mutation for a short
+		 * internal debounce window, ~500 ms) and any in-flight, finite CSS animation has finished, or
+		 * until this cap elapses. This closes the common gap where a page injects a cookie-consent
+		 * banner, lazy widget or other content a beat <em>after</em> navigation returns: without the
+		 * settle the snapshot is taken too early and misses it, forcing a manual re-snapshot. A still
+		 * page goes quiet almost immediately and is delayed by at most the debounce window, so fast
+		 * pages are not meaningfully slowed; a page that never stops mutating (constant
+		 * animation/polling) is bounded by this cap.
+		 * </p>
+		 *
+		 * <p>
+		 * The three stages do not add up on any ordinary path: a click that does not navigate runs the
+		 * DOM-quiet stage alone, and an ordinary link or form-submit click has already committed by the
+		 * time the commit stage is reached. The cap is always applied well inside the per-operation
+		 * deadline, so it can never cause a hang. Set to {@code 0} to disable the settle entirely and
+		 * capture as soon as the page has loaded; the page that is then captured is still internally
+		 * consistent - address, content and element references are read in one go - it is simply
+		 * captured earlier. The settle does <em>not</em> apply to {@code browserSnapshot} (explicit re-capture),
+		 * to {@code browserType} (same-page edit), or to a {@code browserClick} that started no
+		 * navigation - that one gets the DOM-quiet wait alone, because there is no page load to wait
+		 * for.
 		 * </p>
 		 *
 		 * @see #NAVIGATION_SETTLE_MILLIS
@@ -654,7 +685,9 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 		Logger.info("Browser tool started: at most " + getMaxConcurrentSessions()
 			+ " concurrent live browser session(s), page-load timeout " + getNavigationTimeoutSeconds()
 			+ " s, action timeout " + getActionTimeoutSeconds() + " s, settle cap "
-			+ getNavigationSettleMillis() + " ms, acquire timeout " + getAcquireTimeoutSeconds()
+			+ getNavigationSettleMillis() + " ms (bounds each of the commit, network-quiet and "
+			+ "DOM-quiet waits after a page load; a click that did not navigate waits only for "
+			+ "DOM-quiet), acquire timeout " + getAcquireTimeoutSeconds()
 			+ " s, idle timeout " + getSessionIdleTimeoutSeconds() + " s. Every browser connection is "
 			+ "filtered through " + proxyServer
 			+ (isApplyAllowlistToAllRequests() ? " (allowlist governs every request)." : ".")
@@ -768,7 +801,9 @@ public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsServ
 	}
 
 	/**
-	 * Post-navigation settle hard cap in milliseconds, or {@code 0} when the settle is disabled.
+	 * Post-load settle hard cap in milliseconds - it bounds each of the three waits that can follow an
+	 * operation, separately: the commit wait a navigating click runs, the network-quiet stage and the
+	 * DOM-quiet stage - or {@code 0} when the settle is disabled.
 	 *
 	 * <p>
 	 * A negative configured value is treated as {@code 0} (disabled). A positive value is capped at

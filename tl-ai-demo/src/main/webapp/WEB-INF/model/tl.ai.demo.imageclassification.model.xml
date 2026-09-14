@@ -72,6 +72,12 @@
 					reads "84.9". This derived attribute does the formatting itself and is what the
 					invoice table shows; `amount` stays the number everything else works with - the
 					form edits it, and the create handler writes what the model read off the scan.
+
+					TODO: a presentation concern living in the domain model, and it will outlive the
+					gap it works around. The framework gap is that the React view layer ignores an
+					attribute's `format` annotation - which is also why the detail form beside the
+					table still shows "84.9" while the column shows "84,90 €". Remove this attribute
+					and bind the column back to `amount` once the view layer honours the annotation.
 				-->
 				<property name="amountLabel"
 					type="tl.core:String"

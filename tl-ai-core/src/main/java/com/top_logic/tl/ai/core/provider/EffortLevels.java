@@ -38,10 +38,19 @@ public final class EffortLevels {
 
 	/** Which of the two assignment fields a level belongs in. */
 	public enum Kind {
-		/** {@link AgentModelAssignment#thinkingEffort()}. */
+		/**
+		 * The model spends effort on thinking before it answers, as Anthropic models do.
+		 *
+		 * @see AgentModelAssignment#thinkingEffort()
+		 */
 		THINKING_EFFORT,
 
-		/** {@link AgentModelAssignment#reasoningEffort()}. */
+		/**
+		 * The model spends effort on reasoning before it answers, as {@code OpenAI} and {@code xAI}
+		 * models do.
+		 *
+		 * @see AgentModelAssignment#reasoningEffort()
+		 */
 		REASONING_EFFORT,
 
 		/** The model offers no effort setting. */

@@ -41,16 +41,14 @@ public sealed interface Part {
 	record TextPart(String id, Instant timestamp, String text) implements Part {}
 
 	/**
-	 * A thinking / reasoning block produced by the LLM.
-	 *
-	 * @param id part identifier
-	 * @param timestamp when the thinking block was produced
-	 * @param text the reasoning content
-	 * @param continuityToken opaque provider token for multi-turn continuity; may be {@code null}
-	 */
-	/**
 	 * One thinking block of an assistant turn.
 	 *
+	 * @param id
+	 *        part identifier
+	 * @param timestamp
+	 *        when the thinking block was produced
+	 * @param text
+	 *        the reasoning the model wrote
 	 * @param continuityToken
 	 *        the provider's own token for the block (Anthropic's signature, {@code OpenAI}'s
 	 *        encrypted content), or {@code null} when none arrived

@@ -133,6 +133,11 @@ public class ConversationLog {
 		return removed;
 	}
 
+	/**
+	 * Registers an {@link Observer} to be notified of what happens to this log.
+	 *
+	 * @see #removeObserver(Observer)
+	 */
 	public void addObserver(Observer observer) {
 		_observers.add(observer);
 	}

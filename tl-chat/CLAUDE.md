@@ -83,8 +83,14 @@ serves `/chat/*`.
 | Dependencies | `marked` (MIT) + `dompurify` (Apache-2.0 or MPL-2.0) for markdown, `highlight.js` (BSD-3-Clause) for code blocks - core plus 13 registered grammars. All three are bundled into `tl-chat-ui.js`, so their licences travel with the WAR. |
 
 `mvn -pl tl-chat install` runs, in `generate-resources`: `npm install`, then `npm run typecheck`
-(`tsc --noEmit`), then `npm run build`. The type check is a build step of its own because the Vite
-library build strips types without checking them.
+(`tsc --noEmit`), then `vitest run`, then `npm run build`. The type check is a build step of its own
+because the Vite library build strips types without checking them.
+
+All four sit in `generate-resources` on purpose, so `-DskipTests` still runs the JS tests: that flag
+is for the Java suites, whose KB setup is what makes a build slow, while the whole vitest run is a
+second or two. Keeping it there means the bundle that goes into the WAR was never built from code
+its own tests reject - including on a `-DskipTests` build, which is how this module is usually
+built.
 
 ### Dev loop
 

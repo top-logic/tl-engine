@@ -35,6 +35,8 @@ const EN = {
   greeting: (name: string) => (name ? `Hello ${name}.` : 'Hello.'),
   howCanIHelp: 'What can I help you with?',
   askAnything: 'Ask anything…',
+  /** Shown when the host offers sources, so the "@" is worth mentioning. */
+  askAnythingWithAt: 'Ask anything. Type @ for a source, / for an agent',
   typeNext: 'Type your next message…',
   enterSends: 'Enter sends · Shift+Enter adds a line',
   enterSendsShort: 'Enter sends',
@@ -215,7 +217,19 @@ const EN = {
   citationChip: (n: number) => `Citation ${n}`,
   citationKind: 'Kind',
   citationSource: 'Source',
-  removeChip: (label: string) => `Remove ${label}`,
+  addSource: 'Add a source',
+  removeReference: (label: string) => `Remove the reference ${label}`,
+  sourcesTitle: 'Sources',
+  sourcesContributor: 'tl-ai',
+  sourcesEmpty: 'This chat has not cited anything yet.',
+  sourcesFilter: 'Filter sources',
+  sourcesCited: (count: number) => (count === 1 ? '1 cited' : `${count} cited`),
+  sourcesPill: (count: number) => `Sources · ${count === 1 ? '1 cited' : `${count} cited`}`,
+  openSource: 'Open source →',
+  goToAnswer: (marker: number) => `Go to marker ${marker}`,
+  citationMarker: (n: number) => `Source ${n}`,
+  runSteps: (count: number) => (count === 1 ? 'Done in 1 step' : `Done in ${count} steps`),
+  paneClose: 'Close',
 }
 
 type Bundle = typeof EN
@@ -247,6 +261,7 @@ const DE: Bundle = {
   greeting: (name: string) => (name ? `Hallo ${name}.` : 'Hallo.'),
   howCanIHelp: 'Womit kann ich helfen?',
   askAnything: 'Frag mich etwas …',
+  askAnythingWithAt: 'Frag mich etwas. @ für eine Quelle, / für einen Agenten',
   typeNext: 'Nächste Nachricht schreiben …',
   enterSends: 'Enter sendet · Umschalt+Enter macht einen Zeilenumbruch',
   enterSendsShort: 'Enter sendet',
@@ -424,7 +439,19 @@ const DE: Bundle = {
   citationChip: (n: number) => `Beleg ${n}`,
   citationKind: 'Art',
   citationSource: 'Quelle',
-  removeChip: (label: string) => `${label} entfernen`,
+  addSource: 'Quelle hinzufügen',
+  removeReference: (label: string) => `Referenz ${label} entfernen`,
+  sourcesTitle: 'Quellen',
+  sourcesContributor: 'tl-ai',
+  sourcesEmpty: 'In diesem Chat wurde noch nichts zitiert.',
+  sourcesFilter: 'Quellen filtern',
+  sourcesCited: (count: number) => (count === 1 ? '1 zitiert' : `${count} zitiert`),
+  sourcesPill: (count: number) => `Quellen · ${count === 1 ? '1 zitiert' : `${count} zitiert`}`,
+  openSource: 'Quelle öffnen →',
+  goToAnswer: (marker: number) => `Zu Markierung ${marker} springen`,
+  citationMarker: (n: number) => `Quelle ${n}`,
+  runSteps: (count: number) => (count === 1 ? 'In 1 Schritt erledigt' : `In ${count} Schritten erledigt`),
+  paneClose: 'Schließen',
 }
 
 const BUNDLES: Record<Language, Bundle> = { en: EN, de: DE }

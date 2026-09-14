@@ -27,14 +27,16 @@ import { SessionRail } from './chrome'
 import { Composer } from './composer'
 import type {
   ChatExtensions,
-  ComposerChip,
+  ComposerApi,
   PaneOpenOptions,
   RailRenderContext,
   RailSection,
 } from './extensions'
+import type { ReferenceToken } from './reference'
 import { hostRailSections } from './extensions'
 import { parsePreferences, savePreferences } from './preferences'
 import { ContextIcon, ContextSection, ProgressIcon, ProgressSection } from './progress'
+import { SourcesIcon, SourcesSection, citedSources, type CitedSource } from './sources'
 import { parseTasksJson, progressBadge, unseenBadge, type AgentTask } from './progress-model'
 import { RailToggle, SideRail, SideStrip, useCollapsedSections } from './rail'
 import { chatReducer } from './reducer'
@@ -160,7 +162,6 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   const [badgeSeen, setBadgeSeen] = useState(() => prefs.badgeSeen)
   const [paneContent, setPaneContent] = useState<React.ReactNode>(null)
   const [paneOptions, setPaneOptions] = useState<PaneOpenOptions | null>(null)
-  const [hostChips, setHostChips] = useState<ComposerChip[]>(() => extensions?.composerAddons?.chips ?? [])
   const collapsedSections = useCollapsedSections(['context'])
   const [subagents, setSubagents] = useState<SubagentActivity[]>([])
   const [tasks, setTasks] = useState<AgentTask[]>([])
@@ -226,7 +227,6 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   const effortRef = useRef(effort)
   const autoApproveRef = useRef(false)
   const runIdRef = useRef<string | null>(null)
-  const chipsRef = useRef<ComposerChip[]>([])
   /** Set when the run ended because the user stopped it, so the provider error it causes is muted. */
   const cancelledRef = useRef(false)
   sessionIdRef.current = sessionId
@@ -237,13 +237,6 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   mcpDirtyRef.current = mcpDirty
   effortRef.current = effort
   autoApproveRef.current = autoApprove
-
-  const chips = useMemo(() => {
-    const fromHost = extensions?.composerAddons?.chips ?? []
-    const extra = hostChips.filter((chip) => !fromHost.some((item) => item.id === chip.id))
-    return [...fromHost, ...extra]
-  }, [extensions?.composerAddons?.chips, hostChips])
-  chipsRef.current = chips
 
   useEffect(() => {
     if (!authenticated || !windowId) return
@@ -918,7 +911,6 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
       const outbound = composeOutboundText(
         text,
         extensions?.contextHook?.contextTag?.({ messages: messagesRef.current }),
-        chipsRef.current,
       )
       try {
         await sendMessage(windowId, {
@@ -949,9 +941,6 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
         })
         return false
       }
-      // The chips travelled with this send; leaving them would attach the same passage to the next
-      // message too. What the host declared up front (`composerAddons.chips`) stays where it is.
-      setHostChips([])
       return true
     },
     [labels, windowId, refreshSessions, extensions],
@@ -1196,17 +1185,6 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     [labels, contextFacts],
   )
 
-  const railSections = useMemo(
-    () => [progressSection, ...hostRailSections(extensions), contextSection],
-    [progressSection, contextSection, extensions],
-  )
-
-  const badgeTotal = useMemo(
-    () => railSections.reduce((sum, section) => sum + (section.badge?.() ?? 0), 0),
-    [railSections],
-  )
-  const badge = unseenBadge(badgeTotal, badgeSeen)
-
   const openInPane = useCallback((content: React.ReactNode, options: PaneOpenOptions) => {
     setPaneContent(content)
     setPaneOptions(options)
@@ -1218,8 +1196,83 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     setPaneOptions(null)
   }, [])
 
-  const addComposerChip = useCallback((chip: ComposerChip) => {
-    setHostChips((current) => (current.some((item) => item.id === chip.id) ? current : [...current, chip]))
+  /** Every source this chat has cited, newest run included. */
+  const sources = useMemo(() => citedSources(messages), [messages])
+
+  /**
+   * What "open this source" does.
+   *
+   * The host decides for its own kinds - the demo puts the invoice in the pane - and a web source
+   * falls back to its page. One route, so the marker, its popover and the rail all do the same
+   * thing.
+   */
+  const openSource = useCallback(
+    (citation: Citation) => {
+      const node = extensions?.messageAnnotations?.render?.(
+        citation.index,
+        citation,
+        { type: 'assistant_text', id: '', text: '', isStreaming: false, timestamp: Date.now() } as ChatMessage,
+        openInPane,
+      )
+      if (node) {
+        setPaneContent(node)
+        setPaneOptions({ title: citation.label || citation.id, mode: 'card' })
+        setSideOpen(true)
+        return
+      }
+      const href = citation.url || (/^https?:\/\//i.test(citation.id) ? citation.id : '')
+      if (href) window.open(href, '_blank', 'noopener,noreferrer')
+    },
+    [extensions, openInPane],
+  )
+
+  /** Scrolls the thread to the answer a marker belongs to. */
+  const goToAnswer = useCallback((messageId: string) => {
+    const el = document.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el?.classList.add('is-pointed')
+    window.setTimeout(() => el?.classList.remove('is-pointed'), 1600)
+  }, [])
+
+  const sourcesSection: RailSection = useMemo(
+    () => ({
+      id: 'sources',
+      title: labels.sourcesTitle,
+      contributor: labels.sourcesContributor,
+      icon: SourcesIcon,
+      count: () => sources.length,
+      render: (ctx) => (
+        <SourcesSection
+          sources={sources}
+          labels={labels}
+          onOpen={(source: CitedSource) => openSource(source.citation)}
+          onGoTo={goToAnswer}
+          tabs={(extensions?.sourceTabs ?? []).map((tab) => ({
+            id: tab.id,
+            label: tab.label,
+            render: () => tab.render(ctx),
+          }))}
+        />
+      ),
+    }),
+    [labels, sources, openSource, goToAnswer, extensions],
+  )
+
+  const railSections = useMemo(
+    () => [progressSection, ...hostRailSections(extensions), contextSection, sourcesSection],
+    [progressSection, contextSection, sourcesSection, extensions],
+  )
+
+  const badgeTotal = useMemo(
+    () => railSections.reduce((sum, section) => sum + (section.badge?.() ?? 0), 0),
+    [railSections],
+  )
+  const badge = unseenBadge(badgeTotal, badgeSeen)
+
+  /** What the composer exposes to a host: an imperative handle, because the caret lives in the DOM. */
+  const composer = useRef<ComposerApi>(null)
+  const insertReference = useCallback((token: ReferenceToken) => {
+    composer.current?.insertReference(token)
   }, [])
 
   const railCtx: RailRenderContext = useMemo(
@@ -1230,9 +1283,9 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
       pendingApprovals: awaitingApproval,
       openInPane,
       closePane,
-      addComposerChip,
+      insertReference,
     }),
-    [sessionId, messages, busy, awaitingApproval, openInPane, closePane, addComposerChip],
+    [sessionId, messages, busy, awaitingApproval, openInPane, closePane, insertReference],
   )
 
   const toggleSide = useCallback(() => {
@@ -1259,9 +1312,17 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
 
   const paneOpen = sideOpen && paneContent != null
   const railVisible = sideOpen && !paneOpen
+  const documentMode = paneOpen && paneOptions?.mode === 'document'
 
   return (
-    <div id={controlId} className={`tl-cockpit${railCollapsed ? ' is-rail-collapsed' : ''}${sideOpen ? ' has-side' : ''}${paneOpen ? ' has-pane' : ''}`}>
+    <div
+      id={controlId}
+      className={
+        `tl-cockpit${railCollapsed ? ' is-rail-collapsed' : ''}` +
+        `${sideOpen ? ' has-side' : ''}${paneOpen ? ' has-pane' : ''}` +
+        `${documentMode ? ' has-document' : ''}`
+      }
+    >
       <SessionRail
         labels={labels}
         sessions={sessions}
@@ -1300,6 +1361,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             renderAnnotation={extensions?.messageAnnotations?.render}
             openInPane={openInPane}
             extraActions={extensions?.messageActions}
+            onOpenSource={openSource}
           />
           <Composer
             windowId={windowId}
@@ -1336,19 +1398,26 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             onDismissNotice={() => showNotice('')}
             onSend={onSend}
             onStop={onStop}
-            hostChips={chips}
-            onRemoveChip={(id) => setHostChips((current) => current.filter((chip) => chip.id !== id))}
+            ref={composer}
             extraMenuItems={extensions?.composerAddons?.extraMenuItems}
+            referenceCandidates={extensions?.composerAddons?.referenceCandidates}
           />
         </div>
-        {paneOpen ? (
-          <SideStrip
-            sections={railSections}
-            activeId={paneOptions?.sectionId}
-            onSelect={closePane}
-            labels={labels}
-          />
-        ) : null}
+        {/*
+          Always there, one icon per section: the strip is how the rail says what it holds, whether
+          it is open, closed or replaced by a pane. Clicking an icon opens that section.
+        */}
+        <SideStrip
+          sections={railSections}
+          activeId={paneOpen ? paneOptions?.sectionId : railVisible ? undefined : undefined}
+          onSelect={(id) => {
+            closePane()
+            setSideOpen(true)
+            setBadgeSeen(badgeTotal)
+            collapsedSections.expand(id)
+          }}
+          labels={labels}
+        />
         {railVisible ? (
           <aside className="side-column" aria-label={labels.sideRail}>
             <SideRail
@@ -1369,6 +1438,9 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             onWidth={setPaneWidth}
             onBack={closePane}
             labels={labels}
+            mode={paneOptions?.mode}
+            version={paneOptions?.version}
+            actions={paneOptions?.actions}
           >
             {paneContent}
           </SidePane>

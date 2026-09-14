@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ChatMessage, Citation } from './types'
+import type { ReferenceToken } from './reference'
 
 /**
  * How a host application composes the chat without forking it.
@@ -24,6 +25,18 @@ export interface ChatExtensions {
    * (language, agent, model, session).
    */
   contextFacts?: (ctx: ContextHookArg) => ContextFact[]
+  /**
+   * Lists the host puts beside the framework's `Quellen` list, as further tabs of that section.
+   */
+  sourceTabs?: SourceTab[]
+}
+
+/** One tab beside the framework's list of cited sources. */
+export interface SourceTab {
+  id: string
+  /** Already localised. */
+  label: string
+  render: (ctx: RailRenderContext) => ReactNode
 }
 
 /** One collapsible block in the right rail. */
@@ -78,7 +91,8 @@ export interface RailRenderContext {
   openInPane: (content: ReactNode, options: PaneOpenOptions) => void
   /** Closes the pane and shows the rail again. */
   closePane: () => void
-  addComposerChip: (chip: ComposerChip) => void
+  /** Puts an atomic reference token at the composer's caret. */
+  insertReference: (token: ReferenceToken) => void
 }
 
 /** One tool call of the running turn that is waiting for the user's approval. */
@@ -86,6 +100,15 @@ export interface PendingApproval {
   id: string
   toolName: string
 }
+
+/**
+ * How wide the pane opens.
+ *
+ * `card` is a record beside the thread - the default, 420 px with a 360 px floor. `document` is
+ * something to read: the pane takes about two thirds of the workspace and the thread the rest,
+ * never narrower than its own composer. Below 1280 px both are a sheet over the thread.
+ */
+export type PaneMode = 'card' | 'document'
 
 /** Header of the side pane when an artefact is open. */
 export interface PaneOpenOptions {
@@ -96,6 +119,20 @@ export interface PaneOpenOptions {
   tabs?: PaneTab[]
   /** Which section's icon is highlighted on the 56 px strip. */
   sectionId?: string
+  /** Defaults to `card`. */
+  mode?: PaneMode
+  /** Shown next to the name in the pane header, e.g. "Version 2". */
+  version?: string
+  /** Host actions in the pane header, right of the name. */
+  actions?: PaneAction[]
+}
+
+/** One host action in the pane header. */
+export interface PaneAction {
+  id: string
+  label: string
+  icon?: ReactNode
+  onSelect: () => void
 }
 
 export interface PaneTab {
@@ -107,11 +144,17 @@ export interface PaneTab {
 
 export type SidePaneState = 'closed' | 'rail' | 'content'
 
-export interface ComposerChip {
-  id: string
-  label: string
-  /** Travels with the send as a `<quote>` prefix; defaults to the label. */
-  payload?: string
+/** What a host may do to the composer from the outside. */
+export interface ComposerApi {
+  /**
+   * Puts one atomic reference token at the caret.
+   *
+   * The token is part of the sentence: on send it serialises to
+   * `<quote label="…" ref="…">text</quote>` **at its position**, so the model reads the reference
+   * where the user put it.
+   */
+  insertReference: (token: ReferenceToken) => void
+  focus: () => void
 }
 
 export interface ComposerMenuItem {
@@ -119,12 +162,28 @@ export interface ComposerMenuItem {
   label: string
   description?: string
   icon?: ReactNode
-  action: () => void
+  action: (composer: ComposerApi) => void
+}
+
+/** One row the "@" picker offers; choosing it inserts {@link ReferenceCandidate.token}. */
+export interface ReferenceCandidate {
+  id: string
+  label: string
+  /** Second line, e.g. the source's kind or its date. */
+  hint?: string
+  icon?: ReactNode
+  token: ReferenceToken
 }
 
 export interface ComposerAddons {
-  chips?: ComposerChip[]
   extraMenuItems?: ComposerMenuItem[]
+  /**
+   * What typing "@" in the composer offers, filtered by what has been typed after it.
+   *
+   * The framework knows of no sources of its own, so without this seam "@" offers nothing and the
+   * placeholder does not mention it.
+   */
+  referenceCandidates?: (query: string) => ReferenceCandidate[]
 }
 
 export type CitationRender = (

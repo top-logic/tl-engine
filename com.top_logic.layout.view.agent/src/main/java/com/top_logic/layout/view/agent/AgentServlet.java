@@ -646,7 +646,9 @@ public class AgentServlet extends TopLogicServlet {
 	/**
 	 * Verifies an assertion step: the node at {@code address} must have, for each expected key, a state
 	 * value equal to the recorded one (subset match). Comparison is by canonical JSON so numeric and
-	 * representation differences do not cause false mismatches.
+	 * representation differences do not cause false mismatches. A mismatch is reported by the
+	 * {@link AssertCommand#mismatchingKeys(Map, Map) path} of the differing value, together with the
+	 * two values found there.
 	 */
 	@SuppressWarnings("unchecked")
 	private Map<String, Object> verifyAssertion(SSEUpdateQueue queue, String address, Map<String, Object> result,
@@ -662,8 +664,8 @@ public class AgentServlet extends TopLogicServlet {
 				for (String key : mismatchKeys) {
 					Map<String, Object> mismatch = new LinkedHashMap<>();
 					mismatch.put(FIELD_KEY, key);
-					mismatch.put(FIELD_EXPECTED, expected.get(key));
-					mismatch.put(FIELD_ACTUAL, actual.get(key));
+					mismatch.put(FIELD_EXPECTED, AssertCommand.valueAt(expected, key));
+					mismatch.put(FIELD_ACTUAL, AssertCommand.valueAt(actual, key));
 					mismatches.add(mismatch);
 				}
 				result.put(FIELD_MISMATCHES, mismatches);

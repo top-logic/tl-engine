@@ -74,8 +74,8 @@ import com.top_logic.tl.ai.core.tools.task.TaskStore;
  *
  * <p>
  * Manages AI task execution, polling, and state synchronization between background threads
- * and the UI / SSE handlers. Extracted from {@link ChatControl} to separate processing
- * concerns from rendering.
+ * and the UI / SSE handlers. Extracted from the classic {@code ChatControl} (which lives in
+ * <code>tl-chat-classic</code> since #398) to separate processing concerns from rendering.
  * </p>
  */
 public class ChatProcessor {

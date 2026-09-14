@@ -16,7 +16,7 @@ Custom AI agent framework built on TopLogic, replacing LangChain4j with a purpos
 | **tl-ai-vector-index** | Semantic search via embedding models (Mistral) and vector stores (Qdrant/JVector), background indexing daemon |
 | **tl-ai-demo** | Application module bundling all above for deployment |
 
-**Module dependency order:** `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-server` / `tl-chat` / `tl-ai-vector-index` → `tl-chat-classic` → `tl-ai-demo`
+**Module dependency order:** `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-server` / `tl-chat` / `tl-ai-vector-index`; `tl-chat` → `tl-chat-classic`; all → `tl-ai-demo`
 
 ## Build Commands
 

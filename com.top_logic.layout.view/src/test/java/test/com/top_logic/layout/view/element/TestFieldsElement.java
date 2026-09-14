@@ -32,6 +32,7 @@ import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -70,7 +71,7 @@ public class TestFieldsElement extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		_context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue()));
+		_context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")));
 	}
 
 	@Override

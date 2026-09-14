@@ -203,14 +203,44 @@ public class TestBrowserSettleBounds extends TestCase {
 	 * the click.
 	 */
 	private static String lateNavigationPage(int delayMillis) {
+		return lateNavigationPage(delayMillis, true);
+	}
+
+	/**
+	 * As {@link #lateNavigationPage(int)}, with the choice of whether the page is restless (never
+	 * network-idle and never DOM-quiet) or perfectly still - which decides how long the click's
+	 * navigation-detection window is, and so which delays fall inside it.
+	 */
+	private static String lateNavigationPage(int delayMillis, boolean restless) {
 		return "<!doctype html><html><head><title>first</title></head><body>"
 			+ "<h1>first fixture page</h1>"
 			+ "<button id=\"later\" onclick=\"setTimeout(function() {"
 			+ " location.href = 'http://" + SECOND_HOST + "/'; }, " + delayMillis + ");\">"
 			+ LATE_NAVIGATION_BUTTON_NAME + "</button>"
-			+ RESTLESS_SCRIPT
-			+ POLL_SCRIPT
+			+ (restless ? RESTLESS_SCRIPT + POLL_SCRIPT : "")
 			+ "</body></html>";
+	}
+
+	/**
+	 * The second fixture page, served by a server that takes {@code answerAfterMillis} to answer for
+	 * the document itself - a target whose commit outlasts the click's commit wait. Its polls are
+	 * answered at once, so only the navigation is slow.
+	 */
+	private static RecordingServer slowSecondPage(int answerAfterMillis) {
+		return RecordingServer.start(target -> {
+			if (!target.contains(POLL_PATH)) {
+				sleep(answerAfterMillis);
+			}
+			return RecordingServer.Reply.html(SECOND_PAGE);
+		});
+	}
+
+	private static void sleep(long millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	/**
@@ -370,6 +400,62 @@ public class TestBrowserSettleBounds extends TestCase {
 					+ ", now " + generationOf(late) + ")", generationOf(late) > generationBefore);
 
 				assertTrue(when + "the whole click is still bounded: took " + elapsedMillis
+					+ " ms, budget " + PAGE_LOAD_BUDGET_MILLIS + " ms, page-load timeout "
+					+ NAVIGATION_TIMEOUT_MILLIS + " ms", elapsedMillis < PAGE_LOAD_BUDGET_MILLIS);
+			} finally {
+				session.close();
+			}
+		}
+	}
+
+	/**
+	 * <b>The slow commit.</b> A deferred navigation whose target answers later than the click is
+	 * willing to wait must not produce a page view whose {@code URL:} line and whose content describe
+	 * different documents. Either outcome is acceptable - the page the click started on, settled, or
+	 * the page it ended on, settled - but they have to be the same page.
+	 *
+	 * <p>
+	 * No timeout can guarantee that: the commit can land between any two round trips to the browser,
+	 * so the guarantee has to come from reading the URL, the HTML and the refs in a single evaluation
+	 * ({@code BrowserSession.CAPTURE_SCRIPT}). These two cases are the ones that expose it - a still
+	 * page whose target takes 2.5 s, and a restless page whose target takes 5 s; both tore before
+	 * that change.
+	 * </p>
+	 */
+	public void testASlowCommitIsNeverReportedWithTheWrongUrl() {
+		BrowserE2e.assumeEnabled();
+		Assume.assumeTrue("DNS does not resolve the fixture hosts - no network", resolvable());
+		assertSlowCommitStaysConsistent(false, 2_500);
+		assertSlowCommitStaysConsistent(true, 5_000);
+	}
+
+	/** One case of {@link #testASlowCommitIsNeverReportedWithTheWrongUrl()}. */
+	private static void assertSlowCommitStaysConsistent(boolean restless, int answerAfterMillis) {
+		String when = (restless ? "restless" : "still") + " page, target answers after "
+			+ answerAfterMillis + " ms: ";
+		try (RecordingServer first =
+			RecordingServer.serving(lateNavigationPage(LATE_NAVIGATION_DELAYS_MILLIS[1], restless));
+				RecordingServer second = slowSecondPage(answerAfterMillis);
+				FilteringProxy proxy = FilteringProxy.start(PERMIT_ALL, resolvingTo(first, second))) {
+			BrowserSession session =
+				openSession("slow-commit-" + restless + "-" + answerAfterMillis, proxy);
+			try {
+				PageView loaded = session.navigate("http://" + FIRST_HOST + "/");
+				String later = refWithName(loaded.elements(), LATE_NAVIGATION_BUTTON_NAME);
+				assertNotNull(when + "the fixture's deferred-navigation button was captured", later);
+
+				long startNanos = System.nanoTime();
+				PageView clicked = session.click(later);
+				long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
+
+				boolean urlIsSecond = clicked.finalUrl().contains(SECOND_HOST);
+				boolean contentIsSecond = clicked.html().contains(SECOND_PAGE_MARKER);
+				assertEquals(when + "the reported URL and the captured content must describe the same "
+					+ "document - URL was " + clicked.finalUrl() + ", content was the "
+					+ (contentIsSecond ? "second" : "first") + " page",
+					urlIsSecond, contentIsSecond);
+
+				assertTrue(when + "the click does not wait the page out: took " + elapsedMillis
 					+ " ms, budget " + PAGE_LOAD_BUDGET_MILLIS + " ms, page-load timeout "
 					+ NAVIGATION_TIMEOUT_MILLIS + " ms", elapsedMillis < PAGE_LOAD_BUDGET_MILLIS);
 			} finally {

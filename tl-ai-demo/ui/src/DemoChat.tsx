@@ -1,6 +1,6 @@
 import { React, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
-import { App, DefaultCitationPopover, bundle, toLanguage } from 'tl-chat-seams'
+import { App, bundle, toLanguage } from 'tl-chat-seams'
 import type { ChatExtensions, PaneOpenOptions } from 'tl-chat-seams'
 import { InvoiceCite, InvoiceList, InvoicePane, invoiceOf, parseInvoices, type Invoice } from './invoices'
 
@@ -24,10 +24,21 @@ export function DemoChat(props: TLCellProps) {
   }, [])
 
   const extensions: ChatExtensions = useMemo(() => {
+    // An invoice is something to read, so it opens in document mode: two thirds pane, one third
+    // thread. The header is the host's: name, version, actions, close.
     const paneOptions = (invoice: Invoice): PaneOpenOptions => ({
       title: invoice.name,
       backLabel: 'Rechnungen',
       sectionId: 'invoices',
+      mode: 'document',
+      version: invoice.meta ? `Beleg vom ${invoice.meta}` : undefined,
+      actions: [
+        {
+          id: 'export',
+          label: 'Export',
+          onSelect: () => setCreateNote(`„${invoice.name}" wird in dieser Demo nicht exportiert.`),
+        },
+      ],
     })
     return {
       railSections: [
@@ -54,8 +65,14 @@ export function DemoChat(props: TLCellProps) {
                   ctx.openInPane(
                     <InvoicePane
                       invoice={invoice}
-                      onQuote={(label, passage) =>
-                        ctx.addComposerChip({ id: `quote-${label}-${passage.slice(0, 24)}`, label, payload: passage })
+                      onQuote={(invoiceId, label, location, passage) =>
+                        ctx.insertReference({
+                          kind: 'invoice',
+                          id: invoiceId,
+                          label,
+                          location,
+                          text: passage,
+                        })
                       }
                     />,
                     paneOptions(invoice),
@@ -68,8 +85,51 @@ export function DemoChat(props: TLCellProps) {
           ),
         },
       ],
+      composerAddons: {
+        // What "@" offers in this application: its own invoices, as inline references.
+        referenceCandidates: (query: string) => {
+          const wanted = query.trim().toLowerCase()
+          return invoices
+            .filter((invoice) => !wanted || invoice.name.toLowerCase().includes(wanted))
+            .map((invoice) => ({
+              id: invoice.id,
+              label: invoice.name,
+              hint: invoice.state || invoice.meta,
+              token: {
+                kind: 'invoice',
+                id: invoice.id,
+                label: invoice.name,
+                location: '',
+                text: `${invoice.name}, ${invoice.meta || 'ohne Datum'}, ${invoice.state || 'ohne Betrag'}`,
+              },
+            }))
+        },
+      },
       contextFacts: () => [
         { id: 'invoices', label: 'Belege', value: String(invoices.length) },
+      ],
+      // The host's own list beside the framework's Quellen: what this application holds.
+      sourceTabs: [
+        {
+          id: 'invoices',
+          label: 'Belege',
+          render: (ctx) => (
+            <InvoiceList
+              invoices={invoices}
+              emptyText="Diese Anwendung hat noch keine Belege."
+              onOpen={(invoice) => ctx.openInPane(<InvoicePane invoice={invoice} onQuote={() => undefined} />, paneOptions(invoice))}
+              onCreate={onCreate}
+            />
+          ),
+        },
+      ],
+      // The seam is enough for a host action beside copy / rate / regenerate.
+      messageActions: [
+        {
+          id: 'open-in-editor',
+          label: 'Im Editor öffnen',
+          action: () => setCreateNote('Der Editor gehört der Anwendung; die Demo zeigt hier nur die Naht.'),
+        },
       ],
       messageAnnotations: {
         render(_marker, citation, _message, openInPane) {
@@ -84,7 +144,8 @@ export function DemoChat(props: TLCellProps) {
               />
             )
           }
-          return <DefaultCitationPopover citation={citation} labels={labels} />
+          // Nothing of the host's for a web source: the framework opens its page.
+          return null
         },
       },
     }

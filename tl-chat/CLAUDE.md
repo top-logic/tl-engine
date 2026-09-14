@@ -176,6 +176,8 @@ it rewrites a draft and never answers as a persona.
 | `reducer.ts` / `store.ts` / `types.ts` | Transcript reducer, run snapshot store, shared types |
 | `extensions.ts` | Host composition contract (`ChatExtensions`) |
 | `rail.tsx` / `side-pane.tsx` / `progress.tsx` | Right rail, artefact pane, Fortschritt |
+| `token-input.tsx` / `reference.ts` | The composer's inline reference tokens and how they travel |
+| `sources.tsx` | The cited-source model, the `Quellen` section and the per-answer pill |
 
 ## Extending the chat
 
@@ -204,7 +206,7 @@ Every field of `ChatExtensions` is optional.
 |--|--|--|
 | `railSections` | Fortschritt (this session's `createTask` / `updateTask` store, plus an open approval) and Kontext (language, agent, model, chat) | Extra sections between them, in array order. `accent` tints with `--button-primary` / `--layer-selected`; `icon` is what the 56 px strip shows. |
 | `contextFacts` | language, agent, model, chat | Extra lines in the Kontext section. |
-| `composerAddons` | none | Chips before the textarea and extra `+` menu items. On send, chips travel as `<quote>` prefixes on `ChatSendRequest.text`. |
+| `composerAddons` | none | `referenceCandidates(query)` is what typing **@** offers, and `extraMenuItems` adds rows to the `+` menu (their `action` gets the `ComposerApi`). |
 | `messageAnnotations.render` | web-link popover | May call `openInPane` (invoice kind in the demo). |
 | `messageActions` | copy / rate / regenerate | Extra buttons under an answer. |
 | `contextHook` | none | `header` in the thread bar; `contextTag` prepended as `<context>…</context>` on send and regenerate. |
@@ -215,13 +217,46 @@ through the `RailRenderContext` every section's `render(ctx)` receives -
 | `ctx` | |
 |--|--|
 | `sessionId` / `messages` / `busy` / `pendingApprovals` | The open chat, its trace, whether the agent is working, and what waits for this user. |
-| `openInPane(node, options)` | Replaces the rail with the host's node in the same place; `options` carries the title, the back label, the host's tabs and the section whose strip icon is active. |
+| `openInPane(node, options)` | Replaces the rail with the host's node in the same place; `options` carries the title, the back label, the host's tabs and actions, the section whose strip icon is active, and `mode`. |
 | `closePane()` | Back to the rail. |
-| `addComposerChip(chip)` | Puts a chip into the composer, e.g. from a passage the user marked in the pane. |
+| `insertReference(token)` | Puts an atomic reference token at the composer's caret, e.g. from a passage the user marked in the pane. |
 
-Pane geometry: content floor 360 px, thread column never narrower than the composer (the workspace
-is a grid, so opening the pane narrows the thread rather than covering it), splitter draggable and
-arrow-key operable, and **below** 1280 px the pane is a sheet over the thread.
+Pane geometry: `mode: 'card'` (the default) opens at 420 px with a 360 px floor; `mode: 'document'`
+takes about two thirds of the workspace, as far as the thread's 320 px floor allows, under a slim
+header the host fills (`title`, `version`, `actions`, close). The workspace is a grid, so opening the
+pane narrows the thread rather than covering it; the splitter is draggable and arrow-key operable,
+and a width dragged in one mode is not imposed on the other. **Below** 1280 px both modes are a
+sheet over the thread.
+
+### The composer's reference tokens
+
+A host's quoted passage is an **inline token inside the text**, not a chip above it: "shorten
+[this] and expand [that]" needs two references at two positions in one message, and a chip cannot
+say which is which. The token is `{kind, id, label, location, text}`; the caret steps over it,
+Backspace takes it whole, and a screen reader reads it as one named thing.
+
+On send it serialises **at its position** to `<quote label="…" ref="…" location="…" kind="…">the
+quoted text</quote>`, so the model reads the reference inside the sentence that is about it.
+`location` and `kind` are written only when the host set them. The thread renders a sent message
+through the same parser, so the reference reads back as the token the user inserted, and the inline
+editor edits it as one.
+
+Two ways in: `ctx.insertReference(token)` from a host pane, and typing **@** in the composer, which
+offers what `composerAddons.referenceCandidates(query)` returns. **/** on an empty draft opens the
+agent picker. There is no prefix form and no chip list.
+
+### What an answer's citations look like
+
+A marker is a small grey number after the sentence. Hovering (or focusing) it shows the source's
+label, where it comes from, and the excerpt of the source with the cited passage highlighted -
+`cite`'s `passage` argument, kept only when the turn's own tool results really contain it. Clicking
+opens the source: `messageAnnotations.render` decides that for a host kind (returning nothing leaves
+the web default, which opens the page).
+
+Under an answer sits a collapsed `Quellen · n zitiert` pill with that answer's sources. The rail's
+`Quellen` section is the session-wide list: every source cited in this chat, with the marker numbers
+that point at it - a number scrolls to its answer, the row opens the source, and a filter appears
+once the list is long. `sourceTabs` puts a host list beside it as further tabs.
 
 Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`) are bootstrapped from PersonalConfiguration
 via `AgentChatControl.putState` and written through `PUT /chat/preferences`.

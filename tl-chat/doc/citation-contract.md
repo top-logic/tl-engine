@@ -11,7 +11,8 @@ only the configured one made every declaration invisible.
 
 ## Wire
 
-`CitationDto` (`index`, `toolName`, `toolCallId`, `kind`, `id`, `label`, `url`) travels:
+`CitationDto` (`index`, `toolName`, `toolCallId`, `kind`, `id`, `label`, `url`, `passage`,
+`excerpt`) travels:
 
 - on `message_complete` (SSE), so the live answer can chip the markers
 - on persist `TextPartDto`, so a reload restores the same chips
@@ -20,8 +21,13 @@ The compact `Part.TextPart` constructor is still `(id, timestamp, text)`.
 
 ## Tool and prompt
 
-`cite.cite` (`ToolMode.READ`) records `kind`, `id`, `label`, and optional `url` / `toolCallId`. It
-returns the next 1-based marker for this run.
+`cite.cite` (`ToolMode.READ`) records `kind`, `id`, `label`, and optional `url` / `toolCallId` /
+`passage`. It returns the next 1-based marker for this run.
+
+`passage` is the sentence of the source the fact rests on, copied verbatim. The validator keeps it
+only when the turn's own tool results really contain it, and cuts the excerpt around it out of that
+same result - so the popover shows the source's wording in its context rather than the model's
+memory of it. A passage shorter than 12 characters is ignored.
 
 The numbering belongs to the **run**, not to the calling thread: the tool is parallel-safe, so two
 cite calls of one turn run on two pool threads, and a per-thread counter gave both of them `1`. The
@@ -54,6 +60,14 @@ same tool on its catalog (and, if it has its own prompt, the same instruction).
 
 ## Rendering
 
-`[n]` becomes a round accent chip (`data-citation-id`, keyboard-reachable `<button>`). The default
-annotation is a popover with kind, label, and a link when `url` is set. A host `messageAnnotations`
-renderer may call `openInPane` instead (the demo does this for `kind === 'invoice'`).
+`[n]` becomes a small grey number after the sentence (`data-citation-id`, keyboard-reachable
+`<button>`) - quiet, so it says where a fact comes from without taking the eye off the text.
+
+Hovering or focusing it opens a popover with the source's label, its origin (the web host, or the
+kind) and the excerpt with the cited passage highlighted. Clicking **opens** the source:
+`messageAnnotations.render` decides what that means for a host kind, and a host that returns nothing
+for a kind leaves the web default, which opens the page. The same action is what the `Quellen` rail
+section and the per-answer `Quellen · n zitiert` pill perform.
+
+A message's own text never carries a `<quote/>`; that element belongs to the composer's reference
+tokens (#407) and travels the other way, from the user to the model.

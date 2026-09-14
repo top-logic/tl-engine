@@ -91,10 +91,12 @@ export function InvoicePane({
   onQuote,
 }: {
   invoice: Invoice
-  onQuote: (label: string, passage: string) => void
+  onQuote: (invoiceId: string, label: string, location: string, passage: string) => void
 }) {
   const body = React.useRef<HTMLElement>(null)
   const [passage, setPassage] = React.useState('')
+  /** Which row the marked passage came from - the token's location. */
+  const [field, setField] = React.useState('')
 
   const readSelection = React.useCallback(() => {
     const selection = window.getSelection()
@@ -105,6 +107,14 @@ export function InvoicePane({
       body.current != null &&
       body.current.contains(selection.anchorNode)
     setPassage(inside ? text : '')
+    if (!inside) {
+      setField('')
+      return
+    }
+    const node = selection?.anchorNode
+    const element = node?.nodeType === Node.TEXT_NODE ? node.parentElement : (node as HTMLElement | null)
+    const row = element?.closest('dd')
+    setField(row?.previousElementSibling?.textContent?.trim() ?? '')
   }, [])
 
   return (
@@ -126,13 +136,16 @@ export function InvoicePane({
       </section>
       {passage ? (
         <div className="demo-invoice-quote">
-          <span className="demo-invoice-quote-text">„{passage}“</span>
+          <span className="demo-invoice-quote-text">
+            {field ? <strong>{field}: </strong> : null}„{passage}“
+          </span>
           <button
             type="button"
             className="demo-invoice-quote-action"
             onClick={() => {
-              onQuote(invoice.name, passage)
+              onQuote(invoice.id, invoice.name, field, passage)
               setPassage('')
+              setField('')
               window.getSelection()?.removeAllRanges()
             }}
           >

@@ -18,8 +18,24 @@ declare module 'tl-chat-seams' {
     sectionId?: string
   }
 
+  export interface ComposerChip {
+    id: string
+    label: string
+    payload?: string
+  }
+
+  export interface ContextFact {
+    id: string
+    label: string
+    value: string
+  }
+
   export interface RailRenderContext {
+    sessionId: string | null
+    busy: boolean
     openInPane: (content: ReactNode, options: PaneOpenOptions) => void
+    closePane: () => void
+    addComposerChip: (chip: ComposerChip) => void
   }
 
   export interface ChatExtensions {
@@ -27,13 +43,15 @@ declare module 'tl-chat-seams' {
       id: string
       title: string
       contributor?: string
+      icon?: ReactNode
       badge?: () => number
       accent?: boolean
       render: (ctx: RailRenderContext) => ReactNode
     }[]
     composerAddons?: {
-      chips?: { id: string; label: string; payload?: string }[]
+      chips?: ComposerChip[]
     }
+    contextFacts?: (ctx: { messages: unknown[] }) => ContextFact[]
     messageAnnotations?: {
       render: (
         marker: number,

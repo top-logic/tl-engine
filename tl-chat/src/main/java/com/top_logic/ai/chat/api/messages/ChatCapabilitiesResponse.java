@@ -27,6 +27,9 @@ public class ChatCapabilitiesResponse extends de.haumacher.msgbuf.data.AbstractD
 	/** @see #getMcpServers() */
 	public static final String MCP_SERVERS__PROP = "mcpServers";
 
+	/** @see #isPromptImproverAvailable() */
+	public static final String PROMPT_IMPROVER_AVAILABLE__PROP = "promptImproverAvailable";
+
 	private String _entryPointAgent = "";
 
 	private final java.util.List<com.top_logic.ai.chat.api.messages.AgentOptionDto> _agents = new java.util.ArrayList<>();
@@ -34,6 +37,8 @@ public class ChatCapabilitiesResponse extends de.haumacher.msgbuf.data.AbstractD
 	private final java.util.List<com.top_logic.ai.chat.api.messages.ModelOptionDto> _models = new java.util.ArrayList<>();
 
 	private final java.util.List<com.top_logic.ai.chat.api.messages.McpServerOptionDto> _mcpServers = new java.util.ArrayList<>();
+
+	private boolean _promptImproverAvailable = false;
 
 	/**
 	 * Creates a {@link ChatCapabilitiesResponse} instance.
@@ -190,6 +195,33 @@ public class ChatCapabilitiesResponse extends de.haumacher.msgbuf.data.AbstractD
 		_mcpServers.remove(value);
 	}
 
+	/**
+	 * Whether the prompt improver would run for this account.
+	 *
+	 * <p>
+	 * False when the model it runs on, or a server it declares, is forbidden to a role of this
+	 * account: the improver is outside the agent allowlist - the product chose it, not the user - but
+	 * the other two sections still decide, so its run would be refused. A client that offers the
+	 * button anyway offers a refusal.
+	 * </p>
+	 */
+	public final boolean isPromptImproverAvailable() {
+		return _promptImproverAvailable;
+	}
+
+	/**
+	 * @see #isPromptImproverAvailable()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatCapabilitiesResponse setPromptImproverAvailable(boolean value) {
+		internalSetPromptImproverAvailable(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isPromptImproverAvailable()} without chain call utility. */
+	protected final void internalSetPromptImproverAvailable(boolean value) {
+		_promptImproverAvailable = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_CAPABILITIES_RESPONSE__TYPE;
@@ -201,7 +233,8 @@ public class ChatCapabilitiesResponse extends de.haumacher.msgbuf.data.AbstractD
 			ENTRY_POINT_AGENT__PROP, 
 			AGENTS__PROP, 
 			MODELS__PROP, 
-			MCP_SERVERS__PROP);
+			MCP_SERVERS__PROP, 
+			PROMPT_IMPROVER_AVAILABLE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -230,6 +263,7 @@ public class ChatCapabilitiesResponse extends de.haumacher.msgbuf.data.AbstractD
 			case AGENTS__PROP: return getAgents();
 			case MODELS__PROP: return getModels();
 			case MCP_SERVERS__PROP: return getMcpServers();
+			case PROMPT_IMPROVER_AVAILABLE__PROP: return isPromptImproverAvailable();
 			default: return null;
 		}
 	}
@@ -241,6 +275,7 @@ public class ChatCapabilitiesResponse extends de.haumacher.msgbuf.data.AbstractD
 			case AGENTS__PROP: internalSetAgents(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.AgentOptionDto.class, value)); break;
 			case MODELS__PROP: internalSetModels(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.ModelOptionDto.class, value)); break;
 			case MCP_SERVERS__PROP: internalSetMcpServers(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.McpServerOptionDto.class, value)); break;
+			case PROMPT_IMPROVER_AVAILABLE__PROP: internalSetPromptImproverAvailable((boolean) value); break;
 		}
 	}
 
@@ -279,6 +314,8 @@ public class ChatCapabilitiesResponse extends de.haumacher.msgbuf.data.AbstractD
 			x.writeTo(out);
 		}
 		out.endArray();
+		out.name(PROMPT_IMPROVER_AVAILABLE__PROP);
+		out.value(isPromptImproverAvailable());
 	}
 
 	@Override
@@ -315,6 +352,7 @@ public class ChatCapabilitiesResponse extends de.haumacher.msgbuf.data.AbstractD
 				setMcpServers(newValue);
 			}
 			break;
+			case PROMPT_IMPROVER_AVAILABLE__PROP: setPromptImproverAvailable(in.nextBoolean()); break;
 			default: super.readField(in, field);
 		}
 	}

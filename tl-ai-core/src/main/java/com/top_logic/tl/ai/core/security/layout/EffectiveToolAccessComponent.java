@@ -9,6 +9,8 @@ import static com.top_logic.layout.basic.fragments.Fragments.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +51,7 @@ import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.EffectiveToolAccess;
 import com.top_logic.tl.ai.core.security.EffectiveToolAccess.CapabilityAccess;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
@@ -410,16 +413,27 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 			: AiToolAccessService.effectiveRunAccessForRoles(_role == null ? Set.of() : Set.of(_role));
 
 		List<String> agents = names(Dimension.AGENT);
-		List<String> allowedAgents = access.allowedAgents(agents);
-		addSection(root, Dimension.AGENT, agents, allowedAgents, Set.of());
+		// The agent section is not the only one that can stop an agent: one whose own model, or one of
+		// whose own servers, a role forbids cannot run at all - the chat's menu, the fallback agent and
+		// the delegate catalog all drop it, and a view that counted it as reachable would be the one
+		// place in the product that disagrees with the gate. Its row says why instead of vanishing.
+		Map<String, Decision.Denied> stoppedByItsOwn = new LinkedHashMap<>();
+		List<String> allowedAgents = new ArrayList<>();
+		for (String agentName : access.allowedAgents(agents)) {
+			Decision.Denied own =
+				access.agentsOwnRefusal(assignedModel(agentName), declaredServers(agentName));
+			if (own == null) {
+				allowedAgents.add(agentName);
+			} else {
+				stoppedByItsOwn.put(agentName, own);
+			}
+		}
+		addSection(root, Dimension.AGENT, agents, allowedAgents, Set.of(), stoppedByItsOwn);
 
 		Set<String> assignedModels = new TreeSet<>();
 		Set<String> declaredServers = new TreeSet<>();
 		for (String agentName : allowedAgents) {
-			AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
-			if (agent != null) {
-				declaredServers.addAll(agent.mcpServers());
-			}
+			declaredServers.addAll(declaredServers(agentName));
 			String model = assignedModel(agentName);
 			if (model != null) {
 				assignedModels.add(model);
@@ -427,15 +441,21 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 		}
 		List<String> models = names(Dimension.MODEL);
 		addSection(root, Dimension.MODEL, models, access.allowedModels(models, assignedModels),
-			assignedModels);
+			assignedModels, Map.of());
 		List<String> servers = names(Dimension.MCP_SERVER);
 		addSection(root, Dimension.MCP_SERVER, servers,
-			access.allowedMcpServers(servers, declaredServers), declaredServers);
+			access.allowedMcpServers(servers, declaredServers), declaredServers, Map.of());
 	}
 
-	/** One heading row and one row per candidate, with the rule that decided each. */
+	/**
+	 * One heading row and one row per candidate, with the rule that decided each.
+	 *
+	 * @param stoppedByItsOwn
+	 *        The candidates its own section permits and another one stops, with the refusal that
+	 *        stops them; empty for every dimension but {@link Dimension#AGENT}.
+	 */
 	private void addSection(DefaultTreeTableNode root, Dimension dimension, List<String> candidates,
-			List<String> allowed, Set<String> agentsOwn) {
+			List<String> allowed, Set<String> agentsOwn, Map<String, Decision.Denied> stoppedByItsOwn) {
 		DefaultTreeTableNode node = root.createChild(
 			new EffectiveAccessRow.RunSection(dimension, allowed.size(), candidates.size()));
 		RoleAccessPolicy policy = sectionOf(dimension);
@@ -443,9 +463,24 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 			? AiToolAccessService.heldRoleNames(_account)
 			: (_role == null ? Set.of() : Set.of(_role));
 		for (String candidate : candidates) {
-			node.createChild(new EffectiveAccessRow.RunName(dimension, candidate,
-				policy.check(roleNames, candidate, agentsOwn)));
+			Decision.Denied own = stoppedByItsOwn.get(candidate);
+			node.createChild(own == null
+				? new EffectiveAccessRow.RunName(dimension, candidate,
+					policy.check(roleNames, candidate, agentsOwn))
+				: new EffectiveAccessRow.RunName(dimension, candidate, own, usesDenied(candidate, own)));
 		}
+	}
+
+	/** What the row of an agent says that its own model or its own server stops. */
+	private static String usesDenied(String agentName, Decision.Denied own) {
+		return Resources.getInstance().getString(I18NConstants.AGENT_USES_DENIED__AGENT_NAME_ROLE
+			.fill(agentName, own.name(), own.byRole()));
+	}
+
+	/** The MCP servers the named agent declares, empty if there is no such agent. */
+	private static Collection<String> declaredServers(String agentName) {
+		AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+		return agent == null ? List.of() : agent.mcpServers();
 	}
 
 	/** The evaluation of one of the three sections of the running policy. */

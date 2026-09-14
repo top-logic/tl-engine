@@ -137,6 +137,32 @@ public class TestModelAccess extends TestCase {
 	}
 
 	/**
+	 * What stops an agent, named: the view has to say which model and which role, not merely that.
+	 *
+	 * <p>
+	 * The effective-access view lists every agent of the application with the rule that decided it. An
+	 * agent the agent section permits and this one stops needs a row that names the model - an
+	 * administrator who is told only "not reachable" under the heading "agents" has to go looking.
+	 * Silent on purpose: enumerating what an account may run is not a refused call.
+	 * </p>
+	 */
+	public void testTheRefusalNamesTheModelAndTheRole() {
+		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		put(policy, role("ticketReader", List.of(), List.of("claude-opus-4-1")));
+		RunAuthorization access = new RunAuthorization(null, models(policy), null, null,
+			Set.of("ticketReader"));
+
+		Decision.Denied denied = access.agentsOwnRefusal("claude-opus-4-1", Set.of());
+		assertNotNull(denied);
+		assertEquals("claude-opus-4-1", denied.name());
+		assertEquals("ticketReader", denied.byRole());
+		assertEquals(Cause.AGENTS_OWN_DENIED, denied.cause());
+
+		assertNull("An agent whose own model nobody forbids has nothing to report.",
+			access.agentsOwnRefusal("claude-haiku-4-5", Set.of()));
+	}
+
+	/**
 	 * The menu a client is offered under each of the three defaults.
 	 *
 	 * <p>

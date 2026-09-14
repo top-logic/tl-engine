@@ -206,6 +206,14 @@ export interface Capabilities {
   agents: AgentOption[]
   models: ModelOption[]
   mcpServers: McpServerOption[]
+  /**
+   * Whether the prompt improver would run for this account.
+   *
+   * False when a role forbids the model it runs on: it is outside the agent allowlist, but what it
+   * runs on is still decided, so its button would offer a refusal. Absent means yes, so a host that
+   * does not send the field keeps the button.
+   */
+  promptImproverAvailable?: boolean
 }
 
 export type SubagentStatus = 'QUEUED' | 'RUNNING' | 'DONE' | 'FAILED' | 'CANCELLED'

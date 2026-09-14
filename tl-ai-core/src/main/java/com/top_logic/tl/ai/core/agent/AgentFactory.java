@@ -376,6 +376,39 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			|| authorization.allowsAgentsOwn(assignedModelOf(agentDef.name()), agentDef.mcpServers());
 	}
 
+	/**
+	 * Why this run may not use what its agent itself uses, or <code>null</code>.
+	 *
+	 * <p>
+	 * Asked for every run and not only for one that names a model or a server: what an agent is
+	 * assigned is not a choice and is therefore permitted - but a {@code <deny>} still forbids it, and
+	 * while this went unasked the refusal could be escaped by staying silent. A client that named the
+	 * agent's own model was refused, and the identical request without the field ran on exactly that
+	 * model.
+	 * </p>
+	 *
+	 * <p>
+	 * Audited, unlike {@link RunAuthorization#agentsOwnRefusal}: this is the gate, and a run that is
+	 * stopped here belongs in the log.
+	 * </p>
+	 */
+	private static Decision.Denied agentsOwnRefusal(RunAuthorization authorization, String assignedModel,
+			Collection<String> declaredServers) {
+		Decision.Denied ownModel = authorization.assignedModelRefusal(assignedModel);
+		if (ownModel != null) {
+			return ownModel;
+		}
+		if (declaredServers != null) {
+			for (String declared : declaredServers) {
+				Decision.Denied ownServer = authorization.declaredServerRefusal(declared, declaredServers);
+				if (ownServer != null) {
+					return ownServer;
+				}
+			}
+		}
+		return null;
+	}
+
 	/** The model the given agent is assigned, or <code>null</code> while that cannot be resolved. */
 	static String assignedModelOf(String agentName) {
 		try {
@@ -441,19 +474,10 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			return agentRefusal;
 		}
 
-		// What the agent itself uses, asked for every run and not only for one that names it. It is
-		// not a choice and is therefore permitted - but a <deny> still forbids it, and while this was
-		// unasked the refusal could be escaped by staying silent: a client that named the agent's own
-		// model was refused, and the identical request without the field ran on exactly that model.
-		Decision.Denied ownModel = authorization.assignedModelRefusal(assignedModel);
-		if (ownModel != null) {
-			return ownModel;
-		}
-		for (String declared : agentDef.mcpServers()) {
-			Decision.Denied ownServer = authorization.declaredServerRefusal(declared, agentDef.mcpServers());
-			if (ownServer != null) {
-				return ownServer;
-			}
+		Decision.Denied ownRefusal =
+			agentsOwnRefusal(authorization, assignedModel, agentDef.mcpServers());
+		if (ownRefusal != null) {
+			return ownRefusal;
 		}
 
 		if (overrides == null) {
@@ -600,6 +624,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+		// And what that agent itself uses, for the same reason: a child of an agent whose own model a
+		// role denies must not start either, and the catalog filter in front of this is a filter.
+		refuse(agentsOwnRefusal(security.runAuthorization(), assignment.model(), agentDef.mcpServers()));
 
 		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
 		AgentParams config = buildConfig(agentDef, assignment, capabilities);
@@ -637,6 +664,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+		refuse(agentsOwnRefusal(security.runAuthorization(), assignment.model(), agentDef.mcpServers()));
 		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
 		AgentParams config = buildConfig(agentDef, assignment, capabilities);
 		LLMProvider provider = buildProvider(config.model(), assignment.provider());

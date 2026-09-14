@@ -1201,15 +1201,17 @@ public class ToolAccessPolicyComponent extends FormComponent {
 			}
 			boolean restricted = Boolean.TRUE.equals(newValue);
 			_draft.setRunRestricted(dimension, roleName, restricted);
-			if (!restricted) {
-				// Switching off drops the role's entry from the draft, names and all. Emptying the two
-				// lists says so on the screen: they would otherwise go on showing names that are no
-				// longer anywhere, and switching back on would silently start from nothing.
-				syncing(() -> {
+			// Switching off drops the role's entry from the draft, names and all. The two lists say so
+			// on the screen: emptied, because they would otherwise go on showing names that are no
+			// longer anywhere, and locked, because picking one in a list under a switch that reads
+			// "off" would re-create the entry and restrict the role again without saying so.
+			syncing(() -> {
+				setNamesWritable(group, index, restricted);
+				if (!restricted) {
 					clearSelection(group, FIELD_ALLOWED_PREFIX + index);
 					clearSelection(group, FIELD_FORBIDDEN_PREFIX + index);
-				});
-			}
+				}
+			});
 			refreshNotes();
 		});
 		group.addMember(field);
@@ -1223,6 +1225,15 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		}
 	}
 
+	/** Locks or unlocks one role's two name lists, following its switch. */
+	private static void setNamesWritable(FormGroup group, int index, boolean writable) {
+		for (String fieldName : List.of(FIELD_ALLOWED_PREFIX + index, FIELD_FORBIDDEN_PREFIX + index)) {
+			if (group.hasMember(fieldName) && group.getMember(fieldName) instanceof SelectField names) {
+				names.setDisabled(!writable);
+			}
+		}
+	}
+
 	/** One role's list of permitted - or forbidden - names in one section. */
 	private HTMLTemplateFragment namesField(FormGroup group, String prefix, Dimension dimension,
 			String roleName, int index, boolean denies) {
@@ -1230,6 +1241,8 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		SelectField field = FormFactory.newSelectField(fieldName, runOptions(dimension), true, false,
 			false, null);
 		field.setAsSelection(_draft.runNames(dimension, roleName, denies));
+		// A list under a switch that reads "off" names nothing, and must not be able to.
+		field.setDisabled(!_draft.isRunRestricted(dimension, roleName));
 		field.setLabel(resources().getString((denies
 			? I18NConstants.FIELD_ROLE_FORBIDDEN__ROLE
 			: I18NConstants.FIELD_ROLE_ALLOWED__ROLE).fill(roleName)));

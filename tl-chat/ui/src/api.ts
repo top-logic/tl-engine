@@ -68,12 +68,14 @@ export async function fetchCapabilities(windowId: string): Promise<Capabilities>
     agents?: Capabilities['agents']
     models?: Capabilities['models']
     mcpServers?: Capabilities['mcpServers']
+    promptImproverAvailable?: boolean
   }>(await fetch(withWindow('/chat/capabilities', windowId), { credentials: 'include' }))
   return {
     entryPointAgent: data.entryPointAgent,
     agents: data.agents ?? [],
     models: data.models ?? [],
     mcpServers: data.mcpServers ?? [],
+    promptImproverAvailable: data.promptImproverAvailable !== false,
   }
 }
 

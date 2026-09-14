@@ -938,6 +938,18 @@ message ChatCapabilitiesResponse {
 
 	/** MCP servers known to the registry. */
 	repeated McpServerOptionDto mcpServers;
+
+	/**
+	 * Whether the prompt improver would run for this account.
+	 *
+	 * <p>
+	 * False when the model it runs on, or a server it declares, is forbidden to a role of this
+	 * account: the improver is outside the agent allowlist - the product chose it, not the user - but
+	 * the other two sections still decide, so its run would be refused. A client that offers the
+	 * button anyway offers a refusal.
+	 * </p>
+	 */
+	bool promptImproverAvailable;
 }
 
 /** One selectable agent. */

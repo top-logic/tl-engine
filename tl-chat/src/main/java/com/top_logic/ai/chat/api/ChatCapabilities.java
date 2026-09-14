@@ -120,6 +120,12 @@ final class ChatCapabilities {
 			}
 		}
 
+		// The prompt improver is outside the agent allowlist - the product chose it - but what it runs
+		// on is still decided, so the client has to be told when offering its button would offer a
+		// refusal. See ChatServlet.improvePrompt, which refuses exactly this case.
+		response.setPromptImproverAvailable(hiddenAgent == null || access == null
+			|| access.allowsAgentsOwn(assignedModelOf(llm, hiddenAgent), declaredServersOf(hiddenAgent)));
+
 		if (McpServerRegistry.Module.INSTANCE.isActive()) {
 			McpServerRegistry mcp = McpServerRegistry.getInstance();
 			List<String> names = new ArrayList<>(mcp.getConfiguredServerNames());
@@ -204,6 +210,30 @@ final class ChatCapabilities {
 			Logger.debug("No assignment to read a default effort from for '" + modelId + "'.",
 				ChatCapabilities.class);
 			return null;
+		}
+	}
+
+	/** The model the named agent is assigned, or <code>null</code> while nothing can say. */
+	private static String assignedModelOf(LLMService llm, String agentName) {
+		if (llm == null) {
+			return null;
+		}
+		try {
+			return llm.resolveModel(agentName);
+		} catch (RuntimeException ex) {
+			Logger.debug("No model assignment for '" + agentName + "'.", ChatCapabilities.class);
+			return null;
+		}
+	}
+
+	/** The MCP servers the named agent declares, empty if there is no such agent. */
+	private static Collection<String> declaredServersOf(String agentName) {
+		try {
+			AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+			return agent == null ? List.of() : agent.mcpServers();
+		} catch (RuntimeException ex) {
+			Logger.debug("Cannot read the servers of '" + agentName + "'.", ChatCapabilities.class);
+			return List.of();
 		}
 	}
 

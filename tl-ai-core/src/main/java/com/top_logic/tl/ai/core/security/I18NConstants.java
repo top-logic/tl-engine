@@ -59,9 +59,9 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Refusal shown when the model an agent is assigned is forbidden to a role of the acting account.
 	 *
-	 * @en Your agent runs on the model {0}, which is excluded for your role. Nothing you can choose
+	 * @en The agent runs on the model {0}, which is excluded for your role. Nothing you can choose
 	 *     changes that - please report it to an administrator.
-	 * @de Ihr Agent läuft auf dem Modell {0}, das für Ihre Rolle ausgeschlossen ist. Daran ändert
+	 * @de Der Agent läuft auf dem Modell {0}, das für Ihre Rolle ausgeschlossen ist. Daran ändert
 	 *     keine Auswahl etwas - bitte melden Sie es einem Administrator.
 	 */
 	public static ResKey1 MODEL_OF_THE_AGENT_DENIED__MODEL;
@@ -69,9 +69,9 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Refusal shown when a server an agent declares is forbidden to a role of the acting account.
 	 *
-	 * @en Your agent uses the MCP server {0}, which is excluded for your role. Nothing you can choose
+	 * @en The agent uses the MCP server {0}, which is excluded for your role. Nothing you can choose
 	 *     changes that - please report it to an administrator.
-	 * @de Ihr Agent verwendet den MCP-Server {0}, der für Ihre Rolle ausgeschlossen ist. Daran ändert
+	 * @de Der Agent verwendet den MCP-Server {0}, der für Ihre Rolle ausgeschlossen ist. Daran ändert
 	 *     keine Auswahl etwas - bitte melden Sie es einem Administrator.
 	 */
 	public static ResKey1 SERVER_OF_THE_AGENT_DENIED__SERVER;

@@ -1173,7 +1173,7 @@ export function App({ controlId }: TLCellProps) {
           pendingApprovals={pendingApprovals}
           pendingQuestions={pendingQuestions}
           dispatch={dispatch}
-          promptImprovementEnabled={promptImprovementEnabled}
+          promptImprovementEnabled={promptImprovementEnabled && caps.promptImproverAvailable !== false}
           subagents={subagents}
           onCancelSubagent={onCancelSubagent}
           onStopSubagents={onStopSubagents}

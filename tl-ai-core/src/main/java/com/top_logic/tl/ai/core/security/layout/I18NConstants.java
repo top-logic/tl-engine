@@ -1095,6 +1095,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 FIELD_ROLE_FORBIDDEN__ROLE;
 
 	/**
+	 * Why an agent this account is permitted still cannot run for it.
+	 *
+	 * <p>
+	 * The row of an agent whose <em>own</em> model, or one of whose own MCP servers, a role of this
+	 * account forbids. The agent section permits it and another section stops it, so its row says
+	 * which name and which role rather than repeating the agent rule that did let it through.
+	 * </p>
+	 *
+	 * @en The agent {0} cannot run for this account: it uses {1} itself, which the role {2} forbids.
+	 * @de Der Agent {0} kann für dieses Konto nicht laufen: Er verwendet selbst {1}, und das ist für
+	 *     die Rolle {2} ausgeschlossen.
+	 */
+	public static ResKey3 AGENT_USES_DENIED__AGENT_NAME_ROLE;
+
+	/**
 	 * Heading of the agent rows of the effective-access table, and of the agent section of the editor.
 	 *
 	 * @en Agents

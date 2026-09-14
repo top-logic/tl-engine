@@ -406,6 +406,11 @@ a choice need no grant and cannot be granted meaningfully:
   does not decide it. The chat hides it from the picker, and an allowlist that had to name it would
   be an allowlist naming something nobody can discover.
 
+Only `<agent-access>` is waived for those two. `<model-access>` and `<mcp-access>` still decide what
+they run on, so a `<deny>` on the model the improver is assigned switches the improver off for that
+role - the chat then stops offering the "improve prompt" button rather than offering a refusal. If you
+want a role to keep it, do not deny the model it runs on.
+
 Everything else an account may run has to be granted.
 
 ### What happens when a request asks for something else
@@ -430,8 +435,10 @@ refuses nothing while reading like a prohibition.
 ### Delegation
 
 An agent the account may not run is not reachable by asking another agent for it either: it is dropped
-from the delegate catalogue and from `list_agents`, and a `spawn_subagent` naming it is refused. If you
-want an orchestrator to delegate to a specialist, grant the specialist to the same role.
+from the delegate catalogue and from `list_agents`, and a `spawn_subagent` naming it is refused. The
+same holds for an agent this account may run but whose own model or own server a role denies - it is
+dropped from the catalogue and refused when named, because a child run is the acting user's run. If
+you want an orchestrator to delegate to a specialist, grant the specialist to the same role.
 
 ---
 

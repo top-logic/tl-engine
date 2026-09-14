@@ -201,17 +201,40 @@ public class RunAuthorization {
 	 *        The servers it declares; may be <code>null</code>.
 	 */
 	public boolean allowsAgentsOwn(String assignedModel, Collection<String> declaredServers) {
-		if (decide(_models, assignedModel, singleton(assignedModel)) != null) {
-			return false;
+		return agentsOwnRefusal(assignedModel, declaredServers) == null;
+	}
+
+	/**
+	 * Why a run of an agent with the given model and servers is impossible for this principal, without
+	 * logging a refusal.
+	 *
+	 * <p>
+	 * The same question {@link #allowsAgentsOwn} answers, for a caller that has to <em>say</em> why -
+	 * the effective-access view names the model or the server that stops the agent, rather than
+	 * leaving an administrator to find it. Silent on purpose: enumerating what an account may run is
+	 * not a refused call, and one audit line per row would drown the ones that are.
+	 * </p>
+	 *
+	 * @param assignedModel
+	 *        The model that agent is assigned; may be <code>null</code>.
+	 * @param declaredServers
+	 *        The servers it declares; may be <code>null</code>.
+	 * @return The first refusal found, or <code>null</code> if the agent can run.
+	 */
+	public Decision.Denied agentsOwnRefusal(String assignedModel, Collection<String> declaredServers) {
+		Decision.Denied model = decide(_models, assignedModel, singleton(assignedModel));
+		if (model != null) {
+			return agentsOwn(model);
 		}
 		if (declaredServers != null) {
 			for (String serverName : declaredServers) {
-				if (decide(_mcpServers, serverName, declaredServers) != null) {
-					return false;
+				Decision.Denied server = decide(_mcpServers, serverName, declaredServers);
+				if (server != null) {
+					return agentsOwn(server);
 				}
 			}
 		}
-		return true;
+		return null;
 	}
 
 	/**

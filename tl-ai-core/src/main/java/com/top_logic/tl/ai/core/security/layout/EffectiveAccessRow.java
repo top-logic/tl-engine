@@ -130,8 +130,19 @@ public sealed interface EffectiveAccessRow {
 	 *        The name the policy knows it by.
 	 * @param decision
 	 *        Whether the subject may use it, and what decided.
+	 * @param explanation
+	 *        What to say instead of the sentence {@code decision} would give, or <code>null</code> to
+	 *        say that one. For the agent a run cannot use because of what it uses <em>itself</em>: the
+	 *        section that stops it is another one, and a row that quoted its sentence would talk about
+	 *        a model under the heading "agents".
 	 */
-	record RunName(Dimension dimension, String name, Decision decision) implements EffectiveAccessRow {
+	record RunName(Dimension dimension, String name, Decision decision, String explanation)
+			implements EffectiveAccessRow {
+
+		/** A row whose own section decided it. */
+		RunName(Dimension dimension, String name, Decision decision) {
+			this(dimension, name, decision, null);
+		}
 
 		@Override
 		public boolean allowed() {
@@ -140,7 +151,7 @@ public sealed interface EffectiveAccessRow {
 
 		@Override
 		public String provenance() {
-			return ToolAccessLabels.sentence(decision());
+			return explanation() != null ? explanation() : ToolAccessLabels.sentence(decision());
 		}
 	}
 

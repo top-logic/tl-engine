@@ -28,6 +28,7 @@ import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.basic.AbstractConstantControl;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
@@ -55,7 +56,11 @@ import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.Columns;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.core.security.AllAgentNames;
+import com.top_logic.tl.ai.core.security.AllMcpServerNames;
+import com.top_logic.tl.ai.core.security.AllModelNames;
 import com.top_logic.tl.ai.core.security.AllToolNames;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessRule;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BackgroundChoice;
@@ -128,6 +133,21 @@ public class ToolAccessPolicyComponent extends FormComponent {
 
 	/** Name of the group holding what every account gets. */
 	public static final String GROUP_BASELINE = "baseline";
+
+	/** Name of the group holding which agents, models and MCP servers a role may use. */
+	public static final String GROUP_RUN_ACCESS = "runAccess";
+
+	/** Prefix of the group holding one of the three run sections. */
+	public static final String GROUP_SECTION_PREFIX = "section_";
+
+	/** Name of the field holding what a section admits from a role it does not name. */
+	public static final String FIELD_SECTION_DEFAULT = "sectionDefault";
+
+	/** Prefix of the field holding what one role may use in one section. */
+	public static final String FIELD_ALLOWED_PREFIX = "allowed_";
+
+	/** Prefix of the field holding what one role may never use in one section. */
+	public static final String FIELD_FORBIDDEN_PREFIX = "forbidden_";
 
 	/** Name of the group holding what an unattended run may reach. */
 	public static final String GROUP_BACKGROUND = "background";
@@ -273,6 +293,7 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		List<HTMLTemplateFragment> sections = new ArrayList<>();
 		sections.add(htmlTemplate(messages(context)));
 		addRoleGroups(context, sections);
+		addRunAccessGroups(context, sections);
 		addBaselineGroup(context, sections);
 		addBackgroundGroup(context, sections);
 		addAssignmentGroup(context, sections);
@@ -1088,6 +1109,127 @@ public class ToolAccessPolicyComponent extends FormComponent {
 			fragment(content),
 			ConfigKey.part(this, key))
 				.setInitiallyCollapsed(collapsed);
+	}
+
+	// ------------------------------------- agents, models and MCP servers
+
+	/**
+	 * What a role may <em>be</em>: which agents it runs, which models it chooses, which MCP servers it
+	 * attaches.
+	 *
+	 * <p>
+	 * One section per dimension, each with its default and a pair of lists per role. The three read
+	 * alike because they decide alike - an allowlist, a refusal that wins, and a default for everybody
+	 * the section does not name - and a single section holding three unrelated defaults would hide
+	 * exactly the thing an administrator has to get right.
+	 * </p>
+	 */
+	private void addRunAccessGroups(FormContext context, List<HTMLTemplateFragment> sections) {
+		FormGroup runAccess = new FormGroup(GROUP_RUN_ACCESS, getResPrefix());
+		runAccess.setLabel(resources().getString(I18NConstants.SECTION_RUN_ACCESS));
+		runAccess.setTooltip(resources().getString(I18NConstants.SECTION_RUN_ACCESS.tooltip()));
+		context.addMember(runAccess);
+
+		List<HTMLTemplateFragment> inner = new ArrayList<>();
+		for (Dimension dimension : Dimension.values()) {
+			addSectionGroup(runAccess, dimension, inner);
+		}
+		sections.add(section(runAccess, inner, "runAccess", true, this::runAccessSummary));
+	}
+
+	/** One of the three sections: its default, and a pair of lists per configured role. */
+	private void addSectionGroup(FormGroup parent, Dimension dimension,
+			List<HTMLTemplateFragment> sections) {
+		String name = GROUP_SECTION_PREFIX + dimension.name();
+		String prefix = path(GROUP_RUN_ACCESS, name);
+		FormGroup group = new FormGroup(name, getResPrefix());
+		group.setLabel(ToolAccessLabels.dimensionLabel(dimension));
+		parent.addMember(group);
+
+		List<HTMLTemplateFragment> content = new ArrayList<>();
+		SelectField defaultField = FormFactory.newSelectField(FIELD_SECTION_DEFAULT,
+			PolicyDraft.sectionDefaults(dimension), false,
+			List.of(_draft.sectionDefault(dimension)), false, false, null);
+		defaultField.setOptionLabelProvider(MetaLabelProvider.INSTANCE);
+		labelAndHelp(defaultField, I18NConstants.FIELD_SECTION_DEFAULT);
+		defaultField.addValueListener((changed, oldValue, newValue) -> {
+			if (!_syncing) {
+				_draft.setSectionDefault(dimension, single(newValue, null));
+			}
+		});
+		group.addMember(defaultField);
+		content.add(fieldBox(path(prefix, FIELD_SECTION_DEFAULT)));
+
+		List<String> roleNames = _draft.runRoleNames();
+		if (roleNames.isEmpty()) {
+			content.add(contentBox(htmlTemplate(note(I18NConstants.POLICY_NO_ROLES))));
+		}
+		for (int r = 0; r < roleNames.size(); r++) {
+			String roleName = roleNames.get(r);
+			content.add(namesField(group, prefix, dimension, roleName, r, false));
+			content.add(namesField(group, prefix, dimension, roleName, r, true));
+		}
+		sections.add(contentBox(
+			section(group, content, "runAccess." + dimension.name(), false,
+				() -> sectionSummary(dimension))));
+	}
+
+	/** One role's list of permitted - or forbidden - names in one section. */
+	private HTMLTemplateFragment namesField(FormGroup group, String prefix, Dimension dimension,
+			String roleName, int index, boolean denies) {
+		String fieldName = (denies ? FIELD_FORBIDDEN_PREFIX : FIELD_ALLOWED_PREFIX) + index;
+		SelectField field = FormFactory.newSelectField(fieldName, runOptions(dimension), true, false,
+			false, null);
+		field.setAsSelection(_draft.runNames(dimension, roleName, denies));
+		field.setLabel(resources().getString((denies
+			? I18NConstants.FIELD_ROLE_FORBIDDEN__ROLE
+			: I18NConstants.FIELD_ROLE_ALLOWED__ROLE).fill(roleName)));
+		field.setTooltip(resources().getString((denies
+			? I18NConstants.FIELD_ROLE_FORBIDDEN__ROLE
+			: I18NConstants.FIELD_ROLE_ALLOWED__ROLE).fill(roleName).tooltip()));
+		field.addValueListener((changed, oldValue, newValue) -> {
+			if (!_syncing) {
+				_draft.setRunNames(dimension, roleName, denies, strings(newValue));
+				refreshNotes();
+			}
+		});
+		group.addMember(field);
+		return fieldBox(path(prefix, fieldName));
+	}
+
+	/** Everything the application has of one dimension, plus whatever the policy already names. */
+	private static List<String> runOptions(Dimension dimension) {
+		switch (dimension) {
+			case MODEL:
+				return new AllModelNames().apply();
+			case MCP_SERVER:
+				return new AllMcpServerNames().apply();
+			default:
+				return new AllAgentNames().apply();
+		}
+	}
+
+	/** What the collapsed run-access section says: the default of each of the three. */
+	private String runAccessSummary() {
+		List<String> parts = new ArrayList<>();
+		for (Dimension dimension : Dimension.values()) {
+			parts.add(MetaLabelProvider.INSTANCE.getLabel(_draft.sectionDefault(dimension)));
+		}
+		return String.join(" · ", parts);
+	}
+
+	/** What a collapsed section says: its default, and how many roles it restricts. */
+	private String sectionSummary(Dimension dimension) {
+		int roles = 0;
+		for (String roleName : _draft.runRoleNames()) {
+			if (!_draft.runNames(dimension, roleName, false).isEmpty()
+				|| !_draft.runNames(dimension, roleName, true).isEmpty()) {
+				roles++;
+			}
+		}
+		return resources().getString(I18NConstants.SECTION_RUN_SUMMARY__DEFAULT_ROLES.fill(
+			MetaLabelProvider.INSTANCE.getLabel(_draft.sectionDefault(dimension)),
+			Integer.valueOf(roles)));
 	}
 
 	/** Offers every assignment the capability groups no other assignment holds, plus its own. */

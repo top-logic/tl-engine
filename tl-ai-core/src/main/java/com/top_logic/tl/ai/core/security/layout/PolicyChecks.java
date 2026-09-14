@@ -15,6 +15,7 @@ import java.util.function.Predicate;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
@@ -83,6 +84,12 @@ public class PolicyChecks {
 				I18NConstants.WHERE_ROLE_GRANTS__ROLE.fill(role.getName()), result);
 			collectEntryProblems(role.getDenies(),
 				I18NConstants.WHERE_ROLE_DENIES__ROLE.fill(role.getName()), result);
+		}
+		for (Dimension dimension : Dimension.values()) {
+			for (String name : AiToolAccessService.unknownNames(policy, dimension,
+				AiToolAccessService.knownNames(dimension))) {
+				result.add(I18NConstants.REFUSE_UNKNOWN_NAME__NAME.fill(name));
+			}
 		}
 		if (AiToolAccessService.needsBackgroundAllowlist(policy)) {
 			result.add(I18NConstants.REFUSE_BACKGROUND_ALLOWLIST_UNDECLARED);

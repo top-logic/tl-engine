@@ -17,7 +17,17 @@ import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.AgentDefault;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.AgentGrant;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.AgentRoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.McpDefault;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.McpGrant;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.McpRoleAccess;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelDefault;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelGrant;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelRoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
@@ -163,6 +173,191 @@ public class PolicyDraft {
 	/** The roles the policy configures, in the order they are shown. */
 	public List<String> roleNames() {
 		return new ArrayList<>(new TreeSet<>(_config.getToolAccess().keySet()));
+	}
+
+	/**
+	 * The roles any of the four sections configures, in the order they are shown.
+	 *
+	 * <p>
+	 * The union, unlike {@link #roleNames()}: a role may be restricted in which agents it runs without
+	 * being restricted in which tools it uses, and the section that shows it has to see it.
+	 * </p>
+	 */
+	public List<String> runRoleNames() {
+		return new ArrayList<>(AiToolAccessService.configuredRoles(_config));
+	}
+
+	/** What the given section admits from a user none of whose roles it names. */
+	public Object sectionDefault(Dimension dimension) {
+		switch (dimension) {
+			case MODEL:
+				return _config.getModelAccess().getDefault();
+			case MCP_SERVER:
+				return _config.getMcpAccess().getDefault();
+			default:
+				return _config.getAgentAccess().getDefault();
+		}
+	}
+
+	/**
+	 * Puts the given section's default into the given state.
+	 *
+	 * @param dimension
+	 *        Which section to change.
+	 * @param value
+	 *        One of that section's own choices. Anything else is ignored.
+	 */
+	public void setSectionDefault(Dimension dimension, Object value) {
+		if (value instanceof AgentDefault agentDefault) {
+			_config.getAgentAccess().setDefault(agentDefault);
+		} else if (value instanceof ModelDefault modelDefault) {
+			_config.getModelAccess().setDefault(modelDefault);
+		} else if (value instanceof McpDefault mcpDefault) {
+			_config.getMcpAccess().setDefault(mcpDefault);
+		}
+	}
+
+	/** The choices the given section's default can take, in the order they are offered. */
+	public static List<?> sectionDefaults(Dimension dimension) {
+		switch (dimension) {
+			case MODEL:
+				return List.of(ModelDefault.values());
+			case MCP_SERVER:
+				return List.of(McpDefault.values());
+			default:
+				return List.of(AgentDefault.values());
+		}
+	}
+
+	/**
+	 * What the named role may use in the given section.
+	 *
+	 * @param dimension
+	 *        Which section to read.
+	 * @param roleName
+	 *        The role to ask about.
+	 * @param denies
+	 *        Whether to read the refusals rather than the permissions.
+	 * @return The names, in a stable order; empty for a role the section does not configure.
+	 */
+	public List<String> runNames(Dimension dimension, String roleName, boolean denies) {
+		return new ArrayList<>(entryNames(dimension, roleName, denies));
+	}
+
+	/**
+	 * Puts what the named role may use in the given section.
+	 *
+	 * <p>
+	 * Writing the names that are already there is a no-op, so opening the editor on a hand-written
+	 * policy and saving it again leaves its entries as they were. Writing a different set replaces
+	 * them with one entry holding all of them, which is the shape this editor produces.
+	 * </p>
+	 *
+	 * @param dimension
+	 *        Which section to change.
+	 * @param roleName
+	 *        The role to change. An entry is created for it if the section has none.
+	 * @param denies
+	 *        Whether to write the refusals rather than the permissions.
+	 * @param names
+	 *        The names the role may - or may never - use.
+	 */
+	public void setRunNames(Dimension dimension, String roleName, boolean denies, List<String> names) {
+		Set<String> wanted = new LinkedHashSet<>(names);
+		if (wanted.equals(entryNames(dimension, roleName, denies))) {
+			return;
+		}
+		switch (dimension) {
+			case MODEL: {
+				ModelRoleAccess role = _config.getModelAccess().getRoles()
+					.computeIfAbsent(roleName, PolicyDraft::newModelRole);
+				List<ModelGrant> entries = denies ? role.getDenies() : role.getGrants();
+				entries.clear();
+				if (!wanted.isEmpty()) {
+					ModelGrant entry = TypedConfiguration.newConfigItem(ModelGrant.class);
+					entry.setModels(new ArrayList<>(wanted));
+					entries.add(entry);
+				}
+				break;
+			}
+			case MCP_SERVER: {
+				McpRoleAccess role = _config.getMcpAccess().getRoles()
+					.computeIfAbsent(roleName, PolicyDraft::newMcpRole);
+				List<McpGrant> entries = denies ? role.getDenies() : role.getGrants();
+				entries.clear();
+				if (!wanted.isEmpty()) {
+					McpGrant entry = TypedConfiguration.newConfigItem(McpGrant.class);
+					entry.setServers(new ArrayList<>(wanted));
+					entries.add(entry);
+				}
+				break;
+			}
+			default: {
+				AgentRoleAccess role = _config.getAgentAccess().getRoles()
+					.computeIfAbsent(roleName, PolicyDraft::newAgentRole);
+				List<AgentGrant> entries = denies ? role.getDenies() : role.getGrants();
+				entries.clear();
+				if (!wanted.isEmpty()) {
+					AgentGrant entry = TypedConfiguration.newConfigItem(AgentGrant.class);
+					entry.setAgents(new ArrayList<>(wanted));
+					entries.add(entry);
+				}
+				break;
+			}
+		}
+	}
+
+	/** The names one role's entries of the given section hold, in the order they are stored. */
+	private Set<String> entryNames(Dimension dimension, String roleName, boolean denies) {
+		Set<String> result = new LinkedHashSet<>();
+		switch (dimension) {
+			case MODEL: {
+				ModelRoleAccess role = _config.getModelAccess().getRoles().get(roleName);
+				if (role != null) {
+					for (ModelGrant entry : denies ? role.getDenies() : role.getGrants()) {
+						result.addAll(entry.getModels());
+					}
+				}
+				break;
+			}
+			case MCP_SERVER: {
+				McpRoleAccess role = _config.getMcpAccess().getRoles().get(roleName);
+				if (role != null) {
+					for (McpGrant entry : denies ? role.getDenies() : role.getGrants()) {
+						result.addAll(entry.getServers());
+					}
+				}
+				break;
+			}
+			default: {
+				AgentRoleAccess role = _config.getAgentAccess().getRoles().get(roleName);
+				if (role != null) {
+					for (AgentGrant entry : denies ? role.getDenies() : role.getGrants()) {
+						result.addAll(entry.getAgents());
+					}
+				}
+				break;
+			}
+		}
+		return result;
+	}
+
+	private static AgentRoleAccess newAgentRole(String roleName) {
+		AgentRoleAccess role = TypedConfiguration.newConfigItem(AgentRoleAccess.class);
+		role.setName(roleName);
+		return role;
+	}
+
+	private static ModelRoleAccess newModelRole(String roleName) {
+		ModelRoleAccess role = TypedConfiguration.newConfigItem(ModelRoleAccess.class);
+		role.setName(roleName);
+		return role;
+	}
+
+	private static McpRoleAccess newMcpRole(String roleName) {
+		McpRoleAccess role = TypedConfiguration.newConfigItem(McpRoleAccess.class);
+		role.setName(roleName);
+		return role;
 	}
 
 	/** The entry of the named role, or <code>null</code> if the policy has none. */

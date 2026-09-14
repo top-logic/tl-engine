@@ -8,6 +8,9 @@ package com.top_logic.tl.ai.core.security.layout;
 import java.util.Collection;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
 import com.top_logic.tl.ai.core.security.ToolAccessRule;
@@ -146,6 +149,61 @@ public class ToolAccessLabels {
 	public static String verdict(ToolAccessVerdict verdict) {
 		return resources().getString(verdict == ToolAccessVerdict.ALLOWED
 			? I18NConstants.VERDICT_ALLOWED : I18NConstants.VERDICT_DENIED);
+	}
+
+	/**
+	 * What one of the three run sections is about, as a heading.
+	 *
+	 * @param dimension
+	 *        The section to name. Never <code>null</code>.
+	 */
+	public static String dimensionLabel(Dimension dimension) {
+		switch (dimension) {
+			case MODEL:
+				return resources().getString(I18NConstants.SECTION_MODEL_ACCESS);
+			case MCP_SERVER:
+				return resources().getString(I18NConstants.SECTION_MCP_ACCESS);
+			default:
+				return resources().getString(I18NConstants.SECTION_AGENT_ACCESS);
+		}
+	}
+
+	/**
+	 * How much of one run section the subject reaches, as the sentence of its heading row.
+	 *
+	 * @param section
+	 *        The heading row. Never <code>null</code>.
+	 */
+	public static String sectionSummary(EffectiveAccessRow.RunSection section) {
+		return resources().getString(I18NConstants.SECTION_SUMMARY__ALLOWED_TOTAL
+			.fill(Integer.valueOf(section.allowedCount()), Integer.valueOf(section.totalCount())));
+	}
+
+	/**
+	 * Why an agent, a model or an MCP server is reachable or not, as a sentence.
+	 *
+	 * @param decision
+	 *        The decision to explain. Never <code>null</code>.
+	 */
+	public static String sentence(Decision decision) {
+		if (decision instanceof Decision.Granted granted) {
+			return byRoleSentence(granted.byRole());
+		}
+		Decision.Denied denied = (Decision.Denied) decision;
+		return resources().getString(denied.reason());
+	}
+
+	/**
+	 * Which rule let a name through: a role of the subject, the section default, or the agent itself.
+	 */
+	private static String byRoleSentence(String byRole) {
+		if (RoleAccessPolicy.DEFAULT_ROLE.equals(byRole)) {
+			return resources().getString(I18NConstants.ALLOWED_BY_SECTION_DEFAULT);
+		}
+		if (RoleAccessPolicy.AGENT_ROLE.equals(byRole)) {
+			return resources().getString(I18NConstants.ALLOWED_BY_THE_AGENT);
+		}
+		return resources().getString(I18NConstants.ALLOWED_BY_ROLE__ROLE.fill(byRole));
 	}
 
 	/**

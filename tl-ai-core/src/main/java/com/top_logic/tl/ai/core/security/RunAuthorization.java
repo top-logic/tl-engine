@@ -1,0 +1,223 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.security;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import com.top_logic.basic.Logger;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
+
+/**
+ * What one agent run may <em>be</em>: which agent it runs, which model it runs on, which MCP servers
+ * it reaches - decided against the roles of the run's principal.
+ *
+ * <p>
+ * The sibling of {@link ToolAuthorization}, which decides what a run may <em>do</em>. Both are
+ * resolved once, when the run's security context is built, and carried on it; neither re-reads thread
+ * state per check, for the reason {@link ToolAuthorization} gives.
+ * </p>
+ *
+ * <p>
+ * Every method answers about one name the caller asked for. A name the agent itself uses - the model
+ * it is assigned, a server it declares - is not a choice and is permitted, which is why the callers
+ * pass it in: a client that echoes the agent's own model back is not choosing a model.
+ * </p>
+ *
+ * @see com.top_logic.tl.ai.core.agent.TopLogicSecurityContext
+ * @see AiToolAccessService#runAuthorizationFor(Person)
+ */
+public class RunAuthorization {
+
+	/**
+	 * Permits every agent, model and MCP server without consulting a policy.
+	 *
+	 * <p>
+	 * <b>A test seam.</b> No production run carries it:
+	 * {@link AiToolAccessService#runAuthorizationFor(Person)} always evaluates the running service's
+	 * policy and refuses if that service is down. An application that authored no policy gets a real
+	 * authorization over an empty one - which permits every agent, the agent's own model and the
+	 * agent's own servers, and that is a decision rather than the absence of one.
+	 * </p>
+	 */
+	public static final RunAuthorization UNCHECKED = new RunAuthorization(null, null, null, null, Set.of());
+
+	private final RoleAccessPolicy _agents;
+
+	private final RoleAccessPolicy _models;
+
+	private final RoleAccessPolicy _mcpServers;
+
+	private final Person _principal;
+
+	private final Set<String> _heldRoleNames;
+
+	/**
+	 * Creates a {@link RunAuthorization} for one run.
+	 *
+	 * @param agents
+	 *        Which agents a role may run, or <code>null</code> to check nothing.
+	 * @param models
+	 *        Which models a role may choose, or <code>null</code> to check nothing.
+	 * @param mcpServers
+	 *        Which MCP servers a role may attach, or <code>null</code> to check nothing.
+	 * @param principal
+	 *        The user the run acts as, or <code>null</code> for a run with no user identity, who then
+	 *        holds no role.
+	 * @param heldRoleNames
+	 *        The names of the roles {@code principal} holds on the security root, resolved once by the
+	 *        caller.
+	 */
+	public RunAuthorization(RoleAccessPolicy agents, RoleAccessPolicy models, RoleAccessPolicy mcpServers,
+			Person principal, Collection<String> heldRoleNames) {
+		_agents = agents;
+		_models = models;
+		_mcpServers = mcpServers;
+		_principal = principal;
+		_heldRoleNames = heldRoleNames == null ? Set.of() : Set.copyOf(heldRoleNames);
+	}
+
+	/** The roles the run's principal holds on the security root. */
+	public Set<String> heldRoleNames() {
+		return _heldRoleNames;
+	}
+
+	/**
+	 * Why the run's principal may not run the named agent, recording the refusal in the audit log.
+	 *
+	 * @param agentName
+	 *        The agent the run wants to be.
+	 * @return The refusal, or <code>null</code> if the agent is permitted.
+	 */
+	public Decision.Denied agentRefusal(String agentName) {
+		return audit(decide(_agents, agentName, Set.of()));
+	}
+
+	/**
+	 * Why the run's principal may not choose the named model, recording the refusal in the audit log.
+	 *
+	 * @param modelName
+	 *        The model the request asks for.
+	 * @param assignedModel
+	 *        The model the agent of this request is assigned, which is not a choice and is therefore
+	 *        always permitted; may be <code>null</code>.
+	 * @return The refusal, or <code>null</code> if the model is permitted.
+	 */
+	public Decision.Denied modelRefusal(String modelName, String assignedModel) {
+		return audit(decide(_models, modelName, assignedModel == null ? Set.of() : Set.of(assignedModel)));
+	}
+
+	/**
+	 * Why the run's principal may not attach the named MCP server, recording the refusal in the audit
+	 * log.
+	 *
+	 * @param serverName
+	 *        The server the request asks for.
+	 * @param agentServers
+	 *        The servers the agent of this request declares itself, which are not a choice and are
+	 *        therefore permitted unless a role forbids them by name; may be <code>null</code>.
+	 * @return The refusal, or <code>null</code> if the server is permitted.
+	 */
+	public Decision.Denied mcpServerRefusal(String serverName, Collection<String> agentServers) {
+		return audit(decide(_mcpServers, serverName, agentServers == null ? Set.of() : agentServers));
+	}
+
+	/** Whether the run's principal may run the named agent, without logging a refusal. */
+	public boolean allowsAgent(String agentName) {
+		return decide(_agents, agentName, Set.of()) == null;
+	}
+
+	/**
+	 * Which of the given agents the run's principal may run.
+	 *
+	 * @param candidates
+	 *        The agents the application has.
+	 * @return The permitted names, in the order the candidates were given.
+	 */
+	public List<String> allowedAgents(Collection<String> candidates) {
+		return allowed(_agents, candidates, Set.of());
+	}
+
+	/**
+	 * Which of the given models the run's principal may choose.
+	 *
+	 * @param candidates
+	 *        The models the application has configured.
+	 * @param assignedModels
+	 *        The models the agents this user may run are assigned.
+	 * @return The permitted names, in the order the candidates were given.
+	 */
+	public List<String> allowedModels(Collection<String> candidates, Collection<String> assignedModels) {
+		return allowed(_models, candidates, assignedModels);
+	}
+
+	/**
+	 * Which of the given MCP servers the run's principal may attach.
+	 *
+	 * @param candidates
+	 *        The servers the application has configured.
+	 * @param agentServers
+	 *        The servers the agents this user may run declare themselves.
+	 * @return The permitted names, in the order the candidates were given.
+	 */
+	public List<String> allowedMcpServers(Collection<String> candidates, Collection<String> agentServers) {
+		return allowed(_mcpServers, candidates, agentServers);
+	}
+
+	private List<String> allowed(RoleAccessPolicy access, Collection<String> candidates,
+			Collection<String> agentsOwn) {
+		if (access == null || isAdmin()) {
+			return List.copyOf(candidates);
+		}
+		return access.allowed(_heldRoleNames, candidates, agentsOwn);
+	}
+
+	/**
+	 * The refusal for the given name, or <code>null</code> if it is permitted. No side effects.
+	 *
+	 * <p>
+	 * The administrator bypass mirrors {@link ToolAuthorization}: an administrator already bypasses the
+	 * engine's model rights and the tool layer, and a third layer that disagreed would produce an
+	 * unexplainable half-denial. There is no background ceiling here - which agent a run is and what it
+	 * runs on is decided before it starts, and an unattended run inherits the acting account's.
+	 * </p>
+	 */
+	private Decision.Denied decide(RoleAccessPolicy access, String name, Collection<String> agentsOwn) {
+		if (access == null || name == null || name.isBlank()) {
+			return null;
+		}
+		if (isAdmin()) {
+			return null;
+		}
+		return access.check(_heldRoleNames, name, agentsOwn) instanceof Decision.Denied denied
+			? denied
+			: null;
+	}
+
+	private boolean isAdmin() {
+		return _principal != null && _principal.isAdmin();
+	}
+
+	/**
+	 * Records the refusal where an operator can find it, then returns it unchanged.
+	 *
+	 * <p>
+	 * The same shape as {@code ToolAuthorization.audit}, so that one log format answers "why was this
+	 * refused?" for both layers.
+	 * </p>
+	 */
+	private Decision.Denied audit(Decision.Denied denied) {
+		if (denied != null) {
+			Logger.warn("Agent run refused: " + denied.dimension().label() + "='" + denied.name() + "'"
+				+ " user=" + (_principal == null ? "(none)" : _principal.getName())
+				+ " roles=" + _heldRoleNames
+				+ " reason=" + denied.message(), RunAuthorization.class);
+		}
+		return denied;
+	}
+}

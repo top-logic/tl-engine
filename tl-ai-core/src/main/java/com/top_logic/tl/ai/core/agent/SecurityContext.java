@@ -9,6 +9,7 @@ import java.util.Set;
 
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -230,6 +231,26 @@ public interface SecurityContext {
 	 */
 	default SecurityContext withBackgroundCeiling() {
 		return this;
+	}
+
+	/**
+	 * What this run may <em>be</em>: which agent it runs, which model it runs on, which MCP servers it
+	 * reaches.
+	 *
+	 * <p>
+	 * The sibling of {@link #hasToolPermission(Tool)}, which says what the run may <em>do</em>. Asked
+	 * where a run is assembled - {@code AgentFactory} - rather than per tool call, because these three
+	 * are settled before the first provider request.
+	 * </p>
+	 *
+	 * <p>
+	 * The default is {@link RunAuthorization#UNCHECKED}, which is what {@link #UNRESTRICTED} answers -
+	 * a test seam. Every production context is a {@link TopLogicSecurityContext} and carries a real
+	 * one.
+	 * </p>
+	 */
+	default RunAuthorization runAuthorization() {
+		return RunAuthorization.UNCHECKED;
 	}
 
 	/**

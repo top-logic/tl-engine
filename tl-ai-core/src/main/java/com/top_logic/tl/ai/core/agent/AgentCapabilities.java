@@ -369,6 +369,11 @@ public class AgentCapabilities {
 		if (delegate == null) {
 			return null;
 		}
+		if (!_security.runAuthorization().allowsAgent(delegate.name())) {
+			// Asked quietly, like every other filter here: a run that never calls this agent must not
+			// write a denial line per turn. AgentFactory audits the one that is actually attempted.
+			return "the acting account may not run this agent";
+		}
 		return unusableReason(reachableTools(delegate), "reachable tools");
 	}
 

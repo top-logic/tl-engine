@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
@@ -17,6 +18,8 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -112,6 +115,27 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 * @see #getBackgroundAllowlist()
 	 */
 	String BACKGROUND_ALLOWLIST = "background-allowlist";
+
+	/**
+	 * Configuration property name for {@link #getAgentAccess()}.
+	 *
+	 * @see #getAgentAccess()
+	 */
+	String AGENT_ACCESS = "agent-access";
+
+	/**
+	 * Configuration property name for {@link #getModelAccess()}.
+	 *
+	 * @see #getModelAccess()
+	 */
+	String MODEL_ACCESS = "model-access";
+
+	/**
+	 * Configuration property name for {@link #getMcpAccess()}.
+	 *
+	 * @see #getMcpAccess()
+	 */
+	String MCP_ACCESS = "mcp-access";
 
 	/**
 	 * Assigns tools to a capability group when the tool does not state its own.
@@ -242,6 +266,48 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 * Setter for {@link #getBackgroundAllowlist()}.
 	 */
 	void setBackgroundAllowlist(BackgroundAllowlist value);
+
+	/**
+	 * Which security roles may run which agents.
+	 *
+	 * <p>
+	 * Everybody may run every agent until a role is named here. As soon as one of a user's roles is
+	 * named, that user may run exactly the agents their named roles permit - see {@link AgentAccess}.
+	 * </p>
+	 *
+	 * @see AgentAccess
+	 */
+	@Name(AGENT_ACCESS)
+	@ItemDefault
+	AgentAccess getAgentAccess();
+
+	/**
+	 * Which security roles may choose which language models for a single request.
+	 *
+	 * <p>
+	 * Nobody chooses a model until this says so: by default a request runs on the model the agent is
+	 * assigned, whatever a client asks for - see {@link ModelAccess}.
+	 * </p>
+	 *
+	 * @see ModelAccess
+	 */
+	@Name(MODEL_ACCESS)
+	@ItemDefault
+	ModelAccess getModelAccess();
+
+	/**
+	 * Which security roles may attach which MCP servers to a single request.
+	 *
+	 * <p>
+	 * Nobody attaches a server until this says so: by default a request reaches the servers the agent
+	 * itself declares and no others - see {@link McpAccess}.
+	 * </p>
+	 *
+	 * @see McpAccess
+	 */
+	@Name(MCP_ACCESS)
+	@ItemDefault
+	McpAccess getMcpAccess();
 
 	/**
 	 * The upper limit for agent runs that have nobody to confirm a tool call.
@@ -467,5 +533,518 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		 * Setter for {@link #getTools()}.
 		 */
 		void setTools(List<String> value);
+	}
+
+	/*
+	 * The three sections below - agents, models, MCP servers - answer the same shape of question as
+	 * <tool-access> and are deliberately written in the same idiom: a role entry with <grants> and
+	 * <denies>, a deny that wins over every grant, and nothing granted that is not named.
+	 *
+	 * What an administrator writes:
+	 *
+	 *     <agent-access default="all">
+	 *         <role name="SalesUser">
+	 *             <grants><grant agents="sales-assistant, pietro"/></grants>
+	 *             <denies><deny agents="framework-wiring-agent"/></denies>
+	 *         </role>
+	 *     </agent-access>
+	 *     <model-access default="assigned">
+	 *         <role name="SalesUser"><grants><grant models="claude-haiku-4-5"/></grants></role>
+	 *     </model-access>
+	 *     <mcp-access default="agent">
+	 *         <role name="SalesUser"><grants><grant servers="internal-docs"/></grants></role>
+	 *     </mcp-access>
+	 *
+	 * Two rules decide, and they are the same in all three sections:
+	 *
+	 *   * A deny from any held role wins, always - over every grant of every other held role, and over
+	 *     the section default.
+	 *   * A user one of whose roles this section names is bounded by what their named roles grant. The
+	 *     default no longer applies to them; it is what everybody else gets.
+	 *
+	 * That second rule is why "default" and role entries can sit in the same section without
+	 * contradicting each other: naming a role restricts the holders of that role and nobody else, which
+	 * is what an administrator adding one restricted role to a running application means. A role entry
+	 * with no grants is therefore how "this role may use none of them" is said.
+	 *
+	 * The defaults differ per dimension, and each is the least surprising safe answer for its own
+	 * question rather than a uniform one:
+	 *
+	 *   agents: "all"       - an agent is a persona, and an application that configured nothing has
+	 *                         always offered all of them.
+	 *   models: "assigned"  - a model choice is a cost and a capability decision, so the request runs on
+	 *                         what the agent is assigned until an administrator hands the choice out.
+	 *   MCP servers: "agent"- attaching a server is egress the administrator did not plan for that turn,
+	 *                         so a request reaches the agent's own servers and no others.
+	 *
+	 * Unlike <tool-access> there is no group vocabulary and no baseline here: an agent, a model and an
+	 * MCP server are each named individually, because there is no classification of them that anybody
+	 * has agreed on. See doc/security/tool-access-configuration.md.
+	 */
+
+	/**
+	 * Which security roles may run which agents.
+	 *
+	 * <p>
+	 * Name no role and everybody may run every agent. Name a role and its holders may run exactly the
+	 * agents it permits - a role entry that permits none lets its holders run no agent at all.
+	 * Administrators are never restricted.
+	 * </p>
+	 */
+	interface AgentAccess extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getDefault()}.
+		 *
+		 * @see #getDefault()
+		 */
+		String DEFAULT = "default";
+
+		/**
+		 * Configuration property name for {@link #getRoles()}.
+		 *
+		 * @see #getRoles()
+		 */
+		String ROLES = "roles";
+
+		/**
+		 * What a user may run whose roles are not named below.
+		 */
+		@Name(DEFAULT)
+		@FormattedDefault("all")
+		AgentDefault getDefault();
+
+		/**
+		 * Setter for {@link #getDefault()}.
+		 */
+		void setDefault(AgentDefault value);
+
+		/**
+		 * The roles, and which agents each of them may run.
+		 */
+		@Name(ROLES)
+		@Key(AgentRoleAccess.NAME_ATTRIBUTE)
+		@EntryTag("role")
+		@DefaultContainer
+		Map<String, AgentRoleAccess> getRoles();
+	}
+
+	/**
+	 * What a user may run who holds no role this section names.
+	 */
+	enum AgentDefault implements ExternallyNamed {
+
+		/** Every agent of the application. */
+		ALL("all"),
+
+		/** No agent at all. Only the roles named below may run anything. */
+		NONE("none");
+
+		private final String _externalName;
+
+		private AgentDefault(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
+
+	/**
+	 * Which agents one security role may and may not run.
+	 */
+	interface AgentRoleAccess extends NamedConfigMandatory {
+
+		/**
+		 * Configuration property name for {@link #getGrants()}.
+		 *
+		 * @see #getGrants()
+		 */
+		String GRANTS = "grants";
+
+		/**
+		 * Configuration property name for {@link #getDenies()}.
+		 *
+		 * @see #getDenies()
+		 */
+		String DENIES = "denies";
+
+		/**
+		 * The security role this entry is about.
+		 *
+		 * @implNote Redeclared from {@link NamedConfigMandatory} only to carry the option
+		 *           annotation; the property itself is inherited.
+		 *
+		 * @see AllSecurityRoles
+		 */
+		@Override
+		@Options(fun = AllSecurityRoles.class)
+		String getName();
+
+		/**
+		 * The agents this role may run.
+		 *
+		 * <p>
+		 * Leave this empty to let the role run no agent at all.
+		 * </p>
+		 */
+		@Name(GRANTS)
+		@EntryTag("grant")
+		List<AgentGrant> getGrants();
+
+		/**
+		 * The agents this role may never run.
+		 *
+		 * <p>
+		 * A refusal here always wins - over what this role is permitted, and over what every other role
+		 * of the same user permits.
+		 * </p>
+		 */
+		@Name(DENIES)
+		@EntryTag("deny")
+		List<AgentGrant> getDenies();
+	}
+
+	/**
+	 * One entry of a list of permissions or refusals: the agents it names.
+	 */
+	interface AgentGrant extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getAgents()}.
+		 *
+		 * @see #getAgents()
+		 */
+		String AGENTS = "agents";
+
+		/**
+		 * The agents this entry refers to, by name.
+		 *
+		 * @see AllAgentNames
+		 */
+		@Name(AGENTS)
+		@Format(CommaSeparatedStrings.class)
+		@Options(fun = AllAgentNames.class)
+		List<String> getAgents();
+
+		/**
+		 * Setter for {@link #getAgents()}.
+		 */
+		void setAgents(List<String> value);
+	}
+
+	/**
+	 * Which security roles may choose which language model for a single request.
+	 *
+	 * <p>
+	 * Name no role and every request runs on the model its agent is assigned. Name a role and its
+	 * holders may additionally choose the models it permits. Administrators are never restricted.
+	 * </p>
+	 */
+	interface ModelAccess extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getDefault()}.
+		 *
+		 * @see #getDefault()
+		 */
+		String DEFAULT = "default";
+
+		/**
+		 * Configuration property name for {@link #getRoles()}.
+		 *
+		 * @see #getRoles()
+		 */
+		String ROLES = "roles";
+
+		/**
+		 * What a user may choose whose roles are not named below.
+		 */
+		@Name(DEFAULT)
+		@FormattedDefault("assigned")
+		ModelDefault getDefault();
+
+		/**
+		 * Setter for {@link #getDefault()}.
+		 */
+		void setDefault(ModelDefault value);
+
+		/**
+		 * The roles, and which models each of them may choose.
+		 */
+		@Name(ROLES)
+		@Key(ModelRoleAccess.NAME_ATTRIBUTE)
+		@EntryTag("role")
+		@DefaultContainer
+		Map<String, ModelRoleAccess> getRoles();
+	}
+
+	/**
+	 * What a user may choose who holds no role this section names.
+	 */
+	enum ModelDefault implements ExternallyNamed {
+
+		/** Only the model the agent of the request is assigned. The choice is not offered. */
+		ASSIGNED("assigned"),
+
+		/** Every model the application has configured. */
+		ALL("all"),
+
+		/** Nothing, not even the agent's own model - which stops every request that names a model. */
+		NONE("none");
+
+		private final String _externalName;
+
+		private ModelDefault(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
+
+	/**
+	 * Which models one security role may and may not choose.
+	 */
+	interface ModelRoleAccess extends NamedConfigMandatory {
+
+		/**
+		 * Configuration property name for {@link #getGrants()}.
+		 *
+		 * @see #getGrants()
+		 */
+		String GRANTS = "grants";
+
+		/**
+		 * Configuration property name for {@link #getDenies()}.
+		 *
+		 * @see #getDenies()
+		 */
+		String DENIES = "denies";
+
+		/**
+		 * The security role this entry is about.
+		 *
+		 * @implNote Redeclared from {@link NamedConfigMandatory} only to carry the option
+		 *           annotation; the property itself is inherited.
+		 *
+		 * @see AllSecurityRoles
+		 */
+		@Override
+		@Options(fun = AllSecurityRoles.class)
+		String getName();
+
+		/**
+		 * The models this role may choose.
+		 *
+		 * <p>
+		 * The model an agent is assigned is always usable; this is about choosing another one for a
+		 * single request. Leave this empty to take that choice away from the role.
+		 * </p>
+		 */
+		@Name(GRANTS)
+		@EntryTag("grant")
+		List<ModelGrant> getGrants();
+
+		/**
+		 * The models this role may never choose.
+		 *
+		 * <p>
+		 * A refusal here always wins - over what this role is permitted, and over what every other role
+		 * of the same user permits.
+		 * </p>
+		 */
+		@Name(DENIES)
+		@EntryTag("deny")
+		List<ModelGrant> getDenies();
+	}
+
+	/**
+	 * One entry of a list of permissions or refusals: the models it names.
+	 */
+	interface ModelGrant extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getModels()}.
+		 *
+		 * @see #getModels()
+		 */
+		String MODELS = "models";
+
+		/**
+		 * The models this entry refers to, by name.
+		 *
+		 * @see AllModelNames
+		 */
+		@Name(MODELS)
+		@Format(CommaSeparatedStrings.class)
+		@Options(fun = AllModelNames.class)
+		List<String> getModels();
+
+		/**
+		 * Setter for {@link #getModels()}.
+		 */
+		void setModels(List<String> value);
+	}
+
+	/**
+	 * Which security roles may attach which MCP servers to a single request.
+	 *
+	 * <p>
+	 * Name no role and every request reaches the servers its agent declares and no others. Name a role
+	 * and its holders may additionally attach the servers it permits. Administrators are never
+	 * restricted.
+	 * </p>
+	 */
+	interface McpAccess extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getDefault()}.
+		 *
+		 * @see #getDefault()
+		 */
+		String DEFAULT = "default";
+
+		/**
+		 * Configuration property name for {@link #getRoles()}.
+		 *
+		 * @see #getRoles()
+		 */
+		String ROLES = "roles";
+
+		/**
+		 * What a user may attach whose roles are not named below.
+		 */
+		@Name(DEFAULT)
+		@FormattedDefault("agent")
+		McpDefault getDefault();
+
+		/**
+		 * Setter for {@link #getDefault()}.
+		 */
+		void setDefault(McpDefault value);
+
+		/**
+		 * The roles, and which MCP servers each of them may attach.
+		 */
+		@Name(ROLES)
+		@Key(McpRoleAccess.NAME_ATTRIBUTE)
+		@EntryTag("role")
+		@DefaultContainer
+		Map<String, McpRoleAccess> getRoles();
+	}
+
+	/**
+	 * What a user may attach who holds no role this section names.
+	 */
+	enum McpDefault implements ExternallyNamed {
+
+		/** Only the servers the agent of the request declares itself. The choice is not offered. */
+		AGENT("agent"),
+
+		/** Every server the application has configured. */
+		ALL("all"),
+
+		/** No server at all, not even the ones the agent declares. */
+		NONE("none");
+
+		private final String _externalName;
+
+		private McpDefault(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
+
+	/**
+	 * Which MCP servers one security role may and may not attach.
+	 */
+	interface McpRoleAccess extends NamedConfigMandatory {
+
+		/**
+		 * Configuration property name for {@link #getGrants()}.
+		 *
+		 * @see #getGrants()
+		 */
+		String GRANTS = "grants";
+
+		/**
+		 * Configuration property name for {@link #getDenies()}.
+		 *
+		 * @see #getDenies()
+		 */
+		String DENIES = "denies";
+
+		/**
+		 * The security role this entry is about.
+		 *
+		 * @implNote Redeclared from {@link NamedConfigMandatory} only to carry the option
+		 *           annotation; the property itself is inherited.
+		 *
+		 * @see AllSecurityRoles
+		 */
+		@Override
+		@Options(fun = AllSecurityRoles.class)
+		String getName();
+
+		/**
+		 * The MCP servers this role may attach.
+		 *
+		 * <p>
+		 * Leave this empty to let the role attach no server at all - not even the ones the agent
+		 * declares itself.
+		 * </p>
+		 */
+		@Name(GRANTS)
+		@EntryTag("grant")
+		List<McpGrant> getGrants();
+
+		/**
+		 * The MCP servers this role may never attach.
+		 *
+		 * <p>
+		 * A refusal here always wins - over what this role is permitted, over what every other role of
+		 * the same user permits, and over the servers the agent declares itself.
+		 * </p>
+		 */
+		@Name(DENIES)
+		@EntryTag("deny")
+		List<McpGrant> getDenies();
+	}
+
+	/**
+	 * One entry of a list of permissions or refusals: the MCP servers it names.
+	 */
+	interface McpGrant extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getServers()}.
+		 *
+		 * @see #getServers()
+		 */
+		String SERVERS = "servers";
+
+		/**
+		 * The MCP servers this entry refers to, by name.
+		 *
+		 * @see AllMcpServerNames
+		 */
+		@Name(SERVERS)
+		@Format(CommaSeparatedStrings.class)
+		@Options(fun = AllMcpServerNames.class)
+		List<String> getServers();
+
+		/**
+		 * Setter for {@link #getServers()}.
+		 */
+		void setServers(List<String> value);
 	}
 }

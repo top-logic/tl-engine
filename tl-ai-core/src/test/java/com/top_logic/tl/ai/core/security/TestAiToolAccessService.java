@@ -21,6 +21,7 @@ import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tool.boundsec.CommandGroupReference;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
@@ -111,6 +112,80 @@ public class TestAiToolAccessService extends TestCase {
 
 		assertEquals("The misspelled role is named, the correct one is not.",
 			Set.of("ticektReader"), unknown);
+	}
+
+	/**
+	 * A role named in one of the three run sections is checked as a tool grant's role would be.
+	 *
+	 * <p>
+	 * The four sections keep one role vocabulary, so a typo in any of them is the same mistake and has
+	 * to fail at the same moment.
+	 * </p>
+	 */
+	public void testUnknownRolesOfTheRunSectionsAreReported() {
+		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		ToolAccessPolicy.AgentRoleAccess agentRole =
+			TypedConfiguration.newConfigItem(ToolAccessPolicy.AgentRoleAccess.class);
+		agentRole.setName("ticektReader");
+		policy.getAgentAccess().getRoles().put(agentRole.getName(), agentRole);
+
+		assertEquals(Set.of("ticektReader"),
+			AiToolAccessService.unknownRoles(policy, name -> Set.of("ticketReader").contains(name)));
+	}
+
+	/**
+	 * An agent, model or server name the application does not have refuses the boot.
+	 *
+	 * <p>
+	 * A refusal rather than the warning an unknown tool group gets: those three are closed sets the
+	 * application can enumerate, so a name outside one of them is a typo. A misspelled permission
+	 * reaches nothing and a misspelled refusal refuses nothing, and the second is the dangerous half.
+	 * </p>
+	 */
+	public void testUnknownAgentRefusesTheBoot() {
+		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		ToolAccessPolicy.AgentRoleAccess role =
+			TypedConfiguration.newConfigItem(ToolAccessPolicy.AgentRoleAccess.class);
+		role.setName("ticketReader");
+		ToolAccessPolicy.AgentGrant grant =
+			TypedConfiguration.newConfigItem(ToolAccessPolicy.AgentGrant.class);
+		grant.setAgents(List.of("TL_ModelExplorer", "TL_ModelExplorerr"));
+		role.getGrants().add(grant);
+		policy.getAgentAccess().getRoles().put(role.getName(), role);
+
+		assertEquals("The misspelled agent is named, the existing one is not.",
+			Set.of("TL_ModelExplorerr"),
+			AiToolAccessService.unknownNames(policy, Dimension.AGENT,
+				Set.of("TL_ModelExplorer", "TL_SingleAgent")));
+
+		List<String> refusals = AiToolAccessService.refusals(policy, name -> true,
+			dimension -> dimension == Dimension.AGENT ? Set.of("TL_ModelExplorer") : null);
+		assertEquals(1, refusals.size());
+		assertTrue(refusals.get(0), refusals.get(0).contains("TL_ModelExplorerr"));
+	}
+
+	/**
+	 * A name space that cannot be enumerated right now is not judged at all.
+	 *
+	 * <p>
+	 * An empty answer means "nothing could answer", not "the application has no agents": a knowledge
+	 * base whose model is not loaded answers exactly that, and refusing a boot over it would turn a
+	 * check into an outage.
+	 * </p>
+	 */
+	public void testUnknownNamesAreNotJudgedWithoutANameSpace() {
+		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		ToolAccessPolicy.McpRoleAccess role =
+			TypedConfiguration.newConfigItem(ToolAccessPolicy.McpRoleAccess.class);
+		role.setName("ticketReader");
+		ToolAccessPolicy.McpGrant grant =
+			TypedConfiguration.newConfigItem(ToolAccessPolicy.McpGrant.class);
+		grant.setServers(List.of("internal-docs"));
+		role.getGrants().add(grant);
+		policy.getMcpAccess().getRoles().put(role.getName(), role);
+
+		assertEquals(Set.of(), AiToolAccessService.unknownNames(policy, Dimension.MCP_SERVER, null));
+		assertEquals(Set.of(), AiToolAccessService.unknownNames(policy, Dimension.MCP_SERVER, Set.of()));
 	}
 
 	/** A policy naming only existing roles reports nothing. */

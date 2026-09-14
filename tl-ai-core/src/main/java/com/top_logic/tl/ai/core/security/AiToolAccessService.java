@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.ConfigurationError;
@@ -41,7 +42,16 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
+import com.top_logic.tl.ai.core.agent.AgentDefinition;
+import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
+import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.AgentRoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.McpRoleAccess;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelRoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -88,6 +98,13 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 	ToolRegistryService.Module.class,
 	// The model-access grants the boot warning of #289 compares the tool grants against.
 	SecurityConfigurationService.Module.class,
+	// The three name spaces the agent, model and MCP sections are validated against. Declared so
+	// that "is this agent name known" has the same answer on every start; without the ordering the
+	// check would silently be skipped on some of them. None of the three is switched on by this -
+	// all three are active by default and none depends on this service, so there is no cycle.
+	TopLogicAgentDefinitions.Module.class,
+	LLMService.Module.class,
+	McpServerRegistry.Module.class,
 })
 public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessService.Config<?>> {
 
@@ -111,6 +128,12 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 
 	private RoleToolAccess _access;
 
+	private RoleAccessPolicy _agentAccess;
+
+	private RoleAccessPolicy _modelAccess;
+
+	private RoleAccessPolicy _mcpAccess;
+
 	/**
 	 * Creates a new {@link AiToolAccessService} from configuration.
 	 */
@@ -125,9 +148,13 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 
 		Config<?> policy = getConfig();
 		_access = new RoleToolAccess(policy, AiToolAccessService::declaredGroupOf);
+		_agentAccess = RoleAccessPolicy.agents(policy);
+		_modelAccess = RoleAccessPolicy.models(policy);
+		_mcpAccess = RoleAccessPolicy.mcpServers(policy);
 
 		List<String> refusals = refusals(policy, name -> BoundedRole
-			.getRoleByName(PersistencyLayer.getKnowledgeBase(), name) != null);
+			.getRoleByName(PersistencyLayer.getKnowledgeBase(), name) != null,
+			AiToolAccessService::knownNames);
 		for (String refusal : refusals) {
 			_context.error(refusal);
 		}
@@ -138,7 +165,13 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 		Logger.info("Agent tool access:"
 			+ " roles=" + policy.getToolAccess().size()
 			+ " baseline=" + describeBaseline() + "(+" + describeImplicitBaseline() + ")"
-			+ " backgroundAllowlist=" + describeBackgroundAllowlist(policy), AiToolAccessService.class);
+			+ " backgroundAllowlist=" + describeBackgroundAllowlist(policy)
+			+ " agents=" + describeSection(policy.getAgentAccess().getDefault().getExternalName(),
+				_agentAccess)
+			+ " models=" + describeSection(policy.getModelAccess().getDefault().getExternalName(),
+				_modelAccess)
+			+ " mcpServers=" + describeSection(policy.getMcpAccess().getDefault().getExternalName(),
+				_mcpAccess), AiToolAccessService.class);
 
 		if (!refusals.isEmpty()) {
 			// Reported to the instantiation context above so that a full application boot still lists
@@ -169,6 +202,24 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 * @return One sentence per problem, in a stable order; empty for a sound policy.
 	 */
 	public static List<String> refusals(ToolAccessPolicy policy, Predicate<String> roleExists) {
+		return refusals(policy, roleExists, dimension -> null);
+	}
+
+	/**
+	 * Everything about the given policy that must stop the service from starting.
+	 *
+	 * @param policy
+	 *        The policy to inspect.
+	 * @param roleExists
+	 *        Whether a role of the given name exists.
+	 * @param knownNames
+	 *        The agents, models and MCP servers the application has, per dimension, or
+	 *        <code>null</code> for a dimension whose name space cannot be enumerated right now - the
+	 *        check is then skipped rather than answered wrongly.
+	 * @return One sentence per problem, in a stable order; empty for a sound policy.
+	 */
+	public static List<String> refusals(ToolAccessPolicy policy, Predicate<String> roleExists,
+			Function<Dimension, Set<String>> knownNames) {
 		List<String> result = new ArrayList<>();
 		for (String roleName : unknownRoles(policy, roleExists)) {
 			result.add("The role " + roleName
@@ -179,10 +230,104 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 				+ " one thing: " + problem + ". An entry says either a capability group or one or more"
 				+ " tools.");
 		}
+		for (Dimension dimension : Dimension.values()) {
+			for (String name : unknownNames(policy, dimension, knownNames.apply(dimension))) {
+				result.add("The " + dimension.label() + " " + name
+					+ " in the agent tool access configuration does not exist.");
+			}
+		}
 		if (needsBackgroundAllowlist(policy)) {
 			result.add(MISSING_BACKGROUND_ALLOWLIST);
 		}
 		return result;
+	}
+
+	/**
+	 * The names of one dimension that the policy mentions and the application does not have.
+	 *
+	 * <p>
+	 * A refusal rather than a warning, unlike an unknown tool group: an agent, a model and an MCP
+	 * server are each a closed set the application can enumerate, so a name outside it is a typo and
+	 * nothing else. A misspelled permission reaches nothing, and - worse - a misspelled refusal
+	 * refuses nothing while reading as a prohibition.
+	 * </p>
+	 *
+	 * @param policy
+	 *        The policy to inspect.
+	 * @param dimension
+	 *        Which of the three sections to inspect.
+	 * @param known
+	 *        The names the application has, or <code>null</code> if they cannot be enumerated right
+	 *        now, in which case nothing is reported.
+	 * @return The unknown names, in a stable order.
+	 */
+	public static Set<String> unknownNames(ToolAccessPolicy policy, Dimension dimension,
+			Set<String> known) {
+		if (known == null || known.isEmpty()) {
+			// An application with no agent, no model or no MCP server at all is not one whose policy
+			// can be judged - the name space is missing, not the names.
+			return Set.of();
+		}
+		Set<String> unknown = new TreeSet<>(sectionOf(policy, dimension).mentionedNames());
+		unknown.removeAll(known);
+		return unknown;
+	}
+
+	/** The evaluation of one of the three sections of the given policy. */
+	private static RoleAccessPolicy sectionOf(ToolAccessPolicy policy, Dimension dimension) {
+		switch (dimension) {
+			case MODEL:
+				return RoleAccessPolicy.models(policy);
+			case MCP_SERVER:
+				return RoleAccessPolicy.mcpServers(policy);
+			default:
+				return RoleAccessPolicy.agents(policy);
+		}
+	}
+
+	/**
+	 * The names of one dimension this application has, or <code>null</code> if they cannot be
+	 * enumerated right now.
+	 *
+	 * <p>
+	 * Reading an <em>empty</em> answer as "cannot tell" is deliberate: a knowledge base whose model is
+	 * not loaded answers "no agents" rather than failing, and refusing the boot of an application over
+	 * that would turn a check into an outage.
+	 * </p>
+	 */
+	public static Set<String> knownNames(Dimension dimension) {
+		switch (dimension) {
+			case MODEL:
+				if (!LLMService.Module.INSTANCE.isActive()) {
+					return null;
+				}
+				return new TreeSet<>(LLMService.getInstance().getConfiguredModelNames());
+			case MCP_SERVER:
+				if (!McpServerRegistry.Module.INSTANCE.isActive()) {
+					return null;
+				}
+				return new TreeSet<>(McpServerRegistry.getInstance().getConfiguredServerNames());
+			default:
+				return knownAgentNames();
+		}
+	}
+
+	/** The agents this application knows, or <code>null</code> if nothing can answer. */
+	private static Set<String> knownAgentNames() {
+		Set<String> names = new TreeSet<>();
+		try {
+			for (AgentDefinition agent : AgentDefinitionQuery.getInstance().getAllAgents()) {
+				names.add(agent.name());
+			}
+		} catch (RuntimeException ex) {
+			Logger.warn("The agents of this application cannot be listed, so the agent names in the"
+				+ " agent tool access configuration are not checked.", ex, AiToolAccessService.class);
+			if (!TopLogicAgentDefinitions.Module.INSTANCE.isActive()) {
+				return null;
+			}
+			names.addAll(TopLogicAgentDefinitions.getInstance().getAllConfigAgents().keySet());
+		}
+		return names;
 	}
 
 	/**
@@ -274,12 +419,33 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 */
 	public static Set<String> unknownRoles(ToolAccessPolicy policy, Predicate<String> exists) {
 		Set<String> unknown = new TreeSet<>();
-		for (String roleName : policy.getToolAccess().keySet()) {
+		for (String roleName : configuredRoles(policy)) {
 			if (!exists.test(roleName)) {
 				unknown.add(roleName);
 			}
 		}
 		return unknown;
+	}
+
+	/**
+	 * Every role name the given policy configures, in any of its four sections.
+	 *
+	 * @param policy
+	 *        The policy to inspect.
+	 * @return The role names, in a stable order.
+	 */
+	public static Set<String> configuredRoles(ToolAccessPolicy policy) {
+		Set<String> roles = new TreeSet<>(policy.getToolAccess().keySet());
+		roles.addAll(policy.getAgentAccess().getRoles().keySet());
+		roles.addAll(policy.getModelAccess().getRoles().keySet());
+		roles.addAll(policy.getMcpAccess().getRoles().keySet());
+		return roles;
+	}
+
+	/** One of the three run sections, for the boot log line. */
+	private static String describeSection(String defaultValue, RoleAccessPolicy access) {
+		int roles = access.configuredRoles().size();
+		return roles == 0 ? defaultValue : defaultValue + "(" + roles + " roles)";
 	}
 
 	/**
@@ -447,16 +613,34 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 */
 	static Set<String> rolesUnreachableOnSecurityRoot(ToolAccessPolicy policy,
 			Predicate<String> reachableOnRoot) {
-		Set<String> unreachable = new TreeSet<>();
+		Set<String> granting = new TreeSet<>();
 		for (RoleAccess role : policy.getToolAccess().values()) {
 			// A role present with no grants says "this role reaches nothing" on purpose; whether anybody
 			// holds it is then irrelevant, and warning about it would punish saying the emptiness out
 			// loud.
-			if (role.getGrants().isEmpty()) {
-				continue;
+			if (!role.getGrants().isEmpty()) {
+				granting.add(role.getName());
 			}
-			if (!reachableOnRoot.test(role.getName())) {
-				unreachable.add(role.getName());
+		}
+		for (AgentRoleAccess role : policy.getAgentAccess().getRoles().values()) {
+			if (!role.getGrants().isEmpty()) {
+				granting.add(role.getName());
+			}
+		}
+		for (ModelRoleAccess role : policy.getModelAccess().getRoles().values()) {
+			if (!role.getGrants().isEmpty()) {
+				granting.add(role.getName());
+			}
+		}
+		for (McpRoleAccess role : policy.getMcpAccess().getRoles().values()) {
+			if (!role.getGrants().isEmpty()) {
+				granting.add(role.getName());
+			}
+		}
+		Set<String> unreachable = new TreeSet<>();
+		for (String roleName : granting) {
+			if (!reachableOnRoot.test(roleName)) {
+				unreachable.add(roleName);
 			}
 		}
 		return unreachable;
@@ -598,6 +782,21 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 		return _access;
 	}
 
+	/** Which agents a role may run under the policy of this deployment. */
+	public RoleAccessPolicy getAgentAccess() {
+		return _agentAccess;
+	}
+
+	/** Which models a role may choose under the policy of this deployment. */
+	public RoleAccessPolicy getModelAccess() {
+		return _modelAccess;
+	}
+
+	/** Which MCP servers a role may attach under the policy of this deployment. */
+	public RoleAccessPolicy getMcpAccess() {
+		return _mcpAccess;
+	}
+
 	/**
 	 * The names of the roles the given user holds on the security root.
 	 *
@@ -706,6 +905,70 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 		AiToolAccessService service = getInstance();
 		return new ToolAuthorization(service.getAccess(), principal, heldRoleNames(principal),
 			background, identities());
+	}
+
+	/**
+	 * What one run may be, decided against the roles of the account it acts as.
+	 *
+	 * <p>
+	 * The sibling of {@link #authorizationFor(Person, boolean)} for the agent, the model and the MCP
+	 * servers of a run. There is no background variant: which agent a run is and what it runs on is
+	 * settled before it starts, and the {@code <background-allowlist>} is about tool calls nobody is
+	 * there to approve.
+	 * </p>
+	 *
+	 * @param principal
+	 *        The user the run acts as. May be <code>null</code>, who then holds no role.
+	 * @return The authorization to carry on the run's security context, never <code>null</code>.
+	 * @throws IllegalStateException
+	 *         If this service is not running - see {@link #authorizationFor(Person, boolean)}.
+	 */
+	public static RunAuthorization runAuthorizationFor(Person principal) {
+		if (!Module.INSTANCE.isActive()) {
+			throw new IllegalStateException("Which agent a run may be is checked for every run, but the "
+				+ AiToolAccessService.class.getSimpleName() + " is not running. Re-activate it; there"
+				+ " is no unchecked mode to fall back to.");
+		}
+		AiToolAccessService service = getInstance();
+		return new RunAuthorization(service.getAgentAccess(), service.getModelAccess(),
+			service.getMcpAccess(), principal, heldRoleNames(principal));
+	}
+
+	/**
+	 * What the given account may run, and on what, under the policy in effect.
+	 *
+	 * <p>
+	 * The read-only query behind the effective-access view, and the one tl-chat filters its capability
+	 * list with. Same rules as {@link #runAuthorizationFor(Person)}, asked about any account at any
+	 * time.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account to ask about, may be <code>null</code> - who then holds no role.
+	 * @return The evaluation, never <code>null</code>.
+	 */
+	public static RunAuthorization effectiveRunAccessFor(Person account) {
+		AiToolAccessService service = getInstance();
+		return new RunAuthorization(service.getAgentAccess(), service.getModelAccess(),
+			service.getMcpAccess(), account, heldRoleNames(account));
+	}
+
+	/**
+	 * What a holder of exactly the given roles may run, and on what, under the policy in effect.
+	 *
+	 * <p>
+	 * The hypothetical case, like {@link #effectiveAccessForRoles(Collection, boolean)}: no account is
+	 * involved, so nobody is an administrator here.
+	 * </p>
+	 *
+	 * @param roleNames
+	 *        The roles to assume are held on the security root.
+	 * @return The evaluation, never <code>null</code>.
+	 */
+	public static RunAuthorization effectiveRunAccessForRoles(Collection<String> roleNames) {
+		AiToolAccessService service = getInstance();
+		return new RunAuthorization(service.getAgentAccess(), service.getModelAccess(),
+			service.getMcpAccess(), null, roleNames);
 	}
 
 	/**

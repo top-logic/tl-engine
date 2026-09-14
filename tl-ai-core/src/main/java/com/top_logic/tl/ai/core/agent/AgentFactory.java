@@ -31,6 +31,9 @@ import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.EffortLevels;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.tl.ai.core.security.RunAuthorization;
+import com.top_logic.tl.ai.core.security.ToolSecurityException;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
@@ -177,16 +180,23 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			throw new RuntimeException(
 				"No agent found with name '" + name + "'.");
 		}
-		if (overrides != null && overrides.mcpServers() != null) {
-			agentDef = agentDef.withMcpServers(overrides.mcpServers());
-		}
 
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+
+		// Before anything of the request is applied: what a client asked for is not yet what this run
+		// is. The agent's own assignment and its own servers are not a choice and are not checked.
+		authorizeRun(context.security(), agentDef, assignment.model(), overrides);
+
+		if (overrides != null && overrides.mcpServers() != null) {
+			agentDef = agentDef.withMcpServers(overrides.mcpServers());
+		}
 		if (overrides != null && overrides.hasModel()) {
 			assignment = assignment.withModel(overrides.model());
 		}
 		if (overrides != null && overrides.hasEffort()) {
+			// The effort travels with the model: it is a property of the model the turn runs on, and a
+			// model the principal may not choose was already refused above.
 			assignment = applyEffort(assignment, overrides.effort());
 		}
 
@@ -264,6 +274,58 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		/** Whether an effort override is present. */
 		public boolean hasEffort() {
 			return effort != null && !effort.isBlank();
+		}
+	}
+
+	/**
+	 * Refuses a run that is not the acting principal's to start this way.
+	 *
+	 * <p>
+	 * Three questions, all of them about what a <em>client</em> asked for rather than about what an
+	 * administrator configured: may this principal run this agent, choose this model, attach these MCP
+	 * servers. The agent's own assignment and its own server list are passed in and therefore permitted
+	 * - a request that echoes back what the agent already uses is not choosing anything, and every
+	 * client of {@code /chat/send} does exactly that.
+	 * </p>
+	 *
+	 * <p>
+	 * The choke point for every entry point: the chat, {@code AgentRunner}, the scheduler and
+	 * TL-Script all arrive here. Refusing before the provider is built means no round trip is spent on
+	 * a run that may not happen.
+	 * </p>
+	 *
+	 * @param security
+	 *        The security context of the run, carrying the principal's authorization.
+	 * @param agentDef
+	 *        The agent as stored, before any override is applied.
+	 * @param assignedModel
+	 *        The model that agent is assigned.
+	 * @param overrides
+	 *        What the client asked for, may be <code>null</code>.
+	 * @throws ToolSecurityException
+	 *         If the principal may not run the agent, choose the model or attach one of the servers.
+	 */
+	private static void authorizeRun(SecurityContext security, AgentDefinition agentDef,
+			String assignedModel, RunOverrides overrides) {
+		RunAuthorization authorization = security.runAuthorization();
+		refuse(authorization.agentRefusal(agentDef.name()));
+		if (overrides == null) {
+			return;
+		}
+		if (overrides.hasModel()) {
+			refuse(authorization.modelRefusal(overrides.model(), assignedModel));
+		}
+		if (overrides.mcpServers() != null) {
+			for (String serverName : overrides.mcpServers()) {
+				refuse(authorization.mcpServerRefusal(serverName, agentDef.mcpServers()));
+			}
+		}
+	}
+
+	/** Turns a refusal into the exception every entry point reports, or does nothing. */
+	private static void refuse(Decision.Denied denied) {
+		if (denied != null) {
+			throw new ToolSecurityException(denied.reason(), denied.message());
 		}
 	}
 
@@ -375,6 +437,11 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		if (agentDef == null) {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
+		// Delegation is bounded by the acting principal too, not only by the parent agent's delegation
+		// list: a child runs on the user's behalf, so an agent the user may not run is not reachable by
+		// asking another agent for it. AgentCapabilities drops such an agent from the delegate catalog
+		// and from list_agents, so the model normally never asks; this is the gate behind that filter.
+		refuse(security.runAuthorization().agentRefusal(name));
 
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
@@ -410,6 +477,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		if (agentDef == null) {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
+		// See buildAgentLoop: a subagent is the same run under another name.
+		refuse(security.runAuthorization().agentRefusal(name));
+
 		AgentModelAssignment assignment =
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
 		AgentCapabilities capabilities = AgentCapabilities.forRun(security);

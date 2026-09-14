@@ -24,6 +24,14 @@
 				</bundles>
 			</instance>
 		</config>
+		<!-- The role that may open the administration area, granted in security.xml. -->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="demo.react.Administrator"/>
+				</roles>
+			</instance>
+		</config>
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance>
 				<declarations>

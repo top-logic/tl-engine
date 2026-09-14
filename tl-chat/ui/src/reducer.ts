@@ -2,6 +2,7 @@ import type {
   ApprovalOutcome,
   AssistantText,
   ChatMessage,
+  Citation,
   ErrorMessage,
   InteractionOption,
   InteractionRequest,
@@ -23,7 +24,7 @@ export type ChatAction =
   | { type: 'REMOVE_FROM_USER'; id: string }
   | { type: 'ADD_ASSISTANT'; id: string; text: string; isStreaming: boolean }
   | { type: 'APPEND_TEXT'; id: string; delta: string }
-  | { type: 'SET_TEXT'; id: string; text: string }
+  | { type: 'SET_TEXT'; id: string; text: string; citations?: Citation[] }
   | { type: 'FINALIZE_TEXT'; id: string }
   | { type: 'ADD_TOOL'; toolUseId: string; name: string; input: unknown; depth?: number }
   | { type: 'UPDATE_TOOL'; toolUseId: string; status: ToolCallStatus; durationMs?: number }
@@ -98,7 +99,7 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
       // arrives late cannot append itself to the finished text.
       return messages.map((m) =>
         m.type === 'assistant_text' && m.id === action.id
-          ? { ...m, text: action.text, authoritative: true }
+          ? { ...m, text: action.text, authoritative: true, citations: action.citations }
           : m,
       )
     case 'FINALIZE_TEXT':

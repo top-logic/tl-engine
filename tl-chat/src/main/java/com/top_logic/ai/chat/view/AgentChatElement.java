@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
@@ -22,6 +23,14 @@ import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
 
 /**
  * Declarative {@code <agent-chat/>} element for the React view layer.
+ *
+ * <p>
+ * The shipped component is {@code TLAgentChat}. A host that composes the chat from the exported
+ * building blocks in {@code tl-chat-seams.js} registers its own element
+ * ({@code register('MyChat', MyComposition)}) and names it here as {@code react-element}. The
+ * control still binds the session and the tracker; the browser component still talks to
+ * {@code /chat/*}.
+ * </p>
  */
 public class AgentChatElement implements UIElement {
 
@@ -69,6 +78,13 @@ public class AgentChatElement implements UIElement {
 		 */
 		String PROMPT_IMPROVER_AGENT = "prompt-improver-agent";
 
+		/**
+		 * Configuration property name for {@link #getReactElement()}.
+		 *
+		 * @see #getReactElement()
+		 */
+		String REACT_ELEMENT = "react-element";
+
 		@Override
 		@ClassDefault(AgentChatElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -89,6 +105,17 @@ public class AgentChatElement implements UIElement {
 		@Options(fun = AllAgentNameOptions.class)
 		@Nullable
 		String getPromptImproverAgent();
+
+		/**
+		 * Registered React element that renders this chat.
+		 *
+		 * Defaults to {@code TLAgentChat}. A host that called
+		 * {@code register('MyChat', MyComposition)} sets this to {@code MyChat}.
+		 */
+		@Name(REACT_ELEMENT)
+		@Label("React element")
+		@StringDefault("TLAgentChat")
+		String getReactElement();
 	}
 
 	private final Config _config;
@@ -101,6 +128,7 @@ public class AgentChatElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new AgentChatControl(context, _config.getTraceMode(), _config.getPromptImproverAgent());
+		return new AgentChatControl(context, _config.getTraceMode(), _config.getPromptImproverAgent(),
+			_config.getReactElement());
 	}
 }

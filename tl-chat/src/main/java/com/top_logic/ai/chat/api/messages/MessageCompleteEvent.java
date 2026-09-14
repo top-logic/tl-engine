@@ -21,9 +21,14 @@ public class MessageCompleteEvent extends de.haumacher.msgbuf.data.AbstractDataO
 	/** @see #getContentText() */
 	public static final String CONTENT_TEXT__PROP = "contentText";
 
+	/** @see #getCitations() */
+	public static final String CITATIONS__PROP = "citations";
+
 	private String _contentHtml = "";
 
 	private String _contentText = "";
+
+	private final java.util.List<com.top_logic.ai.chat.api.messages.CitationDto> _citations = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link MessageCompleteEvent} instance.
@@ -74,6 +79,48 @@ public class MessageCompleteEvent extends de.haumacher.msgbuf.data.AbstractDataO
 		_contentText = value;
 	}
 
+	/**
+	 * Citations the validator kept, in marker order.
+	 */
+	public final java.util.List<com.top_logic.ai.chat.api.messages.CitationDto> getCitations() {
+		return _citations;
+	}
+
+	/**
+	 * @see #getCitations()
+	 */
+	public com.top_logic.ai.chat.api.messages.MessageCompleteEvent setCitations(java.util.List<? extends com.top_logic.ai.chat.api.messages.CitationDto> value) {
+		internalSetCitations(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getCitations()} without chain call utility. */
+	protected final void internalSetCitations(java.util.List<? extends com.top_logic.ai.chat.api.messages.CitationDto> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'citations' cannot be null.");
+		_citations.clear();
+		_citations.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getCitations()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.MessageCompleteEvent addCitation(com.top_logic.ai.chat.api.messages.CitationDto value) {
+		internalAddCitation(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addCitation(com.top_logic.ai.chat.api.messages.CitationDto)} without chain call utility. */
+	protected final void internalAddCitation(com.top_logic.ai.chat.api.messages.CitationDto value) {
+		_citations.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getCitations()} list.
+	 */
+	public final void removeCitation(com.top_logic.ai.chat.api.messages.CitationDto value) {
+		_citations.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return MESSAGE_COMPLETE_EVENT__TYPE;
@@ -83,7 +130,8 @@ public class MessageCompleteEvent extends de.haumacher.msgbuf.data.AbstractDataO
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			CONTENT_HTML__PROP, 
-			CONTENT_TEXT__PROP);
+			CONTENT_TEXT__PROP, 
+			CITATIONS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -110,6 +158,7 @@ public class MessageCompleteEvent extends de.haumacher.msgbuf.data.AbstractDataO
 		switch (field) {
 			case CONTENT_HTML__PROP: return getContentHtml();
 			case CONTENT_TEXT__PROP: return getContentText();
+			case CITATIONS__PROP: return getCitations();
 			default: return null;
 		}
 	}
@@ -119,6 +168,7 @@ public class MessageCompleteEvent extends de.haumacher.msgbuf.data.AbstractDataO
 		switch (field) {
 			case CONTENT_HTML__PROP: internalSetContentHtml((String) value); break;
 			case CONTENT_TEXT__PROP: internalSetContentText((String) value); break;
+			case CITATIONS__PROP: internalSetCitations(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.CitationDto.class, value)); break;
 		}
 	}
 
@@ -141,6 +191,12 @@ public class MessageCompleteEvent extends de.haumacher.msgbuf.data.AbstractDataO
 		out.value(getContentHtml());
 		out.name(CONTENT_TEXT__PROP);
 		out.value(getContentText());
+		out.name(CITATIONS__PROP);
+		out.beginArray();
+		for (com.top_logic.ai.chat.api.messages.CitationDto x : getCitations()) {
+			x.writeTo(out);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -148,6 +204,16 @@ public class MessageCompleteEvent extends de.haumacher.msgbuf.data.AbstractDataO
 		switch (field) {
 			case CONTENT_HTML__PROP: setContentHtml(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CONTENT_TEXT__PROP: setContentText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case CITATIONS__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.CitationDto> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.ai.chat.api.messages.CitationDto.readCitationDto(in));
+				}
+				in.endArray();
+				setCitations(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

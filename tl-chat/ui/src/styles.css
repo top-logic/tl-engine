@@ -2386,3 +2386,351 @@
     transform: rotate(360deg);
   }
 }
+
+/* --- Right rail / side pane (Issue #401) -------------------------------- */
+
+.workspace {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.workspace .stage {
+  flex: 1;
+  min-width: 20rem;
+}
+
+.thread-bar-end {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.thread-bar-caption {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-toggle {
+  position: relative;
+  gap: 0.35rem;
+  padding-inline: 0.5rem;
+}
+
+.side-toggle-label {
+  font-size: var(--chat-small);
+  font-weight: 600;
+}
+
+.side-toggle-badge {
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.25rem;
+  border-radius: var(--r-pill);
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.side-column {
+  width: 18.75rem;
+  min-width: 18.75rem;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+  overflow: auto;
+}
+
+.side-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.side-section {
+  border-radius: var(--r-1);
+  overflow: hidden;
+}
+
+.side-section.is-framework {
+  border: 1px dashed var(--border-subtle);
+}
+
+.side-section.is-accent {
+  border: 1px solid var(--button-primary);
+  background: color-mix(in srgb, var(--button-primary) 10%, var(--layer));
+}
+
+.side-section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+.side-caret {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-inline-end: 2px solid var(--text-secondary);
+  border-bottom: 2px solid var(--text-secondary);
+  transform: rotate(-45deg);
+}
+
+.side-caret.is-open {
+  transform: rotate(45deg);
+}
+
+.side-section-title {
+  font-weight: 600;
+}
+
+.side-section-badge {
+  font-size: var(--chat-small);
+  color: var(--text-secondary);
+}
+
+.side-section-by {
+  margin-inline-start: auto;
+  font-size: var(--chat-small);
+  color: var(--text-secondary);
+}
+
+.side-section-body {
+  padding: 0 0.6rem 0.6rem;
+}
+
+.side-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.progress-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+}
+
+.progress-step.is-done .progress-label {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+.progress-marker {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
+.progress-marker svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.progress-step.is-running .progress-marker svg circle:last-child {
+  fill: var(--button-primary);
+  stroke: none;
+}
+
+.progress-caption {
+  margin-inline-start: auto;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.side-strip {
+  width: 3.5rem;
+  min-width: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+}
+
+.side-strip-item {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: var(--background);
+  color: inherit;
+  cursor: pointer;
+}
+
+.side-strip-item.is-active {
+  border-color: var(--button-primary);
+  background: color-mix(in srgb, var(--button-primary) 12%, var(--background));
+}
+
+.side-pane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 360px;
+  min-height: 0;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+}
+
+.side-splitter {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -3px;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 2;
+}
+
+.side-pane-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.side-back {
+  border: 0;
+  background: transparent;
+  color: var(--button-primary);
+  cursor: pointer;
+  font: inherit;
+}
+
+.side-pane-title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-pane-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.side-pane-tab {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--chat-small);
+  padding: 0.2rem 0.4rem;
+}
+
+.side-pane-tab.is-active {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.side-pane-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.75rem;
+}
+
+.composer-host-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem 0;
+}
+
+.chip-remove {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0 0.15rem;
+}
+
+.cite-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-inline: 0.15rem;
+  border: 1px solid color-mix(in srgb, var(--button-primary) 50%, var(--border-subtle));
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--button-primary) 14%, transparent);
+  color: var(--button-primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
+  vertical-align: super;
+}
+
+.cite-popover {
+  margin-top: 0.35rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: var(--layer);
+  box-shadow: var(--chat-shadow);
+  max-width: 22rem;
+}
+
+.md-wrap {
+  position: relative;
+}
+
+@media (max-width: 1280px) {
+  .side-column,
+  .side-pane.is-sheet {
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: 4;
+    width: min(100%, 28rem);
+    box-shadow: var(--chat-shadow);
+  }
+
+  .side-pane.is-sheet {
+    min-width: 0;
+  }
+
+  .side-strip {
+    display: none;
+  }
+}

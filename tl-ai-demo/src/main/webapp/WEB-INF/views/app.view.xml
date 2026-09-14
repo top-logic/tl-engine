@@ -115,6 +115,20 @@
 					/>
 				</nav-item>
 
+				<nav-item id="chat-seams"
+					icon="css:bi bi-layout-sidebar-reverse"
+				>
+					<label>
+						<en>Chat with invoices</en>
+						<de>Chat mit Rechnungen</de>
+					</label>
+					<agent-chat
+						react-element="DemoChat"
+						prompt-improver-agent="TL_PromptImprover"
+						trace-mode="overview"
+					/>
+				</nav-item>
+
 				<nav-item id="invoices"
 					icon="css:bi bi-receipt"
 				>

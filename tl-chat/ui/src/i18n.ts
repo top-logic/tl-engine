@@ -195,6 +195,21 @@ const EN = {
   errorDetails: 'Technical details',
   streamLost: 'Lost the event stream.',
   cancelled: 'Stopped.',
+
+  sideRail: 'Rail',
+  sideRailBadge: (count: number) => `${count} new`,
+  sideBack: 'Back',
+  sideSplitter: 'Resize the side pane',
+  railEmpty: 'Nothing to show.',
+  progressTitle: 'Progress',
+  progressContributor: 'tl-ai',
+  progressEmpty: 'No steps in this run yet.',
+  progressWaiting: 'Waiting for approval',
+  contextTitle: 'Context',
+  citationChip: (n: number) => `Citation ${n}`,
+  citationKind: 'Kind',
+  citationSource: 'Source',
+  removeChip: (label: string) => `Remove ${label}`,
 }
 
 type Bundle = typeof EN
@@ -384,6 +399,21 @@ const DE: Bundle = {
   errorDetails: 'Technische Details',
   streamLost: 'Die Ereignisverbindung ist abgerissen.',
   cancelled: 'Abgebrochen.',
+
+  sideRail: 'Leiste',
+  sideRailBadge: (count: number) => `${count} neu`,
+  sideBack: 'Zurück',
+  sideSplitter: 'Seitenbereich in der Breite ändern',
+  railEmpty: 'Nichts anzuzeigen.',
+  progressTitle: 'Fortschritt',
+  progressContributor: 'tl-ai',
+  progressEmpty: 'In diesem Lauf gibt es noch keine Schritte.',
+  progressWaiting: 'Wartet auf Freigabe',
+  contextTitle: 'Kontext',
+  citationChip: (n: number) => `Beleg ${n}`,
+  citationKind: 'Art',
+  citationSource: 'Quelle',
+  removeChip: (label: string) => `${label} entfernen`,
 }
 
 const BUNDLES: Record<Language, Bundle> = { en: EN, de: DE }

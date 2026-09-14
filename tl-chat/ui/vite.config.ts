@@ -11,14 +11,18 @@ export default defineConfig({
     emptyOutDir: false,
     cssCodeSplit: false,
     lib: {
-      entry: 'src/main.tsx',
+      entry: {
+        'tl-chat-ui': 'src/main.tsx',
+        'tl-chat-seams': 'src/index.ts',
+      },
       formats: ['es'],
-      fileName: () => 'tl-chat-ui.js',
+      fileName: (_format, entryName) => `${entryName}.js`,
     },
     outDir: '../src/main/webapp/script',
     rollupOptions: {
       external: ['tl-react-bridge'],
       output: {
+        chunkFileNames: 'tl-chat-shared.js',
         assetFileNames: (asset) => {
           const names = [...(asset.names ?? []), asset.name ?? '']
           return names.some((name) => name.endsWith('.css')) ? 'tl-chat-ui.css' : 'assets/[name][extname]'

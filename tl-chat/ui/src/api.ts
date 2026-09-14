@@ -317,7 +317,7 @@ interface PersistedPart {
   id: string
   type: string
   timestamp: number
-  textData?: { text: string }
+  textData?: { text: string; citations?: import('./types').Citation[] }
   thinkingData?: { text: string }
   toolCallData?: {
     toolName: string
@@ -425,6 +425,7 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
               text: part.textData.text,
               isStreaming: false,
               timestamp: part.timestamp,
+              citations: part.textData.citations,
             })
           }
           break

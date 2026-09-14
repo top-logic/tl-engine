@@ -30,6 +30,24 @@ export interface AssistantText {
    * consumer may still be behind - must not be appended to it.
    */
   authoritative?: boolean
+  /** Structured citations the server kept for this answer; absent when the turn cited nothing. */
+  citations?: Citation[]
+}
+
+/**
+ * One source a `[n]` marker in an answer points to.
+ *
+ * Mirrors {@code CitationDto} on the wire. The server drops any citation whose {@link id} or
+ * {@link url} did not appear in this turn's tool results.
+ */
+export interface Citation {
+  index: number
+  toolName: string
+  toolCallId: string
+  kind: string
+  id: string
+  label: string
+  url: string
 }
 
 export interface ToolCall {

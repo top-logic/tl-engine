@@ -25,7 +25,15 @@ import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
 import { effortLevelsOf, modelsFor } from './models'
 import { SessionRail } from './chrome'
 import { Composer } from './composer'
+import type { ChatExtensions, ComposerChip, PaneOpenOptions, RailSection } from './extensions'
+import { hostRailSections } from './extensions'
+import { parsePreferences, savePreferences } from './preferences'
+import { ProgressSection } from './progress'
+import { progressBadge, unseenBadge } from './progress-model'
+import { RailToggle, SideRail, SideStrip, useCollapsedSections } from './rail'
 import { chatReducer } from './reducer'
+import { composeOutboundText } from './send-prefix'
+import { SidePane } from './side-pane'
 import {
   EMPTY_RUN,
   readActiveSession,
@@ -57,6 +65,7 @@ import {
   type SubagentStatusEvent,
   type TokenUsage,
   type TraceMode,
+  type Citation,
 } from './types'
 
 const { useCallback, useEffect, useMemo, useReducer, useRef, useState } = React
@@ -108,7 +117,7 @@ function mergeSubagent(
   return current.map((item, itemIndex) => (itemIndex === index ? next : item))
 }
 
-export function App({ controlId }: TLCellProps) {
+export function App({ controlId, extensions }: TLCellProps & { extensions?: ChatExtensions }) {
   const state = useTLState()
   const windowId = (state.windowId as string) || ''
   /** False in a session that is not signed in; the servlet refuses every call such a session makes. */
@@ -120,6 +129,7 @@ export function App({ controlId }: TLCellProps) {
   // The chat speaks the language the rest of the application speaks: the user's own locale.
   const language: Language = toLanguage(state.language)
   const labels = useMemo(() => bundle(language), [language])
+  const prefs = useMemo(() => parsePreferences(state), [state])
   // The stored choice wins over the configured default: the element's trace-mode is what a new user
   // starts with, not a setting that overrules what this user picked.
   const [traceMode, setTraceModeState] = useState<TraceMode>(() => readTraceMode() ?? configuredTraceMode)
@@ -139,6 +149,13 @@ export function App({ controlId }: TLCellProps) {
   const [busy, setBusy] = useState(false)
   const [railOpen, setRailOpen] = useState(false)
   const [railCollapsed, setRailCollapsed] = useState(false)
+  const [sideOpen, setSideOpen] = useState(() => prefs.railOpen)
+  const [paneWidth, setPaneWidth] = useState(() => prefs.paneWidth)
+  const [badgeSeen, setBadgeSeen] = useState(() => prefs.badgeSeen)
+  const [paneContent, setPaneContent] = useState<React.ReactNode>(null)
+  const [paneOptions, setPaneOptions] = useState<PaneOpenOptions | null>(null)
+  const [hostChips, setHostChips] = useState<ComposerChip[]>(() => extensions?.composerAddons?.chips ?? [])
+  const collapsedSections = useCollapsedSections(['context'])
   const [subagents, setSubagents] = useState<SubagentActivity[]>([])
   const [autoApprove, setAutoApprove] = useState(false)
   const [connection, setConnection] = useState<ConnectionState>('connecting')
@@ -202,6 +219,7 @@ export function App({ controlId }: TLCellProps) {
   const effortRef = useRef(effort)
   const autoApproveRef = useRef(false)
   const runIdRef = useRef<string | null>(null)
+  const chipsRef = useRef<ComposerChip[]>([])
   /** Set when the run ended because the user stopped it, so the provider error it causes is muted. */
   const cancelledRef = useRef(false)
   sessionIdRef.current = sessionId
@@ -212,6 +230,18 @@ export function App({ controlId }: TLCellProps) {
   mcpDirtyRef.current = mcpDirty
   effortRef.current = effort
   autoApproveRef.current = autoApprove
+
+  const chips = useMemo(() => {
+    const fromHost = extensions?.composerAddons?.chips ?? []
+    const extra = hostChips.filter((chip) => !fromHost.some((item) => item.id === chip.id))
+    return [...fromHost, ...extra]
+  }, [extensions?.composerAddons?.chips, hostChips])
+  chipsRef.current = chips
+
+  useEffect(() => {
+    if (!authenticated || !windowId) return
+    void savePreferences(windowId, { railOpen: sideOpen, paneWidth, badgeSeen })
+  }, [authenticated, windowId, sideOpen, paneWidth, badgeSeen])
 
   const setTraceMode = useCallback((mode: TraceMode) => {
     setTraceModeState(mode)
@@ -652,13 +682,10 @@ export function App({ controlId }: TLCellProps) {
       on('message_complete', (e) => {
         // The authoritative answer. The deltas were a live preview of it; applying it here is what
         // keeps the last fragment from being lost when it arrives after this event.
-        const data = parseJson<{ contentText?: string }>(e.data, {})
-        // Against the message the run streamed into, not against an open one: this frame arrives
-        // after `run_completed`, which has already closed it. Guarding on the open id instead is
-        // what left this safety net unable to fire.
+        const data = parseJson<{ contentText?: string; citations?: Citation[] }>(e.data, {})
         const target = assistantId.current ?? lastAssistantId.current
         if (target && data.contentText) {
-          dispatch({ type: 'SET_TEXT', id: target, text: data.contentText })
+          dispatch({ type: 'SET_TEXT', id: target, text: data.contentText, citations: data.citations })
         }
         finish()
       })
@@ -874,9 +901,14 @@ export function App({ controlId }: TLCellProps) {
       dispatch({ type: 'ADD_USER', id: messageId, text: text || labels.attachmentOnly, edited })
       setBusy(true)
       runStore.set((s) => ({ ...s, busy: true }))
+      const outbound = composeOutboundText(
+        text,
+        extensions?.contextHook?.contextTag?.({ messages: messagesRef.current }),
+        chipsRef.current,
+      )
       try {
         await sendMessage(windowId, {
-          text,
+          text: outbound,
           sessionId: active,
           agent: agentRef.current,
           model: modelRef.current,
@@ -905,7 +937,7 @@ export function App({ controlId }: TLCellProps) {
       }
       return true
     },
-    [labels, windowId, refreshSessions],
+    [labels, windowId, refreshSessions, extensions],
   )
 
   const onStop = useCallback(() => {
@@ -1105,6 +1137,60 @@ export function App({ controlId }: TLCellProps) {
     [windowId],
   )
 
+  const progressSection: RailSection = useMemo(
+    () => ({
+      id: 'progress',
+      title: labels.progressTitle,
+      contributor: labels.progressContributor,
+      badge: () => progressBadge(messages),
+      render: () => <ProgressSection messages={messages} labels={labels} />,
+    }),
+    [labels, messages],
+  )
+
+  const railSections = useMemo(
+    () => [progressSection, ...hostRailSections(extensions)],
+    [progressSection, extensions],
+  )
+
+  const badgeTotal = useMemo(
+    () => railSections.reduce((sum, section) => sum + (section.badge?.() ?? 0), 0),
+    [railSections],
+  )
+  const badge = unseenBadge(badgeTotal, badgeSeen)
+
+  const openInPane = useCallback((content: React.ReactNode, options: PaneOpenOptions) => {
+    setPaneContent(content)
+    setPaneOptions(options)
+    setSideOpen(true)
+  }, [])
+
+  const addComposerChip = useCallback((chip: ComposerChip) => {
+    setHostChips((current) => (current.some((item) => item.id === chip.id) ? current : [...current, chip]))
+  }, [])
+
+  const railCtx = useMemo(
+    () => ({
+      messages,
+      busy,
+      openInPane,
+      addComposerChip,
+    }),
+    [messages, busy, openInPane, addComposerChip],
+  )
+
+  const toggleSide = useCallback(() => {
+    setSideOpen((open) => {
+      if (open) {
+        setPaneContent(null)
+        setPaneOptions(null)
+        return false
+      }
+      setBadgeSeen(badgeTotal)
+      return true
+    })
+  }, [badgeTotal])
+
   if (!authenticated) {
     return (
       <div id={controlId} className="tl-cockpit is-signed-out">
@@ -1116,8 +1202,11 @@ export function App({ controlId }: TLCellProps) {
     )
   }
 
+  const paneOpen = sideOpen && paneContent != null
+  const railVisible = sideOpen && !paneOpen
+
   return (
-    <div id={controlId} className={`tl-cockpit${railCollapsed ? ' is-rail-collapsed' : ''}`}>
+    <div id={controlId} className={`tl-cockpit${railCollapsed ? ' is-rail-collapsed' : ''}${sideOpen ? ' has-side' : ''}${paneOpen ? ' has-pane' : ''}`}>
       <SessionRail
         labels={labels}
         sessions={sessions}
@@ -1132,61 +1221,109 @@ export function App({ controlId }: TLCellProps) {
         onClose={() => setRailOpen(false)}
         onToggleCollapsed={() => setRailCollapsed((value) => !value)}
       />
-      <div className={`stage${messages.length === 0 ? ' is-empty' : ''}`}>
-        <Thread
-          messages={messages}
-          traceMode={traceMode}
-          welcomeName={welcomeName || userName}
-          busy={busy}
-          regenerating={regenerating}
-          feedback={feedback}
-          labels={labels}
-          language={language}
-          effort={effort}
-          onEditSend={onEditSend}
-          onRegenerate={onRegenerate}
-          onRate={onRate}
-          onOpenRail={() => setRailOpen(true)}
-          railCollapsed={railCollapsed}
-          onToggleRail={() => setRailCollapsed((value) => !value)}
-          title={sessionTitle}
-        />
-        <Composer
-          windowId={windowId}
-          agents={caps.agents}
-          models={offeredModels}
-          agent={agent}
-          model={model}
-          onAgent={onAgent}
-          onModel={setModel}
-          mcpServers={caps.mcpServers}
-          selectedMcp={mcp}
-          onToggleMcp={onToggleMcp}
-          traceMode={traceMode}
-          onTraceMode={setTraceMode}
-          effort={effort}
-          effortLevels={effortLevels}
-          onEffort={setEffort}
-          labels={labels}
-          autoApprove={autoApprove}
-          onToggleAutoApprove={() => void onToggleAutoApprove()}
-          pendingApprovals={pendingApprovals}
-          pendingQuestions={pendingQuestions}
-          dispatch={dispatch}
-          promptImprovementEnabled={promptImprovementEnabled && caps.promptImproverAvailable !== false}
-          subagents={subagents}
-          onCancelSubagent={onCancelSubagent}
-          onStopSubagents={onStopSubagents}
-          onLoadSubagentTranscript={onLoadSubagentTranscript}
-          busy={busy}
-          connection={connection}
-          notice={notice}
-          noticeDetail={noticeDetail}
-          noticeTone={noticeTone}
-          onDismissNotice={() => showNotice('')}
-          onSend={onSend}
-          onStop={onStop}
-        />
+      <div className="workspace">
+        <div className={`stage${messages.length === 0 ? ' is-empty' : ''}`}>
+          <Thread
+            messages={messages}
+            traceMode={traceMode}
+            welcomeName={welcomeName || userName}
+            busy={busy}
+            regenerating={regenerating}
+            feedback={feedback}
+            labels={labels}
+            language={language}
+            effort={effort}
+            onEditSend={onEditSend}
+            onRegenerate={onRegenerate}
+            onRate={onRate}
+            onOpenRail={() => setRailOpen(true)}
+            railCollapsed={railCollapsed}
+            onToggleRail={() => setRailCollapsed((value) => !value)}
+            title={sessionTitle}
+            headerCaption={extensions?.contextHook?.header?.({ messages })}
+            headerEnd={<RailToggle open={sideOpen} badge={badge} labels={labels} onToggle={toggleSide} />}
+            renderAnnotation={extensions?.messageAnnotations?.render}
+            openInPane={openInPane}
+            extraActions={extensions?.messageActions}
+          />
+          <Composer
+            windowId={windowId}
+            agents={caps.agents}
+            models={offeredModels}
+            agent={agent}
+            model={model}
+            onAgent={onAgent}
+            onModel={setModel}
+            mcpServers={caps.mcpServers}
+            selectedMcp={mcp}
+            onToggleMcp={onToggleMcp}
+            traceMode={traceMode}
+            onTraceMode={setTraceMode}
+            effort={effort}
+            effortLevels={effortLevels}
+            onEffort={setEffort}
+            labels={labels}
+            autoApprove={autoApprove}
+            onToggleAutoApprove={() => void onToggleAutoApprove()}
+            pendingApprovals={pendingApprovals}
+            pendingQuestions={pendingQuestions}
+            dispatch={dispatch}
+            promptImprovementEnabled={promptImprovementEnabled && caps.promptImproverAvailable !== false}
+            subagents={subagents}
+            onCancelSubagent={onCancelSubagent}
+            onStopSubagents={onStopSubagents}
+            onLoadSubagentTranscript={onLoadSubagentTranscript}
+            busy={busy}
+            connection={connection}
+            notice={notice}
+            noticeDetail={noticeDetail}
+            noticeTone={noticeTone}
+            onDismissNotice={() => showNotice('')}
+            onSend={onSend}
+            onStop={onStop}
+            hostChips={chips}
+            onRemoveChip={(id) => setHostChips((current) => current.filter((chip) => chip.id !== id))}
+            extraMenuItems={extensions?.composerAddons?.extraMenuItems}
+          />
+        </div>
+        {paneOpen ? (
+          <SideStrip
+            sections={railSections}
+            activeId={paneOptions?.sectionId}
+            onSelect={() => {
+              setPaneContent(null)
+              setPaneOptions(null)
+            }}
+            labels={labels}
+          />
+        ) : null}
+        {railVisible ? (
+          <aside className="side-column" aria-label={labels.sideRail}>
+            <SideRail
+              sections={railSections}
+              ctx={railCtx}
+              collapsedIds={collapsedSections.collapsedIds}
+              onToggleSection={collapsedSections.onToggleSection}
+              labels={labels}
+            />
+          </aside>
+        ) : null}
+        {paneOpen ? (
+          <SidePane
+            title={paneOptions?.title ?? ''}
+            backLabel={paneOptions?.backLabel}
+            tabs={paneOptions?.tabs}
+            width={paneWidth}
+            onWidth={setPaneWidth}
+            onBack={() => {
+              setPaneContent(null)
+              setPaneOptions(null)
+            }}
+            labels={labels}
+          >
+            {paneContent}
+          </SidePane>
+        ) : null}
       </div>
     </div>
   )

@@ -70,9 +70,21 @@
 						resource="/script/tl-chat-ui.js"
 						requires="tl-react-bridge"
 					/>
+					<module-script name="tl-chat-seams"
+						resource="/script/tl-chat-seams.js"
+						requires="tl-react-bridge"
+					/>
+					<module-script name="tl-ai-demo-chat"
+						resource="/script/tl-ai-demo-chat.js"
+						requires="tl-chat-seams"
+					/>
 					<stylesheet name="tl-react-agent-chat-css"
 						resource="/script/tl-chat-ui.css"
 						requires="tl-react-controls-css"
+					/>
+					<stylesheet name="tl-ai-demo-chat-css"
+						resource="/style/tl-ai-demo-chat.css"
+						requires="tl-react-agent-chat-css"
 					/>
 					<!--
 						The demo's own skin on the shell around the chat: an app bar that follows

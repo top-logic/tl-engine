@@ -7,6 +7,8 @@ package com.top_logic.ai.chat.view;
 
 import java.util.Locale;
 
+import com.top_logic.ai.chat.api.ChatPreferencesStore;
+import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.view.AgentChatElement.TraceMode;
@@ -30,7 +32,17 @@ public class AgentChatControl extends ReactControl {
 
 	/** Creates an {@link AgentChatControl}. */
 	public AgentChatControl(ReactContext context, TraceMode traceMode, String promptImproverAgent) {
-		super(context, null, "TLAgentChat");
+		this(context, traceMode, promptImproverAgent, "TLAgentChat");
+	}
+
+	/**
+	 * Creates an {@link AgentChatControl} that mounts the named React element.
+	 *
+	 * @param reactElement registered component name, {@code TLAgentChat} when empty
+	 */
+	public AgentChatControl(ReactContext context, TraceMode traceMode, String promptImproverAgent,
+			String reactElement) {
+		super(context, null, blankToNull(reactElement) == null ? "TLAgentChat" : reactElement.trim());
 
 		TaskProgressTracker tracker = bindTracker(context);
 		storeUser(tracker);
@@ -50,6 +62,10 @@ public class AgentChatControl extends ReactControl {
 		putState("language", language());
 		putState("traceMode", traceMode.getExternalName());
 		putState("promptImprovementEnabled", configuredImprover != null);
+		ChatPreferencesDto prefs = ChatPreferencesStore.load();
+		putState("railOpen", prefs.isRailOpen());
+		putState("paneWidth", prefs.getPaneWidth());
+		putState("badgeSeen", prefs.getBadgeSeen());
 	}
 
 	private static TaskProgressTracker bindTracker(ReactContext context) {

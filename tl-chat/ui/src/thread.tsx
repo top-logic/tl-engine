@@ -1,4 +1,5 @@
 import { React } from 'tl-react-bridge'
+import type { CitationRender, MessageAction, PaneOpenOptions } from './extensions'
 import { Markdown } from './markdown'
 import { bundle, formatTimestamp, type Language } from './i18n'
 import { effortLabel } from './models'
@@ -6,6 +7,7 @@ import type {
   ApprovalRequest,
   AssistantText,
   ChatMessage,
+  Citation,
   InteractionRequest,
   MessageFeedback,
   Rating,
@@ -337,6 +339,8 @@ function AnswerFooter({
   regenerating,
   onRate,
   onRegenerate,
+  extraActions,
+  message,
 }: {
   text: string
   timestamp: number
@@ -347,6 +351,8 @@ function AnswerFooter({
   regenerating: boolean
   onRate?: (rating: Rating, note?: string) => void
   onRegenerate?: () => void
+  extraActions?: MessageAction[]
+  message?: ChatMessage
 }) {
   const [copied, setCopied] = useState(false)
   const [noteOpen, setNoteOpen] = useState(false)
@@ -405,6 +411,18 @@ function AnswerFooter({
             {RetryIcon}
           </IconButton>
         ) : null}
+        {extraActions && message
+          ? extraActions.map((action) => (
+              <IconButton
+                key={action.id}
+                label={action.label}
+                hint={action.label}
+                onClick={() => action.action(message)}
+              >
+                {action.icon ?? action.label.slice(0, 1)}
+              </IconButton>
+            ))
+          : null}
         <time className="answer-time" dateTime={new Date(timestamp).toISOString()}>
           {formatTimestamp(timestamp, language)}
         </time>
@@ -453,6 +471,11 @@ function AssistantAnswer({
   regenerating,
   onRate,
   onRegenerate,
+  citations,
+  message,
+  renderAnnotation,
+  openInPane,
+  extraActions,
 }: {
   text: string
   streaming: boolean
@@ -464,12 +487,25 @@ function AssistantAnswer({
   regenerating: boolean
   onRate?: (rating: Rating, note?: string) => void
   onRegenerate?: () => void
+  citations?: Citation[]
+  message?: ChatMessage
+  renderAnnotation?: CitationRender
+  openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
+  extraActions?: MessageAction[]
 }) {
   if (!text && !streaming) return null
   return (
     <div className="turn turn-agent">
       <div className={`answer${streaming ? ' is-streaming' : ''}`}>
-        <Markdown text={text} streaming={streaming} labels={labels} />
+        <Markdown
+          text={text}
+          streaming={streaming}
+          labels={labels}
+          citations={citations}
+          message={message}
+          renderAnnotation={renderAnnotation}
+          openInPane={openInPane}
+        />
       </div>
       {streaming ? null : (
         <AnswerFooter
@@ -482,6 +518,8 @@ function AssistantAnswer({
           regenerating={regenerating}
           onRate={onRate}
           onRegenerate={onRegenerate}
+          extraActions={extraActions}
+          message={message}
         />
       )}
     </div>
@@ -713,6 +751,9 @@ function AgentRun({
   regenerating,
   onRate,
   onRegenerate,
+  renderAnnotation,
+  openInPane,
+  extraActions,
 }: {
   turn: RunTurn
   results: Map<string, ToolResult>
@@ -726,6 +767,9 @@ function AgentRun({
   regenerating: boolean
   onRate?: (rating: Rating, note?: string) => void
   onRegenerate?: () => void
+  renderAnnotation?: CitationRender
+  openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
+  extraActions?: MessageAction[]
 }) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
@@ -751,6 +795,11 @@ function AgentRun({
           regenerating={regenerating}
           onRate={onRate}
           onRegenerate={onRegenerate}
+          citations={answer.citations}
+          message={answer}
+          renderAnnotation={renderAnnotation}
+          openInPane={openInPane}
+          extraActions={extraActions}
         />
       ) : null}
       {traceMode !== 'detailed'
@@ -785,6 +834,11 @@ export const Thread = React.memo(function Thread({
   railCollapsed,
   onToggleRail,
   title,
+  headerEnd,
+  headerCaption,
+  renderAnnotation,
+  openInPane,
+  extraActions,
 }: {
   messages: ChatMessage[]
   traceMode: TraceMode
@@ -802,6 +856,11 @@ export const Thread = React.memo(function Thread({
   railCollapsed: boolean
   onToggleRail: () => void
   title: string
+  headerEnd?: React.ReactNode
+  headerCaption?: React.ReactNode
+  renderAnnotation?: CitationRender
+  openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
+  extraActions?: MessageAction[]
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -855,6 +914,8 @@ export const Thread = React.memo(function Thread({
           </svg>
         </button>
         <h1 title={title || labels.newChat}>{title || labels.newChat}</h1>
+        {headerCaption ? <div className="thread-bar-caption">{headerCaption}</div> : null}
+        {headerEnd ? <div className="thread-bar-end">{headerEnd}</div> : null}
       </div>
       <div
         className="thread"
@@ -911,6 +972,9 @@ export const Thread = React.memo(function Thread({
                         ? () => onRegenerate(user.id, turn.index)
                         : undefined
                     }
+                    renderAnnotation={renderAnnotation}
+                    openInPane={openInPane}
+                    extraActions={extraActions}
                   />
                 </div>
               )

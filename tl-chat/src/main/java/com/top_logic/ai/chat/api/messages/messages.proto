@@ -863,6 +863,35 @@ message TaskUpdateEvent {
 	string tasksJson;
 }
 
+/**
+ * One source a {@code [n]} marker in an answer points to.
+ *
+ * Mirrors the persist {@code CitationDto}. The server drops any citation whose id or url did not
+ * appear in this turn's tool results.
+ */
+message CitationDto {
+	/** 1-based marker index shown in the answer. */
+	int index;
+
+	/** Tool that produced the cited id or URL. */
+	string toolName;
+
+	/** Tool call id of that tool, when known. */
+	string toolCallId;
+
+	/** Host kind, e.g. {@code web} or {@code invoice}. */
+	string kind;
+
+	/** Id the tool returned (a URL, a TID, …). */
+	string id;
+
+	/** Human label for the chip popover. */
+	string label;
+
+	/** Link for a web source; empty otherwise. */
+	string url;
+}
+
 /** SSE event for completed assistant message with server-rendered HTML. */
 message MessageCompleteEvent {
 	/** Server-rendered markdown-to-HTML content. */
@@ -870,6 +899,21 @@ message MessageCompleteEvent {
 
 	/** Raw markdown text for persistence. */
 	string contentText;
+
+	/** Citations the validator kept, in marker order. */
+	repeated CitationDto citations;
+}
+
+/** Per-user layout of the right rail and artefact pane. */
+message ChatPreferencesDto {
+	/** Whether the right rail is open. */
+	bool railOpen;
+
+	/** Width of the artefact pane in pixels; 0 means the default. */
+	int paneWidth;
+
+	/** Sum of section badges last stored when the rail was opened. */
+	int badgeSeen;
 }
 
 /** Token usage breakdown. */

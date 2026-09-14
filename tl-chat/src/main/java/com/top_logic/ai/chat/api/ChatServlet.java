@@ -27,6 +27,7 @@ import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.CancelPromptImprovementRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
+import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackRequest;
@@ -136,6 +137,8 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_TRUNCATE = "/truncate";
 
 	private static final String PATH_FEEDBACK = "/feedback";
+
+	private static final String PATH_PREFERENCES = "/preferences";
 	private static final String TRANSCRIPT_SUFFIX = "/transcript";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 
@@ -247,6 +250,10 @@ public class ChatServlet extends TopLogicServlet {
 			handleCapabilities(req, resp);
 			return;
 		}
+		if (pathInfo.equals(PATH_PREFERENCES) || pathInfo.equals(PATH_PREFERENCES + "/")) {
+			handleGetPreferences(req, resp);
+			return;
+		}
 		if (pathInfo.startsWith(PATH_SESSIONS)) {
 			handleSessionGet(req, resp, pathInfo);
 			return;
@@ -260,6 +267,10 @@ public class ChatServlet extends TopLogicServlet {
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
+		if (pathInfo.equals(PATH_PREFERENCES) || pathInfo.equals(PATH_PREFERENCES + "/")) {
+			handlePutPreferences(req, resp);
 			return;
 		}
 		if (pathInfo.startsWith(PATH_SESSIONS)) {
@@ -1731,6 +1742,29 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write(
 			DtoMapper.toJson(ChatCapabilities.build(resolveCurrentPerson(req), improver)));
+	}
+
+	private void handleGetPreferences(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(DtoMapper.toJson(ChatPreferencesStore.load()));
+	}
+
+	private void handlePutPreferences(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		ChatPreferencesDto body;
+		try {
+			String jsonBody = new String(req.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+			body = ChatPreferencesDto.readChatPreferencesDto(new JsonReader(new StringR(jsonBody)));
+		} catch (Exception ex) {
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON body: " + ex.getMessage());
+			return;
+		}
+		ChatPreferencesStore.save(body);
+		resp.setStatus(HttpServletResponse.SC_OK);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(DtoMapper.toJson(ChatPreferencesStore.load()));
 	}
 
 	private static String blankToNull(String value) {

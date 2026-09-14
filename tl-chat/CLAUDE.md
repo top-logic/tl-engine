@@ -18,6 +18,7 @@ Both served by `ChatServlet` at `/chat/*`:
    - `GET /chat/sessions/{id}` – Load session and activate server-side.
    - `PUT /chat/sessions/{id}/title` – Update session title.
    - `DELETE /chat/sessions/{id}` – Delete session (cascades over recorded executions, tasks, interactions).
+   - `GET /chat/preferences` / `PUT /chat/preferences` – Per-user rail/pane layout. The React UI cannot call `PersonalConfiguration` itself, so these wrap `setJSONValue` **and** `storePersonalConfiguration()` (transient otherwise). Key `tl-chat.layout`.
 
 2. **SSE API** (real-time push):
    - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `message_complete`, `heartbeat`, etc.
@@ -83,8 +84,8 @@ the React chat. Session state the classic control reads - `Chat`, `ChatProcessor
 | | |
 |--|--|
 | Sources | `ui/src` (TypeScript, `.tsx`, `jsx: "react"` - the classic runtime, because React comes from the host) |
-| Bundler | Vite library build, entry `ui/src/main.tsx` |
-| Output | `src/main/webapp/script/tl-chat-ui.js` and `tl-chat-ui.css` - **git-ignored build output, never commit it** |
+| Bundler | Vite library build, entries `ui/src/main.tsx` (`tl-chat-ui.js`) and `ui/src/index.ts` (`tl-chat-seams.js`) |
+| Output | `src/main/webapp/script/tl-chat-ui.js`, `tl-chat-ui.css`, `tl-chat-seams.js` - **git-ignored build output, never commit it** |
 | Node | installed by `frontend-maven-plugin` into `ui/node/` (v20.10.0); a local Node 20 works too |
 | Dependencies | `marked` (MIT) + `dompurify` (Apache-2.0 or MPL-2.0) for markdown, `highlight.js` (BSD-3-Clause) for code blocks - core plus 13 registered grammars. All three are bundled into `tl-chat-ui.js`, so their licences travel with the WAR. |
 
@@ -123,6 +124,7 @@ An application makes the bundle loadable by declaring it on `ClientResources` - 
 
 ```xml
 <module-script name="tl-react-agent-chat" resource="/script/tl-chat-ui.js" requires="tl-react-bridge"/>
+<module-script name="tl-chat-seams" resource="/script/tl-chat-seams.js" requires="tl-react-bridge"/>
 <stylesheet name="tl-react-agent-chat-css" resource="/script/tl-chat-ui.css" requires="tl-react-controls-css"/>
 ```
 
@@ -172,6 +174,51 @@ it rewrites a draft and never answers as a persona.
 | `markdown.tsx` / `highlight.ts` | Markdown rendering, sanitizing, code blocks |
 | `api.ts` | Every call to `/chat/*`, plus the persisted-transcript to message mapping |
 | `reducer.ts` / `store.ts` / `types.ts` | Transcript reducer, run snapshot store, shared types |
+| `extensions.ts` | Host composition contract (`ChatExtensions`) |
+| `rail.tsx` / `side-pane.tsx` / `progress.tsx` | Right rail, artefact pane, Fortschritt |
+
+## Extending the chat
+
+The shipped element is `TLAgentChat` (`ui/src/main.tsx`). A host that composes the chat registers its
+own element and points `<agent-chat react-element="MyChat"/>` at it. `AgentChatControl` is still the
+only binder of session, tracker and prompt-improver; the browser component still talks to `/chat/*`.
+
+```js
+import { register } from 'tl-react-bridge'
+import { App } from 'tl-chat-seams'
+
+register('MyChat', (props) => <App {...props} extensions={myExtensions} />)
+```
+
+`App` with no `extensions` is today's UI: session rail, thread, composer, send/stream/stop, inline
+edit, regenerate, attachments, approval, pickers, and the Fortschritt section as the only right-rail
+contribution. The rail never opens by itself.
+
+### Seams
+
+Every field of `ChatExtensions` is optional.
+
+| Seam | Default | Host |
+|--|--|--|
+| `railSections` | Fortschritt from this turn's tool/approval events | Extra sections below it, in array order. `accent` tints with `--button-primary` / `--layer-selected`. |
+| `sidePane` | closed; user opens **Leiste**; `openInPane` from a section | Host owns pane body/footer. Content floor 360px; below 1280px the pane is a sheet. |
+| `composerAddons` | none | Chips before the textarea and extra `+` menu items. On send, chips travel as `<quote>` prefixes on `ChatSendRequest.text`. |
+| `messageAnnotations.render` | web-link popover | May call `openInPane` (invoice kind in the demo). |
+| `messageActions` | copy / rate / regenerate | Extra buttons under an answer. |
+| `contextHook` | none | `header` in the thread bar; `contextTag` prepended as `<context>…</context>` on send and regenerate. |
+
+Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`) are bootstrapped from PersonalConfiguration
+via `AgentChatControl.putState` and written through `PUT /chat/preferences`.
+
+The Leiste badge is the sum of each section's `badge()` minus the total last stored when the rail was
+opened.
+
+### Stability
+
+Exported types and `App` / `extensions` are the contract. File splits inside `ui/src` are not.
+
+Citations: see `doc/citation-contract.md`. Albert records them with `cite.cite`; the server drops any
+id or URL that did not appear in this turn's other tool results.
 
 ## Notes
 

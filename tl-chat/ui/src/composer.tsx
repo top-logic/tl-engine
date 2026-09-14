@@ -4,6 +4,8 @@ import { ACCEPT_ATTRIBUTE, collectAttachments, dragHasFiles } from './attachment
 import { ContextUsage, formatTokens } from './context-usage'
 import type { bundle } from './i18n'
 import { agentLabel, effortLabel, modelLabel } from './models'
+import { ComposerNotice } from './notice'
+import type { ComposerChip, ComposerMenuItem } from './extensions'
 import { PromptStack } from './prompts'
 import { SubagentActivityPanel } from './subagents'
 import type { ChatAction } from './reducer'
@@ -231,6 +233,9 @@ export const Composer = React.memo(function Composer({
   onDismissNotice,
   onSend,
   onStop,
+  hostChips,
+  onRemoveChip,
+  extraMenuItems,
 }: {
   windowId: string
   agents: AgentOption[]
@@ -270,6 +275,9 @@ export const Composer = React.memo(function Composer({
   onDismissNotice: () => void
   onSend: (text: string, attachments: Attachment[]) => Promise<boolean>
   onStop: () => void
+  hostChips?: ComposerChip[]
+  onRemoveChip?: (id: string) => void
+  extraMenuItems?: ComposerMenuItem[]
 }) {
   const [text, setText] = useState('')
   const [files, setFiles] = useState<Attachment[]>([])
@@ -567,28 +575,36 @@ export const Composer = React.memo(function Composer({
       </div>
 
       {notice || attachError ? (
-        <div
-          className={`composer-notice${noticeTone === 'info' && !attachError ? ' is-neutral' : ''}`}
-          role="status"
-        >
-          <span title={notice && noticeDetail ? `${labels.errorDetails}: ${noticeDetail}` : undefined}>
-            {notice || attachError}
-          </span>
-          <button
-            type="button"
-            className="icon-button tiny"
-            aria-label={labels.dismiss}
-            onClick={() => {
-              onDismissNotice()
-              setAttachError('')
-            }}
-          >
-            {Icon.close}
-          </button>
-        </div>
+        <ComposerNotice
+          text={notice || attachError}
+          detail={notice ? noticeDetail : ''}
+          tone={attachError && !notice ? 'warn' : noticeTone}
+          labels={labels}
+          onDismiss={() => {
+            onDismissNotice()
+            setAttachError('')
+          }}
+        />
       ) : null}
 
       <div className={`composer-surface${dropping ? ' is-dropping' : ''}`} ref={surface}>
+        {hostChips && hostChips.length > 0 ? (
+          <div className="composer-host-chips">
+            {hostChips.map((chip) => (
+              <span key={chip.id} className="overlay-chip is-accent">
+                {chip.label}
+                <button
+                  type="button"
+                  className="chip-remove"
+                  aria-label={labels.removeChip(chip.label)}
+                  onClick={() => onRemoveChip?.(chip.id)}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : null}
         {files.length > 0 ? (
           <div className="attach-row">
             {files.map((item) => (
@@ -665,6 +681,18 @@ export const Composer = React.memo(function Composer({
                         description={labels.uploadFileHint}
                         onClick={() => file.current?.click()}
                       />
+                      {extraMenuItems?.map((item) => (
+                        <MenuRow
+                          key={item.id}
+                          icon={item.icon}
+                          label={item.label}
+                          description={item.description}
+                          onClick={() => {
+                            item.action()
+                            closeMenu()
+                          }}
+                        />
+                      ))}
                     </div>
                     <div className="plus-section">
                       <MenuRow

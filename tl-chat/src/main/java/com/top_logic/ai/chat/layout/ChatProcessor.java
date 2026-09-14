@@ -25,6 +25,7 @@ import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
+import com.top_logic.ai.chat.api.messages.CitationDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.base.context.TLSubSessionContext;
@@ -61,6 +62,7 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.scripting.Converters;
+import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
@@ -299,6 +301,7 @@ public class ChatProcessor {
 				}
 				String result = runResult.response();
 				state.setLastAgentResponse(result);
+				state.setLastCitations(lastCitations(convLog));
 
 				state.addPendingMessage(new ChatMessage("Agent", result));
 
@@ -699,6 +702,9 @@ public class ChatProcessor {
 								MessageCompleteEvent event = MessageCompleteEvent.create()
 									.setContentHtml(html)
 									.setContentText(responseText);
+								for (Citation citation : state.getLastCitations()) {
+									event.addCitation(toCitationDto(citation));
+								}
 								handler.sendMessageComplete(event);
 							}
 						}
@@ -757,6 +763,43 @@ public class ChatProcessor {
 		}
 	}
 
+	private static List<Citation> lastCitations(ConversationLog log) {
+		Turn turn = lastTurn(log);
+		if (turn == null) {
+			return List.of();
+		}
+		Part.TextPart last = null;
+		for (Part part : turn.assistantParts()) {
+			if (part instanceof Part.TextPart text) {
+				last = text;
+			}
+		}
+		return last == null ? List.of() : last.citations();
+	}
+
+	private static Turn lastTurn(ConversationLog log) {
+		if (log == null) {
+			return null;
+		}
+		Turn open = log.currentTurn();
+		if (open != null) {
+			return open;
+		}
+		List<Turn> turns = log.turns();
+		return turns.isEmpty() ? null : turns.get(turns.size() - 1);
+	}
+
+	private static CitationDto toCitationDto(Citation citation) {
+		return CitationDto.create()
+			.setIndex(citation.index())
+			.setToolName(citation.toolName())
+			.setToolCallId(citation.toolCallId())
+			.setKind(citation.kind())
+			.setId(citation.id())
+			.setLabel(citation.label())
+			.setUrl(citation.url());
+	}
+
 	/**
 	 * Thread-safe container for AI processing state shared between background and UI threads.
 	 */
@@ -791,6 +834,7 @@ public class ChatProcessor {
 		private volatile Thread _agentThread;
 		private volatile CancellationToken _cancellationToken;
 		private volatile String _lastAgentResponse;
+		private volatile List<Citation> _lastCitations = List.of();
 
 		private volatile ChatRunOptions _runOptions = ChatRunOptions.DEFAULT;
 
@@ -1015,6 +1059,21 @@ public class ChatProcessor {
 		 */
 		public void setLastAgentResponse(String response) {
 			_lastAgentResponse = response;
+		}
+
+		/** Citations the validator kept for {@link #getLastAgentResponse()}; empty when none. */
+		public List<Citation> getLastCitations() {
+			return _lastCitations;
+		}
+
+		/**
+		 * Stores the citations that belong with the last agent response.
+		 *
+		 * @param citations
+		 *        kept citations; {@code null} becomes empty
+		 */
+		public void setLastCitations(List<Citation> citations) {
+			_lastCitations = citations == null ? List.of() : List.copyOf(citations);
 		}
 	}
 

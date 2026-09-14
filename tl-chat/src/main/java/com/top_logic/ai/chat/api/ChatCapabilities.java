@@ -8,12 +8,14 @@ package com.top_logic.ai.chat.api;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.ai.chat.api.messages.AgentOptionDto;
 import com.top_logic.ai.chat.api.messages.ChatCapabilitiesResponse;
 import com.top_logic.ai.chat.api.messages.McpServerOptionDto;
 import com.top_logic.ai.chat.api.messages.ModelOptionDto;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
@@ -22,6 +24,7 @@ import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.EffortLevels;
 import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.util.Resources;
 
 /**
  * Builds the catalog the chat UI needs to pick an agent, a model, and MCP servers.
@@ -124,10 +127,41 @@ final class ChatCapabilities {
 		}
 	}
 
+	/**
+	 * The one line about an agent that is written for a person, keyed by the agent's name.
+	 *
+	 * <p>
+	 * Only the agents this product ships have one. An agent an installation defines itself is
+	 * offered by its name, which is the name whoever defined it chose - better than a delegation
+	 * prompt addressed to a model.
+	 * </p>
+	 */
+	private static final Map<String, ResKey> AGENT_SUMMARIES = Map.of(
+		"TL_SingleAgent", I18NConstants.AGENT_TL_SINGLE_AGENT,
+		"TL_Orchestrator", I18NConstants.AGENT_TL_ORCHESTRATOR,
+		"TL_ModelExplorer", I18NConstants.AGENT_TL_MODEL_EXPLORER,
+		"TL_TLScriptAgent", I18NConstants.AGENT_TL_TL_SCRIPT_AGENT,
+		"TL_ModelEditor", I18NConstants.AGENT_TL_MODEL_EDITOR);
+
+	/**
+	 * What to say about this agent to the person choosing it, in their language.
+	 *
+	 * <p>
+	 * Deliberately not {@link AgentDefinition#description()}: that is a delegation instruction
+	 * addressed to a model - it names the arguments to pass and tells the caller not to paste the
+	 * user's message - and rendering it as help text is what filled the agent picker with English
+	 * model instructions. An agent with nothing to say here says nothing.
+	 * </p>
+	 */
+	private static String summaryOf(AgentDefinition agent) {
+		ResKey key = AGENT_SUMMARIES.get(agent.name());
+		return key == null ? "" : Resources.getInstance().getString(key);
+	}
+
 	private static AgentOptionDto toAgentDto(AgentDefinition agent, LLMService llm) {
 		AgentOptionDto dto = AgentOptionDto.create()
 			.setName(agent.name())
-			.setDescription(agent.description() != null ? agent.description() : "");
+			.setSummary(summaryOf(agent));
 		if (agent.mcpServers() != null) {
 			dto.getMcpServers().addAll(agent.mcpServers());
 		}

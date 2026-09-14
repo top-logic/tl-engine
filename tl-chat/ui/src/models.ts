@@ -48,6 +48,9 @@ function capitalize(word: string): string {
  * written for the model - so the id is read out instead: the factory prefix is dropped and the
  * camel case is broken up, turning `model-modification.createModule` into "Create module". The id
  * stays available as a tooltip, the same way a model id does.
+ *
+ * A run of capitals survives: it is a name, not a sentence. Folding the whole id to lower case read
+ * `executeTLScript` out as "Execute tlscript".
  */
 export function toolLabel(id: string): string {
   if (!id) return ''
@@ -56,8 +59,16 @@ export function toolLabel(id: string): string {
     .replace(/[_-]+/g, ' ')
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .trim()
-  if (!words) return id
-  return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+  if (!words.length) return id
+  return words
+    .map((word, index) => {
+      if (/[A-Z]{2}/.test(word)) return word
+      const lower = word.toLowerCase()
+      return index === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower
+    })
+    .join(' ')
 }
 
 /** The effort levels the given model offers, empty when it offers none. */

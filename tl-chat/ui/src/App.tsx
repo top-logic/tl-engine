@@ -25,7 +25,16 @@ import { effortLevelsOf } from './models'
 import { SessionRail } from './chrome'
 import { Composer } from './composer'
 import { chatReducer } from './reducer'
-import { EMPTY_RUN, readEffort, readTraceMode, runStore, writeEffort, writeTraceMode } from './store'
+import {
+  EMPTY_RUN,
+  readActiveSession,
+  readEffort,
+  readTraceMode,
+  runStore,
+  writeActiveSession,
+  writeEffort,
+  writeTraceMode,
+} from './store'
 import { Thread } from './thread'
 import {
   promptTokens,
@@ -39,6 +48,7 @@ import {
   type ContextComposition,
   type InteractionRequest,
   type MessageFeedback,
+  type NoticeTone,
   type Rating,
   type SessionSummary,
   type SubagentActivity,
@@ -134,6 +144,15 @@ export function App({ controlId }: TLCellProps) {
   const [notice, setNotice] = useState('')
   /** What the provider itself said, kept out of the strip but reachable as its tooltip. */
   const [noticeDetail, setNoticeDetail] = useState('')
+  /**
+   * Whether the strip reports a failure or merely says what happened.
+   *
+   * "Abgebrochen." and "der Chat ist beschäftigt" are outcomes of what the user just did; wearing
+   * the same warning accent as a provider failure made every line read as something going wrong.
+   */
+  const [noticeTone, setNoticeTone] = useState<NoticeTone>('warn')
+  /** Whether the line now on screen must survive the next run start. */
+  const noticeSticky = useRef(false)
 
   /**
    * Shows one line above the composer, and what stands behind it.
@@ -141,12 +160,38 @@ export function App({ controlId }: TLCellProps) {
    * Text and detail are set together so a later notice never inherits the tooltip of an earlier
    * one.
    */
-  const showNotice = (text: string, detail = '') => {
+  const showNotice = (text: string, detail = '', options: { tone?: NoticeTone; sticky?: boolean } = {}) => {
     setNotice(text)
     setNoticeDetail(detail)
+    setNoticeTone(options.tone ?? 'warn')
+    noticeSticky.current = text !== '' && options.sticky === true
+  }
+
+  /**
+   * Takes the strip down as a run begins, unless what it says has not been readable yet.
+   *
+   * A run start used to clear it unconditionally, which is how "3 spätere Antworten entfernt" was
+   * wiped in the same instant it was written: the send that follows an edit is what starts the run
+   * the line was meant to survive. It survives exactly that one start, and then stays until the
+   * user dismisses it, sends again, or a further run begins.
+   */
+  const clearNoticeOnRunStart = () => {
+    if (noticeSticky.current) {
+      noticeSticky.current = false
+      return
+    }
+    showNotice('')
   }
   const [messages, dispatch] = useReducer(chatReducer, [])
   const assistantId = useRef<string | null>(null)
+  /**
+   * The assistant message this run streamed into, still reachable after the run has ended.
+   *
+   * The frames arrive as `text_delta …, turn_completed, run_completed, message_complete`, so by the
+   * time the authoritative text lands, `assistantId` has already been cleared by the run's end.
+   * Applying it needs an id that outlives that.
+   */
+  const lastAssistantId = useRef<string | null>(null)
   const sessionIdRef = useRef<string | null>(null)
   const messagesRef = useRef(messages)
   const agentRef = useRef(agent)
@@ -262,7 +307,7 @@ export function App({ controlId }: TLCellProps) {
     let reopenTimer = 0
     let connectTimer = 0
 
-    const finish = (error?: string, detail?: string) => {
+    const finish = (error?: string, detail?: string, errorTone: NoticeTone = 'warn') => {
       if (assistantId.current) {
         dispatch({ type: 'FINALIZE_TEXT', id: assistantId.current })
         assistantId.current = null
@@ -271,7 +316,7 @@ export function App({ controlId }: TLCellProps) {
         dispatch({ type: 'END_RUN', runId: runIdRef.current })
         runIdRef.current = null
       }
-      if (error) showNotice(error, detail ?? '')
+      if (error) showNotice(error, detail ?? '', { tone: errorTone })
       setBusy(false)
       runStore.set((s) => ({ ...s, busy: false }))
     }
@@ -331,7 +376,7 @@ export function App({ controlId }: TLCellProps) {
           {},
         )
         setBusy(true)
-        showNotice('')
+        clearNoticeOnRunStart()
         cancelledRef.current = false
         runIdRef.current = data.runId ?? crypto.randomUUID()
         dispatch({ type: 'START_RUN', runId: runIdRef.current })
@@ -352,6 +397,7 @@ export function App({ controlId }: TLCellProps) {
         }))
         if (assistantId.current) dispatch({ type: 'FINALIZE_TEXT', id: assistantId.current })
         assistantId.current = crypto.randomUUID()
+        lastAssistantId.current = assistantId.current
         dispatch({ type: 'ADD_ASSISTANT', id: assistantId.current, text: '', isStreaming: true })
       })
       on('context_composition', (e) => {
@@ -590,7 +636,7 @@ export function App({ controlId }: TLCellProps) {
         // provider's own "Stream cancelled." that follows is swallowed below.
         if (data.reason === 'ABORTED') {
           cancelledRef.current = true
-          finish(bundle(languageRef.current).cancelled)
+          finish(bundle(languageRef.current).cancelled, '', 'info')
         } else {
           finish()
         }
@@ -599,8 +645,12 @@ export function App({ controlId }: TLCellProps) {
         // The authoritative answer. The deltas were a live preview of it; applying it here is what
         // keeps the last fragment from being lost when it arrives after this event.
         const data = parseJson<{ contentText?: string }>(e.data, {})
-        if (assistantId.current && data.contentText) {
-          dispatch({ type: 'SET_TEXT', id: assistantId.current, text: data.contentText })
+        // Against the message the run streamed into, not against an open one: this frame arrives
+        // after `run_completed`, which has already closed it. Guarding on the open id instead is
+        // what left this safety net unable to fire.
+        const target = assistantId.current ?? lastAssistantId.current
+        if (target && data.contentText) {
+          dispatch({ type: 'SET_TEXT', id: target, text: data.contentText })
         }
         finish()
       })
@@ -650,6 +700,22 @@ export function App({ controlId }: TLCellProps) {
     }
   }, [labels, windowId])
 
+  /**
+   * The chat this window had open before it was reloaded, read once, before anything can overwrite
+   * it.
+   *
+   * The effect below persists every change of the open chat, and on the first render that would be
+   * the initial `null` - so the remembered id has to be taken during render, not in an effect.
+   */
+  const remembered = useRef<string | null>(readActiveSession())
+
+  /** Whether the remembered chat has been dealt with; restoring happens once per mount. */
+  const restoredSession = useRef(false)
+
+  useEffect(() => {
+    writeActiveSession(sessionId)
+  }, [sessionId])
+
   const refreshSubagents = useCallback(async () => {
     try {
       setSubagents(await listSubagents(windowId))
@@ -688,6 +754,26 @@ export function App({ controlId }: TLCellProps) {
     },
     [windowId, refreshSubagents],
   )
+
+  /**
+   * Re-opens the chat this window had before it was reloaded.
+   *
+   * A reload used to land on an empty "new chat" with the conversation only findable in the rail,
+   * which reads like data loss. It runs once, and only for a chat that is still in this user's
+   * list - a chat deleted meanwhile, or one remembered from another account, is forgotten instead
+   * of asked for.
+   */
+  useEffect(() => {
+    if (!authenticated || sessionsLoading || restoredSession.current) return
+    restoredSession.current = true
+    const id = remembered.current
+    if (!id) return
+    if (!sessions.some((item) => item.id === id)) {
+      writeActiveSession(null)
+      return
+    }
+    void onSelectSession(id)
+  }, [authenticated, sessionsLoading, sessions, onSelectSession])
 
   /**
    * Starts a new chat.
@@ -735,7 +821,7 @@ export function App({ controlId }: TLCellProps) {
       let active = sessionIdRef.current
       if (!active) {
         // The first send is what brings a chat into being, titled after what was said.
-        const created = await createSession(windowId, autoTitle(text || '(attachment)'))
+        const created = await createSession(windowId, autoTitle(text || labels.attachmentOnly))
         await loadSession(windowId, created.id)
         active = created.id
         setSessionId(active)
@@ -747,7 +833,7 @@ export function App({ controlId }: TLCellProps) {
       // reach the reducer first - on a new chat the answer then appeared above the question.
       // A refused send takes the message back out again.
       const messageId = crypto.randomUUID()
-      dispatch({ type: 'ADD_USER', id: messageId, text: text || '(attachment)', edited })
+      dispatch({ type: 'ADD_USER', id: messageId, text: text || labels.attachmentOnly, edited })
       setBusy(true)
       runStore.set((s) => ({ ...s, busy: true }))
       try {
@@ -765,12 +851,15 @@ export function App({ controlId }: TLCellProps) {
         dispatch({ type: 'REMOVE_MESSAGE', id: messageId })
         setBusy(false)
         runStore.set((s) => ({ ...s, busy: false }))
-        showNotice(err instanceof Error && err.message === 'busy' ? labels.busyHint : labels.sendFailed)
+        const busyRefusal = err instanceof Error && err.message === 'busy'
+        showNotice(busyRefusal ? labels.busyHint : labels.sendFailed, '', {
+          tone: busyRefusal ? 'info' : 'warn',
+        })
         return false
       }
       return true
     },
-    [windowId, refreshSessions],
+    [labels, windowId, refreshSessions],
   )
 
   const onStop = useCallback(() => {
@@ -878,7 +967,7 @@ export function App({ controlId }: TLCellProps) {
       try {
         const result = await truncate(windowId, active, turnIndex)
         if (result.status === 'busy') {
-          showNotice(labels.busyHint)
+          showNotice(labels.busyHint, '', { tone: 'info' })
           return false
         }
         removed = result.removedTurns ?? 0
@@ -892,7 +981,11 @@ export function App({ controlId }: TLCellProps) {
       const sent = await onSend(text, [], true)
       // Dropping the edited turn is what editing always does; saying so only helps when answers the
       // user could still see went with it.
-      if (sent && removed > 1) showNotice(labels.laterTurnsRemoved(removed - 1))
+      // Sticky: the send that follows an edit is what starts the run, and a run start used to
+      // clear the strip in the same instant this line was written into it.
+      if (sent && removed > 1) {
+        showNotice(labels.laterTurnsRemoved(removed - 1), '', { tone: 'info', sticky: true })
+      }
       return sent
     },
     [labels, onSend, windowId],
@@ -920,7 +1013,7 @@ export function App({ controlId }: TLCellProps) {
           effort: effortRef.current || undefined,
         })
         if (result.status === 'busy') {
-          showNotice(labels.busyHint)
+          showNotice(labels.busyHint, '', { tone: 'info' })
           return
         }
         if (result.status !== 'ok') {
@@ -1039,6 +1132,7 @@ export function App({ controlId }: TLCellProps) {
           connection={connection}
           notice={notice}
           noticeDetail={noticeDetail}
+          noticeTone={noticeTone}
           onDismissNotice={() => showNotice('')}
           onSend={onSend}
           onStop={onStop}

@@ -33,7 +33,28 @@ describe('the streamed answer', () => {
     expect(answer(messages).text).toBe(CONTENT)
   })
 
-  it('is the authoritative text once the stream is finalized', () => {
+  /**
+   * The order the server actually produces.
+   *
+   * Measured on every run: `text_delta …, turn_completed, run_completed, message_complete`. The
+   * run's end finalizes the message, and only then does the authoritative text arrive - so it has
+   * to land on a message that is already closed. The earlier version of this test asserted
+   * `SET_TEXT` before `FINALIZE_TEXT`, an order the product never produces, which is how the
+   * client half of the fix could sit there unable to fire.
+   */
+  it('is the authoritative text when it arrives after the run has finalized the message', () => {
+    const messages = run([
+      { type: 'ADD_ASSISTANT', id: 'a1', text: '', isStreaming: true },
+      { type: 'APPEND_TEXT', id: 'a1', delta: 'Die Hauptstadt von Portugal ist' },
+      { type: 'APPEND_TEXT', id: 'a1', delta: ' L' },
+      { type: 'FINALIZE_TEXT', id: 'a1' },
+      { type: 'SET_TEXT', id: 'a1', text: CONTENT },
+    ])
+    expect(answer(messages).text).toBe(CONTENT)
+    expect(answer(messages).isStreaming).toBe(false)
+  })
+
+  it('is the authoritative text when it arrives before the message is finalized', () => {
     const messages = run([
       { type: 'ADD_ASSISTANT', id: 'a1', text: '', isStreaming: true },
       { type: 'APPEND_TEXT', id: 'a1', delta: 'Die Hauptstadt von Portugal ist' },

@@ -81,6 +81,7 @@ const EN = {
   effortMax: 'Maximum',
   mcpServers: 'MCP servers',
   mcpHint: 'External tool servers for this turn',
+  noMcpServers: 'No MCP server is configured',
   traceLevel: 'Trace level',
   traceHint: "How much of the agent's work is shown",
   traceNone: 'None',
@@ -109,6 +110,8 @@ const EN = {
   retry: 'Retry',
   reconnecting: 'Reconnecting…',
   dropHint: 'Drop images or PDFs to attach',
+  /** Stands in for the message text of a send that is nothing but an attachment. */
+  attachmentOnly: 'Attachment',
   dismiss: 'Dismiss',
   busyHint:
     'The agent is still working on the previous message. Your text is kept — send it again when the run has finished.',
@@ -267,6 +270,7 @@ const DE: Bundle = {
   effortMax: 'Maximal',
   mcpServers: 'MCP-Server',
   mcpHint: 'Externe Werkzeug-Server für diesen Zug',
+  noMcpServers: 'Es ist kein MCP-Server konfiguriert',
   traceLevel: 'Detailgrad',
   traceHint: 'Wie viel von der Arbeit des Agenten gezeigt wird',
   traceNone: 'Keiner',
@@ -295,6 +299,7 @@ const DE: Bundle = {
   retry: 'Erneut',
   reconnecting: 'Verbindung wird wiederhergestellt …',
   dropHint: 'Bilder oder PDFs zum Anhängen hier ablegen',
+  attachmentOnly: 'Anhang',
   dismiss: 'Schließen',
   busyHint:
     'Der Agent arbeitet noch an der vorherigen Nachricht. Dein Text bleibt erhalten — sende ihn erneut, wenn der Lauf fertig ist.',

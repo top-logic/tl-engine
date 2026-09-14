@@ -1173,6 +1173,15 @@
   font-size: var(--chat-small);
 }
 
+/*
+ * A notice that only says what happened - "Abgebrochen.", "der Chat ist beschäftigt", "N spätere
+ * Antworten entfernt" - keeps the strip but drops the warning accent, so the amber marker is left
+ * to mean that something actually went wrong.
+ */
+.composer-notice.is-neutral {
+  border-left-color: var(--border-subtle);
+}
+
 .composer-notice span {
   flex: 1;
   min-width: 0;

@@ -16,6 +16,7 @@ import type {
   InteractionRequest,
   McpServerOption,
   ModelOption,
+  NoticeTone,
   SubagentActivity,
   TraceMode,
 } from './types'
@@ -226,6 +227,7 @@ export const Composer = React.memo(function Composer({
   connection,
   notice,
   noticeDetail,
+  noticeTone,
   onDismissNotice,
   onSend,
   onStop,
@@ -263,6 +265,8 @@ export const Composer = React.memo(function Composer({
   notice: string
   /** What stands behind the notice technically, shown as its tooltip; empty when there is none. */
   noticeDetail: string
+  /** Whether the strip reports a failure or only says what happened. */
+  noticeTone: NoticeTone
   onDismissNotice: () => void
   onSend: (text: string, attachments: Attachment[]) => Promise<boolean>
   onStop: () => void
@@ -408,7 +412,7 @@ export const Composer = React.memo(function Composer({
 
   const q = query.trim().toLocaleLowerCase()
   const agentHits = agents.filter(
-    (item) => !q || item.name.toLocaleLowerCase().includes(q) || (item.description ?? '').toLocaleLowerCase().includes(q),
+    (item) => !q || item.name.toLocaleLowerCase().includes(q) || (item.summary ?? '').toLocaleLowerCase().includes(q),
   )
   const modelHits = models.filter(
     (item) => !q || item.id.toLocaleLowerCase().includes(q) || (item.provider ?? '').toLocaleLowerCase().includes(q),
@@ -557,7 +561,10 @@ export const Composer = React.memo(function Composer({
       </div>
 
       {notice || attachError ? (
-        <div className="composer-notice" role="status">
+        <div
+          className={`composer-notice${noticeTone === 'info' && !attachError ? ' is-neutral' : ''}`}
+          role="status"
+        >
           <span title={notice && noticeDetail ? `${labels.errorDetails}: ${noticeDetail}` : undefined}>
             {notice || attachError}
           </span>
@@ -709,7 +716,7 @@ export const Composer = React.memo(function Composer({
                       <MenuRow
                         key={item.name}
                         label={item.name}
-                        description={item.description || undefined}
+                        description={item.summary || undefined}
                         selected={item.name === agent}
                         onClick={() => {
                           onAgent(item.name)
@@ -755,6 +762,10 @@ export const Composer = React.memo(function Composer({
                       />
                     ))}
                   </div>
+                ) : null}
+
+                {pane === 'mcp' && !mcpServers.length ? (
+                  <div className="plus-empty">{labels.noMcpServers}</div>
                 ) : null}
 
                 {(pane === 'mcp' || searching) && mcpHits.length ? (

@@ -74,7 +74,7 @@ public class AgentChatElement implements UIElement {
 		Class<? extends UIElement> getImplementationClass();
 
 		/**
-		 * @en Amount of agent execution detail shown in the chat.
+		 * Amount of agent execution detail shown in the chat.
 		 */
 		@Name(TRACE_MODE)
 		@Label("Trace mode")
@@ -82,8 +82,7 @@ public class AgentChatElement implements UIElement {
 		TraceMode getTraceMode();
 
 		/**
-		 * @en Name of the agent that improves draft prompts. Leave empty to disable prompt
-		 *     improvement.
+		 * Name of the agent that improves draft prompts. Leave empty to disable prompt improvement.
 		 */
 		@Name(PROMPT_IMPROVER_AGENT)
 		@Label("Prompt improver agent")

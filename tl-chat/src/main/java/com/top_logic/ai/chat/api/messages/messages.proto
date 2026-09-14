@@ -931,8 +931,13 @@ message AgentOptionDto {
 	/** Unique agent name. */
 	string name;
 
-	/** Short description. */
-	string description;
+	/**
+	 * One localised line saying what this agent is for, written for the person choosing it.
+	 *
+	 * Empty when the agent has none; the picker then offers it by name alone. The agent's own
+	 * description is a delegation instruction addressed to a model and is never sent here.
+	 */
+	string summary;
 
 	/** MCP servers bound on the agent definition. */
 	repeated string mcpServers;

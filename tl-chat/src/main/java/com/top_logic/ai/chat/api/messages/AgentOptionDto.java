@@ -18,8 +18,8 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getName() */
 	public static final String NAME__PROP = "name";
 
-	/** @see #getDescription() */
-	public static final String DESCRIPTION__PROP = "description";
+	/** @see #getSummary() */
+	public static final String SUMMARY__PROP = "summary";
 
 	/** @see #getMcpServers() */
 	public static final String MCP_SERVERS__PROP = "mcpServers";
@@ -29,7 +29,7 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 
 	private String _name = "";
 
-	private String _description = "";
+	private String _summary = "";
 
 	private final java.util.List<String> _mcpServers = new java.util.ArrayList<>();
 
@@ -65,23 +65,26 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	}
 
 	/**
-	 * Short description.
+	 * One localised line saying what this agent is for, written for the person choosing it.
+	 *
+	 * Empty when the agent has none; the picker then offers it by name alone. The agent's own
+	 * description is a delegation instruction addressed to a model and is never sent here.
 	 */
-	public final String getDescription() {
-		return _description;
+	public final String getSummary() {
+		return _summary;
 	}
 
 	/**
-	 * @see #getDescription()
+	 * @see #getSummary()
 	 */
-	public com.top_logic.ai.chat.api.messages.AgentOptionDto setDescription(String value) {
-		internalSetDescription(value);
+	public com.top_logic.ai.chat.api.messages.AgentOptionDto setSummary(String value) {
+		internalSetSummary(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getDescription()} without chain call utility. */
-	protected final void internalSetDescription(String value) {
-		_description = value;
+	/** Internal setter for {@link #getSummary()} without chain call utility. */
+	protected final void internalSetSummary(String value) {
+		_summary = value;
 	}
 
 	/**
@@ -154,7 +157,7 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			NAME__PROP, 
-			DESCRIPTION__PROP, 
+			SUMMARY__PROP, 
 			MCP_SERVERS__PROP, 
 			MODEL__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
@@ -182,7 +185,7 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public Object get(String field) {
 		switch (field) {
 			case NAME__PROP: return getName();
-			case DESCRIPTION__PROP: return getDescription();
+			case SUMMARY__PROP: return getSummary();
 			case MCP_SERVERS__PROP: return getMcpServers();
 			case MODEL__PROP: return getModel();
 			default: return null;
@@ -193,7 +196,7 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public void set(String field, Object value) {
 		switch (field) {
 			case NAME__PROP: internalSetName((String) value); break;
-			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
+			case SUMMARY__PROP: internalSetSummary((String) value); break;
 			case MCP_SERVERS__PROP: internalSetMcpServers(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case MODEL__PROP: internalSetModel((String) value); break;
 		}
@@ -216,8 +219,8 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 		super.writeFields(out);
 		out.name(NAME__PROP);
 		out.value(getName());
-		out.name(DESCRIPTION__PROP);
-		out.value(getDescription());
+		out.name(SUMMARY__PROP);
+		out.value(getSummary());
 		out.name(MCP_SERVERS__PROP);
 		out.beginArray();
 		for (String x : getMcpServers()) {
@@ -232,7 +235,7 @@ public class AgentOptionDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case NAME__PROP: setName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case DESCRIPTION__PROP: setDescription(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case SUMMARY__PROP: setSummary(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case MCP_SERVERS__PROP: {
 				java.util.List<String> newValue = new java.util.ArrayList<>();
 				in.beginArray();

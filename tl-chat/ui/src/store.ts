@@ -35,6 +35,8 @@ const TRACE_KEY = 'tl-chat-trace'
 
 const EFFORT_KEY = 'tl-chat-effort'
 
+const ACTIVE_SESSION_KEY = 'tl-chat-session'
+
 function isTraceMode(value: unknown): value is TraceMode {
   return value === 'none' || value === 'overview' || value === 'detailed'
 }
@@ -85,5 +87,32 @@ export function writeEffort(effort: string | null): void {
     else window.localStorage.removeItem(EFFORT_KEY)
   } catch {
     /* the choice simply does not survive a reload */
+  }
+}
+
+/**
+ * The chat this browser window had open, or `null` when it had none.
+ *
+ * Held in `sessionStorage` rather than `localStorage` on purpose: that is per tab and survives a
+ * reload, which is exactly the distinction wanted here - pressing F5 returns to the conversation
+ * you were reading, while a newly opened tab starts on the empty state instead of inheriting
+ * another tab's chat.
+ */
+export function readActiveSession(): string | null {
+  try {
+    const stored = window.sessionStorage.getItem(ACTIVE_SESSION_KEY)
+    return stored && stored.trim() ? stored : null
+  } catch {
+    return null
+  }
+}
+
+/** Remembers the open chat for this window. Failing to store it must not break the chat. */
+export function writeActiveSession(sessionId: string | null): void {
+  try {
+    if (sessionId) window.sessionStorage.setItem(ACTIVE_SESSION_KEY, sessionId)
+    else window.sessionStorage.removeItem(ACTIVE_SESSION_KEY)
+  } catch {
+    /* the open chat simply does not survive a reload */
   }
 }

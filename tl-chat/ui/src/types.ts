@@ -141,10 +141,19 @@ export type ChatMessage =
 
 export interface AgentOption {
   name: string
-  description?: string
+  /**
+   * One localised line saying what this agent is for.
+   *
+   * Absent for an agent that has none - its delegation description is written for a model and is
+   * never shown to a person, so the picker then offers the name alone.
+   */
+  summary?: string
   mcpServers?: string[]
   model?: string
 }
+
+/** Whether a notice above the composer reports a failure or merely says what happened. */
+export type NoticeTone = 'warn' | 'info'
 
 export interface ModelOption {
   id: string

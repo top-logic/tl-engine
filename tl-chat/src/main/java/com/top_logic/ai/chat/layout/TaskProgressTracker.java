@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -397,9 +398,21 @@ public class TaskProgressTracker {
 	 *
 	 * @param sessionId
 	 *        The session ID; null to clear.
+	 * @param owner
+	 *        The person acting; the session must be theirs, or nothing is switched.
+	 * @return whether the session is now the active one.
 	 */
-	public void setActiveSessionId(String sessionId) {
-		_sessionManager.switchSession(sessionId);
+	public boolean setActiveSessionId(String sessionId, Person owner) {
+		return _sessionManager.switchSession(sessionId, owner);
+	}
+
+	/**
+	 * The person the active session belongs to, or {@code null} when no session is active.
+	 *
+	 * @see ChatSessionManager#getActiveOwner()
+	 */
+	public Person getSessionOwner() {
+		return _sessionManager.getActiveOwner();
 	}
 
 	/**

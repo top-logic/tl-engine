@@ -255,30 +255,33 @@ public class ChatHistoryService {
 	 * @param owner
 	 *        the person the session must belong to; {@code null} owns nothing
 	 * @return the session, or {@code null} when it does not exist or is not this person's
-	 * @see #findSessionById(String)
+	 * @see #findAnySessionById(String)
 	 */
 	public static TLObject findOwnedSessionById(String objectId, Person owner) {
 		if (owner == null) {
 			return null;
 		}
-		TLObject session = findSessionById(objectId);
+		TLObject session = findAnySessionById(objectId);
 		return session != null && isOwnedBy(session, owner) ? session : null;
 	}
 
 	/**
-	 * Finds an {@link AgentSession} by its {@link KnowledgeObject} ID, without asking whose it is.
+	 * Finds an {@link AgentSession} by its {@link KnowledgeObject} ID, no matter whose it is.
 	 *
 	 * <p>
-	 * Only for callers that check ownership themselves or have no requester to check against (a
-	 * background task, a migration). A request handler wants
-	 * {@link #findOwnedSessionById(String, Person)}.
+	 * Named for what it does, because what it does is dangerous: it hands out any user's chat to
+	 * whoever knows its number, and the numbers are small sequential integers. Twice already a
+	 * request-handling path reached for the short name and got the unguarded lookup; nothing that
+	 * acts on an ID a request supplied may call this. It is left for callers that have no requester
+	 * to check against at all - a migration, a background job started by the system.
 	 * </p>
 	 *
 	 * @param objectId
 	 *        the string representation of the object ID.
 	 * @return the session object, or null if not found.
+	 * @see #findOwnedSessionById(String, Person)
 	 */
-	public static TLObject findSessionById(String objectId) {
+	public static TLObject findAnySessionById(String objectId) {
 		if (objectId == null || objectId.isEmpty()) {
 			return null;
 		}

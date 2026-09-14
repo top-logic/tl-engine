@@ -32,6 +32,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
@@ -91,6 +92,9 @@ public class ChatProcessor {
 	 *        When {@code true}, {@code mcpServers} replaces the agent's configured MCP list.
 	 * @param mcpServers
 	 *        MCP server names used when {@code mcpOverride} is {@code true}; never {@code null}.
+	 * @param effort
+	 *        Thinking / reasoning effort chosen for this turn, or {@code null} to leave the model's
+	 *        own setting alone.
 	 */
 	public record ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers,
 			String effort) {
@@ -259,7 +263,7 @@ public class ChatProcessor {
 
 			// Record the run against the session captured at send time (not the currently
 			// active one), so a completed run is never written under the wrong session.
-			AgentSession agentSession = resolveAgentSession(state.getSessionId());
+			AgentSession agentSession = resolveAgentSession(state.getSessionId(), taskTracker.getSessionOwner());
 			try (SubagentRegistryBinding.Binding saBind = SubagentRegistryBinding.bind(subagentRegistry)) {
 				AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
 					conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null,
@@ -459,22 +463,29 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Resolves the {@link AgentSession} for the given session id, or <code>null</code> if the id
-	 * is unknown (recording is then skipped for the run).
+	 * Resolves the {@link AgentSession} a run is recorded against, or <code>null</code> if it
+	 * cannot be established as this person's (recording is then skipped for the run).
+	 *
+	 * <p>
+	 * This is where a turn is written into a transcript, so the owner is asked again here rather
+	 * than trusted from the session id the run carries: a run must never append to a conversation
+	 * that is not the acting user's.
+	 * </p>
 	 */
-	private static AgentSession resolveAgentSession(String sessionId) {
+	public static AgentSession resolveAgentSession(String sessionId, Person owner) {
 		if (sessionId == null) {
 			Logger.info("Run will not be recorded: no active session id at send time.",
 				ChatProcessor.class);
 			return null;
 		}
 		try {
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
+			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, owner);
 			if (session instanceof AgentSession agentSession) {
 				return agentSession;
 			}
 			Logger.warn("Run will not be recorded: session " + sessionId
-				+ (session == null ? " not found." : " is not an AgentSession."), ChatProcessor.class);
+				+ (session == null ? " not found for this user." : " is not an AgentSession."),
+				ChatProcessor.class);
 			return null;
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to resolve agent session " + sessionId + ": " + ex.getMessage(),

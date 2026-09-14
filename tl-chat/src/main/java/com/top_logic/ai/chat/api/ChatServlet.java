@@ -305,14 +305,23 @@ public class ChatServlet extends TopLogicServlet {
 
 		TaskProgressTracker tracker = currentTracker();
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
+		Person person = resolveCurrentPerson(req);
 
 		if (activeSessionId != null) {
-			tracker.setActiveSessionId(activeSessionId);
+			// The same gate the three turn-removing endpoints use, for the endpoint that spends the
+			// API budget and writes into a transcript: the id arrives in the request body, so
+			// without this it names whichever chat the caller cares to type.
+			if (ownedSessionId(req, resp, activeSessionId) == null) {
+				return;
+			}
+			if (!tracker.setActiveSessionId(activeSessionId, person)) {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+				return;
+			}
 		}
 
 		String storedName = tracker.getUserName();
 		if (storedName == null) {
-			Person person = resolveCurrentPerson(req);
 			if (person != null) {
 				try {
 					storedName = person.getName();
@@ -375,7 +384,7 @@ public class ChatServlet extends TopLogicServlet {
 		if (sessionId == null) {
 			return;
 		}
-		tracker.setActiveSessionId(sessionId);
+		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
 		if (tracker.hasActiveProcessingState()) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
 			return;
@@ -433,7 +442,7 @@ public class ChatServlet extends TopLogicServlet {
 		if (sessionId == null) {
 			return;
 		}
-		tracker.setActiveSessionId(sessionId);
+		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
 		if (tracker.hasActiveProcessingState()) {
 			writeTruncateResponse(resp, TruncateResponse.create().setStatus("busy"));
 			return;
@@ -561,7 +570,7 @@ public class ChatServlet extends TopLogicServlet {
 		if (sessionId == null) {
 			return;
 		}
-		tracker.setActiveSessionId(sessionId);
+		tracker.setActiveSessionId(sessionId, resolveCurrentPerson(req));
 		tracker.setFeedback(body.getTurnIndex(), blankToNull(body.getRating()), body.getNote());
 		tracker.getSessionManager().persistActiveSession();
 
@@ -959,8 +968,8 @@ public class ChatServlet extends TopLogicServlet {
 		// GET /chat/sessions/{id} — load single session + activate server-side
 		String sessionId = extractSessionId(pathInfo);
 		if (sessionId != null && !sessionId.contains("/")) {
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
-			if (session == null || !ChatHistoryService.isOwnedBy(session, person)) {
+			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
+			if (session == null) {
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 				return;
 			}
@@ -969,7 +978,7 @@ public class ChatServlet extends TopLogicServlet {
 
 			// Activate session on the tracker (switches Chat + ChatMemory)
 			if (tracker != null) {
-				tracker.getSessionManager().switchSession(sessionId);
+				tracker.getSessionManager().switchSession(sessionId, person);
 			}
 
 			// Build response with structured entries
@@ -1079,8 +1088,8 @@ public class ChatServlet extends TopLogicServlet {
 				return;
 			}
 			final String newTitle = body.getTitle();
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
-			if (session != null && ChatHistoryService.isOwnedBy(session, person)) {
+			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
+			if (session != null) {
 				ChatHistoryService.updateTitle(session, newTitle);
 				resp.setStatus(HttpServletResponse.SC_OK);
 			} else {
@@ -1208,8 +1217,8 @@ public class ChatServlet extends TopLogicServlet {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
-		TLObject session = ChatHistoryService.findSessionById(sessionId);
-		if (session != null && ChatHistoryService.isOwnedBy(session, person)) {
+		TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
+		if (session != null) {
 			ChatHistoryService.deleteSession(session);
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} else {

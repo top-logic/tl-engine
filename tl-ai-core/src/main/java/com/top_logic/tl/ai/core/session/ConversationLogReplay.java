@@ -111,7 +111,7 @@ public class ConversationLogReplay {
 			if (part instanceof Part.TextPart tp) {
 				_currentContent.add(new TextContent(tp.text()));
 			} else if (part instanceof Part.ThinkingPart tp) {
-				_currentContent.add(new ThinkingContent(tp.text(), tp.continuityToken()));
+				_currentContent.add(new ThinkingContent(tp.text(), tp.continuityToken(), tp.provider()));
 			} else if (part instanceof Part.ToolCallPart tc) {
 				if (tc.status() == Part.ToolCallStatus.RUNNING) {
 					// Incomplete tool call — skip gracefully.

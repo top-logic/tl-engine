@@ -61,6 +61,8 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
+import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.MessageHistorySanitizer;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
@@ -314,10 +316,67 @@ public class AgentLoop {
 		return context.withModel(_config.model());
 	}
 
+	/**
+	 * Which provider's dialect this run's history is in, or <code>null</code> if that is not known.
+	 *
+	 * <p>
+	 * Unknown is the safe answer: nothing provider-specific is replayed then. It is the answer
+	 * whenever the model is not configured (a test wiring its own provider, for one) or resolves to
+	 * more than one provider.
+	 * </p>
+	 */
+	private String providerId() {
+		if (!LLMService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		return LLMService.getInstance().getProviderId(_config.model(), null);
+	}
+
+	/**
+	 * Undoes what a failed run added to the conversation.
+	 *
+	 * <p>
+	 * A run that dies in the provider leaves a half-written turn behind: an assistant message
+	 * whose tool calls never got a result, or a tool result whose answer never came. Replayed on
+	 * the next send, such a fragment is rejected by the provider as well, and the chat stays dead
+	 * however often the user tries. Rolling back to where the run started leaves the history the
+	 * user's next message can build on: everything that completed, plus the message that triggered
+	 * the failed run - the chat adds that one before the run begins, so the user does not have to
+	 * type it again.
+	 * </p>
+	 *
+	 * @param resumePoint
+	 *        the last message present when the run started, or <code>null</code> if the
+	 *        conversation was empty then.
+	 */
+	private static void rollbackFailedRun(Conversation conversation, Message resumePoint) {
+		List<Message> current = conversation.messages();
+		int keep = 0;
+		if (resumePoint != null) {
+			keep = -1;
+			for (int n = current.size() - 1; n >= 0; n--) {
+				if (current.get(n) == resumePoint) {
+					keep = n + 1;
+					break;
+				}
+			}
+			if (keep < 0) {
+				// Compaction rewrote the history this run started from; what belongs to the run
+				// can no longer be told apart from what was summarized into it.
+				return;
+			}
+		}
+		if (keep < current.size()) {
+			conversation.replaceRange(keep, current.size(), List.of());
+		}
+	}
+
 	private AgentResult runLoop(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId) {
 		TokenUsage totalUsage = TokenUsage.EMPTY;
 		int maxTurns = _config.maxTurns();
+		List<Message> before = conversation.messages();
+		Message resumePoint = before.isEmpty() ? null : before.get(before.size() - 1);
 
 		for (int turn = 1; turn <= maxTurns; turn++) {
 			if (Thread.interrupted() || context.cancellationToken().isCancelled()) {
@@ -334,6 +393,7 @@ public class AgentLoop {
 			try {
 				assistantMsg = callProvider(conversation, context, listener, runId, turn);
 			} catch (ProviderException e) {
+				rollbackFailedRun(conversation, resumePoint);
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
 				StopReason stopReason = stopReasonFor(e, context);
@@ -1112,7 +1172,7 @@ public class AgentLoop {
 						InteractionTimeoutService.approvalTimeout());
 					emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
 						toolCall.id(), approvalRequestId, toolCall.name(),
-						toolCall.arguments(), request.displayReason(), request.timeout()));
+						toolCall.arguments(), request.displayReason(), tool.mode(), request.timeout()));
 					// Durable record of the pending approval, carrying the tool call's actual
 					// argument JSON (not the possibly-empty parsed copy shown above).
 					String interactionId = InteractionRecorder.begin(
@@ -1336,13 +1396,16 @@ public class AgentLoop {
 		}
 
 		String systemPrompt = systemPrompt();
-		emit(listener, contextComposition(runId, turn, systemPrompt, filteredTools,
-			conversation.messages()));
+		// What this provider may actually be given: a thinking block another provider minted, or one
+		// whose signature never arrived, is dropped here rather than rejected by the API - a request
+		// refused over a replayed block fails every later one too, because the block stays in memory.
+		List<Message> history = MessageHistorySanitizer.forProvider(conversation.messages(), providerId());
+		emit(listener, contextComposition(runId, turn, systemPrompt, filteredTools, history));
 
 		ProviderRequest request = new ProviderRequest(
 			_config.model(),
 			systemPrompt,
-			conversation.messages(),
+			history,
 			filteredTools,
 			_config.maxOutputTokens(),
 			_config.modelOptions(),
@@ -1374,6 +1437,12 @@ public class AgentLoop {
 	 * its name and description as prose plus its JSON Schema as JSON, which is how the providers
 	 * serialise it.
 	 * </p>
+	 *
+	 * <p>
+	 * What the tools answered is counted twice over: once inside the conversation, where it is part
+	 * of what the model reads, and once on its own, so a reader can see how much of their context a
+	 * single large tool result took.
+	 * </p>
 	 */
 	private static AgentEvent.ContextComposition contextComposition(String runId, int turn,
 			String systemPrompt, List<ToolSchema> tools, List<Message> messages) {
@@ -1384,9 +1453,15 @@ public class AgentLoop {
 				+ estimator.estimateText(tool.description())
 				+ estimator.estimateJson(tool.inputSchemaJson());
 		}
+		int toolResultTokens = 0;
+		for (Message message : messages) {
+			if (message instanceof ToolResultMessage) {
+				toolResultTokens += estimator.estimateTokens(message);
+			}
+		}
 		return new AgentEvent.ContextComposition(runId, turn, now(),
 			estimator.estimateText(systemPrompt), toolTokens,
-			estimator.estimateTokens(messages), tools.size());
+			estimator.estimateTokens(messages), toolResultTokens, tools.size());
 	}
 
 	/**

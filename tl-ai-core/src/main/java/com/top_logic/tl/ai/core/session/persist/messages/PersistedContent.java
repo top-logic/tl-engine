@@ -24,6 +24,9 @@ public class PersistedContent extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getContinuityToken() */
 	public static final String CONTINUITY_TOKEN__PROP = "continuityToken";
 
+	/** @see #getProvider() */
+	public static final String PROVIDER__PROP = "provider";
+
 	/** @see #getToolCallId() */
 	public static final String TOOL_CALL_ID__PROP = "toolCallId";
 
@@ -47,6 +50,8 @@ public class PersistedContent extends de.haumacher.msgbuf.data.AbstractDataObjec
 	private String _text = "";
 
 	private String _continuityToken = "";
+
+	private String _provider = "";
 
 	private String _toolCallId = "";
 
@@ -127,6 +132,32 @@ public class PersistedContent extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** Internal setter for {@link #getContinuityToken()} without chain call utility. */
 	protected final void internalSetContinuityToken(String value) {
 		_continuityToken = value;
+	}
+
+	/**
+	 * Catalog ID of the provider that produced the block, e.g. "anthropic".
+	 *
+	 * <p>
+	 * A continuity token only means something to the provider that minted it, so the origin has to
+	 * survive persistence: without it a reloaded conversation cannot tell whether a thinking block
+	 * may be replayed to the model now in force. Absent in transcripts written before this field.
+	 * </p>
+	 */
+	public final String getProvider() {
+		return _provider;
+	}
+
+	/**
+	 * @see #getProvider()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedContent setProvider(String value) {
+		internalSetProvider(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getProvider()} without chain call utility. */
+	protected final void internalSetProvider(String value) {
+		_provider = value;
 	}
 
 	/**
@@ -260,6 +291,7 @@ public class PersistedContent extends de.haumacher.msgbuf.data.AbstractDataObjec
 			TYPE__PROP, 
 			TEXT__PROP, 
 			CONTINUITY_TOKEN__PROP, 
+			PROVIDER__PROP, 
 			TOOL_CALL_ID__PROP, 
 			TOOL_NAME__PROP, 
 			ARGUMENTS__PROP, 
@@ -293,6 +325,7 @@ public class PersistedContent extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TYPE__PROP: return getType();
 			case TEXT__PROP: return getText();
 			case CONTINUITY_TOKEN__PROP: return getContinuityToken();
+			case PROVIDER__PROP: return getProvider();
 			case TOOL_CALL_ID__PROP: return getToolCallId();
 			case TOOL_NAME__PROP: return getToolName();
 			case ARGUMENTS__PROP: return getArguments();
@@ -309,6 +342,7 @@ public class PersistedContent extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TYPE__PROP: internalSetType((String) value); break;
 			case TEXT__PROP: internalSetText((String) value); break;
 			case CONTINUITY_TOKEN__PROP: internalSetContinuityToken((String) value); break;
+			case PROVIDER__PROP: internalSetProvider((String) value); break;
 			case TOOL_CALL_ID__PROP: internalSetToolCallId((String) value); break;
 			case TOOL_NAME__PROP: internalSetToolName((String) value); break;
 			case ARGUMENTS__PROP: internalSetArguments((String) value); break;
@@ -339,6 +373,8 @@ public class PersistedContent extends de.haumacher.msgbuf.data.AbstractDataObjec
 		out.value(getText());
 		out.name(CONTINUITY_TOKEN__PROP);
 		out.value(getContinuityToken());
+		out.name(PROVIDER__PROP);
+		out.value(getProvider());
 		out.name(TOOL_CALL_ID__PROP);
 		out.value(getToolCallId());
 		out.name(TOOL_NAME__PROP);
@@ -359,6 +395,7 @@ public class PersistedContent extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TYPE__PROP: setType(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TEXT__PROP: setText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CONTINUITY_TOKEN__PROP: setContinuityToken(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case PROVIDER__PROP: setProvider(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TOOL_CALL_ID__PROP: setToolCallId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TOOL_NAME__PROP: setToolName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case ARGUMENTS__PROP: setArguments(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;

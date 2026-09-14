@@ -13,6 +13,7 @@ import java.util.List;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.Message;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.CompactionSidecar;
 import com.top_logic.tl.ai.core.session.ConversationLog;
@@ -31,6 +32,7 @@ import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
 import com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.TextPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto;
 import com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto;
 import com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto;
@@ -124,6 +126,14 @@ public final class ConversationLogSerializer {
 			turn.setLastIterationUsage(turnDto.hasLastIterationUsage()
 				? fromUsageDto(turnDto.getLastIterationUsage())
 				: TokenUsage.EMPTY);
+			if (turnDto.hasContextComposition()) {
+				ContextCompositionDto composition = turnDto.getContextComposition();
+				turn.setContextComposition(new AgentEvent.ContextComposition(turnDto.getId(),
+					turnDto.getTurnNumber(), Instant.ofEpochMilli(turnDto.getTimestamp()),
+					composition.getSystemPromptTokens(), composition.getToolDefinitionTokens(),
+					composition.getMessageTokens(), composition.getToolResultTokens(),
+					composition.getToolCount()));
+			}
 			turn.setUserParts(turnDto.getUserParts().stream()
 				.map(ConversationLogSerializer::fromPartDto).toList());
 			for (PersistedPart partDto : turnDto.getAssistantParts()) {
@@ -143,6 +153,15 @@ public final class ConversationLogSerializer {
 		dto.setProvider(nullToEmpty(turn.provider()));
 		dto.setUsage(toUsageDto(turn.cumulativeUsage()));
 		dto.setLastIterationUsage(toUsageDto(turn.lastIterationUsage()));
+		AgentEvent.ContextComposition composition = turn.contextComposition();
+		if (composition != null) {
+			dto.setContextComposition(ContextCompositionDto.create()
+				.setSystemPromptTokens(composition.systemPromptTokens())
+				.setToolDefinitionTokens(composition.toolDefinitionTokens())
+				.setMessageTokens(composition.messageTokens())
+				.setToolResultTokens(composition.toolResultTokens())
+				.setToolCount(composition.toolCount()));
+		}
 		for (Part part : turn.userParts()) {
 			dto.addUserPart(toPartDto(part));
 		}
@@ -166,6 +185,9 @@ public final class ConversationLogSerializer {
 			dto.setType(TYPE_THINKING);
 			ThinkingPartDto data = ThinkingPartDto.create();
 			data.setText(tp.text());
+			if (tp.provider() != null) {
+				data.setProvider(tp.provider());
+			}
 			if (tp.continuityToken() != null) {
 				data.setContinuityToken(tp.continuityToken());
 			}
@@ -272,7 +294,7 @@ public final class ConversationLogSerializer {
 			case TYPE_THINKING: {
 				ThinkingPartDto data = dto.getThinkingData();
 				return new Part.ThinkingPart(id, timestamp, data.getText(),
-					emptyToNull(data.getContinuityToken()));
+					emptyToNull(data.getContinuityToken()), emptyToNull(data.getProvider()));
 			}
 			case TYPE_TOOL_CALL: {
 				ToolCallPartDto data = dto.getToolCallData();

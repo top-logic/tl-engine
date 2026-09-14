@@ -119,6 +119,8 @@ public class ConversationLogListener implements AgentEventListener {
 			handleRunCompleted();
 		} else if (event instanceof AgentEvent.TurnStarted) {
 			// AgentLoop internal turn — do NOT create a new ConversationLog Turn
+		} else if (event instanceof AgentEvent.ContextComposition e) {
+			handleContextComposition(e);
 		} else if (event instanceof AgentEvent.TurnCompleted e) {
 			handleTurnCompleted(e);
 		} else if (event instanceof AgentEvent.TextDelta e) {
@@ -189,6 +191,13 @@ public class ConversationLogListener implements AgentEventListener {
 		_log.completeTurn();
 	}
 
+	private void handleContextComposition(AgentEvent.ContextComposition e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			turn.setContextComposition(e);
+		}
+	}
+
 	private void handleTurnCompleted(AgentEvent.TurnCompleted e) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
@@ -227,11 +236,14 @@ public class ConversationLogListener implements AgentEventListener {
 			.toList();
 		int count = Math.min(thinkingParts.size(), thinkingContents.size());
 		for (int i = 0; i < count; i++) {
-			String token = thinkingContents.get(i).continuityToken();
+			ThinkingContent content = thinkingContents.get(i);
+			String token = content.continuityToken();
 			if (token != null) {
 				Part.ThinkingPart old = thinkingParts.get(i);
+				// The origin travels with the token: a signature says nothing about which provider
+				// will accept it back unless it is recorded next to it.
 				turn.updatePart(old.id(), new Part.ThinkingPart(
-					old.id(), old.timestamp(), old.text(), token));
+					old.id(), old.timestamp(), old.text(), token, content.provider()));
 			}
 		}
 	}

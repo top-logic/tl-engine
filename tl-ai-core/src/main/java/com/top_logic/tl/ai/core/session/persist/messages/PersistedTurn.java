@@ -36,6 +36,9 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/** @see #getLastIterationUsage() */
 	public static final String LAST_ITERATION_USAGE__PROP = "lastIterationUsage";
 
+	/** @see #getContextComposition() */
+	public static final String CONTEXT_COMPOSITION__PROP = "contextComposition";
+
 	/** @see #getUserParts() */
 	public static final String USER_PARTS__PROP = "userParts";
 
@@ -58,6 +61,8 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	private com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto _usage = null;
 
 	private com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto _lastIterationUsage = null;
+
+	private com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto _contextComposition = null;
 
 	private final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> _userParts = new java.util.ArrayList<>();
 
@@ -237,6 +242,38 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	}
 
 	/**
+	 * What the prompt of this turn's last request was made of.
+	 *
+	 * <p>
+	 * Estimates from the agent loop's token estimator, recorded so a re-opened chat can show the
+	 * same breakdown a live one does. Absent in transcripts written before this field existed.
+	 * </p>
+	 */
+	public final com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto getContextComposition() {
+		return _contextComposition;
+	}
+
+	/**
+	 * @see #getContextComposition()
+	 */
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn setContextComposition(com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto value) {
+		internalSetContextComposition(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getContextComposition()} without chain call utility. */
+	protected final void internalSetContextComposition(com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto value) {
+		_contextComposition = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getContextComposition()} has a value.
+	 */
+	public final boolean hasContextComposition() {
+		return _contextComposition != null;
+	}
+
+	/**
 	 * Parts contributed by the user in this turn.
 	 */
 	public final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> getUserParts() {
@@ -355,6 +392,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			PROVIDER__PROP, 
 			USAGE__PROP, 
 			LAST_ITERATION_USAGE__PROP, 
+			CONTEXT_COMPOSITION__PROP, 
 			USER_PARTS__PROP, 
 			ASSISTANT_PARTS__PROP, 
 			CONTENT_HTML__PROP);
@@ -389,6 +427,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case PROVIDER__PROP: return getProvider();
 			case USAGE__PROP: return getUsage();
 			case LAST_ITERATION_USAGE__PROP: return getLastIterationUsage();
+			case CONTEXT_COMPOSITION__PROP: return getContextComposition();
 			case USER_PARTS__PROP: return getUserParts();
 			case ASSISTANT_PARTS__PROP: return getAssistantParts();
 			case CONTENT_HTML__PROP: return getContentHtml();
@@ -406,6 +445,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case PROVIDER__PROP: internalSetProvider((String) value); break;
 			case USAGE__PROP: internalSetUsage((com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto) value); break;
 			case LAST_ITERATION_USAGE__PROP: internalSetLastIterationUsage((com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto) value); break;
+			case CONTEXT_COMPOSITION__PROP: internalSetContextComposition((com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto) value); break;
 			case USER_PARTS__PROP: internalSetUserParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart.class, value)); break;
 			case ASSISTANT_PARTS__PROP: internalSetAssistantParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart.class, value)); break;
 			case CONTENT_HTML__PROP: internalSetContentHtml((String) value); break;
@@ -445,6 +485,10 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			out.name(LAST_ITERATION_USAGE__PROP);
 			getLastIterationUsage().writeTo(out);
 		}
+		if (hasContextComposition()) {
+			out.name(CONTEXT_COMPOSITION__PROP);
+			getContextComposition().writeTo(out);
+		}
 		out.name(USER_PARTS__PROP);
 		out.beginArray();
 		for (com.top_logic.tl.ai.core.session.persist.messages.PersistedPart x : getUserParts()) {
@@ -471,6 +515,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case PROVIDER__PROP: setProvider(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case USAGE__PROP: setUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case LAST_ITERATION_USAGE__PROP: setLastIterationUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto.readTokenUsageDto(in)); break;
+			case CONTEXT_COMPOSITION__PROP: setContextComposition(com.top_logic.tl.ai.core.session.persist.messages.ContextCompositionDto.readContextCompositionDto(in)); break;
 			case USER_PARTS__PROP: {
 				java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> newValue = new java.util.ArrayList<>();
 				in.beginArray();

@@ -6,6 +6,32 @@ option NoListener;
 option NoInterfaces;
 option NoXml;
 
+/**
+ * Estimated split of a prompt into the parts it is made of.
+ *
+ * <p>
+ * The provider reports one prompt total and never breaks it down, so these are the agent loop's own
+ * estimates from the same token estimator the compaction budget uses. A consumer showing them next
+ * to a measured total must mark them as estimates.
+ * </p>
+ */
+message ContextCompositionDto {
+	/** Estimated tokens of the system prompt. */
+	int systemPromptTokens;
+
+	/** Estimated tokens of the tool schemas sent with the request. */
+	int toolDefinitionTokens;
+
+	/** Estimated tokens of the conversation messages, tool results included. */
+	int messageTokens;
+
+	/** Estimated tokens of the tool results within {@link #messageTokens}. */
+	int toolResultTokens;
+
+	/** Number of tool schemas sent with the request. */
+	int toolCount;
+}
+
 /** Token usage breakdown. */
 message TokenUsageDto {
 	/** Input tokens. */
@@ -65,6 +91,16 @@ message PersistedTurn {
 	 * </p>
 	 */
 	TokenUsageDto lastIterationUsage;
+
+	/**
+	 * What the prompt of this turn's last request was made of.
+	 *
+	 * <p>
+	 * Estimates from the agent loop's token estimator, recorded so a re-opened chat can show the
+	 * same breakdown a live one does. Absent in transcripts written before this field existed.
+	 * </p>
+	 */
+	ContextCompositionDto contextComposition;
 
 	/** Parts contributed by the user in this turn. */
 	repeated PersistedPart userParts;
@@ -131,6 +167,17 @@ message ThinkingPartDto {
 
 	/** Opaque provider token for multi-turn continuity (signature / encrypted_content). */
 	string continuityToken;
+
+	/**
+	 * Catalog ID of the provider that produced the block, e.g. "anthropic".
+	 *
+	 * <p>
+	 * A continuity token only means something to the provider that minted it, so the origin has to
+	 * survive persistence: without it a reloaded conversation cannot tell whether a thinking block
+	 * may be replayed to the model now in force. Absent in transcripts written before this field.
+	 * </p>
+	 */
+	string provider;
 }
 
 /** Tool call part with invocation details and result. */
@@ -343,6 +390,17 @@ message PersistedContent {
 
 	/** Opaque provider token for multi-turn continuity, for thinking content. */
 	string continuityToken;
+
+	/**
+	 * Catalog ID of the provider that produced the block, e.g. "anthropic".
+	 *
+	 * <p>
+	 * A continuity token only means something to the provider that minted it, so the origin has to
+	 * survive persistence: without it a reloaded conversation cannot tell whether a thinking block
+	 * may be replayed to the model now in force. Absent in transcripts written before this field.
+	 * </p>
+	 */
+	string provider;
 
 	/** ID of the tool call, for tool call content. */
 	string toolCallId;

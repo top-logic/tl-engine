@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 
 /**
@@ -54,6 +55,8 @@ public class Turn {
 	private volatile TokenUsage _cumulativeUsage = TokenUsage.EMPTY;
 
 	private volatile TokenUsage _lastIterationUsage = TokenUsage.EMPTY;
+
+	private volatile AgentEvent.ContextComposition _contextComposition;
 
 	/**
 	 * Creates a new turn.
@@ -195,6 +198,23 @@ public class Turn {
 	/** Sets the usage of the last iteration; used when a persisted turn is read back. */
 	public void setLastIterationUsage(TokenUsage usage) {
 		_lastIterationUsage = usage == null ? TokenUsage.EMPTY : usage;
+	}
+
+	/**
+	 * What the prompt of this turn's last request was made of, or {@code null} when unrecorded.
+	 *
+	 * <p>
+	 * Kept so a re-opened chat can show the same breakdown a live one does; the figures are the
+	 * agent loop's estimates, not provider counts.
+	 * </p>
+	 */
+	public AgentEvent.ContextComposition contextComposition() {
+		return _contextComposition;
+	}
+
+	/** Records what the prompt of this turn's latest request was made of. */
+	public void setContextComposition(AgentEvent.ContextComposition composition) {
+		_contextComposition = composition;
 	}
 
 	/**

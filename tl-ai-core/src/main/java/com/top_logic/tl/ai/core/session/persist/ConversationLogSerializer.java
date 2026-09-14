@@ -15,11 +15,13 @@ import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.session.CompactionSidecar;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.CitationDto;
 import com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto;
 import com.top_logic.tl.ai.core.session.persist.messages.CompactionSidecarDto;
 import com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto;
@@ -180,6 +182,9 @@ public final class ConversationLogSerializer {
 			dto.setType(TYPE_TEXT);
 			TextPartDto data = TextPartDto.create();
 			data.setText(tp.text());
+			for (Citation citation : tp.citations()) {
+				data.addCitation(toCitationDto(citation));
+			}
 			dto.setTextData(data);
 		} else if (part instanceof Part.ThinkingPart tp) {
 			dto.setType(TYPE_THINKING);
@@ -289,7 +294,13 @@ public final class ConversationLogSerializer {
 		switch (type) {
 			case TYPE_TEXT: {
 				TextPartDto data = dto.getTextData();
-				return new Part.TextPart(id, timestamp, data.getText());
+				List<Citation> citations = new ArrayList<>();
+				if (data != null) {
+					for (CitationDto item : data.getCitations()) {
+						citations.add(fromCitationDto(item));
+					}
+				}
+				return new Part.TextPart(id, timestamp, data == null ? "" : data.getText(), citations);
 			}
 			case TYPE_THINKING: {
 				ThinkingPartDto data = dto.getThinkingData();
@@ -452,6 +463,23 @@ public final class ConversationLogSerializer {
 			dto.getThinkingTokens(),
 			dto.getCacheReadTokens(),
 			dto.getCacheWriteTokens());
+	}
+
+	private static CitationDto toCitationDto(Citation citation) {
+		CitationDto dto = CitationDto.create();
+		dto.setIndex(citation.index());
+		dto.setToolName(citation.toolName());
+		dto.setToolCallId(citation.toolCallId());
+		dto.setKind(citation.kind());
+		dto.setId(citation.id());
+		dto.setLabel(citation.label());
+		dto.setUrl(citation.url());
+		return dto;
+	}
+
+	private static Citation fromCitationDto(CitationDto dto) {
+		return new Citation(dto.getIndex(), dto.getToolName(), dto.getToolCallId(), dto.getKind(),
+			dto.getId(), dto.getLabel(), dto.getUrl());
 	}
 
 	private static String nullToEmpty(String value) {

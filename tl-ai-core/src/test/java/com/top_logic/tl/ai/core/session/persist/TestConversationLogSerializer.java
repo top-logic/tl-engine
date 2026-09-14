@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.session.CompactionFingerprint;
 import com.top_logic.tl.ai.core.session.CompactionSidecar;
 import com.top_logic.tl.ai.core.session.ConversationLog;
@@ -371,5 +372,25 @@ public class TestConversationLogSerializer extends TestCase {
 		assertNull("An unreadable sidecar must be dropped.", rcp.sidecar());
 		assertEquals("The canonical log around it must survive intact.", "Go",
 			((Part.TextPart) restored.turns().get(0).userParts().get(0)).text());
+	}
+
+	/** Citations on a text part survive a serialize/deserialize round-trip. */
+	public void testCitationsRoundTrip() {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.setUserParts(List.of(new Part.TextPart("u1", Instant.ofEpochMilli(1000), "Cite this")));
+		turn.addAssistantPart(new Part.TextPart("p1", Instant.ofEpochMilli(1001), "Fact [1].",
+			List.of(new Citation(1, "cite.cite", "c1", "web", "https://ok.example", "Ok",
+				"https://ok.example"))));
+		log.completeTurn();
+
+		ConversationLog restored = ConversationLogSerializer.fromJson(ConversationLogSerializer.toJson(log));
+		Part.TextPart text = (Part.TextPart) restored.turns().get(0).assistantParts().get(0);
+		assertEquals(1, text.citations().size());
+		Citation citation = text.citations().get(0);
+		assertEquals(1, citation.index());
+		assertEquals("web", citation.kind());
+		assertEquals("https://ok.example", citation.id());
+		assertEquals("Ok", citation.label());
 	}
 }

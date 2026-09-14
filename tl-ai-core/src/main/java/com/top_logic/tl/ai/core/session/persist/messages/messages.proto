@@ -154,10 +154,37 @@ message PersistedPart {
 	SystemPartDto systemData;
 }
 
+/** One source a citation marker in an answer points to. */
+message CitationDto {
+	/** 1-based marker index shown in the answer. */
+	int index;
+
+	/** Tool that produced the cited id or URL. */
+	string toolName;
+
+	/** Tool call id of that tool, when known. */
+	string toolCallId;
+
+	/** Host kind, e.g. {@code web} or {@code invoice}. */
+	string kind;
+
+	/** Id the tool returned (a URL, a TID, …). */
+	string id;
+
+	/** Human label for the chip popover. */
+	string label;
+
+	/** Link for a web source; empty otherwise. */
+	string url;
+}
+
 /** Text content part. */
 message TextPartDto {
 	/** The text content. */
 	string text;
+
+	/** Citations the validator kept for this text; empty when the turn cited nothing. */
+	repeated CitationDto citations;
 }
 
 /** Thinking/reasoning content part. */

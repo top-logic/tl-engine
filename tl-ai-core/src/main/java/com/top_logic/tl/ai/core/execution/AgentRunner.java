@@ -14,12 +14,15 @@ import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
+import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.tools.interaction.CiteTool;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
@@ -124,22 +127,29 @@ public final class AgentRunner {
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
 
+		CiteTool.reset();
 		AgentFactory.RunResult runResult;
 		try {
 			runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
 				context, effectiveListener, sessionRegistry,
 				overrides != null ? overrides : AgentFactory.RunOverrides.NONE);
 		} catch (RuntimeException ex) {
+			CiteTool.reset();
 			if (recorder != null) {
 				recorder.complete(transcriptOf(log, turnsBefore), ex);
 			}
 			throw ex;
 		}
 
-		if (recorder != null) {
-			recorder.complete(transcriptOf(log, turnsBefore), runResult.response(), null);
+		String response = runResult.response();
+		if (log != null) {
+			response = CitationValidator.apply(log, response).text();
 		}
-		return new RecordedRun(runResult.response(), runResult.registry(),
+		CiteTool.reset();
+		if (recorder != null) {
+			recorder.complete(transcriptOf(log, turnsBefore), response, null);
+		}
+		return new RecordedRun(response, runResult.registry(),
 			recorder != null ? recorder.result() : null,
 			recorder != null ? recorder.execution() : null);
 	}
@@ -205,16 +215,22 @@ public final class AgentRunner {
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
 
+		CiteTool.reset();
 		AgentResult result;
 		try {
 			result = loop.run(conversation, context, effectiveListener);
 		} catch (RuntimeException ex) {
+			CiteTool.reset();
 			if (recorder != null) {
 				recorder.complete(transcriptOf(log, turnsBefore), ex);
 			}
 			throw ex;
 		}
 
+		if (log != null) {
+			CitationValidator.apply(log, lastAssistantText(log));
+		}
+		CiteTool.reset();
 		if (recorder != null) {
 			recorder.complete(transcriptOf(log, turnsBefore), null);
 		}
@@ -265,5 +281,23 @@ public final class AgentRunner {
 			Logger.warn("Failed to serialize run transcript: " + ex.getMessage(), ex, AgentRunner.class);
 			return null;
 		}
+	}
+
+	private static String lastAssistantText(ConversationLog log) {
+		Turn turn = log.currentTurn();
+		if (turn == null) {
+			List<Turn> turns = log.turns();
+			turn = turns.isEmpty() ? null : turns.get(turns.size() - 1);
+		}
+		if (turn == null) {
+			return "";
+		}
+		Part.TextPart last = null;
+		for (Part part : turn.assistantParts()) {
+			if (part instanceof Part.TextPart text) {
+				last = text;
+			}
+		}
+		return last == null ? "" : last.text();
 	}
 }

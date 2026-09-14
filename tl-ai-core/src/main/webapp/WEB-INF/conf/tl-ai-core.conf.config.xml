@@ -1559,6 +1559,12 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 - Be concise and direct — skip filler, skip flattery
 </core_rules>
 
+<cite>
+- Cite what you read with cite.cite, using the id or URL the producing tool returned
+- Cite only sources from this turn; never invent an id or URL
+- One marker per fact: write [n] immediately after the sentence, using the number cite.cite returned
+</cite>
+
 <error_handling>
 - Read the error message and fix the root cause
 - Do NOT retry the same call with the same arguments more than twice
@@ -1576,6 +1582,7 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<tool name="user-interaction.askUser"/>
 							<tool name="model-browser.outlineModel"/>
 							<tool name="view-document.viewDocument"/>
+							<tool name="cite.cite"/>
 						</tools>
 						<skills>
 							<skill name="TL_annotationEditing"/>
@@ -2434,6 +2441,11 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					<factory name="user-interaction">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.interaction.AskUserTool"
+						/>
+					</factory>
+					<factory name="cite">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.interaction.CiteTool"
 						/>
 					</factory>
 					<factory name="gitea">

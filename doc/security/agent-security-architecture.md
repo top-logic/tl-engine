@@ -1307,36 +1307,86 @@ writes, and the provider-safe `factory__tool` form the registry keys it by. A `<
 entry matches any of them. Matching only the registry's form (the first implementation) made a correctly
 spelled dot-notation grant reach nothing at all.
 
-### 4.2 Interaction with the per-agent tool list
+### 4.2 Which agent, model and MCP server a run may be · **implemented** (#392)
 
 The tool list is unchanged from today's `AgentDefinition.tools()`; the role policy is an additional,
-independent filter. The per-agent security mode of section 3.1 is **built** (#260); `required-groups`
-below is still a proposal.
+independent filter over it. What an agent definition does **not** decide is who may run it: it is
+editable by whoever may author agents, so anything it declared about its own security would be either
+inert or an escalation path. The `<required-groups>` self-narrowing that stood here as a proposal was
+never built and is not the control an administrator needs - an allowlist keyed by role is.
+
+Three sibling sections of the same policy answer the three questions a *request* asks, in the idiom
+`<tool-access>` already uses:
 
 ```xml
-<agent name="sales-assistant">
-    <tools>
-        <tool name="instance-browser.listInstances"/>
-        <tool name="instance-browser.getInstance"/>
-        <tool name="model-search.searchModel"/>
-    </tools>
-    <!-- NOT BUILT. Optional: additionally narrow this agent below what the user's roles allow. -->
-    <required-groups>
-        <group name="data.read"/>
-    </required-groups>
-</agent>
+<agent-access default="all">            <!-- all | none -->
+    <role name="SalesUser">
+        <grants><grant agents="sales-assistant, pietro"/></grants>
+        <denies><deny agents="framework-wiring-agent"/></denies>
+    </role>
+</agent-access>
+<model-access default="assigned">       <!-- assigned | all | none -->
+    <role name="SalesUser"><grants><grant models="claude-haiku-4-5"/></grants></role>
+</model-access>
+<mcp-access default="agent">            <!-- agent | all | none -->
+    <role name="SalesUser"><grants><grant servers="internal-docs"/></grants></role>
+</mcp-access>
 ```
 
-**An agent definition declares no security mode.** It briefly could (#260), on both layers an agent
-definition is expressed in, and issue **#288** removed the declaration, the model attribute and the
-selector in the service editor. Nothing about a run's enforcement comes from an agent definition, and
-an agent definition is editable by whoever may author agents - so any value it carried would have been
-either inert or an escalation path. See 3.1.
+#### Semantics, stated precisely
 
-`required-groups` is a self-imposed narrowing: the agent declares it needs nothing beyond these
-groups, so even a user with broad roles gets only these tools through *this* agent. It shrinks blast
-radius for prompt injection (T3) - an injected instruction inside a customer record cannot reach a
-tool the agent never carried.
+Asked about one name the request asked for, against the roles the account holds on the security root:
+
+| # | Rule | Outcome |
+|---|------|---------|
+| 1 | Any held role names it in `<denies>` | Denied, whatever else says |
+| 2 | Any held role names it in `<grants>` | Permitted |
+| 3 | It is what the agent itself uses - its assigned model, a server it declares | Permitted |
+| 4 | Any held role is named in this section | Denied |
+| 5 | Otherwise | The section's `default` decides |
+
+Rule 3 is what keeps the rule set usable: every client of `/chat/send` sends the model it is showing,
+which is the agent's own until the user picks another, and a rule that called that a *choice* would
+refuse every request of a restricted role. Rule 4 is the allowlist reading of a role entry, and it is
+why `default="all"` and a role entry do not contradict each other: naming a role restricts its holders
+and leaves everybody else where they were, which is what adding one restricted role to a running
+application means. A role entry with no `<grants>` is therefore how "this role may use none of them"
+is said.
+
+The defaults are each the least surprising safe answer for their own question rather than one uniform
+one:
+
+| Section | Default | Why |
+|---------|---------|-----|
+| `agent-access` | `all` | An agent is a persona, and an application that configured nothing has always offered all of them. |
+| `model-access` | `assigned` | A model choice is a cost and a capability decision; a request runs on what its agent is assigned until an administrator hands the choice out. |
+| `mcp-access` | `agent` | Attaching a server is egress the administrator did not plan for that turn; a request reaches the agent's own servers and no others. |
+
+`none` refuses the same requests as `assigned` and `agent` do, because of rule 3. What it changes is
+what a client is *offered*: under `none` the menu is empty, so the choice is not shown at all.
+
+Administrators bypass all three, as they bypass the tool layer and the engine's model rights. There is
+no background ceiling here: which agent a run is and what it runs on is settled before it starts, and
+the `<background-allowlist>` is about tool calls nobody is there to approve.
+
+#### Where it is enforced
+
+`AgentFactory.runAgent(..., RunOverrides)` is the choke point - the chat, `AgentRunner`, the scheduler
+and TL-Script all pass through it - and it authorises before applying anything of the request, so no
+provider round trip is spent on a run that may not happen. A refusal is a `ToolSecurityException`
+carrying a `ResKey`; `/chat/send` and `/chat/regenerate` pre-check the same three questions and answer
+**403** with that text, so the user reads a sentence rather than watching a turn fail.
+
+**Delegation is bounded by the acting principal too**, not only by the parent agent's `delegations`
+list: `buildAgentLoop` and `buildSubagentLoop` refuse an agent the account may not run, and
+`AgentCapabilities` drops such an agent from the delegate catalogue and from `list_agents` so that the
+model does not ask for it. The alternative - bounding delegation by the parent agent's list alone -
+would have let `spawn_subagent` reach any agent the orchestrator names, which is the hole #392 was
+filed about.
+
+An agent, a model or an MCP server the application does not have refuses the boot, unlike an unknown
+*tool group*: the three are closed sets the application can enumerate, so a name outside one of them
+is a typo - and a misspelled refusal refuses nothing while reading as a prohibition.
 
 ### 4.3 Administration UI concept · **not built**
 
@@ -1524,7 +1574,8 @@ any more. All new types live in `tl-ai-core/src/main/java/com/top_logic/tl/ai/co
 | `@ToolMethod(group = ...)` in `tl-ai-tool-api` | **Enforced.** All 75 registered tools carry a group; `Tool.group()` is the runtime seam |
 | `@ToolMethod(types = ...)` | **Removed** (#258). Design in 3.3.3; no code |
 | Per-agent `security-mode` (4.2) | Built (#260) and **removed again** (#288), together with the model attribute, the service-editor selector and `SecDemoAgentFloorTest` |
-| Per-agent `required-groups` (4.2) | **Not built.** A self-imposed narrowing of the tool list |
+| Per-agent `required-groups` (4.2) | **Dropped** (#392). A self-imposed narrowing an agent's own author could remove; replaced by `<agent-access>`, `<model-access>` and `<mcp-access>`, which are keyed by role |
+| `<agent-access>` / `<model-access>` / `<mcp-access>` (4.2) | **Implemented** (#392). `RoleAccessPolicy` decides all three; `RunAuthorization` carries the decision on the security context; `AgentFactory` enforces it before the run starts; `/chat/capabilities` filters and `/chat/send` answers 403 |
 | Boot warnings for a policy that reaches nobody | **Implemented** (#289). A `<tool-access>` role that no role rule can produce **on the security root** is warned about through `AccessManager.canHaveRole`, and a role granted `data.read`/`data.write` that appears in no Read/Write/Create grant of `<security-config>` is warned about too - the "Dora" case of the worked example. Warnings, not errors: a direct runtime assignment can still arrive, and model rights can come from a `<part>` grant or an annotation this check does not read |
 | The retrofit examples A.1 / A.2 | **Applied.** A.1 is the shipped shape of `InstanceBrowserTool` and A.2 the shipped shape of the pre-commit guard |
 
@@ -1571,7 +1622,8 @@ See the branch's PR description for the build and test commands that were actual
    default.
 4. **Per-agent `<security-config>` overlays.** Should an agent be able to *narrow* model access beyond
    the user's own rights (e.g. "this agent may read Customer but never Contract, even for a manager")?
-   `required-groups` (4.2) does this at tool granularity; the type-granularity equivalent is unspecified.
+   `<agent-access>` (4.2) decides which agent a user may run at all; narrowing the *data* an agent may
+   reach below its user's own rights is the type-granularity equivalent and is unspecified.
 5. **Vector-index source ids.** Section 3.4.3 assumes each chunk carries its source object id. Whether
    the current index stores it needs confirming; if not, re-indexing is a prerequisite.
 6. **Approval semantics under RBAC.** Today `DATA_WRITE` -> `NeedsApproval` for everyone. Should a role

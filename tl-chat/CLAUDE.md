@@ -128,6 +128,24 @@ the theme the app-bar's `<set-theme>` buttons select. Tokens the shipped themes 
 are aliased once at the top of the file with a fallback that is correct in both themes; add new ones
 there rather than hard-coding a colour.
 
+### What the agent picker shows, and what it filters
+
+Two fields of the agent definition are written for a person and are the only ones the UI shows:
+`display-name` (what the agent is called - `TL_SingleAgent` is "Albert") and `summary` (one line
+saying what it is for). Both are localizable, both live on the definition - in
+`tl-ai-core.conf.config.xml` for the agents this product ships, or in the agent record for one an
+installation authors - and both fall back to nothing: an agent with no display name is shown by its
+technical name, one with no summary by its name alone. The agent's `description` is a delegation
+instruction addressed to a model and never reaches the browser.
+
+The summary is rendered **as authored**, on one line, cut off with an ellipsis where it does not fit.
+A summary that has to fit is shortened where it is written, not here.
+
+`GET /chat/capabilities` is filtered by the acting account (#392): it lists the agents that account
+may run, the models it may choose and the MCP servers it may attach, so the menu cannot offer a turn
+that `/chat/send` would refuse. A request that names something else anyway is answered **403** with a
+sentence in the user's language, which the composer shows in the notice strip in the neutral tone.
+
 ### Module map
 
 | File | What it owns |

@@ -430,6 +430,53 @@
 				</tool-access>
 
 				<!--
+					What a run may BE, as opposed to what it may do: which agent answers, which model it
+					runs on, which MCP servers it reaches (#392).
+
+					The same idiom as <tool-access> above and the same two rules - a deny wins, and a
+					role that is named is restricted to what it is granted while everybody else keeps
+					the section default. What the personas show:
+
+					  Ben holds ticketReader, so he is offered exactly one agent, and of the three
+					  configured models exactly two: the Haiku his role grants, and the Sonnet his
+					  agent is assigned - which is not a choice and needs no grant. Opus is offered to
+					  him nowhere, and a POST naming it is answered 403 with the reason in his
+					  language, as is one naming TL_SingleAgent.
+
+					  Anna holds projectPartner, which no section names, so she keeps every agent - the
+					  contrast that makes Ben's restriction visible rather than merely configured.
+
+					The model names have to be the ones this application configures, spelled exactly:
+					a name no provider lists refuses the boot, which is deliberate and is what makes a
+					typo in a <deny> impossible to ship.
+				-->
+				<agent-access default="all">
+					<role name="ticketReader">
+						<grants>
+							<grant agents="TL_ModelExplorer"/>
+						</grants>
+					</role>
+				</agent-access>
+
+				<model-access default="assigned">
+					<role name="ticketReader">
+						<grants>
+							<grant models="claude-haiku-4-5-20251001"/>
+						</grants>
+					</role>
+				</model-access>
+
+				<!--
+					A role entry with no <grants> at all: ticketReader may attach no MCP server. The
+					fixture configures none, so nothing is taken away today - the entry is here because
+					it is the shape an administrator writes for "this role attaches nothing", and it
+					keeps working when a server is configured later.
+				-->
+				<mcp-access default="agent">
+					<role name="ticketReader"/>
+				</mcp-access>
+
+				<!--
 					An explicitly *empty* baseline, which is not the same as leaving the element out.
 
 					Omitting it means "give every user the read-only default" - model.read and data.read

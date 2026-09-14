@@ -312,6 +312,100 @@ see [What this does not decide](#what-this-does-not-decide).
 
 ---
 
+## Which agents, models and MCP servers a role may use
+
+The sections above decide what a run may **do**. Three more decide what a run may **be** - which agent
+answers, which model it runs on, which MCP servers it reaches. They sit in the same policy and are
+written in the same idiom, and until you name a role in one of them nothing changes for anybody.
+
+```xml
+<agent-access default="all">            <!-- all | none -->
+    <role name="SalesUser">
+        <grants><grant agents="sales-assistant, pietro"/></grants>
+        <denies><deny agents="framework-wiring-agent"/></denies>
+    </role>
+</agent-access>
+<model-access default="assigned">       <!-- assigned | all | none -->
+    <role name="SalesUser"><grants><grant models="claude-haiku-4-5"/></grants></role>
+</model-access>
+<mcp-access default="agent">            <!-- agent | all | none -->
+    <role name="SalesUser"><grants><grant servers="internal-docs"/></grants></role>
+</mcp-access>
+```
+
+### What each section decides when you have written nothing
+
+| Section | Without any entry | What that means for the chat |
+|---------|-------------------|------------------------------|
+| `agent-access` | Everybody may run every agent | The `+` menu offers every agent, as it always has |
+| `model-access` | A request runs on the model its agent is assigned | The model menu offers that model and nothing else |
+| `mcp-access` | A request reaches the servers its agent declares | The MCP list offers those servers and nothing else |
+
+The last two are a tightening: before this, any user could pick any configured model and attach any
+configured MCP server. Write `<model-access default="all"/>` to hand the model choice back to
+everybody, and `<mcp-access default="all"/>` for the servers.
+
+### What naming a role does
+
+As soon as **one of a user's roles** is named in a section, that user may use exactly what their named
+roles permit there - the section's default no longer applies to them, and it still applies to everybody
+else. That is what lets you restrict one role in a running application without touching anyone.
+
+- A role entry with **no** `<grants>` lets its holders use none of them.
+- A `<deny>` wins over everything, including over what the agent itself uses.
+- What the agent itself uses - the model it is assigned, a server it declares - is always permitted
+  unless a `<deny>` names it. A request that echoes the agent's own model back is not choosing a model,
+  and every chat client does exactly that on every turn.
+- `none` refuses the same requests as `assigned` and `agent` do. What it changes is what a client is
+  *offered*: under `none` the menu is empty, so the choice is not shown at all.
+- Administrators bypass all three.
+
+### Recipe: one role, one agent, one model, no MCP server
+
+```xml
+<agent-access default="all">
+    <role name="ticketReader">
+        <grants><grant agents="TL_ModelExplorer"/></grants>
+    </role>
+</agent-access>
+<model-access default="assigned">
+    <role name="ticketReader">
+        <grants><grant models="claude-haiku-4-5"/></grants>
+    </role>
+</model-access>
+<mcp-access default="agent">
+    <role name="ticketReader">
+        <denies><deny servers="internal-docs"/></denies>
+    </role>
+</mcp-access>
+```
+
+A holder of `ticketReader` is offered `TL_ModelExplorer` and nothing else, may pick the Haiku model as
+well as the one its agent is assigned, and cannot attach `internal-docs` even to an agent that declares
+it. Everybody else keeps every agent.
+
+### What happens when a request asks for something else
+
+`/chat/capabilities` never offers it, so the menu cannot produce it. A request that names it anyway -
+a script, an older browser tab - is answered **403** with the sentence the user reads in the notice
+strip above the composer, in their language. The run is refused before the provider is called, so a
+refusal costs nothing.
+
+### Names are checked at boot
+
+An agent, a model or an MCP server this application does not have **refuses the start**, with the name
+in the log - unlike an unknown capability group, which is only a warning. These three are closed sets
+the application can enumerate, so a name outside one of them is a typo, and a misspelled `<deny>`
+refuses nothing while reading like a prohibition.
+
+### Delegation
+
+An agent the account may not run is not reachable by asking another agent for it either: it is dropped
+from the delegate catalogue and from `list_agents`, and a `spawn_subagent` naming it is refused. If you
+want an orchestrator to delegate to a specialist, grant the specialist to the same role.
+
+---
+
 ## Recipes
 
 ### Give one role read-only access, another role the write tools
@@ -621,10 +715,11 @@ is not read-filtered (**issue #291**), and the control for it is withholding `sc
 Approval is a third, separate thing: a tool classified as changing shared data asks the user to confirm
 regardless of which role they hold. There is no way to pre-approve a role, on purpose.
 
-**An agent definition decides nothing about security.** It briefly could name a security mode of its
-own; that setting is gone. What an agent definition decides is which tools it *carries*, and the check
-above then decides which of those the acting account may call. There is no per-agent way to be laxer or
-stricter.
+**An agent definition decides nothing about who may use it.** It briefly could name a security mode of
+its own; that setting is gone. What an agent definition decides is which tools it *carries*, which
+model it is assigned and which MCP servers it declares - and the checks above then decide which of
+those the acting account may reach. Who may run the agent at all is `<agent-access>`, which is keyed by
+role and lives here, because an agent definition is editable by whoever may author agents.
 
 ---
 

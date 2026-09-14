@@ -358,7 +358,7 @@ public class TestSkillAbsenceReason extends TestCase {
 
 	/** Declares three of the four skills; {@link #FOREIGN_SKILL} is deliberately not one of them. */
 	private static AgentDefinition agent() {
-		return new AgentDefinition(AGENT, AGENT, null, "", List.of(READ_TOOL), List.of(),
+		return new AgentDefinition(AGENT, null, AGENT, null, "", List.of(READ_TOOL), List.of(),
 			List.of(READABLE_SKILL, WITHHELD_SKILL, UNGROUPED_SKILL), List.of(), AgentSource.CONFIG);
 	}
 

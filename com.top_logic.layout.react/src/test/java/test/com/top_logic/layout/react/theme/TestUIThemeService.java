@@ -56,6 +56,23 @@ public class TestUIThemeService extends TestCase {
 			+ "<color name='background' value='#ffffff'/>"
 			+ "</theme>");
 
+	/** A reference to a token the theme declares, and one to a token nothing declares. */
+	private static final String REFERENCES = config("light",
+		"<theme name='light'>"
+			+ "<color name='brand' value='#2968c8'/>"
+			+ "<ref name='button-primary' ref='brand'/>"
+			+ "<ref name='focus' ref='brnad'/>"
+			+ "</theme>");
+
+	/** A child referencing a token only its parent declares. */
+	private static final String INHERITED_REFERENCE = config("light",
+		"<theme name='light'>"
+			+ "<color name='brand' value='#2968c8'/>"
+			+ "</theme>"
+			+ "<theme name='dim' extends='light'>"
+			+ "<ref name='focus' ref='brand'/>"
+			+ "</theme>");
+
 	/** Two themes claiming the same appearance preference of the operating system. */
 	private static final String AMBIGUOUS_SYSTEM_DEFAULT = config("light",
 		"<theme name='light'>"
@@ -127,6 +144,32 @@ public class TestUIThemeService extends TestCase {
 	/**
 	 * A second theme claiming the same appearance preference is a configuration error.
 	 */
+	/**
+	 * A reference renders as {@code var(--other)} and is resolved by the browser, so a misspelled
+	 * target would stay silent until the page drops the declaration. It is reported instead.
+	 */
+	public void testUnresolvedReference() throws ConfigurationException {
+		BufferingProtocol log = new BufferingProtocol();
+		create(REFERENCES, log);
+
+		List<String> errors = log.getErrors();
+		assertEquals("Expected a single error, got: " + errors, 1, errors.size());
+		String error = errors.get(0);
+		assertTrue(error, error.contains("focus") && error.contains("brnad"));
+	}
+
+	/**
+	 * The check runs once the inherited tokens are merged, so a theme may reference a token only
+	 * the theme it extends declares.
+	 */
+	public void testInheritedReferenceResolves() throws ConfigurationException {
+		BufferingProtocol log = new BufferingProtocol();
+		UIThemeService service = create(INHERITED_REFERENCE, log);
+
+		assertEquals("Expected no error, got: " + log.getErrors(), List.of(), log.getErrors());
+		assertEquals("var(--brand)", theme(service, "dim").getTokens().get("focus"));
+	}
+
 	public void testAmbiguousSystemDefault() throws ConfigurationException {
 		BufferingProtocol log = new BufferingProtocol();
 		create(AMBIGUOUS_SYSTEM_DEFAULT, log);

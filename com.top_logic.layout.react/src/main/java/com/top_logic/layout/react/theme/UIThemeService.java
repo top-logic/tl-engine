@@ -132,6 +132,31 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		_systemThemes = systemThemes(context, _themes.values());
 	}
 
+	/**
+	 * Reports every {@link RefToken} of the given theme whose target the theme does not answer.
+	 *
+	 * <p>
+	 * A reference renders as {@code var(--other)} and is resolved by the browser, not here, so a
+	 * misspelled target stays silent until the page renders and the declaration is dropped. The
+	 * check runs once the token map is complete, i.e. after the inherited tokens are merged, so a
+	 * theme referencing a token only its parent declares is accepted.
+	 * </p>
+	 */
+	private static void reportUnresolvedReferences(InstantiationContext context, String id,
+			UITheme.Config config, Map<String, String> tokens) {
+		for (Map.Entry<String, ThemeToken.Config<?>> entry : config.getTokens().entrySet()) {
+			ThemeToken.Config<?> tokenConfig = entry.getValue();
+			if (!(tokenConfig instanceof RefToken.Config)) {
+				continue;
+			}
+			String target = ((RefToken.Config) tokenConfig).getRef();
+			if (!tokens.containsKey(target)) {
+				context.error("Token '" + entry.getKey() + "' of theme '" + id
+					+ "' references '" + target + "', which the theme does not declare.");
+			}
+		}
+	}
+
 	private static Map<ColorScheme, UITheme> systemThemes(InstantiationContext context, Collection<UITheme> themes) {
 		Map<ColorScheme, UITheme> result = new EnumMap<>(ColorScheme.class);
 		for (UITheme theme : themes) {
@@ -364,6 +389,7 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 				tokens.put(entry.getKey(), token.cssValue());
 			}
 		}
+		reportUnresolvedReferences(context, id, config, tokens);
 
 		active.remove(id);
 		ColorScheme scheme = config.getColorScheme();

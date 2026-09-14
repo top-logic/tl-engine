@@ -1,6 +1,9 @@
 import { React } from 'tl-react-bridge'
 import type { CitationRender, MessageAction, PaneOpenOptions } from './extensions'
 import { Markdown } from './markdown'
+import { AnswerSources, citedSources } from './sources'
+import { parseDraft, referenceSummary, withoutContextPrefix, type ReferenceToken } from './reference'
+import { TokenInput, type TokenInputHandle } from './token-input'
 import { bundle, formatTimestamp, type Language } from './i18n'
 import { effortLabel } from './models'
 import type {
@@ -222,6 +225,38 @@ const EditIcon = (
 )
 
 /**
+ * What the user wrote: their words, with every reference they inserted rendered as the same token
+ * the composer showed them.
+ */
+function UserText({ text }: { text: string }) {
+  const parts = parseDraft(text)
+  return (
+    <>
+      {parts.map((part, index) =>
+        part.type === 'text' ? (
+          <span key={index}>{part.text}</span>
+        ) : (
+          <ReferenceTokenView key={index} token={part.token} />
+        ),
+      )}
+    </>
+  )
+}
+
+/** One reference, read by a screen reader as a single named thing. */
+export function ReferenceTokenView({ token }: { token: ReferenceToken }) {
+  return (
+    <span className="ref-token is-static" role="img" aria-label={referenceSummary(token)} title={token.text}>
+      <svg viewBox="0 0 16 16" aria-hidden="true" className="ref-token-icon">
+        <path d="M4 2.5h5.2L12 5.3v8.2H4zM9 2.6v3h3M6 8.4h4M6 10.8h4" />
+      </svg>
+      <span className="ref-token-label">{token.label}</span>
+      {token.location?.trim() ? <span className="ref-token-location">{token.location.trim()}</span> : null}
+    </span>
+  )
+}
+
+/**
  * A message the user sent, editable in place.
  *
  * Editing happens in the bubble itself and changes nothing until it is sent: the text is the
@@ -245,26 +280,15 @@ function UserTurn({
   onCancelEdit: () => void
   onSubmitEdit: (text: string) => void
 }) {
-  const [draft, setDraft] = useState(text)
-  const area = useRef<HTMLTextAreaElement>(null)
-
-  // The bubble grows with the text rather than scrolling inside itself: the user is reading their
-  // own message, and a two-line window onto it would hide what they are about to change.
-  useEffect(() => {
-    const el = area.current
-    if (!editing || !el) return
-    el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
-  }, [draft, editing])
+  const own = withoutContextPrefix(text)
+  const [draft, setDraft] = useState(own)
+  const area = useRef<TokenInputHandle>(null)
 
   useEffect(() => {
     if (!editing) return
-    setDraft(text)
-    const el = area.current
-    if (!el) return
-    el.focus()
-    el.setSelectionRange(text.length, text.length)
-  }, [editing, text])
+    setDraft(own)
+    area.current?.focus()
+  }, [editing, own])
 
   if (editing) {
     const submit = () => {
@@ -275,13 +299,15 @@ function UserTurn({
     return (
       <div className="turn turn-user">
         <div className="bubble-user is-editing">
-          <textarea
+          {/* The same editor as the composer, so an edited message keeps its reference tokens
+              instead of showing their markup. */}
+          <TokenInput
             ref={area}
             className="bubble-user-edit"
             value={draft}
-            aria-label={labels.editAndSendAgain}
-            rows={1}
-            onChange={(event) => setDraft(event.currentTarget.value)}
+            ariaLabel={labels.editAndSendAgain}
+            placeholder=""
+            onChange={setDraft}
             onKeyDown={(event) => {
               if (event.key === 'Escape') {
                 event.preventDefault()
@@ -308,7 +334,9 @@ function UserTurn({
   return (
     <div className="turn turn-user">
       <div className="bubble-user">
-        <div className="bubble-user-text">{text}</div>
+        <div className="bubble-user-text">
+          <UserText text={own} />
+        </div>
         {edited ? <span className="bubble-user-edited">{labels.editedMarker}</span> : null}
         {onStartEdit ? (
           <span className="bubble-user-actions">
@@ -476,6 +504,7 @@ function AssistantAnswer({
   renderAnnotation,
   openInPane,
   extraActions,
+  onOpenSource,
 }: {
   text: string
   streaming: boolean
@@ -492,10 +521,12 @@ function AssistantAnswer({
   renderAnnotation?: CitationRender
   openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
   extraActions?: MessageAction[]
+  onOpenSource?: (citation: Citation) => void
 }) {
   if (!text && !streaming) return null
+  const sources = message ? citedSources([message]) : []
   return (
-    <div className="turn turn-agent">
+    <div className="turn turn-agent" data-message-id={message?.id}>
       <div className={`answer${streaming ? ' is-streaming' : ''}`}>
         <Markdown
           text={text}
@@ -505,8 +536,16 @@ function AssistantAnswer({
           message={message}
           renderAnnotation={renderAnnotation}
           openInPane={openInPane}
+          onOpenSource={onOpenSource}
         />
       </div>
+      {streaming || sources.length === 0 ? null : (
+        <AnswerSources
+          sources={sources}
+          labels={labels}
+          onOpen={(source) => onOpenSource?.(source.citation)}
+        />
+      )}
       {streaming ? null : (
         <AnswerFooter
           text={text}
@@ -710,6 +749,45 @@ function DetailedTrace({
 }
 
 /**
+ * The run's own activity, collapsed to one line above the answer.
+ *
+ * A finished run says how many steps it took and nothing else; expanding shows them. The line is
+ * quiet on purpose - what the agent did is available, not announced.
+ */
+function RunSummary({
+  events,
+  results,
+  labels,
+  busy,
+}: {
+  events: ChatMessage[]
+  results: Map<string, ToolResult>
+  labels: Labels
+  busy: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  if (events.length === 0) return null
+  const steps = events.filter((item) => item.type === 'tool_call').length || events.length
+  return (
+    <div className={`run-summary${open ? ' is-open' : ''}`}>
+      <button type="button" className="run-summary-head" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <span className={busy ? 'is-live' : undefined}>
+          {busy ? labels.working : labels.runSteps(steps)}
+        </span>
+        <span className={`run-summary-caret${open ? ' is-open' : ''}`} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="run-summary-body">
+          {events.map((item) => (
+            <TraceEvent key={item.id} item={item} results={results} labels={labels} />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/**
  * The quiet line between the question and the answer.
  *
  * Reserved even while the run is still going, so the answer does not jump down the moment the
@@ -754,6 +832,7 @@ function AgentRun({
   renderAnnotation,
   openInPane,
   extraActions,
+  onOpenSource,
 }: {
   turn: RunTurn
   results: Map<string, ToolResult>
@@ -770,6 +849,7 @@ function AgentRun({
   renderAnnotation?: CitationRender
   openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
   extraActions?: MessageAction[]
+  onOpenSource?: (citation: Citation) => void
 }) {
   const answer = lastAnswer(turn.events)
   const events = traceEvents(turn.events)
@@ -779,7 +859,11 @@ function AgentRun({
 
   return (
     <div className="agent-run">
-      <RunMetaLine meta={meta} summary={summary} busy={busy} labels={labels} />
+      {traceMode === 'overview' && events.length > 0 ? (
+        <RunSummary events={events} results={results} labels={labels} busy={busy} />
+      ) : (
+        <RunMetaLine meta={meta} summary={summary} busy={busy} labels={labels} />
+      )}
       {traceMode === 'detailed' && events.length > 0 ? (
         <DetailedTrace events={events} results={results} labels={labels} effort={effort} model={''} />
       ) : null}
@@ -800,6 +884,7 @@ function AgentRun({
           renderAnnotation={renderAnnotation}
           openInPane={openInPane}
           extraActions={extraActions}
+          onOpenSource={onOpenSource}
         />
       ) : null}
       {traceMode !== 'detailed'
@@ -839,6 +924,7 @@ export const Thread = React.memo(function Thread({
   renderAnnotation,
   openInPane,
   extraActions,
+  onOpenSource,
 }: {
   messages: ChatMessage[]
   traceMode: TraceMode
@@ -861,6 +947,7 @@ export const Thread = React.memo(function Thread({
   renderAnnotation?: CitationRender
   openInPane?: (content: React.ReactNode, options: PaneOpenOptions) => void
   extraActions?: MessageAction[]
+  onOpenSource?: (citation: Citation) => void
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
@@ -975,6 +1062,7 @@ export const Thread = React.memo(function Thread({
                     renderAnnotation={renderAnnotation}
                     openInPane={openInPane}
                     extraActions={extraActions}
+                    onOpenSource={onOpenSource}
                   />
                 </div>
               )

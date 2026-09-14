@@ -5,7 +5,9 @@ import { ContextUsage, formatTokens } from './context-usage'
 import type { bundle } from './i18n'
 import { agentLabel, effortLabel, modelLabel } from './models'
 import { ComposerNotice } from './notice'
-import type { ComposerChip, ComposerMenuItem } from './extensions'
+import type { ComposerApi, ComposerMenuItem, ReferenceCandidate } from './extensions'
+import { draftIsEmpty, type ReferenceToken } from './reference'
+import { TokenInput, type TokenInputHandle } from './token-input'
 import { PromptStack } from './prompts'
 import { SubagentActivityPanel } from './subagents'
 import type { ChatAction } from './reducer'
@@ -23,7 +25,14 @@ import type {
   TraceMode,
 } from './types'
 
-const { useEffect, useRef, useState } = React
+const { useEffect, useImperativeHandle, useMemo, useRef, useState } = React
+
+/** Shown for a reference candidate the host gave no icon of its own. */
+const DefaultSourceIcon = (
+  <svg viewBox="0 0 16 16" aria-hidden="true">
+    <path d="M4 2.5h5.2L12 5.3v8.2H4zM9 2.6v3h3" />
+  </svg>
+)
 
 type MenuPane = 'root' | 'agent' | 'model' | 'mcp' | 'trace' | 'effort'
 
@@ -198,7 +207,8 @@ function MenuRow({
   )
 }
 
-export const Composer = React.memo(function Composer({
+export const Composer = React.memo(
+  React.forwardRef(function Composer({
   windowId,
   agents,
   models,
@@ -233,9 +243,8 @@ export const Composer = React.memo(function Composer({
   onDismissNotice,
   onSend,
   onStop,
-  hostChips,
-  onRemoveChip,
   extraMenuItems,
+  referenceCandidates,
 }: {
   windowId: string
   agents: AgentOption[]
@@ -275,10 +284,9 @@ export const Composer = React.memo(function Composer({
   onDismissNotice: () => void
   onSend: (text: string, attachments: Attachment[]) => Promise<boolean>
   onStop: () => void
-  hostChips?: ComposerChip[]
-  onRemoveChip?: (id: string) => void
   extraMenuItems?: ComposerMenuItem[]
-}) {
+  referenceCandidates?: (query: string) => ReferenceCandidate[]
+}, handle: React.Ref<ComposerApi>) {
   const [text, setText] = useState('')
   const [files, setFiles] = useState<Attachment[]>([])
   const [attachError, setAttachError] = useState('')
@@ -294,7 +302,10 @@ export const Composer = React.memo(function Composer({
   const [improveError, setImproveError] = useState('')
   const [improveUnchanged, setImproveUnchanged] = useState(false)
   const [undoDraft, setUndoDraft] = useState<string | null>(null)
-  const area = useRef<HTMLTextAreaElement>(null)
+  /** The "@…" being typed, or null when the picker is closed. */
+  const [mention, setMention] = useState<string | null>(null)
+  const [mentionIndex, setMentionIndex] = useState(0)
+  const area = useRef<TokenInputHandle>(null)
   const file = useRef<HTMLInputElement>(null)
   const menu = useRef<HTMLDivElement>(null)
   const modelMenu = useRef<HTMLDivElement>(null)
@@ -303,14 +314,7 @@ export const Composer = React.memo(function Composer({
   const abort = useRef<AbortController | null>(null)
 
   useEffect(() => {
-    const el = area.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${Math.min(el.scrollHeight, 180)}px`
-  }, [text])
-
-  useEffect(() => {
-    if (!promptImprovementEnabled || improving || !text.trim()) {
+    if (!promptImprovementEnabled || improving || draftIsEmpty(text)) {
       setImproveVisible(false)
       return
     }
@@ -441,9 +445,32 @@ export const Composer = React.memo(function Composer({
   // palette: typing "opus" must find the model without first walking into the model pane.
   const searching = q.length > 0
 
+  /** What a host does to the composer: from the `+` menu, from the "@" picker, from its own pane. */
+  const composerApi: ComposerApi = useMemo(
+    () => ({
+      insertReference: (token: ReferenceToken) => area.current?.insertReference(token),
+      focus: () => area.current?.focus(),
+    }),
+    [],
+  )
+  useImperativeHandle(handle, () => composerApi, [composerApi])
+
+  const mentionQuery = mention == null ? '' : mention.replace(/^@/, '')
+  const candidates = useMemo(
+    () => (mention == null ? [] : (referenceCandidates?.(mentionQuery) ?? []).slice(0, 8)),
+    [mention, mentionQuery, referenceCandidates],
+  )
+
+  const takeCandidate = (candidate: ReferenceCandidate) => {
+    // The "@query" the user typed is replaced by the token it stood for.
+    area.current?.replaceBefore(mention?.length ?? 0, '')
+    area.current?.insertReference(candidate.token)
+    setMention(null)
+  }
+
   const submit = () => {
     const trimmed = text.trim()
-    if (!trimmed && files.length === 0) return
+    if (draftIsEmpty(text) && files.length === 0) return
     const sentFiles = files
     void onSend(trimmed, sentFiles).then((sent) => {
       if (!sent) return
@@ -451,12 +478,13 @@ export const Composer = React.memo(function Composer({
       setFiles([])
       setUndoDraft(null)
       setImproveVisible(false)
+      setMention(null)
     })
   }
 
   const runImprove = async () => {
     const draft = text.trim()
-    if (!draft || improving) return
+    if (draftIsEmpty(text) || improving) return
     const requestId = crypto.randomUUID()
     improveId.current = requestId
     abort.current?.abort()
@@ -588,23 +616,6 @@ export const Composer = React.memo(function Composer({
       ) : null}
 
       <div className={`composer-surface${dropping ? ' is-dropping' : ''}`} ref={surface}>
-        {hostChips && hostChips.length > 0 ? (
-          <div className="composer-host-chips">
-            {hostChips.map((chip) => (
-              <span key={chip.id} className="overlay-chip is-accent">
-                {chip.label}
-                <button
-                  type="button"
-                  className="chip-remove"
-                  aria-label={labels.removeChip(chip.label)}
-                  onClick={() => onRemoveChip?.(chip.id)}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        ) : null}
         {files.length > 0 ? (
           <div className="attach-row">
             {files.map((item) => (
@@ -688,7 +699,7 @@ export const Composer = React.memo(function Composer({
                           label={item.label}
                           description={item.description}
                           onClick={() => {
-                            item.action()
+                            item.action(composerApi)
                             closeMenu()
                           }}
                         />
@@ -851,30 +862,91 @@ export const Composer = React.memo(function Composer({
             ) : null}
           </div>
 
-          <textarea
-            ref={area}
-            rows={1}
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            onPaste={(event) => {
-              const pasted = Array.from(event.clipboardData?.files ?? [])
-              if (!pasted.length) return
-              event.preventDefault()
-              void addFiles(pasted)
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Escape' && improving) {
-                event.preventDefault()
-                cancelImprove()
-                return
-              }
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault()
-                submit()
-              }
-            }}
-            placeholder={busy ? labels.typeNext : labels.askAnything}
-          />
+          <div className="composer-input">
+            <TokenInput
+              ref={area}
+              value={text}
+              onChange={(next) => {
+                setText(next)
+                // Reading the word under the caret after the change, so "@" opens the picker on the
+                // keystroke that typed it and closes it again when the "@" is deleted.
+                const word = area.current?.wordBeforeCaret() ?? ''
+                if (word.startsWith('@') && referenceCandidates) {
+                  setMention(word)
+                  setMentionIndex(0)
+                } else {
+                  setMention(null)
+                }
+              }}
+              onPasteFiles={(pasted) => void addFiles(pasted)}
+              ariaLabel={labels.askAnything}
+              placeholder={busy ? labels.typeNext : referenceCandidates ? labels.askAnythingWithAt : labels.askAnything}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape' && improving) {
+                  event.preventDefault()
+                  cancelImprove()
+                  return
+                }
+                if (mention != null && candidates.length > 0) {
+                  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                    event.preventDefault()
+                    setMentionIndex((current) => {
+                      const next = current + (event.key === 'ArrowDown' ? 1 : -1)
+                      return (next + candidates.length) % candidates.length
+                    })
+                    return
+                  }
+                  if (event.key === 'Enter' || event.key === 'Tab') {
+                    event.preventDefault()
+                    takeCandidate(candidates[mentionIndex] ?? candidates[0])
+                    return
+                  }
+                }
+                if (event.key === 'Escape' && mention != null) {
+                  event.preventDefault()
+                  setMention(null)
+                  return
+                }
+                // "/" on an empty draft is the agent picker, which the "+" menu already is.
+                if (event.key === '/' && draftIsEmpty(text)) {
+                  event.preventDefault()
+                  setMenuOpen(true)
+                  setPane('agent')
+                  setQuery('')
+                  return
+                }
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault()
+                  submit()
+                }
+              }}
+            />
+            {mention != null && candidates.length > 0 ? (
+              <div className="mention-popover" role="listbox" aria-label={labels.addSource}>
+                {candidates.map((candidate, index) => (
+                  <button
+                    type="button"
+                    key={candidate.id}
+                    role="option"
+                    aria-selected={index === mentionIndex}
+                    className={`mention-row${index === mentionIndex ? ' is-active' : ''}`}
+                    onMouseEnter={() => setMentionIndex(index)}
+                    onMouseDown={(event) => {
+                      // mousedown, not click: the editor must not lose its caret before the insert.
+                      event.preventDefault()
+                      takeCandidate(candidate)
+                    }}
+                  >
+                    <span className="mention-icon" aria-hidden="true">
+                      {candidate.icon ?? DefaultSourceIcon}
+                    </span>
+                    <span className="mention-label">{candidate.label}</span>
+                    {candidate.hint ? <span className="mention-hint">{candidate.hint}</span> : null}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
 
           <div className="composer-actions">
             <div className="model-menu" ref={modelMenu}>
@@ -995,4 +1067,5 @@ export const Composer = React.memo(function Composer({
       ) : null}
     </footer>
   )
-})
+  }),
+)

@@ -1,3 +1,4 @@
+import { draftToText, parseDraft, referenceSummary } from './reference'
 import type {
   ApprovalOutcome,
   Attachment,
@@ -530,6 +531,11 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
  * created once something has been said in it, so there is always a message to name it after.
  */
 export function autoTitle(text: string): string {
-  const trimmed = text.trim().replace(/\s+/g, ' ')
+  // What the user read, not what travelled: a reference token names its source in the title rather
+  // than showing the `<quote/>` it serialises to.
+  const plain = draftToText(parseDraft(text).map((part) =>
+    part.type === 'text' ? part : { type: 'text' as const, text: referenceSummary(part.token) },
+  ))
+  const trimmed = plain.trim().replace(/\s+/g, ' ')
   return trimmed.length > 72 ? `${trimmed.slice(0, 72)}…` : trimmed
 }

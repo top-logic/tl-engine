@@ -77,13 +77,16 @@ describe('unseenBadge', () => {
 })
 
 describe('composeOutboundText', () => {
-  it('prepends context and chips before the typed text', () => {
-    expect(
-      composeOutboundText('hello', 'project X', [{ id: 'c1', label: '§01', payload: 'quoted' }]),
-    ).toBe('<context>project X</context>\n<quote label="§01">quoted</quote>\nhello')
+  it('prepends the context prefix before the draft', () => {
+    expect(composeOutboundText('hello', 'project X')).toBe('<context>project X</context>\nhello')
   })
 
-  it('returns the typed text alone when nothing else is set', () => {
-    expect(composeOutboundText('hello', undefined, [])).toBe('hello')
+  it('returns the draft alone when no context is set', () => {
+    expect(composeOutboundText('hello', undefined)).toBe('hello')
+  })
+
+  it('leaves an inline reference where the user put it', () => {
+    const draft = 'Kürze <quote label="§ 3" ref="inv-1">Zahlbar in 14 Tagen.</quote> und erkläre warum.'
+    expect(composeOutboundText(draft, undefined)).toBe(draft)
   })
 })

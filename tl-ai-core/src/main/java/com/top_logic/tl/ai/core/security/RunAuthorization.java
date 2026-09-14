@@ -152,6 +152,82 @@ public class RunAuthorization {
 		return audit(decide(_mcpServers, serverName, agentServers == null ? Set.of() : agentServers));
 	}
 
+	/**
+	 * Why the agent's <em>own</em> model may not be used, recording the refusal in the audit log.
+	 *
+	 * <p>
+	 * Asked for every run, not only for one that names a model: what an agent is assigned is not a
+	 * choice, and is therefore permitted - but a {@code <deny>} still forbids it, and until this was
+	 * asked a refusal could be escaped by saying nothing. A client that names the agent's own model
+	 * was refused while the identical silent request ran.
+	 * </p>
+	 *
+	 * @param assignedModel
+	 *        The model the agent of this run is assigned; may be <code>null</code>.
+	 * @return The refusal, or <code>null</code> if the run may use it.
+	 */
+	public Decision.Denied assignedModelRefusal(String assignedModel) {
+		return audit(agentsOwn(decide(_models, assignedModel, singleton(assignedModel))));
+	}
+
+	/**
+	 * Why a server the agent <em>declares</em> may not be reached, recording the refusal in the audit
+	 * log.
+	 *
+	 * @param serverName
+	 *        One of the servers the agent of this run declares.
+	 * @param declaredServers
+	 *        All of them.
+	 * @return The refusal, or <code>null</code> if the run may reach it.
+	 * @see #assignedModelRefusal(String)
+	 */
+	public Decision.Denied declaredServerRefusal(String serverName, Collection<String> declaredServers) {
+		return audit(agentsOwn(decide(_mcpServers, serverName,
+			declaredServers == null ? Set.of() : declaredServers)));
+	}
+
+	/**
+	 * Whether a run of an agent with the given model and servers is possible at all for this
+	 * principal, without logging a refusal.
+	 *
+	 * <p>
+	 * For a menu: an agent whose own model or own server a role forbids cannot run for this account,
+	 * so offering it would offer a turn that is refused whatever the user then picks.
+	 * </p>
+	 *
+	 * @param assignedModel
+	 *        The model that agent is assigned; may be <code>null</code>.
+	 * @param declaredServers
+	 *        The servers it declares; may be <code>null</code>.
+	 */
+	public boolean allowsAgentsOwn(String assignedModel, Collection<String> declaredServers) {
+		if (decide(_models, assignedModel, singleton(assignedModel)) != null) {
+			return false;
+		}
+		if (declaredServers != null) {
+			for (String serverName : declaredServers) {
+				if (decide(_mcpServers, serverName, declaredServers) != null) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * The same refusal, said as what it is: not a choice of the user's that was turned down, but two
+	 * settings of the application that contradict each other.
+	 */
+	private static Decision.Denied agentsOwn(Decision.Denied denied) {
+		return denied == null ? null
+			: new Decision.Denied(denied.dimension(), denied.name(), denied.byRole(),
+				RoleAccessPolicy.Cause.AGENTS_OWN_DENIED);
+	}
+
+	private static Set<String> singleton(String name) {
+		return name == null ? Set.of() : Set.of(name);
+	}
+
 	/** Whether the run's principal may run the named agent, without logging a refusal. */
 	public boolean allowsAgent(String agentName) {
 		return decide(_agents, agentName, Set.of()) == null;

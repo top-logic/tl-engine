@@ -19,6 +19,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Cause;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.McpDefault;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.McpGrant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.McpRoleAccess;
@@ -93,6 +94,37 @@ public class TestMcpAccess extends TestCase {
 
 		policy.getMcpAccess().setDefault(McpDefault.NONE);
 		assertEquals(List.of(), mcp(policy).allowed(Set.of("Clerk"), configured, declared));
+	}
+
+	/**
+	 * A denied server the agent <em>declares</em> refuses the run, however silent the request is.
+	 *
+	 * <p>
+	 * The counterpart of the deny rule: it answers only when it is asked, and a client that does not
+	 * override the servers names none. The agent attaches them anyway, so the run has to ask on its
+	 * own behalf - see {@code AgentFactory.refusalFor}.
+	 * </p>
+	 */
+	public void testADeniedDeclaredServerRefusesTheRunItself() {
+		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		put(policy, role("ticketReader", List.of(), List.of("jira")));
+		RunAuthorization access =
+			new RunAuthorization(null, null, mcp(policy), null, Set.of("ticketReader"));
+		Set<String> declared = Set.of("internal-docs", "jira");
+
+		assertNull("A declared server no role forbids stays reachable.",
+			access.declaredServerRefusal("internal-docs", declared));
+
+		Decision.Denied denied = access.declaredServerRefusal("jira", declared);
+		assertNotNull("A run that would attach a denied server must not start.", denied);
+		assertEquals("It is not a choice of the user's that was turned down.",
+			Cause.AGENTS_OWN_DENIED, denied.cause());
+		assertNotNull("The refusal has to be showable to the user.", denied.reason());
+
+		assertFalse("Such an agent cannot run for this account, so no menu may offer it.",
+			access.allowsAgentsOwn(null, declared));
+		assertTrue("An agent that declares only permitted servers still runs.",
+			access.allowsAgentsOwn(null, Set.of("internal-docs")));
 	}
 
 	private static RoleAccessPolicy mcp(ToolAccessPolicy policy) {

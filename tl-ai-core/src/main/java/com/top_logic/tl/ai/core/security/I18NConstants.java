@@ -57,6 +57,34 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 MODEL_NOT_GRANTED__MODEL;
 
 	/**
+	 * Refusal shown when the model an agent is assigned is forbidden to a role of the acting account.
+	 *
+	 * @en Your agent runs on the model {0}, which is excluded for your role. Nothing you can choose
+	 *     changes that - please report it to an administrator.
+	 * @de Ihr Agent läuft auf dem Modell {0}, das für Ihre Rolle ausgeschlossen ist. Daran ändert
+	 *     keine Auswahl etwas - bitte melden Sie es einem Administrator.
+	 */
+	public static ResKey1 MODEL_OF_THE_AGENT_DENIED__MODEL;
+
+	/**
+	 * Refusal shown when a server an agent declares is forbidden to a role of the acting account.
+	 *
+	 * @en Your agent uses the MCP server {0}, which is excluded for your role. Nothing you can choose
+	 *     changes that - please report it to an administrator.
+	 * @de Ihr Agent verwendet den MCP-Server {0}, der für Ihre Rolle ausgeschlossen ist. Daran ändert
+	 *     keine Auswahl etwas - bitte melden Sie es einem Administrator.
+	 */
+	public static ResKey1 SERVER_OF_THE_AGENT_DENIED__SERVER;
+
+	/**
+	 * Refusal shown when a request names an agent this application does not have.
+	 *
+	 * @en There is no agent named {0}.
+	 * @de Es gibt keinen Agenten namens {0}.
+	 */
+	public static ResKey1 UNKNOWN_AGENT__AGENT;
+
+	/**
 	 * Refusal shown when a request chooses a model although no role lets it choose one at all.
 	 *
 	 * @en The model {0} is not available to you. This request runs on the model its agent is assigned.
@@ -122,6 +150,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey denial(Dimension dimension, Cause cause, String name, String roleName) {
 		switch (dimension) {
 			case MODEL:
+				if (cause == Cause.AGENTS_OWN_DENIED) {
+					return MODEL_OF_THE_AGENT_DENIED__MODEL.fill(name);
+				}
 				if (cause == Cause.ROLE_DENY) {
 					return MODEL_DENIED_BY_ROLE__MODEL_ROLE.fill(name, roleName);
 				}
@@ -129,6 +160,9 @@ public class I18NConstants extends I18NConstantsBase {
 					? MODEL_NOT_THE_AGENTS__MODEL.fill(name)
 					: MODEL_NOT_GRANTED__MODEL.fill(name);
 			case MCP_SERVER:
+				if (cause == Cause.AGENTS_OWN_DENIED) {
+					return SERVER_OF_THE_AGENT_DENIED__SERVER.fill(name);
+				}
 				if (cause == Cause.ROLE_DENY) {
 					return MCP_DENIED_BY_ROLE__SERVER_ROLE.fill(name, roleName);
 				}

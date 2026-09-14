@@ -19,6 +19,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Cause;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelDefault;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelGrant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelRoleAccess;
@@ -96,6 +97,43 @@ public class TestModelAccess extends TestCase {
 
 		assertDenied(models(policy).check(Set.of("ticketReader"), "claude-opus-4-1",
 			Set.of("claude-opus-4-1")), Cause.ROLE_DENY);
+	}
+
+	/**
+	 * A denied assigned model refuses every run of that agent, however silent the request is.
+	 *
+	 * <p>
+	 * The counterpart of {@link #testDenyBeatsTheAgentsOwnModel}: the policy answers that way only
+	 * when it is <em>asked</em>, and until #392's second round nothing asked about a model no client
+	 * had named. A request that named the agent's own model was refused while the identical request
+	 * without the field ran on exactly that model.
+	 * </p>
+	 */
+	public void testADeniedAssignedModelRefusesTheRunItself() {
+		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		put(policy, role("ticketReader", List.of(), List.of("claude-opus-4-1")));
+		RunAuthorization access = new RunAuthorization(null, models(policy), null, null,
+			Set.of("ticketReader"));
+
+		Decision.Denied denied = access.assignedModelRefusal("claude-opus-4-1");
+		assertNotNull("A run on a model this role is denied must not start.", denied);
+		assertEquals("It is not a choice of the user's that was turned down.",
+			Cause.AGENTS_OWN_DENIED, denied.cause());
+		assertNotNull("The refusal has to be showable to the user.", denied.reason());
+
+		assertFalse("Such an agent cannot run for this account, so no menu may offer it.",
+			access.allowsAgentsOwn("claude-opus-4-1", Set.of()));
+	}
+
+	/** A model no role forbids stays what it always was: not a choice, and not a refusal. */
+	public void testAnAssignedModelNobodyForbidsIsNotRefused() {
+		ToolAccessPolicy policy = TypedConfiguration.newConfigItem(ToolAccessPolicy.class);
+		put(policy, role("ticketReader", List.of("claude-haiku-4-5"), List.of()));
+		RunAuthorization access = new RunAuthorization(null, models(policy), null, null,
+			Set.of("ticketReader"));
+
+		assertNull(access.assignedModelRefusal("claude-opus-4-1"));
+		assertTrue(access.allowsAgentsOwn("claude-opus-4-1", Set.of()));
 	}
 
 	/**

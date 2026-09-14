@@ -60,6 +60,7 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
@@ -358,9 +359,10 @@ public class ChatServlet extends TopLogicServlet {
 			body.isMcpOverride(),
 			body.getMcpServers(),
 			effort);
-		String refusal = runRefusal(person, options);
+		Refusal refusal = runRefusal(person, options);
 		if (refusal != null) {
-			writeForbidden(resp, ChatSendResponse.create().setStatus(FORBIDDEN).setReason(refusal));
+			writeRefused(resp, refusal,
+				ChatSendResponse.create().setStatus(FORBIDDEN).setReason(refusal.reason()));
 			return;
 		}
 		ChatProcessor.SendResult result =
@@ -416,9 +418,10 @@ public class ChatServlet extends TopLogicServlet {
 			body.isMcpOverride(), body.getMcpServers(), blankToNull(body.getEffort()));
 		// Before the turn is removed, not after: a regenerate that is refused must leave the answer it
 		// was going to replace where it is.
-		String refusal = runRefusal(resolveCurrentPerson(req), options);
+		Refusal refusal = runRefusal(resolveCurrentPerson(req), options);
 		if (refusal != null) {
-			writeForbidden(resp, TruncateResponse.create().setStatus(FORBIDDEN).setReason(refusal));
+			writeRefused(resp, refusal,
+				TruncateResponse.create().setStatus(FORBIDDEN).setReason(refusal.reason()));
 			return;
 		}
 
@@ -619,7 +622,38 @@ public class ChatServlet extends TopLogicServlet {
 	 * request, or the policy service not running - and the run is then refused where it starts.
 	 * </p>
 	 */
-	private String runRefusal(Person person, ChatProcessor.ChatRunOptions options) {
+	private Refusal runRefusal(Person person, ChatProcessor.ChatRunOptions options) {
+		String named = blankToNull(options.agent());
+		Refusal denial = policyRefusal(person, options);
+		if (denial != null) {
+			return denial;
+		}
+		if (named != null && !agentExists(named.trim())) {
+			// A name no agent has. Answered here rather than accepted and left to fail in the
+			// background thread, where it reached the user as a turn that stopped and the
+			// administrator as an ERROR with a stack trace. Not a refusal: the request is wrong,
+			// not forbidden, so it is 404 and not 403.
+			return new Refusal(HttpServletResponse.SC_NOT_FOUND, Resources.getInstance()
+				.getString(com.top_logic.tl.ai.core.security.I18NConstants.UNKNOWN_AGENT__AGENT
+					.fill(named.trim())));
+		}
+		return null;
+	}
+
+	/** Whether this application has an agent of that name, assuming it has while it cannot say. */
+	private static boolean agentExists(String agentName) {
+		try {
+			return AgentDefinitionQuery.getInstance().findAgentByName(agentName) != null;
+		} catch (RuntimeException ex) {
+			// Cannot enumerate, so cannot judge: leave the request to the run, as before.
+			Logger.warn("Could not check whether an agent '" + agentName + "' exists.", ex,
+				ChatServlet.class);
+			return true;
+		}
+	}
+
+	/** Why the agent security policy refuses this request, or <code>null</code> if it does not. */
+	private Refusal policyRefusal(Person person, ChatProcessor.ChatRunOptions options) {
 		if (person == null || !AiToolAccessService.Module.INSTANCE.isActive()) {
 			return null;
 		}
@@ -638,8 +672,8 @@ public class ChatServlet extends TopLogicServlet {
 		if (agentName == null) {
 			// A request that names no agent, from an account that may run none. Its own sentence: the
 			// name of the agent they may not have says nothing they can act on.
-			return Resources.getInstance().getString(
-				com.top_logic.tl.ai.core.security.I18NConstants.NO_AGENT_AVAILABLE);
+			return forbidden(Resources.getInstance().getString(
+				com.top_logic.tl.ai.core.security.I18NConstants.NO_AGENT_AVAILABLE));
 		}
 		List<String> mcpOverride = options.mcpOverride() ? options.mcpServers() : null;
 		AgentFactory.RunOverrides overrides =
@@ -651,7 +685,24 @@ public class ChatServlet extends TopLogicServlet {
 			Logger.warn("Could not pre-check what '" + agentName + "' may run.", ex, ChatServlet.class);
 			return null;
 		}
-		return denied == null ? null : Resources.getInstance().getString(denied.reason());
+		return denied == null ? null : forbidden(Resources.getInstance().getString(denied.reason()));
+	}
+
+	/**
+	 * Why a request cannot be carried out, and the status that says which kind of "cannot" it is.
+	 *
+	 * @param status
+	 *        The HTTP status to answer with.
+	 * @param reason
+	 *        The sentence the client shows, in the user's language.
+	 */
+	private record Refusal(int status, String reason) {
+		// Nothing.
+	}
+
+	/** A refusal by the agent security policy. */
+	private static Refusal forbidden(String reason) {
+		return new Refusal(HttpServletResponse.SC_FORBIDDEN, reason);
 	}
 
 	/** The agents this chat runs for itself and never offers as a conversation partner. */
@@ -661,17 +712,17 @@ public class ChatServlet extends TopLogicServlet {
 		return improver == null || improver.isBlank() ? Set.of() : Set.of(improver);
 	}
 
-	/** Answers a send the acting account may not make, with the reason the client shows. */
-	private static void writeForbidden(HttpServletResponse resp, ChatSendResponse response)
+	/** Answers a send that is refused, with the reason the client shows. */
+	private static void writeRefused(HttpServletResponse resp, Refusal refusal, ChatSendResponse response)
 			throws IOException {
-		forbidden(resp);
+		refused(resp, refusal.status());
 		resp.getWriter().write(DtoMapper.toJson(response));
 	}
 
-	/** Answers a regenerate the acting account may not make, with the reason the client shows. */
-	private static void writeForbidden(HttpServletResponse resp, TruncateResponse response)
+	/** Answers a regenerate that is refused, with the reason the client shows. */
+	private static void writeRefused(HttpServletResponse resp, Refusal refusal, TruncateResponse response)
 			throws IOException {
-		forbidden(resp);
+		refused(resp, refusal.status());
 		resp.getWriter().write(DtoMapper.toJson(response));
 	}
 
@@ -683,8 +734,8 @@ public class ChatServlet extends TopLogicServlet {
 	 * report as a generic failure - which is the opposite of what a refusal with a reason is for.
 	 * </p>
 	 */
-	private static void forbidden(HttpServletResponse resp) {
-		resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+	private static void refused(HttpServletResponse resp, int status) {
+		resp.setStatus(status);
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 	}
@@ -746,7 +797,7 @@ public class ChatServlet extends TopLogicServlet {
 			// so reaching this means the model or an MCP server was refused, which is a decision an
 			// administrator made and the user can read.
 			Logger.info("Prompt improvement refused: " + ex.getMessage(), ChatServlet.class);
-			forbidden(resp);
+			refused(resp, HttpServletResponse.SC_FORBIDDEN);
 			resp.getWriter().write(DtoMapper.toJson(ImprovePromptResponse.create()
 				.setRequestId(body.getRequestId())
 				.setStatus(FORBIDDEN)

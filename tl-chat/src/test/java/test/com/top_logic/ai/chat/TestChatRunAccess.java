@@ -249,6 +249,40 @@ public class TestChatRunAccess extends BasicTestCase {
 			HttpServletResponse.SC_FORBIDDEN == response._status);
 	}
 
+	/**
+	 * A send that names no model at all is not refused for the model it is silently given.
+	 *
+	 * <p>
+	 * Since the second round of #392 the run asks about its agent's <em>own</em> model as well, so
+	 * that a {@code <deny>} on it cannot be escaped by saying nothing. This is the other side of that
+	 * question: under the shipped default the assigned model is permitted, and a request that chooses
+	 * nothing has to go through - which is every request of the legacy chat control.
+	 * </p>
+	 */
+	public void testSendWithoutAModelIsNotRefused() throws Exception {
+		Recording response = send(anna, "{\"text\":\"hallo\",\"agent\":\"" + FRAMEWORK_AGENT + "\"}");
+
+		assertFalse("A send that chooses nothing must not be refused: " + response._body,
+			HttpServletResponse.SC_FORBIDDEN == response._status);
+	}
+
+	/**
+	 * A send that names an agent this application does not have is answered, not accepted.
+	 *
+	 * <p>
+	 * It used to be answered 200 and to die in the background thread with an ERROR and a stack trace,
+	 * leaving the user with a turn that stopped. Not a refusal: nothing forbids it, the name is simply
+	 * wrong, which is why it is 404 and says so rather than quoting the policy.
+	 * </p>
+	 */
+	public void testSendWithAnUnknownAgentIsNotFound() throws Exception {
+		Recording response = send(anna, "{\"text\":\"hallo\",\"agent\":\"NoSuchAgent\"}");
+
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, response._status);
+		assertTrue("The client shows this to the user: " + response._body,
+			response._body.toString().contains("NoSuchAgent"));
+	}
+
 	/** The capabilities payload of the acting account, as JSON. */
 	private String capabilities() throws Exception {
 		Recording response = new Recording();

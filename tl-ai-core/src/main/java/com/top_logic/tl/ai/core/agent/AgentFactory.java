@@ -339,15 +339,51 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		String configured = LLMService.Module.INSTANCE.isActive()
 			? LLMService.getInstance().getEntryPointAgentName()
 			: null;
-		if (isOffered(configured, excluded) && authorization.allowsAgent(configured)) {
+		if (canRun(authorization, configured, excluded)) {
 			return configured;
 		}
 		for (AgentDefinition agent : agents()) {
-			if (isOffered(agent.name(), excluded) && authorization.allowsAgent(agent.name())) {
+			if (canRun(authorization, agent.name(), excluded)) {
 				return agent.name();
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Whether a run of this agent would start at all for the given principal.
+	 *
+	 * <p>
+	 * More than the allowlist: an agent whose own model or whose own server a role denies cannot run
+	 * for that account either, and falling back to one would answer a client that named no agent with
+	 * a refusal it can do nothing about.
+	 * </p>
+	 */
+	private static boolean canRun(RunAuthorization authorization, String agentName,
+			Collection<String> excluded) {
+		if (!isOffered(agentName, excluded) || !authorization.allowsAgent(agentName)) {
+			return false;
+		}
+		AgentDefinition agentDef;
+		try {
+			agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+		} catch (RuntimeException ex) {
+			// Cannot look it up, so cannot rule it out - the run itself decides, as it always does.
+			Logger.debug("Cannot read '" + agentName + "' to check what it uses.", AgentFactory.class);
+			return true;
+		}
+		return agentDef == null
+			|| authorization.allowsAgentsOwn(assignedModelOf(agentDef.name()), agentDef.mcpServers());
+	}
+
+	/** The model the given agent is assigned, or <code>null</code> while that cannot be resolved. */
+	static String assignedModelOf(String agentName) {
+		try {
+			return LLMService.getInstance().resolveModelAssignment(agentName).model();
+		} catch (RuntimeException ex) {
+			Logger.debug("No model assignment to check '" + agentName + "' against.", AgentFactory.class);
+			return null;
+		}
 	}
 
 	/** Whether the given name is one a client would be offered. */
@@ -394,22 +430,34 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		if (agentDef == null) {
 			return authorization.agentRefusal(agentName);
 		}
-		String assignedModel;
-		try {
-			assignedModel = LLMService.getInstance().resolveModelAssignment(agentDef.name()).model();
-		} catch (RuntimeException ex) {
-			Logger.debug("No model assignment to check '" + agentName + "' against.", AgentFactory.class);
-			assignedModel = null;
-		}
-		return refusalFor(authorization, agentDef, assignedModel, overrides);
+		return refusalFor(authorization, agentDef, assignedModelOf(agentDef.name()), overrides);
 	}
 
 	/** The refusal of one run, or <code>null</code>; the one place the three questions are asked. */
 	private static Decision.Denied refusalFor(RunAuthorization authorization, AgentDefinition agentDef,
 			String assignedModel, RunOverrides overrides) {
 		Decision.Denied agentRefusal = authorization.agentRefusal(agentDef.name());
-		if (agentRefusal != null || overrides == null) {
+		if (agentRefusal != null) {
 			return agentRefusal;
+		}
+
+		// What the agent itself uses, asked for every run and not only for one that names it. It is
+		// not a choice and is therefore permitted - but a <deny> still forbids it, and while this was
+		// unasked the refusal could be escaped by staying silent: a client that named the agent's own
+		// model was refused, and the identical request without the field ran on exactly that model.
+		Decision.Denied ownModel = authorization.assignedModelRefusal(assignedModel);
+		if (ownModel != null) {
+			return ownModel;
+		}
+		for (String declared : agentDef.mcpServers()) {
+			Decision.Denied ownServer = authorization.declaredServerRefusal(declared, agentDef.mcpServers());
+			if (ownServer != null) {
+				return ownServer;
+			}
+		}
+
+		if (overrides == null) {
+			return null;
 		}
 		if (overrides.hasModel()) {
 			Decision.Denied modelRefusal = authorization.modelRefusal(overrides.model(), assignedModel);

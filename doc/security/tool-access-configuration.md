@@ -352,15 +352,19 @@ roles permit there - the section's default no longer applies to them, and it sti
 else. That is what lets you restrict one role in a running application without touching anyone.
 
 - A role entry with **no** `<grants>` lets its holders use none of them.
-- A `<deny>` wins over everything, including over what the agent itself uses.
+- A `<deny>` wins over everything, including over what the agent itself uses. Denying a model an
+  agent is assigned, or a server it declares, therefore takes that **agent** away from the role: a run
+  of it is refused whatever the user picks afterwards, and the chat drops it from the picker rather
+  than offering a turn that comes back refused. Deny what a role's own agents use only when you mean
+  that.
 - What the agent itself uses - the model it is assigned, a server it declares - is always permitted
   unless a `<deny>` names it. A request that echoes the agent's own model back is not choosing a model,
   and every chat client does exactly that on every turn.
 - **A `<grant>` is a floor, not a ceiling.** It adds to what the agents of that role already use; it
   cannot take anything away. A role granted only the small model may still run on the large one when
   that is what its agent is assigned, and the only ways to stop that are a `<deny>` naming the large
-  model or a different assignment for the agent. If you are restricting rather than widening, write
-  the `<deny>`.
+  model - which takes that agent away from the role, see above - or a different assignment for the
+  agent. If you are restricting rather than widening, write the `<deny>`.
 - `none` refuses the same requests as `assigned` and `agent` do. What it changes is what a client is
   *offered*: under `none` the menu is empty, so the choice is not shown at all.
 - Administrators bypass all three.
@@ -385,9 +389,10 @@ else. That is what lets you restrict one role in a running application without t
 </mcp-access>
 ```
 
-A holder of `ticketReader` is offered `TL_ModelExplorer` and nothing else, may pick the Haiku model as
-well as the one its agent is assigned, and cannot attach `internal-docs` even to an agent that declares
-it. Everybody else keeps every agent.
+A holder of `ticketReader` is offered `TL_ModelExplorer` and nothing else, and may pick the Haiku model
+as well as the one its agent is assigned. `internal-docs` is out of reach: an agent that does not
+declare it cannot attach it, and an agent that *does* declare it is not offered to this role at all,
+because every run of it would reach the denied server. Everybody else keeps every agent.
 
 ### Which agents a restricted role needs
 

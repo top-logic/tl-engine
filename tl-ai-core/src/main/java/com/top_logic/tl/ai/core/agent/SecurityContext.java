@@ -264,6 +264,13 @@ public interface SecurityContext {
 	 * </p>
 	 *
 	 * <p>
+	 * The exemption holds for the whole run tree, not for one call: the context is what a run passes
+	 * to the subagents it delegates to, so an agent started this way may also delegate to agents the
+	 * user may not run. Use it where the product, and not the user, decides what runs - and not to
+	 * widen a run the user started.
+	 * </p>
+	 *
+	 * <p>
 	 * The default returns {@code this}, which is correct for every context that decides no agent
 	 * anyway.
 	 * </p>

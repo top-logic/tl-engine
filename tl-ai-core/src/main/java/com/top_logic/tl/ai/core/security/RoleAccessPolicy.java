@@ -144,7 +144,18 @@ public final class RoleAccessPolicy {
 		NOT_GRANTED,
 
 		/** Only what the agent itself uses is permitted, and this is not that. */
-		NOT_THE_AGENTS;
+		NOT_THE_AGENTS,
+
+		/**
+		 * The agent itself uses it and a role forbids it.
+		 *
+		 * <p>
+		 * Nobody chose this: two settings of the application contradict each other - an agent is
+		 * assigned a model, or declares a server, that a role of the acting account may never use. It
+		 * therefore gets a sentence of its own, addressed to a user who can do nothing but report it.
+		 * </p>
+		 */
+		AGENTS_OWN_DENIED;
 	}
 
 	/**
@@ -196,6 +207,10 @@ public final class RoleAccessPolicy {
 			public String message() {
 				String what = dimension().label() + " '" + name() + "'";
 				switch (cause()) {
+					case AGENTS_OWN_DENIED:
+						return "Permission denied: the agent uses " + what + " itself, and it is"
+							+ " explicitly denied to your role '" + byRole() + "'. The agent cannot run"
+							+ " for this account at all.";
 					case ROLE_DENY:
 						return "Permission denied: " + what + " is explicitly denied to your role '"
 							+ byRole() + "'.";

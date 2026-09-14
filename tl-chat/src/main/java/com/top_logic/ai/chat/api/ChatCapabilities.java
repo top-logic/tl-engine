@@ -47,8 +47,10 @@ final class ChatCapabilities {
 	 * Filtered by the agent security policy. The agents and the MCP servers listed are exactly the
 	 * ones a run of this account would accept; the models are the ones it may choose with <em>some</em>
 	 * agent it may run, and each carries {@link ModelOptionDto#isGrantedToRole()} so that a client can
-	 * narrow the list to the agent the user has actually selected. The refusal itself stays where it
-	 * belongs - {@code AgentFactory} decides, and this list only keeps the menu honest.
+	 * narrow the list to the agent the user has actually selected. An agent whose <em>own</em> model or
+	 * whose <em>own</em> server is denied to the account is dropped: it cannot run for it at all. The
+	 * refusal itself stays where it belongs - {@code AgentFactory} decides, and this list only keeps
+	 * the menu honest.
 	 * </p>
 	 *
 	 * @param person
@@ -75,6 +77,11 @@ final class ChatCapabilities {
 				continue;
 			}
 			AgentOptionDto dto = toAgentDto(agent, llm);
+			if (access != null && !access.allowsAgentsOwn(dto.getModel(), dto.getMcpServers())) {
+				// Its own model or one of its own servers is denied to this account: a run of it is
+				// refused whatever the user picks afterwards, so the menu must not offer it.
+				continue;
+			}
 			if (!dto.getModel().isEmpty()) {
 				assignedModels.add(dto.getModel());
 			}

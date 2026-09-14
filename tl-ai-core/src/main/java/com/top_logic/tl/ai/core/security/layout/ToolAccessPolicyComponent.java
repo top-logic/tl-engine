@@ -1199,11 +1199,28 @@ public class ToolAccessPolicyComponent extends FormComponent {
 			if (_syncing) {
 				return;
 			}
-			_draft.setRunRestricted(dimension, roleName, Boolean.TRUE.equals(newValue));
+			boolean restricted = Boolean.TRUE.equals(newValue);
+			_draft.setRunRestricted(dimension, roleName, restricted);
+			if (!restricted) {
+				// Switching off drops the role's entry from the draft, names and all. Emptying the two
+				// lists says so on the screen: they would otherwise go on showing names that are no
+				// longer anywhere, and switching back on would silently start from nothing.
+				syncing(() -> {
+					clearSelection(group, FIELD_ALLOWED_PREFIX + index);
+					clearSelection(group, FIELD_FORBIDDEN_PREFIX + index);
+				});
+			}
 			refreshNotes();
 		});
 		group.addMember(field);
 		return fieldBox(path(prefix, fieldName));
+	}
+
+	/** Empties one of the two name lists, if the form has it. */
+	private static void clearSelection(FormGroup group, String fieldName) {
+		if (group.hasMember(fieldName) && group.getMember(fieldName) instanceof SelectField names) {
+			names.setAsSelection(List.of());
+		}
 	}
 
 	/** One role's list of permitted - or forbidden - names in one section. */

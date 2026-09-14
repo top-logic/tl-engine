@@ -1355,6 +1355,16 @@ and leaves everybody else where they were, which is what adding one restricted r
 application means. A role entry with no `<grants>` is therefore how "this role may use none of them"
 is said.
 
+The five rules answer about **one name the request asked for**, and a request asks about very little:
+the chat sends a model and, when the user attached one, a server. So the run asks the two remaining
+questions on its own behalf, before it starts - is the model my agent is assigned denied to this
+account, is any server my agent declares denied to it - and refuses if either is. Without them rule 1
+would answer only when a client happened to name the denied thing: a request that echoed the agent's
+own model back was refused while the identical request without the field ran on exactly that model.
+The consequence is worth stating to whoever writes the policy: denying what an agent itself uses takes
+that **agent** away from the role, and the chat's `/chat/capabilities` drops it for the same reason -
+a menu that offered it would offer a turn that comes back refused.
+
 The defaults are each the least surprising safe answer for their own question rather than one uniform
 one:
 

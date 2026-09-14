@@ -51,10 +51,15 @@ same tool on its catalog (and, if it has its own prompt, the same instruction).
    none at all). Kept declarations are keyed by tool call id, so two that claim the same number are
    both seen instead of one overwriting the other.
 4. Parse `[n]` from **every** `TextPart` of the turn, skipping inline code spans and fenced blocks.
-   Markers whose declared citation survived are renumbered in order of first appearance; markers
-   claimed by a dropped declaration are deleted together with the space in front of them; **every
-   other `[n]` stays exactly as the model wrote it** - an array index, a footnote and a code sample
-   are prose, not citations.
+   Markers whose declared citation survived are renumbered in order of first appearance. **Every
+   other `[n]` outside code is deleted**, together with the space in front of it - whether a cite
+   call claimed it and lost or the model wrote it out of nowhere: in a turn that cited, `[n]` is
+   that turn's own numbering, and a citation-shaped thing that resolves to nothing is worse than no
+   marker (#401 §3.2, "no marker survives without a citation").
+
+   The cost is that a prose bracket in a citing turn goes with it. That is why step 1 matters: a
+   turn that cited **nothing** is not rewritten at all, so `werte[0]`, footnotes and code samples in
+   an ordinary answer are safe. Code spans and fenced blocks are safe in both cases.
 5. Rewrite the turn's `TextPart`s, attach the kept citations to the parts their markers occur in,
    and put text plus citations on `message_complete`.
 

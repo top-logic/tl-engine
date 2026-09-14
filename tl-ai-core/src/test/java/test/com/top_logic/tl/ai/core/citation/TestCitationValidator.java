@@ -99,13 +99,32 @@ public class TestCitationValidator extends TestCase {
 		assertEquals(answer, result.text());
 	}
 
-	/** A marker the model wrote but no cite call claimed stays, even when the turn did cite. */
-	public void testUnclaimedMarkerSurvivesBesideACitation() {
+	/**
+	 * In a turn that cited, a marker pointing at nothing is deleted - the model invented it or its
+	 * citation was dropped, and either way it resolves to nothing.
+	 *
+	 * <p>
+	 * The cost is that prose brackets in such a turn go with it. That is the agreed trade: the
+	 * turn's own numbering is in force, and a reader cannot tell an invented {@code [7]} from a real
+	 * one. A turn that cited nothing keeps every bracket - see
+	 * {@link #testUndeclaredMarkersSurvive()}.
+	 * </p>
+	 */
+	public void testUnclaimedMarkerIsStrippedInACitingTurn() {
 		Result result = CitationValidator.validate(
-			"Fact [1] and the array werte[7].",
+			"Fact [1] and an invented [7].",
 			List.of(decl(1, "INV-12", "")),
 			List.of("invoice INV-12"));
-		assertEquals("Fact [1] and the array werte[7].", result.text());
+		assertEquals("Fact [1] and an invented.", result.text());
+	}
+
+	/** Even in a citing turn, code keeps its brackets. */
+	public void testCodeKeepsItsBracketsInACitingTurn() {
+		Result result = CitationValidator.validate(
+			"Fact [1]. Inline `werte[7]` and:\n```java\nint a = werte[7];\n```",
+			List.of(decl(1, "INV-12", "")),
+			List.of("invoice INV-12"));
+		assertEquals("Fact [1]. Inline `werte[7]` and:\n```java\nint a = werte[7];\n```", result.text());
 	}
 
 	/** Nothing inside an inline code span or a fenced block is rewritten. */
@@ -213,9 +232,10 @@ public class TestCitationValidator extends TestCase {
 		assertEquals(1, result.citations().size());
 		assertEquals("http://quotes.toscrape.com/page/2/", result.citations().get(0).id());
 		assertEquals("web", result.citations().get(0).kind());
-		// The recorded run is the one with the thread-local counter: both calls returned "1", so
-		// only one marker was ever claimed and the second is prose the validator must not touch.
-		assertEquals("Seite 1 sagt das eine [1], Seite 2 das andere [2].", result.text());
+		// The recorded run is the one with the thread-local counter: both calls returned "1", so only
+		// one marker was ever claimed. The turn cited, so its own numbering is in force and the [2]
+		// that points at nothing is deleted rather than left to look like a citation.
+		assertEquals("Seite 1 sagt das eine [1], Seite 2 das andere.", result.text());
 	}
 
 	/** Both URLs of the recorded run are evidenced by the run's own {@code webFetch} results. */

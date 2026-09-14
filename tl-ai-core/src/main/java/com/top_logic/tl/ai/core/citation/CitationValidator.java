@@ -33,10 +33,12 @@ import com.top_logic.tl.ai.tool.api.json.JsonTree;
  * </p>
  *
  * <p>
- * <b>Everything else in the answer is left alone.</b> A turn that declared no citation is not
- * rewritten at all, a {@code [n]} that no cite call ever claimed stays where the model wrote it,
- * and no marker inside an inline code span or a fenced code block is touched - {@code werte[0]},
- * a hand-written footnote and a code sample are prose, not citations.
+ * <b>A turn that cited nothing is left completely alone</b> - no numbering is in force, so
+ * {@code werte[0]}, a hand-written footnote and a code sample are prose and stay exactly as
+ * written. In a turn that <em>did</em> cite, {@code [n]} is that turn's own numbering: a marker
+ * pointing at no surviving citation is deleted, because a citation-shaped thing that resolves to
+ * nothing is worse than no marker. No marker inside an inline code span or a fenced code block is
+ * touched in either case.
  * </p>
  */
 public final class CitationValidator {
@@ -239,9 +241,17 @@ public final class CitationValidator {
 				item.label(), item.url(), passage, excerptAround(passage, evidence)));
 			next++;
 		}
-		// Only a number a cite call claimed and lost is deleted from the text. Everything else the
-		// model wrote in brackets is prose and stays.
+		// In a turn that cited, [n] is the turn's own numbering: a number that points at no surviving
+		// citation is a citation-shaped thing that resolves to nothing, whether a cite call claimed
+		// it and lost or the model wrote it out of nowhere. Both go.
+		//
+		// A turn that cited NOTHING is a different matter and is handled above: there is no numbering
+		// in force, so every bracket is prose and the answer is not touched at all. Code spans and
+		// fenced blocks are never touched either way.
 		Set<Integer> strip = new LinkedHashSet<>(claimed);
+		for (String text : texts) {
+			strip.addAll(markersOf(text));
+		}
 		strip.removeAll(byIndex.keySet());
 
 		if (dropped > 0) {
@@ -387,12 +397,19 @@ public final class CitationValidator {
 	 * </p>
 	 */
 	private static String readable(String window) {
-		return window
+		String text = window
 			.replaceAll("</?untrusted_page_content[^>]*>", " ")
 			.replaceAll("\\[([^\\]]*)\\]\\([^)]*\\)", "$1")
 			.replaceAll("^#+\\s*", " ")
 			.replaceAll("\\s+", " ")
 			.trim();
+		// The window cuts wherever the character count runs out, which can be in the middle of a
+		// markdown link the replacement above could then not undo. Drop what is left of it.
+		int dangling = text.lastIndexOf('[');
+		if (dangling >= 0 && text.indexOf(')', dangling) < 0) {
+			text = text.substring(0, dangling).trim();
+		}
+		return text;
 	}
 
 	private static boolean containsToken(String blob, String token) {

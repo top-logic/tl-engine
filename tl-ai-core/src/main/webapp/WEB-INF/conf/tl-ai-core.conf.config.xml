@@ -154,8 +154,9 @@
 			     acquire-timeout-seconds. A session idle for session-idle-timeout-seconds is
 			     closed.
 
-			     Timeouts: navigation-timeout-seconds bounds a PAGE LOAD (navigate/back) - i.e.
-			     waiting for the network. action-timeout-seconds bounds acting on a single ELEMENT
+			     Timeouts: navigation-timeout-seconds bounds a PAGE LOAD (navigate/back, and a
+			     browserClick that started a navigation) - i.e. waiting for the document and its
+			     load event. action-timeout-seconds bounds acting on a single ELEMENT
 			     (browserClick / browserType, and reading the accessibility snapshot) and is
 			     deliberately much shorter: a click waits for actionability, and once the page has
 			     re-rendered that element away no further waiting can succeed, so a page-load-sized
@@ -163,17 +164,26 @@
 			     answers with an actionable "call browserSnapshot and retry with a fresh ref"
 			     instead. It is clamped to at most navigation-timeout-seconds.
 
-			     navigation-settle-millis: after browserNavigate/browserBack finish their
-			     network/load wait and before the page is captured, wait until the DOM goes quiet
-			     (no mutation for a short internal ~500 ms debounce) AND any in-flight, finite CSS
-			     animation has finished, or until this hard cap elapses, whichever first. That
-			     captures content injected just after navigation (cookie-consent banners, lazy
-			     widgets) without a manual re-snapshot, and keeps a banner that is animating AWAY
-			     from being reported as still-clickable. Endlessly repeating animations (spinners,
-			     carousels) are ignored, so they never push a load out to the cap. A still page is
-			     delayed by at most the debounce window; the cap is always applied inside
-			     navigation-timeout-seconds, so it can never hang. 0 disables it (immediate
-			     capture). Does not apply to browserSnapshot / browserType (they stay immediate).
+			     navigation-settle-millis: hard cap of the post-load SETTLE. After a page-loading
+			     operation (browserNavigate / browserBack / a navigating browserClick) has seen the
+			     page load, and before it is captured, two waits run and THIS cap bounds each of
+			     them. First network-quiet: a brief chance for client-side rendering that starts
+			     only after the load event, ending as soon as the page has issued no request for
+			     Playwright's idle window. It is deliberately NOT bounded by
+			     navigation-timeout-seconds - a page that polls, streams or beacons (most SSO login
+			     pages, most SPAs) never goes network-idle at all, so a page-load-sized budget there
+			     bought nothing and cost that whole budget per operation. Then DOM-quiet: wait until
+			     the DOM goes quiet (no mutation for a short internal ~500 ms debounce) AND any
+			     in-flight, finite CSS animation has finished. That captures content injected just
+			     after navigation (cookie-consent banners, lazy widgets) without a manual
+			     re-snapshot, and keeps a banner that is animating AWAY from being reported as
+			     still-clickable. Endlessly repeating animations (spinners, carousels) are ignored,
+			     so they never push a load out to the cap. A still page is delayed by at most the
+			     debounce window; the cap is always applied inside navigation-timeout-seconds, so it
+			     can never hang. 0 disables the settle (capture as soon as the page has loaded).
+			     Does not apply to browserSnapshot / browserType (they stay immediate), nor to a
+			     browserClick that started no navigation - that one waits for DOM-quiet only,
+			     because there is no page load to wait for.
 
 			     headless: launch toggle. true (the default, production-safe) runs a windowless
 			     Chromium and needs no display. false launches a visible browser window on the app

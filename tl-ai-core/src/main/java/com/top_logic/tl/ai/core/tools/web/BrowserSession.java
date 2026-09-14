@@ -220,6 +220,23 @@ final class BrowserSession {
 	private static final int DOM_QUIET_DEBOUNCE_MILLIS = 500;
 
 	/**
+	 * How long a {@link #click} waits, after the click itself landed, to find out whether it started
+	 * a top-level navigation - the window in which {@link #_navigationStarted} may still be raised by
+	 * the browser.
+	 *
+	 * <p>
+	 * A click that navigates does so by issuing the main-frame request essentially with the click
+	 * itself (a link, a form submit) or from the handler it invoked, so half a second is a generous
+	 * window; a slow <em>server</em> does not lengthen it, because the observed event is the request
+	 * going out, not the response coming back. It is a small internal constant rather than a config
+	 * knob: it does not bound any work, it only decides how long the session listens before it
+	 * concludes that the click stayed on the page - and that conclusion is what saves the click from
+	 * the page-load-sized waits.
+	 * </p>
+	 */
+	private static final int CLICK_NAVIGATION_DETECTION_MILLIS = 500;
+
+	/**
 	 * JavaScript run right after the network/load wait and before {@link #CAPTURE_SCRIPT}, to give
 	 * late-injected content (cookie-consent banners, lazy widgets) time to appear in the DOM before
 	 * the snapshot. It resolves when the DOM has been <em>quiet</em> - no {@code childList}/subtree
@@ -464,7 +481,17 @@ final class BrowserSession {
 	 */
 	private final int _actionTimeoutMillis;
 
-	/** Hard cap (ms) of the post-navigation DOM-quiet settle; {@code 0} disables the settle. */
+	/**
+	 * Hard cap (ms) of the post-load settle: it bounds the network-quiet stage
+	 * ({@link #waitForNetworkQuiet()}) and the DOM-quiet stage ({@link #waitForDomQuiet()}) alike.
+	 * {@code 0} disables the settle, so a loaded page is captured immediately.
+	 *
+	 * <p>
+	 * That the <em>network</em> stage is bounded by this cap rather than by
+	 * {@link #_navigationTimeoutMillis} is what keeps a page that never goes network-idle from costing
+	 * a page-load timeout on every operation; see {@link #waitForNetworkQuiet()}.
+	 * </p>
+	 */
 	private final int _navigationSettleMillis;
 
 	private final DomainPolicy _policy;
@@ -586,6 +613,35 @@ final class BrowserSession {
 	 */
 	private volatile String _offPolicyNavigation;
 
+	/**
+	 * Whether the operation currently being observed has started a <b>top-level navigation</b>.
+	 *
+	 * <p>
+	 * This is what tells a {@link #click} apart from a navigating one, and it decides which settle the
+	 * click gets: a click that only changed the page in place must not pay the page-load-sized waits
+	 * that a page load needs (see {@link #settleAfterClick()}).
+	 * </p>
+	 *
+	 * <p>
+	 * Raised from two sources, because neither alone sees every navigation: the main-frame
+	 * <em>request</em> going out ({@link #installNavigationObserver}), which fires the moment the
+	 * browser commits to fetching a new document and therefore does not depend on how slow the server
+	 * is; and the main frame <em>having navigated</em> ({@link #installSameDocumentNavigationObserver}),
+	 * which additionally covers a same-document hop - a fragment or a {@code history.pushState} - that
+	 * issues no request at all. Comparing URLs is deliberately not one of the sources: a reload or a
+	 * form post to the same address navigates without changing the URL, so a URL comparison would
+	 * classify a real page load as a same-page click.
+	 * </p>
+	 *
+	 * <p>
+	 * Reset at the start of every operation by {@link #beginNavigationAttempt()}, so it can only ever
+	 * describe the operation running now. {@code volatile} for the same reason as
+	 * {@link #_offPolicyNavigation}: Playwright dispatches the callbacks on the session's confined
+	 * thread, so this is single-threaded in practice, and the modifier documents the publication.
+	 * </p>
+	 */
+	private volatile boolean _navigationStarted;
+
 	private BrowserSession(Object key, int navigationTimeoutMillis, int actionTimeoutMillis,
 			int navigationSettleMillis, DomainPolicy policy, String initialStorageState, boolean headed,
 			boolean evadeBotDetection, String proxyServer, boolean sandboxDisabled) {
@@ -643,7 +699,8 @@ final class BrowserSession {
 	 * @param navigationTimeoutMillis
 	 *        The per-page-load Playwright timeout.
 	 * @param navigationSettleMillis
-	 *        Hard cap (ms) of the post-navigation settle; {@code 0} disables it.
+	 *        Hard cap (ms) of the post-load settle (network-quiet and DOM-quiet stages); {@code 0}
+	 *        disables it.
 	 * @param policy
 	 *        The top-level-origin domain policy.
 	 * @param initialStorageState
@@ -672,9 +729,11 @@ final class BrowserSession {
 	 *        The bounded timeout for an element action (click/type/ARIA snapshot); see
 	 *        {@link #_actionTimeoutMillis}.
 	 * @param navigationSettleMillis
-	 *        Hard cap (ms) of the post-navigation DOM-quiet settle run before a page-load capture
-	 *        (see {@link #settle()}); {@code 0} disables the settle (immediate capture). Always
-	 *        bounded well inside {@link #navigationDeadlineMillis()}.
+	 *        Hard cap (ms) of the post-load settle run before a page-load capture - it bounds both
+	 *        the network-quiet stage ({@link #waitForNetworkQuiet()}) and the DOM-quiet stage
+	 *        ({@link #waitForDomQuiet()}) of {@link #settleAfterLoad()}; {@code 0} disables the
+	 *        settle (capture as soon as the page has loaded). Always bounded well inside
+	 *        {@link #navigationDeadlineMillis()}.
 	 * @param policy
 	 *        The top-level-origin domain policy.
 	 * @param initialStorageState
@@ -856,12 +915,14 @@ final class BrowserSession {
 			installSecurityRoute(_context);
 			installRedirectGuard(_context);
 			installProxyRefusalGuard(_context);
+			installNavigationObserver(_context);
 			if (_evadeBotDetection) {
 				// Mask the automation fingerprint before any page script runs (applies to every
 				// document in the context, including the initial about:blank page created below).
 				_context.addInitScript(STEALTH_INIT_SCRIPT);
 			}
 			_page = _context.newPage();
+			installSameDocumentNavigationObserver(_page);
 			Logger.info("Opened isolated " + (_headed ? "headed" : "headless") + " browser session " + _key
 				+ (_evadeBotDetection ? " (bot-detection evasion on)" : "")
 				+ (_proxyServer == null ? " (UNPROXIED - no outbound filtering)"
@@ -907,7 +968,7 @@ final class BrowserSession {
 			} catch (PlaywrightException ex) {
 				throw translateNavigationFailure(url, ex);
 			}
-			settle();
+			settleAfterLoad();
 			String finalUrl = response != null ? response.url() : _page.url();
 			verifyNavigationPolicy(finalUrl);
 			int status = response != null ? response.status() : -1;
@@ -969,7 +1030,7 @@ final class BrowserSession {
 			} catch (PlaywrightException ex) {
 				throw translateActionFailure(ref, "clicked", ex);
 			}
-			settle();
+			settleAfterClick();
 			String finalUrl = _page.url();
 			verifyNavigationPolicy(finalUrl);
 			boolean navigated = !finalUrl.equals(urlBefore);
@@ -1030,7 +1091,7 @@ final class BrowserSession {
 				// No history entry to go back to: the page is unchanged, so keep the generation.
 				return capture(_page.url(), -1, null, false);
 			}
-			settle();
+			settleAfterLoad();
 			String finalUrl = response.url();
 			verifyNavigationPolicy(finalUrl);
 			// Going back landed on a different page in history: start a new page generation.
@@ -1040,28 +1101,134 @@ final class BrowserSession {
 	}
 
 	/**
-	 * Settles a freshly loaded page before it is captured. Run only by the page-<em>loading</em>
-	 * operations ({@link #navigate}, {@link #back} and a navigating {@link #click}), never by the
-	 * explicit re-capture {@link #snapshot} or the same-page edit {@link #type}, which stay immediate.
+	 * Settles a freshly <b>loaded</b> page before it is captured. Run by the page-<em>loading</em>
+	 * operations ({@link #navigate}, {@link #back} and a {@link #click} that started a navigation),
+	 * never by the explicit re-capture {@link #snapshot} or the same-page edit {@link #type}, which
+	 * stay immediate.
 	 *
 	 * <p>
-	 * Two stages: first the network/load wait (existing behaviour), then a bounded DOM-quiet wait so
-	 * content injected shortly <em>after</em> navigation returns - cookie-consent banners, lazy
-	 * widgets - is present in the snapshot rather than requiring the model to re-snapshot manually.
+	 * Three stages, and only the first may spend the page-load budget:
 	 * </p>
+	 * <ol>
+	 * <li>{@link #waitForLoad()} - the document's own load, bounded by the page-load timeout. This is
+	 * the wait the operator sizes with {@code navigation-timeout-seconds}, and a page load is exactly
+	 * what it is for.</li>
+	 * <li>{@link #waitForNetworkQuiet()} - a best-effort wait for the network to fall silent, for
+	 * client-side rendering that only starts after the load event. Bounded by the <em>settle cap</em>,
+	 * never by the page-load timeout: a page that polls or beacons (an SSO login page, most SPAs)
+	 * never goes network-idle at all, so borrowing the page-load budget here bought nothing and cost
+	 * half a minute per operation.</li>
+	 * <li>{@link #waitForDomQuiet()} - the bounded DOM-quiet wait, so content injected shortly
+	 * <em>after</em> the load - cookie-consent banners, lazy widgets - is present in the snapshot
+	 * rather than requiring the model to re-snapshot manually.</li>
+	 * </ol>
 	 */
-	private void settle() {
-		waitForNetworkIdle();
+	private void settleAfterLoad() {
+		waitForLoad();
+		waitForNetworkQuiet();
 		waitForDomQuiet();
 	}
 
-	private void waitForNetworkIdle() {
-		// Best-effort settle for client-side rendering; many SPAs never reach full idle.
+	/**
+	 * Settles after a {@link #click}, spending only what the click actually did warrants.
+	 *
+	 * <p>
+	 * A click that started a top-level navigation gets the full page-load settle. A click that stayed
+	 * on the page - the overwhelming majority: opening a menu, ticking a box, focusing a field - gets
+	 * the bounded DOM-quiet wait and nothing else. There is no page load to wait for, so waiting for
+	 * one can only cost time; on a page that never goes network-idle it used to cost the whole
+	 * {@code navigation-timeout-seconds} on every single click.
+	 * </p>
+	 *
+	 * <p>
+	 * Whether a navigation started is decided from what the browser reported
+	 * ({@link #_navigationStarted}), listened for over a short window, rather than from the URL after
+	 * the fact: a reload or a form post to the same address changes no URL, and a click whose
+	 * navigation is still in flight has not changed it yet either.
+	 * </p>
+	 */
+	private void settleAfterClick() {
+		if (awaitNavigationStart()) {
+			settleAfterLoad();
+		} else {
+			waitForDomQuiet();
+		}
+	}
+
+	/**
+	 * Waits up to {@link #CLICK_NAVIGATION_DETECTION_MILLIS} for the browser to report that the
+	 * operation started a top-level navigation.
+	 *
+	 * <p>
+	 * {@link Page#waitForCondition(java.util.function.BooleanSupplier, Page.WaitForConditionOptions)}
+	 * rather than a sleep, for two reasons: it returns the instant the flag is raised, so the ordinary
+	 * navigating click pays nothing; and it is a Playwright call, which is the only state in which the
+	 * session's confined thread dispatches the very browser events that raise the flag - a plain sleep
+	 * would sit there deaf and always time out.
+	 * </p>
+	 *
+	 * @return Whether a top-level navigation was observed.
+	 */
+	private boolean awaitNavigationStart() {
+		if (_navigationStarted) {
+			// Already raised while the click itself was running; no need to wait at all.
+			return true;
+		}
+		try {
+			_page.waitForCondition(() -> _navigationStarted,
+				new Page.WaitForConditionOptions().setTimeout(CLICK_NAVIGATION_DETECTION_MILLIS));
+		} catch (RuntimeException noNavigation) {
+			// The window elapsed: the click stayed on the page.
+		}
+		return _navigationStarted;
+	}
+
+	/**
+	 * Waits for the current document's {@code load} event within the page-load timeout. Best-effort:
+	 * on expiry the page is captured in whatever state it reached, exactly as the network wait it
+	 * replaced did.
+	 *
+	 * <p>
+	 * {@code load} rather than {@code domcontentloaded}: the navigating verbs already return at
+	 * {@code domcontentloaded} ({@link #navigate}, {@link #back} pass it as their
+	 * {@code waitUntil}), so waiting for it again would be a no-op, and the sub-resources whose
+	 * arrival {@code load} marks - stylesheets, images, deferred scripts - are what decide whether the
+	 * captured page looks finished. It is also the last milestone a page reaches deterministically:
+	 * unlike network-idle, {@code load} fires on a polling page too.
+	 * </p>
+	 */
+	private void waitForLoad() {
+		try {
+			_page.waitForLoadState(LoadState.LOAD,
+				new Page.WaitForLoadStateOptions().setTimeout(_navigationTimeoutMillis));
+		} catch (RuntimeException loadTimeout) {
+			// Proceed with whatever has rendered so far.
+		}
+	}
+
+	/**
+	 * Waits, best-effort, until the page has made no network request for Playwright's idle window, or
+	 * until the settle cap {@link #_navigationSettleMillis} elapses - whichever comes first. A no-op
+	 * when the cap is {@code 0} (settle disabled).
+	 *
+	 * <p>
+	 * Capped by the settle cap and <b>not</b> by {@link #_navigationTimeoutMillis}: network-idle is a
+	 * best-effort signal that a whole class of ordinary pages never produces - anything that polls,
+	 * long-polls, streams or beacons, which today means most SSO login pages and most SPAs - so the
+	 * wait has to be sized as "a brief chance for client-side rendering to start", not as "a page
+	 * load". With the page-load timeout it silently became a fixed half-minute toll on exactly those
+	 * pages while adding nothing on the pages that do go idle, which reach idle in well under the cap.
+	 * </p>
+	 */
+	private void waitForNetworkQuiet() {
+		if (_navigationSettleMillis <= 0) {
+			return;
+		}
 		try {
 			_page.waitForLoadState(LoadState.NETWORKIDLE,
-				new Page.WaitForLoadStateOptions().setTimeout(_navigationTimeoutMillis));
-		} catch (RuntimeException settleTimeout) {
-			// Proceed with whatever has rendered so far.
+				new Page.WaitForLoadStateOptions().setTimeout(_navigationSettleMillis));
+		} catch (RuntimeException notQuiet) {
+			// Expected on any page that polls or beacons; proceed with what has rendered so far.
 		}
 	}
 
@@ -1087,10 +1254,12 @@ final class BrowserSession {
 	/**
 	 * Starts a fresh policy-observation window for one operation, discarding whatever the previous
 	 * one recorded. Must be called before the Playwright call that may navigate, so
-	 * {@link #_offPolicyNavigation} can only ever describe the navigation being attempted now.
+	 * {@link #_offPolicyNavigation} and {@link #_navigationStarted} can only ever describe the
+	 * navigation being attempted now.
 	 */
 	private void beginNavigationAttempt() {
 		_offPolicyNavigation = null;
+		_navigationStarted = false;
 	}
 
 	/**
@@ -1601,13 +1770,61 @@ final class BrowserSession {
 		});
 	}
 
+	/**
+	 * Installs a request listener that records that the operation currently running has started a
+	 * <b>top-level navigation</b>, so {@link #settleAfterClick()} can tell a navigating click from one
+	 * that stayed on the page.
+	 *
+	 * <p>
+	 * The main-frame <em>request</em> is the right signal to key on: the browser issues it as soon as
+	 * it commits to fetching a new document, which for a link or a form submit is within the click
+	 * itself, so the detection window can stay short no matter how slow the server answers. The
+	 * alternative signals are all worse - the URL after the fact misses a reload and a same-address
+	 * post, and the {@code framenavigated} event arrives only once the new document commits, which on
+	 * a slow server is seconds later.
+	 * </p>
+	 *
+	 * <p>
+	 * Purely observational: it decides nothing about policy and aborts nothing. Redirect hops raise the
+	 * flag again, which is harmless - it is already raised by then.
+	 * </p>
+	 */
+	private void installNavigationObserver(BrowserContext context) {
+		context.onRequest(request -> {
+			if (request.isNavigationRequest() && request.frame().parentFrame() == null) {
+				_navigationStarted = true;
+			}
+		});
+	}
+
+	/**
+	 * Completes {@link #installNavigationObserver} for the navigations that issue <b>no request at
+	 * all</b>: a same-document hop - a fragment link, or the {@code history.pushState}/{@code replaceState}
+	 * that a router-driven application navigates with. Those still replace what the page shows, so they
+	 * deserve the page-load settle, and only {@code framenavigated} reports them.
+	 *
+	 * <p>
+	 * Installed on the page rather than the context because {@code framenavigated} is a page-level
+	 * event; this session owns exactly one page for its lifetime, so one registration covers it.
+	 * Sub-frames are ignored: an advert or a widget in an iframe navigating is not this page loading.
+	 * </p>
+	 */
+	private void installSameDocumentNavigationObserver(Page page) {
+		page.onFrameNavigated(frame -> {
+			if (frame.parentFrame() == null) {
+				_navigationStarted = true;
+			}
+		});
+	}
+
 	private long startupDeadlineMillis() {
 		// Chromium launch can be slow on a cold cache; give it generous headroom over one nav.
 		return _navigationTimeoutMillis + 60_000L;
 	}
 
 	private long navigationDeadlineMillis() {
-		// A navigation does DOMCONTENTLOADED then a NETWORKIDLE settle (each up to the timeout),
+		// A navigation does DOMCONTENTLOADED then waits for the load event (each up to the timeout),
+		// then the two settle stages (each bounded by the settle cap, itself clamped to the timeout),
 		// plus extraction; the outer deadline caps a genuine hang without pre-empting normal work.
 		return 2L * _navigationTimeoutMillis + 15_000L;
 	}
@@ -1651,16 +1868,17 @@ final class BrowserSession {
 	}
 
 	/**
-	 * Test-only: loads {@code html} via {@code setContent} and then runs the real page-load
-	 * {@link #settle()} (network wait + bounded DOM-quiet) before capturing, exactly as
-	 * {@link #navigate}/{@link #back} do. Lets gated E2E tests prove that content injected shortly
-	 * after load is captured with the settle on, yet absent with it disabled, without a network
-	 * fixture or loopback server (which SSRF would block). Package-visible for testing.
+	 * Test-only: loads {@code html} via {@code setContent} and then runs the real page-load settle
+	 * {@link #settleAfterLoad()} (load wait + capped network-quiet + bounded DOM-quiet) before
+	 * capturing, exactly as {@link #navigate}/{@link #back} do. Lets gated E2E tests prove that
+	 * content injected shortly after load is captured with the settle on, yet absent with it
+	 * disabled, without a network fixture or loopback server (which SSRF would block).
+	 * Package-visible for testing.
 	 */
 	PageView loadHtmlWithSettleForTest(String html) {
 		return callOnThread(() -> {
 			_page.setContent(html, new Page.SetContentOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
-			settle();
+			settleAfterLoad();
 			_pageGeneration++;
 			return capture(_page.url(), -1, null, true);
 		}, navigationDeadlineMillis());

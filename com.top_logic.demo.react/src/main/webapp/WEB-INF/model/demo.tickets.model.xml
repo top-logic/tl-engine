@@ -37,6 +37,17 @@
 							</default-value>
 						</annotations>
 					</reference>
+					<property name="statusLabel"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr>t -&gt; label($t.get(`demo.tickets:Ticket#status`))</expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
 					<reference name="comments"
 						composite="true"
 						kind="forwards"

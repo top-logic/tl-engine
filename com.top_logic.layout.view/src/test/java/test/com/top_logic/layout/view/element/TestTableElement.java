@@ -27,11 +27,12 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.TableElement;
-import com.top_logic.layout.view.form.RowEditPolicy;
+import com.top_logic.layout.view.element.TableElement.ColumnConfig;
 import com.top_logic.layout.view.element.TableElement.CriterionConfig;
 import com.top_logic.layout.view.element.TableElement.DropConfig;
 import com.top_logic.layout.view.element.TableElement.PresetConfig;
 import com.top_logic.layout.view.element.TableElement.PresetsConfig;
+import com.top_logic.layout.view.form.RowEditPolicy;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -345,6 +346,21 @@ public class TestTableElement extends TestCase {
 		context.checkErrors();
 		assertNotNull("UIElement should be instantiated", element);
 		assertTrue("Should be a ViewElement", element instanceof ViewElement);
+	}
+
+	/**
+	 * Tests that a {@code <column>} carries the display width it configures, and that a column
+	 * configuring none keeps the width its type derives.
+	 */
+	public void testParseColumnWidth() throws Exception {
+		List<ColumnConfig> columns = readTableConfig().getColumns().getColumns();
+
+		assertEquals("name", columns.get(0).getAttribute());
+		assertEquals("The configured width in pixels.", 220, columns.get(0).getWidth());
+
+		assertEquals("active", columns.get(1).getAttribute());
+		assertEquals("A column without a width keeps the one its type derives.", 0,
+			columns.get(1).getWidth());
 	}
 
 	/**

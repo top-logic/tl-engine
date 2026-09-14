@@ -73,11 +73,35 @@ public class ElementPicker {
 	 */
 	public static String start(ReactContext requester, ReactContext target, PickKind kind,
 			Consumer<PickResult> onPicked) {
+		return start(requester, target.getWindowName(), kind, onPicked);
+	}
+
+	/**
+	 * Puts the window with the given id into pick mode.
+	 *
+	 * <p>
+	 * The form for a caller that knows its target by id rather than by context - a side-window
+	 * picking in the window that {@link ReactContext#getOpenerWindowName() opened} it.
+	 * </p>
+	 *
+	 * @param requester
+	 *        The window starting the pick, in whose sub-session the callback runs.
+	 * @param targetWindowId
+	 *        The id of the window the user picks in.
+	 * @param kind
+	 *        What a click resolves to.
+	 * @param onPicked
+	 *        Receives what the user hit; never called if the user aborts the pick.
+	 * @return The correlation token of the started pick, which the client quotes when it reports the
+	 *         click. <code>null</code> if pick mode could not be started, because the session has no
+	 *         registry or the target window has no update queue to reach its browser page through.
+	 */
+	public static String start(ReactContext requester, String targetWindowId, PickKind kind,
+			Consumer<PickResult> onPicked) {
 		ReactWindowRegistry registry = requester.getWindowRegistry();
-		if (registry == null) {
+		if (registry == null || targetWindowId == null) {
 			return null;
 		}
-		String targetWindowId = target.getWindowName();
 		SSEUpdateQueue targetQueue = registry.getQueue(targetWindowId);
 		if (targetQueue == null) {
 			return null;

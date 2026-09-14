@@ -66,7 +66,7 @@ public class StepReplayAction implements ViewAction {
 	@Override
 	public Object execute(ReactContext context, Object input) {
 		ScriptRecorder recorder = RecorderAccess.openerRecorder(context);
-		String openerWindowId = RecorderAccess.openerWindowId(context);
+		String openerWindowId = context.getOpenerWindowName();
 		if (recorder == null || openerWindowId == null) {
 			ViewMessages.info(context, I18NConstants.ERROR_NO_RECORDER);
 			return input;

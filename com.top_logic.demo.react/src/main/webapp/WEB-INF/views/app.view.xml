@@ -232,6 +232,35 @@
 					</open-window>
 
 					<!--
+						Pops out the UI-inspector side-window: pick an element of this window and see the
+						control behind it. Developer tooling, shown only where UI inspection is switched on.
+					-->
+					<open-window
+						height="640"
+						image="css:bi bi-search"
+						placement="TOOLBAR"
+						singleton-key="ui-inspector"
+						view="ui-inspector.view.xml"
+						width="720"
+					>
+						<title>
+							<en>UI inspector</en>
+							<de>UI-Inspektor</de>
+						</title>
+						<label>
+							<en>Inspect</en>
+							<de>Untersuchen</de>
+						</label>
+						<tooltip>
+							<en>Open the UI inspector to examine the elements of this window.</en>
+							<de>Öffnet den UI-Inspektor zur Untersuchung der Elemente dieses Fensters.</de>
+						</tooltip>
+						<executability>
+							<inspect-enabled/>
+						</executability>
+					</open-window>
+
+					<!--
 						Opens the agent access administration: issue an access token that lets an
 						agent outside the browser drive this session, and withdraw issued ones.
 					-->
